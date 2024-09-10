@@ -127,6 +127,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     importThoughtPath: null,
     invalidState: false,
     isLoading: true,
+    isMulticursorTransaction: false,
     jumpHistory: storageModel.get('jumpHistory'),
     jumpIndex: 0,
     latestShortcuts: [],

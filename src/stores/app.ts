@@ -16,6 +16,7 @@ import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
 import freeThoughts from '../redux-middleware/freeThoughts'
 import multi from '../redux-middleware/multi'
 import multicursorAlertMiddleware from '../redux-middleware/multicursorAlertMiddleware'
+import multicursorMiddleware from '../redux-middleware/multicursorMiddleware'
 import pullQueue from '../redux-middleware/pullQueue'
 import scrollCursorIntoView from '../redux-middleware/scrollCursorIntoView'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
@@ -34,6 +35,7 @@ const middlewareEnhancer = applyMiddleware(
   // (must go before the thunk middleware so that it can throw an error before the thunk middleware tries to execute it)
   ...(import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [doNotDispatchReducer] : []),
   multi,
+  multicursorMiddleware,
   thunk,
   // must go after the thunk middleware, otherwise the Puppeteer cursor test fails
   debuggingMiddleware,
