@@ -3,10 +3,10 @@ import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 
 /** A home icon. */
-const HomeIcon = ({ className, fill, size, style }: IconType) => {
+const HomeIcon = ({ className, fill, size, style, wrapperClassName }: IconType & { wrapperClassName?: string }) => {
   const sizeCalculated = useSelector(state => size || state.fontSize)
   return (
-    <span role='img' aria-label='home' className='logo-wrapper'>
+    <span role='img' aria-label='home' className={wrapperClassName}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         width={sizeCalculated}

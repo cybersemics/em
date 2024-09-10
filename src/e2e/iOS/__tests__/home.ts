@@ -22,7 +22,7 @@ it.skip('click home link to set the cursor to null', async () => {
   const editingBefore = await $('.editing')
   expect(editingBefore.elementId).toBeTruthy()
 
-  const homeLink = await $('.home a')
+  const homeLink = await $('[data-testid=home] a')
   expect(homeLink).toBeTruthy()
   await homeLink.click()
 

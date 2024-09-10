@@ -27,7 +27,6 @@ const Toggle = ({ children, expand, title }: { children?: any; expand?: boolean;
         >
           <g>
             <path
-              className='glyph-fg triangle'
               d='M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z'
               fill={colors.fg}
               style={{

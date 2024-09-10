@@ -1,8 +1,8 @@
-import classNames from 'classnames'
 import moize from 'moize'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
+import { multiline as multilineRecipe } from '../../styled-system/recipes'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -32,6 +32,7 @@ import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
 
 const urlLinkStyle = css({
+  /* set height of this a tag to 1em to make sure the a tag doesn't affect .thought annotation's line height */
   height: '1em',
   display: 'inline-block',
   overflow: 'hidden',
@@ -93,6 +94,7 @@ const ThoughtAnnotationContainer = React.memo(
     simplePath,
     minContexts = 2,
     multiline,
+    ellipsizedUrl,
     placeholder,
     invalidState,
     style,
@@ -104,6 +106,7 @@ const ThoughtAnnotationContainer = React.memo(
     invalidState?: boolean
     minContexts?: number
     multiline?: boolean
+    ellipsizedUrl?: boolean
     path: Path
     placeholder?: string
     showContextBreadcrumbs?: boolean
@@ -190,6 +193,7 @@ const ThoughtAnnotationContainer = React.memo(
           simplePath,
           isEditing,
           multiline,
+          ellipsizedUrl: ellipsizedUrl,
           numContexts,
           showSuperscript,
           style,
@@ -210,6 +214,7 @@ const ThoughtAnnotation = React.memo(
     email,
     isEditing,
     multiline,
+    ellipsizedUrl,
     numContexts,
     showSuperscript,
     simplePath,
@@ -223,6 +228,7 @@ const ThoughtAnnotation = React.memo(
     email?: string
     isEditing?: boolean
     multiline?: boolean
+    ellipsizedUrl?: boolean
     numContexts: number
     showSuperscript?: boolean
     simplePath: SimplePath
@@ -252,21 +258,85 @@ const ThoughtAnnotation = React.memo(
     })
 
     return (
-      <div className='thought-annotation'>
+      <div
+        aria-label='thought-annotation'
+        className={css({
+          position: 'absolute',
+          pointerEvents: 'none',
+          userSelect: 'none',
+          boxSizing: 'border-box',
+          width: '100%',
+          // maxWidth: '100%',
+          marginTop: '0',
+          display: 'inline-block',
+          verticalAlign: 'top',
+          whiteSpace: 'pre-wrap',
+          /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
+          maxWidth: ellipsizedUrl ? 'calc(100% - 2em)' : '100%',
+          '@media (max-width: 500px)': {
+            marginTop: { _android: '-2.1px' },
+            marginLeft: { _android: '0.5em' },
+          },
+          '@media (min-width: 560px) and (max-width: 1024px)': {
+            marginTop: { _android: '-0.1px' },
+            marginLeft: { _android: '0.5em' },
+          },
+        })}
+      >
         <div
-          className={classNames({
-            'editable-annotation': true,
-            multiline,
+          className={
+            cx(
+              multiline ? multilineRecipe() : null,
+              css({
+                ...(isAttribute(value) && {
+                  backgroundColor: {
+                    base: '#ddd',
+                    _dark: '#222',
+                  },
+                  fontFamily: 'monospace',
+                }),
+                display: 'inline-block',
+                maxWidth: '100%',
+                padding: '0 0.333em',
+                boxSizing: 'border-box',
+                whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
+                /*
+                  Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
+                  To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
+                */
+                margin: '-0.5px 0 0 calc(1em - 18px)',
+                paddingRight: multiline ? '1em' : '0.333em',
+              }),
+            )
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
-          })}
+          }
           style={{
             fontFamily: isAttribute(value) ? 'monospace' : undefined,
             ...styleAnnotation,
           }}
         >
           <span
-            className='editable-annotation-text'
+            className={css({
+              visibility: 'hidden',
+              position: 'relative',
+              clipPath: 'inset(0.001px 0 0.1em 0)',
+              minHeight: 'minThoughtHeight',
+              wordBreak: 'break-word',
+              ...(ellipsizedUrl && {
+                display: 'inline-block',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                maxWidth: '100%',
+                /*
+                    vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
+                    Here is the reference to the reason.
+                    https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
+                */
+                verticalAlign: 'top',
+              }),
+            })}
             style={style}
             dangerouslySetInnerHTML={{ __html: textMarkup || placeholder || '' }}
           />
@@ -277,7 +347,7 @@ const ThoughtAnnotation = React.memo(
           {email && <EmailIconLink email={email} />}
           {
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-            showSuperscript ? <StaticSuperscript n={numContexts} style={style} /> : null
+            showSuperscript ? <StaticSuperscript absolute n={numContexts} style={style} /> : null
           }
         </div>
       </div>

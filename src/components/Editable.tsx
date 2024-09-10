@@ -1,8 +1,9 @@
-import classNames from 'classnames'
 import { unescape as unescapeHtml } from 'html-escaper'
 import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { cx } from '../../styled-system/css'
+import { editable, multiline as multilineRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
@@ -68,6 +69,7 @@ interface EditableProps {
   placeholder?: string
   rank?: number
   style?: React.CSSProperties
+  className?: string
   simplePath: SimplePath
   /* If transient is true:
     1. Instead of calling exisitingThoughtChange, it calls newThought to add the given child to the state.
@@ -100,6 +102,7 @@ const Editable = ({
   path,
   simplePath,
   style,
+  className,
   transient,
 }: EditableProps) => {
   const state = store.getState()
@@ -564,13 +567,14 @@ const Editable = ({
     <ContentEditable
       disabled={disabled}
       innerRef={contentRef}
-      className={classNames({
-        multiline,
-        preventAutoscroll: true,
-        editable: true,
-        ['editable-' + head(path)]: true,
-        empty: value.length === 0,
-      })}
+      aria-label={'editable-' + head(path)}
+      className={cx(
+        multiline ? multilineRecipe() : null,
+        editable({
+          preventAutoscroll: true,
+        }),
+        className,
+      )}
       html={
         value === EM_TOKEN
           ? '<b>em</b>'
