@@ -4,7 +4,7 @@ import setCursor from '../actions/setCursor'
 import nextThought from '../selectors/nextThought'
 
 /** Moves the cursor to the next child, sibling, or nearest uncle. */
-const cursorDown = (state: State) => {
+const cursorDown = (state: State, { preserveMulticursor }: { preserveMulticursor?: boolean } = {}) => {
   // if there is a cursor, get the next logical child, sibling, or uncle
   const path = nextThought(state)
   return path
@@ -12,6 +12,7 @@ const cursorDown = (state: State) => {
         path,
         cursorHistoryClear: true,
         editing: true,
+        preserveMulticursor,
       })
     : state
 }
@@ -19,4 +20,7 @@ const cursorDown = (state: State) => {
 export default cursorDown
 
 /** Action-creator for cursorDown. */
-export const cursorDownActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorDown' })
+export const cursorDownActionCreator =
+  (payload?: Parameters<typeof cursorDown>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'cursorDown', ...payload })

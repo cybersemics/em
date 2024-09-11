@@ -2,9 +2,12 @@ import { Key } from 'ts-key-enum'
 import Dispatch from '../@types/Dispatch'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
+import State from '../@types/State'
+import { addMulticursorActionCreator } from '../actions/addMulticursor'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
+import nextThought from '../selectors/nextThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -52,7 +55,22 @@ const cursorDownShortcut: Shortcut = {
     // use default browser behavior (i.e. caret down) if there is a valid selection and it's not on the last line of a multi-line editable
     return selection.isOnLastLine()
   },
-  exec: throttleByAnimationFrame((dispatch: Dispatch) => dispatch(cursorDown())),
+  exec: throttleByAnimationFrame((dispatch: Dispatch, getState: () => State, e: KeyboardEvent) => {
+    if (e.shiftKey) {
+      // Add the next thought to the multicursor
+      const next = nextThought(getState())
+      if (next) dispatch(addMulticursorActionCreator({ path: next }))
+
+      dispatch(cursorDown({ preserveMulticursor: true }))
+    } else dispatch(cursorDown())
+  }),
+}
+
+export const cursorDownAlias: Shortcut = {
+  ...cursorDownShortcut,
+  id: 'cursorDownAlias',
+  gesture: undefined,
+  keyboard: { key: Key.ArrowDown, shift: true },
 }
 
 export default cursorDownShortcut

@@ -1,7 +1,10 @@
 import { Key } from 'ts-key-enum'
+import Dispatch from '../@types/Dispatch'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
+import State from '../@types/State'
 import { cursorUpActionCreator as cursorUp } from '../actions/cursorUp'
+import { removeMulticursorActionCreator as removeMulticursor } from '../actions/removeMulticursor'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -50,7 +53,21 @@ const cursorUpShortcut: Shortcut = {
     // use default browser if selection is on the second or greater line of a multi-line editable
     return selection.isOnFirstLine()
   },
-  exec: throttleByAnimationFrame(dispatch => dispatch(cursorUp())),
+  exec: throttleByAnimationFrame((dispatch: Dispatch, getState: () => State, e: KeyboardEvent) => {
+    if (e.shiftKey) {
+      const cursor = getState().cursor
+      if (cursor) dispatch(removeMulticursor({ path: cursor }))
+
+      dispatch(cursorUp({ preserveMulticursor: true }))
+    } else dispatch(cursorUp())
+  }),
+}
+
+export const cursorUpAlias: Shortcut = {
+  ...cursorUpShortcut,
+  id: 'cursorUpAlias',
+  gesture: undefined,
+  keyboard: { key: Key.ArrowUp, shift: true },
 }
 
 export default cursorUpShortcut
