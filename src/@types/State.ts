@@ -97,8 +97,6 @@ interface State {
    * Used by the Content component to determine if there are no root children and EmptyThoughtspace should be displayed.
    */
   isLoading: boolean
-  // True when a multicursor action is being applied to all multicursors.
-  isMulticursorTransaction: boolean
   /**
    * History of edit points that can be navigated with the jump command.
    * New edit points are added to the beginning of the list.

@@ -12,9 +12,6 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
 
     const state = getState()
 
-    // early-exit if the action is part of a multicursor transaction
-    if (state.isMulticursorTransaction) return next(action)
-
     const numMulticursors = Object.keys(state.multicursors).length
 
     if (
