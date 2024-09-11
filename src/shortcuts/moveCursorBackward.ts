@@ -15,6 +15,7 @@ const moveCursorBackward: Shortcut = {
   label: 'Move Cursor Backward',
   description: 'Move the current thought to the next sibling of its context or to previous column in table view.',
   keyboard: { key: Key.Tab, shift: true },
+  multicursor: 'ignore',
   // TODO: Create unique icon
   svg: SettingsIcon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

@@ -22,6 +22,7 @@ const pinAllShortcut: Shortcut = {
   description: 'Pins open all thoughts at the current level.',
   descriptionInverse: 'Unpins all thoughts at the current level.',
   keyboard: { key: 'p', meta: true, shift: true },
+  multicursor: 'ignore',
   svg: PinAllIcon,
   canExecute: getState => !!getState().cursor,
   exec: (dispatch, getState, e, { type }) => {

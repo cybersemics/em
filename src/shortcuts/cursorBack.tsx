@@ -31,6 +31,7 @@ const cursorBackShortcut: Shortcut = {
   gesture: 'r',
   svg: Icon,
   keyboard: 'Escape',
+  multicursor: 'ignore',
   exec: throttleByAnimationFrame((dispatch, getState) => {
     const state = getState()
 

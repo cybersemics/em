@@ -13,6 +13,7 @@ const favorite: Shortcut = {
   labelInverse: 'Remove from Favorites',
   description: 'Add the current thought to your Favorites list.',
   descriptionInverse: 'Remove the current thought from your Favorites list.',
+  multicursor: true,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   isActive: getState => {
     const state = getState()

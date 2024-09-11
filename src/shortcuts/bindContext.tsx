@@ -33,6 +33,10 @@ const bindContextShortcut: Shortcut = {
   svg: Icon,
   description: 'Bind two different contexts of a thought so that they always have the same children.',
   gesture: 'rud',
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot bind multiple thoughts.',
+  },
   keyboard: { key: 'b', shift: true, alt: true },
   hideFromHelp: true,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

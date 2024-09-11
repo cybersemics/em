@@ -20,6 +20,12 @@ const copyCursorShortcut: Shortcut = {
   description: 'Copies the cursor and all descendants.',
   keyboard: { key: 'c', meta: true },
   hideFromHelp: true,
+  multicursor: {
+    enabled: true,
+    execMulticursor: (cursors, dispatch, getState) => {
+      // TODO: Implement
+    },
+  },
   // TODO: Create unique icon
   svg: SettingsIcon,
   canExecute: getState =>

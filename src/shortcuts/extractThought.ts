@@ -7,6 +7,10 @@ const extractThought: Shortcut = {
   label: 'Extract',
   description: 'Extract selected part of a thought as its child',
   keyboard: { key: 'e', control: true, meta: true },
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot extract multiple thoughts.',
+  },
   // TODO: Create unique icon
   svg: SettingsIcon,
   canExecute: getState => !!getState().cursor,

@@ -3,8 +3,8 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import bumpThoughtDown from '../../shortcuts/bumpThoughtDown'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
-import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import executeShortcut from '../../util/executeShortcut'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)

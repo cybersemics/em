@@ -29,6 +29,7 @@ const splitSentencesShortcut: Shortcut = {
   label: 'Split Sentences',
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
   keyboard: { key: 's', meta: true, shift: true },
+  multicursor: true,
   svg: Icon,
   canExecute: getState => !!getState().cursor,
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {

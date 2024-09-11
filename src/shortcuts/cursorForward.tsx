@@ -25,6 +25,7 @@ const cursorForwardShortcut: Shortcut = {
   id: 'cursorForward',
   description: 'Move the cursor down a level.',
   label: 'Forward',
+  multicursor: 'ignore',
   gesture: 'l',
   svg: Icon,
   // must wrap in anonymous function since exit is defined at run time

@@ -25,6 +25,12 @@ const subCategorizeAllShortcut: Shortcut = {
   description: 'Move all thoughts at the current level into a new, empty thought.',
   gesture: 'ldrlu',
   keyboard: { key: 'a', meta: true, alt: true },
+  multicursor: {
+    enabled: true,
+    execMulticursor: (cursors, dispatch, getState) => {
+      // TODO: Implement
+    },
+  },
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: subCategorizeAll(),

@@ -11,6 +11,7 @@ const strikethrough: Shortcut = {
   descriptionInverse: 'Removes strikethrough formatting from the current thought or selected text.',
   svg: Icon,
   keyboard: { key: 's', meta: true },
+  multicursor: true,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState, e) => {
     e.preventDefault()

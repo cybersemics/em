@@ -29,6 +29,7 @@ const headingShortcut = (level: HeadingLevel): Shortcut => ({
       }`
     : 'Sets a heading to normal text.',
   keyboard: { key: level.toString(), meta: true, alt: true },
+  multicursor: true,
   // TODO: Create unique icon
   svg: SettingsIcon,
   canExecute: getState => !!getState().cursor && isDocumentEditable(),

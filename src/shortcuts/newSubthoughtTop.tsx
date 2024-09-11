@@ -29,6 +29,10 @@ const newSubthoughtTopShortcut: Shortcut = {
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
   gesture: 'rdu',
   keyboard: { key: Key.Enter, shift: true, meta: true },
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot create a new subthought with multiple thoughts.',
+  },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec: newThought({ insertNewSubthought: true, insertBefore: true }),

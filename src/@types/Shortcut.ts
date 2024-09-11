@@ -4,6 +4,7 @@ import Dispatch from './Dispatch'
 import GesturePath from './GesturePath'
 import Icon from './Icon'
 import Key from './Key'
+import Path from './Path'
 import ShortcutId from './ShortcutId'
 import ShortcutType from './ShortcutType'
 import State from './State'
@@ -34,7 +35,7 @@ interface Shortcut {
     getState: () => State,
     e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
     { type }: { type: ShortcutType },
-  ) => void
+  ) => void | Promise<void>
 
   /** A MultiGesture sequence to activate the shortcut on touch screens. */
   gesture?: GesturePath | GesturePath[]
@@ -71,6 +72,25 @@ interface Shortcut {
 
   // an icon that represents the shortcut in the Toolbar
   svg: (icon: Icon) => React.ReactNode
+
+  /** Multicursor support. If 'ignore', the shortcut will be executed as if there were no multicursors. When true, the shortcut will be executed for each cursor. Optional object for more control. */
+  multicursor:
+    | 'ignore'
+    | boolean
+    | {
+        /** Whether multicursor mode is enabled for this shortcut. */
+        enabled: boolean
+        /** An error message to display when multicursor mode is not enabled. */
+        error?: (getState: () => State) => string | null
+        /** Optional override for executing the shortcut for multiple cursors. */
+        execMulticursor?: (
+          cursors: Path[],
+          dispatch: Dispatch,
+          getState: () => State,
+          e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
+          { type }: { type: ShortcutType },
+        ) => void | Promise<void>
+      }
 }
 
 export default Shortcut

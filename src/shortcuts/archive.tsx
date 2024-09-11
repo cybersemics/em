@@ -78,6 +78,7 @@ const archiveShortcut: Shortcut = {
   label: 'Archive',
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
   gesture: 'ldl',
+  multicursor: true,
   svg: Icon,
   keyboard: { key: Key.Backspace, shift: true, meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
@@ -90,6 +91,7 @@ export const archiveAliases: Shortcut = {
   svg: Icon,
   label: 'Archive',
   hideFromHelp: true,
+  multicursor: true,
   gesture: [
     'ldlr',
     'lrdl',

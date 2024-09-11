@@ -7,6 +7,7 @@ const commandPaletteShortcut: Shortcut = {
   label: 'Command Palette',
   description: 'Opens the command palette where commands can be executed by name.',
   hideFromCommandPalette: true,
+  multicursor: 'ignore',
   svg: Icon,
   keyboard: { key: 'p', meta: true },
   exec: dispatch => dispatch(commandPalette()),

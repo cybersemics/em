@@ -25,6 +25,10 @@ const generateThought: Shortcut = {
   gesture: 'ur',
   // TODO: Create unique icon
   svg: SettingsIcon,
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot generate multiple thoughts.',
+  },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: async (dispatch, getState) => {
     if (!import.meta.env.VITE_AI_URL) {

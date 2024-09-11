@@ -16,11 +16,11 @@ import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import createTestStore from '../../test-helpers/createTestStore'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
-import executeShortcut from '../../test-helpers/executeShortcut'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getDescendantsOfContext from '../../test-helpers/queries/getDescendantsOfContext'
 import getThoughtByContext from '../../test-helpers/queries/getThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import executeShortcut from '../../util/executeShortcut'
 import toggleSortShortcut from '../toggleSort'
 
 describe('store', () => {

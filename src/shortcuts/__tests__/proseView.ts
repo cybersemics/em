@@ -1,8 +1,8 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import attributeByContext from '../../test-helpers/attributeByContext'
 import createTestStore from '../../test-helpers/createTestStore'
-import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import executeShortcut from '../../util/executeShortcut'
 import proseViewShortcut from '../proseView'
 
 it('toggle on prose view of parent of cursor (inital state without =view attribute)', () => {

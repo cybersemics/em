@@ -11,6 +11,7 @@ const italic: Shortcut = {
   descriptionInverse: 'Removes italic formatting from the current thought.',
   svg: Icon,
   keyboard: { key: 'i', meta: true },
+  multicursor: true,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => {
     dispatch(formatSelection('italic'))

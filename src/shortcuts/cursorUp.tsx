@@ -33,6 +33,7 @@ const cursorUpShortcut: Shortcut = {
   label: 'Cursor Up',
   keyboard: { key: Key.ArrowUp },
   hideFromHelp: true,
+  multicursor: 'ignore',
   svg: Icon,
   canExecute: getState => {
     const state = getState()

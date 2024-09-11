@@ -9,6 +9,7 @@ const bold: Shortcut = {
   label: 'Bold',
   description: 'Bolds the a thought or selected text.',
   descriptionInverse: 'Removes bold formatting from the current thought.',
+  multicursor: true,
   svg: Icon,
   keyboard: { key: 'b', meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

@@ -8,6 +8,7 @@ const jumpBackShortcut: Shortcut = {
   description: 'Move the cursor to the last thought that was edited.',
   keyboard: { key: 'j', meta: true },
   gesture: 'lul',
+  multicursor: 'ignore',
   // TODO: Create unique icon
   svg: SettingsIcon,
   exec: (dispatch, getState) => {

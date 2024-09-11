@@ -54,6 +54,7 @@ const deleteShortcut: Shortcut = {
   label: 'Delete',
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
   gesture: 'ldldl',
+  multicursor: true,
   keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec,

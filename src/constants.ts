@@ -447,6 +447,8 @@ export enum AlertType {
   ImportFile = 'ImportFile',
   // shown when a multicursor selection is active
   MulticursorActive = 'MulticursorActive',
+  // shown when a multicursor selection is active
+  MulticursorError = 'MulticursorError',
   // shown when the user redoes an action
   Redo = 'Redo',
   // shown the first time the user types space to indent

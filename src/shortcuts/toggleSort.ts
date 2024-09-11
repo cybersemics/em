@@ -15,6 +15,7 @@ const toggleSortShortcut: Shortcut = {
   description:
     'Change the sorting option for the current context. Rotates through manual, alphabetical, and reverse alphabetical.',
   keyboard: { key: 's', meta: true, alt: true },
+  multicursor: true,
   svg: Icon,
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()

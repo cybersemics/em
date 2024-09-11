@@ -29,6 +29,10 @@ const newThoughtAboveShortcut: Shortcut = {
   label: 'New Thought (above)',
   description: 'Create a new thought immediately above the current thought.',
   gesture: 'rul',
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot create a new thought with multiple thoughts.',
+  },
   ...(!isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null),
   svg: Icon,
   canExecute: () => isDocumentEditable(),

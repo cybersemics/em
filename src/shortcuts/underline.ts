@@ -11,6 +11,7 @@ const underline: Shortcut = {
   descriptionInverse: 'Removes the underline from the current thought.',
   svg: Icon,
   keyboard: { key: 'u', meta: true },
+  multicursor: true,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => {
     dispatch(formatSelection('underline'))

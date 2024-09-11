@@ -7,6 +7,10 @@ const swapParent: Shortcut = {
   id: 'swapParent',
   label: 'Swap Parent',
   description: 'Swap the current thought with its parent.',
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot swap parent with multiple thoughts.',
+  },
   svg: SwapParentIcon,
   canExecute: getState => isDocumentEditable() && (getState().cursor?.length ?? 0) >= 2,
   exec: dispatch => {

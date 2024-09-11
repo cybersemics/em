@@ -10,6 +10,7 @@ const searchShortcut: Shortcut = {
   label: 'Search',
   description: 'Open the Search input. Use the same shortcut to close.',
   svg: SearchIcon,
+  multicursor: 'ignore',
   keyboard: { key: 'f', meta: true, alt: true },
   exec: (dispatch, getState) => {
     const state = getState()

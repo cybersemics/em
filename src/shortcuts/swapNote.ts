@@ -10,6 +10,7 @@ const swapNote: Shortcut = {
   description: 'Convert a thought to a note.',
   keyboard: { key: 'n', alt: true, shift: true },
   gesture: 'ulr',
+  multicursor: true,
   svg: PencilIcon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {

@@ -6,6 +6,7 @@ const shortcut: Shortcut = {
   id: 'settings',
   label: 'Settings',
   description: 'Customize your experience of em.',
+  multicursor: 'ignore',
   svg: SettingsIcon,
   exec: dispatch => dispatch(showModal({ id: 'settings' })),
   allowExecuteFromModal: true,

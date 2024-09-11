@@ -16,6 +16,7 @@ const pinShortcut: Shortcut = {
   keyboard: { key: 'p', meta: true, alt: true },
   svg: PinIcon,
   canExecute: getState => !!getState().cursor,
+  multicursor: true,
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()
     const { cursor } = state

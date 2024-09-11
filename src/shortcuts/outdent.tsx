@@ -34,6 +34,7 @@ const outdentShortcut: Shortcut = {
     keyboard: moveCursorBackward.keyboard,
   },
   gesture: 'lrl',
+  multicursor: true,
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {

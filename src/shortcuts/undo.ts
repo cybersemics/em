@@ -8,6 +8,7 @@ import getLatestActionType from '../util/getLastActionType'
 const undoShortcut: Shortcut = {
   id: 'undo',
   label: 'Undo',
+  multicursor: 'ignore',
   description: getState => {
     const lastActionType = getLatestActionType(getState().undoPatches)
 

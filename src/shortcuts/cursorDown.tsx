@@ -35,6 +35,7 @@ const cursorDownShortcut: Shortcut = {
   label: 'Cursor Down',
   keyboard: { key: Key.ArrowDown },
   hideFromHelp: true,
+  multicursor: 'ignore',
   svg: Icon,
   canExecute: getState => {
     const state = getState()

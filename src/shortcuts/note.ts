@@ -14,6 +14,10 @@ const noteShortcut: Shortcut = {
   description: 'Add a small note beneath a thought. Cute!',
   keyboard: { key: 'n', alt: true, meta: true },
   gesture: 'rdlr',
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot create a note with multiple thoughts.',
+  },
   svg: PencilIcon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {

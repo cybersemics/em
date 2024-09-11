@@ -1,8 +1,8 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import attributeByContext from '../../test-helpers/attributeByContext'
 import createTestStore from '../../test-helpers/createTestStore'
-import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import executeShortcut from '../../util/executeShortcut'
 import toggleTableViewShortcut from '../toggleTableView'
 
 it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {

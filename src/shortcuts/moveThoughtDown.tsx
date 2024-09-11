@@ -29,6 +29,7 @@ const moveThoughtDownShortcut: Shortcut = {
   description: 'Move the current thought down.',
   gesture: 'dud',
   keyboard: { key: Key.ArrowDown, meta: true, shift: true },
+  multicursor: true,
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => dispatch(moveThoughtDown()),

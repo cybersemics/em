@@ -19,6 +19,13 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
   </svg>
 )
 
+const multicursor: Shortcut['multicursor'] = {
+  enabled: true,
+  execMulticursor: (cursors, dispatch, getState) => {
+    // TODO: Implement
+  },
+}
+
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
 const subCategorizeOneShortcut: Shortcut = {
   id: 'subcategorizeOne',
@@ -26,6 +33,7 @@ const subCategorizeOneShortcut: Shortcut = {
   description: 'Move the current thought into a new, empty thought at the same level.',
   gesture: 'lu',
   keyboard: { key: 'o', meta: true, alt: true },
+  multicursor,
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => dispatch(subCategorizeOne()),
@@ -37,6 +45,7 @@ export const subCategorizeOneShortcutAlias: Shortcut = {
   label: 'Subcategorize',
   hideFromHelp: true,
   keyboard: { key: ']', meta: true },
+  multicursor,
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => dispatch(subCategorizeOne()),

@@ -11,6 +11,10 @@ const bumpThoughtDownShortcut: Shortcut = {
   description: 'Bump the current thought down one level and replace it with a new, empty thought.',
   gesture: 'rld',
   keyboard: { key: 'd', meta: true, alt: true },
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot bump down multiple thoughts.',
+  },
   // TODO: Create unique icon
   svg: SettingsIcon,
   canExecute: getState => !!getState().cursor && isDocumentEditable(),

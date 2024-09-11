@@ -38,6 +38,7 @@ const setCursor = (
     offset,
     path,
     replaceContextViews,
+    preserveMulticursor,
   }: {
     contextChain?: SimplePath[]
     cursorHistoryClear?: boolean
@@ -47,6 +48,7 @@ const setCursor = (
     offset?: number | null
     path: Path | null
     replaceContextViews?: Index<boolean>
+    preserveMulticursor?: boolean
   },
 ): State => {
   if (path && path.length > 1 && path[0] === HOME_TOKEN) {
@@ -147,7 +149,7 @@ const setCursor = (
     expanded,
     noteFocus,
     cursorInitialized: true,
-    ...(!state.isMulticursorTransaction
+    ...(!preserveMulticursor
       ? {
           multicursors: {},
           cursorBeforeMulticursor: null,
