@@ -9,7 +9,7 @@ import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
 import getThoughtById from '../selectors/getThoughtById'
-import { calculateCliffThoughtsHeight } from '../util/cliffThoughtHeight'
+import calculateCliffThoughtsHeight from '../util/cliffThoughtHeight'
 import head from '../util/head'
 import strip from '../util/strip'
 
