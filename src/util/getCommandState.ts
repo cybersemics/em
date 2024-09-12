@@ -22,7 +22,7 @@ const tags = {
 
 /** Extracts the foreground and background colors from the given string.
  * Returns an object with foreColor and backColor properties.
- * If the string does not contain a font or span tag, the default colors are returned.
+ * If the string does not contain a font or span tag, undefined is returned.
  */
 const extractColors = (savedValue: string) => {
   const foreColorRegex = /<font[^>]*\scolor=["']?([^"']+)["']?[^>]*>/i

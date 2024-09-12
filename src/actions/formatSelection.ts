@@ -1,22 +1,12 @@
 import Thunk from '../@types/Thunk'
-import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
-  (
-    command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor',
-    color: string = '#ffffff',
-  ): Thunk =>
-  (dispatch, getState) => {
-    // Apply text and background color to the selected text and apply the command
-    const execCommand = () => {
-      if (command === 'backColor' || command === 'foreColor') document.execCommand(command, false, color)
-      else document.execCommand(command)
-    }
-
+  (command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor', color: string = ''): Thunk =>
+  async (dispatch, getState) => {
     const state = getState()
     if (!state.cursor) return
 
@@ -30,15 +20,16 @@ export const formatSelectionActionCreator =
       const thoughtContentEditable = document.querySelector('.editable-' + thought.id)
       if (!thoughtContentEditable) return
 
-      const savedSelection = selection.save()
+      // const savedSelection = selection.save()
+      console.log(sel)
 
       // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile
       sel?.selectAllChildren(thoughtContentEditable)
-
-      execCommand()
-      selection.restore(savedSelection)
+      document.execCommand(command, false, color)
+      sel?.selectAllChildren(thoughtContentEditable)
+      // selection.restore(savedSelection)
     } else {
-      execCommand()
+      document.execCommand(command, false, color)
       updateCommandState()
     }
 

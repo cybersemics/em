@@ -1,4 +1,5 @@
 import { Page } from 'puppeteer'
+// import click from '../../../test-helpers/click'
 import getEditable from './getEditable'
 
 // extract the background-color or color style property
@@ -24,11 +25,10 @@ const setColor = async (
   end: number,
 ) => {
   const editableNode = await getEditable(page, value)
-  if (!editableNode) throw new Error('editable node for the given value not found.')
 
   const details = await page.evaluate(
     (editableNode, colorType, colorValue, start, end) => {
-      const thoughtContainer = editableNode.closest('.thought-container')
+      const thoughtContainer = editableNode.closest('.thought-container') as HTMLElement
       if (!thoughtContainer) return null
       var textNode = editableNode.childNodes[0] // Assuming there's only text inside
 
@@ -42,17 +42,12 @@ const setColor = async (
       selection.removeAllRanges()
       selection.addRange(range)
       document.execCommand(colorType, false, colorValue)
-
+      // clickElement(page, '.toolbar-icon[aria-label="Text Color"]')
+      // clickElement(page, '[aria-label="text color swatches"] [aria-label="blue"]')
+      console.log(thoughtContainer)
       // Serialize the details
       return {
-        thoughtContainerInfo: thoughtContainer
-          ? {
-              tagName: thoughtContainer.tagName,
-              id: thoughtContainer.id,
-              classList: Array.from(thoughtContainer.classList),
-              innerHTML: thoughtContainer.innerHTML, // limit to first 100 chars
-            }
-          : null,
+        innerHTML: thoughtContainer ? thoughtContainer.innerHTML : null,
         selectionInfo: selection.toString(),
       }
     },
@@ -62,7 +57,7 @@ const setColor = async (
     start,
     end,
   )
-  const htmlString = details?.thoughtContainerInfo?.innerHTML
+  const htmlString = details?.innerHTML
   if (!htmlString) return
   const backgroundColor = extractStyleProperty(htmlString, 'background-color')
   const textColor = extractColor(htmlString)

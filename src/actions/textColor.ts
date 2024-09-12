@@ -18,13 +18,16 @@ const textColor = (
   const thought = pathToThought(state, state.cursor)
   const thoughtText = thought.value.replace(/<[^>]*>/g, '')
   // set bullet to text color when the entire thought selected
+  let newState
   if ((selection.text()?.length === 0 && thoughtText.length !== 0) || selection.text()?.length === thoughtText.length) {
-    return reducerFlow([
+    newState = [
       color && color !== 'default'
         ? setDescendant({ path, values: ['=bullet', '=style', 'color', backgroundColor || color] })
         : deleteAttribute({ path, values: ['=bullet', '=style', 'color'] }),
-    ])(state)
-  } else return reducerFlow([deleteAttribute({ path, values: ['=bullet', '=style', 'color'] })])(state)
+    ]
+  } else newState = [deleteAttribute({ path, values: ['=bullet', '=style', 'color'] })]
+
+  return reducerFlow(newState)(state)
 }
 
 /** Action-creator for textColor. */

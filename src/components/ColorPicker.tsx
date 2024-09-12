@@ -1,5 +1,5 @@
 import { rgbToHex } from '@mui/material'
-import React, { FC, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { FC, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { textColorActionCreator as textColor } from '../actions/textColor'
@@ -43,7 +43,6 @@ const ColorSwatch: FC<{
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
-  const [selected, setSelected] = useState(false)
   size = size || fontSize * 1.2
 
   /** A function that adds an alpha channel to a hex color. */
@@ -51,19 +50,17 @@ const ColorSwatch: FC<{
     if (hex.length === 7) return hex + 'ff'
     return hex
   }
-
-  useEffect(() => {
+  const selected = useMemo(() => {
     const textHexColor = color ? addAlphaToHex(rgbToHex(color)) : undefined
     const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
     const selectedTextHexColor = cursorStyle?.color ? addAlphaToHex(rgbToHex(cursorStyle?.color)) : undefined
     const selectedBackHexColor = cursorStyle?.backgroundColor
       ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor))
       : undefined
-    setSelected(
-      !!(
-        (textHexColor && textHexColor === selectedTextHexColor) ||
-        (backHexColor && backHexColor === selectedBackHexColor)
-      ),
+
+    return !!(
+      (textHexColor && textHexColor === selectedTextHexColor) ||
+      (backHexColor && backHexColor === selectedBackHexColor)
     )
   }, [cursorStyle, backgroundColor, color])
   /** Toggles the text color to the clicked swatch. */
@@ -72,14 +69,20 @@ const ColorSwatch: FC<{
     e.stopPropagation()
 
     // Apply text color to the selection
-    if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || 'rgba(0, 0, 0, 1)'))
+    if (selected) dispatch(formatSelection('foreColor', colors.fg))
+    else if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || 'rgba(0, 0, 0, 1)'))
 
-    // Apply background color to the selection
-    backgroundColor && backgroundColor !== colors.bg
-      ? dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
-      : dispatch(formatSelection('backColor', colors.fg))
+    let selectedColor: string = colors.fg // Default color
 
-    await dispatch(
+    if (backgroundColor && backgroundColor !== colors.bg) {
+      // Determine the background color to apply
+      selectedColor = backgroundColor === 'inverse' ? colors.fg : backgroundColor
+    }
+
+    // Apply the determined background color to the selection
+    if (selected) dispatch(formatSelection('backColor', colors.bg))
+    else dispatch(formatSelection('backColor', selectedColor))
+    dispatch(
       textColor({
         ...(selected
           ? {
