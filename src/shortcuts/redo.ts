@@ -16,6 +16,7 @@ const redoShortcut: Shortcut = {
 
     return 'Redo'
   },
+  keyboard: { key: 'z', meta: true, shift: true },
   svg: RedoIcon,
   exec: dispatch => {
     dispatch(redo())

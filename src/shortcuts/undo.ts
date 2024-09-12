@@ -17,6 +17,7 @@ const undoShortcut: Shortcut = {
 
     return 'Undo.'
   },
+  keyboard: { key: 'z', meta: true },
   svg: UndoIcon,
   exec: (dispatch, getState) => {
     if (!isUndoEnabled(getState())) return
