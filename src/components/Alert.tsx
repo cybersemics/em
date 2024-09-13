@@ -33,7 +33,6 @@ const Alert: FC = () => {
   }, [alert, dispatch])
 
   const undoOrRedo = alert?.alertType === AlertType.Undo || alert?.alertType === AlertType.Redo
-  const multicursor = alert?.alertType === AlertType.MulticursorActive
   const buttons = undoOrRedo ? (
     <div className={css({ marginTop: '0.5em' })}>
       <a
@@ -71,7 +70,7 @@ const Alert: FC = () => {
           onEntering={() => setDismiss(false)}
         >
           {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
-          <Popup {...alert} ref={popupRef} multicursor={multicursor} onClose={onClose} key={value}>
+          <Popup {...alert} ref={popupRef} onClose={onClose} key={value}>
             {value}
             {buttons}
           </Popup>

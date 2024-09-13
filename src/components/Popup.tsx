@@ -6,6 +6,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { deleteResumableFile } from '../actions/importFiles'
 import { isTouch } from '../browser'
+import { AlertType } from '../constants'
 import useCombinedRefs from '../hooks/useCombinedRefs'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
@@ -19,19 +20,18 @@ const Popup = React.forwardRef<
   PropsWithChildren<{
     // used to cancel imports
     importFileId?: string
-    // used to cancel multicursor alerts
-    multicursor?: boolean
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
     textAlign?: 'center' | 'left' | 'right'
     value?: string | null
     cssRaw?: SystemStyleObject
   }>
->(({ children, multicursor, importFileId, onClose, textAlign = 'center', cssRaw }, ref) => {
+>(({ children, importFileId, onClose, textAlign = 'center', cssRaw }, ref) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const padding = useSelector(state => state.fontSize / 2 + 2)
+  const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
   const useSwipeToDismissProps = useSwipeToDismiss({
     // dismiss after animation is complete to avoid touch events going to the Toolbar
     onDismissEnd: () => {
