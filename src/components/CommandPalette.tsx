@@ -22,7 +22,7 @@ import {
 } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
-import executeShortcut from '../util/executeShortcut'
+import { executeShortcutWithMulticursor } from '../util/executeShortcut'
 import GestureDiagram from './GestureDiagram'
 import Popup from './Popup'
 
@@ -436,7 +436,7 @@ const CommandPalette: FC = () => {
       const commandsNew = [shortcut.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
       setRecentCommands(commandsNew)
       dispatch(commandPalette())
-      executeShortcut(shortcut, { event: e, type: 'commandPalette', store, multicursor: true })
+      executeShortcutWithMulticursor(shortcut, { event: e, type: 'commandPalette', store })
       storageModel.set('recentCommands', commandsNew)
     },
     [dispatch, recentCommands, store],

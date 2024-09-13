@@ -20,7 +20,7 @@ import { AlertType, COMMAND_PALETTE_TIMEOUT, GESTURE_CANCEL_ALERT_TEXT, Settings
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
 import * as shortcutObject from './shortcuts/index'
-import executeShortcut from './util/executeShortcut'
+import { executeShortcutWithMulticursor } from './util/executeShortcut'
 import keyValueBy from './util/keyValueBy'
 
 export const globalShortcuts: Shortcut[] = Object.values(shortcutObject)
@@ -206,7 +206,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // do not execute when modal is displayed or a drag is in progress
     if (shortcut && !state.showModal && !state.dragInProgress) {
       shortcutEmitter.trigger('shortcut', shortcut)
-      executeShortcut(shortcut, { event: e, type: 'gesture', store, multicursor: true })
+      executeShortcutWithMulticursor(shortcut, { event: e, type: 'gesture', store })
       if (store.getState().enableLatestShortcutsDiagram) store.dispatch(showLatestShortcuts(shortcut))
     }
 
@@ -285,7 +285,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       e.preventDefault()
 
       // execute shortcut
-      executeShortcut(shortcut, { event: e, type: 'keyboard', store, multicursor: true })
+      executeShortcutWithMulticursor(shortcut, { event: e, type: 'keyboard', store })
     }
   },
 })
