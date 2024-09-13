@@ -1,13 +1,16 @@
 import { act } from '@testing-library/react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newSubthoughtActionCreator as newSubthought } from '../../actions/newSubthought'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeShortcut from '../../util/executeShortcut'
+import { executeShortcutWithMulticursor } from '../../util/executeShortcut'
 import clearThoughtShortcut from '../clearThought'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 
@@ -108,5 +111,98 @@ describe('DOM', () => {
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
   - a`)
+  })
+})
+
+describe('multicursor', () => {
+  it.skip('deletes multiple empty thoughts', async () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      newThought({ value: 'a' }),
+      newSubthought(),
+      setCursor(['a']),
+      newThought({ value: 'b' }),
+      newSubthought(),
+      setCursor(['b']),
+      newThought({ value: 'c' }),
+      setCursor(['a', '']),
+      addMulticursor(['b', '']),
+    ])
+
+    await executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - b
+  - c`
+
+    expect(exported).toEqual(expectedOutput)
+  })
+
+  it('outdents multiple only children', async () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+            - a
+              - a1
+            - b
+              - b1
+            - c
+          `,
+      }),
+      setCursor(['a', 'a1']),
+      addMulticursor(['b', 'b1']),
+    ])
+
+    await executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - a1
+  - b
+  - b1
+  - c`
+
+    expect(exported).toEqual(expectedOutput)
+  })
+
+  it.skip('handles mixed scenarios correctly', async () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+            - a
+            - b
+              - b1
+            - c
+              - c1
+              - c2
+          `,
+      }),
+      setCursor(['a']),
+      newSubthought(),
+      setCursor(['a', '']),
+      addMulticursor(['b', 'b1']),
+      addMulticursor(['c', 'c1']),
+    ])
+
+    await executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - b
+  - b1
+  - c
+    - c1
+    - c2`
+
+    expect(exported).toEqual(expectedOutput)
   })
 })
