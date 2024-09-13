@@ -9,12 +9,7 @@ const shortcut: Shortcut = {
   label: 'Export',
   description: 'Download or copy the current context as plaintext or html.',
   svg: ShareIcon,
-  multicursor: {
-    enabled: true,
-    execMulticursor: (paths, dispatch, getState, e) => {
-      // TODO: Implement
-    },
-  },
+  multicursor: 'ignore',
   canExecute: getState => {
     const state = getState()
     if (state.cursor) return true
