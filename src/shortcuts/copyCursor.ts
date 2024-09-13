@@ -1,3 +1,4 @@
+import Path from '../@types/Path'
 import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { pullActionCreator as pull } from '../actions/pull'
@@ -22,8 +23,62 @@ const copyCursorShortcut: Shortcut = {
   hideFromHelp: true,
   multicursor: {
     enabled: true,
-    execMulticursor: (cursors, dispatch, getState) => {
-      // TODO: Implement
+    execMulticursor: async (cursors, dispatch, getState) => {
+      const state = getState()
+
+      const filteredCursors = cursors.reduce<Path[]>((acc, cur) => {
+        const hasAncestor = acc.some(p => cur.includes(head(p)))
+        if (hasAncestor) return acc
+        return [...acc.filter(p => !p.includes(head(cur))), cur]
+      }, [])
+
+      // sort cursors in document order
+      filteredCursors.sort((a, b) => {
+        for (let i = 0; i < Math.min(a.length, b.length); i++) {
+          const aRank = getThoughtById(state, a[i]).rank
+          const bRank = getThoughtById(state, b[i]).rank
+          if (aRank !== bRank) return aRank - bRank
+        }
+        return a.length - b.length
+      })
+
+      // Pull all thoughts if any are pending
+      const needsPull = filteredCursors.some(cursor =>
+        someDescendants(state, head(cursor), child => isPending(state, getThoughtById(state, child.id))),
+      )
+
+      if (needsPull) {
+        dispatch(alert('Loading thoughts...', { alertType: AlertType.Clipboard }))
+        await dispatch(
+          pull(
+            filteredCursors.map(cursor => head(cursor)),
+            { maxDepth: Infinity },
+          ),
+        )
+      }
+
+      // Get new state after pull
+      const stateAfterPull = getState()
+
+      // Export and copy all selected thoughts
+      const exported = filteredCursors
+        .map(cursor => exportContext(stateAfterPull, head(cursor), 'text/plain', { forcePrefix: true }))
+        .join('\n')
+
+      copy(exported)
+
+      const numThoughts = filteredCursors.length
+      const numDescendants = exported.split('\n').length - numThoughts
+
+      dispatch(
+        alert(
+          `Copied ${numThoughts} thought${numThoughts > 1 ? 's' : ''} and ${numDescendants} descendant${numDescendants !== 1 ? 's' : ''} to the clipboard`,
+          {
+            alertType: AlertType.Clipboard,
+            clearDelay: 3000,
+          },
+        ),
+      )
     },
   },
   // TODO: Create unique icon

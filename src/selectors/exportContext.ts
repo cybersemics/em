@@ -42,6 +42,8 @@ interface Options {
   depth?: number
   /** Exclude archived thoughts. */
   excludeArchived?: boolean
+  /** Force prefix even if root with no children. */
+  forcePrefix?: boolean
 }
 
 /** Exports the navigable subtree of the given context. */
@@ -49,7 +51,16 @@ export const exportContext = (
   state: State,
   contextOrThoughtId: Context | ThoughtId,
   format: MimeType = 'text/html',
-  { indent = 0, title, excludeMarkdownFormatting, excludeMeta, excludeSrc, depth = 0, excludeArchived }: Options = {},
+  {
+    indent = 0,
+    title,
+    excludeMarkdownFormatting,
+    excludeMeta,
+    excludeSrc,
+    depth = 0,
+    forcePrefix,
+    excludeArchived,
+  }: Options = {},
 ): string => {
   const linePostfix = format === 'text/html' ? (indent === 0 ? '  ' : '') + '</li>' : ''
   const tab0 = Array(indent).fill('').join('  ')
@@ -67,7 +78,11 @@ export const exportContext = (
 
   // Note: export single thought without bullet
   const linePrefix =
-    format === 'text/html' ? '<li>' : depth === 0 && childrenFiltered.length === 0 && !isRoot(context) ? '' : '- '
+    format === 'text/html'
+      ? '<li>'
+      : depth === 0 && childrenFiltered.length === 0 && !forcePrefix && !isRoot(context)
+        ? ''
+        : '- '
 
   /** Outputs an exported child. */
   const exportChild = (child: Thought) =>
