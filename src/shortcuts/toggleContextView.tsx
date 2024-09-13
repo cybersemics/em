@@ -29,7 +29,10 @@ const toggleContextViewShortcut: Shortcut = {
     'Closes the context view of the current thought. The context view shows all contexts throughout your thoughtspace in which the thought can be found.',
   gesture: 'ru',
   keyboard: { key: 's', shift: true, alt: true },
-  multicursor: true,
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot toggle context view with multiple thoughts.',
+  },
   svg: Icon,
   canExecute: getState => !!getState().cursor,
   isActive: getState => {
