@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -19,4 +20,4 @@ export const removeMulticursorActionCreator =
   dispatch =>
     dispatch({ type: 'removeMulticursor', ...payload })
 
-export default removeMulticursor
+export default _.curryRight(removeMulticursor)

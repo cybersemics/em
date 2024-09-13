@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -26,4 +27,4 @@ const addAllMulticursor = (state: State): State => {
 /** Action-creator for addAllMulticursor. */
 export const addAllMulticursorActionCreator = (): Thunk => dispatch => dispatch({ type: 'addAllMulticursor' })
 
-export default addAllMulticursor
+export default _.curryRight(addAllMulticursor)
