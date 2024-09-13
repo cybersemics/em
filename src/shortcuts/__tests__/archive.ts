@@ -156,8 +156,6 @@ describe('archive', () => {
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-      console.log('exported', exported)
-
       const expectedOutput = `- ${HOME_TOKEN}
   - =archive
     - ${'' /* prevent trim_trailing_whitespace */}
