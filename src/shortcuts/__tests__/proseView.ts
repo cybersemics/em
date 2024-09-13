@@ -1,14 +1,15 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
-import attributeByContext from '../../test-helpers/attributeByContext'
+import { HOME_TOKEN } from '../../constants'
+import exportContext from '../../selectors/exportContext'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeShortcut from '../../util/executeShortcut'
+import executeShortcut, { executeShortcutWithMulticursor } from '../../util/executeShortcut'
 import proseViewShortcut from '../proseView'
 
-it('toggle on prose view of parent of cursor (inital state without =view attribute)', () => {
+it('toggle on prose view of parent of cursor (initial state without =view attribute)', () => {
   const store = createTestStore()
 
-  // import thoughts
   store.dispatch([
     importText({
       text: `
@@ -22,14 +23,18 @@ it('toggle on prose view of parent of cursor (inital state without =view attribu
 
   executeShortcut(proseViewShortcut, { store })
 
-  // parent of cursor should have =view attribute set to Prose
-  expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Prose')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- __ROOT__
+  - a
+    - =view
+      - Prose
+    - b
+      - c`)
 })
 
-it('toggle on prose view of parent of cursor (inital state with =view attribute set to Table)', () => {
+it('toggle on prose view of parent of cursor (initial state with =view attribute set to Table)', () => {
   const store = createTestStore()
 
-  // import thoughts
   store.dispatch([
     importText({
       text: `
@@ -45,14 +50,18 @@ it('toggle on prose view of parent of cursor (inital state with =view attribute 
 
   executeShortcut(proseViewShortcut, { store })
 
-  // parent of cursor should have =view attribute set to Prose
-  expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Prose')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- __ROOT__
+  - a
+    - =view
+      - Prose
+    - b
+      - c`)
 })
 
 it('toggle off prose view of parent of cursor', () => {
   const store = createTestStore()
 
-  // import thoughts
   store.dispatch([
     importText({
       text: `
@@ -68,6 +77,142 @@ it('toggle off prose view of parent of cursor', () => {
 
   executeShortcut(proseViewShortcut, { store })
 
-  // parent of cursor should not have =view attribute set to Prose
-  expect(attributeByContext(store.getState(), ['a'], '=view')).toBe(null)
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- __ROOT__
+  - a
+    - b
+      - c`)
+})
+
+describe('multicursor', () => {
+  it('toggles prose view on multiple thoughts', async () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - a1
+            - a2
+          - b
+            - b1
+            - b2
+          - c
+            - c1
+            - c2
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    await executeShortcutWithMulticursor(proseViewShortcut, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - a
+    - =view
+      - Prose
+    - a1
+    - a2
+  - b
+    - =view
+      - Prose
+    - b1
+    - b2
+  - c
+    - =view
+      - Prose
+    - c1
+    - c2`)
+  })
+
+  it('toggles prose view off for thoughts that already have it', async () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =view
+              - Prose
+            - a1
+            - a2
+          - b
+            - b1
+            - b2
+          - c
+            - =view
+              - Prose
+            - c1
+            - c2
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    await executeShortcutWithMulticursor(proseViewShortcut, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - a
+    - a1
+    - a2
+  - b
+    - =view
+      - Prose
+    - b1
+    - b2
+  - c
+    - c1
+    - c2`)
+  })
+
+  it('handles mixed scenarios correctly', async () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =view
+              - Table
+            - a1
+            - a2
+          - b
+            - b1
+            - b2
+          - c
+            - =view
+              - Prose
+            - c1
+            - c2
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    await executeShortcutWithMulticursor(proseViewShortcut, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - a
+    - =view
+      - Prose
+    - a1
+    - a2
+  - b
+    - =view
+      - Prose
+    - b1
+    - b2
+  - c
+    - c1
+    - c2`)
+  })
 })
