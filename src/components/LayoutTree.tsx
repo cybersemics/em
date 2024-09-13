@@ -68,7 +68,7 @@ type TreeThought = {
 }
 
 /** 2nd Pass: A thought with position information after its height has been measured. */
-type TreeThoughtPositioned = TreeThought & {
+export type TreeThoughtPositioned = TreeThought & {
   cliff: number
   height: number
   singleLineHeightWithCliff: number
@@ -706,7 +706,9 @@ const LayoutTree = () => {
                   // Do this as padding instead of y, otherwise there will be a gap between drop targets.
                   style={cliff < 0 ? cliffPaddingStyle : undefined}
                   crossContextualKey={key}
-                  deepestDepth={-cliff}
+                  cliff={cliff}
+                  index={index}
+                  treeThoughts={treeThoughtsPositioned}
                 />
 
                 {/* DropEnd (cliff) */}
@@ -741,7 +743,7 @@ const LayoutTree = () => {
                           <DropEnd
                             depth={pathEnd.length}
                             path={pathEnd}
-                            deepestDepth={-cliff}
+                            cliff={cliff}
                             // Extend the click area of the drop target when there is nothing below.
                             // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
                             // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below

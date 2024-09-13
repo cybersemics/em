@@ -9,7 +9,7 @@ import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
 import getThoughtById from '../selectors/getThoughtById'
-import calculateCliffThoughtsHeight from '../util/cliffThoughtHeight'
+import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
 import head from '../util/head'
 import strip from '../util/strip'
 
@@ -18,24 +18,23 @@ const DropUncle = ({
   depth,
   path,
   simplePath,
-  deepestDepth,
+  cliff,
 }: {
   depth?: number
   path: Path
   simplePath: SimplePath
-  deepestDepth?: number
+  cliff?: number
 }) => {
   const dropHoverColor = useDropHoverColor(depth || 0)
   const value = useSelector(state =>
     testFlags.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
   )
 
-  const dragInProgress = useSelector(state => state.dragInProgress)
   const { isHovering, dropTarget } = useDragAndDropThought({ path, simplePath })
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
   // Calculate the height for the uncle thought over cliff
-  const dynamicHeight = calculateCliffThoughtsHeight({ deepestDepth, depth })
+  const dropTargetHeight = calculateCliffDropTargetHeight({ cliff, depth })
 
   if (!dropTarget) return null
 
@@ -47,7 +46,7 @@ const DropUncle = ({
       ref={dropTarget}
       style={{
         backgroundColor: testFlags.simulateDrop ? '#52305f' : undefined, // eggplant
-        height: dragInProgress ? `${1.9 + dynamicHeight}em` : '1.9em',
+        height: `${1.9 + dropTargetHeight}em`,
         opacity: 0.9,
       }}
     >

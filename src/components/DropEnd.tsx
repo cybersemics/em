@@ -12,7 +12,7 @@ import { getChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
-import calculateCliffThoughtsHeight from '../util/cliffThoughtHeight'
+import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -31,13 +31,13 @@ const DropEnd = ({
   // renders the component with additional click area below and to the left since there are no thoughts below to obscure
   last,
   path,
-  deepestDepth,
+  cliff,
 }: {
   depth: number
   distance?: number
   last?: boolean
   path?: Path
-  deepestDepth?: number
+  cliff?: number
 }) => {
   if (!path) {
     throw new Error('path required')
@@ -88,7 +88,7 @@ const DropEnd = ({
     return (isThoughtHovering || isSubthoughtsHovering) && compareReasonable(draggingThoughtValue, lastChildValue) > 0
   })
 
-  const dynamicHeight = calculateCliffThoughtsHeight({ deepestDepth, depth })
+  const dropTargetHeight = calculateCliffDropTargetHeight({ cliff, depth })
 
   return (
     <li
@@ -100,7 +100,7 @@ const DropEnd = ({
       style={{
         display: 'list-item',
         backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
-        height: isRootPath ? '8em' : `${1.9 + dynamicHeight}em`,
+        height: isRootPath ? '8em' : `${1.9 + dropTargetHeight}em`,
         marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
         // offset marginLeft, minus 1em for bullet
         // otherwise drop-hover will be too far left
