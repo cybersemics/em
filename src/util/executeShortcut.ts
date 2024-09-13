@@ -7,6 +7,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { AlertType, noop } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
+import pathToThought from '../selectors/pathToThought'
 import globalStore from '../stores/app'
 import dispatch from '../test-helpers/dispatch'
 
@@ -53,9 +54,15 @@ const executeShortcut = async (shortcut: Shortcut, { store, type, event, multicu
       return
     }
 
+    const cursorBeforeMulticursor = state.cursorBeforeMulticursor
     // For each multicursor, place the cursor on the path and execute the shortcut by recursively calling executeShortcut.
     const paths = Object.values(state.multicursors)
-    const cursorBeforeMulticursor = state.cursorBeforeMulticursor
+    // Sort the paths deterministically: prefer ancestors over descendants, then go by rank.
+    paths.sort((a, b) =>
+      a.length === b.length
+        ? (pathToThought(state, a)?.rank ?? 0) - (pathToThought(state, b)?.rank ?? 0)
+        : a.length - b.length,
+    )
 
     if (multicursorConfig.execMulticursor) {
       // The shortcut has their own multicursor logic, so delegate to it.
