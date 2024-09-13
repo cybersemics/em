@@ -14,19 +14,18 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
 
     const numMulticursors = Object.keys(state.multicursors).length
 
-    if (
-      numMulticursors !== prevNumMulticursors ||
-      (numMulticursors && state.alert?.alertType !== AlertType.MulticursorActive)
-    ) {
-      // clear multicursor alert
-      if (!numMulticursors && state.alert?.alertType === AlertType.MulticursorActive) dispatch(alertActionCreator(null))
+    // clear multicursor alert
+    if (!numMulticursors && state.alert?.alertType === AlertType.MulticursorActive) {
+      return dispatch(alertActionCreator(null))
+    }
+
+    if (numMulticursors !== prevNumMulticursors) {
       // show or update multicursor alert
-      else
-        dispatch(
-          alertActionCreator(numMulticursors === 1 ? '1 thought selected' : `${numMulticursors} thoughts selected`, {
-            alertType: AlertType.MulticursorActive,
-          }),
-        )
+      return dispatch(
+        alertActionCreator(numMulticursors === 1 ? '1 thought selected' : `${numMulticursors} thoughts selected`, {
+          alertType: AlertType.MulticursorActive,
+        }),
+      )
     }
   }
 }
