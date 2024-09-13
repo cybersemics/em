@@ -88,8 +88,8 @@ export const executeShortcutWithMulticursor = async (shortcut: Shortcut, { store
       await executeShortcut(shortcut, { store, type, event })
     }
 
-    // Restore the cursor to its original position.
-    await store.dispatch(setCursor({ path: cursorBeforeMulticursor }))
+    // Restore the cursor to its original position if not prevented.
+    if (!multicursorConfig.preventSetCursor) await store.dispatch(setCursor({ path: cursorBeforeMulticursor }))
   }
 }
 

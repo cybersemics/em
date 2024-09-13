@@ -27,7 +27,10 @@ const moveCursorForward: Shortcut = {
   label: 'Move Cursor Forward',
   description: 'Move the current thought to the end of the previous thought or to next column in table view.',
   keyboard: { key: Key.Tab },
-  multicursor: 'ignore',
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+  },
   // TODO: Create unique icon
   svg: SettingsIcon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

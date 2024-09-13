@@ -33,7 +33,10 @@ const indentShortcut: Shortcut = {
   overlay: {
     keyboard: moveCursorForward.keyboard,
   },
-  multicursor: true,
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+  },
   gesture: 'rlr',
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

@@ -90,6 +90,8 @@ interface Shortcut {
           e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
           { type }: { type: ShortcutType },
         ) => void | Promise<void>
+        /** Prevent the cursor from being set back at the end of the shortcut execution. */
+        preventSetCursor?: boolean
       }
 }
 
