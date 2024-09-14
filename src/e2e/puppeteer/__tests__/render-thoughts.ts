@@ -176,11 +176,11 @@ describe('Font Size: 13', () => {
     // TODO: identify what needs to be waited for specifically
     await sleep(1000)
 
-    await click('.decrease-font') // 17
-    await click('.decrease-font') // 16
-    await click('.decrease-font') // 15
-    await click('.decrease-font') // 14
-    await click('.decrease-font') // 13
+    await click('[data-testid=decrease-font]') // 17
+    await click('[data-testid=decrease-font]') // 16
+    await click('[data-testid=decrease-font]') // 15
+    await click('[data-testid=decrease-font]') // 14
+    await click('[data-testid=decrease-font]') // 13
 
     // close alert
     await click('[data-testid=close-button]')
@@ -201,10 +201,10 @@ describe('Font Size: 22', () => {
     // TODO: identify what needs to be waited for specifically
     await sleep(1000)
 
-    await click('.increase-font') // 19
-    await click('.increase-font') // 20
-    await click('.increase-font') // 21
-    await click('.increase-font') // 22
+    await click('[data-testid=increase-font]') // 19
+    await click('[data-testid=increase-font]') // 20
+    await click('[data-testid=increase-font]') // 21
+    await click('[data-testid=increase-font]') // 22
 
     // close alert
     await click('[data-testid=close-button]')
