@@ -116,6 +116,7 @@ const globalCss = defineGlobalStyles({
     marginBottom: '25px',
   },
   ul: { marginLeft: '1.5em', paddingLeft: '0' },
+  'ul ul': { marginLeft: '1.2em' },
   li: { listStyle: 'none' },
   input: {
     color: 'fg',
