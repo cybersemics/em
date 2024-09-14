@@ -1609,39 +1609,3 @@ a.advance-setting-link {
   transform: rotate(45deg);
 }
 /* Custom checkbox style ends */
-
-.gift-code-wrapper {
-  display: flex;
-  flex-direction: row;
-  align-self: start;
-  margin: 3vh auto;
-  align-items: center;
-  width: 100%;
-}
-
-.gift-code-wrapper svg {
-  cursor: default;
-}
-
-.gift-code-wrapper input {
-  margin: 0 10px;
-  min-width: 180px;
-}
-
-@media only screen and (min-width: 767px) {
-  .gift-code-wrapper {
-    width: 80%;
-  }
-
-  .gift-code-wrapper input {
-    min-width: 300px;
-  }
-}
-
-.copy-icon-wrapper {
-  display: 'inline-flex';
-}
-
-.copy-icon-wrapper svg {
-  cursor: pointer;
-}
