@@ -95,7 +95,10 @@ const deleteEmptyThoughtOrOutdent: Shortcut = {
   label: 'Delete Empty Thought Or Outdent',
   keyboard: { key: Key.Backspace },
   hideFromHelp: true,
-  multicursor: true,
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+  },
   svg: Icon,
   canExecute,
   exec,

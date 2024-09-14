@@ -115,7 +115,7 @@ describe('DOM', () => {
 })
 
 describe('multicursor', () => {
-  it.skip('deletes multiple empty thoughts', async () => {
+  it('deletes multiple empty thoughts', async () => {
     const store = createTestStore()
 
     store.dispatch([
@@ -171,7 +171,7 @@ describe('multicursor', () => {
     expect(exported).toEqual(expectedOutput)
   })
 
-  it.skip('handles mixed scenarios correctly', async () => {
+  it('handles mixed scenarios correctly', async () => {
     const store = createTestStore()
 
     store.dispatch([

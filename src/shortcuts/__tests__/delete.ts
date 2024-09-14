@@ -8,7 +8,7 @@ import { executeShortcutWithMulticursor } from '../../util/executeShortcut'
 import deleteShortcut from '../delete'
 
 describe('delete', () => {
-  describe.skip('multicursor', () => {
+  describe('multicursor', () => {
     it('deletes multiple thoughts', async () => {
       const store = createTestStore()
 

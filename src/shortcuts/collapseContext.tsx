@@ -24,7 +24,10 @@ const collapseContextShortcut: Shortcut = {
   label: 'Collapse',
   description: 'Deletes the current thought and moves all its subthoughts up a level.',
   gesture: 'ldu',
-  multicursor: true,
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+  },
   svg: Icon,
   keyboard: { key: 'c', meta: true, alt: true },
   canExecute: getState => !!getState().cursor,

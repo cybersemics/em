@@ -8,7 +8,7 @@ import { executeShortcutWithMulticursor } from '../../util/executeShortcut'
 import collapseContextShortcut from '../collapseContext'
 
 describe('collapseContext', () => {
-  describe.skip('multicursor', () => {
+  describe('multicursor', () => {
     it('collapses multiple thoughts', async () => {
       const store = createTestStore()
 

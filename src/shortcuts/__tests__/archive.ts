@@ -105,7 +105,7 @@ describe('archive', () => {
       expect(exported).toEqual(expectedOutput)
     })
 
-    it.skip('permanently deletes thoughts that are already archived', async () => {
+    it('permanently deletes thoughts that are already archived', async () => {
       const store = createTestStore()
 
       store.dispatch([
