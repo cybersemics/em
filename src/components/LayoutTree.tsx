@@ -193,7 +193,7 @@ const useNavAndFooterHeight = () => {
   useEffect(
     _.throttle(() => {
       const navEl = document.querySelector('.nav')
-      const footerEl = document.querySelector('.footer')
+      const footerEl = document.querySelector('[aria-label="footer"]')
       setNavAndFooterHeight(
         (navEl?.getBoundingClientRect().height || 0) + (footerEl?.getBoundingClientRect().height || 0),
       )

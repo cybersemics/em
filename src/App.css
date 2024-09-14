@@ -133,10 +133,6 @@ a.text-link {
   font-size: 90%;
 }
 
-.list-none li::before {
-  display: none;
-}
-
 .extend-tap {
   margin: -0.5em;
   padding: 0.5em;
@@ -874,26 +870,6 @@ a.text-link {
 }
 
 /* Footer styles - START */
-
-.footer {
-  position: relative;
-  padding: 1.75em;
-  margin: 0;
-  text-align: right;
-  font-size: 75%;
-  list-style: none;
-  background-color: #e4e4e4; /* 80% of #ddd */
-  box-sizing: border-box;
-  width: 100%;
-  /* above ScrollZone */
-  z-index: var(--z-index-modal);
-}
-
-.dark .footer {
-  background-color: #1a1a1a; /* 80% of #212121 */
-  color: white;
-}
-
 .footer-divider {
   margin: 0 6px;
   user-select: none;
