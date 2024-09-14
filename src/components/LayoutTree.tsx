@@ -14,6 +14,7 @@ import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
 import attributeEquals from '../selectors/attributeEquals'
+import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import getChildren, { childrenFilterPredicate, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
@@ -62,19 +63,21 @@ type TreeThought = {
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
   style?: React.CSSProperties | null
   thoughtId: string
+  isLastVisible?: boolean
   // keys of visible children
   // only used in table view to calculate the width of column 1
   visibleChildrenKeys?: string[]
 }
 
 /** 2nd Pass: A thought with position information after its height has been measured. */
-export type TreeThoughtPositioned = TreeThought & {
+type TreeThoughtPositioned = TreeThought & {
   cliff: number
   height: number
   singleLineHeightWithCliff: number
   width?: number
   x: number
   y: number
+  isLastVisible?: boolean
 }
 
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
@@ -343,7 +346,19 @@ const linearizeTree = (
     return [...accum, node, ...descendants]
   }, [])
 
-  return thoughts
+  // Generate isLastVisible property here because determinig the next thought is difficult in the recursive call. So we do it after tree of thought is completely generated.
+  const treeThoughtsWithIsLastVisible = thoughts.map((node, index, thought) => {
+    const nextNode = thought[index + 1]
+    const nextAutofocus = nextNode ? calculateAutofocus(state, nextNode.path) : null
+    const nextThoughtVisible = nextAutofocus === 'show' || nextAutofocus === 'dim'
+
+    return {
+      ...node,
+      isLastVisible: !nextThoughtVisible,
+    }
+  })
+
+  return treeThoughtsWithIsLastVisible
 }
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
@@ -647,6 +662,7 @@ const LayoutTree = () => {
               path,
               prevChild,
               showContexts,
+              isLastVisible,
               simplePath,
               singleLineHeightWithCliff,
               style,
@@ -663,6 +679,12 @@ const LayoutTree = () => {
             // Render virtualized thoughts with their estimated height so that document height is relatively stable.
             // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
             if (belowCursor && !isCursor && y > viewportBottom + height) return null
+
+            // Get the next and previous thoughts
+            const prevThought = treeThoughtsPositioned[index - 1]
+
+            // Pass only the cliff value iof previous thought
+            const prevCliff = prevThought ? prevThought.cliff : undefined
 
             return (
               <div
@@ -706,9 +728,8 @@ const LayoutTree = () => {
                   // Do this as padding instead of y, otherwise there will be a gap between drop targets.
                   style={cliff < 0 ? cliffPaddingStyle : undefined}
                   crossContextualKey={key}
-                  cliff={cliff}
-                  index={index}
-                  treeThoughts={treeThoughtsPositioned}
+                  prevCliff={prevCliff}
+                  isLastVisible={isLastVisible}
                 />
 
                 {/* DropEnd (cliff) */}
@@ -744,6 +765,7 @@ const LayoutTree = () => {
                             depth={pathEnd.length}
                             path={pathEnd}
                             cliff={cliff}
+                            isLastVisible={isLastVisible}
                             // Extend the click area of the drop target when there is nothing below.
                             // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
                             // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below

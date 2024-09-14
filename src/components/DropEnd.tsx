@@ -32,12 +32,14 @@ const DropEnd = ({
   last,
   path,
   cliff,
+  isLastVisible,
 }: {
   depth: number
   distance?: number
   last?: boolean
   path?: Path
   cliff?: number
+  isLastVisible?: boolean
 }) => {
   if (!path) {
     throw new Error('path required')
@@ -88,7 +90,7 @@ const DropEnd = ({
     return (isThoughtHovering || isSubthoughtsHovering) && compareReasonable(draggingThoughtValue, lastChildValue) > 0
   })
 
-  const dropTargetHeight = calculateCliffDropTargetHeight({ cliff, depth })
+  const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) : 0
 
   return (
     <li

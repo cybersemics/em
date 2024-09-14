@@ -18,7 +18,6 @@ import head from '../util/head'
 import noteValue from '../util/noteValue'
 import DropChild from './DropChild'
 import DropUncle from './DropUncle'
-import { TreeThoughtPositioned } from './LayoutTree'
 import Subthought from './Subthought'
 
 /** A resize handler that should be called whenever a thought's height has changed. */
@@ -58,9 +57,8 @@ const VirtualThought = ({
   style,
   crossContextualKey,
   zoomCursor,
-  cliff,
-  index, // New prop: current index in the list
-  treeThoughts, // New prop: the array of thoughts that is being iterated
+  prevCliff,
+  isLastVisible,
 }: {
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
@@ -80,9 +78,8 @@ const VirtualThought = ({
   /** A key that uniquely identifies the thought across context views. */
   crossContextualKey: string
   zoomCursor?: boolean
-  cliff?: number
-  index: number
-  treeThoughts: TreeThoughtPositioned[]
+  prevCliff?: number
+  isLastVisible?: boolean
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
@@ -196,12 +193,6 @@ const VirtualThought = ({
     [crossContextualKey, onResize, thought.id],
   )
 
-  // Find the previous index (currentIndex - 1)
-  const previousIndex = index - 1
-
-  // Get the cliff value for the previous thought if it exists
-  const previousCliff = previousIndex >= 0 ? (treeThoughts[previousIndex]?.cliff ?? 0) : 0
-
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
   if (!thought) return null
@@ -225,7 +216,7 @@ const VirtualThought = ({
                 - d
               - e
          */
-        !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={previousCliff} />
+        !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
       }
 
       {!shimHiddenThought && (
@@ -256,6 +247,7 @@ const VirtualThought = ({
           // TODO: DragAndDropSubthoughts should be able to handle this.
           path={path}
           simplePath={simplePath}
+          isLastVisible={isLastVisible}
         />
       )}
     </div>

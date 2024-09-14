@@ -9,9 +9,8 @@ import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
-import { getChildrenSorted, hasChildren } from '../selectors/getChildren'
+import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
-import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
@@ -25,19 +24,26 @@ interface DropChildProps {
   last?: boolean
   path: Path
   simplePath: SimplePath
+  isLastVisible?: boolean
 }
 
 /** Renders the DropChildInnerContainer component if the user is dragging and the dropTarget exists. This component is an optimization to avoid calculating DropChildIfCollapsed and DropChild hooks when unnecessary. */
-const DropChildIfDragging = ({ depth, last, path, simplePath }: DropChildProps) => {
+const DropChildIfDragging = ({ depth, last, path, simplePath, isLastVisible }: DropChildProps) => {
   return (
     <DragOnly>
-      <DropChildIfCollapsed depth={depth} last={last} path={path} simplePath={simplePath} />
+      <DropChildIfCollapsed
+        depth={depth}
+        last={last}
+        path={path}
+        simplePath={simplePath}
+        isLastVisible={isLastVisible}
+      />
     </DragOnly>
   )
 }
 
 /** Render the DropChild component if the thought is collapsed, and does not match the dragging thought. This component is an optimization to avoid calculating DropChild hooks when unnecessary. */
-const DropChildIfCollapsed = ({ depth, last, path, simplePath }: DropChildProps) => {
+const DropChildIfCollapsed = ({ depth, last, path, simplePath, isLastVisible }: DropChildProps) => {
   const isExpanded = useSelector(state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(path)])
   const draggingThought = useSelector(state => state.draggingThought, shallowEqual)
 
@@ -45,30 +51,19 @@ const DropChildIfCollapsed = ({ depth, last, path, simplePath }: DropChildProps)
   // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
   if (isExpanded || equalPath(draggingThought, simplePath)) return null
 
-  return <DropChild depth={depth} last={last} path={path} simplePath={simplePath} />
+  return <DropChild depth={depth} last={last} path={path} simplePath={simplePath} isLastVisible={isLastVisible} />
 }
 
 /** A drop target that allows dropping as a child of a thought. It is only shown when a thought has no children or is collapsed. Only renders if there is a valid dropTarget and a drag is in progress. */
-const DropChild = ({ depth, last, path, simplePath }: DropChildProps) => {
+const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildProps) => {
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const dropHoverColor = useDropHoverColor(depth || 0)
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path, simplePath })
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
-  const parentPath = rootedParentOf(
-    useSelector(state => state),
-    path,
-  )
-
-  // Get siblings of the current thought (or root thoughts if no parent)
-  const siblings = useSelector(state => getChildrenSorted(state, head(parentPath)))
-
-  // Check if this thought is the last in its parent's list of children (or in the root context)
-  const isLastChild = head(siblings).id === head(path)
-
   // Calculate the height for the child thought over cliff
-  const dropTargetHeight = isLastChild ? calculateCliffDropTargetHeight({ depth }) : 0
+  const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ depth }) : 0
 
   return (
     <li className='drop-empty' style={{ position: 'relative' }}>
