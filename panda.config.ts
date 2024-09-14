@@ -39,6 +39,22 @@ const keyframes = defineKeyframes({
       opacity: 1,
     },
   },
+  ripple_loader: {
+    '0%': {
+      top: '100%',
+      left: '100%',
+      width: '0',
+      height: '0',
+      opacity: 1,
+    },
+    '100%': {
+      top: '7.14%',
+      left: '7.14%',
+      width: '162.5%',
+      height: '162.5%',
+      opacity: 0,
+    },
+  },
 })
 
 const globalCss = defineGlobalStyles({

@@ -1609,55 +1609,6 @@ code,
   animation: 0.4s ease-out 0s normal forwards fadein;
 }
 
-@keyframes ripple_loader {
-  0% {
-    top: 100%;
-    left: 100%;
-    width: 0;
-    height: 0;
-    opacity: 1;
-  }
-  100% {
-    top: 7.14%;
-    left: 7.14%;
-    width: 162.5%;
-    height: 162.5%;
-    opacity: 0;
-  }
-}
-.ripple_loader div {
-  position: absolute;
-  border-width: 19.04%;
-  border-style: solid;
-  opacity: 1;
-  border-radius: 50%;
-  animation: ripple_loader 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-}
-.ripple_loader div:nth-child(1) {
-  border-color: #e90c59;
-  animation-delay: 0s;
-}
-.ripple_loader div:nth-child(2) {
-  border-color: #46dff0;
-  animation-delay: -0.5s;
-}
-.ripple_loader_container {
-  display: inline-block;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0);
-}
-.ripple_loader {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transform: translateZ(0) scale(0.49);
-  backface-visibility: hidden;
-  transform-origin: 0 0; /* see note above */
-}
-.ripple_loader div {
-  box-sizing: content-box;
-}
-
 .advance-setting-wrapper {
   display: flex;
   justify-content: center;
