@@ -1238,14 +1238,6 @@ code,
   margin: 0 auto;
 }
 
-.tutorial p {
-  margin-top: 20px;
-}
-
-.tutorial p:first-child {
-  margin-top: 0;
-}
-
 .tutorial-skip {
   color: #666;
   top: 10px;
@@ -1274,21 +1266,6 @@ code,
 
 .dark .tutorial-trace-gesture {
   background-color: rgba(0, 0, 0, 0.8);
-}
-
-.tutorial li {
-  list-style: disc;
-  line-height: 1.5;
-}
-
-.simple-list li {
-  list-style: none;
-  width: 240px;
-  margin: 0 auto 0.5em;
-}
-
-.simple-list a {
-  display: block;
 }
 
 /* Prose View */

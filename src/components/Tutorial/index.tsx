@@ -1,6 +1,7 @@
 import React, { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { css, cx } from '../../../styled-system/css'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
@@ -109,7 +110,17 @@ const Tutorial: FC = () => {
   const cursorHeadValue = useSelector(state => state.cursor && headValue(state, state.cursor))
 
   return (
-    <div className='tutorial'>
+    <div
+      className={cx(
+        'tutorial',
+        css({
+          '& p': {
+            marginTop: '20px',
+            '&:first-child': { marginTop: '0' },
+          },
+        }),
+      )}
+    >
       <div className='tutorial-inner'>
         <a
           className={'upper-right tutorial-skip text-small'}
