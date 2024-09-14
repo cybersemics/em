@@ -889,21 +889,9 @@ a.text-link {
   z-index: var(--z-index-modal);
 }
 
-.footer .support-link {
-  color: inherit;
-}
-
 .dark .footer {
   background-color: #1a1a1a; /* 80% of #212121 */
   color: white;
-}
-
-.dark .footer .support-link {
-  color: white;
-}
-
-.footer .support-link:hover {
-  text-decoration: underline;
 }
 
 .footer-divider {
