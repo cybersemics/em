@@ -50,7 +50,6 @@ const globalCss = defineGlobalStyles({
     '--z-index-gesture-trace': '50',
     '--z-index-command-palette': '45',
     '--z-index-modal': '40',
-    '--z-index-hamburger-menu': '30',
     '--z-index-sidebar': '25',
     '--z-index-toolbar-container': '20',
     '--z-index-toolbar-overlay': '15',
