@@ -52,9 +52,14 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
           <>
             <span style={{ userSelect: 'none' }}>
               {isTouch ? (
-                <span className='gesture-container'>
+                <span>
                   Swipe{' '}
-                  <GestureDiagram path={newThoughtShortcut.gesture as GesturePath} size={30} color={colors.gray66} />
+                  <GestureDiagram
+                    inGestureContainer
+                    path={newThoughtShortcut.gesture as GesturePath}
+                    size={30}
+                    color={colors.gray66}
+                  />
                 </span>
               ) : (
                 <span>Hit the Enter key</span>

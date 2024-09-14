@@ -21,9 +21,14 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
   const colors = useSelector(themeColors)
   const returnKey = isMac ? 'RETURN' : 'ENTER'
   const instructions = isTouch ? (
-    <span className='gesture-container'>
+    <span>
       You can add a new thought by swiping
-      <GestureDiagram path={newThoughtShortcut.gesture as GesturePath} size={30} color={colors.gray66} />
+      <GestureDiagram
+        inGestureContainer
+        path={newThoughtShortcut.gesture as GesturePath}
+        size={30}
+        color={colors.gray66}
+      />
     </span>
   ) : (
     `You can add a new thought by pressing ${returnKey} on the keyboard`
