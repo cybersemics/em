@@ -23,10 +23,6 @@
   z-index: var(--z-index-scroll-zone);
 }
 
-ul ul {
-  margin-left: 1.2em;
-}
-
 ul ul.context-chain {
   margin-left: 1.6em;
 }
@@ -139,10 +135,6 @@ a.text-link {
 
 .list-none li::before {
   display: none;
-}
-
-.list-bullet li {
-  list-style: disc;
 }
 
 .extend-tap {
@@ -949,16 +941,6 @@ a.text-link {
     opacity: 0.99;
   }
 }
-
-@keyframes fademostlyin {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 0.85;
-  }
-}
-
 
 .status-close-x {
   font-size: 16px;
