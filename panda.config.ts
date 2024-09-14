@@ -10,6 +10,7 @@ import modalRecipe from './src/recipes/modal'
 import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
 import thoughtRecipe from './src/recipes/thought'
+import tutorialBulletRecipe from './src/recipes/tutorialBullet'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
@@ -260,6 +261,7 @@ export default defineConfig({
         thought: thoughtRecipe,
         editable: editableRecipe,
         multiline: multilineRecipe,
+        tutorialBullet: tutorialBulletRecipe,
       },
       slotRecipes: {
         modal: modalRecipe,
