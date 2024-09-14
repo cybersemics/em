@@ -3,11 +3,11 @@ import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { css } from '../../styled-system/css'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isTouch } from '../browser'
-import themeColors from '../selectors/themeColors'
 import fastClick from '../util/fastClick'
 import Favorites from './Favorites'
 import RecentlyDeleted from './RecentlyDeleted'
@@ -32,18 +32,17 @@ const SidebarLink = ({
   setSection: (section: SidebarSection) => void
   text: string
 }) => {
-  const colors = useSelector(themeColors)
   return (
     <a
       {...fastClick(() => setSection(section))}
-      style={{
-        color: active ? colors.fg : colors.gray50,
+      className={css({
+        color: active ? 'fg' : 'gray50',
         display: 'inline-block',
         fontSize: '1.2em',
         fontWeight: 600,
         margin: '0.5em 1em 0 0',
         textDecoration: 'none',
-      }}
+      })}
     >
       {text}
     </a>
@@ -74,7 +73,15 @@ const Sidebar = () => {
      * we are providing different classname to drawer based on isTouch property.
      */
     <SwipeableDrawerWithClasses
-      classes={{ root: 'z-index-sidebar', paper: isTouch ? 'drawer-container-mobile' : 'drawer-container-desktop' }}
+      classes={{
+        /* Increase precedence over .css-1u2w381-MuiModal-root-MuiDrawer-root z-index. */
+        root: css({ zIndex: 'sidebar !important' }),
+        /* material drawer container css z-index override */
+        paper: css({
+          width: '400px',
+          _mobile: { width: '90%' },
+        }),
+      }}
       disableSwipeToOpen={!isTouch}
       ref={containerRef}
       SwipeAreaProps={{
@@ -118,19 +125,31 @@ const Sidebar = () => {
         onTouchEnd={() => {
           setIsSwiping(false)
         }}
-        style={{
-          height: '100%',
-        }}
+        className={css({ height: '100%' })}
       >
         <div
-          className='sidebar'
-          data-scroll-at-edge
-          style={{
+          aria-label='sidebar'
+          className={css({
+            background: { base: '#f5f5f5', _dark: '#292a2b' },
+            overflowY: 'scroll',
+            overscrollBehavior: 'contain',
+            boxSizing: 'border-box',
+            width: '100%',
+            height: '100%',
+            color: 'fg',
+            scrollbarWidth: 'thin',
+            lineHeight: 1.8,
+            '&::-webkit-scrollbar': {
+              width: '0px', // Remove scrollbar space
+              background: 'transparent', // Optional: just make scrollbar invisible
+              display: 'none',
+            },
             userSelect: 'none',
             // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
             position: 'relative',
             padding: '0 1em',
-          }}
+          })}
+          data-scroll-at-edge
         >
           <CSSTransition in={showSidebar} nodeRef={sidebarMenuRef} timeout={200} classNames='fade'>
             <div

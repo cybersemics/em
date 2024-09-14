@@ -1,6 +1,8 @@
 import { unescape as decodeCharacterEntities } from 'lodash'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
+import { SystemStyleObject } from '../../styled-system/types'
 import SimplePath from '../@types/SimplePath'
 import { searchActionCreator as search } from '../actions/search'
 import { searchContextsActionCreator as searchContexts } from '../actions/searchContexts'
@@ -16,14 +18,14 @@ import strip from '../util/strip'
 
 interface LinkProps {
   charLimit?: number
-  className?: string
   label?: string
   simplePath: SimplePath
   style?: React.CSSProperties
+  cssRaw?: SystemStyleObject
 }
 
 /** Renders a link to a thought. */
-const Link = React.memo(({ className, simplePath, label, charLimit = 32, style }: LinkProps) => {
+const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw }: LinkProps) => {
   const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
   const value = useSelector(state => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
   const dispatch = useDispatch()
@@ -32,7 +34,15 @@ const Link = React.memo(({ className, simplePath, label, charLimit = 32, style }
   return (
     <a
       tabIndex={-1}
-      className={`link ${className}`}
+      className={css(
+        {
+          wordBreak: 'break-word',
+          '&:active': {
+            WebkitTextStrokeWidth: '0.05em',
+          },
+        },
+        cssRaw,
+      )}
       {...fastClick(e => {
         // eslint-disable-line react/no-danger-with-children
         e.preventDefault()
