@@ -32,11 +32,7 @@ let suppressExpansion = false // eslint-disable-line prefer-const
 const ellipsizeContextThoughts = false
 
 // check duplicate ranks within the same context for debugging
-// React prints a warning, but it does not show which thoughts are colliding
-const checkDuplicateRanks = false
-
 const globals = {
-  checkDuplicateRanks,
   ellipsizeContextThoughts,
   errorTimer,
   offlineTimer,
