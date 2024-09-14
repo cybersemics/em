@@ -1,4 +1,5 @@
 import { useSelector } from 'react-redux'
+import { css } from '../../../styled-system/css'
 import GesturePath from '../../@types/GesturePath'
 import { isTouch } from '../../browser'
 import { shortcutById } from '../../shortcuts'
@@ -25,7 +26,7 @@ const TutorialStepSecondThoughtEnter = () => {
             <GestureDiagram
               path={newThoughtShortcut.gesture as GesturePath}
               size={28}
-              style={{ margin: '-10px -4px -6px' }}
+              cssRaw={css.raw({ margin: '-10px -4px -6px' })}
             />
           </>
         ) : (

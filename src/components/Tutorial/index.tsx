@@ -179,7 +179,13 @@ const Tutorial: FC = () => {
             cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
         gesture() ? (
           <div className='tutorial-trace-gesture'>
-            <GestureDiagram path={gesture()!} size={160} strokeWidth={10} arrowSize={5} className='animate-pulse' />
+            <GestureDiagram
+              path={gesture()!}
+              size={160}
+              strokeWidth={10}
+              arrowSize={5}
+              cssRaw={css.raw({ animation: 'pulse 1s infinite alternate' })}
+            />
           </div>
         ) : null}
       </div>

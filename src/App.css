@@ -916,15 +916,6 @@ a.text-link {
   opacity: 0;
 }
 
-@keyframes pulse {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0.25;
-  }
-}
-
 @keyframes pulse-light {
   from {
     opacity: 1;
@@ -932,10 +923,6 @@ a.text-link {
   to {
     opacity: 0.5;
   }
-}
-
-.animate-pulse {
-  animation: pulse 1s infinite alternate;
 }
 
 /* arrow */
@@ -1310,11 +1297,6 @@ code,
 
 .dark .divider {
   border-color: #333;
-}
-
-.gesture-container svg {
-  position: relative;
-  top: 10px;
 }
 
 .search-container {

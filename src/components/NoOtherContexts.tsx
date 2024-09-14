@@ -28,7 +28,7 @@ const NoOtherContexts = ({
       <p style={{ marginTop: 0 }}>This thought is not found in any other contexts.</p>
       {/* <div>
         {isTouch ? (
-          <span className='gesture-container'>
+          <span>
             Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
           </span>
         ) : (
@@ -41,9 +41,14 @@ const NoOtherContexts = ({
       ) : (
         <div>
           {isTouch ? (
-            <span className='gesture-container'>
+            <span>
               Swipe{' '}
-              <GestureDiagram path={toggleContextViewShortcut.gesture as GesturePath} size={30} color='darkgray' />
+              <GestureDiagram
+                inGestureContainer
+                path={toggleContextViewShortcut.gesture as GesturePath}
+                size={30}
+                color='darkgray'
+              />
             </span>
           ) : (
             <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>

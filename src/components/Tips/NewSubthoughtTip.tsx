@@ -22,9 +22,14 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
   const commandKey = isMac ? 'COMMAND' : 'CONTROL'
   const returnKey = isMac ? 'RETURN' : 'ENTER'
   const instructions = isTouch ? (
-    <span className='gesture-container'>
+    <span>
       You can add a new subthought by swiping
-      <GestureDiagram path={newSubthoughtShortcut.gesture as GesturePath} size={30} color={colors.gray66} />
+      <GestureDiagram
+        inGestureContainer
+        path={newSubthoughtShortcut.gesture as GesturePath}
+        size={30}
+        color={colors.gray66}
+      />
     </span>
   ) : (
     `You can add a new subthought by pressing ${commandKey} + ${returnKey} on the keyboard`

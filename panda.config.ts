@@ -32,6 +32,22 @@ const keyframes = defineKeyframes({
       opacity: 0.99,
     },
   },
+  pulse: {
+    from: {
+      opacity: 1,
+    },
+    to: {
+      opacity: 0.25,
+    },
+  },
+  pulseLight: {
+    from: {
+      opacity: 1,
+    },
+    to: {
+      opacity: 0.5,
+    },
+  },
   preventAutoscroll: {
     '0%': {
       opacity: 0,
