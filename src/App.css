@@ -7,9 +7,6 @@
 .z-index-gesture-trace {
   z-index: var(--z-index-gesture-trace);
 }
-.z-index-hamburger-menu {
-  z-index: var(--z-index-hamburger-menu);
-}
 .z-index-navbar {
   z-index: var(--z-index-navbar);
 }
@@ -1374,22 +1371,6 @@ code,
 
 .drawer-container-desktop {
   width: 400px;
-}
-
-/* hamburger menu div */
-/* prevent long press to select */
-/* user-select is not inherited */
-.hamburger-menu,
-.hamburger-menu * {
-  user-select: none;
-}
-
-.hamburger-menu > div > span {
-  background: black;
-}
-
-.dark .hamburger-menu > div > span {
-  background: white;
 }
 
 .ellipsized-path {
