@@ -69,11 +69,11 @@ describe('multiline', () => {
     // TODO: identify what needs to be waited for specifically
     await sleep(1000)
 
-    await click('.decrease-font') // 17
-    await click('.decrease-font') // 16
-    await click('.decrease-font') // 15
-    await click('.decrease-font') // 14
-    await click('.decrease-font') // 13
+    await click('[data-testid=decrease-font]') // 17
+    await click('[data-testid=decrease-font]') // 16
+    await click('[data-testid=decrease-font]') // 15
+    await click('[data-testid=decrease-font]') // 14
+    await click('[data-testid=decrease-font]') // 13
 
     // close alert
     await click('[data-testid=close-button]')

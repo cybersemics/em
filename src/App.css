@@ -869,26 +869,6 @@ a.text-link {
   transition: all 0.75s ease-out;
 }
 
-/* Footer styles - START */
-.footer-divider {
-  margin: 0 6px;
-  user-select: none;
-}
-
-.increase-font {
-  font-size: 1.6em;
-  padding-right: 12px;
-}
-
-.decrease-font {
-  padding-left: 12px;
-  padding-right: 12px;
-}
-
-/* .footer .floatLeft a { text-decoration: none; } may be better with underline*/
-
-/* Footer styles - END */
-
 /* for some reason opacity bleeds through modal*/
 .dim {
   color: rgba(7, 7, 7, 0.5);

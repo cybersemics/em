@@ -72,7 +72,7 @@ const Status = () => {
 }
 
 /** A pipe delimiter for a horizontal list of links. */
-const LinkDivider = () => <span className='footer-divider'> | </span>
+const LinkDivider = () => <span className={css({ margin: '0 6px', userSelect: 'none' })}> | </span>
 
 /** A link that opens a modal. */
 const ModalLink: FC<PropsWithChildren<{ id: Modal }>> = ({ id, children }) => {
@@ -167,10 +167,32 @@ const Footer = () => {
     >
       <li className={liClass}>
         <div className={css({ float: 'left', lineHeight: 1 })}>
-          <a className='increase-font expand-click-area-left no-select' {...fastClick(() => dispatch(fontSizeUp()))}>
+          <a
+            data-testid='increase-font'
+            className={css({
+              paddingLeft: '10px',
+              paddingTop: '10px',
+              paddingBottom: '10px',
+              marginLeft: '-10px',
+              fontSize: '1.6em',
+              paddingRight: '12px',
+              userSelect: 'none',
+            })}
+            {...fastClick(() => dispatch(fontSizeUp()))}
+          >
             A
           </a>
-          <a className='decrease-font expand-click-area-right no-select' {...fastClick(() => dispatch(fontSizeDown()))}>
+          <a
+            data-testid='decrease-font'
+            className={css({
+              paddingTop: '10px',
+              paddingBottom: '10px',
+              paddingLeft: '12px',
+              paddingRight: '12px',
+              userSelect: 'none',
+            })}
+            {...fastClick(() => dispatch(fontSizeDown()))}
+          >
             A
           </a>
         </div>
@@ -185,16 +207,16 @@ const Footer = () => {
       <br />
 
       <li className={liClass}>
-        <span className='dim'>Status: </span>
+        <span className={css({ color: 'dim' })}>Status: </span>
         <Status />
       </li>
       <li className={liClass}>
-        <span className='dim'>TSID: </span>
+        <span className={css({ color: 'dim' })}>TSID: </span>
         <span className={css({ fontStyle: 'monospace' })}>{tsid}</span>
       </li>
 
       <li className={liClass}>
-        <span className='dim'>App Version: </span>
+        <span className={css({ color: 'dim' })}>App Version: </span>
         {pkg.version}
       </li>
     </ul>
