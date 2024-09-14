@@ -1,6 +1,7 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { subCategorizeAllActionCreator as subCategorizeAll } from '../actions/subCategorizeAll'
+import { subcategorizeMulticursorActionCreator as subcategorizeMulticursor } from '../actions/subcategorizeMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
@@ -27,9 +28,8 @@ const subCategorizeAllShortcut: Shortcut = {
   keyboard: { key: 'a', meta: true, alt: true },
   multicursor: {
     enabled: true,
-    execMulticursor: (cursors, dispatch, getState) => {
-      // TODO: Implement
-    },
+    execMulticursor: (_cursors, dispatch) => dispatch(subcategorizeMulticursor()),
+    preventSetCursor: true,
   },
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

@@ -117,6 +117,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   status: false,
   subCategorizeAll: true,
   subCategorizeOne: true,
+  subcategorizeMulticursor: true,
   textColor: true,
   swapNote: true,
   swapParent: true,

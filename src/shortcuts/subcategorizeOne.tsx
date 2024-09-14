@@ -1,6 +1,7 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { subCategorizeOneActionCreator as subCategorizeOne } from '../actions/subCategorizeOne'
+import { subcategorizeMulticursorActionCreator as subcategorizeMulticursor } from '../actions/subcategorizeMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
@@ -21,9 +22,8 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 
 const multicursor: Shortcut['multicursor'] = {
   enabled: true,
-  execMulticursor: (cursors, dispatch, getState) => {
-    // TODO: Implement
-  },
+  execMulticursor: (_cursors, dispatch) => dispatch(subcategorizeMulticursor()),
+  preventSetCursor: true,
 }
 
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
