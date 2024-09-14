@@ -23,11 +23,6 @@
   z-index: var(--z-index-scroll-zone);
 }
 
-/* Increase precedence over .css-1u2w381-MuiModal-root-MuiDrawer-root. */
-div.z-index-sidebar {
-  z-index: var(--z-index-sidebar);
-}
-
 ul ul {
   margin-left: 1.2em;
 }
@@ -689,14 +684,6 @@ a.text-link {
 
 .online {
   color: lightgreen;
-}
-
-.link {
-  word-break: break-word;
-}
-
-.link:active {
-  -webkit-text-stroke-width: 0.05em;
 }
 
 .add-new-thought-link {
@@ -1364,54 +1351,10 @@ code,
   top: var(--safe-area-top) !important;
 }
 
-/* material drawer container css override */
-.drawer-container-mobile {
-  width: 90%;
-}
-
-.drawer-container-desktop {
-  width: 400px;
-}
-
 .ellipsized-path {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.sidebar {
-  background: #f5f5f5;
-  overflow-y: scroll;
-  /* prevent the body from scrolling once the bottom of the sidebar is reached */
-  overscroll-behavior: contain;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  color: black;
-  scrollbar-width: thin; /*for firefox*/
-  line-height: 1.8;
-}
-
-.dark .sidebar {
-  color: white;
-  background: #292a2b;
-}
-
-.sidebar::-webkit-scrollbar {
-  width: 0px; /* Remove scrollbar space */
-  background: transparent; /* Optional: just make scrollbar invisible */
-  display: none;
-}
-
-.sidebar .context-breadcrumbs {
-  margin-top: 1em;
-  margin-left: 0;
-  line-height: 1.5;
-}
-
-/* override link font-weight to allow bold on hover */
-.sidebar a {
-  font-weight: inherit;
 }
 
 .thoughts-tab {
