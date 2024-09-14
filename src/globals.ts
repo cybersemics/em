@@ -27,9 +27,6 @@ let suppressExpansion = false // eslint-disable-line prefer-const
 
 /** These aren's so bad. They're for debugging. */
 
-// disable the tutorial for debugging
-const disableTutorial = false
-
 // Ellipsize the thoughts in the context view. They can be expanded by clicking on the ellipsis.
 // TODO: Default to false but add a setting to enable.
 const ellipsizeContextThoughts = false
@@ -40,7 +37,6 @@ const checkDuplicateRanks = false
 
 const globals = {
   checkDuplicateRanks,
-  disableTutorial,
   ellipsizeContextThoughts,
   errorTimer,
   offlineTimer,
