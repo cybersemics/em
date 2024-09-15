@@ -599,13 +599,6 @@ const LayoutTree = () => {
   const singleLineHeight = useSingleLineHeight({ sizes })
   const cliffPaddingStyle = useMemo(() => ({ paddingBottom: fontSize / 4 }), [fontSize])
 
-  const indentDepth = useSelector(state =>
-    state.cursor && state.cursor.length > 2
-      ? // when the cursor is on a leaf, the indention level should not change
-        state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
-      : 0,
-  )
-
   const {
     indentCursorAncestorTables,
     treeThoughtsPositioned,
@@ -615,10 +608,19 @@ const LayoutTree = () => {
     treeThoughtsPositioned: TreeThoughtPositioned[]
   } = useTreeThoughtsPositioned({ singleLineHeight, sizes, treeThoughts })
 
-  // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
-  // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
-  // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
-  const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
+  /**
+   * The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
+   * The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
+   * The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.
+   */
+  const indent = useSelector(state => {
+    const indentDepth =
+      state.cursor && state.cursor.length > 2
+        ? // when the cursor is on a leaf, the indention level should not change
+          state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
+        : 0
+    return indentDepth * 0.9 + indentCursorAncestorTables / fontSize
+  })
 
   const { height, spaceAbove, spaceBelow, viewportBottom } = useAutofocusViewport({
     singleLineHeight,
