@@ -84,7 +84,7 @@ const isBlack = (color: string | undefined) => {
   }
 }
 
-/** A static thought container with annotation, editable, and superscript. Renders a special component for home and divider contexts. */
+/** A static thought container with annotation, editable, and superscript. Renders a special component for home and divider contexts. Isolated from Thought because this re-renders with useLayoutEffect whenever multiline changes. */
 const StaticThought = ({
   allowSingleContext,
   editing,
@@ -113,6 +113,7 @@ const StaticThought = ({
   const editableRef = React.useRef<HTMLInputElement>(null)
   const multiline = useMultiline(editableRef, simplePath, isEditing)
   const placeholder = usePlaceholder({ isEditing, simplePath })
+  const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
 
   useLayoutEffect(() => {
     updateSize?.()
@@ -127,8 +128,6 @@ const StaticThought = ({
     state => (showContexts ? thoughtToPath(state, head(simplePath)) : simplePath),
     _.isEqual,
   )
-
-  const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
 
   // console.info('<StaticThought> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<StaticThought> ' + prettyPath(store.getState(), simplePath), {

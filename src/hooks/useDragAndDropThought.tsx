@@ -90,7 +90,7 @@ const endDrag = () => {
   })
 }
 
-/** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
+/** Returns true if the Thought can be dropped at the given DropTarget. */
 const canDrop = (props: ThoughtProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 

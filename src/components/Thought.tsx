@@ -81,7 +81,7 @@ export interface ThoughtProps {
   isEditing?: boolean
   isEditingPath?: boolean
   isExpanded?: boolean
-  isHeader?: boolean
+  // isHeader?: boolean
   isHovering?: boolean
   isMultiColumnTable?: boolean
   isPublishChild?: boolean
@@ -120,7 +120,7 @@ const ThoughtComponent = ({
   depth = 0,
   env,
   hideBullet: hideBulletProp,
-  isHeader,
+  // isHeader,
   isMultiColumnTable,
   isContextPending,
   isVisible,
@@ -459,6 +459,7 @@ const ThoughtComponent = ({
           updateSize={updateSize}
           view={view}
         />
+
         <Note path={simplePath} />
       </div>
 
@@ -622,7 +623,6 @@ const ThoughtContainer = ({
           isContextPending={thought.value === '__PENDING__'}
           leaf={leaf}
           // isHeader={isHeader}
-          isHeader={false}
           isMultiColumnTable={isMultiColumnTable}
           isVisible={isVisible}
           updateSize={updateSize}
