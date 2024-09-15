@@ -1037,16 +1037,6 @@ a.text-link {
   box-shadow: 0 0 20px white;
 }
 
-code,
-.code {
-  background-color: #ccc;
-  font-family: monospace;
-}
-
-.dark code {
-  background-color: #333;
-}
-
 .code-block {
   display: block;
   padding: 5px 10px;

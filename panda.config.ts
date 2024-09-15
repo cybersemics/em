@@ -175,6 +175,10 @@ const globalCss = defineGlobalStyles({
     color: 'fg',
     backgroundColor: 'bg',
   },
+  code: {
+    backgroundColor: { base: '#ccc', _dark: '#333' },
+    fontFamily: 'monospace',
+  },
   'button[disabled]': {
     opacity: 0.25,
     pointerEvents: 'none',
