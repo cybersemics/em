@@ -50,7 +50,7 @@ const ThoughtLink = ({
           charLimit={charLimit || 32}
           thoughtsLimit={thoughtsLimit || 10}
           cssRaw={css.raw({ marginTop: '1em', marginLeft: '0', lineHeight: 1.5 })}
-          lightFont
+          linkCssRaw={css.raw({ fontWeight: 'inherit' })}
         />
       )}
       <Link cssRaw={css.raw({ fontWeight: 'inherit' })} simplePath={simplePath} label={value} style={style} />

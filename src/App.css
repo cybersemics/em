@@ -160,16 +160,6 @@ a.text-link {
   margin-right: -0.5em;
 }
 
-.breadcrumbs a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.breadcrumbs a:active {
-  color: #909090;
-  -webkit-text-stroke-width: 0.05em;
-}
-
 .context-breadcrumbs {
   font-size: 0.867em;
   color: gray;
@@ -444,14 +434,6 @@ a.text-link {
   color: #666;
 }
 
-.nav-breadcrumbs {
-  width: 100%;
-  color: #999;
-  padding-left: 15px;
-  font-size: 14px;
-  vertical-align: bottom;
-}
-
 /* to remove padding from breadcrumbs used inside sidebar recenlty edited thoughts  */
 .thoughts-tab .nav-breadcrumbs {
   padding: 0;
@@ -461,18 +443,6 @@ a.text-link {
 .nav-bottom .nav-breadcrumbs {
   width: calc(100% - 40px);
   padding-left: 35px;
-}
-
-.nav-breadcrumbs a {
-  color: #999;
-}
-
-.nav-breadcrumbs a:hover {
-  color: black;
-}
-
-.dark .nav-breadcrumbs a:hover {
-  color: white;
 }
 
 /* react-transition-group animation: fade */
