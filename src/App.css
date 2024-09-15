@@ -1500,10 +1500,6 @@ code,
   margin-bottom: 2em;
 }
 
-p.checkbox-description {
-  margin-top: 0.5em;
-}
-
 .advance-setting-link {
   display: flex;
   position: relative;
@@ -1535,59 +1531,3 @@ a.advance-setting-link {
 .rotate180 {
   transform: rotate(180deg);
 }
-
-/* Custom checkbox style starts */
-.checkbox-container {
-  display: block;
-  position: relative;
-  padding-left: 2.2em;
-  user-select: none;
-}
-
-.checkbox-container input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
-}
-
-.checkbox {
-  position: absolute;
-  top: 0.1em;
-  left: 0.1em;
-  height: 1em;
-  width: 1em;
-  background-color: #fff;
-}
-
-.checkbox-container input ~ .checkbox,
-.checkbox-container:hover input ~ .checkbox,
-.checkbox-container input:checked ~ .checkbox {
-  background-color: transparent;
-  border: 0.1em solid #fff;
-}
-
-/* Create the checkbox/indicator (hidden when not checked) */
-.checkbox:after {
-  content: '';
-  position: absolute;
-  display: none;
-}
-
-/* Show the checkbox when checked */
-.checkbox-container input:checked ~ .checkbox:after {
-  display: block;
-}
-
-/* checkbox indicator */
-.checkbox-container .checkbox:after {
-  left: 0.3em;
-  bottom: 0.2em;
-  width: 0.3em;
-  height: 0.65em;
-  border: solid white;
-  border-width: 0 0.15em 0.15em 0;
-  transform: rotate(45deg);
-}
-/* Custom checkbox style ends */
