@@ -278,6 +278,4 @@ const VirtualThoughtMemo = React.memo(VirtualThought, (prevProps, nextProps) => 
   return isEqual
 })
 
-VirtualThoughtMemo.displayName = 'VirtualThought'
-
 export default VirtualThoughtMemo
