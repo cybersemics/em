@@ -23,7 +23,7 @@ import DragOnly from './DragOnly'
 const DROPEND_FINGERSHIFT = isTouch ? 5 : 0
 
 /** The drop target at the end of the Subthoughts. The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts.  */
-const DropEnd = ({
+const DropEndComponent = ({
   depth,
   distance,
   // specifies if this is the last thought
@@ -133,14 +133,14 @@ const DropEnd = ({
   )
 }
 
-const DropEndMemo = React.memo(DropEnd)
-DropEndMemo.displayName = 'DropEnd'
+const DropEndComponentMemo = React.memo(DropEndComponent)
+DropEndComponentMemo.displayName = 'DropEnd'
 
 /** DropEnd that is only rendered when a drag-and-drop is in progress.. */
-const DropEndDragOnly = (props: Parameters<typeof DropEndMemo>[0]) => (
+const DropEnd = (props: Parameters<typeof DropEndComponentMemo>[0]) => (
   <DragOnly>
-    <DropEndMemo {...props} />
+    <DropEndComponentMemo {...props} />
   </DragOnly>
 )
 
-export default DropEndDragOnly
+export default DropEnd
