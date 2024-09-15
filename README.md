@@ -65,7 +65,7 @@ To the user, a thought just consists of a bullet, text, and superscript indicati
     └─VirtualThought
       └─Thought
         ├─Bullet
-        └─StaticThought
+        └─ThoughtContent
           ├─ThoughtAnnotationContainer
           │ └─ThoughtAnnotation
           │   └─StaticSuperscript
@@ -77,7 +77,7 @@ To the user, a thought just consists of a bullet, text, and superscript indicati
 - `<VirtualThought>` - Conditionally renders a shim when the thought is hidden by autofocus. The shim is a simple div with a height attribute matching the thought's height.
 - `<Thought>` - Renders the Bullet and the Thought.
 - `<Bullet>` - This is, unsurprisingly, the bullet of the thought.
-- `<StaticThought>` - Contains the Editable and ThoughtAnnotation.
+- `<ThoughtContent>` - Contains the Editable and ThoughtAnnotation.
 - `<ThoughtAnnotationContainer>` - Conditionally renders the ThoughtAnnotation only when needed.
 - `<ThoughtAnnotation>` - A non-interactive, hidden clone of the Thought that is used to position the Superscript at the end of the Thought. This is needed because the Thought has an extended click area, while the Superscript needs to be rendered flush to the right edge of the text.
 - `<StaticSuperscript>` - Renders the number of contexts a thought appears in as a superscript.

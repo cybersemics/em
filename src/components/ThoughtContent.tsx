@@ -25,7 +25,7 @@ import usePlaceholder from './Editable/usePlaceholder'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
 
-interface StaticThoughtProps {
+interface ThoughtContenttProps {
   allowSingleContext?: boolean
   debugIndex?: number
   editing?: boolean | null
@@ -85,10 +85,10 @@ const isBlack = (color: string | undefined) => {
 }
 
 /** A static thought container with annotation, editable, and superscript. Renders a special component for home and divider contexts. Isolated from Thought because this re-renders with useLayoutEffect whenever multiline changes. */
-const StaticThought = ({
+const ThoughtContentt = ({
   allowSingleContext,
   editing,
-  // See: StaticThoughtProps['isContextPending']
+  // See: ThoughtContenttProps['isContextPending']
   env,
   isContextPending,
   isEditing,
@@ -103,7 +103,7 @@ const StaticThought = ({
   styleThought,
   styleAnnotation,
   updateSize,
-}: StaticThoughtProps) => {
+}: ThoughtContenttProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
   const dark = useSelector(state => theme(state) !== 'Light')
@@ -129,8 +129,8 @@ const StaticThought = ({
     _.isEqual,
   )
 
-  // console.info('<StaticThought> ' + prettyPath(store.getState(), simplePath))
-  // useWhyDidYouUpdate('<StaticThought> ' + prettyPath(store.getState(), simplePath), {
+  // console.info('<ThoughtContentt> ' + prettyPath(store.getState(), simplePath))
+  // useWhyDidYouUpdate('<ThoughtContentt> ' + prettyPath(store.getState(), simplePath), {
   //   editing,
   //   isContextPending,
   //   isEditing,
@@ -216,6 +216,6 @@ const StaticThought = ({
   )
 }
 
-const StaticThoughtMemo = React.memo(StaticThought)
+const ThoughtContenttMemo = React.memo(ThoughtContentt)
 
-export default StaticThoughtMemo
+export default ThoughtContenttMemo

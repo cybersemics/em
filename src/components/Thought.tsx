@@ -57,7 +57,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DropHover from './DropHover'
 import NoOtherContexts from './NoOtherContexts'
 import Note from './Note'
-import StaticThought from './StaticThought'
+import ThoughtContent from './ThoughtContent'
 
 /**********************************************************************
  * Redux
@@ -440,7 +440,7 @@ const ThoughtComponent = ({
 
         <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
-        <StaticThought
+        <ThoughtContent
           allowSingleContext={allowSingleContext}
           env={env}
           isContextPending={isContextPending}
