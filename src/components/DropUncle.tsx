@@ -4,11 +4,14 @@ import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import ThoughtId from '../@types/ThoughtId'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
+import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import nextSibling from '../selectors/nextSibling'
 import head from '../util/head'
 import strip from '../util/strip'
 
@@ -58,7 +61,25 @@ const DropUncle = ({ depth, path, simplePath }: { depth?: number; path: Path; si
   )
 }
 
-const DropUncleMemo = React.memo(DropUncle)
+/** Renders a DropUncle component if there is a drag in progress and the thought is the cursor's hidden uncle. */
+const DropUncleCondition = ({ depth, path, simplePath }: { depth?: number; path: Path; simplePath: SimplePath }) => {
+  /** Tracks if the thought is the cursor uncle and there is a drag in progress. */
+  const show = useSelector(state => {
+    // only set during drag-and-drop to avoid re-renders
+    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return false
+    const isCursorLeaf = !hasChildren(state, head(state.cursor))
+    const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
+    // first uncle of the cursor used for DropUncle
+    const cursorUncleId = (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
+    return head(simplePath) === cursorUncleId
+  })
+
+  if (!show) return
+
+  return <DropUncle {...{ depth, path, simplePath }} />
+}
+
+const DropUncleMemo = React.memo(DropUncleCondition)
 DropUncleMemo.displayName = 'DropUncle'
 
 export default DropUncleMemo
