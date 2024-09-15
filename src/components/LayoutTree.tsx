@@ -345,119 +345,21 @@ const linearizeTree = (
   return thoughts
 }
 
-/** Lays out thoughts as DOM siblings with manual x,y positioning. */
-const LayoutTree = () => {
-  const { sizes, setSize } = useSizeTracking()
-  const treeThoughts = useSelector(linearizeTree, _.isEqual)
+/**
+ * Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
+ * We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
+ **/
+const useTreeThoughtsPositioned = ({
+  singleLineHeight,
+  sizes,
+  treeThoughts,
+}: {
+  singleLineHeight: number
+  sizes: Index<{ height: number; width?: number; isVisible: boolean }>
+  treeThoughts: TreeThought[]
+}) => {
   const fontSize = useSelector(state => state.fontSize)
-  const dragInProgress = useSelector(state => state.dragInProgress)
-  const indentDepth = useSelector(state =>
-    state.cursor && state.cursor.length > 2
-      ? // when the cursor is on a leaf, the indention level should not change
-        state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
-      : 0,
-  )
-
-  // singleLineHeight is the measured height of a single line thought.
-  // If no sizes have been measured yet, use the estimated height.
-  // Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
-  // Then do not update it again.
-  const singleLineHeightPrev = useRef<number | null>(null)
-  const singleLineHeight = useMemo(() => {
-    // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
-    // If estimatedHeight is off, then totalHeight will fluctuate as actual sizes are saved (due to estimatedHeight differing from the actual single-line height).
-    const estimatedHeight = fontSize * 2 - 2
-
-    const singleLineHeightMeasured = Object.values(sizes).find(
-      // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different sizes.
-      ({ height }) => Math.abs(height - estimatedHeight) < height / 2,
-    )?.height
-    if (singleLineHeightMeasured) {
-      singleLineHeightPrev.current = singleLineHeightMeasured
-    }
-    return singleLineHeightPrev.current || estimatedHeight
-  }, [fontSize, sizes])
-
-  // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
-  const autofocusDepth = useSelector(state => {
-    // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return 0
-    const isCursorLeaf = !hasChildren(state, head(state.cursor))
-    return state.cursor.length + (isCursorLeaf ? -1 : 0)
-  })
-
-  // first uncle of the cursor used for DropUncle
-  const cursorUncleId = useSelector(state => {
-    // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return null
-    const isCursorLeaf = !hasChildren(state, head(state.cursor))
-    const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
-    return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
-  })
-
-  const viewportHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
-
-  const {
-    // the total amount of space above the first visible thought that will be cropped
-    spaceAbove,
-
-    // Sum all the sizes to get the total height of the containing div.
-    // Use estimated single-line height for the thoughts that do not have sizes yet.
-    // Exclude hidden thoughts below the cursor to reduce empty scroll space.
-    totalHeight,
-  } = treeThoughts.reduce(
-    (accum, node) => {
-      const heightNext =
-        node.key in sizes
-          ? sizes[node.key].isVisible || !node.belowCursor
-            ? sizes[node.key].height
-            : 0
-          : singleLineHeight
-      return {
-        totalHeight: accum.totalHeight + heightNext,
-        spaceAbove:
-          accum.spaceAbove + (sizes[node.key] && !sizes[node.key].isVisible && !node.belowCursor ? heightNext : 0),
-      }
-    },
-    {
-      totalHeight: 0,
-      spaceAbove: 0,
-    },
-  )
-
-  // The bottom of all visible thoughts in a virtualized list where thoughts below the viewport are hidden (relative to document coordinates; changes with scroll position).
-  const viewportBottom = viewportBottomStore.useSelector(
-    useCallback(
-      viewportBottomState => {
-        // the number of additional thoughts below the bottom of the screen that are rendered
-        const overshoot = singleLineHeight * 5
-        return viewportBottomState + spaceAbove + overshoot
-      },
-      [singleLineHeight, spaceAbove],
-    ),
-  )
-
-  // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
-  const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
-
-  // memoized style for padding at a cliff
-  const cliffPaddingStyle = useMemo(
-    () => ({
-      paddingBottom: fontSize / 4,
-    }),
-    [fontSize],
-  )
-
-  // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
-  // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
-  const {
-    indentCursorAncestorTables,
-    treeThoughtsPositioned,
-  }: {
-    // the global indent based on the depth of the cursor and how many ancestors are tables
-    indentCursorAncestorTables: number
-    treeThoughtsPositioned: TreeThoughtPositioned[]
-  } = useMemo(() => {
+  return useMemo(() => {
     // y increases monotically, so it is more efficent to accumulate than to calculate each time
     // x varies, so we calculate it each time
     // (it is especially hard to determine how much x is decreased on cliffs when there are any number of tables in between)
@@ -579,6 +481,119 @@ const LayoutTree = () => {
 
     return { indentCursorAncestorTables, treeThoughtsPositioned }
   }, [fontSize, sizes, singleLineHeight, treeThoughts])
+}
+
+/** Lays out thoughts as DOM siblings with manual x,y positioning. */
+const LayoutTree = () => {
+  const { sizes, setSize } = useSizeTracking()
+  const treeThoughts = useSelector(linearizeTree, _.isEqual)
+  const fontSize = useSelector(state => state.fontSize)
+  const dragInProgress = useSelector(state => state.dragInProgress)
+  const indentDepth = useSelector(state =>
+    state.cursor && state.cursor.length > 2
+      ? // when the cursor is on a leaf, the indention level should not change
+        state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
+      : 0,
+  )
+
+  // singleLineHeight is the measured height of a single line thought.
+  // If no sizes have been measured yet, use the estimated height.
+  // Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
+  // Then do not update it again.
+  const singleLineHeightPrev = useRef<number | null>(null)
+  const singleLineHeight = useMemo(() => {
+    // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
+    // If estimatedHeight is off, then totalHeight will fluctuate as actual sizes are saved (due to estimatedHeight differing from the actual single-line height).
+    const estimatedHeight = fontSize * 2 - 2
+
+    const singleLineHeightMeasured = Object.values(sizes).find(
+      // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different sizes.
+      ({ height }) => Math.abs(height - estimatedHeight) < height / 2,
+    )?.height
+    if (singleLineHeightMeasured) {
+      singleLineHeightPrev.current = singleLineHeightMeasured
+    }
+    return singleLineHeightPrev.current || estimatedHeight
+  }, [fontSize, sizes])
+
+  // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
+  const autofocusDepth = useSelector(state => {
+    // only set during drag-and-drop to avoid re-renders
+    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return 0
+    const isCursorLeaf = !hasChildren(state, head(state.cursor))
+    return state.cursor.length + (isCursorLeaf ? -1 : 0)
+  })
+
+  // first uncle of the cursor used for DropUncle
+  const cursorUncleId = useSelector(state => {
+    // only set during drag-and-drop to avoid re-renders
+    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return null
+    const isCursorLeaf = !hasChildren(state, head(state.cursor))
+    const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
+    return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
+  })
+
+  const viewportHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
+
+  const {
+    // the total amount of space above the first visible thought that will be cropped
+    spaceAbove,
+
+    // Sum all the sizes to get the total height of the containing div.
+    // Use estimated single-line height for the thoughts that do not have sizes yet.
+    // Exclude hidden thoughts below the cursor to reduce empty scroll space.
+    totalHeight,
+  } = treeThoughts.reduce(
+    (accum, node) => {
+      const heightNext =
+        node.key in sizes
+          ? sizes[node.key].isVisible || !node.belowCursor
+            ? sizes[node.key].height
+            : 0
+          : singleLineHeight
+      return {
+        totalHeight: accum.totalHeight + heightNext,
+        spaceAbove:
+          accum.spaceAbove + (sizes[node.key] && !sizes[node.key].isVisible && !node.belowCursor ? heightNext : 0),
+      }
+    },
+    {
+      totalHeight: 0,
+      spaceAbove: 0,
+    },
+  )
+
+  // The bottom of all visible thoughts in a virtualized list where thoughts below the viewport are hidden (relative to document coordinates; changes with scroll position).
+  const viewportBottom = viewportBottomStore.useSelector(
+    useCallback(
+      viewportBottomState => {
+        // the number of additional thoughts below the bottom of the screen that are rendered
+        const overshoot = singleLineHeight * 5
+        return viewportBottomState + spaceAbove + overshoot
+      },
+      [singleLineHeight, spaceAbove],
+    ),
+  )
+
+  // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
+  const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
+
+  // memoized style for padding at a cliff
+  const cliffPaddingStyle = useMemo(
+    () => ({
+      paddingBottom: fontSize / 4,
+    }),
+    [fontSize],
+  )
+
+  const {
+    indentCursorAncestorTables,
+    treeThoughtsPositioned,
+  }: {
+    /** The global indent based on the depth of the cursor and how many ancestors are tables. */
+    indentCursorAncestorTables: number
+    treeThoughtsPositioned: TreeThoughtPositioned[]
+  } = useTreeThoughtsPositioned({ singleLineHeight, sizes, treeThoughts })
 
   const spaceAboveLast = useRef(spaceAboveExtended)
 
