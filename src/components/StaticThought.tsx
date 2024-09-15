@@ -25,7 +25,7 @@ import usePlaceholder from './Editable/usePlaceholder'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
 
-export interface ThoughtProps {
+interface StaticThoughtProps {
   allowSingleContext?: boolean
   debugIndex?: number
   editing?: boolean | null
@@ -84,11 +84,11 @@ const isBlack = (color: string | undefined) => {
   }
 }
 
-/** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
+/** A static thought container with annotation, editable, and superscript. Renders a special component for home and divider contexts. */
 const StaticThought = ({
   allowSingleContext,
   editing,
-  // See: ThoughtProps['isContextPending']
+  // See: StaticThoughtProps['isContextPending']
   env,
   isContextPending,
   isEditing,
@@ -103,7 +103,7 @@ const StaticThought = ({
   styleThought,
   styleAnnotation,
   updateSize,
-}: ThoughtProps) => {
+}: StaticThoughtProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
   const dark = useSelector(state => theme(state) !== 'Light')
@@ -203,10 +203,10 @@ const StaticThought = ({
                 whiteSpace: 'nowrap',
                 maxWidth: '100%',
                 /*
-                      vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
-                      Here is the reference to the reason.
-                      https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
-                    */
+                  vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
+                  Here is the reference to the reason.
+                  https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
+                */
                 verticalAlign: 'top',
               }),
             })}
