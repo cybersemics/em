@@ -231,7 +231,6 @@ const VirtualThought = ({
           autofocus={autofocus}
           debugIndex={debugIndex}
           depth={depth + 1}
-          dropUncle={dropUncle}
           env={env}
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}

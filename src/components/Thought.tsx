@@ -506,7 +506,6 @@ const ThoughtContainer = ({
   autofocus,
   debugIndex,
   depth,
-  dropUncle,
   env,
   indexDescendant,
   isMultiColumnTable,
@@ -522,7 +521,6 @@ const ThoughtContainer = ({
   autofocus: Autofocus
   debugIndex?: number
   depth: number
-  dropUncle?: boolean
   env?: LazyEnv
   indexDescendant: number
   isMultiColumnTable?: boolean
