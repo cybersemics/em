@@ -483,6 +483,89 @@ const useTreeThoughtsPositioned = ({
   }, [fontSize, sizes, singleLineHeight, treeThoughts])
 }
 
+/** Calculates the space above and below the visible thoughts to allow seamless virtualization of hidden thoughts and adjustment of the scroll position as the cursor depth changes. */
+const useAutofocusViewport = ({
+  singleLineHeight,
+  sizes,
+  treeThoughts,
+}: {
+  singleLineHeight: number
+  sizes: Index<{ height: number; width?: number; isVisible: boolean }>
+  treeThoughts: TreeThought[]
+}) => {
+  const viewportHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
+  const navAndFooterHeight = useNavAndFooterHeight()
+
+  const {
+    /** The total amount of space above the first visible thought that will be cropped. */
+    spaceAboveFirstThought,
+
+    /**
+     * Sum all the sizes to get the total height of the containing div.
+     * Use estimated single-line height for the thoughts that do not have sizes yet.
+     * Exclude hidden thoughts below the cursor to reduce empty scroll space.
+     */
+    totalHeight,
+  } = treeThoughts.reduce(
+    (accum, node) => {
+      const heightNext =
+        node.key in sizes
+          ? sizes[node.key].isVisible || !node.belowCursor
+            ? sizes[node.key].height
+            : 0
+          : singleLineHeight
+      return {
+        totalHeight: accum.totalHeight + heightNext,
+        spaceAboveFirstThought:
+          accum.spaceAboveFirstThought +
+          (sizes[node.key] && !sizes[node.key].isVisible && !node.belowCursor ? heightNext : 0),
+      }
+    },
+    {
+      totalHeight: 0,
+      spaceAboveFirstThought: 0,
+    },
+  )
+
+  /** Extend spaceAbove to be at least the height of the viewport so that there is room to scroll up. */
+  const spaceAboveExtended = Math.max(spaceAboveFirstThought, viewportHeight)
+
+  const spaceAboveLast = useRef(spaceAboveExtended)
+
+  /** The scroll position before the render so it can be preserved. */
+  const scrollY = window.scrollY
+
+  /** The bottom of all visible thoughts in a virtualized list where thoughts below the viewport are hidden (relative to document coordinates; changes with scroll position). */
+  const viewportBottom = viewportBottomStore.useSelector(
+    useCallback(
+      viewportBottomState => {
+        // the number of additional thoughts below the bottom of the screen that are rendered
+        const overshoot = singleLineHeight * 5
+        return viewportBottomState + spaceAboveFirstThought + overshoot
+      },
+      [singleLineHeight, spaceAboveFirstThought],
+    ),
+  )
+
+  // when spaceAboveExtended changes, scroll by the same amount so that the thoughts appear to stay in the same place
+  useEffect(
+    () => {
+      const spaceAboveDelta = spaceAboveExtended - spaceAboveLast.current
+      window.scrollTo({ top: scrollY - spaceAboveDelta })
+      spaceAboveLast.current = spaceAboveExtended
+    },
+    // do not trigger effect on scrollY change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [spaceAboveExtended],
+  )
+
+  /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
+  // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
+  const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
+
+  return { spaceAbove: spaceAboveExtended - viewportHeight, height: totalHeight, spaceBelow, viewportBottom }
+}
+
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const { sizes, setSize } = useSizeTracking()
@@ -525,51 +608,6 @@ const LayoutTree = () => {
     return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
   })
 
-  const viewportHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
-
-  const {
-    // the total amount of space above the first visible thought that will be cropped
-    spaceAbove,
-
-    // Sum all the sizes to get the total height of the containing div.
-    // Use estimated single-line height for the thoughts that do not have sizes yet.
-    // Exclude hidden thoughts below the cursor to reduce empty scroll space.
-    totalHeight,
-  } = treeThoughts.reduce(
-    (accum, node) => {
-      const heightNext =
-        node.key in sizes
-          ? sizes[node.key].isVisible || !node.belowCursor
-            ? sizes[node.key].height
-            : 0
-          : singleLineHeight
-      return {
-        totalHeight: accum.totalHeight + heightNext,
-        spaceAbove:
-          accum.spaceAbove + (sizes[node.key] && !sizes[node.key].isVisible && !node.belowCursor ? heightNext : 0),
-      }
-    },
-    {
-      totalHeight: 0,
-      spaceAbove: 0,
-    },
-  )
-
-  // The bottom of all visible thoughts in a virtualized list where thoughts below the viewport are hidden (relative to document coordinates; changes with scroll position).
-  const viewportBottom = viewportBottomStore.useSelector(
-    useCallback(
-      viewportBottomState => {
-        // the number of additional thoughts below the bottom of the screen that are rendered
-        const overshoot = singleLineHeight * 5
-        return viewportBottomState + spaceAbove + overshoot
-      },
-      [singleLineHeight, spaceAbove],
-    ),
-  )
-
-  // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
-  const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
-
   // memoized style for padding at a cliff
   const cliffPaddingStyle = useMemo(
     () => ({
@@ -587,39 +625,22 @@ const LayoutTree = () => {
     treeThoughtsPositioned: TreeThoughtPositioned[]
   } = useTreeThoughtsPositioned({ singleLineHeight, sizes, treeThoughts })
 
-  const spaceAboveLast = useRef(spaceAboveExtended)
-
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
   const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
 
-  // get the scroll position before the render so it can be preserved
-  const scrollY = window.scrollY
-
-  // when spaceAbove changes, scroll by the same amount so that the thoughts appear to stay in the same place
-  useEffect(
-    () => {
-      const spaceAboveDelta = spaceAboveExtended - spaceAboveLast.current
-      window.scrollTo({ top: scrollY - spaceAboveDelta })
-      spaceAboveLast.current = spaceAboveExtended
-    },
-    // do not trigger effect on scrollY change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [spaceAboveExtended],
-  )
-
-  const navAndFooterHeight = useNavAndFooterHeight()
-
-  /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
-  // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
-  const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
+  const { height, spaceAbove, spaceBelow, viewportBottom } = useAutofocusViewport({
+    singleLineHeight,
+    sizes,
+    treeThoughts,
+  })
 
   return (
     <div
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
-        transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
+        transform: `translateY(${-spaceAbove}px)`,
         marginTop: '0.501em',
       }}
     >
@@ -627,7 +648,7 @@ const LayoutTree = () => {
         style={{
           // Set a container height that fits all thoughts.
           // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
-          height: totalHeight + spaceBelow,
+          height: height + spaceBelow,
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
           transform: `translateX(${1.5 - indent}em`,
