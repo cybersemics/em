@@ -35,7 +35,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
-import DropCliff from './DropCliff'
+import DropCliffComponent from './DropCliff'
 import VirtualThought from './VirtualThought'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
@@ -516,14 +516,6 @@ const LayoutTree = () => {
     return singleLineHeightPrev.current || estimatedHeight
   }, [fontSize, sizes])
 
-  // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
-  const autofocusDepth = useSelector(state => {
-    // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return 0
-    const isCursorLeaf = !hasChildren(state, head(state.cursor))
-    return state.cursor.length + (isCursorLeaf ? -1 : 0)
-  })
-
   // first uncle of the cursor used for DropUncle
   const cursorUncleId = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
@@ -723,20 +715,15 @@ const LayoutTree = () => {
                   crossContextualKey={key}
                 />
 
-                {/* DropEnd (cliff) */}
-                {dragInProgress &&
-                  cliff < 0 &&
-                  // do not render hidden cliffs
-                  // rough autofocus estimate
-                  autofocusDepth - depth < 2 && (
-                    <DropCliff
-                      cliff={cliff}
-                      depth={depth}
-                      isTableCol2={isTableCol2}
-                      prevWidth={treeThoughtsPositioned[index - 1].width}
-                      path={path}
-                    />
-                  )}
+                {dragInProgress && cliff < 0 && (
+                  <DropCliffComponent
+                    cliff={cliff}
+                    depth={depth}
+                    isTableCol2={isTableCol2}
+                    prevWidth={treeThoughtsPositioned[index - 1].width}
+                    path={path}
+                  />
+                )}
               </div>
             )
           },

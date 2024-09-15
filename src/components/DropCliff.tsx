@@ -1,6 +1,9 @@
+import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
+import testFlags from '../e2e/testFlags'
+import { hasChildren } from '../selectors/getChildren'
 import head from '../util/head'
 import unroot from '../util/unroot'
 import DropEnd from './DropEnd'
@@ -24,6 +27,18 @@ const DropCliff = ({
   /** The path of the thought before the cliff. */
   path: Path
 }) => {
+  // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
+  const autofocusDepth = useSelector(state => {
+    // only set during drag-and-drop to avoid re-renders
+    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return 0
+    const isCursorLeaf = !hasChildren(state, head(state.cursor))
+    return state.cursor.length + (isCursorLeaf ? -1 : 0)
+  })
+
+  // do not render hidden cliffs
+  // rough autofocus estimate
+  if (autofocusDepth - depth > 1) return
+
   return (
     <>
       {Array(-cliff)
