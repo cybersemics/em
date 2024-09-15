@@ -95,111 +95,6 @@ const viewportBottomStore = reactMinistore.compose(
 const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
   `${(contextChain || []).map(head).join('')}|${id}`
 
-/** Dynamically update and remove sizes for different keys. */
-const useSizeTracking = () => {
-  // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
-  const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
-  const unmounted = useRef(false)
-
-  // Track debounced height removals
-  // See: removeSize
-  const sizeRemovalTimeouts = useRef(new Map<string, number>())
-
-  // Removing a size immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
-  // Debouncing size removal mitigates the issue.
-  // Use throttleConcat to accumulate all keys to be removed during the interval.
-  // TODO: Is a root cause of the mount-unmount loop.
-  const removeSize = useCallback((key: string) => {
-    clearTimeout(sizeRemovalTimeouts.current.get(key))
-    const timeout = setTimeout(() => {
-      if (unmounted.current) return
-      setSizes(sizesOld => {
-        delete sizesOld[key]
-        return sizesOld
-      })
-    }, SIZE_REMOVAL_DEBOUNCE) as unknown as number
-    sizeRemovalTimeouts.current.set(key, timeout)
-  }, [])
-
-  /** Update the size record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
-  const setSize = useCallback(
-    ({
-      height,
-      width,
-      id,
-      isVisible,
-      key,
-    }: {
-      height: number | null
-      width?: number | null
-      id: ThoughtId
-      isVisible: boolean
-      key: string
-    }) => {
-      if (height !== null) {
-        // cancel thought removal timeout
-        clearTimeout(sizeRemovalTimeouts.current.get(key))
-        sizeRemovalTimeouts.current.delete(key)
-
-        setSizes(sizesOld =>
-          height === sizesOld[key]?.height && isVisible === sizesOld[key]?.isVisible
-            ? sizesOld
-            : {
-                ...sizesOld,
-                [key]: {
-                  height,
-                  width: width || undefined,
-                  isVisible,
-                },
-              },
-        )
-      } else {
-        removeSize(key)
-      }
-    },
-    [removeSize],
-  )
-
-  useEffect(() => {
-    return () => {
-      unmounted.current = true
-    }
-  }, [])
-
-  return useMemo(
-    () => ({
-      sizes,
-      setSize,
-    }),
-    [sizes, setSize],
-  )
-}
-
-/** Measure the total height of the .nav and .footer elements on render. Always triggers a second render (which is nonconsequential since useSizeTracking already entails additional renders as heights are rendered). */
-const useNavAndFooterHeight = () => {
-  // Get the nav and footer heights for the spaceBelow calculation.
-  // Nav hight changes when the breadcrumbs wrap onto multiple lines.
-  // Footer height changes on font size change.
-  const [navAndFooterHeight, setNavAndFooterHeight] = useState(0)
-
-  // Read the footer and nav heights on render and set the refs so that the spaceBelow calculation is updated on the next render.
-  // This works because there is always a second render due to useSizeTracking.
-  // No risk of infinite render since the effect cannot change the height of the nav or footer.
-  // nav/footer height -> effect -> setNavAndFooterHeight -> render -> effect -> setNavAndFooterHeight (same values)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(
-    _.throttle(() => {
-      const navEl = document.querySelector('.nav')
-      const footerEl = document.querySelector('.footer')
-      setNavAndFooterHeight(
-        (navEl?.getBoundingClientRect().height || 0) + (footerEl?.getBoundingClientRect().height || 0),
-      )
-    }, 16.666),
-  )
-
-  return navAndFooterHeight
-}
-
 /** Recursiveley calculates the tree of visible thoughts, in order, represented as a flat list of thoughts with tree layout information. */
 const linearizeTree = (
   state: State,
@@ -340,6 +235,111 @@ const linearizeTree = (
   }, [])
 
   return thoughts
+}
+
+/** Dynamically update and remove sizes for different keys. */
+const useSizeTracking = () => {
+  // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
+  const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
+  const unmounted = useRef(false)
+
+  // Track debounced height removals
+  // See: removeSize
+  const sizeRemovalTimeouts = useRef(new Map<string, number>())
+
+  // Removing a size immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
+  // Debouncing size removal mitigates the issue.
+  // Use throttleConcat to accumulate all keys to be removed during the interval.
+  // TODO: Is a root cause of the mount-unmount loop.
+  const removeSize = useCallback((key: string) => {
+    clearTimeout(sizeRemovalTimeouts.current.get(key))
+    const timeout = setTimeout(() => {
+      if (unmounted.current) return
+      setSizes(sizesOld => {
+        delete sizesOld[key]
+        return sizesOld
+      })
+    }, SIZE_REMOVAL_DEBOUNCE) as unknown as number
+    sizeRemovalTimeouts.current.set(key, timeout)
+  }, [])
+
+  /** Update the size record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
+  const setSize = useCallback(
+    ({
+      height,
+      width,
+      id,
+      isVisible,
+      key,
+    }: {
+      height: number | null
+      width?: number | null
+      id: ThoughtId
+      isVisible: boolean
+      key: string
+    }) => {
+      if (height !== null) {
+        // cancel thought removal timeout
+        clearTimeout(sizeRemovalTimeouts.current.get(key))
+        sizeRemovalTimeouts.current.delete(key)
+
+        setSizes(sizesOld =>
+          height === sizesOld[key]?.height && isVisible === sizesOld[key]?.isVisible
+            ? sizesOld
+            : {
+                ...sizesOld,
+                [key]: {
+                  height,
+                  width: width || undefined,
+                  isVisible,
+                },
+              },
+        )
+      } else {
+        removeSize(key)
+      }
+    },
+    [removeSize],
+  )
+
+  useEffect(() => {
+    return () => {
+      unmounted.current = true
+    }
+  }, [])
+
+  return useMemo(
+    () => ({
+      sizes,
+      setSize,
+    }),
+    [sizes, setSize],
+  )
+}
+
+/** Measure the total height of the .nav and .footer elements on render. Always triggers a second render (which is nonconsequential since useSizeTracking already entails additional renders as heights are rendered). */
+const useNavAndFooterHeight = () => {
+  // Get the nav and footer heights for the spaceBelow calculation.
+  // Nav hight changes when the breadcrumbs wrap onto multiple lines.
+  // Footer height changes on font size change.
+  const [navAndFooterHeight, setNavAndFooterHeight] = useState(0)
+
+  // Read the footer and nav heights on render and set the refs so that the spaceBelow calculation is updated on the next render.
+  // This works because there is always a second render due to useSizeTracking.
+  // No risk of infinite render since the effect cannot change the height of the nav or footer.
+  // nav/footer height -> effect -> setNavAndFooterHeight -> render -> effect -> setNavAndFooterHeight (same values)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(
+    _.throttle(() => {
+      const navEl = document.querySelector('.nav')
+      const footerEl = document.querySelector('.footer')
+      setNavAndFooterHeight(
+        (navEl?.getBoundingClientRect().height || 0) + (footerEl?.getBoundingClientRect().height || 0),
+      )
+    }, 16.666),
+  )
+
+  return navAndFooterHeight
 }
 
 /**
@@ -593,12 +593,12 @@ const useAutofocusViewport = ({
   return { spaceAbove: spaceAboveExtended - viewportHeight, height: totalHeight, spaceBelow, viewportBottom }
 }
 
-/** Lays out thoughts as DOM siblings with manual x,y positioning. */
+/** Renders the tree of visible thoughts as DOM siblings with absolute x,y positions for animation across depths. */
 const LayoutTree = () => {
-  const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.dragInProgress)
+  const { sizes, setSize } = useSizeTracking()
   const singleLineHeight = useSingleLineHeight({ sizes })
   const cliffPaddingStyle = useMemo(() => ({ paddingBottom: fontSize / 4 }), [fontSize])
 
