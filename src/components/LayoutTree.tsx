@@ -596,21 +596,14 @@ const LayoutTree = () => {
   const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.dragInProgress)
+  const singleLineHeight = useSingleLineHeight({ sizes })
+  const cliffPaddingStyle = useMemo(() => ({ paddingBottom: fontSize / 4 }), [fontSize])
+
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
         state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
       : 0,
-  )
-
-  const singleLineHeight = useSingleLineHeight({ sizes })
-
-  // memoized style for padding at a cliff
-  const cliffPaddingStyle = useMemo(
-    () => ({
-      paddingBottom: fontSize / 4,
-    }),
-    [fontSize],
   )
 
   const {
