@@ -20,7 +20,7 @@ import head from '../util/head'
 import noteValue from '../util/noteValue'
 import DropChild from './DropChild'
 import DropUncle from './DropUncle'
-import Subthought from './Subthought'
+import ThoughtContainer from './Thought'
 
 /** A resize handler that should be called whenever a thought's height has changed. */
 export type OnResize = (args: {
@@ -227,7 +227,7 @@ const VirtualThought = ({
       }
 
       {!shimHiddenThought && (
-        <Subthought
+        <ThoughtContainer
           autofocus={autofocus}
           debugIndex={debugIndex}
           depth={depth + 1}

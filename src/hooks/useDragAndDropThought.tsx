@@ -14,7 +14,7 @@ import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { isTouch } from '../browser'
-import { ThoughtContainerProps } from '../components/Thought'
+import { ThoughtProps } from '../components/Thought'
 import { AlertType } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
@@ -41,7 +41,7 @@ import parentOf from '../util/parentOf'
 import unroot from '../util/unroot'
 
 /** Returns true if the thought can be dragged. */
-const canDrag = (props: ThoughtContainerProps) => {
+const canDrag = (props: ThoughtProps) => {
   const state = store.getState()
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))
@@ -59,7 +59,7 @@ const canDrag = (props: ThoughtContainerProps) => {
 }
 
 /** Handles drag start. */
-const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem => {
+const beginDrag = ({ path, simplePath }: ThoughtProps): DragThoughtItem => {
   const offset = selection.offset()
   store.dispatch(
     dragInProgress({
@@ -91,7 +91,7 @@ const endDrag = () => {
 }
 
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
-const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
+const canDrop = (props: ThoughtProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
@@ -117,7 +117,7 @@ const canDropPath = moize((from: Path, to: Path) => !isDescendantPath(to, from, 
 })
 
 /** Handles dropping a thought on a DropTarget. */
-const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
+const drop = (props: ThoughtProps, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
@@ -207,8 +207,8 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
 })
 
 /** A draggable and droppable Thought hook. */
-const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
-  const propsTypes = props as ThoughtContainerProps
+const useDragAndDropThought = (props: Partial<ThoughtProps>) => {
+  const propsTypes = props as ThoughtProps
 
   const [{ isDragging }, dragSource, dragPreview] = useDrag({
     type: DragAndDropType.Thought,

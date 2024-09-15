@@ -63,20 +63,18 @@ To the user, a thought just consists of a bullet, text, and superscript indicati
 └─Content
   └─LayoutTree
     └─VirtualThought
-      └─Subthought
-        └─Thought
-          ├─Bullet
-          └─StaticThought
-            ├─ThoughtAnnotationContainer
-            │ └─ThoughtAnnotation
-            │   └─StaticSuperscript
-            └─Editable
+      └─Thought
+        ├─Bullet
+        └─StaticThought
+          ├─ThoughtAnnotationContainer
+          │ └─ThoughtAnnotation
+          │   └─StaticSuperscript
+          └─Editable
 ```
 
 - `<Content>` - Root container that defines the margins of the thoughtspace and handles clicking on empty space.
 - `<LayoutTree>` - Renders all visible thoughts as absolutely positioned siblings to allow for conditional rendering of ancestors, list virtualization, and animation across levels.
 - `<VirtualThought>` - Conditionally renders a shim when the thought is hidden by autofocus. The shim is a simple div with a height attribute matching the thought's height.
-- `<Subthought>`
 - `<Thought>` - Renders the Bullet and the Thought.
 - `<Bullet>` - This is, unsurprisingly, the bullet of the thought.
 - `<StaticThought>` - Contains the Editable and ThoughtAnnotation.
