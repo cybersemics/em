@@ -356,12 +356,15 @@ const useTreeThoughtsPositioned = ({
   treeThoughts: TreeThought[]
 }) => {
   const fontSize = useSelector(state => state.fontSize)
+
   return useMemo(() => {
     // y increases monotically, so it is more efficent to accumulate than to calculate each time
     // x varies, so we calculate it each time
     // (it is especially hard to determine how much x is decreased on cliffs when there are any number of tables in between)
     let yaccum = 0
-    let indentCursorAncestorTables = 0
+
+    /** The global indent based on the depth of the cursor and ancestors table widths (pixels). */
+    let indentCursor = 0
 
     /** A stack of { depth, y } that stores the bottom y value of each col1 ancestor. */
     /* By default, yaccum is not advanced by the height of col1. This is what positions col2 at the same y value as col1. However, if the height of col1 exceeds the height of col2, then the next node needs to be positioned below col1, otherwise it will overlap. This stack stores the minimum y value of the next node (i.e. y + height). Depth is used to detect the next node after all of col1's descendants.
@@ -418,7 +421,7 @@ const useTreeThoughtsPositioned = ({
       // Calculate the cursor ancestor table width when we are on the cursor node.
       // This is used to animate the entire tree to the left as the cursor moves right.
       if (node.isCursor) {
-        indentCursorAncestorTables =
+        indentCursor =
           ancestorTableWidths +
           // table col1: shift left by an additional 1 em so that the shift at the next depth does not feel so extreme
           (node.isTableCol1
@@ -476,7 +479,7 @@ const useTreeThoughtsPositioned = ({
       }
     })
 
-    return { indentCursorAncestorTables, treeThoughtsPositioned }
+    return { indentCursor, treeThoughtsPositioned }
   }, [fontSize, sizes, singleLineHeight, treeThoughts])
 }
 
@@ -600,17 +603,16 @@ const LayoutTree = () => {
   const cliffPaddingStyle = useMemo(() => ({ paddingBottom: fontSize / 4 }), [fontSize])
 
   const {
-    indentCursorAncestorTables,
+    indentCursor,
     treeThoughtsPositioned,
   }: {
-    /** The global indent based on the depth of the cursor and how many ancestors are tables. */
-    indentCursorAncestorTables: number
+    indentCursor: number
     treeThoughtsPositioned: TreeThoughtPositioned[]
   } = useTreeThoughtsPositioned({ singleLineHeight, sizes, treeThoughts })
 
   /**
    * The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
-   * The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
+   * The indentCursor multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
    * The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.
    */
   const indent = useSelector(state => {
@@ -619,7 +621,7 @@ const LayoutTree = () => {
         ? // when the cursor is on a leaf, the indention level should not change
           state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
         : 0
-    return indentDepth * 0.9 + indentCursorAncestorTables / fontSize
+    return indentDepth * 0.9 + indentCursor / fontSize
   })
 
   const { height, spaceAbove, spaceBelow, viewportBottom } = useAutofocusViewport({
