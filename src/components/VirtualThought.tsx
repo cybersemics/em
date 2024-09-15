@@ -5,12 +5,14 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import testFlags from '../e2e/testFlags'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import nextSibling from '../selectors/nextSibling'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
@@ -43,7 +45,6 @@ const selectCursor = (state: State) => state.cursor
 const VirtualThought = ({
   debugIndex,
   depth,
-  dropUncle,
   env,
   indexDescendant,
   isMultiColumnTable,
@@ -61,7 +62,6 @@ const VirtualThought = ({
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
   depth: number
-  dropUncle?: boolean
   env?: LazyEnv
   indexDescendant: number
   isMultiColumnTable?: boolean
@@ -92,6 +92,17 @@ const VirtualThought = ({
   /***************************
    * VirtualThought properties
    ***************************/
+
+  /** Tracks if the thought is the cursor uncle and there is a drag in progress. */
+  const dropUncle = useSelector(state => {
+    // only set during drag-and-drop to avoid re-renders
+    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return false
+    const isCursorLeaf = !hasChildren(state, head(state.cursor))
+    const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
+    // first uncle of the cursor used for DropUncle
+    const cursorUncleId = (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
+    return head(simplePath) === cursorUncleId
+  })
 
   // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
   // Wait until the fade out animation has completed before removing.

@@ -20,7 +20,6 @@ import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -60,7 +59,6 @@ type TreeThought = {
   simplePath: SimplePath
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
   style?: React.CSSProperties | null
-  thoughtId: string
   // keys of visible children
   // only used in table view to calculate the width of column 1
   visibleChildrenKeys?: string[]
@@ -310,7 +308,6 @@ const linearizeTree = (
       showContexts: contextViewActive,
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
       style,
-      thoughtId: child.id,
       ...(isTable
         ? { visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)) }
         : null),
@@ -608,15 +605,6 @@ const LayoutTree = () => {
 
   const singleLineHeight = useSingleLineHeight({ sizes })
 
-  // first uncle of the cursor used for DropUncle
-  const cursorUncleId = useSelector(state => {
-    // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return null
-    const isCursorLeaf = !hasChildren(state, head(state.cursor))
-    const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
-    return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
-  })
-
   // memoized style for padding at a cliff
   const cliffPaddingStyle = useMemo(
     () => ({
@@ -687,7 +675,6 @@ const LayoutTree = () => {
               simplePath,
               singleLineHeightWithCliff,
               style,
-              thoughtId,
               width,
               x,
               y,
@@ -727,7 +714,6 @@ const LayoutTree = () => {
                 <VirtualThought
                   debugIndex={testFlags.simulateDrop ? indexChild : undefined}
                   depth={depth}
-                  dropUncle={thoughtId === cursorUncleId}
                   env={env}
                   indexDescendant={indexDescendant}
                   // isMultiColumnTable={isMultiColumnTable}
