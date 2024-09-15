@@ -104,7 +104,7 @@ const equalChildren = (a: Thought[], b: Thought[]) =>
  *
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
  */
-const ThoughtContainer = ({
+const ThoughtComponent = ({
   allowSingleContext,
   childrenForced,
   cursor,
@@ -489,8 +489,7 @@ const ThoughtContainer = ({
   )
 }
 
-ThoughtContainer.displayName = 'ThoughtContainer'
-const ThoughtComponentMemo = React.memo(ThoughtContainer)
-ThoughtComponentMemo.displayName = 'Thought'
+ThoughtComponent.displayName = 'Thought'
+const ThoughtMemo = React.memo(ThoughtComponent)
 
-export default ThoughtComponentMemo
+export default ThoughtMemo
