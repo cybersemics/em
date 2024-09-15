@@ -102,9 +102,9 @@ const BreadCrumb = React.memo(
       path: Path
       showDivider?: boolean
       staticText?: boolean
-      lightFont?: boolean
+      linkCssRaw?: SystemStyleObject
     }
-  >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText, lightFont }, ref) => {
+  >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText, linkCssRaw }, ref) => {
     const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
     const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
     const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
@@ -126,7 +126,13 @@ const BreadCrumb = React.memo(
             <HomeLink color='gray' size={16} className={css({ position: 'static' })} />
           ) : (
             <Link
-              cssRaw={css.raw({ margin: '-0.25em', padding: '0.25em', fontWeight: lightFont ? 'inherit' : undefined })}
+              cssRaw={css.raw(
+                {
+                  margin: '-0.25em',
+                  padding: '0.25em',
+                },
+                linkCssRaw,
+              )}
               simplePath={simplePath}
               label={label}
             />
@@ -158,7 +164,7 @@ const ContextBreadcrumbs = ({
   path,
   staticText,
   thoughtsLimit,
-  lightFont,
+  linkCssRaw,
 }: {
   charLimit?: number
   classNamesObject?: Index<boolean>
@@ -175,7 +181,7 @@ const ContextBreadcrumbs = ({
   /** Disables click on breadcrumb fragments. */
   staticText?: boolean
   thoughtsLimit?: number
-  lightFont?: boolean
+  linkCssRaw?: SystemStyleObject
 }) => {
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
@@ -252,7 +258,14 @@ const ContextBreadcrumbs = ({
                   path={ancestors[i]}
                   showDivider={i > 0}
                   staticText={staticText}
-                  lightFont={lightFont}
+                  linkCssRaw={css.raw(
+                    {
+                      color: 'inherit',
+                      textDecoration: 'none',
+                      '&:active': { color: '#909090', WebkitTextStrokeWidth: '0.05em' },
+                    },
+                    linkCssRaw,
+                  )}
                 />
               </CSSTransition>
             )
