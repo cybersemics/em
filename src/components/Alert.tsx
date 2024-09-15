@@ -1,7 +1,8 @@
-import classNames from 'classnames'
 import React, { FC, useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { css, cx } from '../../styled-system/css'
+import { anchorButton } from '../../styled-system/recipes'
 import { alertActionCreator } from '../actions/alert'
 import { redoActionCreator as redo } from '../actions/redo'
 import { undoActionCreator as undo } from '../actions/undo'
@@ -33,26 +34,24 @@ const Alert: FC = () => {
 
   const undoOrRedo = alert?.alertType === AlertType.Undo || alert?.alertType === AlertType.Redo
   const buttons = undoOrRedo ? (
-    <div style={{ marginTop: '0.5em' }}>
+    <div className={css({ marginTop: '0.5em' })}>
       <a
-        className={classNames('button button-small', { disabled: !undoEnabled })}
-        style={{ margin: '0.25em' }}
+        className={cx(anchorButton({ small: true, isDisabled: !undoEnabled }), css({ margin: '0.25em' }))}
         {...fastClick(e => {
           dispatch(undo())
         })}
       >
-        <UndoIcon fill='black' style={{ position: 'relative', top: '0.25em', right: '0.25em' }} />
+        <UndoIcon fill='black' className={css({ position: 'relative', top: '0.25em', right: '0.25em' })} />
         Undo
       </a>
       <a
-        className={classNames('button button-small', { disabled: !redoEnabled })}
-        style={{ margin: '0.25em' }}
+        className={cx(anchorButton({ small: true, isDisabled: !redoEnabled }), css({ margin: '0.25em' }))}
         {...fastClick(e => {
           dispatch(redo())
         })}
       >
         Redo
-        <RedoIcon fill='black' style={{ position: 'relative', top: '0.25em', left: '0.25em' }} />
+        <RedoIcon fill='black' className={css({ position: 'relative', top: '0.25em', left: '0.25em' })} />
       </a>
     </div>
   ) : null
