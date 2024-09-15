@@ -12,7 +12,8 @@ import React, {
 } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
+import { extendTap } from '../../../styled-system/recipes'
 import ExportOption from '../../@types/ExportOption'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -642,9 +643,18 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       <div className='advance-setting-wrapper'>
         <span>
           <a
-            className='advance-setting-link no-select extend-tap'
+            className={cx(
+              extendTap(),
+              css({
+                userSelect: 'none',
+                display: 'flex',
+                position: 'relative',
+                transition: 'opacity 100ms ease-in-out',
+                color: 'fg',
+                opacity: advancedSettings ? 1 : 0.5,
+              }),
+            )}
             {...fastClick(onAdvancedClick)}
-            style={{ opacity: advancedSettings ? 1 : 0.5 }}
           >
             Advanced
           </a>

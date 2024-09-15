@@ -1490,19 +1490,6 @@ a.text-link {
   margin-bottom: 2em;
 }
 
-.advance-setting-link {
-  display: flex;
-  position: relative;
-  transition: opacity 100ms ease-in-out;
-}
-
-a.advance-setting-link {
-  color: #000;
-}
-.dark a.advance-setting-link {
-  color: #fff;
-}
-
 .advance-setting-chevron {
   display: flex;
   flex-direction: column;
