@@ -8260,7 +8260,7 @@ __metadata:
     y-indexeddb: "https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex"
     y-protocols: "npm:^1.0.6"
     yallist: "npm:^5.0.0"
-    yjs: "npm:^13.6.18"
+    yjs: "npm:^13.6.19"
   languageName: unknown
   linkType: soft
 
@@ -19172,12 +19172,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yjs@npm:^13.6.18":
-  version: 13.6.18
-  resolution: "yjs@npm:13.6.18"
+"yjs@npm:^13.6.19":
+  version: 13.6.19
+  resolution: "yjs@npm:13.6.19"
   dependencies:
     lib0: "npm:^0.2.86"
-  checksum: 10c0/ef886370f5d4ff98491c3612cbd5b4ae3a75d1756aeae98f0a0855f29acf80008f019fe22067fddc447bceacfea00c20f9c3efc0bb7b5cbec62aacb435cb8072
+  checksum: 10c0/225dfe2b94cd275cdb1ab1749a0a68da1f3454e9a64a6de5730ee8b934ba6cb66731d7a293294bcd2b20c7887c5374a56c390e8acac215fd3b5b48cf2bfea6ed
   languageName: node
   linkType: hard
 
