@@ -3,6 +3,8 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
+import DragThoughtItem from '../@types/DragThoughtItem'
+import DropThoughtZone from '../@types/DropThoughtZone'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -18,6 +20,7 @@ import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import getChildren, { childrenFilterPredicate, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import getSortedRank from '../selectors/getSortedRank'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -25,6 +28,7 @@ import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
+import store from '../stores/app'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
@@ -71,7 +75,7 @@ type TreeThought = {
 }
 
 /** 2nd Pass: A thought with position information after its height has been measured. */
-export type TreeThoughtPositioned = TreeThought & {
+type TreeThoughtPositioned = TreeThought & {
   cliff: number
   height: number
   singleLineHeightWithCliff: number
@@ -352,7 +356,7 @@ const linearizeTree = (
 }
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
-const LayoutTree = ({ calculateThoughtPosition }: { calculateThoughtPosition: any }) => {
+const LayoutTree = () => {
   const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
@@ -364,6 +368,7 @@ const LayoutTree = ({ calculateThoughtPosition }: { calculateThoughtPosition: an
         state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
       : 0,
   )
+  const scrollTop = scrollTopStore.useState()
 
   const [bulletWidth, setBulletWidth] = useState<number | undefined>(0)
 
@@ -454,6 +459,29 @@ const LayoutTree = ({ calculateThoughtPosition }: { calculateThoughtPosition: an
     ),
   )
 
+  const hoveringPath = useSelector(state => state.hoveringPath)
+  const contextParentPath = parentOf(hoveringPath || [])
+
+  const isSortedContext = useSelector(state => {
+    return attributeEquals(state, head(contextParentPath), '=sort', 'Alphabetical')
+  })
+
+  const dragDropManager = useDragDropManager()
+
+  const sourceThought = useSelector(state => {
+    const monitor = dragDropManager.getMonitor()
+    const item = monitor.getItem() as DragThoughtItem
+
+    // Check if the dragged item is a thought and the drop zone is not a subthought
+    const isThought = item?.zone === 'Thoughts' && state.hoverZone === DropThoughtZone.ThoughtDrop
+    const sourceThoughtId = head(item?.path || [])
+
+    const sourceThought = isThought ? getThoughtById(state, sourceThoughtId) : null
+    return sourceThought
+  })
+
+  const newRank = useSelector(state => getSortedRank(state, head(contextParentPath), sourceThought?.value || ''))
+
   // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
   const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
 
@@ -465,21 +493,50 @@ const LayoutTree = ({ calculateThoughtPosition }: { calculateThoughtPosition: an
     [fontSize],
   )
 
+  /** Compare ranks between two thoughts. */
+  const compareRanks = (rankA: number, rankB: number) => {
+    const partsA = String(rankA).split('.').map(Number)
+    const partsB = String(rankB).split('.').map(Number)
+    const len = Math.max(partsA.length, partsB.length)
+
+    let result = 0
+    const indexArray = Array.from({ length: len }, (_, i) => i)
+
+    indexArray.some(i => {
+      const valA = partsA[i] || 0
+      const valB = partsB[i] || 0
+      if (valA !== valB) {
+        result = valA - valB
+        return true
+      }
+      return false
+    })
+
+    return result
+  }
+
   // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
   const {
     indentCursorAncestorTables,
     treeThoughtsPositioned,
+    hoverArrowVisibility,
   }: {
     // the global indent based on the depth of the cursor and how many ancestors are tables
     indentCursorAncestorTables: number
     treeThoughtsPositioned: TreeThoughtPositioned[]
+    hoverArrowVisibility: 'above' | 'below' | null
   } = useMemo(() => {
     // y increases monotically, so it is more efficent to accumulate than to calculate each time
     // x varies, so we calculate it each time
     // (it is especially hard to determine how much x is decreased on cliffs when there are any number of tables in between)
     let yaccum = 0
     let indentCursorAncestorTables = 0
+
+    // Flag to indicate if we've found the insertion point in sorted context
+    let insertionY: number | null = null
+    let hoverArrowVisibility: 'above' | 'below' | null = null
+    let insertionFound = false
 
     /** A stack of { depth, y } that stores the bottom y value of each col1 ancestor. */
     /* By default, yaccum is not advanced by the height of col1. This is what positions col2 at the same y value as col1. However, if the height of col1 exceeds the height of col2, then the next node needs to be positioned below col1, otherwise it will overlap. This stack stores the minimum y value of the next node (i.e. y + height). Depth is used to detect the next node after all of col1's descendants.
@@ -586,6 +643,16 @@ const LayoutTree = ({ calculateThoughtPosition }: { calculateThoughtPosition: an
       const isLastVisible =
         (node.autofocus === 'dim' || node.autofocus === 'show') &&
         !(next?.autofocus === 'dim' || next?.autofocus === 'show')
+      // Get the insertion point of the thought in sorted context
+      if (isSortedContext && !insertionFound && sourceThought) {
+        const currentThought = getThoughtById(store.getState(), head(node.path))
+        const currentRank = currentThought.rank
+
+        if (compareRanks(newRank, currentRank) < 0) {
+          insertionY = y
+          insertionFound = true
+        }
+      }
 
       return {
         ...node,
@@ -599,8 +666,35 @@ const LayoutTree = ({ calculateThoughtPosition }: { calculateThoughtPosition: an
       }
     })
 
-    return { indentCursorAncestorTables, treeThoughtsPositioned }
-  }, [fontSize, sizes, singleLineHeight, treeThoughts])
+    // If insertionY is still null, newRank would be inserted at the end
+    if (isSortedContext && insertionY === null && treeThoughtsPositioned.length > 0 && sourceThought) {
+      const lastThought = treeThoughtsPositioned[treeThoughtsPositioned.length - 1]
+      insertionY = lastThought.y + lastThought.height
+    }
+
+    // Determine hoverArrowVisibility based on insertionY
+    if (insertionY !== null) {
+      if (insertionY > viewportHeight + scrollTop) {
+        hoverArrowVisibility = 'below'
+      } else if (insertionY < scrollTop) {
+        hoverArrowVisibility = 'above'
+      } else {
+        hoverArrowVisibility = null
+      }
+    }
+
+    return { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility }
+  }, [
+    treeThoughts,
+    singleLineHeight,
+    fontSize,
+    sizes,
+    isSortedContext,
+    sourceThought,
+    newRank,
+    viewportHeight,
+    scrollTop,
+  ])
 
   const spaceAboveLast = useRef(spaceAboveExtended)
 
@@ -611,11 +705,6 @@ const LayoutTree = ({ calculateThoughtPosition }: { calculateThoughtPosition: an
 
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
-
-  // When a thought is hovered over a sorted context, determine the position of arrow.
-  useEffect(() => {
-    calculateThoughtPosition(treeThoughtsPositioned)
-  }, [calculateThoughtPosition, treeThoughtsPositioned])
 
   // when spaceAbove changes, scroll by the same amount so that the thoughts appear to stay in the same place
   useEffect(
@@ -634,6 +723,9 @@ const LayoutTree = ({ calculateThoughtPosition }: { calculateThoughtPosition: an
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
+  // Calculate the position of the arrow relative to the bottom of the container.
+  const arrowBottom = totalHeight + spaceBelow - scrollTop - window.innerHeight + navAndFooterHeight
+
   return (
     <div
       className={css({
@@ -645,6 +737,26 @@ const LayoutTree = ({ calculateThoughtPosition }: { calculateThoughtPosition: an
       }}
       ref={ref}
     >
+      {hoverArrowVisibility && (
+        <div
+          style={{
+            width: '0',
+            height: '0',
+            borderLeft: '10px solid transparent',
+            borderRight: '10px solid transparent',
+            position: 'absolute',
+            top: hoverArrowVisibility === 'above' ? scrollTop : undefined,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            borderBottom: '20px solid rgb(155, 170, 220)',
+            ...(hoverArrowVisibility === 'below' && {
+              bottom: `${arrowBottom}px`,
+              rotate: '180deg',
+            }),
+            animation: `bobble ${token('durations.arrowBobbleAnimation')} infinite`,
+          }}
+        ></div>
+      )}
       <div
         className={css({ transition: `transform {durations.layoutSlowShiftDuration} ease-out` })}
         style={{
