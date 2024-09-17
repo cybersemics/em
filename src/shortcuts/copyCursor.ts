@@ -72,7 +72,9 @@ const copyCursorShortcut: Shortcut = {
 
       dispatch(
         alert(
-          `Copied ${numThoughts} thought${numThoughts > 1 ? 's' : ''} and ${numDescendants} descendant${numDescendants !== 1 ? 's' : ''} to the clipboard`,
+          `Copied ${numThoughts} thought${numThoughts > 1 ? 's' : ''}${
+            numDescendants > 0 ? ` and ${numDescendants} descendant${numDescendants !== 1 ? 's' : ''}` : ''
+          } to the clipboard`,
           {
             alertType: AlertType.Clipboard,
             clearDelay: 3000,
