@@ -10,7 +10,10 @@ const clearThoughtShortcut: Shortcut = {
   description: 'Clear the text of the current thought. A quick recovery after you have changed your mind.',
   gesture: 'rl',
   keyboard: { key: 'c', alt: true, shift: true, meta: true },
-  multicursor: true,
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot clear multiple thougths.',
+  },
   // TODO: Create unique icon
   svg: SettingsIcon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
