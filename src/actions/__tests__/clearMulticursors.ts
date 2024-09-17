@@ -1,8 +1,6 @@
-import State from '../../@types/State'
-import addMulticursor from '../../actions/addMulticursor'
 import clearMulticursors from '../../actions/clearMulticursors'
 import newThought from '../../actions/newThought'
-import contextToPath from '../../selectors/contextToPath'
+import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -13,8 +11,8 @@ describe('clearMulticursors', () => {
       newThought('a'),
       newThought('b'),
       setCursor(['a']),
-      (state: State) => addMulticursor(state, { path: contextToPath(state, ['a'])! }),
-      (state: State) => addMulticursor(state, { path: contextToPath(state, ['b'])! }),
+      addMulticursorAtFirstMatch(['a']),
+      addMulticursorAtFirstMatch(['b']),
       clearMulticursors,
     ]
 
@@ -34,12 +32,7 @@ describe('clearMulticursors', () => {
   })
 
   it('clears cursorBeforeMulticursor', () => {
-    const steps = [
-      newThought('a'),
-      setCursor(['a']),
-      (state: State) => addMulticursor(state, { path: contextToPath(state, ['a'])! }),
-      clearMulticursors,
-    ]
+    const steps = [newThought('a'), setCursor(['a']), addMulticursorAtFirstMatch(['a']), clearMulticursors]
 
     const stateNew = reducerFlow(steps)(initialState())
 

@@ -1,9 +1,8 @@
-import State from '../../@types/State'
 import addAllMulticursor from '../../actions/addAllMulticursor'
-import addMulticursor from '../../actions/addMulticursor'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import contextToPath from '../../selectors/contextToPath'
+import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
@@ -73,7 +72,7 @@ describe('addAllMulticursor', () => {
       newThought('c'),
       newThought('d'),
       setCursor(['b']),
-      (state: State) => addMulticursor(state, { path: contextToPath(state, ['c'])! }),
+      addMulticursorAtFirstMatch(['c']),
       addAllMulticursor,
     ]
 

@@ -1,8 +1,8 @@
 import State from '../../@types/State'
-import addMulticursor from '../../actions/addMulticursor'
 import newThought from '../../actions/newThought'
 import removeMulticursor from '../../actions/removeMulticursor'
 import contextToPath from '../../selectors/contextToPath'
+import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
@@ -14,8 +14,8 @@ describe('removeMulticursor', () => {
       newThought('a'),
       newThought('b'),
       setCursor(['a']),
-      (state: State) => addMulticursor(state, { path: contextToPath(state, ['a'])! }),
-      (state: State) => addMulticursor(state, { path: contextToPath(state, ['b'])! }),
+      addMulticursorAtFirstMatch(['a']),
+      addMulticursorAtFirstMatch(['b']),
       (state: State) => removeMulticursor(state, { path: contextToPath(state, ['a'])! }),
     ]
 
@@ -34,7 +34,7 @@ describe('removeMulticursor', () => {
       newThought('a'),
       newThought('b'),
       setCursor(['a']),
-      (state: State) => addMulticursor(state, { path: contextToPath(state, ['a'])! }),
+      addMulticursorAtFirstMatch(['a']),
       (state: State) => removeMulticursor(state, { path: contextToPath(state, ['b'])! }),
     ]
 
@@ -52,7 +52,7 @@ describe('removeMulticursor', () => {
     const steps = [
       newThought('a'),
       setCursor(['a']),
-      (state: State) => addMulticursor(state, { path: contextToPath(state, ['a'])! }),
+      addMulticursorAtFirstMatch(['a']),
       (state: State) => removeMulticursor(state, { path: contextToPath(state, ['a'])! }),
     ]
 
