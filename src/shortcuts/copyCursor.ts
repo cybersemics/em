@@ -62,7 +62,7 @@ const copyCursorShortcut: Shortcut = {
 
       // Export and copy all selected thoughts
       const exported = filteredCursors
-        .map(cursor => exportContext(stateAfterPull, head(cursor), 'text/plain', { forcePrefix: true }))
+        .map(cursor => exportContext(stateAfterPull, head(cursor), 'text/plain', { forceBullet: true }))
         .join('\n')
 
       copy(exported)

@@ -43,7 +43,7 @@ interface Options {
   /** Exclude archived thoughts. */
   excludeArchived?: boolean
   /** Force prefix even if root with no children. */
-  forcePrefix?: boolean
+  forceBullet?: boolean
 }
 
 /** Exports the navigable subtree of the given context. */
@@ -58,7 +58,7 @@ export const exportContext = (
     excludeMeta,
     excludeSrc,
     depth = 0,
-    forcePrefix,
+    forceBullet,
     excludeArchived,
   }: Options = {},
 ): string => {
@@ -80,7 +80,7 @@ export const exportContext = (
   const linePrefix =
     format === 'text/html'
       ? '<li>'
-      : depth === 0 && childrenFiltered.length === 0 && !forcePrefix && !isRoot(context)
+      : depth === 0 && childrenFiltered.length === 0 && !forceBullet && !isRoot(context)
         ? ''
         : '- '
 
