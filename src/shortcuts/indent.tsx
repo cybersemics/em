@@ -1,6 +1,7 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { indentActionCreator as indent } from '../actions/indent'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorForward from './moveCursorForward'
 
@@ -39,7 +40,10 @@ const indentShortcut: Shortcut = {
   },
   gesture: 'rlr',
   svg: Icon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: dispatch => dispatch(indent()),
 }
 

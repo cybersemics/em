@@ -2,6 +2,7 @@ import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { subCategorizeOneActionCreator as subCategorizeOne } from '../actions/subCategorizeOne'
 import { subcategorizeMulticursorActionCreator as subcategorizeMulticursor } from '../actions/subcategorizeMulticursor'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
@@ -35,7 +36,10 @@ const subCategorizeOneShortcut: Shortcut = {
   keyboard: { key: 'o', meta: true, alt: true },
   multicursor,
   svg: Icon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: dispatch => dispatch(subCategorizeOne()),
 }
 
@@ -47,7 +51,10 @@ export const subCategorizeOneShortcutAlias: Shortcut = {
   keyboard: { key: ']', meta: true },
   multicursor,
   svg: Icon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: dispatch => dispatch(subCategorizeOne()),
 }
 

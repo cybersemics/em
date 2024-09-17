@@ -3,6 +3,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import PinIcon from '../components/icons/PinIcon'
 import { HOME_PATH } from '../constants'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isPinned from '../selectors/isPinned'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -15,7 +16,10 @@ const pinShortcut: Shortcut = {
   descriptionInverse: 'Unpins a thought so its subthoughts are automatically hidden.',
   keyboard: { key: 'p', meta: true, alt: true },
   svg: PinIcon,
-  canExecute: getState => !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return !!state.cursor || hasMulticursor(state)
+  },
   multicursor: true,
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()

@@ -4,6 +4,7 @@ import Shortcut from '../@types/Shortcut'
 import SettingsIcon from '../components/icons/SettingsIcon'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildren } from '../selectors/getChildren'
+import hasMulticursor from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -33,7 +34,10 @@ const moveCursorForward: Shortcut = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState) => {
     const state = getState()
     const { cursor } = state

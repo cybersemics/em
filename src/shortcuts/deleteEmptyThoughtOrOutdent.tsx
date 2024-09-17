@@ -7,6 +7,7 @@ import { outdentActionCreator as outdent } from '../actions/outdent'
 import * as selection from '../device/selection'
 import { getChildren, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtBefore from '../selectors/getThoughtBefore'
+import hasMulticursor from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -56,7 +57,7 @@ const canExecuteOutdent = (state: State) => {
 /** A selector that returns true if either the cursor is on an empty thought that can be deleted, or is on an only child that can be outdented. */
 const canExecute = (getState: () => State) => {
   const state = getState()
-  return canExecuteOutdent(state) || canExecuteDeleteEmptyThought(state)
+  return canExecuteOutdent(state) || canExecuteDeleteEmptyThought(state) || hasMulticursor(state)
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

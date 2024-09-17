@@ -1,6 +1,7 @@
 import Shortcut from '../@types/Shortcut'
 import { headingActionCreator as heading } from '../actions/heading'
 import SettingsIcon from '../components/icons/SettingsIcon'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 export const headingLabels = {
@@ -32,7 +33,10 @@ const headingShortcut = (level: HeadingLevel): Shortcut => ({
   multicursor: true,
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: getState => !!getState().cursor && isDocumentEditable(),
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: dispatch => {
     dispatch(heading({ level }))
   },

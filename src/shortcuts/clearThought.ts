@@ -2,6 +2,7 @@ import Shortcut from '../@types/Shortcut'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import SettingsIcon from '../components/icons/SettingsIcon'
 import * as selection from '../device/selection'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const clearThoughtShortcut: Shortcut = {
@@ -16,7 +17,10 @@ const clearThoughtShortcut: Shortcut = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: (dispatch, getState) => {
     const isCursorCleared = getState().cursorCleared
 

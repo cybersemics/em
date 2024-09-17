@@ -3,6 +3,7 @@ import { bumpThoughtDownActionCreator as bumpThoughtDown } from '../actions/bump
 import SettingsIcon from '../components/icons/SettingsIcon'
 import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const bumpThoughtDownShortcut: Shortcut = {
@@ -17,7 +18,10 @@ const bumpThoughtDownShortcut: Shortcut = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: getState => !!getState().cursor && isDocumentEditable(),
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: dispatch => {
     // If there is already active selection, no need to focus to the hidden input.
     if (!selection.isActive()) {

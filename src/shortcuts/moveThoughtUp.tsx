@@ -2,6 +2,7 @@ import { Key } from 'ts-key-enum'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { moveThoughtUpActionCreator as moveThoughtUp } from '../actions/moveThoughtUp'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
@@ -31,7 +32,10 @@ const moveThoughtUpShortcut: Shortcut = {
   keyboard: { key: Key.ArrowUp, meta: true, shift: true },
   multicursor: true,
   svg: Icon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: dispatch => dispatch(moveThoughtUp()),
 }
 

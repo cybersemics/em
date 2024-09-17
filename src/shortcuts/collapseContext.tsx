@@ -1,6 +1,7 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { collapseContextActionCreator as collapseContext } from '../actions/collapseContext'
+import hasMulticursor from '../selectors/hasMulticursor'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
 const Icon = ({ size = 20 }: IconType) => (
@@ -30,7 +31,10 @@ const collapseContextShortcut: Shortcut = {
   },
   svg: Icon,
   keyboard: { key: 'c', meta: true, alt: true },
-  canExecute: getState => !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return !!state.cursor || hasMulticursor(state)
+  },
   exec: dispatch => {
     dispatch(collapseContext({}))
   },

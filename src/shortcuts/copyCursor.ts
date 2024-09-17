@@ -8,6 +8,7 @@ import copy from '../device/copy'
 import * as selection from '../device/selection'
 import exportContext from '../selectors/exportContext'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isPending from '../selectors/isPending'
 import simplifyPath from '../selectors/simplifyPath'
 import someDescendants from '../selectors/someDescendants'
@@ -75,9 +76,11 @@ const copyCursorShortcut: Shortcut = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: getState =>
+  canExecute: getState => {
+    const state = getState()
     // do not copy cursor if there is a browser selection
-    selection.isCollapsed() && !!getState().cursor && isDocumentEditable(),
+    return selection.isCollapsed() && (!!state.cursor || hasMulticursor(getState())) && isDocumentEditable()
+  },
   exec: async (dispatch, getState) => {
     const state = getState()
     const simplePath = simplifyPath(state, state.cursor!)

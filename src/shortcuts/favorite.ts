@@ -4,6 +4,7 @@ import { toggleAttributeActionCreator as toggleAttribute } from '../actions/togg
 import StarIcon from '../components/icons/StarIcon'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -14,7 +15,10 @@ const favorite: Shortcut = {
   description: 'Add the current thought to your Favorites list.',
   descriptionInverse: 'Remove the current thought from your Favorites list.',
   multicursor: true,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   isActive: getState => {
     const state = getState()
     const cursor = state.cursor

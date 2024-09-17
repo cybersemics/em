@@ -1,6 +1,7 @@
 import Shortcut from '../@types/Shortcut'
 import { extractThoughtActionCreator as extract } from '../actions/extractThought'
 import SettingsIcon from '../components/icons/SettingsIcon'
+import hasMulticursor from '../selectors/hasMulticursor'
 
 const extractThought: Shortcut = {
   id: 'extractThought',
@@ -13,7 +14,10 @@ const extractThought: Shortcut = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: getState => !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return !!state.cursor || hasMulticursor(state)
+  },
   exec: (dispatch, getState) => {
     dispatch(extract())
   },

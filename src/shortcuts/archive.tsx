@@ -8,6 +8,7 @@ import { AlertType, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -84,7 +85,10 @@ const archiveShortcut: Shortcut = {
   },
   svg: Icon,
   keyboard: { key: Key.Backspace, shift: true, meta: true },
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec,
 }
 
@@ -113,7 +117,10 @@ export const archiveAliases: Shortcut = {
     'lrdldru',
     'lrdldlru',
   ],
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec,
 }
 

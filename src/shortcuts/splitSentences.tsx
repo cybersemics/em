@@ -8,6 +8,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { splitSentencesActionCreator as splitSentences } from '../actions/splitSentences'
 import { HOME_TOKEN } from '../constants'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import head from '../util/head'
@@ -31,7 +32,10 @@ const splitSentencesShortcut: Shortcut = {
   keyboard: { key: 's', meta: true, shift: true },
   multicursor: true,
   svg: Icon,
-  canExecute: getState => !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return !!state.cursor || hasMulticursor(state)
+  },
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
     const state = getState()
     const { cursor } = state

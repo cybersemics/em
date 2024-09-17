@@ -3,6 +3,7 @@ import { showModalActionCreator as showModal } from '../actions/showModal'
 import ShareIcon from '../components/icons/ShareIcon'
 import { HOME_TOKEN } from '../constants'
 import { getAllChildren } from '../selectors/getChildren'
+import hasMulticursor from '../selectors/hasMulticursor'
 
 const shortcut: Shortcut = {
   id: 'exportContext',
@@ -12,7 +13,7 @@ const shortcut: Shortcut = {
   multicursor: 'ignore',
   canExecute: getState => {
     const state = getState()
-    if (state.cursor) return true
+    if (state.cursor || hasMulticursor(state)) return true
     return getAllChildren(state, HOME_TOKEN).length > 0
   },
   exec: dispatch => dispatch(showModal({ id: 'export' })),

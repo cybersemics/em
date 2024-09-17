@@ -4,6 +4,7 @@ import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
 import { outdentActionCreator as outdent } from '../actions/outdent'
 import SettingsIcon from '../components/icons/SettingsIcon'
 import attributeEquals from '../selectors/attributeEquals'
+import hasMulticursor from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -22,7 +23,10 @@ const moveCursorBackward: Shortcut = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

@@ -9,6 +9,7 @@ import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
+import hasMulticursor from '../selectors/hasMulticursor'
 import simplifyPath from '../selectors/simplifyPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -59,7 +60,10 @@ const deleteShortcut: Shortcut = {
     preventSetCursor: true,
   },
   keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec,
   svg: Icon,
 }

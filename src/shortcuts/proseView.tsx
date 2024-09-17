@@ -3,6 +3,7 @@ import Shortcut from '../@types/Shortcut'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import { HOME_PATH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
+import hasMulticursor from '../selectors/hasMulticursor'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -37,7 +38,10 @@ const proseViewShortcut: Shortcut = {
   keyboard: { key: 'p', shift: true, alt: true },
   multicursor: true,
   svg: Icon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

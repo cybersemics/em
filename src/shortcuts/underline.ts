@@ -1,6 +1,7 @@
 import Shortcut from '../@types/Shortcut'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import Icon from '../components/icons/UnderlineIcon'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggles formatting of the current browser selection as underline. If there is no selection, formats the entire thought. */
@@ -12,7 +13,10 @@ const underline: Shortcut = {
   svg: Icon,
   keyboard: { key: 'u', meta: true },
   multicursor: true,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: dispatch => {
     dispatch(formatSelection('underline'))
   },

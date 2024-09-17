@@ -2,6 +2,7 @@ import Shortcut from '../@types/Shortcut'
 import { swapNoteActionCreator } from '../actions/swapNote'
 import PencilIcon from '../components/icons/PencilIcon'
 import asyncFocus from '../device/asyncFocus'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const swapNote: Shortcut = {
@@ -12,7 +13,10 @@ const swapNote: Shortcut = {
   gesture: 'ulr',
   multicursor: true,
   svg: PencilIcon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: (dispatch, getState) => {
     asyncFocus()
     dispatch(swapNoteActionCreator())
