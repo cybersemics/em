@@ -109,6 +109,8 @@ const Tutorial: FC = () => {
 
   const cursorHeadValue = useSelector(state => state.cursor && headValue(state, state.cursor))
 
+  const gesturePath = gesture()
+
   return (
     <div
       className={cx(
@@ -177,10 +179,10 @@ const Tutorial: FC = () => {
             cursor &&
             cursorHeadValue &&
             cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
-        gesture() ? (
+        gesturePath ? (
           <div className='tutorial-trace-gesture'>
             <GestureDiagram
-              path={gesture()!}
+              path={gesturePath}
               size={160}
               strokeWidth={10}
               arrowSize={5}
