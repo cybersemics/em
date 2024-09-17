@@ -25,7 +25,7 @@ import usePlaceholder from './Editable/usePlaceholder'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
 
-export interface ThoughtProps {
+interface ThoughtContenttProps {
   allowSingleContext?: boolean
   debugIndex?: number
   editing?: boolean | null
@@ -84,11 +84,11 @@ const isBlack = (color: string | undefined) => {
   }
 }
 
-/** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
-const StaticThought = ({
+/** A static thought container with annotation, editable, and superscript. Renders a special component for home and divider contexts. Isolated from Thought because this re-renders with useLayoutEffect whenever multiline changes. */
+const ThoughtContentt = ({
   allowSingleContext,
   editing,
-  // See: ThoughtProps['isContextPending']
+  // See: ThoughtContenttProps['isContextPending']
   env,
   isContextPending,
   isEditing,
@@ -103,7 +103,7 @@ const StaticThought = ({
   styleThought,
   styleAnnotation,
   updateSize,
-}: ThoughtProps) => {
+}: ThoughtContenttProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
   const dark = useSelector(state => theme(state) !== 'Light')
@@ -113,6 +113,7 @@ const StaticThought = ({
   const editableRef = React.useRef<HTMLInputElement>(null)
   const multiline = useMultiline(editableRef, simplePath, isEditing)
   const placeholder = usePlaceholder({ isEditing, simplePath })
+  const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
 
   useLayoutEffect(() => {
     updateSize?.()
@@ -128,10 +129,8 @@ const StaticThought = ({
     _.isEqual,
   )
 
-  const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
-
-  // console.info('<StaticThought> ' + prettyPath(store.getState(), simplePath))
-  // useWhyDidYouUpdate('<StaticThought> ' + prettyPath(store.getState(), simplePath), {
+  // console.info('<ThoughtContentt> ' + prettyPath(store.getState(), simplePath))
+  // useWhyDidYouUpdate('<ThoughtContentt> ' + prettyPath(store.getState(), simplePath), {
   //   editing,
   //   isContextPending,
   //   isEditing,
@@ -203,10 +202,10 @@ const StaticThought = ({
                 whiteSpace: 'nowrap',
                 maxWidth: '100%',
                 /*
-                      vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
-                      Here is the reference to the reason.
-                      https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
-                    */
+                  vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
+                  Here is the reference to the reason.
+                  https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
+                */
                 verticalAlign: 'top',
               }),
             })}
@@ -217,7 +216,6 @@ const StaticThought = ({
   )
 }
 
-const StaticThoughtMemo = React.memo(StaticThought)
-StaticThoughtMemo.displayName = 'StaticThought'
+const ThoughtContenttMemo = React.memo(ThoughtContentt)
 
-export default StaticThoughtMemo
+export default ThoughtContenttMemo

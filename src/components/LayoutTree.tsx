@@ -20,7 +20,6 @@ import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -35,8 +34,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
-import unroot from '../util/unroot'
-import DropEnd from './DropEnd'
+import DropCliffComponent from './DropCliff'
 import VirtualThought from './VirtualThought'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
@@ -61,7 +59,6 @@ type TreeThought = {
   simplePath: SimplePath
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
   style?: React.CSSProperties | null
-  thoughtId: string
   // keys of visible children
   // only used in table view to calculate the width of column 1
   visibleChildrenKeys?: string[]
@@ -97,111 +94,6 @@ const viewportBottomStore = reactMinistore.compose(
 // include the head of each context view in the path in the key, otherwise there will be duplicate keys when the same thought is visible in normal view and context view
 const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
   `${(contextChain || []).map(head).join('')}|${id}`
-
-/** Dynamically update and remove sizes for different keys. */
-const useSizeTracking = () => {
-  // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
-  const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
-  const unmounted = useRef(false)
-
-  // Track debounced height removals
-  // See: removeSize
-  const sizeRemovalTimeouts = useRef(new Map<string, number>())
-
-  // Removing a size immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
-  // Debouncing size removal mitigates the issue.
-  // Use throttleConcat to accumulate all keys to be removed during the interval.
-  // TODO: Is a root cause of the mount-unmount loop.
-  const removeSize = useCallback((key: string) => {
-    clearTimeout(sizeRemovalTimeouts.current.get(key))
-    const timeout = setTimeout(() => {
-      if (unmounted.current) return
-      setSizes(sizesOld => {
-        delete sizesOld[key]
-        return sizesOld
-      })
-    }, SIZE_REMOVAL_DEBOUNCE) as unknown as number
-    sizeRemovalTimeouts.current.set(key, timeout)
-  }, [])
-
-  /** Update the size record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
-  const setSize = useCallback(
-    ({
-      height,
-      width,
-      id,
-      isVisible,
-      key,
-    }: {
-      height: number | null
-      width?: number | null
-      id: ThoughtId
-      isVisible: boolean
-      key: string
-    }) => {
-      if (height !== null) {
-        // cancel thought removal timeout
-        clearTimeout(sizeRemovalTimeouts.current.get(key))
-        sizeRemovalTimeouts.current.delete(key)
-
-        setSizes(sizesOld =>
-          height === sizesOld[key]?.height && isVisible === sizesOld[key]?.isVisible
-            ? sizesOld
-            : {
-                ...sizesOld,
-                [key]: {
-                  height,
-                  width: width || undefined,
-                  isVisible,
-                },
-              },
-        )
-      } else {
-        removeSize(key)
-      }
-    },
-    [removeSize],
-  )
-
-  useEffect(() => {
-    return () => {
-      unmounted.current = true
-    }
-  }, [])
-
-  return useMemo(
-    () => ({
-      sizes,
-      setSize,
-    }),
-    [sizes, setSize],
-  )
-}
-
-/** Measure the total height of the .nav and .footer elements on render. Always triggers a second render (which is nonconsequential since useSizeTracking already entails additional renders as heights are rendered). */
-const useNavAndFooterHeight = () => {
-  // Get the nav and footer heights for the spaceBelow calculation.
-  // Nav hight changes when the breadcrumbs wrap onto multiple lines.
-  // Footer height changes on font size change.
-  const [navAndFooterHeight, setNavAndFooterHeight] = useState(0)
-
-  // Read the footer and nav heights on render and set the refs so that the spaceBelow calculation is updated on the next render.
-  // This works because there is always a second render due to useSizeTracking.
-  // No risk of infinite render since the effect cannot change the height of the nav or footer.
-  // nav/footer height -> effect -> setNavAndFooterHeight -> render -> effect -> setNavAndFooterHeight (same values)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(
-    _.throttle(() => {
-      const navEl = document.querySelector('.nav')
-      const footerEl = document.querySelector('.footer')
-      setNavAndFooterHeight(
-        (navEl?.getBoundingClientRect().height || 0) + (footerEl?.getBoundingClientRect().height || 0),
-      )
-    }, 16.666),
-  )
-
-  return navAndFooterHeight
-}
 
 /** Recursiveley calculates the tree of visible thoughts, in order, represented as a flat list of thoughts with tree layout information. */
 const linearizeTree = (
@@ -311,7 +203,6 @@ const linearizeTree = (
       showContexts: contextViewActive,
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
       style,
-      thoughtId: child.id,
       ...(isTable
         ? { visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)) }
         : null),
@@ -346,124 +237,134 @@ const linearizeTree = (
   return thoughts
 }
 
-/** Lays out thoughts as DOM siblings with manual x,y positioning. */
-const LayoutTree = () => {
-  const { sizes, setSize } = useSizeTracking()
-  const treeThoughts = useSelector(linearizeTree, _.isEqual)
-  const fontSize = useSelector(state => state.fontSize)
-  const dragInProgress = useSelector(state => state.dragInProgress)
-  const indentDepth = useSelector(state =>
-    state.cursor && state.cursor.length > 2
-      ? // when the cursor is on a leaf, the indention level should not change
-        state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
-      : 0,
-  )
+/** Dynamically update and remove sizes for different keys. */
+const useSizeTracking = () => {
+  // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
+  const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
+  const unmounted = useRef(false)
 
-  // singleLineHeight is the measured height of a single line thought.
-  // If no sizes have been measured yet, use the estimated height.
-  // Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
-  // Then do not update it again.
-  const singleLineHeightPrev = useRef<number | null>(null)
-  const singleLineHeight = useMemo(() => {
-    // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
-    // If estimatedHeight is off, then totalHeight will fluctuate as actual sizes are saved (due to estimatedHeight differing from the actual single-line height).
-    const estimatedHeight = fontSize * 2 - 2
+  // Track debounced height removals
+  // See: removeSize
+  const sizeRemovalTimeouts = useRef(new Map<string, number>())
 
-    const singleLineHeightMeasured = Object.values(sizes).find(
-      // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different sizes.
-      ({ height }) => Math.abs(height - estimatedHeight) < height / 2,
-    )?.height
-    if (singleLineHeightMeasured) {
-      singleLineHeightPrev.current = singleLineHeightMeasured
-    }
-    return singleLineHeightPrev.current || estimatedHeight
-  }, [fontSize, sizes])
+  // Removing a size immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
+  // Debouncing size removal mitigates the issue.
+  // Use throttleConcat to accumulate all keys to be removed during the interval.
+  // TODO: Is a root cause of the mount-unmount loop.
+  const removeSize = useCallback((key: string) => {
+    clearTimeout(sizeRemovalTimeouts.current.get(key))
+    const timeout = setTimeout(() => {
+      if (unmounted.current) return
+      setSizes(sizesOld => {
+        delete sizesOld[key]
+        return sizesOld
+      })
+    }, SIZE_REMOVAL_DEBOUNCE) as unknown as number
+    sizeRemovalTimeouts.current.set(key, timeout)
+  }, [])
 
-  // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
-  const autofocusDepth = useSelector(state => {
-    // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return 0
-    const isCursorLeaf = !hasChildren(state, head(state.cursor))
-    return state.cursor.length + (isCursorLeaf ? -1 : 0)
-  })
+  /** Update the size record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
+  const setSize = useCallback(
+    ({
+      height,
+      width,
+      id,
+      isVisible,
+      key,
+    }: {
+      height: number | null
+      width?: number | null
+      id: ThoughtId
+      isVisible: boolean
+      key: string
+    }) => {
+      if (height !== null) {
+        // cancel thought removal timeout
+        clearTimeout(sizeRemovalTimeouts.current.get(key))
+        sizeRemovalTimeouts.current.delete(key)
 
-  // first uncle of the cursor used for DropUncle
-  const cursorUncleId = useSelector(state => {
-    // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return null
-    const isCursorLeaf = !hasChildren(state, head(state.cursor))
-    const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
-    return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
-  })
-
-  const viewportHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
-
-  const {
-    // the total amount of space above the first visible thought that will be cropped
-    spaceAbove,
-
-    // Sum all the sizes to get the total height of the containing div.
-    // Use estimated single-line height for the thoughts that do not have sizes yet.
-    // Exclude hidden thoughts below the cursor to reduce empty scroll space.
-    totalHeight,
-  } = treeThoughts.reduce(
-    (accum, node) => {
-      const heightNext =
-        node.key in sizes
-          ? sizes[node.key].isVisible || !node.belowCursor
-            ? sizes[node.key].height
-            : 0
-          : singleLineHeight
-      return {
-        totalHeight: accum.totalHeight + heightNext,
-        spaceAbove:
-          accum.spaceAbove + (sizes[node.key] && !sizes[node.key].isVisible && !node.belowCursor ? heightNext : 0),
+        setSizes(sizesOld =>
+          height === sizesOld[key]?.height && isVisible === sizesOld[key]?.isVisible
+            ? sizesOld
+            : {
+                ...sizesOld,
+                [key]: {
+                  height,
+                  width: width || undefined,
+                  isVisible,
+                },
+              },
+        )
+      } else {
+        removeSize(key)
       }
     },
-    {
-      totalHeight: 0,
-      spaceAbove: 0,
-    },
+    [removeSize],
   )
 
-  // The bottom of all visible thoughts in a virtualized list where thoughts below the viewport are hidden (relative to document coordinates; changes with scroll position).
-  const viewportBottom = viewportBottomStore.useSelector(
-    useCallback(
-      viewportBottomState => {
-        // the number of additional thoughts below the bottom of the screen that are rendered
-        const overshoot = singleLineHeight * 5
-        return viewportBottomState + spaceAbove + overshoot
-      },
-      [singleLineHeight, spaceAbove],
-    ),
-  )
+  useEffect(() => {
+    return () => {
+      unmounted.current = true
+    }
+  }, [])
 
-  // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
-  const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
-
-  // memoized style for padding at a cliff
-  const cliffPaddingStyle = useMemo(
+  return useMemo(
     () => ({
-      paddingBottom: fontSize / 4,
+      sizes,
+      setSize,
     }),
-    [fontSize],
+    [sizes, setSize],
+  )
+}
+
+/** Measure the total height of the .nav and .footer elements on render. Always triggers a second render (which is nonconsequential since useSizeTracking already entails additional renders as heights are rendered). */
+const useNavAndFooterHeight = () => {
+  // Get the nav and footer heights for the spaceBelow calculation.
+  // Nav hight changes when the breadcrumbs wrap onto multiple lines.
+  // Footer height changes on font size change.
+  const [navAndFooterHeight, setNavAndFooterHeight] = useState(0)
+
+  // Read the footer and nav heights on render and set the refs so that the spaceBelow calculation is updated on the next render.
+  // This works because there is always a second render due to useSizeTracking.
+  // No risk of infinite render since the effect cannot change the height of the nav or footer.
+  // nav/footer height -> effect -> setNavAndFooterHeight -> render -> effect -> setNavAndFooterHeight (same values)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(
+    _.throttle(() => {
+      const navEl = document.querySelector('.nav')
+      const footerEl = document.querySelector('.footer')
+      setNavAndFooterHeight(
+        (navEl?.getBoundingClientRect().height || 0) + (footerEl?.getBoundingClientRect().height || 0),
+      )
+    }, 16.666),
   )
 
-  // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
-  // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
-  const {
-    indentCursorAncestorTables,
-    treeThoughtsPositioned,
-  }: {
-    // the global indent based on the depth of the cursor and how many ancestors are tables
-    indentCursorAncestorTables: number
-    treeThoughtsPositioned: TreeThoughtPositioned[]
-  } = useMemo(() => {
+  return navAndFooterHeight
+}
+
+/**
+ * Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
+ * We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
+ **/
+const useTreeThoughtsPositioned = ({
+  singleLineHeight,
+  sizes,
+  treeThoughts,
+}: {
+  singleLineHeight: number
+  sizes: Index<{ height: number; width?: number; isVisible: boolean }>
+  treeThoughts: TreeThought[]
+}) => {
+  const fontSize = useSelector(state => state.fontSize)
+
+  return useMemo(() => {
     // y increases monotically, so it is more efficent to accumulate than to calculate each time
     // x varies, so we calculate it each time
     // (it is especially hard to determine how much x is decreased on cliffs when there are any number of tables in between)
     let yaccum = 0
-    let indentCursorAncestorTables = 0
+
+    /** The global indent based on the depth of the cursor and ancestors table widths (pixels). */
+    let indentCursor = 0
 
     /** A stack of { depth, y } that stores the bottom y value of each col1 ancestor. */
     /* By default, yaccum is not advanced by the height of col1. This is what positions col2 at the same y value as col1. However, if the height of col1 exceeds the height of col2, then the next node needs to be positioned below col1, otherwise it will overlap. This stack stores the minimum y value of the next node (i.e. y + height). Depth is used to detect the next node after all of col1's descendants.
@@ -520,7 +421,7 @@ const LayoutTree = () => {
       // Calculate the cursor ancestor table width when we are on the cursor node.
       // This is used to animate the entire tree to the left as the cursor moves right.
       if (node.isCursor) {
-        indentCursorAncestorTables =
+        indentCursor =
           ancestorTableWidths +
           // table col1: shift left by an additional 1 em so that the shift at the next depth does not feel so extreme
           (node.isTableCol1
@@ -578,20 +479,102 @@ const LayoutTree = () => {
       }
     })
 
-    return { indentCursorAncestorTables, treeThoughtsPositioned }
+    return { indentCursor, treeThoughtsPositioned }
   }, [fontSize, sizes, singleLineHeight, treeThoughts])
+}
+
+/**
+ * The actual height of a single line thought measured in the DOM.
+ * If no sizes have been measured yet, use the estimated height.
+ * Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
+ * Then do not update it again.
+ **/
+const useSingleLineHeight = ({ sizes }: { sizes: Index<{ height: number; width?: number; isVisible: boolean }> }) => {
+  const fontSize = useSelector(state => state.fontSize)
+
+  const singleLineHeightPrev = useRef<number | null>(null)
+
+  return useMemo(() => {
+    // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
+    // If estimatedHeight is off, then totalHeight will fluctuate as actual sizes are saved (due to estimatedHeight differing from the actual single-line height).
+    const estimatedHeight = fontSize * 2 - 2
+
+    const singleLineHeightMeasured = Object.values(sizes).find(
+      // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different sizes.
+      ({ height }) => Math.abs(height - estimatedHeight) < height / 2,
+    )?.height
+    if (singleLineHeightMeasured) {
+      singleLineHeightPrev.current = singleLineHeightMeasured
+    }
+    return singleLineHeightPrev.current || estimatedHeight
+  }, [fontSize, sizes])
+}
+
+/** Calculates the space above and below the visible thoughts to allow seamless virtualization of hidden thoughts and adjustment of the scroll position as the cursor depth changes. */
+const useAutofocusViewport = ({
+  singleLineHeight,
+  sizes,
+  treeThoughts,
+}: {
+  singleLineHeight: number
+  sizes: Index<{ height: number; width?: number; isVisible: boolean }>
+  treeThoughts: TreeThought[]
+}) => {
+  const viewportHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
+  const navAndFooterHeight = useNavAndFooterHeight()
+
+  const {
+    /** The total amount of space above the first visible thought that will be cropped. */
+    spaceAboveFirstThought,
+
+    /**
+     * Sum all the sizes to get the total height of the containing div.
+     * Use estimated single-line height for the thoughts that do not have sizes yet.
+     * Exclude hidden thoughts below the cursor to reduce empty scroll space.
+     */
+    totalHeight,
+  } = treeThoughts.reduce(
+    (accum, node) => {
+      const heightNext =
+        node.key in sizes
+          ? sizes[node.key].isVisible || !node.belowCursor
+            ? sizes[node.key].height
+            : 0
+          : singleLineHeight
+      return {
+        totalHeight: accum.totalHeight + heightNext,
+        spaceAboveFirstThought:
+          accum.spaceAboveFirstThought +
+          (sizes[node.key] && !sizes[node.key].isVisible && !node.belowCursor ? heightNext : 0),
+      }
+    },
+    {
+      totalHeight: 0,
+      spaceAboveFirstThought: 0,
+    },
+  )
+
+  /** Extend spaceAbove to be at least the height of the viewport so that there is room to scroll up. */
+  const spaceAboveExtended = Math.max(spaceAboveFirstThought, viewportHeight)
 
   const spaceAboveLast = useRef(spaceAboveExtended)
 
-  // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
-  // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
-  // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
-  const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
-
-  // get the scroll position before the render so it can be preserved
+  /** The scroll position before the render so it can be preserved. */
   const scrollY = window.scrollY
 
-  // when spaceAbove changes, scroll by the same amount so that the thoughts appear to stay in the same place
+  /** The bottom of all visible thoughts in a virtualized list where thoughts below the viewport are hidden (relative to document coordinates; changes with scroll position). */
+  const viewportBottom = viewportBottomStore.useSelector(
+    useCallback(
+      viewportBottomState => {
+        // the number of additional thoughts below the bottom of the screen that are rendered
+        const overshoot = singleLineHeight * 5
+        return viewportBottomState + spaceAboveFirstThought + overshoot
+      },
+      [singleLineHeight, spaceAboveFirstThought],
+    ),
+  )
+
+  // when spaceAboveExtended changes, scroll by the same amount so that the thoughts appear to stay in the same place
   useEffect(
     () => {
       const spaceAboveDelta = spaceAboveExtended - spaceAboveLast.current
@@ -603,17 +586,55 @@ const LayoutTree = () => {
     [spaceAboveExtended],
   )
 
-  const navAndFooterHeight = useNavAndFooterHeight()
-
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
+
+  return { spaceAbove: spaceAboveExtended - viewportHeight, height: totalHeight, spaceBelow, viewportBottom }
+}
+
+/** Renders the tree of visible thoughts as DOM siblings with absolute x,y positions for animation across depths. */
+const LayoutTree = () => {
+  const treeThoughts = useSelector(linearizeTree, _.isEqual)
+  const fontSize = useSelector(state => state.fontSize)
+  const dragInProgress = useSelector(state => state.dragInProgress)
+  const { sizes, setSize } = useSizeTracking()
+  const singleLineHeight = useSingleLineHeight({ sizes })
+  const cliffPaddingStyle = useMemo(() => ({ paddingBottom: fontSize / 4 }), [fontSize])
+
+  const {
+    indentCursor,
+    treeThoughtsPositioned,
+  }: {
+    indentCursor: number
+    treeThoughtsPositioned: TreeThoughtPositioned[]
+  } = useTreeThoughtsPositioned({ singleLineHeight, sizes, treeThoughts })
+
+  /**
+   * The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
+   * The indentCursor multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
+   * The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.
+   */
+  const indent = useSelector(state => {
+    const indentDepth =
+      state.cursor && state.cursor.length > 2
+        ? // when the cursor is on a leaf, the indention level should not change
+          state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
+        : 0
+    return indentDepth * 0.9 + indentCursor / fontSize
+  })
+
+  const { height, spaceAbove, spaceBelow, viewportBottom } = useAutofocusViewport({
+    singleLineHeight,
+    sizes,
+    treeThoughts,
+  })
 
   return (
     <div
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
-        transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
+        transform: `translateY(${-spaceAbove}px)`,
         marginTop: '0.501em',
       }}
     >
@@ -621,10 +642,10 @@ const LayoutTree = () => {
         style={{
           // Set a container height that fits all thoughts.
           // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
-          height: totalHeight + spaceBelow,
+          height: height + spaceBelow,
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
-          transform: `translateX(${1.5 - indent}em`,
+          transform: `translateX(${1.5 - indent}em)`,
           transition: `transform ${token('durations.layoutSlowShiftDuration')} ease-out`,
           // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
@@ -651,7 +672,6 @@ const LayoutTree = () => {
               simplePath,
               singleLineHeightWithCliff,
               style,
-              thoughtId,
               width,
               x,
               y,
@@ -691,7 +711,6 @@ const LayoutTree = () => {
                 <VirtualThought
                   debugIndex={testFlags.simulateDrop ? indexChild : undefined}
                   depth={depth}
-                  dropUncle={thoughtId === cursorUncleId}
                   env={env}
                   indexDescendant={indexDescendant}
                   // isMultiColumnTable={isMultiColumnTable}
@@ -709,46 +728,15 @@ const LayoutTree = () => {
                   crossContextualKey={key}
                 />
 
-                {/* DropEnd (cliff) */}
-                {dragInProgress &&
-                  cliff < 0 &&
-                  // do not render hidden cliffs
-                  // rough autofocus estimate
-                  autofocusDepth - depth < 2 &&
-                  Array(-cliff)
-                    .fill(0)
-                    .map((x, i) => {
-                      const pathEnd = -(cliff + i) < path.length ? (path.slice(0, cliff + i) as Path) : HOME_PATH
-                      const cliffDepth = unroot(pathEnd).length
-
-                      // After table col2, shift the DropEnd left by the width of col1.
-                      // This correctly positions the drop target for dropping after the table view.
-                      // Otherwise it would be too far to the right.
-                      const dropEndMarginLeft =
-                        isTableCol2 && cliffDepth - depth < 0 ? treeThoughtsPositioned[index - 1].width || 0 : 0
-
-                      return (
-                        <div
-                          key={'DropEnd-' + head(pathEnd)}
-                          className='z-index-subthoughts-drop-end'
-                          style={{
-                            position: 'relative',
-                            top: '-0.2em',
-                            left: `calc(${cliffDepth - depth}em - ${dropEndMarginLeft}px + ${isTouch ? -1 : 1}px)`,
-                            transition: 'left 0.15s ease-out',
-                          }}
-                        >
-                          <DropEnd
-                            depth={pathEnd.length}
-                            path={pathEnd}
-                            // Extend the click area of the drop target when there is nothing below.
-                            // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
-                            // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
-                            // last={!nextChildId}
-                          />
-                        </div>
-                      )
-                    })}
+                {dragInProgress && cliff < 0 && (
+                  <DropCliffComponent
+                    cliff={cliff}
+                    depth={depth}
+                    isTableCol2={isTableCol2}
+                    prevWidth={treeThoughtsPositioned[index - 1].width}
+                    path={path}
+                  />
+                )}
               </div>
             )
           },

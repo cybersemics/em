@@ -18,7 +18,7 @@ import head from '../util/head'
 import noteValue from '../util/noteValue'
 import DropChild from './DropChild'
 import DropUncle from './DropUncle'
-import Subthought from './Subthought'
+import Thought from './Thought'
 
 /** A resize handler that should be called whenever a thought's height has changed. */
 export type OnResize = (args: {
@@ -43,7 +43,6 @@ const selectCursor = (state: State) => state.cursor
 const VirtualThought = ({
   debugIndex,
   depth,
-  dropUncle,
   env,
   indexDescendant,
   isMultiColumnTable,
@@ -61,7 +60,6 @@ const VirtualThought = ({
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
   depth: number
-  dropUncle?: boolean
   env?: LazyEnv
   indexDescendant: number
   isMultiColumnTable?: boolean
@@ -212,15 +210,14 @@ const VirtualThought = ({
                 - d
               - e
          */
-        !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} />
+        !isVisible && <DropUncle depth={depth} path={path} simplePath={simplePath} />
       }
 
       {!shimHiddenThought && (
-        <Subthought
+        <Thought
           autofocus={autofocus}
           debugIndex={debugIndex}
           depth={depth + 1}
-          dropUncle={dropUncle}
           env={env}
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
@@ -266,7 +263,5 @@ const VirtualThoughtMemo = React.memo(VirtualThought, (prevProps, nextProps) => 
 
   return isEqual
 })
-
-VirtualThoughtMemo.displayName = 'VirtualThought'
 
 export default VirtualThoughtMemo
