@@ -92,6 +92,8 @@ interface Shortcut {
         ) => void | Promise<void>
         /** Prevent the cursor from being set back at the end of the shortcut execution. */
         preventSetCursor?: boolean
+        /** Reverse the order of the cursors before executing the shortcut. */
+        reverse?: boolean
       }
 }
 

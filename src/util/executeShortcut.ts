@@ -3,14 +3,18 @@ import { Store } from 'redux'
 import Shortcut from '../@types/Shortcut'
 import ShortcutType from '../@types/ShortcutType'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
+import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { alertActionCreator as alert } from '../actions/alert'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { AlertType, noop } from '../constants'
+import { AlertType, HOME_PATH, noop } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
-import pathToThought from '../selectors/pathToThought'
+import thoughtToPath from '../selectors/thoughtToPath'
 import globalStore from '../stores/app'
 import dispatch from '../test-helpers/dispatch'
+import equalPath from './equalPath'
+import head from './head'
 
 interface Options {
   store?: Store<State, any>
@@ -19,6 +23,15 @@ interface Options {
 }
 
 const eventNoop = { preventDefault: noop } as Event
+
+/** Recomputes the path to a thought. Returns null if the thought does not exist. */
+const recomputePath = (state: State, thoughtId: ThoughtId) => {
+  const path = thoughtToPath(state, thoughtId)
+
+  if (path && equalPath(path, HOME_PATH)) return null
+
+  return path
+}
 
 /** Execute a single shortcut. Defaults to global store and keyboard shortcut. Use `executeShortcutWithMulticursor` to execute a shortcut with multicursor mode. */
 const executeShortcut = async (shortcut: Shortcut, { store, type, event }: Options = {}) => {
@@ -82,19 +95,37 @@ export const executeShortcutWithMulticursor = async (shortcut: Shortcut, { store
     return a.length - b.length
   })
 
+  // Reverse the order of the cursors if the shortcut has reverse multicursor mode enabled.
+  if (multicursorConfig.reverse) {
+    paths.reverse()
+  }
+
   if (multicursorConfig.execMulticursor) {
     // The shortcut has their own multicursor logic, so delegate to it.
-    return await multicursorConfig.execMulticursor(paths, store.dispatch, store.getState, event, { type })
+    await multicursorConfig.execMulticursor(paths, store.dispatch, store.getState, event, { type })
   } else {
     // Execute the shortcut for each multicursor path and restore the cursor to its original position.
     for (const path of paths) {
-      await store.dispatch(setCursor({ path }))
+      // Make sure we have the correct path to the thought in case it was moved during execution.
+      const recomputedPath = recomputePath(state, head(path))
+      if (!recomputedPath) continue
+
+      await store.dispatch(setCursor({ path: recomputedPath }))
       await executeShortcut(shortcut, { store, type, event })
     }
 
     // Restore the cursor to its original position if not prevented.
     if (!multicursorConfig.preventSetCursor) await store.dispatch(setCursor({ path: cursorBeforeMulticursor }))
   }
+
+  // Restore multicursors
+  return await store.dispatch(
+    paths.map(path => (dispatch, getState) => {
+      const recomputedPath = recomputePath(getState(), head(path))
+      if (!recomputedPath) return
+      dispatch(addMulticursor({ path: recomputedPath }))
+    }),
+  )
 }
 
 export default executeShortcut
