@@ -6,6 +6,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { deleteResumableFile } from '../actions/importFiles'
 import { isTouch } from '../browser'
 import useCombinedRefs from '../hooks/useCombinedRefs'
+import usePositionFixed from '../hooks/usePositionFixed'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import syncStatusStore from '../stores/syncStatus'
@@ -29,6 +30,7 @@ const Popup = React.forwardRef<
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const padding = useSelector(state => state.fontSize / 2 + 2)
+  const positionFixedStyles = usePositionFixed()
   const useSwipeToDismissProps = useSwipeToDismiss({
     // dismiss after animation is complete to avoid touch events going to the Toolbar
     onDismissEnd: () => {
@@ -57,9 +59,8 @@ const Popup = React.forwardRef<
       ref={combinedRefs}
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
       style={{
+        ...positionFixedStyles,
         fontSize,
-        position: 'fixed',
-        top: 0,
         width: '100%',
         // scale with font size to stay vertically centered over toolbar
         padding: `${padding}px 0 ${padding}px`,

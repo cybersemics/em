@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isIOS, isSafari, isTouch } from '../browser'
+import { isTouch } from '../browser'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -52,7 +52,6 @@ import isURL from '../util/isURL'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
-import * as positionFixed from './Editable/positionFixed'
 import useEditMode from './Editable/useEditMode'
 import useOnPaste from './Editable/useOnPaste'
 
@@ -412,10 +411,6 @@ const Editable = ({
     e => {
       blurring = true
 
-      if (isTouch && isSafari() && !isIOS) {
-        positionFixed.stop()
-      }
-
       const { invalidState } = state
       throttledChangeRef.current.flush()
 
@@ -481,10 +476,6 @@ const Editable = ({
       if (suppressFocusStore.getState()) return
       // do not allow blur to setEditingValue when it is followed immediately by a focus
       blurring = false
-
-      if (isTouch && isSafari() && !isIOS) {
-        positionFixed.start()
-      }
 
       const { dragHold, dragInProgress } = store.getState()
       if (!dragHold && !dragInProgress) {

@@ -1,15 +1,17 @@
 import { FC, useCallback } from 'react'
+import { css } from '../../../styled-system/css'
 import scrollTo from '../../device/scrollTo'
-import scrollTopStore from '../../stores/scrollTop'
+import usePositionFixed from '../../hooks/usePositionFixed'
 import TutorialNavigationButton from './TutorialNavigationButton'
+
+// approximate height of button in em used to animate in from out of view
+const BUTTON_HEIGHT = 2
 
 /** A button to scroll up to the tutorial. */
 const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
-  const scrollTop = scrollTopStore.useState()
+  const positionFixedStyles = usePositionFixed()
 
-  /**
-   * Scrolls to the top of the window.
-   */
+  /** Scrolls smoothly to the top. */
   const scrollUp = useCallback(() => {
     scrollTo('top', 'smooth')
   }, [])
@@ -17,26 +19,34 @@ const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
   return (
     <div
       style={{
-        position: 'absolute',
-        top: scrollTop,
         left: 0,
+        // for some reason without the additional height the button gets cropped
+        paddingBottom: `${BUTTON_HEIGHT}em`,
+        // Turn off pointer events, otherwise this will block the close button.
+        // The pointerEvents can be re-enabled for the button itself.
+        pointerEvents: 'none',
         width: '100%',
+        ...positionFixedStyles,
       }}
     >
       <div
         style={{
-          visibility: show ? 'visible' : 'hidden',
           opacity: show ? 1 : 0,
           width: '100%',
-          position: 'absolute',
-          top: show ? '0.5em' : '-2em',
-          left: 0,
-          transition: 'opacity 0.25s ease-in-out, visibility 0.25s ease-in-out, top 0.25s ease-in-out',
+          transform: `translateY(${show ? 0.5 : -BUTTON_HEIGHT}em`,
+          transition: 'opacity 0.25s ease-in-out, transform 0.25s ease-in-out',
           display: 'flex',
           justifyContent: 'center',
         }}
       >
-        <TutorialNavigationButton clickHandler={scrollUp} value='Scroll up for tutorial' />
+        <TutorialNavigationButton
+          clickHandler={scrollUp}
+          value='Scroll up for tutorial'
+          classes={css({
+            // enable pointer events on the button to override pointerEvents none on the div above
+            pointerEvents: 'all',
+          })}
+        />
       </div>
     </div>
   )

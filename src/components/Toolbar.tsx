@@ -17,6 +17,7 @@ import ShortcutId from '../@types/ShortcutId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
 import { TOOLBAR_DEFAULT_SHORTCUTS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
+import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -96,6 +97,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     [updateArrows, deselectPressingToolbarId],
   )
 
+  const positionFixedStyles = usePositionFixed()
+
   /**********************************************************************
    * Effects
    **********************************************************************/
@@ -162,6 +165,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           marginLeft: customize ? -5 : 0,
           // offset extended drop area of ToolbarButton
           marginBottom: isDraggingAny ? '-7em' : 0,
+          ...positionFixedStyles,
         }}
       >
         <div

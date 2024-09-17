@@ -148,7 +148,7 @@ const initEvents = (store: Store<State, any>) => {
     store.dispatch(setCursor({ path: cursor, replaceContextViews: contextViews }))
   }
 
-  /** Save selection offset to storage, throttled. */
+  /** Save selection offset to storage, throttled to SELECTION_CHANGE_THROTTLE. */
   const saveSelectionOffset = _.throttle(
     () => {
       storageModel.set('cursor', value => ({
