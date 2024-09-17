@@ -6,6 +6,7 @@ import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { AlertType, noop } from '../constants'
+import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import pathToThought from '../selectors/pathToThought'
 import globalStore from '../stores/app'
@@ -71,12 +72,15 @@ export const executeShortcutWithMulticursor = async (shortcut: Shortcut, { store
   const cursorBeforeMulticursor = state.cursorBeforeMulticursor
   // For each multicursor, place the cursor on the path and execute the shortcut by calling executeShortcut.
   const paths = Object.values(state.multicursors)
-  // Sort the paths deterministically: prefer ancestors over descendants, then go by rank.
-  paths.sort((a, b) =>
-    a.length === b.length
-      ? (pathToThought(state, a)?.rank ?? 0) - (pathToThought(state, b)?.rank ?? 0)
-      : a.length - b.length,
-  )
+  // Sort the paths deterministically in document order
+  paths.sort((a, b) => {
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      const aRank = getThoughtById(state, a[i]).rank
+      const bRank = getThoughtById(state, b[i]).rank
+      if (aRank !== bRank) return aRank - bRank
+    }
+    return a.length - b.length
+  })
 
   if (multicursorConfig.execMulticursor) {
     // The shortcut has their own multicursor logic, so delegate to it.

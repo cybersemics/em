@@ -32,16 +32,6 @@ const copyCursorShortcut: Shortcut = {
         return [...acc.filter(p => !p.includes(head(cur))), cur]
       }, [])
 
-      // sort cursors in document order
-      filteredCursors.sort((a, b) => {
-        for (let i = 0; i < Math.min(a.length, b.length); i++) {
-          const aRank = getThoughtById(state, a[i]).rank
-          const bRank = getThoughtById(state, b[i]).rank
-          if (aRank !== bRank) return aRank - bRank
-        }
-        return a.length - b.length
-      })
-
       // Pull all thoughts if any are pending
       const needsPull = filteredCursors.some(cursor =>
         someDescendants(state, head(cursor), child => isPending(state, getThoughtById(state, child.id))),
