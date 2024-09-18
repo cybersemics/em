@@ -118,14 +118,16 @@ export const executeShortcutWithMulticursor = async (shortcut: Shortcut, { store
     if (!multicursorConfig.preventSetCursor) await store.dispatch(setCursor({ path: cursorBeforeMulticursor }))
   }
 
-  // Restore multicursors
-  return await store.dispatch(
-    paths.map(path => (dispatch, getState) => {
-      const recomputedPath = recomputePath(getState(), head(path))
-      if (!recomputedPath) return
-      dispatch(addMulticursor({ path: recomputedPath }))
-    }),
-  )
+  if (!multicursorConfig.clearMulticursor) {
+    // Restore multicursors
+    await store.dispatch(
+      paths.map(path => (dispatch, getState) => {
+        const recomputedPath = recomputePath(getState(), head(path))
+        if (!recomputedPath) return
+        dispatch(addMulticursor({ path: recomputedPath }))
+      }),
+    )
+  }
 }
 
 export default executeShortcut

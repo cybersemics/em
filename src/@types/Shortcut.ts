@@ -94,6 +94,8 @@ interface Shortcut {
         preventSetCursor?: boolean
         /** Reverse the order of the cursors before executing the shortcut. */
         reverse?: boolean
+        /** Clear the multicursor after the shortcut is executed. */
+        clearMulticursor?: boolean
       }
 }
 

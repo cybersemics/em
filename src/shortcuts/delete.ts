@@ -3,6 +3,7 @@ import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../actions/deleteThoughtWithCursor'
 import { errorActionCreator as error } from '../actions/error'
+import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import Icon from '../components/icons/DeleteIcon'
 import { AlertType, Settings } from '../constants'
 import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
@@ -58,6 +59,24 @@ const deleteShortcut: Shortcut = {
   multicursor: {
     enabled: true,
     preventSetCursor: true,
+    reverse: true,
+    clearMulticursor: true,
+    execMulticursor(cursors, dispatch, getState, e, { type }) {
+      const numThougths = cursors.length
+
+      for (const cursor of cursors) {
+        dispatch(setCursor({ path: cursor }))
+        exec(dispatch, getState, e, { type })
+      }
+
+      dispatch(
+        alert(`Deleted ${numThougths} thoughts.`, {
+          alertType: AlertType.ThoughtDeleted,
+          clearDelay: 8000,
+          showCloseLink: true,
+        }),
+      )
+    },
   },
   keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },
   canExecute: getState => {
