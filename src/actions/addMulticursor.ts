@@ -11,29 +11,22 @@ import setCursor from './setCursor'
 const addMulticursor = (state: State, { path }: { path: Path }): State => {
   const isEmpty = !Object.keys(state.multicursors).length
 
-  if (isEmpty) {
-    return reducerFlow([
-      // for touch, unset the cursor before adding multicursor
-      isTouch ? setCursor({ path: null }) : null,
-      state => ({
-        ...state,
-        cursorBeforeMulticursor: state.cursor,
-        multicursors: {
-          [hashPath(path)]: path,
-          // on desktop, add the cursor to the multicursor set
-          ...(state.cursor && !isTouch ? { [hashPath(state.cursor)]: state.cursor } : {}),
-        },
-      }),
-    ])(state)
-  }
-
-  return {
-    ...state,
-    multicursors: {
-      ...state.multicursors,
-      [hashPath(path)]: path,
-    },
-  }
+  return reducerFlow([
+    // for touch, unset the cursor before adding multicursor
+    isTouch && isEmpty ? setCursor({ path: null }) : null,
+    state => ({
+      ...state,
+      cursorBeforeMulticursor: isEmpty ? state.cursor : state.cursorBeforeMulticursor,
+      multicursors: {
+        ...state.multicursors,
+        [hashPath(path)]: path,
+        // on desktop, add the cursor to the multicursor set if it's empty
+        ...(isEmpty && state.cursor && !isTouch ? { [hashPath(state.cursor)]: state.cursor } : {}),
+      },
+    }),
+    // on desktop, set the cursor to the new multicursor if none exists
+    !state.cursor && !isTouch ? setCursor({ path, preserveMulticursor: true }) : null,
+  ])(state)
 }
 
 /** Action-creator for addMulticursor. */
