@@ -64,6 +64,7 @@ type TreeThought = {
   style?: React.CSSProperties | null
   thoughtId: string
   isLastVisible?: boolean
+  autofocus?: 'show' | 'dim' | 'hide-parent' | 'hide'
   // keys of visible children
   // only used in table view to calculate the width of column 1
   visibleChildrenKeys?: string[]
@@ -292,6 +293,7 @@ const linearizeTree = (
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
     const isTableCol2 = attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
     const isTableCol2Child = attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table')
+    const autofocus = calculateAutofocus(state, childPath)
 
     const node: TreeThought = {
       belowCursor: !!belowCursor,
@@ -303,6 +305,7 @@ const linearizeTree = (
       isTableCol1,
       isTableCol2,
       isTableCol2Child,
+      autofocus,
       // In the context view, use filteredChild.id (the context) rather than child.id (the context parent), otherwise duplicate thoughts in the same context will have the same key.
       // For example, a/~m/cat and a/~m/cats need to use the ids of cat/cats rather than m.
       // filteredChild === child in normal view, so it does not matter in that case.
@@ -346,19 +349,7 @@ const linearizeTree = (
     return [...accum, node, ...descendants]
   }, [])
 
-  // Generate isLastVisible property here because determinig the next thought is difficult in the recursive call. So we do it after tree of thought is completely generated.
-  const treeThoughtsWithIsLastVisible = thoughts.map((node, index, thought) => {
-    const nextNode = thought[index + 1]
-    const nextAutofocus = nextNode ? calculateAutofocus(state, nextNode.path) : null
-    const nextThoughtVisible = nextAutofocus === 'show' || nextAutofocus === 'dim'
-
-    return {
-      ...node,
-      isLastVisible: !nextThoughtVisible,
-    }
-  })
-
-  return treeThoughtsWithIsLastVisible
+  return thoughts
 }
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
@@ -582,12 +573,16 @@ const LayoutTree = () => {
         ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
       }
 
+      const nextAutofocus = next?.autofocus
+      const nextIsLastVisible = nextAutofocus === 'show' || nextAutofocus === 'dim'
+
       return {
         ...node,
         cliff,
         height,
         singleLineHeightWithCliff,
         width: tableCol1Widths.get(head(parentOf(node.path))),
+        isLastVisible: !nextIsLastVisible,
         x,
         y,
       }
@@ -680,7 +675,7 @@ const LayoutTree = () => {
             // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
             if (belowCursor && !isCursor && y > viewportBottom + height) return null
 
-            // Get the next and previous thoughts
+            // Get the previous thought
             const prevThought = treeThoughtsPositioned[index - 1]
 
             // Pass only the cliff value iof previous thought

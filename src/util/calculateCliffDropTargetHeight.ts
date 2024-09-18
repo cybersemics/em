@@ -7,7 +7,6 @@ const calculateCliffDropTargetHeight = ({ cliff = 0, depth }: { cliff?: number; 
   // Calculate dynamic height: increase as depth decreases
   const baseHeight = 1
   const heightIncrease = 0.5
-  // const dropTargetHeight = baseHeight + heightIncrease * ((-cliff || depth) - depth)
   const dropTargetHeight = cliff === 0 ? baseHeight : baseHeight + heightIncrease * (-cliff - depth)
 
   return dropTargetHeight
