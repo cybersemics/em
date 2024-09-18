@@ -35,7 +35,11 @@ const outdentShortcut: Shortcut = {
     keyboard: moveCursorBackward.keyboard,
   },
   gesture: 'lrl',
-  multicursor: true,
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+    reverse: true,
+  },
   svg: Icon,
   canExecute: getState => {
     const state = getState()
