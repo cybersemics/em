@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import { useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
@@ -80,7 +81,17 @@ const NavBar = ({ position }: { position: string }) => {
               {!isTutorialOn && (
                 <>
                   {/* The entire bottom nav is scaled by font size using the Scale component, so we can use a fixed size here. */}
-                  {showHomeLink ? <HomeLink size={24} /> : null}
+                  {showHomeLink ? (
+                    <HomeLink
+                      size={24}
+                      className={css({
+                        position: 'relative',
+                        zIndex: 'stack',
+                        ...(position === 'top' && { cssFloat: 'left', marginRight: '2px' }),
+                        ...(position === 'bottom' && { position: 'absolute', left: '-2px' }),
+                      })}
+                    />
+                  ) : null}
                   <CSSTransition
                     nodeRef={cursorBreadcrumbsWrapperRef}
                     in={!distractionFreeTyping}

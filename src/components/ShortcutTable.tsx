@@ -58,6 +58,10 @@ const groups: {
     shortcuts: ['join', 'splitSentences', 'bold', 'italic', 'strikethrough', 'underline'],
   },
   {
+    title: 'Oops',
+    shortcuts: ['undo', 'redo'],
+  },
+  {
     title: 'Special Views',
     shortcuts: [
       'note',

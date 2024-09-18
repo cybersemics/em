@@ -18,7 +18,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "es5",
+    "target": "es6",
     "paths": {
       // Typecheck React based on installed types, otherwise JSX components are not recognized for some reason.
       // https://stackoverflow.com/a/75093164/480608

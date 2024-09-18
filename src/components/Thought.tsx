@@ -376,7 +376,6 @@ const ThoughtContainer = ({
         // used so that the autofocus can properly highlight the immediate parent of the cursor
         editing: isEditing,
         expanded: isExpanded,
-        function: isAttribute(value), // eslint-disable-line quote-props
         'has-only-child': children.length === 1,
         'invalid-option': invalidOption,
         'is-multi-column': isMultiColumnTable,
@@ -438,6 +437,7 @@ const ThoughtContainer = ({
           env={env}
           isContextPending={isContextPending}
           isEditing={isEditing}
+          ellipsizedUrl={!isEditing && isURL(value)}
           isPublishChild={isPublishChild}
           isVisible={isVisible}
           onEdit={!isTouch ? onEdit : undefined}

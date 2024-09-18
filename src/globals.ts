@@ -27,25 +27,12 @@ let suppressExpansion = false // eslint-disable-line prefer-const
 
 /** These aren's so bad. They're for debugging. */
 
-// disable the tutorial for debugging
-const disableTutorial = false
-
-// Use autoincrement ids for Thoughts and normalize values without hashing for Lexemes to make debugging easier.
-// Autoincrement ids are not globally unique and will conflict with multilpe devices, so only use for debugging purposes.
-const debugIds = false
-
 // Ellipsize the thoughts in the context view. They can be expanded by clicking on the ellipsis.
 // TODO: Default to false but add a setting to enable.
 const ellipsizeContextThoughts = false
 
 // check duplicate ranks within the same context for debugging
-// React prints a warning, but it does not show which thoughts are colliding
-const checkDuplicateRanks = false
-
 const globals = {
-  checkDuplicateRanks,
-  debugIds,
-  disableTutorial,
   ellipsizeContextThoughts,
   errorTimer,
   offlineTimer,

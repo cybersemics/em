@@ -81,7 +81,7 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@hocuspocus/provider": "^2.13.5",
-    "@mui/material": "^5.16.7",
+    "@mui/material": "^6.1.0",
     "algoliasearch": "^5.2.4",
     "axios": "^1.7.7",
     "classnames": "^2.5.1",
@@ -142,7 +142,7 @@
     "y-indexeddb": "https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex",
     "y-protocols": "^1.0.6",
     "yallist": "^5.0.0",
-    "yjs": "^13.6.18"
+    "yjs": "^13.6.19"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
