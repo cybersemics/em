@@ -85,7 +85,7 @@ const Checkbox: FC<
           overflow: 'auto',
         })}
       >
-        {title && <div style={{ lineHeight: children ? 1.2 : 1.5 }}>{title}</div>}
+        {title && <div className={css({ lineHeight: children ? 1.2 : 1.5 })}>{title}</div>}
         {children && <p className={css({ marginTop: '0.5em', fontSize: 'md', color: 'dim' })}>{children}</p>}
       </div>
 
