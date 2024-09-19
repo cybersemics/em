@@ -89,6 +89,7 @@ export interface ThoughtContainerProps {
   style?: React.CSSProperties
   styleContainer?: React.CSSProperties
   updateSize?: () => void
+  extendedWidth: number
 }
 
 /** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
@@ -125,6 +126,7 @@ const ThoughtContainer = ({
   style: styleProp,
   styleContainer: styleContainerProp,
   updateSize,
+  extendedWidth,
 }: ThoughtContainerProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
@@ -451,6 +453,7 @@ const ThoughtContainer = ({
           styleThought={styleThought}
           updateSize={updateSize}
           view={view}
+          extendedWidth={extendedWidth}
         />
         <Note path={simplePath} />
       </div>

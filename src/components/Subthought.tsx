@@ -39,6 +39,7 @@ const Subthought = ({
   simplePath,
   style,
   zoomCursor,
+  extendedWidth,
 }: {
   autofocus: Autofocus
   debugIndex?: number
@@ -55,6 +56,7 @@ const Subthought = ({
   simplePath: SimplePath
   style?: React.CSSProperties
   zoomCursor?: boolean
+  extendedWidth: number
 }) => {
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
@@ -155,6 +157,7 @@ const Subthought = ({
           showContexts={showContexts}
           simplePath={simplePath}
           style={styleSelf}
+          extendedWidth={extendedWidth}
         />
       </div>
 

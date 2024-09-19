@@ -358,6 +358,7 @@ const LayoutTree = () => {
   const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.dragInProgress)
+  const ref = useRef<HTMLDivElement | null>(null)
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
@@ -365,6 +366,7 @@ const LayoutTree = () => {
       : 0,
   )
 
+  const bulletWidth = ref.current?.querySelector('.bullet')?.getBoundingClientRect().width
   // singleLineHeight is the measured height of a single line thought.
   // If no sizes have been measured yet, use the estimated height.
   // Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
@@ -626,6 +628,7 @@ const LayoutTree = () => {
         transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
         marginTop: '0.501em',
       }}
+      ref={ref}
     >
       <div
         style={{
@@ -677,6 +680,14 @@ const LayoutTree = () => {
             // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
             if (belowCursor && !isCursor && y > viewportBottom + height) return null
 
+            const nextThought = isTableCol1 ? treeThoughtsPositioned[index + 1] : null
+            const previousThought = isTableCol1 ? treeThoughtsPositioned[index - 1] : null
+
+            // Adjust col1 width to remove dead zones between col1 and col2, increase the width by the difference between col1 and col2 minus bullet width
+            const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
+            const extendedWidth = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
+            const newWidth = isTableCol1 ? (width || 0) + extendedWidth : width
+
             return (
               <div
                 aria-label='tree-node'
@@ -695,7 +706,7 @@ const LayoutTree = () => {
                   // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
                   // 1em + 10px is an eyeball measurement at font sizes 14 and 18
                   // (Maybe the 10px is from .content padding-left?)
-                  width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
+                  width: isTableCol1 ? newWidth : `calc(100% - ${x}px + 1em + 10px)`,
                   ...style,
                   textAlign: isTableCol1 ? 'right' : undefined,
                 }}

@@ -235,6 +235,7 @@ const VirtualThought = ({
           simplePath={simplePath}
           style={style}
           zoomCursor={zoomCursor}
+          extendedWidth={extendedWidth}
         />
       )}
 
