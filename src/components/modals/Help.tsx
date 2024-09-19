@@ -1,7 +1,7 @@
 import { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { anchorButton, modal, modalText } from '../../../styled-system/recipes'
+import { anchorButton, extendTap, modal, modalText } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
@@ -394,7 +394,7 @@ const ModalHelp = () => {
       ) : (
         <span className='text-small'>
           &lt;{' '}
-          <a {...fastClick(back)} className='extend-tap'>
+          <a {...fastClick(back)} className={extendTap()}>
             Back
           </a>
         </span>
@@ -415,7 +415,7 @@ const ModalHelp = () => {
         section !== Section.Menu && section !== Section.Tutorials && (
           <div className='text-small' style={{ marginTop: '2em' }}>
             &lt;{' '}
-            <a {...fastClick(back)} className='extend-tap'>
+            <a {...fastClick(back)} className={extendTap()}>
               Back
             </a>
           </div>

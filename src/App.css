@@ -129,16 +129,6 @@ a.button-dim {
   font-size: 90%;
 }
 
-.extend-tap {
-  margin: -0.5em;
-  padding: 0.5em;
-}
-
-.extend-tap-small {
-  margin: -0.25em;
-  padding: 0.25em;
-}
-
 .expand-click-area-left {
   padding-left: 10px;
   padding-top: 10px;
