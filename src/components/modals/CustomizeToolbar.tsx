@@ -4,7 +4,7 @@ import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
-import { anchorButton, modal } from '../../../styled-system/recipes'
+import { anchorButton, extendTap, modal } from '../../../styled-system/recipes'
 import DragAndDropType from '../../@types/DragAndDropType'
 import DragShortcutZone from '../../@types/DragShortcutZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
@@ -123,7 +123,7 @@ const ModalCustomizeToolbar: FC = () => {
       <h1 className={modalClasses.title}>Customize Toolbar</h1>
       <p style={{ marginTop: '-1em', marginBottom: '1em' }}>
         &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className='extend-tap'>
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTap()}>
           Back to Settings
         </a>
       </p>
@@ -190,7 +190,7 @@ const ModalCustomizeToolbar: FC = () => {
 
       <p style={{ marginTop: '2em', marginBottom: '2em' }}>
         &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className='extend-tap'>
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTap()}>
           Back to Settings
         </a>
       </p>
@@ -220,7 +220,7 @@ const ModalCustomizeToolbar: FC = () => {
                 dispatch([initUserToolbar({ force: true }), alert('Toolbar reset', { clearDelay: 8000 })])
               }
             })}
-            className='extend-tap'
+            className={extendTap()}
             style={{
               color: colors.red,
             }}

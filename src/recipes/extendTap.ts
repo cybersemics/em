@@ -6,6 +6,14 @@ const extendTapRecipe = defineRecipe({
     margin: '-0.5em',
     padding: '0.5em',
   },
+  variants: {
+    size: {
+      small: {
+        margin: '-0.25em',
+        padding: '0.25em',
+      },
+    },
+  },
 })
 
 export default extendTapRecipe

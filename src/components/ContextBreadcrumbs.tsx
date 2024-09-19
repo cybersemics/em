@@ -4,6 +4,7 @@ import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
+import { extendTap } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
@@ -126,13 +127,8 @@ const BreadCrumb = React.memo(
             <HomeLink color='gray' size={16} className={css({ position: 'static' })} />
           ) : (
             <Link
-              cssRaw={css.raw(
-                {
-                  margin: '-0.25em',
-                  padding: '0.25em',
-                },
-                linkCssRaw,
-              )}
+              cssRaw={css.raw(linkCssRaw)}
+              className={extendTap({ size: 'small' })}
               simplePath={simplePath}
               label={label}
             />

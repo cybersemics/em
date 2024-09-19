@@ -369,7 +369,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
 
   useEffect(
     () => {
-      const clipboard = new ClipboardJS('.copy-clipboard-btn')
+      const clipboard = new ClipboardJS('[aria-label="copy-clipboard-btn"]')
 
       clipboard.on('success', onCopyToClipboard)
 
@@ -633,7 +633,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       {/* Copy to clipboard */}
       <div className='cp-clipboard-wrapper'>
         {exportContent !== null && (
-          <a data-clipboard-text={exportContent} className='copy-clipboard-btn extend-tap'>
+          <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTap()}>
             Copy to clipboard
           </a>
         )}
