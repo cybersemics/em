@@ -463,7 +463,13 @@ const LayoutTree = () => {
   const contextParentPath = parentOf(hoveringPath || [])
 
   const isSortedContext = useSelector(state => {
-    return attributeEquals(state, head(contextParentPath), '=sort', 'Alphabetical')
+    const dropTargetId = head(state.hoveringPath || [])
+
+    // Check if the drop target is on sorted context children or on its parent.
+    const isContextChildren = attributeEquals(state, head(contextParentPath), '=sort', 'Alphabetical')
+    const isContextParent = attributeEquals(state, dropTargetId, '=sort', 'Alphabetical')
+
+    return isContextParent || isContextChildren
   })
 
   const dragDropManager = useDragDropManager()
@@ -644,7 +650,7 @@ const LayoutTree = () => {
         (node.autofocus === 'dim' || node.autofocus === 'show') &&
         !(next?.autofocus === 'dim' || next?.autofocus === 'show')
       // Get the insertion point of the thought in sorted context
-      if (isSortedContext && !insertionFound && sourceThought) {
+      if (isSortedContext && !insertionFound) {
         const currentThought = getThoughtById(store.getState(), head(node.path))
         const currentRank = currentThought.rank
 
@@ -724,7 +730,7 @@ const LayoutTree = () => {
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
   // Calculate the position of the arrow relative to the bottom of the container.
-  const arrowBottom = totalHeight + spaceBelow - scrollTop - window.innerHeight + navAndFooterHeight
+  const arrowBottom = totalHeight + spaceBelow - scrollTop - viewportHeight + navAndFooterHeight
 
   return (
     <div
@@ -747,6 +753,7 @@ const LayoutTree = () => {
             position: 'absolute',
             top: hoverArrowVisibility === 'above' ? scrollTop : undefined,
             left: '50%',
+            zIndex: '99999',
             transform: 'translateX(-50%)',
             borderBottom: '20px solid rgb(155, 170, 220)',
             ...(hoverArrowVisibility === 'below' && {
