@@ -28,6 +28,7 @@ const collapseContextShortcut: Shortcut = {
   multicursor: {
     enabled: true,
     preventSetCursor: true,
+    reverse: true,
   },
   svg: Icon,
   keyboard: { key: 'c', meta: true, alt: true },
