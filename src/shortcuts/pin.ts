@@ -1,5 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
+import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import PinIcon from '../components/icons/PinIcon'
 import { HOME_PATH } from '../constants'
@@ -20,7 +21,29 @@ const pinShortcut: Shortcut = {
     const state = getState()
     return !!state.cursor || hasMulticursor(state)
   },
-  multicursor: true,
+  multicursor: {
+    enabled: true,
+    execMulticursor(cursors, dispatch) {
+      const numThougths = cursors.length
+
+      for (const cursor of cursors) {
+        dispatch([
+          setCursor({ path: cursor, preserveMulticursor: true }),
+          toggleAttribute({
+            path: cursor,
+            values: ['=pin', 'true'],
+          }),
+        ])
+      }
+
+      dispatch(
+        alert(`Pinned ${numThougths} thoughts.`, {
+          clearDelay: 2000,
+          showCloseLink: false,
+        }),
+      )
+    },
+  },
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()
     const { cursor } = state
