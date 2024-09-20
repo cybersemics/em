@@ -685,8 +685,8 @@ const LayoutTree = () => {
 
             // Adjust col1 width to remove dead zones between col1 and col2, increase the width by the difference between col1 and col2 minus bullet width
             const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
-            const extendedWidth = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
-            const newWidth = isTableCol1 ? (width || 0) + extendedWidth : width
+            // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
+            const extendedMargin = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
             return (
               <div
@@ -706,7 +706,7 @@ const LayoutTree = () => {
                   // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
                   // 1em + 10px is an eyeball measurement at font sizes 14 and 18
                   // (Maybe the 10px is from .content padding-left?)
-                  width: isTableCol1 ? newWidth : `calc(100% - ${x}px + 1em + 10px)`,
+                  width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
                   ...style,
                   textAlign: isTableCol1 ? 'right' : undefined,
                 }}
@@ -733,6 +733,7 @@ const LayoutTree = () => {
                   prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
                   isLastVisible={isLastVisible}
                   autofocus={autofocus}
+                  extendedMargin={isTableCol1 ? extendedMargin : 0}
                 />
 
                 {/* DropEnd (cliff) */}

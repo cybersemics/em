@@ -89,7 +89,7 @@ export interface ThoughtContainerProps {
   style?: React.CSSProperties
   styleContainer?: React.CSSProperties
   updateSize?: () => void
-  extendedWidth: number
+  extendedMargin: number
 }
 
 /** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
@@ -126,7 +126,7 @@ const ThoughtContainer = ({
   style: styleProp,
   styleContainer: styleContainerProp,
   updateSize,
-  extendedWidth,
+  extendedMargin,
 }: ThoughtContainerProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
@@ -364,6 +364,7 @@ const ThoughtContainer = ({
         // extend the click area to the left (except if table column 2)
         marginLeft: `calc(${style?.marginLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
         paddingLeft: `calc(${style?.paddingLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
+        marginRight: `-${extendedMargin}px`,
         // paddingRight: 54,
         ...(testFlags.simulateDrop
           ? {
@@ -453,7 +454,7 @@ const ThoughtContainer = ({
           styleThought={styleThought}
           updateSize={updateSize}
           view={view}
-          extendedWidth={extendedWidth}
+          extendedMargin={extendedMargin}
         />
         <Note path={simplePath} />
       </div>
