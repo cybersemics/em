@@ -30,7 +30,10 @@ const moveThoughtDownShortcut: Shortcut = {
   description: 'Move the current thought down.',
   gesture: 'dud',
   keyboard: { key: Key.ArrowDown, meta: true, shift: true },
-  multicursor: true,
+  multicursor: {
+    enabled: true,
+    reverse: true,
+  },
   svg: Icon,
   canExecute: getState => {
     const state = getState()

@@ -94,8 +94,8 @@ describe('moveThoughtDown', () => {
   - c
     - c1
   - b
-    - c2
-  - d`)
+  - d
+    - c2`)
     })
   })
 })
