@@ -87,6 +87,17 @@ const keyframes = defineKeyframes({
       opacity: 0,
     },
   },
+  bobble: {
+    '0%': {
+      transform: 'translateX(-50%) translateY(0)',
+    },
+    '50%': {
+      transform: 'translateX(-50%) translateY(10px)',
+    },
+    '100%': {
+      transform: 'translateX(-50%) translateY(0)',
+    },
+  },
 })
 
 const globalCss = defineGlobalStyles({
