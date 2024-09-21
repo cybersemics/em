@@ -68,8 +68,16 @@ const Search: FC = () => {
   return (
     <ul style={{ marginTop: 0 }}>
       <li className='child'>
-        <div className='search-container'>
-          <span className='bullet-search' role='img' aria-label='Search'>
+        <div className={css({ display: 'flex' })}>
+          <span
+            className={css({
+              position: 'absolute',
+              marginTop: '-2px',
+              marginLeft: '-12px',
+            })}
+            role='img'
+            aria-label='Search'
+          >
             <SearchIcon size={16} />
           </span>
           <div className={thought({ flex: true })}>
@@ -96,8 +104,8 @@ const Search: FC = () => {
             />
           </div>
         </div>
-        <div className='archive-check'>
-          <label>
+        <div className={css({ marginLeft: '-12px', marginTop: '5px' })}>
+          <label className={css({ cursor: 'pointer', fontSize: '12px' })}>
             <input type='checkbox' onChange={onArchiveChange} defaultChecked={false} /> Archive
           </label>
         </div>

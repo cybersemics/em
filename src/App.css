@@ -624,24 +624,8 @@
   user-select: none;
 }
 
-.search-container > .bullet-search {
-  position: absolute;
-  margin-top: -2px;
-  margin-left: -12px;
-}
-
 .mobile .child > .thought-container > .bullet.show-contexts {
   margin-right: -1.5px;
-}
-
-.archive-check {
-  margin-left: -12px;
-  margin-top: 5px;
-}
-
-.archive-check label {
-  cursor: pointer;
-  font-size: 12px;
 }
 
 /* Android Section */
@@ -1170,10 +1154,6 @@
 
 .dark .divider {
   border-color: #333;
-}
-
-.search-container {
-  display: flex;
 }
 
 .cp-clipboard-wrapper {
