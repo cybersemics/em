@@ -365,7 +365,6 @@ const ThoughtContainer = ({
         marginLeft: `calc(${style?.marginLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
         paddingLeft: `calc(${style?.paddingLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
         marginRight: `-${extendedMargin}px`,
-        // paddingRight: 54,
         ...(testFlags.simulateDrop
           ? {
               backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
@@ -416,7 +415,7 @@ const ThoughtContainer = ({
         style={{
           // ensure that ThoughtAnnotation is positioned correctly
           position: 'relative',
-          // ...(hideBullet ? { marginLeft: -12 } : null),
+          ...(hideBullet ? { marginLeft: -12 } : null),
         }}
       >
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
