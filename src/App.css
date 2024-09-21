@@ -23,10 +23,6 @@
   z-index: var(--z-index-scroll-zone);
 }
 
-ul ul.context-chain {
-  margin-left: 1.6em;
-}
-
 .clear {
   clear: both;
 }
