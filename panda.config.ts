@@ -193,7 +193,7 @@ const globalCss = defineGlobalStyles({
   /* :empty does not work because thought may contain <br> */
   '[placeholder]:empty::before': {
     fontStyle: 'italic',
-    color: 'rgba(7, 7, 7, 0.5)',
+    color: { base: 'rgba(7, 7, 7, 0.5)', _dark: 'rgba(255, 255, 255, 0.5)' },
     content: 'attr(placeholder)',
     cursor: 'text',
   },

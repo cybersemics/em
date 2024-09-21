@@ -599,8 +599,7 @@
   color: rgba(7, 7, 7, 0.5);
 }
 
-.dark .text-note,
-.dark [placeholder]:empty::before {
+.dark .text-note {
   color: rgba(255, 255, 255, 0.5);
 }
 
