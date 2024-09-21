@@ -2,10 +2,9 @@ import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
-import Index from '../@types/IndexType'
 import { updateSplitPositionActionCreator as updateSplitPosition } from '../actions/updateSplitPosition'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { Settings } from '../constants'
@@ -56,49 +55,6 @@ const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHan
 //     </div>
 //   )
 // }
-
-/** Converts React.CSSProperties to CSS by injecting a <style> element. Returns the style content on the css callback. */
-const StyleInjector = ({
-  css,
-  selector,
-  style,
-}: {
-  css: (stylesheet: string) => void
-  selector: string
-  style: React.CSSProperties
-}) => {
-  const ref = useRef<HTMLElement | null>(null)
-  useEffect(
-    () => {
-      if (!ref.current) return
-      const styleContent = ref.current.getAttribute('style') || ''
-      ref.current.remove()
-      const ruleset = `${selector}{${styleContent}}`
-      css(ruleset)
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
-  return <span ref={ref} style={style} />
-}
-
-/** Injects styles into a <style> element that affects all elements in the document. */
-const GlobalStyles = React.memo(({ styles }: { styles: [string, React.CSSProperties][] }) => {
-  const [globalStyle, setGlobalStyle] = useState<Index<string>>({})
-  const appendGlobalStyle = useCallback(
-    (i: number) => (css: string) => setGlobalStyle(globalStyle => ({ ...globalStyle, [i]: css })),
-    [],
-  )
-  return (
-    <>
-      {styles.map(([selector, style], i) => (
-        <StyleInjector key={i} css={appendGlobalStyle(i)} selector={selector} style={style} />
-      ))}
-      <style>{Object.values(globalStyle).join('')}</style>
-    </>
-  )
-})
-GlobalStyles.displayName = 'GlobalStyles'
 
 /** Disables long-press-to-select by clearing any selections that appear during long press. */
 const useDisableLongPressToSelect = () => {
@@ -225,33 +181,6 @@ const AppComponent: FC = () => {
     safari: isSafari(),
   })
 
-  const globalStyles = useMemo<[string, React.CSSProperties][]>(
-    () => [
-      [
-        // increase specificity to override .popup .modal-actions
-        'a.button.button.button:hover, a.button.button.button:active',
-        {
-          backgroundColor: colors.fg85,
-        },
-      ],
-      [
-        'a.button.button-outline',
-        {
-          backgroundColor: colors.bg,
-          border: `solid 1px ${colors.fg}`,
-          color: colors.fg,
-        },
-      ],
-      [
-        'a.button.button.button.button-outline:hover, a.button.button.button.button-outline:active',
-        {
-          backgroundColor: colors.gray15,
-        },
-      ],
-    ],
-    [colors],
-  )
-
   if (showModal && !modals[showModal]) {
     throw new Error(`Missing component for Modal type: ${showModal}`)
   }
@@ -260,7 +189,6 @@ const AppComponent: FC = () => {
 
   return (
     <div className={componentClassNames}>
-      <GlobalStyles styles={globalStyles} />
       <Alert />
       <Tips />
       <CommandPalette />

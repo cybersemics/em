@@ -63,64 +63,6 @@ ul ul.context-chain {
   right: 0;
 }
 
-a.button {
-  padding: 0.5em 2em;
-  min-width: 6em;
-  text-decoration: none;
-  display: inline-block;
-  border-radius: 99px;
-  color: white;
-  background-color: black;
-}
-
-a.button.action-button {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  transition: all 100ms ease-in-out;
-}
-
-a.button.action-button.disabled {
-  opacity: 0.5;
-}
-
-a.button:active {
-  background-color: #111;
-}
-
-a.button-small {
-  padding: 2px 0;
-  font-size: 90%;
-}
-
-a.button-less-padding {
-  padding: 4px 12px;
-}
-
-.dark a.button {
-  color: black;
-  background-color: white;
-}
-
-.dark a.button:active {
-  background-color: #dcdcdc;
-}
-
-a.button-variable-width {
-  min-width: 0;
-}
-
-a.button.disabled {
-  opacity: 0.25;
-  pointer-events: none;
-  user-select: none;
-  cursor: auto;
-}
-
-a.button-dim {
-  opacity: 0.5;
-}
-
 .text-small {
   font-size: 80%;
 }
