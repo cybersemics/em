@@ -3,8 +3,6 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
-import DragThoughtItem from '../@types/DragThoughtItem'
-import DropThoughtZone from '../@types/DropThoughtZone'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -15,12 +13,12 @@ import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
+import useSortedContext from '../hooks/useSortedContext'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import getChildren, { childrenFilterPredicate, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
-import getSortedRank from '../selectors/getSortedRank'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -33,6 +31,7 @@ import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
+import compareRanks from '../util/compareRanks'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -42,6 +41,7 @@ import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
 import unroot from '../util/unroot'
 import DropEnd from './DropEnd'
+import HoverArrow from './HoverArrow'
 import VirtualThought from './VirtualThought'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
@@ -459,34 +459,7 @@ const LayoutTree = () => {
     ),
   )
 
-  const hoveringPath = useSelector(state => state.hoveringPath)
-  const contextParentPath = parentOf(hoveringPath || [])
-
-  const isSortedContext = useSelector(state => {
-    const dropTargetId = head(state.hoveringPath || [])
-
-    // Check if the drop target is on sorted context children or on its parent.
-    const isContextChildren = attributeEquals(state, head(contextParentPath), '=sort', 'Alphabetical')
-    const isContextParent = attributeEquals(state, dropTargetId, '=sort', 'Alphabetical')
-
-    return isContextParent || isContextChildren
-  })
-
-  const dragDropManager = useDragDropManager()
-
-  const sourceThought = useSelector(state => {
-    const monitor = dragDropManager.getMonitor()
-    const item = monitor.getItem() as DragThoughtItem
-
-    // Check if the dragged item is a thought and the drop zone is not a subthought
-    const isThought = item?.zone === 'Thoughts' && state.hoverZone === DropThoughtZone.ThoughtDrop
-    const sourceThoughtId = head(item?.path || [])
-
-    const sourceThought = isThought ? getThoughtById(state, sourceThoughtId) : null
-    return sourceThought
-  })
-
-  const newRank = useSelector(state => getSortedRank(state, head(contextParentPath), sourceThought?.value || ''))
+  const { isSortedContext, newRank, sourceThought } = useSortedContext()
 
   // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
   const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
@@ -498,28 +471,6 @@ const LayoutTree = () => {
     }),
     [fontSize],
   )
-
-  /** Compare ranks between two thoughts. */
-  const compareRanks = (rankA: number, rankB: number) => {
-    const partsA = String(rankA).split('.').map(Number)
-    const partsB = String(rankB).split('.').map(Number)
-    const len = Math.max(partsA.length, partsB.length)
-
-    let result = 0
-    const indexArray = Array.from({ length: len }, (_, i) => i)
-
-    indexArray.some(i => {
-      const valA = partsA[i] || 0
-      const valB = partsB[i] || 0
-      if (valA !== valB) {
-        result = valA - valB
-        return true
-      }
-      return false
-    })
-
-    return result
-  }
 
   // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
@@ -743,27 +694,7 @@ const LayoutTree = () => {
       }}
       ref={ref}
     >
-      {hoverArrowVisibility && (
-        <div
-          style={{
-            width: '0',
-            height: '0',
-            borderLeft: '10px solid transparent',
-            borderRight: '10px solid transparent',
-            position: 'absolute',
-            top: hoverArrowVisibility === 'above' ? scrollTop : undefined,
-            left: '50%',
-            zIndex: '99999',
-            transform: 'translateX(-50%)',
-            borderBottom: '20px solid rgb(155, 170, 220)',
-            ...(hoverArrowVisibility === 'below' && {
-              bottom: `${arrowBottom}px`,
-              rotate: '180deg',
-            }),
-            animation: `bobble ${token('durations.arrowBobbleAnimation')} infinite`,
-          }}
-        ></div>
-      )}
+      <HoverArrow arrowBottom={arrowBottom} hoverArrowVisibility={hoverArrowVisibility} scrollTop={scrollTop} />
       <div
         className={css({ transition: `transform {durations.layoutSlowShiftDuration} ease-out` })}
         style={{
