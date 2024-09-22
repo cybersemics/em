@@ -53,11 +53,6 @@
     text-align: center;
   }
 }
-.upper-right {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
 
 .text-small {
   font-size: 80%;
@@ -990,29 +985,6 @@
   margin-left: 18px;
 }
 
-.tutorial {
-  padding: 40px 20px 20px;
-  background-color: #ddd;
-  position: relative;
-  z-index: var(--z-index-tutorial);
-}
-
-.dark .tutorial {
-  background-color: #212121;
-  color: white;
-}
-
-.tutorial-inner {
-  max-width: 32em;
-  margin: 0 auto;
-}
-
-.tutorial-skip {
-  color: #666;
-  top: 10px;
-  right: 15px;
-}
-
 .tutorial-next-wait {
   margin-left: 10px;
   font-style: italic;
@@ -1020,21 +992,6 @@
 
 .tutorial-step-bullets {
   margin-bottom: 10px;
-}
-
-.tutorial-trace-gesture {
-  position: absolute;
-  margin-top: 50px;
-  z-index: var(--z-index-tutorial-trace-gesture);
-  text-align: center;
-  left: 0;
-  right: 0;
-  background-color: rgba(255, 255, 255, 0.8);
-  padding-bottom: 50px;
-}
-
-.dark .tutorial-trace-gesture {
-  background-color: rgba(0, 0, 0, 0.8);
 }
 
 /* Prose View */
