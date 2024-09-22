@@ -145,7 +145,7 @@ const useSizeTracking = () => {
         sizeRemovalTimeouts.current.delete(key)
 
         setSizes(sizesOld =>
-          height === sizesOld[key]?.height && isVisible === sizesOld[key]?.isVisible
+          height === sizesOld[key]?.height && width === sizesOld[key]?.width && isVisible === sizesOld[key]?.isVisible
             ? sizesOld
             : {
                 ...sizesOld,
