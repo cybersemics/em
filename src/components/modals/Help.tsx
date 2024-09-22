@@ -11,14 +11,14 @@ import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
 import ShortcutTable from './../ShortcutTable'
-import GestureLibraryIcon from './../icons/GestureLibraryIcon'
+import CommandLibraryIcon from './../icons/CommandLibraryIcon'
 import MetaIcon from './../icons/MetaIcon'
 import TutorialsIcon from './../icons/TutorialsIcon'
 import ModalComponent from './ModalComponent'
 
 enum Section {
   About = 'About',
-  GestureLibrary = 'GestureLibrary',
+  CommandLibrary = 'CommandLibrary',
   Menu = 'Menu',
   Metaprogramming = 'Metaprogramming',
   Tutorials = 'Tutorials',
@@ -57,16 +57,16 @@ const HelpMenu = ({ onSelect }: { onSelect: (section: Section) => void }) => (
       description='Play the interactive tutorials to learn the basics.'
     />
     <HelpMenuItem
-      Icon={GestureLibraryIcon}
-      onTap={() => onSelect(Section.GestureLibrary)}
-      title='Gesture Library'
-      description='View a list of all available gestures.'
+      Icon={CommandLibraryIcon}
+      onTap={() => onSelect(Section.CommandLibrary)}
+      title='Command Library'
+      description='View a list of all commands that are available via the toolbar, command palette, keyboard, and mobile gestures.'
     />
     <HelpMenuItem
       Icon={MetaIcon}
       onTap={() => onSelect(Section.Metaprogramming)}
       title='Metaprogramming'
-      description={`Explore em's unique metaprogramming feature for customizing the appearance and behavior of individual thoughts.`}
+      description={`Peek under the hood at em's unique metaprogramming feature for customizing the appearance and behavior of individual thoughts.`}
     />
   </div>
 )
@@ -402,7 +402,7 @@ const ModalHelp = () => {
 
       {section === Section.Tutorials ? (
         <Tutorials />
-      ) : section === Section.GestureLibrary ? (
+      ) : section === Section.CommandLibrary ? (
         <CommandCenter />
       ) : section === Section.Metaprogramming ? (
         <Metaprogramming />
