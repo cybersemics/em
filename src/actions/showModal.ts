@@ -5,7 +5,7 @@ import Thunk from '../@types/Thunk'
 import scrollTo from '../device/scrollTo'
 
 /** Shows or hides a modal. */
-const showModal = (state: State, { id }: { id: string }) => ({
+const showModal = (state: State, { id }: { id: Modal }) => ({
   ...state,
   showModal: id,
 })
