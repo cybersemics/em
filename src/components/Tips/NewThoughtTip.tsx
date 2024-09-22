@@ -17,6 +17,7 @@ interface NewThoughtTipProps {
   display: boolean
 }
 
+const buttonContainerClassName = css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })
 /** A tip that explains how to add a new thought. */
 const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
   const returnKey = isMac ? 'RETURN' : 'ENTER'
@@ -39,7 +40,7 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
         <b>Tip</b>: {instructions}
       </p>
       <div>
-        <div className={css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })}>
+        <div className={buttonContainerClassName}>
           <a
             className={anchorButton()}
             {...fastClick(() => {
@@ -49,7 +50,7 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
             Okay
           </a>
         </div>
-        <div className={css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })}>
+        <div className={buttonContainerClassName}>
           <a
             tabIndex={-1}
             {...fastClick(() => {
