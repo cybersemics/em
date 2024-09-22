@@ -556,15 +556,15 @@ const LayoutTree = () => {
       // capture the y position of the current thought before it is incremented by its own height
       const y = yaccum
 
-      // increase y by the height of the current thought
-      if (!node.isTableCol1 || node.leaf) {
-        yaccum += height
-      }
-
       // if the current thought is in table col1, push its y and depth onto the stack so that the next node after it can be positioned below it instead of overlapping it
       // See: ycol1Ancestors
       if (node.isTableCol1) {
         ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
+      }
+
+      // increase y by the height of the current thought
+      if (!node.isTableCol1 || node.leaf) {
+        yaccum += height
       }
 
       return {
