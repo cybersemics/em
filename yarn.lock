@@ -8243,7 +8243,7 @@ __metadata:
     ts-key-enum: "npm:^2.0.12"
     typescript: "npm:5.4.5"
     use-onclickoutside: "npm:^0.4.1"
-    vite: "npm:^5.4.3"
+    vite: "npm:^5.4.7"
     vite-plugin-checker: "npm:^0.7.2"
     vite-plugin-html: "npm:^3.2.2"
     vite-plugin-pwa: "npm:^0.20.2"
@@ -18222,9 +18222,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^5.4.3":
-  version: 5.4.3
-  resolution: "vite@npm:5.4.3"
+"vite@npm:^5.4.7":
+  version: 5.4.7
+  resolution: "vite@npm:5.4.7"
   dependencies:
     esbuild: "npm:^0.21.3"
     fsevents: "npm:~2.3.3"
@@ -18261,7 +18261,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10c0/7afe601bcba82f81980c718fc171ba8f0c45e3bffaeb7ef831b64b84e396f963c3c87818b74da4c8e817d1bce1c179f1efae3bcb14d2e94b4eb635071722c8f2
+  checksum: 10c0/0ca7ca60f71c61f3855bbabf7e33909bec32933b35914d4d281813c728183e78e7ce5be05735a7671df3a994613d3881f520a32a80715faa92effb28deee9320
   languageName: node
   linkType: hard
 
