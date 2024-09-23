@@ -57,6 +57,13 @@ const FontSize = () => {
         : fontSize === DEFAULT_FONT_SIZE
           ? 'default'
           : null
+  
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      e.currentTarget.blur()
+    }
+  }
 
   return (
     <div>
@@ -66,11 +73,14 @@ const FontSize = () => {
         min={MIN_FONT_SIZE}
         max={MAX_FONT_SIZE}
         value={fontSize}
-        onBlur={e => {
-          if (fontSize < MIN_FONT_SIZE || fontSize > MAX_FONT_SIZE) return
-          dispatch(fontSizeActionCreator(+e.target.value))
+        onKeyDown={onKeyDown}
+        onChange={e => {
+          const inputValue = +e.target.value
+
+          setFontSize(inputValue)
+          if (inputValue < MIN_FONT_SIZE || inputValue > MAX_FONT_SIZE) return
+          dispatch(fontSizeActionCreator(inputValue))
         }}
-        onChange={e => setFontSize(+e.target.value)}
         style={{
           fontSize: fontSizeSelector,
           padding: '0.5em',
