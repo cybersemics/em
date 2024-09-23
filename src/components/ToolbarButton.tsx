@@ -10,6 +10,7 @@ import themeColors from '../selectors/themeColors'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
+import { executeShortcutWithMulticursor } from '../util/executeShortcut'
 import fastClick from '../util/fastClick'
 
 export interface ToolbarButtonProps {
@@ -44,7 +45,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   if (!shortcut) {
     console.error('Missing shortcut: ' + shortcutId)
   }
-  const { svg, exec, isActive, canExecute } = shortcut
+  const { svg, isActive, canExecute } = shortcut
 
   // Determine if the button should be shown in an active state. Precedence is as follows:
   // 1. If customize toolbar, use selected state.
@@ -83,7 +84,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       const toolbarEl = iconEl.closest('.toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
-        exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+        executeShortcutWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
         // prevent Editable blur
         if (isTouch) {
