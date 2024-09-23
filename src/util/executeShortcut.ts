@@ -1,5 +1,7 @@
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
+import MulticursorFilter from '../@types/MulticursorFilter'
+import Path from '../@types/Path'
 import Shortcut from '../@types/Shortcut'
 import ShortcutType from '../@types/ShortcutType'
 import State from '../@types/State'
@@ -14,7 +16,10 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import globalStore from '../stores/app'
 import dispatch from '../test-helpers/dispatch'
 import equalPath from './equalPath'
+import hashPath from './hashPath'
 import head from './head'
+import parentOf from './parentOf'
+import UnreachableError from './unreachable'
 
 interface Options {
   store?: Store<State, any>
@@ -23,6 +28,44 @@ interface Options {
 }
 
 const eventNoop = { preventDefault: noop } as Event
+
+/** Filter the cursors based on the filter type. Cursors are sorted in document order. */
+const filterCursors = (_state: State, cursors: Path[], filter: MulticursorFilter = 'none') => {
+  switch (filter) {
+    case 'none':
+      return cursors
+
+    case 'first-sibling': {
+      const seenParents = new Set<string>()
+
+      return cursors.filter(cursor => {
+        const parent = hashPath(parentOf(cursor))
+
+        if (seenParents.has(parent)) return false
+        seenParents.add(parent)
+
+        return true
+      })
+    }
+
+    case 'last-sibling': {
+      const seenParents = new Set<string>()
+
+      return cursors.reverse().filter(cursor => {
+        const parent = hashPath(parentOf(cursor))
+
+        if (seenParents.has(parent)) return false
+        seenParents.add(parent)
+
+        return true
+      })
+    }
+
+    default:
+      // Make sure all cases are covered
+      throw new UnreachableError(filter)
+  }
+}
 
 /** Recomputes the path to a thought. Returns null if the thought does not exist. */
 const recomputePath = (state: State, thoughtId: ThoughtId) => {
@@ -95,9 +138,11 @@ export const executeShortcutWithMulticursor = async (shortcut: Shortcut, { store
     return a.length - b.length
   })
 
+  const filteredPaths = filterCursors(state, paths, multicursorConfig.filter)
+
   // Reverse the order of the cursors if the shortcut has reverse multicursor mode enabled.
   if (multicursorConfig.reverse) {
-    paths.reverse()
+    filteredPaths.reverse()
   }
 
   if (multicursorConfig.execMulticursor) {
@@ -105,7 +150,7 @@ export const executeShortcutWithMulticursor = async (shortcut: Shortcut, { store
     await multicursorConfig.execMulticursor(paths, store.dispatch, store.getState, event, { type })
   } else {
     // Execute the shortcut for each multicursor path and restore the cursor to its original position.
-    for (const path of paths) {
+    for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
       const recomputedPath = recomputePath(state, head(path))
       if (!recomputedPath) continue
@@ -121,7 +166,7 @@ export const executeShortcutWithMulticursor = async (shortcut: Shortcut, { store
   if (!multicursorConfig.clearMulticursor) {
     // Restore multicursors
     await store.dispatch(
-      paths.map(path => (dispatch, getState) => {
+      filteredPaths.map(path => (dispatch, getState) => {
         const recomputedPath = recomputePath(getState(), head(path))
         if (!recomputedPath) return
         dispatch(addMulticursor({ path: recomputedPath }))

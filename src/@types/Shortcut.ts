@@ -4,6 +4,7 @@ import Dispatch from './Dispatch'
 import GesturePath from './GesturePath'
 import Icon from './Icon'
 import Key from './Key'
+import MulticursorFilter from './MulticursorFilter'
 import Path from './Path'
 import ShortcutId from './ShortcutId'
 import ShortcutType from './ShortcutType'
@@ -96,6 +97,14 @@ interface Shortcut {
         reverse?: boolean
         /** Clear the multicursor after the shortcut is executed. */
         clearMulticursor?: boolean
+        /**
+         * Filter the cursors before executing the shortcut.
+         *
+         * 'none' - execute the shortcut for all cursors
+         * 'first-sibling' - execute the shortcut for only the first sibling within the same parent
+         * 'last-sibling' - execute the shortcut for only the last sibling within the same parent
+         */
+        filter?: MulticursorFilter
       }
 }
 
