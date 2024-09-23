@@ -14,7 +14,27 @@ const favorite: Shortcut = {
   labelInverse: 'Remove from Favorites',
   description: 'Add the current thought to your Favorites list.',
   descriptionInverse: 'Remove the current thought from your Favorites list.',
-  multicursor: true,
+  multicursor: {
+    enabled: true,
+    execMulticursor(cursors, dispatch, getState, e, { type }) {
+      const state = getState()
+      const numThougths = cursors.length
+
+      const allFavorites = cursors.map(cursor => findDescendant(state, head(cursor), '=favorite')).every(Boolean)
+
+      for (const cursor of cursors) {
+        dispatch(toggleAttribute({ path: cursor, values: ['=favorite', 'true'] }))
+      }
+
+      dispatch(
+        alert(
+          allFavorites
+            ? `Removed ${numThougths} thoughts from favorites.`
+            : `Added ${numThougths} thoughts to favorites.`,
+        ),
+      )
+    },
+  },
   canExecute: getState => {
     const state = getState()
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
