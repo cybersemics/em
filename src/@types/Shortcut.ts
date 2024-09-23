@@ -100,9 +100,9 @@ interface Shortcut {
         /**
          * Filter the cursors before executing the shortcut.
          *
-         * 'none' - execute the shortcut for all cursors
-         * 'first-sibling' - execute the shortcut for only the first sibling within the same parent
-         * 'last-sibling' - execute the shortcut for only the last sibling within the same parent
+         * 'none' - Execute the shortcut for all cursors.
+         * 'first-sibling' - Execute the shortcut for only the first sibling within the same parent.
+         * 'last-sibling' - Execute the shortcut for only the last sibling within the same parent.
          */
         filter?: MulticursorFilter
       }
