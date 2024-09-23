@@ -1,4 +1,5 @@
-import { FC, useState } from 'react'
+import { FC, useMemo, useState } from 'react'
+import { useStore } from 'react-redux'
 import { modalText } from '../../styled-system/recipes'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
@@ -138,21 +139,47 @@ const ShortcutTable = ({
   selectedShortcut?: Shortcut
 }) => {
   const modalClasses = modalText()
-  const [_, setKeyboardInProgress] = useState('')
+  const [keyboardInProgress, setKeyboardInProgress] = useState('')
+  const store = useStore()
   
+  const possibleShortcutsSorted = useMemo(() => {
+
+    if (!keyboardInProgress) return groups
+    const possibleShortcuts = groups.filter(group => {
+      const shortcuts = group.shortcuts.filter(_shortcut => {
+        const shortcut = shortcutById(_shortcut)
+        const label = (
+          shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label
+        ).toLowerCase()
+        const description = typeof shortcut.description === 'function' ? shortcut.description(store.getState) : shortcut.description
+        const chars = keyboardInProgress.toLowerCase().split('')
+
+        const isInLabel = chars.some(char => char !== ' ' && label.includes(char)) && keyboardInProgress.split('').filter(char => char !== ' ' && !label.includes(char)).length <= 3
+        const isInDescription = chars.some(char => char !== ' ' && description?.toLowerCase().includes(char)) && keyboardInProgress.split('').filter(char => char !== ' ' && !description?.toLowerCase().includes(char)).length <= 3
+
+        return isInLabel || isInDescription
+      })
+      console.log(typeof shortcuts)
+      
+      return {
+        ...group,
+        shortcuts
+      }
+    })
+
+    return possibleShortcuts
+  }, [keyboardInProgress])
   
   return (
     <div>
       <SearchShortcut onInput={setKeyboardInProgress} />
       <div style={{ textAlign: 'left' }}>
-        {groups.map(group => {
+        {possibleShortcutsSorted.map(group => {
           console.log(group)
-          const shortcuts = group.shortcuts
-            .map(shortcutById)
-            .filter((shortcut): shortcut is Shortcut => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
+          const shortcuts = group.shortcuts.map(shortcutById)
 
-          // do not render groups with no shrotcuts on this platform
-          if (shortcuts.length === 0) return null
+
+          if (group.shortcuts.length === 0) return null
 
           return (
             <div key={group.title}>
