@@ -3,6 +3,7 @@ import _ from 'lodash'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { token } from '../../styled-system/tokens'
+import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -64,7 +65,7 @@ type TreeThought = {
   style?: React.CSSProperties | null
   thoughtId: string
   isLastVisible?: boolean
-  autofocus?: 'show' | 'dim' | 'hide-parent' | 'hide'
+  autofocus: Autofocus
   // keys of visible children
   // only used in table view to calculate the width of column 1
   visibleChildrenKeys?: string[]
@@ -78,7 +79,6 @@ type TreeThoughtPositioned = TreeThought & {
   width?: number
   x: number
   y: number
-  isLastVisible?: boolean
 }
 
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
@@ -573,8 +573,9 @@ const LayoutTree = () => {
         ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
       }
 
-      const nextAutofocus = next?.autofocus
-      const nextIsLastVisible = nextAutofocus === 'show' || nextAutofocus === 'dim'
+      const isLastVisible =
+        (node.autofocus === 'dim' || node.autofocus === 'show') &&
+        !(next?.autofocus === 'dim' || next?.autofocus === 'show')
 
       return {
         ...node,
@@ -582,7 +583,7 @@ const LayoutTree = () => {
         height,
         singleLineHeightWithCliff,
         width: tableCol1Widths.get(head(parentOf(node.path))),
-        isLastVisible: !nextIsLastVisible,
+        isLastVisible,
         x,
         y,
       }
@@ -663,6 +664,7 @@ const LayoutTree = () => {
               style,
               thoughtId,
               width,
+              autofocus,
               x,
               y,
             },
@@ -674,12 +676,6 @@ const LayoutTree = () => {
             // Render virtualized thoughts with their estimated height so that document height is relatively stable.
             // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
             if (belowCursor && !isCursor && y > viewportBottom + height) return null
-
-            // Get the previous thought
-            const prevThought = treeThoughtsPositioned[index - 1]
-
-            // Pass only the cliff value iof previous thought
-            const prevCliff = prevThought ? prevThought.cliff : undefined
 
             return (
               <div
@@ -723,8 +719,9 @@ const LayoutTree = () => {
                   // Do this as padding instead of y, otherwise there will be a gap between drop targets.
                   style={cliff < 0 ? cliffPaddingStyle : undefined}
                   crossContextualKey={key}
-                  prevCliff={prevCliff}
+                  prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
                   isLastVisible={isLastVisible}
+                  autofocus={autofocus}
                 />
 
                 {/* DropEnd (cliff) */}
