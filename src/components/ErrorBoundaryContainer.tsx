@@ -52,10 +52,7 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
         </div>
       )}
       <pre className={css({ whiteSpace: 'normal' })}>{componentStack}</pre>
-      <a
-        {...fastClick(() => window.location.reload())}
-        className={cx('button', cx(anchorButton(), css({ minWidth: 0 })))}
-      >
+      <a {...fastClick(() => window.location.reload())} className={cx(anchorButton(), css({ minWidth: 0 }))}>
         Refresh
       </a>
     </div>

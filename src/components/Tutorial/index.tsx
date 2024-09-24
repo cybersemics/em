@@ -113,23 +113,33 @@ const Tutorial: FC = () => {
 
   return (
     <div
-      className={cx(
-        'tutorial',
-        css({
-          '& p': {
-            marginTop: '20px',
-            '&:first-child': { marginTop: '0' },
-          },
-        }),
-      )}
+      className={css({
+        padding: '40px 20px 20px',
+        backgroundColor: { base: '#ddd', _dark: '#212121' },
+        position: 'relative',
+        zIndex: 'tutorial',
+        color: 'fg',
+        '& p': {
+          marginTop: '20px',
+          '&:first-child': { marginTop: '0' },
+        },
+      })}
     >
-      <div className='tutorial-inner'>
+      <div className={css({ maxWidth: '32em', margin: '0 auto' })}>
         <a
-          className={'upper-right tutorial-skip text-small'}
-          style={{
-            visibility:
-              tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden',
-          }}
+          className={cx(
+            css({
+              position: 'absolute',
+              color: '#666',
+              top: '10px',
+              right: '15px',
+              fontSize: 'sm',
+              visibility:
+                tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS
+                  ? 'visible'
+                  : 'hidden',
+            }),
+          )}
           {...fastClick(() => {
             if (window.confirm('Do you really want to close the tutorial?')) {
               dispatch(tutorial({ value: false }))
@@ -138,8 +148,8 @@ const Tutorial: FC = () => {
         >
           ✕ close tutorial
         </a>
-        <div className='clear'>
-          <div className='tutorial-text'>
+        <div className={css({ clear: 'both' })}>
+          <div>
             <TransitionGroup>
               {tutorialStepComponent ? (
                 <WithCSSTransition component={tutorialStepComponent} {...tutorialStepProps} />
@@ -180,7 +190,18 @@ const Tutorial: FC = () => {
             cursorHeadValue &&
             cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
         gesturePath ? (
-          <div className='tutorial-trace-gesture'>
+          <div
+            className={css({
+              position: 'absolute',
+              marginTop: '50px',
+              zIndex: 'tutorialTraceGesture',
+              textAlign: 'center',
+              left: 0,
+              right: 0,
+              backgroundColor: { base: 'rgba(255, 255, 255, 0.8)', _dark: 'rgba(0, 0, 0, 0.8)' },
+              paddingBottom: '50px',
+            })}
+          >
             <GestureDiagram
               path={gesturePath}
               size={160}

@@ -1,11 +1,13 @@
 import { FC } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
+import { css } from '../../../styled-system/css'
+import { anchorButton } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import GesturePath from '../../@types/GesturePath'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
-import themeColors from '../../selectors/themeColors'
 import newSubthoughtShortcut from '../../shortcuts/newSubthought'
 import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
@@ -18,7 +20,7 @@ interface NewSubthoughtTipProps {
 /** A tip that explains how to add a new subthought. */
 const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
   const dispatch = useDispatch()
-  const colors = useSelector(themeColors)
+
   const commandKey = isMac ? 'COMMAND' : 'CONTROL'
   const returnKey = isMac ? 'RETURN' : 'ENTER'
   const instructions = isTouch ? (
@@ -28,7 +30,7 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
         inGestureContainer
         path={newSubthoughtShortcut.gesture as GesturePath}
         size={30}
-        color={colors.gray66}
+        color={token('colors.gray66')}
       />
     </span>
   ) : (
@@ -40,15 +42,9 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
         <b>Tip</b>: {instructions}
       </p>
       <div>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginBottom: '0.5em',
-          }}
-        >
+        <div className={css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })}>
           <a
-            className='button'
+            className={anchorButton()}
             {...fastClick(() => {
               dispatch(dismissTip())
             })}
@@ -56,19 +52,13 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
             Okay
           </a>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginBottom: '0.5em',
-          }}
-        >
+        <div className={css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })}>
           <a
             tabIndex={-1}
             {...fastClick(() => {
               dispatch([removeToolbarButton('newSubthought'), dismissTip()])
             })}
-            className='button'
+            className={anchorButton()}
           >
             Remove this icon from the toolbar
           </a>
