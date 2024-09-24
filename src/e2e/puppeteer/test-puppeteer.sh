@@ -31,7 +31,7 @@ trap cleanup EXIT INT TERM
 if [ -z "$GITHUB_ACTIONS" ]; then
     # We're not in a GitHub Action, so start the browserless docker container
     echo "Starting browserless docker container..."
-    CONTAINER_ID=$(docker run -d --rm -p 7566:3000 -e "CONNECTION_TIMEOUT=-1" browserless/chrome)
+    CONTAINER_ID=$(docker run -d --rm -p 7566:3000 --add-host=host.docker.internal:host-gateway -e "CONNECTION_TIMEOUT=-1" browserless/chrome)
 
     # Wait for the container to be ready
     echo "Waiting for browserless to be ready..."
