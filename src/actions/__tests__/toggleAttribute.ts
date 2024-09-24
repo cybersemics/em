@@ -268,7 +268,6 @@ it('preserve sorted context', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =pin
-      - true
     - =sort
       - Alphabetical`)
 })

@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
 import Index from '../@types/IndexType'
 import { updateSplitPositionActionCreator as updateSplitPosition } from '../actions/updateSplitPosition'
-import { isAndroid, isSafari, isTouch } from '../browser'
+import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
@@ -30,6 +30,7 @@ import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import QuickDropPanel from './QuickDropPanel'
 import Sidebar from './Sidebar'
+import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import * as modals from './modals'
@@ -118,9 +119,12 @@ const useDisableLongPressToSelect = () => {
   }, [onSelectionChange])
 }
 
-/** Cancel gesture if there is an active text selection or active drag. */
-const shouldCancelGesture = () =>
-  (selection.isActive() && !selection.isCollapsed()) || store.getState().dragInProgress || !!store.getState().showModal
+/** Cancel gesture if there is an active text selection, drag, modal, or sidebar. */
+const shouldCancelGesture = (): boolean =>
+  (selection.isActive() && !selection.isCollapsed()) ||
+  store.getState().dragInProgress ||
+  !!store.getState().showModal ||
+  store.getState().showSidebar
 
 /**
  * Wrap an element in the MultiGesture component if the user has a touch screen.
@@ -171,6 +175,13 @@ const AppComponent: FC = () => {
 
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
+    document.body.setAttribute('data-color-mode', dark ? 'dark' : 'light')
+    document.body.setAttribute('data-device', isTouch ? 'mobile' : 'desktop')
+    document.body.setAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
+    document.body.setAttribute(
+      'data-browser',
+      /Chrome/.test(navigator.userAgent) ? 'chrome' : isSafari() ? 'safari' : 'other',
+    )
     if (testFlags.simulateDrag) {
       document.body.classList.add('debug-simulate-drag')
     }
@@ -251,6 +262,7 @@ const AppComponent: FC = () => {
     <div className={componentClassNames}>
       <GlobalStyles styles={globalStyles} />
       <Alert />
+      <Tips />
       <CommandPalette />
       <ErrorMessage />
       {enableLatestShortcutsDiagram && <LatestShortcutsDiagram position='bottom' />}

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
+import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -7,11 +8,9 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
-import calculateAutofocus from '../selectors/calculateAutofocus'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -57,6 +56,9 @@ const VirtualThought = ({
   style,
   crossContextualKey,
   zoomCursor,
+  prevCliff,
+  isLastVisible,
+  autofocus,
 }: {
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
@@ -76,6 +78,9 @@ const VirtualThought = ({
   /** A key that uniquely identifies the thought across context views. */
   crossContextualKey: string
   zoomCursor?: boolean
+  prevCliff?: number
+  isLastVisible?: boolean
+  autofocus: Autofocus
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
@@ -96,7 +101,6 @@ const VirtualThought = ({
   // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
   // Wait until the fade out animation has completed before removing.
   // Only shim 'hide', not 'hide-parent', thoughts, otherwise hidden parents snap in instead of fading in when moving up the tree.
-  const autofocus = useSelector(calculateAutofocus(path))
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
     delay: 750,
@@ -124,10 +128,14 @@ const VirtualThought = ({
   const updateSize = useCallback(() => {
     // Get the updated autofocus, otherwise isVisible will be stale.
     // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
-    const autofocusNew = calculateAutofocus(store.getState(), path)
-    const isVisibleNew = autofocusNew === 'show' || autofocusNew === 'dim'
+    const isVisibleNew = autofocus === 'show' || autofocus === 'dim'
     if (!ref.current) return
-    const heightNew = ref.current.getBoundingClientRect().height
+
+    // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
+    const heightNew = Math.max(
+      ref.current.getBoundingClientRect().height,
+      ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
+    )
     const widthNew = ref.current.querySelector('.editable')?.getBoundingClientRect().width
 
     // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
@@ -142,7 +150,7 @@ const VirtualThought = ({
       isVisible: isVisibleNew,
       key: crossContextualKey,
     })
-  }, [crossContextualKey, onResize, path, thought.id])
+  }, [crossContextualKey, onResize, thought.id, autofocus])
 
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
@@ -163,6 +171,15 @@ const VirtualThought = ({
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
   useSelectorEffect(updateSize, selectCursor, shallowEqual)
+
+  // Recalculate height after thought value changes.
+  // Otherwise, the hight is not recalculated after splitThought.
+  // TODO: useLayoutEffect does not work for some reason, causing the thought to briefly render at the incorrect height.
+  const value = useSelector(state => {
+    const thoughtId = head(simplePath)
+    return thoughtId ? getThoughtById(state, thoughtId).value : null
+  })
+  useEffect(updateSize, [updateSize, value])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(
@@ -198,7 +215,7 @@ const VirtualThought = ({
                 - d
               - e
          */
-        !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} />
+        !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
       }
 
       {!shimHiddenThought && (
@@ -229,13 +246,31 @@ const VirtualThought = ({
           // TODO: DragAndDropSubthoughts should be able to handle this.
           path={path}
           simplePath={simplePath}
+          isLastVisible={isLastVisible}
         />
       )}
     </div>
   )
 }
 
-const VirtualThoughtMemo = React.memo(VirtualThought)
+type VirtualThoughtPropsKeys = keyof typeof VirtualThought
+
+const VirtualThoughtMemo = React.memo(VirtualThought, (prevProps, nextProps) => {
+  let isEqual = true
+
+  for (const key in prevProps) {
+    if (key === 'path' || key === 'simplePath') {
+      isEqual = equalPath(prevProps[key], nextProps[key])
+      if (!isEqual) break
+    } else if (prevProps[key as VirtualThoughtPropsKeys] !== nextProps[key as VirtualThoughtPropsKeys]) {
+      isEqual = false
+      break
+    }
+  }
+
+  return isEqual
+})
+
 VirtualThoughtMemo.displayName = 'VirtualThought'
 
 export default VirtualThoughtMemo

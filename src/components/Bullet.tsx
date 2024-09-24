@@ -1,6 +1,7 @@
 import classNames from 'classnames'
 import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { cva } from '../../styled-system/css'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
@@ -35,9 +36,228 @@ interface BulletProps {
   thoughtId: ThoughtId
   // depth?: number
   // debugIndex?: number
+  isCursorGrandparent?: boolean
+  isCursorParent?: boolean
 }
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
+
+const glyph = cva({
+  base: {
+    fill: { base: 'rgba(39, 39, 39, 1)', _dark: 'rgba(217, 217, 217, 1)' },
+    position: 'relative',
+    '@media (max-width: 500px)': {
+      _android: {
+        position: 'relative',
+        marginLeft: '-16.8px',
+        opacity: 0.9,
+        transition: 'opacity 0.75s ease-in-out',
+        marginRight: '-5px',
+        left: '3px',
+        fontSize: '16px',
+      },
+    },
+    '@media (min-width: 560px) and (max-width: 1024px)': {
+      _android: {
+        position: 'relative',
+        marginLeft: '-16.8px',
+        opacity: 0.8,
+        transition: 'opacity 0.75s ease-in-out',
+        marginRight: '-5px',
+        left: '4px',
+        fontSize: '28px',
+      },
+    },
+  },
+  variants: {
+    leaf: { true: {} },
+    showContexts: {
+      true: {
+        _mobile: {
+          fontSize: '80%',
+          left: '-0.08em',
+          top: '0.05em',
+        },
+        '@media (max-width: 500px)': {
+          _android: {
+            fontSize: '149%',
+            left: '2px',
+            top: '-5.1px',
+          },
+        },
+        '@media (min-width: 560px) and (max-width: 1024px)': {
+          _android: {
+            fontSize: '149%',
+            left: '2px',
+            top: '-5.1px',
+          },
+        },
+      },
+    },
+    isBulletExpanded: { true: {} },
+    // childrenNew currently unused as NewThought is not importing Bullet
+    childrenNew: {
+      true: {
+        content: "'+'",
+        left: '-0.15em',
+        top: '-0.05em',
+        marginRight: '-0.3em',
+        _mobile: {
+          left: '0.05em',
+          top: '-0.1em',
+          marginRight: '-0.1em',
+        },
+        '@media (max-width: 500px)': {
+          _android: {
+            content: "'+'",
+            left: '0.05em',
+            top: '-0.1em',
+            marginRight: '-0.1em',
+          },
+        },
+        '@media (min-width: 560px) and (max-width: 1024px)': {
+          _android: {
+            content: "'+'",
+            left: '0.05em',
+            top: '-0.1em',
+            marginRight: '-0.1em',
+          },
+        },
+      },
+    },
+  },
+  compoundVariants: [
+    {
+      leaf: true,
+      showContexts: true,
+      css: {
+        fontSize: '90%',
+        top: '-0.05em',
+        _mobile: {
+          top: '0',
+          left: '-0.3em',
+          marginRight: 'calc(-0.48em - 5px)',
+        },
+        '@media (max-width: 500px)': {
+          _android: {
+            position: 'relative',
+            fontSize: '160%',
+            left: '1px',
+            top: '-8.1px',
+            marginRight: '-5px',
+            paddingRight: '10px',
+          },
+        },
+        '@media (min-width: 560px) and (max-width: 1024px)': {
+          _android: {
+            position: 'relative',
+            fontSize: '171%',
+            left: '2px',
+            top: '-7.1px',
+            marginRight: '-5px',
+            paddingRight: '10px',
+          },
+        },
+      },
+    },
+    {
+      leaf: false,
+      isBulletExpanded: true,
+      css: {
+        '@media (max-width: 500px)': {
+          _android: {
+            left: '2px',
+            top: '-1.6px',
+            fontSize: '19px',
+          },
+        },
+        '@media (min-width: 560px) and (max-width: 1024px)': {
+          _android: {},
+        },
+      },
+    },
+    {
+      leaf: false,
+      showContexts: true,
+      isBulletExpanded: true,
+      css: {
+        '@media (max-width: 500px)': {
+          _android: {
+            left: '2px',
+            fontSize: '20px',
+            top: '-2.5px',
+          },
+        },
+        '@media (min-width: 560px) and (max-width: 1024px)': {
+          _android: {
+            left: '3px',
+            top: '-5.1px',
+          },
+        },
+      },
+    },
+  ],
+  defaultVariants: {
+    leaf: false,
+    showContexts: false,
+  },
+})
+
+const glyphFg = cva({
+  base: {
+    transition: 'transform 0.1s ease-out, fill-opacity 0.5s ease-out',
+  },
+  variants: {
+    gray: {
+      true: {
+        color: '#666',
+        fill: '#666',
+      },
+    },
+    graypulse: {
+      true: {
+        color: '#666',
+        fill: '#666',
+        '-webkit-animation': {
+          // TODO: not sure if this will apply TODO CHRISTINA
+          base: 'toblack 400ms infinite alternate ease-in-out',
+          _dark: 'towhite 400ms infinite alternate ease-in-out',
+        },
+      },
+    },
+    triangle: {
+      true: {},
+    },
+    leaf: {
+      true: {},
+    },
+    showContexts: { true: {} },
+    isBulletExpanded: { true: {} },
+  },
+  compoundVariants: [
+    {
+      leaf: false,
+      triangle: true,
+      isBulletExpanded: true,
+      css: {
+        transform: 'rotate(90deg) translateX(10px)',
+      },
+    },
+    {
+      leaf: false,
+      showContexts: true,
+      isBulletExpanded: true,
+      css: {
+        _mobile: {
+          left: '-0.02em',
+        },
+      },
+    },
+  ],
+  defaultVariants: {
+    leaf: false,
+  },
+})
 
 /** A circle bullet for leaf thoughts. */
 const BulletLeaf = ({
@@ -46,16 +266,26 @@ const BulletLeaf = ({
   missing,
   pending,
   showContexts,
-}: { fill?: string; isHighlighted?: boolean; missing?: boolean; pending?: boolean; showContexts?: boolean } = {}) => {
+  isBulletExpanded,
+}: {
+  fill?: string
+  isHighlighted?: boolean
+  missing?: boolean
+  pending?: boolean
+  showContexts?: boolean
+  isBulletExpanded?: boolean
+} = {}) => {
   const colors = useSelector(themeColors)
   const radius = isIOSSafari ? 105 : 92
   return (
     <ellipse
       aria-label='bullet-glyph'
-      className={classNames({
-        'glyph-fg': true,
+      className={glyphFg({
         gray: missing,
         graypulse: pending,
+        showContexts,
+        leaf: true,
+        isBulletExpanded,
       })}
       data-bullet='leaf'
       ry={radius}
@@ -80,6 +310,7 @@ const BulletParent = ({
   childrenMissing,
   pending,
   showContexts,
+  isBulletExpanded,
 }: {
   currentScale?: number
   fill?: string
@@ -87,6 +318,7 @@ const BulletParent = ({
   childrenMissing?: boolean
   pending?: boolean
   showContexts?: boolean
+  isBulletExpanded?: boolean
 } = {}) => {
   const colors = useSelector(themeColors)
   const path = isIOSSafari
@@ -104,7 +336,14 @@ const BulletParent = ({
 
   return (
     <path
-      className={classNames({ 'glyph-fg': true, triangle: true, gray: childrenMissing, graypulse: pending })}
+      className={glyphFg({
+        triangle: true,
+        gray: childrenMissing,
+        graypulse: pending,
+        isBulletExpanded,
+        showContexts,
+        leaf: false,
+      })}
       data-bullet='parent'
       style={{
         transformOrigin: calculateTransformOrigin(),
@@ -155,6 +394,8 @@ const Bullet = ({
   publish,
   simplePath,
   thoughtId,
+  isCursorGrandparent,
+  isCursorParent,
   // depth,
   // debugIndex,
 }: BulletProps) => {
@@ -205,6 +446,9 @@ const Bullet = ({
     const styles = getStyle(state, bulletId)
     return styles?.color
   })
+
+  const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
+  const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded
 
   // offset margin with padding by equal amounts proportional to the font size to extend the click area
   const extendClickWidth = fontSize * 1.2
@@ -257,6 +501,7 @@ const Bullet = ({
 
   return (
     <span
+      data-testid={'bullet-' + hashPath(path)}
       aria-label='bullet'
       className={classNames({
         bullet: true,
@@ -278,9 +523,14 @@ const Bullet = ({
       onClick={clickHandler}
     >
       <svg
-        className='glyph'
+        className={glyph({ isBulletExpanded, showContexts, leaf })}
         viewBox='0 0 600 600'
         style={{
+          // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
+          // This caused the bullet slide animation to end with a jerky movement.
+          // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
+          // allowing the browser to optimize the animation.
+          willChange: 'transform',
           height: lineHeight,
           width: lineHeight,
           marginLeft: -lineHeight,
@@ -314,6 +564,7 @@ const Bullet = ({
               missing={missing}
               pending={pending}
               showContexts={showContexts}
+              isBulletExpanded={isBulletExpanded}
             />
           ) : (
             <BulletParent
@@ -323,6 +574,7 @@ const Bullet = ({
               childrenMissing={childrenMissing}
               pending={pending}
               showContexts={showContexts}
+              isBulletExpanded={isBulletExpanded}
             />
           )}
         </g>

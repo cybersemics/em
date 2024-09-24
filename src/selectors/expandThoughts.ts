@@ -4,7 +4,6 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_EXPAND_DEPTH } from '../constants'
-import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import findDescendant from '../selectors/findDescendant'
@@ -26,15 +25,7 @@ import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
 import { anyChild, getAllChildrenAsThoughts } from './getChildren'
 import getContexts from './getContexts'
-
-// pin state map
-const pinStateMap = { false: false, true: true }
-
-/** Returns true if a thought is pinned with =pin/true, false if =pin/false, and null if not pinned. */
-const pinned = (state: State, id: ThoughtId | null): boolean | null => {
-  const pinState = attribute(state, id, '=pin') as keyof typeof pinStateMap
-  return pinStateMap[pinState] ?? null
-}
+import pinned from './isPinned'
 
 /** Returns true if a thought's children are pinned with =children/=pin/true, false if =children/=pin/false, and null if not pinned. */
 const childrenPinned = (state: State, id: ThoughtId): boolean | null => {
@@ -50,9 +41,9 @@ const isTableColumn1 = (state: State, path: Path) => attributeEquals(state, head
 
 /**
  * Check for =publish/=attributes/=children/=pin in publish mode.
- * Note: Use 'pinChildren' so it is not interpreted in editing mode.
+ * Note: Use 'pinAll' so it is not interpreted in editing mode.
  */
-const publishPinChildren = (state: State, context: Context) => {
+const publishPinAll = (state: State, context: Context) => {
   const id = contextToThoughtId(state, unroot([...context, '=publish', '=attributes']) as Context)
   return id && publishMode() && childrenPinned(state, id)
 }
@@ -145,7 +136,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
     childrenPinned(state, thoughtId) !== false
 
   const childrenExpanded =
-    isTable(state, thoughtId) || hasOnlyChild || publishPinChildren(state, simplePath)
+    isTable(state, thoughtId) || hasOnlyChild || publishPinAll(state, simplePath)
       ? // all children are expanded
         visibleChildren
       : // some children expanded

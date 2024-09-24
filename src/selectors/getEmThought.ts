@@ -8,7 +8,7 @@ import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildren } from '../selectors/getChildren'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
-import { resolveArray } from '../util/memoizeResolvers'
+import resolveArray from '../util/resolveArray'
 import storage from '../util/storage'
 import getThoughtById from './getThoughtById'
 

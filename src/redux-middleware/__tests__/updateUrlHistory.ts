@@ -3,7 +3,7 @@ import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from 
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 
 beforeEach(createTestApp)

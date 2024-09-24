@@ -1,22 +1,21 @@
 /* Visual regression tests
- * Snapshot Directory: ./__image_snapshots__/{platform}/{filename}
+ * Snapshot Directory: ./__image_snapshots__/{filename}
  * Run `jest -u` to update failed snapshots.
  * Press i in jest watch to update failing snapshots interactively.
  * See: https://github.com/americanexpress/jest-image-snapshot
  */
 import { configureToMatchImageSnapshot } from 'jest-image-snapshot'
-import os from 'os'
 import path from 'path'
 
 /** Configures snapshot test settings. */
 function configureSnapshots({
   fileName,
 }: {
-  /** The file name of the test file. This is used to group snapshots into an identically-named subdirectory under the platform directory. */
+  /** The file name of the test file (excluding extension). This is used to group snapshots into an identically-named subdirectory. */
   fileName: string
 }) {
   return configureToMatchImageSnapshot({
-    /** Apply a Gaussian Blur on compared images (radius in pixels). Used to normalize small rendering differences between platforms. */
+    /** Apply a Gaussian Blur on compared images (radius in pixels). */
     // blur of 1.25 and threshold of 0.2 has false negatives
     // blur of 2 and threshold of 0.1 has false negatives
     // blur of 2.5 and threshold of 0.1 has false negatives
@@ -34,16 +33,10 @@ function configureSnapshots({
     failureThreshold: 8,
     // custom identifier for snapshots based on the title of the test
     customSnapshotIdentifier: ({ defaultIdentifier }) => {
-      return `${defaultIdentifier.replace(`${fileName}-ts-src-e-2-e-puppeteer-tests-${fileName}-ts-`, '').toLocaleLowerCase()}`
+      return `${defaultIdentifier.replace(`${fileName}-ts-`, '').toLocaleLowerCase()}`
     },
-    // Set snapshot directory to __image_snapshots__/{platform}/{filename} to avoid conflicts between platforms and group snapshots by test file.
-    customSnapshotsDir: path.join(
-      __dirname,
-      '__tests__',
-      '__image_snapshots__',
-      os.platform() === 'darwin' ? 'macos' : 'ubuntu',
-      fileName,
-    ),
+    // Set snapshot directory to __image_snapshots__/{filename}.
+    customSnapshotsDir: path.join(__dirname, '__tests__', '__image_snapshots__', fileName),
   })
 }
 

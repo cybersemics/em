@@ -1,4 +1,5 @@
 import { useSelector } from 'react-redux'
+import { css } from '../../../styled-system/css'
 import themeColors from '../../selectors/themeColors'
 
 /** Url icon. */
@@ -9,13 +10,13 @@ const UrlIcon = () => {
       width='1em'
       height='1em'
       viewBox='0 0 30 30'
-      style={{
+      className={css({
         marginLeft: '2px',
-        marginTop: '-0.056em',
-        padding: '0.167em 0.167em 0.167em 0.056em',
+        // Make sure the icon doesn't take up extra space.
+        padding: '0.05em 0.167em 0.167em 0',
         cursor: 'pointer',
         pointerEvents: 'all',
-      }}
+      })}
     >
       <path
         fill={colors.gray50}

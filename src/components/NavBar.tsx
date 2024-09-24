@@ -2,6 +2,8 @@ import classNames from 'classnames'
 import { useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
@@ -27,7 +29,25 @@ const CursorBreadcrumbs = () => {
     shallowEqual,
   )
 
-  return <ContextBreadcrumbs path={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
+  return (
+    <ContextBreadcrumbs
+      cssRaw={css.raw({
+        width: '100%',
+        color: '#999',
+        paddingLeft: '15px',
+        fontSize: '14px',
+        verticalAlign: 'bottom',
+      })}
+      linkCssRaw={css.raw({
+        color: '#999',
+        '&:hover': {
+          color: 'fg',
+        },
+      })}
+      path={breadcrumbSimplePath}
+      classNamesObject={navBreadcrumbsClass}
+    />
+  )
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
@@ -42,6 +62,9 @@ const NavBar = ({ position }: { position: string }) => {
 
   const showHomeLink = useSelector(state => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2))
   const backgroundColor = useSelector(state => (state.cursor && state.cursor.length > 0 ? colors.bg : undefined))
+  const boxShadow = useSelector(state =>
+    state.cursor && state.cursor.length > 0 ? `0 20px 15px 25px ${token('colors.bg')}` : undefined,
+  )
 
   const cursorBreadcrumbsWrapperRef = useRef<HTMLDivElement>(null)
 
@@ -68,6 +91,7 @@ const NavBar = ({ position }: { position: string }) => {
           })}
           style={{
             backgroundColor,
+            boxShadow,
           }}
         >
           <div className='nav-inset'>
@@ -75,7 +99,17 @@ const NavBar = ({ position }: { position: string }) => {
               {!isTutorialOn && (
                 <>
                   {/* The entire bottom nav is scaled by font size using the Scale component, so we can use a fixed size here. */}
-                  {showHomeLink ? <HomeLink size={24} /> : null}
+                  {showHomeLink ? (
+                    <HomeLink
+                      size={24}
+                      className={css({
+                        position: 'relative',
+                        zIndex: 'stack',
+                        ...(position === 'top' && { cssFloat: 'left', marginRight: '2px' }),
+                        ...(position === 'bottom' && { position: 'absolute', left: '-2px' }),
+                      })}
+                    />
+                  ) : null}
                   <CSSTransition
                     nodeRef={cursorBreadcrumbsWrapperRef}
                     in={!distractionFreeTyping}

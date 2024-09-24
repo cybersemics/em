@@ -1,26 +1,27 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
+import { cx } from '../../../styled-system/css'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
-import themeColors from '../../selectors/themeColors'
 
 export interface IconProps {
   fill?: string
   size?: number
   style?: Index<string>
+  classes?: string
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const CheckmarkIcon: FC<IconProps> = ({ fill, size = 20, style }) => {
-  const colors = useSelector(themeColors)
+const CheckmarkIcon: FC<IconProps> = ({ fill, size = 20, style, classes }) => {
   return (
     <svg
-      className='icon'
+      className={cx(icon(), classes)}
       x='0px'
       y='0px'
       viewBox='0 0 21 21'
       width={size}
       height={size}
-      fill={fill || colors.fg}
+      fill={fill || token('colors.fg')}
       style={style}
     >
       <g>

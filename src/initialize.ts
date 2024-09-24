@@ -283,11 +283,5 @@ window.em = windowEm
 */
 // moize.collectStats()
 
-/** Logs debugging information to a fixed position debug window. Useful for PWA debugging. */
-window.debug = (message: string) => {
-  const debugEl = document.getElementById('debug')!
-  debugEl.innerHTML = `${new Date()}: ${message}\n${debugEl.innerHTML}`
-}
-
 export type TestHelpers = typeof windowEm.testHelpers
 export type WindowEm = typeof windowEm

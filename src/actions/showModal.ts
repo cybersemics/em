@@ -5,13 +5,10 @@ import Thunk from '../@types/Thunk'
 import scrollTo from '../device/scrollTo'
 
 /** Shows or hides a modal. */
-const showModal = (state: State, { id }: { id: string }) => {
-  return {
-    ...state,
-    showModal: id,
-    showModalIcon: null,
-  }
-}
+const showModal = (state: State, { id }: { id: Modal }) => ({
+  ...state,
+  showModal: id,
+})
 
 /** Display a given modal dialog box and scroll to the top. */
 export const showModalActionCreator =

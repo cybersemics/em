@@ -1,9 +1,9 @@
-import classNames from 'classnames'
 import _ from 'lodash'
 import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { anchorButton, extendTap, modalText } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
 import Share from '../../@types/Share'
@@ -45,18 +45,18 @@ const ModalDevices = () => {
 
   const onBack = useCallback(() => setSelected(null), [])
 
+  const modalClasses = modalText()
   return (
     <ModalComponent
       id='devices'
       title='Device Management'
-      className='popup'
       center
       // do not show the close button on the detail view, since it renders the "Remove device" link at the very bottom of the page
       actions={({ close }) =>
         !selected ? <ActionButton key='close' title='Close' {...fastClick(() => close())} /> : null
       }
     >
-      <div className='modal-wrapper'>
+      <div className={modalClasses.wrapper}>
         <TransitionGroup>
           {selected && permissions[selected] ? (
             <CSSTransition
@@ -138,9 +138,11 @@ const ShareList = React.forwardRef<
     [],
   )
 
+  const modalClasses = modalText()
+
   return (
     <div ref={ref}>
-      <p className='modal-description'>Add or remove devices that can access and edit this thoughtspace.</p>
+      <p className={modalClasses.description}>Add or remove devices that can access and edit this thoughtspace.</p>
 
       {status === 'connected' ? (
         <>
@@ -188,9 +190,8 @@ const ShareList = React.forwardRef<
                   <div style={{ marginTop: '1em' }}>
                     <a
                       {...fastClick(() => setShowDeviceForm(true))}
-                      className={classNames({
-                        button: true,
-                        'button-outline': true,
+                      className={anchorButton({
+                        outline: true,
                       })}
                       style={{
                         display: 'inline-block',
@@ -322,9 +323,8 @@ const AddDeviceForm = ({
       <div>
         <a
           {...fastClick(() => onSubmit({ name, role: 'owner' }))}
-          className={classNames({
-            button: true,
-            'button-outline': true,
+          className={anchorButton({
+            outline: true,
           })}
           style={{
             display: 'inline-block',
@@ -543,10 +543,10 @@ const ShareDetail = React.memo(
           {onBack && (
             <a
               {...fastClick(onBack)}
-              className={classNames({
-                button: true,
-                'action-button': true,
-                'extend-tap': true,
+              className={anchorButton({
+                actionButton: true,
+                // extendTap overrides default button padding
+                extendTap: true,
               })}
               style={{
                 color: colors.bg,
@@ -572,7 +572,7 @@ const ShareDetail = React.memo(
                 permissionsModel.delete(accessToken, share)
                 onBack()
               }}
-              className='extend-tap'
+              className={extendTap()}
               style={{ color: colors.red }}
             >
               {isLastDevice ? 'Delete all thoughts' : 'Remove device'}

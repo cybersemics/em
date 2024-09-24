@@ -4,7 +4,7 @@ import ModalComponent from './ModalComponent'
 /** Modal used for GestureDiagram snapshot test. */
 const ModalTestGestureDiagram = () => {
   return (
-    <ModalComponent id='testGestureDiagram' className='popup' hideClose={true}>
+    <ModalComponent id='testGestureDiagram' hideClose={true}>
       <GestureDiagram path='r' size={48} arrowSize={12} />
       <GestureDiagram path='rd' size={48} arrowSize={12} />
       <GestureDiagram path='rdr' size={48} arrowSize={12} />

@@ -1,8 +1,9 @@
-import classNames from 'classnames'
 import { unescape as unescapeHtml } from 'html-escaper'
 import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { cx } from '../../styled-system/css'
+import { editable, multiline as multilineRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
@@ -68,6 +69,7 @@ interface EditableProps {
   placeholder?: string
   rank?: number
   style?: React.CSSProperties
+  className?: string
   simplePath: SimplePath
   /* If transient is true:
     1. Instead of calling exisitingThoughtChange, it calls newThought to add the given child to the state.
@@ -100,6 +102,7 @@ const Editable = ({
   path,
   simplePath,
   style,
+  className,
   transient,
 }: EditableProps) => {
   const state = store.getState()
@@ -306,9 +309,10 @@ const Editable = ({
       // Note: Joining every line does not work well for multiple paragraphs or bulleted lists with multiline items. It may be better to not split or join newlines at all, and make the user explicitly execute a join or split command. This gives them the ability to manually split on paragraphs and then use the join command on each. Indentation is not preserved in OCR, so it is not possible to completely automate multi paragraph restoration.
       const ocrDetected = oldValue === '' && /<div>(?!<br>)/.test(e.target.value)
 
-      const newValue = e.target
-        ? stripEmptyFormattingTags(
-            addEmojiSpace(
+      const newValue = stripEmptyFormattingTags(
+        addEmojiSpace(
+          ocrDetected
+            ? // If we detect OCR, we need to clean and escape the value
               unescapeHtml(
                 // When paragraphs from books are scanned with OCR, the value will consist of separate lines (wrapped in <div>...</div>).
                 // Therefore, when OCR is detected, join the lines together with spaes.
@@ -316,10 +320,11 @@ const Editable = ({
                 strip(ocrDetected ? e.target.value.replace(/<div>/g, ' ') : e.target.value, {
                   preserveFormatting: true,
                 }),
-              ),
-            ),
-          )
-        : oldValue
+              )
+            : // Otherwise, we avoid unescaping the value to preserve escaped HTML characters.
+              e.target.value,
+        ),
+      )
 
       /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
 
@@ -562,13 +567,14 @@ const Editable = ({
     <ContentEditable
       disabled={disabled}
       innerRef={contentRef}
-      className={classNames({
-        multiline,
-        preventAutoscroll: true,
-        editable: true,
-        ['editable-' + head(path)]: true,
-        empty: value.length === 0,
-      })}
+      aria-label={'editable-' + head(path)}
+      className={cx(
+        multiline ? multilineRecipe() : null,
+        editable({
+          preventAutoscroll: true,
+        }),
+        className,
+      )}
       html={
         value === EM_TOKEN
           ? '<b>em</b>'

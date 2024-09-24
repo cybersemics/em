@@ -146,12 +146,12 @@ const useDragAndDropFavorites = (props: Partial<DragAndDropFavoriteReturnType>) 
     collect: dragCollect,
   })
 
-  const [{ isHovering }, dropTarget] = useDrop(() => ({
+  const [{ isHovering }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
-  }))
+  })
 
   return { isDragging, dragSource, dragPreview, isHovering, dropTarget }
 }

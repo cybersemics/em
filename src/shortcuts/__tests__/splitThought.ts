@@ -2,7 +2,7 @@ import { screen } from '@testing-library/dom'
 import { act } from '@testing-library/react'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import store from '../../stores/app'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)

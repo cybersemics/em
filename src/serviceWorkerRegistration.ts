@@ -1,3 +1,5 @@
+/* eslint-disable import/prefer-default-export */
+
 // This optional code is used to register a service worker.
 // register() is not called by default.
 
@@ -134,8 +136,8 @@ export function unregister() {
       .then(registration => {
         registration.unregister()
       })
-      .catch(error => {
-        console.error(error.message)
+      .catch((err: Error) => {
+        console.error(err.message)
       })
   }
 }

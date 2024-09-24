@@ -14,11 +14,21 @@ env:
 jobs:
   run:
     name: Puppeteer
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
+    services:
+      browserless:
+        image: browserless/chrome:latest
+        ports:
+          - 7566:3000
+        env:
+          CONNECTION_TIMEOUT: -1
 
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Set Node.js version
         uses: actions/setup-node@v4
@@ -27,6 +37,9 @@ jobs:
 
       - name: Install npm dependencies
         run: yarn
+
+      - name: Start SSL proxy
+        run: docker run -d --rm --add-host=host.docker.internal:host-gateway -e "PORT=3000" -p 2552:443 esplo/docker-local-ssl-termination-proxy
 
       - name: Build
         run: yarn build
@@ -42,5 +55,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: __diff_output__
-          path: src/e2e/puppeteer/__tests__/__image_snapshots__/*/__diff_output__/
+          path: src/e2e/puppeteer/__tests__/__image_snapshots__/**/__diff_output__/
           if-no-files-found: ignore

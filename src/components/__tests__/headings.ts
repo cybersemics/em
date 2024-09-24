@@ -1,8 +1,8 @@
 import { act } from '@testing-library/react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import store from '../../stores/app'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
-import { findThoughtByText } from '../../test-helpers/queries'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)

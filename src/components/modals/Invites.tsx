@@ -2,10 +2,11 @@ import _ from 'lodash'
 import { nanoid } from 'nanoid'
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../../styled-system/css'
+import { modalText } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { alertActionCreator as alert } from '../../actions/alert'
-import { baseUrl } from '../../device/router'
 import themeColors from '../../selectors/themeColors'
 import fastClick from '../../util/fastClick'
 import timestamp from '../../util/timestamp'
@@ -15,6 +16,8 @@ import CopyClipboard from './../icons/CopyClipboard'
 import InvitesIcon from './../icons/InvitesIcon'
 import ModalComponent from './ModalComponent'
 
+const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+const svgClasses = css({ cursor: 'default' })
 /**
  * Get all the invite codes that belongs to the given user.
  */
@@ -129,11 +132,12 @@ const Invites = () => {
   //   return <div>You arent allowed to view this page. </div>
   // }
 
+  const modalClasses = modalText()
+
   return (
     <ModalComponent
       id='invites'
       title='Gift codes'
-      className='popup'
       center
       actions={({ close }) => (
         <div>
@@ -141,8 +145,8 @@ const Invites = () => {
         </div>
       )}
     >
-      <div className='modal-wrapper'>
-        <p className='modal-description'>
+      <div className={modalClasses.wrapper}>
+        <p className={modalClasses.description}>
           You get three shiny gift codes to share <b>em</b> with anyone you choose!
         </p>
         {isFetchingInvites && <p style={{ fontSize: '18px' }}>Fetching your shiny codes ✨...</p>}
@@ -150,12 +154,25 @@ const Invites = () => {
           const selectedIconFill = focusedGiftCode !== id ? 'grey' : undefined
           const link = `${baseUrl}/signup?code=${id}`
           return (
-            <div key={`${id}-gift-code`} className='gift-code-wrapper'>
+            <div
+              key={`${id}-gift-code`}
+              className={css({
+                display: 'flex',
+                flexDirection: 'row',
+                alignSelf: 'start',
+                margin: '3vh auto',
+                alignItems: 'center',
+                width: '100%',
+                '@media only screen and (min-width: 767px)': {
+                  width: '80%',
+                },
+              })}
+            >
               <div
                 style={{ display: 'inline-flex' }}
                 {...fastClick(() => (focusedGiftCode === id ? setFocusedGiftCode(null) : onInviteCodeSeen(id)))}
               >
-                <InvitesIcon fill={selectedIconFill} size={26} />
+                <InvitesIcon classes={svgClasses} fill={selectedIconFill} size={26} />
               </div>
               <input
                 type={hasSeen ? 'text' : 'password'}
@@ -163,13 +180,20 @@ const Invites = () => {
                 value={link}
                 onBlur={() => setFocusedGiftCode(null)}
                 onFocus={() => onInviteCodeSeen(id)}
+                className={css({
+                  margin: '0 10px',
+                  minWidth: '180px',
+                  '@media only screen and (min-width: 767px)': {
+                    minWidth: '300px',
+                  },
+                })}
               />
               {used ? (
-                <CheckmarkIcon fill={selectedIconFill} size={21} />
+                <CheckmarkIcon classes={svgClasses} fill={selectedIconFill} size={21} />
               ) : (
-                <CheckmarkIcon fill={colors.bg} size={21} />
+                <CheckmarkIcon classes={svgClasses} fill={colors.bg} size={21} />
               )}
-              <div className='copy-icon-wrapper' {...fastClick(() => updateCopy(link))}>
+              <div className={css({ display: 'inline-flex' })} {...fastClick(() => updateCopy(link))}>
                 <CopyClipboard fill={selectedIconFill} size={26} />
               </div>
             </div>

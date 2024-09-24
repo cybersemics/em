@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { editingActionCreator as editing } from '../actions/editing'
-import { isTouch } from '../browser'
 import { noop } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
@@ -33,7 +32,10 @@ const useLongPress = (
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       // do not stop propagation, or it will break MultiGesture
-      if (lock) return
+
+      // do not long press if another component is already pressed
+      // do not long press if right-clicking, otherwise right-clicking on a bullet will cause it to get stuck in the pressed state
+      if (lock || (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2)) return
 
       if ('touches' in e) {
         clientCoords.current = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
@@ -104,12 +106,14 @@ const useLongPress = (
     [onLongPressEnd, pressed],
   )
 
+  // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.
+  // Allow double tap to open the context menu as usual.
   // Android passes React.PointerEvent
   // Web passes React.MouseEvent
   const onContextMenu = useCallback(
     (e: React.MouseEvent | React.PointerEvent) => {
-      // Double tap activation of context menu produces a pointerType of `touch` whereas long press activation of context menu produces pointer type of `mouse`
-      if (!isTouch || ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch')) {
+      // On Android, double tap activation of context menu produces a pointerType of `mouse` whereas long press produces `touch`
+      if ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch') {
         e.preventDefault()
         e.stopPropagation()
         selection.clear()

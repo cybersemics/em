@@ -1,5 +1,5 @@
 // import moize from 'moize'
-// import { resolveArray } from './memoizeResolvers'
+// import resolveArray from './resolveArray'
 import moize from 'moize'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'

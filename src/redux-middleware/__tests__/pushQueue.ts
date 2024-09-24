@@ -8,7 +8,7 @@
 // import contextToPath from '../../selectors/contextToPath'
 // import store from '../../stores/app'
 // import contextToThought from '../../test-helpers/contextToThought'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 // import testTimer from '../../test-helpers/testTimer'
 

@@ -2,11 +2,11 @@ import _ from 'lodash'
 import React, { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { css } from '../../styled-system/css'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
-import { errorActionCreator as error } from '../actions/error'
 import { isTouch } from '../browser'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import { disableScroll, enableScroll } from '../device/disableScroll'
@@ -22,7 +22,6 @@ import {
 } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
-import fastClick from '../util/fastClick'
 import GestureDiagram from './GestureDiagram'
 import Popup from './Popup'
 
@@ -122,9 +121,6 @@ const CommandSearch: FC<{
         }}
         style={{ marginLeft: 0, marginBottom: 0, border: 'none' }}
       />
-      <a className='upper-right status-close-x text-small' {...fastClick(() => dispatch(error({ value: null })))}>
-        ✕
-      </a>
     </div>
   )
 }
@@ -244,12 +240,12 @@ const CommandRow: FC<{
               highlight={!disabled ? gestureInProgress.length : undefined}
               path={gestureString(shortcut)}
               strokeWidth={4}
-              style={{
+              cssRaw={css.raw({
                 position: 'absolute',
                 marginLeft: selected ? 5 : 15,
                 left: selected ? '-1.75em' : '-2.2em',
                 top: selected ? '-0.2em' : '-0.75em',
-              }}
+              })}
               width={45}
               height={45}
             />
@@ -583,6 +579,8 @@ const CommandPaletteWithTransition: FC = () => {
   const dispatch = useDispatch()
   const popupRef = useRef<HTMLDivElement>(null)
 
+  const popUpStyles = css.raw({ zIndex: 'commandPalette' })
+
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
     setDismiss(true)
@@ -603,6 +601,7 @@ const CommandPaletteWithTransition: FC = () => {
             // only show the close link on desktop
             // do not show the close link on touch devices since the CommandPalette is automatically dismissed when the gesture ends.
             {...(!isTouch ? { onClose } : null)}
+            cssRaw={popUpStyles}
           >
             <CommandPalette />
           </Popup>

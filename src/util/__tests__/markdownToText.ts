@@ -1,4 +1,4 @@
-import { markdownToText } from '../markdownToText'
+import markdownToText from '../markdownToText'
 
 describe('markdownToText', () => {
   it('should import paragraphs', () => {

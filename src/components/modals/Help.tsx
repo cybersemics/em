@@ -1,5 +1,7 @@
 import { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css, cx } from '../../../styled-system/css'
+import { anchorButton, extendTap, modal, modalText } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
@@ -9,14 +11,14 @@ import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
 import ShortcutTable from './../ShortcutTable'
-import GestureLibraryIcon from './../icons/GestureLibraryIcon'
+import CommandLibraryIcon from './../icons/CommandLibraryIcon'
 import MetaIcon from './../icons/MetaIcon'
 import TutorialsIcon from './../icons/TutorialsIcon'
 import ModalComponent from './ModalComponent'
 
 enum Section {
   About = 'About',
-  GestureLibrary = 'GestureLibrary',
+  CommandLibrary = 'CommandLibrary',
   Menu = 'Menu',
   Metaprogramming = 'Metaprogramming',
   Tutorials = 'Tutorials',
@@ -55,16 +57,16 @@ const HelpMenu = ({ onSelect }: { onSelect: (section: Section) => void }) => (
       description='Play the interactive tutorials to learn the basics.'
     />
     <HelpMenuItem
-      Icon={GestureLibraryIcon}
-      onTap={() => onSelect(Section.GestureLibrary)}
-      title='Gesture Library'
-      description='View a list of all available gestures.'
+      Icon={CommandLibraryIcon}
+      onTap={() => onSelect(Section.CommandLibrary)}
+      title='Command Library'
+      description='View a list of all commands that are available via the toolbar, command palette, keyboard, and mobile gestures.'
     />
     <HelpMenuItem
       Icon={MetaIcon}
       onTap={() => onSelect(Section.Metaprogramming)}
       title='Metaprogramming'
-      description={`Explore em's unique metaprogramming feature for customizing the appearance and behavior of individual thoughts.`}
+      description={`Peek under the hood at em's unique metaprogramming feature for customizing the appearance and behavior of individual thoughts.`}
     />
   </div>
 )
@@ -73,14 +75,17 @@ const HelpMenu = ({ onSelect }: { onSelect: (section: Section) => void }) => (
 const Tutorials = () => {
   const dispatch = useDispatch()
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
+
+  const { subtitle } = modalText()
+  const modalClasses = modal({ stack: true })
   return (
     <section className='popup-section' id='tutorials'>
-      <h2 className='modal-subtitle'>Tutorials</h2>
+      <h2 className={subtitle}>Tutorials</h2>
 
-      <div className='modal-actions modal-actions-stack center' style={{ alignItems: 'flex-start' }}>
+      <div className={modalClasses.actions} style={{ alignItems: 'flex-start' }}>
         <div>
           <a
-            className='button'
+            className={cx(anchorButton({ thin: true }), css({ marginBottom: '1em' }))}
             {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
@@ -96,7 +101,7 @@ const Tutorials = () => {
         </div>
         <div>
           <a
-            className='button'
+            className={cx(anchorButton({ thin: true }), css({ marginBottom: '1em' }))}
             {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
@@ -126,9 +131,10 @@ const Options = ({ options }: { options: string[] }) => (
 
 /** A help section that lists all metaprogramming attributes. */
 const Metaprogramming = () => {
+  const modalClasses = modalText({ compact: true })
   return (
     <div>
-      <h2 id='meta' className='modal-subtitle modal-subtitle-compact'>
+      <h2 id='meta' className={modalClasses.subtitle}>
         Metaprogramming
       </h2>
 
@@ -380,7 +386,6 @@ const ModalHelp = () => {
     <ModalComponent
       id='help'
       title='Help'
-      className='popup'
       actions={({ close }) => <ActionButton key='close' title='Close' {...fastClick(() => close())} />}
       style={{ fontSize }}
     >
@@ -389,7 +394,7 @@ const ModalHelp = () => {
       ) : (
         <span className='text-small'>
           &lt;{' '}
-          <a {...fastClick(back)} className='extend-tap'>
+          <a {...fastClick(back)} className={extendTap()}>
             Back
           </a>
         </span>
@@ -397,7 +402,7 @@ const ModalHelp = () => {
 
       {section === Section.Tutorials ? (
         <Tutorials />
-      ) : section === Section.GestureLibrary ? (
+      ) : section === Section.CommandLibrary ? (
         <CommandCenter />
       ) : section === Section.Metaprogramming ? (
         <Metaprogramming />
@@ -410,7 +415,7 @@ const ModalHelp = () => {
         section !== Section.Menu && section !== Section.Tutorials && (
           <div className='text-small' style={{ marginTop: '2em' }}>
             &lt;{' '}
-            <a {...fastClick(back)} className='extend-tap'>
+            <a {...fastClick(back)} className={extendTap()}>
               Back
             </a>
           </div>

@@ -106,6 +106,7 @@ export const deleteEmptyThoughtOrOutdentAlias: Shortcut = {
   label: 'Delete Empty Thought Or Outdent (alias)',
   keyboard: { key: Key.Backspace, shift: true },
   hideFromHelp: true,
+  svg: Icon,
   canExecute,
   exec,
 }

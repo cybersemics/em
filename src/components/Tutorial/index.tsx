@@ -1,6 +1,7 @@
 import React, { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { css, cx } from '../../../styled-system/css'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
@@ -24,6 +25,7 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
+import useIsVisible from '../../hooks/useIsVisible'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
 import { shortcutById } from '../../shortcuts'
@@ -32,6 +34,7 @@ import headValue from '../../util/headValue'
 import once from '../../util/once'
 import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
+import TutorialScrollUpButton from './TutorialScrollUpButton'
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 
 const NO_CHILDREN: Thought[] = []
@@ -58,6 +61,7 @@ if (!newThoughtShortcut) {
 
 /** Tutorial component. */
 const Tutorial: FC = () => {
+  const [isVisible, nextRef] = useIsVisible<HTMLAnchorElement>(true)
   const tutorialStep = useSelector(state => {
     const step = +(getSetting(state, 'Tutorial Step') || 1)
     return isNaN(step) ? 1 : step
@@ -105,16 +109,32 @@ const Tutorial: FC = () => {
 
   const cursorHeadValue = useSelector(state => state.cursor && headValue(state, state.cursor))
 
+  const gesturePath = gesture()
+
   return (
-    <div className='tutorial'>
+    <div
+      className={cx(
+        'tutorial',
+        css({
+          '& p': {
+            marginTop: '20px',
+            '&:first-child': { marginTop: '0' },
+          },
+        }),
+      )}
+    >
       <div className='tutorial-inner'>
         <a
-          className='upper-right tutorial-skip text-small'
+          className={'upper-right tutorial-skip text-small'}
           style={{
             visibility:
               tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden',
           }}
-          {...fastClick(() => dispatch(tutorial({ value: false })))}
+          {...fastClick(() => {
+            if (window.confirm('Do you really want to close the tutorial?')) {
+              dispatch(tutorial({ value: false }))
+            }
+          })}
         >
           ✕ close tutorial
         </a>
@@ -130,7 +150,7 @@ const Tutorial: FC = () => {
               )}
             </TransitionGroup>
           </div>
-          <TutorialNavigation tutorialStep={tutorialStep} />
+          <TutorialNavigation nextRef={nextRef} tutorialStep={tutorialStep} />
         </div>
 
         {isTouch &&
@@ -159,12 +179,19 @@ const Tutorial: FC = () => {
             cursor &&
             cursorHeadValue &&
             cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
-        gesture() ? (
+        gesturePath ? (
           <div className='tutorial-trace-gesture'>
-            <GestureDiagram path={gesture()!} size={160} strokeWidth={10} arrowSize={5} className='animate-pulse' />
+            <GestureDiagram
+              path={gesturePath}
+              size={160}
+              strokeWidth={10}
+              arrowSize={5}
+              cssRaw={css.raw({ animation: 'pulse 1s infinite alternate' })}
+            />
           </div>
         ) : null}
       </div>
+      <TutorialScrollUpButton show={!isVisible} />
     </div>
   )
 }

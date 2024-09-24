@@ -1,62 +1,29 @@
-import classNames from 'classnames'
-import { FC, useCallback, useEffect, useRef, useState } from 'react'
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { css } from '../../../styled-system/css'
+import { anchorButton, extendTap, modal } from '../../../styled-system/recipes'
 import DragAndDropType from '../../@types/DragAndDropType'
 import DragShortcutZone from '../../@types/DragShortcutZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
 import Shortcut from '../../@types/Shortcut'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
-import { deleteThoughtActionCreator as deleteThought } from '../../actions/deleteThought'
 import { dragShortcutZoneActionCreator as dragShortcutZone } from '../../actions/dragShortcutZone'
 import { initUserToolbarActionCreator as initUserToolbar } from '../../actions/initUserToolbar'
+import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
-import { AlertText, AlertType, EM_TOKEN } from '../../constants'
-import contextToPath from '../../selectors/contextToPath'
-import findDescendant from '../../selectors/findDescendant'
-import { getChildrenRanked } from '../../selectors/getChildren'
+import { AlertText, AlertType } from '../../constants'
 import themeColors from '../../selectors/themeColors'
 import { shortcutById } from '../../shortcuts'
-import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
-import ShortcutRow from './../ShortcutRow'
+import ShortcutTableOnly from '../ShortcutTableOnly'
 import ShortcutTable from './../ShortcutTable'
 import Toolbar from './../Toolbar'
 import ModalComponent from './ModalComponent'
-
-/** Handles dropping a toolbar button on DropToRemoveFromToolbar. */
-const drop = (monitor: DropTargetMonitor) => {
-  const state = store.getState()
-  const { shortcut } = monitor.getItem() as DragToolbarItem
-  const from = shortcut
-
-  // initialize EM/Settings/Toolbar/Visible with default shortcuts
-  store.dispatch(initUserToolbar())
-  const userToolbarThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
-  const userShortcutChildren = getChildrenRanked(store.getState(), userToolbarThoughtId)
-  const userShortcutIds = userShortcutChildren.map(subthought => subthought.value)
-
-  // user shortcuts must exist since it was created above
-  const userShortcutsPath = contextToPath(store.getState(), [EM_TOKEN, 'Settings', 'Toolbar'])!
-  const fromIndex = userShortcutIds.indexOf(from.id)
-  if (fromIndex === -1) return
-  const fromThoughtId = userShortcutChildren[fromIndex].id
-
-  store.dispatch([
-    alert(`Removed ${shortcut.label} from toolbar`, {
-      alertType: AlertType.ToolbarButtonRemoved,
-      clearDelay: 5000,
-    }),
-    deleteThought({
-      thoughtId: fromThoughtId,
-      pathParent: userShortcutsPath,
-    }),
-  ])
-}
 
 /** Collects props from the DropTarget. */
 const dropCollect = (monitor: DropTargetMonitor) => {
@@ -69,12 +36,14 @@ const dropCollect = (monitor: DropTargetMonitor) => {
 
 /** A drag-and-drop wrapper component that will remove the toolbar-button from the toolbar when dropped on. */
 const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) => {
+  const dispatch = useDispatch()
   const [{ isHovering, sourceZone }, dropTarget] = useDrop({
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],
-    drop: (item, monitor) => drop(monitor),
+    drop: (item: DragToolbarItem) => {
+      dispatch(removeToolbarButton(item.shortcut.id))
+    },
     collect: dropCollect,
   })
-  const dispatch = useDispatch()
   const dragShortcut = useSelector(state => state.dragShortcut)
 
   useEffect(() => {
@@ -109,24 +78,23 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
           showCloseLink: false,
         }),
       )
-    } else if (isHovering) {
-      dispatch([
-        alert(`Drop to remove ${shortcutById(dragShortcut).label} from toolbar`, {
-          alertType: AlertType.ToolbarButtonRemoveHint,
-          showCloseLink: false,
-        }),
-      ])
-    } else {
-      dispatch([
-        alert(AlertText.DragAndDropToolbar, {
-          alertType: AlertType.DragAndDropToolbarHint,
-          showCloseLink: false,
-        }),
-      ])
+    } else if (sourceZone === DragShortcutZone.Toolbar) {
+      if (isHovering) {
+        dispatch([
+          alert(`Drop to remove ${shortcutById(dragShortcut).label} from toolbar`, {
+            alertType: AlertType.ToolbarButtonRemoveHint,
+            showCloseLink: false,
+          }),
+        ])
+      }
     }
   }, [dispatch, dragShortcut, isHovering, sourceZone])
 
-  return <div ref={dropTarget}>{children}</div>
+  return (
+    <div data-drop-to-remove-from-toolbar-hovering={isHovering ? '' : undefined} ref={dropTarget}>
+      {children}
+    </div>
+  )
 }
 
 /** Customize Toolbar modal. */
@@ -141,23 +109,39 @@ const ModalCustomizeToolbar: FC = () => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const shortcutsContainerRef = useRef<HTMLDivElement>(null)
+  const shortcuts = useMemo(() => [selectedShortcut], [selectedShortcut])
+
+  const id = 'customizeToolbar'
+  const modalClasses = modal({ id })
 
   return (
     <ModalComponent
-      id='customizeToolbar'
+      id={id}
       // omit title since we need to make room for the toolbar
       title=''
-      className='popup'
     >
-      <h1 className='modal-title'>Customize Toolbar</h1>
+      <h1 className={modalClasses.title}>Customize Toolbar</h1>
       <p style={{ marginTop: '-1em', marginBottom: '1em' }}>
         &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className='extend-tap'>
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTap()}>
           Back to Settings
         </a>
       </p>
 
-      <div style={{ position: 'sticky', top: 0, marginBottom: '1em' }}>
+      <div
+        className={css({
+          // mask the selected bar that is rendered outside thn left edge of the ShortcutRow
+          backgroundColor: selectedShortcut ? 'bg' : undefined,
+          position: 'sticky',
+          top: '0px',
+          marginBottom: '1em',
+          // extend element to mask the selected bar that is rendered outside thn left edge of the ShortcutRow
+          marginLeft: '-modalPadding',
+          paddingLeft: 'modalPadding',
+          // above ShortcutRow, which has position: relative for the selected bar
+          zIndex: 1,
+        })}
+      >
         <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedShortcut?.id} />
 
         {/* selected toolbar button details */}
@@ -187,11 +171,7 @@ const ModalCustomizeToolbar: FC = () => {
                 position: 'relative',
               }}
             >
-              <table className='shortcuts'>
-                <tbody>
-                  <ShortcutRow shortcut={selectedShortcut} />
-                </tbody>
-              </table>
+              <ShortcutTableOnly shortcuts={shortcuts} />
             </div>
           </div>
         </CSSTransition>
@@ -210,7 +190,7 @@ const ModalCustomizeToolbar: FC = () => {
 
       <p style={{ marginTop: '2em', marginBottom: '2em' }}>
         &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className='extend-tap'>
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTap()}>
           Back to Settings
         </a>
       </p>
@@ -218,9 +198,8 @@ const ModalCustomizeToolbar: FC = () => {
       <div className='center'>
         <a
           {...fastClick(() => dispatch(closeModal()))}
-          className={classNames({
-            button: true,
-            'action-button': true,
+          className={anchorButton({
+            actionButton: true,
           })}
           style={{
             color: colors.bg,
@@ -241,7 +220,7 @@ const ModalCustomizeToolbar: FC = () => {
                 dispatch([initUserToolbar({ force: true }), alert('Toolbar reset', { clearDelay: 8000 })])
               }
             })}
-            className='extend-tap'
+            className={extendTap()}
             style={{
               color: colors.red,
             }}

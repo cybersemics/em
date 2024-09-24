@@ -73,7 +73,7 @@ const parseStyleString = (styleString: string): StyleProperty[] => {
       const style = styleProperty.split(':')
       return {
         name: style[0].trim().toLowerCase(),
-        value: style[1].trim().toLowerCase(),
+        value: style[1]?.trim().toLowerCase(),
       }
     })
 }

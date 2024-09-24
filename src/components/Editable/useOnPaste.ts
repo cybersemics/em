@@ -1,3 +1,4 @@
+import { escape as escapeHtml } from 'html-escaper'
 import React, { useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
@@ -8,8 +9,7 @@ import * as selection from '../../device/selection'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import store from '../../stores/app'
 import equalPath from '../../util/equalPath'
-import isHTML from '../../util/isHTML'
-import { isMarkdown } from '../../util/isMarkdown'
+import isMarkdown from '../../util/isMarkdown'
 import strip from '../../util/strip'
 import timestamp from '../../util/timestamp'
 
@@ -64,7 +64,11 @@ const useOnPaste = ({
           )
         }
 
-        const text = isHTML(plainText) ? plainText : htmlText || plainText
+        const text = htmlText
+          ? // Clean HTML from clipboard
+            strip(htmlText, { preserveFormatting: true })
+          : // Escape plain text from clipboard
+            escapeHtml(plainText)
 
         // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
         const multiline = plainText.trim().includes('\n') || htmlText?.match(/<(li|p|br)[\s>]/)

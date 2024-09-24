@@ -5,7 +5,7 @@ module.exports = {
     mocha: true,
     jest: true,
   },
-  extends: ['standard', 'react-app', 'plugin:react/recommended', 'plugin:import/typescript', 'raine', 'prettier'],
+  extends: ['react-app', 'plugin:react/recommended', 'plugin:import/typescript', 'prettier'],
   // to be removed later
   globals: {
     Atomics: 'readonly',
@@ -27,6 +27,13 @@ module.exports = {
     ],
 
     // jsdoc
+    'jsdoc/check-alignment': 2,
+    'jsdoc/check-indentation': 2,
+    'jsdoc/check-syntax': 2,
+    'jsdoc/check-types': 2,
+    'jsdoc/implements-on-classes': 2,
+    'jsdoc/no-types': 2,
+    'jsdoc/no-undefined-types': 2,
     'jsdoc/check-tag-names': [
       2,
       {

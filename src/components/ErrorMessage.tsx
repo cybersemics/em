@@ -1,8 +1,9 @@
 import { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { css } from '../../styled-system/css'
 import { errorActionCreator as error } from '../actions/error'
-import fastClick from '../util/fastClick'
+import CloseButton from './CloseButton'
 
 /** An error message that can be dismissed with a close button. */
 const ErrorMessage: FC = () => {
@@ -14,11 +15,23 @@ const ErrorMessage: FC = () => {
     <TransitionGroup>
       {value ? (
         <CSSTransition key={0} nodeRef={errorMessageRef} timeout={200} classNames='fade'>
-          <div ref={errorMessageRef} className='error-message'>
+          <div
+            ref={errorMessageRef}
+            className={css({
+              position: 'fixed',
+              top: 'safeAreaTop',
+              left: '0',
+              right: '0',
+              padding: '5px 25px 5px 5px',
+              backgroundColor: '#c23',
+              color: 'white',
+              textAlign: 'center',
+              zIndex: 'popup',
+              wordBreak: 'break-word',
+            })}
+          >
             {value.toString()}
-            <a className='upper-right status-close-x text-small' {...fastClick(() => dispatch(error({ value: null })))}>
-              ✕
-            </a>
+            <CloseButton onClose={() => dispatch(error({ value: null }))} />
           </div>
         </CSSTransition>
       ) : null}

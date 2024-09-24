@@ -1,20 +1,20 @@
-import { useSelector } from 'react-redux'
+import { cx } from '../../styled-system/css'
+import { icon } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import Icon from '../@types/Icon'
-import themeColors from '../selectors/themeColors'
 
 /** An Undo icon. */
-const UndoIcon = ({ fill, size = 18, style }: Icon) => {
-  const colors = useSelector(themeColors)
+const UndoIcon = ({ fill, size = 18, style, className }: Icon) => {
   return (
     <svg
       version='1.1'
-      className={'icon'}
+      className={cx(icon(), className)}
       xmlns='http://www.w3.org/2000/svg'
       x='0px'
       y='0px'
       width={size}
       height={size}
-      fill={fill || colors.fg}
+      fill={fill || token('colors.fg')}
       style={style}
       viewBox='0 -50 600 600'
     >

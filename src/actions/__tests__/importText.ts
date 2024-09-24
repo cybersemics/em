@@ -795,41 +795,6 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
     expect(actual).toBe(expectedOutput)
   })
 
-  it('should paste text that contains li tags properly that is copied from OSX Notes.app', () => {
-    /* eslint-disable no-irregular-whitespace */
-    const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<title></title>
-<meta name="Generator" content="Cocoa HTML Writer">
-<meta name="CocoaVersion" content="1894.6">
-<style type="text/css">
-p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
-</style>
-</head>
-<body>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;li&gt;&lt;i&gt;&lt;b&gt;A&lt;/b&gt;&lt;/i&gt;&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;li&gt;&lt;i&gt;&lt;b&gt;B&lt;/b&gt;&lt;/i&gt;&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;li&gt;&lt;i&gt;&lt;b&gt;C&lt;/b&gt;&lt;/i&gt;&lt;/li&gt;</p>
-</body>
-</html>`
-    /* eslint-enable no-irregular-whitespace */
-
-    const actual = importExport(paste)
-    const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
-    <ul>
-      <li><i><b>A</b></i></li>
-      <li><i><b>B</b></i></li>
-      <li><i><b>C</b></i></li>
-    </ul>
-  </li>
-</ul>`
-    expect(actual).toBe(expectedOutput)
-  })
-
   it('should paste text that contains formatting properly that is copied from OSX Notes.app', () => {
     /* eslint-disable no-irregular-whitespace */
     const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">

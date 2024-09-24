@@ -1,20 +1,19 @@
 import { useSelector } from 'react-redux'
+import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
-import themeColors from '../../selectors/themeColors'
 
 /** A home icon. */
-const HomeIcon = ({ className, fill, size, style }: IconType) => {
+const HomeIcon = ({ className, fill, size, style, wrapperClassName }: IconType & { wrapperClassName?: string }) => {
   const sizeCalculated = useSelector(state => size || state.fontSize)
-  const colors = useSelector(themeColors)
   return (
-    <span role='img' aria-label='home' className='logo-wrapper'>
+    <span role='img' aria-label='home' className={wrapperClassName}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         width={sizeCalculated}
         height={sizeCalculated}
         viewBox='0 0 24 24'
         className={`logo ${className}`}
-        fill={fill || colors.fg}
+        fill={fill || token('colors.fg')}
         style={{
           height: sizeCalculated,
           width: sizeCalculated,

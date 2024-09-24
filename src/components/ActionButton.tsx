@@ -1,56 +1,40 @@
-import classNames from 'classnames'
 import React from 'react'
-import { useSelector } from 'react-redux'
-import themeColors from '../selectors/themeColors'
+import { AnchorButtonVariantProps, anchorButton } from '../../styled-system/recipes'
 import fastClick from '../util/fastClick'
 import Loader from './Loader'
 
 interface ActionButtonProps {
   title: string
-  active?: boolean
   onClick?: (e: React.MouseEvent | React.TouchEvent) => void
-  inActive?: boolean
-  small?: boolean
   /** Render button with fg and bg colors inverted. */
-  inverse?: boolean
   isLoading?: boolean
   isDisabled?: boolean
 }
 
 /**
- * Action Button.
+ * Action Button with default thin variant. Used in Modals.
  */
 export const ActionButton = ({
   title,
-  active,
   inActive,
   inverse,
   small,
+  thin = true,
   isLoading,
   isDisabled,
   onClick,
   ...restProps
-}: ActionButtonProps & React.HTMLAttributes<HTMLAnchorElement>) => {
-  const colors = useSelector(themeColors)
+}: ActionButtonProps & AnchorButtonVariantProps & React.HTMLAttributes<HTMLAnchorElement>) => {
   return (
     <a
-      className={classNames({
-        button: true,
-        'button-active': active,
-        'button-inactive': inActive,
-        'button-small': small,
-        'action-button': true,
-        disabled: isDisabled,
+      className={anchorButton({
+        inActive,
+        small,
+        actionButton: true,
+        thin,
+        isDisabled,
+        inverse,
       })}
-      style={
-        inverse
-          ? {
-              backgroundColor: colors.gray15,
-              border: `solid 1px ${colors.gray50}`,
-              color: colors.fg,
-            }
-          : undefined
-      }
       {...(onClick && !isDisabled ? fastClick(onClick) : null)}
       {...restProps}
     >

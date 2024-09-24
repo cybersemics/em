@@ -1,3 +1,5 @@
+/* eslint-disable import/prefer-default-export */
+
 /** Defines global keyboard shortcuts and gestures. */
 import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'

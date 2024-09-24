@@ -1,8 +1,10 @@
+/* eslint-disable import/prefer-default-export */
+
 /** Defines app-wide constants. */
 import ShortcutId from './@types/ShortcutId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
-import { emojiRegex } from './emojiRegex'
+import emojiRegex from './emojiRegex'
 import { colors } from './selectors/themeColors'
 
 // maximum number of characters of children to allow expansion
@@ -169,11 +171,13 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   'undo',
   'redo',
   'newThought',
+  'newSubthought',
   'favorite',
   'outdent',
   'indent',
+  'swapParent',
   'pin',
-  'pinChildren',
+  'pinAll',
   'toggleTableView',
   'toggleSort',
   'toggleDone',
@@ -215,7 +219,6 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   // 'moveThoughtDown',
   // 'moveThoughtUp',
   // 'newGrandChild',
-  // 'newSubthought',
   // 'newSubthoughtTop',
   // 'newThoughtAbove',
   // 'newUncle',
@@ -442,6 +445,8 @@ export enum AlertType {
   GestureHint = 'GestureHint',
   // shown when importing one or more files via drag-and-drop or a large paste
   ImportFile = 'ImportFile',
+  // shown when the user redoes an action
+  Redo = 'Redo',
   // shown the first time the user types space to indent
   SpaceToIndentHint = 'SpaceToIndentHint',
   // shown when the sort setting is changed
@@ -458,6 +463,8 @@ export enum AlertType {
   ToolbarButtonRemoved = 'ToolbarButtonRemoved',
   // shown when the user has exceeded the maximimum number of characters allowed in feedback
   ModalFeedbackMaxChars = 'ModalFeedbackMaxChars',
+  // shown when the user undoes an action
+  Undo = 'Undo',
 }
 
 // User settings that can be saved to /EM/Settings/
@@ -470,9 +477,6 @@ export enum Settings {
   favoritesHideContexts = 'favoritesHideContexts',
   hideSuperscripts = 'hideSuperscripts',
 }
-
-// maximum size of state.jumpHistory
-export const MAX_JUMPS = 100
 
 // max time attempting to connect before moving to offline mode (milliseconds)
 export const WEBSOCKET_TIMEOUT = 3000
@@ -496,9 +500,6 @@ export const FREE_THOUGHTS_THROTTLE = 1000
 
 /** Controls the delay when enabling distraction free typing. */
 export const THROTTLE_DISTRACTION_FREE_TYPING = 100
-
-/** The animation duration of a node in the LayoutTree component. */
-export const LAYOUT_NODE_ANIMATION_DURATION = 150
 
 /** The animation duration for a toolbar button press. */
 export const TOOLBAR_PRESS_ANIMATION_DURATION = 80

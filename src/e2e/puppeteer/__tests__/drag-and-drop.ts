@@ -3,7 +3,6 @@ import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import helpers from '../helpers'
 
-// configure toMatchImageSnapshot to write the snapshots to __image_snapshots__/{platform}/{filename}
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
@@ -16,15 +15,7 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 */
 
-const { paste, remove, screenshot, dragAndDropThought, simulateDragAndDrop, clickThought } = helpers()
-
-/** Removes the huds-up-display (header, footer, etc) so that only the thoughts are shown. */
-const removeHUD = async () => {
-  await remove('[aria-label="footer"]')
-  await remove('[aria-label="menu"]')
-  await remove('[aria-label="nav"]')
-  await remove('[aria-label="toolbar"]')
-}
+const { paste, removeHUD, screenshot, dragAndDropThought, simulateDragAndDrop, clickThought } = helpers()
 
 describe('drag', () => {
   beforeEach(removeHUD)
@@ -169,6 +160,42 @@ describe('drag', () => {
 
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('drop target last child in cliff', async () => {
+    await paste(`
+        - a
+          - b
+            - c
+              - d
+                - e
+                - f
+        - x
+      `)
+
+    await simulateDragAndDrop({ drop: true })
+
+    await clickThought('a')
+    await clickThought('b')
+    await dragAndDropThought('e', 'f', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('drop target last visible child', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+      `)
+
+    await simulateDragAndDrop({ drop: true })
+
+    await dragAndDropThought('b', 'c', { position: 'after' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()

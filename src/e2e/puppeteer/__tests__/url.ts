@@ -3,7 +3,6 @@ import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import helpers from '../helpers'
 
-// configure toMatchImageSnapshot to write the snapshots to __image_snapshots__/{platform}/{filename}
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
@@ -16,34 +15,87 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 */
 
-const { paste, press, screenshot, remove } = helpers()
-
-/** Removes the huds-up-display (header, footer, etc) so that only the thoughts are shown. */
-const removeHUD = async () => {
-  await remove('[aria-label="footer"]')
-  await remove('[aria-label="menu"]')
-  await remove('[aria-label="nav"]')
-  await remove('[aria-label="toolbar"]')
-}
+const { click, paste, press, screenshot, removeHUD, scroll } = helpers()
 
 // Tests the following cases:
-// 1. Single line url
-// 2. Placeholder with url child
-// 3. Multiline url (ellipsized)
-// 4. Multiline url (with cursor)
-it('url', async () => {
+// - Single line url
+// - Single line url with cursor
+it('single line', async () => {
   await removeHUD()
 
   await paste(`
     - https://test.com/single-line
-    -
-      - https://github.com/cybersemics/em
-    - https://test.com/some/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
-    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
-    - This thought tests the line height of the above multiline url with cursor
+    - https://test.com/single-line-with-cursor
+    - This thought tests the line height of the above thought
   `)
 
   await press('ArrowUp')
+
+  // wait for render animation to complete
+  await sleep(1000)
+
+  const image = await screenshot()
+  expect(image).toMatchImageSnapshot()
+})
+
+describe('multiline', () => {
+  /** Tests the following cases:
+   * - Placeholder with url child.
+   * - Multiline url (ellipsized).
+   * - Multiline url (with cursor).
+   */
+  const multilineTest = async () => {
+    await removeHUD()
+
+    await paste(`
+    - https://test.com/single-line
+    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url
+    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url/with-cursor
+    - This thought tests the line height of the above thought
+  `)
+
+    await press('ArrowUp')
+
+    // wait for render animation to complete
+    await sleep(1000)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  }
+
+  it('Font Size: 18 (default)', multilineTest)
+
+  it('Font Size: 13', async () => {
+    // TODO: identify what needs to be waited for specifically
+    await sleep(1000)
+
+    await click('[data-testid=decrease-font]') // 17
+    await click('[data-testid=decrease-font]') // 16
+    await click('[data-testid=decrease-font]') // 15
+    await click('[data-testid=decrease-font]') // 14
+    await click('[data-testid=decrease-font]') // 13
+
+    // close alert
+    await click('[data-testid=close-button]')
+
+    // scroll to top
+    await scroll(0, 0)
+
+    await multilineTest()
+  })
+})
+
+it('collapsed thought with url child', async () => {
+  await removeHUD()
+
+  await paste(`
+    - test
+      - https://github.com/cybersemics/em
+    - 
+      - https://github.com/cybersemics/em
+  `)
+
+  await press('Escape')
 
   // wait for render animation to complete
   await sleep(1000)

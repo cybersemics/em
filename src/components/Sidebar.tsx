@@ -3,13 +3,14 @@ import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { css } from '../../styled-system/css'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isTouch } from '../browser'
-import themeColors from '../selectors/themeColors'
 import fastClick from '../util/fastClick'
 import Favorites from './Favorites'
+import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
 
 // extend SwipeableDrawer with classes prop
@@ -17,16 +18,46 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
   SwipeableDrawerProps & { classes: any; ref: any }
 >
 
+type SidebarSection = 'favorites' | 'recentEdited' | 'deletedEdited'
+
+/** A link to a sidebar section. */
+const SidebarLink = ({
+  active,
+  section,
+  setSection,
+  text,
+}: {
+  active?: boolean
+  section: SidebarSection
+  setSection: (section: SidebarSection) => void
+  text: string
+}) => {
+  return (
+    <a
+      {...fastClick(() => setSection(section))}
+      className={css({
+        color: active ? 'fg' : 'gray50',
+        display: 'inline-block',
+        fontSize: '1.2em',
+        fontWeight: 600,
+        margin: '0.5em 1em 0 0',
+        textDecoration: 'none',
+      })}
+    >
+      {text}
+    </a>
+  )
+}
+
 /** The sidebar component. */
 const Sidebar = () => {
   const [isSwiping, setIsSwiping] = useState(false)
   const containerRef = useRef<HTMLInputElement>(null)
   const sidebarMenuRef = useRef<HTMLInputElement>(null)
   const showSidebar = useSelector(state => state.showSidebar)
-  const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const dispatch = useDispatch()
-  const [section, setSection] = useState<'favorites' | 'recent'>('favorites')
+  const [section, setSection] = useState<SidebarSection>('favorites')
 
   /** Toggle the sidebar. */
   const toggleSidebar = (value: boolean) => {
@@ -42,7 +73,15 @@ const Sidebar = () => {
      * we are providing different classname to drawer based on isTouch property.
      */
     <SwipeableDrawerWithClasses
-      classes={{ root: 'z-index-sidebar', paper: isTouch ? 'drawer-container-mobile' : 'drawer-container-desktop' }}
+      classes={{
+        /* Increase precedence over .css-1u2w381-MuiModal-root-MuiDrawer-root z-index. */
+        root: css({ zIndex: 'sidebar !important' }),
+        /* material drawer container css z-index override */
+        paper: css({
+          width: '400px',
+          _mobile: { width: '90%' },
+        }),
+      }}
       disableSwipeToOpen={!isTouch}
       ref={containerRef}
       SwipeAreaProps={{
@@ -86,18 +125,31 @@ const Sidebar = () => {
         onTouchEnd={() => {
           setIsSwiping(false)
         }}
-        style={{
-          height: '100%',
-        }}
+        className={css({ height: '100%' })}
       >
         <div
-          className='sidebar'
-          style={{
+          aria-label='sidebar'
+          className={css({
+            background: { base: '#f5f5f5', _dark: '#292a2b' },
+            overflowY: 'scroll',
+            overscrollBehavior: 'contain',
+            boxSizing: 'border-box',
+            width: '100%',
+            height: '100%',
+            color: 'fg',
+            scrollbarWidth: 'thin',
+            lineHeight: 1.8,
+            '&::-webkit-scrollbar': {
+              width: '0px', // Remove scrollbar space
+              background: 'transparent', // Optional: just make scrollbar invisible
+              display: 'none',
+            },
             userSelect: 'none',
             // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
             position: 'relative',
             padding: '0 1em',
-          }}
+          })}
+          data-scroll-at-edge
         >
           <CSSTransition in={showSidebar} nodeRef={sidebarMenuRef} timeout={200} classNames='fade'>
             <div
@@ -107,36 +159,36 @@ const Sidebar = () => {
                 marginLeft: fontSize * 1.3 + 30,
               }}
             >
-              <a
-                {...fastClick(() => setSection('favorites'))}
-                style={{
-                  color: section === 'favorites' ? colors.fg : colors.gray50,
-                  display: 'inline-block',
-                  fontSize: '1.2em',
-                  fontWeight: 600,
-                  margin: '0.5em 1em 0 0',
-                  textDecoration: 'none',
-                }}
-              >
-                Favorites
-              </a>
-              <a
-                {...fastClick(() => setSection('recent'))}
-                style={{
-                  color: section === 'recent' ? colors.fg : colors.gray50,
-                  display: 'inline-block',
-                  fontSize: '1.2em',
-                  fontWeight: 600,
-                  margin: '0.5em 1em 0 0',
-                  textDecoration: 'none',
-                }}
-              >
-                Recently Edited
-              </a>
+              <SidebarLink
+                active={section === 'favorites'}
+                section='favorites'
+                setSection={setSection}
+                text='Favorites'
+              />
+              <SidebarLink
+                active={section === 'recentEdited'}
+                section='recentEdited'
+                setSection={setSection}
+                text='Recently Edited'
+              />
+              <SidebarLink
+                active={section === 'deletedEdited'}
+                section='deletedEdited'
+                setSection={setSection}
+                text='Recently Deleted'
+              />
             </div>
           </CSSTransition>
 
-          {section === 'favorites' ? <Favorites disableDragAndDrop={isSwiping} /> : <RecentlyEdited />}
+          {section === 'favorites' ? (
+            <Favorites disableDragAndDrop={isSwiping} />
+          ) : section === 'recentEdited' ? (
+            <RecentlyEdited />
+          ) : section === 'deletedEdited' ? (
+            <RecentlyDeleted />
+          ) : (
+            'Not yet implemented'
+          )}
         </div>
       </div>
     </SwipeableDrawerWithClasses>

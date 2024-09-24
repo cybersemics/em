@@ -17,7 +17,7 @@ export const formatSelectionActionCreator =
 
     // if there is no selection, format the entire thought by selecting the whole thought
     if (sel?.toString().length === 0 && thought.value.length !== 0) {
-      const thoughtContentEditable = document.querySelector('.editable-' + thought.id)
+      const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
       if (!thoughtContentEditable) return
 
       // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile

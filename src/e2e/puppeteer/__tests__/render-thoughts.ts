@@ -3,7 +3,6 @@ import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import helpers from '../helpers'
 
-// configure toMatchImageSnapshot to write the snapshots to __image_snapshots__/{platform}/{filename}
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
@@ -16,15 +15,7 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 */
 
-const { click, paste, press, remove, screenshot, scroll, type } = helpers()
-
-/** Removes the huds-up-display (header, footer, etc) so that only the thoughts are shown. */
-const removeHUD = async () => {
-  await remove('[aria-label="footer"]')
-  await remove('[aria-label="menu"]')
-  await remove('[aria-label="nav"]')
-  await remove('[aria-label="toolbar"]')
-}
+const { click, paste, press, removeHUD, screenshot, scroll, type } = helpers()
 
 /** Set up the snapshot tests. These are defined in a function so they can be run at different font sizes (via adjusting the font size in beforeEach). */
 const testSuite = () => {
@@ -185,14 +176,14 @@ describe('Font Size: 13', () => {
     // TODO: identify what needs to be waited for specifically
     await sleep(1000)
 
-    await click('.decrease-font') // 17
-    await click('.decrease-font') // 16
-    await click('.decrease-font') // 15
-    await click('.decrease-font') // 14
-    await click('.decrease-font') // 13
+    await click('[data-testid=decrease-font]') // 17
+    await click('[data-testid=decrease-font]') // 16
+    await click('[data-testid=decrease-font]') // 15
+    await click('[data-testid=decrease-font]') // 14
+    await click('[data-testid=decrease-font]') // 13
 
     // close alert
-    await click('.status-close-x')
+    await click('[data-testid=close-button]')
 
     // scroll to top
     await scroll(0, 0)
@@ -210,13 +201,13 @@ describe('Font Size: 22', () => {
     // TODO: identify what needs to be waited for specifically
     await sleep(1000)
 
-    await click('.increase-font') // 19
-    await click('.increase-font') // 20
-    await click('.increase-font') // 21
-    await click('.increase-font') // 22
+    await click('[data-testid=increase-font]') // 19
+    await click('[data-testid=increase-font]') // 20
+    await click('[data-testid=increase-font]') // 21
+    await click('[data-testid=increase-font]') // 22
 
     // close alert
-    await click('.status-close-x')
+    await click('[data-testid=close-button]')
 
     // scroll to top
     await scroll(0, 0)

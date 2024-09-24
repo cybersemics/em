@@ -1,5 +1,7 @@
 import { FC, PropsWithChildren } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css, cx } from '../../../styled-system/css'
+import { anchorButton } from '../../../styled-system/recipes'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
@@ -13,16 +15,27 @@ const TutorialHint: FC<PropsWithChildren> = ({ children }) => {
 
   return (
     <>
-      {!hint ? (
-        <a
-          className='button button-variable-width button-status button-less-padding text-small button-dim'
-          {...fastClick(() => dispatch(setTutorialStep({ value: tutorialStep + 0.1 })))}
-        >
-          hint
-        </a>
-      ) : (
-        children
-      )}
+      <a
+        className={cx(
+          anchorButton({
+            variableWidth: true,
+            lessPadding: true,
+            dim: hint,
+            smallGapX: true,
+          }),
+          css({ fontSize: 'sm' }),
+        )}
+        {...fastClick(() =>
+          dispatch(
+            setTutorialStep({
+              value: !hint ? tutorialStep + 0.1 : Math.floor(tutorialStep),
+            }),
+          ),
+        )}
+      >
+        hint
+      </a>
+      {hint && children}
     </>
   )
 }

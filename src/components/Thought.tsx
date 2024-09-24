@@ -1,6 +1,7 @@
 import classNames from 'classnames'
 import React, { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
+import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import LazyEnv from '../@types/LazyEnv'
@@ -89,9 +90,6 @@ export interface ThoughtContainerProps {
   styleContainer?: React.CSSProperties
   updateSize?: () => void
 }
-
-/** Animation to apply to a parent when one of its children is being hovered over. Disabled in puppeteer tests. */
-const CHILD_IS_HOVERING_ANIMATION = navigator.webdriver ? undefined : 'pulse 0.5s linear infinite alternate'
 
 /** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
 const equalChildren = (a: Thought[], b: Thought[]) =>
@@ -272,10 +270,11 @@ const ThoughtContainer = ({
   // See: https://stackoverflow.com/a/46452396/480608
   const styleThought = useMemo(
     (): React.CSSProperties => ({
+      /** Animation to apply to a parent when one of its children is being hovered over. Disabled in puppeteer tests. */
       ...(isChildHovering
         ? {
             WebkitTextStrokeWidth: '0.05em',
-            animation: CHILD_IS_HOVERING_ANIMATION,
+            animation: `pulse-light ${token('durations.highlightPulseDuration')} linear infinite alternate`,
             color: colors.highlight,
           }
         : null),
@@ -357,7 +356,7 @@ const ThoughtContainer = ({
       style={{
         // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
         position: 'relative',
-        transition: 'transform 0.75s ease-out, opacity 0.75s ease-out',
+        transition: `transform ${token('durations.layoutSlowShiftDuration')} ease-out, opacity ${token('durations.layoutSlowShiftDuration')} ease-out`,
         ...style,
         ...styleContainer,
         // extend the click area to the left (except if table column 2)
@@ -377,7 +376,6 @@ const ThoughtContainer = ({
         // used so that the autofocus can properly highlight the immediate parent of the cursor
         editing: isEditing,
         expanded: isExpanded,
-        function: isAttribute(value), // eslint-disable-line quote-props
         'has-only-child': children.length === 1,
         'invalid-option': invalidOption,
         'is-multi-column': isMultiColumnTable,
@@ -410,6 +408,7 @@ const ThoughtContainer = ({
           'thought-container': true,
           'single-line': !isEditing && isURL(value),
         })}
+        data-testid={'thought-' + hashPath(path)}
         style={{
           // ensure that ThoughtAnnotation is positioned correctly
           position: 'relative',
@@ -438,6 +437,7 @@ const ThoughtContainer = ({
           env={env}
           isContextPending={isContextPending}
           isEditing={isEditing}
+          ellipsizedUrl={!isEditing && isURL(value)}
           isPublishChild={isPublishChild}
           isVisible={isVisible}
           onEdit={!isTouch ? onEdit : undefined}
@@ -491,6 +491,6 @@ const ThoughtContainer = ({
 
 ThoughtContainer.displayName = 'ThoughtContainer'
 const ThoughtComponentMemo = React.memo(ThoughtContainer)
-ThoughtComponentMemo.displayName = 'ThoughtComponent'
+ThoughtComponentMemo.displayName = 'Thought'
 
 export default ThoughtComponentMemo

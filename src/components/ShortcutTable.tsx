@@ -1,13 +1,11 @@
-import { shallowEqual, useSelector } from 'react-redux'
+import { modalText } from '../../styled-system/recipes'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
-import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
-import getUserToolbar from '../selectors/getUserToolbar'
 import { globalShortcuts, shortcutById } from '../shortcuts'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
-import ShortcutRow from './ShortcutRow'
+import ShortcutTableOnly from './ShortcutTableOnly'
 
 // define the grouping and ordering of shortcuts
 const groups: {
@@ -26,7 +24,6 @@ const groups: {
       'moveCursorBackward',
       'moveCursorForward',
       'commandPalette',
-      'help',
       'home',
       'search',
     ],
@@ -59,6 +56,10 @@ const groups: {
     shortcuts: ['join', 'splitSentences', 'bold', 'italic', 'strikethrough', 'underline'],
   },
   {
+    title: 'Oops',
+    shortcuts: ['undo', 'redo'],
+  },
+  {
     title: 'Special Views',
     shortcuts: [
       'note',
@@ -77,7 +78,15 @@ const groups: {
   },
   {
     title: 'Visibility',
-    shortcuts: ['pin', 'pinChildren', 'toggleDone', 'toggleHiddenThoughts'],
+    shortcuts: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
+  },
+  {
+    title: 'Settings',
+    shortcuts: ['customizeToolbar'],
+  },
+  {
+    title: 'Help',
+    shortcuts: ['help'],
   },
 ]
 
@@ -109,12 +118,7 @@ const ShortcutTable = ({
   onSelect?: (shortcut: Shortcut | null) => void
   selectedShortcut?: Shortcut
 }) => {
-  // custom user toolbar
-  // fall back to defaults if user does not have Settings defined
-  const shortcutIds = useSelector(state => {
-    const userShortcutIds = getUserToolbar(state)
-    return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_SHORTCUTS
-  }, shallowEqual)
+  const modalClasses = modalText()
 
   return (
     <div style={{ textAlign: 'left' }}>
@@ -128,24 +132,14 @@ const ShortcutTable = ({
 
         return (
           <div key={group.title}>
-            <h2 className='modal-subtitle'>{group.title}</h2>
-            <table className='shortcuts'>
-              <tbody>
-                {shortcuts.map(shortcut => {
-                  const indexInToolbar = shortcutIds.findIndex(id => id === shortcut.id)
-                  return (
-                    <ShortcutRow
-                      customize={customize}
-                      key={shortcut.id}
-                      indexInToolbar={indexInToolbar !== -1 ? indexInToolbar + 1 : null}
-                      onSelect={onSelect}
-                      selected={shortcut.id === selectedShortcut?.id}
-                      shortcut={shortcut}
-                    />
-                  )
-                })}
-              </tbody>
-            </table>
+            <h2 className={modalClasses.subtitle}>{group.title}</h2>
+            <ShortcutTableOnly
+              shortcuts={shortcuts}
+              selectedShortcut={selectedShortcut}
+              customize={customize}
+              onSelect={onSelect}
+              applyIndexInToolbar
+            />
           </div>
         )
       })}

@@ -1,5 +1,6 @@
 import { FC, PropsWithChildren } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { extendTap } from '../../../styled-system/recipes'
 import { fontSizeActionCreator } from '../../actions/fontSize'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actions/toggleUserSetting'
@@ -95,7 +96,6 @@ const ModalSettings = () => {
     <ModalComponent
       id='settings'
       title='Settings'
-      className='popup'
       actions={({ close }) => (
         <div style={{ textAlign: 'center' }}>
           <ActionButton key='close' title='Close' {...fastClick(() => close())} />
@@ -104,7 +104,7 @@ const ModalSettings = () => {
     >
       <form>
         <p style={{ marginBottom: '3em', marginTop: '-1em' }}>
-          <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))} className='extend-tap'>
+          <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))} className={extendTap()}>
             Customize Toolbar
           </a>{' '}
           &gt;

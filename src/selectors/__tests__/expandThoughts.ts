@@ -362,6 +362,46 @@ describe('pin', () => {
     })
   })
 
+  // Standalone variant of =pin/true, same tests as above.
+  describe('=pin', () => {
+    it('pinned thoughts are expanded when cursor is on parent', () => {
+      const text = `
+        - a
+          - b
+            - =pin
+            - c
+          - d
+            - e
+      `
+
+      const steps = [importText({ text }), setCursor(['a'])]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+
+      // unpinned sibling
+      expect(isContextExpanded(stateNew, ['a', 'd'])).toBeFalsy()
+    })
+
+    it('pinned thoughts are expanded when cursor is on sibling', () => {
+      const text = `
+        - a
+          - b
+            - =pin
+            - c
+          - d
+            - e
+      `
+
+      const steps = [importText({ text }), setCursor(['a', 'd'])]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    })
+  })
+
   describe('=pin/false', () => {
     it('only child descendants are not expanded with =pin/false', () => {
       const text = `
@@ -481,7 +521,7 @@ describe('pin', () => {
   })
 })
 
-describe('=children/=pin', () => {
+describe('=children/=pin/true', () => {
   it('pinned children are expanded when cursor is on parent', () => {
     const text = `
       - a
@@ -562,6 +602,67 @@ describe('=children/=pin', () => {
     // expanded with cursor
     const stateNew1 = setCursor(stateNew, ['a', 'b'])
     expect(isContextExpanded(stateNew1, ['a', 'b'])).toBeTruthy()
+  })
+})
+
+describe('=children/=pin', () => {
+  it('pinned children are expanded when cursor is on parent', () => {
+    const text = `
+      - a
+        - =children
+          - =pin
+        - b
+          - c
+        - d
+          - e
+    `
+
+    const steps = [importText({ text }), setCursor(['a'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
+  })
+
+  it('pinned children are expanded when cursor is on sibling', () => {
+    const text = `
+      - a
+        - =children
+          - =pin
+        - b
+          - c
+        - d
+          - e
+    `
+
+    const stateNew = importText(initialState(), { text })
+
+    const stateNew1 = setCursor(stateNew, ['a', 'b'])
+    expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
+
+    const stateNew2 = setCursor(stateNew, ['a', 'd'])
+    expect(isContextExpanded(stateNew2, ['a', 'b'])).toBeTruthy()
+  })
+
+  it('pinned children are expanded when cursor is on niece', () => {
+    const text = `
+      - a
+        - =children
+          - =pin
+        - b
+          - c
+        - d
+          - e
+    `
+
+    const stateNew = importText(initialState(), { text })
+
+    const stateNew1 = setCursor(stateNew, ['a', 'b', 'c'])
+    expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
+
+    const stateNew2 = setCursor(stateNew, ['a', 'd', 'e'])
+    expect(isContextExpanded(stateNew2, ['a', 'b'])).toBeTruthy()
   })
 })
 

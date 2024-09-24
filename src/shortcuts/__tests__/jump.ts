@@ -4,11 +4,132 @@ import { indentActionCreator as indent } from '../../actions/indent'
 import { jumpActionCreator as jump } from '../../actions/jump'
 import { newSubthoughtActionCreator as newSubthought } from '../../actions/newSubthought'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
-import { createTestStore } from '../../test-helpers/createTestStore'
+import createTestStore from '../../test-helpers/createTestStore'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import head from '../../util/head'
 import pathToContext from '../../util/pathToContext'
+
+describe('jump history', () => {
+  it('add edited path to jump history', () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - x
+        - b
+          - y
+      `,
+      }),
+      setCursor(['a', 'x']),
+      editThought(['a', 'x'], 'xx'),
+    ])
+
+    const state = store.getState()
+
+    expect(pathToContext(state, state.jumpHistory[0]!)).toEqual(['a', 'xx'])
+  })
+
+  it('navigaton does not push to jump history', () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+      `,
+      }),
+      setCursor(['a']),
+      editThought(['a'], 'aa'),
+    ])
+
+    const stateA = store.getState()
+    expect(pathToContext(stateA, stateA.jumpHistory[0]!)).toEqual(['aa'])
+
+    store.dispatch(setCursor(['b']))
+
+    const stateB = store.getState()
+    expect(pathToContext(stateB, stateB.jumpHistory[0]!)).toEqual(['aa'])
+    expect(stateA.jumpHistory.length).toEqual(stateB.jumpHistory.length)
+  })
+
+  it('replace last jump when editing a sibling', () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+      `,
+      }),
+      setCursor(['a']),
+      editThought(['a'], 'aa'),
+    ])
+
+    const stateA = store.getState()
+    expect(pathToContext(stateA, stateA.jumpHistory[0]!)).toEqual(['aa'])
+
+    store.dispatch([setCursor(['b']), editThought(['b'], 'bb')])
+
+    // the jump point is now bb, but the total number of jumps stayed the same
+    const stateB = store.getState()
+    expect(pathToContext(stateB, stateB.jumpHistory[0]!)).toEqual(['bb'])
+    expect(stateA.jumpHistory.length).toEqual(stateB.jumpHistory.length)
+  })
+
+  it('replace last jump when editing a child', () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - b
+      `,
+      }),
+      setCursor(['a']),
+      editThought(['a'], 'aa'),
+    ])
+
+    const stateA = store.getState()
+
+    store.dispatch([setCursor(['aa', 'b']), editThought(['aa', 'b'], 'bb')])
+
+    const stateB = store.getState()
+    expect(pathToContext(stateB, stateB.jumpHistory[0]!)).toEqual(['aa', 'bb'])
+    expect(stateA.jumpHistory.length).toEqual(stateB.jumpHistory.length)
+  })
+
+  // TODO: We should probably merge ancestors.
+  it('do not merge ancestors (?)', () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - b
+            - c
+              - d
+                - e
+                  - f
+      `,
+      }),
+      setCursor(['a', 'b', 'c', 'd', 'e', 'f']),
+      editThought(['a', 'b', 'c', 'd', 'e', 'f'], 'ff'),
+    ])
+
+    const state = store.getState()
+    expect(pathToContext(state, state.jumpHistory[0]!)).toEqual(['a', 'b', 'c', 'd', 'e', 'ff'])
+    expect(pathToContext(state, state.jumpHistory[1]!)).toEqual(['a'])
+  })
+})
 
 describe('jump back', () => {
   it('jump back to the last edit point', () => {

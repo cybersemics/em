@@ -72,14 +72,12 @@ const ModalFeedback = () => {
     <ModalComponent
       id='feedback'
       title='Feedback'
-      className='popup'
       center
       actions={({ close }) => (
         <div>
           <ActionButton
             key='send'
             title='Send'
-            active={true}
             isLoading={isSubmitting}
             isDisabled={isDisabled}
             {...fastClick(() => onSubmit({ close }))}

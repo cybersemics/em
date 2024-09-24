@@ -1,45 +1,3 @@
-/* z-index schedule
-   Keep these in one place to make it easier to determine interactions and prevent conflicts.
-   Javascript should use z-index-* classnames so that z-indexes themselves are all defined here. */
-:root {
-  --z-index-popup: 1500;
-  --z-index-gesture-trace: 50;
-  --z-index-command-palette: 45;
-  --z-index-modal: 40;
-  --z-index-hamburger-menu: 30;
-  --z-index-sidebar: 25;
-  --z-index-toolbar-container: 20;
-  --z-index-toolbar-overlay: 15;
-  --z-index-toolbar-arrow: 15;
-  --z-index-toolbar: 10;
-  /* above Sidebar */
-  --z-index-navbar: 10;
-  --z-index-latest-shortcuts: 10;
-  /* above .children */
-  --z-index-tutorial-trace-gesture: 5;
-  /* above normal .drop-hover and subthoughts-drop-end */
-  --z-index-drop-empty: 6;
-  /* above thought and bullet. */
-  --z-index-subthoughts-drop-end: 5;
-  /* above .children */
-  --z-index-tutorial: 3;
-  /* above footer and breadcrumbs */
-  --z-index-scroll-zone: 2;
-  /* set z-index on .thought-annotation links so they are above .editable and thus clickable */
-  --z-index-thought-annotation-link: 2;
-  --z-index-resizer: 2;
-  /* place above .thought-container to preserve click area of bullet
-   otherwise clicking on the bottom edge of the bullet will activate cursorUp from the child */
-  --z-index-bullet: 2;
-  /* define a single var to place any element in a stacking context */
-  --z-index-stack: 1;
-  --z-index-hide: -1;
-  /* Sidebar is set inline to z-index: 1 */
-
-  --safe-area-top: env(safe-area-inset-top);
-  --safe-area-bottom: env(safe-area-inset-bottom);
-}
-
 .z-index-popup {
   z-index: var(--z-index-popup);
 }
@@ -48,9 +6,6 @@
 }
 .z-index-gesture-trace {
   z-index: var(--z-index-gesture-trace);
-}
-.z-index-hamburger-menu {
-  z-index: var(--z-index-hamburger-menu);
 }
 .z-index-navbar {
   z-index: var(--z-index-navbar);
@@ -68,143 +23,8 @@
   z-index: var(--z-index-scroll-zone);
 }
 
-/* Increase precedence over .css-1u2w381-MuiModal-root-MuiDrawer-root. */
-div.z-index-sidebar {
-  z-index: var(--z-index-sidebar);
-}
-
-/* fixed debug box in bottom right */
-#debug {
-  position: fixed;
-  bottom: 0;
-  right: 10px;
-  white-space: pre;
-  font-family: monospace;
-  font-size: 10px;
-  color: lightblue;
-}
-
-html,
-body,
-#root,
-#app {
-  height: 100%;
-  font-size: 16px;
-}
-
-body,
-textarea {
-  font-weight: 300;
-  font-family: 'Helvetica';
-  line-height: 1.25;
-}
-
-body {
-  /* Disables pull-to-refresh but allows overscroll glow effects. */
-  overscroll-behavior-y: contain;
-}
-
-button {
-  font-size: 1.2em;
-}
-
-a {
-  cursor: pointer;
-  text-decoration-line: underline;
-  outline: none;
-  color: #1b6f9a;
-  font-weight: 400;
-}
-
-/* Headings */
-h1 {
-  font-size: 32px;
-  font-weight: 400;
-  margin-top: 0;
-  margin-bottom: 12px;
-}
-
-h2 {
-  font-size: 100%;
-  font-weight: 300;
-  border-bottom: solid 1px black;
-  margin-bottom: 25px;
-}
-
-.dark h2 {
-  border-bottom: solid 1px white;
-}
-
-ul {
-  margin-left: 1.5em;
-  padding-left: 0;
-}
-
-ul ul {
-  margin-left: 1.2em;
-}
-
 ul ul.context-chain {
   margin-left: 1.6em;
-}
-
-li {
-  list-style: none;
-}
-
-input[type='email'],
-input[type='password'],
-input[type='text'] {
-  width: 40%;
-  min-width: 300px;
-  display: block;
-  margin: 0 auto;
-  padding: 10px;
-  font-size: 16px;
-  border: solid 1px #ddd;
-  border-radius: 5px;
-  margin-bottom: 2vh;
-}
-input:focus {
-  border: solid 1px #eee;
-  outline: 0 none;
-}
-
-/** Aligns checkbox and label vertically. */
-input[type='checkbox'] {
-  vertical-align: middle;
-  position: relative;
-  bottom: 1px;
-}
-
-label {
-  display: block;
-}
-
-.dark input:focus {
-  border: solid 1px #999;
-}
-
-.dark input {
-  color: white;
-  border: solid 1px #333;
-  background-color: black;
-}
-
-textarea {
-  width: calc(100% - 40px);
-  display: block;
-  margin: 0 auto;
-  height: 50vh;
-  padding: 10px;
-  font-size: 16px;
-  border: solid 1px #ddd;
-}
-
-.dark textarea {
-  color: white;
-  border: solid 1px #333;
-  background-color: black;
 }
 
 .clear {
@@ -286,22 +106,11 @@ a.button-less-padding {
   background-color: #dcdcdc;
 }
 
-.dark .tutorial-text a.button {
-  color: black;
-}
-
 a.button-variable-width {
   min-width: 0;
 }
 
-a.button[disabled] {
-  opacity: 0.25;
-  pointer-events: none;
-  user-select: none;
-  cursor: auto;
-}
-
-button[disabled] {
+a.button.disabled {
   opacity: 0.25;
   pointer-events: none;
   user-select: none;
@@ -312,34 +121,12 @@ a.button-dim {
   opacity: 0.5;
 }
 
-a.text-link {
-  text-decoration: underline;
-}
-
 .text-small {
   font-size: 80%;
 }
 
 .text-medium {
   font-size: 90%;
-}
-
-.list-none li::before {
-  display: none;
-}
-
-.list-bullet li {
-  list-style: disc;
-}
-
-.extend-tap {
-  margin: -0.5em;
-  padding: 0.5em;
-}
-
-.extend-tap-small {
-  margin: -0.25em;
-  padding: 0.25em;
 }
 
 .expand-click-area-left {
@@ -359,11 +146,6 @@ a.text-link {
   margin-right: -0.5em;
 }
 
-.breadcrumbs a {
-  color: inherit;
-  text-decoration: none;
-}
-
 .context-breadcrumbs {
   font-size: 0.867em;
   color: gray;
@@ -379,16 +161,6 @@ a.text-link {
   /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
      Otherwise the accumulated y value will not be correct. */
   padding-top: 0.5em;
-}
-
-.context-breadcrumbs .superscript-container {
-  position: relative;
-  left: -2px;
-  top: -3px;
-}
-
-.thought-annotation .context-breadcrumbs {
-  margin-right: 2px;
 }
 
 /* required to avoid iPhone converting to emoji
@@ -483,24 +255,9 @@ a.text-link {
 .toolbar-icon {
   cursor: pointer;
   display: inline-block;
-  padding: 5px 8px;
+  padding: 15px 8px 5px 8px;
   border-radius: 3px;
   z-index: var(--z-index-stack);
-}
-
-.toolbar-icon .icon {
-  padding-top: 10px;
-  flex: 1;
-}
-
-/* TextColor icon is used inside the toolbar-popup, so we need to revert the padding from .toolbar-icon .icon. More resilient than making .toolbar-icon .icon into a child selector. */
-.toolbar-popup .icon {
-  padding-top: 0;
-}
-
-.icon-text {
-  flex: 8;
-  font-size: 12px;
 }
 
 /* Toolbar mask */
@@ -531,64 +288,12 @@ a.text-link {
 
 /* Thoughts */
 
-[contenteditable] {
-  outline: none;
-  user-select: text;
-}
-
 [contenteditable].active-underline:focus {
   border-bottom: solid 1px;
 }
 
-.thought,
-.thought-annotation {
-  max-width: 100%;
-  /* do not set font-weight or it will override =heading style. */
-  margin-top: 0;
-  display: inline-block;
-  vertical-align: top;
-  white-space: pre-wrap;
-}
-
-/* Need to override max-width for table cols since they are rendered within the calculated width, instead of a whole line.
-This prevents table cols being rendered as multiline content, which causes inaacurate initial render */
-.table-col1 .thought,
-.table-col1 .thought-annotation {
-  max-width: 100%;
-}
-
-.thought-annotation {
-  position: absolute;
-  pointer-events: none;
-  user-select: none;
-  /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
-  box-sizing: border-box;
-}
-
-.editable-annotation {
-  display: inline-block;
-  width: 100%;
-  padding: 0 0.333em;
-  box-sizing: border-box;
-}
-
-.thought-annotation a {
-  position: relative;
-  z-index: var(--z-index-thought-annotation-link);
-}
-
-.editable-annotation-text,
-.thought-annotation .breadcrumbs {
-  visibility: hidden;
-  /* color: tomato; */
-}
-
 .subthought-highlight {
   border-bottom: solid 1px;
-}
-
-.thought-annotation .num-contexts {
-  position: absolute;
 }
 
 /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
@@ -603,88 +308,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
 }
 .child.expanded:not(.leaf) + .child > .thought-container .bullet {
   top: 0.3em;
-}
-
-.child .editable {
-  /* Add some padding-right for increased click area. */
-  /* Add some padding-left otherwise caret is invisible on empty elements. */
-  /* Cannot use padding-top on editable, as clicking it causes the selection to go to the beginning. */
-  /* Cannot use padding-bottom on editable, as clicking it causes the selection to go to the end. */
-  padding: 0 1em 0 0.333em;
-  box-sizing: border-box;
-}
-
-.thought {
-  --min-thought-height: 1.9em;
-}
-
-.child .editable,
-.editable-annotation-text {
-  /* slide editable up so that it overlaps with the previous thought, ensuring there is no dead click zone from clip-path */
-  margin: -0.5px 0 0 calc(1em - 18px);
-  /* create stacking order to position above thought-annotation so that function background color does not mask thought */
-  position: relative;
-  /* Prevent the selection from being incorrectly set to the beginning of the thought when the top edge is clicked, and the end of the thought when the bottom edge is clicked. Instead, we want the usual behavior of the selection being placed near the click. */
-  clip-path: inset(0.001px 0 0.1em 0);
-  /* Use minimum height to the cover the gap left by clip-path */
-  min-height: var(--min-thought-height);
-}
-
-/** Assign annotation height on single line truncated url */
-.single-line .thought {
-  /**
-    .single-line element has display: inline-block property, it affects the height calculation of the .thought div so we need to set the height manually.
-  */
-  height: var(--min-thought-height);
-}
-
-/* On Safari, the caret is not lined up with the placeholder text on empty thoughts (due to either negative margin or line-height).
-   Add padding-top to shift the caret down.
-   This bumps the placeholder text off, so we need to shift the placeholder text up by the same amount.
-*/
-.safari .child .editable:empty {
-  padding-top: 0.2em;
-  margin-bottom: -0.2em; /* offset padding-top, otherwise next sibling will be bumped down */
-}
-/* shift placeholder up to offset padding-top */
-.safari .child .editable:empty::before {
-  top: -0.2em;
-  position: relative;
-}
-
-/* TODO: Safari only? */
-.mobile .child .editable {
-  margin-top: -2px;
-}
-
-/* Define the correct line-height for multiline thoughts. This is not used by single-line thoughts where line-height is used instead of padding in order to preserve click behavior. See ".thought-container" and ".child .editable" above. Increase specificity to override ".mobiile .child .editable". */
-.multiline.multiline.multiline.multiline {
-  line-height: 1.25;
-  margin-top: -0.12em;
-  padding-bottom: 0.5em;
-  padding-top: 0.33em;
-  /* A small amount of margin-bottom may make multiline thoughts feel less crunched. However, this must be prevented or overridden when the thought has a note, otherwise there will be too much space in between the thought and the note. */
-}
-
-.safari .multiline.multiline.multiline.multiline {
-  padding-top: 0.3em;
-}
-
-/* Hacky, nonlinear multiline padding-top that works across all font sizes on mobile Safari. Otherwise the thought goes out of alignment with the bullet when it becomes multiline. */
-.mobile.safari .multiline.multiline.multiline.multiline {
-  /* 0.2em works at font size 13 */
-  /* 0.24em works at font size 18 */
-  /* works without max at font sizes 18–24 */
-  padding-top: calc(max(0.5em, 7.5px) - 5px);
-}
-
-.child .editable,
-.editable-annotation-text {
-  word-break: break-word; /* breaks urls; backwards-compatible with regular text unlike break-all */
-}
-
-.mobile .child .editable {
-  padding-bottom: 0;
 }
 
 .children-subheading {
@@ -745,21 +368,10 @@ This prevents table cols being rendered as multiline content, which causes inaac
   padding-bottom: 20px;
 }
 
-body.dark {
-  color: white;
-  background-color: black;
-}
-
 .dark .root,
-.dark .content,
-.dark .modal {
+.dark .content {
   background-color: black;
   color: #e3e3e3;
-}
-
-.dark .footer a,
-.dark .tutorial-text a {
-  color: #87ceeb;
 }
 
 .logo {
@@ -804,108 +416,8 @@ body.dark {
   padding-bottom: calc(max(10px, var(--safe-area-bottom)));
 }
 
-.home .logo-wrapper {
-  display: flex;
-  align-items: center;
-}
-
-.nav .home {
-  position: relative;
-  z-index: var(--z-index-stack);
-}
-
-.nav-top .home {
-  float: left;
-  margin-right: 2px; /* spacing before breadcrumbs */
-}
-
-.nav-bottom .home {
-  position: absolute;
-  left: -2px;
-}
-
-.modal .home {
-  display: inline-block;
-  position: relative;
-  top: 5px;
-  margin-top: -10px;
-}
-
-.thought .home {
-  position: relative;
-  top: -4px;
-  left: -2px;
-}
-
-.breadcrumbs .home {
-  /* override .nav-bottom .home */
-  position: static;
-}
-
-.breadcrumbs .home .logo-wrapper {
-  /* override .home .logo-wrapper */
-  display: inline;
-  position: relative;
-  top: 3px;
-}
-
-.thought-annotation .home {
-  display: none;
-}
-
-.error-message {
-  position: fixed;
-  top: var(--safe-area-top);
-  left: 0;
-  right: 0;
-  padding: 5px 25px 5px 5px; /* extra padding-right to make room for x */
-  background-color: #c23;
-  color: white;
-  text-align: center;
-  z-index: var(--z-index-popup);
-  word-break: break-word; /* break at normal word boundary but also within word if it exceeds width of container */
-}
-
-.status {
-  color: #aaa;
-  background-color: rgba(255, 255, 255, 0.8);
-  float: left;
-  position: fixed;
-  top: 5;
-  z-index: var(--z-index-popup);
-}
-
-.status span {
-  padding: 15px 15px 10px 15px;
-  display: inline-block;
-}
-
-.dark .status {
-  background-color: rgba(0, 0, 0, 0.8);
-  color: #e3e3e3;
-}
-
 .dark .offline {
   color: #666;
-}
-
-.nav-breadcrumbs {
-  width: 100%;
-  color: #999;
-  padding-left: 15px;
-  font-size: 14px;
-  vertical-align: bottom;
-}
-
-.nav-breadcrumbs.nonempty {
-  box-shadow: 0 10px 15px 25px white;
-  clip-path: inset(
-    -30px -30px 0 -30px
-  ); /* clip box-shadow to top half to prevent covering footer on mobile Safari (z-index doesn't work) */
-}
-
-.dark .nav-breadcrumbs.nonempty {
-  box-shadow: 0 10px 15px 25px black;
 }
 
 /* to remove padding from breadcrumbs used inside sidebar recenlty edited thoughts  */
@@ -917,18 +429,6 @@ body.dark {
 .nav-bottom .nav-breadcrumbs {
   width: calc(100% - 40px);
   padding-left: 35px;
-}
-
-.nav-breadcrumbs a {
-  color: #999;
-}
-
-.nav-breadcrumbs a:hover {
-  color: black;
-}
-
-.dark .nav-breadcrumbs a:hover {
-  color: white;
 }
 
 /* react-transition-group animation: fade */
@@ -1119,45 +619,6 @@ body.dark {
   color: lightgreen;
 }
 
-.link {
-  word-break: break-word;
-}
-
-.superscript-container {
-  white-space: nowrap; /* prevent expanded click area from wrapping */
-  z-index: var(--z-index-stack);
-  pointer-events: none;
-  user-select: none;
-}
-
-.superscript-container sup {
-  position: relative;
-  z-index: var(--z-index-stack);
-}
-
-.num-contexts {
-  font-size: 60%;
-  white-space: nowrap;
-}
-
-.num-contexts > sup {
-  top: -1px;
-  left: 1px;
-}
-
-.num-contexts > sup > a {
-  padding-right: 15px; /* additional click area */
-  margin-right: -15px;
-  padding-bottom: 8px;
-  margin-bottom: -8px;
-}
-
-h1 .num-contexts {
-  font-size: 40%;
-  top: -4px;
-  left: 1px;
-}
-
 .add-new-thought-link {
   display: inline-block;
   color: #ccc;
@@ -1168,21 +629,12 @@ h1 .num-contexts {
   margin-left: 12px;
 }
 
-.from > :first-child > .thought-container > .thought {
-  font-weight: 400;
-}
-
 .add-new-thought {
   outline: none;
   min-width: 3.75em;
   display: inline-block;
   border-bottom: solid 1px #ccc;
   margin-left: -2px;
-}
-
-.search[contenteditable] {
-  display: block;
-  padding-top: 0;
 }
 
 .center-in-content {
@@ -1204,40 +656,22 @@ h1 .num-contexts {
   cursor: default;
 }
 
-.text-note,
-.placeholder,
-[placeholder]:empty::before {
+.text-note {
   font-style: italic;
   color: rgba(7, 7, 7, 0.5);
 }
 
-/* empty class is set dynamically by javascript during editing. */
-/* :empty does not work because thought may contain <br> */
-[placeholder]:empty::before {
-  content: attr(placeholder);
-  cursor: text;
-}
-
-.search:empty::before {
-  padding-top: 2px;
-}
-
 .dark .text-note,
-.dark .placeholder,
 .dark [placeholder]:empty::before {
   color: rgba(255, 255, 255, 0.5);
 }
 
 /* The placeholder color should be inversed when a light background color is applied. */
 /* See: StaticThought */
-.text-note.inverse,
-.placeholder.inverse,
-.thought.inverse [placeholder]:empty::before {
+.text-note.inverse {
   color: rgba(255, 255, 255, 0.5);
 }
-.dark .text-note.inverse,
-.dark .placeholder.inverse,
-.dark .thought.inverse [placeholder]:empty::before {
+.dark .text-note.inverse {
   color: rgba(7, 7, 7, 0.5);
 }
 
@@ -1252,25 +686,6 @@ h1 .num-contexts {
   user-select: none;
 }
 
-/* Style bullet glyph with CSS to allow .graypulse animation to override it. */
-.bullet .glyph {
-  fill: rgba(39, 39, 39, 1);
-}
-.dark .bullet .glyph {
-  fill: rgba(217, 217, 217, 1);
-}
-
-.child > .thought-container > .bullet .glyph {
-  position: relative;
-  /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
-}
-
-.child > .thought-container > .bullet .glyph .glyph-fg {
-  transition:
-    transform 0.1s ease-out,
-    fill-opacity 0.5s ease-out;
-}
-
 .search-container > .bullet-search {
   position: absolute;
   margin-top: -2px;
@@ -1279,37 +694,6 @@ h1 .num-contexts {
 
 .mobile .child > .thought-container > .bullet.show-contexts {
   margin-right: -1.5px;
-}
-
-.mobile .child > .thought-container > .bullet.show-contexts .glyph {
-  font-size: 80%;
-  left: -0.08em;
-  top: 0.05em;
-}
-
-.child.expanded:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle,
-.child.editing:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle,
-.child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle,
-.child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle {
-  transform: rotate(90deg) translateX(10px);
-}
-
-.mobile .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,
-.mobile .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,
-.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,
-.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg {
-  left: -0.02em;
-}
-
-.child.leaf > .thought-container > .bullet.show-contexts .glyph {
-  font-size: 90%;
-  top: -0.05em;
-}
-
-.mobile .child.leaf > .thought-container > .bullet.show-contexts .glyph {
-  top: 0;
-  left: -0.3em;
-  margin-right: calc(-0.48em - 5px); /* offset from .child > .thought-container > .bullet .glyph margin-right */
 }
 
 .archive-check {
@@ -1338,68 +722,6 @@ h1 .num-contexts {
     margin-left: -3px;
   }
 
-  .android .child > .thought-container > .bullet .glyph {
-    position: relative;
-    margin-left: -16.8px;
-    opacity: 0.9;
-    transition: opacity 0.75s ease-in-out;
-    margin-right: -5px; /* increase click area */
-    left: 3px;
-    font-size: 16px;
-  }
-
-  /* Contexted Styles */
-  .android .child > .thought-container > .bullet.show-contexts .glyph {
-    font-size: 149%;
-    left: 2px;
-    top: -5.1px;
-  }
-
-  .android .child.leaf > .thought-container > .bullet.show-contexts .glyph {
-    position: relative;
-    font-size: 160%;
-    left: 1px;
-    top: -8.1px;
-    margin-right: -5px;
-    padding-right: 10px;
-  }
-
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph {
-    left: 2px;
-    font-size: 20px;
-    top: -2.5px;
-  }
-
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.editing:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph {
-    left: 2px;
-    top: -1.6px;
-    font-size: 19px;
-  }
-
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    content: '+';
-    left: -0.15em;
-    top: -0.05em;
-    margin-right: -0.3em;
-  }
-
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    left: 0.05em;
-    top: -0.1em;
-    margin-right: -0.1em;
-  }
-
-  .android .thought,
-  .android .thought-annotation {
-    margin-top: -0.1px;
-    margin-left: 0.5em;
-  }
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
@@ -1412,12 +734,6 @@ h1 .num-contexts {
   margin-top: 0.501em; /* Match editable padding */
     padding: 1px 0 0.2px 100px;
   }
-
-  .android .thought,
-  .android .thought-annotation {
-    margin-top: -2.1px;
-    margin-left: 0.5em;
-  }
 }
 
 /* Tablet Properties */
@@ -1428,40 +744,6 @@ h1 .num-contexts {
     margin-left: -3px;
   }
 
-  .android .child > .thought-container > .bullet .glyph {
-    position: relative;
-    margin-left: -16.8px;
-    opacity: 0.8;
-    transition: opacity 0.75s ease-in-out;
-    margin-right: -5px; /* increase click area */
-    left: 4px;
-    font-size: 28px;
-  }
-
-  /* Contexted Styles */
-  .android .child > .thought-container > .bullet.show-contexts .glyph {
-    font-size: 149%;
-    left: 2px;
-    top: -5.1px;
-  }
-
-  .android .child.leaf > .thought-container > .bullet.show-contexts .glyph {
-    position: relative;
-    font-size: 171%;
-    left: 2px;
-    top: -7.1px;
-    margin-right: -5px;
-    padding-right: 10px;
-  }
-
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph {
-    left: 3px;
-    top: -5.1px;
-  }
-
   .android
     .child.show-contexts:first-of-type
     > .thought-container
@@ -1470,23 +752,6 @@ h1 .num-contexts {
     margin-top: calc(0.18em - 4px); /* */
   }
 
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    content: '+';
-    left: -0.15em;
-    top: -0.05em;
-    margin-right: -0.3em;
-  }
-
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    left: 0.05em;
-    top: -0.1em;
-    margin-right: -0.1em;
-  }
-  .android .thought,
-  .android .thought-annotation {
-    margin-top: -0.1px;
-    margin-left: 0.5em;
-  }
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
@@ -1531,21 +796,6 @@ h1 .num-contexts {
 }
 */
 
-/* overlay bullet for cursor */
-
-.children-new .child > .thought-container > .bullet .glyph {
-  content: '+';
-  left: -0.15em;
-  top: -0.05em;
-  margin-right: -0.3em;
-}
-
-.mobile .children-new .child > .thought-container > .bullet .glyph {
-  left: 0.05em;
-  top: -0.1em;
-  margin-right: -0.1em;
-}
-
 /* autofocus */
 
 /*
@@ -1564,94 +814,12 @@ h1 .num-contexts {
   transition: all 0.75s ease-out;
 }
 
-/* overflow:hidden breaks sticky header */
-.container {
-  position: relative;
-}
-
-/* Footer styles - START */
-
-.footer {
-  position: relative;
-  padding: 1.75em;
-  margin: 0;
-  text-align: right;
-  font-size: 75%;
-  list-style: none;
-  background-color: #e4e4e4; /* 80% of #ddd */
-  box-sizing: border-box;
-  width: 100%;
-  /* above ScrollZone */
-  z-index: var(--z-index-modal);
-}
-
-.dark .footer a {
-  color: skyblue;
-}
-
-.footer .support-link {
-  color: inherit;
-}
-
-.dark .footer {
-  background-color: #1a1a1a; /* 80% of #212121 */
-  color: white;
-}
-
-.dark .footer .support-link {
-  color: white;
-}
-
-.footer .support-link:hover {
-  text-decoration: underline;
-}
-
-.footer-divider {
-  margin: 0 6px;
-  user-select: none;
-}
-
-.increase-font {
-  font-size: 1.6em;
-  padding-right: 12px;
-}
-
-.decrease-font {
-  padding-left: 12px;
-  padding-right: 12px;
-}
-
-.floatLeft {
-  float: left;
-}
-/* .footer .floatLeft a { text-decoration: none; } may be better with underline*/
-
-/* Footer styles - END */
-
 /* for some reason opacity bleeds through modal*/
 .dim {
   color: rgba(7, 7, 7, 0.5);
 }
 .dark .dim {
   color: rgba(255, 255, 255, 0.5);
-}
-
-.modal {
-  background-color: white;
-  box-shadow: 2px 5px 5px rgba(0, 0, 0, 0.5);
-  border: solid 1px rgba(0, 0, 0, 0.2);
-  padding: 15px;
-  position: absolute;
-  display: inline-block;
-  line-height: 1.5;
-  width: calc(100% - 100px);
-  z-index: var(--z-index-modal);
-  animation: fademostlyin 0.4s;
-  min-width: 200px;
-}
-
-.modal.opaque {
-  animation: fadein 0.4s;
 }
 
 @keyframes fadein {
@@ -1663,45 +831,6 @@ h1 .num-contexts {
   }
 }
 
-@keyframes fademostlyin {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 0.85;
-  }
-}
-
-.modal p {
-  margin: 0 0 1em 0;
-}
-
-.modal.center {
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-}
-
-.popup {
-  box-shadow: none;
-  border: none;
-  display: block;
-  width: 100%;
-  padding: 8%;
-  box-sizing: border-box;
-}
-
-.popup-close-x {
-  /* extend click area */
-  padding: 10px 20px;
-  margin: -10px -20px;
-  position: fixed;
-  top: calc(9px - 0.2em);
-  right: 11px;
-  color: inherit;
-  text-decoration: none;
-}
-
 .status-close-x {
   font-size: 16px;
   top: 0;
@@ -1711,145 +840,8 @@ h1 .num-contexts {
   text-decoration: none;
 }
 
-.dark .modal a.popup-close-x {
-  color: inherit;
-}
-
-.popup .modal-content {
-  max-width: 40em;
-  margin: 0 auto;
-  max-height: none;
-}
-
-.popup .modal-title {
-  font-weight: 700;
-  margin-bottom: 40px;
-  text-align: center;
-}
-
-.popup .modal-subtitle {
-  font-family: 'Helvetica Neue';
-  font-size: 1.7em;
-}
-
-.popup .modal-subtitle-compact {
-  margin-bottom: 0.8em;
-}
-
-.popup .modal-text {
-  margin-bottom: 2em;
-}
-
-.popup .modal-actions a.button {
-  text-decoration: none;
-  background-color: black;
-  color: white;
-  padding-top: 2px;
-  padding-bottom: 2px;
-  margin-top: 2px;
-  margin-bottom: 2px;
-}
-
 .popup-section {
   margin-bottom: 50px;
-}
-
-.modal-welcome {
-  height: 100%;
-  font-size: 26px;
-  padding-top: 2em;
-}
-
-.modal-welcome .modal-title {
-  margin-bottom: 0;
-  line-height: 1;
-}
-
-.modal-welcome .modal-text {
-  margin-top: 2em;
-  margin-bottom: 2.5em;
-  font-size: 75%;
-}
-
-.modal-welcome .modal-actions {
-  font-size: 0.75em;
-}
-
-.dark .popup .modal-actions a.button {
-  color: black;
-  background-color: white;
-}
-
-.modal-content .button {
-  cursor: pointer;
-  background: transparent;
-  color: #ccc;
-  display: block;
-  border: 0 none;
-  margin: 10px auto 0;
-}
-.modal-content .button:focus {
-  color: #fff;
-  outline: 0 none;
-  border: 0 none;
-}
-
-.dark .popup .modal-actions a {
-  color: white;
-}
-
-.popup .modal-actions a.button.button-inactive {
-  background-color: #aaa;
-}
-
-/** Use .modal-actions-stack for buttons that switch to vertical layout on small screen sizes. */
-.popup .modal-actions.modal-actions-stack a.button {
-  margin-bottom: 0.5em;
-}
-
-.single-line .thought .editable,
-.single-line .thought-annotation .editable-annotation-text {
-  display: inline-block;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.single-line .thought {
-  max-width: calc(100% - 1em);
-}
-
-.single-line .thought-annotation {
-  /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
-  max-width: calc(100% - 2em);
-}
-
-/* Fix a tag position after overflow:hidden applined on span tag. */
-.single-line .thought-annotation .editable-annotation-text + a {
-  position: absolute;
-}
-.single-line .thought-annotation .editable-annotation-text + a + .superscript-container {
-  position: absolute;
-  right: -22px;
-}
-
-.multiline.multiline.multiline.multiline.editable-annotation {
-  padding-right: 1em;
-}
-
-@media screen and (min-width: 480px) {
-  .popup .modal-actions.modal-actions-stack {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .popup .modal-actions.modal-actions-stack > * {
-    margin-top: 1em;
-  }
-  .popup .modal-actions.modal-actions-stack > :not(:last-child) {
-    margin-right: 1em;
-  }
 }
 
 .popup .logo {
@@ -1857,62 +849,7 @@ h1 .num-contexts {
   vertical-align: text-bottom;
 }
 
-.modal-title {
-  font-weight: 400;
-}
-
-.modal-actions a {
-  font-weight: normal;
-  margin: 0 5px;
-  text-decoration: underline;
-  white-space: nowrap;
-  line-height: 2;
-}
-
-.dark .modal {
-  background-color: #333;
-  border: solid 1px rgba(255, 255, 255, 0.1);
-}
-
-.dark .popup {
-  background-color: black;
-  border: none;
-}
-
-.dark .modal a {
-  color: lightblue;
-}
-
-.modal-home {
-  margin-left: 20px;
-  margin-top: -5px;
-}
-
 /* higher precendence than ".dark .modal .a" */
-.modal-close {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  font-size: 12px;
-  vertical-align: middle;
-  text-align: center;
-  padding: 10px;
-}
-
-.popup .modal-close {
-  display: none;
-}
-
-.modal-close span {
-  display: inline-block;
-  width: 11px;
-  height: 11px;
-}
-
-.dark a.modal-close span {
-  color: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.3);
-}
 
 .animate {
   transition: all 0.4s ease-out;
@@ -1924,17 +861,13 @@ h1 .num-contexts {
   opacity: 0;
 }
 
-@keyframes pulse {
+@keyframes pulse-light {
   from {
     opacity: 1;
   }
   to {
-    opacity: 0.25;
+    opacity: 0.5;
   }
-}
-
-.animate-pulse {
-  animation: pulse 1s infinite alternate;
 }
 
 /* arrow */
@@ -2049,40 +982,10 @@ h1 .num-contexts {
   box-shadow: 0 0 20px white;
 }
 
-code,
-.code {
-  background-color: #ccc;
-  font-family: monospace;
-}
-
-.dark code {
-  background-color: #333;
-}
-
 .code-block {
   display: block;
   padding: 5px 10px;
   margin: 2px 5px 10px;
-}
-
-.shortcuts {
-  font-size: 14px;
-}
-
-.shortcuts th {
-  padding-right: 1em;
-  text-align: left;
-  font-weight: normal;
-}
-
-.shortcuts td {
-  min-width: 10rem;
-}
-
-/* center gesture diagrams */
-.mobile .shortcuts td {
-  text-align: center;
-  min-width: auto;
 }
 
 .mobile.drag-in-progress * {
@@ -2160,41 +1063,10 @@ code,
   z-index: var(--z-index-drop-empty);
 }
 
-.status-button {
-  border: solid 1px black;
-  border-radius: 99px;
-  padding: 2px 7px;
-  font-size: 80%;
-  transition: opacity 0.75s ease-out;
-}
-
-.status-button:hover {
-  background-color: black;
-  color: white;
-}
-
-.dark .status-button {
-  border-color: white;
-}
-
-.dark .status-button:hover {
-  background-color: white;
-  color: black;
-}
-
-.status-button-fade {
-  opacity: 0;
-}
-
 .indent {
   display: inline-block;
   margin-top: 5px;
   margin-left: 18px;
-}
-
-.search-children a.button {
-  /* TODO: Fix the markup rather than overriding the margin; */
-  margin: 10px 0 15px -25px;
 }
 
 .tutorial {
@@ -2214,14 +1086,6 @@ code,
   margin: 0 auto;
 }
 
-.tutorial p {
-  margin-top: 20px;
-}
-
-.tutorial p:first-child {
-  margin-top: 0;
-}
-
 .tutorial-skip {
   color: #666;
   top: 10px;
@@ -2233,30 +1097,8 @@ code,
   font-style: italic;
 }
 
-.tutorial .button {
-  margin-left: 5px;
-  margin-right: 5px;
-}
-
 .tutorial-step-bullets {
   margin-bottom: 10px;
-}
-
-.tutorial-step-bullet {
-  color: inherit;
-  text-decoration: none;
-  font-size: 32px;
-}
-
-.tutorial-step-bullets .tutorial-step-bullet {
-  opacity: 0.25;
-  margin-left: 1px;
-  margin-right: 1px;
-  transition: all 400ms ease-in-out;
-}
-
-.tutorial-step-bullets .tutorial-step-bullet.active {
-  opacity: 1;
 }
 
 .tutorial-trace-gesture {
@@ -2272,21 +1114,6 @@ code,
 
 .dark .tutorial-trace-gesture {
   background-color: rgba(0, 0, 0, 0.8);
-}
-
-.tutorial li {
-  list-style: disc;
-  line-height: 1.5;
-}
-
-.simple-list li {
-  list-style: none;
-  width: 240px;
-  margin: 0 auto 0.5em;
-}
-
-.simple-list a {
-  display: block;
 }
 
 /* Prose View */
@@ -2349,70 +1176,10 @@ code,
   top: var(--safe-area-top) !important;
 }
 
-/* material drawer container css override */
-.drawer-container-mobile {
-  width: 90%;
-}
-
-.drawer-container-desktop {
-  width: 400px;
-}
-
-/* hamburger menu div */
-/* prevent long press to select */
-/* user-select is not inherited */
-.hamburger-menu,
-.hamburger-menu * {
-  user-select: none;
-}
-
-.hamburger-menu > div > span {
-  background: black;
-}
-
-.dark .hamburger-menu > div > span {
-  background: white;
-}
-
 .ellipsized-path {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.sidebar {
-  background: #f5f5f5;
-  overflow-y: scroll;
-  /* prevent the body from scrolling once the bottom of the sidebar is reached */
-  overscroll-behavior: contain;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  color: black;
-  scrollbar-width: thin; /*for firefox*/
-  line-height: 1.8;
-}
-
-.dark .sidebar {
-  color: white;
-  background: #292a2b;
-}
-
-.sidebar::-webkit-scrollbar {
-  width: 0px; /* Remove scrollbar space */
-  background: transparent; /* Optional: just make scrollbar invisible */
-  display: none;
-}
-
-.sidebar .context-breadcrumbs {
-  margin-top: 1em;
-  margin-left: 0;
-  line-height: 1.5;
-}
-
-/* override link font-weight to allow bold on hover */
-.sidebar a {
-  font-weight: inherit;
 }
 
 .thoughts-tab {
@@ -2433,11 +1200,6 @@ code,
   cursor: pointer;
   flex: 1;
   transition: all 0.1s ease-in-out;
-}
-
-.icon-text {
-  flex: 8;
-  font-size: 12px;
 }
 
 .divider-container {
@@ -2472,78 +1234,8 @@ code,
   border-color: #333;
 }
 
-.gesture-container svg {
-  position: relative;
-  top: 10px;
-}
-
 .search-container {
   display: flex;
-}
-
-.search-container > .thought {
-  flex: 1;
-  display: flex;
-}
-
-.function > .thought-container > .thought > .editable {
-  font-family: monospace;
-}
-
-.function > .thought-container > .editable-annotation {
-  background-color: #ddd;
-  font-family: monospace;
-}
-
-.dark .function > .thought-container > .editable-annotation {
-  background-color: #222;
-}
-
-.modal-export-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 10px;
-}
-
-.modal-btn-export {
-  font-family: Helvetica;
-  text-align: center;
-  cursor: pointer;
-  outline: none;
-  padding: 2px 30px;
-  min-width: 90px;
-  display: inline-block;
-  border-radius: 99px;
-  margin: 0 5px 15px 5px;
-  white-space: nowrap;
-  line-height: 2;
-  text-decoration: none;
-  border: none;
-}
-
-.modal-export-btns-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.modal-btn-cancel {
-  cursor: pointer;
-  border: none;
-  outline: none;
-  background: none;
-}
-
-.modal-export-publish {
-  border-top: solid 1px #ccc;
-  margin-top: 30px;
-  margin-bottom: 20px;
-  padding-top: 40px;
-  text-align: center;
-}
-
-.dark .modal-export-publish {
-  border-top-color: #444;
 }
 
 .cp-clipboard-wrapper {
@@ -2737,90 +1429,10 @@ code,
   animation: 0.4s ease-out 0s normal forwards fadein;
 }
 
-/* See: https://stackoverflow.com/a/60712537/480608 */
-@keyframes preventAutoscroll {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.preventAutoscroll {
-  animation: 0.01s 1 preventAutoscroll;
-}
-
-@keyframes ripple_loader {
-  0% {
-    top: 100%;
-    left: 100%;
-    width: 0;
-    height: 0;
-    opacity: 1;
-  }
-  100% {
-    top: 7.14%;
-    left: 7.14%;
-    width: 162.5%;
-    height: 162.5%;
-    opacity: 0;
-  }
-}
-.ripple_loader div {
-  position: absolute;
-  border-width: 19.04%;
-  border-style: solid;
-  opacity: 1;
-  border-radius: 50%;
-  animation: ripple_loader 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-}
-.ripple_loader div:nth-child(1) {
-  border-color: #e90c59;
-  animation-delay: 0s;
-}
-.ripple_loader div:nth-child(2) {
-  border-color: #46dff0;
-  animation-delay: -0.5s;
-}
-.ripple_loader_container {
-  display: inline-block;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0);
-}
-.ripple_loader {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transform: translateZ(0) scale(0.49);
-  backface-visibility: hidden;
-  transform-origin: 0 0; /* see note above */
-}
-.ripple_loader div {
-  box-sizing: content-box;
-}
-
 .advance-setting-wrapper {
   display: flex;
   justify-content: center;
   margin-bottom: 2em;
-}
-
-p.checkbox-description {
-  margin-top: 0.5em;
-}
-
-.advance-setting-link {
-  display: flex;
-  position: relative;
-  transition: opacity 100ms ease-in-out;
-}
-
-a.advance-setting-link {
-  color: #000;
-}
-.dark a.advance-setting-link {
-  color: #fff;
 }
 
 .advance-setting-chevron {
@@ -2840,111 +1452,4 @@ a.advance-setting-link {
 
 .rotate180 {
   transform: rotate(180deg);
-}
-
-/* Custom checkbox style starts */
-.checkbox-container {
-  display: block;
-  position: relative;
-  padding-left: 2.2em;
-  user-select: none;
-}
-
-.checkbox-container input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
-}
-
-.checkbox {
-  position: absolute;
-  top: 0.1em;
-  left: 0.1em;
-  height: 1em;
-  width: 1em;
-  background-color: #fff;
-}
-
-.checkbox-container input ~ .checkbox,
-.checkbox-container:hover input ~ .checkbox,
-.checkbox-container input:checked ~ .checkbox {
-  background-color: transparent;
-  border: 0.1em solid #fff;
-}
-
-/* Create the checkbox/indicator (hidden when not checked) */
-.checkbox:after {
-  content: '';
-  position: absolute;
-  display: none;
-}
-
-/* Show the checkbox when checked */
-.checkbox-container input:checked ~ .checkbox:after {
-  display: block;
-}
-
-/* checkbox indicator */
-.checkbox-container .checkbox:after {
-  left: 0.3em;
-  bottom: 0.2em;
-  width: 0.3em;
-  height: 0.65em;
-  border: solid white;
-  border-width: 0 0.15em 0.15em 0;
-  transform: rotate(45deg);
-}
-/* Custom checkbox style ends */
-
-.modal .modal-wrapper {
-  display: flex;
-  min-height: 100px;
-  flex-direction: column;
-}
-
-.modal .modal-description {
-  font-size: 18px;
-  margin-bottom: 30px;
-}
-
-.gift-code-wrapper {
-  display: flex;
-  flex-direction: row;
-  align-self: start;
-  margin: 3vh auto;
-  align-items: center;
-  width: 100%;
-}
-
-.gift-code-wrapper svg {
-  cursor: default;
-}
-
-.gift-code-wrapper input {
-  margin: 0 10px;
-  min-width: 180px;
-}
-
-@media only screen and (min-width: 767px) {
-  .gift-code-wrapper {
-    width: 80%;
-  }
-
-  .gift-code-wrapper input {
-    min-width: 300px;
-  }
-}
-
-.copy-icon-wrapper {
-  display: 'inline-flex';
-}
-
-.copy-icon-wrapper svg {
-  cursor: pointer;
-}
-
-a {
-  user-select: none;
 }

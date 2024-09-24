@@ -1,5 +1,7 @@
-import classNames from 'classnames'
+import { Ref } from 'react'
 import { useDispatch } from 'react-redux'
+import { css, cx } from '../../../styled-system/css'
+import { tutorialBullet } from '../../../styled-system/recipes'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialChoiceActionCreator as tutorialChoice } from '../../actions/tutorialChoice'
 import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutorialNext'
@@ -19,8 +21,18 @@ import TutorialNavigationButton from './TutorialNavigationButton'
 import TutorialNavigationNext from './TutorialNavigationNext'
 import TutorialNavigationPrev from './TutorialNavigationPrev'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const TutorialNavigation = ({ tutorialStep }: { tutorialStep: number }) => {
+/**
+ * TutorialNavigation component for navigating through the tutorial steps.
+ */
+const TutorialNavigation = ({
+  tutorialStep,
+  nextRef,
+}: {
+  /** The current step in the tutorial. */
+  tutorialStep: number
+  /** A reference passed to the "next" navigation button. */
+  nextRef: Ref<HTMLAnchorElement>
+}) => {
   const dispatch = useDispatch()
   const tutorialOptions = [
     { key: TUTORIAL_VERSION_TODO, value: TUTORIAL_VERSION_TODO, textValue: 'To-Do List' },
@@ -40,9 +52,14 @@ const TutorialNavigation = ({ tutorialStep }: { tutorialStep: number }) => {
             const step = i + (tutorialStep < TUTORIAL2_STEP_START ? 1 : TUTORIAL2_STEP_START)
             return (
               <a
-                className={classNames({
-                  'tutorial-step-bullet': true,
-                  active: step === Math.floor(tutorialStep),
+                className={css({
+                  color: 'inherit',
+                  textDecoration: 'none',
+                  fontSize: '32px',
+                  marginLeft: '1px',
+                  marginRight: '1px',
+                  transition: 'all 400ms ease-in-out',
+                  opacity: step === Math.floor(tutorialStep) ? 1 : 0.25,
                 })}
                 key={step}
                 {...fastClick(() => dispatch(setTutorialStep({ value: step })))}
@@ -62,14 +79,25 @@ const TutorialNavigation = ({ tutorialStep }: { tutorialStep: number }) => {
           <TutorialNavigationButton clickHandler={() => dispatch(tutorial({ value: false }))} value='Play on my own' />
         </>
       ) : tutorialStep === TUTORIAL2_STEP_CHOOSE ? (
-        <ul className='simple-list'>
+        <ul>
           {tutorialOptions.map(({ key, value, textValue }) => (
-            <li key={key}>
+            <li
+              className={cx(
+                tutorialBullet(),
+                css({
+                  listStyle: 'none',
+                  width: '240px',
+                  margin: '0 auto 0.5em',
+                }),
+              )}
+              key={key}
+            >
               <TutorialNavigationButton
                 clickHandler={() => {
                   dispatch([tutorialChoice({ value }), tutorialNext({})])
                 }}
                 value={textValue}
+                classes={css({ display: 'block' })}
               />
             </li>
           ))}
@@ -77,7 +105,7 @@ const TutorialNavigation = ({ tutorialStep }: { tutorialStep: number }) => {
       ) : (
         <>
           <TutorialNavigationPrev tutorialStep={tutorialStep} />
-          <TutorialNavigationNext tutorialStep={tutorialStep} />
+          <TutorialNavigationNext tutorialStep={tutorialStep} ref={nextRef} />
         </>
       )}
     </div>

@@ -1,5 +1,5 @@
 /** Returns true if the given text is presumed to be markdown by checking for markdown-specific tokens. */
-export const isMarkdown = (text: string): boolean => {
+export default function isMarkdown(text: string): boolean {
   // Regular expressions for common Markdown elements
   const headingRegex = /^ *#{1,6}/m
   const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/

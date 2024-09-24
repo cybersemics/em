@@ -1,7 +1,8 @@
-import classNames from 'classnames'
 import _ from 'lodash'
 import React, { useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
+import { thought } from '../../styled-system/recipes'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -12,6 +13,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import theme from '../selectors/theme'
 import thoughtToPath from '../selectors/thoughtToPath'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isRoot from '../util/isRoot'
@@ -20,7 +22,6 @@ import Divider from './Divider'
 import Editable from './Editable'
 import useMultiline from './Editable/useMultiline'
 import usePlaceholder from './Editable/usePlaceholder'
-import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
 
@@ -35,6 +36,7 @@ export interface ThoughtProps {
   // Subthoughts gets the special __PENDING__ value from getContexts and passes it through to Thought and Static Thought
   isContextPending?: boolean
   isEditing?: boolean
+  ellipsizedUrl?: boolean
   isPublishChild?: boolean
   // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
   // currently this does not control visibility, but merely tracks it
@@ -90,6 +92,7 @@ const StaticThought = ({
   env,
   isContextPending,
   isEditing,
+  ellipsizedUrl,
   isVisible,
   onEdit,
   path,
@@ -151,6 +154,7 @@ const StaticThought = ({
         env={env}
         minContexts={allowSingleContext ? 0 : 2}
         multiline={multiline}
+        ellipsizedUrl={ellipsizedUrl}
         placeholder={placeholder}
         path={path}
         showContextBreadcrumbs={showContextBreadcrumbs}
@@ -160,11 +164,9 @@ const StaticThought = ({
       />
       <div
         aria-label='thought'
-        className={classNames({
-          thought: true,
-          // invert placeholder color if the color is inverted (such as when a background color is applied)
-          inverse:
-            (dark && isBlack(styleAnnotation?.color)) || (!dark && isWhite(styleAnnotation?.color)) ? 'inverse' : null,
+        className={thought({
+          ellipsizedUrl,
+          inverse: (dark && isBlack(styleAnnotation?.color)) || (!dark && isWhite(styleAnnotation?.color)),
         })}
         style={{
           // do not set a min-width on table column 1 since there is no room for additional click area
@@ -191,10 +193,25 @@ const StaticThought = ({
             style={style}
             simplePath={simplePathLive}
             onEdit={onEdit}
+            className={css({
+              ...(isTableCol1 && { maxWidth: '100%' }),
+              ...(isAttribute(value) && { fontFamily: 'monospace' }),
+              ...(ellipsizedUrl && {
+                display: 'inline-block',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                maxWidth: '100%',
+                /*
+                      vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
+                      Here is the reference to the reason.
+                      https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
+                    */
+                verticalAlign: 'top',
+              }),
+            })}
           />
         )}
-
-        <Superscript simplePath={simplePathLive} superscript={false} />
       </div>
     </>
   )

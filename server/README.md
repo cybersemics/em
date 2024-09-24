@@ -7,7 +7,7 @@ The app will automatically connect to the server specified by the client-side en
 ## Setup
 
 1. `yarn`
-1. `npm run build`
+1. `yarn build`
 1. _optional:_ Install MongoDB (see [below](#mongodb))
    - Add the connection string to the server env variable (see [server](https://github.com/cybersemics/em/tree/staging2/server#server))
 
@@ -16,13 +16,13 @@ The app will automatically connect to the server specified by the client-side en
 The server process is managed by pm2, which restarts the server if it crashes.
 
 ```sh
-npm start
+yarn start
 ```
 
 Usually you will want to monitor the server logs while it is running:
 
 ```sh
-npm run logs
+yarn logs
 ```
 
 Other npm scripts:
@@ -35,13 +35,13 @@ Other npm scripts:
 
 ## Testing with live staging or production data
 
-Normally in local development the app connects to the local websocket server and database. To test with live staging or production data, override `VITE_WEBSOCKET_HOST` in `.env.development` with the value from `.env.production` or `.env.staging` and restart localhost. It is recommended that you run the app on a different port to ensure that local storage stays sandboxed, i.e. `PORT=3012 npm start`.
+Normally in local development the app connects to the local websocket server and database. To test with live staging or production data, override `VITE_WEBSOCKET_HOST` in `.env.development` with the value from `.env.production` or `.env.staging` and restart localhost. It is recommended that you run the app on a different port to ensure that local storage stays sandboxed, i.e. `PORT=3012 yarn start`.
 
 Note: `NODE_ENV` itself cannot be manually overwritten, and is set based on how the server is started:
 
-- `npm start` → **development**
-- `npm test` → **test**
-- `npm run build` → **production**
+- `yarn start` → **development**
+- `yarn test` → **test**
+- `yarn build` → **production**
 
 For additional information about how environment variables are used on the client-side, see: https://create-react-app.dev/docs/adding-custom-environment-variables/.
 
@@ -64,7 +64,7 @@ services:
   - build_command: |-
       cd server &&
       yarn &&
-      npm run build
+      yarn build
     environment_slug: node-js
     envs:
       - key: VITE_WEBSOCKET_HOST
@@ -87,7 +87,7 @@ services:
     name: em
     routes:
       - path: /
-    run_command: cd server && HOST=0.0.0.0 PORT=3001 npm run start
+    run_command: cd server && HOST=0.0.0.0 PORT=3001 yarn start
     source_dir: /
 ```
 

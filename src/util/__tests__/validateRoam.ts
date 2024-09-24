@@ -1,6 +1,6 @@
 import validateRoam from '../validateRoam'
 
-export const testData = [
+const testData = [
   {
     title: 'Fruits',
     children: [

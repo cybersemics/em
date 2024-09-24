@@ -40,7 +40,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
       clearTimeout(undoArchiveTimer)
 
       // close the alert after a delay
-      // only close the alert if it is an undo alert
+      // only close the alert if it is a ThoughtArchive alert
       undoArchiveTimer = window.setTimeout(() => {
         const state = getState()
         if (state.alert && state.alert.alertType === AlertType.ThoughtArchived) {
@@ -77,9 +77,9 @@ const archiveShortcut: Shortcut = {
   id: 'archive',
   label: 'Archive',
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
-  gesture: 'ldldl',
+  gesture: 'ldl',
   svg: Icon,
-  keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },
+  keyboard: { key: Key.Backspace, shift: true, meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec,
 }
@@ -87,6 +87,7 @@ const archiveShortcut: Shortcut = {
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const archiveAliases: Shortcut = {
   id: 'archiveAliases',
+  svg: Icon,
   label: 'Archive',
   hideFromHelp: true,
   gesture: [

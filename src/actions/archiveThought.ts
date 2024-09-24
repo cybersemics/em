@@ -11,8 +11,9 @@ import moveThought from '../actions/moveThought'
 import newThought from '../actions/newThought'
 import setCursor from '../actions/setCursor'
 import { AlertType, HOME_PATH } from '../constants'
+import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import findDescendant from '../selectors/findDescendant'
-import { anyChild, findAnyChild, getAllChildren } from '../selectors/getChildren'
+import { findAnyChild, getAllChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -25,7 +26,6 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import splitChain from '../selectors/splitChain'
 import thoughtsEditingFromChain from '../selectors/thoughtsEditingFromChain'
 import appendToPath from '../util/appendToPath'
-import ellipsize from '../util/ellipsize'
 import equalThoughtValue from '../util/equalThoughtValue'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -86,9 +86,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   const isArchive = thought.value === '=archive'
   const isArchived = isThoughtArchived(state, path)
   const hasDescendants = getAllChildren(state, head(path)).length !== 0
-  const child = anyChild(state, head(simplePath))
   const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(thought.value)
-  const alertLabel = ellipsize(thought.value === '=note' ? 'note ' + child?.value || '' : thought.value)
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
@@ -170,9 +168,9 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
                 })
               : null,
 
-          // undo alert
+          // alert
           alert({
-            value: `Archived ${alertLabel}`,
+            value: deleteThoughtAlertText(state, path, { archive: true }),
             // provide an alertType so the delete shortcut can null the alert after a delay
             alertType: AlertType.ThoughtArchived,
             showCloseLink: true,
