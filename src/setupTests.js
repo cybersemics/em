@@ -15,3 +15,7 @@ global.TextDecoder = TextDecoder
 window.blur = noop
 window.scrollTo = noop
 window.matchMedia = window.matchMedia || (() => false)
+
+document.execCommand = () => {
+  console.warn('document.execCommand is not implemented in JSDOM')
+}
