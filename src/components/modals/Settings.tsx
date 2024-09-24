@@ -74,6 +74,12 @@ const FontSize = () => {
         min={MIN_FONT_SIZE}
         max={MAX_FONT_SIZE}
         value={fontSize}
+        // reset on blur if font size is out of bounds
+        onBlur={() => {
+          if (fontSize < MIN_FONT_SIZE || fontSize > MAX_FONT_SIZE) {
+            setFontSize(fontSizeSelector)
+          }
+        }}
         onKeyDown={onKeyDown}
         onChange={e => {
           const inputValue = +e.target.value
