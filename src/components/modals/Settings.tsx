@@ -57,7 +57,8 @@ const FontSize = () => {
         : fontSize === DEFAULT_FONT_SIZE
           ? 'default'
           : null
-  
+
+  /** Unfocus the input when the Enter key is pressed. */
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault()
