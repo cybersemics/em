@@ -20,14 +20,10 @@ export const formatSelectionActionCreator =
       const thoughtContentEditable = document.querySelector('.editable-' + thought.id)
       if (!thoughtContentEditable) return
 
-      // const savedSelection = selection.save()
-      console.log(sel)
-
       // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile
       sel?.selectAllChildren(thoughtContentEditable)
       document.execCommand(command, false, color)
       sel?.selectAllChildren(thoughtContentEditable)
-      // selection.restore(savedSelection)
     } else {
       document.execCommand(command, false, color)
       updateCommandState()

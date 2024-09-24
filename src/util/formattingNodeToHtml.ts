@@ -29,7 +29,7 @@ const formattingNodeToHtml = (node: Element) => {
   const content: string = node.children.reduce((acc, child) => {
     return acc + (child.type === 'text' ? child.content : child.type === 'comment' ? '' : formattingNodeToHtml(child))
   }, '')
-  let newNode = replaceFontToSpan(node)
+  const newNode = replaceFontToSpan(node)
   if (newNode.tagName === 'span') {
     const styleAttributes = _.filter(newNode.attributes, { key: 'style' })
 

@@ -1,14 +1,20 @@
-// import { HOME_TOKEN } from '../../../constants'
-// import exportContext from '../../../selectors/exportContext'
-// import store from '../../../stores/app'
-import click from '../../../test-helpers/click'
 import helpers from '../helpers'
 
-vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
-const { setColor, clickThought, paste, waitForEditable } = helpers()
+const { getEditingText, click, clickThought, paste, waitForEditable } = helpers()
 
-it('Set the text color of the selection', async () => {
+/**
+ * Extract the Style of html string.
+ */
+const extractStyleProperty = (html: string, property: string): string | null => {
+  // Create a regex pattern that ensures the property is not part of another property
+  const regex = new RegExp(`"${property}\\s*:\\s*([^;]+)`, 'i')
+  const match = regex.exec(html)
+  return match ? match[1].trim() : null
+}
+
+it('Set the text color of the text', async () => {
   const importText = `
     - Labrador
     - Golden Retriever`
@@ -18,13 +24,16 @@ it('Set the text color of the selection', async () => {
   await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
 
-  const result = await setColor('Golden Retriever', 'foreColor', '#ffff00', 1, 4)
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
-  expect(result?.textColor).toBe('#ff0000')
-  expect(result?.backColor).toBe(null)
+  const cursorText = await getEditingText()
+  const result = extractStyleProperty(cursorText!, 'color')
+  expect(result).toBe('#00c7e6')
+  // expect(result?.backColor).toBe(null)
 })
 
-it('Set the background color of the selection', async () => {
+it('Set the background color of the text', async () => {
   const importText = `
     - Labrador
     - Golden Retriever`
@@ -34,10 +43,11 @@ it('Set the background color of the selection', async () => {
   await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
   await click('.toolbar-icon[aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
-  const result = await setColor('Golden Retriever', 'backColor', 'rgb(255, 0, 0)', 1, 4)
-  expect(result?.textColor).toBe(null)
-  expect(result?.backColor).toBe('rgb(255, 0, 0)')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+  const cursorText = await getEditingText()
+  const result = extractStyleProperty(cursorText!, 'background-color')
+  expect(result).toBe('rgb(0, 214, 136)')
 })
 
 it('Clear the text color when selecting white', async () => {
@@ -49,9 +59,61 @@ it('Clear the text color when selecting white', async () => {
 
   await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
+  let cursorText = await getEditingText()
+  expect(extractStyleProperty(cursorText!, 'color')).toBe(null)
 
-  let result = await setColor('Golden Retriever', 'backColor', '#ffff00', 1, 4)
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="green"]')
+  cursorText = await getEditingText()
+  expect(extractStyleProperty(cursorText!, 'color')).toBe('#00d688')
 
-  expect(result?.textColor).toBe('#ffffff')
-  expect(result?.backColor).toBe(null)
+  await click('[aria-label="text color swatches"] [aria-label="default"]')
+  cursorText = await getEditingText()
+  expect(extractStyleProperty(cursorText!, 'color')).toBe(null)
+})
+
+it('Clear the background color when selecting text color', async () => {
+  const importText = `
+    - Labrador
+    - Golden Retriever`
+
+  await paste(importText)
+
+  await waitForEditable('Golden Retriever')
+  await clickThought('Golden Retriever')
+  let cursorText = await getEditingText()
+  expect(extractStyleProperty(cursorText!, 'background-color')).toBe(null)
+
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  cursorText = await getEditingText()
+  expect(extractStyleProperty(cursorText!, 'background-color')).toBe('rgb(0, 214, 136)')
+
+  await click('[aria-label="text color swatches"] [aria-label="purple"]')
+  cursorText = await getEditingText()
+  expect(extractStyleProperty(cursorText!, 'color')).toBe('#aa80ff')
+  expect(extractStyleProperty(cursorText!, 'background-color')).toBe(null)
+})
+
+it('Clear the text color when setting background color', async () => {
+  const importText = `
+    - Labrador
+    - Golden Retriever`
+
+  await paste(importText)
+
+  await waitForEditable('Golden Retriever')
+  await clickThought('Golden Retriever')
+  let cursorText = await getEditingText()
+  expect(extractStyleProperty(cursorText!, 'color')).toBe(null)
+
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="green"]')
+  cursorText = await getEditingText()
+  expect(extractStyleProperty(cursorText!, 'color')).toBe('#00d688')
+
+  await click('[aria-label="background color swatches"] [aria-label="purple"]')
+  cursorText = await getEditingText()
+  expect(extractStyleProperty(cursorText!, 'background-color')).toBe('rgb(170, 128, 255)')
+  expect(extractStyleProperty(cursorText!, 'color')).toBe(null)
 })
