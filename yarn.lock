@@ -3515,6 +3515,43 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@pandacss/node@patch:@pandacss/node@npm%3A0.45.1#~/.yarn/patches/@pandacss-node-npm-0.45.1-fd00aeff2c.patch":
+  version: 0.45.1
+  resolution: "@pandacss/node@patch:@pandacss/node@npm%3A0.45.1#~/.yarn/patches/@pandacss-node-npm-0.45.1-fd00aeff2c.patch::version=0.45.1&hash=dc7451"
+  dependencies:
+    "@pandacss/config": "npm:0.45.1"
+    "@pandacss/core": "npm:0.45.1"
+    "@pandacss/extractor": "npm:0.45.1"
+    "@pandacss/generator": "npm:0.45.1"
+    "@pandacss/logger": "npm:0.45.1"
+    "@pandacss/parser": "npm:0.45.1"
+    "@pandacss/shared": "npm:0.45.1"
+    "@pandacss/token-dictionary": "npm:0.45.1"
+    "@pandacss/types": "npm:0.45.1"
+    browserslist: "npm:4.23.3"
+    chokidar: "npm:3.6.0"
+    fast-glob: "npm:3.3.2"
+    file-size: "npm:1.0.0"
+    filesize: "npm:10.1.4"
+    fs-extra: "npm:11.2.0"
+    glob-parent: "npm:6.0.2"
+    is-glob: "npm:4.0.3"
+    lodash.merge: "npm:4.6.2"
+    look-it-up: "npm:2.1.0"
+    outdent: "npm: ^0.8.0"
+    package-manager-detector: "npm:0.1.0"
+    perfect-debounce: "npm:1.0.0"
+    pkg-types: "npm:1.0.3"
+    pluralize: "npm:8.0.0"
+    postcss: "npm:8.4.41"
+    prettier: "npm:3.2.5"
+    ts-morph: "npm:21.0.1"
+    ts-pattern: "npm:5.0.8"
+    tsconfck: "npm:3.0.2"
+  checksum: 10c0/bff413c00d66196e27fa6f49ab815160fd794131664ebbb116e345ac572c9a1ca89348d575ade77b256ead82c05ce81e54c13c0e95815054a15a448600bf3315
+  languageName: node
+  linkType: hard
+
 "@pandacss/parser@npm:0.45.1":
   version: 0.45.1
   resolution: "@pandacss/parser@npm:0.45.1"
