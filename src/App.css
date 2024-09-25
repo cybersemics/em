@@ -23,10 +23,6 @@
   z-index: var(--z-index-scroll-zone);
 }
 
-ul ul.context-chain {
-  margin-left: 1.6em;
-}
-
 .clear {
   clear: both;
 }
@@ -56,69 +52,6 @@ ul ul.context-chain {
   .center-desktop {
     text-align: center;
   }
-}
-.upper-right {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-a.button {
-  padding: 0.5em 2em;
-  min-width: 6em;
-  text-decoration: none;
-  display: inline-block;
-  border-radius: 99px;
-  color: white;
-  background-color: black;
-}
-
-a.button.action-button {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  transition: all 100ms ease-in-out;
-}
-
-a.button.action-button.disabled {
-  opacity: 0.5;
-}
-
-a.button:active {
-  background-color: #111;
-}
-
-a.button-small {
-  padding: 2px 0;
-  font-size: 90%;
-}
-
-a.button-less-padding {
-  padding: 4px 12px;
-}
-
-.dark a.button {
-  color: black;
-  background-color: white;
-}
-
-.dark a.button:active {
-  background-color: #dcdcdc;
-}
-
-a.button-variable-width {
-  min-width: 0;
-}
-
-a.button.disabled {
-  opacity: 0.25;
-  pointer-events: none;
-  user-select: none;
-  cursor: auto;
-}
-
-a.button-dim {
-  opacity: 0.5;
 }
 
 .text-small {
@@ -661,8 +594,7 @@ a.button-dim {
   color: rgba(7, 7, 7, 0.5);
 }
 
-.dark .text-note,
-.dark [placeholder]:empty::before {
+.dark .text-note {
   color: rgba(255, 255, 255, 0.5);
 }
 
@@ -686,24 +618,8 @@ a.button-dim {
   user-select: none;
 }
 
-.search-container > .bullet-search {
-  position: absolute;
-  margin-top: -2px;
-  margin-left: -12px;
-}
-
 .mobile .child > .thought-container > .bullet.show-contexts {
   margin-right: -1.5px;
-}
-
-.archive-check {
-  margin-left: -12px;
-  margin-top: 5px;
-}
-
-.archive-check label {
-  cursor: pointer;
-  font-size: 12px;
 }
 
 /* Android Section */
@@ -765,36 +681,6 @@ a.button-dim {
     padding: 1px 0 0.2px 100px;
   }
 }
-
-/*.context-chain > .child > .thought-container > .bullet .glyph {
-  font-size: 10px;
-  content: '◀';
-  top: -0.1em;
-  left: -0.1em;
-  margin-right: -0.30em;
-}
-
-.mobile .context-chain > .child > .thought-container > .bullet .glyph {
-  font-size: 14px;
-  content: '◄';
-  margin-left: -16px;
-  margin-right: -0.15em;
-}
-
-.context-chain > .child.leaf::before {
-  font-size: 12px;
-  content: '◁';
-  top: -0.05em;
-  margin-right: -0.25em;
-}
-
-.mobile .context-chain > .child.leaf::before {
-  content: '◅';
-  margin-right: 0.05em;
-  margin-left: -17px;
-  top: -0.15em;
-}
-*/
 
 /* autofocus */
 
@@ -1069,29 +955,6 @@ a.button-dim {
   margin-left: 18px;
 }
 
-.tutorial {
-  padding: 40px 20px 20px;
-  background-color: #ddd;
-  position: relative;
-  z-index: var(--z-index-tutorial);
-}
-
-.dark .tutorial {
-  background-color: #212121;
-  color: white;
-}
-
-.tutorial-inner {
-  max-width: 32em;
-  margin: 0 auto;
-}
-
-.tutorial-skip {
-  color: #666;
-  top: 10px;
-  right: 15px;
-}
-
 .tutorial-next-wait {
   margin-left: 10px;
   font-style: italic;
@@ -1099,21 +962,6 @@ a.button-dim {
 
 .tutorial-step-bullets {
   margin-bottom: 10px;
-}
-
-.tutorial-trace-gesture {
-  position: absolute;
-  margin-top: 50px;
-  z-index: var(--z-index-tutorial-trace-gesture);
-  text-align: center;
-  left: 0;
-  right: 0;
-  background-color: rgba(255, 255, 255, 0.8);
-  padding-bottom: 50px;
-}
-
-.dark .tutorial-trace-gesture {
-  background-color: rgba(0, 0, 0, 0.8);
 }
 
 /* Prose View */
@@ -1232,10 +1080,6 @@ a.button-dim {
 
 .dark .divider {
   border-color: #333;
-}
-
-.search-container {
-  display: flex;
 }
 
 .cp-clipboard-wrapper {
