@@ -31,7 +31,6 @@ import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
-import compareRanks from '../util/compareRanks'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -601,11 +600,11 @@ const LayoutTree = () => {
         (node.autofocus === 'dim' || node.autofocus === 'show') &&
         !(next?.autofocus === 'dim' || next?.autofocus === 'show')
       // Get the insertion point of the thought in sorted context
-      if (isSortedContext && !insertionFound) {
+      if (isSortedContext && !insertionFound && sourceThought) {
         const currentThought = getThoughtById(store.getState(), head(node.path))
         const currentRank = currentThought.rank
 
-        if (compareRanks(newRank, currentRank) < 0) {
+        if (newRank - currentRank < 0) {
           insertionY = y
           insertionFound = true
         }

@@ -20,7 +20,9 @@ const useSortedContext = () => {
     const isContextChildren = attributeEquals(state, head(contextParentPath), '=sort', 'Alphabetical')
     const isContextParent = attributeEquals(state, dropTargetId, '=sort', 'Alphabetical')
 
-    return isContextParent || isContextChildren
+    const thoughtDrop = state.hoverZone === DropThoughtZone.ThoughtDrop
+
+    return isContextParent || (isContextChildren && thoughtDrop)
   })
 
   const dragDropManager = useDragDropManager()
@@ -30,7 +32,7 @@ const useSortedContext = () => {
     const item = monitor.getItem() as DragThoughtItem
 
     // Check if the dragged item is a thought and the drop zone is not a subthought
-    const isThought = item?.zone === 'Thoughts' && state.hoverZone === DropThoughtZone.ThoughtDrop
+    const isThought = item?.zone === 'Thoughts'
     const sourceThoughtId = head(item?.path || [])
 
     const sourceThought = isThought ? getThoughtById(state, sourceThoughtId) : null
