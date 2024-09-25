@@ -130,7 +130,7 @@ describe('multicursor', () => {
       addMulticursor(['b', '']),
     ])
 
-    await executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
+    executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     const expectedOutput = `- ${HOME_TOKEN}
@@ -158,7 +158,7 @@ describe('multicursor', () => {
       addMulticursor(['b', 'b1']),
     ])
 
-    await executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
+    executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     const expectedOutput = `- ${HOME_TOKEN}
@@ -192,7 +192,7 @@ describe('multicursor', () => {
       addMulticursor(['c', 'c1']),
     ])
 
-    await executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
+    executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     const expectedOutput = `- ${HOME_TOKEN}

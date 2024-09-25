@@ -25,7 +25,7 @@ describe('archive', () => {
         addMulticursor(['c']),
       ])
 
-      await executeShortcutWithMulticursor(archiveShortcut, { store })
+      executeShortcutWithMulticursor(archiveShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -57,7 +57,7 @@ describe('archive', () => {
         addMulticursor(['d', 'f']),
       ])
 
-      await executeShortcutWithMulticursor(archiveShortcut, { store })
+      executeShortcutWithMulticursor(archiveShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -91,7 +91,7 @@ describe('archive', () => {
         addMulticursor(['c']),
       ])
 
-      await executeShortcutWithMulticursor(archiveShortcut, { store })
+      executeShortcutWithMulticursor(archiveShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -122,7 +122,7 @@ describe('archive', () => {
         addMulticursor(['=archive', 'y']),
       ])
 
-      await executeShortcutWithMulticursor(archiveShortcut, { store })
+      executeShortcutWithMulticursor(archiveShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -152,7 +152,7 @@ describe('archive', () => {
         addMulticursor(['c', '']),
       ])
 
-      await executeShortcutWithMulticursor(archiveShortcut, { store })
+      executeShortcutWithMulticursor(archiveShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

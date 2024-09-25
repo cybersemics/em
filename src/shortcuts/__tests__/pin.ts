@@ -165,7 +165,7 @@ describe('multicursor', () => {
       addMulticursor(['g']),
     ])
 
-    await executeShortcutWithMulticursor(pinShortcut, { store })
+    executeShortcutWithMulticursor(pinShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -207,7 +207,7 @@ describe('multicursor', () => {
       addMulticursor(['g']),
     ])
 
-    await executeShortcutWithMulticursor(pinShortcut, { store })
+    executeShortcutWithMulticursor(pinShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -242,7 +242,7 @@ describe('multicursor', () => {
       addMulticursor(['d', 'e']),
     ])
 
-    await executeShortcutWithMulticursor(pinShortcut, { store })
+    executeShortcutWithMulticursor(pinShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -277,7 +277,7 @@ describe('multicursor', () => {
       addMulticursor(['d', 'e']),
     ])
 
-    await executeShortcutWithMulticursor(pinShortcut, { store })
+    executeShortcutWithMulticursor(pinShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -309,7 +309,7 @@ describe('multicursor', () => {
       addMulticursor(['e', 'f', 'g']),
     ])
 
-    await executeShortcutWithMulticursor(pinShortcut, { store })
+    executeShortcutWithMulticursor(pinShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__

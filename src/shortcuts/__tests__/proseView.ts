@@ -107,7 +107,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    await executeShortcutWithMulticursor(proseViewShortcut, { store })
+    executeShortcutWithMulticursor(proseViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -154,7 +154,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    await executeShortcutWithMulticursor(proseViewShortcut, { store })
+    executeShortcutWithMulticursor(proseViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -197,7 +197,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    await executeShortcutWithMulticursor(proseViewShortcut, { store })
+    executeShortcutWithMulticursor(proseViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__

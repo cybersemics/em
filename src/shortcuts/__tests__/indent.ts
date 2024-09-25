@@ -25,7 +25,7 @@ describe('indent', () => {
         addMulticursor(['c']),
       ])
 
-      await executeShortcutWithMulticursor(indentShortcut, { store })
+      executeShortcutWithMulticursor(indentShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -56,7 +56,7 @@ describe('indent', () => {
         addMulticursor(['d', 'f']),
       ])
 
-      await executeShortcutWithMulticursor(indentShortcut, { store })
+      executeShortcutWithMulticursor(indentShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

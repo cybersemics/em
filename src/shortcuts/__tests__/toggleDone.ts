@@ -75,7 +75,7 @@ describe('toggleDone', () => {
         addMulticursor(['d', 'e']),
       ])
 
-      await executeShortcutWithMulticursor(toggleDoneShortcut, { store })
+      executeShortcutWithMulticursor(toggleDoneShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- __ROOT__
@@ -110,7 +110,7 @@ describe('toggleDone', () => {
         addMulticursor(['d', 'f']),
       ])
 
-      await executeShortcutWithMulticursor(toggleDoneShortcut, { store })
+      executeShortcutWithMulticursor(toggleDoneShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- __ROOT__

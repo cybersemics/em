@@ -73,7 +73,7 @@ describe('swapNote', () => {
         addMulticursor(['e', 'f']),
       ])
 
-      await executeShortcutWithMulticursor(swapNoteShortcut, { store })
+      executeShortcutWithMulticursor(swapNoteShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- __ROOT__

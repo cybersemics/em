@@ -28,7 +28,7 @@ describe('collapseContext', () => {
         addMulticursor(['b']),
       ])
 
-      await executeShortcutWithMulticursor(collapseContextShortcut, { store })
+      executeShortcutWithMulticursor(collapseContextShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -65,7 +65,7 @@ describe('collapseContext', () => {
         addMulticursor(['d', 'e']),
       ])
 
-      await executeShortcutWithMulticursor(collapseContextShortcut, { store })
+      executeShortcutWithMulticursor(collapseContextShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -101,7 +101,7 @@ describe('collapseContext', () => {
         addMulticursor(['c']),
       ])
 
-      await executeShortcutWithMulticursor(collapseContextShortcut, { store })
+      executeShortcutWithMulticursor(collapseContextShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -132,7 +132,7 @@ describe('collapseContext', () => {
         addMulticursor(['e', 'f']),
       ])
 
-      await executeShortcutWithMulticursor(collapseContextShortcut, { store })
+      executeShortcutWithMulticursor(collapseContextShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

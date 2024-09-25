@@ -50,7 +50,7 @@ describe('moveThoughtDown', () => {
         addMulticursor(['d']),
       ])
 
-      await executeShortcutWithMulticursor(moveThoughtDownShortcut, { store })
+      executeShortcutWithMulticursor(moveThoughtDownShortcut, { store })
 
       const state = store.getState()
       const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -83,7 +83,7 @@ describe('moveThoughtDown', () => {
         addMulticursor(['c', 'c2']),
       ])
 
-      await executeShortcutWithMulticursor(moveThoughtDownShortcut, { store })
+      executeShortcutWithMulticursor(moveThoughtDownShortcut, { store })
 
       const state = store.getState()
       const exported = exportContext(state, [HOME_TOKEN], 'text/plain')

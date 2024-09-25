@@ -85,7 +85,7 @@ describe('splitSentences', () => {
         addMulticursor(['C. This is C. More C.']),
       ])
 
-      await executeShortcutWithMulticursor(splitSentencesShortcut, { store })
+      executeShortcutWithMulticursor(splitSentencesShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- __ROOT__
@@ -114,7 +114,7 @@ describe('splitSentences', () => {
         addMulticursor(['Three now. Middle sentence. Last one.']),
       ])
 
-      await executeShortcutWithMulticursor(splitSentencesShortcut, { store })
+      executeShortcutWithMulticursor(splitSentencesShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- __ROOT__

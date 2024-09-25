@@ -876,7 +876,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    await executeShortcutWithMulticursor(toggleSortShortcut, { store })
+    executeShortcutWithMulticursor(toggleSortShortcut, { store })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -919,7 +919,7 @@ describe('multicursor', () => {
       addMulticursor(['x', 'c']),
     ])
 
-    await executeShortcutWithMulticursor(toggleSortShortcut, { store })
+    executeShortcutWithMulticursor(toggleSortShortcut, { store })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')

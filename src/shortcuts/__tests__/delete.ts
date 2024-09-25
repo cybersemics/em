@@ -25,7 +25,7 @@ describe('delete', () => {
         addMulticursor(['c']),
       ])
 
-      await executeShortcutWithMulticursor(deleteShortcut, { store })
+      executeShortcutWithMulticursor(deleteShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -54,7 +54,7 @@ describe('delete', () => {
         addMulticursor(['d', 'f']),
       ])
 
-      await executeShortcutWithMulticursor(deleteShortcut, { store })
+      executeShortcutWithMulticursor(deleteShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -84,7 +84,7 @@ describe('delete', () => {
         addMulticursor(['c']),
       ])
 
-      await executeShortcutWithMulticursor(deleteShortcut, { store })
+      executeShortcutWithMulticursor(deleteShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

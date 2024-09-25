@@ -30,7 +30,7 @@ describe('copyCursor', () => {
       setCursor(['a']),
     ])
 
-    await executeShortcutWithMulticursor(copyCursorShortcut, { store })
+    executeShortcutWithMulticursor(copyCursorShortcut, { store })
 
     expect(copyModule.default).toHaveBeenCalledWith(
       `- a
@@ -61,7 +61,7 @@ describe('copyCursor', () => {
         addMulticursor(['c']),
       ])
 
-      await executeShortcutWithMulticursor(copyCursorShortcut, { store })
+      executeShortcutWithMulticursor(copyCursorShortcut, { store })
 
       expect(copyModule.default).toHaveBeenCalledWith(
         `- a
@@ -92,7 +92,7 @@ describe('copyCursor', () => {
         addMulticursor(['a', 'a1']),
       ])
 
-      await executeShortcutWithMulticursor(copyCursorShortcut, { store })
+      executeShortcutWithMulticursor(copyCursorShortcut, { store })
 
       expect(copyModule.default).toHaveBeenCalledWith(
         `- a
@@ -126,7 +126,7 @@ describe('copyCursor', () => {
         addMulticursor(['c']),
       ])
 
-      await executeShortcutWithMulticursor(copyCursorShortcut, { store })
+      executeShortcutWithMulticursor(copyCursorShortcut, { store })
 
       expect(copyModule.default).toHaveBeenCalledWith(
         `- a

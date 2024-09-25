@@ -102,7 +102,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    await executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
+    executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -149,7 +149,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    await executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
+    executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -187,7 +187,7 @@ describe('multicursor', () => {
       addMulticursor(['a', 'c']),
     ])
 
-    await executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
+    executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__

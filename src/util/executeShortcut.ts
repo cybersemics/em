@@ -77,7 +77,7 @@ const recomputePath = (state: State, thoughtId: ThoughtId) => {
 }
 
 /** Execute a single shortcut. Defaults to global store and keyboard shortcut. Use `executeShortcutWithMulticursor` to execute a shortcut with multicursor mode. */
-const executeShortcut = async (shortcut: Shortcut, { store, type, event }: Options = {}) => {
+const executeShortcut = (shortcut: Shortcut, { store, type, event }: Options = {}) => {
   store = store ?? globalStore
   type = type ?? 'keyboard'
   event = event ?? eventNoop
@@ -87,11 +87,11 @@ const executeShortcut = async (shortcut: Shortcut, { store, type, event }: Optio
   if (!canExecute) return
 
   // execute single shortcut
-  await shortcut.exec(store.dispatch, store.getState, event, { type })
+  shortcut.exec(store.dispatch, store.getState, event, { type })
 }
 
 /** Execute shortcut. Defaults to global store and keyboard shortcut. */
-export const executeShortcutWithMulticursor = async (shortcut: Shortcut, { store, type, event }: Options = {}) => {
+export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type, event }: Options = {}) => {
   store = store ?? globalStore
   type = type ?? 'keyboard'
   event = event ?? eventNoop
@@ -147,7 +147,7 @@ export const executeShortcutWithMulticursor = async (shortcut: Shortcut, { store
 
   if (multicursorConfig.execMulticursor) {
     // The shortcut has their own multicursor logic, so delegate to it.
-    await multicursorConfig.execMulticursor(paths, store.dispatch, store.getState, event, { type })
+    multicursorConfig.execMulticursor(paths, store.dispatch, store.getState, event, { type })
   } else {
     // Execute the shortcut for each multicursor path and restore the cursor to its original position.
     for (const path of filteredPaths) {
@@ -155,17 +155,17 @@ export const executeShortcutWithMulticursor = async (shortcut: Shortcut, { store
       const recomputedPath = recomputePath(state, head(path))
       if (!recomputedPath) continue
 
-      await store.dispatch(setCursor({ path: recomputedPath }))
-      await executeShortcut(shortcut, { store, type, event })
+      store.dispatch(setCursor({ path: recomputedPath }))
+      executeShortcut(shortcut, { store, type, event })
     }
 
     // Restore the cursor to its original position if not prevented.
-    if (!multicursorConfig.preventSetCursor) await store.dispatch(setCursor({ path: cursorBeforeMulticursor }))
+    if (!multicursorConfig.preventSetCursor) store.dispatch(setCursor({ path: cursorBeforeMulticursor }))
   }
 
   if (!multicursorConfig.clearMulticursor) {
     // Restore multicursors
-    await store.dispatch(
+    store.dispatch(
       filteredPaths.map(path => (dispatch, getState) => {
         const recomputedPath = recomputePath(getState(), head(path))
         if (!recomputedPath) return

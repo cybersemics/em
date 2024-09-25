@@ -62,7 +62,7 @@ describe('favorite', () => {
         addMulticursor(['B']),
       ])
 
-      await executeShortcutWithMulticursor(favorite, { store })
+      executeShortcutWithMulticursor(favorite, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       const expectedOutput = `- ${HOME_TOKEN}
@@ -93,7 +93,7 @@ describe('favorite', () => {
         addMulticursor(['B']),
       ])
 
-      await executeShortcutWithMulticursor(favorite, { store })
+      executeShortcutWithMulticursor(favorite, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       const expectedOutput = `- ${HOME_TOKEN}
@@ -122,7 +122,7 @@ describe('favorite', () => {
         addMulticursor(['C']),
       ])
 
-      await executeShortcutWithMulticursor(favorite, { store })
+      executeShortcutWithMulticursor(favorite, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       const expectedOutput = `- ${HOME_TOKEN}
