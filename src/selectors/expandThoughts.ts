@@ -20,12 +20,13 @@ import isURL from '../util/isURL'
 import keyValueBy from '../util/keyValueBy'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
-import strip from '../util/strip'
 import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
 import { anyChild, getAllChildrenAsThoughts } from './getChildren'
 import getContexts from './getContexts'
 import pinned from './isPinned'
+
+const EXPAND_THOUGHTS_REGEX = new RegExp(`${EXPAND_THOUGHT_CHAR}(</[^>]>)*$`, 'g')
 
 /** Returns true if a thought's children are pinned with =children/=pin/true, false if =children/=pin/false, and null if not pinned. */
 const childrenPinned = (state: State, id: ThoughtId): boolean | null => {
@@ -108,7 +109,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
   const visibleChildren = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter(child => {
-        const value = strip(child.value)
+        const value = child.value.replace(EXPAND_THOUGHTS_REGEX, EXPAND_THOUGHT_CHAR)
         const childPath = unroot([...path, child.id])
 
         /** Check of the path is the ancestor of the expansion path. */
@@ -162,7 +163,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
             isHiddenAttribute() ||
             pinned(state, child.id) ||
             (childrenPinned(state, thoughtId) && pinned(state, child.id) === null) ||
-            strip(child.value).endsWith(EXPAND_THOUGHT_CHAR)
+            EXPAND_THOUGHTS_REGEX.test(child.value)
           )
         })
 
