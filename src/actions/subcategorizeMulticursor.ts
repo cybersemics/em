@@ -7,6 +7,7 @@ import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import { AlertType } from '../constants'
 import getRankBefore from '../selectors/getRankBefore'
+import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
@@ -24,6 +25,16 @@ const subcategorizeMulticursor = (state: State) => {
   if (Object.keys(multicursors).length === 0) return state
 
   const multicursorPaths = Object.values(multicursors)
+
+  // Sort the paths deterministically in document order
+  multicursorPaths.sort((a, b) => {
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      const aRank = getThoughtById(state, a[i]).rank
+      const bRank = getThoughtById(state, b[i]).rank
+      if (aRank !== bRank) return aRank - bRank
+    }
+    return a.length - b.length
+  })
 
   const firstPath = multicursorPaths[0]
   const commonParent = parentOf(firstPath)
@@ -52,7 +63,7 @@ const subcategorizeMulticursor = (state: State) => {
       moveThought({
         oldPath: simplifyPath(state, path),
         newPath: appendToPath(commonParent, newThoughtId, head(path)),
-        newRank: getRankBefore(state, simplifyPath(state, appendToPath(commonParent, newThoughtId, head(path)))),
+        newRank: getThoughtById(state, head(path)).rank,
       }),
     ),
     setCursor({
