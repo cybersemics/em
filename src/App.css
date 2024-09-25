@@ -660,14 +660,6 @@
     margin-left: -3px;
   }
 
-  .android
-    .child.show-contexts:first-of-type
-    > .thought-container
-    > .thought
-    .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-    margin-top: calc(0.18em - 4px); /* */
-  }
-
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
