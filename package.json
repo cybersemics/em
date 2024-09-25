@@ -41,7 +41,7 @@
     "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:tsc": "tsc",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output \"lint:*\"",
-    "postinstall": "patch-package && scripts/install-hooks.sh && yarn build:styles",
+    "postinstall": "scripts/install-hooks.sh && yarn build:styles",
     "servebuild": "npx serve -s build -l 3000",
     "start": "vite --host --port 3000",
     "test:ios": "jest ./src/e2e/iOS --verbose",
@@ -69,7 +69,8 @@
   },
   "resolutions": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0"
+    "@typescript-eslint/parser": "^7.18.0",
+    "@pandacss/node@npm:0.45.1": "patch:@pandacss/node@npm%3A0.45.1#~/.yarn/patches/@pandacss-node-npm-0.45.1-fd00aeff2c.patch"
   },
   "dependencies": {
     "@capacitor/android": "^4.8.2",
@@ -105,7 +106,6 @@
     "nanoid": "^5.0.7",
     "openai": "^4.56.0",
     "page-lifecycle": "git+https://github.com/magic-akari/page-lifecycle#feat/add-types",
-    "patch-package": "^8.0.0",
     "pluralize": "^8.0.0",
     "qrcode.react": "^3.1.0",
     "react": "18.3.1",
