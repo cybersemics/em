@@ -240,12 +240,12 @@ const CommandRow: FC<{
               highlight={!disabled ? gestureInProgress.length : undefined}
               path={gestureString(shortcut)}
               strokeWidth={4}
-              style={{
+              cssRaw={css.raw({
                 position: 'absolute',
                 marginLeft: selected ? 5 : 15,
                 left: selected ? '-1.75em' : '-2.2em',
                 top: selected ? '-0.2em' : '-0.75em',
-              }}
+              })}
               width={45}
               height={45}
             />

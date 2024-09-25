@@ -164,6 +164,42 @@ describe('drag', () => {
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
+
+  it('drop target last child in cliff', async () => {
+    await paste(`
+        - a
+          - b
+            - c
+              - d
+                - e
+                - f
+        - x
+      `)
+
+    await simulateDragAndDrop({ drop: true })
+
+    await clickThought('a')
+    await clickThought('b')
+    await dragAndDropThought('e', 'f', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('drop target last visible child', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+      `)
+
+    await simulateDragAndDrop({ drop: true })
+
+    await dragAndDropThought('b', 'c', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 })
 
 describe('drop', () => {

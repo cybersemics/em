@@ -7,9 +7,6 @@
 .z-index-gesture-trace {
   z-index: var(--z-index-gesture-trace);
 }
-.z-index-hamburger-menu {
-  z-index: var(--z-index-hamburger-menu);
-}
 .z-index-navbar {
   z-index: var(--z-index-navbar);
 }
@@ -24,19 +21,6 @@
 }
 .z-index-scroll-zone {
   z-index: var(--z-index-scroll-zone);
-}
-
-/* Increase precedence over .css-1u2w381-MuiModal-root-MuiDrawer-root. */
-div.z-index-sidebar {
-  z-index: var(--z-index-sidebar);
-}
-
-ul ul {
-  margin-left: 1.2em;
-}
-
-ul ul.context-chain {
-  margin-left: 1.6em;
 }
 
 .clear {
@@ -69,73 +53,6 @@ ul ul.context-chain {
     text-align: center;
   }
 }
-.upper-right {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-a.button {
-  padding: 0.5em 2em;
-  min-width: 6em;
-  text-decoration: none;
-  display: inline-block;
-  border-radius: 99px;
-  color: white;
-  background-color: black;
-}
-
-a.button.action-button {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  transition: all 100ms ease-in-out;
-}
-
-a.button.action-button.disabled {
-  opacity: 0.5;
-}
-
-a.button:active {
-  background-color: #111;
-}
-
-a.button-small {
-  padding: 2px 0;
-  font-size: 90%;
-}
-
-a.button-less-padding {
-  padding: 4px 12px;
-}
-
-.dark a.button {
-  color: black;
-  background-color: white;
-}
-
-.dark a.button:active {
-  background-color: #dcdcdc;
-}
-
-a.button-variable-width {
-  min-width: 0;
-}
-
-a.button.disabled {
-  opacity: 0.25;
-  pointer-events: none;
-  user-select: none;
-  cursor: auto;
-}
-
-a.button-dim {
-  opacity: 0.5;
-}
-
-a.text-link {
-  text-decoration: underline;
-}
 
 .text-small {
   font-size: 80%;
@@ -143,24 +60,6 @@ a.text-link {
 
 .text-medium {
   font-size: 90%;
-}
-
-.list-none li::before {
-  display: none;
-}
-
-.list-bullet li {
-  list-style: disc;
-}
-
-.extend-tap {
-  margin: -0.5em;
-  padding: 0.5em;
-}
-
-.extend-tap-small {
-  margin: -0.25em;
-  padding: 0.25em;
 }
 
 .expand-click-area-left {
@@ -178,16 +77,6 @@ a.text-link {
 
 .breadcrumbs .num-contexts {
   margin-right: -0.5em;
-}
-
-.breadcrumbs a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.breadcrumbs a:active {
-  color: #909090;
-  -webkit-text-stroke-width: 0.05em;
 }
 
 .context-breadcrumbs {
@@ -464,25 +353,6 @@ a.text-link {
   color: #666;
 }
 
-.nav-breadcrumbs {
-  width: 100%;
-  color: #999;
-  padding-left: 15px;
-  font-size: 14px;
-  vertical-align: bottom;
-}
-
-.nav-breadcrumbs.nonempty {
-  box-shadow: 0 10px 15px 25px white;
-  clip-path: inset(
-    -30px -30px 0 -30px
-  ); /* clip box-shadow to top half to prevent covering footer on mobile Safari (z-index doesn't work) */
-}
-
-.dark .nav-breadcrumbs.nonempty {
-  box-shadow: 0 10px 15px 25px black;
-}
-
 /* to remove padding from breadcrumbs used inside sidebar recenlty edited thoughts  */
 .thoughts-tab .nav-breadcrumbs {
   padding: 0;
@@ -492,18 +362,6 @@ a.text-link {
 .nav-bottom .nav-breadcrumbs {
   width: calc(100% - 40px);
   padding-left: 35px;
-}
-
-.nav-breadcrumbs a {
-  color: #999;
-}
-
-.nav-breadcrumbs a:hover {
-  color: black;
-}
-
-.dark .nav-breadcrumbs a:hover {
-  color: white;
 }
 
 /* react-transition-group animation: fade */
@@ -694,14 +552,6 @@ a.text-link {
   color: lightgreen;
 }
 
-.link {
-  word-break: break-word;
-}
-
-.link:active {
-  -webkit-text-stroke-width: 0.05em;
-}
-
 .add-new-thought-link {
   display: inline-block;
   color: #ccc;
@@ -744,8 +594,7 @@ a.text-link {
   color: rgba(7, 7, 7, 0.5);
 }
 
-.dark .text-note,
-.dark [placeholder]:empty::before {
+.dark .text-note {
   color: rgba(255, 255, 255, 0.5);
 }
 
@@ -769,24 +618,8 @@ a.text-link {
   user-select: none;
 }
 
-.search-container > .bullet-search {
-  position: absolute;
-  margin-top: -2px;
-  margin-left: -12px;
-}
-
 .mobile .child > .thought-container > .bullet.show-contexts {
   margin-right: -1.5px;
-}
-
-.archive-check {
-  margin-left: -12px;
-  margin-top: 5px;
-}
-
-.archive-check label {
-  cursor: pointer;
-  font-size: 12px;
 }
 
 /* Android Section */
@@ -849,36 +682,6 @@ a.text-link {
   }
 }
 
-/*.context-chain > .child > .thought-container > .bullet .glyph {
-  font-size: 10px;
-  content: '◀';
-  top: -0.1em;
-  left: -0.1em;
-  margin-right: -0.30em;
-}
-
-.mobile .context-chain > .child > .thought-container > .bullet .glyph {
-  font-size: 14px;
-  content: '◄';
-  margin-left: -16px;
-  margin-right: -0.15em;
-}
-
-.context-chain > .child.leaf::before {
-  font-size: 12px;
-  content: '◁';
-  top: -0.05em;
-  margin-right: -0.25em;
-}
-
-.mobile .context-chain > .child.leaf::before {
-  content: '◅';
-  margin-right: 0.05em;
-  margin-left: -17px;
-  top: -0.15em;
-}
-*/
-
 /* autofocus */
 
 /*
@@ -897,58 +700,6 @@ a.text-link {
   transition: all 0.75s ease-out;
 }
 
-/* Footer styles - START */
-
-.footer {
-  position: relative;
-  padding: 1.75em;
-  margin: 0;
-  text-align: right;
-  font-size: 75%;
-  list-style: none;
-  background-color: #e4e4e4; /* 80% of #ddd */
-  box-sizing: border-box;
-  width: 100%;
-  /* above ScrollZone */
-  z-index: var(--z-index-modal);
-}
-
-.footer .support-link {
-  color: inherit;
-}
-
-.dark .footer {
-  background-color: #1a1a1a; /* 80% of #212121 */
-  color: white;
-}
-
-.dark .footer .support-link {
-  color: white;
-}
-
-.footer .support-link:hover {
-  text-decoration: underline;
-}
-
-.footer-divider {
-  margin: 0 6px;
-  user-select: none;
-}
-
-.increase-font {
-  font-size: 1.6em;
-  padding-right: 12px;
-}
-
-.decrease-font {
-  padding-left: 12px;
-  padding-right: 12px;
-}
-
-/* .footer .floatLeft a { text-decoration: none; } may be better with underline*/
-
-/* Footer styles - END */
-
 /* for some reason opacity bleeds through modal*/
 .dim {
   color: rgba(7, 7, 7, 0.5);
@@ -965,16 +716,6 @@ a.text-link {
     opacity: 0.99;
   }
 }
-
-@keyframes fademostlyin {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 0.85;
-  }
-}
-
 
 .status-close-x {
   font-size: 16px;
@@ -1006,15 +747,6 @@ a.text-link {
   opacity: 0;
 }
 
-@keyframes pulse {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0.25;
-  }
-}
-
 @keyframes pulse-light {
   from {
     opacity: 1;
@@ -1022,10 +754,6 @@ a.text-link {
   to {
     opacity: 0.5;
   }
-}
-
-.animate-pulse {
-  animation: pulse 1s infinite alternate;
 }
 
 /* arrow */
@@ -1140,16 +868,6 @@ a.text-link {
   box-shadow: 0 0 20px white;
 }
 
-code,
-.code {
-  background-color: #ccc;
-  font-family: monospace;
-}
-
-.dark code {
-  background-color: #333;
-}
-
 .code-block {
   display: block;
   padding: 5px 10px;
@@ -1237,37 +955,6 @@ code,
   margin-left: 18px;
 }
 
-.tutorial {
-  padding: 40px 20px 20px;
-  background-color: #ddd;
-  position: relative;
-  z-index: var(--z-index-tutorial);
-}
-
-.dark .tutorial {
-  background-color: #212121;
-  color: white;
-}
-
-.tutorial-inner {
-  max-width: 32em;
-  margin: 0 auto;
-}
-
-.tutorial p {
-  margin-top: 20px;
-}
-
-.tutorial p:first-child {
-  margin-top: 0;
-}
-
-.tutorial-skip {
-  color: #666;
-  top: 10px;
-  right: 15px;
-}
-
 .tutorial-next-wait {
   margin-left: 10px;
   font-style: italic;
@@ -1275,36 +962,6 @@ code,
 
 .tutorial-step-bullets {
   margin-bottom: 10px;
-}
-
-.tutorial-trace-gesture {
-  position: absolute;
-  margin-top: 50px;
-  z-index: var(--z-index-tutorial-trace-gesture);
-  text-align: center;
-  left: 0;
-  right: 0;
-  background-color: rgba(255, 255, 255, 0.8);
-  padding-bottom: 50px;
-}
-
-.dark .tutorial-trace-gesture {
-  background-color: rgba(0, 0, 0, 0.8);
-}
-
-.tutorial li {
-  list-style: disc;
-  line-height: 1.5;
-}
-
-.simple-list li {
-  list-style: none;
-  width: 240px;
-  margin: 0 auto 0.5em;
-}
-
-.simple-list a {
-  display: block;
 }
 
 /* Prose View */
@@ -1367,70 +1024,10 @@ code,
   top: var(--safe-area-top) !important;
 }
 
-/* material drawer container css override */
-.drawer-container-mobile {
-  width: 90%;
-}
-
-.drawer-container-desktop {
-  width: 400px;
-}
-
-/* hamburger menu div */
-/* prevent long press to select */
-/* user-select is not inherited */
-.hamburger-menu,
-.hamburger-menu * {
-  user-select: none;
-}
-
-.hamburger-menu > div > span {
-  background: black;
-}
-
-.dark .hamburger-menu > div > span {
-  background: white;
-}
-
 .ellipsized-path {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.sidebar {
-  background: #f5f5f5;
-  overflow-y: scroll;
-  /* prevent the body from scrolling once the bottom of the sidebar is reached */
-  overscroll-behavior: contain;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  color: black;
-  scrollbar-width: thin; /*for firefox*/
-  line-height: 1.8;
-}
-
-.dark .sidebar {
-  color: white;
-  background: #292a2b;
-}
-
-.sidebar::-webkit-scrollbar {
-  width: 0px; /* Remove scrollbar space */
-  background: transparent; /* Optional: just make scrollbar invisible */
-  display: none;
-}
-
-.sidebar .context-breadcrumbs {
-  margin-top: 1em;
-  margin-left: 0;
-  line-height: 1.5;
-}
-
-/* override link font-weight to allow bold on hover */
-.sidebar a {
-  font-weight: inherit;
 }
 
 .thoughts-tab {
@@ -1483,15 +1080,6 @@ code,
 
 .dark .divider {
   border-color: #333;
-}
-
-.gesture-container svg {
-  position: relative;
-  top: 10px;
-}
-
-.search-container {
-  display: flex;
 }
 
 .cp-clipboard-wrapper {
@@ -1685,76 +1273,10 @@ code,
   animation: 0.4s ease-out 0s normal forwards fadein;
 }
 
-@keyframes ripple_loader {
-  0% {
-    top: 100%;
-    left: 100%;
-    width: 0;
-    height: 0;
-    opacity: 1;
-  }
-  100% {
-    top: 7.14%;
-    left: 7.14%;
-    width: 162.5%;
-    height: 162.5%;
-    opacity: 0;
-  }
-}
-.ripple_loader div {
-  position: absolute;
-  border-width: 19.04%;
-  border-style: solid;
-  opacity: 1;
-  border-radius: 50%;
-  animation: ripple_loader 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-}
-.ripple_loader div:nth-child(1) {
-  border-color: #e90c59;
-  animation-delay: 0s;
-}
-.ripple_loader div:nth-child(2) {
-  border-color: #46dff0;
-  animation-delay: -0.5s;
-}
-.ripple_loader_container {
-  display: inline-block;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0);
-}
-.ripple_loader {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transform: translateZ(0) scale(0.49);
-  backface-visibility: hidden;
-  transform-origin: 0 0; /* see note above */
-}
-.ripple_loader div {
-  box-sizing: content-box;
-}
-
 .advance-setting-wrapper {
   display: flex;
   justify-content: center;
   margin-bottom: 2em;
-}
-
-p.checkbox-description {
-  margin-top: 0.5em;
-}
-
-.advance-setting-link {
-  display: flex;
-  position: relative;
-  transition: opacity 100ms ease-in-out;
-}
-
-a.advance-setting-link {
-  color: #000;
-}
-.dark a.advance-setting-link {
-  color: #fff;
 }
 
 .advance-setting-chevron {
@@ -1774,96 +1296,4 @@ a.advance-setting-link {
 
 .rotate180 {
   transform: rotate(180deg);
-}
-
-/* Custom checkbox style starts */
-.checkbox-container {
-  display: block;
-  position: relative;
-  padding-left: 2.2em;
-  user-select: none;
-}
-
-.checkbox-container input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
-}
-
-.checkbox {
-  position: absolute;
-  top: 0.1em;
-  left: 0.1em;
-  height: 1em;
-  width: 1em;
-  background-color: #fff;
-}
-
-.checkbox-container input ~ .checkbox,
-.checkbox-container:hover input ~ .checkbox,
-.checkbox-container input:checked ~ .checkbox {
-  background-color: transparent;
-  border: 0.1em solid #fff;
-}
-
-/* Create the checkbox/indicator (hidden when not checked) */
-.checkbox:after {
-  content: '';
-  position: absolute;
-  display: none;
-}
-
-/* Show the checkbox when checked */
-.checkbox-container input:checked ~ .checkbox:after {
-  display: block;
-}
-
-/* checkbox indicator */
-.checkbox-container .checkbox:after {
-  left: 0.3em;
-  bottom: 0.2em;
-  width: 0.3em;
-  height: 0.65em;
-  border: solid white;
-  border-width: 0 0.15em 0.15em 0;
-  transform: rotate(45deg);
-}
-/* Custom checkbox style ends */
-
-.gift-code-wrapper {
-  display: flex;
-  flex-direction: row;
-  align-self: start;
-  margin: 3vh auto;
-  align-items: center;
-  width: 100%;
-}
-
-.gift-code-wrapper svg {
-  cursor: default;
-}
-
-.gift-code-wrapper input {
-  margin: 0 10px;
-  min-width: 180px;
-}
-
-@media only screen and (min-width: 767px) {
-  .gift-code-wrapper {
-    width: 80%;
-  }
-
-  .gift-code-wrapper input {
-    min-width: 300px;
-  }
-}
-
-.copy-icon-wrapper {
-  display: 'inline-flex';
-}
-
-.copy-icon-wrapper svg {
-  cursor: pointer;
 }

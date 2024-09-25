@@ -1,0 +1,16 @@
+diff --git a/dist/index.js b/dist/index.js
+index 9f84ee661b9b6741e39f1e3eddd782edddc051cd..04b85782fd41a91d07691437df774ffaa50efce5 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -2821,8 +2821,9 @@ var Builder = class {
+   extractFile = (ctx, file) => {
+     const meta = this.filesMeta?.changes.get(file) ?? this.getFileMeta(file);
+     const hasConfigChanged = this.affecteds ? this.affecteds.hasConfigChanged : true;
+-    if (meta.isUnchanged && !hasConfigChanged)
+-      return;
++    // WORKAROUND: Always extract the files. Otherwise, parts of the CSS is missing in the final output.
++    // if (meta.isUnchanged && !hasConfigChanged)
++    //   return;
+     const parserResult = ctx.parseFile(file);
+     fileModifiedMap.set(file, meta.mtime);
+     return parserResult;

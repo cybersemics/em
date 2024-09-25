@@ -1,6 +1,7 @@
 import React, { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { css, cx } from '../../../styled-system/css'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
@@ -108,15 +109,37 @@ const Tutorial: FC = () => {
 
   const cursorHeadValue = useSelector(state => state.cursor && headValue(state, state.cursor))
 
+  const gesturePath = gesture()
+
   return (
-    <div className='tutorial'>
-      <div className='tutorial-inner'>
+    <div
+      className={css({
+        padding: '40px 20px 20px',
+        backgroundColor: { base: '#ddd', _dark: '#212121' },
+        position: 'relative',
+        zIndex: 'tutorial',
+        color: 'fg',
+        '& p': {
+          marginTop: '20px',
+          '&:first-child': { marginTop: '0' },
+        },
+      })}
+    >
+      <div className={css({ maxWidth: '32em', margin: '0 auto' })}>
         <a
-          className={'upper-right tutorial-skip text-small'}
-          style={{
-            visibility:
-              tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden',
-          }}
+          className={cx(
+            css({
+              position: 'absolute',
+              color: '#666',
+              top: '10px',
+              right: '15px',
+              fontSize: 'sm',
+              visibility:
+                tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS
+                  ? 'visible'
+                  : 'hidden',
+            }),
+          )}
           {...fastClick(() => {
             if (window.confirm('Do you really want to close the tutorial?')) {
               dispatch(tutorial({ value: false }))
@@ -125,8 +148,8 @@ const Tutorial: FC = () => {
         >
           ✕ close tutorial
         </a>
-        <div className='clear'>
-          <div className='tutorial-text'>
+        <div className={css({ clear: 'both' })}>
+          <div>
             <TransitionGroup>
               {tutorialStepComponent ? (
                 <WithCSSTransition component={tutorialStepComponent} {...tutorialStepProps} />
@@ -166,9 +189,26 @@ const Tutorial: FC = () => {
             cursor &&
             cursorHeadValue &&
             cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
-        gesture() ? (
-          <div className='tutorial-trace-gesture'>
-            <GestureDiagram path={gesture()!} size={160} strokeWidth={10} arrowSize={5} className='animate-pulse' />
+        gesturePath ? (
+          <div
+            className={css({
+              position: 'absolute',
+              marginTop: '50px',
+              zIndex: 'tutorialTraceGesture',
+              textAlign: 'center',
+              left: 0,
+              right: 0,
+              backgroundColor: { base: 'rgba(255, 255, 255, 0.8)', _dark: 'rgba(0, 0, 0, 0.8)' },
+              paddingBottom: '50px',
+            })}
+          >
+            <GestureDiagram
+              path={gesturePath}
+              size={160}
+              strokeWidth={10}
+              arrowSize={5}
+              cssRaw={css.raw({ animation: 'pulse 1s infinite alternate' })}
+            />
           </div>
         ) : null}
       </div>

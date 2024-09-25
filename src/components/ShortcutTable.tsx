@@ -26,7 +26,6 @@ const groups: {
       'moveCursorBackward',
       'moveCursorForward',
       'commandPalette',
-      'help',
       'home',
       'search',
     ],
@@ -82,6 +81,14 @@ const groups: {
   {
     title: 'Visibility',
     shortcuts: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
+  },
+  {
+    title: 'Settings',
+    shortcuts: ['customizeToolbar'],
+  },
+  {
+    title: 'Help',
+    shortcuts: ['help'],
   },
 ]
 

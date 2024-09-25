@@ -1,4 +1,5 @@
 import { FC } from 'react'
+import { cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
@@ -7,13 +8,14 @@ export interface IconProps {
   fill?: string
   size?: number
   style?: Index<string | number>
+  classes?: string
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const InvitesIcon: FC<IconProps> = ({ fill, size = 20, style }) => {
+const InvitesIcon: FC<IconProps> = ({ fill, size = 20, style, classes }) => {
   return (
     <svg
-      className={icon()}
+      className={cx(icon(), classes)}
       x='0px'
       y='0px'
       viewBox='0 0 19 20'

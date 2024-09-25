@@ -2,6 +2,8 @@
 import React, { FC, PropsWithChildren, useEffect, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import pkg from '../../package.json'
+import { css, cx } from '../../styled-system/css'
+import { extendTap } from '../../styled-system/recipes'
 import Modal from '../@types/Modal'
 import { alertActionCreator as alert } from '../actions/alert'
 import fontSizeDown from '../actions/fontSizeDown'
@@ -12,7 +14,6 @@ import { tsid } from '../data-providers/yjs'
 import scrollTo from '../device/scrollTo'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
-import themeColors from '../selectors/themeColors'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import syncStatusStore from '../stores/syncStatus'
 import fastClick from '../util/fastClick'
@@ -32,7 +33,6 @@ const useFooterUseSelectors = () => {
 
 /** Show the user's connection status. */
 const Status = () => {
-  const colors = useSelector(themeColors)
   const replicationPercentage = syncStatusStore.useSelector(({ replicationProgress }) =>
     replicationProgress !== null ? Math.floor(replicationProgress * 100) : null,
   )
@@ -43,16 +43,16 @@ const Status = () => {
   const status = offlineStatusStore.useState()
   return (
     <span
-      style={{
+      className={css({
         color:
           status === 'preconnecting' || status === 'offline'
-            ? colors.gray50
+            ? 'gray50'
             : status === 'connecting' || status === 'reconnecting'
-              ? colors.yellow
+              ? 'yellow'
               : status === 'connected' || status === 'synced'
-                ? colors.lightgreen
-                : colors.red,
-      }}
+                ? 'lightgreen'
+                : 'red',
+      })}
     >
       {savingPercentage < 100
         ? `Saving ${savingPercentage}%`
@@ -72,7 +72,7 @@ const Status = () => {
 }
 
 /** A pipe delimiter for a horizontal list of links. */
-const LinkDivider = () => <span className='footer-divider'> | </span>
+const LinkDivider = () => <span className={css({ margin: '0 6px', userSelect: 'none' })}> | </span>
 
 /** A link that opens a modal. */
 const ModalLink: FC<PropsWithChildren<{ id: Modal }>> = ({ id, children }) => {
@@ -81,10 +81,7 @@ const ModalLink: FC<PropsWithChildren<{ id: Modal }>> = ({ id, children }) => {
     <a
       tabIndex={-1}
       {...fastClick(() => dispatch(showModal({ id })))}
-      className='extend-tap'
-      style={{
-        whiteSpace: 'nowrap',
-      }}
+      className={cx(extendTap(), css({ whiteSpace: 'nowrap' }))}
     >
       {children}
     </a>
@@ -98,7 +95,7 @@ const HelpButton: React.FC = () => {
     <div
       {...fastClick(() => dispatch(showModal({ id: 'help' })))}
       title='Help'
-      style={{
+      className={css({
         cursor: 'pointer',
         display: 'inline-flex',
         fontWeight: 'bold',
@@ -107,12 +104,18 @@ const HelpButton: React.FC = () => {
         padding: 10,
         margin: '-10px -10px -10px 10px',
         userSelect: 'none',
-      }}
+      })}
     >
       ?
     </div>
   )
 }
+
+const liClass = css({
+  '&::before': {
+    display: 'none',
+  },
+})
 
 /** A footer component with some useful links. */
 const Footer = () => {
@@ -146,18 +149,55 @@ const Footer = () => {
   if (isTutorialOn && tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
 
   return (
-    <ul aria-label='footer' className='footer list-none'>
-      <li>
-        <div style={{ float: 'left', lineHeight: 1 }}>
-          <a className='increase-font expand-click-area-left no-select' {...fastClick(() => dispatch(fontSizeUp()))}>
+    <ul
+      aria-label='footer'
+      className={css({
+        position: 'relative',
+        padding: '1.75em',
+        margin: '0',
+        textAlign: 'right',
+        fontSize: '75%',
+        listStyle: 'none',
+        backgroundColor: { base: '#e4e4e4', _dark: '#1a1a1a' },
+        boxSizing: 'border-box',
+        width: '100%',
+        zIndex: 'modal',
+        color: 'fg',
+      })}
+    >
+      <li className={liClass}>
+        <div className={css({ float: 'left', lineHeight: 1 })}>
+          <a
+            data-testid='increase-font'
+            className={css({
+              paddingLeft: '10px',
+              paddingTop: '10px',
+              paddingBottom: '10px',
+              marginLeft: '-10px',
+              fontSize: '1.6em',
+              paddingRight: '12px',
+              userSelect: 'none',
+            })}
+            {...fastClick(() => dispatch(fontSizeUp()))}
+          >
             A
           </a>
-          <a className='decrease-font expand-click-area-right no-select' {...fastClick(() => dispatch(fontSizeDown()))}>
+          <a
+            data-testid='decrease-font'
+            className={css({
+              paddingTop: '10px',
+              paddingBottom: '10px',
+              paddingLeft: '12px',
+              paddingRight: '12px',
+              userSelect: 'none',
+            })}
+            {...fastClick(() => dispatch(fontSizeDown()))}
+          >
             A
           </a>
         </div>
 
-        <div style={{ lineHeight: 2, margin: '-0.5em 0' }}>
+        <div className={css({ lineHeight: 2, margin: '-0.5em 0' })}>
           <ModalLink id='devices'>Devices</ModalLink>
           <LinkDivider />
           <ModalLink id='settings'>Settings</ModalLink>
@@ -166,17 +206,17 @@ const Footer = () => {
       </li>
       <br />
 
-      <li>
-        <span className='dim'>Status: </span>
+      <li className={liClass}>
+        <span className={css({ color: 'dim' })}>Status: </span>
         <Status />
       </li>
-      <li>
-        <span className='dim'>TSID: </span>
-        <span style={{ fontStyle: 'monospace' }}>{tsid}</span>
+      <li className={liClass}>
+        <span className={css({ color: 'dim' })}>TSID: </span>
+        <span className={css({ fontStyle: 'monospace' })}>{tsid}</span>
       </li>
 
-      <li>
-        <span className='dim'>App Version: </span>
+      <li className={liClass}>
+        <span className={css({ color: 'dim' })}>App Version: </span>
         {pkg.version}
       </li>
     </ul>

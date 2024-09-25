@@ -7,7 +7,7 @@ import scrollTo from '../device/scrollTo'
 const openHelpShortcut: Shortcut = {
   id: 'help',
   label: 'Help',
-  description: `Opens the Help manual, which contains the tutorials and a list of all ${
+  description: `Opens the Help screen, which contains the tutorials and a list of all ${
     isTouch ? 'gestures' : 'keyboard shortcuts'
   }.`,
   keyboard: { key: '/', meta: true },

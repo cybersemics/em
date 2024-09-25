@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import Thought from '../@types/Thought'
 import getThoughtById from '../selectors/getThoughtById'
@@ -48,9 +49,11 @@ const ThoughtLink = ({
           staticText={staticBreadcrumbs}
           charLimit={charLimit || 32}
           thoughtsLimit={thoughtsLimit || 10}
+          cssRaw={css.raw({ marginTop: '1em', marginLeft: '0', lineHeight: 1.5 })}
+          linkCssRaw={css.raw({ fontWeight: 'inherit' })}
         />
       )}
-      <Link simplePath={simplePath} label={value} style={style} />
+      <Link cssRaw={css.raw({ fontWeight: 'inherit' })} simplePath={simplePath} label={value} style={style} />
       <Superscript simplePath={simplePath} />
     </div>
   )

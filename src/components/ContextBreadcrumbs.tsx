@@ -3,7 +3,9 @@ import { unescape as decodeCharacterEntities, isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
+import { extendTap } from '../../styled-system/recipes'
+import { SystemStyleObject } from '../../styled-system/types'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
@@ -101,8 +103,9 @@ const BreadCrumb = React.memo(
       path: Path
       showDivider?: boolean
       staticText?: boolean
+      linkCssRaw?: SystemStyleObject
     }
-  >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText }, ref) => {
+  >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText, linkCssRaw }, ref) => {
     const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
     const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
     const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
@@ -123,7 +126,12 @@ const BreadCrumb = React.memo(
           ) : label === HOME_TOKEN ? (
             <HomeLink color='gray' size={16} className={css({ position: 'static' })} />
           ) : (
-            <Link className='extend-tap-small' simplePath={simplePath} label={label} />
+            <Link
+              cssRaw={css.raw(linkCssRaw)}
+              className={extendTap({ size: 'small' })}
+              simplePath={simplePath}
+              label={label}
+            />
           ))}
         {!isDeleting && <Superscript simplePath={simplePath} css={superscriptCss} />}
       </span>
@@ -145,15 +153,18 @@ BreadCrumb.displayName = 'BreadCrumb'
 const ContextBreadcrumbs = ({
   charLimit,
   classNamesObject,
+  cssRaw,
   hideArchive,
   hidden,
   homeContext,
   path,
   staticText,
   thoughtsLimit,
+  linkCssRaw,
 }: {
   charLimit?: number
   classNamesObject?: Index<boolean>
+  cssRaw?: SystemStyleObject
   /** Hide just the =archive thought, but show the rest of the path. */
   hideArchive?: boolean
   /**
@@ -166,6 +177,7 @@ const ContextBreadcrumbs = ({
   /** Disables click on breadcrumb fragments. */
   staticText?: boolean
   thoughtsLimit?: number
+  linkCssRaw?: SystemStyleObject
 }) => {
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
@@ -196,10 +208,13 @@ const ContextBreadcrumbs = ({
     <div
       aria-label={hidden ? undefined : 'context-breadcrumbs'}
       style={hidden ? { visibility: 'hidden' } : {}}
-      className={classNames({
-        'breadcrumbs context-breadcrumbs': true,
-        ...classNamesObject,
-      })}
+      className={cx(
+        classNames({
+          'breadcrumbs context-breadcrumbs': true,
+          ...classNamesObject,
+        }),
+        css(cssRaw),
+      )}
     >
       {isRoot(simplePath) ? (
         /*
@@ -239,6 +254,14 @@ const ContextBreadcrumbs = ({
                   path={ancestors[i]}
                   showDivider={i > 0}
                   staticText={staticText}
+                  linkCssRaw={css.raw(
+                    {
+                      color: 'inherit',
+                      textDecoration: 'none',
+                      '&:active': { color: '#909090', WebkitTextStrokeWidth: '0.05em' },
+                    },
+                    linkCssRaw,
+                  )}
                 />
               </CSSTransition>
             )

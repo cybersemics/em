@@ -3,8 +3,8 @@ import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
 
-/** Gesture Library icon that looks like a finger pressing a button. */
-const GestureLibraryIcon: FC<Icon> = ({ fill, style, size = 20 }) => {
+/** Command Library icon that looks like a finger pressing a button. */
+const CommandLibraryIcon: FC<Icon> = ({ fill, style, size = 20 }) => {
   return (
     <svg
       x='0'
@@ -27,4 +27,4 @@ const GestureLibraryIcon: FC<Icon> = ({ fill, style, size = 20 }) => {
   )
 }
 
-export default GestureLibraryIcon
+export default CommandLibraryIcon

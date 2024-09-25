@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
+import { SystemStyleObject } from '../../styled-system/types'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
@@ -8,7 +10,6 @@ import createId from '../util/createId'
 
 interface GestureDiagramProps {
   arrowSize?: number
-  className?: string
   color?: string
   flexibleSize?: number
   // override auto height
@@ -26,6 +27,8 @@ interface GestureDiagramProps {
   viewBox?: `${number} ${number} ${number} ${number}`
   // override auto width
   width?: number
+  inGestureContainer?: boolean
+  cssRaw?: SystemStyleObject
 }
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
@@ -55,7 +58,6 @@ const oppositeDirection = (dir: Direction) =>
  */
 const GestureDiagram = ({
   arrowSize,
-  className,
   color,
   flexibleSize,
   height,
@@ -67,6 +69,8 @@ const GestureDiagram = ({
   style,
   viewBox,
   width,
+  inGestureContainer,
+  cssRaw,
 }: GestureDiagramProps) => {
   const [id] = useState(createId())
   const colors = useSelector(themeColors)
@@ -142,7 +146,7 @@ const GestureDiagram = ({
     <svg
       width={width || '100'}
       height={height || '100'}
-      className={className}
+      className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
       style={style}
       ref={onRef}
       viewBox={viewBox}

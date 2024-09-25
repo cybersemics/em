@@ -3,7 +3,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { anchorButton, modalText } from '../../../styled-system/recipes'
+import { anchorButton, extendTap, modalText } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
 import Share from '../../@types/Share'
@@ -572,7 +572,7 @@ const ShareDetail = React.memo(
                 permissionsModel.delete(accessToken, share)
                 onBack()
               }}
-              className='extend-tap'
+              className={extendTap()}
               style={{ color: colors.red }}
             >
               {isLastDevice ? 'Delete all thoughts' : 'Remove device'}

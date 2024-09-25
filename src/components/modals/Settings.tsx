@@ -1,5 +1,6 @@
-import { FC, PropsWithChildren } from 'react'
+import { FC, PropsWithChildren, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { extendTap } from '../../../styled-system/recipes'
 import { fontSizeActionCreator } from '../../actions/fontSize'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actions/toggleUserSetting'
@@ -47,7 +48,8 @@ const Setting: FC<
 /** A font size control. */
 const FontSize = () => {
   const dispatch = useDispatch()
-  const fontSize = useSelector(state => state.fontSize)
+  const fontSizeSelector = useSelector(state => state.fontSize)
+  const [fontSize, setFontSize] = useState<number>(fontSizeSelector)
   const label =
     fontSize <= MIN_FONT_SIZE
       ? 'minimum reached'
@@ -57,6 +59,14 @@ const FontSize = () => {
           ? 'default'
           : null
 
+  /** Unfocus the input when the Enter key is pressed. */
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      e.currentTarget.blur()
+    }
+  }
+
   return (
     <div>
       Font Size:{' '}
@@ -65,18 +75,30 @@ const FontSize = () => {
         min={MIN_FONT_SIZE}
         max={MAX_FONT_SIZE}
         value={fontSize}
+        // reset on blur if font size is out of bounds
+        onBlur={() => {
+          if (fontSize < MIN_FONT_SIZE || fontSize > MAX_FONT_SIZE) {
+            setFontSize(fontSizeSelector)
+          }
+        }}
+        onKeyDown={onKeyDown}
         onChange={e => {
-          dispatch(fontSizeActionCreator(+e.target.value))
+          const inputValue = +e.target.value
+
+          setFontSize(inputValue)
+          if (inputValue < MIN_FONT_SIZE || inputValue > MAX_FONT_SIZE) return
+          dispatch(fontSizeActionCreator(inputValue))
         }}
         style={{
-          fontSize,
+          fontSize: fontSizeSelector,
           padding: '0.5em',
         }}
       />
-      {fontSize !== DEFAULT_FONT_SIZE && (
+      {fontSizeSelector !== DEFAULT_FONT_SIZE && (
         <a
           onClick={() => {
             dispatch(fontSizeActionCreator(DEFAULT_FONT_SIZE))
+            setFontSize(DEFAULT_FONT_SIZE)
           }}
           style={{ marginLeft: '0.5em' }}
         >
@@ -103,7 +125,7 @@ const ModalSettings = () => {
     >
       <form>
         <p style={{ marginBottom: '3em', marginTop: '-1em' }}>
-          <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))} className='extend-tap'>
+          <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))} className={extendTap()}>
             Customize Toolbar
           </a>{' '}
           &gt;

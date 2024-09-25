@@ -10,6 +10,8 @@ import modalRecipe from './src/recipes/modal'
 import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
 import thoughtRecipe from './src/recipes/thought'
+import tutorialBulletRecipe from './src/recipes/tutorialBullet'
+import upperRightRecipe from './src/recipes/upperRight'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
@@ -31,12 +33,44 @@ const keyframes = defineKeyframes({
       opacity: 0.99,
     },
   },
+  pulse: {
+    from: {
+      opacity: 1,
+    },
+    to: {
+      opacity: 0.25,
+    },
+  },
+  pulseLight: {
+    from: {
+      opacity: 1,
+    },
+    to: {
+      opacity: 0.5,
+    },
+  },
   preventAutoscroll: {
     '0%': {
       opacity: 0,
     },
     '100%': {
       opacity: 1,
+    },
+  },
+  ripple_loader: {
+    '0%': {
+      top: '100%',
+      left: '100%',
+      width: '0',
+      height: '0',
+      opacity: 1,
+    },
+    '100%': {
+      top: '7.14%',
+      left: '7.14%',
+      width: '162.5%',
+      height: '162.5%',
+      opacity: 0,
     },
   },
 })
@@ -50,15 +84,12 @@ const globalCss = defineGlobalStyles({
     '--z-index-gesture-trace': '50',
     '--z-index-command-palette': '45',
     '--z-index-modal': '40',
-    '--z-index-hamburger-menu': '30',
-    '--z-index-sidebar': '25',
     '--z-index-toolbar-container': '20',
     '--z-index-toolbar-overlay': '15',
     '--z-index-toolbar-arrow': '15',
     '--z-index-toolbar': '10',
     '--z-index-navbar': '10',
     '--z-index-latest-shortcuts': '10',
-    '--z-index-tutorial-trace-gesture': '5',
     '--z-index-drop-empty': '6',
     '--z-index-subthoughts-drop-end': '5',
     '--z-index-tutorial': '3',
@@ -101,6 +132,7 @@ const globalCss = defineGlobalStyles({
     marginBottom: '25px',
   },
   ul: { marginLeft: '1.5em', paddingLeft: '0' },
+  'ul ul': { marginLeft: '1.2em' },
   li: { listStyle: 'none' },
   input: {
     color: 'fg',
@@ -143,6 +175,10 @@ const globalCss = defineGlobalStyles({
     color: 'fg',
     backgroundColor: 'bg',
   },
+  code: {
+    backgroundColor: { base: '#ccc', _dark: '#333' },
+    fontFamily: 'monospace',
+  },
   'button[disabled]': {
     opacity: 0.25,
     pointerEvents: 'none',
@@ -157,7 +193,7 @@ const globalCss = defineGlobalStyles({
   /* :empty does not work because thought may contain <br> */
   '[placeholder]:empty::before': {
     fontStyle: 'italic',
-    color: 'rgba(7, 7, 7, 0.5)',
+    color: { base: 'rgba(7, 7, 7, 0.5)', _dark: 'rgba(255, 255, 255, 0.5)' },
     content: 'attr(placeholder)',
     cursor: 'text',
   },
@@ -246,6 +282,8 @@ export default defineConfig({
         thought: thoughtRecipe,
         editable: editableRecipe,
         multiline: multilineRecipe,
+        tutorialBullet: tutorialBulletRecipe,
+        upperRight: upperRightRecipe,
       },
       slotRecipes: {
         modal: modalRecipe,

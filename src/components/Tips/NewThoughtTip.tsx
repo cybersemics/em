@@ -1,11 +1,12 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
+import { css } from '../../../styled-system/css'
+import { anchorButton } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import GesturePath from '../../@types/GesturePath'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
-import themeColors from '../../selectors/themeColors'
 import newThoughtShortcut from '../../shortcuts/newThought'
 import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
@@ -16,14 +17,19 @@ interface NewThoughtTipProps {
   display: boolean
 }
 
+const buttonContainerClassName = css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })
 /** A tip that explains how to add a new thought. */
 const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
-  const colors = useSelector(themeColors)
   const returnKey = isMac ? 'RETURN' : 'ENTER'
   const instructions = isTouch ? (
-    <span className='gesture-container'>
+    <span>
       You can add a new thought by swiping
-      <GestureDiagram path={newThoughtShortcut.gesture as GesturePath} size={30} color={colors.gray66} />
+      <GestureDiagram
+        inGestureContainer
+        path={newThoughtShortcut.gesture as GesturePath}
+        size={30}
+        color={token('colors.gray66')}
+      />
     </span>
   ) : (
     `You can add a new thought by pressing ${returnKey} on the keyboard`
@@ -34,15 +40,9 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
         <b>Tip</b>: {instructions}
       </p>
       <div>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginBottom: '0.5em',
-          }}
-        >
+        <div className={buttonContainerClassName}>
           <a
-            className='button'
+            className={anchorButton()}
             {...fastClick(() => {
               store.dispatch(dismissTip())
             })}
@@ -50,20 +50,14 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
             Okay
           </a>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginBottom: '0.5em',
-          }}
-        >
+        <div className={buttonContainerClassName}>
           <a
             tabIndex={-1}
             {...fastClick(() => {
               store.dispatch(removeToolbarButton('newThought'))
               store.dispatch(dismissTip())
             })}
-            className='button'
+            className={anchorButton()}
           >
             Remove this icon from the toolbar
           </a>

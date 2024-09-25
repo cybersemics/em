@@ -12,7 +12,8 @@ import React, {
 } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
+import { extendTap } from '../../../styled-system/recipes'
 import ExportOption from '../../@types/ExportOption'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -368,7 +369,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
 
   useEffect(
     () => {
-      const clipboard = new ClipboardJS('.copy-clipboard-btn')
+      const clipboard = new ClipboardJS('[aria-label="copy-clipboard-btn"]')
 
       clipboard.on('success', onCopyToClipboard)
 
@@ -632,7 +633,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       {/* Copy to clipboard */}
       <div className='cp-clipboard-wrapper'>
         {exportContent !== null && (
-          <a data-clipboard-text={exportContent} className='copy-clipboard-btn extend-tap'>
+          <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTap()}>
             Copy to clipboard
           </a>
         )}
@@ -642,9 +643,18 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       <div className='advance-setting-wrapper'>
         <span>
           <a
-            className='advance-setting-link no-select extend-tap'
+            className={cx(
+              extendTap(),
+              css({
+                userSelect: 'none',
+                display: 'flex',
+                position: 'relative',
+                transition: 'opacity 100ms ease-in-out',
+                color: 'fg',
+                opacity: advancedSettings ? 1 : 0.5,
+              }),
+            )}
             {...fastClick(onAdvancedClick)}
-            style={{ opacity: advancedSettings ? 1 : 0.5 }}
           >
             Advanced
           </a>

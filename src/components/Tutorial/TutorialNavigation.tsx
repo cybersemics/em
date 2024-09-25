@@ -1,6 +1,7 @@
 import { Ref } from 'react'
 import { useDispatch } from 'react-redux'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
+import { tutorialBullet } from '../../../styled-system/recipes'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialChoiceActionCreator as tutorialChoice } from '../../actions/tutorialChoice'
 import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutorialNext'
@@ -78,14 +79,25 @@ const TutorialNavigation = ({
           <TutorialNavigationButton clickHandler={() => dispatch(tutorial({ value: false }))} value='Play on my own' />
         </>
       ) : tutorialStep === TUTORIAL2_STEP_CHOOSE ? (
-        <ul className='simple-list'>
+        <ul>
           {tutorialOptions.map(({ key, value, textValue }) => (
-            <li key={key}>
+            <li
+              className={cx(
+                tutorialBullet(),
+                css({
+                  listStyle: 'none',
+                  width: '240px',
+                  margin: '0 auto 0.5em',
+                }),
+              )}
+              key={key}
+            >
               <TutorialNavigationButton
                 clickHandler={() => {
                   dispatch([tutorialChoice({ value }), tutorialNext({})])
                 }}
                 value={textValue}
+                classes={css({ display: 'block' })}
               />
             </li>
           ))}

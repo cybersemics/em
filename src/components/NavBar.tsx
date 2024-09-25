@@ -29,7 +29,25 @@ const CursorBreadcrumbs = () => {
     shallowEqual,
   )
 
-  return <ContextBreadcrumbs path={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
+  return (
+    <ContextBreadcrumbs
+      cssRaw={css.raw({
+        width: '100%',
+        color: '#999',
+        paddingLeft: '15px',
+        fontSize: '14px',
+        verticalAlign: 'bottom',
+      })}
+      linkCssRaw={css.raw({
+        color: '#999',
+        '&:hover': {
+          color: 'fg',
+        },
+      })}
+      path={breadcrumbSimplePath}
+      classNamesObject={navBreadcrumbsClass}
+    />
+  )
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
