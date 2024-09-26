@@ -1,7 +1,10 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import anchorButtonRecipe from './src/recipes/anchorButton'
+import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
+import dropEndRecipe from './src/recipes/dropEnd'
+import dropHoverRecipe from './src/recipes/dropHover'
 import editableRecipe from './src/recipes/editable'
 import extendTapRecipe from './src/recipes/extendTap'
 import iconRecipe from './src/recipes/icon'
@@ -90,7 +93,6 @@ const globalCss = defineGlobalStyles({
     '--z-index-toolbar': '10',
     '--z-index-navbar': '10',
     '--z-index-latest-shortcuts': '10',
-    '--z-index-drop-empty': '6',
     '--z-index-subthoughts-drop-end': '5',
     '--z-index-tutorial': '3',
     '--z-index-scroll-zone': '2',
@@ -277,6 +279,7 @@ export default defineConfig({
         icon: iconRecipe,
         anchorButton: anchorButtonRecipe,
         button: buttonRecipe,
+        bullet: bulletRecipe,
         link: linkRecipe,
         extendTap: extendTapRecipe,
         thought: thoughtRecipe,
@@ -284,6 +287,8 @@ export default defineConfig({
         multiline: multilineRecipe,
         tutorialBullet: tutorialBulletRecipe,
         upperRight: upperRightRecipe,
+        dropHover: dropHoverRecipe,
+        dropEnd: dropEndRecipe,
       },
       slotRecipes: {
         modal: modalRecipe,
@@ -303,6 +308,9 @@ export default defineConfig({
               base: 'rgba(7, 7, 7, 0.5)',
               _dark: 'rgba(255, 255, 255, 0.5)',
             },
+          },
+          invalidOption: {
+            value: 'tomato !important',
           },
         },
         durations: {

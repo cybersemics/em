@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { anchorButton } from '../../styled-system/recipes'
+import { anchorButton, bullet } from '../../styled-system/recipes'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
@@ -76,7 +76,7 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
   return show ? (
     <ul style={{ marginTop: 0 }} className={'children-new'}>
       <li className='child leaf'>
-        {type === 'bullet' ? <span className='bullet' /> : null}
+        {type === 'bullet' ? <span className={bullet()} /> : null}
         <div className='thought'>
           <a
             className={

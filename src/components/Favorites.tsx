@@ -1,8 +1,9 @@
-import classNames from 'classnames'
 import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import CSSTransition from 'react-transition-group/CSSTransition'
+import { css, cx } from '../../styled-system/css'
+import { dropHover } from '../../styled-system/recipes'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/toggleUserSetting'
@@ -47,16 +48,15 @@ const DragAndDropFavorite = ({
     <div {...dragHoldResult.props} style={{ overflow: 'auto' }} ref={node => dragSource(dropTarget(node))}>
       {!disableDragAndDrop && isHovering && (
         <span
-          className={classNames({
-            'drop-hover': true,
-            pressed: !disableDragAndDrop && dragHoldResult.isPressed,
-          })}
-          style={{
-            backgroundColor: colors.highlight,
-            marginLeft: 0,
-            marginTop: '-0.4em',
-            width: 'calc(100% - 4em)',
-          }}
+          className={cx(
+            dropHover(),
+            css({
+              backgroundColor: 'highlight',
+              marginLeft: 0,
+              marginTop: '-0.4em',
+              width: 'calc(100% - 4em)',
+            }),
+          )}
         />
       )}
       <ThoughtLink
@@ -85,13 +85,15 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
   return (
     <div style={{ height: '4em' }} ref={dropTarget}>
       <span
-        className='drop-hover'
-        style={{
-          marginLeft: 0,
-          marginTop: 0,
-          width: 'calc(100% - 4em)',
-          background: isHovering ? 'rgba(155, 170, 220, 1)' : undefined,
-        }}
+        className={cx(
+          dropHover(),
+          css({
+            marginLeft: 0,
+            marginTop: 0,
+            width: 'calc(100% - 4em)',
+            background: isHovering ? 'rgba(155, 170, 220, 1)' : undefined,
+          }),
+        )}
       />
     </div>
   )

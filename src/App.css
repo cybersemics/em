@@ -235,14 +235,6 @@
   line-height: 1.72;
 }
 
-/* Add some space before the first sibling after an expanded thought to make room for its children. Cannot use line-height since it adds unwanted space on the bottom, so we have to use padding-top even though it messes up the caret placement on click. See ".child .editable" below for details. */
-.child.expanded:not(.leaf) + .child > .thought-container {
-  padding-top: 0.3em;
-}
-.child.expanded:not(.leaf) + .child > .thought-container .bullet {
-  top: 0.3em;
-}
-
 .children-subheading {
   position: relative;
   margin-top: 3px;
@@ -607,19 +599,9 @@
   color: rgba(7, 7, 7, 0.5);
 }
 
-.bullet {
-  z-index: var(--z-index-bullet);
-  /* required for smooth animation when additional space is added after an expanded thought. See ".child.expanded:not(.leaf) + .child > .thought-container .bullet". */
-  top: 0;
-}
-
 /* Disable long press to select on iOS. See useLongPress for details. */
 .pressed .editable {
   user-select: none;
-}
-
-.mobile .child > .thought-container > .bullet.show-contexts {
-  margin-right: -1.5px;
 }
 
 /* Android Section */
@@ -632,10 +614,6 @@
     margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
   margin-top: 0.501em; /* Match editable padding */
     padding: 0.2em 0 0.2em 100px;
-  }
-
-  .android .child > .thought-container > .bullet {
-    margin-left: -3px;
   }
 
   .android .children-subheading {
@@ -655,11 +633,6 @@
 /* Tablet Properties */
 
 @media (min-width: 560px) and (max-width: 1024px) {
-  .android .child > .thought-container > .bullet {
-    transition: transform 0.1s ease-in-out;
-    margin-left: -3px;
-  }
-
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
@@ -874,73 +847,6 @@
   color: lightblue;
 }
 
-/* the bar that displays on hover when dragging thoughts */
-.drop-hover {
-  position: absolute;
-  width: calc(100% - 2em);
-  height: 3px;
-  border-radius: 99px;
-  z-index: var(--z-index-stack);
-}
-
-/* Thought drop-hover */
-/* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
-.thought-container .drop-hover {
-  /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
-  margin-left: calc(-0.4em - 12px);
-  margin-top: -0.2em;
-}
-.mobile .thought-container .drop-hover {
-  /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
-  margin-left: calc(-0.4em - 14px);
-}
-
-/* the drop target at the end of a context */
-.drop-end {
-  position: absolute;
-  height: 0.5em;
-  /* margin to offset bullet width */
-  margin-left: -1em;
-  /* Add additional click area to position the drop target more evenly between siblings (vertically).
-     Unfortunately, due to the HTML hierarchy stacking order, multiple drop-ends at the same y position (e.g. after /a/b/c below) will always be obscured by their previous siblings descendants.
-     This is still better than nothing.
-   */
-  margin-top: -0.5em;
-  padding-top: 0.5em;
-  /* must use z-index 0 since deeply nested drop targets come BEFORE other subsequent uncles in the HTML. Otherwise z-index will be ignored and the HTML order will force an incorrect stacking order; later uncles will obscure deeply nested drop targets.
-
-  e.g. The subthught drop target for a would incorrectly obscure that of b and c.
-
-  - a
-    - b
-      - c
-
-  */
-  z-index: 0;
-  width: calc(100% - 38px);
-}
-
-.child.drop-end.last {
-  margin-top: 0.4em;
-  /* extend click area since there are no thoughts below */
-  height: 4em;
-}
-
-.child.drop-end::before {
-  display: none;
-}
-
-/* Last drop-end in Subthoughts */
-.drop-end .drop-hover {
-  margin-left: calc(0.6em - 13px);
-  width: calc(100% - 3em);
-}
-
-.drop-empty .drop-end {
-  /* override .drop-hover */
-  z-index: var(--z-index-drop-empty);
-}
-
 .indent {
   display: inline-block;
   margin-top: 5px;
@@ -1052,18 +958,6 @@
 
 .child-divider {
   margin-left: -125px;
-}
-
-.child-divider .drop-hover {
-  margin-left: 6px;
-}
-
-.inside-divider .drop-hover {
-  margin-left: 6px;
-}
-
-.child-divider .bullet {
-  display: none !important;
 }
 
 .divider {

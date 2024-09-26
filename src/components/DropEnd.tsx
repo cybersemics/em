@@ -1,6 +1,6 @@
-import classNames from 'classnames'
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { dropEnd, dropHover } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
@@ -94,10 +94,7 @@ const DropEnd = ({
 
   return (
     <li
-      className={classNames({
-        'drop-end': true,
-        last,
-      })}
+      className={dropEnd()}
       ref={dropTarget}
       style={{
         display: 'list-item',
@@ -128,7 +125,7 @@ const DropEnd = ({
       )}
       {(showDropHover || testFlags.simulateDrag) && (
         <span
-          className='drop-hover'
+          className={dropHover({ insideDropEnd: true })}
           style={{
             backgroundColor: dropHoverColor,
             // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch
