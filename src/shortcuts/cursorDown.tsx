@@ -83,6 +83,9 @@ const cursorDownShortcut: Shortcut = {
           appendToPath(parentOf(path), nextSiblingThought.id)
         : nextThought(state)
 
+      // if there is no next path, do nothing
+      if (!nextPath) return
+
       const isNextPathMulticursor = nextPath && isMulticursorPath(state, nextPath)
 
       dispatch([

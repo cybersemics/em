@@ -87,6 +87,9 @@ const cursorUpShortcut: Shortcut = {
           ? pathParent
           : null
 
+      // if there is no previous path, do nothing
+      if (!prevPath) return
+
       const isPrevPathMulticursor = prevPath && isMulticursorPath(state, prevPath)
 
       dispatch([
