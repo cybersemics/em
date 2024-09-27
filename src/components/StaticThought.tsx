@@ -54,6 +54,7 @@ export interface ThoughtProps {
   styleContainer?: React.CSSProperties
   styleThought?: React.CSSProperties
   view?: string | null
+  marginRight: number
 }
 
 /** Returns true if a color is white, in rgb, rgba, hex, or color name. */
@@ -102,6 +103,7 @@ const StaticThought = ({
   style,
   styleThought,
   styleAnnotation,
+  marginRight,
   updateSize,
 }: ThoughtProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
@@ -171,6 +173,7 @@ const StaticThought = ({
         style={{
           // do not set a min-width on table column 1 since there is no room for additional click area
           minWidth: !isTableCol1 ? '3em' : undefined,
+          marginRight: `${marginRight}px`,
         }}
       >
         {homeContext ? (

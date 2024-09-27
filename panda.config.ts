@@ -11,6 +11,7 @@ import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
 import thoughtRecipe from './src/recipes/thought'
 import tutorialBulletRecipe from './src/recipes/tutorialBullet'
+import upperRightRecipe from './src/recipes/upperRight'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
@@ -89,7 +90,6 @@ const globalCss = defineGlobalStyles({
     '--z-index-toolbar': '10',
     '--z-index-navbar': '10',
     '--z-index-latest-shortcuts': '10',
-    '--z-index-tutorial-trace-gesture': '5',
     '--z-index-drop-empty': '6',
     '--z-index-subthoughts-drop-end': '5',
     '--z-index-tutorial': '3',
@@ -193,7 +193,7 @@ const globalCss = defineGlobalStyles({
   /* :empty does not work because thought may contain <br> */
   '[placeholder]:empty::before': {
     fontStyle: 'italic',
-    color: 'rgba(7, 7, 7, 0.5)',
+    color: { base: 'rgba(7, 7, 7, 0.5)', _dark: 'rgba(255, 255, 255, 0.5)' },
     content: 'attr(placeholder)',
     cursor: 'text',
   },
@@ -283,6 +283,7 @@ export default defineConfig({
         editable: editableRecipe,
         multiline: multilineRecipe,
         tutorialBullet: tutorialBulletRecipe,
+        upperRight: upperRightRecipe,
       },
       slotRecipes: {
         modal: modalRecipe,
