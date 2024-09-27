@@ -737,6 +737,7 @@ const LayoutTree = () => {
                   singleLineHeight={singleLineHeightWithCliff}
                   // Add a bit of space after a cliff to give nested lists some breathing room.
                   // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+                  // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
                   style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
                   crossContextualKey={key}
                   prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
