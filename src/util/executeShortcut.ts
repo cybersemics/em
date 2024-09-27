@@ -96,10 +96,6 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
   type = type ?? 'keyboard'
   event = event ?? eventNoop
 
-  const canExecute = !shortcut.canExecute || shortcut.canExecute(store.getState)
-  // Exit early if the shortcut cannot execute
-  if (!canExecute) return
-
   const state = store.getState()
 
   const shouldExecuteMulticursor = hasMulticursor(state) && shortcut.multicursor !== 'ignore'
@@ -139,6 +135,12 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
   })
 
   const filteredPaths = filterCursors(state, paths, multicursorConfig.filter)
+
+  const canExecute = paths.every(
+    path => !shortcut.canExecute || shortcut.canExecute(() => ({ ...state, cursor: path })),
+  )
+  // Exit early if the shortcut cannot execute
+  if (!canExecute) return
 
   // Reverse the order of the cursors if the shortcut has reverse multicursor mode enabled.
   if (multicursorConfig.reverse) {
