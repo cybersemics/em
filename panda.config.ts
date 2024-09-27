@@ -326,6 +326,7 @@ export default defineConfig({
           bullet: { value: 2 },
           stack: { value: 1 },
           hide: { value: -1 },
+          arrow: { value: 9999 },
         },
       },
       recipes: {
