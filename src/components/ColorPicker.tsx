@@ -64,21 +64,18 @@ const ColorSwatch: FC<{
     )
   }, [cursorStyle, backgroundColor, color])
   /** Toggles the text color to the clicked swatch. */
-  const toggleTextColor = async (e: React.MouseEvent | React.TouchEvent) => {
+  const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
     // stop toolbar button dip
     e.stopPropagation()
-
     // Apply text color to the selection
     if (selected) dispatch(formatSelection('foreColor', colors.fg))
-    else if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || 'rgba(0, 0, 0, 1)'))
-
-    let selectedColor: string = colors.fg // Default color
+    else if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg))
+    let selectedColor: string = colors.bg // Default color
 
     if (backgroundColor && backgroundColor !== colors.bg) {
       // Determine the background color to apply
       selectedColor = backgroundColor === 'inverse' ? colors.fg : backgroundColor
     }
-
     // Apply the determined background color to the selection
     if (selected) dispatch(formatSelection('backColor', colors.bg))
     else dispatch(formatSelection('backColor', selectedColor))

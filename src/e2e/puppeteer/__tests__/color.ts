@@ -32,6 +32,7 @@ it('Set the text color of the text', async () => {
   const cursorText = await getEditingText()
   const result = extractStyleProperty(cursorText!)
   expect(result?.color).toBe('#00c7e6')
+  expect(result?.backgroundColor).toBe('rgb(0, 0, 0)')
 })
 
 it('Set the background color of the text', async () => {
@@ -93,7 +94,7 @@ it('Clear the background color when selecting text color', async () => {
   await click('[aria-label="text color swatches"] [aria-label="purple"]')
   cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.color).toBe('#aa80ff')
-  expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe('rgb(255, 255, 255)')
+  expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe('rgb(0, 0, 0)')
 })
 
 it('Clear the text color when setting background color', async () => {

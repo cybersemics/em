@@ -10,30 +10,33 @@ import deleteAttribute from './deleteAttribute'
 /** Sets the text color or background color of the cursor. */
 const textColor = (
   state: State,
-  { backgroundColor, color, shape }: { backgroundColor?: string; color?: string; shape?: 'bullet' | 'text' },
+  {
+    backgroundColor,
+    color,
+    shape,
+    fullySelected,
+  }: { backgroundColor?: string; color?: string; shape?: 'bullet' | 'text'; fullySelected?: boolean },
 ) => {
   if (!state.cursor) return state
   const path = state.cursor
-
-  const thought = pathToThought(state, state.cursor)
-  const thoughtText = thought.value.replace(/<[^>]*>/g, '')
   // set bullet to text color when the entire thought selected
-  let newState
-  if ((selection.text()?.length === 0 && thoughtText.length !== 0) || selection.text()?.length === thoughtText.length) {
-    newState = [
-      color && color !== 'default'
-        ? setDescendant({ path, values: ['=bullet', '=style', 'color', backgroundColor || color] })
-        : deleteAttribute({ path, values: ['=bullet', '=style', 'color'] }),
-    ]
-  } else newState = [deleteAttribute({ path, values: ['=bullet', '=style', 'color'] })]
-
+  const newState =
+    fullySelected && ((color && color !== 'default') || (backgroundColor && backgroundColor !== 'inverse'))
+      ? [setDescendant({ path, values: ['=bullet', '=style', 'color', backgroundColor! || color!] })]
+      : [deleteAttribute({ path, values: ['=bullet', '=style', 'color'] })]
   return reducerFlow(newState)(state)
 }
 
 /** Action-creator for textColor. */
 export const textColorActionCreator =
   (payload: Parameters<typeof textColor>[1]): Thunk =>
-  dispatch =>
-    dispatch({ type: 'textColor', ...payload })
+  (dispatch, getState) => {
+    const state = getState()
+    const thought = pathToThought(state, state.cursor!)
+    const thoughtText = thought.value.replace(/<[^>]*>/g, '')
+    const fullySelected =
+      (selection.text()?.length === 0 && thoughtText.length !== 0) || selection.text()?.length === thoughtText.length
+    dispatch({ type: 'textColor', ...payload, fullySelected })
+  }
 
 export default _.curryRight(textColor)
