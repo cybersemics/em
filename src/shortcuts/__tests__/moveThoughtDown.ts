@@ -97,5 +97,30 @@ describe('moveThoughtDown', () => {
   - d
     - c2`)
     })
+
+    it('does nothing if there is no next thought', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - a
+            - b
+            - c
+          `,
+        }),
+        setCursor(['b']),
+        addMulticursor(['c']),
+      ])
+
+      executeShortcutWithMulticursor(moveThoughtDownShortcut, { store })
+
+      const state = store.getState()
+      const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+      expect(exported).toBe(`- __ROOT__
+  - a
+  - b
+  - c`)
+    })
   })
 })

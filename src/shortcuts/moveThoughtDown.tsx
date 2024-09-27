@@ -2,8 +2,10 @@ import { Key } from 'ts-key-enum'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../actions/moveThoughtDown'
-import hasMulticursor from '../selectors/hasMulticursor'
+import nextSibling from '../selectors/nextSibling'
+import appendToPath from '../util/appendToPath'
 import isDocumentEditable from '../util/isDocumentEditable'
+import parentOf from '../util/parentOf'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -37,7 +39,18 @@ const moveThoughtDownShortcut: Shortcut = {
   svg: Icon,
   canExecute: getState => {
     const state = getState()
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+    const { cursor } = state
+
+    if (!cursor || !isDocumentEditable()) return false
+
+    const pathParent = parentOf(cursor)
+    const nextThought = nextSibling(state, cursor)
+
+    // if the cursor is the last child, move the thought to the beginning of its next uncle
+    const nextUncleThought = pathParent.length > 0 ? nextSibling(state, pathParent) : null
+    const nextUnclePath = nextUncleThought ? appendToPath(parentOf(pathParent), nextUncleThought.id) : null
+
+    return !!nextThought || !!nextUnclePath
   },
   exec: dispatch => dispatch(moveThoughtDown()),
 }

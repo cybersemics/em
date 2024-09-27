@@ -2,8 +2,12 @@ import { Key } from 'ts-key-enum'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { moveThoughtUpActionCreator as moveThoughtUp } from '../actions/moveThoughtUp'
-import hasMulticursor from '../selectors/hasMulticursor'
+import getThoughtBefore from '../selectors/getThoughtBefore'
+import prevSibling from '../selectors/prevSibling'
+import simplifyPath from '../selectors/simplifyPath'
+import appendToPath from '../util/appendToPath'
 import isDocumentEditable from '../util/isDocumentEditable'
+import parentOf from '../util/parentOf'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -34,7 +38,19 @@ const moveThoughtUpShortcut: Shortcut = {
   svg: Icon,
   canExecute: getState => {
     const state = getState()
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+    const { cursor } = state
+
+    if (!cursor || !isDocumentEditable()) return false
+
+    const pathParent = parentOf(cursor)
+
+    const prevThought = prevSibling(state, cursor)
+
+    // if the cursor is on the first thought, move the thought to the end of its prev uncle
+    const prevUncleThought = pathParent.length > 0 ? getThoughtBefore(state, simplifyPath(state, pathParent)) : null
+    const prevUnclePath = prevUncleThought ? appendToPath(parentOf(pathParent), prevUncleThought.id) : null
+
+    return !!prevThought || !!prevUnclePath
   },
   exec: dispatch => dispatch(moveThoughtUp()),
 }

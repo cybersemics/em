@@ -62,31 +62,6 @@ describe('moveThoughtUp', () => {
   - d`)
     })
 
-    it('does not move the first thought', async () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - a
-            - b
-            - c
-          `,
-        }),
-        setCursor(['a']),
-        addMulticursor(['b']),
-      ])
-
-      executeShortcutWithMulticursor(moveThoughtUpShortcut, { store })
-
-      const state = store.getState()
-      const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-      expect(exported).toBe(`- __ROOT__
-  - b
-  - a
-  - c`)
-    })
-
     it('handles mixed scenarios correctly', async () => {
       const store = createTestStore()
 
@@ -121,6 +96,31 @@ describe('moveThoughtUp', () => {
     - c1
   - b
   - d`)
+    })
+
+    it('does not move the first thought', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+          - a
+          - b
+          - c
+        `,
+        }),
+        setCursor(['a']),
+        addMulticursor(['b']),
+      ])
+
+      executeShortcutWithMulticursor(moveThoughtUpShortcut, { store })
+
+      const state = store.getState()
+      const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+      expect(exported).toBe(`- __ROOT__
+  - a
+  - b
+  - c`)
     })
   })
 })
