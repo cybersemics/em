@@ -6,17 +6,18 @@ import suppressFocusStore from '../stores/suppressFocus'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
-  (command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor', color: string = ''): Thunk =>
+  (
+    command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor' | 'removeFormat',
+    color: string = '',
+  ): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     if (!state.cursor) return
-
     const thought = pathToThought(state, state.cursor)
-
     const sel = window.getSelection()
     suppressFocusStore.update(true)
-
     // if there is no selection, format the entire thought by selecting the whole thought
+
     if (sel?.toString().length === 0 && thought.value.length !== 0) {
       const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
       if (!thoughtContentEditable) return
@@ -29,6 +30,5 @@ export const formatSelectionActionCreator =
       document.execCommand(command, false, color)
       updateCommandState()
     }
-
     suppressFocusStore.update(false)
   }

@@ -57,7 +57,6 @@ const ColorSwatch: FC<{
     const selectedBackHexColor = cursorStyle?.backgroundColor
       ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor))
       : undefined
-
     return !!(
       (textHexColor && textHexColor === selectedTextHexColor) ||
       (backHexColor && backHexColor === selectedBackHexColor)
@@ -66,19 +65,18 @@ const ColorSwatch: FC<{
   /** Toggles the text color to the clicked swatch. */
   const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
     // stop toolbar button dip
-    e.stopPropagation()
+    // e.stopPropagation()
     // Apply text color to the selection
-    if (selected) dispatch(formatSelection('foreColor', colors.fg))
-    else if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg))
-    let selectedColor: string = colors.bg // Default color
-
-    if (backgroundColor && backgroundColor !== colors.bg) {
-      // Determine the background color to apply
-      selectedColor = backgroundColor === 'inverse' ? colors.fg : backgroundColor
+    if (label === 'default') dispatch(formatSelection('removeFormat'))
+    else {
+      if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg))
+      else dispatch(formatSelection('foreColor', colors.fg))
+      // Apply background color to the selection
+      if (backgroundColor && backgroundColor !== colors.bg)
+        dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
+      else dispatch(formatSelection('backColor', colors.bg))
     }
-    // Apply the determined background color to the selection
-    if (selected) dispatch(formatSelection('backColor', colors.bg))
-    else dispatch(formatSelection('backColor', selectedColor))
+
     dispatch(
       textColor({
         ...(selected

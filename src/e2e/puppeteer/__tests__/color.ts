@@ -71,7 +71,7 @@ it('Clear the text color when selecting white', async () => {
 
   await click('[aria-label="text color swatches"] [aria-label="default"]')
   cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.color).toBe('#ffffff')
+  expect(extractStyleProperty(cursorText!)?.color).toBe(null)
 })
 
 it('Clear the background color when selecting text color', async () => {
