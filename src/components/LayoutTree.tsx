@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { token } from '../../styled-system/tokens'
 import Autofocus from '../@types/Autofocus'
@@ -366,7 +366,18 @@ const LayoutTree = () => {
       : 0,
   )
 
-  const bulletWidth = ref.current?.querySelector('.bullet')?.getBoundingClientRect().width
+  const [bulletWidth, setBulletWidth] = useState<number | undefined>(0)
+
+  // set the bullet width only during drag or when simulateDrop is true
+  useLayoutEffect(() => {
+    const bullet = ref.current?.querySelector('[aria-label=bullet]')
+
+    const newBulletWidth =
+      dragInProgress || testFlags.simulateDrop ? bullet?.getBoundingClientRect().width : bulletWidth
+
+    setBulletWidth(newBulletWidth)
+  }, [dragInProgress, bulletWidth])
+
   // singleLineHeight is the measured height of a single line thought.
   // If no sizes have been measured yet, use the estimated height.
   // Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
@@ -686,7 +697,7 @@ const LayoutTree = () => {
             // Adjust col1 width to remove dead zones between col1 and col2, increase the width by the difference between col1 and col2 minus bullet width
             const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
             // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
-            const extendedMargin = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
+            const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
             return (
               <div
@@ -733,7 +744,7 @@ const LayoutTree = () => {
                   prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
                   isLastVisible={isLastVisible}
                   autofocus={autofocus}
-                  extendedMargin={isTableCol1 ? extendedMargin : 0}
+                  marginRight={isTableCol1 ? marginRight : 0}
                 />
 
                 {/* DropEnd (cliff) */}

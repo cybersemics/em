@@ -59,7 +59,7 @@ const VirtualThought = ({
   prevCliff,
   isLastVisible,
   autofocus,
-  extendedMargin,
+  marginRight,
 }: {
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
@@ -82,7 +82,7 @@ const VirtualThought = ({
   prevCliff?: number
   isLastVisible?: boolean
   autofocus: Autofocus
-  extendedMargin: number
+  marginRight: number
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
@@ -237,7 +237,7 @@ const VirtualThought = ({
           simplePath={simplePath}
           style={style}
           zoomCursor={zoomCursor}
-          extendedMargin={extendedMargin}
+          marginRight={marginRight}
         />
       )}
 

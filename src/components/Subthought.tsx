@@ -39,7 +39,7 @@ const Subthought = ({
   simplePath,
   style,
   zoomCursor,
-  extendedMargin,
+  marginRight,
 }: {
   autofocus: Autofocus
   debugIndex?: number
@@ -56,7 +56,7 @@ const Subthought = ({
   simplePath: SimplePath
   style?: React.CSSProperties
   zoomCursor?: boolean
-  extendedMargin: number
+  marginRight: number
 }) => {
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
@@ -157,7 +157,7 @@ const Subthought = ({
           showContexts={showContexts}
           simplePath={simplePath}
           style={styleSelf}
-          extendedMargin={extendedMargin}
+          marginRight={marginRight}
         />
       </div>
 
