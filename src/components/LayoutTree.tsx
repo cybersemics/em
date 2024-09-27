@@ -370,13 +370,11 @@ const LayoutTree = () => {
 
   // set the bullet width only during drag or when simulateDrop is true
   useLayoutEffect(() => {
-    const bullet = ref.current?.querySelector('[aria-label=bullet]')
-
-    const newBulletWidth =
-      dragInProgress || testFlags.simulateDrop ? bullet?.getBoundingClientRect().width : bulletWidth
-
-    setBulletWidth(newBulletWidth)
-  }, [dragInProgress, bulletWidth])
+    if (dragInProgress || testFlags.simulateDrop) {
+      const bullet = ref.current?.querySelector('[aria-label=bullet]')
+      setBulletWidth(bullet?.getBoundingClientRect().width)
+    }
+  }, [dragInProgress])
 
   // singleLineHeight is the measured height of a single line thought.
   // If no sizes have been measured yet, use the estimated height.
