@@ -5,7 +5,7 @@ import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
-export const formatSelectionActionCreator =
+const formatSelectionActionCreator =
   (command: 'bold' | 'italic' | 'strikethrough' | 'underline'): Thunk =>
   (dispatch, getState) => {
     const state = getState()
@@ -35,3 +35,5 @@ export const formatSelectionActionCreator =
 
     suppressFocusStore.update(false)
   }
+
+export default formatSelectionActionCreator
