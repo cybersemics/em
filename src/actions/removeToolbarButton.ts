@@ -2,7 +2,7 @@ import ShortcutId from '../@types/ShortcutId'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
-import { initUserToolbarActionCreator } from '../actions/initUserToolbar'
+import initUserToolbar from '../actions/initUserToolbar'
 import { AlertType, EM_TOKEN } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
@@ -16,7 +16,7 @@ export const removeToolbarButtonActionCreator =
     const shortcut = shortcutById(shortcutId)
 
     // initialize EM/Settings/Toolbar/Visible with default shortcuts
-    dispatch(initUserToolbarActionCreator())
+    dispatch(initUserToolbar())
     const state = getState()
     const userToolbarThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
     const userShortcutChildren = getChildrenRanked(getState(), userToolbarThoughtId)
