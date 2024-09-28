@@ -16,13 +16,13 @@ interface SuperscriptProps {
   showSingle?: boolean
   superscript?: boolean
   simplePath: SimplePath
-  css?: SystemStyleObject
+  cssRaw?: SystemStyleObject
 }
 
 const NO_CONTEXTS: ThoughtId[] = []
 
 /** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or simplePath (used by Subthought). */
-const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, css }) => {
+const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, cssRaw }) => {
   const [numContexts, setNumContexts] = useState(0)
   const ref = useRef<HTMLElement>(null)
 
@@ -46,7 +46,7 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, css }) => {
     })
   }, [contexts, showHiddenThoughts])
 
-  return <StaticSuperscript ref={ref} show={!!(show && numContexts)} n={numContexts} css={css} hideZero />
+  return <StaticSuperscript ref={ref} show={!!(show && numContexts)} n={numContexts} cssRaw={cssRaw} hideZero />
 }
 
 const SuperscriptMemo = React.memo(Superscript)
