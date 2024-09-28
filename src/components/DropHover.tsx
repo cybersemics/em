@@ -6,6 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
+import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
@@ -76,6 +77,11 @@ const DropHoverIfVisible = ({
 const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
   const dropHoverColor = useDropHoverColor(simplePath.length)
   const highlight2 = useSelector(state => themeColors(state)?.highlight2)
+
+  const isTableCol1 = useSelector(state =>
+    attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
+  )
+
   const animateHover = useSelector(state => {
     const parent = parentOf(simplePath)
     const autofocus = calculateAutofocus(state, simplePath)
@@ -89,6 +95,8 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
       style={{
         display: 'inline',
         backgroundColor: animateHover ? highlight2 : dropHoverColor,
+        width: isTableCol1 ? '50vw' : undefined,
+        marginLeft: isTableCol1 ? 'calc(0.9em - 12px)' : undefined,
         animation: animateHover
           ? `pulse-light ${token('durations.hoverPulseDuration')} linear infinite alternate`
           : undefined,
