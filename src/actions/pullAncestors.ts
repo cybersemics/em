@@ -8,7 +8,7 @@ import { pullActionCreator as pull } from './pull'
 const rootContextSet = new Set<ThoughtId>([ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID])
 
 /** An action-creator that pulls the ancestors of one or more thoughts (inclusive). */
-export const pullAncestorsActionCreator = (
+const pullAncestorsActionCreator = (
   ids: ThoughtId[],
   { force, maxDepth }: { force?: boolean; maxDepth?: number } = {},
 ): Thunk<Promise<void>> => {
@@ -24,3 +24,5 @@ export const pullAncestorsActionCreator = (
     }
   }
 }
+
+export default pullAncestorsActionCreator
