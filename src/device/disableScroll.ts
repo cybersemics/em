@@ -1,3 +1,5 @@
+/* eslint-disable import/prefer-default-export */
+
 /** Disables scrolling on the body element with overflow:hidden. */
 export const disableScroll = () => {
   document.body.style.overflow = 'hidden'
