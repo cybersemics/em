@@ -4,7 +4,7 @@ import scrollTo from '../device/scrollTo'
 import storage from '../util/storage'
 
 /** Logs the user out and clears the state. */
-export const logoutActionCreator = (): Thunk => (dispatch, getState) => {
+const logoutActionCreator = (): Thunk => (dispatch, getState) => {
   // clear local db
   // clearAll().catch(err => {
   //   localStorage.removeItem(INITIAL_SETTING_KEY)
@@ -23,3 +23,5 @@ export const logoutActionCreator = (): Thunk => (dispatch, getState) => {
   // scroll to top
   scrollTo('top')
 }
+
+export default logoutActionCreator
