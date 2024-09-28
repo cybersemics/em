@@ -26,6 +26,16 @@ module.exports = {
       },
     ],
 
+    // import/prefer-default-export
+    'import/prefer-default-export': [
+      2,
+      {
+        // any: Any exporting file must contain a default export.
+        // single: When there is only a single export from a module, prefer using default export over named export.
+        target: 'any',
+      },
+    ],
+
     // jsdoc
     'jsdoc/check-alignment': 2,
     'jsdoc/check-indentation': 2,
