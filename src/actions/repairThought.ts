@@ -13,7 +13,7 @@ import headValue from '../util/headValue'
 import removeContext from '../util/removeContext'
 
 /** Checks for and repairs data integrity issues that are detected after a thought is fully replicated. Namely, it can remove Lexeme contexts that no longer have a corresponding thought, and it can restore Lexeme context parent's that have been removed. Unfortunately, data integrity issues are quite possible given that Thoughts and Lexemes are stored in separate Docs. */
-export const repairThoughtActionCreator =
+const repairThoughtActionCreator =
   (id: ThoughtId, thought: Thought | undefined): Thunk =>
   (dispatch, getState) => {
     // Repair Lexeme with invalid context by removing cxid of missing thought.
@@ -78,3 +78,5 @@ export const repairThoughtActionCreator =
       }
     }
   }
+
+export default repairThoughtActionCreator

@@ -15,7 +15,7 @@ import { initThoughtsActionCreator as initThoughts } from './actions/initThought
 import loadFromUrl from './actions/loadFromUrl'
 import { preloadSourcesActionCreator as preloadSources } from './actions/preloadSources'
 import { pullActionCreator as pull } from './actions/pull'
-import { repairThoughtActionCreator } from './actions/repairThought'
+import repairThoughtActionCreator from './actions/repairThought'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { HOME_TOKEN } from './constants'
