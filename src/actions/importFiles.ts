@@ -1,3 +1,5 @@
+/* eslint-disable import/prefer-default-export */
+
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
 import { nanoid } from 'nanoid'
@@ -176,7 +178,7 @@ const pullDuplicateDescendants =
   }
 
 /** Action-creator for importFiles. */
-export const importFilesActionCreator =
+const importFilesActionCreator =
   ({ files, insertBefore, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!files && !resume) {
@@ -421,3 +423,5 @@ export const importFilesActionCreator =
 
     dispatch(alertWithMinistore(null, { alertType: AlertType.ImportFile }))
   }
+
+  export default importFilesActionCreator

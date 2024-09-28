@@ -11,7 +11,7 @@ import { createThoughtActionCreator as createThought } from '../actions/createTh
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { errorActionCreator as error } from '../actions/error'
-import { importFilesActionCreator as importFiles } from '../actions/importFiles'
+import importFiles from '../actions/importFiles'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { isTouch } from '../browser'
 import { ThoughtContainerProps } from '../components/Thought'
