@@ -1,21 +1,64 @@
+import { cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
 
 /** New thought icon. */
-const NewThoughtIcon = ({ style, size }: Icon) => {
+const NewThoughtIcon = ({ fill, size = 14, style = {}, className }: Icon) => {
+  const scalingFactor = 1.37
+  const newSize = size * scalingFactor
+  const strokeColor = style.fill || fill || token('colors.fg')
+
   return (
     <svg
+      className={cx(icon(), className)}
       xmlns='http://www.w3.org/2000/svg'
-      version='1.1'
-      x='0'
-      y='0'
-      viewBox='0 0 83.46 83.46'
-      className={icon()}
-      width={size}
-      height={size}
-      style={{ ...style }}
+      width={newSize}
+      height={newSize}
+      viewBox='0 0 24 24'
+      fill={fill || token('colors.fg')}
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px`, marginTop: '-1px' }}
     >
-      <path d='m41.73,0C18.72,0,0,18.72,0,41.73s18.72,41.73,41.73,41.73,41.73-18.72,41.73-41.73S64.74,0,41.73,0Zm0,79.49c-20.82,0-37.76-16.94-37.76-37.76S20.91,3.97,41.73,3.97s37.76,16.94,37.76,37.76-16.94,37.76-37.76,37.76Zm22.69-37.76c0,1.1-.89,1.99-1.99,1.99h-18.71v18.71c0,1.1-.89,1.99-1.99,1.99s-1.99-.89-1.99-1.99v-18.71h-18.71c-1.1,0-1.99-.89-1.99-1.99s.89-1.99,1.99-1.99h18.71v-18.71c0-1.1.89-1.99,1.99-1.99s1.99.89,1.99,1.99v18.71h18.71c1.1,0,1.99.89,1.99,1.99Z'></path>
+      <title>New Thought Icon</title>
+      <g id='Layer_2' data-name='Layer 2'>
+        <g id='Layer_3' data-name='Layer 3'>
+          <g id='_03-new-thought' data-name='03-new-thought'>
+            <rect width='24' height='24' fill='none' />
+            <circle
+              className='cls-2'
+              cx='12'
+              cy='12'
+              r='10.15'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              fill='none'
+            />
+            <line
+              className='cls-2'
+              x1='12'
+              y1='7.37'
+              x2='12'
+              y2='16.63'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              fill='none'
+            />
+            <line
+              className='cls-2'
+              x1='7.37'
+              y1='12'
+              x2='16.63'
+              y2='12'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              fill='none'
+            />
+          </g>
+        </g>
+      </g>
     </svg>
   )
 }
