@@ -1,5 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
 import { nanoid } from 'nanoid'
@@ -424,4 +423,4 @@ const importFilesActionCreator =
     dispatch(alertWithMinistore(null, { alertType: AlertType.ImportFile }))
   }
 
-  export default importFilesActionCreator
+export default importFilesActionCreator

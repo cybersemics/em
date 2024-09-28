@@ -1,5 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-
 import Index from '../../@types/IndexType'
 import ThoughtId from '../../@types/ThoughtId'
 
