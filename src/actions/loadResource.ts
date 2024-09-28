@@ -1,7 +1,7 @@
 import Path from '../@types/Path'
 import Thunk from '../@types/Thunk'
 import { errorActionCreator as error } from '../actions/error'
-import { loadFromUrlActionCreator as loadFromUrl } from '../actions/loadFromUrl'
+import loadFromUrl from '../actions/loadFromUrl'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setResourceCacheActionCreator } from '../actions/setResourceCache'
 import attribute from '../selectors/attribute'
