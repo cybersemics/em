@@ -5,7 +5,7 @@ import getLatestActionType from '../util/getLastActionType'
 import { alertActionCreator as alert } from './alert'
 
 /** Action-creator for undo. */
-export const undoActionCreator = (): Thunk => (dispatch, getState) => {
+const undoActionCreator = (): Thunk => (dispatch, getState) => {
   const lastActionType = getLatestActionType(getState().undoPatches)
 
   dispatch({ type: 'undo' })
@@ -20,3 +20,5 @@ export const undoActionCreator = (): Thunk => (dispatch, getState) => {
     }),
   )
 }
+
+export default undoActionCreator
