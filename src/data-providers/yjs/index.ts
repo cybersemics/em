@@ -1,3 +1,5 @@
+/* eslint-disable import/prefer-default-export */
+
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import { nanoid } from 'nanoid'
 import { IndexeddbPersistence } from 'y-indexeddb'
