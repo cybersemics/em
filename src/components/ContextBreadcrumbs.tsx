@@ -1,12 +1,10 @@
-import classNames from 'classnames'
 import { unescape as decodeCharacterEntities, isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { css, cx } from '../../styled-system/css'
+import { css } from '../../styled-system/css'
 import { extendTap } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
-import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
@@ -117,7 +115,7 @@ const BreadCrumb = React.memo(
       userSelect: 'none',
     }
     return !isOverflow ? (
-      <span ref={ref} style={{ fontSize: staticText ? '0.8em' : undefined }}>
+      <span ref={ref} className={css({ fontSize: staticText ? '0.8em' : undefined })}>
         {/* possible delimiter symbols: ⇢ */}
         {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
         {!isDeleting &&
@@ -138,7 +136,7 @@ const BreadCrumb = React.memo(
     ) : (
       <span ref={ref}>
         <span style={delimiterStyle}> • </span>
-        <span {...fastClick(onClickEllipsis)} style={{ cursor: 'pointer' }}>
+        <span {...fastClick(onClickEllipsis)} className={css({ cursor: 'pointer' })}>
           {' '}
           ...{' '}
         </span>
@@ -152,7 +150,6 @@ BreadCrumb.displayName = 'BreadCrumb'
 /** Renders the ancestor chain of a path as links. */
 const ContextBreadcrumbs = ({
   charLimit,
-  classNamesObject,
   cssRaw,
   hideArchive,
   hidden,
@@ -163,7 +160,6 @@ const ContextBreadcrumbs = ({
   linkCssRaw,
 }: {
   charLimit?: number
-  classNamesObject?: Index<boolean>
   cssRaw?: SystemStyleObject
   /** Hide just the =archive thought, but show the rest of the path. */
   hideArchive?: boolean
@@ -207,13 +203,16 @@ const ContextBreadcrumbs = ({
   return (
     <div
       aria-label={hidden ? undefined : 'context-breadcrumbs'}
-      style={hidden ? { visibility: 'hidden' } : {}}
-      className={cx(
-        classNames({
-          'breadcrumbs context-breadcrumbs': true,
-          ...classNamesObject,
-        }),
-        css(cssRaw),
+      className={css(
+        {
+          fontSize: '0.867em',
+          color: 'gray',
+          marginLeft: 'calc(1.3em - 14.5px)',
+          marginTop: '0.533em',
+          minHeight: '1em',
+          visibility: hidden ? 'hidden' : undefined,
+        },
+        cssRaw,
       )}
     >
       {isRoot(simplePath) ? (

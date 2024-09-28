@@ -1,6 +1,7 @@
 import classNames from 'classnames'
 import React, { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -392,7 +393,17 @@ const ThoughtContainer = ({
       })}
     >
       {showContexts && simplePath.length > 1 ? (
-        <ContextBreadcrumbs path={parentOf(simplePath)} homeContext={homeContext} />
+        <ContextBreadcrumbs
+          cssRaw={css.raw({
+            /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
+            marginBottom: '-0.25em',
+            /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
+              Otherwise the accumulated y value will not be correct. */
+            paddingTop: '0.5em',
+          })}
+          path={parentOf(simplePath)}
+          homeContext={homeContext}
+        />
       ) : showContexts && simplePath.length > 2 ? (
         <span className='ellipsis'>
           <a

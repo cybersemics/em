@@ -75,27 +75,6 @@
   padding-bottom: 10px;
 }
 
-.breadcrumbs .num-contexts {
-  margin-right: -0.5em;
-}
-
-.context-breadcrumbs {
-  font-size: 0.867em;
-  color: gray;
-  /* approximate bullet width across multiple font sizes */
-  margin-left: calc(1.3em - 14.5px);
-  margin-top: 0.533em;
-  min-height: 1em;
-}
-
-.child .context-breadcrumbs {
-  /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
-  margin-bottom: -0.25em;
-  /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
-     Otherwise the accumulated y value will not be correct. */
-  padding-top: 0.5em;
-}
-
 /* required to avoid iPhone converting to emoji
  https://stackoverflow.com/questions/11178433/how-do-i-stop-ios-from-converting-a-small-pointing-right-triangle-character-into
  */
@@ -343,17 +322,6 @@
 
 .dark .offline {
   color: #666;
-}
-
-/* to remove padding from breadcrumbs used inside sidebar recenlty edited thoughts  */
-.thoughts-tab .nav-breadcrumbs {
-  padding: 0;
-}
-
-/** offset logo */
-.nav-bottom .nav-breadcrumbs {
-  width: calc(100% - 40px);
-  padding-left: 35px;
 }
 
 /* react-transition-group animation: fade */
@@ -921,20 +889,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.thoughts-tab {
-  transition: all 0.4s linear;
-}
-
-.thoughts-tab::-webkit-scrollbar {
-  width: 0px; /* Remove scrollbar space */
-  background: transparent; /* Optional: just make scrollbar invisible */
-  display: none;
-}
-
-.thoughts-tab:hover {
-  opacity: 1;
 }
 
 .icon {

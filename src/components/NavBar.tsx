@@ -17,13 +17,8 @@ import HomeLink from './HomeLink'
 import InvitesButton from './InvitesButton'
 import Scale from './Scale'
 
-// define at top-level for stable object reference
-const navBreadcrumbsClass = {
-  'nav-breadcrumbs': true,
-}
-
 /** Renders ContextBreadcrumbs for the cursor. */
-const CursorBreadcrumbs = () => {
+const CursorBreadcrumbs = ({ position }: { position: string }) => {
   const breadcrumbSimplePath = useSelector(
     state => (state.cursor ? state.cursor.slice(publishMode() ? 1 : 0, state.cursor.length) : []) as Path,
     shallowEqual,
@@ -37,6 +32,7 @@ const CursorBreadcrumbs = () => {
         paddingLeft: '15px',
         fontSize: '14px',
         verticalAlign: 'bottom',
+        ...(position === 'bottom' && { width: 'calc(100% - 40px)', paddingLeft: '35px' }),
       })}
       linkCssRaw={css.raw({
         color: '#999',
@@ -45,7 +41,6 @@ const CursorBreadcrumbs = () => {
         },
       })}
       path={breadcrumbSimplePath}
-      classNamesObject={navBreadcrumbsClass}
     />
   )
 }
@@ -70,16 +65,16 @@ const NavBar = ({ position }: { position: string }) => {
 
   return (
     <div
-      className='z-index-navbar'
-      style={
-        !isTouch || !editing
+      className={css({
+        zIndex: 'navbar',
+        ...(!isTouch || !editing
           ? {
               position: 'sticky',
               // cannot use safe-area-inset because of mobile Safari z-index issues
               bottom: 0,
             }
-          : undefined
-      }
+          : undefined),
+      })}
     >
       {/* {isTouch && <SidebarGutter />} */}
       <Scale amount={scale} origin='bottom left'>
@@ -118,7 +113,7 @@ const NavBar = ({ position }: { position: string }) => {
                     unmountOnExit
                   >
                     <div ref={cursorBreadcrumbsWrapperRef} style={{ flexGrow: 1 }}>
-                      <CursorBreadcrumbs />
+                      <CursorBreadcrumbs position={position} />
                     </div>
                   </CSSTransition>
 
