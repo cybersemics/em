@@ -7,7 +7,7 @@ import scrollTo from '../device/scrollTo'
 import * as selection from '../device/selection'
 
 /** Navigates home and resets the scroll position. */
-export const homeActionCreator = (): Thunk => (dispatch, getState) => {
+const homeActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
   if (state.search != null) {
@@ -21,3 +21,5 @@ export const homeActionCreator = (): Thunk => (dispatch, getState) => {
 
   scrollTo('top')
 }
+
+export default homeActionCreator

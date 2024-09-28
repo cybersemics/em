@@ -2,7 +2,7 @@ import { Dispatch } from 'react'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import Thunk from '../@types/Thunk'
-import { homeActionCreator as home } from '../actions/home'
+import home from '../actions/home'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

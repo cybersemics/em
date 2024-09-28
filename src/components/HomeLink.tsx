@@ -2,7 +2,7 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { extendTap } from '../../styled-system/recipes'
-import { homeActionCreator as home } from '../actions/home'
+import home from '../actions/home'
 import fastClick from '../util/fastClick'
 import HomeIcon from './icons/HomeIcon'
 
