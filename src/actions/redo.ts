@@ -5,7 +5,7 @@ import getLatestActionType from '../util/getLastActionType'
 import { alertActionCreator as alert } from './alert'
 
 /** Action-creator for redo. */
-export const redoActionCreator = (): Thunk => (dispatch, getState) => {
+const redoActionCreator = (): Thunk => (dispatch, getState) => {
   const lastActionType = getLatestActionType(getState().redoPatches)
 
   dispatch({ type: 'redo' })
@@ -20,3 +20,5 @@ export const redoActionCreator = (): Thunk => (dispatch, getState) => {
     }),
   )
 }
+
+export default redoActionCreator
