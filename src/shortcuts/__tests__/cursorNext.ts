@@ -1,4 +1,4 @@
-import { cursorNextActionCreator as cursorNext } from '../../actions/cursorNext'
+import cursorNext from '../../actions/cursorNext'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
