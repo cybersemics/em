@@ -70,5 +70,34 @@ describe('indent', () => {
 
       expect(exported).toEqual(expectedOutput)
     })
+
+    it('does not indent all thoughts on the same level', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - b
+              - c
+            - d
+          `,
+        }),
+        setCursor(['b']),
+        addMulticursor(['c']),
+      ])
+
+      executeShortcutWithMulticursor(indentShortcut, { store })
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+      const expectedOutput = `- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+  - d`
+
+      expect(exported).toEqual(expectedOutput)
+    })
   })
 })

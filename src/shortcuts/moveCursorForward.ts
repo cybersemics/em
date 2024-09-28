@@ -4,7 +4,7 @@ import Shortcut from '../@types/Shortcut'
 import SettingsIcon from '../components/icons/SettingsIcon'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildren } from '../selectors/getChildren'
-import hasMulticursor from '../selectors/hasMulticursor'
+import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -36,7 +36,14 @@ const moveCursorForward: Shortcut = {
   svg: SettingsIcon,
   canExecute: getState => {
     const state = getState()
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+
+    if (!state.cursor) return false
+
+    const path = simplifyPath(state, state.cursor)
+    const parentId = head(rootedParentOf(state, path))
+    const isTable = attributeEquals(state, parentId, '=view', 'Table')
+
+    return isDocumentEditable() && (isTable || !!prevSibling(state, state.cursor))
   },
   exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState) => {
     const state = getState()
