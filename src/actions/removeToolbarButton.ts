@@ -10,7 +10,7 @@ import { getChildrenRanked } from '../selectors/getChildren'
 import { shortcutById } from '../shortcuts'
 
 /** Removes a toolbar button. */
-export const removeToolbarButtonActionCreator =
+const removeToolbarButtonActionCreator =
   (shortcutId: ShortcutId): Thunk =>
   (dispatch, getState) => {
     const shortcut = shortcutById(shortcutId)
@@ -39,3 +39,5 @@ export const removeToolbarButtonActionCreator =
       }),
     ])
   }
+
+export default removeToolbarButtonActionCreator
