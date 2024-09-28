@@ -1,6 +1,7 @@
-import classNames from 'classnames'
 import React, { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
+import { css } from '../../styled-system/css'
+import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
@@ -8,7 +9,7 @@ import fastClick from '../util/fastClick'
 import head from '../util/head'
 
 /** A custom horizontal rule. */
-const Divider = ({ path }: { path: Path }) => {
+const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) => {
   const dividerSetWidth = React.createRef<HTMLInputElement>()
   const dispatch = useDispatch()
 
@@ -39,22 +40,26 @@ const Divider = ({ path }: { path: Path }) => {
     <div
       aria-label='divider'
       ref={dividerSetWidth}
-      style={{
+      className={css({
         margin: '-2px -4px -5px',
         maxWidth: '100%',
         padding: '10px 4px 16px',
         position: 'relative',
         width: 85,
-      }}
-      className='divider-container z-index-stack'
+        zIndex: 'stack',
+      })}
       {...fastClick(setCursorToDivider)}
     >
       <div
         aria-label={'editable-' + head(path)}
-        className={classNames({
-          divider: true,
-          // requires editable-hash className to be selected by the cursor navigation via editableNode
-        })}
+        className={css(
+          {
+            // divider: true,
+            border: { base: 'solid 1px gray', _dark: 'solid 1px #333' },
+            // requires editable-hash className to be selected by the cursor navigation via editableNode
+          },
+          cssRaw,
+        )}
       />
     </div>
   )

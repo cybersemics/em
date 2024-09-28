@@ -55,6 +55,7 @@ export interface ThoughtProps {
   styleThought?: React.CSSProperties
   view?: string | null
   marginRight: number
+  isPressed: boolean
 }
 
 /** Returns true if a color is white, in rgb, rgba, hex, or color name. */
@@ -105,6 +106,7 @@ const StaticThought = ({
   styleAnnotation,
   marginRight,
   updateSize,
+  isPressed,
 }: ThoughtProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
@@ -180,7 +182,7 @@ const StaticThought = ({
           // left, top are eyeballed for different font sizes
           <HomeIcon style={{ position: 'relative', left: fontSize - 14, top: fontSize / 4 - 1 }} />
         ) : isDivider(value) ? (
-          <Divider path={simplePathLive} />
+          <Divider cssRaw={css.raw({ borderColor: 'rgb(204, 204, 204)' })} path={simplePathLive} />
         ) : /* insert padding equal to the Editable height while context ancestors are loading */ isContextPending ? (
           <div style={{ paddingTop: '2.8em' }}></div>
         ) : (
@@ -211,6 +213,7 @@ const StaticThought = ({
                       https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
                     */
                 verticalAlign: 'top',
+                userSelect: isPressed ? 'none' : undefined,
               }),
             })}
           />

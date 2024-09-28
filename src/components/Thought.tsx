@@ -142,15 +142,6 @@ const ThoughtContainer = ({
   // const parentView = useSelector(state => attribute(state, head(parentOf(simplePath)), '=view'))
   const expandedContextThought = useSelector(state => state.expandedContextThought)
   const view = useSelector(state => attribute(state, head(simplePath), '=view'))
-  const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
-
-  // Note: An active expand hover top thought cannot be a cursor's grandparent as it is already treated as cursor's parent.
-  const isCursorGrandparent = useSelector(state => {
-    const isExpandedHoverTopPath = state.expandHoverUpPath && equalPath(path, state.expandHoverUpPath)
-    const cursorParent = state.cursor && parentOf(state.cursor)
-    const cursorGrandparent = cursorParent && rootedParentOf(state, cursorParent)
-    return !isExpandedHoverTopPath && !!cursor && equalPath(cursorGrandparent, path)
-  })
 
   // Note: If the thought is the active expand hover top path then it should be treated as a cursor parent. It is because the current implementation allows tree to unfold visually starting from cursor parent.
   const isCursorParent = useSelector(state => {
@@ -203,7 +194,6 @@ const ThoughtContainer = ({
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
-  const isTable = useSelector(state => view === 'Table' && !isContextViewActive(state, path))
 
   const dragHoldResult = useDragHold({
     isDragging,
@@ -375,21 +365,9 @@ const ThoughtContainer = ({
       className={classNames({
         child: true,
         'child-divider': isDivider(value),
-        'cursor-parent': isCursorParent,
-        'cursor-grandparent': isCursorGrandparent,
         // used so that the autofocus can properly highlight the immediate parent of the cursor
         editing: isEditing,
-        expanded: isExpanded,
-        'has-only-child': children.length === 1,
         'invalid-option': invalidOption,
-        'is-multi-column': isMultiColumnTable,
-        leaf: leaf || (isEditing && globals.suppressExpansion),
-        pressed: dragHoldResult.isPressed,
-        // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
-        prose: view === 'Prose',
-        'show-contexts': showContexts,
-        'show-contexts-no-breadcrumbs': simplePath.length === 2,
-        'table-view': isTable,
       })}
     >
       {showContexts && simplePath.length > 1 ? (
@@ -465,6 +443,7 @@ const ThoughtContainer = ({
           updateSize={updateSize}
           view={view}
           marginRight={marginRight}
+          isPressed={dragHoldResult.isPressed}
         />
         <Note path={simplePath} />
       </div>

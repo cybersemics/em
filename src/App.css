@@ -567,11 +567,6 @@
   color: rgba(7, 7, 7, 0.5);
 }
 
-/* Disable long press to select on iOS. See useLongPress for details. */
-.pressed .editable {
-  user-select: none;
-}
-
 /* Android Section */
 
 /*### Phone Portrait ### */
@@ -897,24 +892,8 @@
   transition: all 0.1s ease-in-out;
 }
 
-.divider-container {
-  margin-top: 5px;
-}
-
-.editing > .thought-container > .thought > .divider-container > .divider {
-  border-color: rgb(204, 204, 204);
-}
-
 .child-divider {
   margin-left: -125px;
-}
-
-.divider {
-  border: solid 1px gray;
-}
-
-.dark .divider {
-  border-color: #333;
 }
 
 .cp-clipboard-wrapper {
