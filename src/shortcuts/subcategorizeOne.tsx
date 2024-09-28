@@ -25,6 +25,7 @@ const multicursor: Shortcut['multicursor'] = {
   enabled: true,
   execMulticursor: (_cursors, dispatch) => dispatch(subcategorizeMulticursor()),
   preventSetCursor: true,
+  clearMulticursor: true,
 }
 
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order

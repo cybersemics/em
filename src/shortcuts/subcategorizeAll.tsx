@@ -31,6 +31,7 @@ const subCategorizeAllShortcut: Shortcut = {
     enabled: true,
     execMulticursor: (_cursors, dispatch) => dispatch(subcategorizeMulticursor()),
     preventSetCursor: true,
+    clearMulticursor: true,
   },
   svg: Icon,
   canExecute: getState => {
