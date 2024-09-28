@@ -660,11 +660,6 @@
   margin-right: -1.2em;
 }*/
 
-/* new thought */
-.children-new {
-  transition: all 0.75s ease-out;
-}
-
 /* for some reason opacity bleeds through modal*/
 .dim {
   color: rgba(7, 7, 7, 0.5);
