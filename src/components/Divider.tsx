@@ -25,7 +25,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
       const parentUl = dividerSetWidth.current.closest('ul')
       const children = parentUl ? (Array.from(parentUl.childNodes) as HTMLElement[]) : []
       const widths = children.map((child: HTMLElement) => {
-        if (child.classList.contains('child-divider')) return DIVIDER_PLUS_PX
+        if (child.querySelector('[data-divider=true]')) return DIVIDER_PLUS_PX
         const subs = child.getElementsByClassName('subthought') as HTMLCollectionOf<HTMLElement>
         return subs.length ? subs[0].offsetWidth + DIVIDER_PLUS_PX : DIVIDER_PLUS_PX
       })

@@ -346,6 +346,8 @@ const ThoughtContainer = ({
       {...dragHoldResult.props}
       ref={node => dragSource(dropTarget(node))}
       aria-label='child'
+      data-divider={isDivider(value)}
+      data-editing={isEditing}
       style={{
         // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
         position: 'relative',
@@ -366,7 +368,6 @@ const ThoughtContainer = ({
         child: true,
         'child-divider': isDivider(value),
         // used so that the autofocus can properly highlight the immediate parent of the cursor
-        editing: isEditing,
         'invalid-option': invalidOption,
       })}
     >
