@@ -88,14 +88,14 @@ const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildPr
       >
         {testFlags.simulateDrop && (
           <span
-            style={{
+            className={css({
               paddingLeft: 5,
               position: 'absolute',
               // make sure label does not interfere with drop target hovering
               pointerEvents: 'none',
               left: 0,
               color: '#ff7bc3' /* mid pink */,
-            }}
+            })}
           >
             {strip(value)}
             {isHovering ? '*' : ''}

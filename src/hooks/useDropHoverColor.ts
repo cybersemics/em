@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux'
-import themeColors from '../selectors/themeColors'
+import { token } from '../../styled-system/tokens'
 
 /** Returns the color of the drop-hover element.
  * Drop hover color alternates as depth increases.
@@ -7,8 +7,7 @@ import themeColors from '../selectors/themeColors'
  * */
 const useDropHoverColor = (depth: number) =>
   useSelector(state => {
-    const colors = themeColors(state)
-    return ((state.draggingThought || []).length - depth) % 2 ? colors.highlight2 : colors.highlight
+    return ((state.draggingThought || []).length - depth) % 2 ? token('colors.highlight2') : token('colors.highlight')
   })
 
 export default useDropHoverColor
