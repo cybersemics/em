@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
-import { pullActionCreator as pull } from '../actions/pull'
+import pull from '../actions/pull'
 import SettingsIcon from '../components/icons/SettingsIcon'
 import { AlertType } from '../constants'
 import copy from '../device/copy'

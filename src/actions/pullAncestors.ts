@@ -2,7 +2,7 @@ import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../constants'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
-import { pullActionCreator as pull } from './pull'
+import pull from './pull'
 
 /** A set of all four root contexts. */
 const rootContextSet = new Set<ThoughtId>([ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID])

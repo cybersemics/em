@@ -51,7 +51,7 @@ const getPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId
  * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
-export const pullActionCreator =
+const pullActionCreator =
   (
     thoughtIds: ThoughtId[],
     {
@@ -140,3 +140,5 @@ export const pullActionCreator =
 
     return pendingThoughts
   }
+
+export default pullActionCreator
