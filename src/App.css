@@ -320,10 +320,6 @@
   padding-bottom: calc(max(10px, var(--safe-area-bottom)));
 }
 
-.dark .offline {
-  color: #666;
-}
-
 /* react-transition-group animation: fade */
 .fade-enter {
   opacity: 0;
@@ -572,24 +568,11 @@
 /*### Phone Portrait ### */
 
 @media (max-width: 500px) {
-  .android .child {
-    position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
-    margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
-  margin-top: 0.501em; /* Match editable padding */
-    padding: 0.2em 0 0.2em 100px;
-  }
-
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
     margin-bottom: 2px;
     padding-bottom: 4px;
-  }
-  .android .child {
-    position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
-    margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
-  margin-top: 0.501em; /* Match editable padding */
-    padding: 1px 0 0.2px 100px;
   }
 }
 
@@ -601,12 +584,6 @@
     margin-top: -8px;
     margin-bottom: 2px;
     padding-bottom: 4px;
-  }
-  .android .child {
-    position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
-    margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
-  margin-top: 0.501em; /* Match editable padding */
-    padding: 1px 0 0.2px 100px;
   }
 }
 
@@ -892,10 +869,6 @@
   transition: all 0.1s ease-in-out;
 }
 
-.child-divider {
-  margin-left: -125px;
-}
-
 .cp-clipboard-wrapper {
   margin-bottom: 15px;
   text-align: center;
@@ -942,10 +915,6 @@
 
 .dark .drop-down-wrapper {
   background-color: black;
-}
-
-.invalid-option {
-  color: tomato !important;
 }
 
 /* Publish */

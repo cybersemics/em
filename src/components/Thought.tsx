@@ -1,7 +1,8 @@
 import classNames from 'classnames'
 import React, { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
+import { child, invalidOption as invalidOptionRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -364,12 +365,13 @@ const ThoughtContainer = ({
             }
           : null),
       }}
-      className={classNames({
-        child: true,
-        'child-divider': isDivider(value),
-        // used so that the autofocus can properly highlight the immediate parent of the cursor
-        'invalid-option': invalidOption,
-      })}
+      className={cx(
+        child(),
+        invalidOption && invalidOptionRecipe(),
+        css({
+          marginLeft: isDivider(value) ? '-125px' : undefined,
+        }),
+      )}
     >
       {showContexts && simplePath.length > 1 ? (
         <ContextBreadcrumbs

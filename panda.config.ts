@@ -3,11 +3,13 @@ import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
+import childRecipe from './src/recipes/child'
 import dropEndRecipe from './src/recipes/dropEnd'
 import dropHoverRecipe from './src/recipes/dropHover'
 import editableRecipe from './src/recipes/editable'
 import extendTapRecipe from './src/recipes/extendTap'
 import iconRecipe from './src/recipes/icon'
+import invalidOptionRecipe from './src/recipes/invalidOption'
 import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalTextRecipe from './src/recipes/modalText'
@@ -277,6 +279,7 @@ export default defineConfig({
       },
       recipes: {
         icon: iconRecipe,
+        child: childRecipe,
         anchorButton: anchorButtonRecipe,
         button: buttonRecipe,
         bullet: bulletRecipe,
@@ -289,6 +292,7 @@ export default defineConfig({
         upperRight: upperRightRecipe,
         dropHover: dropHoverRecipe,
         dropEnd: dropEndRecipe,
+        invalidOption: invalidOptionRecipe,
       },
       slotRecipes: {
         modal: modalRecipe,
