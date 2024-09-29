@@ -135,8 +135,6 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
     return a.length - b.length
   })
 
-  console.log('paths', paths)
-
   const filteredPaths = filterCursors(state, paths, multicursorConfig.filter)
 
   const canExecute = paths.every(
