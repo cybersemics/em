@@ -1,4 +1,3 @@
-import classNames from 'classnames'
 import React, { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
@@ -386,7 +385,7 @@ const ThoughtContainer = ({
           homeContext={homeContext}
         />
       ) : showContexts && simplePath.length > 2 ? (
-        <span className='ellipsis'>
+        <span className={css({ fontSize: '75%' })}>
           <a
             tabIndex={-1}
             {...fastClick(() => {
@@ -399,9 +398,11 @@ const ThoughtContainer = ({
       ) : null}
 
       <div
-        className={classNames({
-          'thought-container': true,
-          'single-line': !isEditing && isURL(value),
+        aria-label='thought-container'
+        className={css({
+          /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
+          /* must match value used in Editable useMultiline */
+          lineHeight: '1.72',
         })}
         data-testid={'thought-' + hashPath(path)}
         style={{

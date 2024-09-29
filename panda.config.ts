@@ -14,6 +14,7 @@ import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
+import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
 import tutorialBulletRecipe from './src/recipes/tutorialBullet'
 import upperRightRecipe from './src/recipes/upperRight'
@@ -287,6 +288,7 @@ export default defineConfig({
         extendTap: extendTapRecipe,
         thought: thoughtRecipe,
         editable: editableRecipe,
+        textNote: textNoteRecipe,
         multiline: multilineRecipe,
         tutorialBullet: tutorialBulletRecipe,
         upperRight: upperRightRecipe,

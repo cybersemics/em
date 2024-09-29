@@ -208,21 +208,11 @@
   border-bottom: solid 1px;
 }
 
-/* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
-.thought-container {
-  /* must match value used in Editable useMultiline */
-  line-height: 1.72;
-}
-
 .children-subheading {
   position: relative;
   margin-top: 3px;
   margin-bottom: 2px;
   padding-bottom: 4px;
-}
-
-.ellipsis {
-  font-size: 75%;
 }
 
 .down-chevron {
