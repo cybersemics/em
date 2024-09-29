@@ -1,12 +1,13 @@
+import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 
 /** Device icon. */
-const DeviceIcon = ({ fill, size = 20, style }: IconType) => {
+const DeviceIcon = ({ fill, size = 20, style, className, cssRaw }: IconType) => {
   return (
     <svg
-      className={icon()}
+      className={cx(icon(), css(cssRaw), className)}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

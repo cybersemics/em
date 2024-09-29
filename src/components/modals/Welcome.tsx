@@ -22,7 +22,9 @@ const onRef = (el: HTMLDivElement) => {
 
   if (!contentEl) return
 
-  const logoEls = el.querySelectorAll('.logo') as NodeListOf<SVGGraphicsElement & HTMLElement & { width: number }>
+  const logoEls = el.querySelectorAll('[aria-label="logo"]') as NodeListOf<
+    SVGGraphicsElement & HTMLElement & { width: number }
+  >
   let fontSize = 100
   let width = logoEls[0] && logoEls[0].width
 
