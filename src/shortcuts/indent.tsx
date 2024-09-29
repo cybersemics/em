@@ -36,7 +36,6 @@ const indentShortcut: Shortcut = {
   },
   multicursor: {
     enabled: true,
-    preventSetCursor: true,
   },
   gesture: 'rlr',
   svg: Icon,

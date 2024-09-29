@@ -30,7 +30,6 @@ const moveCursorForward: Shortcut = {
   keyboard: { key: Key.Tab },
   multicursor: {
     enabled: true,
-    preventSetCursor: true,
   },
   // TODO: Create unique icon
   svg: SettingsIcon,

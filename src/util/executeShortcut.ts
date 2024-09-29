@@ -10,6 +10,7 @@ import { addMulticursorActionCreator as addMulticursor } from '../actions/addMul
 import { alertActionCreator as alert } from '../actions/alert'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { AlertType, HOME_PATH, noop } from '../constants'
+import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -154,7 +155,7 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
     // Execute the shortcut for each multicursor path and restore the cursor to its original position.
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
-      const recomputedPath = recomputePath(state, head(path))
+      const recomputedPath = recomputePath(store.getState(), head(path))
       if (!recomputedPath) continue
 
       store.dispatch(setCursor({ path: recomputedPath }))
@@ -162,7 +163,10 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
     }
 
     // Restore the cursor to its original position if not prevented.
-    if (!multicursorConfig.preventSetCursor) store.dispatch(setCursor({ path: cursorBeforeMulticursor }))
+    if (!multicursorConfig.preventSetCursor && cursorBeforeMulticursor) {
+      store.dispatch(setCursor({ path: recomputePath(store.getState(), head(cursorBeforeMulticursor)) }))
+      selection.clear()
+    }
   }
 
   if (!multicursorConfig.clearMulticursor) {

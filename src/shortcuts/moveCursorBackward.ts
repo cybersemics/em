@@ -18,7 +18,6 @@ const moveCursorBackward: Shortcut = {
   keyboard: { key: Key.Tab, shift: true },
   multicursor: {
     enabled: true,
-    preventSetCursor: true,
     reverse: true,
   },
   // TODO: Create unique icon
