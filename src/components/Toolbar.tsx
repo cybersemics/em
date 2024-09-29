@@ -8,10 +8,10 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
-import classNames from 'classnames'
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { css, cva } from '../../styled-system/css'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import TipId from '../@types/TipId'
@@ -31,6 +31,49 @@ interface ToolbarProps {
   selected?: ShortcutId
 }
 
+const arrow = cva({
+  base: {
+    position: 'absolute',
+    fontSize: '80%',
+    paddingTop: '16px',
+    verticalAlign: 'middle',
+    color: 'gray',
+    backgroundColor: 'bg',
+    display: 'inline-block',
+    lineHeight: '20px',
+    zIndex: 'toolbarArrow',
+  },
+  variants: {
+    isHidden: {
+      true: {
+        display: 'none !important',
+      },
+    },
+    direction: {
+      left: {
+        marginLeft: '-5px',
+        paddingLeft: '5px',
+        paddingRight: '4px',
+      },
+      right: {
+        right: '-11px',
+        paddingLeft: '4px',
+        paddingRight: '13px',
+      },
+    },
+    fixed: { true: {} },
+  },
+  compoundVariants: [
+    {
+      direction: 'right',
+      fixed: true,
+      css: {
+        right: '0',
+      },
+    },
+  ],
+})
+
 /** Toolbar component. */
 const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const dispatch = useDispatch()
@@ -39,8 +82,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const lastScrollLeft = useRef<number>(0)
   const toolbarContainerRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
-  const [leftArrowElementClassName, setLeftArrowElementClassName] = useState<string | undefined>('hidden')
-  const [rightArrowElementClassName, setRightArrowElementClassName] = useState<string | undefined>('shown')
+  const [leftArrowIsShown, setLeftArrowIsShown] = useState(false)
+  const [rightArrowIsShown, setRightArrowIsShown] = useState(true)
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
   const [latestPress, setLatestPress] = useState(0)
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
@@ -77,8 +120,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const updateArrows = useCallback(() => {
     const el = toolbarRef.current
     if (el) {
-      setLeftArrowElementClassName(el.scrollLeft > 20 ? 'shown' : 'hidden')
-      setRightArrowElementClassName(el.offsetWidth + el.scrollLeft < el.scrollWidth - 20 ? 'shown' : 'hidden')
+      setLeftArrowIsShown(el.scrollLeft > 20)
+      setRightArrowIsShown(el.offsetWidth + el.scrollLeft < el.scrollWidth - 20)
     }
   }, [])
 
@@ -153,9 +196,21 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       <div
         ref={toolbarContainerRef}
         aria-label='toolbar'
-        className={classNames({
-          'toolbar-container': true,
-          'toolbar-fixed': !customize,
+        className={css({
+          position: 'relative',
+          textAlign: 'right',
+          maxWidth: '100%',
+          userSelect: 'none',
+          WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          ...(!customize && {
+            position: 'fixed',
+            top: '0',
+            right: '0',
+            zIndex: 'toolbarContainer',
+            marginTop: '-500px',
+            paddingTop: '500px',
+          }),
         })}
         style={{
           // make toolbar flush with left padding
@@ -165,26 +220,53 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
         }}
       >
         <div
-          className='toolbar-mask'
+          className={css({
+            position: 'absolute',
+            /* sometimes the body peeks through with top:0 */
+            top: '-1px',
+            left: '0',
+            /* Hide the popup-close-x in the customize modal by extending the toolbar-mask to the right. Otherwise it would be too cluttered. Use just enough to cover popup-close-x without  */
+            right: '-1.75em',
+            backgroundColor: 'bg',
+            pointerEvents: 'none',
+            boxShadow: '-10px 10px 20px 0 {colors.bg}',
+            ...(!customize && {
+              boxShadow: '10px -20px 15px 25px {colors.bg}',
+              paddingTop: '500px',
+            }),
+          })}
           style={{
             // must scale height with fontSize, since height does not scale linearly with em or px
             height: fontSize + 30,
           }}
         />
         <div>
-          <span id='left-arrow' className={leftArrowElementClassName}>
+          <span
+            id='left-arrow'
+            className={arrow({ direction: 'left', isHidden: !leftArrowIsShown, fixed: !customize })}
+          >
             <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />
           </span>
           <div
             id='toolbar'
             ref={toolbarRef}
-            className='toolbar'
-            data-scroll-at-edge={customize}
-            onScroll={onScroll}
-            style={{
+            className={css({
+              maxWidth: '100%',
+              position: 'relative',
+              touchAction: 'inherit',
+              display: 'inline-flex',
+              overflowX: 'scroll',
+              zIndex: 'toolbar',
+              alignItems: 'flex-start',
+              '&::-webkit-scrollbar': {
+                display: 'none',
+              },
+              ...(!customize && { maxWidth: 'calc(100% - 4em)', '& > *:last-child': { marginRight: '1em' } }),
               marginLeft: customize ? -3 : 0,
               paddingLeft: customize ? 3 : 0,
-            }}
+            })}
+            data-scroll-at-edge={customize}
+            onScroll={onScroll}
           >
             {shortcutIds.map(id => {
               return (
@@ -204,7 +286,10 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             })}
           </div>
 
-          <span id='right-arrow' className={rightArrowElementClassName}>
+          <span
+            id='right-arrow'
+            className={arrow({ direction: 'right', isHidden: !rightArrowIsShown, fixed: !customize })}
+          >
             <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
           </span>
         </div>
