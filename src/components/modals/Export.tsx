@@ -10,7 +10,7 @@ import React, {
   useRef,
   useState,
 } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector, useStore } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
 import { css, cx } from '../../../styled-system/css'
 import { extendTap } from '../../../styled-system/recipes'
@@ -30,10 +30,13 @@ import * as selection from '../../device/selection'
 import globals from '../../globals'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
 import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
+import getThoughtById from '../../selectors/getThoughtById'
+import hasMulticursor from '../../selectors/hasMulticursor'
 import simplifyPath from '../../selectors/simplifyPath'
 import theme from '../../selectors/theme'
 import themeColors from '../../selectors/themeColors'
 import ellipsize from '../../util/ellipsize'
+import equalPath from '../../util/equalPath'
 import exportPhrase from '../../util/exportPhrase'
 import fastClick from '../../util/fastClick'
 import head from '../../util/head'
@@ -67,7 +70,7 @@ interface AdvancedSetting {
 }
 
 interface ExportThoughtsPhraseOptions {
-  id: ThoughtId
+  ids: ThoughtId | ThoughtId[]
   excludeArchived: boolean
   excludeMeta: boolean
   /** The final number of descendants. */
@@ -119,7 +122,7 @@ const useExportedState = () => useContext(ExportedStateContext)
 /**
  * Context to handle pull status and number of descendants.
  */
-const PullProvider: FC<PropsWithChildren<{ simplePath: SimplePath }>> = ({ children, simplePath }) => {
+const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ children, simplePaths }) => {
   const isMounted = useRef(false)
   const [isPulling, setIsPulling] = useState<boolean>(true)
   const [exportedState, setExportedState] = useState<State | null>(null)
@@ -140,18 +143,20 @@ const PullProvider: FC<PropsWithChildren<{ simplePath: SimplePath }>> = ({ child
     () => {
       isMounted.current = true
 
-      const id = head(simplePath)
+      const replications = simplePaths.map(simplePath => {
+        const id = head(simplePath)
 
-      const { promise, cancel } = replicateTree(id, {
-        // TODO: Warn the user if offline or not fully replicated
-        remote: false,
-        onThought: (thought, thoughtIndex) => {
-          if (!isMounted.current) return
-          setExportingThoughtsThrottled(thought)
-        },
+        return replicateTree(id, {
+          // TODO: Warn the user if offline or not fully replicated
+          remote: false,
+          onThought: (thought, thoughtIndex) => {
+            if (!isMounted.current) return
+            setExportingThoughtsThrottled(thought)
+          },
+        })
       })
 
-      promise.then(thoughtIndex => {
+      Promise.all(replications.map(replication => replication.promise)).then(thoughtIndices => {
         if (!isMounted.current) return
 
         setExportingThoughtsThrottled.flush()
@@ -161,10 +166,7 @@ const PullProvider: FC<PropsWithChildren<{ simplePath: SimplePath }>> = ({ child
           ...initial,
           thoughts: {
             ...initial.thoughts,
-            thoughtIndex: {
-              ...initial.thoughts.thoughtIndex,
-              ...thoughtIndex,
-            },
+            thoughtIndex: Object.assign({}, initial.thoughts.thoughtIndex, ...thoughtIndices),
           },
         }
 
@@ -174,7 +176,7 @@ const PullProvider: FC<PropsWithChildren<{ simplePath: SimplePath }>> = ({ child
 
       return () => {
         isMounted.current = false
-        cancel()
+        replications.forEach(replication => replication.cancel())
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,7 +198,7 @@ const PullProvider: FC<PropsWithChildren<{ simplePath: SimplePath }>> = ({ child
 
 /** A user-friendly phrase describing how many thoughts will be exported. Updated with an estimate as thoughts are pulled. */
 const ExportThoughtsPhrase = ({
-  id,
+  ids,
   excludeArchived,
   excludeMeta,
   numDescendantsFinal,
@@ -215,8 +217,8 @@ const ExportThoughtsPhrase = ({
   const n = numDescendantsFinal ?? numDescendants
 
   const phrase =
-    numDescendantsFinal || numDescendants
-      ? exportPhrase(id, n, { value: title })
+    numDescendantsFinal || numDescendants || ids.length > 1
+      ? exportPhrase(ids, n, { value: title })
       : n === 0 || n === 1
         ? '1 thought'
         : 'thoughts'
@@ -269,11 +271,12 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 }
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
-const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
+const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
+  const store = useStore()
   const dispatch = useDispatch()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const id = head(simplePath)
-  const title = useSelector(state => (isRoot(simplePath) ? 'home' : headValue(state, simplePath)))
+  const id = head(simplePaths[0])
+  const title = useSelector(state => (isRoot(simplePaths[0]) ? 'home' : headValue(state, simplePaths[0])))
   const titleShort = ellipsize(title)
   // const titleMedium = ellipsize(title, 25)
 
@@ -296,25 +299,51 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   // does not update in real-time (See: ExportThoughtsPhrase component)
   const numDescendantsFinal = exportContent
     ? selected.type === 'text/plain'
-      ? exportContent.split('\n').length - 1
+      ? exportContent.split('\n').length - simplePaths.length
       : (numDescendantsInState ?? 0)
     : null
 
-  const exportThoughtsPhraseFinal = useSelector(state => exportPhrase(id, numDescendantsFinal, { value: title }))
+  const exportThoughtsPhraseFinal = useSelector(state =>
+    exportPhrase(
+      simplePaths.map(simplePath => head(simplePath)),
+      numDescendantsFinal,
+      { value: title },
+    ),
+  )
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
     if (!exportedState) return
-    const exported =
-      selected.type === 'application/json'
-        ? JSON.stringify(exportedState.thoughts, null, 2)
-        : exportContext(exportedState, id, selected.type, {
+
+    if (selected.type === 'application/json') {
+      setExportContent(JSON.stringify(exportedState.thoughts, null, 2))
+    } else {
+      // Sort in document order. At this point, all thoughts are pulled and in state.
+      const sortedPaths = [...simplePaths].sort((a, b) => {
+        for (let i = 0; i < Math.min(a.length, b.length); i++) {
+          const aRank = getThoughtById(store.getState(), a[i]).rank
+          const bRank = getThoughtById(store.getState(), b[i]).rank
+          if (aRank !== bRank) return aRank - bRank
+        }
+        return a.length - b.length
+      })
+
+      const exported = sortedPaths
+        .map(simplePath =>
+          exportContext(exportedState, head(simplePath), selected.type, {
             excludeArchived: !shouldIncludeArchived,
             excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
             excludeMeta: !shouldIncludeMetaAttributes,
-          })
+          }),
+        )
+        .join('\n')
+        // Collapse contiguous <ul> tags.
+        .replace(/<\/ul>\s*<ul>/g, '')
+        // Clear empty lines
+        .replace(/\n+/g, '\n')
 
-    setExportContent(removeHome(exported).trimStart())
+      setExportContent(removeHome(exported).trimStart())
+    }
   }
 
   /** Show an alert and close the modal after the thoughts are copied to the clipboard. */
@@ -547,7 +576,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
                 'state'
               ) : (
                 <ExportThoughtsPhrase
-                  id={id}
+                  ids={simplePaths.map(simplePath => head(simplePath))}
                   excludeArchived={!shouldIncludeArchived}
                   excludeMeta={!shouldIncludeMetaAttributes}
                   numDescendantsFinal={numDescendantsFinal}
@@ -786,11 +815,28 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
  * Export component wrapped with pull provider.
  */
 const ModalExportWrapper = () => {
-  const simplePath = useSelector(state => (state.cursor ? simplifyPath(state, state.cursor) : HOME_PATH))
+  const simplePaths = useSelector(
+    state =>
+      hasMulticursor(state)
+        ? Object.values(state.multicursors).map(cursor => simplifyPath(state, cursor))
+        : [state.cursor ? simplifyPath(state, state.cursor) : HOME_PATH],
+    (a, b) => a.length === b.length && a.every((p, i) => equalPath(p, b[i])),
+  )
+
+  // Remove descendants of other paths, sort in document order
+  const filteredPaths = useMemo(() => {
+    const paths = simplePaths.reduce<SimplePath[]>((acc, cur) => {
+      const hasAncestor = acc.some(p => cur.includes(head(p)))
+      if (hasAncestor) return acc
+      return [...acc.filter(p => !p.includes(head(cur))), cur]
+    }, [])
+
+    return paths
+  }, [simplePaths])
 
   return (
-    <PullProvider simplePath={simplePath}>
-      <ModalExport simplePath={simplePath} />
+    <PullProvider simplePaths={filteredPaths}>
+      <ModalExport simplePaths={filteredPaths} />
     </PullProvider>
   )
 }
