@@ -22,6 +22,7 @@ import getDescendantsOfContext from '../../test-helpers/queries/getDescendantsOf
 import getThoughtByContext from '../../test-helpers/queries/getThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeShortcut, { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import hashPath from '../../util/hashPath'
 import toggleSortShortcut from '../toggleSort'
 
 describe('store', () => {
@@ -942,5 +943,45 @@ describe('multicursor', () => {
     - =sort
       - Alphabetical
         - Desc`)
+  })
+
+  it('should maintain multicursor after sorting', () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    executeShortcutWithMulticursor(toggleSortShortcut, { store })
+
+    const state = store.getState()
+    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+    const a = contextToPath(state, ['a'])!
+    const b = contextToPath(state, ['b'])!
+    const c = contextToPath(state, ['c'])!
+
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Asc
+  - a
+  - b
+  - c`)
+
+    expect(state.multicursors).toEqual({
+      [hashPath(a)]: a,
+      [hashPath(b)]: b,
+      [hashPath(c)]: c,
+    })
   })
 })

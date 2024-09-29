@@ -168,7 +168,7 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
   if (!multicursorConfig.clearMulticursor) {
     // Restore multicursors
     store.dispatch(
-      filteredPaths.map(path => (dispatch, getState) => {
+      paths.map(path => (dispatch, getState) => {
         const recomputedPath = recomputePath(getState(), head(path))
         if (!recomputedPath) return
         dispatch(addMulticursor({ path: recomputedPath }))
