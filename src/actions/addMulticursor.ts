@@ -8,7 +8,7 @@ import reducerFlow from '../util/reducerFlow'
 import setCursor from './setCursor'
 
 /** Adds a cursor to the multicursor set. */
-const addMulticursor = (state: State, { path }: { path: Path }): State => {
+const addMulticursor = (state: State, { path, ignoreCursor }: { path: Path; ignoreCursor?: boolean }): State => {
   const isEmpty = !Object.keys(state.multicursors).length
 
   return reducerFlow([
@@ -21,7 +21,7 @@ const addMulticursor = (state: State, { path }: { path: Path }): State => {
         ...state.multicursors,
         [hashPath(path)]: path,
         // on desktop, add the cursor to the multicursor set if it's empty
-        ...(isEmpty && state.cursor && !isTouch ? { [hashPath(state.cursor)]: state.cursor } : {}),
+        ...(isEmpty && !ignoreCursor && state.cursor && !isTouch ? { [hashPath(state.cursor)]: state.cursor } : {}),
       },
     }),
     // on desktop, set the cursor to the new multicursor if none exists

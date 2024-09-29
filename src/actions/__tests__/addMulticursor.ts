@@ -125,4 +125,23 @@ describe('addMulticursor', () => {
     })
     expect(stateNew.cursorBeforeMulticursor).toBeNull()
   })
+
+  it('add multicursor and ignore cursor', () => {
+    const steps = [
+      newThought('a'),
+      newThought('b'),
+      setCursor(['a']),
+      (state: State) => addMulticursor(state, { path: contextToPath(state, ['b'])!, ignoreCursor: true }),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const a = contextToPath(stateNew, ['a'])!
+    const b = contextToPath(stateNew, ['b'])!
+
+    expect(stateNew.multicursors).toEqual({
+      [hashPath(b)]: b,
+    })
+    expect(stateNew.cursorBeforeMulticursor).toEqual(a)
+  })
 })

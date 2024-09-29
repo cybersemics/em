@@ -135,6 +135,8 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
     return a.length - b.length
   })
 
+  console.log('paths', paths)
+
   const filteredPaths = filterCursors(state, paths, multicursorConfig.filter)
 
   const canExecute = paths.every(
@@ -175,7 +177,7 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
       paths.map(path => (dispatch, getState) => {
         const recomputedPath = recomputePath(getState(), head(path))
         if (!recomputedPath) return
-        dispatch(addMulticursor({ path: recomputedPath }))
+        dispatch(addMulticursor({ path: recomputedPath, ignoreCursor: true }))
       }),
     )
   }
