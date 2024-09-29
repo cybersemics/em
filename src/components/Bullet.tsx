@@ -501,7 +501,7 @@ const Bullet = ({
             ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
             : [deleteAttribute({ path: simplePath, value: '=pin' })]),
           // move cursor
-          setCursor({ path: shouldCollapse ? pathParent : path }),
+          setCursor({ path: shouldCollapse ? pathParent : path, preserveMulticursor: true }),
         ])
       })
     },
