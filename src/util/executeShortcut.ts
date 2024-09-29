@@ -163,12 +163,14 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
       store.dispatch(setCursor({ path: recomputedPath }))
       executeShortcut(shortcut, { store, type, event })
     }
+  }
 
-    // Restore the cursor to its original position if not prevented.
-    if (!multicursorConfig.preventSetCursor && cursorBeforeMulticursor) {
-      store.dispatch(setCursor({ path: recomputePath(store.getState(), head(cursorBeforeMulticursor)) }))
+  // Restore the cursor to its original position if not prevented.
+  if (!multicursorConfig.preventSetCursor && cursorBeforeMulticursor) {
+    store.dispatch(setCursor({ path: recomputePath(store.getState(), head(cursorBeforeMulticursor)) }))
+    requestAnimationFrame(() => {
       selection.clear()
-    }
+    })
   }
 
   if (!multicursorConfig.clearMulticursor) {
