@@ -942,40 +942,6 @@
   width: 100%;
 }
 
-.latest-shortcuts-transition-enter {
-  opacity: 0;
-}
-
-.latest-shortcuts-transition-enter-active {
-  opacity: 1;
-  transition: opacity 400ms;
-}
-
-.latest-shortcuts-transition-exit {
-  opacity: 1;
-}
-.latest-shortcuts-transition-exit-active {
-  opacity: 0;
-  transition: opacity 400ms;
-}
-
-.latest-shortcuts {
-  position: absolute;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  z-index: var(--z-index-latest-shortcuts);
-  pointer-events: none;
-}
-
-.latest-shortcuts.middle {
-  top: 30%;
-}
-
-.latest-shortcuts.bottom {
-  bottom: 20%;
-}
-
 .latest-shortcuts .shortcut-tab {
   background: rgb(94, 94, 94);
   border-radius: 7px;
