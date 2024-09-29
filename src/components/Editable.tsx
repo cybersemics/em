@@ -214,7 +214,6 @@ const Editable = ({
       dispatch(
         setCursor({
           cursorHistoryClear: true,
-          preserveMulticursor: true,
           editing,
           offset,
           path,
