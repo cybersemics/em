@@ -607,11 +607,6 @@
   margin-bottom: 50px;
 }
 
-.popup .logo {
-  width: 44px;
-  vertical-align: text-bottom;
-}
-
 /* higher precendence than ".dark .modal .a" */
 
 .animate {
