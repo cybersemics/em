@@ -323,9 +323,9 @@ const linearizeTree = (
         ? {
             visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)),
             childrenValues: getChildren(state, child.id).map(child => ({
-              col1Key: child.id,
+              col1Key: crossContextualKey(contextChain, child.id),
               col1Value: child.value,
-              col2Key: getChildren(state, child.id)?.[0]?.id,
+              col2Key: crossContextualKey(contextChain, getChildren(state, child.id)?.[0]?.id),
               col2Value: getChildren(state, child.id)?.[0]?.value,
             })),
           }
@@ -563,7 +563,7 @@ const LayoutTree = () => {
           const maximumCol1Width = fontSize * 20
 
           // Only override the tableCol1Width if we found values in the 2nd column.
-          if (!isNaN(col2Avg) && col2Avg > 0) {
+          if (!isNaN(col2Avg) && col2Avg > 0 && tableCol2Width > 0) {
             tableCol1Width = Math.max(
               minimumCol1Width,
               Math.min(maximumCol1Width, (col1Avg / (col1Avg + col2Avg)) * (tableCol1Width + tableCol2Width)),
