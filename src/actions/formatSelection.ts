@@ -33,7 +33,7 @@ export const formatSelectionActionCreator =
     }
     const styledElements = thoughtContentEditable.querySelectorAll('[style]')
     styledElements.forEach(el => {
-      if (rgbToHex(window.getComputedStyle(el).backgroundColor).toLocaleLowerCase() === colors?.bg.toLocaleLowerCase())
+      if (rgbToHex(window.getComputedStyle(el).backgroundColor).toLowerCase() === colors?.bg.toLowerCase())
         el.removeAttribute('style')
     })
     suppressFocusStore.update(false)

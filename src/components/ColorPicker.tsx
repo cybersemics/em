@@ -49,7 +49,7 @@ const ColorSwatch: FC<{
   const fontSize = useSelector(state => state.fontSize)
   const currentThought = useSelector(state => !!state.cursor && getThoughtById(state, head(state.cursor))) as Thought
   size = size || fontSize * 1.2
-  console.log(cursorStyle)
+
   /** A function that adds an alpha channel to a hex color. */
   const addAlphaToHex = (hex: string) => {
     if (hex.length === 7) return hex + 'ff'
@@ -79,8 +79,8 @@ const ColorSwatch: FC<{
       matchBgColor = bgColors.size > 1 ? null : bgColors.values().next().value
 
       return !!(
-        (textHexColor && textHexColor === addAlphaToHex(rgbToHex(matchColor))) ||
-        (backHexColor && backHexColor === addAlphaToHex(rgbToHex(matchBgColor)))
+        (textHexColor && textHexColor === (matchColor && addAlphaToHex(rgbToHex(matchColor)))) ||
+        (backHexColor && backHexColor === (matchBgColor && addAlphaToHex(rgbToHex(matchBgColor))))
       )
     }
     return !!(
