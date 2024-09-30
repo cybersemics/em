@@ -28,6 +28,7 @@ import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
+import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
 import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
 import getThoughtById from '../../selectors/getThoughtById'
@@ -319,14 +320,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       setExportContent(JSON.stringify(exportedState.thoughts, null, 2))
     } else {
       // Sort in document order. At this point, all thoughts are pulled and in state.
-      const sortedPaths = [...simplePaths].sort((a, b) => {
-        for (let i = 0; i < Math.min(a.length, b.length); i++) {
-          const aRank = getThoughtById(store.getState(), a[i]).rank
-          const bRank = getThoughtById(store.getState(), b[i]).rank
-          if (aRank !== bRank) return aRank - bRank
-        }
-        return a.length - b.length
-      })
+      const sortedPaths = documentSort(exportedState, simplePaths)
 
       const exported = sortedPaths
         .map(simplePath =>

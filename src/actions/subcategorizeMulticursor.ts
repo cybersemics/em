@@ -6,6 +6,7 @@ import createThought from '../actions/createThought'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import { AlertType } from '../constants'
+import documentSort from '../selectors/documentSort'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -24,17 +25,7 @@ const subcategorizeMulticursor = (state: State) => {
   // If there are no active multicursors, do nothing
   if (Object.keys(multicursors).length === 0) return state
 
-  const multicursorPaths = Object.values(multicursors)
-
-  // Sort the paths deterministically in document order
-  multicursorPaths.sort((a, b) => {
-    for (let i = 0; i < Math.min(a.length, b.length); i++) {
-      const aRank = getThoughtById(state, a[i]).rank
-      const bRank = getThoughtById(state, b[i]).rank
-      if (aRank !== bRank) return aRank - bRank
-    }
-    return a.length - b.length
-  })
+  const multicursorPaths = documentSort(state, Object.values(multicursors))
 
   const firstPath = multicursorPaths[0]
   const commonParent = parentOf(firstPath)

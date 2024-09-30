@@ -11,6 +11,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { AlertType, HOME_PATH, noop } from '../constants'
 import * as selection from '../device/selection'
+import documentSort from '../selectors/documentSort'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -137,16 +138,7 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
 
   const cursorBeforeMulticursor = state.cursorBeforeMulticursor
   // For each multicursor, place the cursor on the path and execute the shortcut by calling executeShortcut.
-  const paths = Object.values(state.multicursors)
-  // Sort the paths deterministically in document order
-  paths.sort((a, b) => {
-    for (let i = 0; i < Math.min(a.length, b.length); i++) {
-      const aRank = getThoughtById(state, a[i]).rank
-      const bRank = getThoughtById(state, b[i]).rank
-      if (aRank !== bRank) return aRank - bRank
-    }
-    return a.length - b.length
-  })
+  const paths = documentSort(state, Object.values(state.multicursors))
 
   const filteredPaths = filterCursors(state, paths, multicursorConfig.filter)
 
