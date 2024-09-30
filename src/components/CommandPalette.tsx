@@ -1,10 +1,9 @@
 import _ from 'lodash'
-import React, { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import Shortcut from '../@types/Shortcut'
-import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
@@ -12,18 +11,13 @@ import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import { disableScroll, enableScroll } from '../device/disableScroll'
 import * as selection from '../device/selection'
 import themeColors from '../selectors/themeColors'
-import {
-  formatKeyboardShortcut,
-  gestureString,
-  globalShortcuts,
-  hashKeyDown,
-  hashShortcut,
-  shortcutById,
-} from '../shortcuts'
+import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import GestureDiagram from './GestureDiagram'
 import Popup from './Popup'
+import useShortcut from '../hooks/useShortcuts'
+import { HighlightedText } from './HighlightedText'
 
 /**********************************************************************
  * Constants
@@ -33,8 +27,6 @@ import Popup from './Popup'
 const MAX_RECENT_COMMANDS = 5
 
 const commandPaletteShortcut = shortcutById('commandPalette')
-
-const visibleShortcuts = globalShortcuts.filter(shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp)
 
 /**********************************************************************
  * Helper Functions
@@ -122,39 +114,6 @@ const CommandSearch: FC<{
         style={{ marginLeft: 0, marginBottom: 0, border: 'none' }}
       />
     </div>
-  )
-}
-
-/** Renders text with matching characters highlighted. */
-const HighlightedText: FC<{ value: string; match: string; disabled?: boolean }> = ({ value, match, disabled }) => {
-  const colors = useSelector(themeColors)
-
-  // move an index forward as matches are found so that chars are only matched once each
-  let index = 0
-
-  return (
-    <span>
-      {value.split('').map((char, i) => {
-        const matchIndex = match.trim().slice(index).toLowerCase().indexOf(char.toLowerCase()) + index
-        const isMatch = matchIndex >= index
-
-        if (isMatch) {
-          index++
-        }
-
-        return (
-          <span key={i}>
-            <span
-              style={{
-                color: !disabled && isMatch ? colors.vividHighlight : undefined,
-              }}
-            >
-              {char}
-            </span>
-          </span>
-        )
-      })}
-    </span>
   )
 }
 
@@ -336,88 +295,11 @@ const CommandPalette: FC = () => {
   const dispatch = useDispatch()
   const gestureInProgress = gestureStore.useState()
   const fontSize = useSelector(state => state.fontSize)
-  const [keyboardInProgress, setKeyboardInProgress] = useState('')
-  const [recentCommands, setRecentCommands] = useState<ShortcutId[]>(storageModel.get('recentCommands'))
   const unmounted = useRef(false)
-
   // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
-  const show = gestureInProgress || !isTouch
-
-  // get the shortcuts that can be executed from the current gesture in progress
-  const possibleShortcutsSorted = useMemo(() => {
-    if (!show) return []
-
-    const possibleShortcuts = visibleShortcuts.filter(shortcut => {
-      // gesture
-      if (isTouch) {
-        return shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)
-      }
-      // keyboard
-      else {
-        // if no query is entered, all shortcuts are visible
-        if (!keyboardInProgress) return true
-
-        const label = (
-          shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label
-        ).toLowerCase()
-        const chars = keyboardInProgress.toLowerCase().split('')
-
-        return (
-          // include shortcuts with at least one included char and no more than three chars non-matching chars
-          // fuzzy matching will prioritize the best shortcuts
-          chars.some(char => char !== ' ' && label.includes(char)) &&
-          keyboardInProgress.split('').filter(char => char !== ' ' && !label.includes(char)).length <= 3
-        )
-      }
-    })
-
-    // sorted shortcuts
-    const sorted = _.sortBy(possibleShortcuts, shortcut => {
-      const label = (
-        shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse : shortcut.label
-      ).toLowerCase()
-
-      // always sort exact match to top
-      if (gestureInProgress === shortcut.gesture || keyboardInProgress.trim().toLowerCase() === label) return '\x00'
-      // sort inactive shortcuts to the bottom alphabetically
-      else if (!isExecutable(store.getState(), shortcut)) return `\x99${label}`
-      // sort gesture by length and then label
-      // no padding of length needed since no gesture exceeds a single digit
-      else if (gestureInProgress) return `\x01${label}`
-
-      return (
-        // prepend \x01 to sort after exact match and before inactive shortcuts
-        '\x01' +
-        [
-          // recent commands
-          !keyboardInProgress &&
-            (() => {
-              const i = recentCommands.indexOf(shortcut.id)
-              // if not found, sort to the end
-              // pad with zeros so that the sort is correct for multiple digits
-              return i === -1 ? 'z' : i.toString().padStart(5, '0')
-            })(),
-          // startsWith
-          keyboardInProgress && label.startsWith(keyboardInProgress.trim().toLowerCase()) ? 0 : 1,
-          // contains (n chars)
-          // subtract from a large value to reverse order, otherwise shortcuts with fewer matches will be sorted to the top
-          keyboardInProgress &&
-            (
-              9999 -
-              keyboardInProgress
-                .toLowerCase()
-                .split('')
-                .filter(char => char !== ' ' && label.includes(char)).length
-            )
-              .toString()
-              .padStart(5, '0'),
-          // all else equal, sort by label
-          label,
-        ].join('\x00')
-      )
-    })
-    return sorted
-  }, [gestureInProgress, keyboardInProgress, recentCommands, show, store])
+  const isGestureActive = gestureInProgress || !isTouch
+  const { keyboardInProgress, setKeyboardInProgress, possibleShortcutsSorted, recentCommands, setRecentCommands } =
+    useShortcut({ isGestureActive: isGestureActive, includeRecentCommand: true })
 
   const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
 
@@ -513,7 +395,7 @@ const CommandPalette: FC = () => {
   return (
     <div
       style={{
-        ...(show ? { paddingLeft: '4em', paddingRight: '1.8em' } : null),
+        ...(isGestureActive ? { paddingLeft: '4em', paddingRight: '1.8em' } : null),
         marginBottom: isTouch ? 0 : fontSize,
         textAlign: 'left',
       }}
