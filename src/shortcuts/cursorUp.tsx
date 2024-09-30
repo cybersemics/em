@@ -123,6 +123,10 @@ const cursorUpShortcut: Shortcut = {
           }
         },
       ])
+
+      requestAnimationFrame(() => {
+        selection.clear()
+      })
     } else dispatch(cursorUp())
   }),
 }

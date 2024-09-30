@@ -119,6 +119,10 @@ const cursorDownShortcut: Shortcut = {
           }
         },
       ])
+
+      requestAnimationFrame(() => {
+        selection.clear()
+      })
     } else dispatch(cursorDown())
   }),
 }
