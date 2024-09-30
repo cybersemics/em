@@ -1,46 +1,42 @@
+import { cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 
-/** Pencil icon. */
-const PencilIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+/** TableView icon replacement. */
+const TableViewIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   const scalingFactor = 1.37
   const newSize = size * scalingFactor
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (
     <svg
-      className={icon({ className })}
       xmlns='http://www.w3.org/2000/svg'
+      className={cx(icon(), className)}
       width={newSize}
       height={newSize}
       viewBox='0 0 24 24'
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
       fill='none'
     >
-      <title>Pencil Icon</title>
+      <title>Table View Icon</title>
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
-          <g id='_19-note' data-name='19-note'>
+          <g id='_09-table-view' data-name='09-table-view'>
             <rect width='24' height='24' fill='none' />
-            <path d='M3,21.49H21' fill='none' stroke={strokeColor} strokeLinecap='round' strokeLinejoin='round' />
-            <path
-              d='M18.18,2.8l2.06,2.07a1,1,0,0,1,0,1.41L8.73,17.79,4,19l1.21-4.69L16.76,2.8A1,1,0,0,1,18.18,2.8Z'
-              fill='none'
+            <rect
               stroke={strokeColor}
               strokeLinecap='round'
               strokeLinejoin='round'
-            />
-            <line
-              x1='13.94'
-              y1='5.63'
-              x2='17.42'
-              y2='9.11'
               fill='none'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
+              x='3'
+              y='3'
+              width='18'
+              height='18'
+              rx='3'
             />
+            <line stroke={strokeColor} strokeLinecap='round' strokeLinejoin='round' x1='12' y1='3' x2='12' y2='21' />
+            <line stroke={strokeColor} strokeLinecap='round' strokeLinejoin='round' x1='3' y1='12' x2='21' y2='12' />
           </g>
         </g>
       </g>
@@ -48,4 +44,4 @@ const PencilIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   )
 }
 
-export default PencilIcon
+export default TableViewIcon

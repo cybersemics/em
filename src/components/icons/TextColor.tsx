@@ -1,38 +1,46 @@
-import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 
-/** Text Color Icon Component. */
-const Icon = ({ size = 20, style }: IconType) => {
-  size = style?.height ? +style.height : size
+/** Text Color Icon. */
+const TextColorIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+  const scalingFactor = 1.37
+  const newSize = size * scalingFactor
+  const strokeColor = style.fill || fill || token('colors.fg')
+
   return (
-    <span className={cx(icon(), css({ display: 'inline-block' }))}>
-      <span
-        className={css({
-          borderRadius: 5,
-          display: 'inline-block',
-          marginLeft: 2,
-          marginRight: 2,
-          textAlign: 'center',
-        })}
-        style={{
-          border: `solid 1px ${style?.fill || style?.color},`,
-          marginTop: size / 10 - 1,
-          color: style?.fill,
-          ...style,
-          width: size * 0.8,
-          height: size * 0.8,
-        }}
-      >
-        <span
-          className={css({ verticalAlign: 'top', position: 'relative', top: '1px' })}
-          style={{ fontSize: size * 0.65 }}
-        >
-          A
-        </span>
-      </span>
-    </span>
+    <svg
+      className={icon({ className })}
+      xmlns='http://www.w3.org/2000/svg'
+      width={newSize}
+      height={newSize}
+      viewBox='0 0 24 24'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+      fill='none'
+    >
+      <title>Text Color Icon</title>
+      <g id='Layer_2' data-name='Layer 2'>
+        <g id='Layer_3' data-name='Layer 3'>
+          <g id='_17-text-color' data-name='17-text-color'>
+            <rect width='24' height='24' fill='none' />
+            <rect
+              className='cls-2'
+              x='2.73'
+              y='2.73'
+              width='18.53'
+              height='18.53'
+              rx='3'
+              fill='none'
+              stroke={strokeColor}
+            />
+            <line className='cls-2' x1='12' y1='7.2' x2='7.42' y2='16.6' fill='none' stroke={strokeColor} />
+            <line className='cls-2' x1='12' y1='7.2' x2='16.58' y2='16.6' fill='none' stroke={strokeColor} />
+            <line className='cls-2' x1='8.96' y1='13.44' x2='15.05' y2='13.44' fill='none' stroke={strokeColor} />
+          </g>
+        </g>
+      </g>
+    </svg>
   )
 }
 
-export default Icon
+export default TextColorIcon
