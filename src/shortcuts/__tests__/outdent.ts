@@ -5,11 +5,73 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeShortcutWithMulticursor } from '../../util/executeShortcut'
-import indentShortcut from '../indent'
+import outdentShortcut from '../outdent'
 
-describe('indent', () => {
+describe('outdent', () => {
   describe('multicursor', () => {
-    it('indents multiple thoughts', async () => {
+    it('outdents multiple thoughts', async () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - b
+              - c
+            - d
+          `,
+        }),
+        setCursor(['a', 'b']),
+        addMulticursor(['a', 'c']),
+      ])
+
+      executeShortcutWithMulticursor(outdentShortcut, { store })
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+      const expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d`
+
+      expect(exported).toEqual(expectedOutput)
+    })
+
+    it('outdents thoughts at different levels', async () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - b
+                - c
+            - d
+              - e
+                - f
+          `,
+        }),
+        setCursor(['a', 'b', 'c']),
+        addMulticursor(['d', 'e', 'f']),
+      ])
+
+      executeShortcutWithMulticursor(outdentShortcut, { store })
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+      const expectedOutput = `- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+  - d
+    - e
+    - f`
+
+      expect(exported).toEqual(expectedOutput)
+    })
+
+    it('does not outdent thoughts already at the root level', () => {
       const store = createTestStore()
 
       store.dispatch([
@@ -21,115 +83,53 @@ describe('indent', () => {
             - d
           `,
         }),
-        setCursor(['b']),
-        addMulticursor(['c']),
+        setCursor(['a', 'b']),
+        addMulticursor(['a', 'c']),
       ])
 
-      executeShortcutWithMulticursor(indentShortcut, { store })
+      executeShortcutWithMulticursor(outdentShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
       const expectedOutput = `- ${HOME_TOKEN}
   - a
-    - b
-    - c
+  - b
+  - c
   - d`
 
       expect(exported).toEqual(expectedOutput)
     })
 
-    it('indents thoughts at different levels', async () => {
+    it('outdents parent/child thoughts', () => {
       const store = createTestStore()
 
       store.dispatch([
         importText({
           text: `
-            - a
-              - b
-              - c
-            - d
-              - e
-              - f
-          `,
-        }),
-        setCursor(['a', 'c']),
-        addMulticursor(['d', 'f']),
-      ])
-
-      executeShortcutWithMulticursor(indentShortcut, { store })
-
-      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-      const expectedOutput = `- ${HOME_TOKEN}
-  - a
-    - b
-      - c
-  - d
-    - e
-      - f`
-
-      expect(exported).toEqual(expectedOutput)
-    })
-
-    it('does not indent all thoughts on the same level', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - b
-              - c
-            - d
-          `,
-        }),
-        setCursor(['b']),
-        addMulticursor(['c']),
-      ])
-
-      executeShortcutWithMulticursor(indentShortcut, { store })
-
-      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-      const expectedOutput = `- ${HOME_TOKEN}
-  - a
-    - b
-    - c
-  - d`
-
-      expect(exported).toEqual(expectedOutput)
-    })
-
-    it('indents parent/child thoughts', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-          - a
-            - b
-          - c
-            - d
-          - e
-            - f
-          `,
-        }),
-        setCursor(['c']),
-        addMulticursor(['c', 'd']),
-        addMulticursor(['e']),
-      ])
-
-      executeShortcutWithMulticursor(indentShortcut, { store })
-
-      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-      const expectedOutput = `- ${HOME_TOKEN}
   - a
     - b
     - c
       - d
     - e
-      - f`
+      - f
+          `,
+        }),
+        setCursor(['a', 'c']),
+        addMulticursor(['a', 'c', 'd']),
+        addMulticursor(['a', 'e']),
+      ])
+
+      executeShortcutWithMulticursor(outdentShortcut, { store })
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+      const expectedOutput = `- ${HOME_TOKEN}
+  - a
+    - b
+  - c
+    - d
+  - e
+    - f`
 
       expect(exported).toEqual(expectedOutput)
     })

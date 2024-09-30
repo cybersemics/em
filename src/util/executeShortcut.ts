@@ -31,9 +31,9 @@ interface Options {
 const eventNoop = { preventDefault: noop } as Event
 
 /** Filter the cursors based on the filter type. Cursors are sorted in document order. */
-const filterCursors = (_state: State, cursors: Path[], filter: MulticursorFilter = 'none') => {
+const filterCursors = (_state: State, cursors: Path[], filter: MulticursorFilter = 'all') => {
   switch (filter) {
-    case 'none':
+    case 'all':
       return cursors
 
     case 'first-sibling': {
@@ -59,6 +59,19 @@ const filterCursors = (_state: State, cursors: Path[], filter: MulticursorFilter
         seenParents.add(parent)
 
         return true
+      })
+    }
+
+    case 'prefer-ancestor': {
+      const seenCursors = new Set<string>()
+
+      return cursors.filter(cursor => {
+        const parent = hashPath(parentOf(cursor))
+
+        // Always add the cursor to the set to resolve direct chains.
+        seenCursors.add(hashPath(cursor))
+
+        return !seenCursors.has(parent)
       })
     }
 
@@ -137,9 +150,10 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
 
   const filteredPaths = filterCursors(state, paths, multicursorConfig.filter)
 
-  const canExecute = paths.every(
+  const canExecute = filteredPaths.every(
     path => !shortcut.canExecute || shortcut.canExecute(() => ({ ...state, cursor: path })),
   )
+
   // Exit early if the shortcut cannot execute
   if (!canExecute) return
 
@@ -148,10 +162,8 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
     filteredPaths.reverse()
   }
 
-  if (multicursorConfig.execMulticursor) {
-    // The shortcut has their own multicursor logic, so delegate to it.
-    multicursorConfig.execMulticursor(paths, store.dispatch, store.getState, event, { type })
-  } else {
+  /** Multicursor execution loop. */
+  const execMulticursor = () => {
     // Execute the shortcut for each multicursor path and restore the cursor to its original position.
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
@@ -161,6 +173,13 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
       store.dispatch(setCursor({ path: recomputedPath }))
       executeShortcut(shortcut, { store, type, event })
     }
+  }
+
+  if (multicursorConfig.execMulticursor) {
+    // The shortcut has their own multicursor logic, so delegate to it and pass in the default execMulticursor function.
+    multicursorConfig.execMulticursor(filteredPaths, store.dispatch, store.getState, event, { type }, execMulticursor)
+  } else {
+    execMulticursor()
   }
 
   // Restore the cursor to its original position if not prevented.

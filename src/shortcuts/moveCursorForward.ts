@@ -30,19 +30,27 @@ const moveCursorForward: Shortcut = {
   keyboard: { key: Key.Tab },
   multicursor: {
     enabled: true,
+    filter: 'prefer-ancestor',
+    execMulticursor(cursors, dispatch, getState, e, { type }, execMulticursor) {
+      // Make sure we can execute for all cursors before proceeding.
+      // This is shifted here to allow `e.preventDefault()` to work.
+      const canExecute = cursors.every(cursor => {
+        const path = simplifyPath(getState(), cursor)
+        const parentId = head(rootedParentOf(getState(), path))
+        const isTable = attributeEquals(getState(), parentId, '=view', 'Table')
+        return isDocumentEditable() && (isTable || !!prevSibling(getState(), cursor))
+      })
+
+      if (!canExecute) return
+
+      return execMulticursor()
+    },
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
   canExecute: getState => {
     const state = getState()
-
-    if (!state.cursor) return false
-
-    const path = simplifyPath(state, state.cursor)
-    const parentId = head(rootedParentOf(state, path))
-    const isTable = attributeEquals(state, parentId, '=view', 'Table')
-
-    return isDocumentEditable() && (isTable || !!prevSibling(state, state.cursor))
+    return isDocumentEditable() && !!state.cursor
   },
   exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState) => {
     const state = getState()

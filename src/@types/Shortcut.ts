@@ -90,7 +90,8 @@ interface Shortcut {
           getState: () => State,
           e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
           { type }: { type: ShortcutType },
-        ) => void | Promise<void>
+          execMulticursor: () => void,
+        ) => void
         /** Prevent the cursor from being set back at the end of the shortcut execution. */
         preventSetCursor?: boolean
         /** Reverse the order of the cursors before executing the shortcut. */

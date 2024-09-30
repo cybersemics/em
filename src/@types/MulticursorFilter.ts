@@ -1,4 +1,4 @@
 /** Filter for multicursor execution. */
-type MulticursorFilter = 'none' | 'first-sibling' | 'last-sibling'
+type MulticursorFilter = 'all' | 'first-sibling' | 'last-sibling' | 'prefer-ancestor'
 
 export default MulticursorFilter
