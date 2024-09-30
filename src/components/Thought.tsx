@@ -29,7 +29,6 @@ import { getAllChildrenAsThoughts, getChildrenRanked, hasChildren } from '../sel
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -343,8 +342,6 @@ const ThoughtContainer = ({
   //   ...dragHoldResult.props,
   // })
 
-  const isMulticursor = useSelector(state => isMulticursorPath(state, path))
-
   /** Handles multicursor activation. */
   const handleMultiselect = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
@@ -439,7 +436,6 @@ const ThoughtContainer = ({
           <Bullet
             isContextPending={isContextPending}
             isDragging={isDragging}
-            isMulticursor={isMulticursor}
             isEditing={isEditing}
             leaf={leaf}
             path={path}

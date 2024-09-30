@@ -18,6 +18,7 @@ import getLexeme from '../selectors/getLexeme'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
 import hashPath from '../util/hashPath'
@@ -28,7 +29,6 @@ interface BulletProps {
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
   isDragging?: boolean
-  isMulticursor?: boolean
   isEditing?: boolean
   leaf?: boolean
   publish?: boolean
@@ -390,7 +390,6 @@ const BulletCursorOverlay = ({
 const Bullet = ({
   isContextPending,
   isDragging,
-  isMulticursor,
   isEditing,
   leaf,
   path,
@@ -412,6 +411,7 @@ const Bullet = ({
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
+  const isMulticursor = useSelector(state => isMulticursorPath(state, path))
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging || isMulticursor
@@ -480,7 +480,7 @@ const Bullet = ({
 
       // short circuit if toggling multiselect
       if (!isTouch && (isMac ? e.metaKey : e.ctrlKey)) {
-        dispatch(toggleMulticursor({ path: simplePath }))
+        dispatch(toggleMulticursor({ path }))
         return
       }
 

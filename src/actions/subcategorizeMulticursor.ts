@@ -52,7 +52,7 @@ const subcategorizeMulticursor = (state: State) => {
     }),
     ...multicursorPaths.reverse().map(path =>
       moveThought({
-        oldPath: simplifyPath(state, path),
+        oldPath: path,
         newPath: appendToPath(commonParent, newThoughtId, head(path)),
         newRank: getThoughtById(state, head(path)).rank,
       }),
