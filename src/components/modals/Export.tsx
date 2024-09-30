@@ -10,7 +10,7 @@ import React, {
   useRef,
   useState,
 } from 'react'
-import { useDispatch, useSelector, useStore } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
 import { css, cx } from '../../../styled-system/css'
 import { extendTap } from '../../../styled-system/recipes'
@@ -31,7 +31,6 @@ import globals from '../../globals'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
 import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
-import getThoughtById from '../../selectors/getThoughtById'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import simplifyPath from '../../selectors/simplifyPath'
 import theme from '../../selectors/theme'
@@ -273,7 +272,6 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
-  const store = useStore()
   const dispatch = useDispatch()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const id = head(simplePaths[0])
