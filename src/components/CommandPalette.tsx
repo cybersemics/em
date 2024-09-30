@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
@@ -10,14 +9,14 @@ import { isTouch } from '../browser'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import { disableScroll, enableScroll } from '../device/disableScroll'
 import * as selection from '../device/selection'
+import useShortcut from '../hooks/useShortcut'
 import themeColors from '../selectors/themeColors'
 import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import GestureDiagram from './GestureDiagram'
-import Popup from './Popup'
-import useShortcut from '../hooks/useShortcuts'
 import { HighlightedText } from './HighlightedText'
+import Popup from './Popup'
 
 /**********************************************************************
  * Constants
@@ -320,7 +319,7 @@ const CommandPalette: FC = () => {
       shortcut.exec(dispatch, store.getState, e, { type: 'commandPalette' })
       storageModel.set('recentCommands', commandsNew)
     },
-    [dispatch, recentCommands, store],
+    [dispatch, recentCommands, setRecentCommands, store],
   )
 
   /** Execute the selected shortcut. */

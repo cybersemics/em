@@ -1,9 +1,13 @@
-import { useSelector } from "react-redux";
-import themeColors from "../selectors/themeColors";
-import { FC } from "react";
+import { FC } from 'react'
+import { useSelector } from 'react-redux'
+import themeColors from '../selectors/themeColors'
 
 /** Renders text with matching characters highlighted. */
-export const HighlightedText: FC<{ value: string; match: string; disabled?: boolean }> = ({ value, match, disabled }) => {
+export const HighlightedText: FC<{ value: string; match: string; disabled?: boolean }> = ({
+  value,
+  match,
+  disabled,
+}) => {
   const colors = useSelector(themeColors)
 
   // move an index forward as matches are found so that chars are only matched once each

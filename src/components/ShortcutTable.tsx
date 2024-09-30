@@ -1,13 +1,13 @@
-import { FC, useMemo } from "react";
+import { FC, useMemo } from 'react'
 import { modalText } from '../../styled-system/recipes'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
+import useShortcut from '../hooks/useShortcut'
 import { globalShortcuts, shortcutById } from '../shortcuts'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import ShortcutTableOnly from './ShortcutTableOnly'
-import useShortcut from "../hooks/useShortcuts";
 
 // define the grouping and ordering of shortcuts
 const groups: {
@@ -110,13 +110,16 @@ if (shortcutsUngrouped.length > 0) {
   )
 }
 
+/**
+ *
+ */
 const SearchShortcut: FC<{
   onInput?: (value: string) => void
 }> = ({ onInput }) => {
   return (
     <div id='search' style={{ borderBottom: 'solid 1px gray' }}>
       <input
-      type='text'
+        type='text'
         placeholder='Search commands by name...'
         // ref={inputRef}
         onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,37 +131,37 @@ const SearchShortcut: FC<{
           marginTop: '1em',
           border: 'none',
           boxSizing: 'border-box',
-          width: '100%'
+          width: '100%',
         }}
       />
-      </div>
+    </div>
   )
 }
 
 /** Renders a table of shortcuts. */
 const ShortcutTable = ({
-   customize,
-   onSelect,
-   selectedShortcut
+  customize,
+  onSelect,
+  selectedShortcut,
 }: {
   customize?: boolean
   onSelect?: (shortcut: Shortcut | null) => void
   selectedShortcut?: Shortcut
 }) => {
-  const modalClasses = modalText();
-  const { setKeyboardInProgress, possibleShortcutsSorted } = useShortcut({
+  const modalClasses = modalText()
+  const { setKeyboardInProgress, keyboardInProgress, possibleShortcutsSorted } = useShortcut({
     includeRecentCommand: false,
-  });
+  })
 
   const groupsWithShortcuts = useMemo(() => {
     return groups.map(group => {
       // const shortcuts = group.shortcuts.map(shortcutById)
-      const shortcutsFiltered = group.shortcuts.filter(shortcut => (
-        possibleShortcutsSorted.find(possibleShortcut => possibleShortcut.id === shortcut)
-      ))
+      const shortcutsFiltered = group.shortcuts.filter(shortcut =>
+        possibleShortcutsSorted.find(possibleShortcut => possibleShortcut.id === shortcut),
+      )
       return {
         title: group.title,
-        shortcuts: shortcutsFiltered.map(shortcut => shortcutById(shortcut))
+        shortcuts: shortcutsFiltered.map(shortcut => shortcutById(shortcut)),
       }
     })
   }, [possibleShortcutsSorted])
@@ -166,29 +169,31 @@ const ShortcutTable = ({
   return (
     <div>
       <SearchShortcut onInput={setKeyboardInProgress} />
-      <div style={{ textAlign: "left" }}>
+      <div style={{ textAlign: 'left' }}>
         {groupsWithShortcuts.map(group => {
           const shortcuts = group.shortcuts
 
-
-          if (group.shortcuts.length === 0) return null;
+          if (group.shortcuts.length === 0) return null
 
           return (
             <div key={group.title}>
-              <h2 className={modalClasses.subtitle} style={{ marginTop: ".5em" }}>{group.title}</h2>
+              <h2 className={modalClasses.subtitle} style={{ marginTop: '.5em' }}>
+                {group.title}
+              </h2>
               <ShortcutTableOnly
                 shortcuts={shortcuts}
                 selectedShortcut={selectedShortcut}
                 customize={customize}
                 onSelect={onSelect}
                 applyIndexInToolbar
+                keyboardInProgress={keyboardInProgress}
               />
             </div>
-          );
+          )
         })}
       </div>
     </div>
-  );
-};
+  )
+}
 
 export default ShortcutTable

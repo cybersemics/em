@@ -12,12 +12,14 @@ const ShortcutTableOnly = ({
   customize,
   onSelect,
   applyIndexInToolbar,
+  keyboardInProgress,
 }: {
   shortcuts: (Shortcut | null)[]
   selectedShortcut?: Shortcut
   customize?: boolean
   onSelect?: (shortcut: Shortcut | null) => void
   applyIndexInToolbar?: boolean
+  keyboardInProgress?: string
 }) => {
   // custom user toolbar
   // fall back to defaults if user does not have Settings defined
@@ -39,6 +41,7 @@ const ShortcutTableOnly = ({
               onSelect={onSelect}
               selected={selectedShortcut && shortcut?.id === selectedShortcut.id}
               shortcut={shortcut}
+              keyboardInProgress={keyboardInProgress}
             />
           )
         })}
