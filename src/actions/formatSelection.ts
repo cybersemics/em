@@ -1,3 +1,4 @@
+import { rgbToHex } from '@mui/material'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
@@ -9,6 +10,7 @@ export const formatSelectionActionCreator =
   (
     command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor' | 'removeFormat',
     color: string = '',
+    colors: any = {},
   ): Thunk =>
   (dispatch, getState) => {
     const state = getState()
@@ -17,10 +19,9 @@ export const formatSelectionActionCreator =
     const sel = window.getSelection()
     suppressFocusStore.update(true)
     // if there is no selection, format the entire thought by selecting the whole thought
-
+    const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
+    if (!thoughtContentEditable) return
     if (sel?.toString().length === 0 && thought.value.length !== 0) {
-      const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
-      if (!thoughtContentEditable) return
       const savedSelection = selection.save()
       // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile
       sel?.selectAllChildren(thoughtContentEditable)
@@ -30,5 +31,10 @@ export const formatSelectionActionCreator =
       document.execCommand(command, false, color)
       updateCommandState()
     }
+    const styledElements = thoughtContentEditable.querySelectorAll('[style]')
+    styledElements.forEach(el => {
+      if (rgbToHex(window.getComputedStyle(el).backgroundColor).toLocaleLowerCase() === colors?.bg.toLocaleLowerCase())
+        el.removeAttribute('style')
+    })
     suppressFocusStore.update(false)
   }

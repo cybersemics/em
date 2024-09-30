@@ -1,12 +1,16 @@
 import { rgbToHex } from '@mui/material'
 import React, { FC, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import Thought from '../@types/Thought'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { textColorActionCreator as textColor } from '../actions/textColor'
 import { isTouch } from '../browser'
+import * as selection from '../device/selection'
+import getThoughtById from '../selectors/getThoughtById'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
 import fastClick from '../util/fastClick'
+import head from '../util/head'
 import TriangleDown from './TriangleDown'
 import TextColorIcon from './icons/TextColor'
 
@@ -43,13 +47,16 @@ const ColorSwatch: FC<{
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
+  const currentThought = useSelector(state => !!state.cursor && getThoughtById(state, head(state.cursor))) as Thought
   size = size || fontSize * 1.2
-
+  console.log(cursorStyle)
   /** A function that adds an alpha channel to a hex color. */
   const addAlphaToHex = (hex: string) => {
     if (hex.length === 7) return hex + 'ff'
     return hex
   }
+  const colorRegex = /color="(#[0-9a-fA-F]{6})"/g
+  const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
   const selected = useMemo(() => {
     const textHexColor = color ? addAlphaToHex(rgbToHex(color)) : undefined
     const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
@@ -57,24 +64,42 @@ const ColorSwatch: FC<{
     const selectedBackHexColor = cursorStyle?.backgroundColor
       ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor))
       : undefined
+    if ((cursorStyle?.color === undefined && cursorStyle?.backgroundColor === undefined) || !selection.isThought()) {
+      const currentThoughtValue = currentThought.value
+      const colorMatches = currentThoughtValue.match(colorRegex)
+      let matchColor, matchBgColor, match
+      const colors: Set<string> = new Set()
+      if (colorMatches) {
+        colorMatches.forEach(match => colors.add(match.slice(7, -1)))
+        matchColor = colors.size > 1 ? null : colors.values().next().value
+      }
+
+      const bgColors: Set<string> = new Set()
+      while ((match = bgColorRegex.exec(currentThoughtValue)) !== null) if (match[1]) bgColors.add(match[1])
+      matchBgColor = bgColors.size > 1 ? null : bgColors.values().next().value
+
+      return !!(
+        (textHexColor && textHexColor === addAlphaToHex(rgbToHex(matchColor))) ||
+        (backHexColor && backHexColor === addAlphaToHex(rgbToHex(matchBgColor)))
+      )
+    }
     return !!(
       (textHexColor && textHexColor === selectedTextHexColor) ||
       (backHexColor && backHexColor === selectedBackHexColor)
     )
   }, [cursorStyle, backgroundColor, color])
+
   /** Toggles the text color to the clicked swatch. */
   const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
-    // stop toolbar button dip
-    // e.stopPropagation()
     // Apply text color to the selection
     if (label === 'default') dispatch(formatSelection('removeFormat'))
     else {
-      if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg))
-      else dispatch(formatSelection('foreColor', colors.fg))
+      if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg, colors))
+      else dispatch(formatSelection('foreColor', colors.fg, colors))
       // Apply background color to the selection
       if (backgroundColor && backgroundColor !== colors.bg)
-        dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
-      else dispatch(formatSelection('backColor', colors.bg))
+        dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor, colors))
+      else dispatch(formatSelection('backColor', colors.bg, colors))
     }
 
     dispatch(
