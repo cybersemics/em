@@ -1,15 +1,14 @@
-import { useStore } from 'react-redux'
-import Shortcut from '../@types/Shortcut'
 import _ from 'lodash'
 import { useMemo, useState } from 'react'
-import { globalShortcuts, gestureString } from '../shortcuts'
-import { isTouch } from '../browser'
-import gestureStore from '../stores/gesture'
-import State from '../@types/State'
-import ShortcutId from '../@types/ShortcutId'
-import storageModel from '../stores/storageModel'
+import { useStore } from 'react-redux'
 import GesturePath from '../@types/GesturePath'
-
+import Shortcut from '../@types/Shortcut'
+import ShortcutId from '../@types/ShortcutId'
+import State from '../@types/State'
+import { isTouch } from '../browser'
+import { gestureString, globalShortcuts } from '../shortcuts'
+import gestureStore from '../stores/gesture'
+import storageModel from '../stores/storageModel'
 
 /**********************************************************************
  * Helper Functions
@@ -19,20 +18,25 @@ import GesturePath from '../@types/GesturePath'
 const isExecutable = (state: State, shortcut: Shortcut) =>
   (!shortcut.canExecute || shortcut.canExecute(() => state)) && (shortcut.allowExecuteFromModal || !state.showModal)
 
+/**
+ *
+ */
 const useShortcut = ({
-  isGestureActive = true, includeRecentCommand = false
+  isGestureActive = true,
+  includeRecentCommand = false,
 }: {
   isGestureActive?: boolean | GesturePath
   includeRecentCommand?: boolean
 }) => {
   const gestureInProgress = gestureStore.useState()
   const [keyboardInProgress, setKeyboardInProgress] = useState('')
-  const visibleShortcuts = globalShortcuts.filter(shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp)
+  const visibleShortcuts = globalShortcuts.filter(
+    shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp,
+  )
   const [recentCommands, setRecentCommands] = useState<ShortcutId[]>(storageModel.get('recentCommands'))
   const store = useStore()
 
   const possibleShortcutsSorted = useMemo(() => {
-
     if (!isGestureActive) return []
 
     const possibleShortcuts = visibleShortcuts.filter(shortcut => {
@@ -78,7 +82,8 @@ const useShortcut = ({
         '\x01' +
         [
           // recent commands
-          (!keyboardInProgress && includeRecentCommand) &&
+          !keyboardInProgress &&
+            includeRecentCommand &&
             (() => {
               const i = recentCommands.indexOf(shortcut.id)
               // if not found, sort to the end
