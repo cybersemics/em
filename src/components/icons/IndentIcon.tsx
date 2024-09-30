@@ -2,7 +2,6 @@ import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 
-// eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
 const IndentIcon = ({ fill, size = 14, style = {}, className }: IconType) => {
   const scalingFactor = 1.37
   const newSize = size * scalingFactor
@@ -15,7 +14,7 @@ const IndentIcon = ({ fill, size = 14, style = {}, className }: IconType) => {
       width={newSize}
       height={newSize}
       viewBox='0 0 24 24'
-      style={{ ...style, width: `${newSize}px`, height: `${newSize}px`, marginTop: '-1px' }}
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
       <title>IndentIcon</title>
       <g id='Layer_2' data-name='Layer 2'>

@@ -4,7 +4,7 @@ import { token } from '../../styled-system/tokens'
 import Icon from '../@types/Icon'
 
 /** A redo icon. */
-const RedoIcon = ({ fill, size = 14, style = {}, className }: Icon) => {
+const RedoIcon = ({ fill, size = 18, style = {}, className }: Icon) => {
   const scalingFactor = 1.37
   const newSize = size * scalingFactor
   const strokeColor = style.fill || fill || token('colors.fg')
@@ -17,7 +17,7 @@ const RedoIcon = ({ fill, size = 14, style = {}, className }: Icon) => {
       height={newSize}
       viewBox='0 0 24 24'
       fill={fill || token('colors.fg')}
-      style={{ ...style, width: `${newSize}px`, height: `${newSize}px`, marginTop: '-1px' }}
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
       <title>Redo Icon</title>
       <g id='Layer_2' data-name='Layer 2'>

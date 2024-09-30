@@ -1,25 +1,38 @@
-import { useSelector } from 'react-redux'
-import Icon from '../../@types/Icon'
-import themeColors from '../../selectors/themeColors'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
+import IconType from '../../@types/Icon'
 
-/** A swap parent icon. */
-const SwapParentIcon = ({ fill, size = 20, style }: Icon) => {
-  const colors = useSelector(themeColors)
+const SwapParentIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+  const scalingFactor = 1.37
+  const newSize = size * scalingFactor
+  const strokeColor = style.fill || fill || token('colors.fg')
+
   return (
     <svg
-      className={'icon'}
-      x='0px'
-      y='0px'
-      width={size}
-      height={size}
+      className={icon({ className })}
+      xmlns="http://www.w3.org/2000/svg"
+      width={newSize}
+      height={newSize}
+      viewBox="0 0 24 24"
       style={{
-        fill: fill || colors.fg,
         ...style,
+        width: `${newSize}px`,
+        height: `${newSize}px`,
       }}
-      viewBox='0 0 24 27'
     >
-      <g>
-        <path d='M12,21a1,1,0,0,1-1,1H5a1,1,0,0,1-1-1V5.41l-.29.29A1,1,0,0,1,2.29,4.29l2-2h0a1,1,0,0,1,1.41,0h0l2,2A1,1,0,1,1,6.29,5.71L6,5.41V20h5A1,1,0,0,1,12,21Zm9.71-2.71a1,1,0,0,0-1.41,0l-.29.29V3a1,1,0,0,0-1-1H13a1,1,0,0,0,0,2h5V18.59l-.29-.29a1,1,0,0,0-1.41,1.41l2,2h0a1,1,0,0,0,1.41,0h0l2-2A1,1,0,0,0,21.71,18.29Z' />
+      <title>Swap Parent Icon</title>
+      <g id="Layer_2" data-name="Layer 2">
+        <g id="Layer_3" data-name="Layer 3">
+          <g id="_17-swap-parent" data-name="17-swap-parent">
+            <rect width="24" height="24" fill="none" />
+            <path d="M13.05,20.26l-7.52-3.8a6.91,6.91,0,0,1,1-12.72" fill="none" stroke={strokeColor} strokeLinejoin="round" />
+            <path d="M11.06,3.4l7.52,3.8a6.91,6.91,0,0,1-1,12.72" fill="none" stroke={strokeColor} strokeLinejoin="round" />
+            <polyline points="12.03 6.38 11.06 3.4 14.04 2.43" fill="none" stroke={strokeColor} strokeLinejoin="round" />
+            <polyline points="10.04 21.29 13.02 20.32 12.05 17.34" fill="none" stroke={strokeColor} strokeLinejoin="round" />
+            <circle cx="12.05" cy="11.83" r="2" fill={strokeColor} opacity="0.3" />
+            <circle cx="12.05" cy="11.83" r="1.16" fill={strokeColor} />
+          </g>
+        </g>
       </g>
     </svg>
   )

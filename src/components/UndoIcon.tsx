@@ -4,7 +4,7 @@ import { token } from '../../styled-system/tokens'
 import Icon from '../@types/Icon'
 
 /** An Undo icon. */
-const UndoIcon = ({ fill, size = 14, style = {}, className }: Icon) => {
+const UndoIcon = ({ fill, size = 18, style = {}, className }: Icon) => {
   const scalingFactor = 1.37
   const newSize = size * scalingFactor
   const strokeColor = style.fill || fill || token('colors.fg')
@@ -20,7 +20,7 @@ const UndoIcon = ({ fill, size = 14, style = {}, className }: Icon) => {
       height={newSize}
       viewBox='0 0 24 24'
       fill={fill || token('colors.fg')}
-      style={{ ...style, width: `${newSize}px`, height: `${newSize}px`, marginTop: '-1px' }}
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
       <title>Undo Icon</title>
       <g id='Layer_2' data-name='Layer 2'>

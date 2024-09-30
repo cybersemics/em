@@ -17,7 +17,7 @@ const NewThoughtIcon = ({ fill, size = 14, style = {}, className }: Icon) => {
       height={newSize}
       viewBox='0 0 24 24'
       fill={fill || token('colors.fg')}
-      style={{ ...style, width: `${newSize}px`, height: `${newSize}px`, marginTop: '-1px' }}
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
       <title>New Thought Icon</title>
       <g id='Layer_2' data-name='Layer 2'>

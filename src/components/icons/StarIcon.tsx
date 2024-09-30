@@ -18,7 +18,7 @@ const FavoriteIcon = ({ fill, size = 14, style = {}, className }: IconType) => {
       height={newSize}
       viewBox='0 0 24 24'
       fill='none'
-      style={{ ...style, width: `${newSize}px`, height: `${newSize}px`, marginTop: '-1px' }}
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
       <title>Favorite Icon</title>
       <g id='Layer_2' data-name='Layer 2'>
