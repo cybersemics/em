@@ -18,7 +18,7 @@ const onRef = (el: HTMLDivElement) => {
   const MIN_FONT_SIZE = 10
   const LOGO_SCALE_PX_PER_PERCENTAGE = 0.3
 
-  const contentEl = el.querySelector('.modal-content') as HTMLElement
+  const contentEl = el.querySelector('[aria-label=modal-content') as HTMLElement
 
   if (!contentEl) return
 
