@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
@@ -28,14 +28,11 @@ const useDragHold = ({
   // See: https://stackoverflow.com/questions/923782/disable-the-text-highlighting-magnifier-on-touch-hold-on-mobile-safari-webkit
   const [isPressed, setIsPressed] = useState(false)
   const dispatch = useDispatch()
-  // keep track of whether the drag moved; use true by default to prevent false positive onLongPressEnd calls
-  const didMove = useRef(true)
 
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = useCallback(
     () => {
       if (disabled) return
-      didMove.current = false
       setIsPressed(true)
       dispatch(dragHold({ value: true, simplePath, sourceZone }))
     },
@@ -52,14 +49,12 @@ const useDragHold = ({
       dispatch((dispatch, getState) => {
         if (getState().dragHold) {
           dispatch([dragHold({ value: false }), alert(null)])
+
+          if (toggleMulticursorOnLongPress) {
+            dispatch(toggleMulticursor({ path: simplePath }))
+          }
         }
       })
-
-      // the user did not move the thought, toggle the multicursor
-      if (!didMove.current && toggleMulticursorOnLongPress) {
-        didMove.current = true
-        dispatch(toggleMulticursor({ path: simplePath }))
-      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -69,11 +64,6 @@ const useDragHold = ({
   // so disable dragHold and isPressed as soon as we are dragging
   // or if no longer dragging and dragHold never got cleared.
   useEffect(() => {
-    // track that the drag actually moved
-    if (isDragging) {
-      didMove.current = true
-    }
-
     dispatch((dispatch, getState) => {
       const state = getState()
 
