@@ -17,15 +17,13 @@ const favorite: Shortcut = {
   multicursor: {
     enabled: true,
     preventSetCursor: true,
-    execMulticursor(cursors, dispatch, getState, e, { type }) {
+    execMulticursor(cursors, dispatch, getState, e, { type }, execMulticursor) {
       const state = getState()
       const numThougths = cursors.length
 
       const allFavorites = cursors.map(cursor => findDescendant(state, head(cursor), '=favorite')).every(Boolean)
 
-      for (const cursor of cursors) {
-        dispatch(toggleAttribute({ path: cursor, values: ['=favorite', 'true'] }))
-      }
+      execMulticursor()
 
       dispatch(
         alert(

@@ -4,7 +4,6 @@ import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { errorActionCreator as error } from '../actions/error'
-import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { AlertType, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
@@ -84,13 +83,10 @@ const archiveShortcut: Shortcut = {
     enabled: true,
     preventSetCursor: true,
     clearMulticursor: true,
-    execMulticursor(cursors, dispatch, getState, e, { type }) {
+    execMulticursor(cursors, dispatch, getState, e, { type }, execMulticursor) {
       const numThougths = cursors.length
 
-      for (const cursor of cursors) {
-        dispatch(setCursor({ path: cursor }))
-        exec(dispatch, getState, e, { type })
-      }
+      execMulticursor()
 
       dispatch(
         alert(`Deleted ${numThougths} thoughts.`, {
