@@ -23,6 +23,7 @@ const pinShortcut: Shortcut = {
   },
   multicursor: {
     enabled: true,
+    preventSetCursor: true,
     execMulticursor(cursors, dispatch) {
       const numThougths = cursors.length
 

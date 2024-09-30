@@ -32,7 +32,10 @@ const toggleTableViewShortcut: Shortcut = {
   description: 'Display the current thought as a table, where each subthought is a separate column.',
   gesture: 'rdlu',
   keyboard: { key: 't', alt: true, shift: true },
-  multicursor: true,
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+  },
   svg: Icon,
   canExecute: getState => {
     const state = getState()

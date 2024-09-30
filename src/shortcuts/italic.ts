@@ -12,7 +12,10 @@ const italic: Shortcut = {
   descriptionInverse: 'Removes italic formatting from the current thought.',
   svg: Icon,
   keyboard: { key: 'i', meta: true },
-  multicursor: true,
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+  },
   canExecute: getState => {
     const state = getState()
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))

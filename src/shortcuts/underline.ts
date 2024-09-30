@@ -12,7 +12,10 @@ const underline: Shortcut = {
   descriptionInverse: 'Removes the underline from the current thought.',
   svg: Icon,
   keyboard: { key: 'u', meta: true },
-  multicursor: true,
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+  },
   canExecute: getState => {
     const state = getState()
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))

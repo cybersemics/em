@@ -30,7 +30,10 @@ const headingShortcut = (level: HeadingLevel): Shortcut => ({
       }`
     : 'Sets a heading to normal text.',
   keyboard: { key: level.toString(), meta: true, alt: true },
-  multicursor: true,
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+  },
   // TODO: Create unique icon
   svg: SettingsIcon,
   canExecute: getState => {
