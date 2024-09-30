@@ -69,6 +69,7 @@ type TreeThought = {
   // keys of visible children
   // only used in table view to calculate the width of column 1
   visibleChildrenKeys?: string[]
+  childrenValues?: { col1Key: string; col1Value: string; col2Key: string; col2Value: string }[]
 }
 
 /** 2nd Pass: A thought with position information after its height has been measured. */
@@ -319,7 +320,15 @@ const linearizeTree = (
       style,
       thoughtId: child.id,
       ...(isTable
-        ? { visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)) }
+        ? {
+            visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)),
+            childrenValues: getChildren(state, child.id).map(child => ({
+              col1Key: child.id,
+              col1Value: child.value,
+              col2Key: getChildren(state, child.id)?.[0]?.id,
+              col2Value: getChildren(state, child.id)?.[0]?.value,
+            })),
+          }
         : null),
     }
 
@@ -518,10 +527,50 @@ const LayoutTree = () => {
 
       // set the width of table col1 to the minimum width of all visible thoughts in the column
       if (node.visibleChildrenKeys) {
-        const tableCol1Width = node.visibleChildrenKeys?.reduce(
+        let tableCol1Width = node.visibleChildrenKeys?.reduce(
           (accum, childKey) => Math.max(accum, sizes[childKey]?.width || 0),
           0,
         )
+
+        // Implementation of col1width = avg1/(avg1+avg2) * totalWidth
+        // with checks for minumum and maximum lengths.
+        if (node.childrenValues?.length) {
+          let col1Sum = 0
+          let col2Sum = 0
+
+          // Count how many entities are in the 2nd column.
+          // We don't do it for the 1st column, because
+          // we assume the row cannot exist without
+          // at least the 1st column's node.
+          let numCol2Entities = 0
+          let tableCol2Width = 0
+
+          node.childrenValues?.forEach(x => {
+            col1Sum += x.col1Value?.length || 0
+
+            if (x.col2Value?.length) {
+              col2Sum += x.col2Value?.length || 0
+              numCol2Entities++
+            }
+
+            tableCol2Width = Math.max(tableCol2Width, sizes[x.col2Key]?.width || 0)
+          })
+
+          const col1Avg = col1Sum / node.childrenValues.length
+          const col2Avg = numCol2Entities > 0 || col2Sum === 0 ? col2Sum / numCol2Entities : NaN
+
+          const minimumCol1Width = fontSize * 7
+          const maximumCol1Width = fontSize * 20
+
+          // Only override the tableCol1Width if we found values in the 2nd column.
+          if (!isNaN(col2Avg) && col2Avg > 0) {
+            tableCol1Width = Math.max(
+              minimumCol1Width,
+              Math.min(maximumCol1Width, (col1Avg / (col1Avg + col2Avg)) * (tableCol1Width + tableCol2Width)),
+            )
+          }
+        }
+
         if (tableCol1Width > 0) {
           tableCol1Widths.set(head(node.path), tableCol1Width)
         }
