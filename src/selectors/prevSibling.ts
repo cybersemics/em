@@ -41,10 +41,7 @@ export const prevSibling = (
     const message = `Thought ${thought.value} with Path ${path} missing from ${
       showContexts ? 'context view' : 'child'
     } of ${thought.parentId}`
-    console.error(message, { thought, siblings, parent: getThoughtById(state, thought.parentId) })
-    // During initial render, the thought may not be hydrated yet, so we return null instead of
-    // throwing an error. This only occurs when the page is loaded with a cursor.
-    return null
+    throw new Error(message)
   }
 
   const prev = siblings[index - 1]
