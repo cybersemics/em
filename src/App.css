@@ -594,19 +594,6 @@
   }
 }
 
-.status-close-x {
-  font-size: 16px;
-  top: 0;
-  right: 0;
-  padding: 0.4em 0.5em 1em 1em; /* extra tap area */
-  color: inherit;
-  text-decoration: none;
-}
-
-.popup-section {
-  margin-bottom: 50px;
-}
-
 /* higher precendence than ".dark .modal .a" */
 
 .animate {
