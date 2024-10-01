@@ -27,7 +27,6 @@ const IconAsc = ({ fill, size = 20, style = {}, className }: Icon) => {
       fill='none'
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
-      <title>Sort Ascending</title>
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
           <g id='_10-sort' data-name='10-sort'>
@@ -106,7 +105,6 @@ const IconDesc = ({ fill, size = 20, style = {}, className }: Icon) => {
       fill='none'
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
-      <title>Sort Descending</title>
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
           <g id='_11-sort-descending' data-name='11-sort-descending'>

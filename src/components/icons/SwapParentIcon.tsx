@@ -23,7 +23,6 @@ const SwapParentIcon = ({ fill, size = 20, style = {}, className }: IconType) =>
         height: `${newSize}px`,
       }}
     >
-      <title>Swap Parent Icon</title>
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
           <g id='_17-swap-parent' data-name='17-swap-parent'>

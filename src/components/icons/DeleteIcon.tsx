@@ -1,23 +1,73 @@
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import Icon from '../../@types/Icon'
+import IconType from '../../@types/Icon'
 
-/** A delete icon. */
-const DeleteIcon = ({ fill, size = 18, style }: Icon) => {
+/** Delete icon. */
+const DeleteIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+  const scalingFactor = 1.37
+  const newSize = size * scalingFactor
+  const strokeColor = style.fill || fill || token('colors.fg')
+
   return (
     <svg
-      className={icon()}
-      width={size}
-      height={size}
-      fill={fill || token('colors.fg')}
-      viewBox='50 0 600 600'
-      style={style}
+      className={icon({ className })}
+      xmlns='http://www.w3.org/2000/svg'
+      width={newSize}
+      height={newSize}
+      viewBox='0 0 24 24'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+      fill='none'
     >
-      <g>
-        <path d='m260.91 178.18h25.453v280h-25.453z' />
-        <path d='m413.64 178.18h25.453v280h-25.453z' />
-        <path d='m579.09 89.09h-114.55l0.003906-38.18c0-20.363-17.816-38.184-38.184-38.184h-152.73c-20.363 0-38.184 17.82-38.184 38.184v38.184l-114.54-0.003906v25.453h38.184l22.91 397.09c0 20.363 17.816 35.637 38.184 35.637h257.09c20.363 0 38.184-15.273 38.184-35.637l22.91-397.09 40.719 0.003906zm-318.18-38.18c0-7.6367 5.0898-12.727 12.727-12.727h152.73c7.6367 0 12.727 5.0898 12.727 12.727v38.184h-178.18zm231.64 458.18c0 7.6367-5.0898 12.727-12.727 12.727h-259.64c-7.6367 0-12.727-5.0898-12.727-12.727l-22.91-394.54h328.36z' />
-        <path d='m337.27 178.18h25.453v280h-25.453z' />
+      <g id='Layer_2' data-name='Layer 2'>
+        <g id='Layer_3' data-name='Layer 3'>
+          <g id='_22-trash' data-name='22-trash'>
+            <rect width='24' height='24' fill='none' />
+            <path
+              d='M4.66,6.11H19.34l-.9,14a2,2,0,0,1-2,1.91H7.59a2,2,0,0,1-2-1.91Z'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <line
+              x1='2.95'
+              y1='6.11'
+              x2='21.05'
+              y2='6.11'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <path
+              d='M7.17,6.11V3.47a1.07,1.07,0,0,1,1.12-1h7.42a1.07,1.07,0,0,1,1.11,1V6.11'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <line
+              x1='9.67'
+              y1='11.01'
+              x2='9.67'
+              y2='17.14'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <line
+              x1='14.14'
+              y1='11.01'
+              x2='14.14'
+              y2='17.14'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+          </g>
+        </g>
       </g>
     </svg>
   )

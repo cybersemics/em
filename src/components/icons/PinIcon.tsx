@@ -19,7 +19,6 @@ const PinIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
       fill={fill || token('colors.fg')}
     >
-      <title>Pin Icon</title>
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
           <g id='_07-pin' data-name='07-pin'>

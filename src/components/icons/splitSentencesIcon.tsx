@@ -2,8 +2,8 @@ import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 
-/** Device icon. */
-const DeviceIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+/** SplitSentences icon. */
+const splitSentencesIcon = ({ fill = 'black', size = 20, style = {}, className }: IconType) => {
   const scalingFactor = 1.37
   const newSize = size * scalingFactor
   const strokeColor = style.fill || fill || token('colors.fg')
@@ -20,71 +20,47 @@ const DeviceIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
     >
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
-          <g id='_26-device-management' data-name='26-device-management'>
-            <rect className='cls-1' width='24' height='24' fill='none' />
-            <path
-              d='M8.25,6.22v-2a2.44,2.44,0,0,1,2.44-2.44h8.45a2.44,2.44,0,0,1,2.44,2.44v12.3a2.44,2.44,0,0,1-2.44,2.44H12.39'
+          <g id='_23-split-sentences' data-name='23-split-sentences'>
+            <rect width='24' height='24' fill='none' />
+            <line
+              x1='11.77'
+              y1='12.05'
+              x2='20.76'
+              y2='21.04'
               fill='none'
               stroke={strokeColor}
               strokeLinecap='round'
               strokeLinejoin='round'
             />
-            <rect
-              x='2.81'
-              y='6.22'
-              width='9.58'
-              height='16.12'
-              rx='2'
+            <polyline
+              points='21.41 16.64 21.41 21.7 16.7 21.7'
               fill='none'
               stroke={strokeColor}
               strokeLinecap='round'
               strokeLinejoin='round'
             />
             <line
-              x1='2.81'
-              y1='18.38'
-              x2='12.39'
-              y2='18.38'
+              x1='11.77'
+              y1='12.04'
+              x2='20.76'
+              y2='3.05'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <polyline
+              points='21.41 7.45 21.41 2.39 16.7 2.39'
               fill='none'
               stroke={strokeColor}
               strokeLinecap='round'
               strokeLinejoin='round'
             />
             <line
-              x1='2.81'
-              y1='8.94'
-              x2='12.39'
-              y2='8.94'
-              fill='none'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            />
-            <line
-              x1='7.6'
-              y1='20.39'
-              x2='7.6'
-              y2='20.39'
-              fill='none'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            />
-            <line
-              x1='14.91'
-              y1='15.96'
-              x2='14.91'
-              y2='15.96'
-              fill='none'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            />
-            <line
-              x1='15.56'
-              y1='4.36'
-              x2='14.26'
-              y2='4.36'
+              x1='11.77'
+              y1='12.05'
+              x2='2.59'
+              y2='12.05'
               fill='none'
               stroke={strokeColor}
               strokeLinecap='round'
@@ -97,4 +73,4 @@ const DeviceIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   )
 }
 
-export default DeviceIcon
+export default splitSentencesIcon

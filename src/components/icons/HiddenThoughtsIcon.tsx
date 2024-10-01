@@ -1,59 +1,52 @@
-import { cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import Icon from '../../@types/Icon'
+import IconType from '../../@types/Icon'
 
-/** New thought icon. */
-const NewThoughtIcon = ({ fill, size = 14, style = {}, className }: Icon) => {
+/** HiddenThoughts icon. */
+const HiddenThoughtsIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   const scalingFactor = 1.37
   const newSize = size * scalingFactor
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (
     <svg
-      className={cx(icon(), className)}
+      className={icon({ className })}
       xmlns='http://www.w3.org/2000/svg'
       width={newSize}
       height={newSize}
       viewBox='0 0 24 24'
-      fill={fill || token('colors.fg')}
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+      fill='none'
     >
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
-          <g id='_03-new-thought' data-name='03-new-thought'>
+          <g id='_24-show-hidden-thoughts' data-name='24-show-hidden-thoughts'>
             <rect width='24' height='24' fill='none' />
+            <path
+              d='M21.73,10.89a2,2,0,0,1,0,2.21A11.72,11.72,0,0,1,12,18.5a11.72,11.72,0,0,1-9.73-5.4,2,2,0,0,1,0-2.21A11.71,11.71,0,0,1,12,5.5,11.71,11.71,0,0,1,21.73,10.89Z'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
             <circle
-              className='cls-2'
               cx='12'
-              cy='12'
-              r='10.15'
+              cy='11.99'
+              r='3.87'
+              fill='none'
               stroke={strokeColor}
               strokeLinecap='round'
               strokeLinejoin='round'
-              fill='none'
             />
             <line
-              className='cls-2'
-              x1='12'
-              y1='7.37'
-              x2='12'
-              y2='16.63'
+              x1='19.29'
+              y1='4.71'
+              x2='4.69'
+              y2='19.3'
+              fill='none'
               stroke={strokeColor}
               strokeLinecap='round'
               strokeLinejoin='round'
-              fill='none'
-            />
-            <line
-              className='cls-2'
-              x1='7.37'
-              y1='12'
-              x2='16.63'
-              y2='12'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              fill='none'
             />
           </g>
         </g>
@@ -62,4 +55,4 @@ const NewThoughtIcon = ({ fill, size = 14, style = {}, className }: Icon) => {
   )
 }
 
-export default NewThoughtIcon
+export default HiddenThoughtsIcon

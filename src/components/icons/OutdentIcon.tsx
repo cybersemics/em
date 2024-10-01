@@ -17,7 +17,6 @@ const OutdentIcon = ({ fill, size = 14, style = {}, className }: IconType) => {
       viewBox='0 0 24 24'
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
-      <title>Outdent Icon</title>
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
           <g id='_05-outdent' data-name='05-outdent'>

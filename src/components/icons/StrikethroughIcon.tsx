@@ -18,7 +18,6 @@ const StrikethroughIcon = ({ fill, size = 20, style = {}, className }: IconType)
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
       fill='none'
     >
-      <title>Strikethrough Icon</title>
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
           <g id='_16-strikethrough' data-name='16-strikethrough'>

@@ -19,7 +19,6 @@ const TableViewIcon = ({ fill, size = 20, style = {}, className }: IconType) => 
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
       fill='none'
     >
-      <title>Table View Icon</title>
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
           <g id='_09-table-view' data-name='09-table-view'>

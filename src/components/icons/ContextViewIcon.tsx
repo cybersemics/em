@@ -18,7 +18,6 @@ const ContextViewIcon = ({ fill, size = 20, style = {}, className }: IconType) =
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
       fill='none'
     >
-      <title>Context View Icon</title>
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
           <g id='_18-context-view' data-name='18-context-view'>
