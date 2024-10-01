@@ -1,9 +1,9 @@
-import { icon } from '../../styled-system/recipes'
-import { token } from '../../styled-system/tokens'
-import IconType from '../@types/Icon'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
+import IconType from '../../@types/Icon'
 
-/** Search icon. */
-const SearchIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+/** HomeToolbar icon. */
+const HomeToolbarIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   const scalingFactor = 1.37
   const newSize = size * scalingFactor
   const strokeColor = style.fill || fill || token('colors.fg')
@@ -20,21 +20,20 @@ const SearchIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
     >
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
-          <g id='_12-search' data-name='12-search'>
+          <g id='_11-home' data-name='11-home'>
             <rect className='cls-1' width='24' height='24' fill='none' />
-            <path
+            <polygon
               className='cls-2'
-              d='M10.15,17.75A7.2,7.2,0,1,0,3,10.55,7.2,7.2,0,0,0,10.15,17.75Z'
+              points='20.88 21.25 20.88 8.89 12.22 2.06 3.56 8.89 3.56 21.25 20.88 21.25'
               stroke={strokeColor}
               strokeLinejoin='round'
               fill='none'
             />
             <path
               className='cls-3'
-              d='M21.12,21.52l-4.29-4.29'
+              d='M9.87,21.25V16.61a2.35,2.35,0,0,1,2.35-2.35h0a2.35,2.35,0,0,1,2.35,2.35v4.64'
               stroke={strokeColor}
-              strokeLinejoin='round'
-              strokeLinecap='round'
+              strokeMiterlimit='10'
               fill='none'
             />
           </g>
@@ -44,4 +43,4 @@ const SearchIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   )
 }
 
-export default SearchIcon
+export default HomeToolbarIcon

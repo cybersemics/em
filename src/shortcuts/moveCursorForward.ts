@@ -1,7 +1,7 @@
 import { Dispatch } from 'react'
 import { Key } from 'ts-key-enum'
 import Shortcut from '../@types/Shortcut'
-import SettingsIcon from '../components/icons/SettingsIcon'
+import MoveCursorForwardIcon from '../components/icons/MoveCursorForwardIcon'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildren } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -28,7 +28,7 @@ const moveCursorForward: Shortcut = {
   description: 'Move the current thought to the end of the previous thought or to next column in table view.',
   keyboard: { key: Key.Tab },
   // TODO: Create unique icon
-  svg: SettingsIcon,
+  svg: MoveCursorForwardIcon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState) => {
     const state = getState()

@@ -1,9 +1,9 @@
-import { icon } from '../../styled-system/recipes'
-import { token } from '../../styled-system/tokens'
-import IconType from '../@types/Icon'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
+import IconType from '../../@types/Icon'
 
-/** Search icon. */
-const SearchIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+/** CommandPalette icon. */
+const CommandPaletteIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   const scalingFactor = 1.37
   const newSize = size * scalingFactor
   const strokeColor = style.fill || fill || token('colors.fg')
@@ -20,21 +20,14 @@ const SearchIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
     >
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
-          <g id='_12-search' data-name='12-search'>
+          <g id='_27-command-palette' data-name='27-command-palette'>
             <rect className='cls-1' width='24' height='24' fill='none' />
             <path
               className='cls-2'
-              d='M10.15,17.75A7.2,7.2,0,1,0,3,10.55,7.2,7.2,0,0,0,10.15,17.75Z'
+              d='M15.41,12v6.25a2.71,2.71,0,1,0,2.7-2.71H5.48a2.71,2.71,0,1,0,2.71,2.71V5.62A2.71,2.71,0,1,0,5.48,8.33H18.11a2.71,2.71,0,1,0-2.7-2.71Z'
               stroke={strokeColor}
-              strokeLinejoin='round'
-              fill='none'
-            />
-            <path
-              className='cls-3'
-              d='M21.12,21.52l-4.29-4.29'
-              stroke={strokeColor}
-              strokeLinejoin='round'
               strokeLinecap='round'
+              strokeLinejoin='round'
               fill='none'
             />
           </g>
@@ -44,4 +37,4 @@ const SearchIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   )
 }
 
-export default SearchIcon
+export default CommandPaletteIcon

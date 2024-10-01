@@ -1,9 +1,9 @@
-import { icon } from '../../styled-system/recipes'
-import { token } from '../../styled-system/tokens'
-import IconType from '../@types/Icon'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
+import IconType from '../../@types/Icon'
 
-/** Search icon. */
-const SearchIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+/** JumpForward icon. */
+const JumpForwardIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   const scalingFactor = 1.37
   const newSize = size * scalingFactor
   const strokeColor = style.fill || fill || token('colors.fg')
@@ -20,21 +20,20 @@ const SearchIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
     >
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
-          <g id='_12-search' data-name='12-search'>
+          <g id='_08-jump-forward' data-name='08-jump-forward'>
             <rect className='cls-1' width='24' height='24' fill='none' />
             <path
               className='cls-2'
-              d='M10.15,17.75A7.2,7.2,0,1,0,3,10.55,7.2,7.2,0,0,0,10.15,17.75Z'
+              d='M17,6.44,22,11.52a.72.72,0,0,1,0,1L17,17.6'
               stroke={strokeColor}
               strokeLinejoin='round'
               fill='none'
             />
             <path
-              className='cls-3'
-              d='M21.12,21.52l-4.29-4.29'
+              className='cls-2'
+              d='M22.24,12H4.07a2.31,2.31,0,0,0-2.26,2.8h0a2.32,2.32,0,0,0,2.66,1.8l.78-.14A2.31,2.31,0,0,0,7,13.33L4.49,7.05'
               stroke={strokeColor}
               strokeLinejoin='round'
-              strokeLinecap='round'
               fill='none'
             />
           </g>
@@ -44,4 +43,4 @@ const SearchIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   )
 }
 
-export default SearchIcon
+export default JumpForwardIcon
