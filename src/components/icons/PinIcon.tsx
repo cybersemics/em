@@ -2,11 +2,11 @@ import { cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
+import { FONT_SCALING_FACTOR } from '../../constants'
 
 /** Pin icon. */
 const PinIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
-  const scalingFactor = 1.37 // Adjust as needed
-  const newSize = size * scalingFactor
+  const newSize = size * FONT_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (

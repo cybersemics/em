@@ -1,13 +1,11 @@
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
+import { FONT_SCALING_FACTOR } from '../../constants'
 
-/**
- *
- */
+/** Indent icon. */
 const IndentIcon = ({ fill, size = 14, style = {}, className }: IconType) => {
-  const scalingFactor = 1.37
-  const newSize = size * scalingFactor
+  const newSize = size * FONT_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (

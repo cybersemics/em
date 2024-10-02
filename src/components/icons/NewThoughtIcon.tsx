@@ -2,11 +2,11 @@ import { cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
+import { FONT_SCALING_FACTOR } from '../../constants'
 
 /** New thought icon. */
 const NewThoughtIcon = ({ fill, size = 14, style = {}, className }: Icon) => {
-  const scalingFactor = 1.37
-  const newSize = size * scalingFactor
+  const newSize = size * FONT_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (
