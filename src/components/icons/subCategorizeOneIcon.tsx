@@ -3,7 +3,7 @@ import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 import { FONT_SCALING_FACTOR } from '../../constants'
 
-/** Bold icon. */
+/** Sub Categorize One icon. */
 const subCategorizeOneIcon = ({ fill = 'black', size = 20, style = {}, className }: IconType) => {
   const newSize = size * FONT_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')

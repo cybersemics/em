@@ -16,48 +16,13 @@ const NewThoughtIcon = ({ fill, size = 14, style = {}, className }: Icon) => {
       width={newSize}
       height={newSize}
       viewBox='0 0 24 24'
-      fill={fill || token('colors.fg')}
+      fill='none' // Set fill to none
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
-      <g id='Layer_2' data-name='Layer 2'>
-        <g id='Layer_3' data-name='Layer 3'>
-          <g id='_03-new-thought' data-name='03-new-thought'>
-            <rect width='24' height='24' fill='none' />
-            <circle
-              className='cls-2'
-              cx='12'
-              cy='12'
-              r='10.15'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              fill='none'
-            />
-            <line
-              className='cls-2'
-              x1='12'
-              y1='7.37'
-              x2='12'
-              y2='16.63'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              fill='none'
-            />
-            <line
-              className='cls-2'
-              x1='7.37'
-              y1='12'
-              x2='16.63'
-              y2='12'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              fill='none'
-            />
-          </g>
-        </g>
-      </g>
+      <rect width='24' height='24' fill='none' />
+      <line x1='22.3' y1='12' x2='11.66' y2='12' stroke={strokeColor} strokeLinejoin='round' />
+      <line x1='5.79' y1='9' x2='5.79' y2='15' stroke={strokeColor} strokeLinecap='round' />
+      <line x1='2.79' y1='12' x2='8.79' y2='12' stroke={strokeColor} strokeLinecap='round' />
     </svg>
   )
 }
