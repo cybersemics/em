@@ -58,6 +58,7 @@ const ColorSwatch: FC<{
     if (hex.length === 7) return hex + 'ff'
     return hex
   }
+  /** Define the color and background color regex to get the current color of current thought */
   const colorRegex = /color="(#[0-9a-fA-F]{6})"/g
   const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
   const selected = useMemo(() => {
@@ -71,6 +72,7 @@ const ColorSwatch: FC<{
       const currentThoughtValue = currentThought.value
       const colorMatches = currentThoughtValue.match(colorRegex)
       let matchColor, match
+      /** Get the colors and background colors used in current thought's value */
       const colors: Set<string> = new Set()
       if (colorMatches) {
         colorMatches.forEach(match => colors.add(match.slice(7, -1)))
