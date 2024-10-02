@@ -57,7 +57,6 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const isButtonActive = customize ? selected : commandState !== undefined ? commandState : isShortcutActive
 
   const dragShortcutZone = useSelector(state => state.dragShortcutZone)
-  const showColorPicker = useSelector(state => state.showColorPicker)
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(() => state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(() => state))
@@ -165,7 +164,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         // offset top to avoid changing container height
         // marginBottom: isPressing ? -10 : 0,
         // top: isButtonExecutable && isPressing ? 10 : 0,
-        transform: `translateY(${isButtonExecutable && isPressing && !longPress.isPressed && !isDragging && !showColorPicker ? 0.25 : 0}em`,
+        transform: `translateY(${isButtonExecutable && isPressing && !longPress.isPressed && !isDragging ? 0.25 : 0}em`,
         position: 'relative',
         cursor: isButtonExecutable ? 'pointer' : 'default',
         transition: 'transform 80ms ease-out, max-width 80ms ease-out, margin-left 80ms ease-out',

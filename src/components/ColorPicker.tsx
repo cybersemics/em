@@ -2,11 +2,13 @@ import { rgbToHex } from '@mui/material'
 import React, { FC, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Thought from '../@types/Thought'
+import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { textColorActionCreator as textColor } from '../actions/textColor'
 import { isTouch } from '../browser'
-import * as selection from '../device/selection'
+// import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
+import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
 import fastClick from '../util/fastClick'
@@ -48,6 +50,7 @@ const ColorSwatch: FC<{
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const currentThought = useSelector(state => !!state.cursor && getThoughtById(state, head(state.cursor))) as Thought
+  const simplePath = useSelector(state => simplifyPath(state, state.cursor!))
   size = size || fontSize * 1.2
 
   /** A function that adds an alpha channel to a hex color. */
@@ -64,10 +67,10 @@ const ColorSwatch: FC<{
     const selectedBackHexColor = cursorStyle?.backgroundColor
       ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor))
       : undefined
-    if ((cursorStyle?.color === undefined && cursorStyle?.backgroundColor === undefined) || !selection.isThought()) {
+    if (cursorStyle?.color === undefined && cursorStyle?.backgroundColor === undefined) {
       const currentThoughtValue = currentThought.value
       const colorMatches = currentThoughtValue.match(colorRegex)
-      let matchColor, matchBgColor, match
+      let matchColor, match
       const colors: Set<string> = new Set()
       if (colorMatches) {
         colorMatches.forEach(match => colors.add(match.slice(7, -1)))
@@ -76,7 +79,7 @@ const ColorSwatch: FC<{
 
       const bgColors: Set<string> = new Set()
       while ((match = bgColorRegex.exec(currentThoughtValue)) !== null) if (match[1]) bgColors.add(match[1])
-      matchBgColor = bgColors.size > 1 ? null : bgColors.values().next().value
+      const matchBgColor = bgColors.size > 1 ? null : bgColors.values().next().value
 
       return !!(
         (textHexColor && textHexColor === (matchColor && addAlphaToHex(rgbToHex(matchColor)))) ||
@@ -87,19 +90,29 @@ const ColorSwatch: FC<{
       (textHexColor && textHexColor === selectedTextHexColor) ||
       (backHexColor && backHexColor === selectedBackHexColor)
     )
-  }, [cursorStyle, backgroundColor, color])
+  }, [cursorStyle, backgroundColor, color, bgColorRegex, colorRegex, currentThought.value])
 
   /** Toggles the text color to the clicked swatch. */
   const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
-    // Apply text color to the selection
-    if (label === 'default') dispatch(formatSelection('removeFormat'))
+    // stop toolbar button dip
+    e.stopPropagation()
+    e.preventDefault()
+
+    if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg))
+    else dispatch(formatSelection('foreColor', colors.fg))
+    // Apply background color to the selection
+    if (backgroundColor && backgroundColor !== colors.bg)
+      dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
     else {
-      if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg, colors))
-      else dispatch(formatSelection('foreColor', colors.fg, colors))
-      // Apply background color to the selection
-      if (backgroundColor && backgroundColor !== colors.bg)
-        dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor, colors))
-      else dispatch(formatSelection('backColor', colors.bg, colors))
+      // dispatch(formatSelection('backColor', colors.bg))
+      const thoughtContentEditable = document.querySelector(`[aria-label="editable-${currentThought.id}"]`)
+      const styledElements = thoughtContentEditable?.querySelectorAll('[style]')
+      styledElements?.forEach(el => {
+        el.removeAttribute('style')
+      })
+      dispatch(
+        editThought({ oldValue: currentThought.value, newValue: thoughtContentEditable?.innerHTML!, path: simplePath }),
+      )
     }
 
     dispatch(
