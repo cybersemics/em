@@ -26,7 +26,6 @@ describe('removeMulticursor', () => {
     expect(stateNew.multicursors).toEqual({
       [hashPath(b)]: b,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(contextToPath(stateNew, ['a'])!)
   })
 
   it('does nothing when removing non-existent multicursor', () => {
@@ -45,7 +44,6 @@ describe('removeMulticursor', () => {
     expect(stateNew.multicursors).toEqual({
       [hashPath(a)]: a,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(a)
   })
 
   it('removes last multicursor', () => {
@@ -59,6 +57,5 @@ describe('removeMulticursor', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.multicursors).toEqual({})
-    expect(stateNew.cursorBeforeMulticursor).toEqual(contextToPath(stateNew, ['a'])!)
   })
 })

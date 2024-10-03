@@ -16,7 +16,6 @@ const favorite: Shortcut = {
   descriptionInverse: 'Remove the current thought from your Favorites list.',
   multicursor: {
     enabled: true,
-    preventSetCursor: true,
     execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
       const state = getState()
       const numThougths = cursors.length

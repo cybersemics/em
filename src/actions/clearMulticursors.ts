@@ -6,7 +6,6 @@ const clearMulticursors = (state: State): State => {
   return {
     ...state,
     multicursors: {},
-    cursorBeforeMulticursor: null,
   }
 }
 

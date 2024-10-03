@@ -31,7 +31,6 @@ interface State {
    * See: /actions/cursorCleared.
    */
   cursorCleared: boolean
-  cursorBeforeMulticursor: Path | null
   cursorBeforeQuickAdd: Path | null
   cursorBeforeSearch: Path | null
   cursorHistory: Path[]

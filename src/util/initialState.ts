@@ -111,7 +111,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     cursor: null,
     cursorBeforeSearch: null,
     cursorBeforeQuickAdd: null,
-    cursorBeforeMulticursor: null,
     cursorCleared: false,
     cursorHistory: [],
     cursorInitialized: false,

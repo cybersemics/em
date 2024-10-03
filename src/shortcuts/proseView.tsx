@@ -36,7 +36,7 @@ const proseViewShortcut: Shortcut = {
   description: 'Display subthoughts of the current thought as indented paragraphs.',
   gesture: 'rudr',
   keyboard: { key: 'p', shift: true, alt: true },
-  multicursor: { enabled: true, preventSetCursor: true },
+  multicursor: true,
   svg: Icon,
   canExecute: getState => {
     const state = getState()

@@ -152,7 +152,6 @@ const setCursor = (
     ...(!preserveMulticursor
       ? {
           multicursors: {},
-          cursorBeforeMulticursor: null,
         }
       : null),
     ...(!thoughtsResolved ? { showColorPicker: false } : null),

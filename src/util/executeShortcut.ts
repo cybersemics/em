@@ -135,7 +135,9 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
     return
   }
 
-  const cursorBeforeMulticursor = state.cursorBeforeMulticursor
+  // Save the cursor before execution
+  const cursorBeforeExecution = state.cursor
+
   // For each multicursor, place the cursor on the path and execute the shortcut by calling executeShortcut.
   const paths = documentSort(state, Object.values(state.multicursors))
 
@@ -174,8 +176,8 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
   }
 
   // Restore the cursor to its original position if not prevented.
-  if (!multicursorConfig.preventSetCursor && cursorBeforeMulticursor) {
-    store.dispatch(setCursor({ path: recomputePath(store.getState(), head(cursorBeforeMulticursor)) }))
+  if (!multicursorConfig.preventSetCursor && cursorBeforeExecution) {
+    store.dispatch(setCursor({ path: recomputePath(store.getState(), head(cursorBeforeExecution)) }))
     requestAnimationFrame(() => {
       selection.clear()
     })

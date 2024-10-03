@@ -19,7 +19,6 @@ describe('clearMulticursors', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.multicursors).toEqual({})
-    expect(stateNew.cursorBeforeMulticursor).toBeNull()
   })
 
   it('does nothing when there are no multicursors', () => {
@@ -28,15 +27,5 @@ describe('clearMulticursors', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.multicursors).toEqual({})
-    expect(stateNew.cursorBeforeMulticursor).toBeNull()
-  })
-
-  it('clears cursorBeforeMulticursor', () => {
-    const steps = [newThought('a'), setCursor(['a']), addMulticursorAtFirstMatch(['a']), clearMulticursors]
-
-    const stateNew = reducerFlow(steps)(initialState())
-
-    expect(stateNew.multicursors).toEqual({})
-    expect(stateNew.cursorBeforeMulticursor).toBeNull()
   })
 })

@@ -17,7 +17,6 @@ const toggleSortShortcut: Shortcut = {
   keyboard: { key: 's', meta: true, alt: true },
   multicursor: {
     enabled: true,
-    preventSetCursor: true,
     filter: 'first-sibling',
   },
   svg: Icon,

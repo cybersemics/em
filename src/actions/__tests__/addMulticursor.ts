@@ -26,7 +26,6 @@ describe('addMulticursor', () => {
       [hashPath(a)]: a,
       [hashPath(b)]: b,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(contextToPath(stateNew, ['a'])!)
   })
 
   it('adds current cursor as first multicursor', () => {
@@ -44,7 +43,6 @@ describe('addMulticursor', () => {
     expect(stateNew.multicursors).toEqual({
       [hashPath(b)]: b,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(b)
   })
 
   it('adds second multicursor', () => {
@@ -65,7 +63,6 @@ describe('addMulticursor', () => {
       [hashPath(a)]: a,
       [hashPath(b)]: b,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(b)
   })
 
   it('adds subthought to multicursor', () => {
@@ -86,7 +83,6 @@ describe('addMulticursor', () => {
       [hashPath(a)]: a,
       [hashPath(a1)]: a1,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(a)
   })
 
   it('do nothing when adding existing multicursor', () => {
@@ -105,7 +101,6 @@ describe('addMulticursor', () => {
     expect(stateNew.multicursors).toEqual({
       [hashPath(b)]: b,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(b)
   })
 
   it('add multicursor when there is no cursor', () => {
@@ -123,7 +118,6 @@ describe('addMulticursor', () => {
     expect(stateNew.multicursors).toEqual({
       [hashPath(a)]: a,
     })
-    expect(stateNew.cursorBeforeMulticursor).toBeNull()
   })
 
   it('add multicursor and ignore cursor', () => {
@@ -136,12 +130,10 @@ describe('addMulticursor', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    const a = contextToPath(stateNew, ['a'])!
     const b = contextToPath(stateNew, ['b'])!
 
     expect(stateNew.multicursors).toEqual({
       [hashPath(b)]: b,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(a)
   })
 })

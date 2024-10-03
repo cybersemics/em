@@ -23,7 +23,6 @@ describe('addAllMulticursor', () => {
       [hashPath(b)]: b,
       [hashPath(c)]: c,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(b)
   })
 
   it('adds all root thoughts to multicursor when no cursor is set', () => {
@@ -40,7 +39,6 @@ describe('addAllMulticursor', () => {
       [hashPath(b)]: b,
       [hashPath(c)]: c,
     })
-    expect(stateNew.cursorBeforeMulticursor).toBeNull()
   })
 
   it('does not add subthoughts to multicursor', () => {
@@ -62,7 +60,6 @@ describe('addAllMulticursor', () => {
       [hashPath(a)]: a,
       [hashPath(b)]: b,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(a)
   })
 
   it('works with existing multicursors', () => {
@@ -89,7 +86,6 @@ describe('addAllMulticursor', () => {
       [hashPath(c)]: c,
       [hashPath(d)]: d,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(b)
   })
 
   it('selects all siblings when a subthought is selected', () => {
@@ -113,6 +109,5 @@ describe('addAllMulticursor', () => {
       [hashPath(a2)]: a2,
       [hashPath(a3)]: a3,
     })
-    expect(stateNew.cursorBeforeMulticursor).toEqual(a2)
   })
 })

@@ -16,7 +16,6 @@ const addMulticursor = (state: State, { path, ignoreCursor }: { path: Path; igno
     isTouch && isEmpty ? setCursor({ path: null }) : null,
     state => ({
       ...state,
-      cursorBeforeMulticursor: isEmpty ? state.cursor : state.cursorBeforeMulticursor,
       multicursors: {
         ...state.multicursors,
         [hashPath(path)]: path,
