@@ -1,6 +1,11 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { indentActionCreator as indent } from '../actions/indent'
+import attributeEquals from '../selectors/attributeEquals'
+import prevSibling from '../selectors/prevSibling'
+import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
+import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorForward from './moveCursorForward'
 
@@ -33,7 +38,24 @@ const indentShortcut: Shortcut = {
   overlay: {
     keyboard: moveCursorForward.keyboard,
   },
-  multicursor: moveCursorForward.multicursor,
+  multicursor: {
+    enabled: true,
+    filter: 'prefer-ancestor',
+    execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
+      // Make sure we can execute for all cursors before proceeding.
+      // This is shifted here to allow `e.preventDefault()` to work.
+      const canExecute = cursors.every(cursor => {
+        const path = simplifyPath(getState(), cursor)
+        const parentId = head(rootedParentOf(getState(), path))
+        const isTable = attributeEquals(getState(), parentId, '=view', 'Table')
+        return isDocumentEditable() && (isTable || !!prevSibling(getState(), cursor))
+      })
+
+      if (!canExecute) return
+
+      return execAll()
+    },
+  },
   gesture: 'rlr',
   svg: Icon,
   canExecute: getState => {
