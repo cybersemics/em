@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
-import loadResource from '../actions/loadResource'
+import { loadResourceActionCreator as loadResource } from '../actions/loadResource'
 import contextToPath from '../selectors/contextToPath'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'

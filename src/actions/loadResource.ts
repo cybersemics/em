@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import Path from '../@types/Path'
 import Thunk from '../@types/Thunk'
 import { errorActionCreator as error } from '../actions/error'
@@ -11,7 +12,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 
 /** Checks =src in the given path. If it exists, load the url and import it into the given context. Set a loading status in state.resourceCache to prevent prevent redundant fetches. */
-const loadResourceActionCreator =
+export const loadResourceActionCreator =
   (path: Path): Thunk =>
   (dispatch, getState) => {
     const state = getState()
@@ -53,5 +54,3 @@ const loadResourceActionCreator =
       setResourceCache(true)
     }
   }
-
-export default loadResourceActionCreator
