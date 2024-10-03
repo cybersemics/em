@@ -8,7 +8,6 @@ const jumpBackShortcut: Shortcut = {
   description: 'Move the cursor to the last thought that was edited.',
   keyboard: { key: 'j', meta: true },
   gesture: 'lul',
-  // TODO: Create unique icon
   svg: JumpBackIcon,
   exec: (dispatch, getState) => {
     dispatch(jump(-1))

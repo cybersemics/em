@@ -3,8 +3,8 @@ import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 import { FONT_SCALING_FACTOR } from '../../constants'
 
-/** Help icon. */
-const HelpIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+/** Heading4 icon. */
+const Heading4Icon = ({ fill, size = 20, style = {}, className }: IconType) => {
   const newSize = size * FONT_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
@@ -20,24 +20,13 @@ const HelpIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
     >
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
-          <g id='_13-help' data-name='13-help'>
+          <g id='_21-heading4' data-name='21-heading4'>
             <rect width='24' height='24' fill='none' />
+            <path d='M2.68,18.18V6.72H4.19v4.71h6V6.72h1.51V18.18H10.15v-5.4h-6v5.4Z' fill={strokeColor} />
             <path
-              d='M12.22,13.51v-.23a1.76,1.76,0,0,1,.94-1.49,1.69,1.69,0,0,0,.91-1.45,1.85,1.85,0,1,0-3.7,0'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              fill='none'
+              d='M18.12,18.18V15.44h-5V14.15l5.23-7.43h1.15v7.43h1.55v1.29H19.53v2.74Zm0-4V9l-3.58,5.17Z'
+              fill={strokeColor}
             />
-            <path
-              d='M12.21,16.18h0'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              fill='none'
-              strokeWidth='1.5'
-            />
-            <circle cx='12.22' cy='12' r='9.85' fill='none' stroke={strokeColor} strokeLinejoin='round' />
           </g>
         </g>
       </g>
@@ -45,4 +34,4 @@ const HelpIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   )
 }
 
-export default HelpIcon
+export default Heading4Icon

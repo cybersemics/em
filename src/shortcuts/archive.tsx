@@ -1,9 +1,9 @@
 import { Key } from 'ts-key-enum'
-import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { errorActionCreator as error } from '../actions/error'
+import ArchiveIcon from '../components/icons/ArchiveIcon'
 import { AlertType, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
@@ -54,31 +54,12 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   }
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
-const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
-  <svg
-    version='1.1'
-    className='icon'
-    xmlns='http://www.w3.org/2000/svg'
-    width={size}
-    height={size}
-    fill={fill}
-    style={style}
-    viewBox='0 0 20 16'
-    enableBackground='new 0 0 50 50'
-  >
-    <g>
-      <path d='M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1V2zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5H2zm13-3H1v2h14V2zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z' />
-    </g>
-  </svg>
-)
-
 const archiveShortcut: Shortcut = {
   id: 'archive',
   label: 'Archive',
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
   gesture: 'ldl',
-  svg: Icon,
+  svg: ArchiveIcon,
   keyboard: { key: Key.Backspace, shift: true, meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec,
@@ -87,7 +68,7 @@ const archiveShortcut: Shortcut = {
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const archiveAliases: Shortcut = {
   id: 'archiveAliases',
-  svg: Icon,
+  svg: ArchiveIcon,
   label: 'Archive',
   hideFromHelp: true,
   gesture: [

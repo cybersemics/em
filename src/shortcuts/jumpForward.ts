@@ -8,7 +8,6 @@ const jumpForwardShortcut: Shortcut = {
   description: 'Move the cursor to the next edit point. Reverses jump back.',
   keyboard: { key: 'j', shift: true, meta: true },
   gesture: 'rur',
-  // TODO: Create unique icon
   svg: JumpForwardIcon,
   exec: (dispatch, getState) => {
     dispatch(jump(1))
