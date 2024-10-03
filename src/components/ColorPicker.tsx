@@ -1,16 +1,15 @@
 import { rgbToHex } from '@mui/material'
 import React, { FC, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import Thought from '../@types/Thought'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { textColorActionCreator as textColor } from '../actions/textColor'
 import { isTouch } from '../browser'
-// import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
+// import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import TriangleDown from './TriangleDown'
@@ -49,7 +48,10 @@ const ColorSwatch: FC<{
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
-  const currentThought = useSelector(state => !!state.cursor && getThoughtById(state, head(state.cursor))) as Thought
+  const currentThoughtId = useSelector(state => !!state.cursor && head(state.cursor))
+  const currentThoughtValue = useSelector(
+    state => (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || '',
+  )
   const simplePath = useSelector(state => simplifyPath(state, state.cursor!))
   size = size || fontSize * 1.2
 
@@ -58,21 +60,24 @@ const ColorSwatch: FC<{
     if (hex.length === 7) return hex + 'ff'
     return hex
   }
-  /** Define the color and background color regex to get the current color of current thought */
-  const colorRegex = /color="(#[0-9a-fA-F]{6})"/g
-  const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
+
   const selected = useMemo(() => {
+    // Define the color and background color regex to get the current color of current thought
+    const colorRegex = /color="(#[0-9a-fA-F]{6})"/g
+    const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
     const textHexColor = color ? addAlphaToHex(rgbToHex(color)) : undefined
     const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
     const selectedTextHexColor = cursorStyle?.color ? addAlphaToHex(rgbToHex(cursorStyle?.color)) : undefined
     const selectedBackHexColor = cursorStyle?.backgroundColor
       ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor))
       : undefined
-    if (cursorStyle?.color === undefined && cursorStyle?.backgroundColor === undefined) {
-      const currentThoughtValue = currentThought.value
+    if (
+      (cursorStyle?.color === undefined && cursorStyle?.backgroundColor === undefined) ||
+      (rgbToHex(cursorStyle?.color!) === '#cccccc' && rgbToHex(cursorStyle?.backgroundColor!) === '#333333')
+    ) {
       const colorMatches = currentThoughtValue.match(colorRegex)
       let matchColor, match
-      /** Get the colors and background colors used in current thought's value */
+      // Get the colors and background colors used in current thought's value
       const colors: Set<string> = new Set()
       if (colorMatches) {
         colorMatches.forEach(match => colors.add(match.slice(7, -1)))
@@ -92,7 +97,7 @@ const ColorSwatch: FC<{
       (textHexColor && textHexColor === selectedTextHexColor) ||
       (backHexColor && backHexColor === selectedBackHexColor)
     )
-  }, [cursorStyle, backgroundColor, color, bgColorRegex, colorRegex, currentThought.value])
+  }, [cursorStyle, backgroundColor, color, currentThoughtValue])
 
   /** Toggles the text color to the clicked swatch. */
   const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
@@ -107,13 +112,13 @@ const ColorSwatch: FC<{
       dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
     else {
       // dispatch(formatSelection('backColor', colors.bg))
-      const thoughtContentEditable = document.querySelector(`[aria-label="editable-${currentThought.id}"]`)
+      const thoughtContentEditable = document.querySelector(`[aria-label="editable-${currentThoughtId}"]`)
       const styledElements = thoughtContentEditable?.querySelectorAll('[style]')
       styledElements?.forEach(el => {
         el.removeAttribute('style')
       })
       dispatch(
-        editThought({ oldValue: currentThought.value, newValue: thoughtContentEditable?.innerHTML!, path: simplePath }),
+        editThought({ oldValue: currentThoughtValue, newValue: thoughtContentEditable?.innerHTML!, path: simplePath }),
       )
     }
 
@@ -178,10 +183,17 @@ const ColorSwatch: FC<{
 const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fontSize, style }) => {
   const colors = useSelector(themeColors)
   const ref = useRef<HTMLDivElement>(null)
-  const cursorStyle = {
-    backgroundColor: commandStateStore.useSelector(state => state.backColor as string | undefined),
-    color: commandStateStore.useSelector(state => state.foreColor as string | undefined),
-  }
+  const backgroundColor = commandStateStore.useSelector(state => state.backColor as string | undefined)
+  const color = commandStateStore.useSelector(state => state.foreColor as string | undefined)
+
+  // Memoize the cursorStyle object so that it only updates when backgroundColor or color changes
+  const cursorStyle = useMemo(
+    () => ({
+      backgroundColor,
+      color,
+    }),
+    [backgroundColor, color],
+  )
 
   const overflow = useWindowOverflow(ref)
 

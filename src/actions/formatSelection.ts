@@ -17,12 +17,10 @@ export const formatSelectionActionCreator =
     const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
     if (!thoughtContentEditable) return
     if (sel?.toString().length === 0 && thought.value.length !== 0) {
-      // const savedSelection = selection.save()
       const savedSelection = selection.save()
       // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile
       sel?.selectAllChildren(thoughtContentEditable)
       document.execCommand(command, false, color)
-      // selection.restore(savedSelection)
       selection.restore(savedSelection)
     } else {
       document.execCommand(command, false, color)
