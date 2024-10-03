@@ -1,6 +1,6 @@
 import { startCase } from 'lodash'
 import Shortcut from '../@types/Shortcut'
-import redo from '../actions/redo'
+import { redoActionCreator as redo } from '../actions/redo'
 import RedoIcon from '../components/RedoIcon'
 import getLatestActionType from '../util/getLastActionType'
 
