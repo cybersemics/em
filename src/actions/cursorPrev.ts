@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import suppressExpansion from '../actions/suppressExpansion'
+import { suppressExpansionActionCreator as suppressExpansion } from '../actions/suppressExpansion'
 import { HOME_TOKEN } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
