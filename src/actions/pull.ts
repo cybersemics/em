@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import _ from 'lodash'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
@@ -51,7 +52,7 @@ const getPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId
  * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
-const pullActionCreator =
+export const pullActionCreator =
   (
     thoughtIds: ThoughtId[],
     {
@@ -140,5 +141,3 @@ const pullActionCreator =
 
     return pendingThoughts
   }
-
-export default pullActionCreator
