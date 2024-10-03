@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import restoreCursorBeforeSearch from '../actions/restoreCursorBeforeSearch'
 import { searchActionCreator as search } from '../actions/search'
@@ -7,7 +8,7 @@ import scrollTo from '../device/scrollTo'
 import * as selection from '../device/selection'
 
 /** Navigates home and resets the scroll position. */
-const homeActionCreator = (): Thunk => (dispatch, getState) => {
+export const homeActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
   if (state.search != null) {
@@ -21,5 +22,3 @@ const homeActionCreator = (): Thunk => (dispatch, getState) => {
 
   scrollTo('top')
 }
-
-export default homeActionCreator
