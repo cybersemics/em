@@ -1,10 +1,11 @@
+/* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { statusActionCreator as status } from '../actions/status'
 import storage from '../util/storage'
 
 /** Redirects the user to the login page. */
-const loginActionCreator = (): Thunk => dispatch => {
+export const loginActionCreator = (): Thunk => dispatch => {
   throw new Error('Not implemented')
   dispatch(status({ value: 'connecting' }))
   storage.setItem('modal-to-show', 'welcome')
@@ -14,5 +15,3 @@ const loginActionCreator = (): Thunk => dispatch => {
     dispatch(alert('Redirecting to login...'))
   })
 }
-
-export default loginActionCreator
