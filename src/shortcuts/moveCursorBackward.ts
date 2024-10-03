@@ -17,8 +17,9 @@ const moveCursorBackward: Shortcut = {
   description: 'Move the current thought to the next sibling of its context or to previous column in table view.',
   keyboard: { key: Key.Tab, shift: true },
   multicursor: {
-    filter: 'prefer-ancestor',
     enabled: true,
+    filter: 'prefer-ancestor',
+    preventSetCursor: true,
     reverse: true,
   },
   // TODO: Create unique icon
