@@ -166,7 +166,7 @@ const IconDesc = ({ fill, size = 20, style = {}, className }: Icon) => {
   )
 }
 
-/** Main Icon Component. */
+/** Sort Icon Component. */
 const SortIcon = ({ size = 20, style, className }: Icon) => {
   const direction = useSelector(getCursorSortDirection)
   const Component = direction === 'Desc' ? IconDesc : IconAsc
