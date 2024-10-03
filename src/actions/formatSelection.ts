@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
@@ -5,7 +6,7 @@ import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
-const formatSelectionActionCreator =
+export const formatSelectionActionCreator =
   (command: 'bold' | 'italic' | 'strikethrough' | 'underline'): Thunk =>
   (dispatch, getState) => {
     const state = getState()
@@ -35,5 +36,3 @@ const formatSelectionActionCreator =
 
     suppressFocusStore.update(false)
   }
-
-export default formatSelectionActionCreator

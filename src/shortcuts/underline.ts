@@ -1,5 +1,5 @@
 import Shortcut from '../@types/Shortcut'
-import formatSelection from '../actions/formatSelection'
+import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import Icon from '../components/icons/UnderlineIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
