@@ -104,6 +104,7 @@ interface Shortcut {
          * 'none' - Execute the shortcut for all cursors.
          * 'first-sibling' - Execute the shortcut for only the first sibling within the same parent.
          * 'last-sibling' - Execute the shortcut for only the last sibling within the same parent.
+         * 'prefer-ancestor' - Execute the shortcut for the highest direct ancestors in the selection.
          */
         filter?: MulticursorFilter
       }
