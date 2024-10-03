@@ -177,7 +177,7 @@ const pullDuplicateDescendants =
   }
 
 /** Action-creator for importFiles. */
-const importFilesActionCreator =
+export const importFilesActionCreator =
   ({ files, insertBefore, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!files && !resume) {
@@ -422,5 +422,3 @@ const importFilesActionCreator =
 
     dispatch(alertWithMinistore(null, { alertType: AlertType.ImportFile }))
   }
-
-export default importFilesActionCreator
