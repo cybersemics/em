@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { importTextActionCreator as importText } from '../actions/importText'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
@@ -16,7 +17,7 @@ interface Options {
  *
  * @param skipRoot    See importHtml.
  */
-const loadFromUrlActionCreator =
+export const loadFromUrlActionCreator =
   (url: string, path = HOME_PATH, { skipRoot }: Options = {}): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
     const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url
@@ -41,5 +42,3 @@ const loadFromUrlActionCreator =
       )
     }
   }
-
-export default loadFromUrlActionCreator
