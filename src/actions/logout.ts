@@ -1,10 +1,11 @@
+/* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { clearActionCreator as clear } from '../actions/clear'
 import scrollTo from '../device/scrollTo'
 import storage from '../util/storage'
 
 /** Logs the user out and clears the state. */
-const logoutActionCreator = (): Thunk => (dispatch, getState) => {
+export const logoutActionCreator = (): Thunk => (dispatch, getState) => {
   // clear local db
   // clearAll().catch(err => {
   //   localStorage.removeItem(INITIAL_SETTING_KEY)
@@ -23,5 +24,3 @@ const logoutActionCreator = (): Thunk => (dispatch, getState) => {
   // scroll to top
   scrollTo('top')
 }
-
-export default logoutActionCreator
