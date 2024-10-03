@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import Path from '../@types/Path'
 import Thunk from '../@types/Thunk'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
@@ -6,7 +7,7 @@ import { EM_TOKEN, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 
 /** Action-creator to initialize the user toolbar at /EM/Settings/Toolbar on demand. Does nothing if user toolbar has already been created. */
-const initUserToolbarActionCreator =
+export const initUserToolbarActionCreator =
   ({
     force,
   }: {
@@ -34,5 +35,3 @@ ${TOOLBAR_DEFAULT_SHORTCUTS.map(shortcutId => '              - ' + shortcutId).j
         : null,
     ])
   }
-
-export default initUserToolbarActionCreator
