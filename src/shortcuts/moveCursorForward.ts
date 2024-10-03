@@ -31,7 +31,7 @@ const moveCursorForward: Shortcut = {
   multicursor: {
     enabled: true,
     filter: 'prefer-ancestor',
-    execMulticursor(cursors, dispatch, getState, e, { type }, execMulticursor) {
+    execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
       // Make sure we can execute for all cursors before proceeding.
       // This is shifted here to allow `e.preventDefault()` to work.
       const canExecute = cursors.every(cursor => {
@@ -43,7 +43,7 @@ const moveCursorForward: Shortcut = {
 
       if (!canExecute) return
 
-      return execMulticursor()
+      return execAll()
     },
   },
   // TODO: Create unique icon

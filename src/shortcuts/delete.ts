@@ -60,10 +60,10 @@ const deleteShortcut: Shortcut = {
     preventSetCursor: true,
     reverse: true,
     clearMulticursor: true,
-    execMulticursor(cursors, dispatch, getState, e, { type }, execMulticursor) {
+    execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
       const numThougths = cursors.length
 
-      execMulticursor()
+      execAll()
 
       dispatch(
         alert(`Deleted ${numThougths} thoughts.`, {

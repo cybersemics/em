@@ -23,10 +23,10 @@ const pinShortcut: Shortcut = {
   multicursor: {
     enabled: true,
     preventSetCursor: true,
-    execMulticursor(cursors, dispatch, getState, e, { type }, execMulticursor) {
+    execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
       const numThougths = cursors.length
 
-      execMulticursor()
+      execAll()
 
       dispatch(
         alert(`Pinned ${numThougths} thoughts.`, {
