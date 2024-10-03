@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../constants'
@@ -8,7 +9,7 @@ import { pullActionCreator as pull } from './pull'
 const rootContextSet = new Set<ThoughtId>([ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID])
 
 /** An action-creator that pulls the ancestors of one or more thoughts (inclusive). */
-const pullAncestorsActionCreator = (
+export const pullAncestorsActionCreator = (
   ids: ThoughtId[],
   { force, maxDepth }: { force?: boolean; maxDepth?: number } = {},
 ): Thunk<Promise<void>> => {
@@ -24,5 +25,3 @@ const pullAncestorsActionCreator = (
     }
   }
 }
-
-export default pullAncestorsActionCreator
