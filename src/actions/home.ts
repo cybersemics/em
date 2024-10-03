@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
-import restoreCursorBeforeSearch from '../actions/restoreCursorBeforeSearch'
+import { restoreCursorBeforeSearch } from '../actions/restoreCursorBeforeSearch'
 import { searchActionCreator as search } from '../actions/search'
 import { searchContextsActionCreator as searchContexts } from '../actions/searchContexts'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'

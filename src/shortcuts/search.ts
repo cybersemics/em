@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { cursorBeforeSearchActionCreator as cursorBeforeSearch } from '../actions/cursorBeforeSearch'
-import restoreCursorBeforeSearch from '../actions/restoreCursorBeforeSearch'
+import { restoreCursorBeforeSearch } from '../actions/restoreCursorBeforeSearch'
 import { searchActionCreator as search } from '../actions/search'
 import SearchIcon from '../components/SearchIcon'
 import * as selection from '../device/selection'
