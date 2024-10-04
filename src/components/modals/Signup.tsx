@@ -7,7 +7,7 @@ import { showModalActionCreator as showModal } from '../../actions/showModal'
 import fastClick from '../../util/fastClick'
 import getQueryParam from '../../util/getQueryParam'
 import storage from '../../util/storage'
-import { ActionButton } from './../ActionButton'
+import ActionButton from './../ActionButton'
 import InvitesIcon from './../icons/InvitesIcon'
 import ModalComponent from './ModalComponent'
 

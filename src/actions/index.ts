@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 /** Re-export all reducers for app.ts. */
 
 export { default as addLatestShortcuts } from './addLatestShortcuts'

@@ -9,7 +9,7 @@ import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tuto
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
-import { ActionButton } from './../ActionButton'
+import ActionButton from './../ActionButton'
 import ShortcutTable from './../ShortcutTable'
 import CommandLibraryIcon from './../icons/CommandLibraryIcon'
 import MetaIcon from './../icons/MetaIcon'

@@ -20,7 +20,8 @@ import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
 import headValue from '../../util/headValue'
 import TutorialNavigationButton from './TutorialNavigationButton'
-import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
+import context1SubthoughtCreated from './utils/context1SubthoughtCreated'
+import context2SubthoughtCreated from './utils/context2SubthoughtCreated'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialStep: number }>(

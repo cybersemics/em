@@ -1,3 +1,5 @@
+/* eslint-disable import/prefer-default-export */
+
 /** Position fixed breaks in mobile Safari when the keyboard is up. This module provides functionality to emulate position:fixed by changing all top navigation to position:absolute and updating on scroll. */
 
 /** Change position:fixed top nav to position:absolute in order to fix Safari position:fixed browser behavior when keyboard is up. */
