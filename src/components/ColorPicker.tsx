@@ -5,6 +5,7 @@ import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { textColorActionCreator as textColor } from '../actions/textColor'
 import { isTouch } from '../browser'
+import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
@@ -71,20 +72,20 @@ const ColorSwatch: FC<{
     const selectedBackHexColor = cursorStyle?.backgroundColor
       ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor))
       : undefined
-    console.log(cursorStyle, colors.fg, colors.bg, selectedTextHexColor, selectedBackHexColor)
     if (
       (cursorStyle?.color === undefined && cursorStyle?.backgroundColor === undefined) ||
       (selectedTextHexColor === '#ccccccff' && selectedBackHexColor === '#333333ff') ||
       (selectedTextHexColor === addAlphaToHex(rgbToHex(colors.fg)) &&
-        selectedBackHexColor === addAlphaToHex(rgbToHex(colors.bg)))
+        selectedBackHexColor === addAlphaToHex(rgbToHex(colors.bg)) &&
+        !selection.isThought())
     ) {
       const colorMatches = currentThoughtValue.match(colorRegex)
       let matchColor, match
       // Get the colors and background colors used in current thought's value
-      const colors: Set<string> = new Set()
+      const fgColors: Set<string> = new Set()
       if (colorMatches) {
-        colorMatches.forEach(match => colors.add(match.slice(7, -1)))
-        matchColor = colors.size > 1 ? null : colors.values().next().value
+        colorMatches.forEach(match => fgColors.add(match.slice(7, -1)))
+        matchColor = fgColors.size > 1 ? null : fgColors.values().next().value
       }
 
       const bgColors: Set<string> = new Set()
@@ -100,7 +101,7 @@ const ColorSwatch: FC<{
       (textHexColor && textHexColor === selectedTextHexColor) ||
       (backHexColor && backHexColor === selectedBackHexColor)
     )
-  }, [cursorStyle, backgroundColor, color, currentThoughtValue])
+  }, [cursorStyle, backgroundColor, color, currentThoughtValue, colors])
 
   /** Toggles the text color to the clicked swatch. */
   const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
@@ -114,12 +115,18 @@ const ColorSwatch: FC<{
     if (backgroundColor && backgroundColor !== colors.bg)
       dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
     else {
-      // dispatch(formatSelection('backColor', colors.bg))
+      dispatch(formatSelection('backColor', colors.bg))
       const thoughtContentEditable = document.querySelector(`[aria-label="editable-${currentThoughtId}"]`)
       if (!thoughtContentEditable) return
       const styledElements = thoughtContentEditable.querySelectorAll('[style]')
       styledElements?.forEach(el => {
-        el.removeAttribute('style')
+        const elementColor = el.getAttribute('color')
+        const elementStyle = el.getAttribute('style')
+        if (
+          (elementColor && elementColor !== rgbToHex(colors.bg)) ||
+          (label === 'default' && elementStyle?.includes('background-color'))
+        )
+          el.removeAttribute('style')
       })
       dispatch(
         editThought({ oldValue: currentThoughtValue, newValue: thoughtContentEditable.innerHTML, path: simplePath }),
