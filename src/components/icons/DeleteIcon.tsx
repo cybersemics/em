@@ -20,51 +20,21 @@ const DeleteIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
     >
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
-          <g id='_22-trash' data-name='22-trash'>
+          <g id='_31-permanently-delet' data-name='31-permanently-delet'>
             <rect width='24' height='24' fill='none' />
             <path
-              d='M4.66,6.11H19.34l-.9,14a2,2,0,0,1-2,1.91H7.59a2,2,0,0,1-2-1.91Z'
-              fill='none'
+              d='M7.68,22.21A9.29,9.29,0,0,1,4.6,7.93h0c-.43,2-.35,5.49,2.25,6A10.49,10.49,0,0,1,13.19,3.67c-1.94,4.88,2.82,7.24,3,10.7,2.33-.18,4.06-2,3.51-4.29a8,8,0,0,1-4,12.22Z'
               stroke={strokeColor}
               strokeLinecap='round'
               strokeLinejoin='round'
-            />
-            <line
-              x1='2.95'
-              y1='6.11'
-              x2='21.05'
-              y2='6.11'
               fill='none'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
             />
             <path
-              d='M7.17,6.11V3.47a1.07,1.07,0,0,1,1.12-1h7.42a1.07,1.07,0,0,1,1.11,1V6.11'
-              fill='none'
+              d='M13,22.27c1.21-1.59.16-4.5-1.57-5-1.54.38-2.94,3.44-1.63,4.95'
               stroke={strokeColor}
               strokeLinecap='round'
               strokeLinejoin='round'
-            />
-            <line
-              x1='9.67'
-              y1='11.01'
-              x2='9.67'
-              y2='17.14'
               fill='none'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            />
-            <line
-              x1='14.14'
-              y1='11.01'
-              x2='14.14'
-              y2='17.14'
-              fill='none'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
             />
           </g>
         </g>

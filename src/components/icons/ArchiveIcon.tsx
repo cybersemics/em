@@ -7,6 +7,7 @@ import { FONT_SCALING_FACTOR } from '../../constants'
 const ArchiveIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   const newSize = size * FONT_SCALING_FACTOR
   const fillColor = style.fill || fill || token('colors.fg')
+  const strokeColor = fillColor // You can customize this or pass as a prop if needed
 
   return (
     <svg
@@ -14,11 +15,60 @@ const ArchiveIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
       xmlns='http://www.w3.org/2000/svg'
       width={newSize}
       height={newSize}
-      viewBox='0 0 20 16'
-      style={{ ...style, width: `${newSize}px`, height: `${newSize}px`, fill: fillColor }}
+      viewBox='0 0 24 24'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+      fill='none'
     >
-      <g>
-        <path d='M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1V2zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5H2zm13-3H1v2h14V2zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z' />
+      <g id='Layer_2' data-name='Layer 2'>
+        <g id='Layer_3' data-name='Layer 3'>
+          <g id='_22-trash' data-name='22-trash'>
+            <rect width='24' height='24' fill='none' />
+            <path
+              d='M4.66,6.11H19.34l-.9,14a2,2,0,0,1-2,1.91H7.59a2,2,0,0,1-2-1.91Z'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <line
+              x1='2.95'
+              y1='6.11'
+              x2='21.05'
+              y2='6.11'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <path
+              d='M7.17,6.11V3.47a1.07,1.07,0,0,1,1.12-1h7.42a1.07,1.07,0,0,1,1.11,1V6.11'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <line
+              x1='9.67'
+              y1='11.01'
+              x2='9.67'
+              y2='17.14'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <line
+              x1='14.14'
+              y1='11.01'
+              x2='14.14'
+              y2='17.14'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+          </g>
+        </g>
       </g>
     </svg>
   )
