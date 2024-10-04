@@ -71,9 +71,12 @@ const ColorSwatch: FC<{
     const selectedBackHexColor = cursorStyle?.backgroundColor
       ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor))
       : undefined
+    console.log(cursorStyle, colors.fg, colors.bg, selectedTextHexColor, selectedBackHexColor)
     if (
       (cursorStyle?.color === undefined && cursorStyle?.backgroundColor === undefined) ||
-      (rgbToHex(cursorStyle?.color!) === '#cccccc' && rgbToHex(cursorStyle?.backgroundColor!) === '#333333')
+      (selectedTextHexColor === '#ccccccff' && selectedBackHexColor === '#333333ff') ||
+      (selectedTextHexColor === addAlphaToHex(rgbToHex(colors.fg)) &&
+        selectedBackHexColor === addAlphaToHex(rgbToHex(colors.bg)))
     ) {
       const colorMatches = currentThoughtValue.match(colorRegex)
       let matchColor, match
@@ -113,12 +116,13 @@ const ColorSwatch: FC<{
     else {
       // dispatch(formatSelection('backColor', colors.bg))
       const thoughtContentEditable = document.querySelector(`[aria-label="editable-${currentThoughtId}"]`)
-      const styledElements = thoughtContentEditable?.querySelectorAll('[style]')
+      if (!thoughtContentEditable) return
+      const styledElements = thoughtContentEditable.querySelectorAll('[style]')
       styledElements?.forEach(el => {
         el.removeAttribute('style')
       })
       dispatch(
-        editThought({ oldValue: currentThoughtValue, newValue: thoughtContentEditable?.innerHTML!, path: simplePath }),
+        editThought({ oldValue: currentThoughtValue, newValue: thoughtContentEditable.innerHTML, path: simplePath }),
       )
     }
 
