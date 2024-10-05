@@ -90,12 +90,12 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
     return autofocus === 'dim' && autofocusParent === 'hide'
   })
   const thoughtId = head(simplePath)
-  const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
+  const insideDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
   return (
     <span
       className={cx(
-        dropHover({ insideDivider: isDivider(value) }),
+        dropHover({ insideDivider }),
         css({
           /* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
           /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
