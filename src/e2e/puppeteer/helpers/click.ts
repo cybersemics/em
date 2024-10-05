@@ -1,5 +1,6 @@
 import { JSHandle, Page } from 'puppeteer'
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
   const page: Page
 }

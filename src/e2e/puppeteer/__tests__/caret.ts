@@ -1,9 +1,7 @@
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
-import clickThought from '../helpers/clickThought'
 import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
-import press from '../helpers/press'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 

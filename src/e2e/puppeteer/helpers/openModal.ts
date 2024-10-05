@@ -2,6 +2,7 @@ import { Page } from 'puppeteer'
 import ModalType from '../../../@types/Modal'
 import { WindowEm } from '../../../initialize'
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
   const page: Page
 }

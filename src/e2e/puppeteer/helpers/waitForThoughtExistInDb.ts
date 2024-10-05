@@ -3,6 +3,7 @@ import { WindowEm } from '../../../initialize'
 
 const em = window.em as WindowEm
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
   const page: Page
 }

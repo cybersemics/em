@@ -1,6 +1,7 @@
 import { Page } from 'puppeteer'
 import getEditable from './getEditable'
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
   const page: Page
 }

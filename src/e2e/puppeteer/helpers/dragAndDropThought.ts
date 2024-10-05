@@ -3,6 +3,7 @@ import sleep from '../../../util/sleep'
 import getEditable from './getEditable'
 import showMousePointer from './showMousePointer'
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
   const page: Page
 }

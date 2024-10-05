@@ -3,6 +3,7 @@ import Context from '../../../@types/Context'
 import Thought from '../../../@types/Thought'
 import { WindowEm } from '../../../initialize'
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
   const page: Page
 }

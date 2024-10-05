@@ -1,6 +1,7 @@
 import { Page } from 'puppeteer'
 import { WindowEm } from '../../../initialize'
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
   const page: Page
 }

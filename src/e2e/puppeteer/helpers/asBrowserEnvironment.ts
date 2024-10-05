@@ -1,6 +1,7 @@
 import { Page } from 'puppeteer'
 import { BrowserEnvironment } from '../../browserEnvironment/types'
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
   const page: Page
 }
