@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { swapNoteActionCreator } from '../actions/swapNote'
-import PencilIcon from '../components/icons/PencilIcon'
+import ConvertToNoteIcon from '../components/icons/ConvertToNoteIcon'
 import asyncFocus from '../device/asyncFocus'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -10,7 +10,7 @@ const swapNote: Shortcut = {
   description: 'Convert a thought to a note.',
   keyboard: { key: 'n', alt: true, shift: true },
   gesture: 'ulr',
-  svg: PencilIcon,
+  svg: ConvertToNoteIcon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     asyncFocus()
