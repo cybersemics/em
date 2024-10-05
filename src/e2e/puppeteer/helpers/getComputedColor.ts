@@ -1,7 +1,7 @@
 import { ElementHandle, Page } from 'puppeteer'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 /**

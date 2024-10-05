@@ -1,9 +1,9 @@
-import setup from './helpers/setup';
 import { Browser, Page } from 'puppeteer'
+import setup from './helpers/setup'
 
 declare module global {
-  const browser: Browser;
-  let page: Page;
+  const browser: Browser
+  let page: Page
 }
 
 beforeEach(async () => {

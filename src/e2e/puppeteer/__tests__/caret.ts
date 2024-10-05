@@ -1,11 +1,11 @@
-import paste from '../helpers/paste';
-import clickThought from '../helpers/clickThought';
-import waitForEditable from '../helpers/waitForEditable';
-import click from '../helpers/click';
-import press from '../helpers/press';
-import getSelection from '../helpers/getSelection';
-import clickBullet from '../helpers/clickBullet';
-import waitUntil from '../helpers/waitUntil';
+import click from '../helpers/click'
+import clickBullet from '../helpers/clickBullet'
+import clickThought from '../helpers/clickThought'
+import getSelection from '../helpers/getSelection'
+import paste from '../helpers/paste'
+import press from '../helpers/press'
+import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 

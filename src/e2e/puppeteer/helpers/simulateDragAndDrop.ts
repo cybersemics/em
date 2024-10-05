@@ -2,7 +2,7 @@ import { Page } from 'puppeteer'
 import { WindowEm } from '../../../initialize'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 interface Options {

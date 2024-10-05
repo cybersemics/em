@@ -1,11 +1,11 @@
 import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
-import removeHUD from '../helpers/removeHUD'
+import click from '../helpers/click'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import removeHUD from '../helpers/removeHUD'
 import screenshot from '../helpers/screenshot'
-import click from '../helpers/click'
 import scroll from '../helpers/scroll'
 
 expect.extend({

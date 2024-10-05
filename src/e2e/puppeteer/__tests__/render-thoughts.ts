@@ -1,13 +1,13 @@
 import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
-import screenshot from '../helpers/screenshot'
-import removeHUD from '../helpers/removeHUD'
-import press from '../helpers/press'
-import type from '../helpers/type'
-import paste from '../helpers/paste'
 import click from '../helpers/click'
+import paste from '../helpers/paste'
+import press from '../helpers/press'
+import removeHUD from '../helpers/removeHUD'
+import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
+import type from '../helpers/type'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),

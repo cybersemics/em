@@ -4,7 +4,7 @@ import Thought from '../../../@types/Thought'
 import { WindowEm } from '../../../initialize'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 /**

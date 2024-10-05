@@ -1,7 +1,7 @@
 import { Page } from 'puppeteer'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 /** Scroll to the top of the page. */

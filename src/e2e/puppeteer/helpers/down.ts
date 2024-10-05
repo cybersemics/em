@@ -1,7 +1,7 @@
 import { KeyInput, Keyboard, Page } from 'puppeteer'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 type Options = Parameters<Keyboard['down']>[1]

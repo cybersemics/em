@@ -21,7 +21,7 @@ export default defineWorkspace([
       include: ['src/e2e/puppeteer/__tests__/*.ts'],
       exclude: ['node_modules/**'],
       environment: './src/e2e/puppeteer-environment.ts',
-      setupFiles: ["./src/e2e/puppeteer/setup.ts"]
+      setupFiles: ['./src/e2e/puppeteer/setup.ts'],
     },
   },
 ])

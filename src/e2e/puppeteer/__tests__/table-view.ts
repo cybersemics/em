@@ -1,8 +1,8 @@
 import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
-import removeHUD from '../helpers/removeHUD'
 import paste from '../helpers/paste'
+import removeHUD from '../helpers/removeHUD'
 import screenshot from '../helpers/screenshot'
 
 expect.extend({

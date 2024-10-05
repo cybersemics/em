@@ -2,7 +2,7 @@ import { Page } from 'puppeteer'
 import { BrowserEnvironment } from '../../browserEnvironment/types'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 /** Converts a Page to a BrowserEnvironment. */

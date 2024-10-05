@@ -1,7 +1,7 @@
 import { Page } from 'puppeteer'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 /** Renders a simulated mouse pointer that tracks the actual mouse movements. */

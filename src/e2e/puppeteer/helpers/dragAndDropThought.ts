@@ -4,7 +4,7 @@ import getEditable from './getEditable'
 import showMousePointer from './showMousePointer'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 interface DragAndDropOptions {

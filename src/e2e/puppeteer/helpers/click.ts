@@ -1,7 +1,7 @@
 import { JSHandle, Page } from 'puppeteer'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 interface Options {

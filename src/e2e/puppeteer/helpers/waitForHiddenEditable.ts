@@ -2,7 +2,7 @@ import { Page } from 'puppeteer'
 import waitForEditable from './waitForEditable'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 /** Wait for an editable to become hidden by checking the color alpha. */

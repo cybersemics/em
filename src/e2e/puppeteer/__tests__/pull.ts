@@ -1,10 +1,10 @@
-import $ from "../helpers/$"
-import clickThought from "../helpers/clickThought"
-import paste from "../helpers/paste"
-import press from "../helpers/press"
-import refresh from "../helpers/refresh"
-import waitForEditable from "../helpers/waitForEditable"
-import waitForThoughtExistInDb from "../helpers/waitForThoughtExistInDb"
+import $ from '../helpers/$'
+import clickThought from '../helpers/clickThought'
+import paste from '../helpers/paste'
+import press from '../helpers/press'
+import refresh from '../helpers/refresh'
+import waitForEditable from '../helpers/waitForEditable'
+import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 
 vi.setConfig({ testTimeout: 20000 })
 

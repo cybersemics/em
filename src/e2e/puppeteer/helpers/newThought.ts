@@ -2,7 +2,7 @@ import { Page } from 'puppeteer'
 import waitForEditable from './waitForEditable'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 /** Creates a new thought by hitting Enter and typing text. Waits for renders between each step. */

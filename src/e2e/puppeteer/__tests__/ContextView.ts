@@ -1,11 +1,10 @@
 import sleep from '../../../util/sleep'
-
-import click from '../helpers/click';
-import clickThought from '../helpers/clickThought';
-import paste from '../helpers/paste';
-import refresh from '../helpers/refresh';
-import waitForEditable from '../helpers/waitForEditable';
-import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb';
+import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
+import paste from '../helpers/paste'
+import refresh from '../helpers/refresh'
+import waitForEditable from '../helpers/waitForEditable'
+import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 
 vi.setConfig({ testTimeout: 20000 })
 

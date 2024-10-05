@@ -2,7 +2,7 @@ import { Page } from 'puppeteer'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
-  let page: Page;
+  let page: Page
 }
 
 /** Removes the first Node that matches the selector from the DOM. NOOP if the selector is empty. */

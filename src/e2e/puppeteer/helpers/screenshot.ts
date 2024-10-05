@@ -1,7 +1,7 @@
 import { Page, ScreenshotOptions } from 'puppeteer'
 
 declare module global {
-  const page: Page;
+  const page: Page
 }
 
 /** Takes a screenshot. Note: Clears the browser selection first, as the timing of the blinking caret differs between runs. */
