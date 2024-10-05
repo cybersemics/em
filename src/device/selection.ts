@@ -64,7 +64,7 @@ export const isThought = (): boolean => {
   // type classList as optional
   let focusNode = window.getSelection()?.focusNode
   if (!focusNode) return false
-  while ((focusNode as HTMLElement).tagName !== 'DIV') {
+  while ((focusNode as HTMLElement)?.tagName !== 'DIV') {
     if (isEditable(focusNode)) return true
     focusNode = focusNode?.parentNode
   }

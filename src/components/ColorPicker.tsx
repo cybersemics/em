@@ -10,7 +10,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
-// import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import TriangleDown from './TriangleDown'
@@ -50,10 +49,6 @@ const ColorSwatch: FC<{
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const currentThoughtId = useSelector(state => !!state.cursor && head(state.cursor))
-  const currentThoughtValue = useSelector(
-    state => (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || '',
-  )
-  const simplePath = useSelector(state => simplifyPath(state, state.cursor!))
   size = size || fontSize * 1.2
 
   /** A function that adds an alpha channel to a hex color. */
@@ -62,9 +57,12 @@ const ColorSwatch: FC<{
     return hex
   }
 
-  const selected = useMemo(() => {
+  const selected = useSelector(state => {
+    const currentThoughtValue = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''
+    const themeColor = themeColors(state)
     // Define the color and background color regex to get the current color of current thought
-    const colorRegex = /color="(#[0-9a-fA-F]{6})"/g
+    // document.execCommand('foreColor') adds the color attribute with hex and document.execCommand('backColor') adds the background-color attribute with the rgb
+    const colorRegex = /color="#([0-9a-fA-F]{6})"/g
     const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
     const textHexColor = color ? addAlphaToHex(rgbToHex(color)) : undefined
     const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
@@ -75,15 +73,18 @@ const ColorSwatch: FC<{
     if (
       (cursorStyle?.color === undefined && cursorStyle?.backgroundColor === undefined) ||
       (selectedTextHexColor === '#ccccccff' && selectedBackHexColor === '#333333ff') ||
-      (selectedTextHexColor === addAlphaToHex(rgbToHex(colors.fg)) &&
-        selectedBackHexColor === addAlphaToHex(rgbToHex(colors.bg)) &&
+      (selectedTextHexColor === addAlphaToHex(rgbToHex(themeColor.fg)) &&
+        selectedBackHexColor === addAlphaToHex(rgbToHex(themeColor.bg)) &&
         !selection.isThought())
     ) {
-      const colorMatches = currentThoughtValue.match(colorRegex)
+      const colorMatches = currentThoughtValue.match(colorRegex) || []
+
       let matchColor, match
       // Get the colors and background colors used in current thought's value
       const fgColors: Set<string> = new Set()
       if (colorMatches) {
+        // colorMatches will be like this : [color="#ee82ee", color="#ff823e"] and match.slice(7, -1) will be #ee82ee
+        // If the thought is colored with many colors, matchColor will be null and if the thought is colored with one color, matchColor will be that color
         colorMatches.forEach(match => fgColors.add(match.slice(7, -1)))
         matchColor = fgColors.size > 1 ? null : fgColors.values().next().value
       }
@@ -101,14 +102,14 @@ const ColorSwatch: FC<{
       (textHexColor && textHexColor === selectedTextHexColor) ||
       (backHexColor && backHexColor === selectedBackHexColor)
     )
-  }, [cursorStyle, backgroundColor, color, currentThoughtValue, colors])
+  })
 
   /** Toggles the text color to the clicked swatch. */
   const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
     // stop toolbar button dip
     e.stopPropagation()
     e.preventDefault()
-
+    console.log(color, backgroundColor, colors.bg, colors.fg)
     if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg))
     else dispatch(formatSelection('foreColor', colors.fg))
     // Apply background color to the selection
@@ -118,6 +119,7 @@ const ColorSwatch: FC<{
       dispatch(formatSelection('backColor', colors.bg))
       const thoughtContentEditable = document.querySelector(`[aria-label="editable-${currentThoughtId}"]`)
       if (!thoughtContentEditable) return
+      // Delete the default background and foreground color from the current thought's innerHTML
       const styledElements = thoughtContentEditable.querySelectorAll('[style]')
       styledElements?.forEach(el => {
         const elementColor = el.getAttribute('color')
@@ -128,9 +130,20 @@ const ColorSwatch: FC<{
         )
           el.removeAttribute('style')
       })
-      dispatch(
-        editThought({ oldValue: currentThoughtValue, newValue: thoughtContentEditable.innerHTML, path: simplePath }),
-      )
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        if (!state.cursor) return
+        const thought = getThoughtById(state, head(state.cursor))
+        const simplePath = simplifyPath(state, state.cursor)
+        // Edit the current thought with the changed innerHTML
+        dispatch(
+          editThought({
+            oldValue: thought.value,
+            newValue: thoughtContentEditable.innerHTML,
+            path: simplePath,
+          }),
+        )
+      })
     }
 
     dispatch(
