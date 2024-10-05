@@ -1,5 +1,9 @@
 import { JSHandle, Page } from 'puppeteer'
 
+declare module global {
+  const page: Page;
+}
+
 interface Options {
   // Click on the inside edge of the editable
   edge?: 'left' | 'right'
@@ -15,10 +19,10 @@ interface Options {
  * Click a node with an optional text offset or x,y offset.
  */
 const click = async (
-  page: Page,
   nodeHandleOrSelector: JSHandle | string,
   { edge = 'left', offset, x = 0, y = 0 }: Options = {},
 ) => {
+  const page = global.page
   const isMobile = page.viewport()?.isMobile
 
   if (isMobile && (offset || x || y)) {

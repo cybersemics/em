@@ -1,9 +1,13 @@
 import sleep from '../../../util/sleep'
-import helpers from '../helpers'
+
+import clickThought from '../helpers/clickThought';
+import getEditingText from '../helpers/getEditingText';
+import paste from '../helpers/paste';
+import press from '../helpers/press';
+import refresh from '../helpers/refresh';
+import waitForEditable from '../helpers/waitForEditable';
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
-
-const { paste, getEditingText, refresh, waitForEditable, clickThought, press } = helpers()
 
 it('set the cursor to a thought in the home context on load', async () => {
   const importText = `

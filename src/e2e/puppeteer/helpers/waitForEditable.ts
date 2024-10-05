@@ -1,5 +1,9 @@
 import { Page } from 'puppeteer'
 
+declare module global {
+  const page: Page;
+}
+
 interface Options {
   timeout?: number
 }
@@ -7,8 +11,8 @@ interface Options {
 /**
  * Wait for editable div that contains the given value.
  */
-const waitForEditable = async (page: Page, value: string, { timeout }: Options = { timeout: 6000 }) =>
-  await page.waitForFunction(
+const waitForEditable = async (value: string, { timeout }: Options = { timeout: 6000 }) =>
+  await global.page.waitForFunction(
     (value: string) => {
       return Array.from(document.querySelectorAll('[data-editable]')).find(element => element.innerHTML === value)
     },

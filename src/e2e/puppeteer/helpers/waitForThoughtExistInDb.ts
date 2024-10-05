@@ -3,8 +3,13 @@ import { WindowEm } from '../../../initialize'
 
 const em = window.em as WindowEm
 
+declare module global {
+  const page: Page;
+}
+
 /** Wait for the given thought value to exist in the database. */
-const waitForThoughtExistInDb = async (page: Page, value: string) => {
+const waitForThoughtExistInDb = async (value: string) => {
+  const page = global.page;
   await page.evaluate(async value => {
     await new Promise(resolve => {
       const testHelpers = em.testHelpers

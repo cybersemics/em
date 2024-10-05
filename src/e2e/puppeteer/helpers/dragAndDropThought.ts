@@ -3,6 +3,10 @@ import sleep from '../../../util/sleep'
 import getEditable from './getEditable'
 import showMousePointer from './showMousePointer'
 
+declare module global {
+  const page: Page;
+}
+
 interface DragAndDropOptions {
   /** Determines where the destination thought is dropped, relative to the source thought.
     - after: drop the source thought as a sibling after the destination thought.
@@ -18,13 +22,14 @@ interface DragAndDropOptions {
 
 /** Performs Drag and Drop functionality on a thought in Puppeteer browser. */
 const dragAndDropThought = async (
-  page: Page,
   sourceValue: string,
   destValue: string,
   { position, mouseUp, dropUncle }: DragAndDropOptions,
 ) => {
-  const sourceElement = await getEditable(page, sourceValue)
-  const destElement = await getEditable(page, destValue)
+  const page = global.page
+
+  const sourceElement = await getEditable(sourceValue)
+  const destElement = await getEditable(destValue)
 
   if (!sourceElement.boundingBox) {
     console.error({ sourceElement, sourceValue, destElement, destValue })
@@ -37,7 +42,7 @@ const dragAndDropThought = async (
   const dragStart = await sourceElement.boundingBox()
   const dragEnd = await destElement.boundingBox()
 
-  await showMousePointer(page)
+  await showMousePointer()
 
   if (!dragStart) {
     throw new Error('Drag source element not found')

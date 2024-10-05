@@ -1,8 +1,12 @@
 import { Page } from 'puppeteer'
 
+declare module global {
+  const page: Page;
+}
+
 /** Renders a simulated mouse pointer that tracks the actual mouse movements. */
-async function showMousePointer(page: Page) {
-  await page.evaluate(() => {
+async function showMousePointer() {
+  await global.page.evaluate(() => {
     const pointer = document.createElement('puppeteer-mouse-pointer')
     pointer.innerHTML = `
       <svg viewBox="8 3 24 24" width="30">

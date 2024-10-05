@@ -1,6 +1,10 @@
 import { Page } from 'puppeteer'
 
+declare module global {
+  const page: Page;
+}
+
 /** Performs a querySelector on the document. */
-const $ = (page: Page, selector: string) => page.$(selector)
+const $ = (selector: string) => global.page.$(selector)
 
 export default $

@@ -1,9 +1,13 @@
 import sleep from '../../../util/sleep'
-import helpers from '../helpers'
+
+import click from '../helpers/click';
+import clickThought from '../helpers/clickThought';
+import paste from '../helpers/paste';
+import refresh from '../helpers/refresh';
+import waitForEditable from '../helpers/waitForEditable';
+import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb';
 
 vi.setConfig({ testTimeout: 20000 })
-
-const { click, paste, refresh, waitForEditable, waitForThoughtExistInDb, clickThought } = helpers()
 
 // using a puppeteer test since I can't get refresh to work in RTL tests
 it('load buffered ancestors of contexts when context view is activated', async () => {

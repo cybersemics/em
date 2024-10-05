@@ -1,7 +1,13 @@
 import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
-import helpers from '../helpers'
+import screenshot from '../helpers/screenshot'
+import removeHUD from '../helpers/removeHUD'
+import press from '../helpers/press'
+import type from '../helpers/type'
+import paste from '../helpers/paste'
+import click from '../helpers/click'
+import scroll from '../helpers/scroll'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -14,8 +20,6 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
   Jest supports automatic retries on test failures. This can be useful for browser screenshot tests which tend to have more frequent false positives. Note that when using jest.retryTimes you'll have to use a unique customSnapshotIdentifier as that's the only way to reliably identify snapshots.
 
 */
-
-const { click, paste, press, removeHUD, screenshot, scroll, type } = helpers()
 
 /** Set up the snapshot tests. These are defined in a function so they can be run at different font sizes (via adjusting the font size in beforeEach). */
 const testSuite = () => {

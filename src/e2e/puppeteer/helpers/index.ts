@@ -18,7 +18,6 @@ import openModal from './openModal'
 import paste from './paste'
 import press from './press'
 import refresh from './refresh'
-import remove from './remove'
 import removeHUD from './removeHUD'
 import screenshot from './screenshot'
 import scroll from './scroll'
@@ -54,7 +53,6 @@ const helpers = {
   openModal,
   paste,
   press,
-  remove,
   removeHUD,
   refresh,
   screenshot,

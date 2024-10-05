@@ -1,9 +1,10 @@
 import sleep from '../../../util/sleep'
-import helpers from '../helpers'
+import getPage from '../helpers/getPage'
+import press from '../helpers/press'
+import type from '../helpers/type'
+import waitForEditable from '../helpers/waitForEditable'
 
 vi.setConfig({ testTimeout: 20000 })
-
-const { getPage, press, type, waitForEditable } = helpers()
 
 /** Custom helper for pasting plain text, avoiding the existing `paste` helper that uses `importText` internally. */
 const pastePlainText = async (text: string) => {

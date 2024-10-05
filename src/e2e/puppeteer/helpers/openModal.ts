@@ -2,13 +2,17 @@ import { Page } from 'puppeteer'
 import ModalType from '../../../@types/Modal'
 import { WindowEm } from '../../../initialize'
 
+declare module global {
+  const page: Page;
+}
+
 const em = window.em as WindowEm
 
 /** Directly opens a Modal. */
-const openModal = async (page: Page, id: ModalType): Promise<void> => {
+const openModal = async (id: ModalType): Promise<void> => {
   await new Promise(resolve => setTimeout(resolve, 100))
 
-  await page.evaluate(id => {
+  await global.page.evaluate(id => {
     em.store.dispatch({ type: 'showModal', id })
   }, id)
 }
