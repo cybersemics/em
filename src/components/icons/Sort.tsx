@@ -5,7 +5,7 @@ import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
 import State from '../../@types/State'
 import { HOME_PATH } from '../../constants'
-import { FONT_SCALING_FACTOR } from '../../constants'
+import { ICON_SCALING_FACTOR } from '../../constants'
 import getSortPreference from '../../selectors/getSortPreference'
 import head from '../../util/head'
 
@@ -14,7 +14,7 @@ const getCursorSortDirection = (state: State) => getSortPreference(state, head(s
 
 /** Ascending Icon Component. */
 const IconAsc = ({ fill, size = 20, style = {}, className }: Icon) => {
-  const newSize = size * FONT_SCALING_FACTOR
+  const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (
@@ -91,7 +91,7 @@ const IconAsc = ({ fill, size = 20, style = {}, className }: Icon) => {
 
 /** Descending Icon Component. */
 const IconDesc = ({ fill, size = 20, style = {}, className }: Icon) => {
-  const newSize = size * FONT_SCALING_FACTOR
+  const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (
