@@ -182,7 +182,7 @@ const StaticThought = ({
           // left, top are eyeballed for different font sizes
           <HomeIcon style={{ position: 'relative', left: fontSize - 14, top: fontSize / 4 - 1 }} />
         ) : isDivider(value) ? (
-          <Divider cssRaw={css.raw({ borderColor: 'rgb(204, 204, 204)' })} path={simplePathLive} />
+          <Divider path={simplePathLive} />
         ) : /* insert padding equal to the Editable height while context ancestors are loading */ isContextPending ? (
           <div style={{ paddingTop: '2.8em' }}></div>
         ) : (
