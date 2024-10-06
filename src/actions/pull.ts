@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import _ from 'lodash'
 import State from '../@types/State'
 import Thought from '../@types/Thought'

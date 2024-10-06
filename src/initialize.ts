@@ -15,7 +15,7 @@ import { initThoughtsActionCreator as initThoughts } from './actions/initThought
 import { loadFromUrlActionCreator as loadFromUrl } from './actions/loadFromUrl'
 import { preloadSourcesActionCreator as preloadSources } from './actions/preloadSources'
 import { pullActionCreator as pull } from './actions/pull'
-import { repairThoughtActionCreator } from './actions/repairThought'
+import { repairThoughtActionCreator as repairThought } from './actions/repairThought'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { HOME_TOKEN } from './constants'
@@ -140,7 +140,7 @@ export const initialize = async () => {
       }
     },
     onThoughtReplicated: (id, thought) => {
-      store.dispatch(repairThoughtActionCreator(id, thought))
+      store.dispatch(repairThought(id, thought))
     },
     onUpdateThoughts: options => {
       store.dispatch(updateThoughtsActionCreator(options))

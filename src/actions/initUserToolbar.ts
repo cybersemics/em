@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import Path from '../@types/Path'
 import Thunk from '../@types/Thunk'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'

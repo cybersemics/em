@@ -165,6 +165,29 @@ describe('drag', () => {
     expect(image).toMatchImageSnapshot()
   })
 
+  it('drop hover after first thought of column one', async () => {
+    await paste(`
+        - x
+        - a
+          - =view
+            - Table
+          - =pin
+            - true
+          - b
+            - c
+          - d
+            - e
+      `)
+
+    await simulateDragAndDrop({ drop: true })
+
+    await clickThought('x')
+    await dragAndDropThought('x', 'd', { position: 'before' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
   it('drop target last child in cliff', async () => {
     await paste(`
         - a

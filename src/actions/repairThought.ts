@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import { isFunction } from 'lodash'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
