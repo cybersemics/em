@@ -62,13 +62,21 @@ const isEditable = (node?: Node | null) =>
 // We should see if it is possible to just use state.editing and selection.isActive()
 export const isThought = (): boolean => {
   // type classList as optional
+  const focusNode = window.getSelection()?.focusNode
+  if (!focusNode) return false
+  // check focusNode and focusNode.parentNode, since it could be on the TEXT_NODE or the ELEMENT_NODE
+  return isEditable(focusNode) || isEditable(focusNode.parentNode)
+}
+
+/** Returns true if the selection is on a thought. */
+export const isOnThought = (): boolean => {
   let focusNode = window.getSelection()?.focusNode
   if (!focusNode) return false
   while ((focusNode as HTMLElement)?.tagName !== 'DIV') {
     if (isEditable(focusNode)) return true
     focusNode = focusNode?.parentNode
   }
-  // check focusNode and focusNode.parentNode, since it could be on the TEXT_NODE or the ELEMENT_NODE
+  // check focusNode if it is on the TEXT_NODE or the ELEMENT_NODE
   return isEditable(focusNode)
 }
 

@@ -48,7 +48,6 @@ const ColorSwatch: FC<{
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
-  const currentThoughtId = useSelector(state => !!state.cursor && head(state.cursor))
   size = size || fontSize * 1.2
 
   /** A function that adds an alpha channel to a hex color. */
@@ -75,7 +74,7 @@ const ColorSwatch: FC<{
       (selectedTextHexColor === '#ccccccff' && selectedBackHexColor === '#333333ff') ||
       (selectedTextHexColor === addAlphaToHex(rgbToHex(themeColor.fg)) &&
         selectedBackHexColor === addAlphaToHex(rgbToHex(themeColor.bg)) &&
-        !selection.isThought())
+        !selection.isOnThought())
     ) {
       const colorMatches = currentThoughtValue.match(colorRegex) || []
 
@@ -109,7 +108,6 @@ const ColorSwatch: FC<{
     // stop toolbar button dip
     e.stopPropagation()
     e.preventDefault()
-    console.log(color, backgroundColor, colors.bg, colors.fg)
     if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg))
     else dispatch(formatSelection('foreColor', colors.fg))
     // Apply background color to the selection
@@ -117,29 +115,32 @@ const ColorSwatch: FC<{
       dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
     else {
       dispatch(formatSelection('backColor', colors.bg))
-      const thoughtContentEditable = document.querySelector(`[aria-label="editable-${currentThoughtId}"]`)
-      if (!thoughtContentEditable) return
-      // Delete the default background and foreground color from the current thought's innerHTML
-      const styledElements = thoughtContentEditable.querySelectorAll('[style]')
-      styledElements?.forEach(el => {
-        const elementColor = el.getAttribute('color')
-        const elementStyle = el.getAttribute('style')
-        if (
-          (elementColor && elementColor !== rgbToHex(colors.bg)) ||
-          (label === 'default' && elementStyle?.includes('background-color'))
-        )
-          el.removeAttribute('style')
-      })
+
+      /** Function to check if a style(background) should be removed based on the color and background-color */
+      const shouldRemoveStyle = (styleString: string) => {
+        const styleLower = styleString.toLowerCase()
+        const hasBackgroundColor = styleLower.includes('background-color')
+        const colorMatch = styleLower.match(/color\s*:\s*([^;]+);?/)
+        const elementColor = colorMatch ? colorMatch[1].trim() : null
+        const isDifferentColor = elementColor && elementColor !== rgbToHex(colors.bg)
+        if ((elementColor && isDifferentColor) || (label === 'default' && hasBackgroundColor)) return true
+        return false
+      }
       dispatch((dispatch, getState) => {
         const state = getState()
         if (!state.cursor) return
         const thought = getThoughtById(state, head(state.cursor))
         const simplePath = simplifyPath(state, state.cursor)
-        // Edit the current thought with the changed innerHTML
+        const styleAttrPattern = /style\s*=\s*["'][^"']*["']/gi
+        //Replace style attributes based on the conditions
+        const newThoughtValue = thought.value.replace(styleAttrPattern, match => {
+          if (shouldRemoveStyle(match)) return ''
+          return match
+        })
         dispatch(
           editThought({
             oldValue: thought.value,
-            newValue: thoughtContentEditable.innerHTML,
+            newValue: newThoughtValue,
             path: simplePath,
           }),
         )
