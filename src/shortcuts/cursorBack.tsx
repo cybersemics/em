@@ -2,6 +2,7 @@ import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
+import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 // import directly since util/index is not loaded yet when shortcut is initialized
@@ -35,8 +36,8 @@ const cursorBackShortcut: Shortcut = {
   exec: throttleByAnimationFrame((dispatch, getState) => {
     const state = getState()
 
-    // if there is a multicursor, clear it instead
-    if (hasMulticursor(state)) {
+    // if there is a multicursor and the device is not touch, clear it instead
+    if (hasMulticursor(state) && !isTouch) {
       dispatch(clearMulticursors())
       return
     }
