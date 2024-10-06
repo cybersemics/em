@@ -19,7 +19,6 @@ const moveCursorBackward: Shortcut = {
   multicursor: {
     enabled: true,
     filter: 'prefer-ancestor',
-    preventSetCursor: true,
     reverse: true,
   },
   // TODO: Create unique icon

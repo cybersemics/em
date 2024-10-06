@@ -38,7 +38,6 @@ const outdentShortcut: Shortcut = {
   multicursor: {
     enabled: true,
     filter: 'prefer-ancestor',
-    preventSetCursor: true,
     reverse: true,
   },
   svg: Icon,
