@@ -11,6 +11,7 @@ import useCombinedRefs from '../hooks/useCombinedRefs'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import syncStatusStore from '../stores/syncStatus'
+import fastClick from '../util/fastClick'
 import strip from '../util/strip'
 import CloseButton from './CloseButton'
 
@@ -103,10 +104,10 @@ const Popup = React.forwardRef<
       )}
       {multicursor && (
         <a
-          onClick={() => {
+          {...fastClick(e => {
             dispatch(clearMulticursors())
             onClose?.()
-          }}
+          })}
         >
           cancel
         </a>
