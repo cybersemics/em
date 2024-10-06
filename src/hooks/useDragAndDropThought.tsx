@@ -22,6 +22,7 @@ import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
@@ -46,11 +47,13 @@ const canDrag = (props: ThoughtContainerProps) => {
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))
   const isDraggable = props.isVisible || props.isCursorParent
+  const isMulticursorActive = hasMulticursor(state)
 
   return (
     isDocumentEditable() &&
     !!isDraggable &&
     (!isTouch || globals.touched) &&
+    !isMulticursorActive &&
     !findDescendant(state, thoughtId, '=immovable') &&
     !findDescendant(state, thoughtId, '=readonly') &&
     !findDescendant(state, pathParentId, '=immovable') &&

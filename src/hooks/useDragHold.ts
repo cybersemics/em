@@ -34,7 +34,7 @@ const useDragHold = ({
     () => {
       if (disabled) return
       setIsPressed(true)
-      dispatch(dragHold({ value: true, simplePath, sourceZone }))
+      dispatch([dragHold({ value: true, simplePath, sourceZone })])
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -47,8 +47,10 @@ const useDragHold = ({
 
       setIsPressed(false)
       dispatch((dispatch, getState) => {
-        if (getState().dragHold) {
-          dispatch([dragHold({ value: false }), alert(null)])
+        const state = getState()
+
+        if (state.dragHold) {
+          dispatch([dragHold({ value: false }), !hasMulticursor(state) ? alert(null) : null])
 
           if (toggleMulticursorOnLongPress) {
             dispatch(toggleMulticursor({ path: simplePath }))
