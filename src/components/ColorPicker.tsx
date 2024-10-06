@@ -59,8 +59,10 @@ const ColorSwatch: FC<{
   const selected = useSelector(state => {
     const currentThoughtValue = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''
     const themeColor = themeColors(state)
-    // Define the color and background color regex to get the current color of current thought
-    // document.execCommand('foreColor') adds the color attribute with hex and document.execCommand('backColor') adds the background-color attribute with the rgb
+    /* Define the color and background color regex to get the current color of current thought
+       document.execCommand('foreColor') adds the color attribute with hex and document.execCommand('backColor') adds the background-color attribute with the rgb
+       document.execCommand('foreColor') always sets the color as hex whether the value is rgb or hex. And document.execCommand('backColor') always sets the background with the rgb
+    */
     const colorRegex = /color="#([0-9a-fA-F]{6})"/g
     const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
     const textHexColor = color ? addAlphaToHex(rgbToHex(color)) : undefined
