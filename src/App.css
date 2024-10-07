@@ -269,7 +269,7 @@
 
 .content {
   background-color: white;
-  color: #111;
+  color: #000;
   padding: 80px 10px 153px 50px
     /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
   position: relative;
@@ -304,7 +304,7 @@
 .dark .root,
 .dark .content {
   background-color: black;
-  color: #e3e3e3;
+  color: white;
 }
 
 .logo {

@@ -143,7 +143,6 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     }),
     [buttonError, colors, dropToRemove, fontSize, isButtonActive, isButtonExecutable, isDragging, longPress.isPressed],
   )
-
   return (
     <div
       {...longPress.props}

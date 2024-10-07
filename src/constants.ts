@@ -266,11 +266,11 @@ export const EMOJI_REGEX = emojiRegex
  */
 export const REGEX_EMOJI_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
-export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike', 'code']
+export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike', 'code', 'font']
 
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 
-export const ALLOWED_ATTR = ['class', 'style']
+export const ALLOWED_ATTR = ['class', 'style', 'color']
 
 export const EMPTY_SPACE = '  '
 

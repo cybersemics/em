@@ -1,9 +1,15 @@
-import React, { FC, useLayoutEffect, useRef, useState } from 'react'
-import { shallowEqual, useDispatch, useSelector } from 'react-redux'
+import { rgbToHex } from '@mui/material'
+import React, { FC, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { editThoughtActionCreator as editThought } from '../actions/editThought'
+import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { textColorActionCreator as textColor } from '../actions/textColor'
 import { isTouch } from '../browser'
-import getStyle from '../selectors/getStyle'
+import * as selection from '../device/selection'
+import getThoughtById from '../selectors/getThoughtById'
+import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
+import commandStateStore from '../stores/commandStateStore'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import TriangleDown from './TriangleDown'
@@ -42,14 +48,107 @@ const ColorSwatch: FC<{
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
-  const selected =
-    (color && cursorStyle?.color === color) || (backgroundColor && cursorStyle?.backgroundColor === backgroundColor)
   size = size || fontSize * 1.2
+
+  /** A function that adds an alpha channel to a hex color. */
+  const addAlphaToHex = (hex: string) => {
+    if (hex.length === 7) return hex + 'ff'
+    return hex
+  }
+
+  const selected = useSelector(state => {
+    const currentThoughtValue = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''
+    const themeColor = themeColors(state)
+    /* Define the color and background color regex to get the current color of current thought
+       document.execCommand('foreColor') adds the color attribute with hex and document.execCommand('backColor') adds the background-color attribute with the rgb
+       document.execCommand('foreColor') always sets the color as hex whether the value is rgb or hex. And document.execCommand('backColor') always sets the background with the rgb
+    */
+    const colorRegex = /color="#([0-9a-fA-F]{6})"/g
+    const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
+    const textHexColor = color ? addAlphaToHex(rgbToHex(color)) : undefined
+    const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
+    const selectedTextHexColor = cursorStyle?.color ? addAlphaToHex(rgbToHex(cursorStyle?.color)) : undefined
+    const selectedBackHexColor = cursorStyle?.backgroundColor
+      ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor))
+      : undefined
+    if (
+      (cursorStyle?.color === undefined && cursorStyle?.backgroundColor === undefined) ||
+      (selectedTextHexColor === '#ccccccff' && selectedBackHexColor === '#333333ff') ||
+      (selectedTextHexColor === addAlphaToHex(rgbToHex(themeColor.fg)) &&
+        selectedBackHexColor === addAlphaToHex(rgbToHex(themeColor.bg)) &&
+        !selection.isOnThought())
+    ) {
+      const colorMatches = currentThoughtValue.match(colorRegex) || []
+
+      let matchColor, match
+      // Get the colors and background colors used in current thought's value
+      const fgColors: Set<string> = new Set()
+      if (colorMatches) {
+        // colorMatches will be like this : [color="#ee82ee", color="#ff823e"] and match.slice(7, -1) will be #ee82ee
+        // If the thought is colored with many colors, matchColor will be null and if the thought is colored with one color, matchColor will be that color
+        colorMatches.forEach(match => fgColors.add(match.slice(7, -1)))
+        matchColor = fgColors.size > 1 ? null : fgColors.values().next().value
+      }
+
+      const bgColors: Set<string> = new Set()
+      while ((match = bgColorRegex.exec(currentThoughtValue)) !== null) if (match[1]) bgColors.add(match[1])
+      const matchBgColor = bgColors.size > 1 ? null : bgColors.values().next().value
+
+      return !!(
+        (textHexColor && textHexColor === (matchColor && addAlphaToHex(rgbToHex(matchColor)))) ||
+        (backHexColor && backHexColor === (matchBgColor && addAlphaToHex(rgbToHex(matchBgColor))))
+      )
+    }
+    return !!(
+      (textHexColor && textHexColor === selectedTextHexColor) ||
+      (backHexColor && backHexColor === selectedBackHexColor)
+    )
+  })
 
   /** Toggles the text color to the clicked swatch. */
   const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
     // stop toolbar button dip
     e.stopPropagation()
+    e.preventDefault()
+    if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg))
+    else dispatch(formatSelection('foreColor', colors.fg))
+    // Apply background color to the selection
+    if (backgroundColor && backgroundColor !== colors.bg)
+      dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
+    else {
+      dispatch(formatSelection('backColor', colors.bg))
+
+      /** Function to check if a style(background) should be removed based on the color and background-color. */
+      const shouldRemoveStyle = (styleString: string) => {
+        const styleLower = styleString.toLowerCase()
+        const hasBackgroundColor = styleLower.includes('background-color')
+        const colorMatch = styleLower.match(/color\s*:\s*([^;]+);?/)
+        const elementColor = colorMatch ? colorMatch[1].trim() : null
+        const isDifferentColor = elementColor && elementColor !== rgbToHex(colors.bg)
+        if ((elementColor && isDifferentColor) || (label === 'default' && hasBackgroundColor)) return true
+        return false
+      }
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        if (!state.cursor) return
+        const thought = getThoughtById(state, head(state.cursor))
+        const simplePath = simplifyPath(state, state.cursor)
+        const styleAttrPattern = /style\s*=\s*["'][^"']*["']/gi
+        //Replace style attributes based on the conditions
+        const newThoughtValue = thought.value.replace(styleAttrPattern, match => {
+          if (shouldRemoveStyle(match)) return ''
+          return match
+        })
+        dispatch(
+          editThought({
+            oldValue: thought.value,
+            newValue: newThoughtValue,
+            path: simplePath,
+          }),
+        )
+      })
+    }
+
     dispatch(
       textColor({
         ...(selected
@@ -111,17 +210,16 @@ const ColorSwatch: FC<{
 const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fontSize, style }) => {
   const colors = useSelector(themeColors)
   const ref = useRef<HTMLDivElement>(null)
-  const cursorStyle = useSelector(
-    state =>
-      state.showColorPicker && state.cursor
-        ? {
-            // merge =style (which contains color) and =styleAnnotation (which contains backgroundColor)
-            // the style attribute name is not relevant here
-            ...(getStyle(state, head(state.cursor)) || ({} as React.CSSProperties)),
-            ...getStyle(state, head(state.cursor), { attributeName: '=styleAnnotation' }),
-          }
-        : undefined,
-    shallowEqual,
+  const backgroundColor = commandStateStore.useSelector(state => state.backColor as string | undefined)
+  const color = commandStateStore.useSelector(state => state.foreColor as string | undefined)
+
+  // Memoize the cursorStyle object so that it only updates when backgroundColor or color changes
+  const cursorStyle = useMemo(
+    () => ({
+      backgroundColor,
+      color,
+    }),
+    [backgroundColor, color],
   )
 
   const overflow = useWindowOverflow(ref)

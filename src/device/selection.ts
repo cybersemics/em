@@ -68,6 +68,18 @@ export const isThought = (): boolean => {
   return isEditable(focusNode) || isEditable(focusNode.parentNode)
 }
 
+/** Returns true if the selection is on a thought. */
+export const isOnThought = (): boolean => {
+  let focusNode = window.getSelection()?.focusNode
+  if (!focusNode) return false
+  while ((focusNode as HTMLElement)?.tagName !== 'DIV') {
+    if (isEditable(focusNode)) return true
+    focusNode = focusNode?.parentNode
+  }
+  // check focusNode if it is on the TEXT_NODE or the ELEMENT_NODE
+  return isEditable(focusNode)
+}
+
 /** Returns true if the selection is  on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
 export const isOnFirstLine = (): boolean => {
   const selection = window.getSelection()
