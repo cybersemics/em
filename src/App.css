@@ -100,15 +100,6 @@
   content: '\25B6 \FE0E';
 }
 
-/* Toolbar */
-.toolbar-icon {
-  cursor: pointer;
-  display: inline-block;
-  padding: 15px 8px 5px 8px;
-  border-radius: 3px;
-  z-index: var(--z-index-stack);
-}
-
 /* Thoughts */
 
 [contenteditable].active-underline:focus {

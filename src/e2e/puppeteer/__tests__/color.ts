@@ -26,7 +26,7 @@ it('Set the text color of the text', async () => {
   await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
 
-  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const cursorText = await getEditingText()
@@ -44,7 +44,7 @@ it('Set the background color of the text', async () => {
 
   await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
-  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
 
   const cursorText = await getEditingText()
@@ -64,7 +64,7 @@ it('Clear the text color when selecting white', async () => {
   let cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.color).toBe(null)
 
-  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="green"]')
   cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.color).toBe('#00d688')
@@ -86,7 +86,7 @@ it('Clear the background color when selecting text color', async () => {
   let cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe(null)
 
-  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
   cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe('rgb(0, 214, 136)')
@@ -109,7 +109,7 @@ it('Clear the text color when setting background color', async () => {
   let cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.color).toBe(null)
 
-  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="green"]')
   cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.color).toBe('#00d688')
