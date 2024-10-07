@@ -7,7 +7,7 @@ import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actio
 import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../../constants'
 import getUserSetting from '../../selectors/getUserSetting'
 import fastClick from '../../util/fastClick'
-import { ActionButton } from './../ActionButton'
+import ActionButton from './../ActionButton'
 import Checkbox from './../Checkbox'
 import ModalComponent from './ModalComponent'
 

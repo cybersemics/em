@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../constants'

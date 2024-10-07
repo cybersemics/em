@@ -26,6 +26,16 @@ module.exports = {
       },
     ],
 
+    // import/prefer-default-export
+    'import/prefer-default-export': [
+      2,
+      {
+        // any: Any exporting file must contain a default export.
+        // single: When there is only a single export from a module, prefer using default export over named export.
+        target: 'any',
+      },
+    ],
+
     // jsdoc
     'jsdoc/check-alignment': 2,
     'jsdoc/check-indentation': 2,
@@ -103,7 +113,6 @@ module.exports = {
       settings: { react: { version: 'detect' } },
       rules: {
         semi: ['error', 'never'],
-        'import/prefer-default-export': 0,
         // temporary fix from 'typescript-eslint' docs
         // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-unused-vars.md
         'no-extra-parens': 0,

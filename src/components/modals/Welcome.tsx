@@ -8,7 +8,7 @@ import { HOME_TOKEN } from '../../constants'
 import { hasChildren } from '../../selectors/getChildren'
 import offlineStatusStore from '../../stores/offlineStatusStore'
 import fastClick from '../../util/fastClick'
-import { ActionButton } from './../ActionButton'
+import ActionButton from './../ActionButton'
 import ModalComponent from './ModalComponent'
 
 /** Shrink modal text and logos to fit container vertically. */

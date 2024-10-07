@@ -12,7 +12,7 @@ import contextToThoughtId from '../../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../../selectors/getChildren'
 import headValue from '../../util/headValue'
 import TutorialHint from './TutorialHint'
-import { context1SubthoughtCreated } from './TutorialUtils'
+import context1SubthoughtCreated from './utils/context1SubthoughtCreated'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1SubThought = ({
