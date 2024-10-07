@@ -40,6 +40,7 @@ const urlLinkStyle = css({
   zIndex: 'thoughtAnnotationLink',
   marginLeft: 3,
   textDecoration: 'none',
+  verticalAlign: 'text-top',
 })
 
 /** Returns true if a link is to a thought within the user's thoughtspace. */
