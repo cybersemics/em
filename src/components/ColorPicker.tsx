@@ -118,7 +118,7 @@ const ColorSwatch: FC<{
     else {
       dispatch(formatSelection('backColor', colors.bg))
 
-      /** Function to check if a style(background) should be removed based on the color and background-color */
+      /** Function to check if a style(background) should be removed based on the color and background-color. */
       const shouldRemoveStyle = (styleString: string) => {
         const styleLower = styleString.toLowerCase()
         const hasBackgroundColor = styleLower.includes('background-color')
