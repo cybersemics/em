@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import { startCase } from 'lodash'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
