@@ -66,7 +66,7 @@ const Search: FC = () => {
   }
 
   return (
-    <ul style={{ marginTop: 0 }}>
+    <ul className={css({ marginTop: 0 })}>
       <li className={child()}>
         <div className={css({ display: 'flex' })}>
           <span
