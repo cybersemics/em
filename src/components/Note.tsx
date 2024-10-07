@@ -124,7 +124,6 @@ const Note = React.memo(({ path }: { path: Path }) => {
         html={note || ''}
         innerRef={noteRef}
         aria-label='note-editable'
-        className={'note-editable'}
         placeholder='Enter a note'
         onKeyDown={onKeyDown}
         onChange={onChange}
