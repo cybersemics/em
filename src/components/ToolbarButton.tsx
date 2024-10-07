@@ -220,7 +220,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }
       <SVG
         size={fontSize}
-        className={css({
+        cssRaw={css.raw({
           position: 'relative' as const,
           cursor: isButtonExecutable ? 'pointer' : 'default',
           opacity: dropToRemove ? 0 : 1,

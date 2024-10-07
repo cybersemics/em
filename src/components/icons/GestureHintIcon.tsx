@@ -28,7 +28,7 @@ const GestureHintIcon: FC<{
       x='0px'
       y='0px'
       viewBox='50 -50 575 575'
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

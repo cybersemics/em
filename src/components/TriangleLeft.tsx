@@ -1,8 +1,8 @@
-import { css, cx } from '../../styled-system/css'
+import { css } from '../../styled-system/css'
 import Icon from '../@types/Icon'
 
 /** A left-facing svg triangle. */
-const TriangleLeft = ({ fill = 'black', size = 20, width, height, style, className, cssRaw }: Icon) => (
+const TriangleLeft = ({ fill = 'black', size = 20, width, height, style, cssRaw }: Icon) => (
   <svg
     xmlns=''
     version='1.1'
@@ -11,7 +11,7 @@ const TriangleLeft = ({ fill = 'black', size = 20, width, height, style, classNa
     fill={fill}
     style={style}
     viewBox='0 0 5 10'
-    className={cx(className, css(cssRaw))}
+    className={css(cssRaw)}
   >
     <polygon points='0,5 5,0 5,10' />
   </svg>

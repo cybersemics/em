@@ -1,8 +1,8 @@
-import { css, cx } from '../../styled-system/css'
+import { css } from '../../styled-system/css'
 import Icon from '../@types/Icon'
 
 /** A down-facing triangle component. */
-const TriangleDown = ({ fill = 'black', size = 20, width, height, style, className, cssRaw }: Icon) => (
+const TriangleDown = ({ fill = 'black', size = 20, width, height, style, cssRaw }: Icon) => (
   <svg
     xmlns=''
     version='1.1'
@@ -10,7 +10,7 @@ const TriangleDown = ({ fill = 'black', size = 20, width, height, style, classNa
     height={height || (width ? width * 2 : size)}
     fill={fill}
     style={style}
-    className={cx(className, css(cssRaw))}
+    className={css(cssRaw)}
     viewBox='0 0 10 10'
   >
     <polygon points='0,5 5,0 10,5' />

@@ -11,7 +11,7 @@ const HomeIcon = ({
   style,
   wrapperClassName,
   cssRaw,
-}: IconType & { wrapperClassName?: string }) => {
+}: IconType & { wrapperClassName?: string; className?: string }) => {
   const sizeCalculated = useSelector(state => size || state.fontSize)
   return (
     <span role='img' aria-label='home' className={wrapperClassName}>

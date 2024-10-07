@@ -3,7 +3,7 @@ import { icon } from '../../../styled-system/recipes'
 import IconType from '../../@types/Icon'
 
 /** Text Color Icon Component. */
-const Icon = ({ size = 20, style, className, cssRaw }: IconType) => {
+const Icon = ({ size = 20, style, cssRaw }: IconType) => {
   size = style?.height ? +style.height : size
   return (
     <span className={cx(icon(), css({ display: 'inline-block' }))}>
@@ -19,7 +19,6 @@ const Icon = ({ size = 20, style, className, cssRaw }: IconType) => {
             },
             cssRaw,
           ),
-          className,
         )}
         style={{
           border: `solid 1px ${style?.fill || style?.color},`,

@@ -4,10 +4,10 @@ import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
 
 /** A pencil icon. */
-const PencilIcon = ({ fill, size = 20, style, className, cssRaw }: Icon) => {
+const PencilIcon = ({ fill, size = 20, style, cssRaw }: Icon) => {
   return (
     <svg
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       x='0px'
       y='0px'
       width={size}

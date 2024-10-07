@@ -5,10 +5,10 @@ import Shortcut from '../@types/Shortcut'
 import { cursorForwardActionCreator as cursorForward } from '../actions/cursorForward'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
-const Icon = ({ fill = 'black', size = 20, style, className, cssRaw }: IconType) => (
+const Icon = ({ fill = 'black', size = 20, style, cssRaw }: IconType) => (
   <svg
     version='1.1'
-    className={cx(icon(), css(cssRaw), className)}
+    className={cx(icon(), css(cssRaw))}
     xmlns='http://www.w3.org/2000/svg'
     width={size}
     height={size}

@@ -3,11 +3,11 @@ import { icon } from '../../../styled-system/recipes'
 import IconType from '../../@types/Icon'
 
 /** Pin icon. */
-const PinIcon = ({ size = 20, style, className, cssRaw }: IconType) => {
+const PinIcon = ({ size = 20, style, cssRaw }: IconType) => {
   return (
     <svg
       version='1.1'
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       viewBox='75 0 550 550'
       width={size}
       height={size}

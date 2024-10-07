@@ -5,10 +5,10 @@ import Shortcut from '../@types/Shortcut'
 import { collapseContextActionCreator as collapseContext } from '../actions/collapseContext'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
-const Icon = ({ className, size = 20, cssRaw }: IconType) => (
+const Icon = ({ size = 20, cssRaw }: IconType) => (
   <svg
     version='1.1'
-    className={cx(icon(), css(cssRaw), className)}
+    className={cx(icon(), css(cssRaw))}
     xmlns='http://www.w3.org/2000/svg'
     width={size}
     height={size}

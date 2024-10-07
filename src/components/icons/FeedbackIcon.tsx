@@ -17,7 +17,7 @@ interface IconProps {
 const FeedbackIcon: FC<IconProps> = ({ fill, size = 20, style, className, cssRaw }) => {
   return (
     <svg
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       x='0px'
       y='0px'
       viewBox='0 0 46 50'

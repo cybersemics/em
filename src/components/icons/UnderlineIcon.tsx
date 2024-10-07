@@ -3,14 +3,14 @@ import { icon } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 
 /** Underline icon. */
-const UnderlineIcon = ({ style, size, className, cssRaw }: Icon) => (
+const UnderlineIcon = ({ style, size, cssRaw }: Icon) => (
   <svg
     xmlns='http://www.w3.org/2000/svg'
     version='1.1'
     x='0'
     y='0'
     viewBox='-80 -100 460 460'
-    className={cx(icon(), css(cssRaw), className)}
+    className={cx(icon(), css(cssRaw))}
     width={size}
     height={size}
     style={{ ...style }}

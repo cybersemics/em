@@ -4,10 +4,10 @@ import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
 
 /** A delete icon. */
-const DeleteIcon = ({ fill, size = 18, style, className, cssRaw }: Icon) => {
+const DeleteIcon = ({ fill, size = 18, style, cssRaw }: Icon) => {
   return (
     <svg
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

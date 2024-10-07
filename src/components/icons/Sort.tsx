@@ -11,10 +11,10 @@ import head from '../../util/head'
 const getCursorSortDirection = (state: State) => getSortPreference(state, head(state.cursor || HOME_PATH)).direction
 
 /** Ascending Icon Component. */
-const IconAsc = ({ size = 20, style, className, cssRaw }: IconType) => (
+const IconAsc = ({ size = 20, style, cssRaw }: IconType) => (
   <svg
     version='1.1'
-    className={cx(icon(), css(cssRaw), className)}
+    className={cx(icon(), css(cssRaw))}
     xmlns='http://www.w3.org/2000/svg'
     width={size}
     height={size}
@@ -34,10 +34,10 @@ const IconAsc = ({ size = 20, style, className, cssRaw }: IconType) => (
 )
 
 /** Descending Icon Component. */
-const IconDesc = ({ size = 20, style, className, cssRaw }: IconType) => (
+const IconDesc = ({ size = 20, style, cssRaw }: IconType) => (
   <svg
     version='1.1'
-    className={cx(icon(), css(cssRaw), className)}
+    className={cx(icon(), css(cssRaw))}
     xmlns='http://www.w3.org/2000/svg'
     width={size}
     height={size}
@@ -57,10 +57,10 @@ const IconDesc = ({ size = 20, style, className, cssRaw }: IconType) => (
 )
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
-const Icon = ({ size = 20, style, className, cssRaw }: IconType) => {
+const Icon = ({ size = 20, style, cssRaw }: IconType) => {
   const direction = useSelector(getCursorSortDirection)
   const Component = direction === 'Desc' ? IconDesc : IconAsc
-  return <Component size={size} style={style} className={className} cssRaw={cssRaw} />
+  return <Component size={size} style={style} cssRaw={cssRaw} />
 }
 
 export default Icon

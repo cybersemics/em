@@ -5,13 +5,13 @@ import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
 
 /** Tutorials icon that shows a teacher at a board. */
-const TutorialsIcon: FC<Icon> = ({ cssRaw, fill, className, style, size = 20 }) => {
+const TutorialsIcon: FC<Icon> = ({ cssRaw, fill, style, size = 20 }) => {
   return (
     <svg
       x='0'
       y='0'
       viewBox='90 100 600 600'
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

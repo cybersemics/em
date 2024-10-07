@@ -5,10 +5,10 @@ import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const SettingsIcon: FC<IconType> = ({ cssRaw, fill, size = 20, style, className }) => {
+const SettingsIcon: FC<IconType> = ({ cssRaw, fill, size = 20, style }) => {
   return (
     <svg
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       x='0px'
       y='0px'
       viewBox='100 0 600 600'

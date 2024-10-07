@@ -3,7 +3,7 @@ import { icon } from '../../../styled-system/recipes'
 import IconType from '../../@types/Icon'
 
 /** Download icon. */
-const DownloadIcon = ({ fill, size = 20, style, className, cssRaw }: IconType) => {
+const DownloadIcon = ({ fill, size = 20, style, cssRaw }: IconType) => {
   const stroke = style?.fill || fill
   return (
     <svg
@@ -11,7 +11,7 @@ const DownloadIcon = ({ fill, size = 20, style, className, cssRaw }: IconType) =
       height={size}
       viewBox='65 0 390.526 540'
       fill={fill}
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       style={style}
     >
       <path

@@ -14,12 +14,12 @@ interface SearchIconProps {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const SearchIcon: FC<SearchIconProps> = ({ cssRaw, fill, size = 20, style, className }) => {
+const SearchIcon: FC<SearchIconProps> = ({ cssRaw, fill, size = 20, style }) => {
   const colors = useSelector(themeColors)
   return (
     <svg
       version='1.1'
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
       x='0px'
       y='0px'

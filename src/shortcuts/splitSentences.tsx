@@ -17,14 +17,14 @@ import parentOf from '../util/parentOf'
 import splitSentence from '../util/splitSentence'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
-const Icon = ({ fill = 'black', size = 20, style, className, cssRaw }: IconType) => (
+const Icon = ({ fill = 'black', size = 20, style, cssRaw }: IconType) => (
   <svg
-    className={cx(className, css(cssRaw))}
+    className={cx(css({ marginTop: -2 }, cssRaw))}
     version='1.1'
     width={size}
     height={size}
     fill={fill}
-    style={{ marginTop: -2, ...style }}
+    style={style}
     viewBox='0 0 110 115'
   >
     <g transform='scale(1.3)'>

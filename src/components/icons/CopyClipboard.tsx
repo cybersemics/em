@@ -5,10 +5,10 @@ import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
 
 /** Clipboard icon. */
-const CopyClipboard: FC<Icon> = ({ cssRaw, fill, size = 20, style, className }) => {
+const CopyClipboard: FC<Icon> = ({ cssRaw, fill, size = 20, style }) => {
   return (
     <svg
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       x='0px'
       y='0px'
       viewBox='0 0 15 18'

@@ -4,10 +4,10 @@ import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 
 /** Share icon. */
-const ShareIcon = ({ fill, size = 20, style, className, cssRaw }: IconType) => {
+const ShareIcon = ({ fill, size = 20, style, cssRaw }: IconType) => {
   return (
     <svg
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

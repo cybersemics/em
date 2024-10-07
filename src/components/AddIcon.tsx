@@ -15,7 +15,7 @@ interface SearchIconProps {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const AddIcon: FC<SearchIconProps> = ({ cssRaw, fill, size = 20, style, className }) => {
+const AddIcon: FC<SearchIconProps> = ({ cssRaw, fill, size = 20, style }) => {
   const colors = useSelector(themeColors)
   return (
     <svg
@@ -23,7 +23,7 @@ const AddIcon: FC<SearchIconProps> = ({ cssRaw, fill, size = 20, style, classNam
       x='0px'
       y='0px'
       viewBox='1 2 97 96'
-      className={cx(icon(), css(cssRaw), className)}
+      className={cx(icon(), css(cssRaw))}
       width={size}
       height={size}
       fill={fill || colors.fg}
