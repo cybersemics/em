@@ -10,7 +10,7 @@ interface Options {
 const waitForEditable = async (page: Page, value: string, { timeout }: Options = { timeout: 6000 }) =>
   await page.waitForFunction(
     (value: string) => {
-      return Array.from(document.getElementsByClassName('editable')).find(element => element.innerHTML === value)
+      return Array.from(document.querySelectorAll('[data-editable]')).find(element => element.innerHTML === value)
     },
     {
       timeout,

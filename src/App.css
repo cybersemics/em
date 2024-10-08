@@ -69,27 +69,6 @@
   padding-bottom: 10px;
 }
 
-.breadcrumbs .num-contexts {
-  margin-right: -0.5em;
-}
-
-.context-breadcrumbs {
-  font-size: 0.867em;
-  color: gray;
-  /* approximate bullet width across multiple font sizes */
-  margin-left: calc(1.3em - 14.5px);
-  margin-top: 0.533em;
-  min-height: 1em;
-}
-
-.child .context-breadcrumbs {
-  /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
-  margin-bottom: -0.25em;
-  /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
-     Otherwise the accumulated y value will not be correct. */
-  padding-top: 0.5em;
-}
-
 /* required to avoid iPhone converting to emoji
  https://stackoverflow.com/questions/11178433/how-do-i-stop-ios-from-converting-a-small-pointing-right-triangle-character-into
  */
@@ -110,29 +89,11 @@
   border-bottom: solid 1px;
 }
 
-/* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
-.thought-container {
-  /* must match value used in Editable useMultiline */
-  line-height: 1.72;
-}
-
-/* Add some space before the first sibling after an expanded thought to make room for its children. Cannot use line-height since it adds unwanted space on the bottom, so we have to use padding-top even though it messes up the caret placement on click. See ".child .editable" below for details. */
-.child.expanded:not(.leaf) + .child > .thought-container {
-  padding-top: 0.3em;
-}
-.child.expanded:not(.leaf) + .child > .thought-container .bullet {
-  top: 0.3em;
-}
-
 .children-subheading {
   position: relative;
   margin-top: 3px;
   margin-bottom: 2px;
   padding-bottom: 4px;
-}
-
-.ellipsis {
-  font-size: 75%;
 }
 
 .down-chevron {
@@ -224,21 +185,6 @@
   align-items: flex-end;
   /* rounded screens */
   padding-bottom: calc(max(10px, var(--safe-area-bottom)));
-}
-
-.dark .offline {
-  color: #666;
-}
-
-/* to remove padding from breadcrumbs used inside sidebar recenlty edited thoughts  */
-.thoughts-tab .nav-breadcrumbs {
-  padding: 0;
-}
-
-/** offset logo */
-.nav-bottom .nav-breadcrumbs {
-  width: calc(100% - 40px);
-  padding-left: 35px;
 }
 
 /* react-transition-group animation: fade */
@@ -484,78 +430,27 @@
   color: rgba(7, 7, 7, 0.5);
 }
 
-.bullet {
-  z-index: var(--z-index-bullet);
-  /* required for smooth animation when additional space is added after an expanded thought. See ".child.expanded:not(.leaf) + .child > .thought-container .bullet". */
-  top: 0;
-}
-
-/* Disable long press to select on iOS. See useLongPress for details. */
-.pressed .editable {
-  user-select: none;
-}
-
-.mobile .child > .thought-container > .bullet.show-contexts {
-  margin-right: -1.5px;
-}
-
 /* Android Section */
 
 /*### Phone Portrait ### */
 
 @media (max-width: 500px) {
-  .android .child {
-    position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
-    margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
-  margin-top: 0.501em; /* Match editable padding */
-    padding: 0.2em 0 0.2em 100px;
-  }
-
-  .android .child > .thought-container > .bullet {
-    margin-left: -3px;
-  }
-
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
     margin-bottom: 2px;
     padding-bottom: 4px;
-  }
-  .android .child {
-    position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
-    margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
-  margin-top: 0.501em; /* Match editable padding */
-    padding: 1px 0 0.2px 100px;
   }
 }
 
 /* Tablet Properties */
 
 @media (min-width: 560px) and (max-width: 1024px) {
-  .android .child > .thought-container > .bullet {
-    transition: transform 0.1s ease-in-out;
-    margin-left: -3px;
-  }
-
-  .android
-    .child.show-contexts:first-of-type
-    > .thought-container
-    > .thought
-    .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-    margin-top: calc(0.18em - 4px); /* */
-  }
-
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
     margin-bottom: 2px;
     padding-bottom: 4px;
-  }
-  .android .child {
-    position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
-    margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
-  margin-top: 0.501em; /* Match editable padding */
-    padding: 1px 0 0.2px 100px;
   }
 }
 
@@ -571,11 +466,6 @@
 /*.autofocus-hide-parent {
   margin-right: -1.2em;
 }*/
-
-/* new thought */
-.children-new {
-  transition: all 0.75s ease-out;
-}
 
 /* for some reason opacity bleeds through modal*/
 .dim {
@@ -741,73 +631,6 @@
   color: lightblue;
 }
 
-/* the bar that displays on hover when dragging thoughts */
-.drop-hover {
-  position: absolute;
-  width: calc(100% - 2em);
-  height: 3px;
-  border-radius: 99px;
-  z-index: var(--z-index-stack);
-}
-
-/* Thought drop-hover */
-/* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
-.thought-container .drop-hover {
-  /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
-  margin-left: calc(-0.4em - 12px);
-  margin-top: -0.2em;
-}
-.mobile .thought-container .drop-hover {
-  /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
-  margin-left: calc(-0.4em - 14px);
-}
-
-/* the drop target at the end of a context */
-.drop-end {
-  position: absolute;
-  height: 0.5em;
-  /* margin to offset bullet width */
-  margin-left: -1em;
-  /* Add additional click area to position the drop target more evenly between siblings (vertically).
-     Unfortunately, due to the HTML hierarchy stacking order, multiple drop-ends at the same y position (e.g. after /a/b/c below) will always be obscured by their previous siblings descendants.
-     This is still better than nothing.
-   */
-  margin-top: -0.5em;
-  padding-top: 0.5em;
-  /* must use z-index 0 since deeply nested drop targets come BEFORE other subsequent uncles in the HTML. Otherwise z-index will be ignored and the HTML order will force an incorrect stacking order; later uncles will obscure deeply nested drop targets.
-
-  e.g. The subthught drop target for a would incorrectly obscure that of b and c.
-
-  - a
-    - b
-      - c
-
-  */
-  z-index: 0;
-  width: calc(100% - 38px);
-}
-
-.child.drop-end.last {
-  margin-top: 0.4em;
-  /* extend click area since there are no thoughts below */
-  height: 4em;
-}
-
-.child.drop-end::before {
-  display: none;
-}
-
-/* Last drop-end in Subthoughts */
-.drop-end .drop-hover {
-  margin-left: calc(0.6em - 13px);
-  width: calc(100% - 3em);
-}
-
-.drop-empty .drop-end {
-  /* override .drop-hover */
-  z-index: var(--z-index-drop-empty);
-}
-
 .indent {
   display: inline-block;
   margin-top: 5px;
@@ -889,56 +712,10 @@
   text-overflow: ellipsis;
 }
 
-.thoughts-tab {
-  transition: all 0.4s linear;
-}
-
-.thoughts-tab::-webkit-scrollbar {
-  width: 0px; /* Remove scrollbar space */
-  background: transparent; /* Optional: just make scrollbar invisible */
-  display: none;
-}
-
-.thoughts-tab:hover {
-  opacity: 1;
-}
-
 .icon {
   cursor: pointer;
   flex: 1;
   transition: all 0.1s ease-in-out;
-}
-
-.divider-container {
-  margin-top: 5px;
-}
-
-.editing > .thought-container > .thought > .divider-container > .divider {
-  border-color: rgb(204, 204, 204);
-}
-
-.child-divider {
-  margin-left: -125px;
-}
-
-.child-divider .drop-hover {
-  margin-left: 6px;
-}
-
-.inside-divider .drop-hover {
-  margin-left: 6px;
-}
-
-.child-divider .bullet {
-  display: none !important;
-}
-
-.divider {
-  border: solid 1px gray;
-}
-
-.dark .divider {
-  border-color: #333;
 }
 
 .cp-clipboard-wrapper {
@@ -989,10 +766,6 @@
   background-color: black;
 }
 
-.invalid-option {
-  color: tomato !important;
-}
-
 /* Publish */
 
 .publish-meta {
@@ -1026,40 +799,6 @@
   /* Using vh here allows shortcuts diagram to always appear keyboard in mobile. */
   height: 100vh;
   width: 100%;
-}
-
-.latest-shortcuts-transition-enter {
-  opacity: 0;
-}
-
-.latest-shortcuts-transition-enter-active {
-  opacity: 1;
-  transition: opacity 400ms;
-}
-
-.latest-shortcuts-transition-exit {
-  opacity: 1;
-}
-.latest-shortcuts-transition-exit-active {
-  opacity: 0;
-  transition: opacity 400ms;
-}
-
-.latest-shortcuts {
-  position: absolute;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  z-index: var(--z-index-latest-shortcuts);
-  pointer-events: none;
-}
-
-.latest-shortcuts.middle {
-  top: 30%;
-}
-
-.latest-shortcuts.bottom {
-  bottom: 20%;
 }
 
 .latest-shortcuts .shortcut-tab {

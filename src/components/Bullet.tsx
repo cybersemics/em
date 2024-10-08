@@ -1,7 +1,7 @@
-import classNames from 'classnames'
 import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { cva } from '../../styled-system/css'
+import { css, cva, cx } from '../../styled-system/css'
+import { bullet } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
@@ -21,6 +21,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 
 interface BulletProps {
@@ -413,6 +414,9 @@ const Bullet = ({
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging
   })
+  const bulletIsDivider = useSelector(state =>
+    isDivider(getThoughtById(state, thoughtId)?.value) ? 'none' : undefined,
+  )
 
   /** Returns true if the thought is pending. */
   const pending = useSelector(state => {
@@ -503,11 +507,29 @@ const Bullet = ({
     <span
       data-testid={'bullet-' + hashPath(path)}
       aria-label='bullet'
-      className={classNames({
-        bullet: true,
-        'show-contexts': showContexts,
-        'invalid-option': invalid,
-      })}
+      className={cx(
+        bullet({ invalid }),
+        css({
+          _mobile: {
+            marginRight: showContexts ? '-1.5px' : undefined,
+          },
+          '@media (min-width: 560px) and (max-width: 1024px)': {
+            _android: {
+              transition: 'transform 0.1s ease-in-out',
+              marginLeft: '-3px',
+            },
+          },
+          '@media (max-width: 500px)': {
+            _android: {
+              marginLeft: '-3px',
+            },
+          },
+          display: bulletIsDivider,
+          position: 'absolute',
+          verticalAlign: 'top',
+          cursor: 'pointer',
+        }),
+      )}
       style={{
         marginTop: -extendClickHeight,
         marginLeft: -extendClickWidth + marginLeft,
@@ -515,10 +537,7 @@ const Bullet = ({
         paddingTop: extendClickHeight,
         paddingLeft: extendClickWidth,
         paddingBottom: extendClickHeight + 2,
-        position: 'absolute',
-        verticalAlign: 'top',
         width,
-        cursor: 'pointer',
       }}
       onClick={clickHandler}
     >

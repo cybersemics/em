@@ -227,7 +227,7 @@ it.skip('Swipe over hidden thought', async () => {
   const previousSibling = await ref().execute((newThoughtEditable: Element<'async'>) => {
     const editable = (newThoughtEditable as unknown as HTMLElement)
       .closest('ul.children')
-      ?.firstElementChild?.getElementsByClassName('editable')[0] as HTMLElement
+      ?.firstElementChild?.querySelector('[data-editable]') as HTMLElement
     return editable?.innerText
   }, newThoughtEditable)
 
@@ -250,7 +250,7 @@ it.skip('Bump Thought Down on a thought that has children', async () => {
     const children = (newThoughtEditable as unknown as HTMLElement)
       .closest('ul.children')
       ?.firstElementChild?.getElementsByTagName('ul')[0]
-      ?.getElementsByClassName('editable') as HTMLCollection
+      ?.querySelectorAll('[data-editable]') as NodeListOf<HTMLElement>
     return Array.from(children).map(x => (x as HTMLElement).innerText)
   }, newThoughtEditable)
 

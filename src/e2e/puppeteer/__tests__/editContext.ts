@@ -5,7 +5,7 @@ import helpers from '../helpers'
 const getFirstSubthought = (editable: JSHandle) =>
   editable
     .asElement()!
-    .evaluateHandle(el => el.parentElement?.parentElement?.nextElementSibling?.querySelector('.editable'))
+    .evaluateHandle(el => el.parentElement?.parentElement?.nextElementSibling?.querySelector(`[data-editable]`))
 
 vi.setConfig({ testTimeout: 20000 })
 

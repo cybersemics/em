@@ -7,23 +7,25 @@ const StaticSuperscript = React.forwardRef<
   HTMLSpanElement,
   {
     n: number
-    css?: SystemStyleObject
+    cssRaw?: SystemStyleObject
     style?: React.CSSProperties
     show?: boolean
     hideZero?: boolean
     absolute?: boolean
   }
->(({ n, style, show = true, hideZero, absolute }, forwardRef) => (
+>(({ n, style, show = true, hideZero, absolute, cssRaw }, forwardRef) => (
   <span
     ref={forwardRef}
-    className={css({
-      /* prevent expanded click area from wrapping */
-      whiteSpace: 'nowrap',
-      zIndex: 'stack',
-      pointerEvents: 'none',
-      userSelect: 'none',
-      ...css,
-    })}
+    className={css(
+      {
+        /* prevent expanded click area from wrapping */
+        whiteSpace: 'nowrap',
+        zIndex: 'stack',
+        pointerEvents: 'none',
+        userSelect: 'none',
+      },
+      cssRaw,
+    )}
     style={style}
   >
     {show && (

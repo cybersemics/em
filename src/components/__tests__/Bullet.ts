@@ -25,7 +25,7 @@ describe('render', () => {
       }),
     ])
 
-    const bullets = document.querySelectorAll('.bullet')
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
     expect(bullets.length).toBe(3)
   })
 
@@ -42,7 +42,7 @@ describe('render', () => {
 
     // =bullet is hidden so only a is shown
     // a should not have a bullet
-    const bullets = document.querySelectorAll('.bullet')
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
     expect(bullets.length).toBe(0)
   })
 
@@ -62,7 +62,7 @@ describe('render', () => {
 
     // =bullet is hidden so only a, b, c are shown
     // only a should have a bullet
-    const bullets = document.querySelectorAll('.bullet')
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
     expect(bullets.length).toBe(1)
   })
 
@@ -82,7 +82,7 @@ describe('render', () => {
     ])
 
     // =children should not have a bullet since =bullet/None is applied
-    const bullets = document.querySelectorAll('.bullet')
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
     expect(bullets.length).toBe(3)
   })
 
@@ -104,7 +104,7 @@ describe('render', () => {
     ])
 
     // only a and b should have bullets
-    const bullets = document.querySelectorAll('.bullet')
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
     expect(bullets.length).toBe(2)
   })
 
@@ -122,7 +122,7 @@ describe('render', () => {
       toggleHiddenThoughts(),
     ])
 
-    const bullets = document.querySelectorAll('.bullet')
+    const bullets = document.querySelectorAll('[aria-label="bullet"]')
     expect(bullets.length).toBe(4)
   })
 

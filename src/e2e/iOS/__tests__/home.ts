@@ -19,13 +19,13 @@ it.skip('click home link to set the cursor to null', async () => {
   await clickThought('b') // set cursor
   await clickThought('b') // open keyboard
 
-  const editingBefore = await $('.editing')
+  const editingBefore = await $('[data-editing=true]')
   expect(editingBefore.elementId).toBeTruthy()
 
   const homeLink = await $('[data-testid=home] a')
   expect(homeLink).toBeTruthy()
   await homeLink.click()
 
-  const editingAfter = await $('.editing')
+  const editingAfter = await $('[data-editing=true]')
   expect(editingAfter.elementId).toBeFalsy()
 })

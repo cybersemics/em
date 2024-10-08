@@ -19,11 +19,11 @@ it('reset content editable inner html on bumpThoughtDown', async () => {
     setCursor(['a']),
   ])
 
-  expect(document.querySelector('div.editable')?.textContent).toBe('a')
+  expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('a')
 
   await act(async () => {
     executeShortcut(bumpThoughtDown)
   })
 
-  expect(document.querySelector('div.editable')?.textContent).toBe('')
+  expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('')
 })

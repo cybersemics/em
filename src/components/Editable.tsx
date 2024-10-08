@@ -3,7 +3,7 @@ import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
-import { editable, multiline as multilineRecipe } from '../../styled-system/recipes'
+import { editable, invalidOption, multiline as multilineRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
@@ -156,7 +156,7 @@ const Editable = ({
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
-    contentRef.current && contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
+    contentRef.current && contentRef.current.classList[value ? 'add' : 'remove'](invalidOption())
 
   // side effect to set old value ref to head value from updated simplePath. Also update editing value, if it is different from current value.
   useEffect(
@@ -435,7 +435,7 @@ const Editable = ({
       const isRelatedTargetEditableOrNote =
         e.relatedTarget &&
         ((e.relatedTarget as Element).classList?.contains('editable') ||
-          (e.relatedTarget as Element).classList?.contains('note-editable'))
+          !!(e.relatedTarget as Element).querySelector('[aria-label="note-editable"]'))
 
       if (isRelatedTargetEditableOrNote) return
 
@@ -568,6 +568,7 @@ const Editable = ({
       disabled={disabled}
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
+      data-editable
       className={cx(
         multiline ? multilineRecipe() : null,
         editable({

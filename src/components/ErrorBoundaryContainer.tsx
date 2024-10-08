@@ -1,7 +1,7 @@
 import { FC, PropsWithChildren, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { css, cx } from '../../styled-system/css'
-import { anchorButton } from '../../styled-system/recipes'
+import { anchorButton, invalidOption } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import fastClick from '../util/fastClick'
 
@@ -43,7 +43,7 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
   <div className={css({ margin: 50 })}>
     <p>Oops, there was an error.</p>
     <div className={css({ fontSize: 14 })}>
-      {error && <pre className='invalid-option'>{error.message || 'Error'}</pre>}
+      {error && <pre className={invalidOption()}>{error.message || 'Error'}</pre>}
       {error && (
         <div>
           <Toggle title='Details:'>
