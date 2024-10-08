@@ -1,5 +1,5 @@
 import { rgbToHex } from '@mui/material'
-import React, { FC, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { FC, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
@@ -14,6 +14,9 @@ import fastClick from '../util/fastClick'
 import head from '../util/head'
 import TriangleDown from './TriangleDown'
 import TextColorIcon from './icons/TextColor'
+
+/** A function that adds an alpha channel to a hex color. */
+const addAlphaToHex = (hex: string) => (hex.length === 7 ? hex + 'ff' : hex)
 
 /** A hook that returns the left and right overflow of the element outside the bounds of the screen. Do not re-calculate on every render or it will create an infinite loop when scrolling the Toolbar. */
 const useWindowOverflow = (ref: React.RefObject<HTMLElement>) => {
@@ -41,20 +44,20 @@ const ColorSwatch: FC<{
   color?: string
   // aria-label; defaults to color or background color
   label?: string
-  cursorStyle?: React.CSSProperties
   shape?: 'text' | 'bullet'
   size?: number
-}> = ({ backgroundColor, color, cursorStyle, label, shape, size }) => {
+}> = ({ backgroundColor, color, label, shape, size }) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
-  size = size || fontSize * 1.2
+  const commandStateBackgroundColor = commandStateStore.useSelector(state =>
+    state.backColor ? addAlphaToHex(rgbToHex(state.backColor as string)) : null,
+  )
+  const commandStateColor = commandStateStore.useSelector(state =>
+    state.foreColor ? addAlphaToHex(rgbToHex(state.foreColor as string)) : null,
+  )
 
-  /** A function that adds an alpha channel to a hex color. */
-  const addAlphaToHex = (hex: string) => {
-    if (hex.length === 7) return hex + 'ff'
-    return hex
-  }
+  size = size || fontSize * 1.2
 
   const selected = useSelector(state => {
     const currentThoughtValue = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''
@@ -67,15 +70,11 @@ const ColorSwatch: FC<{
     const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
     const textHexColor = color ? addAlphaToHex(rgbToHex(color)) : undefined
     const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
-    const selectedTextHexColor = cursorStyle?.color ? addAlphaToHex(rgbToHex(cursorStyle?.color)) : undefined
-    const selectedBackHexColor = cursorStyle?.backgroundColor
-      ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor))
-      : undefined
     if (
-      (cursorStyle?.color === undefined && cursorStyle?.backgroundColor === undefined) ||
-      (selectedTextHexColor === '#ccccccff' && selectedBackHexColor === '#333333ff') ||
-      (selectedTextHexColor === addAlphaToHex(rgbToHex(themeColor.fg)) &&
-        selectedBackHexColor === addAlphaToHex(rgbToHex(themeColor.bg)) &&
+      (!commandStateColor && !commandStateBackgroundColor) ||
+      (commandStateColor === '#ccccccff' && commandStateBackgroundColor === '#333333ff') ||
+      (commandStateColor === addAlphaToHex(rgbToHex(themeColor.fg)) &&
+        commandStateBackgroundColor === addAlphaToHex(rgbToHex(themeColor.bg)) &&
         !selection.isOnThought())
     ) {
       const colorMatches = currentThoughtValue.match(colorRegex) || []
@@ -100,8 +99,8 @@ const ColorSwatch: FC<{
       )
     }
     return !!(
-      (textHexColor && textHexColor === selectedTextHexColor) ||
-      (backHexColor && backHexColor === selectedBackHexColor)
+      (textHexColor && textHexColor === commandStateColor) ||
+      (backHexColor && backHexColor === commandStateBackgroundColor)
     )
   })
 
@@ -210,17 +209,6 @@ const ColorSwatch: FC<{
 const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fontSize, style }) => {
   const colors = useSelector(themeColors)
   const ref = useRef<HTMLDivElement>(null)
-  const backgroundColor = commandStateStore.useSelector(state => state.backColor as string | undefined)
-  const color = commandStateStore.useSelector(state => state.foreColor as string | undefined)
-
-  // Memoize the cursorStyle object so that it only updates when backgroundColor or color changes
-  const cursorStyle = useMemo(
-    () => ({
-      backgroundColor,
-      color,
-    }),
-    [backgroundColor, color],
-  )
 
   const overflow = useWindowOverflow(ref)
 
@@ -256,28 +244,28 @@ const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fo
 
         {/* Text Color */}
         <div aria-label='text color swatches' style={{ whiteSpace: 'nowrap' }}>
-          <ColorSwatch cursorStyle={cursorStyle} color={colors.fg} label='default' />
-          <ColorSwatch cursorStyle={cursorStyle} color={colors.gray} label='gray' />
-          <ColorSwatch cursorStyle={cursorStyle} color={colors.orange} label='orange' />
-          <ColorSwatch cursorStyle={cursorStyle} color={colors.yellow} label='yellow' />
-          <ColorSwatch cursorStyle={cursorStyle} color={colors.green} label='green' />
-          <ColorSwatch cursorStyle={cursorStyle} color={colors.blue} label='blue' />
-          <ColorSwatch cursorStyle={cursorStyle} color={colors.purple} label='purple' />
-          <ColorSwatch cursorStyle={cursorStyle} color={colors.pink} label='pink' />
-          <ColorSwatch cursorStyle={cursorStyle} color={colors.red} label='red' />
+          <ColorSwatch color={colors.fg} label='default' />
+          <ColorSwatch color={colors.gray} label='gray' />
+          <ColorSwatch color={colors.orange} label='orange' />
+          <ColorSwatch color={colors.yellow} label='yellow' />
+          <ColorSwatch color={colors.green} label='green' />
+          <ColorSwatch color={colors.blue} label='blue' />
+          <ColorSwatch color={colors.purple} label='purple' />
+          <ColorSwatch color={colors.pink} label='pink' />
+          <ColorSwatch color={colors.red} label='red' />
         </div>
 
         {/* Background Color */}
         <div aria-label='background color swatches' style={{ whiteSpace: 'nowrap' }}>
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.fg} label='inverse' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.gray} label='gray' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.orange} label='orange' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.yellow} label='yellow' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.green} label='green' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.blue} label='blue' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.purple} label='purple' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.pink} label='pink' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.red} label='red' />
+          <ColorSwatch backgroundColor={colors.fg} label='inverse' />
+          <ColorSwatch backgroundColor={colors.gray} label='gray' />
+          <ColorSwatch backgroundColor={colors.orange} label='orange' />
+          <ColorSwatch backgroundColor={colors.yellow} label='yellow' />
+          <ColorSwatch backgroundColor={colors.green} label='green' />
+          <ColorSwatch backgroundColor={colors.blue} label='blue' />
+          <ColorSwatch backgroundColor={colors.purple} label='purple' />
+          <ColorSwatch backgroundColor={colors.pink} label='pink' />
+          <ColorSwatch backgroundColor={colors.red} label='red' />
         </div>
       </div>
     </div>
