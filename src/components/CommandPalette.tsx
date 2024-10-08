@@ -14,6 +14,7 @@ import themeColors from '../selectors/themeColors'
 import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
+import allowScroll from '../device/disableScroll'
 import GestureDiagram from './GestureDiagram'
 import { HighlightedText } from './HighlightedText'
 import Popup from './Popup'
@@ -298,7 +299,7 @@ const CommandPalette: FC = () => {
   // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
   const isGestureActive = gestureInProgress || !isTouch
   const { keyboardInProgress, setKeyboardInProgress, possibleShortcutsSorted, recentCommands, setRecentCommands } =
-    useShortcut({ isGestureActive: isGestureActive, includeRecentCommand: true })
+    useShortcut({ isGestureActive: isGestureActive, includeRecentCommand: true, sortActiveCommandsFirst: false })
 
   const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
 
@@ -335,6 +336,14 @@ const CommandPalette: FC = () => {
   useEffect(() => {
     setSelectedShortcut(possibleShortcutsSorted[0])
   }, [keyboardInProgress, possibleShortcutsSorted, setSelectedShortcut])
+  useEffect(() => {
+    allowScroll(false)
+
+    return () => {
+      allowScroll(true)
+      unmounted.current = true
+    }
+  }, [])
 
   useEffect(() => {
     disableScroll()

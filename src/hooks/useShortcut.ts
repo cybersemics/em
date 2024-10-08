@@ -15,7 +15,7 @@ import storageModel from '../stores/storageModel'
  **********************************************************************/
 
 /** Returns true if the shortcut can be executed. */
-const isExecutable = (state: State, shortcut: Shortcut) =>
+export const isExecutable = (state: State, shortcut: Shortcut) =>
   (!shortcut.canExecute || shortcut.canExecute(() => state)) && (shortcut.allowExecuteFromModal || !state.showModal)
 
 /**
@@ -24,9 +24,12 @@ const isExecutable = (state: State, shortcut: Shortcut) =>
 const useShortcut = ({
   isGestureActive = true,
   includeRecentCommand = false,
+  sortActiveCommandsFirst = true,
 }: {
   isGestureActive?: boolean | GesturePath
-  includeRecentCommand?: boolean
+  includeRecentCommand?: boolean,
+  sortActiveCommandsFirst?: boolean,
+  
 }) => {
   const gestureInProgress = gestureStore.useState()
   const [keyboardInProgress, setKeyboardInProgress] = useState('')
@@ -72,7 +75,7 @@ const useShortcut = ({
       // always sort exact match to top
       if (gestureInProgress === shortcut.gesture || keyboardInProgress.trim().toLowerCase() === label) return '\x00'
       // sort inactive shortcuts to the bottom alphabetically
-      else if (!isExecutable(store.getState(), shortcut)) return `\x99${label}`
+      else if (sortActiveCommandsFirst && !isExecutable(store.getState(), shortcut)) return `\x99${label}`
       // sort gesture by length and then label
       // no padding of length needed since no gesture exceeds a single digit
       else if (gestureInProgress) return `\x01${label}`

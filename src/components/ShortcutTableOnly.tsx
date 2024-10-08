@@ -12,7 +12,7 @@ const ShortcutTableOnly = ({
   customize,
   onSelect,
   applyIndexInToolbar,
-  keyboardInProgress,
+  keyboardInProgress
 }: {
   shortcuts: (Shortcut | null)[]
   selectedShortcut?: Shortcut

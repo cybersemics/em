@@ -124,11 +124,16 @@ const ShortcutRow = ({
               {indexInToolbar}.{' '}
             </span>
           )}
-          {keyboardInProgress ? (
-            <HighlightedText value={shortcut.label} match={keyboardInProgress} />
-          ) : (
-            <b>{shortcut.label}</b>
-          )}
+
+          {
+            keyboardInProgress!?.length > 0 ? (
+              <b>
+                <HighlightedText value={shortcut.label} match={keyboardInProgress as string} />
+              </b>
+            ) : (
+              <b>{shortcut.label}</b>
+            )
+          }
           <p>{description}</p>
         </th>
         {/* center gesture diagrams on mobile */}
