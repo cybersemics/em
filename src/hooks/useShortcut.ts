@@ -27,9 +27,8 @@ const useShortcut = ({
   sortActiveCommandsFirst = true,
 }: {
   isGestureActive?: boolean | GesturePath
-  includeRecentCommand?: boolean,
-  sortActiveCommandsFirst?: boolean,
-  
+  includeRecentCommand?: boolean
+  sortActiveCommandsFirst?: boolean
 }) => {
   const gestureInProgress = gestureStore.useState()
   const [keyboardInProgress, setKeyboardInProgress] = useState('')
@@ -113,8 +112,10 @@ const useShortcut = ({
       )
     })
     return sorted
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     gestureInProgress,
+    sortActiveCommandsFirst,
     isGestureActive,
     keyboardInProgress,
     recentCommands,

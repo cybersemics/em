@@ -8,9 +8,6 @@ import { globalShortcuts, shortcutById } from '../shortcuts'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import ShortcutTableOnly from './ShortcutTableOnly'
-// import { useStore } from "react-redux"
-// import { sortShortcuts } from "../util/sortShortcut";
-
 
 // define the grouping and ordering of shortcuts
 const groups: {
@@ -141,13 +138,16 @@ const SearchShortcut: FC<{
   )
 }
 
+/**
+ *
+ */
 const ShortcutGroup: ({
   customize,
   onSelect,
   selectedShortcut,
   title,
   shortcuts,
-  keyboardInProgress
+  keyboardInProgress,
 }: {
   customize?: boolean
   onSelect?: (shortcut: Shortcut | null) => void
@@ -185,35 +185,42 @@ const ShortcutTable = ({
 }) => {
   const { setKeyboardInProgress, keyboardInProgress, possibleShortcutsSorted } = useShortcut({
     includeRecentCommand: false,
-    sortActiveCommandsFirst: false
+    sortActiveCommandsFirst: false,
   })
 
   return (
     <div>
       <SearchShortcut onInput={setKeyboardInProgress} />
       <div style={{ textAlign: 'left' }}>
-        {
-          keyboardInProgress ? (
-            <ShortcutGroup
-              title={'Results'}
-              shortcuts={possibleShortcutsSorted}
-              selectedShortcut={selectedShortcut}
-              customize={customize}
-              onSelect={onSelect}
-              keyboardInProgress={keyboardInProgress}
-            />
-          ) : (
-            groups.map(group => {
-              const shortcuts = group.shortcuts
+        {keyboardInProgress ? (
+          <ShortcutGroup
+            title={'Results'}
+            shortcuts={possibleShortcutsSorted}
+            selectedShortcut={selectedShortcut}
+            customize={customize}
+            onSelect={onSelect}
+            keyboardInProgress={keyboardInProgress}
+          />
+        ) : (
+          groups.map(group => {
+            const shortcuts = group.shortcuts
               .map(shortcutById)
               .filter((shortcut): shortcut is Shortcut => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
-    
-              // do not render groups with no shrotcuts on this platform
-              if (shortcuts.length === 0) return null
-              return <ShortcutGroup title={group.title} shortcuts={shortcuts} key={group.title} customize={customize} onSelect={onSelect} selectedShortcut={selectedShortcut} />
-            })
-          )
-        }
+
+            // do not render groups with no shrotcuts on this platform
+            if (shortcuts.length === 0) return null
+            return (
+              <ShortcutGroup
+                title={group.title}
+                shortcuts={shortcuts}
+                key={group.title}
+                customize={customize}
+                onSelect={onSelect}
+                selectedShortcut={selectedShortcut}
+              />
+            )
+          })
+        )}
       </div>
     </div>
   )

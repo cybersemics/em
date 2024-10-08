@@ -12,7 +12,7 @@ import { noop } from '../constants'
 import { formatKeyboardShortcut } from '../shortcuts'
 import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
-import { HighlightedText } from './HighlightedText'
+import HighlightedText from './HighlightedText'
 
 interface ShortcutRowProps {
   customize?: boolean
@@ -125,15 +125,13 @@ const ShortcutRow = ({
             </span>
           )}
 
-          {
-            keyboardInProgress!?.length > 0 ? (
-              <b>
-                <HighlightedText value={shortcut.label} match={keyboardInProgress as string} />
-              </b>
-            ) : (
-              <b>{shortcut.label}</b>
-            )
-          }
+          {keyboardInProgress && keyboardInProgress?.length > 0 ? (
+            <b>
+              <HighlightedText value={shortcut.label} match={keyboardInProgress} />
+            </b>
+          ) : (
+            <b>{shortcut.label}</b>
+          )}
           <p>{description}</p>
         </th>
         {/* center gesture diagrams on mobile */}
