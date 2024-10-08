@@ -568,6 +568,7 @@ const Editable = ({
       disabled={disabled}
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
+      data-editable
       className={cx(
         multiline ? multilineRecipe() : null,
         editable({

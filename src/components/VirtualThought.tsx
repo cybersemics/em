@@ -138,10 +138,10 @@ const VirtualThought = ({
       ref.current.getBoundingClientRect().height,
       ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
     )
-    const widthNew = ref.current.querySelector('.editable')?.getBoundingClientRect().width
+    const widthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
 
     // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
-    const editable = ref.current.querySelector('.editable')
+    const editable = ref.current.querySelector(`[data-editable]`)
     if (editable?.hasAttribute('data-prevent-autoscroll')) return
 
     setHeight(heightNew)

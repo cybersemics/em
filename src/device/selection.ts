@@ -112,7 +112,7 @@ export const isOnLastLine = (): boolean => {
   if (!baseNodeParentEl) return true
 
   // baseNodeParentEl is the thought for plain text, but formatted text requires traversing up
-  const thought = ((baseNodeParentEl as HTMLElement).closest?.('.editable') as HTMLElement) || baseNodeParentEl
+  const thought = ((baseNodeParentEl as HTMLElement).closest?.('[data-editable]') as HTMLElement) || baseNodeParentEl
   const { y: baseNodeY, height: baseNodeHeight } = thought.getClientRects()[0]
   const [paddingTop, , paddingBottom] = getElementPaddings(thought)
 
