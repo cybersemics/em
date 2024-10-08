@@ -1,20 +1,25 @@
 import React, { FC } from 'react'
 import { useSelector } from 'react-redux'
+import { css, cx } from '../../styled-system/css'
+import { icon } from '../../styled-system/recipes'
+import { SystemStyleObject } from '../../styled-system/types'
 import themeColors from '../selectors/themeColors'
 
 interface SearchIconProps {
   fill?: string
   size?: number
   style?: React.CSSProperties
+  className?: string
+  cssRaw?: SystemStyleObject
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const SearchIcon: FC<SearchIconProps> = ({ fill, size = 20, style }) => {
+const SearchIcon: FC<SearchIconProps> = ({ cssRaw, fill, size = 20, style }) => {
   const colors = useSelector(themeColors)
   return (
     <svg
       version='1.1'
-      className='icon'
+      className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
       x='0px'
       y='0px'

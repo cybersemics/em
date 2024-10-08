@@ -1,4 +1,6 @@
 import { Key } from 'ts-key-enum'
+import { css, cx } from '../../styled-system/css'
+import { icon } from '../../styled-system/recipes'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { cursorNextActionCreator as cursorNext } from '../actions/cursorNext'
@@ -6,10 +8,10 @@ import { cursorNextActionCreator as cursorNext } from '../actions/cursorNext'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
-const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
+const Icon = ({ fill = 'black', size = 20, style, cssRaw }: IconType) => (
   <svg
     version='1.1'
-    className='icon'
+    className={cx(icon(), css(cssRaw))}
     xmlns='http://www.w3.org/2000/svg'
     width={size}
     height={size}

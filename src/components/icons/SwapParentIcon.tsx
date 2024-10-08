@@ -1,21 +1,19 @@
-import { useSelector } from 'react-redux'
+import { css, cx } from '../../../styled-system/css'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
-import themeColors from '../../selectors/themeColors'
 
 /** A swap parent icon. */
-const SwapParentIcon = ({ fill, size = 20, style }: Icon) => {
-  const colors = useSelector(themeColors)
+const SwapParentIcon = ({ fill, size = 20, style, cssRaw }: Icon) => {
   return (
     <svg
-      className={'icon'}
+      className={cx(icon(), css(cssRaw))}
       x='0px'
       y='0px'
       width={size}
       height={size}
-      style={{
-        fill: fill || colors.fg,
-        ...style,
-      }}
+      fill={fill || token('colors.fg')}
+      style={style}
       viewBox='0 0 24 27'
     >
       <g>

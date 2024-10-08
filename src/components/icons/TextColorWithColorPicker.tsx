@@ -6,13 +6,13 @@ import ColorPicker from '../ColorPicker'
 import TextColorIcon from './TextColor'
 
 /** Text Color Icon Component with popup ColorPicker. */
-const Icon = ({ size = 20, style }: IconType) => {
+const Icon = ({ size = 20, style, cssRaw }: IconType) => {
   const showColorPicker = useSelector(state => state.showColorPicker)
   const toolbarPopupRef = useRef<HTMLDivElement>(null)
 
   return (
     <div>
-      <TextColorIcon size={size} style={style} />
+      <TextColorIcon size={size} style={style} cssRaw={cssRaw} />
       <CSSTransition
         nodeRef={toolbarPopupRef}
         in={showColorPicker}

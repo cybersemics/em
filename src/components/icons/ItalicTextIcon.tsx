@@ -1,8 +1,9 @@
+import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 
 /** Italic icon. */
-const ItalicTextIcon = ({ style, size }: Icon) => {
+const ItalicTextIcon = ({ style, size, cssRaw }: Icon) => {
   return (
     <svg
       xmlns='http://www.w3.org/2000/svg'
@@ -10,7 +11,7 @@ const ItalicTextIcon = ({ style, size }: Icon) => {
       x='0'
       y='0'
       viewBox='-5 -0.5 31.5 20'
-      className={icon()}
+      className={cx(icon(), css(cssRaw))}
       width={size}
       height={size}
       style={{ ...style }}

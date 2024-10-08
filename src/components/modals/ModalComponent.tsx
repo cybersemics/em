@@ -100,6 +100,7 @@ class ModalComponent extends React.Component<ModalProps> {
           </a>
         )}
         <div
+          aria-label='modal-content'
           className={css({
             maxWidth: '40em',
             margin: '0 auto',

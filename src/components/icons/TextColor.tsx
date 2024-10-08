@@ -3,18 +3,23 @@ import { icon } from '../../../styled-system/recipes'
 import IconType from '../../@types/Icon'
 
 /** Text Color Icon Component. */
-const Icon = ({ size = 20, style }: IconType) => {
+const Icon = ({ size = 20, style, cssRaw }: IconType) => {
   size = style?.height ? +style.height : size
   return (
     <span className={cx(icon(), css({ display: 'inline-block' }))}>
       <span
-        className={css({
-          borderRadius: 5,
-          display: 'inline-block',
-          marginLeft: 2,
-          marginRight: 2,
-          textAlign: 'center',
-        })}
+        className={cx(
+          css(
+            {
+              borderRadius: 5,
+              display: 'inline-block',
+              marginLeft: 2,
+              marginRight: 2,
+              textAlign: 'center',
+            },
+            cssRaw,
+          ),
+        )}
         style={{
           border: `solid 1px ${style?.fill || style?.color},`,
           marginTop: size / 10 - 1,

@@ -12,7 +12,7 @@ afterEach(cleanupTestApp)
 
 it('Set the bullet color using the ColorPicker', async () => {
   await dispatch([newThought({ value: 'aaaaaabbbbbb' })])
-  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const state = store.getState()
@@ -39,7 +39,7 @@ it('Set the bullet color from another color using the ColorPicker', async () => 
     }),
   ])
 
-  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="red"]')
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')

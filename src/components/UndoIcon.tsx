@@ -1,14 +1,14 @@
-import { cx } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import { icon } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import Icon from '../@types/Icon'
 
 /** An Undo icon. */
-const UndoIcon = ({ fill, size = 18, style, className }: Icon) => {
+const UndoIcon = ({ fill, size = 18, style, cssRaw }: Icon) => {
   return (
     <svg
       version='1.1'
-      className={cx(icon(), className)}
+      className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
       x='0px'
       y='0px'

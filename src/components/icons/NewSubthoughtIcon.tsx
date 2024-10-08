@@ -1,8 +1,9 @@
+import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 
 /** New subthought icon. */
-const NewSubthoughtIcon = ({ style, size }: Icon) => {
+const NewSubthoughtIcon = ({ style, size, cssRaw }: Icon) => {
   return (
     <svg
       xmlns='http://www.w3.org/2000/svg'
@@ -10,7 +11,7 @@ const NewSubthoughtIcon = ({ style, size }: Icon) => {
       x='0'
       y='0'
       viewBox='0 0 86.16 61.01'
-      className={icon()}
+      className={cx(icon(), css(cssRaw))}
       width={size}
       height={size}
       style={{ ...style }}

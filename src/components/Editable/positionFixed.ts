@@ -7,7 +7,7 @@ export const start = () => {
   document.addEventListener('scroll', update)
   const alert = document.getElementsByClassName('alert')[0] as HTMLElement
   const hamburgerMenu = document.querySelector('[aria-label="menu"]') as HTMLElement
-  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
+  const toolbar = document.querySelector('[aria-label="toolbar"]') as HTMLElement
   const rightArrow = document.getElementById('right-arrow') as HTMLElement
   const leftArrow = document.getElementById('left-arrow') as HTMLElement
   Array.from([alert, hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
@@ -25,7 +25,7 @@ export const stop = () => {
   document.removeEventListener('scroll', update)
   const alert = document.getElementsByClassName('alert')[0] as HTMLElement
   const hamburgerMenu = document.querySelector('[aria-label="menu"]') as HTMLElement
-  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
+  const toolbar = document.querySelector('[aria-label="toolbar"]') as HTMLElement
   const rightArrow = document.getElementById('right-arrow') as HTMLElement
   const leftArrow = document.getElementById('left-arrow') as HTMLElement
   Array.from([alert, hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
@@ -40,7 +40,7 @@ export const stop = () => {
 export const update = () => {
   const alert = document.getElementsByClassName('alert')[0] as HTMLElement
   const hamburgerMenu = document.querySelector('[aria-label="menu"]') as HTMLElement
-  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
+  const toolbar = document.querySelector('[aria-label="toolbar"]') as HTMLElement
   Array.from([alert, hamburgerMenu, toolbar]).forEach(el => {
     if (!el) return // hamburger menu and toolbar are not rendered during tutorial
     el.style.top = `${window.scrollY}px`

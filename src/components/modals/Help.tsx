@@ -79,7 +79,7 @@ const Tutorials = () => {
   const { subtitle } = modalText()
   const modalClasses = modal({ stack: true })
   return (
-    <section className='popup-section' id='tutorials'>
+    <section className={css({ marginBottom: '50px' })} id='tutorials'>
       <h2 className={subtitle}>Tutorials</h2>
 
       <div className={modalClasses.actions} style={{ alignItems: 'flex-start' }}>
