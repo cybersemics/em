@@ -9,8 +9,8 @@ import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
+import { bulletColorActionCreator as bulletColor } from './bulletColor'
 import { editThoughtActionCreator as editThought } from './editThought'
-import { textColorActionCreator as textColor } from './textColor'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
@@ -81,7 +81,7 @@ export const formatSelectionActionCreator =
       })
 
       dispatch(
-        textColor({
+        bulletColor({
           ...(selected
             ? {
                 color: 'default',
