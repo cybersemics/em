@@ -114,13 +114,12 @@ const useShortcut = ({
     })
     return sorted
   }, [
-    isGestureActive,
-    visibleShortcuts,
     gestureInProgress,
+    isGestureActive,
     keyboardInProgress,
+    recentCommands,
     store,
     includeRecentCommand,
-    recentCommands,
   ])
 
   return {

@@ -7,7 +7,6 @@ import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
-import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useShortcut from '../hooks/useShortcut'
 import themeColors from '../selectors/themeColors'
@@ -299,7 +298,7 @@ const CommandPalette: FC = () => {
   // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
   const isGestureActive = gestureInProgress || !isTouch
   const { keyboardInProgress, setKeyboardInProgress, possibleShortcutsSorted, recentCommands, setRecentCommands } =
-    useShortcut({ isGestureActive: isGestureActive, includeRecentCommand: true, sortActiveCommandsFirst: false })
+    useShortcut({ isGestureActive: isGestureActive, includeRecentCommand: true, sortActiveCommandsFirst: true })
 
   const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
 
@@ -336,14 +335,6 @@ const CommandPalette: FC = () => {
   useEffect(() => {
     setSelectedShortcut(possibleShortcutsSorted[0])
   }, [keyboardInProgress, possibleShortcutsSorted, setSelectedShortcut])
-  useEffect(() => {
-    allowScroll(false)
-
-    return () => {
-      allowScroll(true)
-      unmounted.current = true
-    }
-  }, [])
 
   useEffect(() => {
     allowScroll(false)

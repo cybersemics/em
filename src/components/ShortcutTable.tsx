@@ -8,8 +8,6 @@ import { globalShortcuts, shortcutById } from '../shortcuts'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import ShortcutTableOnly from './ShortcutTableOnly'
-import ShortcutRow from './ShortcutRow'
-import { css } from '../../styled-system/css'
 // import { useStore } from "react-redux"
 // import { sortShortcuts } from "../util/sortShortcut";
 
@@ -106,7 +104,6 @@ const shortcutsUngrouped = globalShortcuts.filter(
   shortcut =>
     !shortcutsGroupedMap[shortcut.id] && !shortcut.hideFromHelp && (isTouch ? shortcut.gesture : shortcut.keyboard),
 )
-console.log(shortcutsGroupedMap)
 
 if (shortcutsUngrouped.length > 0) {
   throw new Error(
@@ -148,39 +145,31 @@ const ShortcutGroup: ({
   customize,
   onSelect,
   selectedShortcut,
+  title,
+  shortcuts,
+  keyboardInProgress
 }: {
   customize?: boolean
   onSelect?: (shortcut: Shortcut | null) => void
   selectedShortcut?: Shortcut
-}) => JSX.Element = ({ customize, onSelect, selectedShortcut }) => {
+  title: string
+  keyboardInProgress?: string
+  shortcuts: (Shortcut | null)[]
+}) => JSX.Element = ({ customize, onSelect, selectedShortcut, shortcuts, title, keyboardInProgress }) => {
   const modalClasses = modalText()
 
   return (
-    <>
-    {
-      groups.map(group => {
-        const shortcuts = group.shortcuts
-          .map(shortcutById)
-          .filter((shortcut): shortcut is Shortcut => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
-
-        // do not render groups with no shrotcuts on this platform
-        if (shortcuts.length === 0) return null
-
-        return (
-          <div key={group.title}>
-            <h2 className={modalClasses.subtitle}>{group.title}</h2>
-            <ShortcutTableOnly
-              shortcuts={shortcuts}
-              selectedShortcut={selectedShortcut}
-              customize={customize}
-              onSelect={onSelect}
-              applyIndexInToolbar
-            />
-          </div>
-        )
-      })
-    }
-    </>
+    <div>
+      <h2 className={modalClasses.subtitle}>{title}</h2>
+      <ShortcutTableOnly
+        shortcuts={shortcuts}
+        selectedShortcut={selectedShortcut}
+        customize={customize}
+        onSelect={onSelect}
+        keyboardInProgress={keyboardInProgress}
+        applyIndexInToolbar
+      />
+    </div>
   )
 }
 
@@ -196,8 +185,8 @@ const ShortcutTable = ({
 }) => {
   const { setKeyboardInProgress, keyboardInProgress, possibleShortcutsSorted } = useShortcut({
     includeRecentCommand: false,
+    sortActiveCommandsFirst: false
   })
-  const modalClasses = modalText()
 
   return (
     <div>
@@ -205,26 +194,24 @@ const ShortcutTable = ({
       <div style={{ textAlign: 'left' }}>
         {
           keyboardInProgress ? (
-            <>
-              <h2 className={modalClasses.subtitle}>Results:</h2>
-              <table className={css({ fontSize: '14px' })} style={{ marginTop: '2rem' }}>
-                <tbody>
-                  {possibleShortcutsSorted.map(shortcut => {
-                    return (
-                      <ShortcutRow
-                        key={shortcut?.id}
-                        shortcut={shortcut}
-                        onSelect={onSelect}
-                        selected={selectedShortcut && shortcut.id === selectedShortcut.id}
-                        keyboardInProgress={keyboardInProgress}
-                      />
-                    )
-                  })}
-                </tbody>
-              </table>
-            </>
+            <ShortcutGroup
+              title={'Results'}
+              shortcuts={possibleShortcutsSorted}
+              selectedShortcut={selectedShortcut}
+              customize={customize}
+              onSelect={onSelect}
+              keyboardInProgress={keyboardInProgress}
+            />
           ) : (
-            <ShortcutGroup customize={customize} onSelect={onSelect} selectedShortcut={selectedShortcut} />
+            groups.map(group => {
+              const shortcuts = group.shortcuts
+              .map(shortcutById)
+              .filter((shortcut): shortcut is Shortcut => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
+    
+              // do not render groups with no shrotcuts on this platform
+              if (shortcuts.length === 0) return null
+              return <ShortcutGroup title={group.title} shortcuts={shortcuts} key={group.title} customize={customize} onSelect={onSelect} selectedShortcut={selectedShortcut} />
+            })
           )
         }
       </div>
