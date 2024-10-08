@@ -1,6 +1,7 @@
-import classNames from 'classnames'
 import React from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
+import { css, cx } from '../../styled-system/css'
+import { dropEnd, dropHover } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -66,34 +67,35 @@ const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildPr
   const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ depth }) : 0
 
   return (
-    <li className='drop-empty' style={{ position: 'relative' }}>
+    <li style={{ position: 'relative' }}>
       <span
-        className={classNames({
-          'drop-end': true,
-          'inside-divider': isDivider(value),
-          last,
-        })}
+        className={cx(
+          dropEnd(),
+          css({
+            zIndex: 'dropEmpty',
+            backgroundColor: testFlags.simulateDrop ? '#32305f' : undefined, // purple-eggplant
+            // shift the drop target to the right
+            marginLeft: isTouch ? '33%' : 'calc(2.9em - 2px)',
+            opacity: 0.9,
+            // add some additional padding to empty subthought drop targets to avoid gaps in between sibling's subthought drop targets. This provides a smoother experience when dragging across many siblings. The user can still shift left to be clear of the empty subthought drop targets and drop on a child drop target.
+            paddingBottom: '1em',
+          }),
+        )}
         ref={dropTarget}
         style={{
-          backgroundColor: testFlags.simulateDrop ? '#32305f' : undefined, // purple-eggplant
-          // shift the drop target to the right
-          marginLeft: isTouch ? '33%' : 'calc(2.9em - 2px)',
-          opacity: 0.9,
-          // add some additional padding to empty subthought drop targets to avoid gaps in between sibling's subthought drop targets. This provides a smoother experience when dragging across many siblings. The user can still shift left to be clear of the empty subthought drop targets and drop on a child drop target.
-          paddingBottom: '1em',
           height: `${0.5 + dropTargetHeight}em`,
         }}
       >
         {testFlags.simulateDrop && (
           <span
-            style={{
+            className={css({
               paddingLeft: 5,
               position: 'absolute',
               // make sure label does not interfere with drop target hovering
               pointerEvents: 'none',
               left: 0,
               color: '#ff7bc3' /* mid pink */,
-            }}
+            })}
           >
             {strip(value)}
             {isHovering ? '*' : ''}
@@ -101,13 +103,17 @@ const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildPr
         )}
         {(testFlags.simulateDrag || isHovering) && (
           <span
-            className='drop-hover'
+            className={cx(
+              dropHover({ insideDropEnd: true, insideDivider: isDivider(value) }),
+              css({
+                // offset drop-end (above) and add 0.25em to slightly  exaggerate the indentation for better drop perception.
+                marginLeft: isTouch ? 'calc(-33% - 8px)' : 'calc(-2em - 10px)',
+                marginTop: '-0.4em',
+                width: '100%',
+              }),
+            )}
             style={{
               backgroundColor: dropHoverColor,
-              // offset drop-end (above) and add 0.25em to slightly  exaggerate the indentation for better drop perception.
-              marginLeft: isTouch ? 'calc(-33% - 8px)' : 'calc(-2em - 10px)',
-              marginTop: '-0.4em',
-              width: '100%',
             }}
           />
         )}

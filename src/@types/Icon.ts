@@ -1,7 +1,8 @@
 import React from 'react'
+import { SystemStyleObject } from '../../styled-system/types'
 
 interface Icon {
-  className?: string
+  cssRaw?: SystemStyleObject
   fill?: string
   height?: number
   size?: number

@@ -1,25 +1,22 @@
-import { cx } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import { icon } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
-import Icon from '../@types/Icon'
+import IconType from '../@types/Icon'
 import { ICON_SCALING_FACTOR } from '../constants'
 
-/** An Undo icon. */
-const UndoIcon = ({ fill, size = 18, style = {}, className }: Icon) => {
+/** Undo icon. */
+const UndoIcon = ({ fill, size = 18, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (
     <svg
-      version='1.1'
-      className={cx(icon(), className)}
+      className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
-      x='0px'
-      y='0px'
       width={newSize}
       height={newSize}
       viewBox='0 0 24 24'
-      fill={fill || token('colors.fg')}
+      fill='none'
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
       <g id='Layer_2' data-name='Layer 2'>

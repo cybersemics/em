@@ -1,9 +1,17 @@
 import { useSelector } from 'react-redux'
+import { css, cx } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 
 /** A home icon. */
-const HomeIcon = ({ className, fill, size, style, wrapperClassName }: IconType & { wrapperClassName?: string }) => {
+const HomeIcon = ({
+  className,
+  fill,
+  size,
+  style,
+  wrapperClassName,
+  cssRaw,
+}: IconType & { wrapperClassName?: string; className?: string }) => {
   const sizeCalculated = useSelector(state => size || state.fontSize)
   return (
     <span role='img' aria-label='home' className={wrapperClassName}>
@@ -12,7 +20,8 @@ const HomeIcon = ({ className, fill, size, style, wrapperClassName }: IconType &
         width={sizeCalculated}
         height={sizeCalculated}
         viewBox='0 0 24 24'
-        className={`logo ${className}`}
+        aria-label='logo'
+        className={cx(className, css({ width: '24px' }, cssRaw))}
         fill={fill || token('colors.fg')}
         style={{
           height: sizeCalculated,

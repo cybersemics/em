@@ -1,6 +1,7 @@
-import classNames from 'classnames'
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { css, cx } from '../../styled-system/css'
+import { dropEnd, dropHover } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
@@ -94,32 +95,33 @@ const DropEnd = ({
 
   return (
     <li
-      className={classNames({
-        'drop-end': true,
-        last,
-      })}
-      ref={dropTarget}
+      className={cx(
+        dropEnd(),
+        css({
+          display: 'list-item',
+          marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
+          // offset marginLeft, minus 1em for bullet
+          // otherwise drop-hover will be too far left
+          paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
+          // use transform to avoid conflicting with margin, which is currently spread out across multiple components and App.css
+        }),
+      )}
       style={{
-        display: 'list-item',
         backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
         height: isRootPath ? '8em' : `${1.9 + dropTargetHeight}em`,
-        marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
-        // offset marginLeft, minus 1em for bullet
-        // otherwise drop-hover will be too far left
-        paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
-        // use transform to avoid conflicting with margin, which is currently spread out across multiple components and App.css
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
       }}
+      ref={dropTarget}
     >
       {testFlags.simulateDrop && (
         <span
-          style={{
+          className={css({
             position: 'absolute',
             left: '0.3em',
             // make sure label does not interfere with drop target hovering
             pointerEvents: 'none',
             color: '#ff7bc3' /* mid pink */,
-          }}
+          })}
         >
           {isHovering ? '*' : ''}
           {last ? '$' : ''}
@@ -128,7 +130,7 @@ const DropEnd = ({
       )}
       {(showDropHover || testFlags.simulateDrag) && (
         <span
-          className='drop-hover'
+          className={dropHover({ insideDropEnd: true })}
           style={{
             backgroundColor: dropHoverColor,
             // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch

@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../actions/toggleHiddenThoughts'
-import Icon from '../components/icons/HiddenThoughtsIcon'
+import HiddenThoughtsIcon from '../components/icons/HiddenThoughtsIcon'
 
 const toggleHiddenThoughtsShortcut: Shortcut = {
   id: 'toggleHiddenThoughts',
@@ -9,7 +9,7 @@ const toggleHiddenThoughtsShortcut: Shortcut = {
   description: 'Show all hidden thoughts.',
   descriptionInverse: 'Hide hidden thoughts.',
   keyboard: { key: 'h', shift: true, alt: true },
-  svg: Icon,
+  svg: HiddenThoughtsIcon,
   exec: dispatch => dispatch(toggleHiddenThoughts()),
   isActive: getState => getState().showHiddenThoughts,
 }

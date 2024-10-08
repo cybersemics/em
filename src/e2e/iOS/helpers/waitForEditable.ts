@@ -7,7 +7,7 @@ const waitForEditable = async (browser: Browser<'async'>, value: string) => {
     async () =>
       await browser.execute(value => {
         return (
-          Array.from(document.getElementsByClassName('editable')).filter(element => element.innerHTML === value)
+          Array.from(document.querySelectorAll('[data-editable]')).filter(element => element.innerHTML === value)
             .length > 0
         )
       }, value),

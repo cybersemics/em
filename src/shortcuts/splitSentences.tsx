@@ -5,7 +5,7 @@ import Shortcut from '../@types/Shortcut'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { splitSentencesActionCreator as splitSentences } from '../actions/splitSentences'
-import Icon from '../components/icons/splitSentencesIcon'
+import SplitSentencesIcon from '../components/icons/splitSentencesIcon'
 import { HOME_TOKEN } from '../constants'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -19,8 +19,7 @@ const splitSentencesShortcut: Shortcut = {
   id: 'splitSentences',
   label: 'Split Sentences',
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
-  keyboard: { key: 's', meta: true, shift: true },
-  svg: Icon,
+  svg: SplitSentencesIcon,
   canExecute: getState => !!getState().cursor,
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
     const state = getState()
@@ -36,7 +35,7 @@ const splitSentencesShortcut: Shortcut = {
       )
       return
     }
-    // check if splitSentences creates duplicates
+
     const showContexts = cursor && isContextViewActive(state, rootedParentOf(state, cursor))
     const path =
       cursor &&
@@ -55,6 +54,7 @@ const splitSentencesShortcut: Shortcut = {
       )
       return
     }
+
     dispatch(splitSentences())
   },
 }

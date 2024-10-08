@@ -1,26 +1,28 @@
 import { useSelector } from 'react-redux'
-import { cx } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import Icon from '../../@types/Icon'
-import State from '../../@types/State'
-import { HOME_PATH } from '../../constants'
+import IconType from '../../@types/Icon'
 import { ICON_SCALING_FACTOR } from '../../constants'
 import getSortPreference from '../../selectors/getSortPreference'
 import head from '../../util/head'
 
-/** Get sort direction of cursor. */
+// Assuming State and other types are properly defined
+
+/**
+ *
+ */
 const getCursorSortDirection = (state: State) => getSortPreference(state, head(state.cursor || HOME_PATH)).direction
 
-/** Ascending Icon Component. */
-const IconAsc = ({ fill, size = 20, style = {}, className }: Icon) => {
+/** Ascending Icon Component refactored. */
+const IconAsc = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (
     <svg
+      className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
-      className={cx(icon(), className)}
       width={newSize}
       height={newSize}
       viewBox='0 0 24 24'
@@ -89,15 +91,15 @@ const IconAsc = ({ fill, size = 20, style = {}, className }: Icon) => {
   )
 }
 
-/** Descending Icon Component. */
-const IconDesc = ({ fill, size = 20, style = {}, className }: Icon) => {
+/** Descending Icon Component refactored. */
+const IconDesc = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (
     <svg
+      className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
-      className={cx(icon(), className)}
       width={newSize}
       height={newSize}
       viewBox='0 0 24 24'
@@ -167,10 +169,10 @@ const IconDesc = ({ fill, size = 20, style = {}, className }: Icon) => {
 }
 
 /** Sort Icon Component. */
-const SortIcon = ({ size = 20, style, className }: Icon) => {
+const SortIcon = ({ size = 20, style = {}, cssRaw }: IconType) => {
   const direction = useSelector(getCursorSortDirection)
   const Component = direction === 'Desc' ? IconDesc : IconAsc
-  return <Component size={size} style={style} className={className} />
+  return <Component size={size} style={style} cssRaw={cssRaw} />
 }
 
 export default SortIcon

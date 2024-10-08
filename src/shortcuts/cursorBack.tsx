@@ -1,16 +1,15 @@
 import Shortcut from '../@types/Shortcut'
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
-import Icon from '../components/icons/BackIcon'
+import BackIcon from '../components/icons/BackIcon'
 import * as selection from '../device/selection'
-// import directly since util/index is not loaded yet when shortcut is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 const cursorBackShortcut: Shortcut = {
   id: 'cursorBack',
-  description: 'Move the cursor up a level.',
   label: 'Back',
+  description: 'Move the cursor up a level.',
   gesture: 'r',
-  svg: Icon,
+  svg: BackIcon,
   keyboard: 'Escape',
   exec: throttleByAnimationFrame((dispatch, getState) => {
     const { cursor, search } = getState()

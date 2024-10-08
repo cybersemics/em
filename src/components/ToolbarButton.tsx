@@ -1,12 +1,13 @@
 import React, { FC, MutableRefObject, useCallback, useMemo } from 'react'
 import { useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
-import themeColors from '../selectors/themeColors'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
@@ -39,7 +40,6 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   selected,
   shortcutId,
 }) => {
-  const colors = useSelector(themeColors)
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
     console.error('Missing shortcut: ' + shortcutId)
@@ -80,7 +80,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     (e: React.MouseEvent | React.TouchEvent) => {
       longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
       const iconEl = e.target as HTMLElement
-      const toolbarEl = iconEl.closest('.toolbar')!
+      const toolbarEl = iconEl.closest('#toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         exec(store.dispatch, store.getState, e, { type: 'toolbar' })
@@ -105,7 +105,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const tapDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       const iconEl = e.target as HTMLElement
-      const toolbarEl = iconEl.closest('.toolbar')!
+      const toolbarEl = iconEl.closest('#toolbar')!
       longPressTapDown(e)
 
       lastScrollLeft.current = toolbarEl.scrollLeft
@@ -127,32 +127,31 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
   const style = useMemo(
     () => ({
-      position: 'relative' as const,
-      cursor: isButtonExecutable ? 'pointer' : 'default',
       fill: buttonError
-        ? colors.red
+        ? token('colors.red')
         : longPress.isPressed || isDragging
           ? undefined
           : isButtonExecutable && isButtonActive
-            ? colors.fg
-            : 'gray',
+            ? token('colors.fg')
+            : 'gray', // keep fill in style because some icons need the exact color
       width: fontSize + 4,
       height: fontSize + 4,
-      opacity: dropToRemove ? 0 : 1,
-      transition: 'opacity 200ms ease-out',
     }),
-    [buttonError, colors, dropToRemove, fontSize, isButtonActive, isButtonExecutable, isDragging, longPress.isPressed],
+    [buttonError, fontSize, isButtonActive, isButtonExecutable, isDragging, longPress.isPressed],
   )
-
   return (
     <div
       {...longPress.props}
       aria-label={shortcut.label}
+      data-testid='toolbar-icon'
       ref={node => dragSource(dropTarget(node))}
       key={shortcutId}
       title={`${shortcut.label}${(shortcut.keyboard ?? shortcut.overlay?.keyboard) ? ` (${formatKeyboardShortcut((shortcut.keyboard ?? shortcut.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
-      style={{
-        // animate maxWidth to avoid having to know the exact width of the toolbar icon
+      className={css({
+        display: 'inline-block',
+        padding: '15px 8px 5px 8px',
+        borderRadius: '3px',
+        zIndex: 'stack', // animate maxWidth to avoid having to know the exact width of the toolbar icon
         // maxWidth just needs to exceed the width
         maxWidth: fontSize * 2,
         ...(dropToRemove
@@ -165,22 +164,24 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         // offset top to avoid changing container height
         // marginBottom: isPressing ? -10 : 0,
         // top: isButtonExecutable && isPressing ? 10 : 0,
-        transform: `translateY(${isButtonExecutable && isPressing && !longPress.isPressed && !isDragging ? 0.25 : 0}em`,
+        transform:
+          isButtonExecutable && isPressing && !longPress.isPressed && !isDragging
+            ? `translateY(0.25em)`
+            : `translateY(0em)`,
         position: 'relative',
         cursor: isButtonExecutable ? 'pointer' : 'default',
         transition: 'transform 80ms ease-out, max-width 80ms ease-out, margin-left 80ms ease-out',
         // extend drop area down, otherwise the drop hover is blocked by the user's finger
         // must match toolbar marginBottom
         paddingBottom: isDraggingAny ? '7em' : 0,
-      }}
-      className='toolbar-icon'
+      })}
       onMouseLeave={onMouseLeave}
       {...fastClick(tapUp, tapDown, undefined, touchMove)}
     >
       {
         // selected top dash
         selected && !dropToRemove ? (
-          <div style={{ height: 2, backgroundColor: colors.highlight, width: fontSize }}></div>
+          <div className={css({ height: 2, backgroundColor: 'highlight' })} style={{ width: fontSize }}></div>
         ) : null
       }
 
@@ -188,15 +189,14 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         // drag-and-drop circle overlay
         (longPress.isPressed || isDragging) && !dropToRemove && (
           <div
-            style={{
+            className={css({
               borderRadius: 999,
-              width: fontSize * 1.75,
-              height: fontSize * 1.75,
-              backgroundColor: colors.gray33,
+              backgroundColor: 'gray33',
               position: 'absolute',
               top: 9,
               left: 2,
-            }}
+            })}
+            style={{ width: fontSize * 1.75, height: fontSize * 1.75 }}
           />
         )
       }
@@ -205,21 +205,29 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         // drop hover
         (isHovering || dropToRemove) && (
           <div
-            style={{
-              borderRight: dropToRemove ? `dashed 1px ${colors.gray}` : undefined,
+            className={css({
+              borderRight: dropToRemove ? `dashed 1px {colors.gray}` : undefined,
               position: 'absolute',
-              top: fontSize / 2 + 3,
               left: dropToRemove ? 15 : -2,
               // match the height of the inverted button
-              height: fontSize * 1.5,
               width: dropToRemove ? 2 : 3,
               // dropToRemove uses dashed border instead of background color
-              backgroundColor: dropToRemove ? undefined : colors.highlight,
-            }}
+              backgroundColor: dropToRemove ? undefined : 'highlight',
+            })}
+            style={{ top: fontSize / 2 + 3, height: fontSize * 1.5 }}
           />
         )
       }
-      <SVG size={fontSize} style={style} />
+      <SVG
+        size={fontSize}
+        cssRaw={css.raw({
+          position: 'relative' as const,
+          cursor: isButtonExecutable ? 'pointer' : 'default',
+          opacity: dropToRemove ? 0 : 1,
+          transition: 'opacity 200ms ease-out',
+        })}
+        style={style}
+      />
     </div>
   )
 }

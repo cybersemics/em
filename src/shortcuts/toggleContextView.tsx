@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { toggleContextViewActionCreator as toggleContextView } from '../actions/toggleContextView'
-import Icon from '../components/icons/ContextViewIcon'
+import ContextViewIcon from '../components/icons/ContextViewIcon'
 import isContextViewActive from '../selectors/isContextViewActive'
 
 const toggleContextViewShortcut: Shortcut = {
@@ -12,7 +12,7 @@ const toggleContextViewShortcut: Shortcut = {
     'Closes the context view of the current thought. The context view shows all contexts throughout your thoughtspace in which the thought can be found.',
   gesture: 'ru',
   keyboard: { key: 's', shift: true, alt: true },
-  svg: Icon,
+  svg: ContextViewIcon,
   canExecute: getState => !!getState().cursor,
   isActive: getState => {
     const state = getState()

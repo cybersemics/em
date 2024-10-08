@@ -10,11 +10,11 @@ const clickBullet = async (page: Page, value: string) => {
   if (!editableNode) throw new Error('editable node for the given value not found.')
 
   const bulletNode = await page.evaluateHandle((editableNode: Element) => {
-    const thoughtContainer = editableNode.closest('.thought-container') as HTMLElement
+    const thoughtContainer = editableNode.closest('[aria-label="thought-container"]') as HTMLElement
 
     if (!thoughtContainer) return
 
-    return thoughtContainer.querySelector(':scope > .bullet')
+    return thoughtContainer.querySelector(':scope > [aria-label="bullet"]')
   }, editableNode)
 
   if (!bulletNode) throw new Error('Bullet node not found.')

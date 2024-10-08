@@ -67,7 +67,7 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
 
     // get the screen-relative y coordinate of the toolbar
     // do not show the alert if the toolbar is within 50px of the top of screen, otherwise it blocks the toolbar
-    const toolbarTop = document.querySelector('.toolbar')?.getBoundingClientRect().top || 0
+    const toolbarTop = document.querySelector('#toolbar')?.getBoundingClientRect().top || 0
 
     if (toolbarTop < 50) {
       dispatch(alert(null))

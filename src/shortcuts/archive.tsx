@@ -4,6 +4,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { errorActionCreator as error } from '../actions/error'
 import ArchiveIcon from '../components/icons/ArchiveIcon'
+// This line was omitted and should be included
 import { AlertType, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
@@ -31,24 +32,16 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH
       const childNote = findAnyChild(state, head(path), child => child.value === '=note')
-      // we know there is a =note child if noteFocus is true
-      // we just need to get the Child object so that archiveThought has the full path
       const pathNote = appendToPath(path, childNote!.id)
       dispatch(archiveThought({ path: pathNote }))
     } else {
-      // clear the undo alert timer to prevent previously cleared undo alert from closing this one
       clearTimeout(undoArchiveTimer)
-
-      // close the alert after a delay
-      // only close the alert if it is a ThoughtArchive alert
       undoArchiveTimer = window.setTimeout(() => {
         const state = getState()
         if (state.alert && state.alert.alertType === AlertType.ThoughtArchived) {
           dispatch(alert(null))
         }
       }, 5000)
-
-      // archive the thought
       dispatch(archiveThought({ path: state.cursor ?? undefined }))
     }
   }

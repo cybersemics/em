@@ -1,19 +1,19 @@
-import { cx } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 import { ICON_SCALING_FACTOR } from '../../constants'
 
 /** PinAll icon. */
-const PinAllIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+const PinAllIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (
     <svg
+      className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
-      className={cx(icon(), className)}
-      width={newSize}
+      width={newSize} // Making width and height the same
       height={newSize}
       viewBox='0 0 24 24'
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}

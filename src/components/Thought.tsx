@@ -1,6 +1,7 @@
-import classNames from 'classnames'
 import React, { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
+import { css, cx } from '../../styled-system/css'
+import { child, invalidOption as invalidOptionRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -141,15 +142,6 @@ const ThoughtContainer = ({
   // const parentView = useSelector(state => attribute(state, head(parentOf(simplePath)), '=view'))
   const expandedContextThought = useSelector(state => state.expandedContextThought)
   const view = useSelector(state => attribute(state, head(simplePath), '=view'))
-  const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
-
-  // Note: An active expand hover top thought cannot be a cursor's grandparent as it is already treated as cursor's parent.
-  const isCursorGrandparent = useSelector(state => {
-    const isExpandedHoverTopPath = state.expandHoverUpPath && equalPath(path, state.expandHoverUpPath)
-    const cursorParent = state.cursor && parentOf(state.cursor)
-    const cursorGrandparent = cursorParent && rootedParentOf(state, cursorParent)
-    return !isExpandedHoverTopPath && !!cursor && equalPath(cursorGrandparent, path)
-  })
 
   // Note: If the thought is the active expand hover top path then it should be treated as a cursor parent. It is because the current implementation allows tree to unfold visually starting from cursor parent.
   const isCursorParent = useSelector(state => {
@@ -202,7 +194,6 @@ const ThoughtContainer = ({
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
-  const isTable = useSelector(state => view === 'Table' && !isContextViewActive(state, path))
 
   const dragHoldResult = useDragHold({
     isDragging,
@@ -355,6 +346,8 @@ const ThoughtContainer = ({
       {...dragHoldResult.props}
       ref={node => dragSource(dropTarget(node))}
       aria-label='child'
+      data-divider={isDivider(value)}
+      data-editing={isEditing}
       style={{
         // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
         position: 'relative',
@@ -371,30 +364,28 @@ const ThoughtContainer = ({
             }
           : null),
       }}
-      className={classNames({
-        child: true,
-        'child-divider': isDivider(value),
-        'cursor-parent': isCursorParent,
-        'cursor-grandparent': isCursorGrandparent,
-        // used so that the autofocus can properly highlight the immediate parent of the cursor
-        editing: isEditing,
-        expanded: isExpanded,
-        'has-only-child': children.length === 1,
-        'invalid-option': invalidOption,
-        'is-multi-column': isMultiColumnTable,
-        leaf: leaf || (isEditing && globals.suppressExpansion),
-        pressed: dragHoldResult.isPressed,
-        // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
-        prose: view === 'Prose',
-        'show-contexts': showContexts,
-        'show-contexts-no-breadcrumbs': simplePath.length === 2,
-        'table-view': isTable,
-      })}
+      className={cx(
+        child(),
+        invalidOption && invalidOptionRecipe(),
+        css({
+          marginLeft: isDivider(value) ? '-125px' : undefined,
+        }),
+      )}
     >
       {showContexts && simplePath.length > 1 ? (
-        <ContextBreadcrumbs path={parentOf(simplePath)} homeContext={homeContext} />
+        <ContextBreadcrumbs
+          cssRaw={css.raw({
+            /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
+            marginBottom: '-0.25em',
+            /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
+              Otherwise the accumulated y value will not be correct. */
+            paddingTop: '0.5em',
+          })}
+          path={parentOf(simplePath)}
+          homeContext={homeContext}
+        />
       ) : showContexts && simplePath.length > 2 ? (
-        <span className='ellipsis'>
+        <span className={css({ fontSize: '75%' })}>
           <a
             tabIndex={-1}
             {...fastClick(() => {
@@ -407,9 +398,11 @@ const ThoughtContainer = ({
       ) : null}
 
       <div
-        className={classNames({
-          'thought-container': true,
-          'single-line': !isEditing && isURL(value),
+        aria-label='thought-container'
+        className={css({
+          /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
+          /* must match value used in Editable useMultiline */
+          lineHeight: '1.72',
         })}
         data-testid={'thought-' + hashPath(path)}
         style={{
@@ -454,6 +447,7 @@ const ThoughtContainer = ({
           updateSize={updateSize}
           view={view}
           marginRight={marginRight}
+          isPressed={dragHoldResult.isPressed}
         />
         <Note path={simplePath} />
       </div>

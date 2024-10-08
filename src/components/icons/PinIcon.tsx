@@ -1,22 +1,26 @@
-import { cx } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 import { ICON_SCALING_FACTOR } from '../../constants'
 
 /** Pin icon. */
-const PinIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+const PinIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
   return (
     <svg
+      className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
-      className={cx(icon(), className)}
       width={newSize}
       height={newSize}
       viewBox='0 0 24 24'
-      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+      style={{
+        ...style,
+        width: `${newSize}px`,
+        height: `${newSize}px`,
+      }}
       fill={fill || token('colors.fg')}
     >
       <g id='Layer_2' data-name='Layer 2'>

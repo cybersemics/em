@@ -1,11 +1,19 @@
+import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import IconType from '../../@types/Icon'
 
 /** Download icon. */
-const DownloadIcon = ({ fill, size = 20, style }: IconType) => {
+const DownloadIcon = ({ fill, size = 20, style, cssRaw }: IconType) => {
   const stroke = style?.fill || fill
   return (
-    <svg width={size} height={size} viewBox='65 0 390.526 540' fill={fill} className={icon()} style={style}>
+    <svg
+      width={size}
+      height={size}
+      viewBox='65 0 390.526 540'
+      fill={fill}
+      className={cx(icon(), css(cssRaw))}
+      style={style}
+    >
       <path
         d='M 281.49 17.698 L 281.49 93.079 C 281.49 104.973 291.135 114.618 303.029 114.618 L 378.41 114.618'
         fill='none'
