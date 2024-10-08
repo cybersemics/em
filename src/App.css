@@ -814,20 +814,6 @@
   fill: #666;
 }
 
-.graypulse {
-  color: #666;
-  fill: #666;
-  -webkit-animation: toblack 400ms infinite alternate ease-in-out;
-}
-
-.dark .graypulse {
-  -webkit-animation: towhite 400ms infinite alternate ease-in-out;
-}
-
-.no-select {
-  user-select: none;
-}
-
 .empty-thoughtspace {
   animation: 0.4s ease-out 0s normal forwards fadein;
 }
