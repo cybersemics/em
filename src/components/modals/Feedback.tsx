@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { AlertType } from '../../constants'
 import fastClick from '../../util/fastClick'
-import { ActionButton } from './../ActionButton'
+import ActionButton from './../ActionButton'
 import ModalComponent from './ModalComponent'
 
 const FEEDBACK_MIN_LENGTH = 10

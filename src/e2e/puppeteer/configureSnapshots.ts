@@ -15,22 +15,14 @@ function configureSnapshots({
   fileName: string
 }) {
   return configureToMatchImageSnapshot({
-    /** Apply a Gaussian Blur on compared images (radius in pixels). */
-    // blur of 1.25 and threshold of 0.2 has false negatives
-    // blur of 2 and threshold of 0.1 has false negatives
-    // blur of 2.5 and threshold of 0.1 has false negatives
-    // blur of 1.5 and threshold of 0.175 has NO false negatives (false positives untested)
-    blur: 1.5,
     customDiffConfig: {
-      // per-pixel failure threshold (percent)
+      // per-pixel failure threshold percent (default: 0.01)
       // puppeteer anti-aliasing (?) commonly creates small differences in text and svg rendering at different font sizes, so increase the threshold
-      threshold: 0.2,
+      // Bullet SVGs fail even at 0.1
+      threshold: 0.18,
     },
-    // Full picture failure threshold (pixels)
-    // 4 pixels definitely has false positives.
-    // 14 px definitely has false negatives.
-    // Hopefully 8 is the sweet spot.
-    failureThreshold: 8,
+    // full picture failure threshold pixels (default: 0)
+    failureThreshold: 4,
     // custom identifier for snapshots based on the title of the test
     customSnapshotIdentifier: ({ defaultIdentifier }) => {
       return `${defaultIdentifier.replace(`${fileName}-ts-`, '').toLocaleLowerCase()}`

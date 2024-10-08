@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { clearActionCreator as clear } from '../actions/clear'
 import scrollTo from '../device/scrollTo'

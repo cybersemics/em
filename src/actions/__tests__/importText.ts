@@ -1114,7 +1114,7 @@ it('import single line with style attributes', () => {
   expect(exported).toBe(`<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
-      <li><span style="font-weight: bold;">Atonement</span></li>
+      <li><span style="color: rgb(255, 255, 255);font-weight: bold;background-color: rgb(0, 0, 0);">Atonement</span></li>
     </ul>
   </li>
 </ul>`)
@@ -1129,7 +1129,7 @@ it('import single line with style attributes and a single br tag', () => {
   expect(exported).toBe(`<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
-      <li>Marcel Duchamp: The Art of the Possible</li>
+      <li><span style="color: pink;">Marcel Duchamp: The Art of the Possible</span></li>
     </ul>
   </li>
 </ul>`)

@@ -14,7 +14,7 @@ interface ActionButtonProps {
 /**
  * Action Button with default thin variant. Used in Modals.
  */
-export const ActionButton = ({
+const ActionButton = ({
   title,
   inActive,
   inverse,
@@ -44,3 +44,5 @@ export const ActionButton = ({
     </a>
   )
 }
+
+export default ActionButton
