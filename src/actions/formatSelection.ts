@@ -10,6 +10,7 @@ import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
 import { editThoughtActionCreator as editThought } from './editThought'
+import { textColorActionCreator as textColor } from './textColor'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
@@ -17,10 +18,13 @@ export const formatSelectionActionCreator =
     command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor',
     color: string = '',
     {
-      isDefault,
+      label,
+      selected,
     }: {
-      /** True if the clicked swatch has the default label. */
-      isDefault?: boolean
+      /** Color swatch label. */
+      label?: string
+      /** True if the color swatch is selected. */
+      selected?: boolean
     } = {},
   ): Thunk =>
   (dispatch, getState) => {
@@ -52,7 +56,7 @@ export const formatSelectionActionCreator =
         const colorMatch = styleLower.match(/color\s*:\s*([^;]+);?/)
         const elementColor = colorMatch ? colorMatch[1].trim() : null
         const isDifferentColor = elementColor && elementColor !== rgbToHex(colors.bg)
-        if ((elementColor && isDifferentColor) || (isDefault && hasBackgroundColor)) return true
+        if ((elementColor && isDifferentColor) || (label === 'default' && hasBackgroundColor)) return true
         return false
       }
 
@@ -75,6 +79,20 @@ export const formatSelectionActionCreator =
           }),
         )
       })
+
+      dispatch(
+        textColor({
+          ...(selected
+            ? {
+                color: 'default',
+              }
+            : color
+              ? { color: label }
+              : {
+                  backgroundColor: label,
+                }),
+        }),
+      )
     }
 
     suppressFocusStore.update(false)

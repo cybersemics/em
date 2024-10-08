@@ -9,12 +9,7 @@ import deleteAttribute from './deleteAttribute'
 /** Sets the text color or background color of the cursor. */
 const textColor = (
   state: State,
-  {
-    backgroundColor,
-    color,
-    shape,
-    fullySelected,
-  }: { backgroundColor?: string; color?: string; shape?: 'bullet' | 'text'; fullySelected?: boolean },
+  { backgroundColor, color, fullySelected }: { backgroundColor?: string; color?: string; fullySelected?: boolean },
 ) => {
   if (!state.cursor) return state
   const path = state.cursor

@@ -2,7 +2,6 @@ import { rgbToHex } from '@mui/material'
 import React, { FC, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
-import { textColorActionCreator as textColor } from '../actions/textColor'
 import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
@@ -107,29 +106,25 @@ const ColorSwatch: FC<{
     // stop toolbar button dip
     e.stopPropagation()
     e.preventDefault()
-    if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg))
-    else dispatch(formatSelection('foreColor', colors.fg))
-    // Apply background color to the selection
-    if (backgroundColor && backgroundColor !== colors.bg)
-      dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
-    else {
-      dispatch(formatSelection('backColor', colors.bg, { isDefault: label === 'default' }))
+
+    // Apply text color to the selection
+    if (backgroundColor || color !== 'default') {
+      dispatch(formatSelection('foreColor', color || colors.bg, { label, selected }))
+    } else {
+      dispatch(formatSelection('foreColor', colors.fg, { label, selected }))
     }
 
-    dispatch(
-      textColor({
-        ...(selected
-          ? {
-              color: 'default',
-            }
-          : color
-            ? { color: label }
-            : {
-                backgroundColor: label,
-              }),
-        shape,
-      }),
-    )
+    // Apply background color to the selection
+    if (backgroundColor && backgroundColor !== colors.bg) {
+      dispatch(
+        formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor, {
+          label,
+          selected,
+        }),
+      )
+    } else {
+      dispatch(formatSelection('backColor', colors.bg, { label, selected }))
+    }
   }
   return (
     <span
