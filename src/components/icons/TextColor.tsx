@@ -21,7 +21,7 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
           ),
         )}
         style={{
-          border: `solid 1px ${style?.fill || style?.color},`,
+          border: `solid 1px ${style?.fill || style?.color}`,
           marginTop: size / 10 - 1,
           color: style?.fill,
           ...style,

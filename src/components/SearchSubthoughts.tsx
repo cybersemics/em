@@ -1,5 +1,7 @@
 import { FC, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css, cx } from '../../styled-system/css'
+import { textNote } from '../../styled-system/recipes'
 import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import { errorActionCreator as error } from '../actions/error'
@@ -112,7 +114,7 @@ const SearchSubthoughts: FC = () => {
       {!hasLexeme(store.getState(), search) && isDocumentEditable() ? (
         <NewThought path={[] as unknown as SimplePath} label={`Create "${search}"`} value={search} type='button' />
       ) : null}
-      <span className='text-note text-small'>
+      <span className={cx(textNote(), css({ fontSize: 'sm' }))}>
         {formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"
       </span>
       {/* TODO: VirtualTree */}
@@ -124,7 +126,7 @@ const SearchSubthoughts: FC = () => {
       /> */}
       {children.length > DEFAULT_SEARCH_LIMIT ? (
         <a
-          className='indent text-note'
+          className={cx(textNote(), css({ display: 'inline-block', marginTop: '5px', marginLeft: '18px' }))}
           {...fastClick(() => dispatch(setSearchLimit({ value: searchLimit + DEFAULT_SEARCH_LIMIT })))}
         >
           More...

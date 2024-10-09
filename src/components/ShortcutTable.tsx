@@ -1,3 +1,4 @@
+import { css } from '../../styled-system/css'
 import { modalText } from '../../styled-system/recipes'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
@@ -121,7 +122,7 @@ const ShortcutTable = ({
   const modalClasses = modalText()
 
   return (
-    <div style={{ textAlign: 'left' }}>
+    <div className={css({ textAlign: 'left' })}>
       {groups.map(group => {
         const shortcuts = group.shortcuts
           .map(shortcutById)

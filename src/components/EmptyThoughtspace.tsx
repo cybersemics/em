@@ -1,10 +1,12 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
+import { textNote } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import { isTouch } from '../browser'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
 import getSetting from '../selectors/getSetting'
-import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import GestureDiagram from './GestureDiagram'
@@ -28,10 +30,8 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
 
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 0))
 
-  const colors = useSelector(themeColors)
-
   return (
-    <div className='empty-thoughtspace'>
+    <div aria-label='empty-thoughtspace' className={css({ animation: '0.4s ease-out 0s normal forwards fadein' })}>
       {
         // show nothing during the preconnecting phase (See: useOfflineStatus)
         // show loading ellipsis when connecting or loading
@@ -42,15 +42,15 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
         // show special message when there are no children in tutorial
         isTutorial ? (
           tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isTouch ? (
-            <div className='center-in-content'>
-              <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>
+            <div className={css({ textAlign: 'center', marginLeft: '-30px' })}>
+              <i className={textNote()}>Ahhh. Open space. Unlimited possibilities.</i>
             </div>
           ) : // hide on mobile during TUTORIAL_STEP_FIRSTTHOUGHT since the gesture diagram is displayed
           null
         ) : (
           // default
           <>
-            <span style={{ userSelect: 'none' }}>
+            <span className={css({ userSelect: 'none' })}>
               {isTouch ? (
                 <span>
                   Swipe{' '}
@@ -58,7 +58,7 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
                     inGestureContainer
                     path={newThoughtShortcut.gesture as GesturePath}
                     size={30}
-                    color={colors.gray66}
+                    color={token('colors.gray66')}
                   />
                 </span>
               ) : (

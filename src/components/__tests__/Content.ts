@@ -6,7 +6,7 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('render EmptyThoughtspace when there are no thoughts in the root context', async () => {
-  expect(document.querySelector('.empty-thoughtspace')).toBeTruthy()
+  expect(document.querySelector('[aria-label="empty-thoughtspace"]')).toBeTruthy()
 })
 
 it('do not render EmptyThoughtspace when there are thoughts in the root context', async () => {
@@ -20,7 +20,7 @@ it('do not render EmptyThoughtspace when there are thoughts in the root context'
     }),
   )
 
-  expect(document.querySelector('.empty-thoughtspace')).toBeNull()
+  expect(document.querySelector('[aria-label="empty-thoughtspace"]')).toBeNull()
 })
 
 it('render EmptyThoughtspace when there are only invisible thoughts in the root context', async () => {
@@ -32,5 +32,5 @@ it('render EmptyThoughtspace when there are only invisible thoughts in the root 
     }),
   )
 
-  expect(document.querySelector('.empty-thoughtspace')).toBeTruthy()
+  expect(document.querySelector('[aria-label="empty-thoughtspace"]')).toBeTruthy()
 })
