@@ -79,6 +79,11 @@ const keyframes = defineKeyframes({
       opacity: 0,
     },
   },
+  ellipsis: {
+    to: {
+      width: '1.25em',
+    },
+  },
 })
 
 const globalCss = defineGlobalStyles({

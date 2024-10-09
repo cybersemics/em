@@ -359,20 +359,6 @@
   margin-left: -30px;
 }
 
-.absolute-center {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 10%; /* slightly above the fold */
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  user-select: none;
-  cursor: default;
-}
-
 .text-note {
   font-style: italic;
   color: rgba(7, 7, 7, 0.5);
@@ -775,24 +761,6 @@
 
 .quick-add-button.rotate {
   transform: rotate(135deg);
-}
-
-@keyframes ellipsis {
-  to {
-    width: 1.25em;
-  }
-}
-
-.loading-ellipsis:after {
-  overflow: hidden;
-  position: absolute;
-  display: inline-block;
-  vertical-align: bottom;
-  -webkit-animation: ellipsis steps(4, end) 1000ms infinite;
-  animation: ellipsis steps(4, end) 1000ms infinite;
-  content: '\2026'; /* ascii code for the ellipsis character */
-  width: 0;
-  margin-left: 0.1em;
 }
 
 @keyframes toblack {
