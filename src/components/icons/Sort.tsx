@@ -3,15 +3,13 @@ import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
+import State from '../../@types/State'
+import { HOME_PATH } from '../../constants'
 import { ICON_SCALING_FACTOR } from '../../constants'
 import getSortPreference from '../../selectors/getSortPreference'
 import head from '../../util/head'
 
-// Assuming State and other types are properly defined
-
-/**
- *
- */
+/** Cursor Sort Direction. */
 const getCursorSortDirection = (state: State) => getSortPreference(state, head(state.cursor || HOME_PATH)).direction
 
 /** Ascending Icon Component refactored. */

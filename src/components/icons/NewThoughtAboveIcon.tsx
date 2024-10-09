@@ -1,17 +1,18 @@
+import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 import { ICON_SCALING_FACTOR } from '../../constants'
 
 /** New Thought Above icon. */
-const NewThoughtAboveIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
+const NewThoughtAboveIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
   const fillColor = style.fill || fill || token('colors.fg') // Fill color for circle
 
   return (
     <svg
-      className={icon({ className })}
+      className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
       width={newSize}
       height={newSize}
