@@ -110,44 +110,6 @@
 }
 
 
-/* Navigation styles */
-.nav {
-  position: sticky;
-  z-index: var(--z-index-stack);
-  padding: 0 15px 0 10px;
-  bottom: 0;
-}
-
-.nav-container {
-  position: absolute;
-  width: calc(100% - 30px); /* offset .nav padding */
-  transition: background-color 0.2s ease-out;
-}
-
-.nav-container .nav-right-button-group {
-  display: grid;
-  grid-auto-flow: column;
-  grid-column-gap: 15px;
-  align-items: center;
-}
-
-.nav-top {
-  top: 0;
-}
-
-.nav-bottom {
-  padding: 0 15px;
-}
-
-.nav-bottom .nav-container {
-  position: relative;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-  /* rounded screens */
-  padding-bottom: calc(max(10px, var(--safe-area-bottom)));
-}
-
 /* react-transition-group animation: fade */
 .fade-enter {
   opacity: 0;

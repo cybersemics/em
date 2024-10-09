@@ -195,7 +195,7 @@ const useNavAndFooterHeight = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(
     _.throttle(() => {
-      const navEl = document.querySelector('.nav')
+      const navEl = document.querySelector('[aria-label="nav"]')
       const footerEl = document.querySelector('[aria-label="footer"]')
       setNavAndFooterHeight(
         (navEl?.getBoundingClientRect().height || 0) + (footerEl?.getBoundingClientRect().height || 0),
