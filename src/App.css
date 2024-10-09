@@ -632,49 +632,6 @@
   text-align: center;
 }
 
-.drop-down-wrapper {
-  background-color: white;
-  box-shadow: 0 0 10px 0px black;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  border: 1px solid white;
-  position: absolute;
-  right: 3px;
-  padding: 0px 5px;
-  z-index: var(--z-index-stack);
-}
-
-.drop-down-wrapper .drop-down-option-wrapper {
-  cursor: pointer;
-  padding: 2px 0px;
-  border-top: 1px solid #444;
-  transition: opacity 150ms ease-in;
-}
-
-.drop-down-wrapper .drop-down-option-wrapper:hover {
-  opacity: 0.85;
-}
-
-.drop-down-wrapper .drop-down-option-wrapper:first-child {
-  border-top: none;
-}
-
-.drop-down-wrapper .drop-down-option {
-  display: flex;
-  align-items: center;
-  margin-left: 10px;
-}
-
-.drop-down-wrapper .drop-down-option .drop-down-label {
-  margin-left: 10px;
-  width: 95px;
-}
-
-.dark .drop-down-wrapper {
-  background-color: black;
-}
-
 /* Publish */
 
 .publish-meta {
@@ -698,11 +655,6 @@
   opacity: 0.6;
 }
 
-.quick-add-button {
-  display: inline-flex;
-  transition: transform 200ms ease-in-out;
-}
-
 .latest-shortcuts-wrapper {
   position: absolute;
   /* Using vh here allows shortcuts diagram to always appear keyboard in mobile. */
@@ -719,10 +671,6 @@
   opacity: 0.7;
   padding: 10px;
   margin: 0 2px;
-}
-
-.quick-add-button.rotate {
-  transform: rotate(135deg);
 }
 
 @keyframes toblack {
