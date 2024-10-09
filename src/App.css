@@ -540,12 +540,6 @@
   color: lightblue;
 }
 
-.indent {
-  display: inline-block;
-  margin-top: 5px;
-  margin-left: 18px;
-}
-
 .tutorial-next-wait {
   margin-left: 10px;
   font-style: italic;
@@ -632,29 +626,6 @@
   text-align: center;
 }
 
-/* Publish */
-
-.publish-meta {
-  margin: 15px 0;
-  font-size: 85%;
-  overflow: hidden;
-  line-height: 1.4;
-}
-
-.publish-meta .react-gravatar {
-  margin: 10px 10px 10px 0;
-  border-radius: 9999px;
-  float: left;
-}
-
-.publish-meta .byline:first-of-type {
-  margin-top: 15px;
-}
-
-.publish-meta .byline:nth-of-type(2) {
-  opacity: 0.6;
-}
-
 .latest-shortcuts-wrapper {
   position: absolute;
   /* Using vh here allows shortcuts diagram to always appear keyboard in mobile. */
@@ -690,10 +661,6 @@
 .gray {
   color: #666;
   fill: #666;
-}
-
-.empty-thoughtspace {
-  animation: 0.4s ease-out 0s normal forwards fadein;
 }
 
 .advance-setting-wrapper {

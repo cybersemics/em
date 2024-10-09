@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import CSSTransition from 'react-transition-group/CSSTransition'
+import { css } from '../../styled-system/css'
 import { isTouch } from '../browser'
 import CopyOneDrop from './CopyOneDrop'
 import DeleteDrop from './DeleteDrop'
@@ -14,15 +15,7 @@ const QuickDropPanel = () => {
 
   return (
     <CSSTransition nodeRef={quickDropPanelRef} in={isDragging} timeout={200} classNames='slide-right' unmountOnExit>
-      <div
-        ref={quickDropPanelRef}
-        style={{
-          position: 'fixed',
-          right: 0,
-          top: '20vh',
-          zIndex: 9999,
-        }}
-      >
+      <div ref={quickDropPanelRef} className={css({ position: 'fixed', right: 0, top: '20vh', zIndex: 9999 })}>
         <DeleteDrop />
         {
           // CopyOneDrop does not work on Mobile Safari, so temporarily disable it.
