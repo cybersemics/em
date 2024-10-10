@@ -8245,7 +8245,7 @@ __metadata:
     murmurhash3js: "npm:^3.0.1"
     nanoid: "npm:^5.0.7"
     npm-run-all: "npm:^4.1.5"
-    openai: "npm:^4.56.0"
+    openai: "npm:^4.67.1"
     page-lifecycle: "git+https://github.com/magic-akari/page-lifecycle#feat/add-types"
     pluralize: "npm:^8.0.0"
     postinstall-postinstall: "npm:^2.1.0"
@@ -14149,9 +14149,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^4.56.0":
-  version: 4.56.0
-  resolution: "openai@npm:4.56.0"
+"openai@npm:^4.67.1":
+  version: 4.67.1
+  resolution: "openai@npm:4.67.1"
   dependencies:
     "@types/node": "npm:^18.11.18"
     "@types/node-fetch": "npm:^2.6.4"
@@ -14167,7 +14167,7 @@ __metadata:
       optional: true
   bin:
     openai: bin/cli
-  checksum: 10c0/d1a5ddda89ab95ad319c8d5af5a0e998916971cc453d22ace58475ffe34a624b37ff2e5fc614d489252c0de2f475ef11197b581836f6ac78c95c12089e6fa316
+  checksum: 10c0/123746bfac3dd4d6bfb9d6e404bdb98c50cc24a1d8bfc787bb92f20ec7031ac7bd514b3181dad863bc32e1b1e41171d9aad52a89138c00a97b4bff48c8d9e365
   languageName: node
   linkType: hard
 
