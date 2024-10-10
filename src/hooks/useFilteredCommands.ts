@@ -16,14 +16,14 @@ const isExecutable = (state: State, shortcut: Shortcut) =>
 
 /** A hook that filters and sorts commands based on a search or the current gesture or keyboard input. */
 const useFilteredCommands = ({
+  platformShortcutsOnly,
   recentCommands,
   sortActiveCommandsFirst,
-  platformShortcutsOnly,
 }: {
-  recentCommands?: ShortcutId[]
-  sortActiveCommandsFirst?: boolean
   /** Only include commands that have shortcuts on the current platform (keyboard on desktop/gestures on mobile). */
   platformShortcutsOnly?: boolean
+  recentCommands?: ShortcutId[]
+  sortActiveCommandsFirst?: boolean
 } = {}) => {
   const gestureInProgress = gestureStore.useState()
   const [search, setSearch] = useState('')
@@ -114,7 +114,7 @@ const useFilteredCommands = ({
   }, [gestureInProgress, sortActiveCommandsFirst, search, recentCommands, store, platformShortcutsOnly])
 
   return {
-    possibleShortcutsSorted,
+    shortcuts: possibleShortcutsSorted,
     search,
     setSearch,
     recentCommands,

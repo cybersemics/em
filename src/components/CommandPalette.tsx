@@ -296,12 +296,12 @@ const CommandPalette: FC = () => {
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
   const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
-  const { search, setSearch, possibleShortcutsSorted } = useFilteredCommands({
+  const { search, setSearch, shortcuts } = useFilteredCommands({
     recentCommands,
     sortActiveCommandsFirst: true,
   })
 
-  const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
+  const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(shortcuts[0])
 
   /** Execute a shortcut. */
   const onExecute = useCallback(
@@ -334,8 +334,8 @@ const CommandPalette: FC = () => {
 
   // Select the first shortcut when the input changes.
   useEffect(() => {
-    setSelectedShortcut(possibleShortcutsSorted[0])
-  }, [search, possibleShortcutsSorted, setSelectedShortcut])
+    setSelectedShortcut(shortcuts[0])
+  }, [search, shortcuts, setSelectedShortcut])
 
   useEffect(() => {
     allowScroll(false)
@@ -351,12 +351,12 @@ const CommandPalette: FC = () => {
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      if (selectedShortcut !== possibleShortcutsSorted[0]) {
-        const i = possibleShortcutsSorted.indexOf(selectedShortcut)
-        setSelectedShortcut(possibleShortcutsSorted[i - 1])
+      if (selectedShortcut !== shortcuts[0]) {
+        const i = shortcuts.indexOf(selectedShortcut)
+        setSelectedShortcut(shortcuts[i - 1])
       }
     },
-    [possibleShortcutsSorted, selectedShortcut],
+    [shortcuts, selectedShortcut],
   )
 
   /** Select the next shortcut in the list. */
@@ -364,12 +364,12 @@ const CommandPalette: FC = () => {
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      if (selectedShortcut !== possibleShortcutsSorted[possibleShortcutsSorted.length - 1]) {
-        const i = possibleShortcutsSorted.indexOf(selectedShortcut)
-        setSelectedShortcut(possibleShortcutsSorted[i + 1])
+      if (selectedShortcut !== shortcuts[shortcuts.length - 1]) {
+        const i = shortcuts.indexOf(selectedShortcut)
+        setSelectedShortcut(shortcuts[i + 1])
       }
     },
-    [possibleShortcutsSorted, selectedShortcut],
+    [shortcuts, selectedShortcut],
   )
 
   /** Select the first shortcut in the list. */
@@ -377,9 +377,9 @@ const CommandPalette: FC = () => {
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      setSelectedShortcut(possibleShortcutsSorted[0])
+      setSelectedShortcut(shortcuts[0])
     },
-    [possibleShortcutsSorted],
+    [shortcuts],
   )
 
   /* Select the last shortcut in the list. */
@@ -387,9 +387,9 @@ const CommandPalette: FC = () => {
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      setSelectedShortcut(possibleShortcutsSorted[possibleShortcutsSorted.length - 1])
+      setSelectedShortcut(shortcuts[shortcuts.length - 1])
     },
-    [possibleShortcutsSorted],
+    [shortcuts],
   )
 
   return (
@@ -400,7 +400,7 @@ const CommandPalette: FC = () => {
         textAlign: 'left',
       }}
     >
-      {!isTouch || (gestureInProgress && possibleShortcutsSorted.length > 0) ? (
+      {!isTouch || (gestureInProgress && shortcuts.length > 0) ? (
         <div>
           <h2
             style={{
@@ -433,19 +433,19 @@ const CommandPalette: FC = () => {
               ...(!isTouch ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
             }}
           >
-            {possibleShortcutsSorted.map(shortcut => (
+            {shortcuts.map(shortcut => (
               <CommandRow
                 search={search}
                 gestureInProgress={gestureInProgress as string}
                 key={shortcut.id}
-                last={shortcut === possibleShortcutsSorted[possibleShortcutsSorted.length - 1]}
+                last={shortcut === shortcuts[shortcuts.length - 1]}
                 onClick={onExecute}
                 onHover={onHover}
                 selected={!isTouch ? shortcut === selectedShortcut : gestureInProgress === shortcut.gesture}
                 shortcut={shortcut}
               />
             ))}
-            {possibleShortcutsSorted.length === 0 && <span style={{ marginLeft: '1em' }}>No matching commands</span>}
+            {shortcuts.length === 0 && <span style={{ marginLeft: '1em' }}>No matching commands</span>}
           </div>
         </div>
       ) : isTouch ? (

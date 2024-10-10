@@ -178,7 +178,7 @@ const ShortcutTable = ({
   onSelect?: (shortcut: Shortcut | null) => void
   selectedShortcut?: Shortcut
 }) => {
-  const { setSearch, search, possibleShortcutsSorted } = useFilteredCommands({ platformShortcutsOnly: true })
+  const { setSearch, search, shortcuts } = useFilteredCommands({ platformShortcutsOnly: true })
 
   return (
     <div>
@@ -187,7 +187,7 @@ const ShortcutTable = ({
         {search ? (
           <ShortcutGroup
             title={'Results'}
-            shortcuts={possibleShortcutsSorted}
+            shortcuts={shortcuts}
             selectedShortcut={selectedShortcut}
             customize={customize}
             onSelect={onSelect}
