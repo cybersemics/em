@@ -37,11 +37,15 @@ const useShortcut = ({
     const possibleShortcuts = visibleShortcuts.filter(shortcut => {
       // gesture
       if (isTouch) {
+        // only commands with gestures are visible
         return shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)
       }
       // keyboard
       else {
-        // if no query is entered, all shortcuts are visible
+        // only commands with keyboard shortcuts are visible
+        if (!shortcut.keyboard) return false
+
+        // if no query is entered, all commands with keyboard shortcuts are visible
         if (!search) return true
 
         const label = (
