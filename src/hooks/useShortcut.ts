@@ -44,7 +44,9 @@ const useShortcut = ({
         if (!search) return true
 
         const label = (
-          shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label
+          sortActiveCommandsFirst && shortcut.labelInverse && shortcut.isActive?.(store.getState)
+            ? shortcut.labelInverse!
+            : shortcut.label
         ).toLowerCase()
         const chars = search.toLowerCase().split('')
 
