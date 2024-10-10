@@ -26,7 +26,7 @@ const useShortcut = ({
   sortActiveCommandsFirst?: boolean
 }) => {
   const gestureInProgress = gestureStore.useState()
-  const [keyboardInProgress, setKeyboardInProgress] = useState('')
+  const [search, setSearch] = useState('')
   const visibleShortcuts = globalShortcuts.filter(
     shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp,
   )
@@ -42,18 +42,18 @@ const useShortcut = ({
       // keyboard
       else {
         // if no query is entered, all shortcuts are visible
-        if (!keyboardInProgress) return true
+        if (!search) return true
 
         const label = (
           shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label
         ).toLowerCase()
-        const chars = keyboardInProgress.toLowerCase().split('')
+        const chars = search.toLowerCase().split('')
 
         return (
           // include shortcuts with at least one included char and no more than three chars non-matching chars
           // fuzzy matching will prioritize the best shortcuts
           chars.some(char => char !== ' ' && label.includes(char)) &&
-          keyboardInProgress.split('').filter(char => char !== ' ' && !label.includes(char)).length <= 3
+          search.split('').filter(char => char !== ' ' && !label.includes(char)).length <= 3
         )
       }
     })
@@ -65,7 +65,7 @@ const useShortcut = ({
       ).toLowerCase()
 
       // always sort exact match to top
-      if (gestureInProgress === shortcut.gesture || keyboardInProgress.trim().toLowerCase() === label) return '\x00'
+      if (gestureInProgress === shortcut.gesture || search.trim().toLowerCase() === label) return '\x00'
       // sort inactive shortcuts to the bottom alphabetically
       else if (sortActiveCommandsFirst && !isExecutable(store.getState(), shortcut)) return `\x99${label}`
       // sort gesture by length and then label
@@ -77,7 +77,7 @@ const useShortcut = ({
         '\x01' +
         [
           // recent commands
-          !keyboardInProgress &&
+          !search &&
             includeRecentCommand &&
             (() => {
               const i = recentCommands.indexOf(shortcut.id)
@@ -86,13 +86,13 @@ const useShortcut = ({
               return i === -1 ? 'z' : i.toString().padStart(5, '0')
             })(),
           // startsWith
-          keyboardInProgress && label.startsWith(keyboardInProgress.trim().toLowerCase()) ? 0 : 1,
+          search && label.startsWith(search.trim().toLowerCase()) ? 0 : 1,
           // contains (n chars)
           // subtract from a large value to reverse order, otherwise shortcuts with fewer matches will be sorted to the top
-          keyboardInProgress &&
+          search &&
             (
               9999 -
-              keyboardInProgress
+              search
                 .toLowerCase()
                 .split('')
                 .filter(char => char !== ' ' && label.includes(char)).length
@@ -106,12 +106,12 @@ const useShortcut = ({
     })
     return sorted
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gestureInProgress, sortActiveCommandsFirst, keyboardInProgress, recentCommands, store, includeRecentCommand])
+  }, [gestureInProgress, sortActiveCommandsFirst, search, recentCommands, store, includeRecentCommand])
 
   return {
     possibleShortcutsSorted,
-    keyboardInProgress,
-    setKeyboardInProgress,
+    search,
+    setSearch,
     recentCommands,
     setRecentCommands,
   }

@@ -142,15 +142,15 @@ const ShortcutGroup: ({
   selectedShortcut,
   title,
   shortcuts,
-  keyboardInProgress,
+  search,
 }: {
   customize?: boolean
   onSelect?: (shortcut: Shortcut | null) => void
   selectedShortcut?: Shortcut
   title: string
-  keyboardInProgress?: string
+  search?: string
   shortcuts: (Shortcut | null)[]
-}) => JSX.Element = ({ customize, onSelect, selectedShortcut, shortcuts, title, keyboardInProgress }) => {
+}) => JSX.Element = ({ customize, onSelect, selectedShortcut, shortcuts, title, search }) => {
   const modalClasses = modalText()
 
   return (
@@ -161,7 +161,7 @@ const ShortcutGroup: ({
         selectedShortcut={selectedShortcut}
         customize={customize}
         onSelect={onSelect}
-        keyboardInProgress={keyboardInProgress}
+        search={search}
         applyIndexInToolbar
       />
     </div>
@@ -178,23 +178,23 @@ const ShortcutTable = ({
   onSelect?: (shortcut: Shortcut | null) => void
   selectedShortcut?: Shortcut
 }) => {
-  const { setKeyboardInProgress, keyboardInProgress, possibleShortcutsSorted } = useShortcut({
+  const { setSearch, search, possibleShortcutsSorted } = useShortcut({
     includeRecentCommand: false,
     sortActiveCommandsFirst: false,
   })
 
   return (
     <div>
-      <SearchShortcut onInput={setKeyboardInProgress} />
+      <SearchShortcut onInput={setSearch} />
       <div style={{ textAlign: 'left' }}>
-        {keyboardInProgress ? (
+        {search ? (
           <ShortcutGroup
             title={'Results'}
             shortcuts={possibleShortcutsSorted}
             selectedShortcut={selectedShortcut}
             customize={customize}
             onSelect={onSelect}
-            keyboardInProgress={keyboardInProgress}
+            search={search}
           />
         ) : (
           groups.map(group => {

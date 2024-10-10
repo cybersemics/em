@@ -119,14 +119,14 @@ const CommandSearch: FC<{
 /** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
 const CommandRow: FC<{
   gestureInProgress: string
-  keyboardInProgress: string
+  search: string
   last?: boolean
   onClick: (e: React.MouseEvent, shortcut: Shortcut) => void
   onHover: (e: MouseEvent, shortcut: Shortcut) => void
   selected?: boolean
   shortcut: Shortcut
   style?: React.CSSProperties
-}> = ({ gestureInProgress, keyboardInProgress, last, onClick, onHover, selected, shortcut, style }) => {
+}> = ({ gestureInProgress, search, last, onClick, onHover, selected, shortcut, style }) => {
   const store = useStore()
   const ref = React.useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
@@ -222,7 +222,7 @@ const CommandRow: FC<{
               fontWeight: selected ? 'bold' : undefined,
             }}
           >
-            <HighlightedText value={label} match={keyboardInProgress} disabled={disabled} />
+            <HighlightedText value={label} match={search} disabled={disabled} />
           </div>
         </div>
 
@@ -295,8 +295,10 @@ const CommandPalette: FC = () => {
   const gestureInProgress = gestureStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
-  const { keyboardInProgress, setKeyboardInProgress, possibleShortcutsSorted, recentCommands, setRecentCommands } =
-    useShortcut({ includeRecentCommand: true, sortActiveCommandsFirst: true })
+  const { search, setSearch, possibleShortcutsSorted, recentCommands, setRecentCommands } = useShortcut({
+    includeRecentCommand: true,
+    sortActiveCommandsFirst: true,
+  })
 
   const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
 
@@ -332,7 +334,7 @@ const CommandPalette: FC = () => {
   // Select the first shortcut when the input changes.
   useEffect(() => {
     setSelectedShortcut(possibleShortcutsSorted[0])
-  }, [keyboardInProgress, possibleShortcutsSorted, setSelectedShortcut])
+  }, [search, possibleShortcutsSorted, setSelectedShortcut])
 
   useEffect(() => {
     allowScroll(false)
@@ -411,7 +413,7 @@ const CommandPalette: FC = () => {
             {!isTouch ? (
               <CommandSearch
                 onExecute={onExecuteSelected}
-                onInput={setKeyboardInProgress}
+                onInput={setSearch}
                 onSelectUp={onSelectUp}
                 onSelectDown={onSelectDown}
                 onSelectTop={onSelectTop}
@@ -432,7 +434,7 @@ const CommandPalette: FC = () => {
           >
             {possibleShortcutsSorted.map(shortcut => (
               <CommandRow
-                keyboardInProgress={keyboardInProgress}
+                search={search}
                 gestureInProgress={gestureInProgress as string}
                 key={shortcut.id}
                 last={shortcut === possibleShortcutsSorted[possibleShortcutsSorted.length - 1]}
