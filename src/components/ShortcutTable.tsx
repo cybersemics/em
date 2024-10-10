@@ -3,7 +3,7 @@ import { modalText } from '../../styled-system/recipes'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
-import useShortcut from '../hooks/useShortcut'
+import useFilteredCommands from '../hooks/useFilteredCommands'
 import { globalShortcuts, shortcutById } from '../shortcuts'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
@@ -178,7 +178,7 @@ const ShortcutTable = ({
   onSelect?: (shortcut: Shortcut | null) => void
   selectedShortcut?: Shortcut
 }) => {
-  const { setSearch, search, possibleShortcutsSorted } = useShortcut({ platformShortcutsOnly: true })
+  const { setSearch, search, possibleShortcutsSorted } = useFilteredCommands({ platformShortcutsOnly: true })
 
   return (
     <div>

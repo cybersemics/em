@@ -9,7 +9,7 @@ import { isTouch } from '../browser'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
-import useShortcut from '../hooks/useShortcut'
+import useFilteredCommands from '../hooks/useFilteredCommands'
 import themeColors from '../selectors/themeColors'
 import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import gestureStore from '../stores/gesture'
@@ -296,7 +296,7 @@ const CommandPalette: FC = () => {
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
   const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
-  const { search, setSearch, possibleShortcutsSorted } = useShortcut({
+  const { search, setSearch, possibleShortcutsSorted } = useFilteredCommands({
     recentCommands,
     sortActiveCommandsFirst: true,
   })

@@ -14,8 +14,8 @@ const visibleShortcuts = globalShortcuts.filter(shortcut => !shortcut.hideFromCo
 const isExecutable = (state: State, shortcut: Shortcut) =>
   (!shortcut.canExecute || shortcut.canExecute(() => state)) && (shortcut.allowExecuteFromModal || !state.showModal)
 
-/** A hook that filters and sorts shortcuts based on the current gesture or keyboard input. */
-const useShortcut = ({
+/** A hook that filters and sorts commands based on a search or the current gesture or keyboard input. */
+const useFilteredCommands = ({
   recentCommands,
   sortActiveCommandsFirst,
   platformShortcutsOnly,
@@ -121,4 +121,4 @@ const useShortcut = ({
   }
 }
 
-export default useShortcut
+export default useFilteredCommands
