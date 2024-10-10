@@ -9,9 +9,7 @@ import { gestureString, globalShortcuts } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 
-/**********************************************************************
- * Helper Functions
- **********************************************************************/
+const visibleShortcuts = globalShortcuts.filter(shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp)
 
 /** Returns true if the shortcut can be executed. */
 const isExecutable = (state: State, shortcut: Shortcut) =>
@@ -27,9 +25,6 @@ const useShortcut = ({
 }) => {
   const gestureInProgress = gestureStore.useState()
   const [search, setSearch] = useState('')
-  const visibleShortcuts = globalShortcuts.filter(
-    shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp,
-  )
   const [recentCommands, setRecentCommands] = useState<ShortcutId[]>(storageModel.get('recentCommands'))
   const store = useStore()
 
@@ -109,7 +104,6 @@ const useShortcut = ({
       )
     })
     return sorted
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gestureInProgress, sortActiveCommandsFirst, search, recentCommands, store, includeRecentCommand])
 
   return {
