@@ -7,7 +7,6 @@ import State from '../@types/State'
 import { isTouch } from '../browser'
 import { gestureString, globalShortcuts } from '../shortcuts'
 import gestureStore from '../stores/gesture'
-import storageModel from '../stores/storageModel'
 
 const visibleShortcuts = globalShortcuts.filter(shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp)
 
@@ -17,18 +16,17 @@ const isExecutable = (state: State, shortcut: Shortcut) =>
 
 /** A hook that filters and sorts shortcuts based on the current gesture or keyboard input. */
 const useShortcut = ({
-  includeRecentCommand,
+  recentCommands,
   sortActiveCommandsFirst,
   platformShortcutsOnly,
 }: {
-  includeRecentCommand?: boolean
+  recentCommands?: ShortcutId[]
   sortActiveCommandsFirst?: boolean
   /** Only include commands that have shortcuts on the current platform (keyboard on desktop/gestures on mobile). */
   platformShortcutsOnly?: boolean
 } = {}) => {
   const gestureInProgress = gestureStore.useState()
   const [search, setSearch] = useState('')
-  const [recentCommands, setRecentCommands] = useState<ShortcutId[]>(storageModel.get('recentCommands'))
   const store = useStore()
 
   const possibleShortcutsSorted = useMemo(() => {
@@ -85,7 +83,8 @@ const useShortcut = ({
         [
           // recent commands
           !search &&
-            includeRecentCommand &&
+            recentCommands &&
+            recentCommands.length > 0 &&
             (() => {
               const i = recentCommands.indexOf(shortcut.id)
               // if not found, sort to the end
@@ -112,22 +111,13 @@ const useShortcut = ({
       )
     })
     return sorted
-  }, [
-    gestureInProgress,
-    sortActiveCommandsFirst,
-    search,
-    recentCommands,
-    store,
-    includeRecentCommand,
-    platformShortcutsOnly,
-  ])
+  }, [gestureInProgress, sortActiveCommandsFirst, search, recentCommands, store, platformShortcutsOnly])
 
   return {
     possibleShortcutsSorted,
     search,
     setSearch,
     recentCommands,
-    setRecentCommands,
   }
 }
 

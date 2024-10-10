@@ -295,8 +295,9 @@ const CommandPalette: FC = () => {
   const gestureInProgress = gestureStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
-  const { search, setSearch, possibleShortcutsSorted, recentCommands, setRecentCommands } = useShortcut({
-    includeRecentCommand: true,
+  const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
+  const { search, setSearch, possibleShortcutsSorted } = useShortcut({
+    recentCommands,
     sortActiveCommandsFirst: true,
   })
 
@@ -314,10 +315,10 @@ const CommandPalette: FC = () => {
       )
         return
       const commandsNew = [shortcut.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
-      setRecentCommands(commandsNew)
       dispatch(commandPalette())
       shortcut.exec(dispatch, store.getState, e, { type: 'commandPalette' })
       storageModel.set('recentCommands', commandsNew)
+      setRecentCommands(commandsNew)
     },
     [dispatch, recentCommands, setRecentCommands, store],
   )
