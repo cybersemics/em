@@ -178,7 +178,7 @@ const ShortcutTable = ({
   onSelect?: (shortcut: Shortcut | null) => void
   selectedShortcut?: Shortcut
 }) => {
-  const { setSearch, search, possibleShortcutsSorted } = useShortcut()
+  const { setSearch, search, possibleShortcutsSorted } = useShortcut({ platformShortcutsOnly: true })
 
   return (
     <div>

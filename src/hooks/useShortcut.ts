@@ -19,9 +19,12 @@ const isExecutable = (state: State, shortcut: Shortcut) =>
 const useShortcut = ({
   includeRecentCommand,
   sortActiveCommandsFirst,
+  platformShortcutsOnly,
 }: {
   includeRecentCommand?: boolean
   sortActiveCommandsFirst?: boolean
+  /** Only include commands that have shortcuts on the current platform (keyboard on desktop/gestures on mobile). */
+  platformShortcutsOnly?: boolean
 } = {}) => {
   const gestureInProgress = gestureStore.useState()
   const [search, setSearch] = useState('')
@@ -33,12 +36,15 @@ const useShortcut = ({
       // gesture
       if (isTouch) {
         // only commands with gestures are visible
-        return shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)
+        return (
+          (!platformShortcutsOnly || shortcut.gesture) &&
+          gestureString(shortcut).startsWith(gestureInProgress as string)
+        )
       }
       // keyboard
       else {
         // only commands with keyboard shortcuts are visible
-        if (!shortcut.keyboard) return false
+        if (platformShortcutsOnly && !shortcut.keyboard) return false
 
         // if no query is entered, all commands with keyboard shortcuts are visible
         if (!search) return true
@@ -106,7 +112,15 @@ const useShortcut = ({
       )
     })
     return sorted
-  }, [gestureInProgress, sortActiveCommandsFirst, search, recentCommands, store, includeRecentCommand])
+  }, [
+    gestureInProgress,
+    sortActiveCommandsFirst,
+    search,
+    recentCommands,
+    store,
+    includeRecentCommand,
+    platformShortcutsOnly,
+  ])
 
   return {
     possibleShortcutsSorted,
