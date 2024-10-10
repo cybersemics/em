@@ -12,12 +12,15 @@ const ShortcutTableOnly = ({
   customize,
   onSelect,
   applyIndexInToolbar,
+  search,
 }: {
   shortcuts: (Shortcut | null)[]
   selectedShortcut?: Shortcut
   customize?: boolean
   onSelect?: (shortcut: Shortcut | null) => void
   applyIndexInToolbar?: boolean
+  /** Search text that will be highlighted within the matched shortcut title. */
+  search?: string
 }) => {
   // custom user toolbar
   // fall back to defaults if user does not have Settings defined
@@ -39,6 +42,7 @@ const ShortcutTableOnly = ({
               onSelect={onSelect}
               selected={selectedShortcut && shortcut?.id === selectedShortcut.id}
               shortcut={shortcut}
+              search={search}
             />
           )
         })}

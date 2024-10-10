@@ -1,7 +1,9 @@
+import { FC, useState } from 'react'
 import { modalText } from '../../styled-system/recipes'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
+import useFilteredCommands from '../hooks/useFilteredCommands'
 import { globalShortcuts, shortcutById } from '../shortcuts'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
@@ -108,6 +110,64 @@ if (shortcutsUngrouped.length > 0) {
   )
 }
 
+/** Search bar for filtering shortcuts. */
+const SearchShortcut: FC<{
+  onInput?: (value: string) => void
+}> = ({ onInput }) => {
+  return (
+    <div id='search' style={{ borderBottom: 'solid 1px gray' }}>
+      <input
+        type='text'
+        placeholder='Search commands by name...'
+        onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+          onInput?.(e.target.value)
+        }}
+        style={{
+          marginLeft: 0,
+          marginBottom: 0,
+          marginTop: '1em',
+          border: 'none',
+          boxSizing: 'border-box',
+          width: '100%',
+        }}
+      />
+    </div>
+  )
+}
+
+/** Renders a group of shortcuts with a heading. */
+const ShortcutGroup: ({
+  customize,
+  onSelect,
+  selectedShortcut,
+  title,
+  shortcuts,
+  search,
+}: {
+  customize?: boolean
+  onSelect?: (shortcut: Shortcut | null) => void
+  selectedShortcut?: Shortcut
+  title: string
+  search?: string
+  shortcuts: (Shortcut | null)[]
+}) => JSX.Element = ({ customize, onSelect, selectedShortcut, shortcuts, title, search }) => {
+  const modalClasses = modalText()
+
+  return (
+    <div>
+      <h2 className={modalClasses.subtitle}>{title}</h2>
+      <ShortcutTableOnly
+        shortcuts={shortcuts}
+        selectedShortcut={selectedShortcut}
+        customize={customize}
+        onSelect={onSelect}
+        search={search}
+        applyIndexInToolbar
+      />
+    </div>
+  )
+}
+
 /** Renders a table of shortcuts. */
 const ShortcutTable = ({
   customize,
@@ -118,31 +178,42 @@ const ShortcutTable = ({
   onSelect?: (shortcut: Shortcut | null) => void
   selectedShortcut?: Shortcut
 }) => {
-  const modalClasses = modalText()
+  const [search, setSearch] = useState('')
+  const shortcuts = useFilteredCommands(search, { platformShortcutsOnly: true })
 
   return (
-    <div style={{ textAlign: 'left' }}>
-      {groups.map(group => {
-        const shortcuts = group.shortcuts
-          .map(shortcutById)
-          .filter((shortcut): shortcut is Shortcut => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
+    <div>
+      <SearchShortcut onInput={setSearch} />
+      <div style={{ textAlign: 'left' }}>
+        {search ? (
+          <ShortcutGroup
+            title={'Results'}
+            shortcuts={shortcuts}
+            selectedShortcut={selectedShortcut}
+            customize={customize}
+            onSelect={onSelect}
+            search={search}
+          />
+        ) : (
+          groups.map(group => {
+            const shortcuts = group.shortcuts
+              .map(shortcutById)
+              .filter((shortcut): shortcut is Shortcut => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
 
-        // do not render groups with no shrotcuts on this platform
-        if (shortcuts.length === 0) return null
-
-        return (
-          <div key={group.title}>
-            <h2 className={modalClasses.subtitle}>{group.title}</h2>
-            <ShortcutTableOnly
-              shortcuts={shortcuts}
-              selectedShortcut={selectedShortcut}
-              customize={customize}
-              onSelect={onSelect}
-              applyIndexInToolbar
-            />
-          </div>
-        )
-      })}
+            // do not render groups with no shortcuts on this platform
+            return shortcuts.length > 0 ? (
+              <ShortcutGroup
+                title={group.title}
+                shortcuts={shortcuts}
+                key={group.title}
+                customize={customize}
+                onSelect={onSelect}
+                selectedShortcut={selectedShortcut}
+              />
+            ) : null
+          })
+        )}
+      </div>
     </div>
   )
 }
