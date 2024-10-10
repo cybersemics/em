@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useStore } from 'react-redux'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
@@ -15,18 +15,21 @@ const isExecutable = (state: State, shortcut: Shortcut) =>
   (!shortcut.canExecute || shortcut.canExecute(() => state)) && (shortcut.allowExecuteFromModal || !state.showModal)
 
 /** A hook that filters and sorts commands based on a search or the current gesture or keyboard input. */
-const useFilteredCommands = ({
-  platformShortcutsOnly,
-  recentCommands,
-  sortActiveCommandsFirst,
-}: {
-  /** Only include commands that have shortcuts on the current platform (keyboard on desktop/gestures on mobile). */
-  platformShortcutsOnly?: boolean
-  recentCommands?: ShortcutId[]
-  sortActiveCommandsFirst?: boolean
-} = {}) => {
+const useFilteredCommands = (
+  search: string,
+  {
+    platformShortcutsOnly,
+    recentCommands,
+    sortActiveCommandsFirst,
+  }: {
+    /** Only include commands that have shortcuts on the current platform (keyboard on desktop/gestures on mobile). */
+    platformShortcutsOnly?: boolean
+    recentCommands?: ShortcutId[]
+    /** The search term to filter commands that match. */
+    sortActiveCommandsFirst?: boolean
+  },
+) => {
   const gestureInProgress = gestureStore.useState()
-  const [search, setSearch] = useState('')
   const store = useStore()
 
   const possibleShortcutsSorted = useMemo(() => {
@@ -113,12 +116,7 @@ const useFilteredCommands = ({
     return sorted
   }, [gestureInProgress, sortActiveCommandsFirst, search, recentCommands, store, platformShortcutsOnly])
 
-  return {
-    shortcuts: possibleShortcutsSorted,
-    search,
-    setSearch,
-    recentCommands,
-  }
+  return possibleShortcutsSorted
 }
 
 export default useFilteredCommands

@@ -296,7 +296,8 @@ const CommandPalette: FC = () => {
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
   const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
-  const { search, setSearch, shortcuts } = useFilteredCommands({
+  const [search, setSearch] = useState('')
+  const shortcuts = useFilteredCommands(search, {
     recentCommands,
     sortActiveCommandsFirst: true,
   })

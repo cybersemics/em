@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, useState } from 'react'
 import { modalText } from '../../styled-system/recipes'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
@@ -178,7 +178,8 @@ const ShortcutTable = ({
   onSelect?: (shortcut: Shortcut | null) => void
   selectedShortcut?: Shortcut
 }) => {
-  const { setSearch, search, shortcuts } = useFilteredCommands({ platformShortcutsOnly: true })
+  const [search, setSearch] = useState('')
+  const shortcuts = useFilteredCommands(search, { platformShortcutsOnly: true })
 
   return (
     <div>
