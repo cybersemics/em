@@ -17,12 +17,12 @@ const isExecutable = (state: State, shortcut: Shortcut) =>
 
 /** A hook that filters and sorts shortcuts based on the current gesture or keyboard input. */
 const useShortcut = ({
-  includeRecentCommand = false,
-  sortActiveCommandsFirst = true,
+  includeRecentCommand,
+  sortActiveCommandsFirst,
 }: {
   includeRecentCommand?: boolean
   sortActiveCommandsFirst?: boolean
-}) => {
+} = {}) => {
   const gestureInProgress = gestureStore.useState()
   const [search, setSearch] = useState('')
   const [recentCommands, setRecentCommands] = useState<ShortcutId[]>(storageModel.get('recentCommands'))
