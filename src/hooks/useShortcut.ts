@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import { useMemo, useState } from 'react'
 import { useStore } from 'react-redux'
-import GesturePath from '../@types/GesturePath'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
@@ -22,11 +21,9 @@ export const isExecutable = (state: State, shortcut: Shortcut) =>
  *
  */
 const useShortcut = ({
-  isGestureActive = true,
   includeRecentCommand = false,
   sortActiveCommandsFirst = true,
 }: {
-  isGestureActive?: boolean | GesturePath
   includeRecentCommand?: boolean
   sortActiveCommandsFirst?: boolean
 }) => {
@@ -39,11 +36,9 @@ const useShortcut = ({
   const store = useStore()
 
   const possibleShortcutsSorted = useMemo(() => {
-    if (!isGestureActive) return []
-
     const possibleShortcuts = visibleShortcuts.filter(shortcut => {
       // gesture
-      if (isTouch && !isGestureActive) {
+      if (isTouch) {
         return shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)
       }
       // keyboard
@@ -113,15 +108,7 @@ const useShortcut = ({
     })
     return sorted
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    gestureInProgress,
-    sortActiveCommandsFirst,
-    isGestureActive,
-    keyboardInProgress,
-    recentCommands,
-    store,
-    includeRecentCommand,
-  ])
+  }, [gestureInProgress, sortActiveCommandsFirst, keyboardInProgress, recentCommands, store, includeRecentCommand])
 
   return {
     possibleShortcutsSorted,

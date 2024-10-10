@@ -295,10 +295,8 @@ const CommandPalette: FC = () => {
   const gestureInProgress = gestureStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
-  // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
-  const isGestureActive = gestureInProgress || !isTouch
   const { keyboardInProgress, setKeyboardInProgress, possibleShortcutsSorted, recentCommands, setRecentCommands } =
-    useShortcut({ isGestureActive: isGestureActive, includeRecentCommand: true, sortActiveCommandsFirst: true })
+    useShortcut({ includeRecentCommand: true, sortActiveCommandsFirst: true })
 
   const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
 
@@ -394,7 +392,7 @@ const CommandPalette: FC = () => {
   return (
     <div
       style={{
-        ...(isGestureActive ? { paddingLeft: '4em', paddingRight: '1.8em' } : null),
+        ...(gestureInProgress || !isTouch ? { paddingLeft: '4em', paddingRight: '1.8em' } : null),
         marginBottom: isTouch ? 0 : fontSize,
         textAlign: 'left',
       }}
