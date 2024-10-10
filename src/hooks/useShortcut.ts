@@ -14,12 +14,10 @@ import storageModel from '../stores/storageModel'
  **********************************************************************/
 
 /** Returns true if the shortcut can be executed. */
-export const isExecutable = (state: State, shortcut: Shortcut) =>
+const isExecutable = (state: State, shortcut: Shortcut) =>
   (!shortcut.canExecute || shortcut.canExecute(() => state)) && (shortcut.allowExecuteFromModal || !state.showModal)
 
-/**
- *
- */
+/** A hook that filters and sorts shortcuts based on the current gesture or keyboard input. */
 const useShortcut = ({
   includeRecentCommand = false,
   sortActiveCommandsFirst = true,

@@ -110,9 +110,7 @@ if (shortcutsUngrouped.length > 0) {
   )
 }
 
-/**
- *
- */
+/** Search bar for filtering shortcuts. */
 const SearchShortcut: FC<{
   onInput?: (value: string) => void
 }> = ({ onInput }) => {
@@ -121,7 +119,6 @@ const SearchShortcut: FC<{
       <input
         type='text'
         placeholder='Search commands by name...'
-        // ref={inputRef}
         onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
           onInput?.(e.target.value)
         }}
@@ -138,9 +135,7 @@ const SearchShortcut: FC<{
   )
 }
 
-/**
- *
- */
+/** Renders a group of shortcuts with a heading. */
 const ShortcutGroup: ({
   customize,
   onSelect,
@@ -207,9 +202,8 @@ const ShortcutTable = ({
               .map(shortcutById)
               .filter((shortcut): shortcut is Shortcut => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
 
-            // do not render groups with no shrotcuts on this platform
-            if (shortcuts.length === 0) return null
-            return (
+            // do not render groups with no shortcuts on this platform
+            return shortcuts.length > 0 ? (
               <ShortcutGroup
                 title={group.title}
                 shortcuts={shortcuts}
@@ -218,7 +212,7 @@ const ShortcutTable = ({
                 onSelect={onSelect}
                 selectedShortcut={selectedShortcut}
               />
-            )
+            ) : null
           })
         )}
       </div>

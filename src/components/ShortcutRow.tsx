@@ -125,7 +125,7 @@ const ShortcutRow = ({
             </span>
           )}
 
-          {keyboardInProgress && keyboardInProgress?.length > 0 ? (
+          {keyboardInProgress && keyboardInProgress.length > 0 ? (
             <b>
               <HighlightedText value={shortcut.label} match={keyboardInProgress} />
             </b>
