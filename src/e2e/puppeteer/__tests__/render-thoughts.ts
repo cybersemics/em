@@ -7,8 +7,7 @@ expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
-//vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
-vi.setConfig({ testTimeout: 2 * 60000, hookTimeout: 2 * 20000 })
+vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 /* From jest-image-snapshot README:
 
