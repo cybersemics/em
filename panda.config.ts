@@ -22,7 +22,7 @@ import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
 
-/** returns duration values with a zero duration for _test */
+/** Returns duration values with a zero duration for _test. */
 const duration = (str: string) => ({
   value: {
     base: str,
