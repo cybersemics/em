@@ -4,11 +4,13 @@ import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isTouch } from '../browser'
 import fastClick from '../util/fastClick'
+import toMilliseconds from '../util/toMilliseconds'
 import Favorites from './Favorites'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
@@ -151,7 +153,12 @@ const Sidebar = () => {
           })}
           data-scroll-at-edge
         >
-          <CSSTransition in={showSidebar} nodeRef={sidebarMenuRef} timeout={200} classNames='fade'>
+          <CSSTransition
+            in={showSidebar}
+            nodeRef={sidebarMenuRef}
+            timeout={toMilliseconds(token('durations.sidebarFadeDuration'))}
+            classNames='fade'
+          >
             <div
               ref={sidebarMenuRef}
               style={{
