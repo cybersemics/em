@@ -2,6 +2,7 @@ import React, { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
@@ -32,6 +33,7 @@ import { shortcutById } from '../../shortcuts'
 import fastClick from '../../util/fastClick'
 import headValue from '../../util/headValue'
 import once from '../../util/once'
+import toMilliseconds from '../../util/toMilliseconds'
 import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
 import TutorialScrollUpButton from './TutorialScrollUpButton'
@@ -45,7 +47,13 @@ const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props
 
   const Component = component
   return (
-    <CSSTransition nodeRef={nodeRef} in={true} key={Math.floor(props.transitionKey)} timeout={400} classNames='slide'>
+    <CSSTransition
+      nodeRef={nodeRef}
+      in={true}
+      key={Math.floor(props.transitionKey)}
+      timeout={toMilliseconds(token('durations.tutorialStepSlideDuration'))}
+      classNames='slide'
+    >
       <div ref={nodeRef}>
         <Component {...props} />
       </div>
