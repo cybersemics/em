@@ -1,8 +1,10 @@
-import helpers from '../helpers'
-
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
-const { getEditingText, click, clickThought, paste, waitForEditable } = helpers()
+import click from "../helpers/click"
+import clickThought from "../helpers/clickThought"
+import getEditingText from "../helpers/getEditingText"
+import paste from "../helpers/paste"
+import waitForEditable from "../helpers/waitForEditable"
 
 /**
  * Extract the Style of html string.
