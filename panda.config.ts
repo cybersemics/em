@@ -327,6 +327,8 @@ export default defineConfig({
           },
         },
         durations: {
+          addDeviceFormFadeDuration: duration('400ms'),
+          addDeviceButtonFadeDuration: duration('400ms'),
           alertFadeDuration: duration('800ms'),
           colorPickerFadeDuration: duration('200ms'),
           commandPaletteFadeDuration: duration('200ms'),
