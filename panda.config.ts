@@ -340,6 +340,7 @@ export default defineConfig({
           layoutSlowShiftDuration: duration('750ms'),
           /** The animation duration of a node in the LayoutTree component. */
           layoutNodeAnimationDuration: duration('150ms'),
+          quickDropPanelSlideDuration: duration('200ms'),
         },
       },
     },
