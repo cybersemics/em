@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { CSSTransition } from 'react-transition-group'
+import { token } from '../../styled-system/tokens'
 import {
   AlertType,
   GESTURE_CANCEL_ALERT_TEXT,
@@ -15,6 +16,7 @@ import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import viewportStore from '../stores/viewport'
+import toMilliseconds from '../util/toMilliseconds'
 
 interface TraceGestureProps {
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
@@ -142,7 +144,12 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         pointerEvents: eventNodeRef ? 'none' : undefined,
       }}
     >
-      <CSSTransition nodeRef={fadeBothEnterElRef} in={show} timeout={400} classNames='fade-both'>
+      <CSSTransition
+        nodeRef={fadeBothEnterElRef}
+        in={show}
+        timeout={toMilliseconds(token('durations.signaturePadFadeDuration'))}
+        classNames='fade-both'
+      >
         <div
           ref={fadeBothEnterElRef}
           // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots

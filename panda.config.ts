@@ -342,6 +342,8 @@ export default defineConfig({
           layoutNodeAnimationDuration: duration('150ms'),
           quickDropPanelSlideDuration: duration('200ms'),
           sidebarFadeDuration: duration('200ms'),
+          signaturePadFadeDuration: duration('400ms'),
+          toolbarFadeDuration: duration('600ms'),
         },
       },
     },
