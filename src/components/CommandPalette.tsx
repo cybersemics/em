@@ -2,6 +2,7 @@ import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } fro
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
@@ -15,6 +16,7 @@ import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, short
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import { executeShortcutWithMulticursor } from '../util/executeShortcut'
+import toMilliseconds from '../util/toMilliseconds'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import Popup from './Popup'
@@ -479,7 +481,13 @@ const CommandPaletteWithTransition: FC = () => {
       childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {showCommandPalette ? (
-        <CSSTransition key={0} nodeRef={popupRef} timeout={200} classNames='fade' onEntering={() => setDismiss(false)}>
+        <CSSTransition
+          key={0}
+          nodeRef={popupRef}
+          timeout={toMilliseconds(token('durations.commandPaletteFadeDuration'))}
+          classNames='fade'
+          onEntering={() => setDismiss(false)}
+        >
           <Popup
             ref={popupRef}
             // only show the close link on desktop
