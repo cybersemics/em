@@ -2,7 +2,9 @@ import { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import { errorActionCreator as error } from '../actions/error'
+import toMilliseconds from '../util/toMilliseconds'
 import CloseButton from './CloseButton'
 
 /** An error message that can be dismissed with a close button. */
@@ -14,7 +16,12 @@ const ErrorMessage: FC = () => {
   return (
     <TransitionGroup>
       {value ? (
-        <CSSTransition key={0} nodeRef={errorMessageRef} timeout={200} classNames='fade'>
+        <CSSTransition
+          key={0}
+          nodeRef={errorMessageRef}
+          timeout={toMilliseconds(token('durations.errorMessageFadeDuration'))}
+          classNames='fade'
+        >
           <div
             ref={errorMessageRef}
             className={css({
