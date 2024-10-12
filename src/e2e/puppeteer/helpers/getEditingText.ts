@@ -5,7 +5,7 @@ import { fetchPage } from './setup'
  */
 const getEditingText = () =>
   fetchPage().evaluate(() => {
-    return document.querySelector('.editing .editable')?.innerHTML
+    return document.querySelector('[data-editing=true] [data-editable]')?.innerHTML
   })
 
 export default getEditingText
