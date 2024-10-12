@@ -1,7 +1,7 @@
 import { Page } from 'puppeteer'
 import setup from './helpers/setup'
 
-let page: Page | null = null;
+let page: Page | null = null
 
 beforeEach(async () => {
   page = await setup()
