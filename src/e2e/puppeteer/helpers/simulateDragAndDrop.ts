@@ -1,10 +1,5 @@
-import { Page } from 'puppeteer'
 import { WindowEm } from '../../../initialize'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
+import { fetchPage } from './setup'
 
 interface Options {
   /** Renders all DropHover components. */
@@ -18,7 +13,7 @@ const em = window.em as WindowEm
 const simulateDragAndDrop = async ({ drag, drop }: Options): Promise<void> => {
   await new Promise(resolve => setTimeout(resolve, 100))
 
-  await global.page.evaluate(
+  await fetchPage().evaluate(
     (drag, drop) => {
       em.testFlags.simulateDrag = !!drag
       em.testFlags.simulateDrop = !!drop

@@ -1,18 +1,13 @@
-import { Page } from 'puppeteer'
 import Context from '../../../@types/Context'
 import Thought from '../../../@types/Thought'
 import { WindowEm } from '../../../initialize'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
+import { fetchPage } from './setup'
 
 /**
  * Wait until given context has a child with given value.
  */
 const waitForContextHasChildWithValue = async (context: Context, childValue: string) =>
-  await global.page.waitForFunction(
+  await fetchPage().waitForFunction(
     (context: Context, childValue: string) =>
       (window.em as WindowEm)
         .getAllChildrenAsThoughts(context)

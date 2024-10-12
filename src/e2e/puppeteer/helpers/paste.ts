@@ -1,12 +1,6 @@
-import { Browser, Page } from 'puppeteer'
 import { HOME_TOKEN } from '../../../constants'
 import { WindowEm } from '../../../initialize'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const browser: Browser
-  let page: Page
-}
+import { fetchPage } from './setup'
 
 const em = window.em as WindowEm
 
@@ -15,7 +9,7 @@ async function paste(pathUnranked: string[], text: string): Promise<void>
 
 /** Import text on given unranked path using exposed testHelpers. */
 async function paste(pathUnranked: string | string[], text?: string): Promise<void> {
-  const page = global.page
+  const page = fetchPage()
   const _pathUnranked = typeof pathUnranked === 'string' ? [HOME_TOKEN] : (pathUnranked as string[])
   const _text = typeof pathUnranked === 'string' ? pathUnranked : text!
   // await new Promise(resolve => setTimeout(resolve, 200))

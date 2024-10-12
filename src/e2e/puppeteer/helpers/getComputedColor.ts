@@ -1,15 +1,11 @@
-import { ElementHandle, Page } from 'puppeteer'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
+import { ElementHandle } from 'puppeteer'
+import { fetchPage } from './setup'
 
 /**
  * Get computed color.
  */
 const getComputedColor = async (element: ElementHandle) => {
-  const styleHandle = await global.page.evaluateHandle(elementHandle => {
+  const styleHandle = await fetchPage().evaluateHandle(elementHandle => {
     const cssDeclarationObject = window.getComputedStyle(elementHandle)
     return cssDeclarationObject.color
   }, element)

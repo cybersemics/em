@@ -1,13 +1,8 @@
-import { Page } from 'puppeteer'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
+import { fetchPage } from './setup'
 
 /** Scroll to the top of the page. */
 const scroll = async (x: number, y: number) => {
-  await global.page.evaluate(
+  await fetchPage().evaluate(
     (x: number, y: number) => {
       window.scroll(x, y)
     },

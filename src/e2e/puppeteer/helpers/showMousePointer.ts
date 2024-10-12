@@ -1,13 +1,8 @@
-import { Page } from 'puppeteer'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
+import { fetchPage } from './setup'
 
 /** Renders a simulated mouse pointer that tracks the actual mouse movements. */
 async function showMousePointer() {
-  await global.page.evaluate(() => {
+  await fetchPage().evaluate(() => {
     const pointer = document.createElement('puppeteer-mouse-pointer')
     pointer.innerHTML = `
       <svg viewBox="8 3 24 24" width="30">

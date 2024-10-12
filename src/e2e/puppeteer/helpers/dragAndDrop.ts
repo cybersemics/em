@@ -1,13 +1,8 @@
-import { Page } from 'puppeteer'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
+import { fetchPage } from './setup'
 
 /** Performs Drag and Drop functionality in Puppeteer browser. */
 const dragAndDrop = async (selectorDrag: string, selectorDrop: string) => {
-  const page = global.page
+  const page = fetchPage()
 
   // Get the bounding boxes of the drag and drop targets
   const dragStart = await page.$eval(selectorDrag, el => ({

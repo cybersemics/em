@@ -1,12 +1,7 @@
-import { Page } from 'puppeteer'
 import sleep from '../../../util/sleep'
 import getEditable from './getEditable'
+import { fetchPage } from './setup'
 import showMousePointer from './showMousePointer'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
 
 interface DragAndDropOptions {
   /** Determines where the destination thought is dropped, relative to the source thought.
@@ -27,7 +22,7 @@ const dragAndDropThought = async (
   destValue: string,
   { position, mouseUp, dropUncle }: DragAndDropOptions,
 ) => {
-  const page = global.page
+  const page = fetchPage()
 
   const sourceElement = await getEditable(sourceValue)
   const destElement = await getEditable(destValue)

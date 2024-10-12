@@ -1,16 +1,11 @@
-import { Page } from 'puppeteer'
 import { WindowEm } from '../../../initialize'
+import { fetchPage } from './setup'
 
 const em = window.em as WindowEm
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
-
 /** Wait for the given thought value to exist in the database. */
 const waitForThoughtExistInDb = async (value: string) => {
-  const page = global.page
+  const page = fetchPage()
   await page.evaluate(async value => {
     await new Promise(resolve => {
       const testHelpers = em.testHelpers

@@ -1,10 +1,5 @@
-import { Page } from 'puppeteer'
 import { WindowEm } from '../../../initialize'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
+import { fetchPage } from './setup'
 
 const em = window.em as WindowEm
 
@@ -12,7 +7,7 @@ const em = window.em as WindowEm
  * Wait until value of the state for the given property path equals the given value.
  */
 const waitForState = async (path: string, value: any) => {
-  await global.page.evaluate(
+  await fetchPage().evaluate(
     async (path, value) => {
       await new Promise(resolve => {
         const { getState, _ } = em.testHelpers

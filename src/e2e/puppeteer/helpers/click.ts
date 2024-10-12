@@ -1,9 +1,5 @@
-import { JSHandle, Page } from 'puppeteer'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
+import { JSHandle } from 'puppeteer'
+import { fetchPage } from './setup'
 
 interface Options {
   // Click on the inside edge of the editable
@@ -23,7 +19,7 @@ const click = async (
   nodeHandleOrSelector: JSHandle | string,
   { edge = 'left', offset, x = 0, y = 0 }: Options = {},
 ) => {
-  const page = global.page
+  const page = fetchPage()
   const isMobile = page.viewport()?.isMobile
 
   if (isMobile && (offset || x || y)) {

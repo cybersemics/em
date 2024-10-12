@@ -1,11 +1,6 @@
-import { Page } from 'puppeteer'
 import ModalType from '../../../@types/Modal'
 import { WindowEm } from '../../../initialize'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
+import { fetchPage } from './setup'
 
 const em = window.em as WindowEm
 
@@ -13,7 +8,7 @@ const em = window.em as WindowEm
 const openModal = async (id: ModalType): Promise<void> => {
   await new Promise(resolve => setTimeout(resolve, 100))
 
-  await global.page.evaluate(id => {
+  await fetchPage().evaluate(id => {
     em.store.dispatch({ type: 'showModal', id })
   }, id)
 }

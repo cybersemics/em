@@ -1,16 +1,11 @@
-import { Page } from 'puppeteer'
 import getEditable from './getEditable'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
+import { fetchPage } from './setup'
 
 /**
  * Click the bullet for the given thought.
  */
 const clickBullet = async (value: string) => {
-  const page = global.page
+  const page = fetchPage()
   const editableNode = await getEditable(value)
 
   if (!editableNode) throw new Error('editable node for the given value not found.')

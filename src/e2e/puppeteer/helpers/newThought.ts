@@ -1,14 +1,9 @@
-import { Page } from 'puppeteer'
+import { fetchPage } from './setup'
 import waitForEditable from './waitForEditable'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
 
 /** Creates a new thought by hitting Enter and typing text. Waits for renders between each step. */
 const newThought = async (value?: string) => {
-  const page = global.page
+  const page = fetchPage()
   await page.keyboard.press('Enter')
   await waitForEditable('')
   if (value) {

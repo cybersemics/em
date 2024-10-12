@@ -1,11 +1,7 @@
-import { Device, Page } from 'puppeteer'
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const page: Page
-}
+import { Device } from 'puppeteer'
+import { fetchPage } from './setup'
 
 /** Holds down a key on the keyboad. */
-const emulate = async (device: Device) => await global.page.emulate(device)
+const emulate = async (device: Device) => await fetchPage().emulate(device)
 
 export default emulate

@@ -15,7 +15,7 @@ export interface InitPageOptions {
   emulatedDevice?: Device
 }
 
-let currentPage: Page | null = null;
+let currentPage: Page | null = null
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
@@ -88,12 +88,13 @@ const setup = async ({
   return page
 }
 
+/**
+ *
+ */
 export const fetchPage = (): Page => {
-  if (!currentPage)
-    throw new Error("Page is not initialized.")
+  if (!currentPage) throw new Error('Page is not initialized.')
 
   return currentPage
 }
-
 
 export default setup
