@@ -329,6 +329,7 @@ export default defineConfig({
         durations: {
           alertFadeDuration: duration('800ms'),
           commandPaletteFadeDuration: duration('200ms'),
+          contextBreadcrumbsFadeDuration: duration('600ms'),
           highlightPulseDuration: duration('500ms'),
           hoverPulseDuration: duration('300ms'),
           /** The animation duration for the slower opacity transition and horizontal shift of the LayoutTree as the depth of the cursor changes. */
