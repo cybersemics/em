@@ -1,10 +1,10 @@
-vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
+import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
+import getEditingText from '../helpers/getEditingText'
+import paste from '../helpers/paste'
+import waitForEditable from '../helpers/waitForEditable'
 
-import click from "../helpers/click"
-import clickThought from "../helpers/clickThought"
-import getEditingText from "../helpers/getEditingText"
-import paste from "../helpers/paste"
-import waitForEditable from "../helpers/waitForEditable"
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
 /**
  * Extract the Style of html string.
