@@ -22,6 +22,8 @@ import ContentEditable, { ContentEditableEvent } from './../ContentEditable'
 import CopyClipboard from './../icons/CopyClipboard'
 import PencilIcon from './../icons/PencilIcon'
 import ModalComponent from './ModalComponent'
+import toMilliseconds from '../../util/toMilliseconds'
+import { token } from '../../../styled-system/tokens'
 
 /** A hook that subscribes to the permissionsClientDoc. */
 const usePermissions = (): Index<Share> => useSharedType(permissionsClientDoc.getMap<Share>())
@@ -64,7 +66,7 @@ const ModalDevices = () => {
               nodeRef={shareDetailRef}
               classNames='fade-400'
               exit={false}
-              timeout={400}
+              timeout={toMilliseconds(token('durations.shareDetailFadeDuration'))}
               unmountOnExit
             >
               <ShareDetail
@@ -81,7 +83,7 @@ const ModalDevices = () => {
               nodeRef={shareListRef}
               classNames='fade-400'
               exit={false}
-              timeout={400}
+              timeout={toMilliseconds(token('durations.shareListFadeDuration'))}
               unmountOnExit
             >
               <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
