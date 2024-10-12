@@ -1,19 +1,15 @@
-import { Browser, Page } from 'puppeteer'
+import { Page } from 'puppeteer'
 import setup from './helpers/setup'
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare module global {
-  const browser: Browser
-  let page: Page
-}
+let page: Page | null = null;
 
 beforeEach(async () => {
-  global.page = await setup()
+  page = await setup()
 }, 60000)
 
 afterEach(async () => {
-  if (global.page) {
-    await global.page.close().catch(() => {
+  if (page) {
+    await page.close().catch(() => {
       // Ignore errors when closing the page.
     })
   }
