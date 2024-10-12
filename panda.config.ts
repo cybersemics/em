@@ -328,6 +328,7 @@ export default defineConfig({
         },
         durations: {
           alertFadeDuration: duration('800ms'),
+          colorPickerFadeDuration: duration('200ms'),
           commandPaletteFadeDuration: duration('200ms'),
           contextBreadcrumbsFadeDuration: duration('600ms'),
           cursorBreadcrumbsFadeDuration: duration('200ms'),
