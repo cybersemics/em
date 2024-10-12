@@ -12,6 +12,7 @@ import themeColors from '../selectors/themeColors'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
+import toMilliseconds from '../util/toMilliseconds'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import HomeLink from './HomeLink'
 import InvitesButton from './InvitesButton'
@@ -108,7 +109,7 @@ const NavBar = ({ position }: { position: string }) => {
                   <CSSTransition
                     nodeRef={cursorBreadcrumbsWrapperRef}
                     in={!distractionFreeTyping}
-                    timeout={200}
+                    timeout={toMilliseconds(token('durations.cursorBreadcrumbsFadeDuration'))}
                     classNames='fade'
                     unmountOnExit
                   >
