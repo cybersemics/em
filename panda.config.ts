@@ -334,6 +334,7 @@ export default defineConfig({
           favoritesSlidedownDuration: duration('150ms'),
           highlightPulseDuration: duration('500ms'),
           hoverPulseDuration: duration('300ms'),
+          latestShortcutsOpacityDuration: duration('400ms'),
           /** The animation duration for the slower opacity transition and horizontal shift of the LayoutTree as the depth of the cursor changes. */
           layoutSlowShiftDuration: duration('750ms'),
           /** The animation duration of a node in the LayoutTree component. */
