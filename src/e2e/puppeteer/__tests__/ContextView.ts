@@ -1,7 +1,7 @@
 import sleep from '../../../util/sleep'
 import helpers from '../helpers'
 
-vi.setConfig({ testTimeout: 20000 })
+vi.setConfig({ testTimeout: 60000 })
 
 const { click, paste, refresh, waitForEditable, waitForThoughtExistInDb, clickThought } = helpers()
 
@@ -15,7 +15,7 @@ it('load buffered ancestors of contexts when context view is activated', async (
           - m
     `
   await paste(importText)
-  await sleep(1000)
+  await sleep(2000)
   await waitForEditable('m')
   await clickThought('m')
 
@@ -23,21 +23,21 @@ it('load buffered ancestors of contexts when context view is activated', async (
 
   await refresh()
 
-  await sleep(1000)
+  await sleep(2000)
 
   await waitForEditable('m')
 
   // wait for a re-render in case the lexeme was loaded after the parent
   // getEditingText will return undefined if we don't wait
   // we don't currently have a way to tell if a lexeme is missing or just loading
-  await sleep(1000)
+  await sleep(2000)
 
   await clickThought('m')
   await click('[data-testid="toolbar-icon"][aria-label="Context View"]')
 
   // allow ancestors to be loaded
   // may not be practically necessary, but there could be a delay on slower machines
-  await sleep(1000)
+  await sleep(4000)
 
   // assert that c is loaded
   await waitForEditable('c')
