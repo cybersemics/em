@@ -77,7 +77,6 @@ const setup = async ({
     await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
   }
 
-  // wait for YJS to give up connecting to WebsocketProvider
   // add 500ms for hamburger-menu animation to complete
   await sleep(500)
 
