@@ -79,8 +79,6 @@ const setup = async ({
 
   // add 500ms for hamburger-menu animation to complete
   await sleep(500)
-
-  return page
 }
 
 beforeEach(setup, 60000)
