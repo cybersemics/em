@@ -356,6 +356,8 @@ export default defineConfig({
           sidebarFadeDuration: duration('200ms'),
           signaturePadFadeDuration: duration('400ms'),
           toolbarFadeDuration: duration('600ms'),
+          toolbarButtonTransitionDuration: duration('80ms'),
+          toolbarButtonSVGOpacityDuration: duration('200ms'),
           toolbarHelpTextFadeDuration: duration('200ms'),
           triangleToggleTransformDuration: duration('100ms'),
           tutorialStepSlideDuration: duration('400ms'),

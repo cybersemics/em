@@ -171,7 +171,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
             : `translateY(0em)`,
         position: 'relative',
         cursor: isButtonExecutable ? 'pointer' : 'default',
-        transition: 'transform 80ms ease-out, max-width 80ms ease-out, margin-left 80ms ease-out',
+        transition: `transform ${token('durations.toolbarButtonTransitionDuration')} ease-out, max-width ${token('durations.toolbarButtonTransitionDuration')} ease-out, margin-left ${token('durations.toolbarButtonTransitionDuration')} ease-out`,
         // extend drop area down, otherwise the drop hover is blocked by the user's finger
         // must match toolbar marginBottom
         paddingBottom: isDraggingAny ? '7em' : 0,
@@ -225,7 +225,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           position: 'relative' as const,
           cursor: isButtonExecutable ? 'pointer' : 'default',
           opacity: dropToRemove ? 0 : 1,
-          transition: 'opacity 200ms ease-out',
+          transition: `opacity ${token('durations.toolbarButtonSVGOpacityDuration')} ease-out`,
         })}
         style={style}
       />
