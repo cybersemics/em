@@ -34,9 +34,9 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
         in={latestShortcuts.length > 0}
         classNames={{
           enter: css({ opacity: 0 }),
-          enterActive: css({ opacity: 1, transition: 'opacity 400ms' }),
+          enterActive: css({ opacity: 1, transition: `opacity ${token('durations.latestShortcutsOpacityDuration')}` }),
           exit: css({ opacity: 1 }),
-          exitActive: css({ opacity: 0, transition: 'opacity 400ms' }),
+          exitActive: css({ opacity: 0, transition: `opacity ${token('durations.latestShortcutsOpacityDuration')}` }),
         }}
         timeout={toMilliseconds(token('durations.latestShortcutsOpacityDuration'))}
         unmountOnExit
