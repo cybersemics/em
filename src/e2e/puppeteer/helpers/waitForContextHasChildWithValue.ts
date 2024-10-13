@@ -1,13 +1,13 @@
 import Context from '../../../@types/Context'
 import Thought from '../../../@types/Thought'
 import { WindowEm } from '../../../initialize'
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 /**
  * Wait until given context has a child with given value.
  */
 const waitForContextHasChildWithValue = async (context: Context, childValue: string) =>
-  await fetchPage().waitForFunction(
+  await page.waitForFunction(
     (context: Context, childValue: string) =>
       (window.em as WindowEm)
         .getAllChildrenAsThoughts(context)

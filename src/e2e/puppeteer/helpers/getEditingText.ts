@@ -1,10 +1,10 @@
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 /**
  * Get the thought value that cursor on.
  */
 const getEditingText = () =>
-  fetchPage().evaluate(() => {
+  page.evaluate(() => {
     return document.querySelector('[data-editing=true] [data-editable]')?.innerHTML
   })
 

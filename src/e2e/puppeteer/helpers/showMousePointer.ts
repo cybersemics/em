@@ -1,8 +1,8 @@
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 /** Renders a simulated mouse pointer that tracks the actual mouse movements. */
 async function showMousePointer() {
-  await fetchPage().evaluate(() => {
+  await page.evaluate(() => {
     const pointer = document.createElement('puppeteer-mouse-pointer')
     pointer.innerHTML = `
       <svg viewBox="8 3 24 24" width="30">
