@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
 import { css, cx } from '../../../styled-system/css'
 import { extendTap } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import ExportOption from '../../@types/ExportOption'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -670,7 +671,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
                 userSelect: 'none',
                 display: 'flex',
                 position: 'relative',
-                transition: 'opacity 100ms ease-in-out',
+                transition: `opacity ${token('durations.advancedSettingsLinkOpacityDuration')} ease-in-out`,
                 color: 'fg',
                 opacity: advancedSettings ? 1 : 0.5,
               }),
