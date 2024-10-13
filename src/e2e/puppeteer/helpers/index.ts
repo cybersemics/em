@@ -22,6 +22,7 @@ import remove from './remove'
 import removeHUD from './removeHUD'
 import screenshot from './screenshot'
 import scroll from './scroll'
+import scrollIntoView from './scrollIntoView'
 import setup from './setup'
 import simulateDragAndDrop from './simulateDragAndDrop'
 import type from './type'
@@ -59,6 +60,7 @@ const helpers = {
   refresh,
   screenshot,
   scroll,
+  scrollIntoView,
   type,
   waitForContextHasChildWithValue,
   waitForEditable,
