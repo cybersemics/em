@@ -10,8 +10,7 @@ expect.extend({
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
-// TODO: Why does styled-system not load from dev server?
-it.skip('modal', async () => {
+it('modal', async () => {
   await openModal('customizeToolbar')
   expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'modal-customizeToolbar' })
 
