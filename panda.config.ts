@@ -329,6 +329,7 @@ export default defineConfig({
         durations: {
           addDeviceFormFadeDuration: duration('400ms'),
           addDeviceButtonFadeDuration: duration('400ms'),
+          advancedSettingsLinkOpacityDuration: duration('100ms'),
           alertFadeDuration: duration('800ms'),
           bulletOpacityDuration: duration('750ms'),
           bulletFgTransformDuration: duration('100ms'),
