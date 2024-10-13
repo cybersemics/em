@@ -1,4 +1,4 @@
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 interface Options {
   behavior?: ScrollBehavior
@@ -7,7 +7,6 @@ interface Options {
 
 /** Scroll an element into view using its query selector. */
 const scrollIntoView = async (selector: string, { behavior = 'smooth', block = 'start' }: Options = {}) => {
-  const page = await fetchPage() // Dynamically fetch the current page
   await page.evaluate(
     (selector: string, behavior: ScrollBehavior, block: ScrollLogicalPosition) => {
       const element = document.querySelector(selector)
