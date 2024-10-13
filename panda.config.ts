@@ -355,6 +355,7 @@ export default defineConfig({
           shortcutTableFadeDuration: duration('200ms'),
           sidebarFadeDuration: duration('200ms'),
           signaturePadFadeDuration: duration('400ms'),
+          signaturePadOpacityDuration: duration('150ms'),
           toolbarFadeDuration: duration('600ms'),
           toolbarButtonTransitionDuration: duration('80ms'),
           toolbarButtonSVGOpacityDuration: duration('200ms'),
