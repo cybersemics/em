@@ -1,10 +1,10 @@
-import { Page } from 'puppeteer'
+import { fetchPage } from './setup'
 
 /**
  * Get editable node handle for the given value.
  */
-const getEditable = (page: Page, value: string) =>
-  page.evaluateHandle(value => {
+const getEditable = (value: string) =>
+  fetchPage().evaluateHandle(value => {
     const xpath = `//div[@data-editable and contains(text(), "${value}")]`
     return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null)
       .singleNodeValue as HTMLElement

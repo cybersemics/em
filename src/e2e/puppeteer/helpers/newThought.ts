@@ -1,13 +1,14 @@
-import { Page } from 'puppeteer'
+import { fetchPage } from './setup'
 import waitForEditable from './waitForEditable'
 
 /** Creates a new thought by hitting Enter and typing text. Waits for renders between each step. */
-const newThought = async (page: Page, value?: string) => {
+const newThought = async (value?: string) => {
+  const page = fetchPage()
   await page.keyboard.press('Enter')
-  await waitForEditable(page, '')
+  await waitForEditable('')
   if (value) {
     await page.keyboard.type(value)
-    await waitForEditable(page, value)
+    await waitForEditable(value)
   }
 }
 

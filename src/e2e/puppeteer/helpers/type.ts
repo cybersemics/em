@@ -1,6 +1,6 @@
-import { Page } from 'puppeteer'
+import { fetchPage } from './setup'
 
 /** Type text on the keyboard. */
-const type = (page: Page, text: string) => page.keyboard.type(text)
+const type = (text: string) => fetchPage().keyboard.type(text)
 
 export default type

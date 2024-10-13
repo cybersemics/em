@@ -1,13 +1,13 @@
-import { Page } from 'puppeteer'
 import Context from '../../../@types/Context'
 import Thought from '../../../@types/Thought'
 import { WindowEm } from '../../../initialize'
+import { fetchPage } from './setup'
 
 /**
  * Wait until given context has a child with given value.
  */
-const waitForContextHasChildWithValue = async (page: Page, context: Context, childValue: string) =>
-  await page.waitForFunction(
+const waitForContextHasChildWithValue = async (context: Context, childValue: string) =>
+  await fetchPage().waitForFunction(
     (context: Context, childValue: string) =>
       (window.em as WindowEm)
         .getAllChildrenAsThoughts(context)
