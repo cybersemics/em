@@ -60,6 +60,7 @@ module.exports = {
       2,
       {
         contexts: ['VariableDeclarator > ArrowFunctionExpression'],
+        enableFixer: false,
         require: {
           ClassDeclaration: true,
           ClassExpression: true,
