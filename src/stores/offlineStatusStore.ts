@@ -2,15 +2,15 @@ import { HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import OfflineStatus from '../@types/OfflineStatus'
 import WebsocketStatus from '../@types/WebsocketStatus'
 import { WEBSOCKET_TIMEOUT } from '../constants'
+import isE2E from '../util/isE2E'
 import reactMinistore from './react-ministore'
 
 /** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). There are a couple places where offlineStatusStore.update is called directly in order to skip preconnecting. See: OfflineStatus type for description of all possible statuses. */
 export const offlineStatusStore = reactMinistore<OfflineStatus>('preconnecting')
 
 /** Define timeouts based on whether we're in e2e tests or not. We're somewhat limited since these run post-build but there might be cleaner ways to do this. */
-const isE2E = !!navigator.webdriver
-const initialOfflineTimeout = isE2E ? 0 : 500
-const offlineTimeout = isE2E ? 0 : WEBSOCKET_TIMEOUT
+const initialOfflineTimeout = isE2E() ? 0 : 500
+const offlineTimeout = isE2E() ? 0 : WEBSOCKET_TIMEOUT
 
 /** Enter a connecting state and then switch to offline after a delay. */
 const startConnecting = () => {
