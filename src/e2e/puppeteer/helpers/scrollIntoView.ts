@@ -9,7 +9,7 @@ interface Options {
 const scrollIntoView = async (selector: string, { behavior = 'smooth', block = 'start' }: Options = {}) => {
   const page = await fetchPage() // Dynamically fetch the current page
   await page.evaluate(
-    (selector, behavior, block) => {
+    (selector: string, behavior: ScrollBehavior, block: ScrollLogicalPosition) => {
       const element = document.querySelector(selector)
       if (element) {
         element.scrollIntoView({ behavior, block })
