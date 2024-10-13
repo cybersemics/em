@@ -364,6 +364,7 @@ export default defineConfig({
           toolbarHelpTextFadeDuration: duration('200ms'),
           triangleToggleTransformDuration: duration('100ms'),
           tutorialStepSlideDuration: duration('400ms'),
+          tutorialStepNavigationDuration: duration('400ms'),
         },
       },
     },
