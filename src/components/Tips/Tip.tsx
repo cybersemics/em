@@ -1,4 +1,5 @@
 import { FC, PropsWithChildren } from 'react'
+import { token } from '../../../styled-system/tokens'
 
 interface TipProps {
   display: boolean
@@ -16,7 +17,7 @@ const Tip: FC<PropsWithChildren<TipProps>> = ({ display, children }, ref) => {
         display: 'flex',
         justifyContent: 'center',
         transform: display ? 'translateY(0)' : 'translateY(100%)',
-        transition: 'transform 200ms ease-in-out, opacity 200ms ease-in-out',
+        transition: `transform ${token('durations.tipTransitionDuration')} ease-in-out, opacity ${token('durations.tipTransitionDuration')} ease-in-out`,
         opacity: display ? 1 : 0,
       }}
       className='z-index-popup'

@@ -357,6 +357,7 @@ export default defineConfig({
           sidebarFadeDuration: duration('200ms'),
           signaturePadFadeDuration: duration('400ms'),
           signaturePadOpacityDuration: duration('150ms'),
+          tipTransitionDuration: duration('200ms'),
           toolbarFadeDuration: duration('600ms'),
           toolbarButtonTransitionDuration: duration('80ms'),
           toolbarButtonSVGOpacityDuration: duration('200ms'),
