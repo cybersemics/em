@@ -1,4 +1,4 @@
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 interface Options {
   timeout?: number
@@ -8,7 +8,7 @@ interface Options {
  * Wait for editable div that contains the given value.
  */
 const waitForEditable = async (value: string, { timeout }: Options = { timeout: 6000 }) =>
-  await fetchPage().waitForFunction(
+  await page.waitForFunction(
     (value: string) => {
       return Array.from(document.querySelectorAll('[data-editable]')).find(element => element.innerHTML === value)
     },

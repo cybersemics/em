@@ -1,5 +1,5 @@
 import { JSHandle } from 'puppeteer'
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 interface Options {
   // Click on the inside edge of the editable
@@ -19,7 +19,6 @@ const click = async (
   nodeHandleOrSelector: JSHandle | string,
   { edge = 'left', offset, x = 0, y = 0 }: Options = {},
 ) => {
-  const page = fetchPage()
   const isMobile = page.viewport()?.isMobile
 
   if (isMobile && (offset || x || y)) {

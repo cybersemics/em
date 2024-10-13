@@ -1,15 +1,13 @@
 import sleep from '../../../util/sleep'
 import press from '../helpers/press'
-import { fetchPage } from '../helpers/setup'
 import type from '../helpers/type'
 import waitForEditable from '../helpers/waitForEditable'
+import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000 })
 
 /** Custom helper for pasting plain text, avoiding the existing `paste` helper that uses `importText` internally. */
 const pastePlainText = async (text: string) => {
-  const page = fetchPage()
-
   // Load text into clipboard
   await page.evaluate(text => {
     navigator.clipboard.write([
@@ -28,8 +26,6 @@ const pastePlainText = async (text: string) => {
 
 /** Custom helper for pasting HTML, avoiding the existing `paste` helper that uses `importText` internally. */
 const pasteHTML = async (html: string) => {
-  const page = fetchPage()
-
   // Load HTML into clipboard
   await page.evaluate(html => {
     navigator.clipboard.write([

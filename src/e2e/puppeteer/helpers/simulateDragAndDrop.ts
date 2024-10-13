@@ -1,5 +1,5 @@
 import { WindowEm } from '../../../initialize'
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 interface Options {
   /** Renders all DropHover components. */
@@ -13,7 +13,7 @@ const em = window.em as WindowEm
 const simulateDragAndDrop = async ({ drag, drop }: Options): Promise<void> => {
   await new Promise(resolve => setTimeout(resolve, 100))
 
-  await fetchPage().evaluate(
+  await page.evaluate(
     (drag, drop) => {
       em.testFlags.simulateDrag = !!drag
       em.testFlags.simulateDrop = !!drop

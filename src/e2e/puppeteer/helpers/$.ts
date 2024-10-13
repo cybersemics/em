@@ -1,6 +1,6 @@
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 /** Performs a querySelector on the document. */
-const $ = (selector: string) => fetchPage().$(selector)
+const $ = (selector: string) => page.$(selector)
 
 export default $

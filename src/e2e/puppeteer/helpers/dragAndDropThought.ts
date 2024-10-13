@@ -1,6 +1,6 @@
 import sleep from '../../../util/sleep'
+import { page } from '../setup'
 import getEditable from './getEditable'
-import { fetchPage } from './setup'
 import showMousePointer from './showMousePointer'
 
 interface DragAndDropOptions {
@@ -22,8 +22,6 @@ const dragAndDropThought = async (
   destValue: string,
   { position, mouseUp, dropUncle }: DragAndDropOptions,
 ) => {
-  const page = fetchPage()
-
   const sourceElement = await getEditable(sourceValue)
   const destElement = await getEditable(destValue)
 

@@ -1,11 +1,10 @@
 import { WindowEm } from '../../../initialize'
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 const em = window.em as WindowEm
 
 /** Wait for the given thought value to exist in the database. */
 const waitForThoughtExistInDb = async (value: string) => {
-  const page = fetchPage()
   await page.evaluate(async value => {
     await new Promise(resolve => {
       const testHelpers = em.testHelpers
