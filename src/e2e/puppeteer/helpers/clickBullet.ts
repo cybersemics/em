@@ -1,11 +1,10 @@
+import { page } from '../setup'
 import getEditable from './getEditable'
-import { fetchPage } from './setup'
 
 /**
  * Click the bullet for the given thought.
  */
 const clickBullet = async (value: string) => {
-  const page = fetchPage()
   const editableNode = await getEditable(value)
 
   if (!editableNode) throw new Error('editable node for the given value not found.')

@@ -1,6 +1,6 @@
 import ModalType from '../../../@types/Modal'
 import { WindowEm } from '../../../initialize'
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 const em = window.em as WindowEm
 
@@ -8,7 +8,7 @@ const em = window.em as WindowEm
 const openModal = async (id: ModalType): Promise<void> => {
   await new Promise(resolve => setTimeout(resolve, 100))
 
-  await fetchPage().evaluate(id => {
+  await page.evaluate(id => {
     em.store.dispatch({ type: 'showModal', id })
   }, id)
 }

@@ -1,6 +1,6 @@
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 /** Type text on the keyboard. */
-const type = (text: string) => fetchPage().keyboard.type(text)
+const type = (text: string) => page.keyboard.type(text)
 
 export default type

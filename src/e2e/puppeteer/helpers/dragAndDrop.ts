@@ -1,9 +1,7 @@
-import { fetchPage } from './setup'
+import { page } from '../setup'
 
 /** Performs Drag and Drop functionality in Puppeteer browser. */
 const dragAndDrop = async (selectorDrag: string, selectorDrop: string) => {
-  const page = fetchPage()
-
   // Get the bounding boxes of the drag and drop targets
   const dragStart = await page.$eval(selectorDrag, el => ({
     x: el.getBoundingClientRect().x + el.getBoundingClientRect().width / 2,
