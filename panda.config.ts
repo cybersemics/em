@@ -363,6 +363,7 @@ export default defineConfig({
           toolbarButtonSVGOpacityDuration: duration('200ms'),
           toolbarHelpTextFadeDuration: duration('200ms'),
           triangleToggleTransformDuration: duration('100ms'),
+          tutorialNavigationButtonDuration: duration('250ms'),
           tutorialStepSlideDuration: duration('400ms'),
           tutorialStepNavigationDuration: duration('400ms'),
         },
