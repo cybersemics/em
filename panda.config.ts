@@ -337,6 +337,7 @@ export default defineConfig({
           commandPaletteFadeDuration: duration('200ms'),
           contextBreadcrumbsFadeDuration: duration('600ms'),
           cursorBreadcrumbsFadeDuration: duration('200ms'),
+          dropEndTransitionDuration: duration('150ms'),
           errorMessageFadeDuration: duration('200ms'),
           favoritesSlidedownDuration: duration('150ms'),
           highlightPulseDuration: duration('500ms'),

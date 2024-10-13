@@ -770,7 +770,7 @@ const LayoutTree = () => {
                             position: 'relative',
                             top: '-0.2em',
                             left: `calc(${cliffDepth - depth}em - ${dropEndMarginLeft}px + ${isTouch ? -1 : 1}px)`,
-                            transition: 'left 0.15s ease-out',
+                            transition: `left ${token('durations.dropEndTransitionDuration')} ease-out`,
                           }}
                         >
                           <DropEnd
