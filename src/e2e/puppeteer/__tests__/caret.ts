@@ -1,23 +1,22 @@
 import { KnownDevices } from 'puppeteer'
-import helpers from '../helpers'
+import click from '../helpers/click'
+import clickBullet from '../helpers/clickBullet'
+import clickThought from '../helpers/clickThought'
+import down from '../helpers/down'
+import emulate from '../helpers/emulate'
+import getEditingText from '../helpers/getEditingText'
+import getSelection from '../helpers/getSelection'
+import paste from '../helpers/paste'
+import press from '../helpers/press'
+import refresh from '../helpers/refresh'
+import waitForEditable from '../helpers/waitForEditable'
+import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
+import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
+import waitUntil from '../helpers/waitUntil'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('all platforms', () => {
-  const {
-    click,
-    clickBullet,
-    clickThought,
-    down,
-    getSelection,
-    paste,
-    press,
-    refresh,
-    waitForEditable,
-    waitUntil,
-    waitForThoughtExistInDb,
-  } = helpers()
-
   // TODO: Why is this failing?
   it.skip('caret should be at the beginning of thought after split on enter', async () => {
     const importText = `
@@ -171,16 +170,9 @@ describe('all platforms', () => {
 })
 
 describe('mobile only', () => {
-  const {
-    click,
-    clickBullet,
-    clickThought,
-    paste,
-    getEditingText,
-    getSelection,
-    waitForEditable,
-    waitForHiddenEditable,
-  } = helpers({ emulatedDevice: KnownDevices['iPhone 11'] })
+  beforeEach(async () => {
+    await emulate(KnownDevices['iPhone 11'])
+  }, 5000)
 
   it('After subcategorizeOne, the caret should be on the new thought', async () => {
     const importText = `

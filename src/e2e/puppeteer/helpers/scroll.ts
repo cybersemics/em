@@ -1,8 +1,8 @@
-import { Page } from 'puppeteer'
+import { fetchPage } from './setup'
 
 /** Scroll to the top of the page. */
-const scroll = async (page: Page, x: number, y: number) => {
-  await page.evaluate(
+const scroll = async (x: number, y: number) => {
+  await fetchPage().evaluate(
     (x: number, y: number) => {
       window.scroll(x, y)
     },

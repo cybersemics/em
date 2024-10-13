@@ -1,6 +1,6 @@
-import { Page } from 'puppeteer'
+import { fetchPage } from './setup'
 
 /** Performs a querySelector on the document. */
-const $ = (page: Page, selector: string) => page.$(selector)
+const $ = (selector: string) => fetchPage().$(selector)
 
 export default $

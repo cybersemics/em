@@ -1,5 +1,10 @@
 import { JSHandle } from 'puppeteer'
-import helpers from '../helpers'
+import $ from '../helpers/$'
+import clickThought from '../helpers/clickThought'
+import getEditable from '../helpers/getEditable'
+import paste from '../helpers/paste'
+import press from '../helpers/press'
+import type from '../helpers/type'
 
 /** Gets the first subthought of an editable. */
 const getFirstSubthought = (editable: JSHandle) =>
@@ -8,8 +13,6 @@ const getFirstSubthought = (editable: JSHandle) =>
     .evaluateHandle(el => el.parentElement?.parentElement?.nextElementSibling?.querySelector(`[data-editable]`))
 
 vi.setConfig({ testTimeout: 20000 })
-
-const { $, clickThought, getEditable, paste, press, type } = helpers()
 
 // TODO getFirstSubthought no longer works after flat rendering of thoughts via LayoutTree
 it.skip('edit context value', async () => {

@@ -1,10 +1,11 @@
-import { ElementHandle, Page } from 'puppeteer'
+import { ElementHandle } from 'puppeteer'
+import { fetchPage } from './setup'
 
 /**
  * Get computed color.
  */
-const getComputedColor = async (page: Page, element: ElementHandle) => {
-  const styleHandle = await page.evaluateHandle(elementHandle => {
+const getComputedColor = async (element: ElementHandle) => {
+  const styleHandle = await fetchPage().evaluateHandle(elementHandle => {
     const cssDeclarationObject = window.getComputedStyle(elementHandle)
     return cssDeclarationObject.color
   }, element)

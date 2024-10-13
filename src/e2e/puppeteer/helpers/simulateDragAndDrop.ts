@@ -1,5 +1,5 @@
-import { Page } from 'puppeteer'
 import { WindowEm } from '../../../initialize'
+import { fetchPage } from './setup'
 
 interface Options {
   /** Renders all DropHover components. */
@@ -10,10 +10,10 @@ interface Options {
 const em = window.em as WindowEm
 
 /** Sets testFlags for simulating drag and drop process. */
-const simulateDragAndDrop = async (page: Page, { drag, drop }: Options): Promise<void> => {
+const simulateDragAndDrop = async ({ drag, drop }: Options): Promise<void> => {
   await new Promise(resolve => setTimeout(resolve, 100))
 
-  await page.evaluate(
+  await fetchPage().evaluate(
     (drag, drop) => {
       em.testFlags.simulateDrag = !!drag
       em.testFlags.simulateDrop = !!drop

@@ -15,6 +15,8 @@ export interface InitPageOptions {
   emulatedDevice?: Device
 }
 
+let currentPage: Page | null = null
+
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
   puppeteerBrowser = global.browser,
@@ -30,7 +32,7 @@ const setup = async ({
   // Grant permissions to read and write to the clipboard, only works with https.
   await context.overridePermissions(url.replace(/:\d+/, ''), ['clipboard-read', 'clipboard-write'])
 
-  const page: Page = await context.newPage()
+  const page = await context.newPage()
 
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
@@ -81,6 +83,18 @@ const setup = async ({
   // add 500ms for hamburger-menu animation to complete
   await sleep(WEBSOCKET_TIMEOUT + 500)
 
+  currentPage = page
+
   return page
 }
+
+/**
+ *
+ */
+export const fetchPage = (): Page => {
+  if (!currentPage) throw new Error('Page is not initialized.')
+
+  return currentPage
+}
+
 export default setup
