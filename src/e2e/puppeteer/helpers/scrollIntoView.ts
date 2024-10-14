@@ -10,9 +10,10 @@ const scrollIntoView = async (selector: string, { behavior = 'smooth', block = '
   await page.evaluate(
     (selector: string, behavior: ScrollBehavior, block: ScrollLogicalPosition) => {
       const element = document.querySelector(selector)
-      if (element) {
-        element.scrollIntoView({ behavior, block })
+      if (!element) {
+        throw new Error(`Element not found for selector: ${selector}`)
       }
+      element.scrollIntoView({ behavior, block })
     },
     selector,
     behavior,
