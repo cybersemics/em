@@ -242,7 +242,6 @@ describe('drop', () => {
       `)
 
     await dragAndDropThought('a', 'd', { position: 'after', mouseUp: true })
-    await sleep(1000)
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
