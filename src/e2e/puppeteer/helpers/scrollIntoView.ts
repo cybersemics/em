@@ -6,7 +6,7 @@ interface Options {
 }
 
 /** Scroll an element into view using its query selector. */
-const scrollIntoView = async (selector: string, { behavior = 'smooth', block = 'start' }: Options = {}) => {
+const scrollIntoView = async (selector: string, { behavior = 'instant', block = 'start' }: Options = {}) => {
   await page.evaluate(
     (selector: string, behavior: ScrollBehavior, block: ScrollLogicalPosition) => {
       const element = document.querySelector(selector)
