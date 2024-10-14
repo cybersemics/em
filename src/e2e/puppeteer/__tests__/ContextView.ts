@@ -34,7 +34,7 @@ it('load buffered ancestors of contexts when context view is activated', async (
   await sleep(100)
 
   await clickThought('m')
-  await scrollIntoView('[data-testid="toolbar-icon"][aria-label="Note"]')
+  await scrollIntoView('[data-testid="toolbar-icon"][aria-label="Context View"]')
 
   await click('[data-testid="toolbar-icon"][aria-label="Context View"]')
 
