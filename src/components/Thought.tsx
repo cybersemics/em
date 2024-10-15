@@ -18,6 +18,7 @@ import testFlags from '../e2e/testFlags'
 import globals from '../globals'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
+import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
 import useHoveringPath from '../hooks/useHoveringPath'
 import useThoughtStyle from '../hooks/useThoughtStyle'
@@ -161,7 +162,7 @@ const ThoughtContainer = ({
         equalPath(cursorParent, path)
   })
 
-  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget } = useDragAndDropThought({
+  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget, isDeepHovering } = useDragAndDropThought({
     path,
     simplePath,
     isVisible,
@@ -169,6 +170,8 @@ const ThoughtContainer = ({
   })
 
   useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
+  useDragLeave({ isDeepHovering })
+
   // check if the cursor is editing a thought directly
   const isEditing = useSelector(state => equalPath(state.cursor, path))
 
