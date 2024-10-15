@@ -958,6 +958,7 @@
   border: 3px solid var(--indigo-border);
   display: flex;
   position: relative;
+  cursor: pointer;
   transition: all 350ms ease-in;
   color: var(--indigo-color);
 }
@@ -983,6 +984,7 @@
   animation-duration: 350ms;
   animation-fill-mode: forwards;
   content: '';
+  cursor: pointer;
   width: 35px;
   height: 35px;
   border: 3px solid var(--gray-border);
