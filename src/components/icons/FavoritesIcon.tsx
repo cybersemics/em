@@ -4,8 +4,8 @@ import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 import { ICON_SCALING_FACTOR } from '../../constants'
 
-/** Favorite icon. */
-const FavoriteIcon = ({ fill, size = 14, style = {}, cssRaw }: IconType) => {
+/** Favorites icon. */
+const FavoritesIcon = ({ fill, size = 14, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
@@ -31,4 +31,4 @@ const FavoriteIcon = ({ fill, size = 14, style = {}, cssRaw }: IconType) => {
   )
 }
 
-export default FavoriteIcon
+export default FavoritesIcon
