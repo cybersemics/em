@@ -133,11 +133,11 @@ const ModalSettings = () => {
         </p>
 
         <div style={{ marginBottom: '2em' }}>
-          <ThemeSwitch />
+          <FontSize />
         </div>
 
         <div style={{ marginBottom: '2em' }}>
-          <FontSize />
+          <ThemeSwitch />
         </div>
 
         <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>
