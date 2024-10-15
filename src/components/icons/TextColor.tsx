@@ -4,7 +4,7 @@ import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 import { ICON_SCALING_FACTOR } from '../../constants'
 
-/** TextColor Icon refactored. */
+/** TextColor Icon. */
 const TextColorIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')

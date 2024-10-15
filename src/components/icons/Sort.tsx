@@ -12,7 +12,7 @@ import head from '../../util/head'
 /** Cursor Sort Direction. */
 const getCursorSortDirection = (state: State) => getSortPreference(state, head(state.cursor || HOME_PATH)).direction
 
-/** Ascending Icon Component refactored. */
+/** Ascending Icon Component. */
 const IconAsc = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
@@ -89,7 +89,7 @@ const IconAsc = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
   )
 }
 
-/** Descending Icon Component refactored. */
+/** Descending Icon Component. */
 const IconDesc = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
