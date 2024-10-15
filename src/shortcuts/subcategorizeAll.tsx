@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { subCategorizeAllActionCreator as subCategorizeAll } from '../actions/subCategorizeAll'
-import SubCategorizeAllIcon from '../components/icons/subCategorizeAllIcon'
+import SubCategorizeAllIcon from '../components/icons/SubCategorizeAllIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const subCategorizeAllShortcut: Shortcut = {

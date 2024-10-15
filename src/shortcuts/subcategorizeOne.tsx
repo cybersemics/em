@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { subCategorizeOneActionCreator as subCategorizeOne } from '../actions/subCategorizeOne'
-import SubCategorizeOneIcon from '../components/icons/subCategorizeOneIcon'
+import SubCategorizeAllIcon from '../components/icons/SubCategorizeAllIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
@@ -10,7 +10,7 @@ const subCategorizeOneShortcut: Shortcut = {
   description: 'Move the current thought into a new, empty thought at the same level.',
   gesture: 'lu',
   keyboard: { key: 'o', meta: true, alt: true },
-  svg: SubCategorizeOneIcon,
+  svg: SubCategorizeAllIcon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => dispatch(subCategorizeOne()),
 }
@@ -21,7 +21,7 @@ export const subCategorizeOneShortcutAlias: Shortcut = {
   label: 'Subcategorize',
   hideFromHelp: true,
   keyboard: { key: ']', meta: true },
-  svg: SubCategorizeOneIcon,
+  svg: SubCategorizeAllIcon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => dispatch(subCategorizeOne()),
 }

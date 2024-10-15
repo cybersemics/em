@@ -5,7 +5,7 @@ import IconType from '../../@types/Icon'
 import { ICON_SCALING_FACTOR } from '../../constants'
 
 /** SubCategorize All icon. */
-const subCategorizeAllIcon = ({ fill = 'black', size = 20, style = {}, cssRaw }: IconType) => {
+const SubCategorizeAllIcon = ({ fill = 'black', size = 20, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
@@ -71,4 +71,4 @@ const subCategorizeAllIcon = ({ fill = 'black', size = 20, style = {}, cssRaw }:
   )
 }
 
-export default subCategorizeAllIcon
+export default SubCategorizeAllIcon

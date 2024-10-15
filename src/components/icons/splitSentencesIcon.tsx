@@ -4,8 +4,8 @@ import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 import { ICON_SCALING_FACTOR } from '../../constants'
 
-/** SplitSentences icon. */
-const splitSentencesIcon = ({ fill = 'black', size = 20, style = {}, cssRaw }: IconType) => {
+/** Split Sentences icon. */
+const SplitSentencesIcon = ({ fill = 'black', size = 20, style = {}, cssRaw }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const strokeColor = style.fill || fill || token('colors.fg')
 
@@ -74,4 +74,4 @@ const splitSentencesIcon = ({ fill = 'black', size = 20, style = {}, cssRaw }: I
   )
 }
 
-export default splitSentencesIcon
+export default SplitSentencesIcon
