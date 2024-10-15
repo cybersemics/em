@@ -895,3 +895,178 @@
 .rotate180 {
   transform: rotate(180deg);
 }
+
+:root {
+  /** sunny side **/
+  --blue-background: #c2e9f6;
+  --blue-border: #108dad;
+  --blue-color: #96dcee;
+  --yellow-background: #fffaa8;
+  --yellow-border: #f5eb71;
+  /** dark side **/
+  --indigo-background: #808fc7;
+  --indigo-border: #808bbc;
+  --indigo-color: #6b7abb;
+  --gray-border: #e8e8ea;
+  --gray-dots: #e8e8ea;
+}
+
+@keyframes reverse {
+  0% {
+    left: 47px;
+    width: 35px;
+  }
+  60% {
+    left: 3px;
+    width: 80px;
+  }
+  100% {
+    left: 3px;
+  }
+}
+
+@keyframes switch {
+  0% {
+    left: 3px;
+  }
+  60% {
+    left: 3px;
+    width: 80px;
+  }
+  100% {
+    left: 47px;
+    width: 35px;
+  }
+}
+
+.toggle--checkbox {
+  display: none;
+}
+
+.container--toggle {
+  place-items: center;
+  position: relative;
+  grid-area: toggle;
+}
+
+/* background */
+.toggle--label {
+  width: 88px;
+  height: 40px;
+  background: var(--indigo-color);
+  border-radius: 100px;
+  border: 3px solid var(--indigo-border);
+  display: flex;
+  position: relative;
+  transition: all 350ms ease-in;
+  color: var(--indigo-color);
+}
+
+.toggle--checkbox:checked + .toggle--label {
+  background: var(--blue-color);
+  color: var(--blue-color);
+  border-color: var(--blue-border);
+}
+
+/* sun and moon */
+.toggle--checkbox:checked + .toggle--label:before {
+  animation-name: reverse;
+  animation-duration: 350ms;
+  animation-fill-mode: forwards;
+  transition: all 360ms ease-in;
+  background: var(--yellow-background);
+  border-color: var(--yellow-border);
+}
+
+.toggle--label:before {
+  animation-name: switch;
+  animation-duration: 350ms;
+  animation-fill-mode: forwards;
+  content: '';
+  width: 35px;
+  height: 35px;
+  border: 3px solid var(--gray-border);
+  position: absolute;
+  border-radius: 40px;
+  background: white;
+}
+
+/* moon dimples */
+.toggle--label:after {
+  transition-delay: 0ms;
+  transition: all 250ms ease-in;
+  position: absolute;
+  content: '';
+  box-shadow:
+    var(--gray-dots) -14px 0 0 1px,
+    var(--gray-dots) -22px 12px 0 -1px;
+  left: 80px;
+  top: 10px;
+  width: 6px;
+  height: 6px;
+  background: transparent;
+  border-radius: 50%;
+  opacity: 1;
+}
+
+.toggle--checkbox:checked + .toggle--label:after {
+  transition-delay: 50ms;
+  opacity: 0;
+}
+
+/* clouds */
+.toggle--checkbox:checked + .toggle--label .toggle--label-background {
+  width: 5px;
+  left: 65px;
+  top: 22px;
+}
+
+.toggle--checkbox:checked + .toggle--label .toggle--label-background:before {
+  top: -4px;
+  left: -5px;
+  width: 20px;
+  height: 5px;
+}
+
+.toggle--checkbox:checked + .toggle--label .toggle--label-background:after {
+  top: 3px;
+  width: 20px;
+  height: 5px;
+  left: -10px;
+}
+
+/* stars */
+.toggle--label-background {
+  border-radius: 5px;
+  position: relative;
+  background: white;
+  left: 35px;
+  width: 6px;
+  transition: all 150ms ease-in;
+  top: 20px;
+  height: 4px;
+}
+
+.toggle--label-background:before {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  top: -15px;
+  border-radius: 5px;
+  background: white;
+  left: -20px;
+  transition: all 150ms ease-in;
+}
+
+.toggle--label-background:after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  left: -20px;
+  top: 10px;
+  border-radius: 5px;
+  background: white;
+  transition: all 150ms ease-in;
+}
