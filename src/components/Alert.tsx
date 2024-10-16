@@ -41,7 +41,7 @@ const Alert: FC = () => {
           dispatch(undo())
         })}
       >
-        <UndoIcon fill='black' className={css({ position: 'relative', top: '0.25em', right: '0.25em' })} />
+        <UndoIcon fill='black' cssRaw={css.raw({ position: 'relative', top: '0.25em', right: '0.25em' })} />
         Undo
       </a>
       <a
@@ -51,7 +51,7 @@ const Alert: FC = () => {
         })}
       >
         Redo
-        <RedoIcon fill='black' className={css({ position: 'relative', top: '0.25em', left: '0.25em' })} />
+        <RedoIcon fill='black' cssRaw={css.raw({ position: 'relative', top: '0.25em', left: '0.25em' })} />
       </a>
     </div>
   ) : null

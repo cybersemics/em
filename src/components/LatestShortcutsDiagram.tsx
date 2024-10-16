@@ -1,7 +1,7 @@
-import classNames from 'classnames'
 import { FC, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { css } from '../../styled-system/css'
 import GesturePath from '../@types/GesturePath'
 import GestureDiagram from './GestureDiagram'
 
@@ -30,15 +30,26 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
       <CSSTransition
         nodeRef={latestShortcutsElRef}
         in={latestShortcuts.length > 0}
-        classNames={'latest-shortcuts-transition'}
+        classNames={{
+          enter: css({ opacity: 0 }),
+          enterActive: css({ opacity: 1, transition: 'opacity 400ms' }),
+          exit: css({ opacity: 1 }),
+          exitActive: css({ opacity: 0, transition: 'opacity 400ms' }),
+        }}
         timeout={400}
         unmountOnExit
       >
         <div
           ref={latestShortcutsElRef}
-          className={classNames({
-            'latest-shortcuts': true,
-            [position]: true,
+          className={css({
+            position: 'absolute',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            zIndex: 'latestShortcuts',
+            pointerEvents: 'none',
+            ...(position === 'middle' && { top: '30%' }),
+            ...(position === 'bottom' && { bottom: '20%' }),
           })}
         >
           {shortcutsList.map((shortcut, index) => {

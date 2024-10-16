@@ -9,7 +9,7 @@ import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tuto
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
-import { ActionButton } from './../ActionButton'
+import ActionButton from './../ActionButton'
 import ShortcutTable from './../ShortcutTable'
 import CommandLibraryIcon from './../icons/CommandLibraryIcon'
 import MetaIcon from './../icons/MetaIcon'
@@ -79,7 +79,7 @@ const Tutorials = () => {
   const { subtitle } = modalText()
   const modalClasses = modal({ stack: true })
   return (
-    <section className='popup-section' id='tutorials'>
+    <section className={css({ marginBottom: '50px' })} id='tutorials'>
       <h2 className={subtitle}>Tutorials</h2>
 
       <div className={modalClasses.actions} style={{ alignItems: 'flex-start' }}>

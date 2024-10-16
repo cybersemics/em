@@ -68,6 +68,18 @@ export const isThought = (): boolean => {
   return isEditable(focusNode) || isEditable(focusNode.parentNode)
 }
 
+/** Returns true if the selection is on a thought. */
+export const isOnThought = (): boolean => {
+  let focusNode = window.getSelection()?.focusNode
+  if (!focusNode) return false
+  while ((focusNode as HTMLElement)?.tagName !== 'DIV') {
+    if (isEditable(focusNode)) return true
+    focusNode = focusNode?.parentNode
+  }
+  // check focusNode if it is on the TEXT_NODE or the ELEMENT_NODE
+  return isEditable(focusNode)
+}
+
 /** Returns true if the selection is  on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
 export const isOnFirstLine = (): boolean => {
   const selection = window.getSelection()
@@ -112,7 +124,7 @@ export const isOnLastLine = (): boolean => {
   if (!baseNodeParentEl) return true
 
   // baseNodeParentEl is the thought for plain text, but formatted text requires traversing up
-  const thought = ((baseNodeParentEl as HTMLElement).closest?.('.editable') as HTMLElement) || baseNodeParentEl
+  const thought = ((baseNodeParentEl as HTMLElement).closest?.('[data-editable]') as HTMLElement) || baseNodeParentEl
   const { y: baseNodeY, height: baseNodeHeight } = thought.getClientRects()[0]
   const [paddingTop, , paddingBottom] = getElementPaddings(thought)
 

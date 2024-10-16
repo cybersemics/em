@@ -1,13 +1,14 @@
 import { FC } from 'react'
+import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
 
 /** Clipboard icon. */
-const CopyClipboard: FC<Icon> = ({ fill, size = 20, style }) => {
+const CopyClipboard: FC<Icon> = ({ cssRaw, fill, size = 20, style }) => {
   return (
     <svg
-      className={icon()}
+      className={cx(icon(), css(cssRaw))}
       x='0px'
       y='0px'
       viewBox='0 0 15 18'

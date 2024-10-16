@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 /** Re-export all reducers for app.ts. */
 
 export { default as addAllMulticursor } from './addAllMulticursor'
@@ -6,6 +7,7 @@ export { default as addMulticursor } from './addMulticursor'
 export { default as alert } from './alert'
 export { default as archiveThought } from './archiveThought'
 export { default as authenticate } from './authenticate'
+export { default as bulletColor } from './bulletColor'
 export { default as bumpThoughtDown } from './bumpThoughtDown'
 export { default as clear } from './clear'
 export { default as clearExpandDown } from './clearExpandDown'
@@ -78,7 +80,6 @@ export { default as status } from './status'
 export { default as subCategorizeAll } from './subCategorizeAll'
 export { default as subCategorizeOne } from './subCategorizeOne'
 export { default as subcategorizeMulticursor } from './subcategorizeMulticursor'
-export { default as textColor } from './textColor'
 export { default as showTip } from './showTip'
 export { default as swapNote } from './swapNote'
 export { default as swapParent } from './swapParent'

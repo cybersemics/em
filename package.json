@@ -1,6 +1,6 @@
 {
   "name": "em",
-  "version": "300.30.16",
+  "version": "300.30.17",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -104,7 +104,7 @@
     "moize": "^6.1.6",
     "murmurhash3js": "^3.0.1",
     "nanoid": "^5.0.7",
-    "openai": "^4.56.0",
+    "openai": "^4.67.1",
     "page-lifecycle": "git+https://github.com/magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
     "qrcode.react": "^3.1.0",
@@ -215,7 +215,7 @@
     "typescript": "5.4.5",
     "vite": "^5.4.7",
     "vite-plugin-checker": "^0.7.2",
-    "vite-plugin-pwa": "^0.20.2",
+    "vite-plugin-pwa": "^0.20.5",
     "vitest": "^2.0.5",
     "webdriverio": "^7.36.0"
   },

@@ -11,6 +11,8 @@ const commandStateStore = reactMinistore<CommandState>({
   italic: false,
   underline: false,
   strikethrough: false,
+  foreColor: undefined,
+  backColor: undefined,
 })
 
 /** Resets the command state to false. */
@@ -20,6 +22,8 @@ export const resetCommandState = () => {
     italic: false,
     underline: false,
     strikethrough: false,
+    foreColor: undefined,
+    backColor: undefined,
   })
 }
 
@@ -36,6 +40,8 @@ export const updateCommandState = () => {
           italic: document.queryCommandState('italic'),
           underline: document.queryCommandState('underline'),
           strikethrough: document.queryCommandState('strikethrough'),
+          foreColor: document.queryCommandValue('foreColor'),
+          backColor: document.queryCommandValue('backColor'),
         }
       : getCommandState(pathToThought(state, state.cursor).value)
   commandStateStore.update(action)

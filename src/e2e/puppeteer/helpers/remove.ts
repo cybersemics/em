@@ -1,7 +1,7 @@
-import { Page } from 'puppeteer'
+import { page } from '../setup'
 
 /** Removes the first Node that matches the selector from the DOM. NOOP if the selector is empty. */
-const remove = async (page: Page, selector: string) => {
+const remove = async (selector: string) => {
   return page.evaluate((selector: string) => document.querySelector(selector)?.remove(), selector)
 }
 

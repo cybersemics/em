@@ -1,19 +1,15 @@
+/* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
 import { Browser, ConsoleMessage, Device, Page } from 'puppeteer'
-import { WEBSOCKET_TIMEOUT } from '../../../constants'
-import sleep from '../../../util/sleep'
+import { WEBSOCKET_TIMEOUT } from '../../constants'
+import sleep from '../../util/sleep'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
   const browser: Browser
 }
 
-export interface InitPageOptions {
-  puppeteerBrowser?: Browser
-  url?: string
-  skipTutorial?: boolean
-  emulatedDevice?: Device
-}
+export let page: Page
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
@@ -24,13 +20,18 @@ const setup = async ({
   // url = 'https://google.com',
   emulatedDevice,
   skipTutorial = true,
-}: InitPageOptions = {}): Promise<Page> => {
+}: {
+  puppeteerBrowser?: Browser
+  url?: string
+  skipTutorial?: boolean
+  emulatedDevice?: Device
+} = {}) => {
   const context = await puppeteerBrowser.createBrowserContext()
 
   // Grant permissions to read and write to the clipboard, only works with https.
   await context.overridePermissions(url.replace(/:\d+/, ''), ['clipboard-read', 'clipboard-write'])
 
-  const page: Page = await context.newPage()
+  page = await context.newPage()
 
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
@@ -80,7 +81,14 @@ const setup = async ({
   // wait for YJS to give up connecting to WebsocketProvider
   // add 500ms for hamburger-menu animation to complete
   await sleep(WEBSOCKET_TIMEOUT + 500)
-
-  return page
 }
-export default setup
+
+beforeEach(setup, 60000)
+
+afterEach(async () => {
+  if (page) {
+    await page.close().catch(() => {
+      // Ignore errors when closing the page.
+    })
+  }
+})

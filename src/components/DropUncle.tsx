@@ -1,6 +1,7 @@
-import classNames from 'classnames'
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { css, cx } from '../../styled-system/css'
+import { dropEnd, dropHover } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -40,33 +41,33 @@ const DropUncle = ({
 
   return (
     <span
-      className={classNames({
-        'drop-end': true,
-      })}
+      className={cx(
+        dropEnd(),
+        css({
+          backgroundColor: testFlags.simulateDrop ? '#52305f' : undefined, // eggplant
+          opacity: 0.9,
+        }),
+      )}
+      style={{ height: `${1.9 + dropTargetHeight}em` }}
       ref={dropTarget}
-      style={{
-        backgroundColor: testFlags.simulateDrop ? '#52305f' : undefined, // eggplant
-        height: `${1.9 + dropTargetHeight}em`,
-        opacity: 0.9,
-      }}
     >
       {testFlags.simulateDrop && (
         <span
-          style={{
+          className={css({
             paddingLeft: 5,
             position: 'absolute',
             // make sure label does not interfere with drop target hovering
             pointerEvents: 'none',
             left: 0,
             color: '#ff7bc3' /* mid pink */,
-          }}
+          })}
         >
           {strip(value)}
           {isHovering ? '*' : ''}
         </span>
       )}
       {(testFlags.simulateDrag || isHovering) && (
-        <span className='drop-hover' style={{ backgroundColor: dropHoverColor }} />
+        <span className={dropHover({ insideDropEnd: true })} style={{ backgroundColor: dropHoverColor }} />
       )}
     </span>
   )

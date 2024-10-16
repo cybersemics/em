@@ -1,3 +1,5 @@
+import { css, cx } from '../../styled-system/css'
+import { icon } from '../../styled-system/recipes'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
@@ -9,10 +11,10 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
-const Icon = ({ size = 20 }: IconType) => (
+const Icon = ({ size = 20, cssRaw }: IconType) => (
   <svg
     version='1.1'
-    className='icon'
+    className={cx(icon(), css(cssRaw))}
     xmlns='http://www.w3.org/2000/svg'
     width={size}
     height={size}

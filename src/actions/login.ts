@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { statusActionCreator as status } from '../actions/status'

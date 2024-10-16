@@ -1,5 +1,7 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { css, cx } from '../../styled-system/css'
+import { dropHover } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
@@ -11,10 +13,10 @@ import calculateAutofocus from '../selectors/calculateAutofocus'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
-import themeColors from '../selectors/themeColors'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 
 /** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts. */
@@ -76,7 +78,6 @@ const DropHoverIfVisible = ({
 /** Renders a drop-hover element unconditionally. */
 const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
   const dropHoverColor = useDropHoverColor(simplePath.length)
-  const highlight2 = useSelector(state => themeColors(state)?.highlight2)
 
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
@@ -88,19 +89,28 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
     const autofocusParent = calculateAutofocus(state, parent)
     return autofocus === 'dim' && autofocusParent === 'hide'
   })
+  const thoughtId = head(simplePath)
+  const insideDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
   return (
     <span
-      className='drop-hover'
-      style={{
-        display: 'inline',
-        backgroundColor: animateHover ? highlight2 : dropHoverColor,
-        width: isTableCol1 ? '50vw' : undefined,
-        marginLeft: isTableCol1 ? 'calc(0.9em - 12px)' : undefined,
-        animation: animateHover
-          ? `pulse-light ${token('durations.hoverPulseDuration')} linear infinite alternate`
-          : undefined,
-      }}
+      className={cx(
+        dropHover({ insideDivider }),
+        css({
+          /* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
+          /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
+          marginLeft: isTableCol1 ? 'calc(0.9em - 12px)' : 'calc(-0.4em - 12px)',
+          marginTop: '-0.2em',
+          _mobile: {
+            /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
+            marginLeft: 'calc(-0.4em - 14px)',
+          },
+          display: 'inline',
+          width: isTableCol1 ? '50vw' : undefined,
+          animation: animateHover ? `pulse-light {durations.hoverPulseDuration} linear infinite alternate` : undefined,
+        }),
+      )}
+      style={{ backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColor }}
     />
   )
 }

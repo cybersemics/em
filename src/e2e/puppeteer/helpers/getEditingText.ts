@@ -1,11 +1,11 @@
-import { Page } from 'puppeteer'
+import { page } from '../setup'
 
 /**
  * Get the thought value that cursor on.
  */
-const getEditingText = (page: Page) =>
+const getEditingText = () =>
   page.evaluate(() => {
-    return document.querySelector('.editing .editable')?.innerHTML
+    return document.querySelector('[data-editing=true] [data-editable]')?.innerHTML
   })
 
 export default getEditingText

@@ -1,20 +1,34 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import anchorButtonRecipe from './src/recipes/anchorButton'
+import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
+import childRecipe from './src/recipes/child'
+import dropEndRecipe from './src/recipes/dropEnd'
+import dropHoverRecipe from './src/recipes/dropHover'
 import editableRecipe from './src/recipes/editable'
 import extendTapRecipe from './src/recipes/extendTap'
 import iconRecipe from './src/recipes/icon'
+import invalidOptionRecipe from './src/recipes/invalidOption'
 import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
+import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
 import tutorialBulletRecipe from './src/recipes/tutorialBullet'
 import upperRightRecipe from './src/recipes/upperRight'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
+
+/** Returns duration values with a zero duration for _test. */
+const duration = (str: string) => ({
+  value: {
+    base: str,
+    _test: '0ms',
+  },
+})
 
 const keyframes = defineKeyframes({
   fademostlyin: {
@@ -84,13 +98,11 @@ const globalCss = defineGlobalStyles({
     '--z-index-gesture-trace': '50',
     '--z-index-command-palette': '45',
     '--z-index-modal': '40',
-    '--z-index-toolbar-container': '20',
     '--z-index-toolbar-overlay': '15',
     '--z-index-toolbar-arrow': '15',
     '--z-index-toolbar': '10',
     '--z-index-navbar': '10',
     '--z-index-latest-shortcuts': '10',
-    '--z-index-drop-empty': '6',
     '--z-index-subthoughts-drop-end': '5',
     '--z-index-tutorial': '3',
     '--z-index-scroll-zone': '2',
@@ -275,15 +287,21 @@ export default defineConfig({
       },
       recipes: {
         icon: iconRecipe,
+        child: childRecipe,
         anchorButton: anchorButtonRecipe,
         button: buttonRecipe,
+        bullet: bulletRecipe,
         link: linkRecipe,
         extendTap: extendTapRecipe,
         thought: thoughtRecipe,
         editable: editableRecipe,
+        textNote: textNoteRecipe,
         multiline: multilineRecipe,
         tutorialBullet: tutorialBulletRecipe,
         upperRight: upperRightRecipe,
+        dropHover: dropHoverRecipe,
+        dropEnd: dropEndRecipe,
+        invalidOption: invalidOptionRecipe,
       },
       slotRecipes: {
         modal: modalRecipe,
@@ -304,34 +322,17 @@ export default defineConfig({
               _dark: 'rgba(255, 255, 255, 0.5)',
             },
           },
+          invalidOption: {
+            value: 'tomato !important',
+          },
         },
         durations: {
-          highlightPulseDuration: {
-            value: {
-              base: '500ms',
-              _test: '0s',
-            },
-          },
-          hoverPulseDuration: {
-            value: {
-              base: '300ms',
-              _test: '0s',
-            },
-          },
+          highlightPulseDuration: duration('500ms'),
+          hoverPulseDuration: duration('300ms'),
           /** The animation duration for the slower opacity transition and horizontal shift of the LayoutTree as the depth of the cursor changes. */
-          layoutSlowShiftDuration: {
-            value: {
-              base: '750ms',
-              _test: '0s',
-            },
-          },
+          layoutSlowShiftDuration: duration('750ms'),
           /** The animation duration of a node in the LayoutTree component. */
-          layoutNodeAnimationDuration: {
-            value: {
-              base: '150ms',
-              _test: '0s',
-            },
-          },
+          layoutNodeAnimationDuration: duration('150ms'),
         },
       },
     },

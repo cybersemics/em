@@ -6,7 +6,7 @@ import { alertActionCreator as alert } from '../../actions/alert'
 import { loginActionCreator as login } from '../../actions/login'
 import fastClick from '../../util/fastClick'
 import storage from '../../util/storage'
-import { ActionButton } from './../ActionButton'
+import ActionButton from './../ActionButton'
 import ModalComponent from './ModalComponent'
 
 const errorsIndex = {

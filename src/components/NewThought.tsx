@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { anchorButton } from '../../styled-system/recipes'
+import { anchorButton, bullet, child, thought } from '../../styled-system/recipes'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
@@ -74,10 +74,10 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
   }, [dispatch, distance, path, value])
 
   return show ? (
-    <ul style={{ marginTop: 0 }} className={'children-new'}>
-      <li className='child leaf'>
-        {type === 'bullet' ? <span className='bullet' /> : null}
-        <div className='thought'>
+    <ul className={css({ transition: 'all 0.75s ease-out', marginTop: 0 })}>
+      <li className={child()}>
+        {type === 'bullet' ? <span className={bullet()} /> : null}
+        <div className={thought()}>
           <a
             className={
               type === 'bullet'
@@ -92,11 +92,10 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
                     anchorButton({
                       variableWidth: true,
                     }),
+                    /* TODO: Fix the markup rather than overriding the margin; */
+                    css({ margin: '10px 0 15px -25px' }),
                   )
             }
-            // PandaCSS cannot statically generate styles in css({...}) here due to the condition. Currently only type === 'button' is being used.
-            /* TODO: Fix the markup rather than overriding the margin; */
-            style={type === 'button' ? { margin: '10px 0 15px -25px' } : undefined}
             {...fastClick(onClick)}
           >
             {label || <>Add a {showContexts ? 'context' : 'thought'}</>}

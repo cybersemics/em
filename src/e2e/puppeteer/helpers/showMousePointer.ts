@@ -1,7 +1,7 @@
-import { Page } from 'puppeteer'
+import { page } from '../setup'
 
 /** Renders a simulated mouse pointer that tracks the actual mouse movements. */
-async function showMousePointer(page: Page) {
+async function showMousePointer() {
   await page.evaluate(() => {
     const pointer = document.createElement('puppeteer-mouse-pointer')
     pointer.innerHTML = `

@@ -1,8 +1,9 @@
+import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 
 /** Strikethrough icon. */
-const StrikethroughIcon = ({ style, size = 20 }: Icon) => {
+const StrikethroughIcon = ({ style, size = 20, cssRaw }: Icon) => {
   return (
     <svg
       xmlns='http://www.w3.org/2000/svg'
@@ -10,7 +11,7 @@ const StrikethroughIcon = ({ style, size = 20 }: Icon) => {
       x='0'
       y='0'
       viewBox='-50 0 700 500'
-      className={icon()}
+      className={cx(icon(), css(cssRaw))}
       width={size}
       height={size}
       style={{ ...style }}

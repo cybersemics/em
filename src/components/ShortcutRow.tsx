@@ -12,14 +12,7 @@ import { noop } from '../constants'
 import { formatKeyboardShortcut } from '../shortcuts'
 import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
-
-interface ShortcutRowProps {
-  customize?: boolean
-  indexInToolbar?: number | null
-  onSelect?: (shortcut: Shortcut | null) => void
-  selected?: boolean
-  shortcut: Shortcut | null
-}
+import HighlightedText from './HighlightedText'
 
 /** Converts the integer into an ordinal, e.g. 1st, 2nd, 3rd, 4th, etc. */
 const ordinal = (n: number) => {
@@ -34,7 +27,22 @@ const ordinal = (n: number) => {
 }
 
 /** Renders all of a shortcut's details as a table row. */
-const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }: ShortcutRowProps) => {
+const ShortcutRow = ({
+  customize,
+  onSelect,
+  selected,
+  shortcut,
+  indexInToolbar,
+  search,
+}: {
+  customize?: boolean
+  indexInToolbar?: number | null
+  onSelect?: (shortcut: Shortcut | null) => void
+  selected?: boolean
+  shortcut: Shortcut | null
+  /** Search text that will be highlighted within the matched shortcut title. */
+  search?: string
+}) => {
   const [{ isDragging }, dragSource] = useDrag({
     type: DragAndDropType.ToolbarButton,
     item: (): DragToolbarItem => {
@@ -115,7 +123,14 @@ const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }
               {indexInToolbar}.{' '}
             </span>
           )}
-          <b>{shortcut.label}</b>
+
+          {search && search.length > 0 ? (
+            <b>
+              <HighlightedText value={shortcut.label} match={search} />
+            </b>
+          ) : (
+            <b>{shortcut.label}</b>
+          )}
           <p>{description}</p>
         </th>
         {/* center gesture diagrams on mobile */}
