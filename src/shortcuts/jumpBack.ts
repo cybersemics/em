@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { jumpActionCreator as jump } from '../actions/jump'
-import SettingsIcon from '../components/icons/SettingsIcon'
+import JumpBackIcon from '../components/icons/JumpBackIcon'
 
 const jumpBackShortcut: Shortcut = {
   id: 'jumpBack',
@@ -8,8 +8,7 @@ const jumpBackShortcut: Shortcut = {
   description: 'Move the cursor to the last thought that was edited.',
   keyboard: { key: 'j', meta: true },
   gesture: 'lul',
-  // TODO: Create unique icon
-  svg: SettingsIcon,
+  svg: JumpBackIcon,
   exec: (dispatch, getState) => {
     dispatch(jump(-1))
   },

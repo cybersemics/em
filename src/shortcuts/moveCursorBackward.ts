@@ -2,7 +2,7 @@ import { Key } from 'ts-key-enum'
 import Shortcut from '../@types/Shortcut'
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
 import { outdentActionCreator as outdent } from '../actions/outdent'
-import SettingsIcon from '../components/icons/SettingsIcon'
+import MoveCursorBackwardIcon from '../components/icons/MoveCursorBackwardIcon'
 import attributeEquals from '../selectors/attributeEquals'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -15,8 +15,7 @@ const moveCursorBackward: Shortcut = {
   label: 'Move Cursor Backward',
   description: 'Move the current thought to the next sibling of its context or to previous column in table view.',
   keyboard: { key: Key.Tab, shift: true },
-  // TODO: Create unique icon
-  svg: SettingsIcon,
+  svg: MoveCursorBackwardIcon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()

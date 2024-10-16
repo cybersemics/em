@@ -1,7 +1,7 @@
 import Shortcut from '../@types/Shortcut'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { isTouch } from '../browser'
-import Icon from '../components/icons/HelpIcon'
+import HelpIcon from '../components/icons/HelpIcon'
 import scrollTo from '../device/scrollTo'
 
 const openHelpShortcut: Shortcut = {
@@ -11,7 +11,7 @@ const openHelpShortcut: Shortcut = {
     isTouch ? 'gestures' : 'keyboard shortcuts'
   }.`,
   keyboard: { key: '/', meta: true },
-  svg: Icon,
+  svg: HelpIcon,
   exec: dispatch => {
     dispatch(showModal({ id: 'help' }))
     scrollTo('top')

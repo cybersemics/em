@@ -1,23 +1,29 @@
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
-import Icon from '../../@types/Icon'
+import { token } from '../../../styled-system/tokens'
+import IconType from '../../@types/Icon'
+import { ICON_SCALING_FACTOR } from '../../constants'
 
-/** New subthought icon. */
-const NewSubthoughtIcon = ({ style, size, cssRaw }: Icon) => {
+/** New Subthought icon. */
+const NewSubthoughtIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
+  const newSize = size * ICON_SCALING_FACTOR
+  const strokeColor = style.fill || fill || token('colors.fg')
+  const fillColor = style.fill || fill || token('colors.fg')
+
   return (
     <svg
-      xmlns='http://www.w3.org/2000/svg'
-      version='1.1'
-      x='0'
-      y='0'
-      viewBox='0 0 86.16 61.01'
       className={cx(icon(), css(cssRaw))}
-      width={size}
-      height={size}
-      style={{ ...style }}
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 24 24'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+      fill='none'
     >
-      <path d='m55.66,0c-16.82,0-30.5,13.68-30.5,30.5s13.68,30.5,30.5,30.5,30.5-13.68,30.5-30.5S72.48,0,55.66,0Zm0,58.1c-15.22,0-27.6-12.38-27.6-27.6S40.44,2.91,55.66,2.91s27.6,12.38,27.6,27.6-12.38,27.6-27.6,27.6Zm16.58-27.6c0,.8-.65,1.45-1.45,1.45h-13.68v13.68c0,.8-.65,1.45-1.45,1.45s-1.45-.65-1.45-1.45v-13.68h-13.68c-.8,0-1.45-.65-1.45-1.45s.65-1.45,1.45-1.45h13.68v-13.68c0-.8.65-1.45,1.45-1.45s1.45.65,1.45,1.45v13.68h13.68c.8,0,1.45.65,1.45,1.45Z' />
-      <path d='m23.74,30.58s0,0,0,0c0-.19-.04-.38-.11-.55,0,0,0-.02,0-.02-.08-.19-.19-.35-.33-.49l-6.02-6.02c-.59-.59-1.54-.59-2.12,0-.59.59-.59,1.54,0,2.12l3.46,3.46h-7.85v-15.92c0-.83-.67-1.5-1.5-1.5H1.5c-.83,0-1.5.67-1.5,1.5s.67,1.5,1.5,1.5h6.27v15.92c0,.83.67,1.5,1.5,1.5h9.35l-3.46,3.46c-.59.59-.59,1.54,0,2.12.29.29.68.44,1.06.44s.77-.15,1.06-.44l6.02-6.02c.14-.14.25-.31.33-.49,0,0,0-.02,0-.02.07-.17.11-.35.11-.55,0,0,0,0,0,0h0Z' />
+      <rect width='24' height='24' fill='none' />
+      <line x1='17.3' y1='7.91' x2='7.2' y2='7.91' stroke={strokeColor} strokeLinejoin='round' fill='none' />
+      <circle cx='2.55' cy='7.91' r='1.25' fill={fillColor} />
+      <line x1='22.77' y1='15.35' x2='14.66' y2='15.35' stroke={strokeColor} strokeLinejoin='round' fill='none' />
+      <line x1='9.2' y1='13.35' x2='9.2' y2='17.35' stroke={strokeColor} strokeLinecap='round' fill='none' />
+      <line x1='7.2' y1='15.35' x2='11.2' y2='15.35' stroke={strokeColor} strokeLinecap='round' fill='none' />
     </svg>
   )
 }

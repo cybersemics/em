@@ -20,7 +20,7 @@ import head from '../util/head'
 import nonNull from '../util/nonNull'
 import Checkbox from './Checkbox'
 import ThoughtLink from './ThoughtLink'
-import StarIcon from './icons/StarIcon'
+import FavoritesIcon from './icons/FavoritesIcon'
 
 /**
  * Drag and Drop Favorites component.
@@ -196,7 +196,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
         ) : (
           <div style={{ marginTop: '1em', maxWidth: 450 }}>
             To add a thought to your favorites list, set the cursor on a thought and tap{' '}
-            <StarIcon style={{ verticalAlign: 'text-bottom' }} /> in the toolbar.
+            <FavoritesIcon style={{ verticalAlign: 'text-bottom' }} /> in the toolbar.
           </div>
         )}
         <DropEnd disableDragAndDrop={disableDragAndDrop} />

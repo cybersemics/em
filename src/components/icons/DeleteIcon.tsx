@@ -1,24 +1,42 @@
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import Icon from '../../@types/Icon'
+import IconType from '../../@types/Icon'
+import { ICON_SCALING_FACTOR } from '../../constants'
 
-/** A delete icon. */
-const DeleteIcon = ({ fill, size = 18, style, cssRaw }: Icon) => {
+/** Delete icon. */
+const DeleteIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
+  const newSize = size * ICON_SCALING_FACTOR
+  const strokeColor = style.fill || fill || token('colors.fg')
+
   return (
     <svg
       className={cx(icon(), css(cssRaw))}
-      width={size}
-      height={size}
-      fill={fill || token('colors.fg')}
-      viewBox='50 0 600 600'
-      style={style}
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 24 24'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+      fill='none'
     >
-      <g>
-        <path d='m260.91 178.18h25.453v280h-25.453z' />
-        <path d='m413.64 178.18h25.453v280h-25.453z' />
-        <path d='m579.09 89.09h-114.55l0.003906-38.18c0-20.363-17.816-38.184-38.184-38.184h-152.73c-20.363 0-38.184 17.82-38.184 38.184v38.184l-114.54-0.003906v25.453h38.184l22.91 397.09c0 20.363 17.816 35.637 38.184 35.637h257.09c20.363 0 38.184-15.273 38.184-35.637l22.91-397.09 40.719 0.003906zm-318.18-38.18c0-7.6367 5.0898-12.727 12.727-12.727h152.73c7.6367 0 12.727 5.0898 12.727 12.727v38.184h-178.18zm231.64 458.18c0 7.6367-5.0898 12.727-12.727 12.727h-259.64c-7.6367 0-12.727-5.0898-12.727-12.727l-22.91-394.54h328.36z' />
-        <path d='m337.27 178.18h25.453v280h-25.453z' />
+      <g id='Layer_2' data-name='Layer 2'>
+        <g id='Layer_3' data-name='Layer 3'>
+          <g id='_31-permanently-delete' data-name='31-permanently-delete'>
+            <rect width='24' height='24' fill='none' />
+            <path
+              d='M7.68,22.21A9.29,9.29,0,0,1,4.6,7.93h0c-.43,2-.35,5.49,2.25,6A10.49,10.49,0,0,1,13.19,3.67c-1.94,4.88,2.82,7.24,3,10.7,2.33-.18,4.06-2,3.51-4.29a8,8,0,0,1-4,12.22Z'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              fill='none'
+            />
+            <path
+              d='M13,22.27c1.21-1.59.16-4.5-1.57-5-1.54.38-2.94,3.44-1.63,4.95'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              fill='none'
+            />
+          </g>
+        </g>
       </g>
     </svg>
   )

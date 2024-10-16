@@ -1,35 +1,42 @@
-import React, { FC } from 'react'
-import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { icon } from '../../styled-system/recipes'
-import { SystemStyleObject } from '../../styled-system/types'
-import themeColors from '../selectors/themeColors'
+import { token } from '../../styled-system/tokens'
+import IconType from '../@types/Icon'
+import { ICON_SCALING_FACTOR } from '../constants'
 
-interface SearchIconProps {
-  fill?: string
-  size?: number
-  style?: React.CSSProperties
-  className?: string
-  cssRaw?: SystemStyleObject
-}
+/** Search icon. */
+const SearchIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
+  const newSize = size * ICON_SCALING_FACTOR
+  const strokeColor = style.fill || fill || token('colors.fg')
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const SearchIcon: FC<SearchIconProps> = ({ cssRaw, fill, size = 20, style }) => {
-  const colors = useSelector(themeColors)
   return (
     <svg
-      version='1.1'
       className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
-      x='0px'
-      y='0px'
-      width={size}
-      height={size}
-      fill={fill || colors.fg}
-      style={style}
-      viewBox='0 0 50 50'
+      viewBox='0 0 24 24'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+      fill='none'
     >
-      <path d='M 21 3 C 11.601563 3 4 10.601563 4 20 C 4 29.398438 11.601563 37 21 37 C 24.355469 37 27.460938 36.015625 30.09375 34.34375 L 42.375 46.625 L 46.625 42.375 L 34.5 30.28125 C 36.679688 27.421875 38 23.878906 38 20 C 38 10.601563 30.398438 3 21 3 Z M 21 7 C 28.199219 7 34 12.800781 34 20 C 34 27.199219 28.199219 33 21 33 C 13.800781 33 8 27.199219 8 20 C 8 12.800781 13.800781 7 21 7 Z'></path>
+      <g id='Layer_2' data-name='Layer 2'>
+        <g id='Layer_3' data-name='Layer 3'>
+          <g id='_12-search' data-name='12-search'>
+            <rect width='24' height='24' fill='none' />
+            <path
+              d='M10.15,17.75A7.2,7.2,0,1,0,3,10.55,7.2,7.2,0,0,0,10.15,17.75Z'
+              stroke={strokeColor}
+              strokeLinejoin='round'
+              fill='none'
+            />
+            <path
+              d='M21.12,21.52l-4.29-4.29'
+              stroke={strokeColor}
+              strokeLinejoin='round'
+              strokeLinecap='round'
+              fill='none'
+            />
+          </g>
+        </g>
+      </g>
     </svg>
   )
 }
