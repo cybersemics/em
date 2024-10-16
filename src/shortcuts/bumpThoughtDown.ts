@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { bumpThoughtDownActionCreator as bumpThoughtDown } from '../actions/bumpThoughtDown'
-import SettingsIcon from '../components/icons/SettingsIcon'
+import BumpThoughtDownIcon from '../components/icons/BumpThoughtDownIcon'
 import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -16,8 +16,7 @@ const bumpThoughtDownShortcut: Shortcut = {
     enabled: false,
     error: () => 'Cannot bump down multiple thoughts.',
   },
-  // TODO: Create unique icon
-  svg: SettingsIcon,
+  svg: BumpThoughtDownIcon,
   canExecute: getState => {
     const state = getState()
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))

@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
-import SettingsIcon from '../components/icons/SettingsIcon'
+import ClearThoughtIcon from '../components/icons/ClearThoughtIcon'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -15,8 +15,7 @@ const clearThoughtShortcut: Shortcut = {
     enabled: false,
     error: () => 'Cannot clear multiple thougths.',
   },
-  // TODO: Create unique icon
-  svg: SettingsIcon,
+  svg: ClearThoughtIcon,
   canExecute: getState => {
     const state = getState()
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))

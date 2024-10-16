@@ -1,24 +1,35 @@
-import { FC } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import Icon from '../../@types/Icon'
+import IconType from '../../@types/Icon'
+import { ICON_SCALING_FACTOR } from '../../constants'
 
 /** Check icon used for toggleDone. */
-const CheckIcon: FC<Icon> = ({ cssRaw, fill, size = 20, style }) => {
+const CheckIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
+  const newSize = size * ICON_SCALING_FACTOR
+  const strokeColor = style.fill || fill || token('colors.fg')
+
   return (
     <svg
       className={cx(icon(), css(cssRaw))}
-      x='0px'
-      y='0px'
-      viewBox='0 290.2 6 7'
-      width={size}
-      height={size}
-      fill={fill || token('colors.fg')}
-      style={style}
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 24 24'
+      fill='none'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
-      <g>
-        <path d='m 5.2832031,291.44141 c -0.2081804,0.006 -0.4009798,0.0962 -0.5429687,0.23828 l -2.6132813,2.61328 -0.4980469,-0.49609 c -0.1742845,-0.17379 -0.3978262,-0.25889 -0.6054687,-0.25 -0.20764255,0.009 -0.39286065,0.10184 -0.52929688,0.23828 -0.13643622,0.13643 -0.22953121,0.32164 -0.23828124,0.52929 -0.00875,0.20766 0.0759646,0.43143 0.25,0.60547 l 1.05859372,1.0586 c 0.3076825,0.30767 0.8153642,0.30767 1.1230469,0 l 3.1757812,-3.17579 c 0.2459941,-0.24599 0.2884663,-0.60254 0.171875,-0.8789 -0.1165912,-0.27636 -0.4033055,-0.49281 -0.7519531,-0.48242 z m 0.265625,0.68945 c 0.040513,0.096 0.034654,0.20167 -0.060547,0.29687 L 2.3125,295.60352 c -0.1053641,0.10536 -0.2676832,0.10536 -0.3730469,0 l -1.05859372,-1.0586 c -0.0835859,-0.0836 -0.098286,-0.14768 -0.0957031,-0.20898 0.002583,-0.0613 0.0315479,-0.12725 0.0820313,-0.17774 0.0504833,-0.0505 0.11623838,-0.0794 0.17773442,-0.082 0.061496,-0.003 0.1252789,0.0122 0.2089843,0.0957 l 0.6855469,0.68359 c 0.1034257,0.10386 0.2715743,0.10386 0.375,0 l 2.8007813,-2.80078 c 0.052259,-0.0523 0.117187,-0.082 0.1835936,-0.084 0.1336618,-0.004 0.2094871,0.0641 0.25,0.16016 z' />
+      <g id='Layer_2' data-name='Layer 2'>
+        <g id='Layer_3' data-name='Layer 3'>
+          <g id='_12-mark-as-done' data-name='12-mark-as-done'>
+            <rect width='24' height='24' fill='none' />
+            <polyline
+              stroke={strokeColor}
+              fill='none'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              points='2.28 13.51 7.67 18.91 21.72 4.86'
+            />
+          </g>
+        </g>
       </g>
     </svg>
   )

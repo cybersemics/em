@@ -1,7 +1,7 @@
 import { Dispatch } from 'react'
 import { Key } from 'ts-key-enum'
 import Shortcut from '../@types/Shortcut'
-import SettingsIcon from '../components/icons/SettingsIcon'
+import MoveCursorForwardIcon from '../components/icons/MoveCursorForwardIcon'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildren } from '../selectors/getChildren'
 import prevSibling from '../selectors/prevSibling'
@@ -46,8 +46,7 @@ const moveCursorForward: Shortcut = {
       return execAll()
     },
   },
-  // TODO: Create unique icon
-  svg: SettingsIcon,
+  svg: MoveCursorForwardIcon,
   canExecute: getState => {
     const state = getState()
     return isDocumentEditable() && !!state.cursor

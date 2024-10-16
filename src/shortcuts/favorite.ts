@@ -1,7 +1,7 @@
 import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
-import StarIcon from '../components/icons/StarIcon'
+import FavoritesIcon from '../components/icons/FavoritesIcon'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -45,7 +45,7 @@ const favorite: Shortcut = {
     const isFavorite = findDescendant(state, id, '=favorite')
     return !!isFavorite
   },
-  svg: StarIcon,
+  svg: FavoritesIcon,
   exec: (dispatch, getState) => {
     const state = getState()
     const cursor = state.cursor!

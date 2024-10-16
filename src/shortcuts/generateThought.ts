@@ -5,7 +5,7 @@ import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
-import SettingsIcon from '../components/icons/SettingsIcon'
+import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
@@ -23,8 +23,7 @@ const generateThought: Shortcut = {
   // svg: Icon,
   keyboard: { key: 'g', meta: true, alt: true },
   gesture: 'ur',
-  // TODO: Create unique icon
-  svg: SettingsIcon,
+  svg: GenerateThoughtIcon,
   multicursor: {
     enabled: false,
     error: () => 'Cannot generate multiple thoughts.',

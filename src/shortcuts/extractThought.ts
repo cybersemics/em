@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { extractThoughtActionCreator as extract } from '../actions/extractThought'
-import SettingsIcon from '../components/icons/SettingsIcon'
+import ExtractThoughtIcon from '../components/icons/ExtractThoughtIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 
 const extractThought: Shortcut = {
@@ -12,8 +12,7 @@ const extractThought: Shortcut = {
     enabled: false,
     error: () => 'Cannot extract multiple thoughts.',
   },
-  // TODO: Create unique icon
-  svg: SettingsIcon,
+  svg: ExtractThoughtIcon,
   canExecute: getState => {
     const state = getState()
     return !!state.cursor || hasMulticursor(state)

@@ -1,22 +1,26 @@
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
-import Icon from '../../@types/Icon'
+import { token } from '../../../styled-system/tokens'
+import IconType from '../../@types/Icon'
+import { ICON_SCALING_FACTOR } from '../../constants'
 
 /** New thought icon. */
-const NewThoughtIcon = ({ style, size, cssRaw }: Icon) => {
+const NewThoughtIcon = ({ fill, size = 14, style = {}, cssRaw }: IconType) => {
+  const newSize = size * ICON_SCALING_FACTOR
+  const strokeColor = style.fill || fill || token('colors.fg')
+
   return (
     <svg
-      xmlns='http://www.w3.org/2000/svg'
-      version='1.1'
-      x='0'
-      y='0'
-      viewBox='0 0 83.46 83.46'
       className={cx(icon(), css(cssRaw))}
-      width={size}
-      height={size}
-      style={{ ...style }}
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 24 24'
+      fill='none'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
-      <path d='m41.73,0C18.72,0,0,18.72,0,41.73s18.72,41.73,41.73,41.73,41.73-18.72,41.73-41.73S64.74,0,41.73,0Zm0,79.49c-20.82,0-37.76-16.94-37.76-37.76S20.91,3.97,41.73,3.97s37.76,16.94,37.76,37.76-16.94,37.76-37.76,37.76Zm22.69-37.76c0,1.1-.89,1.99-1.99,1.99h-18.71v18.71c0,1.1-.89,1.99-1.99,1.99s-1.99-.89-1.99-1.99v-18.71h-18.71c-1.1,0-1.99-.89-1.99-1.99s.89-1.99,1.99-1.99h18.71v-18.71c0-1.1.89-1.99,1.99-1.99s1.99.89,1.99,1.99v18.71h18.71c1.1,0,1.99.89,1.99,1.99Z'></path>
+      <rect width='24' height='24' fill='none' />
+      <line x1='22.3' y1='12' x2='11.66' y2='12' stroke={strokeColor} strokeLinejoin='round' />
+      <line x1='5.79' y1='9' x2='5.79' y2='15' stroke={strokeColor} strokeLinecap='round' />
+      <line x1='2.79' y1='12' x2='8.79' y2='12' stroke={strokeColor} strokeLinecap='round' />
     </svg>
   )
 }

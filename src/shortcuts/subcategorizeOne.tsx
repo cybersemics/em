@@ -1,27 +1,9 @@
-import { css, cx } from '../../styled-system/css'
-import { icon } from '../../styled-system/recipes'
-import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { subCategorizeOneActionCreator as subCategorizeOne } from '../actions/subCategorizeOne'
 import { subcategorizeMulticursorActionCreator as subcategorizeMulticursor } from '../actions/subcategorizeMulticursor'
+import SubCategorizeOneIcon from '../components/icons/SubCategorizeOneIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
-
-// eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
-const Icon = ({ fill = 'black', size = 20, style, cssRaw }: IconType) => (
-  <svg
-    version='1.1'
-    className={cx(icon(), css(cssRaw))}
-    xmlns='http://www.w3.org/2000/svg'
-    width={size}
-    height={size}
-    fill={fill}
-    style={style}
-    viewBox='0 0 24 24'
-  >
-    <path d='M12.6,15.782V8.218a2.939,2.939,0,1,0-1.2,0v7.564a2.939,2.939,0,1,0,1.2,0ZM10.26,5.34A1.74,1.74,0,1,1,12,7.081,1.743,1.743,0,0,1,10.26,5.34ZM12,20.4a1.741,1.741,0,1,1,1.74-1.74A1.743,1.743,0,0,1,12,20.4Z' />
-  </svg>
-)
 
 const multicursor: Shortcut['multicursor'] = {
   enabled: true,
@@ -38,7 +20,7 @@ const subCategorizeOneShortcut: Shortcut = {
   gesture: 'lu',
   keyboard: { key: 'o', meta: true, alt: true },
   multicursor,
-  svg: Icon,
+  svg: SubCategorizeOneIcon,
   canExecute: getState => {
     const state = getState()
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
@@ -53,7 +35,7 @@ export const subCategorizeOneShortcutAlias: Shortcut = {
   hideFromHelp: true,
   keyboard: { key: ']', meta: true },
   multicursor,
-  svg: Icon,
+  svg: SubCategorizeOneIcon,
   canExecute: getState => {
     const state = getState()
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))

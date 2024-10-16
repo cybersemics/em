@@ -1,24 +1,47 @@
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
+import { ICON_SCALING_FACTOR } from '../../constants'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const HelpIcon = ({ fill = 'black', size = 20, style, cssRaw }: IconType) => (
-  <svg
-    version='1.1'
-    className={cx(icon(), css(cssRaw))}
-    xmlns='http://www.w3.org/2000/svg'
-    width={size}
-    height={size}
-    fill={fill}
-    style={style}
-    viewBox='0 0 19.481 19.481'
-    enableBackground='new 0 0 19.481 19.481'
-  >
-    <g>
-      <path d='m10.201,.758l2.478,5.865 6.344,.545c0.44,0.038 0.619,0.587 0.285,0.876l-4.812,4.169 1.442,6.202c0.1,0.431-0.367,0.77-0.745,0.541l-5.452-3.288-5.452,3.288c-0.379,0.228-0.845-0.111-0.745-0.541l1.442-6.202-4.813-4.17c-0.334-0.289-0.156-0.838 0.285-0.876l6.344-.545 2.478-5.864c0.172-0.408 0.749-0.408 0.921,0z' />
-    </g>
-  </svg>
-)
+/** Help icon. */
+const HelpIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
+  const newSize = size * ICON_SCALING_FACTOR
+  const strokeColor = style.fill || fill || token('colors.fg')
+
+  return (
+    <svg
+      className={cx(icon(), css(cssRaw))}
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 24 24'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+      fill='none'
+    >
+      <g id='Layer_2' data-name='Layer 2'>
+        <g id='Layer_3' data-name='Layer 3'>
+          <g id='_13-help' data-name='13-help'>
+            <rect width='24' height='24' fill='none' />
+            <path
+              d='M12.22,13.51v-.23a1.76,1.76,0,0,1,.94-1.49,1.69,1.69,0,0,0,.91-1.45,1.85,1.85,0,1,0-3.7,0'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              fill='none'
+            />
+            <path
+              d='M12.21,16.18h0'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              fill='none'
+              strokeWidth='1.5'
+            />
+            <circle cx='12.22' cy='12' r='9.85' fill='none' stroke={strokeColor} strokeLinejoin='round' />
+          </g>
+        </g>
+      </g>
+    </svg>
+  )
+}
 
 export default HelpIcon

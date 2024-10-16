@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { joinActionCreator as join } from '../actions/join'
-import SettingsIcon from '../components/icons/SettingsIcon'
+import JoinThoughtsIcon from '../components/icons/JoinThoughtsIcon'
 
 const joinThoughts: Shortcut = {
   id: 'join',
@@ -11,8 +11,7 @@ const joinThoughts: Shortcut = {
     enabled: false,
     error: () => 'Cannot join multiple thoughts.',
   },
-  // TODO: Create unique icon
-  svg: SettingsIcon,
+  svg: JoinThoughtsIcon,
   canExecute: getState => !!getState().cursor,
   exec: (dispatch, getState) => {
     dispatch(join())

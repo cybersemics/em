@@ -2,21 +2,42 @@ import { css, cx } from '../../styled-system/css'
 import { icon } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import Icon from '../@types/Icon'
+import { ICON_SCALING_FACTOR } from '../constants'
 
 /** A redo icon. */
-const RedoIcon = ({ fill, size = 18, style, cssRaw }: Icon) => {
+const RedoIcon = ({ fill, size = 18, style = {}, cssRaw }: Icon) => {
+  const newSize = size * ICON_SCALING_FACTOR
+  const strokeColor = style.fill || fill || token('colors.fg')
+
   return (
     <svg
-      version='1.1'
       className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
-      width={size}
-      height={size}
+      viewBox='0 0 24 24'
       fill={fill || token('colors.fg')}
-      style={style}
-      viewBox='0 -50 600 600'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
     >
-      <path d='m502.121094 1.214844c-5.972656-2.453125-12.863282-1.109375-17.429688 3.476562l-57.597656 57.601563c-47.488281-39.210938-108.417969-62.292969-171.09375-62.292969-141.164062 0-256 114.835938-256 256s114.835938 256 256 256c68.332031 0 132.609375-26.644531 180.96875-75.03125 8.34375-8.339844 8.34375-21.820312 0-30.164062-8.339844-8.339844-21.820312-8.339844-30.164062 0-40.296876 40.320312-93.867188 62.527343-150.804688 62.527343-117.632812 0-213.332031-95.699219-213.332031-213.332031s95.699219-213.332031 213.332031-213.332031c51.414062 0 101.332031 18.496093 140.777344 49.917969l-50.75 50.773437c-4.585938 4.585937-5.929688 11.457031-3.476563 17.429687 2.472657 5.972657 8.296875 9.878907 14.78125 9.878907h138.667969c8.832031 0 16-7.167969 16-16v-138.667969c0-6.484375-3.902344-12.308594-9.878906-14.785156zm0 0'></path>
+      <g id='Layer_2' data-name='Layer 2'>
+        <g id='Layer_3' data-name='Layer 3'>
+          <g id='_02-redo' data-name='02-redo'>
+            <rect width='24' height='24' fill='none' />
+            <path
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              fill='none'
+              d='M19.76,7.24a10.24,10.24,0,0,0-2-2.11,8.67,8.67,0,1,0,1.57,12.16'
+            />
+            <path
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              fill='none'
+              d='M16.06,7.71l4.17.11L20,3.43'
+            />
+          </g>
+        </g>
+      </g>
     </svg>
   )
 }
