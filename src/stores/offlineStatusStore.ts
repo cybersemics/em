@@ -7,8 +7,10 @@ import reactMinistore from './react-ministore'
 /** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). There are a couple places where offlineStatusStore.update is called directly in order to skip preconnecting. See: OfflineStatus type for description of all possible statuses. */
 export const offlineStatusStore = reactMinistore<OfflineStatus>('preconnecting')
 
-/** Define timeouts based on whether we're in e2e tests or not. We're somewhat limited since these run post-build but there might be cleaner ways to do this. */
-const initialOfflineTimeout = navigator.webdriver ? 0 : 500
+/** Delay before attempting to connect to the server. Disabled during E2E tests. */
+const preconnectingTimeout = navigator.webdriver ? 0 : 500
+
+/** Amount of time trying to connect before changint to offline status. Disabled during E2E tests. */
 const offlineTimeout = navigator.webdriver ? 0 : WEBSOCKET_TIMEOUT
 
 /** Enter a connecting state and then switch to offline after a delay. */
@@ -65,7 +67,7 @@ export const init = (websocket: HocuspocusProviderWebsocket) => {
   // Start connecting to populate offlineStatusStore.
   // This must done in an init function that is called in app initalize, otherwise @sinonjs/fake-timers are not yet set and createTestApp tests break.
   // TODO: Why does deferring websocketProviderPermissions.connect() to init break tests?
-  offlineTimer = setTimeout(startConnecting, initialOfflineTimeout)
+  offlineTimer = setTimeout(startConnecting, preconnectingTimeout)
 }
 
 export default offlineStatusStore
