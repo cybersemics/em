@@ -13,8 +13,6 @@ const TableViewIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
     <svg
       xmlns='http://www.w3.org/2000/svg'
       className={cx(icon(), css(cssRaw))}
-      width={newSize}
-      height={newSize}
       viewBox='0 0 24 24'
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
       fill='none'

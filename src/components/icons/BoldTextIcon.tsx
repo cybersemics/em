@@ -13,8 +13,6 @@ const BoldTextIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
     <svg
       className={cx(icon(), css(cssRaw))} // Combine class names
       xmlns='http://www.w3.org/2000/svg'
-      width={newSize}
-      height={newSize}
       viewBox='0 0 24 24' // Keep the original viewBox
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }} // Inline styles
       fill='none'

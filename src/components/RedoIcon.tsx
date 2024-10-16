@@ -13,8 +13,6 @@ const RedoIcon = ({ fill, size = 18, style = {}, cssRaw }: Icon) => {
     <svg
       className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
-      width={newSize}
-      height={newSize}
       viewBox='0 0 24 24'
       fill={fill || token('colors.fg')}
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
