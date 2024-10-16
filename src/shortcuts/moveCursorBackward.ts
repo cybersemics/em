@@ -4,6 +4,7 @@ import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
 import { outdentActionCreator as outdent } from '../actions/outdent'
 import MoveCursorBackwardIcon from '../components/icons/MoveCursorBackwardIcon'
 import attributeEquals from '../selectors/attributeEquals'
+import hasMulticursor from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -15,8 +16,16 @@ const moveCursorBackward: Shortcut = {
   label: 'Move Cursor Backward',
   description: 'Move the current thought to the next sibling of its context or to previous column in table view.',
   keyboard: { key: Key.Tab, shift: true },
+  multicursor: {
+    enabled: true,
+    filter: 'prefer-ancestor',
+    reverse: true,
+  },
   svg: MoveCursorBackwardIcon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

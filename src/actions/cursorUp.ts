@@ -10,7 +10,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 
 /** Moves the cursor to the previous sibling. Works in normal or context view. If there is no cursor, sets the cursor on the last thought of in the home context. */
-const cursorUp = (state: State) => {
+const cursorUp = (state: State, { preserveMulticursor }: { preserveMulticursor?: boolean } = {}) => {
   const { cursor } = state
   const path = cursor || HOME_PATH
   const pathParent = rootedParentOf(state, path)
@@ -30,10 +30,13 @@ const cursorUp = (state: State) => {
       : null
 
   // noop if there is no previous path, i.e. the cursor is on the very first thought
-  return prevPath ? setCursor(state, { path: prevPath }) : state
+  return prevPath ? setCursor(state, { path: prevPath, preserveMulticursor }) : state
 }
 
 /** Action-creator for cursorUp. */
-export const cursorUpActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorUp' })
+export const cursorUpActionCreator =
+  (payload?: Parameters<typeof cursorUp>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'cursorUp', ...payload })
 
 export default cursorUp

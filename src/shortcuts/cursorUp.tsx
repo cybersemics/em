@@ -1,13 +1,26 @@
 import { Key } from 'ts-key-enum'
 import { css, cx } from '../../styled-system/css'
 import { icon } from '../../styled-system/recipes'
+import Dispatch from '../@types/Dispatch'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
+import State from '../@types/State'
+import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { cursorUpActionCreator as cursorUp } from '../actions/cursorUp'
+import { removeMulticursorActionCreator as removeMulticursor } from '../actions/removeMulticursor'
+import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
+import { getChildrenSorted } from '../selectors/getChildren'
+import hasMulticursor from '../selectors/hasMulticursor'
+import isMulticursorPath from '../selectors/isMulticursorPath'
+import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
+import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import isRoot from '../util/isRoot'
+import parentOf from '../util/parentOf'
 // import directly since util/index is not loaded yet when shortcut is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
@@ -35,6 +48,7 @@ const cursorUpShortcut: Shortcut = {
   label: 'Cursor Up',
   keyboard: { key: Key.ArrowUp },
   hideFromHelp: true,
+  multicursor: 'ignore',
   svg: Icon,
   canExecute: getState => {
     const state = getState()
@@ -51,7 +65,79 @@ const cursorUpShortcut: Shortcut = {
     // use default browser if selection is on the second or greater line of a multi-line editable
     return selection.isOnFirstLine()
   },
-  exec: throttleByAnimationFrame(dispatch => dispatch(cursorUp())),
+  exec: throttleByAnimationFrame((dispatch: Dispatch, getState: () => State, e: KeyboardEvent) => {
+    if (e.shiftKey) {
+      const state = getState()
+      const isMulticursorEmpty = !hasMulticursor(state)
+      const isCurrentCursorMulticursor = state.cursor && isMulticursorPath(state, state.cursor)
+
+      const { cursor } = state
+      const path = cursor || HOME_PATH
+      const pathParent = rootedParentOf(state, path)
+
+      const prevThought = cursor
+        ? // if cursor exists, get the previous sibling
+          prevSibling(state, cursor)
+        : // otherwise, get the last thought in the home context
+          getChildrenSorted(state, HOME_TOKEN).slice(-1)[0]
+
+      const prevPath = prevThought
+        ? // non-first child path
+          appendToPath(parentOf(path), prevThought.id)
+        : // when the cursor is on the first child in a context, move up a level
+          !isRoot(pathParent)
+          ? pathParent
+          : null
+
+      // if there is no previous path, do nothing
+      if (!prevPath) return
+
+      const isPrevPathMulticursor = prevPath && isMulticursorPath(state, prevPath)
+
+      dispatch([
+        setCursor({ path: prevPath, preserveMulticursor: true }),
+        dispatch => {
+          // New multicursor set
+          if (isMulticursorEmpty) {
+            // Add the current cursor to the multicursor, if it exists
+            if (state.cursor) {
+              dispatch(addMulticursor({ path: state.cursor }))
+            }
+
+            // Add the previous cursor to the multicursor, if it exists
+            if (prevPath) {
+              dispatch(addMulticursor({ path: prevPath }))
+            }
+
+            return
+          }
+
+          // Extend the multicursor set to the previous cursor
+          if (isCurrentCursorMulticursor && !isPrevPathMulticursor && prevPath) {
+            dispatch(addMulticursor({ path: prevPath }))
+            return
+          }
+
+          // Remove the previous cursor from the multicursor set
+          if (isCurrentCursorMulticursor && isPrevPathMulticursor && state.cursor) {
+            dispatch(removeMulticursor({ path: state.cursor }))
+            return
+          }
+        },
+      ])
+
+      requestAnimationFrame(() => {
+        selection.clear()
+      })
+    } else dispatch(cursorUp())
+  }),
+}
+
+export const cursorUpAlias: Shortcut = {
+  ...cursorUpShortcut,
+  id: 'cursorUpAlias',
+  gesture: undefined,
+  keyboard: { key: Key.ArrowUp, shift: true },
 }
 
 export default cursorUpShortcut

@@ -9,6 +9,7 @@ import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
+import hasMulticursor from '../selectors/hasMulticursor'
 import simplifyPath from '../selectors/simplifyPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -54,8 +55,30 @@ const deleteShortcut: Shortcut = {
   label: 'Delete',
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
   gesture: 'ldldl',
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+    reverse: true,
+    clearMulticursor: true,
+    execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
+      const numThougths = cursors.length
+
+      execAll()
+
+      dispatch(
+        alert(`Deleted ${numThougths} thoughts.`, {
+          alertType: AlertType.ThoughtDeleted,
+          clearDelay: 8000,
+          showCloseLink: true,
+        }),
+      )
+    },
+  },
   keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec,
   svg: Icon,
 }

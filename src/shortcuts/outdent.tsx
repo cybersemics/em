@@ -1,6 +1,7 @@
 import Shortcut from '../@types/Shortcut'
 import { outdentActionCreator as outdent } from '../actions/outdent'
 import OutdentIcon from '../components/icons/OutdentIcon'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorBackward from './moveCursorBackward'
 
@@ -12,8 +13,16 @@ const outdentShortcut: Shortcut = {
     keyboard: moveCursorBackward.keyboard,
   },
   gesture: 'lrl',
+  multicursor: {
+    enabled: true,
+    filter: 'prefer-ancestor',
+    reverse: true,
+  },
   svg: OutdentIcon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

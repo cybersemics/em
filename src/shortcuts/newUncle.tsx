@@ -12,6 +12,10 @@ const newUncleShortcut: Shortcut = {
   description: 'Add a new thought one level up. Same as creating a new thought and then outdenting it.',
   gesture: 'rdl',
   keyboard: { key: Key.Enter, meta: true, alt: true },
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot create a new subthought with multiple thoughts.',
+  },
   svg: NewSubthoughtNextIcon,
   canExecute: getState => {
     const { cursor } = getState()

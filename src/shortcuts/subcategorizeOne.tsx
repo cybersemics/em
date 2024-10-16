@@ -1,7 +1,16 @@
 import Shortcut from '../@types/Shortcut'
 import { subCategorizeOneActionCreator as subCategorizeOne } from '../actions/subCategorizeOne'
+import { subcategorizeMulticursorActionCreator as subcategorizeMulticursor } from '../actions/subcategorizeMulticursor'
 import SubCategorizeOneIcon from '../components/icons/SubCategorizeOneIcon'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
+
+const multicursor: Shortcut['multicursor'] = {
+  enabled: true,
+  execMulticursor: (_cursors, dispatch) => dispatch(subcategorizeMulticursor()),
+  preventSetCursor: true,
+  clearMulticursor: true,
+}
 
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
 const subCategorizeOneShortcut: Shortcut = {
@@ -10,8 +19,12 @@ const subCategorizeOneShortcut: Shortcut = {
   description: 'Move the current thought into a new, empty thought at the same level.',
   gesture: 'lu',
   keyboard: { key: 'o', meta: true, alt: true },
+  multicursor,
   svg: SubCategorizeOneIcon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: dispatch => dispatch(subCategorizeOne()),
 }
 
@@ -21,8 +34,12 @@ export const subCategorizeOneShortcutAlias: Shortcut = {
   label: 'Subcategorize',
   hideFromHelp: true,
   keyboard: { key: ']', meta: true },
+  multicursor,
   svg: SubCategorizeOneIcon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: dispatch => dispatch(subCategorizeOne()),
 }
 

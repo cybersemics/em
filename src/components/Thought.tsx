@@ -11,7 +11,8 @@ import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { expandContextThoughtActionCreator as expandContextThought } from '../actions/expandContextThought'
-import { isTouch } from '../browser'
+import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
+import { isMac, isTouch } from '../browser'
 import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
 import testFlags from '../e2e/testFlags'
 import globals from '../globals'
@@ -199,6 +200,7 @@ const ThoughtContainer = ({
     isDragging,
     simplePath,
     sourceZone: DragThoughtZone.Thoughts,
+    toggleMulticursorOnLongPress: true,
   })
 
   const homeContext = useSelector(state => {
@@ -331,6 +333,17 @@ const ThoughtContainer = ({
   //   ...dragHoldResult.props,
   // })
 
+  /** Handles multicursor activation. */
+  const handleMultiselect = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (!isTouch && (isMac ? (e as React.MouseEvent).metaKey : (e as React.MouseEvent).ctrlKey)) {
+        e.preventDefault()
+        dispatch(toggleMulticursor({ path }))
+      }
+    },
+    [dispatch, path],
+  )
+
   // thought does not exist
   if (value == null) return null
 
@@ -348,6 +361,7 @@ const ThoughtContainer = ({
       aria-label='child'
       data-divider={isDivider(value)}
       data-editing={isEditing}
+      onClick={isTouch ? undefined : handleMultiselect}
       style={{
         // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
         position: 'relative',

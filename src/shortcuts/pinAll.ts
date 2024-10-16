@@ -8,6 +8,7 @@ import { HOME_PATH } from '../constants'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -22,8 +23,12 @@ const pinAllShortcut: Shortcut = {
   description: 'Pins open all thoughts at the current level.',
   descriptionInverse: 'Unpins all thoughts at the current level.',
   keyboard: { key: 'p', meta: true, shift: true },
+  multicursor: 'ignore',
   svg: PinAllIcon,
-  canExecute: getState => !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return !!state.cursor || hasMulticursor(state)
+  },
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()
     const { cursor } = state

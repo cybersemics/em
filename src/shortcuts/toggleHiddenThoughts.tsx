@@ -9,6 +9,7 @@ const toggleHiddenThoughtsShortcut: Shortcut = {
   description: 'Show all hidden thoughts.',
   descriptionInverse: 'Hide hidden thoughts.',
   keyboard: { key: 'h', shift: true, alt: true },
+  multicursor: 'ignore',
   svg: HiddenThoughtsIcon,
   exec: dispatch => dispatch(toggleHiddenThoughts()),
   isActive: getState => getState().showHiddenThoughts,

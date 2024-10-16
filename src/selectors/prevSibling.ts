@@ -41,7 +41,6 @@ export const prevSibling = (
     const message = `Thought ${thought.value} with Path ${path} missing from ${
       showContexts ? 'context view' : 'child'
     } of ${thought.parentId}`
-    console.error(message, { thought, siblings, parent: getThoughtById(state, thought.parentId) })
     throw new Error(message)
   }
 

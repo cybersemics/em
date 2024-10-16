@@ -8,6 +8,7 @@ import { splitSentencesActionCreator as splitSentences } from '../actions/splitS
 import SplitSentencesIcon from '../components/icons/SplitSentencesIcon'
 import { HOME_TOKEN } from '../constants'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import head from '../util/head'
@@ -19,8 +20,13 @@ const splitSentencesShortcut: Shortcut = {
   id: 'splitSentences',
   label: 'Split Sentences',
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
+  keyboard: { key: 's', meta: true, shift: true },
+  multicursor: true,
   svg: SplitSentencesIcon,
-  canExecute: getState => !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return !!state.cursor || hasMulticursor(state)
+  },
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
     const state = getState()
     const { cursor } = state

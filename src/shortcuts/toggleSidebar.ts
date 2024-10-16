@@ -6,6 +6,7 @@ const toggleSidebarShortcut: Shortcut = {
   id: 'toggleSidebar',
   label: 'Toggle Recently Edited',
   keyboard: { key: 'r', alt: true },
+  multicursor: 'ignore',
   // TODO: Create unique icon
   svg: SettingsIcon,
   hideFromHelp: true,

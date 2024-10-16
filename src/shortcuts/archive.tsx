@@ -8,6 +8,7 @@ import { AlertType, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -58,9 +59,30 @@ const archiveShortcut: Shortcut = {
   label: 'Archive',
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
   gesture: 'ldl',
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+    clearMulticursor: true,
+    execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
+      const numThougths = cursors.length
+
+      execAll()
+
+      dispatch(
+        alert(`Deleted ${numThougths} thoughts.`, {
+          alertType: AlertType.ThoughtDeleted,
+          clearDelay: 8000,
+          showCloseLink: true,
+        }),
+      )
+    },
+  },
   svg: ArchiveIcon,
   keyboard: { key: Key.Backspace, shift: true, meta: true },
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec,
 }
 
@@ -70,6 +92,10 @@ export const archiveAliases: Shortcut = {
   svg: ArchiveIcon,
   label: 'Archive',
   hideFromHelp: true,
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+  },
   gesture: [
     'ldlr',
     'lrdl',
@@ -85,7 +111,10 @@ export const archiveAliases: Shortcut = {
     'lrdldru',
     'lrdldlru',
   ],
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec,
 }
 

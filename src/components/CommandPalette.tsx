@@ -14,6 +14,7 @@ import themeColors from '../selectors/themeColors'
 import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
+import { executeShortcutWithMulticursor } from '../util/executeShortcut'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import Popup from './Popup'
@@ -317,7 +318,7 @@ const CommandPalette: FC = () => {
         return
       const commandsNew = [shortcut.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
       dispatch(commandPalette())
-      shortcut.exec(dispatch, store.getState, e, { type: 'commandPalette' })
+      executeShortcutWithMulticursor(shortcut, { event: e, type: 'commandPalette', store })
       storageModel.set('recentCommands', commandsNew)
       setRecentCommands(commandsNew)
     },

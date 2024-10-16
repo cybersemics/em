@@ -4,6 +4,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertText, AlertType } from '../constants'
+import hasMulticursor from '../selectors/hasMulticursor'
 import alert from './alert'
 
 interface Payload {
@@ -14,7 +15,7 @@ interface Payload {
 
 /** Reducer for highlighting a bullet on click and hold. */
 const dragHold = (state: State, { value = false, simplePath, sourceZone }: Payload) => ({
-  ...(value
+  ...(value && !hasMulticursor(state)
     ? alert(state, {
         value: sourceZone === DragThoughtZone.Thoughts ? AlertText.DragAndDrop : AlertText.ReorderFavorites,
         alertType: AlertType.DragAndDropHint,

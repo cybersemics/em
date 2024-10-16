@@ -60,12 +60,18 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   }
 }
 
+const multicursor = {
+  enabled: false,
+  error: () => 'Cannot create a new thought with multiple thoughts.',
+}
+
 const newThoughtShortcut: Shortcut = {
   id: 'newThought',
   label: 'New Thought',
   description: 'Create a shiny new thought.',
   keyboard: { key: Key.Enter },
   gesture: 'rd',
+  multicursor,
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,
@@ -77,6 +83,7 @@ export const newThoughtAliases: Shortcut = {
   label: 'New Thought',
   hideFromHelp: true,
   gesture: ['rdld', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
+  multicursor,
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   // smuggle it in with the aliases
   ...(isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null),
