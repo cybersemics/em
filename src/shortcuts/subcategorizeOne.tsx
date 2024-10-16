@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { subCategorizeOneActionCreator as subCategorizeOne } from '../actions/subCategorizeOne'
-import SubCategorizeOneIcon from '../components/icons/SubCategorizeOneIcon'
+import SubCategorizeOneIcon from '../components/icons/SubCategorizeOneIcon2'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
