@@ -18,8 +18,7 @@ export const formatLetterCaseActionCreator =
     const thought = pathToThought(state, cursor)
     const originalThoughtValue = thought.value
     const savedSelection = selection.save()
-    console.log(savedSelection)
-    // Util function to apply the appropriate transformation based on the command
+    /** Util function to apply the appropriate transformation based on the command. */
     const getUpdatedThoughtValue = (command: string, value: string): string => {
       switch (command) {
         case 'LowerCase':

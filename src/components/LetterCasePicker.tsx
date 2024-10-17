@@ -40,6 +40,7 @@ const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = 
   const dispatch = useDispatch()
   const overflow = useWindowOverflow(ref)
 
+  /** Toggles the Letter Case to the clicked swatch. */
   const toggleLetterCase = (command: string, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     e.preventDefault()
@@ -107,5 +108,6 @@ const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = 
     </div>
   )
 })
+LetterCasePicker.displayName = 'LetterCasePicker'
 
 export default LetterCasePicker
