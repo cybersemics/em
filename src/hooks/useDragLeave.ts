@@ -2,6 +2,7 @@ import { debounce } from 'lodash'
 import { useEffect, useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import { updateHoveringPathActionCreator } from '../actions/updateHoveringPath'
+import useSortedContext from './useSortedContext'
 
 const DEBOUNCE_DELAY = 50
 let hoverCount = 0
@@ -13,6 +14,7 @@ let debouncedSetHoveringPath: ReturnType<typeof debounce> | null = null
 const useDragLeave = ({ isDeepHovering }: { isDeepHovering: boolean }) => {
   const dispatch = useDispatch()
   const prevIsDeepHoveringRef = useRef(isDeepHovering)
+  const { hoveringOnDropEnd } = useSortedContext()
 
   // Initialize the debounced function if it hasn't been already
   if (!debouncedSetHoveringPath) {
@@ -31,7 +33,7 @@ const useDragLeave = ({ isDeepHovering }: { isDeepHovering: boolean }) => {
       debouncedSetHoveringPath?.cancel()
     } else if (!isDeepHovering && prevIsDeepHoveringRef.current) {
       // Cursor has left a drop target
-      if (hoverCount === 0) {
+      if (hoverCount === 0 && !hoveringOnDropEnd) {
         // No drop targets are being hovered over; start debounce
         debouncedSetHoveringPath?.()
       }
@@ -50,6 +52,6 @@ const useDragLeave = ({ isDeepHovering }: { isDeepHovering: boolean }) => {
         }
       }
     }
-  }, [isDeepHovering, dispatch])
+  }, [isDeepHovering, dispatch, hoveringOnDropEnd])
 }
 export default useDragLeave

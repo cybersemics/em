@@ -373,19 +373,19 @@ const LayoutTree = () => {
   const scrollTop = scrollTopStore.useState()
 
   const [bulletWidth, setBulletWidth] = useState<number | undefined>(0)
-  const toolbarRef = useRef<number | undefined>(0)
+  const toolbarHeightRef = useRef(0)
   const distanceFromTop = useRef<number | undefined>(0)
 
   // set the bullet width only during drag or when simulateDrop is true
   useLayoutEffect(() => {
     if (dragInProgress || testFlags.simulateDrop) {
       const bullet = ref.current?.querySelector('[aria-label=bullet]')
+      setBulletWidth(bullet?.getBoundingClientRect().width)
+
       const toolbar = document.querySelector('#toolbar')
 
+      if (toolbar) toolbarHeightRef.current = toolbar?.getBoundingClientRect().height
       distanceFromTop.current = (ref.current?.getBoundingClientRect().top ?? 0) + scrollTop
-
-      toolbarRef.current = toolbar?.getBoundingClientRect().height
-      setBulletWidth(bullet?.getBoundingClientRect().width)
     }
   }, [dragInProgress, scrollTop])
 
@@ -473,7 +473,7 @@ const LayoutTree = () => {
 
   const maxVisibleY = viewportHeight + scrollTop - ((distanceFromTop.current ?? 0) + navbarHeight)
 
-  const { isSortedContext, newRank, sourceThought, hoveringOnDropEnd } = useSortedContext()
+  const { isSortedContext, newRank, hoveringOnDropEnd } = useSortedContext()
 
   // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
   const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
@@ -504,10 +504,15 @@ const LayoutTree = () => {
     let yaccum = 0
     let indentCursorAncestorTables = 0
 
-    // Flag to indicate if we've found the insertion point in sorted context
-    let insertionY: number | null = null
+    // Arrow visibility based on insertionY
     let hoverArrowVisibility: 'above' | 'below' | null = null
-    let insertionFound = false
+
+    // The rank of the first and last thoughts in sorted context.
+    let firstThoughtRank = 0
+    let lastThoughtRank = 0
+    // The rank of the first and last visible thoughts in sorted context.
+    let firstVisibleThoughtRank = 0
+    let lastVisibleThoughtRank = 0
 
     /** A stack of { depth, y } that stores the bottom y value of each col1 ancestor. */
     /* By default, yaccum is not advanced by the height of col1. This is what positions col2 at the same y value as col1. However, if the height of col1 exceeds the height of col2, then the next node needs to be positioned below col1, otherwise it will overlap. This stack stores the minimum y value of the next node (i.e. y + height). Depth is used to detect the next node after all of col1's descendants.
@@ -616,20 +621,25 @@ const LayoutTree = () => {
         (node.autofocus === 'dim' || node.autofocus === 'show') &&
         !(next?.autofocus === 'dim' || next?.autofocus === 'show')
 
+      // Check if current thought is inside a sorted context.
       const isInSortedContext = attributeEquals(state, head(parentOf(node.path)), '=sort', 'Alphabetical')
 
-      // Get the insertion point of the thought in sorted context
-      if (isSortedContext && isInSortedContext && !insertionFound && sourceThought) {
+      if (isInSortedContext) {
         const currentThought = getThoughtById(state, head(node.path))
-        const currentRank = currentThought.rank
-
-        if (newRank - currentRank < 0) {
-          insertionY = y
-          insertionFound = true
+        // Update first and last thought ranks in sorted context
+        if (!firstThoughtRank) {
+          firstThoughtRank = currentThought.rank
         }
-      } else if (hoveringOnDropEnd) {
-        insertionY = y
-        insertionFound = true
+        lastThoughtRank = currentThought.rank
+
+        // Check if the current thought is visible
+        if (y < maxVisibleY && y > scrollTop - (toolbarHeightRef.current ?? 0)) {
+          // Update first and last visible thought ranks in sorted context
+          if (!firstVisibleThoughtRank) {
+            firstVisibleThoughtRank = currentThought.rank
+          }
+          lastVisibleThoughtRank = currentThought.rank
+        }
       }
 
       return {
@@ -644,17 +654,11 @@ const LayoutTree = () => {
       }
     })
 
-    // If insertionY is still null, newRank would be inserted at the end
-    if (isSortedContext && insertionY === null && treeThoughtsPositioned.length > 0 && sourceThought) {
-      const lastThought = treeThoughtsPositioned[treeThoughtsPositioned.length - 1]
-      insertionY = lastThought.y + lastThought.height
-    }
-
-    // Determine hoverArrowVisibility based on insertionY
-    if (insertionY !== null) {
-      if (insertionY > maxVisibleY) {
+    // Determine hoverArrowVisibility based on newRank and the visible thoughts
+    if (isSortedContext || hoveringOnDropEnd) {
+      if (newRank > lastVisibleThoughtRank && lastVisibleThoughtRank !== lastThoughtRank) {
         hoverArrowVisibility = 'below'
-      } else if (insertionY < scrollTop - (toolbarRef.current ?? 0)) {
+      } else if (newRank < firstVisibleThoughtRank && firstVisibleThoughtRank !== firstThoughtRank) {
         hoverArrowVisibility = 'above'
       } else {
         hoverArrowVisibility = null
@@ -663,16 +667,15 @@ const LayoutTree = () => {
 
     return { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility }
   }, [
+    treeThoughts,
+    isSortedContext,
     hoveringOnDropEnd,
     singleLineHeight,
     fontSize,
     sizes,
-    treeThoughts,
-    isSortedContext,
-    sourceThought,
+    maxVisibleY,
     scrollTop,
     newRank,
-    maxVisibleY,
   ])
 
   const spaceAboveLast = useRef(spaceAboveExtended)

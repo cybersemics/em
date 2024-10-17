@@ -2,6 +2,7 @@ import { useDragDropManager } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DropThoughtZone from '../@types/DropThoughtZone'
+import Path from '../@types/Path'
 import attributeEquals from '../selectors/attributeEquals'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -10,10 +11,10 @@ import parentOf from '../util/parentOf'
 
 /** A hook that checks if a dragging thought is hovering over a sorted context, and returns new rank where that thought will be dropped. */
 const useSortedContext = () => {
-  const hoveringPath = useSelector(state => state.hoveringPath)
+  const hoveringPath = useSelector(state => state.hoveringPath) as Path
   const contextParentPath = parentOf(hoveringPath || [])
 
-  // check if the hoevring path is on a sorted context
+  // check if the hovering path is on a sorted context
   const isSortedContext = useSelector(state => {
     // Check if the drop target is on sorted context children or on its parent.
     const isContextChildren = attributeEquals(state, head(contextParentPath), '=sort', 'Alphabetical')
@@ -45,12 +46,12 @@ const useSortedContext = () => {
     return sourceThought
   })
 
-  const newRank = useSelector(state => getSortedRank(state, head(contextParentPath), sourceThought?.value || ''))
+  const contextpath = hoveringOnDropEnd ? hoveringPath : contextParentPath
+  const newRank = useSelector(state => getSortedRank(state, head(contextpath), sourceThought?.value || ''))
 
   return {
     isSortedContext,
     newRank,
-    sourceThought,
     hoveringOnDropEnd,
   }
 }
