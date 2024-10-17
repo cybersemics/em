@@ -16,6 +16,7 @@ import { setInvalidStateActionCreator as setInvalidState } from '../actions/inva
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
+import { toggleLettercaseActionCreator as toggleLettercase } from '../actions/toggleLettercase'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isIOS, isMac, isSafari, isTouch } from '../browser'
 import {
@@ -556,9 +557,9 @@ const Editable = ({
         if (!isVisible) {
           selection.clear()
 
-          if (state.showColorPicker) {
-            dispatch(toggleColorPicker({ value: false }))
-          }
+          if (state.showColorPicker) dispatch(toggleColorPicker({ value: false }))
+
+          if (state.showLettercase) dispatch(toggleLettercase({ value: false }))
         } else {
           setCursorOnThought()
 

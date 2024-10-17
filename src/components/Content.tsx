@@ -7,6 +7,7 @@ import { Thunk } from '../@types/Thunk'
 import { closeModalActionCreator as closeModal } from '../actions/closeModal'
 import { expandContextThoughtActionCreator as expandContextThought } from '../actions/expandContextThought'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
+import { toggleLettercaseActionCreator as toggleLettercase } from '../actions/toggleLettercase'
 import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import * as selection from '../device/selection'
@@ -58,6 +59,7 @@ const Content: FC = () => {
     setIsPressed(false)
 
     dispatch([state.showColorPicker ? toggleColorPicker({ value: false }) : null])
+    dispatch([state.showLettercase ? toggleLettercase({ value: false }) : null])
 
     // web only
     // click event occured during text selection has focus node of type text unlike normal event which has node of type element
