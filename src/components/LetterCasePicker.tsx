@@ -1,8 +1,9 @@
-import React, { FC, memo, useLayoutEffect, useRef, useState } from 'react'
+import React, { FC, memo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { titleCase } from 'title-case'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/formatLetterCase'
 import { isTouch } from '../browser'
+import useWindowOverflow from '../hooks/useWindowOverflow'
 import getThoughtById from '../selectors/getThoughtById'
 import themeColors from '../selectors/themeColors'
 import fastClick from '../util/fastClick'
@@ -12,26 +13,6 @@ import LowerCaseIcon from './icons/LowerCaseIcon'
 import SentenceCaseIcon from './icons/SentenceCaseIcon'
 import TitleCaseIcon from './icons/TitleCaseIcon'
 import UpperCaseIcon from './icons/UpperCaseIcon'
-
-/** A hook that returns the left and right overflow of the element outside the bounds of the screen. Do not re-calculate on every render or it will create an infinite loop when scrolling the Toolbar. */
-const useWindowOverflow = (ref: React.RefObject<HTMLElement>) => {
-  const [overflow, setOverflow] = useState({ left: 0, right: 0 })
-
-  useLayoutEffect(() => {
-    if (!ref.current) return
-    const rect = ref.current.getBoundingClientRect()
-    // Subtract the previous overflow, since that affects the client rect.
-    // Otherwise the overflow will alternate on each render as it moves on and off the screen.
-    const left = Math.max(0, -rect.x + 15 - overflow.left)
-    // add 10px for padding
-    const right = Math.max(0, rect.x + rect.width - window.innerWidth + 10 - overflow.right)
-    if (left > 0 || right > 0) {
-      setOverflow({ left, right })
-    }
-  }, [ref, overflow.left, overflow.right])
-
-  return overflow
-}
 
 /** Letter Case Picker component. */
 const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = memo(({ fontSize, style }) => {
