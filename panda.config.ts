@@ -294,7 +294,7 @@ export default defineConfig({
           bullet: { value: 2 },
           stack: { value: 1 },
           hide: { value: -1 },
-          arrow: { value: 9999 },
+          arrow: { value: 1400 },
         },
       },
       recipes: {
@@ -345,6 +345,7 @@ export default defineConfig({
           layoutSlowShiftDuration: duration('750ms'),
           /** The animation duration of a node in the LayoutTree component. */
           layoutNodeAnimationDuration: duration('150ms'),
+          arrowBobbleAnimation: duration('1s'),
         },
       },
     },
