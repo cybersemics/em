@@ -9,6 +9,10 @@ const textColor: Shortcut = {
   description: 'Change the text color or highlight color to your liking.',
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  multicursor: {
+    enabled: false,
+    error: () => 'Cannot change text color with multiple thoughts.',
+  },
   exec: (dispatch, getState) => {
     const state = getState()
     dispatch({

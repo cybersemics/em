@@ -1,9 +1,10 @@
 import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
-import StarIcon from '../components/icons/StarIcon'
+import FavoritesIcon from '../components/icons/FavoritesIcon'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -13,7 +14,29 @@ const favorite: Shortcut = {
   labelInverse: 'Remove from Favorites',
   description: 'Add the current thought to your Favorites list.',
   descriptionInverse: 'Remove the current thought from your Favorites list.',
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  multicursor: {
+    enabled: true,
+    execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
+      const state = getState()
+      const numThougths = cursors.length
+
+      const allFavorites = cursors.map(cursor => findDescendant(state, head(cursor), '=favorite')).every(Boolean)
+
+      execAll()
+
+      dispatch(
+        alert(
+          allFavorites
+            ? `Removed ${numThougths} thoughts from favorites.`
+            : `Added ${numThougths} thoughts to favorites.`,
+        ),
+      )
+    },
+  },
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   isActive: getState => {
     const state = getState()
     const cursor = state.cursor
@@ -22,7 +45,7 @@ const favorite: Shortcut = {
     const isFavorite = findDescendant(state, id, '=favorite')
     return !!isFavorite
   },
-  svg: StarIcon,
+  svg: FavoritesIcon,
   exec: (dispatch, getState) => {
     const state = getState()
     const cursor = state.cursor!

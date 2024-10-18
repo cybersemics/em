@@ -6,6 +6,7 @@ const fontSizeDownShortcut: Shortcut = {
   id: 'fontSizeDown',
   label: 'Decrease Font Size',
   description: 'Decrease the font size. Get your reading glasses.',
+  multicursor: 'ignore',
   // TODO: Create unique icon
   svg: SettingsIcon,
   exec: dispatch => {

@@ -1,8 +1,9 @@
-import { KeyInput, Keyboard, Page } from 'puppeteer'
+import { KeyInput, Keyboard } from 'puppeteer'
+import { page } from '../setup'
 
 type Options = Parameters<Keyboard['press']>[1]
 
 /** Presses a key on the keyboad. */
-const press = (page: Page, key: KeyInput, options?: Options) => page.keyboard.press(key, options)
+const press = (key: KeyInput, options?: Options) => page.keyboard.press(key, options)
 
 export default press

@@ -4,6 +4,8 @@ import Dispatch from './Dispatch'
 import GesturePath from './GesturePath'
 import Icon from './Icon'
 import Key from './Key'
+import MulticursorFilter from './MulticursorFilter'
+import Path from './Path'
 import ShortcutId from './ShortcutId'
 import ShortcutType from './ShortcutType'
 import State from './State'
@@ -34,7 +36,7 @@ interface Shortcut {
     getState: () => State,
     e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
     { type }: { type: ShortcutType },
-  ) => void
+  ) => void | Promise<void>
 
   /** A MultiGesture sequence to activate the shortcut on touch screens. */
   gesture?: GesturePath | GesturePath[]
@@ -71,6 +73,41 @@ interface Shortcut {
 
   // an icon that represents the shortcut in the Toolbar
   svg: (icon: Icon) => React.ReactNode
+
+  /** Multicursor support. If 'ignore', the shortcut will be executed as if there were no multicursors. When true, the shortcut will be executed for each cursor. Optional object for more control. */
+  multicursor:
+    | 'ignore'
+    | boolean
+    | {
+        /** Whether multicursor mode is enabled for this shortcut. */
+        enabled: boolean
+        /** An error message to display when multicursor mode is not enabled. */
+        error?: (getState: () => State) => string | null
+        /** Optional override for executing the shortcut for multiple cursors. */
+        execMulticursor?: (
+          cursors: Path[],
+          dispatch: Dispatch,
+          getState: () => State,
+          e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
+          { type }: { type: ShortcutType },
+          execAll: () => void,
+        ) => void
+        /** Prevent the cursor from being set back at the end of the shortcut execution. */
+        preventSetCursor?: boolean
+        /** Reverse the order of the cursors before executing the shortcut. */
+        reverse?: boolean
+        /** Clear the multicursor after the shortcut is executed. */
+        clearMulticursor?: boolean
+        /**
+         * Filter the cursors before executing the shortcut.
+         *
+         * 'none' - Execute the shortcut for all cursors.
+         * 'first-sibling' - Execute the shortcut for only the first sibling within the same parent.
+         * 'last-sibling' - Execute the shortcut for only the last sibling within the same parent.
+         * 'prefer-ancestor' - Execute the shortcut for the highest direct ancestors in the selection.
+         */
+        filter?: MulticursorFilter
+      }
 }
 
 export default Shortcut

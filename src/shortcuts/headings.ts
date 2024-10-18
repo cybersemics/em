@@ -1,6 +1,12 @@
 import Shortcut from '../@types/Shortcut'
 import { headingActionCreator as heading } from '../actions/heading'
-import SettingsIcon from '../components/icons/SettingsIcon'
+import Heading1Icon from '../components/icons/Heading1Icon'
+import Heading2Icon from '../components/icons/Heading2Icon'
+import Heading3Icon from '../components/icons/Heading3Icon'
+import Heading4Icon from '../components/icons/Heading4Icon'
+import Heading5Icon from '../components/icons/Heading5Icon'
+import NormalTextIcon from '../components/icons/NormalTextIcon'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 export const headingLabels = {
@@ -11,6 +17,15 @@ export const headingLabels = {
   5: 'small',
 }
 
+// Choose the SVG icon based on the heading level
+const iconMap = {
+  0: NormalTextIcon,
+  1: Heading1Icon,
+  2: Heading2Icon,
+  3: Heading3Icon,
+  4: Heading4Icon,
+  5: Heading5Icon,
+}
 export type HeadingLevel = 0 | 1 | 2 | 3 | 4 | 5
 
 /** Creates a heading shortcut at a given level (h1, h2, etc). */
@@ -29,9 +44,12 @@ const headingShortcut = (level: HeadingLevel): Shortcut => ({
       }`
     : 'Sets a heading to normal text.',
   keyboard: { key: level.toString(), meta: true, alt: true },
-  // TODO: Create unique icon
-  svg: SettingsIcon,
-  canExecute: getState => !!getState().cursor && isDocumentEditable(),
+  multicursor: true,
+  svg: iconMap[level], // Assign the icon based on the level
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec: dispatch => {
     dispatch(heading({ level }))
   },

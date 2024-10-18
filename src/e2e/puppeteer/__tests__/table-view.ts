@@ -1,15 +1,15 @@
 import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
-import helpers from '../helpers'
+import paste from '../helpers/paste'
+import removeHUD from '../helpers/removeHUD'
+import screenshot from '../helpers/screenshot'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
-
-const { paste, removeHUD, screenshot } = helpers()
 
 describe('Table View', () => {
   beforeEach(removeHUD)

@@ -3,12 +3,15 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import { alertActionCreator as alert } from '../actions/alert'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { deleteResumableFile } from '../actions/importFiles'
 import { isTouch } from '../browser'
+import { AlertType } from '../constants'
 import useCombinedRefs from '../hooks/useCombinedRefs'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import syncStatusStore from '../stores/syncStatus'
+import fastClick from '../util/fastClick'
 import strip from '../util/strip'
 import CloseButton from './CloseButton'
 
@@ -29,6 +32,7 @@ const Popup = React.forwardRef<
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const padding = useSelector(state => state.fontSize / 2 + 2)
+  const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
   const useSwipeToDismissProps = useSwipeToDismiss({
     // dismiss after animation is complete to avoid touch events going to the Toolbar
     onDismissEnd: () => {
@@ -94,6 +98,16 @@ const Popup = React.forwardRef<
             syncStatusStore.update({ importProgress: 1 })
             onClose?.()
           }}
+        >
+          cancel
+        </a>
+      )}
+      {multicursor && (
+        <a
+          {...fastClick(e => {
+            dispatch(clearMulticursors())
+            onClose?.()
+          })}
         >
           cancel
         </a>

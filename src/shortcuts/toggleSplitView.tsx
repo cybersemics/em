@@ -20,6 +20,7 @@ const toggleSplitViewShortcut: Shortcut = {
   label: 'Split View',
   description: 'Render two independent views for side-by-side editing.',
   descriptionInverse: 'Revert to a single editing view.',
+  multicursor: 'ignore',
   svg: Icon,
   exec: (dispatch, getState) => {
     const state = getState()

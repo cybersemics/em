@@ -11,16 +11,18 @@ import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import attributeByContext from '../../test-helpers/attributeByContext'
 import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import createTestStore from '../../test-helpers/createTestStore'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
-import executeShortcut from '../../test-helpers/executeShortcut'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getDescendantsOfContext from '../../test-helpers/queries/getDescendantsOfContext'
 import getThoughtByContext from '../../test-helpers/queries/getThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import executeShortcut, { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import hashPath from '../../util/hashPath'
 import toggleSortShortcut from '../toggleSort'
 
 describe('store', () => {
@@ -855,6 +857,131 @@ describe('DOM', () => {
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('_bc')
+    })
+  })
+})
+
+describe('multicursor', () => {
+  it('should sort the cursors with first-sibling filter', async () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+        `,
+      }),
+      setCursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    executeShortcutWithMulticursor(toggleSortShortcut, { store })
+
+    const state = store.getState()
+    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Asc
+  - a
+  - b
+  - c`)
+  })
+
+  it('should handle nested thoughts', async () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+          - y
+            - =sort
+              - Alphabetical
+                - Asc
+            - d
+            - e
+            - f
+          - x
+            - a
+            - b
+            - c
+        `,
+      }),
+      setCursor(['y']),
+      addMulticursor(['y', 'd']),
+      addMulticursor(['y', 'e']),
+      addMulticursor(['y', 'f']),
+      addMulticursor(['x']),
+      addMulticursor(['x', 'a']),
+      addMulticursor(['x', 'b']),
+      addMulticursor(['x', 'c']),
+    ])
+
+    executeShortcutWithMulticursor(toggleSortShortcut, { store })
+
+    const state = store.getState()
+    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Asc
+  - x
+    - =sort
+      - Alphabetical
+        - Asc
+    - a
+    - b
+    - c
+  - y
+    - f
+    - e
+    - d
+    - =sort
+      - Alphabetical
+        - Desc`)
+  })
+
+  it('should maintain multicursor after sorting', () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    executeShortcutWithMulticursor(toggleSortShortcut, { store })
+
+    const state = store.getState()
+    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+    const a = contextToPath(state, ['a'])!
+    const b = contextToPath(state, ['b'])!
+    const c = contextToPath(state, ['c'])!
+
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Asc
+  - a
+  - b
+  - c`)
+
+    expect(state.multicursors).toEqual({
+      [hashPath(a)]: a,
+      [hashPath(b)]: b,
+      [hashPath(c)]: c,
     })
   })
 })

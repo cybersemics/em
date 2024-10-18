@@ -1,43 +1,29 @@
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
+import { ICON_SCALING_FACTOR } from '../../constants'
 
-/** Text Color Icon Component. */
-const Icon = ({ size = 20, style, cssRaw }: IconType) => {
-  size = style?.height ? +style.height : size
+/** TextColor Icon. */
+const TextColorIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
+  const newSize = size * ICON_SCALING_FACTOR
+  const strokeColor = style.fill || fill || token('colors.fg')
+
   return (
-    <span className={cx(icon(), css({ display: 'inline-block' }))}>
-      <span
-        className={cx(
-          css(
-            {
-              borderRadius: 5,
-              display: 'inline-block',
-              marginLeft: 2,
-              marginRight: 2,
-              textAlign: 'center',
-            },
-            cssRaw,
-          ),
-        )}
-        style={{
-          border: `solid 1px ${style?.fill || style?.color}`,
-          marginTop: size / 10 - 1,
-          color: style?.fill,
-          ...style,
-          width: size * 0.8,
-          height: size * 0.8,
-        }}
-      >
-        <span
-          className={css({ verticalAlign: 'top', position: 'relative', top: '1px' })}
-          style={{ fontSize: size * 0.65 }}
-        >
-          A
-        </span>
-      </span>
-    </span>
+    <svg
+      className={cx(icon(), css(cssRaw))}
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 24 24'
+      fill='none'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+    >
+      <rect width='24' height='24' fill='none' />
+      <rect x='2.73' y='2.73' width='18.53' height='18.53' rx='3' fill='none' stroke={strokeColor} />
+      <line x1='12' y1='7.2' x2='7.42' y2='16.6' fill='none' stroke={strokeColor} />
+      <line x1='12' y1='7.2' x2='16.58' y2='16.6' fill='none' stroke={strokeColor} />
+      <line x1='8.96' y1='13.44' x2='15.05' y2='13.44' fill='none' stroke={strokeColor} />
+    </svg>
   )
 }
 
-export default Icon
+export default TextColorIcon

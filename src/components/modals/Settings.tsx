@@ -7,6 +7,7 @@ import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actio
 import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../../constants'
 import getUserSetting from '../../selectors/getUserSetting'
 import fastClick from '../../util/fastClick'
+import ThemeSwitch from '../ThemeSwitch'
 import ActionButton from './../ActionButton'
 import Checkbox from './../Checkbox'
 import ModalComponent from './ModalComponent'
@@ -124,7 +125,7 @@ const ModalSettings = () => {
       )}
     >
       <form>
-        <p style={{ marginBottom: '3em', marginTop: '-1em' }}>
+        <p style={{ marginBottom: '2em', marginTop: '-1em' }}>
           <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))} className={extendTap()}>
             Customize Toolbar
           </a>{' '}
@@ -133,6 +134,10 @@ const ModalSettings = () => {
 
         <div style={{ marginBottom: '2em' }}>
           <FontSize />
+        </div>
+
+        <div style={{ marginBottom: '2em' }}>
+          <ThemeSwitch />
         </div>
 
         <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>

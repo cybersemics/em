@@ -37,21 +37,21 @@ const Alert: FC = () => {
     <div className={css({ marginTop: '0.5em' })}>
       <a
         className={cx(anchorButton({ small: true, isDisabled: !undoEnabled }), css({ margin: '0.25em' }))}
-        {...fastClick(e => {
+        {...fastClick(() => {
           dispatch(undo())
         })}
       >
-        <UndoIcon fill='black' cssRaw={css.raw({ position: 'relative', top: '0.25em', right: '0.25em' })} />
+        <UndoIcon size={14} fill='black' cssRaw={css.raw({ position: 'relative', top: '0.25em', right: '0.25em' })} />
         Undo
       </a>
       <a
         className={cx(anchorButton({ small: true, isDisabled: !redoEnabled }), css({ margin: '0.25em' }))}
-        {...fastClick(e => {
+        {...fastClick(() => {
           dispatch(redo())
         })}
       >
         Redo
-        <RedoIcon fill='black' cssRaw={css.raw({ position: 'relative', top: '0.25em', left: '0.25em' })} />
+        <RedoIcon size={14} fill='black' cssRaw={css.raw({ position: 'relative', top: '0.25em', left: '0.25em' })} />
       </a>
     </div>
   ) : null

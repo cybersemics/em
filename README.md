@@ -84,3 +84,13 @@ To the user, a thought just consists of a bullet, text, and superscript indicati
 - `<ThoughtAnnotation>` - A non-interactive, hidden clone of the Thought that is used to position the Superscript at the end of the Thought. This is needed because the Thought has an extended click area, while the Superscript needs to be rendered flush to the right edge of the text.
 - `<StaticSuperscript>` - Renders the number of contexts a thought appears in as a superscript.
 - `<Editable>` - Renders the thought text as a content-editable and handles live editing, throttled updates, selection, pasting, and all other editing capacities.
+
+## Styles
+
+This project uses [PandaCSS](https://panda-css.com/) for styling. Styles are automatically generated from ts files at compile-time when the dev server is running.
+
+- Do not add any styles to App.css.
+- Prefer inline styles, e.g. `css({ margin: '10px', padding: '10px' })`
+- If the styles get out of sync, restart the dev server or run `panda codegen`.
+
+See: https://panda-css.com/docs/concepts/writing-styles

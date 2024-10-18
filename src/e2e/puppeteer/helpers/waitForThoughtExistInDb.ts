@@ -1,10 +1,10 @@
-import { Page } from 'puppeteer'
 import { WindowEm } from '../../../initialize'
+import { page } from '../setup'
 
 const em = window.em as WindowEm
 
 /** Wait for the given thought value to exist in the database. */
-const waitForThoughtExistInDb = async (page: Page, value: string) => {
+const waitForThoughtExistInDb = async (value: string) => {
   await page.evaluate(async value => {
     await new Promise(resolve => {
       const testHelpers = em.testHelpers

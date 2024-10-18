@@ -2,22 +2,95 @@ import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
+import { ICON_SCALING_FACTOR } from '../../constants'
 
 /** Device icon. */
-const DeviceIcon = ({ fill, size = 20, style, cssRaw }: IconType) => {
+const DeviceIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
+  const newSize = size * ICON_SCALING_FACTOR
+  const strokeColor = style.fill || fill || token('colors.fg')
+
   return (
     <svg
       className={cx(icon(), css(cssRaw))}
-      width={size}
-      height={size}
-      fill={fill || token('colors.fg')}
-      style={style}
-      viewBox='150 70 400 420'
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 24 24'
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+      fill='none'
     >
-      <g>
-        <path d='m264.32 446.88c0 8.9688-7.2695 16.242-16.242 16.242-8.9688 0-16.238-7.2734-16.238-16.242s7.2695-16.238 16.238-16.238c8.9727 0 16.242 7.2695 16.242 16.238' />
-        <path d='m421.12 409.92c0 8.9688-7.2734 16.238-16.242 16.238s-16.238-7.2695-16.238-16.238c0-8.9727 7.2695-16.242 16.238-16.242s16.242 7.2695 16.242 16.242' />
-        <path d='m512.96 67.199h-213.92c-20.16 0-38.641 17.922-38.641 37.52v40.883h-70c-26.32 0-47.602 21.281-47.602 47.602v246.4c0 26.32 21.281 47.602 47.602 47.602h112c19.039 0 35.84-11.762 43.121-28h167.44c20.16 0 38.641-17.922 38.641-37.52v-316.96c0-19.598-18.48-37.52-38.641-37.52zm-322.56 95.199h112c16.801 0 30.801 14 30.801 30.801v8.4023h-173.6v-8.3984c0-16.805 14-30.805 30.797-30.805zm-30.797 56h173.6v190.4l-173.6 0.003906zm142.8 252h-112c-16.801 0-30.801-14-30.801-30.801l0.003906-13.996h173.6v14c-0.003906 16.797-14.004 30.797-30.805 30.797zm232.4-48.719c0 10.641-10.641 20.719-21.84 20.719h-162.96v-2.8008-246.4c0-26.32-21.281-47.602-47.602-47.602l-25.199 0.003906v-40.879c0-10.641 10.641-20.719 21.84-20.719h214.48c11.199 0 21.84 10.078 21.84 20.719v316.96z' />
+      <g id='Layer_2' data-name='Layer 2'>
+        <g id='Layer_3' data-name='Layer 3'>
+          <g id='_26-device-management' data-name='26-device-management'>
+            <rect className='cls-1' width='24' height='24' fill='none' />
+            <path
+              d='M8.25,6.22v-2a2.44,2.44,0,0,1,2.44-2.44h8.45a2.44,2.44,0,0,1,2.44,2.44v12.3a2.44,2.44,0,0,1-2.44,2.44H12.39'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <rect
+              x='2.81'
+              y='6.22'
+              width='9.58'
+              height='16.12'
+              rx='2'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <line
+              x1='2.81'
+              y1='18.38'
+              x2='12.39'
+              y2='18.38'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <line
+              x1='2.81'
+              y1='8.94'
+              x2='12.39'
+              y2='8.94'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <line
+              x1='7.6'
+              y1='20.39'
+              x2='7.6'
+              y2='20.39'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <line
+              x1='14.91'
+              y1='15.96'
+              x2='14.91'
+              y2='15.96'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+            <line
+              x1='15.56'
+              y1='4.36'
+              x2='14.26'
+              y2='4.36'
+              fill='none'
+              stroke={strokeColor}
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+          </g>
+        </g>
       </g>
     </svg>
   )

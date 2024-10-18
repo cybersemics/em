@@ -131,6 +131,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     latestShortcuts: [],
     manualSortMap: {},
     modals: {},
+    multicursors: {},
     noteFocus: false,
     recentlyEdited: {},
     redoPatches: [],

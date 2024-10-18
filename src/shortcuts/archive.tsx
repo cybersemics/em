@@ -1,15 +1,14 @@
 import { Key } from 'ts-key-enum'
-import { css, cx } from '../../styled-system/css'
-import { icon } from '../../styled-system/recipes'
-import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { errorActionCreator as error } from '../actions/error'
+import ArchiveIcon from '../components/icons/ArchiveIcon'
 import { AlertType, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -49,49 +48,54 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
           dispatch(alert(null))
         }
       }, 5000)
-
       // archive the thought
       dispatch(archiveThought({ path: state.cursor ?? undefined }))
     }
   }
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
-const Icon = ({ fill = 'black', size = 20, style, cssRaw }: IconType) => (
-  <svg
-    version='1.1'
-    className={cx(icon(), css(cssRaw))}
-    xmlns='http://www.w3.org/2000/svg'
-    width={size}
-    height={size}
-    fill={fill}
-    style={style}
-    viewBox='0 0 20 16'
-    enableBackground='new 0 0 50 50'
-  >
-    <g>
-      <path d='M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1V2zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5H2zm13-3H1v2h14V2zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z' />
-    </g>
-  </svg>
-)
-
 const archiveShortcut: Shortcut = {
   id: 'archive',
   label: 'Archive',
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
   gesture: 'ldl',
-  svg: Icon,
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+    clearMulticursor: true,
+    execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
+      const numThougths = cursors.length
+
+      execAll()
+
+      dispatch(
+        alert(`Deleted ${numThougths} thoughts.`, {
+          alertType: AlertType.ThoughtDeleted,
+          clearDelay: 8000,
+          showCloseLink: true,
+        }),
+      )
+    },
+  },
+  svg: ArchiveIcon,
   keyboard: { key: Key.Backspace, shift: true, meta: true },
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec,
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const archiveAliases: Shortcut = {
   id: 'archiveAliases',
-  svg: Icon,
+  svg: ArchiveIcon,
   label: 'Archive',
   hideFromHelp: true,
+  multicursor: {
+    enabled: true,
+    preventSetCursor: true,
+  },
   gesture: [
     'ldlr',
     'lrdl',
@@ -107,7 +111,10 @@ export const archiveAliases: Shortcut = {
     'lrdldru',
     'lrdldlru',
   ],
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => {
+    const state = getState()
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+  },
   exec,
 }
 

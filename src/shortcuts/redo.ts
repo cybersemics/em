@@ -7,6 +7,7 @@ import getLatestActionType from '../util/getLastActionType'
 const redoShortcut: Shortcut = {
   id: 'redo',
   label: 'Redo',
+  multicursor: 'ignore',
   description: getState => {
     const lastActionType = getLatestActionType(getState().redoPatches)
 

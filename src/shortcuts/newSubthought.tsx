@@ -7,12 +7,18 @@ import isDocumentEditable from '../util/isDocumentEditable'
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec = newThought({ insertNewSubthought: true })
 
+const multicursor = {
+  enabled: false,
+  error: () => 'Cannot create a new subthought with multiple thoughts.',
+}
+
 const newSubthoughtShortcut: Shortcut = {
   id: 'newSubthought',
   label: 'New Subthought',
   description: 'Create a new subthought in the current thought. Adds it to the bottom of any existing subthoughts.',
   gesture: 'rdr',
   keyboard: { key: Key.Enter, meta: true },
+  multicursor,
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,
@@ -55,6 +61,7 @@ export const newSubthoughtAliases: Shortcut = {
     'rldldru',
     'rldldlru',
   ],
+  multicursor,
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,

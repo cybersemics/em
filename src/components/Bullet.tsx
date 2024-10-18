@@ -8,6 +8,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
+import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 // import testFlags from '../e2e/testFlags'
 import attributeEquals from '../selectors/attributeEquals'
@@ -17,6 +18,7 @@ import getLexeme from '../selectors/getLexeme'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
 import hashPath from '../util/hashPath'
@@ -411,9 +413,10 @@ const Bullet = ({
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
+  const isMulticursor = useSelector(state => isMulticursorPath(state, path))
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
-    return isHolding || isDragging
+    return isHolding || isDragging || isMulticursor
   })
   const bulletIsDivider = useSelector(state =>
     isDivider(getThoughtById(state, thoughtId)?.value) ? 'none' : undefined,
@@ -480,6 +483,12 @@ const Bullet = ({
       // stopping propagation from useLongPress was not working either due to bubbling order or mismatched event type
       if (dragHold) return
 
+      // short circuit if toggling multiselect
+      if (!isTouch && (isMac ? e.metaKey : e.ctrlKey)) {
+        dispatch(toggleMulticursor({ path }))
+        return
+      }
+
       dispatch((dispatch, getState) => {
         const state = getState()
         const isExpanded = state.expanded[hashPath(path)]
@@ -497,7 +506,7 @@ const Bullet = ({
             ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
             : [deleteAttribute({ path: simplePath, value: '=pin' })]),
           // move cursor
-          setCursor({ path: shouldCollapse ? pathParent : path }),
+          setCursor({ path: shouldCollapse ? pathParent : path, preserveMulticursor: true }),
         ])
       })
     },

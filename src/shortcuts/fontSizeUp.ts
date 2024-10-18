@@ -6,6 +6,7 @@ const fontSizeUpShortcut: Shortcut = {
   id: 'fontSizeUp',
   label: 'Increase Font Size',
   description: 'Increase the font size. Bigger is better!',
+  multicursor: 'ignore',
   // TODO: Create unique icon
   svg: SettingsIcon,
   exec: dispatch => {

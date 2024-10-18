@@ -8,7 +8,15 @@ interface Options {
 }
 
 /** Generates a user-friendly phrase describing how many thoughts will be exported. */
-const exportPhrase = (id: ThoughtId, numDescendants: number | null, { value }: Options = {}) => {
+const exportPhrase = (idOrIds: ThoughtId | ThoughtId[], numDescendants: number | null, { value }: Options = {}) => {
+  if (Array.isArray(idOrIds) && idOrIds.length > 1) {
+    return `${idOrIds.length} thoughts ${
+      numDescendants ? ` and ${numDescendants.toLocaleString()} subthought${numDescendants === 1 ? '' : 's'}` : ''
+    }`
+  }
+
+  const id = Array.isArray(idOrIds) ? idOrIds[0] : idOrIds
+
   // presumably getThoughtById will never fail, but guard for safety
   const label = ellipsize(value || 'thought')
 

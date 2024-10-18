@@ -22,6 +22,14 @@ import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
 
+/** Returns duration values with a zero duration for _test. */
+const duration = (str: string) => ({
+  value: {
+    base: str,
+    _test: '0ms',
+  },
+})
+
 const keyframes = defineKeyframes({
   fademostlyin: {
     from: {
@@ -324,32 +332,12 @@ export default defineConfig({
           },
         },
         durations: {
-          highlightPulseDuration: {
-            value: {
-              base: '500ms',
-              _test: '0s',
-            },
-          },
-          hoverPulseDuration: {
-            value: {
-              base: '300ms',
-              _test: '0s',
-            },
-          },
+          highlightPulseDuration: duration('500ms'),
+          hoverPulseDuration: duration('300ms'),
           /** The animation duration for the slower opacity transition and horizontal shift of the LayoutTree as the depth of the cursor changes. */
-          layoutSlowShiftDuration: {
-            value: {
-              base: '750ms',
-              _test: '0s',
-            },
-          },
+          layoutSlowShiftDuration: duration('750ms'),
           /** The animation duration of a node in the LayoutTree component. */
-          layoutNodeAnimationDuration: {
-            value: {
-              base: '150ms',
-              _test: '0s',
-            },
-          },
+          layoutNodeAnimationDuration: duration('150ms'),
         },
       },
     },
