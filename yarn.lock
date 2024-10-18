@@ -8276,6 +8276,7 @@ __metadata:
     reselect: "npm:^5.1.1"
     tcp-port-used: "npm:^1.0.2"
     text-block-parser: "npm:^1.1.1"
+    title-case: "npm:^4.3.2"
     truncate-html: "npm:^1.1.2"
     ts-key-enum: "npm:^2.0.12"
     typescript: "npm:5.4.5"
@@ -17472,6 +17473,13 @@ __metadata:
   version: 3.0.0
   resolution: "tinyspy@npm:3.0.0"
   checksum: 10c0/eb0dec264aa5370efd3d29743825eb115ed7f1ef8a72a431e9a75d5c9e7d67e99d04b0d61d86b8cd70c79ec27863f241ad0317bc453f78762e0cbd76d2c332d0
+  languageName: node
+  linkType: hard
+
+"title-case@npm:^4.3.2":
+  version: 4.3.2
+  resolution: "title-case@npm:4.3.2"
+  checksum: 10c0/f040c5b0586e3a4ac5881e59ac060ebfa56dae611b0d513ad211fa7f92597d418395fa902fe9d7ee49f98e557e88421e274680b22a3b04dd1ce1c577225444d3
   languageName: node
   linkType: hard
 

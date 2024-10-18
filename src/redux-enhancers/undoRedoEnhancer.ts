@@ -123,6 +123,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   swapParent: true,
   toggleAbsoluteContext: false,
   toggleAttribute: true,
+  toggleLetterCase: false,
   toggleColorPicker: false,
   toggleContextView: true,
   toggleHiddenThoughts: true,
