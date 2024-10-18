@@ -14,7 +14,7 @@ const newUncleShortcut: Shortcut = {
   keyboard: { key: Key.Enter, meta: true, alt: true },
   multicursor: {
     enabled: false,
-    error: () => 'Cannot create a new subthought with multiple thoughts.',
+    error: 'Cannot create a new subthought with multiple thoughts.',
   },
   svg: NewSubthoughtNextIcon,
   canExecute: state => {

@@ -13,7 +13,7 @@ const clearThoughtShortcut: Shortcut = {
   keyboard: { key: 'c', alt: true, shift: true, meta: true },
   multicursor: {
     enabled: false,
-    error: () => 'Cannot clear multiple thougths.',
+    error: 'Cannot clear multiple thougths.',
   },
   svg: ClearThoughtIcon,
   canExecute: state => {

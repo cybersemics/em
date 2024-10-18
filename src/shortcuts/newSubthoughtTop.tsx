@@ -12,7 +12,7 @@ const newSubthoughtTopShortcut: Shortcut = {
   keyboard: { key: Key.Enter, shift: true, meta: true },
   multicursor: {
     enabled: false,
-    error: () => 'Cannot create a new subthought with multiple thoughts.',
+    error: 'Cannot create a new subthought with multiple thoughts.',
   },
   svg: NewSubthoughtAboveIcon,
   canExecute: () => isDocumentEditable(),

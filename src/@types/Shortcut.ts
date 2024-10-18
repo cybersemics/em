@@ -82,7 +82,7 @@ interface Shortcut {
         /** Whether multicursor mode is enabled for this shortcut. */
         enabled: boolean
         /** An error message to display when multicursor mode is not enabled. */
-        error?: (getState: () => State) => string | null
+        error?: ((state: State) => string) | string
         /** Optional override for executing the shortcut for multiple cursors. */
         execMulticursor?: (
           cursors: Path[],

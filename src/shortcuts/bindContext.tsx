@@ -37,7 +37,7 @@ const bindContextShortcut: Shortcut = {
   gesture: 'rud',
   multicursor: {
     enabled: false,
-    error: () => 'Cannot bind multiple thoughts.',
+    error: 'Cannot bind multiple thoughts.',
   },
   keyboard: { key: 'b', shift: true, alt: true },
   hideFromHelp: true,

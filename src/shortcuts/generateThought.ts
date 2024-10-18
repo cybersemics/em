@@ -26,7 +26,7 @@ const generateThought: Shortcut = {
   svg: GenerateThoughtIcon,
   multicursor: {
     enabled: false,
-    error: () => 'Cannot generate multiple thoughts.',
+    error: 'Cannot generate multiple thoughts.',
   },
   canExecute: state => isDocumentEditable() && !!state.cursor,
   exec: async (dispatch, getState) => {

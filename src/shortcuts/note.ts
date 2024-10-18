@@ -16,7 +16,7 @@ const noteShortcut: Shortcut = {
   gesture: 'rdlr',
   multicursor: {
     enabled: false,
-    error: () => 'Cannot create a note with multiple thoughts.',
+    error: 'Cannot create a note with multiple thoughts.',
   },
   svg: PencilIcon,
   canExecute: state => isDocumentEditable() && !!state.cursor,

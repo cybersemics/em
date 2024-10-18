@@ -10,7 +10,7 @@ const newGrandChildShortcut: Shortcut = {
   gesture: 'rdrd',
   multicursor: {
     enabled: false,
-    error: () => 'Cannot create a new grandchild with multiple thoughts.',
+    error: 'Cannot create a new grandchild with multiple thoughts.',
   },
   // TODO: Create unique icon
   svg: SettingsIcon,

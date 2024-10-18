@@ -11,7 +11,7 @@ const textColor: Shortcut = {
   canExecute: state => isDocumentEditable() && !!state.cursor,
   multicursor: {
     enabled: false,
-    error: () => 'Cannot change text color with multiple thoughts.',
+    error: 'Cannot change text color with multiple thoughts.',
   },
   exec: (dispatch, getState) => {
     const state = getState()
