@@ -51,8 +51,7 @@ const toggleSortShortcut: Shortcut = {
   },
   // Show an error if the ranks do not match the sort condition.
   // This is only needed for migrating to permasort, and can be removed after the migration is complete.
-  error: getState => {
-    const state = getState()
+  error: state => {
     if (!state.cursor || isRoot(state.cursor)) return null
 
     const simplePath = simplifyPath(state, state.cursor)
