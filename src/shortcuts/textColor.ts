@@ -21,7 +21,7 @@ const textColor: Shortcut = {
     })
   },
   isActive: state => !!state.cursor,
-  isDropdownOpen: getState => !!getState().showColorPicker,
+  isDropdownOpen: state => !!state.showColorPicker,
 }
 
 export default textColor

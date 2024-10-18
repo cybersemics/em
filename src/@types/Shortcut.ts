@@ -54,7 +54,7 @@ interface Shortcut {
   isActive?: (state: State) => boolean
 
   /** When true, a small open dropdown indicator will be rendered beneath the icon. */
-  isDropdownOpen?: (getState: () => State) => boolean
+  isDropdownOpen?: (state: State) => boolean
 
   /** A keyboard sequence to activate the shortcut. */
   keyboard?: Key | string
