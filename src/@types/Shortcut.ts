@@ -22,10 +22,10 @@ interface Shortcut {
   conflicts?: string[]
 
   /** A description of what the shortcut does that is shown in the Help modal. */
-  description?: string | ((getState: () => State) => string)
+  description?: string | ((state: State) => string)
 
   /** A description of what the shortcut does whnn it is in an inverse state. */
-  descriptionInverse?: string | ((getState: () => State) => string)
+  descriptionInverse?: string | ((state: State) => string)
 
   /** A function that returns an error message if the shortcut should indicate an error. */
   error?: (getState: () => State) => string | null

@@ -9,8 +9,8 @@ const undoShortcut: Shortcut = {
   id: 'undo',
   label: 'Undo',
   multicursor: 'ignore',
-  description: getState => {
-    const lastActionType = getLatestActionType(getState().undoPatches)
+  description: state => {
+    const lastActionType = getLatestActionType(state.undoPatches)
 
     if (lastActionType) {
       return `Undo ${startCase(lastActionType)}`

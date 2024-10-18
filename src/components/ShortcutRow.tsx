@@ -64,7 +64,7 @@ const ShortcutRow = ({
 
   const description = useSelector(state => {
     if (!shortcut) return ''
-    return typeof shortcut.description === 'function' ? shortcut.description(() => state) : shortcut.description
+    return typeof shortcut.description === 'function' ? shortcut.description(state) : shortcut.description
   })
 
   return (

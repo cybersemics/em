@@ -139,7 +139,7 @@ const CommandRow: FC<{
   const description = useSelector(state => {
     const descriptionStringOrFunction = (isActive && shortcut.descriptionInverse) || shortcut.description
     return descriptionStringOrFunction instanceof Function
-      ? descriptionStringOrFunction(() => state)
+      ? descriptionStringOrFunction(state)
       : descriptionStringOrFunction
   })
 

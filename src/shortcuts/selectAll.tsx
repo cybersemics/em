@@ -8,8 +8,7 @@ const selectAllShortcut: Shortcut = {
   id: 'selectAll',
   label: 'Select All',
   svg: () => null,
-  description: getState => {
-    const state = getState()
+  description: state => {
     return isTouch
       ? 'Selects all thoughts at the current level. May reduce wrist strain.'
       : hasMulticursor(state)
