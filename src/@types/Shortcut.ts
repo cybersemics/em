@@ -14,21 +14,21 @@ interface Shortcut {
   /** Allow the shortcut to be executed when a modal is open. */
   allowExecuteFromModal?: boolean
 
-  /** A function that returns true if the shortcut can be executed with the current state. */
-  canExecute?: (getState: () => State) => boolean
+  /** A selector that returns true if the shortcut can be executed with the current state. */
+  canExecute?: (state: State) => boolean
 
   /** An ad hoc property to track conflicting shortcuts. */
   // TODO: Refactor so this is not in the main Shortcut type.
   conflicts?: string[]
 
   /** A description of what the shortcut does that is shown in the Help modal. */
-  description?: string | ((getState: () => State) => string)
+  description?: string | ((state: State) => string)
 
   /** A description of what the shortcut does whnn it is in an inverse state. */
-  descriptionInverse?: string | ((getState: () => State) => string)
+  descriptionInverse?: string | ((state: State) => string)
 
   /** A function that returns an error message if the shortcut should indicate an error. */
-  error?: (getState: () => State) => string | null
+  error?: (state: State) => string | null
 
   /** Executes the shortcut. */
   exec: (
@@ -51,10 +51,10 @@ interface Shortcut {
   id: ShortcutId
 
   /** A function that returns true if the shortcut should be highlighted in the Toolbar. */
-  isActive?: (getState: () => State) => boolean
+  isActive?: (state: State) => boolean
 
   /** When true, a small open dropdown indicator will be rendered beneath the icon. */
-  isDropdownOpen?: (getState: () => State) => boolean
+  isDropdownOpen?: (state: State) => boolean
 
   /** A keyboard sequence to activate the shortcut. */
   keyboard?: Key | string
@@ -82,7 +82,7 @@ interface Shortcut {
         /** Whether multicursor mode is enabled for this shortcut. */
         enabled: boolean
         /** An error message to display when multicursor mode is not enabled. */
-        error?: (getState: () => State) => string | null
+        error?: ((state: State) => string) | string
         /** Optional override for executing the shortcut for multiple cursors. */
         execMulticursor?: (
           cursors: Path[],

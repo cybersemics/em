@@ -15,12 +15,10 @@ const toggleDone: Shortcut = {
   descriptionInverse: 'Unmarks a thought as done.',
   keyboard: { alt: true, shift: true, key: 'Enter' },
   multicursor: true,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
-  isActive: getState => {
-    const state = getState()
+  isActive: state => {
     const cursor = state.cursor
     return !!cursor && !!findDescendant(state, head(cursor), ['=done'])
   },

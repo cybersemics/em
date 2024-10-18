@@ -9,7 +9,7 @@ const exec = newThought({ insertNewSubthought: true })
 
 const multicursor = {
   enabled: false,
-  error: () => 'Cannot create a new subthought with multiple thoughts.',
+  error: 'Cannot create a new subthought with multiple thoughts.',
 }
 
 const newSubthoughtShortcut: Shortcut = {

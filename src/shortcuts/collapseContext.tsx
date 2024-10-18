@@ -15,8 +15,7 @@ const collapseContextShortcut: Shortcut = {
   },
   svg: CollapseIcon,
   keyboard: { key: 'c', meta: true, alt: true },
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
   exec: dispatch => {

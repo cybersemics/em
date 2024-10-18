@@ -62,7 +62,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
 
 const multicursor = {
   enabled: false,
-  error: () => 'Cannot create a new thought with multiple thoughts.',
+  error: 'Cannot create a new thought with multiple thoughts.',
 }
 
 const newThoughtShortcut: Shortcut = {

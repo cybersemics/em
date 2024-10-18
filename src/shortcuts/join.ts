@@ -9,10 +9,10 @@ const joinThoughts: Shortcut = {
   keyboard: { key: 'i', alt: true, shift: true },
   multicursor: {
     enabled: false,
-    error: () => 'Cannot join multiple thoughts.',
+    error: 'Cannot join multiple thoughts.',
   },
   svg: JoinThoughtsIcon,
-  canExecute: getState => !!getState().cursor,
+  canExecute: state => !!state.cursor,
   exec: (dispatch, getState) => {
     dispatch(join())
   },

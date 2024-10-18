@@ -16,8 +16,7 @@ const proseViewShortcut: Shortcut = {
   keyboard: { key: 'p', shift: true, alt: true },
   multicursor: true,
   svg: ProseViewIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: (dispatch, getState) => {
@@ -34,8 +33,7 @@ const proseViewShortcut: Shortcut = {
       }),
     )
   },
-  isActive: getState => {
-    const state = getState()
+  isActive: state => {
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return attributeEquals(state, head(path), '=view', 'Prose')

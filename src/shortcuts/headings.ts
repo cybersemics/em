@@ -46,8 +46,7 @@ const headingShortcut = (level: HeadingLevel): Shortcut => ({
   keyboard: { key: level.toString(), meta: true, alt: true },
   multicursor: true,
   svg: iconMap[level], // Assign the icon based on the level
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => {

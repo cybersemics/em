@@ -14,10 +14,9 @@ const toggleContextViewShortcut: Shortcut = {
   keyboard: { key: 's', shift: true, alt: true },
   multicursor: true,
   svg: ContextViewIcon,
-  canExecute: getState => !!getState().cursor,
-  isActive: getState => {
-    const state = getState()
-    return !!state.cursor && isContextViewActive(getState(), state.cursor)
+  canExecute: state => !!state.cursor,
+  isActive: state => {
+    return !!state.cursor && isContextViewActive(state, state.cursor)
   },
   exec: dispatch => dispatch(toggleContextView()),
 }

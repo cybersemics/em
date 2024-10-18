@@ -25,8 +25,7 @@ const pinAllShortcut: Shortcut = {
   keyboard: { key: 'p', meta: true, shift: true },
   multicursor: 'ignore',
   svg: PinAllIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
   exec: (dispatch, getState, e, { type }) => {
@@ -86,8 +85,7 @@ const pinAllShortcut: Shortcut = {
       },
     ])
   },
-  isActive: getState => {
-    const state = getState()
+  isActive: state => {
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     const childrenAttributeId = findDescendant(state, head(path), '=children')

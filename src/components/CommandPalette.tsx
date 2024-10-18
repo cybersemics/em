@@ -34,7 +34,7 @@ const commandPaletteShortcut = shortcutById('commandPalette')
 
 /** Returns true if the shortcut can be executed. */
 const isExecutable = (state: State, shortcut: Shortcut) =>
-  (!shortcut.canExecute || shortcut.canExecute(() => state)) && (shortcut.allowExecuteFromModal || !state.showModal)
+  (!shortcut.canExecute || shortcut.canExecute(state)) && (shortcut.allowExecuteFromModal || !state.showModal)
 
 /**********************************************************************
  * Components
@@ -131,7 +131,7 @@ const CommandRow: FC<{
   const store = useStore()
   const ref = React.useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
-  const isActive = shortcut.isActive?.(store.getState)
+  const isActive = shortcut.isActive?.(store.getState())
   const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
   const disabled = useSelector(state => !isExecutable(state, shortcut))
 
@@ -139,7 +139,7 @@ const CommandRow: FC<{
   const description = useSelector(state => {
     const descriptionStringOrFunction = (isActive && shortcut.descriptionInverse) || shortcut.description
     return descriptionStringOrFunction instanceof Function
-      ? descriptionStringOrFunction(() => state)
+      ? descriptionStringOrFunction(state)
       : descriptionStringOrFunction
   })
 
@@ -312,7 +312,7 @@ const CommandPalette: FC = () => {
       e.preventDefault()
       if (
         unmounted.current ||
-        (shortcut.canExecute && !shortcut.canExecute(store.getState)) ||
+        (shortcut.canExecute && !shortcut.canExecute(store.getState())) ||
         (store.getState().showModal && !shortcut.allowExecuteFromModal)
       )
         return
