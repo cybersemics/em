@@ -2,7 +2,7 @@ import Shortcut from '../@types/Shortcut'
 import Icon from '../components/icons/LetterCaseWithPicker'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-/** Toggle the built-in =done style to cross out an item. */
+/** Toggle the letter case picker. */
 const letterCase: Shortcut = {
   id: 'letterCase',
   label: 'LetterCase',
@@ -13,12 +13,8 @@ const letterCase: Shortcut = {
     enabled: false,
     error: () => 'Cannot change text color with multiple thoughts.',
   },
-  exec: (dispatch, getState) => {
-    const state = getState()
-    dispatch({
-      type: 'toggleLetterCase',
-      path: state.cursor,
-    })
+  exec: dispatch => {
+    dispatch({ type: 'toggleLetterCase' })
   },
   isActive: getState => !!getState().cursor,
   isDropdownOpen: getState => !!getState().showColorPicker,
