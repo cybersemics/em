@@ -1,4 +1,5 @@
 import { CSSProperties } from 'react'
+import { css, cx } from '../../styled-system/css'
 import fastClick from '../util/fastClick'
 
 interface ChevronImgProps {
@@ -14,9 +15,9 @@ const ChevronImg = ({ dark, onClickHandle, className, additonalStyle }: ChevronI
     viewBox='0 0 48 48'
     height='22px'
     width='22px'
-    style={{ ...additonalStyle, cursor: 'pointer' }}
+    style={additonalStyle}
     {...fastClick(onClickHandle)}
-    className={className || ''}
+    className={cx(className, css({ cursor: 'pointer' }))}
   >
     <path d='M14.83 16.42l9.17 9.17 9.17-9.17 2.83 2.83-12 12-12-12z' fill={dark ? '#fff' : '#000'} />
     <path d='M0-.75h48v48h-48z' fill='none' />

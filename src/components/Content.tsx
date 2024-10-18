@@ -1,6 +1,6 @@
-import classNames from 'classnames'
-import React, { FC, useMemo, useRef, useState } from 'react'
+import React, { FC, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import Dispatch from '../@types/Dispatch'
 import SimplePath from '../@types/SimplePath'
 import { Thunk } from '../@types/Thunk'
@@ -16,7 +16,6 @@ import isTutorial from '../selectors/isTutorial'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
-import publishMode from '../util/publishMode'
 import Editable from './Editable'
 import EmptyThoughtspace from './EmptyThoughtspace'
 import LayoutTree from './LayoutTree'
@@ -71,23 +70,36 @@ const Content: FC = () => {
     ])
   }
 
-  /** Generate class names. */
-  const contentClassNames = useMemo(
-    () =>
-      classNames({
-        content: true,
-        'content-tutorial': isTouch && tutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS,
-        publish: publishMode(),
-      }),
-    [tutorialStep, tutorial],
-  )
-
   return (
     <div id='content-wrapper'>
       <div
         id='content'
         ref={contentRef}
-        className={contentClassNames}
+        className={css({
+          backgroundColor: 'bg',
+          color: 'fg',
+          padding: '80px 10px 153px 50px',
+          position: 'relative',
+          transition: 'transform 0 ease-out, margin 0 ease-out',
+          boxSizing: 'border-box',
+          maxWidth: '66%',
+          margin: '0 auto',
+          minHeight: '100vh',
+          '@media (max-width: 960px)': {
+            maxWidth: '80%',
+          },
+          '@media (max-width: 560px)': {
+            maxWidth: '50em',
+            paddingLeft: '40px',
+          },
+          ...(isTouch &&
+            tutorial &&
+            tutorialStep !== TUTORIAL2_STEP_SUCCESS && {
+              /* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
+              minHeight: 'auto',
+              paddingBottom: '20px',
+            }),
+        })}
         {...fastClick(() => dispatch(clickOnEmptySpace))}
         onMouseDown={() => setIsPressed(true)}
       >

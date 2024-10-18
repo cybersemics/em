@@ -67,7 +67,7 @@ const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildPr
   const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ depth }) : 0
 
   return (
-    <li style={{ position: 'relative' }}>
+    <li className={css({ position: 'relative' })}>
       <span
         className={cx(
           dropEnd(),
@@ -82,9 +82,7 @@ const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildPr
           }),
         )}
         ref={dropTarget}
-        style={{
-          height: `${0.5 + dropTargetHeight}em`,
-        }}
+        style={{ height: `${0.5 + dropTargetHeight}em` }}
       >
         {testFlags.simulateDrop && (
           <span
@@ -112,9 +110,7 @@ const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildPr
                 width: '100%',
               }),
             )}
-            style={{
-              backgroundColor: dropHoverColor,
-            }}
+            style={{ backgroundColor: dropHoverColor }}
           />
         )}
       </span>

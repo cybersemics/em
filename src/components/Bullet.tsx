@@ -283,6 +283,7 @@ const BulletLeaf = ({
   return (
     <ellipse
       aria-label='bullet-glyph'
+      data-graypulse={pending}
       className={glyphFg({
         gray: missing,
         graypulse: pending,
