@@ -53,8 +53,7 @@ const pinShortcut: Shortcut = {
       }),
     )
   },
-  isActive: getState => {
-    const state = getState()
+  isActive: state => {
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return isPinned(state, head(path)) ?? false

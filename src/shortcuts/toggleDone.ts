@@ -18,8 +18,7 @@ const toggleDone: Shortcut = {
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
-  isActive: getState => {
-    const state = getState()
+  isActive: state => {
     const cursor = state.cursor
     return !!cursor && !!findDescendant(state, head(cursor), ['=done'])
   },

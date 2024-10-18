@@ -51,7 +51,7 @@ const useFilteredCommands = (
         if (!search) return true
 
         const label = (
-          sortActiveCommandsFirst && shortcut.labelInverse && shortcut.isActive?.(store.getState)
+          sortActiveCommandsFirst && shortcut.labelInverse && shortcut.isActive?.(store.getState())
             ? shortcut.labelInverse!
             : shortcut.label
         ).toLowerCase()
@@ -69,7 +69,7 @@ const useFilteredCommands = (
     // sorted shortcuts
     const sorted = _.sortBy(possibleShortcuts, shortcut => {
       const label = (
-        shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse : shortcut.label
+        shortcut.labelInverse && shortcut.isActive?.(store.getState()) ? shortcut.labelInverse : shortcut.label
       ).toLowerCase()
 
       // always sort exact match to top

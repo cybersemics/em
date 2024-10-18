@@ -12,7 +12,7 @@ const toggleHiddenThoughtsShortcut: Shortcut = {
   multicursor: 'ignore',
   svg: HiddenThoughtsIcon,
   exec: dispatch => dispatch(toggleHiddenThoughts()),
-  isActive: getState => getState().showHiddenThoughts,
+  isActive: state => state.showHiddenThoughts,
 }
 
 export default toggleHiddenThoughtsShortcut

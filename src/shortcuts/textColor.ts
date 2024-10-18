@@ -20,7 +20,7 @@ const textColor: Shortcut = {
       path: state.cursor,
     })
   },
-  isActive: getState => !!getState().cursor,
+  isActive: state => !!state.cursor,
   isDropdownOpen: getState => !!getState().showColorPicker,
 }
 

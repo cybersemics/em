@@ -131,7 +131,7 @@ const CommandRow: FC<{
   const store = useStore()
   const ref = React.useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
-  const isActive = shortcut.isActive?.(store.getState)
+  const isActive = shortcut.isActive?.(store.getState())
   const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
   const disabled = useSelector(state => !isExecutable(state, shortcut))
 

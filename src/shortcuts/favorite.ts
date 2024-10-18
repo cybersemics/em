@@ -36,8 +36,7 @@ const favorite: Shortcut = {
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
-  isActive: getState => {
-    const state = getState()
+  isActive: state => {
     const cursor = state.cursor
     if (!cursor) return false
     const id = head(cursor)

@@ -43,8 +43,7 @@ const toggleSortShortcut: Shortcut = {
       )
     }
   },
-  isActive: getState => {
-    const state = getState()
+  isActive: state => {
     if (!state.cursor || isRoot(state.cursor)) return false
 
     const path = simplifyPath(state, rootedParentOf(state, state.cursor))

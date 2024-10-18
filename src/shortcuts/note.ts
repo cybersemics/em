@@ -30,8 +30,7 @@ const noteShortcut: Shortcut = {
     asyncFocus()
     dispatch(toggleNote())
   },
-  isActive: getState => {
-    const state = getState()
+  isActive: state => {
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return attribute(state, head(path), '=note') !== null

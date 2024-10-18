@@ -85,8 +85,7 @@ const pinAllShortcut: Shortcut = {
       },
     ])
   },
-  isActive: getState => {
-    const state = getState()
+  isActive: state => {
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     const childrenAttributeId = findDescendant(state, head(path), '=children')
