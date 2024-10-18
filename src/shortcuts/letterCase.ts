@@ -8,7 +8,7 @@ const letterCase: Shortcut = {
   label: 'LetterCase',
   description: 'Change the Letter case.',
   svg: Icon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: state => isDocumentEditable() && !!state.cursor,
   multicursor: {
     enabled: false,
     error: () => 'Cannot change text color with multiple thoughts.',
@@ -16,8 +16,8 @@ const letterCase: Shortcut = {
   exec: dispatch => {
     dispatch({ type: 'toggleLetterCase' })
   },
-  isActive: getState => !!getState().cursor,
-  isDropdownOpen: getState => !!getState().showColorPicker,
+  isActive: state => !!state.cursor,
+  isDropdownOpen: state => !!state.showLetterCase,
 }
 
 export default letterCase
