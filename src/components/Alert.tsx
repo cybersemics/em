@@ -10,6 +10,7 @@ import { AlertType } from '../constants'
 import isUndoEnabled from '../selectors/isUndoEnabled'
 import alertStore from '../stores/alert'
 import fastClick from '../util/fastClick'
+import strip from '../util/strip'
 import Popup from './Popup'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
@@ -21,7 +22,7 @@ const Alert: FC = () => {
   const dispatch = useDispatch()
   const alert = useSelector(state => state.alert)
   const alertStoreValue = alertStore.useState()
-  const value = alertStoreValue ?? alert?.value
+  const value = strip(alertStoreValue ?? alert?.value ?? '')
   const undoEnabled = useSelector(isUndoEnabled)
   const redoEnabled = useSelector(state => state.redoPatches.length > 0)
 
