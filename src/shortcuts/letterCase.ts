@@ -3,9 +3,9 @@ import Icon from '../components/icons/LetterCaseWithPicker'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the built-in =done style to cross out an item. */
-const lettercase: Shortcut = {
-  id: 'lettercase',
-  label: 'Lettercase',
+const letterCase: Shortcut = {
+  id: 'letterCase',
+  label: 'LetterCase',
   description: 'Change the Letter case.',
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
@@ -16,7 +16,7 @@ const lettercase: Shortcut = {
   exec: (dispatch, getState) => {
     const state = getState()
     dispatch({
-      type: 'toggleLettercase',
+      type: 'toggleLetterCase',
       path: state.cursor,
     })
   },
@@ -24,4 +24,4 @@ const lettercase: Shortcut = {
   isDropdownOpen: getState => !!getState().showColorPicker,
 }
 
-export default lettercase
+export default letterCase

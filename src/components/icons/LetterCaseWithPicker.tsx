@@ -7,7 +7,7 @@ import LetterCaseIcon from './LetterCaseIcon'
 
 /** Text Color Icon Component with popup ColorPicker. */
 const Icon = ({ size = 20, style, cssRaw }: IconType) => {
-  const showLettercase = useSelector(state => state.showLettercase)
+  const showLetterCase = useSelector(state => state.showLetterCase)
   const toolbarPopupRef = useRef<HTMLDivElement>(null)
 
   return (
@@ -15,7 +15,7 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
       <LetterCaseIcon size={size} style={style} cssRaw={cssRaw} />
       <CSSTransition
         nodeRef={toolbarPopupRef}
-        in={showLettercase}
+        in={showLetterCase}
         timeout={200}
         classNames='fade'
         exit={false}

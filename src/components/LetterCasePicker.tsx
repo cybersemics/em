@@ -1,11 +1,12 @@
 import React, { FC, memo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { titleCase } from 'title-case'
+import LetterCaseType from '../@types/LetterCaseType'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/formatLetterCase'
 import { isTouch } from '../browser'
 import useWindowOverflow from '../hooks/useWindowOverflow'
 import getThoughtById from '../selectors/getThoughtById'
 import themeColors from '../selectors/themeColors'
+import applyLetterCase from '../util/applyLetterCase'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import TriangleDown from './TriangleDown'
@@ -22,21 +23,20 @@ const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = 
   const overflow = useWindowOverflow(ref)
 
   /** Toggles the Letter Case to the clicked swatch. */
-  const toggleLetterCase = (command: string, e: React.MouseEvent | React.TouchEvent) => {
+  const toggleLetterCase = (command: LetterCaseType, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     e.preventDefault()
     dispatch(formatLetterCase(command))
   }
   const selected = useSelector(state => {
     const value = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''
-    if (value === value.toLowerCase()) return 'LowerCase'
-    if (value === value.toUpperCase()) return 'UpperCase'
-    const sentenceCaseRegex = /(^\w|\.\s*\w)/gi
-    if (value === value.toLowerCase().replace(sentenceCaseRegex, match => match.toUpperCase())) return 'SentenceCase'
-    if (value === titleCase(value.toLowerCase())) return 'TitleCase'
+    if (value === applyLetterCase('LowerCase', value)) return 'LowerCase'
+    if (value === applyLetterCase('UpperCase', value)) return 'UpperCase'
+    if (value === applyLetterCase('SentenceCase', value)) return 'SentenceCase'
+    if (value === applyLetterCase('TitleCase', value)) return 'TitleCase'
     return ''
   })
-  const casingTypes = ['LowerCase', 'UpperCase', 'SentenceCase', 'TitleCase']
+  const casingTypes: LetterCaseType[] = ['LowerCase', 'UpperCase', 'SentenceCase', 'TitleCase']
 
   return (
     <div style={{ userSelect: 'none' }}>

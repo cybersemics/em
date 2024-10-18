@@ -1,4 +1,3 @@
-// import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -12,7 +11,7 @@ afterEach(cleanupTestApp)
 
 it('Set Lower Case to the current thought', async () => {
   await dispatch([newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' })])
-  await click('[data-testid="toolbar-icon"][aria-label="Lettercase"]')
+  await click('[data-testid="toolbar-icon"][aria-label="LetterCase"]')
   await click('[aria-label="letter case swatches"] [aria-label="LowerCase"]')
 
   const state = store.getState()
@@ -24,7 +23,7 @@ it('Set Lower Case to the current thought', async () => {
 
 it('Set Upper Case to the current thought', async () => {
   await dispatch([newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' })])
-  await click('[data-testid="toolbar-icon"][aria-label="Lettercase"]')
+  await click('[data-testid="toolbar-icon"][aria-label="LetterCase"]')
   await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
 
   const state = store.getState()
@@ -36,7 +35,7 @@ it('Set Upper Case to the current thought', async () => {
 
 it('Set Sentence Case to the current thought', async () => {
   await dispatch([newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' })])
-  await click('[data-testid="toolbar-icon"][aria-label="Lettercase"]')
+  await click('[data-testid="toolbar-icon"][aria-label="LetterCase"]')
   await click('[aria-label="letter case swatches"] [aria-label="SentenceCase"]')
 
   const state = store.getState()
@@ -48,7 +47,7 @@ it('Set Sentence Case to the current thought', async () => {
 
 it('Set Title Case to the current thought', async () => {
   await dispatch([newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' })])
-  await click('[data-testid="toolbar-icon"][aria-label="Lettercase"]')
+  await click('[data-testid="toolbar-icon"][aria-label="LetterCase"]')
   await click('[aria-label="letter case swatches"] [aria-label="TitleCase"]')
 
   const state = store.getState()
