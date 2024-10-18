@@ -96,7 +96,7 @@ const executeShortcut = (shortcut: Shortcut, { store, type, event }: Options = {
   type = type ?? 'keyboard'
   event = event ?? eventNoop
 
-  const canExecute = !shortcut.canExecute || shortcut.canExecute(store.getState)
+  const canExecute = !shortcut.canExecute || shortcut.canExecute(store.getState())
   // Exit early if the shortcut cannot execute
   if (!canExecute) return
 
@@ -144,7 +144,7 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
   const filteredPaths = filterCursors(state, paths, multicursorConfig.filter)
 
   const canExecute = filteredPaths.every(
-    path => !shortcut.canExecute || shortcut.canExecute(() => ({ ...state, cursor: path })),
+    path => !shortcut.canExecute || shortcut.canExecute({ ...state, cursor: path }),
   )
 
   // Exit early if the shortcut cannot execute

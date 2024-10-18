@@ -16,8 +16,7 @@ const proseViewShortcut: Shortcut = {
   keyboard: { key: 'p', shift: true, alt: true },
   multicursor: true,
   svg: ProseViewIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: (dispatch, getState) => {

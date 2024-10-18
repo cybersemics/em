@@ -19,8 +19,7 @@ const outdentShortcut: Shortcut = {
     reverse: true,
   },
   svg: OutdentIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: (dispatch, getState) => {

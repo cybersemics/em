@@ -15,8 +15,7 @@ const toggleTableViewShortcut: Shortcut = {
   keyboard: { key: 't', alt: true, shift: true },
   multicursor: true,
   svg: TableViewIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
   exec: (dispatch, getState) => {

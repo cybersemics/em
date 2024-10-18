@@ -34,7 +34,7 @@ const commandPaletteShortcut = shortcutById('commandPalette')
 
 /** Returns true if the shortcut can be executed. */
 const isExecutable = (state: State, shortcut: Shortcut) =>
-  (!shortcut.canExecute || shortcut.canExecute(() => state)) && (shortcut.allowExecuteFromModal || !state.showModal)
+  (!shortcut.canExecute || shortcut.canExecute(state)) && (shortcut.allowExecuteFromModal || !state.showModal)
 
 /**********************************************************************
  * Components
@@ -312,7 +312,7 @@ const CommandPalette: FC = () => {
       e.preventDefault()
       if (
         unmounted.current ||
-        (shortcut.canExecute && !shortcut.canExecute(store.getState)) ||
+        (shortcut.canExecute && !shortcut.canExecute(store.getState())) ||
         (store.getState().showModal && !shortcut.allowExecuteFromModal)
       )
         return

@@ -12,7 +12,7 @@ const joinThoughts: Shortcut = {
     error: () => 'Cannot join multiple thoughts.',
   },
   svg: JoinThoughtsIcon,
-  canExecute: getState => !!getState().cursor,
+  canExecute: state => !!state.cursor,
   exec: (dispatch, getState) => {
     dispatch(join())
   },

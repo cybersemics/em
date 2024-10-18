@@ -41,7 +41,7 @@ const bindContextShortcut: Shortcut = {
   },
   keyboard: { key: 'b', shift: true, alt: true },
   hideFromHelp: true,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: state => isDocumentEditable() && !!state.cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

@@ -16,8 +16,7 @@ const clearThoughtShortcut: Shortcut = {
     error: () => 'Cannot clear multiple thougths.',
   },
   svg: ClearThoughtIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: (dispatch, getState) => {

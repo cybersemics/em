@@ -33,8 +33,7 @@ const favorite: Shortcut = {
       )
     },
   },
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   isActive: getState => {

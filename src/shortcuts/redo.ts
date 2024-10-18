@@ -22,7 +22,7 @@ const redoShortcut: Shortcut = {
   exec: dispatch => {
     dispatch(redo())
   },
-  canExecute: getState => getState().redoPatches.length > 0,
+  canExecute: state => state.redoPatches.length > 0,
 }
 
 export default redoShortcut

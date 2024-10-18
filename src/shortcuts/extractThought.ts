@@ -13,8 +13,7 @@ const extractThought: Shortcut = {
     error: () => 'Cannot extract multiple thoughts.',
   },
   svg: ExtractThoughtIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
   exec: (dispatch, getState) => {

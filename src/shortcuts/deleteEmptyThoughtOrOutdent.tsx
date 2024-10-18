@@ -57,8 +57,7 @@ const canExecuteOutdent = (state: State) => {
 }
 
 /** A selector that returns true if either the cursor is on an empty thought that can be deleted, or is on an only child that can be outdented. */
-const canExecute = (getState: () => State) => {
-  const state = getState()
+const canExecute = (state: State) => {
   return canExecuteOutdent(state) || canExecuteDeleteEmptyThought(state) || hasMulticursor(state)
 }
 

@@ -281,7 +281,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // execute the shortcut
     shortcutEmitter.trigger('shortcut', shortcut)
 
-    if (!shortcut.canExecute || shortcut.canExecute(store.getState)) {
+    if (!shortcut.canExecute || shortcut.canExecute(store.getState())) {
       e.preventDefault()
 
       // execute shortcut

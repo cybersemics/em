@@ -21,7 +21,7 @@ const selectAllShortcut: Shortcut = {
   multicursor: 'ignore',
   // Select All is disabled on desktop when there is no multicursor.
   // This enables the default browser behavior of selecting all text in the thought.
-  canExecute: getState => isDocumentEditable() && (isTouch || hasMulticursor(getState())),
+  canExecute: state => isDocumentEditable() && (isTouch || hasMulticursor(state)),
   exec: addAllMulticursor(),
 }
 

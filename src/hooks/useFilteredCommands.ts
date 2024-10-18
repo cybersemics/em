@@ -12,7 +12,7 @@ const visibleShortcuts = globalShortcuts.filter(shortcut => !shortcut.hideFromCo
 
 /** Returns true if the shortcut can be executed. */
 const isExecutable = (state: State, shortcut: Shortcut) =>
-  (!shortcut.canExecute || shortcut.canExecute(() => state)) && (shortcut.allowExecuteFromModal || !state.showModal)
+  (!shortcut.canExecute || shortcut.canExecute(state)) && (shortcut.allowExecuteFromModal || !state.showModal)
 
 /** A hook that filters and sorts commands based on a search or the current gesture or keyboard input. */
 const useFilteredCommands = (

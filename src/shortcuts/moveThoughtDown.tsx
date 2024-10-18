@@ -18,8 +18,7 @@ const moveThoughtDownShortcut: Shortcut = {
     reverse: true,
   },
   svg: MoveThoughtDownIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     const { cursor } = state
 
     if (!cursor || !isDocumentEditable()) return false

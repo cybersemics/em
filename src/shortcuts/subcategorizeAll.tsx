@@ -18,8 +18,7 @@ const subCategorizeAllShortcut: Shortcut = {
     clearMulticursor: true,
   },
   svg: SubCategorizeAllIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: subCategorizeAll(),

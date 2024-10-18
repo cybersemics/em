@@ -13,8 +13,7 @@ const swapParent: Shortcut = {
     error: () => 'Cannot swap parent with multiple thoughts.',
   },
   svg: SwapParentIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && ((state.cursor?.length ?? 0) >= 2 || hasMulticursor(state))
   },
   exec: dispatch => {

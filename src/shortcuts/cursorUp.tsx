@@ -50,8 +50,7 @@ const cursorUpShortcut: Shortcut = {
   hideFromHelp: true,
   multicursor: 'ignore',
   svg: Icon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     const { cursor } = state
 
     if (!cursor) return true

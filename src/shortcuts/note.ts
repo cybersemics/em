@@ -19,7 +19,7 @@ const noteShortcut: Shortcut = {
     error: () => 'Cannot create a note with multiple thoughts.',
   },
   svg: PencilIcon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: state => isDocumentEditable() && !!state.cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

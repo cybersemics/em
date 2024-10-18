@@ -17,8 +17,7 @@ const bumpThoughtDownShortcut: Shortcut = {
     error: () => 'Cannot bump down multiple thoughts.',
   },
   svg: BumpThoughtDownIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => {

@@ -14,8 +14,8 @@ interface Shortcut {
   /** Allow the shortcut to be executed when a modal is open. */
   allowExecuteFromModal?: boolean
 
-  /** A function that returns true if the shortcut can be executed with the current state. */
-  canExecute?: (getState: () => State) => boolean
+  /** A selector that returns true if the shortcut can be executed with the current state. */
+  canExecute?: (state: State) => boolean
 
   /** An ad hoc property to track conflicting shortcuts. */
   // TODO: Refactor so this is not in the main Shortcut type.

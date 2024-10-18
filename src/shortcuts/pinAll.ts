@@ -25,8 +25,7 @@ const pinAllShortcut: Shortcut = {
   keyboard: { key: 'p', meta: true, shift: true },
   multicursor: 'ignore',
   svg: PinAllIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
   exec: (dispatch, getState, e, { type }) => {

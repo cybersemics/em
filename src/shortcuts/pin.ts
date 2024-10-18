@@ -16,8 +16,7 @@ const pinShortcut: Shortcut = {
   descriptionInverse: 'Unpins a thought so its subthoughts are automatically hidden.',
   keyboard: { key: 'p', meta: true, alt: true },
   svg: PinIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
   multicursor: {

@@ -23,8 +23,7 @@ const splitSentencesShortcut: Shortcut = {
   keyboard: { key: 's', meta: true, shift: true },
   multicursor: true,
   svg: SplitSentencesIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
