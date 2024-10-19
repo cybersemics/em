@@ -2,7 +2,7 @@ import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder'
 import { page } from '../setup'
 
 /** Initialize recorder. */
-async function init() {
+function init() {
   const recorder = new PuppeteerScreenRecorder(page)
 
   /** Start recording. */
