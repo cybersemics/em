@@ -24,19 +24,18 @@ const join = (state: State) => {
   const path = cursor
   const simplePath = simplifyPath(state, path)
   const parentId = head(parentOf(simplePath))
-  const contextChildren = getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
+  const children = getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
   const thoughtId = head(simplePath)
-  const { value, rank } = getThoughtById(state, thoughtId)
-  const siblings = contextChildren.filter(child => child.value !== value && child.rank !== rank)
+  const { value } = getThoughtById(state, thoughtId)
 
   let minNextRank = getNextRank(state, parentId)
 
-  const reducers = contextChildren
-    .map((sibling, i) => {
-      const pathToSibling = appendToPath(parentOf(simplePath), sibling.id)
-      const children = getAllChildren(state, sibling.id)
+  const moveThoughtReducers = children
+    .map(child => {
+      const pathToSibling = appendToPath(parentOf(simplePath), child.id)
+      const grandchildren = getAllChildren(state, child.id)
 
-      return children.map((child, j) => {
+      return grandchildren.map((child, j) => {
         const oldPath = getChildPath(state, child, pathToSibling)
         const newPath = appendToPath(path, child)
         return moveThought({ oldPath, newPath, newRank: (minNextRank += 1) })
@@ -44,22 +43,21 @@ const join = (state: State) => {
     })
     .flat()
 
-  const newValue = contextChildren.reduce((acc, { value }) => `${acc} ${value}`, '').trim()
-
-  const updateThoughtReducer = editThought({
+  const editThoughtReducer = editThought({
     oldValue: value,
-    newValue,
+    newValue: children.reduce((acc, { value }) => `${acc} ${value}`, '').trim(),
     path: simplePath,
   })
 
-  const removalReducers = siblings.map(sibling =>
+  const siblings = children.filter(child => child.id !== thoughtId)
+  const deleteThoughtReducers = siblings.map(sibling =>
     deleteThought({
       pathParent: parentOf(simplePath),
       thoughtId: sibling.id,
     }),
   )
 
-  return reducerFlow([...reducers, updateThoughtReducer, ...removalReducers])(state)
+  return reducerFlow([...moveThoughtReducers, editThoughtReducer, ...deleteThoughtReducers])(state)
 }
 
 /** Action-creator for join. */
