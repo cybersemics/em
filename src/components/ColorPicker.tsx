@@ -109,12 +109,15 @@ const ColorSwatch: FC<{
     // stop toolbar button dip
     e.stopPropagation()
     e.preventDefault()
-    if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || colors.bg))
-    else dispatch(formatSelection('foreColor', colors.fg))
+    if (backgroundColor || color !== 'default') {
+      dispatch(formatSelection('foreColor', color || colors.bg))
+    } else {
+      dispatch(formatSelection('foreColor', colors.fg))
+    }
     // Apply background color to the selection
-    if (backgroundColor && backgroundColor !== colors.bg)
+    if (backgroundColor && backgroundColor !== colors.bg) {
       dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
-    else {
+    } else {
       dispatch(formatSelection('backColor', colors.bg))
 
       /** Function to check if a style(background) should be removed based on the color and background-color. */
