@@ -127,9 +127,9 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
   if (!multicursorConfig.enabled) {
     const errorMessage = !multicursorConfig.error
       ? 'Cannot execute this shortcut with multiple thoughts.'
-      : typeof multicursorConfig.error === 'string'
-        ? () => multicursorConfig.error as string
-        : multicursorConfig.error(store.getState())
+      : typeof multicursorConfig.error === 'function'
+        ? multicursorConfig.error(store.getState())
+        : multicursorConfig.error
     store.dispatch(
       alert(errorMessage, {
         alertType: AlertType.MulticursorError,
