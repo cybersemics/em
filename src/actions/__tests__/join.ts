@@ -45,6 +45,25 @@ it('joins thoughts in rank order', () => {
   expect(removeHome(exported)).toEqual(expectedOutput)
 })
 
+it('ignores metaprogramming attributes', () => {
+  const text = `
+    - a
+      - =test
+      - m
+      - n
+  `
+  const steps = [importText({ text }), setCursor(['a', 'm']), join()]
+
+  const newState = reducerFlow(steps)(initialState())
+  const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
+  const expectedOutput = `
+- a
+  - =test
+  - m n
+`
+  expect(removeHome(exported)).toEqual(expectedOutput)
+})
+
 it('joins two thoughts and merges their children', () => {
   const text = `
     - a

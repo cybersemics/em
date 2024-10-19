@@ -8,6 +8,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
@@ -23,7 +24,7 @@ const join = (state: State) => {
   const path = cursor
   const simplePath = simplifyPath(state, path)
   const parentId = head(parentOf(simplePath))
-  const contextChildren = getAllChildrenSorted(state, parentId)
+  const contextChildren = getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
   const thoughtId = head(simplePath)
   const { value, rank } = getThoughtById(state, thoughtId)
   const siblings = contextChildren.filter(child => child.value !== value && child.rank !== rank)
