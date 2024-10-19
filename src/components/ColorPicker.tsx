@@ -2,12 +2,10 @@ import { rgbToHex } from '@mui/material'
 import React, { FC, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { bulletColorActionCreator as bulletColor } from '../actions/bulletColor'
-import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
-import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
 import fastClick from '../util/fastClick'
@@ -119,36 +117,6 @@ const ColorSwatch: FC<{
       dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
     } else {
       dispatch(formatSelection('backColor', colors.bg))
-
-      /** Function to check if a style(background) should be removed based on the color and background-color. */
-      const shouldRemoveStyle = (styleString: string) => {
-        const styleLower = styleString.toLowerCase()
-        const hasBackgroundColor = styleLower.includes('background-color')
-        const colorMatch = styleLower.match(/color\s*:\s*([^;]+);?/)
-        const elementColor = colorMatch ? colorMatch[1].trim() : null
-        const isDifferentColor = elementColor && elementColor !== rgbToHex(colors.bg)
-        if ((elementColor && isDifferentColor) || (label === 'default' && hasBackgroundColor)) return true
-        return false
-      }
-      dispatch((dispatch, getState) => {
-        const state = getState()
-        if (!state.cursor) return
-        const thought = getThoughtById(state, head(state.cursor))
-        const simplePath = simplifyPath(state, state.cursor)
-        const styleAttrPattern = /style\s*=\s*["'][^"']*["']/gi
-        //Replace style attributes based on the conditions
-        const newThoughtValue = thought.value.replace(styleAttrPattern, match => {
-          if (shouldRemoveStyle(match)) return ''
-          return match
-        })
-        dispatch(
-          editThought({
-            oldValue: thought.value,
-            newValue: newThoughtValue,
-            path: simplePath,
-          }),
-        )
-      })
     }
 
     dispatch(
