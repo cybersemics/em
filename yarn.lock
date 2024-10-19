@@ -2594,95 +2594,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ffmpeg-installer/darwin-arm64@npm:4.1.5":
-  version: 4.1.5
-  resolution: "@ffmpeg-installer/darwin-arm64@npm:4.1.5"
-  conditions: os=darwin & cpu=arm64
-  languageName: node
-  linkType: hard
-
-"@ffmpeg-installer/darwin-x64@npm:4.1.0":
-  version: 4.1.0
-  resolution: "@ffmpeg-installer/darwin-x64@npm:4.1.0"
-  conditions: os=darwin & cpu=x64
-  languageName: node
-  linkType: hard
-
-"@ffmpeg-installer/ffmpeg@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "@ffmpeg-installer/ffmpeg@npm:1.1.0"
-  dependencies:
-    "@ffmpeg-installer/darwin-arm64": "npm:4.1.5"
-    "@ffmpeg-installer/darwin-x64": "npm:4.1.0"
-    "@ffmpeg-installer/linux-arm": "npm:4.1.3"
-    "@ffmpeg-installer/linux-arm64": "npm:4.1.4"
-    "@ffmpeg-installer/linux-ia32": "npm:4.1.0"
-    "@ffmpeg-installer/linux-x64": "npm:4.1.0"
-    "@ffmpeg-installer/win32-ia32": "npm:4.1.0"
-    "@ffmpeg-installer/win32-x64": "npm:4.1.0"
-  dependenciesMeta:
-    "@ffmpeg-installer/darwin-arm64":
-      optional: true
-    "@ffmpeg-installer/darwin-x64":
-      optional: true
-    "@ffmpeg-installer/linux-arm":
-      optional: true
-    "@ffmpeg-installer/linux-arm64":
-      optional: true
-    "@ffmpeg-installer/linux-ia32":
-      optional: true
-    "@ffmpeg-installer/linux-x64":
-      optional: true
-    "@ffmpeg-installer/win32-ia32":
-      optional: true
-    "@ffmpeg-installer/win32-x64":
-      optional: true
-  checksum: 10c0/bf77e5d2a3e15cd175e3b3d117a16c877700fb6dd9708d3f9959f0fdea98ebf3658dcbe0d558a627ac0f0f6142b3e3dd3c3e9bc80dcdd5a1de1574620e685d37
-  languageName: node
-  linkType: hard
-
-"@ffmpeg-installer/linux-arm64@npm:4.1.4":
-  version: 4.1.4
-  resolution: "@ffmpeg-installer/linux-arm64@npm:4.1.4"
-  conditions: os=linux & cpu=arm64
-  languageName: node
-  linkType: hard
-
-"@ffmpeg-installer/linux-arm@npm:4.1.3":
-  version: 4.1.3
-  resolution: "@ffmpeg-installer/linux-arm@npm:4.1.3"
-  conditions: os=linux & cpu=arm
-  languageName: node
-  linkType: hard
-
-"@ffmpeg-installer/linux-ia32@npm:4.1.0":
-  version: 4.1.0
-  resolution: "@ffmpeg-installer/linux-ia32@npm:4.1.0"
-  conditions: os=linux & cpu=ia32
-  languageName: node
-  linkType: hard
-
-"@ffmpeg-installer/linux-x64@npm:4.1.0":
-  version: 4.1.0
-  resolution: "@ffmpeg-installer/linux-x64@npm:4.1.0"
-  conditions: os=linux & cpu=x64
-  languageName: node
-  linkType: hard
-
-"@ffmpeg-installer/win32-ia32@npm:4.1.0":
-  version: 4.1.0
-  resolution: "@ffmpeg-installer/win32-ia32@npm:4.1.0"
-  conditions: os=win32 & cpu=ia32
-  languageName: node
-  linkType: hard
-
-"@ffmpeg-installer/win32-x64@npm:4.1.0":
-  version: 4.1.0
-  resolution: "@ffmpeg-installer/win32-x64@npm:4.1.0"
-  conditions: os=win32 & cpu=x64
-  languageName: node
-  linkType: hard
-
 "@hapi/hoek@npm:^9.0.0, @hapi/hoek@npm:^9.3.0":
   version: 9.3.0
   resolution: "@hapi/hoek@npm:9.3.0"
@@ -6158,13 +6069,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"async@npm:^0.2.9":
-  version: 0.2.10
-  resolution: "async@npm:0.2.10"
-  checksum: 10c0/714d284dc6c3ae59f3e8b347083e32c7657ba4ffc4ff945eb152ad4fb08def27e768992fcd4d9fd3b411c6b42f1541862ac917446bf2a1acfa0f302d1001f7d2
-  languageName: node
-  linkType: hard
-
 "async@npm:^3.2.3, async@npm:^3.2.4":
   version: 3.2.5
   resolution: "async@npm:3.2.5"
@@ -8347,7 +8251,6 @@ __metadata:
     postinstall-postinstall: "npm:^2.1.0"
     prettier: "npm:^3.3.3"
     puppeteer: "npm:^22.12.1"
-    puppeteer-screen-recorder: "npm:3.0.3"
     qrcode.react: "npm:^3.1.0"
     react: "npm:18.3.1"
     react-contenteditable: "npm:^3.3.7"
@@ -9830,16 +9733,6 @@ __metadata:
   version: 0.242.1
   resolution: "flow-parser@npm:0.242.1"
   checksum: 10c0/7aaf2f0e6b4bfa78bd3f8981de1063a23810aa8d32f6dbe20d429a787e4e4ab0fbc2b43790b50138cb294b2ca9dc3309ad22b41f8f4102ea047007bb1e5ca353
-  languageName: node
-  linkType: hard
-
-"fluent-ffmpeg@npm:^2.1.2":
-  version: 2.1.3
-  resolution: "fluent-ffmpeg@npm:2.1.3"
-  dependencies:
-    async: "npm:^0.2.9"
-    which: "npm:^1.1.1"
-  checksum: 10c0/0397379ec3237c10b2389edeef26fdaf93f36d1b20b0f28f8945fe6d9121dcee9b0c615bf7d44edb7abd37233e0d24f0db39389668d3c86a1a2a0d59e3f4457b
   languageName: node
   linkType: hard
 
@@ -15210,21 +15103,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"puppeteer-screen-recorder@npm:3.0.3":
-  version: 3.0.3
-  resolution: "puppeteer-screen-recorder@npm:3.0.3"
-  dependencies:
-    "@ffmpeg-installer/ffmpeg": "npm:^1.1.0"
-    fluent-ffmpeg: "npm:^2.1.2"
-  peerDependencies:
-    puppeteer: ">=19.0.0"
-  dependenciesMeta:
-    "@ffmpeg-installer/ffmpeg":
-      optional: true
-  checksum: 10c0/bdd3881aca827caf341d6cc87b3a0e48d9e0a28ecf7038640e16d7f74bbc24d94b76a7e095e27631eebea1e4f9937d77562ddb2bfa11c075f80f681a735771d8
-  languageName: node
-  linkType: hard
-
 "puppeteer@npm:^22.12.1":
   version: 22.15.0
   resolution: "puppeteer@npm:22.15.0"
@@ -18773,7 +18651,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"which@npm:^1.1.1, which@npm:^1.2.9":
+"which@npm:^1.2.9":
   version: 1.3.1
   resolution: "which@npm:1.3.1"
   dependencies:
