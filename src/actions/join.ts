@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import getChildPath from '../selectors/getChildPath'
@@ -15,8 +16,8 @@ import deleteThought from './deleteThought'
 import editThought from './editThought'
 import moveThought from './moveThought'
 
-/** Join two or more thoughts split by spaces. */
-const join = (state: State) => {
+/** Join two or more thoughts split by spaces. Defaults to all non-attribute thoughts at the level of the cursor. */
+const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -24,7 +25,9 @@ const join = (state: State) => {
   const path = cursor
   const simplePath = simplifyPath(state, path)
   const parentId = head(parentOf(simplePath))
-  const children = getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
+  const children = paths
+    ? paths.map(path => getThoughtById(state, head(path)))
+    : getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
   const thoughtId = head(simplePath)
   const { value } = getThoughtById(state, thoughtId)
 
@@ -61,6 +64,9 @@ const join = (state: State) => {
 }
 
 /** Action-creator for join. */
-export const joinActionCreator = (): Thunk => dispatch => dispatch({ type: 'join' })
+export const joinActionCreator =
+  (payload: Parameters<typeof join>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'join', ...payload })
 
 export default _.curryRight(join)
