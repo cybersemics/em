@@ -15,7 +15,6 @@ import documentSort from '../selectors/documentSort'
 import hasMulticursor from '../selectors/hasMulticursor'
 import thoughtToPath from '../selectors/thoughtToPath'
 import globalStore from '../stores/app'
-import dispatch from '../test-helpers/dispatch'
 import equalPath from './equalPath'
 import hashPath from './hashPath'
 import head from './head'
@@ -131,7 +130,7 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
       : typeof multicursorConfig.error === 'string'
         ? () => multicursorConfig.error as string
         : multicursorConfig.error(store.getState())
-    dispatch(
+    store.dispatch(
       alert(errorMessage, {
         alertType: AlertType.MulticursorError,
         clearDelay: 5000,
