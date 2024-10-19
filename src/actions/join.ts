@@ -2,7 +2,7 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import getChildPath from '../selectors/getChildPath'
-import { getAllChildren, getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildren, getAllChildrenSorted } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
@@ -23,7 +23,7 @@ const join = (state: State) => {
   const path = cursor
   const simplePath = simplifyPath(state, path)
   const parentId = head(parentOf(simplePath))
-  const contextChildren = getAllChildrenAsThoughts(state, parentId)
+  const contextChildren = getAllChildrenSorted(state, parentId)
   const thoughtId = head(simplePath)
   const { value, rank } = getThoughtById(state, thoughtId)
   const siblings = contextChildren.filter(child => child.value !== value && child.rank !== rank)
