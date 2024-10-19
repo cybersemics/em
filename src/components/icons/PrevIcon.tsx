@@ -20,15 +20,14 @@ const PrevIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
           <g id='_10-previous-thought' data-name='10-previous-thought'>
-            <rect className='cls-1' width='24' height='24' fill='none' />
+            <rect width='24' height='24' fill='none' />
             <path
-              className='cls-2'
               d='M12.2,22.31V16.75H9.62A3.8,3.8,0,0,1,5.82,13h0a3.8,3.8,0,0,1,3.8-3.8H12.2V1.55'
               stroke={strokeColor}
               strokeLinejoin='round'
               fill='none'
             />
-            <path className='cls-2' d='M9.2,4.55l3-3,3,3' stroke={strokeColor} strokeLinejoin='round' fill='none' />
+            <path d='M9.2,4.55l3-3,3,3' stroke={strokeColor} strokeLinejoin='round' fill='none' />
           </g>
         </g>
       </g>

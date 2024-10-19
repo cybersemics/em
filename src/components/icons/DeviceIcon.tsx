@@ -20,7 +20,7 @@ const DeviceIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
       <g id='Layer_2' data-name='Layer 2'>
         <g id='Layer_3' data-name='Layer 3'>
           <g id='_26-device-management' data-name='26-device-management'>
-            <rect className='cls-1' width='24' height='24' fill='none' />
+            <rect width='24' height='24' fill='none' />
             <path
               d='M8.25,6.22v-2a2.44,2.44,0,0,1,2.44-2.44h8.45a2.44,2.44,0,0,1,2.44,2.44v12.3a2.44,2.44,0,0,1-2.44,2.44H12.39'
               fill='none'

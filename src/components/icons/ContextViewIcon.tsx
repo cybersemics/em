@@ -14,7 +14,7 @@ const ContextViewIcon = ({ fill, size = 20, style = {}, cssRaw, animated }: Icon
   return (
     <div className={cx(icon(), css(cssRaw))} style={{ width: `${newSize}px`, height: `${newSize}px` }}>
       {animated ? (
-        <LottieAnimation animationData={animationData} speed={3} />
+        <LottieAnimation animationData={animationData} speed={2} />
       ) : (
         <svg
           xmlns='http://www.w3.org/2000/svg'
@@ -26,32 +26,12 @@ const ContextViewIcon = ({ fill, size = 20, style = {}, cssRaw, animated }: Icon
             <g id='Layer_3' data-name='Layer 3'>
               <g id='_18-context-view' data-name='18-context-view'>
                 <rect width='24' height='24' fill='none' />
-                <path
-                  className='cls-2'
-                  d='M14,4.47a2,2,0,1,0-2,2A2,2,0,0,0,14,4.47Z'
-                  fill='none'
-                  stroke={strokeColor}
-                />
-                <path className='cls-2' d='M6,4.47a2,2,0,1,0-2,2A2,2,0,0,0,6,4.47Z' fill='none' stroke={strokeColor} />
-                <path
-                  className='cls-2'
-                  d='M22,4.47a2,2,0,1,0-2,2A2,2,0,0,0,22,4.47Z'
-                  fill='none'
-                  stroke={strokeColor}
-                />
-                <path
-                  className='cls-2'
-                  d='M14,20.47a2,2,0,1,0-2,2A2,2,0,0,0,14,20.47Z'
-                  fill='none'
-                  stroke={strokeColor}
-                />
-                <path className='cls-2' d='M12,18.47v-12' fill='none' stroke={strokeColor} />
-                <path
-                  className='cls-2'
-                  d='M20,6.47v5a2,2,0,0,1-2,2H6a2,2,0,0,1-2-2v-5'
-                  fill='none'
-                  stroke={strokeColor}
-                />
+                <path d='M14,4.47a2,2,0,1,0-2,2A2,2,0,0,0,14,4.47Z' fill='none' stroke={strokeColor} />
+                <path d='M6,4.47a2,2,0,1,0-2,2A2,2,0,0,0,6,4.47Z' fill='none' stroke={strokeColor} />
+                <path d='M22,4.47a2,2,0,1,0-2,2A2,2,0,0,0,22,4.47Z' fill='none' stroke={strokeColor} />
+                <path d='M14,20.47a2,2,0,1,0-2,2A2,2,0,0,0,14,20.47Z' fill='none' stroke={strokeColor} />
+                <path d='M12,18.47v-12' fill='none' stroke={strokeColor} />
+                <path d='M20,6.47v5a2,2,0,0,1-2,2H6a2,2,0,0,1-2-2v-5' fill='none' stroke={strokeColor} />
               </g>
             </g>
           </g>
