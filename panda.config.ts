@@ -87,6 +87,17 @@ const keyframes = defineKeyframes({
       opacity: 0,
     },
   },
+  bobble: {
+    '0%': {
+      transform: 'translateX(-50%) translateY(0)',
+    },
+    '50%': {
+      transform: 'translateX(-50%) translateY(10px)',
+    },
+    '100%': {
+      transform: 'translateX(-50%) translateY(0)',
+    },
+  },
 })
 
 const globalCss = defineGlobalStyles({
@@ -283,6 +294,7 @@ export default defineConfig({
           bullet: { value: 2 },
           stack: { value: 1 },
           hide: { value: -1 },
+          arrow: { value: 1400 },
         },
       },
       recipes: {
@@ -333,6 +345,7 @@ export default defineConfig({
           layoutSlowShiftDuration: duration('750ms'),
           /** The animation duration of a node in the LayoutTree component. */
           layoutNodeAnimationDuration: duration('150ms'),
+          arrowBobbleAnimation: duration('1s'),
         },
       },
     },

@@ -13,6 +13,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
+import useSortedContext from '../hooks/useSortedContext'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
@@ -25,6 +26,7 @@ import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
+import store from '../stores/app'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
@@ -38,6 +40,7 @@ import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
 import unroot from '../util/unroot'
 import DropEnd from './DropEnd'
+import HoverArrow from './HoverArrow'
 import VirtualThought from './VirtualThought'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
@@ -186,24 +189,27 @@ const useNavAndFooterHeight = () => {
   // Get the nav and footer heights for the spaceBelow calculation.
   // Nav hight changes when the breadcrumbs wrap onto multiple lines.
   // Footer height changes on font size change.
-  const [navAndFooterHeight, setNavAndFooterHeight] = useState(0)
+  const [navbarHeight, setNavbarHeight] = useState(0)
+  const [footerHeight, setFooterHeight] = useState(0)
 
   // Read the footer and nav heights on render and set the refs so that the spaceBelow calculation is updated on the next render.
   // This works because there is always a second render due to useSizeTracking.
   // No risk of infinite render since the effect cannot change the height of the nav or footer.
-  // nav/footer height -> effect -> setNavAndFooterHeight -> render -> effect -> setNavAndFooterHeight (same values)
+  // nav/footer height -> effect -> setNavbarHeight/setFooterHeight -> render -> effect -> setNavbarHeight/setFooterHeight (same values)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(
     _.throttle(() => {
       const navEl = document.querySelector('.nav')
       const footerEl = document.querySelector('[aria-label="footer"]')
-      setNavAndFooterHeight(
-        (navEl?.getBoundingClientRect().height || 0) + (footerEl?.getBoundingClientRect().height || 0),
-      )
+      setNavbarHeight(navEl?.getBoundingClientRect().height || 0)
+      setFooterHeight(footerEl?.getBoundingClientRect().height || 0)
     }, 16.666),
   )
 
-  return navAndFooterHeight
+  return {
+    navbarHeight,
+    footerHeight,
+  }
 }
 
 /** Recursiveley calculates the tree of visible thoughts, in order, represented as a flat list of thoughts with tree layout information. */
@@ -364,16 +370,24 @@ const LayoutTree = () => {
         state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
       : 0,
   )
+  const scrollTop = scrollTopStore.useState()
 
   const [bulletWidth, setBulletWidth] = useState<number | undefined>(0)
+  const toolbarHeightRef = useRef(0)
+  const distanceFromTop = useRef<number | undefined>(0)
 
   // set the bullet width only during drag or when simulateDrop is true
   useLayoutEffect(() => {
     if (dragInProgress || testFlags.simulateDrop) {
       const bullet = ref.current?.querySelector('[aria-label=bullet]')
       setBulletWidth(bullet?.getBoundingClientRect().width)
+
+      const toolbar = document.querySelector('#toolbar')
+
+      if (toolbar) toolbarHeightRef.current = toolbar?.getBoundingClientRect().height
+      distanceFromTop.current = (ref.current?.getBoundingClientRect().top ?? 0) + scrollTop
     }
-  }, [dragInProgress])
+  }, [dragInProgress, scrollTop])
 
   // singleLineHeight is the measured height of a single line thought.
   // If no sizes have been measured yet, use the estimated height.
@@ -454,6 +468,13 @@ const LayoutTree = () => {
     ),
   )
 
+  const { footerHeight, navbarHeight } = useNavAndFooterHeight()
+  const navAndFooterHeight = navbarHeight + footerHeight
+
+  const maxVisibleY = viewportHeight + scrollTop - ((distanceFromTop.current ?? 0) + navbarHeight)
+
+  const { isSortedContext, newRank, hoveringOnDropEnd } = useSortedContext()
+
   // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
   const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
 
@@ -470,16 +491,28 @@ const LayoutTree = () => {
   const {
     indentCursorAncestorTables,
     treeThoughtsPositioned,
+    hoverArrowVisibility,
   }: {
     // the global indent based on the depth of the cursor and how many ancestors are tables
     indentCursorAncestorTables: number
     treeThoughtsPositioned: TreeThoughtPositioned[]
+    hoverArrowVisibility: 'above' | 'below' | null
   } = useMemo(() => {
     // y increases monotically, so it is more efficent to accumulate than to calculate each time
     // x varies, so we calculate it each time
     // (it is especially hard to determine how much x is decreased on cliffs when there are any number of tables in between)
     let yaccum = 0
     let indentCursorAncestorTables = 0
+
+    // Arrow visibility based on insertionY
+    let hoverArrowVisibility: 'above' | 'below' | null = null
+
+    // The rank of the first and last thoughts in sorted context.
+    let firstThoughtRank = 0
+    let lastThoughtRank = 0
+    // The rank of the first and last visible thoughts in sorted context.
+    let firstVisibleThoughtRank = 0
+    let lastVisibleThoughtRank = 0
 
     /** A stack of { depth, y } that stores the bottom y value of each col1 ancestor. */
     /* By default, yaccum is not advanced by the height of col1. This is what positions col2 at the same y value as col1. However, if the height of col1 exceeds the height of col2, then the next node needs to be positioned below col1, otherwise it will overlap. This stack stores the minimum y value of the next node (i.e. y + height). Depth is used to detect the next node after all of col1's descendants.
@@ -504,6 +537,7 @@ const LayoutTree = () => {
     const tableCol1Widths = new Map<ThoughtId, number>()
     const treeThoughtsPositioned = treeThoughts.map((node, i) => {
       const next: TreeThought | undefined = treeThoughts[i + 1]
+      const state = store.getState()
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
       // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
@@ -587,6 +621,27 @@ const LayoutTree = () => {
         (node.autofocus === 'dim' || node.autofocus === 'show') &&
         !(next?.autofocus === 'dim' || next?.autofocus === 'show')
 
+      // Check if current thought is inside a sorted context.
+      const isInSortedContext = attributeEquals(state, head(parentOf(node.path)), '=sort', 'Alphabetical')
+
+      if (isInSortedContext) {
+        const currentThought = getThoughtById(state, head(node.path))
+        // Update first and last thought ranks in sorted context
+        if (!firstThoughtRank) {
+          firstThoughtRank = currentThought.rank
+        }
+        lastThoughtRank = currentThought.rank
+
+        // Check if the current thought is visible
+        if (y < maxVisibleY && y > scrollTop - (toolbarHeightRef.current ?? 0)) {
+          // Update first and last visible thought ranks in sorted context
+          if (!firstVisibleThoughtRank) {
+            firstVisibleThoughtRank = currentThought.rank
+          }
+          lastVisibleThoughtRank = currentThought.rank
+        }
+      }
+
       return {
         ...node,
         cliff,
@@ -599,8 +654,29 @@ const LayoutTree = () => {
       }
     })
 
-    return { indentCursorAncestorTables, treeThoughtsPositioned }
-  }, [fontSize, sizes, singleLineHeight, treeThoughts])
+    // Determine hoverArrowVisibility based on newRank and the visible thoughts
+    if (isSortedContext || hoveringOnDropEnd) {
+      if (newRank > lastVisibleThoughtRank && lastVisibleThoughtRank !== lastThoughtRank) {
+        hoverArrowVisibility = 'below'
+      } else if (newRank < firstVisibleThoughtRank && firstVisibleThoughtRank !== firstThoughtRank) {
+        hoverArrowVisibility = 'above'
+      } else {
+        hoverArrowVisibility = null
+      }
+    }
+
+    return { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility }
+  }, [
+    treeThoughts,
+    isSortedContext,
+    hoveringOnDropEnd,
+    singleLineHeight,
+    fontSize,
+    sizes,
+    maxVisibleY,
+    scrollTop,
+    newRank,
+  ])
 
   const spaceAboveLast = useRef(spaceAboveExtended)
 
@@ -624,10 +700,12 @@ const LayoutTree = () => {
     [spaceAboveExtended],
   )
 
-  const navAndFooterHeight = useNavAndFooterHeight()
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
+
+  // Calculate the position of the arrow relative to the bottom of the container.
+  const arrowBottom = totalHeight + spaceBelow - scrollTop - viewportHeight + navAndFooterHeight
 
   return (
     <div
@@ -638,6 +716,7 @@ const LayoutTree = () => {
       }}
       ref={ref}
     >
+      <HoverArrow arrowBottom={arrowBottom} hoverArrowVisibility={hoverArrowVisibility} scrollTop={scrollTop} />
       <div
         style={{
           // Set a container height that fits all thoughts.
