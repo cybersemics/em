@@ -1,10 +1,8 @@
 import durations from '../../durations.config'
-import init from '../durations'
-
-let durationsHelper: any
+import durationsHelper from '../durations'
 
 beforeEach(() => {
-  durationsHelper = init()
+  durationsHelper.setInTest(false)
 })
 
 describe('getDuration', () => {
@@ -17,8 +15,12 @@ describe('getDuration', () => {
   it('should return the zero duration when in test state', () => {
     const [key] = getTestVals()
 
-    durationsHelper.forceInTest()
+    durationsHelper.setInTest(true)
     expect(durationsHelper.get(key)).toBe(0)
+  })
+
+  it('should throw an error if the key does not exist', () => {
+    expect(() => durationsHelper.get('fake-key')).toThrow(Error)
   })
 })
 
@@ -36,7 +38,7 @@ describe('getDurations', () => {
   })
 
   it('should return the zero duration when in test state', () => {
-    durationsHelper.forceInTest()
+    durationsHelper.setInTest(true)
     const actualDurations = durationsHelper.getAll()
 
     // SHould have same number of keys

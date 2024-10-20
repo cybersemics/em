@@ -2,17 +2,21 @@ import durations, { type DurationConfig } from '../durations.config'
 
 /** Initialize duration helper. */
 function init() {
-  let inTest = navigator.webdriver
+  let inTest: boolean = !!navigator.webdriver
 
   /** Returns the duration for a particular key or undefined if it doesn't exist. */
-  const get = (key: string): number | undefined => (durations[key] ? durationOrZero(durations[key]) : undefined)
+  const get = (key: string): number => {
+    if (durations[key]) return durationOrZero(durations[key])
+
+    throw new Error(`No config for duration key ${key}`)
+  }
 
   /** Returns all durations. */
   const getAll = (): DurationConfig => Object.entries(durations).reduce(reduceDurations, {})
 
   /** Override inTest state. Should only be used for testing purposes. */
-  const forceInTest = () => {
-    inTest = true
+  const setInTest = (inTestOverride: boolean) => {
+    inTest = inTestOverride
   }
 
   /** Returns the duration config with the durations or zero depending on whether we're in tests or not. */
@@ -28,8 +32,10 @@ function init() {
   return {
     get,
     getAll,
-    forceInTest,
+    setInTest,
   }
 }
 
-export default init
+const durationsHelper = init()
+
+export default durationsHelper
