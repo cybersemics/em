@@ -126,9 +126,6 @@ const testSuite = () => {
 
       await press('ArrowUp')
 
-      // wait for render animation to complete
-      await sleep(1000)
-
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
@@ -157,9 +154,6 @@ describe('Font Size: 18 (default)', () => {
 
 describe('Font Size: 13', () => {
   beforeEach(async () => {
-    // TODO: identify what needs to be waited for specifically
-    await sleep(1000)
-
     await click('[data-testid=decrease-font]') // 17
     await click('[data-testid=decrease-font]') // 16
     await click('[data-testid=decrease-font]') // 15
@@ -171,9 +165,6 @@ describe('Font Size: 13', () => {
 
     // scroll to top
     await scroll(0, 0)
-
-    // wait for toolbar size transitions to complete
-    await sleep(400)
   })
 
   // run the snapshot tests at font size 14
