@@ -25,7 +25,6 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 const testSuite = () => {
   describe('', () => {
     it('initial load', async () => {
-      await sleep(1000)
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
