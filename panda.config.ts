@@ -19,8 +19,31 @@ import thoughtRecipe from './src/recipes/thought'
 import tutorialBulletRecipe from './src/recipes/tutorialBullet'
 import upperRightRecipe from './src/recipes/upperRight'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
+import durationsHelper from './src/util/durations'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
+
+type DurationToken = {
+  value: {
+    base: string
+    _test: string
+  }
+}
+
+/** Returns durations formatted for the PandaCSS config. */
+const durationsReducer = (pv: Record<string, DurationToken>, [key, duration]: [string, number]) => {
+  pv[key] = {
+    value: {
+      base: `${duration}ms`,
+      _test: '0ms',
+    },
+  }
+
+  return pv
+}
+
+/** Add `ms` units to raw value. */
+const durations = Object.entries(durationsHelper.getAll()).reduce(durationsReducer, {})
 
 /** Returns duration values with a zero duration for _test. */
 const duration = (str: string) => ({
@@ -326,14 +349,7 @@ export default defineConfig({
             value: 'tomato !important',
           },
         },
-        durations: {
-          highlightPulseDuration: duration('500ms'),
-          hoverPulseDuration: duration('300ms'),
-          /** The animation duration for the slower opacity transition and horizontal shift of the LayoutTree as the depth of the cursor changes. */
-          layoutSlowShiftDuration: duration('750ms'),
-          /** The animation duration of a node in the LayoutTree component. */
-          layoutNodeAnimationDuration: duration('150ms'),
-        },
+        durations,
       },
     },
   },
