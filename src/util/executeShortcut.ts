@@ -15,7 +15,6 @@ import documentSort from '../selectors/documentSort'
 import hasMulticursor from '../selectors/hasMulticursor'
 import thoughtToPath from '../selectors/thoughtToPath'
 import globalStore from '../stores/app'
-import dispatch from '../test-helpers/dispatch'
 import equalPath from './equalPath'
 import hashPath from './hashPath'
 import head from './head'
@@ -128,10 +127,10 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
   if (!multicursorConfig.enabled) {
     const errorMessage = !multicursorConfig.error
       ? 'Cannot execute this shortcut with multiple thoughts.'
-      : typeof multicursorConfig.error === 'string'
-        ? () => multicursorConfig.error as string
-        : multicursorConfig.error(store.getState())
-    dispatch(
+      : typeof multicursorConfig.error === 'function'
+        ? multicursorConfig.error(store.getState())
+        : multicursorConfig.error
+    store.dispatch(
       alert(errorMessage, {
         alertType: AlertType.MulticursorError,
         clearDelay: 5000,

@@ -1,6 +1,7 @@
 import { rgbToHex } from '@mui/material'
 import React, { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { bulletColorActionCreator as bulletColor } from '../actions/bulletColor'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { isTouch } from '../browser'
 import * as selection from '../device/selection'
@@ -87,25 +88,32 @@ const ColorSwatch: FC<{
     // stop toolbar button dip
     e.stopPropagation()
     e.preventDefault()
-
-    // Apply text color to the selection
     if (backgroundColor || color !== 'default') {
-      dispatch(formatSelection('foreColor', color || colors.bg, { label, selected }))
+      dispatch(formatSelection('foreColor', color || colors.bg))
     } else {
-      dispatch(formatSelection('foreColor', colors.fg, { label, selected }))
+      dispatch(formatSelection('foreColor', colors.fg))
     }
-
     // Apply background color to the selection
     if (backgroundColor && backgroundColor !== colors.bg) {
-      dispatch(
-        formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor, {
-          label,
-          selected,
-        }),
-      )
+      dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
     } else {
-      dispatch(formatSelection('backColor', colors.bg, { label, selected }))
+      dispatch(formatSelection('backColor', colors.bg))
     }
+
+    dispatch(
+      bulletColor({
+        ...(selected
+          ? {
+              color: 'default',
+            }
+          : color
+            ? { color: label }
+            : {
+                backgroundColor: label,
+              }),
+        shape,
+      }),
+    )
   }
   return (
     <span
