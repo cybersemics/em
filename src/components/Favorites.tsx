@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import CSSTransition from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
 import { dropHover } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/toggleUserSetting'
@@ -15,6 +16,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import thoughtToPath from '../selectors/thoughtToPath'
+import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import nonNull from '../util/nonNull'
@@ -135,7 +137,13 @@ const FavoritesOptions = ({
       </div>
 
       <div style={{ overflow: 'hidden' }}>
-        <CSSTransition in={showOptions} nodeRef={formRef} timeout={150} classNames='slidedown' unmountOnExit>
+        <CSSTransition
+          in={showOptions}
+          nodeRef={formRef}
+          timeout={durations.get('favoritesSlidedownDuration')}
+          classNames='slidedown'
+          unmountOnExit
+        >
           <form
             ref={formRef}
             className='text-small'
