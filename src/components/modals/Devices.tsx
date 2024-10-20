@@ -65,7 +65,7 @@ const ModalDevices = () => {
               nodeRef={shareDetailRef}
               classNames='fade-400'
               exit={false}
-              timeout={400}
+              timeout={durationsHelper.get('shareDetailFadeDuration')}
               unmountOnExit
             >
               <ShareDetail
@@ -82,7 +82,7 @@ const ModalDevices = () => {
               nodeRef={shareListRef}
               classNames='fade-400'
               exit={false}
-              timeout={400}
+              timeout={durationsHelper.get('shareListFadeDuration')}
               unmountOnExit
             >
               <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
