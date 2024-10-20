@@ -1,5 +1,6 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
+import durationsConfig from './src/durations.config'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
@@ -19,7 +20,6 @@ import thoughtRecipe from './src/recipes/thought'
 import tutorialBulletRecipe from './src/recipes/tutorialBullet'
 import upperRightRecipe from './src/recipes/upperRight'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
-import durationsHelper from './src/util/durations'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
 
@@ -43,7 +43,7 @@ const durationsReducer = (pv: Record<string, DurationToken>, [key, duration]: [s
 }
 
 /** Add `ms` units to raw value. */
-const durations = Object.entries(durationsHelper.getAll()).reduce(durationsReducer, {})
+const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
 
 const keyframes = defineKeyframes({
   fademostlyin: {
