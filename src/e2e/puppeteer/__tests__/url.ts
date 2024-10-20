@@ -1,5 +1,4 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import hideHUD from '../helpers/hideHUD'
@@ -36,9 +35,6 @@ it.skip('single line', async () => {
 
   await press('ArrowUp')
 
-  // wait for render animation to complete
-  await sleep(1000)
-
   const image = await screenshot()
   expect(image).toMatchImageSnapshot()
 })
@@ -61,9 +57,6 @@ describe('multiline', () => {
 
     await press('ArrowUp')
 
-    // wait for render animation to complete
-    await sleep(1000)
-
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   }
@@ -71,9 +64,6 @@ describe('multiline', () => {
   it('Font Size: 18 (default)', multilineTest)
 
   it('Font Size: 13', async () => {
-    // TODO: identify what needs to be waited for specifically
-    await sleep(1000)
-
     await click('[data-testid=decrease-font]') // 17
     await click('[data-testid=decrease-font]') // 16
     await click('[data-testid=decrease-font]') // 15
@@ -101,9 +91,6 @@ it('collapsed thought with url child', async () => {
   `)
 
   await press('Escape')
-
-  // wait for render animation to complete
-  await sleep(1000)
 
   const image = await screenshot()
   expect(image).toMatchImageSnapshot()
