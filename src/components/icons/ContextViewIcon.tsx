@@ -4,7 +4,7 @@ import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/Icon'
 import { ICON_SCALING_FACTOR } from '../../constants'
 import LottieAnimation from './LottieAnimation'
-import animationData from './animations/ContextViewIcon.json'
+import animationData from './animations/18-context-view_3.json'
 
 /** Context View Icon with Conditional Lottie Animation. */
 const ContextViewIcon = ({ fill, size = 20, style = {}, cssRaw, animated }: IconType) => {
