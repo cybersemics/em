@@ -1,5 +1,4 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
@@ -78,15 +77,7 @@ describe('drag', () => {
       `)
 
     await clickThought('b')
-
-    // wait for b to expand
-    await sleep(100)
-
     await clickThought('c')
-
-    // wait for c to expand and e to fade out
-    await sleep(400)
-
     await dragAndDropThought('c', 'e', { position: 'before', dropUncle: true })
 
     const image = await screenshot()
