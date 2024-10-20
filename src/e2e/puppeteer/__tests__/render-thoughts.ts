@@ -76,9 +76,6 @@ const testSuite = () => {
         - c
       `)
 
-      // wait for render animation to complete
-      await sleep(1000)
-
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
