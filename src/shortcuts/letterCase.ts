@@ -9,11 +9,10 @@ const letterCase: Shortcut = {
   description: 'Change the Letter case.',
   svg: Icon,
   canExecute: state => isDocumentEditable() && !!state.cursor,
-  multicursor: {
-    enabled: false,
-    error: () => 'Cannot change text color with multiple thoughts.',
-  },
-  exec: dispatch => {
+  multicursor: 'ignore',
+  exec: (dispatch, getState) => {
+    const state = getState()
+    if (state.showColorPicker) dispatch({ type: 'toggleColorPicker' })
     dispatch({ type: 'toggleLetterCase' })
   },
   isActive: state => !!state.cursor,
