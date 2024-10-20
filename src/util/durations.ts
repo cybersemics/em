@@ -36,6 +36,6 @@ function init() {
   }
 }
 
-const durationsHelper = init()
+const durations = init()
 
-export default durationsHelper
+export default durations
