@@ -289,14 +289,7 @@ describe('drop', () => {
       `)
 
       await clickThought('b')
-
-      // wait for b to expand
-      await sleep(100)
-
       await clickThought('c')
-
-      // wait for c to expand and e to fade out
-      await sleep(400)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
