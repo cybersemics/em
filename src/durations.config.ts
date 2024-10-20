@@ -1,13 +1,45 @@
 export type DurationConfig = Record<string, number>
 
 const durationsMillis: DurationConfig = {
+  addDeviceFormFadeDuration: 400,
+  addDeviceButtonFadeDuration: 400,
+  advancedSettingsLinkOpacityDuration: 100,
+  alertFadeDuration: 800,
+  bulletOpacityDuration: 750,
+  bulletFgTransformDuration: 100,
+  bulletFgOpacityDuration: 500,
+  colorPickerFadeDuration: 200,
+  commandPaletteFadeDuration: 200,
+  contextBreadcrumbsFadeDuration: 600,
+  cursorBreadcrumbsFadeDuration: 200,
+  dropEndTransitionDuration: 150,
+  errorMessageFadeDuration: 200,
+  favoritesSlidedownDuration: 150,
   highlightPulseDuration: 500,
   hoverPulseDuration: 300,
+  latestShortcutsOpacityDuration: 400,
+  /** The animation duration for the slower opacity transition and horizontal shift of the LayoutTree as the depth of the cursor changes. */
   layoutSlowShiftDuration: 750,
+  /** The animation duration of a node in the LayoutTree component. */
   layoutNodeAnimationDuration: 150,
   newThoughtTransitionDuration: 750,
   noteColorTransitionDuration: 750,
+  quickDropPanelSlideDuration: 200,
+  shareDetailFadeDuration: 400,
+  shareListFadeDuration: 400,
+  shortcutTableFadeDuration: 200,
+  sidebarFadeDuration: 200,
+  signaturePadFadeDuration: 400,
   signaturePadOpacityDuration: 150,
+  tipTransitionDuration: 200,
+  toolbarFadeDuration: 600,
+  toolbarButtonTransitionDuration: 80,
+  toolbarButtonSVGOpacityDuration: 200,
+  toolbarHelpTextFadeDuration: 200,
+  triangleToggleTransformDuration: 100,
+  tutorialNavigationButtonDuration: 250,
+  tutorialStepSlideDuration: 400,
+  tutorialStepNavigationDuration: 400,
 }
 
 export default durationsMillis
