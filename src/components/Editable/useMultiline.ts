@@ -62,7 +62,8 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   })
   useEffect(updateMultiline, [splitThoughtValue, updateMultiline])
 
-  viewportStore.useEffect(updateMultiline)
+  // re-measure when the screen is resized
+  viewportStore.useSelectorEffect(updateMultiline, state => state.innerWidth)
 
   return multiline
 }
