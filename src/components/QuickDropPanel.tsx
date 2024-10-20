@@ -3,6 +3,7 @@ import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import CSSTransition from 'react-transition-group/CSSTransition'
 import { isTouch } from '../browser'
+import durations from '../util/durations'
 import CopyOneDrop from './CopyOneDrop'
 import DeleteDrop from './DeleteDrop'
 import ExportDrop from './ExportDrop'
@@ -13,7 +14,13 @@ const QuickDropPanel = () => {
   const quickDropPanelRef = useRef<HTMLDivElement>(null)
 
   return (
-    <CSSTransition nodeRef={quickDropPanelRef} in={isDragging} timeout={200} classNames='slide-right' unmountOnExit>
+    <CSSTransition
+      nodeRef={quickDropPanelRef}
+      in={isDragging}
+      timeout={durations.get('quickDropPanelSlideDuration')}
+      classNames='slide-right'
+      unmountOnExit
+    >
       <div
         ref={quickDropPanelRef}
         style={{
