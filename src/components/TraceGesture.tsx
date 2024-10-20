@@ -16,6 +16,7 @@ import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import viewportStore from '../stores/viewport'
+import durations from '../util/durations'
 
 interface TraceGestureProps {
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
@@ -143,7 +144,12 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         pointerEvents: eventNodeRef ? 'none' : undefined,
       }}
     >
-      <CSSTransition nodeRef={fadeBothEnterElRef} in={show} timeout={400} classNames='fade-both'>
+      <CSSTransition
+        nodeRef={fadeBothEnterElRef}
+        in={show}
+        timeout={durations.get('signaturePadFadeDuration')}
+        classNames='fade-both'
+      >
         <div
           ref={fadeBothEnterElRef}
           // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots
