@@ -10,6 +10,7 @@ import { BASE_FONT_SIZE } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import themeColors from '../selectors/themeColors'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import durations from '../util/durations'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
@@ -108,7 +109,7 @@ const NavBar = ({ position }: { position: string }) => {
                   <CSSTransition
                     nodeRef={cursorBreadcrumbsWrapperRef}
                     in={!distractionFreeTyping}
-                    timeout={200}
+                    timeout={durations.get('cursorBreadcrumbsFadeDuration')}
                     classNames='fade'
                     unmountOnExit
                   >
