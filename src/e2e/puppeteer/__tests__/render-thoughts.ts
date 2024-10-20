@@ -65,9 +65,6 @@ const testSuite = () => {
 
       await press('ArrowUp')
 
-      // wait for render animation to complete
-      await sleep(800)
-
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
@@ -97,9 +94,6 @@ const testSuite = () => {
 
       await press('ArrowUp')
 
-      // wait for render animation to complete
-      await sleep(1000)
-
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
@@ -120,9 +114,6 @@ const testSuite = () => {
       // move cursor to the multiline thought
       await press('ArrowUp')
       await press('ArrowUp')
-
-      // wait for render animation to complete
-      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -155,9 +146,6 @@ const testSuite = () => {
       `)
 
       await press('ArrowUp')
-
-      // wait for render animation to complete
-      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
