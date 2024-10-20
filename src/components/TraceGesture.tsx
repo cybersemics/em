@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { CSSTransition } from 'react-transition-group'
+import { token } from '../../styled-system/tokens'
 import {
   AlertType,
   GESTURE_CANCEL_ALERT_TEXT,
