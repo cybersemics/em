@@ -36,7 +36,6 @@ const testSuite = () => {
     it('one thought', async () => {
       await press('Enter')
       await type('a')
-      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
