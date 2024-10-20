@@ -45,14 +45,6 @@ const durationsReducer = (pv: Record<string, DurationToken>, [key, duration]: [s
 /** Add `ms` units to raw value. */
 const durations = Object.entries(durationsHelper.getAll()).reduce(durationsReducer, {})
 
-/** Returns duration values with a zero duration for _test. */
-const duration = (str: string) => ({
-  value: {
-    base: str,
-    _test: '0ms',
-  },
-})
-
 const keyframes = defineKeyframes({
   fademostlyin: {
     from: {
