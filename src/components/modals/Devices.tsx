@@ -15,7 +15,7 @@ import * as selection from '../../device/selection'
 import useSharedType from '../../hooks/useSharedType'
 import useStatus from '../../hooks/useStatus'
 import themeColors from '../../selectors/themeColors'
-import durationsHelper from '../../util/durations'
+import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import strip from '../../util/strip'
 import ActionButton from './../ActionButton'
@@ -65,7 +65,7 @@ const ModalDevices = () => {
               nodeRef={shareDetailRef}
               classNames='fade-400'
               exit={false}
-              timeout={durationsHelper.get('shareDetailFadeDuration')}
+              timeout={durations.get('shareDetailFadeDuration')}
               unmountOnExit
             >
               <ShareDetail
@@ -82,7 +82,7 @@ const ModalDevices = () => {
               nodeRef={shareListRef}
               classNames='fade-400'
               exit={false}
-              timeout={durationsHelper.get('shareListFadeDuration')}
+              timeout={durations.get('shareListFadeDuration')}
               unmountOnExit
             >
               <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
@@ -168,7 +168,7 @@ const ShareList = React.forwardRef<
                   key='add-device-form'
                   classNames='fade-400'
                   exit={false}
-                  timeout={durationsHelper.get('addDeviceFormFadeDuration')}
+                  timeout={durations.get('addDeviceFormFadeDuration')}
                   unmountOnExit
                 >
                   <div>
@@ -197,7 +197,7 @@ const ShareList = React.forwardRef<
                   key='add-a-device'
                   classNames='fade-400'
                   exit={false}
-                  timeout={durationsHelper.get('addDeviceButtonFadeDuration')}
+                  timeout={durations.get('addDeviceButtonFadeDuration')}
                   unmountOnExit
                 >
                   <div style={{ marginTop: '1em' }}>
