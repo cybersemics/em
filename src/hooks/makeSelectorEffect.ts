@@ -5,7 +5,7 @@ import Store from '../@types/Store'
 const makeSelectorEffect = <U extends Store<any>>(store: U) => {
   type S = U extends Store<infer V> ? V : never
 
-  return <T>(effect: () => void, select: (state: S) => T, equalityFn?: (a: T, b: T) => boolean) => {
+  return <T>(effect: (slice: T) => void, select: (state: S) => T, equalityFn?: (a: T, b: T) => boolean) => {
     const prev = useRef<T>(select(store.getState()))
     useEffect(
       () =>
@@ -13,7 +13,7 @@ const makeSelectorEffect = <U extends Store<any>>(store: U) => {
         store.subscribe(() => {
           const current = select(store.getState())
           if (equalityFn ? !equalityFn(current, prev.current) : current !== prev.current) {
-            effect()
+            effect(current)
           }
           prev.current = current
         }),
