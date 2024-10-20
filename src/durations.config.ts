@@ -5,8 +5,9 @@ const durationsMillis: DurationConfig = {
   hoverPulseDuration: 300,
   layoutSlowShiftDuration: 750,
   layoutNodeAnimationDuration: 150,
-  signaturePadOpacityDuration: 150,
+  newThoughtTransitionDuration: 750,
   noteColorTransitionDuration: 750,
+  signaturePadOpacityDuration: 150,
 }
 
 export default durationsMillis
