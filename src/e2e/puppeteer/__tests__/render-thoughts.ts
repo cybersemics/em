@@ -165,6 +165,9 @@ describe('Font Size: 13', () => {
 
     // scroll to top
     await scroll(0, 0)
+
+    // wait for toolbar size transitions to complete
+    await sleep(400)
   })
 
   // run the snapshot tests at font size 14
@@ -173,9 +176,6 @@ describe('Font Size: 13', () => {
 
 describe('Font Size: 22', () => {
   beforeEach(async () => {
-    // TODO: identify what needs to be waited for specifically
-    await sleep(1000)
-
     await click('[data-testid=increase-font]') // 19
     await click('[data-testid=increase-font]') // 20
     await click('[data-testid=increase-font]') // 21
