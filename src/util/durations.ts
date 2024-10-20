@@ -1,4 +1,4 @@
-import durations, { type DurationConfig } from '../durations.config'
+import durationsConfig, { type DurationConfig } from '../durations.config'
 
 /** Initialize duration helper. */
 function init() {
@@ -6,13 +6,13 @@ function init() {
 
   /** Returns the duration for a particular key or undefined if it doesn't exist. */
   const get = (key: string): number => {
-    if (durations[key]) return durationOrZero(durations[key])
+    if (durationsConfig[key]) return durationOrZero(durationsConfig[key])
 
     throw new Error(`No config for duration key ${key}`)
   }
 
   /** Returns all durations. */
-  const getAll = (): DurationConfig => Object.entries(durations).reduce(reduceDurations, {})
+  const getAll = (): DurationConfig => Object.entries(durationsConfig).reduce(reduceDurations, {})
 
   /** Override inTest state. Should only be used for testing purposes. */
   const setInTest = (inTestOverride: boolean) => {
