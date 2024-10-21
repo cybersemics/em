@@ -17,8 +17,7 @@ const moveThoughtUpShortcut: Shortcut = {
   keyboard: { key: Key.ArrowUp, meta: true, shift: true },
   multicursor: true,
   svg: MoveThoughtUpIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     const { cursor } = state
 
     if (!cursor || !isDocumentEditable()) return false

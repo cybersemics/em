@@ -125,7 +125,7 @@
     transform 0 ease-out,
     margin 0 ease-out; /* add transition time after initial load and scroll into place */
   box-sizing: border-box; /* make height include padding so that the min-height can be exctly 100vh */
-  max-width: 66%;
+  max-width: 55em; /* limit line width for easier reading */
   margin: 0 auto;
   min-height: 100vh; /* forces footer to bottom when there is little content */
 }

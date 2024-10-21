@@ -14,11 +14,10 @@ const bumpThoughtDownShortcut: Shortcut = {
   keyboard: { key: 'd', meta: true, alt: true },
   multicursor: {
     enabled: false,
-    error: () => 'Cannot bump down multiple thoughts.',
+    error: 'Cannot bump down multiple thoughts.',
   },
   svg: BumpThoughtDownIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => {

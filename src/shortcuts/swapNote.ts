@@ -12,8 +12,7 @@ const swapNote: Shortcut = {
   keyboard: { key: 'n', alt: true, shift: true },
   gesture: 'ulr',
   multicursor: true,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   svg: ConvertToNoteIcon,

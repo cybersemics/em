@@ -7,6 +7,7 @@ import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import removeHome from '../../util/removeHome'
 import importText from '../importText'
+import moveThoughtUp from '../moveThoughtUp'
 
 it('joins two simple thoughts', () => {
   const text = `
@@ -23,6 +24,42 @@ it('joins two simple thoughts', () => {
 - a
   - m n
 - b
+`
+  expect(removeHome(exported)).toEqual(expectedOutput)
+})
+
+it('joins thoughts in rank order', () => {
+  const text = `
+    - a
+      - n
+      - m
+  `
+  const steps = [importText({ text }), setCursor(['a', 'm']), moveThoughtUp, join()]
+
+  const newState = reducerFlow(steps)(initialState())
+  const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
+  const expectedOutput = `
+- a
+  - m n
+`
+  expect(removeHome(exported)).toEqual(expectedOutput)
+})
+
+it('ignores metaprogramming attributes', () => {
+  const text = `
+    - a
+      - =test
+      - m
+      - n
+  `
+  const steps = [importText({ text }), setCursor(['a', 'm']), join()]
+
+  const newState = reducerFlow(steps)(initialState())
+  const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
+  const expectedOutput = `
+- a
+  - =test
+  - m n
 `
   expect(removeHome(exported)).toEqual(expectedOutput)
 })

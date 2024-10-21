@@ -10,11 +10,10 @@ const extractThought: Shortcut = {
   keyboard: { key: 'e', control: true, meta: true },
   multicursor: {
     enabled: false,
-    error: () => 'Cannot extract multiple thoughts.',
+    error: 'Cannot extract multiple thoughts.',
   },
   svg: ExtractThoughtIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
   exec: (dispatch, getState) => {

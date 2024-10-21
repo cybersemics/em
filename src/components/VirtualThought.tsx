@@ -12,6 +12,7 @@ import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import editingValueStore from '../stores/editingValue'
+import viewportStore from '../stores/viewport'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
@@ -173,6 +174,9 @@ const VirtualThought = ({
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
   useSelectorEffect(updateSize, selectCursor, shallowEqual)
+
+  // re-measure when the screen is resized
+  viewportStore.useSelectorEffect(updateSize, state => state.innerWidth)
 
   // Recalculate height after thought value changes.
   // Otherwise, the hight is not recalculated after splitThought.

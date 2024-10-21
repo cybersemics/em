@@ -11,8 +11,7 @@ const shortcut: Shortcut = {
   description: 'Download or copy the current context as plaintext or html.',
   svg: ShareIcon,
   multicursor: 'ignore',
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     if (state.cursor || hasMulticursor(state)) return true
     return getAllChildren(state, HOME_TOKEN).length > 0
   },

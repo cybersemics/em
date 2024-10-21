@@ -36,8 +36,7 @@ const indentShortcut: Shortcut = {
   },
   gesture: 'rlr',
   svg: IndentIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && !!state.cursor
   },
   exec: dispatch => dispatch(indent()),

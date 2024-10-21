@@ -12,7 +12,7 @@ const newThoughtAboveShortcut: Shortcut = {
   gesture: 'rul',
   multicursor: {
     enabled: false,
-    error: () => 'Cannot create a new thought with multiple thoughts.',
+    error: 'Cannot create a new thought with multiple thoughts.',
   },
   ...(!isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null),
   svg: NewThoughtAboveIcon,

@@ -75,8 +75,7 @@ const deleteShortcut: Shortcut = {
     },
   },
   keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec,

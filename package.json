@@ -1,6 +1,6 @@
 {
   "name": "em",
-  "version": "300.30.17",
+  "version": "300.30.24",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -208,6 +208,7 @@
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.3.3",
     "puppeteer": "^22.12.1",
+    "puppeteer-screen-recorder": "3.0.3",
     "react-dnd-test-backend": "^16.0.1",
     "react-dnd-test-utils": "^16.0.1",
     "redux-mock-store": "^1.5.4",

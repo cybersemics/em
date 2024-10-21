@@ -13,8 +13,7 @@ const bold: Shortcut = {
   multicursor: true,
   svg: Icon,
   keyboard: { key: 'b', meta: true },
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => {

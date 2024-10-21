@@ -16,10 +16,10 @@ const noteShortcut: Shortcut = {
   gesture: 'rdlr',
   multicursor: {
     enabled: false,
-    error: () => 'Cannot create a note with multiple thoughts.',
+    error: 'Cannot create a note with multiple thoughts.',
   },
   svg: PencilIcon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: state => isDocumentEditable() && !!state.cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
@@ -30,8 +30,7 @@ const noteShortcut: Shortcut = {
     asyncFocus()
     dispatch(toggleNote())
   },
-  isActive: getState => {
-    const state = getState()
+  isActive: state => {
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return attribute(state, head(path), '=note') !== null

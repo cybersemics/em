@@ -8,8 +8,8 @@ const redoShortcut: Shortcut = {
   id: 'redo',
   label: 'Redo',
   multicursor: 'ignore',
-  description: getState => {
-    const lastActionType = getLatestActionType(getState().redoPatches)
+  description: state => {
+    const lastActionType = getLatestActionType(state.redoPatches)
 
     if (lastActionType) {
       return `Redo ${startCase(lastActionType)}`
@@ -22,7 +22,7 @@ const redoShortcut: Shortcut = {
   exec: dispatch => {
     dispatch(redo())
   },
-  canExecute: getState => getState().redoPatches.length > 0,
+  canExecute: state => state.redoPatches.length > 0,
 }
 
 export default redoShortcut

@@ -14,11 +14,11 @@ const newUncleShortcut: Shortcut = {
   keyboard: { key: Key.Enter, meta: true, alt: true },
   multicursor: {
     enabled: false,
-    error: () => 'Cannot create a new subthought with multiple thoughts.',
+    error: 'Cannot create a new subthought with multiple thoughts.',
   },
   svg: NewSubthoughtNextIcon,
-  canExecute: getState => {
-    const { cursor } = getState()
+  canExecute: state => {
+    const { cursor } = state
     return isDocumentEditable() && !!cursor && cursor.length > 1
   },
   exec: (dispatch, getState) => {
