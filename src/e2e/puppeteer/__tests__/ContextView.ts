@@ -1,4 +1,3 @@
-import sleep from '../../../util/sleep'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
