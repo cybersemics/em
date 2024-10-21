@@ -8,6 +8,7 @@ interface Icon {
   size?: number
   style?: React.CSSProperties
   width?: number
+  animated?: boolean
 }
 
 export default Icon

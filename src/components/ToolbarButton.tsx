@@ -1,4 +1,4 @@
-import React, { FC, MutableRefObject, useCallback, useMemo } from 'react'
+import React, { FC, MutableRefObject, useCallback, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -26,6 +26,7 @@ export interface ToolbarButtonProps {
   onMouseLeave?: () => void
   selected?: boolean
   shortcutId: ShortcutId
+  animated?: boolean
 }
 
 /** A single button in the Toolbar. */
@@ -41,6 +42,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   selected,
   shortcutId,
 }) => {
+  const [isAnimated, setIsAnimated] = useState(false)
+
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
     console.error('Missing shortcut: ' + shortcutId)
@@ -94,12 +97,14 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
       lastScrollLeft.current = toolbarEl.scrollLeft
 
+      setIsAnimated(false)
+
       if (!disabled) {
         onTapUp?.(shortcutId, e)
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapUp, customize, isButtonExecutable, disabled, isPressing, onTapUp],
+    [longPressTapUp, customize, isButtonExecutable, disabled, isPressing, onTapUp, lastScrollLeft, setIsAnimated],
   )
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
@@ -110,6 +115,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       longPressTapDown(e)
 
       lastScrollLeft.current = toolbarEl.scrollLeft
+
+      setIsAnimated(true)
 
       if (!disabled) {
         onTapDown?.(shortcutId, e)
@@ -228,6 +235,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           transition: 'opacity 200ms ease-out',
         })}
         style={style}
+        animated={isAnimated}
       />
     </div>
   )
