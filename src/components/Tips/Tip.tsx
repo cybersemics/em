@@ -15,6 +15,8 @@ const Tip: FC<PropsWithChildren<TipProps>> = ({ display, children }, ref) => {
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
+        // disable pointer revents when hidden, otherwise it will block clicks on the NavBar
+        pointerEvents: display ? 'auto' : 'none',
         transform: display ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 200ms ease-in-out, opacity 200ms ease-in-out',
         opacity: display ? 1 : 0,
