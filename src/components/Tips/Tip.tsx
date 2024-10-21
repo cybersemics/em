@@ -1,17 +1,18 @@
 import { FC, PropsWithChildren } from 'react'
-
-interface TipProps {
-  display: boolean
-}
+import { css } from '../../../styled-system/css'
 
 /** A tip that gets displayed at the bottom of the window. */
-const Tip: FC<PropsWithChildren<TipProps>> = ({ display, children }, ref) => {
+const Tip: FC<
+  PropsWithChildren<{
+    display: boolean
+  }>
+> = ({ display, children }) => {
   return (
     <div
-      style={{
+      className={css({
         position: 'fixed',
         bottom: '1em',
-        left: 0,
+        left: '0',
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
@@ -19,20 +20,20 @@ const Tip: FC<PropsWithChildren<TipProps>> = ({ display, children }, ref) => {
         pointerEvents: display ? 'auto' : 'none',
         transform: display ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 200ms ease-in-out, opacity 200ms ease-in-out',
-        opacity: display ? 1 : 0,
-      }}
-      className='z-index-popup'
+        opacity: display ? '1' : '0',
+        zIndex: 'popup',
+      })}
     >
       <div
-        style={{
+        className={css({
           backgroundColor: '#333',
           display: 'inline-block',
           padding: '1em',
           maxWidth: '20em',
-          borderRadius: 5,
+          borderRadius: '5',
           textAlign: 'center',
           color: '#ccc',
-        }}
+        })}
       >
         {children}
       </div>
