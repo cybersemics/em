@@ -97,7 +97,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
       lastScrollLeft.current = toolbarEl.scrollLeft
 
-      setIsAnimated(false)
+      setTimeout(() => setIsAnimated(false), 2000)
+      //setIsAnimated(false)
 
       if (!disabled) {
         onTapUp?.(shortcutId, e)

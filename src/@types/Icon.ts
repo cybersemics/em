@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { ReactNode } from 'react'
 import { SystemStyleObject } from '../../styled-system/types'
 
-interface Icon {
+interface IconType {
   cssRaw?: SystemStyleObject
   fill?: string
   height?: number
@@ -11,4 +11,16 @@ interface Icon {
   animated?: boolean
 }
 
-export default Icon
+export interface AnimatedIconType {
+  cssRaw?: SystemStyleObject
+  fill?: string
+  height?: number
+  size?: number
+  style?: React.CSSProperties
+  width?: number
+  animated?: boolean
+  animationData?: object
+  children?: ReactNode
+}
+
+export default IconType
