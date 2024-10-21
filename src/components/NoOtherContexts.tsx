@@ -1,3 +1,5 @@
+import { css, cx } from '../../styled-system/css'
+import { textNote } from '../../styled-system/recipes'
 import GesturePath from '../@types/GesturePath'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
@@ -18,14 +20,17 @@ const NoOtherContexts = ({
 
   return (
     <div
-      className='text-note text-small'
-      style={{
-        lineHeight: 1.72,
-        // use padding instead of margin to ensure it affects height for LayoutTree node y calculation
-        paddingBottom: '0.75em',
-      }}
+      className={cx(
+        textNote(),
+        css({
+          fontSize: 'sm',
+          lineHeight: 1.72,
+          // use padding instead of margin to ensure it affects height for LayoutTree node y calculation
+          paddingBottom: '0.75em',
+        }),
+      )}
     >
-      <p style={{ marginTop: 0 }}>This thought is not found in any other contexts.</p>
+      <p className={css({ marginTop: 0 })}>This thought is not found in any other contexts.</p>
       {/* <div>
         {isTouch ? (
           <span>

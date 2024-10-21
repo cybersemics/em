@@ -2,6 +2,7 @@ import { FC, useEffect } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
@@ -83,7 +84,7 @@ const QuickDropIcon = ({
   )
 
   return (
-    <div style={{ marginBottom: 10 }}>
+    <div className={css({ marginBottom: 10 })}>
       <div
         className='z-index-stack'
         ref={dropTarget}
@@ -97,7 +98,7 @@ const QuickDropIcon = ({
           size={fontSize * 1.5}
           fill={isHovering ? (dark ? 'lightblue' : 'royalblue') : dark ? 'white' : 'black'}
           // disable default .icon transition so that highlight is immediate
-          style={{ cursor: 'move', transition: 'none', verticalAlign: 'middle' }}
+          cssRaw={css.raw({ cursor: 'move', transition: 'none', verticalAlign: 'middle' })}
         />
       </div>
     </div>

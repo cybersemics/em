@@ -1,6 +1,7 @@
 import { isEqual, uniqBy } from 'lodash'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import Thunk from '../@types/Thunk'
 import { pullAncestorsActionCreator as pullAncestors } from '../actions/pullAncestors'
 import useDelayedState from '../hooks/useDelayedState'
@@ -59,7 +60,7 @@ const RecentlyEdited = () => {
   ])
 
   return (
-    <div style={{ marginBottom: '4em', marginTop: '1.5em' }}>
+    <div className={css({ marginBottom: '4em', marginTop: '1.5em' })}>
       {!loaded ? (
         ready ? (
           <LoadingEllipsis />
@@ -71,7 +72,7 @@ const RecentlyEdited = () => {
           ))}
         </div>
       ) : (
-        <div style={{ maxWidth: 450 }}>No recent thoughts.</div>
+        <div className={css({ maxWidth: 450 })}>No recent thoughts.</div>
       )}
     </div>
   )

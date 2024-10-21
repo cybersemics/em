@@ -115,83 +115,6 @@
   top: 2px;
 }
 
-.content {
-  background-color: white;
-  color: #000;
-  padding: 80px 10px 153px 50px
-    /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
-  position: relative;
-  transition:
-    transform 0 ease-out,
-    margin 0 ease-out; /* add transition time after initial load and scroll into place */
-  box-sizing: border-box; /* make height include padding so that the min-height can be exctly 100vh */
-  max-width: 55em; /* limit line width for easier reading */
-  margin: 0 auto;
-  min-height: 100vh; /* forces footer to bottom when there is little content */
-}
-
-@media (max-width: 960px) {
-  .content {
-    max-width: 80%;
-  }
-}
-
-@media (max-width: 560px) {
-  .content {
-    max-width: 50em;
-    padding-left: 40px;
-  }
-}
-
-/* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
-.content-tutorial {
-  min-height: auto;
-  padding-bottom: 20px;
-}
-
-.dark .root,
-.dark .content {
-  background-color: black;
-  color: white;
-}
-
-/* Navigation styles */
-.nav {
-  position: sticky;
-  z-index: var(--z-index-stack);
-  padding: 0 15px 0 10px;
-  bottom: 0;
-}
-
-.nav-container {
-  position: absolute;
-  width: calc(100% - 30px); /* offset .nav padding */
-  transition: background-color 0.2s ease-out;
-}
-
-.nav-container .nav-right-button-group {
-  display: grid;
-  grid-auto-flow: column;
-  grid-column-gap: 15px;
-  align-items: center;
-}
-
-.nav-top {
-  top: 0;
-}
-
-.nav-bottom {
-  padding: 0 15px;
-}
-
-.nav-bottom .nav-container {
-  position: relative;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-  /* rounded screens */
-  padding-bottom: calc(max(10px, var(--safe-area-bottom)));
-}
 
 /* react-transition-group animation: fade */
 .fade-enter {
@@ -402,20 +325,6 @@
 .center-in-content {
   text-align: center;
   margin-left: -30px;
-}
-
-.absolute-center {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 10%; /* slightly above the fold */
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  user-select: none;
-  cursor: default;
 }
 
 .text-note {
@@ -637,12 +546,6 @@
   color: lightblue;
 }
 
-.indent {
-  display: inline-block;
-  margin-top: 5px;
-  margin-left: 18px;
-}
-
 .tutorial-next-wait {
   margin-left: 10px;
   font-style: italic;
@@ -729,77 +632,6 @@
   text-align: center;
 }
 
-.drop-down-wrapper {
-  background-color: white;
-  box-shadow: 0 0 10px 0px black;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  border: 1px solid white;
-  position: absolute;
-  right: 3px;
-  padding: 0px 5px;
-  z-index: var(--z-index-stack);
-}
-
-.drop-down-wrapper .drop-down-option-wrapper {
-  cursor: pointer;
-  padding: 2px 0px;
-  border-top: 1px solid #444;
-  transition: opacity 150ms ease-in;
-}
-
-.drop-down-wrapper .drop-down-option-wrapper:hover {
-  opacity: 0.85;
-}
-
-.drop-down-wrapper .drop-down-option-wrapper:first-child {
-  border-top: none;
-}
-
-.drop-down-wrapper .drop-down-option {
-  display: flex;
-  align-items: center;
-  margin-left: 10px;
-}
-
-.drop-down-wrapper .drop-down-option .drop-down-label {
-  margin-left: 10px;
-  width: 95px;
-}
-
-.dark .drop-down-wrapper {
-  background-color: black;
-}
-
-/* Publish */
-
-.publish-meta {
-  margin: 15px 0;
-  font-size: 85%;
-  overflow: hidden;
-  line-height: 1.4;
-}
-
-.publish-meta .react-gravatar {
-  margin: 10px 10px 10px 0;
-  border-radius: 9999px;
-  float: left;
-}
-
-.publish-meta .byline:first-of-type {
-  margin-top: 15px;
-}
-
-.publish-meta .byline:nth-of-type(2) {
-  opacity: 0.6;
-}
-
-.quick-add-button {
-  display: inline-flex;
-  transition: transform 200ms ease-in-out;
-}
-
 .latest-shortcuts-wrapper {
   position: absolute;
   /* Using vh here allows shortcuts diagram to always appear keyboard in mobile. */
@@ -816,28 +648,6 @@
   opacity: 0.7;
   padding: 10px;
   margin: 0 2px;
-}
-
-.quick-add-button.rotate {
-  transform: rotate(135deg);
-}
-
-@keyframes ellipsis {
-  to {
-    width: 1.25em;
-  }
-}
-
-.loading-ellipsis:after {
-  overflow: hidden;
-  position: absolute;
-  display: inline-block;
-  vertical-align: bottom;
-  -webkit-animation: ellipsis steps(4, end) 1000ms infinite;
-  animation: ellipsis steps(4, end) 1000ms infinite;
-  content: '\2026'; /* ascii code for the ellipsis character */
-  width: 0;
-  margin-left: 0.1em;
 }
 
 @keyframes toblack {
@@ -857,24 +667,6 @@
 .gray {
   color: #666;
   fill: #666;
-}
-
-.graypulse {
-  color: #666;
-  fill: #666;
-  -webkit-animation: toblack 400ms infinite alternate ease-in-out;
-}
-
-.dark .graypulse {
-  -webkit-animation: towhite 400ms infinite alternate ease-in-out;
-}
-
-.no-select {
-  user-select: none;
-}
-
-.empty-thoughtspace {
-  animation: 0.4s ease-out 0s normal forwards fadein;
 }
 
 .advance-setting-wrapper {

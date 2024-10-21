@@ -14,7 +14,6 @@ import useDragHold from '../hooks/useDragHold'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
-import themeColors from '../selectors/themeColors'
 import thoughtToPath from '../selectors/thoughtToPath'
 import durations from '../util/durations'
 import fastClick from '../util/fastClick'
@@ -36,7 +35,6 @@ const DragAndDropFavorite = ({
   disableDragAndDrop?: boolean
   simplePath: SimplePath
 }) => {
-  const colors = useSelector(themeColors)
   const { dragSource, dropTarget, isDragging, isHovering } = useDragAndDropFavorites({
     disableDragAndDrop,
     simplePath,
@@ -47,7 +45,7 @@ const DragAndDropFavorite = ({
   return (
     // Set overflow:auto so the drop target fully wraps its contents.
     // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
-    <div {...dragHoldResult.props} style={{ overflow: 'auto' }} ref={node => dragSource(dropTarget(node))}>
+    <div {...dragHoldResult.props} className={css({ overflow: 'auto' })} ref={node => dragSource(dropTarget(node))}>
       {!disableDragAndDrop && isHovering && (
         <span
           className={cx(
@@ -68,7 +66,7 @@ const DragAndDropFavorite = ({
           ...(!disableDragAndDrop &&
             (isDragging || dragHoldResult.isPressed
               ? {
-                  color: colors.highlight,
+                  color: token('colors.highlight'),
                   fontWeight: 'bold',
                 }
               : undefined)),
@@ -85,7 +83,7 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
   })
 
   return (
-    <div style={{ height: '4em' }} ref={dropTarget}>
+    <div className={css({ height: '4em' })} ref={dropTarget}>
       <span
         className={cx(
           dropHover(),
@@ -114,21 +112,27 @@ const FavoritesOptions = ({
   const formRef = useRef<HTMLFormElement>(null)
 
   return (
-    <div style={{ marginBottom: '0.5em', marginLeft: 2 }}>
+    <div className={css({ marginBottom: '0.5em', marginLeft: 2 })}>
       {/* Show Options toggle */}
-      <div style={{ marginLeft: '1em' }}>
+      <div className={css({ marginLeft: '1em' })}>
         <span
           {...fastClick(() => setShowOptions(!showOptions))}
-          style={{ color: '#444', cursor: 'pointer', fontSize: '0.7em', fontWeight: 'bold', position: 'relative' }}
+          className={css({
+            color: '#444',
+            cursor: 'pointer',
+            fontSize: '0.7em',
+            fontWeight: 'bold',
+            position: 'relative',
+          })}
         >
           <span
-            style={{
+            className={css({
               display: 'inline-block',
-              transform: `rotate(${showOptions ? 90 : 0}deg)`,
+              transform: showOptions ? `rotate(90deg)` : `rotate(0deg)`,
               transition: `transform ${token('durations.favoritesSlidedownDuration')} ease-out`,
               // avoid position:absolute to trivially achieve correct vertical alignment with text
               marginLeft: '-1em',
-            }}
+            })}
           >
             ▸
           </span>{' '}
@@ -136,7 +140,7 @@ const FavoritesOptions = ({
         </span>
       </div>
 
-      <div style={{ overflow: 'hidden' }}>
+      <div className={css({ overflow: 'hidden' })}>
         <CSSTransition
           in={showOptions}
           nodeRef={formRef}
@@ -146,12 +150,7 @@ const FavoritesOptions = ({
         >
           <form
             ref={formRef}
-            className='text-small'
-            style={{
-              backgroundColor: '#3e3e3e',
-              borderRadius: '0.5em',
-              padding: '1em',
-            }}
+            className={css({ fontSize: 'sm', backgroundColor: '#3e3e3e', borderRadius: '0.5em', padding: '1em' })}
           >
             <Checkbox
               checked={!hideContexts}
@@ -190,7 +189,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
         {simplePaths.length > 0 ? (
           <div>
             <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
-            <div style={{ marginTop: '1em' }}>
+            <div className={css({ marginTop: '1em' })}>
               {simplePaths.map((simplePath, i) => (
                 <DragAndDropFavorite
                   key={head(simplePath)}
@@ -202,9 +201,9 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
             </div>
           </div>
         ) : (
-          <div style={{ marginTop: '1em', maxWidth: 450 }}>
+          <div className={css({ marginTop: '1em', maxWidth: 450 })}>
             To add a thought to your favorites list, set the cursor on a thought and tap{' '}
-            <FavoritesIcon style={{ verticalAlign: 'text-bottom' }} /> in the toolbar.
+            <FavoritesIcon cssRaw={css.raw({ verticalAlign: 'text-bottom' })} /> in the toolbar.
           </div>
         )}
         <DropEnd disableDragAndDrop={disableDragAndDrop} />
