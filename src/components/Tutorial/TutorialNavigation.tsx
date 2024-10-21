@@ -2,6 +2,7 @@ import { Ref } from 'react'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { tutorialBullet } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialChoiceActionCreator as tutorialChoice } from '../../actions/tutorialChoice'
 import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutorialNext'
@@ -58,7 +59,7 @@ const TutorialNavigation = ({
                   fontSize: '32px',
                   marginLeft: '1px',
                   marginRight: '1px',
-                  transition: 'all 400ms ease-in-out',
+                  transition: `all ${token('durations.tutorialStepNavigationDuration')} ease-in-out`,
                   opacity: step === Math.floor(tutorialStep) ? 1 : 0.25,
                 })}
                 key={step}

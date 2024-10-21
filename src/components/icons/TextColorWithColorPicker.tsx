@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import IconType from '../../@types/Icon'
+import durations from '../../util/durations'
 import ColorPicker from '../ColorPicker'
 import TextColorIcon from './TextColor'
 
@@ -16,7 +17,7 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
       <CSSTransition
         nodeRef={toolbarPopupRef}
         in={showColorPicker}
-        timeout={200}
+        timeout={durations.get('colorPickerFadeDuration')}
         classNames='fade'
         exit={false}
         unmountOnExit

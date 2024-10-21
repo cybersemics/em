@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { anchorButton, bullet, child, thought } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
@@ -74,7 +75,9 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
   }, [dispatch, distance, path, value])
 
   return show ? (
-    <ul className={css({ transition: 'all 0.75s ease-out', marginTop: 0 })}>
+    <ul
+      className={css({ transition: `all ${token('durations.newThoughtTransitionDuration')} ease-out`, marginTop: 0 })}
+    >
       <li className={child()}>
         {type === 'bullet' ? <span className={bullet()} /> : null}
         <div className={thought()}>

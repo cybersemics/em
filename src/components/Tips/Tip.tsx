@@ -1,5 +1,6 @@
 import { FC, PropsWithChildren } from 'react'
 import { css } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
 
 /** A tip that gets displayed at the bottom of the window. */
 const Tip: FC<
@@ -19,7 +20,7 @@ const Tip: FC<
         // disable pointer revents when hidden, otherwise it will block clicks on the NavBar
         pointerEvents: display ? 'auto' : 'none',
         transform: display ? 'translateY(0)' : 'translateY(100%)',
-        transition: 'transform 200ms ease-in-out, opacity 200ms ease-in-out',
+        transition: `transform ${token('durations.tipTransitionDuration')} ease-in-out, opacity ${token('durations.tipTransitionDuration')} ease-in-out`,
         opacity: display ? '1' : '0',
         zIndex: 'popup',
       })}

@@ -8,6 +8,7 @@ import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isTouch } from '../browser'
+import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import Favorites from './Favorites'
 import RecentlyDeleted from './RecentlyDeleted'
@@ -151,7 +152,12 @@ const Sidebar = () => {
           })}
           data-scroll-at-edge
         >
-          <CSSTransition in={showSidebar} nodeRef={sidebarMenuRef} timeout={200} classNames='fade'>
+          <CSSTransition
+            in={showSidebar}
+            nodeRef={sidebarMenuRef}
+            timeout={durations.get('sidebarFadeDuration')}
+            classNames='fade'
+          >
             <div
               ref={sidebarMenuRef}
               style={{

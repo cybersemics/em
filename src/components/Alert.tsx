@@ -9,6 +9,7 @@ import { undoActionCreator as undo } from '../actions/undo'
 import { AlertType } from '../constants'
 import isUndoEnabled from '../selectors/isUndoEnabled'
 import alertStore from '../stores/alert'
+import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import strip from '../util/strip'
 import Popup from './Popup'
@@ -66,7 +67,7 @@ const Alert: FC = () => {
         <CSSTransition
           key={0}
           nodeRef={popupRef}
-          timeout={800}
+          timeout={durations.get('alertFadeDuration')}
           classNames='fade-slow-out'
           onEntering={() => setDismiss(false)}
         >
