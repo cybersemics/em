@@ -76,6 +76,8 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
       }}
       ref={contentRef}
       contentEditable={!disabled}
+      // disable spellCheck when running in Puppeteer, otherwise red squiggly lines can break the snapshot tests
+      spellCheck={!navigator.webdriver}
       style={style}
       onBlur={(originalEvent: React.FocusEvent<HTMLInputElement>) => {
         const innerHTML = contentRef!.current!.innerHTML

@@ -37,11 +37,11 @@ const bindContextShortcut: Shortcut = {
   gesture: 'rud',
   multicursor: {
     enabled: false,
-    error: () => 'Cannot bind multiple thoughts.',
+    error: 'Cannot bind multiple thoughts.',
   },
   keyboard: { key: 'b', shift: true, alt: true },
   hideFromHelp: true,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: state => isDocumentEditable() && !!state.cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

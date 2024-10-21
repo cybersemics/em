@@ -15,7 +15,6 @@ import documentSort from '../selectors/documentSort'
 import hasMulticursor from '../selectors/hasMulticursor'
 import thoughtToPath from '../selectors/thoughtToPath'
 import globalStore from '../stores/app'
-import dispatch from '../test-helpers/dispatch'
 import equalPath from './equalPath'
 import hashPath from './hashPath'
 import head from './head'
@@ -96,7 +95,7 @@ const executeShortcut = (shortcut: Shortcut, { store, type, event }: Options = {
   type = type ?? 'keyboard'
   event = event ?? eventNoop
 
-  const canExecute = !shortcut.canExecute || shortcut.canExecute(store.getState)
+  const canExecute = !shortcut.canExecute || shortcut.canExecute(store.getState())
   // Exit early if the shortcut cannot execute
   if (!canExecute) return
 
@@ -126,8 +125,13 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
 
   // multicursor is not enabled for this shortcut, alert and exit early
   if (!multicursorConfig.enabled) {
-    dispatch(
-      alert(multicursorConfig.error?.(store.getState) ?? 'Cannot execute this shortcut with multiple thoughts.', {
+    const errorMessage = !multicursorConfig.error
+      ? 'Cannot execute this shortcut with multiple thoughts.'
+      : typeof multicursorConfig.error === 'function'
+        ? multicursorConfig.error(store.getState())
+        : multicursorConfig.error
+    store.dispatch(
+      alert(errorMessage, {
         alertType: AlertType.MulticursorError,
         clearDelay: 5000,
       }),
@@ -144,7 +148,7 @@ export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type
   const filteredPaths = filterCursors(state, paths, multicursorConfig.filter)
 
   const canExecute = filteredPaths.every(
-    path => !shortcut.canExecute || shortcut.canExecute(() => ({ ...state, cursor: path })),
+    path => !shortcut.canExecute || shortcut.canExecute({ ...state, cursor: path }),
   )
 
   // Exit early if the shortcut cannot execute

@@ -79,8 +79,7 @@ const archiveShortcut: Shortcut = {
   },
   svg: ArchiveIcon,
   keyboard: { key: Key.Backspace, shift: true, meta: true },
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec,
@@ -111,8 +110,7 @@ export const archiveAliases: Shortcut = {
     'lrdldru',
     'lrdldlru',
   ],
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec,

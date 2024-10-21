@@ -47,8 +47,7 @@ const moveCursorForward: Shortcut = {
     },
   },
   svg: MoveCursorForwardIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && !!state.cursor
   },
   exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState) => {

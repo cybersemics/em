@@ -26,7 +26,7 @@ const toggleSplitViewShortcut: Shortcut = {
     const state = getState()
     dispatch(toggleSplitView({ value: !state.showSplitView }))
   },
-  isActive: getState => getState().showSplitView,
+  isActive: state => state.showSplitView,
 }
 
 export default toggleSplitViewShortcut

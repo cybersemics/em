@@ -76,10 +76,9 @@ const copyCursorShortcut: Shortcut = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     // do not copy cursor if there is a browser selection
-    return selection.isCollapsed() && (!!state.cursor || hasMulticursor(getState())) && isDocumentEditable()
+    return selection.isCollapsed() && (!!state.cursor || hasMulticursor(state)) && isDocumentEditable()
   },
   exec: async (dispatch, getState) => {
     const state = getState()

@@ -9,7 +9,12 @@ import deleteAttribute from './deleteAttribute'
 /** Sets the bullet color of the cursor. */
 const bulletColor = (
   state: State,
-  { backgroundColor, color, fullySelected }: { backgroundColor?: string; color?: string; fullySelected?: boolean },
+  {
+    backgroundColor,
+    color,
+    shape,
+    fullySelected,
+  }: { backgroundColor?: string; color?: string; shape?: 'bullet' | 'text'; fullySelected?: boolean },
 ) => {
   if (!state.cursor) return state
   const path = state.cursor

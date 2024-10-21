@@ -15,8 +15,7 @@ const toggleTableViewShortcut: Shortcut = {
   keyboard: { key: 't', alt: true, shift: true },
   multicursor: true,
   svg: TableViewIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
   exec: (dispatch, getState) => {
@@ -33,8 +32,7 @@ const toggleTableViewShortcut: Shortcut = {
       }),
     )
   },
-  isActive: getState => {
-    const state = getState()
+  isActive: state => {
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return attributeEquals(state, head(path), '=view', 'Table')

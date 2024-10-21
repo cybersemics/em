@@ -21,8 +21,7 @@ const subCategorizeOneShortcut: Shortcut = {
   keyboard: { key: 'o', meta: true, alt: true },
   multicursor,
   svg: SubCategorizeOneIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => dispatch(subCategorizeOne()),
@@ -36,8 +35,7 @@ export const subCategorizeOneShortcutAlias: Shortcut = {
   keyboard: { key: ']', meta: true },
   multicursor,
   svg: SubCategorizeOneIcon,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => dispatch(subCategorizeOne()),

@@ -9,8 +9,8 @@ const undoShortcut: Shortcut = {
   id: 'undo',
   label: 'Undo',
   multicursor: 'ignore',
-  description: getState => {
-    const lastActionType = getLatestActionType(getState().undoPatches)
+  description: state => {
+    const lastActionType = getLatestActionType(state.undoPatches)
 
     if (lastActionType) {
       return `Undo ${startCase(lastActionType)}`
@@ -24,7 +24,7 @@ const undoShortcut: Shortcut = {
     if (!isUndoEnabled(getState())) return
     dispatch(undo())
   },
-  canExecute: getState => isUndoEnabled(getState()),
+  canExecute: state => isUndoEnabled(state),
 }
 
 export default undoShortcut

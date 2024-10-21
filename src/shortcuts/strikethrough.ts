@@ -13,8 +13,7 @@ const strikethrough: Shortcut = {
   svg: Icon,
   keyboard: { key: 's', meta: true },
   multicursor: true,
-  canExecute: getState => {
-    const state = getState()
+  canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: (dispatch, getState, e) => {
