@@ -257,12 +257,6 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
             }}
             options={exportOptions}
             dark={dark}
-            style={{
-              top: '120%',
-              left: 0, // position on the left edge of "Plain Text", otherwise the left side gets cut off on mobile
-              display: 'table', // the only value that seems to overflow properly within the inline-flex element
-              padding: 0,
-            }}
           />
         </span>
       </span>

@@ -21,15 +21,19 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
         ref={ref}
         className={css({
           boxShadow: '0 0 10px 0px black',
-          display: 'flex',
+          // display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-evenly',
           position: 'absolute',
           right: '3px',
-          padding: '0px 5px',
+          // padding: '0px 5px',
           zIndex: 'stack',
           backgroundColor: 'bg',
           border: `1px solid {colors.fg}`,
+          top: '120%',
+          left: 0, // position on the left edge of "Plain Text", otherwise the left side gets cut off on mobile
+          display: 'table', // the only value that seems to overflow properly within the inline-flex element
+          padding: 0,
         })}
         style={style}
       >
