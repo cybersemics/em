@@ -29,19 +29,10 @@ it('load buffered ancestors of contexts when context view is activated', async (
 
   await waitForEditable('m')
 
-  // wait for a re-render in case the lexeme was loaded after the parent
-  // getEditingText will return undefined if we don't wait
-  // we don't currently have a way to tell if a lexeme is missing or just loading
-  await sleep(100)
-
   await clickThought('m')
   await scrollIntoView('[data-testid="toolbar-icon"][aria-label="Context View"]')
   await scrollBy('#toolbar', 50, 0)
   await click('[data-testid="toolbar-icon"][aria-label="Context View"]')
-
-  // allow ancestors to be loaded
-  // may not be practically necessary, but there could be a delay on slower machines
-  await sleep(10)
 
   // assert that c is loaded
   await waitForEditable('c')
