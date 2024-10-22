@@ -50,7 +50,7 @@ const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props
       nodeRef={nodeRef}
       in={true}
       key={Math.floor(props.transitionKey)}
-      timeout={durations.get('tutorialStepSlideDuration')}
+      timeout={durations.get('fastDuration')}
       classNames='slide'
     >
       <div ref={nodeRef}>

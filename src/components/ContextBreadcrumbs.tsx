@@ -245,12 +245,7 @@ const ContextBreadcrumbs = ({
             // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
             // This way it will only animate when the length of the cursor changes.
             return (
-              <CSSTransition
-                key={i}
-                nodeRef={nodeRef}
-                timeout={durations.get('contextBreadcrumbsFadeDuration')}
-                classNames='fade-600'
-              >
+              <CSSTransition key={i} nodeRef={nodeRef} timeout={durations.get('mediumDuration')} classNames='fade'>
                 <BreadCrumb
                   ref={nodeRef}
                   isOverflow={isOverflow}

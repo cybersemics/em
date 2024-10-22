@@ -35,11 +35,11 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
         in={latestShortcuts.length > 0}
         classNames={{
           enter: css({ opacity: 0 }),
-          enterActive: css({ opacity: 1, transition: `opacity {durations.latestShortcutsOpacityDuration}` }),
+          enterActive: css({ opacity: 1, transition: `opacity {durations.mediumDuration}` }),
           exit: css({ opacity: 1 }),
-          exitActive: css({ opacity: 0, transition: `opacity {durations.latestShortcutsOpacityDuration}` }),
+          exitActive: css({ opacity: 0, transition: `opacity {durations.mediumDuration}` }),
         }}
-        timeout={durations.get('latestShortcutsOpacityDuration')}
+        timeout={durations.get('mediumDuration')}
         unmountOnExit
       >
         <div

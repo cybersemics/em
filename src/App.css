@@ -133,7 +133,7 @@
 .slidedown-enter-active {
   margin-bottom: 1em;
   margin-top: 0;
-  transition: margin 150ms ease-out;
+  transition: margin 100ms ease-out;
 }
 
 .slidedown-enter-done {
@@ -149,7 +149,7 @@
 .slidedown-exit-active {
   margin-bottom: 0;
   margin-top: -3em;
-  transition: margin 150ms ease-out;
+  transition: margin 100ms ease-out;
 }
 
 .slidedown-exit-done {

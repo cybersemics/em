@@ -463,7 +463,7 @@ const CommandPaletteWithTransition: FC = () => {
         <CSSTransition
           key={0}
           nodeRef={popupRef}
-          timeout={durations.get('commandPaletteFadeDuration')}
+          timeout={durations.get('mediumDuration')}
           classNames='fade'
           onEntering={() => setDismiss(false)}
         >

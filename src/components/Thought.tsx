@@ -269,7 +269,7 @@ const ThoughtContainer = ({
       ...(isChildHovering
         ? {
             WebkitTextStrokeWidth: '0.05em',
-            animation: `pulse-light ${token('durations.highlightPulseDuration')} linear infinite alternate`,
+            animation: `pulse-light ${token('durations.slowPulseDuration')} linear infinite alternate`,
             color: colors.highlight,
           }
         : null),

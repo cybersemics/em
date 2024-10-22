@@ -772,7 +772,7 @@ const LayoutTree = () => {
                           className={css({
                             position: 'relative',
                             top: '-0.2em',
-                            transition: `left {durations.dropEndTransitionDuration} ease-out`,
+                            transition: `left {durations.fastDuration} ease-out`,
                             zIndex: 'subthoughtsDropEnd',
                           })}
                           style={{

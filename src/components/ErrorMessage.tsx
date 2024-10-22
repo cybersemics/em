@@ -15,12 +15,7 @@ const ErrorMessage: FC = () => {
   return (
     <TransitionGroup>
       {value ? (
-        <CSSTransition
-          key={0}
-          nodeRef={errorMessageRef}
-          timeout={durations.get('errorMessageFadeDuration')}
-          classNames='fade'
-        >
+        <CSSTransition key={0} nodeRef={errorMessageRef} timeout={durations.get('mediumDuration')} classNames='fade'>
           <div
             ref={errorMessageRef}
             className={css({
