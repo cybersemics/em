@@ -190,9 +190,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     <CSSTransition
       nodeRef={toolbarContainerRef}
       in={!distractionFreeTyping}
-      timeout={durations.get('distractionFreeTyping')}
+      timeout={durations.get('distractionFreeTypingDuration')}
       classNames='fade-600'
-      unmountOnExit
     >
       <div
         ref={toolbarContainerRef}
