@@ -192,7 +192,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       in={!distractionFreeTyping}
       timeout={durations.get('distractionFreeTyping')}
       classNames='fade-600'
-      unmountOnExit
     >
       <div
         ref={toolbarContainerRef}
