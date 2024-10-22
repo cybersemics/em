@@ -2,9 +2,9 @@ import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
+import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import removeHUD from '../helpers/removeHUD'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import type from '../helpers/type'
@@ -32,7 +32,7 @@ const testSuite = () => {
   })
 
   describe('', () => {
-    beforeEach(removeHUD)
+    beforeEach(hideHUD)
 
     it('one thought', async () => {
       await press('Enter')
