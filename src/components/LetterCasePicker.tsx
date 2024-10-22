@@ -45,9 +45,9 @@ const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = 
         ref={ref}
         style={{
           ...style,
-          backgroundColor: `${colors.fgOverlay90}`,
         }}
         className={css({
+          background: { base: '#ebebeb', _dark: '#141414' },
           borderRadius: '3',
           display: 'inline-block',
           padding: '0.2em 0.25em 0.25em',
