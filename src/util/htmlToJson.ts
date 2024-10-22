@@ -35,7 +35,7 @@ const textNodeToBlock = (node: Text): Block => ({
 const isBr = (node: HimalayaNode): boolean => node.type === 'element' && node.tagName === 'br'
 
 /** Returns true if the node is a WorkFlowy note. */
-const isWorkflowyNote = (node: HimalayaNode) => node.type === 'element' && getAttribute('class', node) === 'note'
+const isWorkflowyNote = (node: HimalayaNode) => node.type === 'element' && getAttribute('aria-label', node) === 'note'
 
 /** Convert Workflowy tag to Block. */
 const workflowyNoteToBlock = (node: Element): Block => {
@@ -134,7 +134,7 @@ const liToBlock = (node: Element): Block | Block[] => {
 /** Converts a <ul> element to a Block. */
 const ulToBlock = (node: Element, prevNode: Element) => {
   const converted = himalayaToBlock(node.children) as Block[]
-  return prevNode && prevNode.type === 'element' && getAttribute('class', prevNode) === 'note'
+  return prevNode && prevNode.type === 'element' && getAttribute('aria-label', prevNode) === 'note'
     ? converted[0]
     : converted
 }
@@ -182,7 +182,7 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
         e.g.
           - a
           - b
-          - c<br><span class="note">This is c!</span>
+          - c<br><span aria-label="note">This is c!</span>
 
           This should be import as:
 

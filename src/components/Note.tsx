@@ -111,7 +111,8 @@ const Note = React.memo(({ path }: { path: Path }) => {
 
   return (
     <div
-      className='note children-subheading text-note text-small'
+      aria-label='note'
+      className='children-subheading text-note text-small'
       style={{
         lineHeight: 1.25,
         // negative margin to compensate for line-height. See .thought-container
