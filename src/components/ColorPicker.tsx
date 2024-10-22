@@ -1,6 +1,9 @@
 import { rgbToHex } from '@mui/material'
 import React, { FC, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
+import { SystemStyleObject } from '../../styled-system/types'
 import { bulletColorActionCreator as bulletColor } from '../actions/bulletColor'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { isTouch } from '../browser'
@@ -144,32 +147,28 @@ const ColorSwatch: FC<{
       onTouchStart={toggleTextColor}
       // only add mousedown to desktop, otherwise it will activate twice on mobile
       onMouseDown={!isTouch ? toggleTextColor : undefined}
-      style={{ cursor: 'pointer' }}
+      className={css({ cursor: 'pointer' })}
     >
       {shape === 'bullet' ? (
         <span
-          style={{
-            color,
+          className={css({
             display: 'inline-block',
-            fontSize: size,
             margin: '3px 5px 5px',
-            width: size - 1,
-            height: size - 1,
             textAlign: 'center',
-          }}
+          })}
+          style={{ color, fontSize: size, width: size - 1, height: size - 1 }}
         >
           •
         </span>
       ) : (
         <TextColorIcon
-          size={size}
-          style={{
-            backgroundColor,
-            border: `solid 1px ${selected ? colors.fg : 'transparent'}`,
+          cssRaw={css.raw({
+            border: selected ? `solid 1px {colors.fg}` : `solid 1px transparent`,
             fontWeight: selected ? 'bold' : 'normal',
-            color: backgroundColor ? 'black' : color,
             margin: '3px 5px 5px',
-          }}
+          })}
+          size={size}
+          style={{ color: backgroundColor ? 'black' : color, backgroundColor }}
         />
       )}
     </span>
@@ -177,40 +176,38 @@ const ColorSwatch: FC<{
 }
 
 /** Text Color Picker component. */
-const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fontSize, style }) => {
+const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties; cssRaw?: SystemStyleObject }> = ({
+  fontSize,
+  style,
+  cssRaw,
+}) => {
   const colors = useSelector(themeColors)
   const ref = useRef<HTMLDivElement>(null)
 
   const overflow = useWindowOverflow(ref)
 
   return (
-    <div
-      style={{
-        userSelect: 'none',
-      }}
-    >
+    <div className={css({ userSelect: 'none' })}>
       <div
+        className={css(
+          {
+            backgroundColor: 'fgOverlay90',
+            borderRadius: 3,
+            display: 'inline-block',
+            padding: '0.2em 0.25em 0.25em',
+            position: 'relative',
+          },
+          cssRaw,
+        )}
         ref={ref}
-        style={{
-          backgroundColor: colors.fgOverlay90,
-          borderRadius: 3,
-          display: 'inline-block',
-          padding: '0.2em 0.25em 0.25em',
-          position: 'relative',
-          ...(overflow.left ? { left: overflow.left } : { right: overflow.right }),
-          ...style,
-        }}
+        style={{ ...(overflow.left ? { left: overflow.left } : { right: overflow.right }), ...style }}
       >
         {/* Triangle */}
         <TriangleDown
-          fill={colors.fgOverlay90}
+          fill={token('colors.fgOverlay90')}
+          cssRaw={css.raw({ position: 'absolute', width: '100%' })}
           size={fontSize}
-          style={{
-            position: 'absolute',
-            ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }),
-            top: -fontSize / 2,
-            width: '100%',
-          }}
+          style={{ ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }), top: -fontSize / 2 }}
         />
 
         {/* Text Color */}

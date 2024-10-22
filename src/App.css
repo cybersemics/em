@@ -4,47 +4,6 @@
   See: https://panda-css.com/docs/concepts/writing-styles
 */
 
-.z-index-popup {
-  z-index: var(--z-index-popup);
-}
-.z-index-command-palette {
-  z-index: var(--z-index-command-palette);
-}
-.z-index-gesture-trace {
-  z-index: var(--z-index-gesture-trace);
-}
-.z-index-navbar {
-  z-index: var(--z-index-navbar);
-}
-.z-index-subthoughts-drop-end {
-  z-index: var(--z-index-subthoughts-drop-end);
-}
-.z-index-stack {
-  z-index: var(--z-index-stack);
-}
-.z-index-hide {
-  z-index: var(--z-index-hide);
-}
-.z-index-scroll-zone {
-  z-index: var(--z-index-scroll-zone);
-}
-
-@media screen and (min-width: 600px) {
-  .center-desktop {
-    text-align: center;
-  }
-}
-
-/* required to avoid iPhone converting to emoji
- https://stackoverflow.com/questions/11178433/how-do-i-stop-ios-from-converting-a-small-pointing-right-triangle-character-into
- */
-.left-triangle::after {
-  content: '\25C0 \FE0E';
-}
-.right-triangle::after {
-  content: '\25B6 \FE0E';
-}
-
 /* Thoughts */
 
 [contenteditable].active-underline:focus {

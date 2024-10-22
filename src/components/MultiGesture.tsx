@@ -100,9 +100,7 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
         pointerEvents: 'none',
         ...(leftHanded ? { borderRight: `solid 1px {colors.gray33}` } : { borderLeft: `solid 1px {colors.gray33}` }),
       })}
-      style={{
-        width: SCROLL_ZONE_WIDTH,
-      }}
+      style={{ width: SCROLL_ZONE_WIDTH }}
     />
   )
 }
