@@ -97,7 +97,6 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
       lastScrollLeft.current = toolbarEl.scrollLeft
 
-      setTimeout(() => setIsAnimated(false), 2000)
       //setIsAnimated(false)
 
       if (!disabled) {
@@ -237,6 +236,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         })}
         style={style}
         animated={isAnimated}
+        animationComplete={() => setIsAnimated(false)}
       />
     </div>
   )

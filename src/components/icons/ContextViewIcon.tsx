@@ -3,9 +3,9 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/18-context-view_3.json'
 
 /** Context View Icon with Conditional Lottie Animation. */
-const ContextViewIcon = ({ fill, size, style = {}, cssRaw, animated }: IconType) => {
+const ContextViewIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
-    <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData }}>
+    <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'

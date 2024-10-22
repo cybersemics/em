@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react'
 interface LottieAnimationProps {
   animationData: any
   speed?: number
+  onComplete?: () => void
 }
 
 /**
@@ -16,6 +17,7 @@ interface LottieAnimationProps {
 const LottieAnimation: React.FC<LottieAnimationProps> = ({
   animationData,
   speed = 1, // Default speed set to 1x
+  onComplete,
 }) => {
   const lottieRef = useRef<LottieRefCurrentProps | null>(null)
 
@@ -25,15 +27,7 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
     }
   }, [speed])
 
-  return (
-    <Player
-      animationData={animationData}
-      style={{ width: '100%', height: '100%' }}
-      lottieRef={lottieRef}
-      autoplay
-      loop={false}
-    />
-  )
+  return <Player animationData={animationData} lottieRef={lottieRef} autoplay loop={false} onComplete={onComplete} />
 }
 
 export default LottieAnimation

@@ -9,6 +9,7 @@ interface IconType {
   style?: React.CSSProperties
   width?: number
   animated?: boolean
+  animationComplete?: () => void
 }
 
 export interface AnimatedIconType {
@@ -19,6 +20,7 @@ export interface AnimatedIconType {
   style?: React.CSSProperties
   width?: number
   animated?: boolean
+  animationComplete?: () => void
   animationData?: object
   children?: ReactNode
 }
