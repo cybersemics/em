@@ -2,9 +2,9 @@ import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
+import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import removeHUD from '../helpers/removeHUD'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 
@@ -26,7 +26,7 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 // TODO: Re-enable test after fixing the layout shift issue
 // https://github.com/cybersemics/em/issues/2452
 it.skip('single line', async () => {
-  await removeHUD()
+  await hideHUD()
 
   await paste(`
     - https://test.com/single-line
@@ -50,7 +50,7 @@ describe('multiline', () => {
    * - Multiline url (with cursor).
    */
   const multilineTest = async () => {
-    await removeHUD()
+    await hideHUD()
 
     await paste(`
     - https://test.com/single-line
@@ -91,7 +91,7 @@ describe('multiline', () => {
 })
 
 it('collapsed thought with url child', async () => {
-  await removeHUD()
+  await hideHUD()
 
   await paste(`
     - test

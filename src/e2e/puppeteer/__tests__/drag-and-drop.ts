@@ -3,8 +3,8 @@ import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
+import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
-import removeHUD from '../helpers/removeHUD'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 
@@ -21,7 +21,7 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 */
 
 describe('drag', () => {
-  beforeEach(removeHUD)
+  beforeEach(hideHUD)
 
   it('DragAndDropThought', async () => {
     await paste(`
@@ -229,7 +229,7 @@ describe('drag', () => {
 })
 
 describe('drop', () => {
-  beforeEach(removeHUD)
+  beforeEach(hideHUD)
 
   it('DragAndDropThought', async () => {
     await simulateDragAndDrop({ drag: true, drop: true })
