@@ -629,24 +629,6 @@
   text-align: center;
 }
 
-.latest-shortcuts-wrapper {
-  position: absolute;
-  /* Using vh here allows shortcuts diagram to always appear keyboard in mobile. */
-  height: 100vh;
-  width: 100%;
-}
-
-.latest-shortcuts .shortcut-tab {
-  background: rgb(94, 94, 94);
-  border-radius: 7px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 0.7;
-  padding: 10px;
-  margin: 0 2px;
-}
-
 @keyframes toblack {
   to {
     color: black;
