@@ -29,37 +29,10 @@
   z-index: var(--z-index-scroll-zone);
 }
 
-.clear {
-  clear: both;
-}
-.relative {
-  position: relative;
-}
-.missing {
-  color: #ccc;
-}
-.direct {
-  color: #212121;
-}
-.center {
-  text-align: center;
-}
-.left {
-  text-align: left;
-}
-
 @media screen and (min-width: 600px) {
   .center-desktop {
     text-align: center;
   }
-}
-
-.text-small {
-  font-size: 80%;
-}
-
-.text-medium {
-  font-size: 90%;
 }
 
 /* required to avoid iPhone converting to emoji
@@ -258,14 +231,6 @@
   transition: all 200ms ease-out;
 }
 
-.error {
-  color: red;
-}
-
-.online {
-  color: lightgreen;
-}
-
 /* autofocus */
 
 /*
@@ -280,21 +245,6 @@
 }*/
 
 /* for some reason opacity bleeds through modal*/
-.dim {
-  color: rgba(7, 7, 7, 0.5);
-}
-.dark .dim {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-@keyframes fadein {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 0.99;
-  }
-}
 
 /* higher precendence than ".dark .modal .a" */
 
@@ -401,34 +351,6 @@
   left: 10%;
 }
 
-.modal-icon {
-  display: inline-block;
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  color: #666;
-  text-align: center;
-  animation: fadein 0.4s;
-}
-
-.modal-icon-inner {
-  font-family: 'Times New Roman';
-  display: inline-block;
-  width: 25px;
-  height: 25px;
-  border: solid 1px rgba(0, 0, 0, 0.2);
-  border-radius: 99px;
-  color: black;
-  background-color: whitesmoke;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-}
-
-.dark .modal-icon-inner {
-  color: white;
-  background-color: black;
-  box-shadow: 0 0 20px white;
-}
-
 .code-block {
   display: block;
   padding: 5px 10px;
@@ -500,37 +422,8 @@
   top: var(--safe-area-top) !important;
 }
 
-.ellipsized-path {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .icon {
   cursor: pointer;
   flex: 1;
   transition: all 0.1s ease-in-out;
-}
-
-@keyframes toblack {
-  to {
-    color: black;
-    fill: black;
-  }
-}
-
-@keyframes towhite {
-  to {
-    color: white;
-    fill: white;
-  }
-}
-
-.gray {
-  color: #666;
-  fill: #666;
-}
-
-.rotate180 {
-  transform: rotate(180deg);
 }

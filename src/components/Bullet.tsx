@@ -218,7 +218,6 @@ const glyphFg = cva({
         color: '#666',
         fill: '#666',
         '-webkit-animation': {
-          // TODO: not sure if this will apply TODO CHRISTINA
           base: 'toblack 400ms infinite alternate ease-in-out',
           _dark: 'towhite 400ms infinite alternate ease-in-out',
         },

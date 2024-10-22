@@ -201,7 +201,7 @@ const ModalCustomizeToolbar: FC = () => {
         </a>
       </p>
 
-      <div className='center'>
+      <div className={css({ textAlign: 'center' })}>
         <a
           {...fastClick(() => dispatch(closeModal()))}
           className={cx(

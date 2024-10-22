@@ -107,7 +107,7 @@ const FontSize = () => {
           reset
         </a>
       )}
-      {label ? <span className='dim'> ({label})</span> : null}
+      {label ? <span className={css({ color: 'dim' })}> ({label})</span> : null}
     </div>
   )
 }

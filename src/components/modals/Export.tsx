@@ -192,6 +192,12 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
 }
 
 /******************************************************************************
+ * Styles
+ *****************************************************************************/
+
+const rotate180Class = css({ transform: 'rotate(180deg)' })
+
+/******************************************************************************
  * Components
  *****************************************************************************/
 
@@ -244,7 +250,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
         {selected.label}
       </a>
       <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
-        <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? 'rotate180' : ''} />
+        <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? rotate180Class : ''} />
         <span>
           <DropDownMenu
             isOpen={isOpen}
@@ -668,7 +674,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
           <ChevronImg
             dark={dark}
             onClickHandle={onAdvancedClick}
-            className={advancedSettings ? 'rotate180' : ''}
+            className={advancedSettings ? rotate180Class : ''}
             additonalStyle={{ opacity: advancedSettings ? 1 : 0.5 }}
           />
         </span>
@@ -730,7 +736,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
                     </span>
                   )}
                 </p>
-                <p className='dim'>
+                <p className={css({color: 'dim'})}>
                   <i>
                     Note: These thoughts are published permanently. <br />
                     This action cannot be undone.

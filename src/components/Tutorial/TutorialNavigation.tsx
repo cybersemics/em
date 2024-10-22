@@ -40,7 +40,7 @@ const TutorialNavigation = ({
     { key: TUTORIAL_VERSION_BOOK, value: TUTORIAL_VERSION_BOOK, textValue: 'Book/Podcast Notes' },
   ]
   return (
-    <div className='center'>
+    <div className={css({ textAlign: 'center' })}>
       <div className={css({ marginBottom: '10px' })}>
         {Array(
           tutorialStep < TUTORIAL2_STEP_START
