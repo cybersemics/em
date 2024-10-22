@@ -62,19 +62,6 @@
   font-size: 90%;
 }
 
-.expand-click-area-left {
-  padding-left: 10px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  margin-left: -10px;
-}
-
-.expand-click-area-right {
-  padding-right: 10px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-
 /* required to avoid iPhone converting to emoji
  https://stackoverflow.com/questions/11178433/how-do-i-stop-ios-from-converting-a-small-pointing-right-triangle-character-into
  */
@@ -91,30 +78,12 @@
   border-bottom: solid 1px;
 }
 
-.subthought-highlight {
-  border-bottom: solid 1px;
-}
-
 .children-subheading {
   position: relative;
   margin-top: 3px;
   margin-bottom: 2px;
   padding-bottom: 4px;
 }
-
-.down-chevron {
-  font-style: normal;
-  font-size: 125%;
-  line-height: 0;
-}
-
-.up-chevron {
-  font-style: normal;
-  font-size: 75%;
-  position: relative;
-  top: 2px;
-}
-
 
 /* react-transition-group animation: fade */
 .fade-enter {
@@ -302,29 +271,6 @@
 
 .online {
   color: lightgreen;
-}
-
-.add-new-thought-link {
-  display: inline-block;
-  color: #ccc;
-  position: relative;
-}
-
-.has-other-contexts {
-  margin-left: 12px;
-}
-
-.add-new-thought {
-  outline: none;
-  min-width: 3.75em;
-  display: inline-block;
-  border-bottom: solid 1px #ccc;
-  margin-left: -2px;
-}
-
-.center-in-content {
-  text-align: center;
-  margin-left: -30px;
 }
 
 .text-note {
