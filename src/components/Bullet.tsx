@@ -369,7 +369,6 @@ const BulletCursorOverlay = ({
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
   return (
     <ellipse
-      className='bullet-cursor-overlay'
       ry={bulletOverlayRadius}
       rx={bulletOverlayRadius}
       cy='300'
