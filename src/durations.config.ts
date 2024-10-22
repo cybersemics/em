@@ -1,6 +1,4 @@
-export type DurationConfig = Record<string, number>
-
-const durationsMillis: DurationConfig = {
+const durationsMillis = {
   addDeviceFormFadeDuration: 400,
   addDeviceButtonFadeDuration: 400,
   advancedSettingsLinkOpacityDuration: 100,
@@ -40,6 +38,6 @@ const durationsMillis: DurationConfig = {
   tutorialNavigationButtonDuration: 250,
   tutorialStepSlideDuration: 400,
   tutorialStepNavigationDuration: 400,
-}
+} as const
 
 export default durationsMillis

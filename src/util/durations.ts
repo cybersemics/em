@@ -1,18 +1,16 @@
-import durationsConfig, { type DurationConfig } from '../durations.config'
+import durationsConfig from '../durations.config'
 
 /** Initialize duration helper. */
 function init() {
   let inTest: boolean = !!navigator.webdriver
 
   /** Returns the duration for a particular key or undefined if it doesn't exist. */
-  const get = (key: string): number => {
-    if (durationsConfig[key]) return durationOrZero(durationsConfig[key])
-
-    throw new Error(`No config for duration key ${key}`)
+  const get = (key: keyof typeof durationsConfig): number => {
+    return durationOrZero(durationsConfig[key])
   }
 
   /** Returns all durations. */
-  const getAll = (): DurationConfig => Object.entries(durationsConfig).reduce(reduceDurations, {})
+  const getAll = () => Object.entries(durationsConfig).reduce(reduceDurations, {})
 
   /** Override inTest state. Should only be used for testing purposes. */
   const setInTest = (inTestOverride: boolean) => {

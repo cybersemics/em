@@ -18,10 +18,6 @@ describe('getDuration', () => {
     durationsHelper.setInTest(true)
     expect(durationsHelper.get(key)).toBe(0)
   })
-
-  it('should throw an error if the key does not exist', () => {
-    expect(() => durationsHelper.get('fake-key')).toThrow(Error)
-  })
 })
 
 describe('getDurations', () => {
@@ -33,7 +29,7 @@ describe('getDurations', () => {
 
     // Each duration value should match
     Object.entries(actualDurations).forEach(([key, duration]) => {
-      expect(duration).toEqual(durations[key])
+      expect(duration).toEqual(durations[key as keyof typeof durations])
     })
   })
 
@@ -52,12 +48,12 @@ describe('getDurations', () => {
 })
 
 /** Return the first configurad duration. */
-const getTestVals = (): [string, number] => {
+const getTestVals = (): [keyof typeof durations, number] => {
   const keys = Object.keys(durations)
 
   if (keys.length === 0) throw new Error('No durations configured.')
 
-  const key = keys[0]
+  const key = keys[0] as keyof typeof durations
 
   return [key, durations[key]]
 }
