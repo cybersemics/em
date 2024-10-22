@@ -86,13 +86,13 @@ const QuickDropIcon = ({
   return (
     <div className={css({ marginBottom: 10 })}>
       <div
-        className='z-index-stack'
         ref={dropTarget}
-        style={{
+        className={css({
+          zIndex: 'stack',
           padding: '1em',
           borderRadius: '999px 0 0 999px',
           backgroundColor: isHovering ? 'rgba(40,40,40,0.8)' : 'rgba(30,30,30,0.8)',
-        }}
+        })}
       >
         <Icon
           size={fontSize * 1.5}
