@@ -20,6 +20,7 @@ import { TOOLBAR_DEFAULT_SHORTCUTS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import durations from '../util/durations'
 import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
@@ -189,9 +190,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     <CSSTransition
       nodeRef={toolbarContainerRef}
       in={!distractionFreeTyping}
-      timeout={600}
+      timeout={durations.get('distractionFreeTypingDuration')}
       classNames='fade-600'
-      unmountOnExit
     >
       <div
         ref={toolbarContainerRef}

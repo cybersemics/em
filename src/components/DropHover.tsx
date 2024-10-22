@@ -107,7 +107,7 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
           },
           display: 'inline',
           width: isTableCol1 ? '50vw' : undefined,
-          animation: animateHover ? `pulse-light {durations.hoverPulseDuration} linear infinite alternate` : undefined,
+          animation: animateHover ? `pulse-light {durations.mediumPulseDuration} linear infinite alternate` : undefined,
         }),
       )}
       style={{ backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColor }}

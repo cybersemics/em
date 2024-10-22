@@ -119,7 +119,7 @@ const NavBar = ({ position }: { position: string }) => {
                   <CSSTransition
                     nodeRef={cursorBreadcrumbsWrapperRef}
                     in={!distractionFreeTyping}
-                    timeout={durations.get('cursorBreadcrumbsFadeDuration')}
+                    timeout={durations.get('mediumDuration')}
                     classNames='fade'
                     unmountOnExit
                   >

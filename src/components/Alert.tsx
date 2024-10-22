@@ -67,7 +67,7 @@ const Alert: FC = () => {
         <CSSTransition
           key={0}
           nodeRef={popupRef}
-          timeout={durations.get('alertFadeDuration')}
+          timeout={durations.get('slowDuration')}
           classNames='fade-slow-out'
           onEntering={() => setDismiss(false)}
         >

@@ -65,7 +65,7 @@ const ModalDevices = () => {
               nodeRef={shareDetailRef}
               classNames='fade-400'
               exit={false}
-              timeout={durations.get('shareDetailFadeDuration')}
+              timeout={durations.get('mediumDuration')}
               unmountOnExit
             >
               <ShareDetail
@@ -82,7 +82,7 @@ const ModalDevices = () => {
               nodeRef={shareListRef}
               classNames='fade-400'
               exit={false}
-              timeout={durations.get('shareListFadeDuration')}
+              timeout={durations.get('mediumDuration')}
               unmountOnExit
             >
               <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
@@ -168,7 +168,7 @@ const ShareList = React.forwardRef<
                   key='add-device-form'
                   classNames='fade-400'
                   exit={false}
-                  timeout={durations.get('addDeviceFormFadeDuration')}
+                  timeout={durations.get('mediumDuration')}
                   unmountOnExit
                 >
                   <div>
@@ -197,7 +197,7 @@ const ShareList = React.forwardRef<
                   key='add-a-device'
                   classNames='fade-400'
                   exit={false}
-                  timeout={durations.get('addDeviceButtonFadeDuration')}
+                  timeout={durations.get('mediumDuration')}
                   unmountOnExit
                 >
                   <div style={{ marginTop: '1em' }}>

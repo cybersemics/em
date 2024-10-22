@@ -43,7 +43,7 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
               cursor: 'pointer',
               padding: '2px 0px',
               borderTop: '1px solid #444',
-              transition: 'opacity 150ms ease-in',
+              transition: 'opacity {durations.fastDuration} ease-in',
             })}
             // composite key is unique
             key={`${option.type}-${option.label}`}
