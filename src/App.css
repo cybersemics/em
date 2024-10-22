@@ -78,13 +78,6 @@
   border-bottom: solid 1px;
 }
 
-.children-subheading {
-  position: relative;
-  margin-top: 3px;
-  margin-bottom: 2px;
-  padding-bottom: 4px;
-}
-
 /* react-transition-group animation: fade */
 .fade-enter {
   opacity: 0;
@@ -271,48 +264,6 @@
 
 .online {
   color: lightgreen;
-}
-
-.text-note {
-  font-style: italic;
-  color: rgba(7, 7, 7, 0.5);
-}
-
-.dark .text-note {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-/* The placeholder color should be inversed when a light background color is applied. */
-/* See: StaticThought */
-.text-note.inverse {
-  color: rgba(255, 255, 255, 0.5);
-}
-.dark .text-note.inverse {
-  color: rgba(7, 7, 7, 0.5);
-}
-
-/* Android Section */
-
-/*### Phone Portrait ### */
-
-@media (max-width: 500px) {
-  .android .children-subheading {
-    position: relative;
-    margin-top: -8px;
-    margin-bottom: 2px;
-    padding-bottom: 4px;
-  }
-}
-
-/* Tablet Properties */
-
-@media (min-width: 560px) and (max-width: 1024px) {
-  .android .children-subheading {
-    position: relative;
-    margin-top: -8px;
-    margin-bottom: 2px;
-    padding-bottom: 4px;
-  }
 }
 
 /* autofocus */
