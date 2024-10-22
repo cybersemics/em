@@ -14,11 +14,7 @@ const PinIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
       className={cx(icon(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
       viewBox='0 0 24 24'
-      style={{
-        ...style,
-        width: `${newSize}px`,
-        height: `${newSize}px`,
-      }}
+      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
       fill={fill || token('colors.fg')}
     >
       <g id='Layer_2' data-name='Layer 2'>
