@@ -150,7 +150,7 @@ const ModalCustomizeToolbar: FC = () => {
           nodeRef={shortcutsContainerRef}
           in={!!selectedShortcut}
           classNames='fade'
-          timeout={durations.get('shortcutTableFadeDuration')}
+          timeout={durations.get('mediumDuration')}
           exit={false}
           unmountOnExit
         >
@@ -181,7 +181,7 @@ const ModalCustomizeToolbar: FC = () => {
       <CSSTransition
         in={!selectedShortcut}
         classNames='fade'
-        timeout={durations.get('toolbarHelpTextFadeDuration')}
+        timeout={durations.get('mediumDuration')}
         exit={false}
         unmountOnExit
       >

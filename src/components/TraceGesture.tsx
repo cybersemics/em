@@ -140,14 +140,14 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         // Dim the gesture trace to 50% opacity when the gesture is cancelled.
         // Also dim when hidden, otherwise when releasing a cancelled gesture the opacity briefly goes back to 1 to start the fade-both animation. This also has the effect of immediately dimming a valid (non-cancelled) gesture as soon as it is released, which actually looks pretty good.
         opacity: cancelled || !show ? 0.5 : 1,
-        transition: `opacity ${token('durations.signaturePadOpacityDuration')} ease-in-out`,
+        transition: `opacity ${token('durations.traceOpacityDuration')} ease-in-out`,
         pointerEvents: eventNodeRef ? 'none' : undefined,
       }}
     >
       <CSSTransition
         nodeRef={fadeBothEnterElRef}
         in={show}
-        timeout={durations.get('signaturePadFadeDuration')}
+        timeout={durations.get('mediumDuration')}
         classNames='fade-both'
       >
         <div

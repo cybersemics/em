@@ -18,7 +18,7 @@ const QuickDropPanel = () => {
     <CSSTransition
       nodeRef={quickDropPanelRef}
       in={isDragging}
-      timeout={durations.get('quickDropPanelSlideDuration')}
+      timeout={durations.get('fastDuration')}
       classNames='slide-right'
       unmountOnExit
     >

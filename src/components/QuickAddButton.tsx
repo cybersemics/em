@@ -17,7 +17,7 @@ const QuickAddButton: React.FC = () => {
     <div
       className={css({
         display: 'inline-flex',
-        transition: 'transform 200ms ease-in-out',
+        transition: 'transform {durations.fastDuration} ease-in-out',
         rotate: isAbsolute(rootContext) ? 'rotate(135deg)' : undefined,
       })}
       {...fastClick(() => dispatch(toggleAbsoluteContext()))}
