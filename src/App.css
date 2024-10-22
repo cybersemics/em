@@ -607,9 +607,6 @@
 .Resizer.disabled:hover {
   border-color: transparent;
 }
-.SplitPane.animating .Pane {
-  transition: width 0.2s ease;
-}
 
 .MuiDrawer-paperAnchorLeft {
   top: var(--safe-area-top) !important;
