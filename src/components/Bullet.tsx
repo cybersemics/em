@@ -542,9 +542,8 @@ const Bullet = ({
         }),
       )}
       style={{
-        marginTop: -extendClickHeight,
-        marginLeft: -extendClickWidth + marginLeft,
-        marginBottom: -extendClickHeight - 2,
+        top: -extendClickHeight,
+        left: -extendClickWidth + marginLeft,
         paddingTop: extendClickHeight,
         paddingLeft: extendClickWidth,
         paddingBottom: extendClickHeight + 2,
