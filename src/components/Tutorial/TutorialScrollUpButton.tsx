@@ -1,4 +1,5 @@
 import { FC, useCallback } from 'react'
+import { token } from '../../../styled-system/tokens'
 import scrollTo from '../../device/scrollTo'
 import scrollTopStore from '../../stores/scrollTop'
 import TutorialNavigationButton from './TutorialNavigationButton'
@@ -31,7 +32,7 @@ const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
           position: 'absolute',
           top: show ? '0.5em' : '-2em',
           left: 0,
-          transition: 'opacity 0.25s ease-in-out, visibility 0.25s ease-in-out, top 0.25s ease-in-out',
+          transition: `opacity ${token('durations.tutorialNavigationButtonDuration')} ease-in-out, visibility ${token('durations.tutorialNavigationButtonDuration')} ease-in-out, top ${token('durations.tutorialNavigationButtonDuration')} ease-in-out`,
           display: 'flex',
           justifyContent: 'center',
         }}
