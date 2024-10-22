@@ -86,9 +86,7 @@ const HamburgerMenu = () => {
           // Therefore, position the HamburgerMenu at top: 1px so that the sidebar is not accidentally opened on tab change.
           top: 1,
         })}
-        style={{
-          padding: `${paddingTop}px 15px 10px 15px`,
-        }}
+        style={{ padding: `${paddingTop}px 15px 10px 15px` }}
         {...fastClick(() => {
           // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?
           // onClick does not have the same problem
