@@ -1,4 +1,5 @@
 import { FC, useState } from 'react'
+import { css } from '../../styled-system/css'
 import { modalText } from '../../styled-system/recipes'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
@@ -185,7 +186,7 @@ const ShortcutTable = ({
   return (
     <div>
       <SearchShortcut onInput={setSearch} />
-      <div style={{ textAlign: 'left' }}>
+      <div className={css({ textAlign: 'left' })}>
         {search ? (
           <ShortcutGroup
             title={'Results'}
