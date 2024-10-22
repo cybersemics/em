@@ -2,7 +2,6 @@ import { FC, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import durations from '../util/durations'
 import GestureDiagram from './GestureDiagram'
@@ -34,9 +33,9 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
         in={latestShortcuts.length > 0}
         classNames={{
           enter: css({ opacity: 0 }),
-          enterActive: css({ opacity: 1, transition: `opacity ${token('durations.latestShortcutsOpacityDuration')}` }),
+          enterActive: css({ opacity: 1, transition: `opacity {durations.latestShortcutsOpacityDuration}` }),
           exit: css({ opacity: 1 }),
-          exitActive: css({ opacity: 0, transition: `opacity ${token('durations.latestShortcutsOpacityDuration')}` }),
+          exitActive: css({ opacity: 0, transition: `opacity {durations.latestShortcutsOpacityDuration}` }),
         }}
         timeout={durations.get('latestShortcutsOpacityDuration')}
         unmountOnExit

@@ -2,7 +2,6 @@ import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { bullet } from '../../styled-system/recipes'
-import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
@@ -55,7 +54,7 @@ const glyph = cva({
         position: 'relative',
         marginLeft: '-16.8px',
         opacity: 0.9,
-        transition: `opacity ${token('durations.bulletOpacityDuration')} ease-in-out`,
+        transition: `opacity {durations.bulletOpacityDuration} ease-in-out`,
         marginRight: '-5px',
         left: '3px',
         fontSize: '16px',
@@ -66,7 +65,7 @@ const glyph = cva({
         position: 'relative',
         marginLeft: '-16.8px',
         opacity: 0.8,
-        transition: `opacity ${token('durations.bulletOpacityDuration')} ease-in-out`,
+        transition: `opacity {durations.bulletOpacityDuration} ease-in-out`,
         marginRight: '-5px',
         left: '4px',
         fontSize: '28px',
@@ -209,7 +208,7 @@ const glyph = cva({
 
 const glyphFg = cva({
   base: {
-    transition: `transform ${token('durations.bulletFgTransformDuration')} ease-out, fill-opacity ${token('durations.bulletFgOpacityDuration')} ease-out`,
+    transition: `transform {durations.bulletFgTransformDuration} ease-out, fill-opacity {durations.bulletFgOpacityDuration} ease-out`,
   },
   variants: {
     gray: {
@@ -526,7 +525,7 @@ const Bullet = ({
           },
           '@media (min-width: 560px) and (max-width: 1024px)': {
             _android: {
-              transition: `transform ${token('durations.bulletFgTransformDuration')} ease-in-out`,
+              transition: `transform {durations.bulletFgTransformDuration} ease-in-out`,
               marginLeft: '-3px',
             },
           },

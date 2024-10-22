@@ -129,7 +129,7 @@ const FavoritesOptions = ({
             className={css({
               display: 'inline-block',
               transform: showOptions ? `rotate(90deg)` : `rotate(0deg)`,
-              transition: `transform ${token('durations.favoritesSlidedownDuration')} ease-out`,
+              transition: `transform {durations.favoritesSlidedownDuration} ease-out`,
               // avoid position:absolute to trivially achieve correct vertical alignment with text
               marginLeft: '-1em',
             })}
