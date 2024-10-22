@@ -1,13 +1,13 @@
 import _ from 'lodash'
 import { nanoid } from 'nanoid'
 import { useCallback, useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { modalText } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { alertActionCreator as alert } from '../../actions/alert'
-import themeColors from '../../selectors/themeColors'
 import fastClick from '../../util/fastClick'
 import timestamp from '../../util/timestamp'
 import ActionButton from './../ActionButton'
@@ -56,7 +56,6 @@ const generateUserInvites = (userId: string) =>
 const Invites = () => {
   const dispatch = useDispatch()
 
-  const colors = useSelector(themeColors)
   const [focusedGiftCode, setFocusedGiftCode] = useState<string | null>(null)
   const [inviteCodes, setInviteCodes] = useState<Index<InviteCode>>({})
 
@@ -149,7 +148,7 @@ const Invites = () => {
         <p className={modalClasses.description}>
           You get three shiny gift codes to share <b>em</b> with anyone you choose!
         </p>
-        {isFetchingInvites && <p style={{ fontSize: '18px' }}>Fetching your shiny codes ✨...</p>}
+        {isFetchingInvites && <p className={css({ fontSize: '18px' })}>Fetching your shiny codes ✨...</p>}
         {Object.values(inviteCodes).map(({ used, id, hasSeen }, idx) => {
           const selectedIconFill = focusedGiftCode !== id ? 'grey' : undefined
           const link = `${baseUrl}/signup?code=${id}`
@@ -169,7 +168,7 @@ const Invites = () => {
               })}
             >
               <div
-                style={{ display: 'inline-flex' }}
+                className={css({ display: 'inline-flex' })}
                 {...fastClick(() => (focusedGiftCode === id ? setFocusedGiftCode(null) : onInviteCodeSeen(id)))}
               >
                 <InvitesIcon classes={svgClasses} fill={selectedIconFill} size={26} />
@@ -191,7 +190,7 @@ const Invites = () => {
               {used ? (
                 <CheckmarkIcon classes={svgClasses} fill={selectedIconFill} size={21} />
               ) : (
-                <CheckmarkIcon classes={svgClasses} fill={colors.bg} size={21} />
+                <CheckmarkIcon classes={svgClasses} fill={token('colors.bg')} size={21} />
               )}
               <div className={css({ display: 'inline-flex' })} {...fastClick(() => updateCopy(link))}>
                 <CopyClipboard fill={selectedIconFill} size={26} />

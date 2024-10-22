@@ -624,11 +624,6 @@
   transition: all 0.1s ease-in-out;
 }
 
-.cp-clipboard-wrapper {
-  margin-bottom: 15px;
-  text-align: center;
-}
-
 @keyframes toblack {
   to {
     color: black;
@@ -646,27 +641,6 @@
 .gray {
   color: #666;
   fill: #666;
-}
-
-.advance-setting-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 2em;
-}
-
-.advance-setting-chevron {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  position: relative;
-}
-
-.advance-setting-section {
-  display: flex;
-  justify-content: center;
-  margin: 0 auto;
-  max-width: 34em;
-  flex-direction: column;
 }
 
 .rotate180 {

@@ -1,5 +1,6 @@
 /* eslint-disable no-unmodified-loop-condition */
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../../styled-system/css'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
@@ -77,7 +78,7 @@ const ModalWelcome = () => {
               <ActionButton key='start' title={`${isEmpty ? 'START' : 'RESUME'} TUTORIAL`} {...fastClick(close)} />
             </div>
             {!isEmpty && (
-              <div style={{ margin: '1em 0' }}>
+              <div className={css({ margin: '1em 0' })}>
                 <ActionButton
                   key='resume'
                   title='RESTART TUTORIAL'
@@ -88,20 +89,15 @@ const ModalWelcome = () => {
                 />
               </div>
             )}
-            <div key='skip' style={{ marginTop: 15, opacity: 0.5 }}>
+            <div key='skip' className={css({ marginTop: 15, opacity: 0.5 })}>
               <a
                 id='skip-tutorial'
-                className='text-small'
+                className={css({ fontSize: 'sm', marginBottom: '-1em', paddingBottom: '1em', textDecoration: 'none' })}
                 {...fastClick(() => {
                   dispatch([clear({ local: true, remote: true })])
                   endTutorial()
                   close()
                 })}
-                style={{
-                  marginBottom: '-1em',
-                  paddingBottom: '1em',
-                  textDecoration: 'none',
-                }}
               >
                 New, empty thoughtspace
               </a>
@@ -109,8 +105,8 @@ const ModalWelcome = () => {
           </div>
         )}
       >
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <div style={{ maxWidth: 560 }}>
+        <div className={css({ display: 'flex', justifyContent: 'center' })}>
+          <div className={css({ maxWidth: 560 })}>
             <p>
               <b>em</b> is a process-oriented writing tool for personal sensemaking.
             </p>
