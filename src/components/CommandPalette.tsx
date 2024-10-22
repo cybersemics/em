@@ -14,6 +14,7 @@ import useFilteredCommands from '../hooks/useFilteredCommands'
 import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
+import durations from '../util/durations'
 import { executeShortcutWithMulticursor } from '../util/executeShortcut'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
@@ -459,7 +460,13 @@ const CommandPaletteWithTransition: FC = () => {
       childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {showCommandPalette ? (
-        <CSSTransition key={0} nodeRef={popupRef} timeout={200} classNames='fade' onEntering={() => setDismiss(false)}>
+        <CSSTransition
+          key={0}
+          nodeRef={popupRef}
+          timeout={durations.get('commandPaletteFadeDuration')}
+          classNames='fade'
+          onEntering={() => setDismiss(false)}
+        >
           <Popup
             ref={popupRef}
             // only show the close link on desktop

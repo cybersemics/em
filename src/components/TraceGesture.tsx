@@ -16,6 +16,7 @@ import getUserSetting from '../selectors/getUserSetting'
 import { gestureString, globalShortcuts } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import viewportStore from '../stores/viewport'
+import durations from '../util/durations'
 
 interface TraceGestureProps {
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
@@ -136,12 +137,17 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         // Dim the gesture trace to 50% opacity when the gesture is cancelled.
         // Also dim when hidden, otherwise when releasing a cancelled gesture the opacity briefly goes back to 1 to start the fade-both animation. This also has the effect of immediately dimming a valid (non-cancelled) gesture as soon as it is released, which actually looks pretty good.
         opacity: cancelled || !show ? 0.5 : 1,
-        transition: 'opacity 150ms ease-in-out',
+        transition: `opacity {durations.signaturePadOpacityDuration} ease-in-out`,
         pointerEvents: eventNodeRef ? 'none' : undefined,
       })}
       style={{ height: innerHeight }}
     >
-      <CSSTransition nodeRef={fadeBothEnterElRef} in={show} timeout={400} classNames='fade-both'>
+      <CSSTransition
+        nodeRef={fadeBothEnterElRef}
+        in={show}
+        timeout={durations.get('signaturePadFadeDuration')}
+        classNames='fade-both'
+      >
         <div
           ref={fadeBothEnterElRef}
           // start the opacity at 0, otherwise clicking will render small dots

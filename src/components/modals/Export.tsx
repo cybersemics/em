@@ -652,7 +652,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
                 userSelect: 'none',
                 display: 'flex',
                 position: 'relative',
-                transition: 'opacity 100ms ease-in-out',
+                transition: `opacity {durations.advancedSettingsLinkOpacityDuration} ease-in-out`,
                 color: 'fg',
                 opacity: advancedSettings ? 1 : 0.5,
               }),

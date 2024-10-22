@@ -18,6 +18,7 @@ import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
 import { AlertText, AlertType } from '../../constants'
 import { shortcutById } from '../../shortcuts'
+import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import ShortcutTableOnly from '../ShortcutTableOnly'
 import ShortcutTable from './../ShortcutTable'
@@ -148,7 +149,7 @@ const ModalCustomizeToolbar: FC = () => {
           nodeRef={shortcutsContainerRef}
           in={!!selectedShortcut}
           classNames='fade'
-          timeout={200}
+          timeout={durations.get('shortcutTableFadeDuration')}
           exit={false}
           unmountOnExit
         >
@@ -176,7 +177,13 @@ const ModalCustomizeToolbar: FC = () => {
         </CSSTransition>
       </div>
 
-      <CSSTransition in={!selectedShortcut} classNames='fade' timeout={200} exit={false} unmountOnExit>
+      <CSSTransition
+        in={!selectedShortcut}
+        classNames='fade'
+        timeout={durations.get('toolbarHelpTextFadeDuration')}
+        exit={false}
+        unmountOnExit
+      >
         <div className={css({ marginTop: '2em', marginBottom: '2.645em', color: 'dim' })}>
           <p>Drag-and-drop to rearrange toolbar.</p>
           <p>{isTouch ? 'Tap' : 'Click'} a command for details.</p>

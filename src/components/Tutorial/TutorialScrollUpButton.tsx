@@ -25,7 +25,7 @@ const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
           position: 'absolute',
           top: show ? '0.5em' : '-2em',
           left: 0,
-          transition: 'opacity 0.25s ease-in-out, visibility 0.25s ease-in-out, top 0.25s ease-in-out',
+          transition: `opacity {durations.tutorialNavigationButtonDuration} ease-in-out, visibility {durations.tutorialNavigationButtonDuration} ease-in-out, top {durations.tutorialNavigationButtonDuration} ease-in-out`,
           display: 'flex',
           justifyContent: 'center',
         })}

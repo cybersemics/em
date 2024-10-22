@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
+import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
@@ -117,7 +118,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
         marginTop: -3,
         // offset editable's margin-left, which is dynamically set based on font size
         marginLeft: fontSize - 14,
-        transition: 'color 0.75s ease-in-out',
+        transition: `color ${token('durations.noteColorTransitionDuration')} ease-in-out`,
       }}
     >
       <ContentEditable

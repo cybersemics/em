@@ -4,6 +4,7 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import { globalShortcuts } from '../shortcuts'
+import durations from '../util/durations'
 import GestureDiagram from './GestureDiagram'
 
 interface LatestShortcutsDiagramProps {
@@ -34,11 +35,11 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
         in={latestShortcuts.length > 0}
         classNames={{
           enter: css({ opacity: 0 }),
-          enterActive: css({ opacity: 1, transition: 'opacity 400ms' }),
+          enterActive: css({ opacity: 1, transition: `opacity {durations.latestShortcutsOpacityDuration}` }),
           exit: css({ opacity: 1 }),
-          exitActive: css({ opacity: 0, transition: 'opacity 400ms' }),
+          exitActive: css({ opacity: 0, transition: `opacity {durations.latestShortcutsOpacityDuration}` }),
         }}
-        timeout={400}
+        timeout={durations.get('latestShortcutsOpacityDuration')}
         unmountOnExit
       >
         <div
