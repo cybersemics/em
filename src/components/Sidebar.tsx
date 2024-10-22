@@ -155,7 +155,7 @@ const Sidebar = () => {
           <CSSTransition
             in={showSidebar}
             nodeRef={sidebarMenuRef}
-            timeout={durations.get('sidebarFadeDuration')}
+            timeout={durations.get('mediumDuration')}
             classNames='fade'
           >
             <div

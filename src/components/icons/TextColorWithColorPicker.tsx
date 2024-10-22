@@ -17,7 +17,7 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
       <CSSTransition
         nodeRef={toolbarPopupRef}
         in={showColorPicker}
-        timeout={durations.get('colorPickerFadeDuration')}
+        timeout={durations.get('mediumDuration')}
         classNames='fade'
         exit={false}
         unmountOnExit
