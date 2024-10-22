@@ -1,5 +1,6 @@
 import React, { FC, memo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import LetterCaseType from '../@types/LetterCaseType'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/formatLetterCase'
 import { isTouch } from '../browser'
@@ -39,18 +40,20 @@ const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = 
   const casingTypes: LetterCaseType[] = ['LowerCase', 'UpperCase', 'SentenceCase', 'TitleCase']
 
   return (
-    <div style={{ userSelect: 'none' }}>
+    <div className={css({ userSelect: 'none' })}>
       <div
         ref={ref}
         style={{
-          backgroundColor: colors.fgOverlay90,
-          borderRadius: 3,
+          ...style,
+          backgroundColor: `${colors.fgOverlay90}`,
+        }}
+        className={css({
+          borderRadius: '3',
           display: 'inline-block',
           padding: '0.2em 0.25em 0.25em',
           position: 'relative',
-          ...(overflow.left ? { left: overflow.left } : { right: overflow.right }),
-          ...style,
-        }}
+          ...(overflow.left ? { left: `${overflow.left}` } : { right: `${overflow.right}` }),
+        })}
       >
         <TriangleDown
           fill={colors.fgOverlay90}
@@ -63,16 +66,16 @@ const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = 
           }}
         />
 
-        <div aria-label='letter case swatches' style={{ whiteSpace: 'wrap' }}>
+        <div aria-label='letter case swatches' className={css({ whiteSpace: 'wrap' })}>
           {casingTypes.map(type => (
             <div
               key={type}
               title={type}
-              style={{
-                border: `solid 1px ${selected === type ? colors.fg : 'transparent'}`,
+              style={{ border: `solid 1px ${selected === type ? `${colors.fg}` : 'transparent'}` }}
+              className={css({
                 margin: '2px',
-                lineHeight: 0,
-              }}
+                lineHeight: '0',
+              })}
               aria-label={type}
               {...fastClick(e => e.stopPropagation())}
               onTouchStart={e => toggleLetterCase(type, e)}
