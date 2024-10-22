@@ -41,7 +41,7 @@ const TutorialNavigation = ({
   ]
   return (
     <div className='center'>
-      <div className='tutorial-step-bullets'>
+      <div className={css({ marginBottom: '10px' })}>
         {Array(
           tutorialStep < TUTORIAL2_STEP_START
             ? TUTORIAL_STEP_SUCCESS - TUTORIAL_STEP_START + 1

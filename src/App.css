@@ -546,15 +546,6 @@
   color: lightblue;
 }
 
-.tutorial-next-wait {
-  margin-left: 10px;
-  font-style: italic;
-}
-
-.tutorial-step-bullets {
-  margin-bottom: 10px;
-}
-
 /* Prose View */
 
 .SplitPane,
