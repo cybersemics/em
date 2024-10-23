@@ -1,4 +1,3 @@
-import sleep from '../../../util/sleep'
 import press from '../helpers/press'
 import type from '../helpers/type'
 import waitForEditable from '../helpers/waitForEditable'
