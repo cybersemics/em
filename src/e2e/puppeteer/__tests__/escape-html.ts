@@ -9,15 +9,13 @@ vi.setConfig({ testTimeout: 20000 })
 /** Custom helper for pasting plain text, avoiding the existing `paste` helper that uses `importText` internally. */
 const pastePlainText = async (text: string) => {
   // Load text into clipboard
-  await page.evaluate(text => {
-    navigator.clipboard.write([
+  await page.evaluate(async text => {
+    await navigator.clipboard.write([
       new ClipboardItem({
         'text/plain': new Blob([text], { type: 'text/plain' }),
       }),
     ])
   }, text)
-
-  await sleep(300)
 
   await page.keyboard.down('Shift')
   await page.keyboard.press('Insert')
@@ -27,16 +25,14 @@ const pastePlainText = async (text: string) => {
 /** Custom helper for pasting HTML, avoiding the existing `paste` helper that uses `importText` internally. */
 const pasteHTML = async (html: string) => {
   // Load HTML into clipboard
-  await page.evaluate(html => {
-    navigator.clipboard.write([
+  await page.evaluate(async html => {
+    await navigator.clipboard.write([
       new ClipboardItem({
         'text/plain': new Blob(['Plain text should be ignored when pasting as HTML.'], { type: 'text/plain' }),
         'text/html': new Blob([html], { type: 'text/html' }),
       }),
     ])
   }, html)
-
-  await sleep(300)
 
   await page.keyboard.down('Shift')
   await page.keyboard.press('Insert')
