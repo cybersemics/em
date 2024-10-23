@@ -9,7 +9,6 @@ import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 import useCombinedRefs from '../hooks/useCombinedRefs'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
-import themeColors from '../selectors/themeColors'
 import syncStatusStore from '../stores/syncStatus'
 import fastClick from '../util/fastClick'
 import CloseButton from './CloseButton'
@@ -28,7 +27,7 @@ const Popup = React.forwardRef<
   }>
 >(({ children, importFileId, onClose, textAlign = 'center', cssRaw }, ref) => {
   const dispatch = useDispatch()
-  const colors = useSelector(themeColors)
+
   const fontSize = useSelector(state => state.fontSize)
   const padding = useSelector(state => state.fontSize / 2 + 2)
   const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
@@ -48,11 +47,18 @@ const Popup = React.forwardRef<
           boxShadow: 'none',
           border: 'none',
           display: 'block',
-          width: '100%',
           padding: '8%',
           boxSizing: 'border-box',
           zIndex: 'popup',
           backgroundColor: 'bg',
+          position: 'fixed',
+          top: 0,
+          width: '100%',
+          color: 'gray50',
+          overflowX: 'hidden',
+          overflowY: 'auto',
+          maxHeight: '100%',
+          maxWidth: '100%',
         },
         cssRaw,
       )}
@@ -61,28 +67,13 @@ const Popup = React.forwardRef<
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
       style={{
         fontSize,
-        position: 'fixed',
-        top: 0,
-        width: '100%',
         // scale with font size to stay vertically centered over toolbar
         padding: `${padding}px 0 ${padding}px`,
-        color: colors.gray50,
-        overflowX: 'hidden',
-        overflowY: 'auto',
-        maxHeight: '100%',
-        maxWidth: '100%',
         textAlign,
         ...(isTouch ? useSwipeToDismissProps.style : null),
       }}
     >
-      <div
-        style={{
-          padding: '0.25em',
-          backgroundColor: colors.bgOverlay80,
-        }}
-      >
-        {children}
-      </div>
+      <div className={css({ padding: '0.25em', backgroundColor: 'bgOverlay80' })}>{children}</div>
       {importFileId && (
         <a
           onClick={() => {

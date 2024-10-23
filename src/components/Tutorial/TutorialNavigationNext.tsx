@@ -1,5 +1,6 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../../styled-system/css'
 import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutorialNext'
 import {
   HOME_TOKEN,
@@ -58,7 +59,7 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
         ref={ref}
       />
     ) : (
-      <span className='tutorial-next-wait text-small' ref={ref}>
+      <span className={css({ marginLeft: '10px', fontStyle: 'italic', fontSize: 'sm' })} ref={ref}>
         Complete the instructions to continue
       </span>
     )

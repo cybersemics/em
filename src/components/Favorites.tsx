@@ -15,6 +15,7 @@ import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import thoughtToPath from '../selectors/thoughtToPath'
+import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import nonNull from '../util/nonNull'
@@ -128,7 +129,7 @@ const FavoritesOptions = ({
             className={css({
               display: 'inline-block',
               transform: showOptions ? `rotate(90deg)` : `rotate(0deg)`,
-              transition: 'transform 150ms ease-out',
+              transition: `transform {durations.veryFastDuration} ease-out`,
               // avoid position:absolute to trivially achieve correct vertical alignment with text
               marginLeft: '-1em',
             })}
@@ -140,7 +141,13 @@ const FavoritesOptions = ({
       </div>
 
       <div className={css({ overflow: 'hidden' })}>
-        <CSSTransition in={showOptions} nodeRef={formRef} timeout={150} classNames='slidedown' unmountOnExit>
+        <CSSTransition
+          in={showOptions}
+          nodeRef={formRef}
+          timeout={durations.get('veryFastDuration')}
+          classNames='slidedown'
+          unmountOnExit
+        >
           <form
             ref={formRef}
             className={css({ fontSize: 'sm', backgroundColor: '#3e3e3e', borderRadius: '0.5em', padding: '1em' })}

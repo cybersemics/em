@@ -1,4 +1,5 @@
 import { useDispatch } from 'react-redux'
+import { css } from '../../styled-system/css'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import fastClick from '../util/fastClick'
 import InvitesIcon from './icons/InvitesIcon'
@@ -9,7 +10,7 @@ import InvitesIcon from './icons/InvitesIcon'
 const InvitesButton = () => {
   const dispatch = useDispatch()
   return (
-    <div style={{ display: 'inline-flex' }} {...fastClick(() => dispatch(showModal({ id: 'invites' })))}>
+    <div className={css({ display: 'inline-flex' })} {...fastClick(() => dispatch(showModal({ id: 'invites' })))}>
       <InvitesIcon size={24} />
     </div>
   )

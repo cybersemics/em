@@ -1,11 +1,11 @@
 import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
 import { useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import { Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
-import themeColors from '../selectors/themeColors'
 import gestureStore from '../stores/gesture'
 import TraceGesture from './TraceGesture'
 
@@ -83,25 +83,24 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
 
 /** An overlay for the scroll zone that blocks pointer events. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
-  const colors = useSelector(themeColors)
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
   if (hideScrollZone) return null
 
   return (
     <div
-      className='z-index-scroll-zone'
-      style={{
-        background: `linear-gradient(90deg, ${colors.bg} -100%, ${colors.fg} 100%)`,
-        backgroundColor: colors.gray50,
-        [leftHanded ? 'borderRight' : 'borderLeft']: `solid 1px ${colors.gray33}`,
+      className={css({
+        zIndex: 'scrollZone',
+        background: `linear-gradient(90deg, {colors.bg} -100%, {colors.fg} 100%)`,
+        backgroundColor: 'gray50',
         position: 'fixed',
         left: leftHanded ? 0 : undefined,
         right: leftHanded ? undefined : 0,
         height: '100%',
         opacity: 0.18,
         pointerEvents: 'none',
-        width: SCROLL_ZONE_WIDTH,
-      }}
+        ...(leftHanded ? { borderRight: `solid 1px {colors.gray33}` } : { borderLeft: `solid 1px {colors.gray33}` }),
+      })}
+      style={{ width: SCROLL_ZONE_WIDTH }}
     />
   )
 }

@@ -1,5 +1,6 @@
 import { FC, PropsWithChildren, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../../styled-system/css'
 import { extendTap } from '../../../styled-system/recipes'
 import { fontSizeActionCreator } from '../../actions/fontSize'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
@@ -101,12 +102,12 @@ const FontSize = () => {
             dispatch(fontSizeActionCreator(DEFAULT_FONT_SIZE))
             setFontSize(DEFAULT_FONT_SIZE)
           }}
-          style={{ marginLeft: '0.5em' }}
+          className={css({ marginLeft: '0.5em' })}
         >
           reset
         </a>
       )}
-      {label ? <span className='dim'> ({label})</span> : null}
+      {label ? <span className={css({ color: 'dim' })}> ({label})</span> : null}
     </div>
   )
 }
@@ -119,24 +120,24 @@ const ModalSettings = () => {
       id='settings'
       title='Settings'
       actions={({ close }) => (
-        <div style={{ textAlign: 'center' }}>
+        <div className={css({ textAlign: 'center' })}>
           <ActionButton key='close' title='Close' {...fastClick(() => close())} />
         </div>
       )}
     >
       <form>
-        <p style={{ marginBottom: '2em', marginTop: '-1em' }}>
+        <p className={css({ marginBottom: '2em', marginTop: '-1em' })}>
           <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))} className={extendTap()}>
             Customize Toolbar
           </a>{' '}
           &gt;
         </p>
 
-        <div style={{ marginBottom: '2em' }}>
+        <div className={css({ marginBottom: '2em' })}>
           <FontSize />
         </div>
 
-        <div style={{ marginBottom: '2em' }}>
+        <div className={css({ marginBottom: '2em' })}>
           <ThemeSwitch />
         </div>
 

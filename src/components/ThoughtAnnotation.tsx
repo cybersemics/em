@@ -27,6 +27,7 @@ import isVisibleContext from '../util/isVisibleContext'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import resolveArray from '../util/resolveArray'
+import stripTags from '../util/stripTags'
 import StaticSuperscript from './StaticSuperscript'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
@@ -176,7 +177,7 @@ const ThoughtAnnotationContainer = React.memo(
           !isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
           ? childrenUrls[0].value
           : null
-      return urlValue
+      return urlValue ? stripTags(urlValue) : urlValue
     })
 
     const email = isEmail(value) ? value : undefined
@@ -311,6 +312,9 @@ const ThoughtAnnotation = React.memo(
             )
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
+            // .subthought-highlight {
+            //   border-bottom: solid 1px;
+            // }
           }
           style={{
             fontFamily: isAttribute(value) ? 'monospace' : undefined,

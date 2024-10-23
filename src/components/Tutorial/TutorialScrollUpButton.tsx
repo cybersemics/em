@@ -1,4 +1,5 @@
 import { FC, useCallback } from 'react'
+import { css } from '../../../styled-system/css'
 import scrollTo from '../../device/scrollTo'
 import scrollTopStore from '../../stores/scrollTop'
 import TutorialNavigationButton from './TutorialNavigationButton'
@@ -15,26 +16,19 @@ const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
   }, [])
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        top: scrollTop,
-        left: 0,
-        width: '100%',
-      }}
-    >
+    <div className={css({ position: 'absolute', left: 0, width: '100%' })} style={{ top: scrollTop }}>
       <div
-        style={{
+        className={css({
           visibility: show ? 'visible' : 'hidden',
           opacity: show ? 1 : 0,
           width: '100%',
           position: 'absolute',
           top: show ? '0.5em' : '-2em',
           left: 0,
-          transition: 'opacity 0.25s ease-in-out, visibility 0.25s ease-in-out, top 0.25s ease-in-out',
+          transition: `opacity {durations.fastDuration} ease-in-out, visibility {durations.fastDuration} ease-in-out, top {durations.fastDuration} ease-in-out`,
           display: 'flex',
           justifyContent: 'center',
-        }}
+        })}
       >
         <TutorialNavigationButton clickHandler={scrollUp} value='Scroll up for tutorial' />
       </div>

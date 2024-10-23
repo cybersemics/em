@@ -1,8 +1,10 @@
 import { FC, useEffect, useRef } from 'react'
-import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
+import { globalShortcuts } from '../shortcuts'
+import durations from '../util/durations'
 import GestureDiagram from './GestureDiagram'
 
 interface LatestShortcutsDiagramProps {
@@ -13,7 +15,8 @@ interface LatestShortcutsDiagramProps {
  * Shows latest activated shortcuts diagram.
  */
 const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'middle' }) => {
-  const latestShortcuts = useSelector(state => state.latestShortcuts)
+  // const latestShortcuts = useSelector(state => state.latestShortcuts)
+  const latestShortcuts = globalShortcuts.slice(0, 2)
 
   const latestShortcutsRef = useRef(latestShortcuts)
   const latestShortcutsElRef = useRef<HTMLDivElement>(null)
@@ -26,17 +29,17 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
   const shortcutsList = latestShortcuts.length === 0 ? latestShortcutsRef.current : latestShortcuts
 
   return (
-    <div className='latest-shortcuts-wrapper'>
+    <div className={css({ position: 'absolute', height: '100vh', width: '100%' })}>
       <CSSTransition
         nodeRef={latestShortcutsElRef}
         in={latestShortcuts.length > 0}
         classNames={{
           enter: css({ opacity: 0 }),
-          enterActive: css({ opacity: 1, transition: 'opacity 400ms' }),
+          enterActive: css({ opacity: 1, transition: `opacity {durations.mediumDuration}` }),
           exit: css({ opacity: 1 }),
-          exitActive: css({ opacity: 0, transition: 'opacity 400ms' }),
+          exitActive: css({ opacity: 0, transition: `opacity {durations.mediumDuration}` }),
         }}
-        timeout={400}
+        timeout={durations.get('mediumDuration')}
         unmountOnExit
       >
         <div
@@ -54,9 +57,28 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
         >
           {shortcutsList.map((shortcut, index) => {
             return (
-              <div key={shortcut.id} className='shortcut-tab-wrapper'>
-                <div className='shortcut-tab'>
-                  <GestureDiagram path={shortcut.gesture as GesturePath} size={30} color='white' strokeWidth={2} />
+              <div key={shortcut.id}>
+                <div
+                  className={css({
+                    background: {
+                      _dark: 'rgb(94, 94, 94)',
+                      base: 'rgb(180, 180, 180)',
+                    },
+                    borderRadius: '7px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    opacity: '0.7',
+                    padding: '10px',
+                    margin: '0 2px',
+                  })}
+                >
+                  <GestureDiagram
+                    path={shortcut.gesture as GesturePath}
+                    size={30}
+                    color={token('colors.fg')}
+                    strokeWidth={2}
+                  />
                 </div>
               </div>
             )

@@ -1,5 +1,6 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
+import { css, cx } from '../../../styled-system/css'
 import { button } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import { alertActionCreator as alert } from '../../actions/alert'
@@ -143,9 +144,8 @@ const ModalAuth = () => {
           {!isModeActive(modes.login) && (
             <button
               disabled={isSubmitting}
-              className={button()}
+              className={cx(button(), css({ textDecoration: 'underline', marginTop: 15 }))}
               {...fastClick(showLogin)}
-              style={{ textDecoration: 'underline', marginTop: 15 }}
             >
               {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
             </button>
@@ -154,8 +154,7 @@ const ModalAuth = () => {
           {!isModeActive(modes.resetPassword) && (
             <button
               disabled={isSubmitting}
-              className={button()}
-              style={{ textDecoration: 'underline', marginTop: 15 }}
+              className={cx(button(), css({ textDecoration: 'underline', marginTop: 15 }))}
               {...fastClick(signInWithGoogle)}
             >
               Sign in with Google
@@ -164,9 +163,8 @@ const ModalAuth = () => {
 
           <button
             disabled={isSubmitting}
-            className={button()}
+            className={cx(button(), css({ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }))}
             key='cancel'
-            style={{ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }}
           >
             <a
               id='cancel-login'
@@ -182,7 +180,7 @@ const ModalAuth = () => {
         </div>
       )}
     >
-      <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
+      <div className={css({ display: 'flex', minHeight: '100px', flexDirection: 'column' })}>
         <input type='email' placeholder='email' value={email} onChange={onChangeEmail} />
 
         {!isModeActive(modes.resetPassword) && (
@@ -195,7 +193,7 @@ const ModalAuth = () => {
           </button>
         )}
 
-        {error && <span style={{ color: 'crimson' }}>{error}</span>}
+        {error && <span className={css({ color: 'crimson' })}>{error}</span>}
       </div>
     </ModalComponent>
   )

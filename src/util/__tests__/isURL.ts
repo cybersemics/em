@@ -1,6 +1,6 @@
 import isURL from '../isURL'
 
-const valueUrls = [
+const validUrls = [
   'http://nonssl.com',
   'https://ssl.com',
   'localhost:3000/',
@@ -30,6 +30,11 @@ const valueUrls = [
   'http://a.b-c.de',
   'http://www.cs.cornell.edu/report.pdf',
   'http://test.com/?foo=1.0',
+  '<span style=“background-color: black”>test.com</span>',
+  '<span style="color: rgb(255, 255, 255);background-color: rgb(51, 51, 51);">https://test.com</span>',
+  '<code>test.com</code>',
+  '<code><i><b>test.com</b></i></code>',
+  '<b>test.com</b>',
 ]
 
 const invalidUrls = [
@@ -69,7 +74,7 @@ const invalidUrls = [
 ]
 
 describe('valid urls', () => {
-  valueUrls.forEach(url => {
+  validUrls.forEach(url => {
     it(url, () => {
       expect(isURL(url)).toBe(true)
     })
