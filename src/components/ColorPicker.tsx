@@ -176,11 +176,7 @@ const ColorSwatch: FC<{
 }
 
 /** Text Color Picker component. */
-const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties; cssRaw?: SystemStyleObject }> = ({
-  fontSize,
-  style,
-  cssRaw,
-}) => {
+const ColorPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = ({ fontSize, cssRaw }) => {
   const colors = useSelector(themeColors)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -200,7 +196,7 @@ const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties; cssRaw?: 
           cssRaw,
         )}
         ref={ref}
-        style={{ ...(overflow.left ? { left: overflow.left } : { right: overflow.right }), ...style }}
+        style={{ ...(overflow.left ? { left: overflow.left } : { right: overflow.right }) }}
       >
         {/* Triangle */}
         <TriangleDown
