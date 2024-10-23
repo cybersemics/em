@@ -4,6 +4,7 @@ import Thunk from '../@types/Thunk'
 import setDescendant from '../actions/setDescendant'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
+import stripTags from '../util/stripTags'
 import deleteAttribute from './deleteAttribute'
 
 /** Sets the bullet color of the cursor. */
@@ -30,7 +31,7 @@ export const bulletColorActionCreator =
   (dispatch, getState) => {
     const state = getState()
     const thought = pathToThought(state, state.cursor!)
-    const thoughtText = thought.value.replace(/<[^>]*>/g, '')
+    const thoughtText = stripTags(thought.value)
     const fullySelected =
       (selection.text()?.length === 0 && thoughtText.length !== 0) || selection.text()?.length === thoughtText.length
     dispatch({ type: 'bulletColor', ...payload, fullySelected })
