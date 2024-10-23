@@ -216,11 +216,46 @@ const AppComponent: FC = () => {
               </div>
             ) : (
               <SplitPane
-                className={css({
-                  position: 'relative',
-                  '& .Pane': {
-                    transition: isSplitting ? 'width 0.2s ease' : undefined,
+                paneClassName={css({ transition: isSplitting ? 'width 0.2s ease' : undefined, userSelect: 'none' })}
+                resizerClassName={css({
+                  background: '#fff',
+                  opacity: 0.2,
+                  zIndex: 'resizer',
+                  boxSizing: 'border-box',
+                  backgroundClip: 'padding-box',
+                  userSelect: 'none',
+                  '&:hover': {
+                    transition: 'all 0.2s ease-out',
                   },
+                  '&.horizontal': {
+                    height: '11px',
+                    margin: '-5px 0',
+                    borderTop: '5px solid rgba(255, 255, 255, 0)',
+                    borderBottom: '5px solid rgba(255, 255, 255, 0)',
+                    cursor: 'row-resize',
+                    width: '100%',
+                  },
+                  '&.horizontal:hover': {
+                    borderTop: '5px solid rgba(0, 0, 0, 0.5)',
+                    borderBottom: '5px solid rgba(0, 0, 0, 0.5)',
+                  },
+                  '&.vertical': {
+                    width: '11px',
+                    margin: '0 -5px',
+                    borderLeft: '5px solid rgba(255, 255, 255, 0)',
+                    borderRight: '5px solid rgba(255, 255, 255, 0)',
+                    cursor: 'col-resize',
+                  },
+                  '&.vertical:hover': {
+                    borderLeft: '5px solid rgba(255, 255, 255, 0.5)',
+                    borderRight: '5px solid rgba(255, 255, 255, 0.5)',
+                  },
+                  '&.disabled': { cursor: 'not-allowed' },
+                  '&.disabled:hover': { borderColor: 'transparent' },
+                })}
+                className={css({
+                  position: 'relative', // not applied due to `position: absolute` in style prop of react-split-pane
+                  userSelect: 'none',
                 })}
                 defaultSize={!showSplitView ? '100%' : splitPosition || '50%'}
                 onChange={onSplitResize}
