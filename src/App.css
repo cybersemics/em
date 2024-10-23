@@ -211,10 +211,6 @@
   user-select: none;
 }
 
-.dragging {
-  color: lightblue;
-}
-
 /* Prose View */
 
 .SplitPane,
