@@ -1,5 +1,4 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
@@ -78,15 +77,7 @@ describe('drag', () => {
       `)
 
     await clickThought('b')
-
-    // wait for b to expand
-    await sleep(100)
-
     await clickThought('c')
-
-    // wait for c to expand and e to fade out
-    await sleep(400)
-
     await dragAndDropThought('c', 'e', { position: 'before', dropUncle: true })
 
     const image = await screenshot()
@@ -108,12 +99,6 @@ describe('drag', () => {
       `)
 
     await clickThought('x')
-
-    // Add delay before drag, otherwise the pointer position is sometimes off (intermittend).
-    // This is possibly because c is still animating into place, so it throws off the drag-and-drop coordinates.
-    // Try removing after animatoins are disabled during tests.
-    await sleep(400)
-
     await dragAndDropThought('x', 'd', { position: 'after', dropUncle: true })
 
     const image = await screenshot()
@@ -135,12 +120,6 @@ describe('drag', () => {
       `)
 
     await clickThought('x')
-
-    // Add delay before drag, otherwise the pointer position is off (consistent).
-    // This is possibly because c is still animating into place, so it throws off the drag-and-drop coordinates.
-    // Try removing after animatoins are disabled during tests.
-    await sleep(400)
-
     await dragAndDropThought('x', 'c', { position: 'after' })
 
     const image = await screenshot()
@@ -256,9 +235,6 @@ describe('drop', () => {
         - d
       `)
 
-      // wait for .child fade animation
-      await sleep(750)
-
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
@@ -289,14 +265,7 @@ describe('drop', () => {
       `)
 
       await clickThought('b')
-
-      // wait for b to expand
-      await sleep(100)
-
       await clickThought('c')
-
-      // wait for c to expand and e to fade out
-      await sleep(400)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
