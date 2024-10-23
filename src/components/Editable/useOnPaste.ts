@@ -68,7 +68,7 @@ const useOnPaste = ({
           ? // Clean HTML from clipboard
             strip(htmlText, { preserveFormatting: true })
           : // Escape plain text from clipboard
-            escapeHtml(strip(plainText))
+            escapeHtml(plainText.trim())
 
         // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
         const multiline = plainText.trim().includes('\n') || htmlText?.match(/<(li|p|br)[\s>]/)
