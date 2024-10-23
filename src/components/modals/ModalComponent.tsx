@@ -55,7 +55,7 @@ class ModalComponent extends React.Component<ModalProps> {
     this.animateAndClose = () => {
       window.removeEventListener('keydown', this.onKeyDown!, true)
       if (this.ref.current) {
-        this.ref.current.classList.add('animate-fadeout')
+        this.ref.current.classList.add(css({ opacity: 0 }))
       }
       setTimeout(() => {
         store.dispatch(closeModal())
