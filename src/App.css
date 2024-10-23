@@ -207,12 +207,6 @@
 
 /* higher precendence than ".dark .modal .a" */
 
-.animate {
-  transition: all 0.4s ease-out;
-}
-.animate-slow {
-  transition: all 1s ease-out;
-}
 .animate-fadeout {
   opacity: 0;
 }
