@@ -4,12 +4,6 @@
   See: https://panda-css.com/docs/concepts/writing-styles
 */
 
-/* Thoughts */
-
-[contenteditable].active-underline:focus {
-  border-bottom: solid 1px;
-}
-
 /* react-transition-group animation: fade */
 .fade-enter {
   opacity: 0;

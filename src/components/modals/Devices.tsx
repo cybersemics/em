@@ -365,7 +365,7 @@ const EditableName = React.memo(
     return (
       <div className={css({ position: 'relative' })}>
         <ContentEditable
-          className='active-underline'
+          className={css({ '&:focus': { borderBottom: 'solid 1px' } })}
           innerRef={ref}
           html={value}
           onChange={onChange}
