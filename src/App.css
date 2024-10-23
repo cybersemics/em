@@ -368,9 +368,3 @@
 .MuiDrawer-paperAnchorLeft {
   top: var(--safe-area-top) !important;
 }
-
-.icon {
-  cursor: pointer;
-  flex: 1;
-  transition: all 0.1s ease-in-out;
-}
