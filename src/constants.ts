@@ -189,6 +189,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   'underline',
   'strikethrough',
   'textColor',
+  'letterCase',
   'toggleContextView',
   'note',
   'subcategorizeOne',
