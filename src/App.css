@@ -201,10 +201,6 @@
 
 /* higher precendence than ".dark .modal .a" */
 
-.animate-fadeout {
-  opacity: 0;
-}
-
 .code-block {
   display: block;
   padding: 5px 10px;
