@@ -4,115 +4,10 @@
   See: https://panda-css.com/docs/concepts/writing-styles
 */
 
-.z-index-popup {
-  z-index: var(--z-index-popup);
-}
-.z-index-command-palette {
-  z-index: var(--z-index-command-palette);
-}
-.z-index-gesture-trace {
-  z-index: var(--z-index-gesture-trace);
-}
-.z-index-navbar {
-  z-index: var(--z-index-navbar);
-}
-.z-index-subthoughts-drop-end {
-  z-index: var(--z-index-subthoughts-drop-end);
-}
-.z-index-stack {
-  z-index: var(--z-index-stack);
-}
-.z-index-hide {
-  z-index: var(--z-index-hide);
-}
-.z-index-scroll-zone {
-  z-index: var(--z-index-scroll-zone);
-}
-
-.clear {
-  clear: both;
-}
-.relative {
-  position: relative;
-}
-.missing {
-  color: #ccc;
-}
-.direct {
-  color: #212121;
-}
-.center {
-  text-align: center;
-}
-.left {
-  text-align: left;
-}
-
-@media screen and (min-width: 600px) {
-  .center-desktop {
-    text-align: center;
-  }
-}
-
-.text-small {
-  font-size: 80%;
-}
-
-.text-medium {
-  font-size: 90%;
-}
-
-.expand-click-area-left {
-  padding-left: 10px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  margin-left: -10px;
-}
-
-.expand-click-area-right {
-  padding-right: 10px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-
-/* required to avoid iPhone converting to emoji
- https://stackoverflow.com/questions/11178433/how-do-i-stop-ios-from-converting-a-small-pointing-right-triangle-character-into
- */
-.left-triangle::after {
-  content: '\25C0 \FE0E';
-}
-.right-triangle::after {
-  content: '\25B6 \FE0E';
-}
-
 /* Thoughts */
 
 [contenteditable].active-underline:focus {
   border-bottom: solid 1px;
-}
-
-.subthought-highlight {
-  border-bottom: solid 1px;
-}
-
-.children-subheading {
-  position: relative;
-  margin-top: 3px;
-  margin-bottom: 2px;
-  padding-bottom: 4px;
-}
-
-.down-chevron {
-  font-style: normal;
-  font-size: 125%;
-  line-height: 0;
-}
-
-.up-chevron {
-  font-style: normal;
-  font-size: 75%;
-  position: relative;
-  top: 2px;
 }
 
 /* react-transition-group animation: fade */
@@ -295,79 +190,6 @@
   transition: all 200ms ease-out;
 }
 
-.error {
-  color: red;
-}
-
-.online {
-  color: lightgreen;
-}
-
-.add-new-thought-link {
-  display: inline-block;
-  color: #ccc;
-  position: relative;
-}
-
-.has-other-contexts {
-  margin-left: 12px;
-}
-
-.add-new-thought {
-  outline: none;
-  min-width: 3.75em;
-  display: inline-block;
-  border-bottom: solid 1px #ccc;
-  margin-left: -2px;
-}
-
-.center-in-content {
-  text-align: center;
-  margin-left: -30px;
-}
-
-.text-note {
-  font-style: italic;
-  color: rgba(7, 7, 7, 0.5);
-}
-
-.dark .text-note {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-/* The placeholder color should be inversed when a light background color is applied. */
-/* See: StaticThought */
-.text-note.inverse {
-  color: rgba(255, 255, 255, 0.5);
-}
-.dark .text-note.inverse {
-  color: rgba(7, 7, 7, 0.5);
-}
-
-/* Android Section */
-
-/*### Phone Portrait ### */
-
-@media (max-width: 500px) {
-  .android .children-subheading {
-    position: relative;
-    margin-top: -8px;
-    margin-bottom: 2px;
-    padding-bottom: 4px;
-  }
-}
-
-/* Tablet Properties */
-
-@media (min-width: 560px) and (max-width: 1024px) {
-  .android .children-subheading {
-    position: relative;
-    margin-top: -8px;
-    margin-bottom: 2px;
-    padding-bottom: 4px;
-  }
-}
-
 /* autofocus */
 
 /*
@@ -382,21 +204,6 @@
 }*/
 
 /* for some reason opacity bleeds through modal*/
-.dim {
-  color: rgba(7, 7, 7, 0.5);
-}
-.dark .dim {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-@keyframes fadein {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 0.99;
-  }
-}
 
 /* higher precendence than ".dark .modal .a" */
 
@@ -503,34 +310,6 @@
   left: 10%;
 }
 
-.modal-icon {
-  display: inline-block;
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  color: #666;
-  text-align: center;
-  animation: fadein 0.4s;
-}
-
-.modal-icon-inner {
-  font-family: 'Times New Roman';
-  display: inline-block;
-  width: 25px;
-  height: 25px;
-  border: solid 1px rgba(0, 0, 0, 0.2);
-  border-radius: 99px;
-  color: black;
-  background-color: whitesmoke;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-}
-
-.dark .modal-icon-inner {
-  color: white;
-  background-color: black;
-  box-shadow: 0 0 20px white;
-}
-
 .code-block {
   display: block;
   padding: 5px 10px;
@@ -543,15 +322,6 @@
 
 .dragging {
   color: lightblue;
-}
-
-.tutorial-next-wait {
-  margin-left: 10px;
-  font-style: italic;
-}
-
-.tutorial-step-bullets {
-  margin-bottom: 10px;
 }
 
 /* Prose View */
@@ -606,89 +376,13 @@
 .Resizer.disabled:hover {
   border-color: transparent;
 }
-.SplitPane.animating .Pane {
-  transition: width 0.2s ease;
-}
 
 .MuiDrawer-paperAnchorLeft {
   top: var(--safe-area-top) !important;
-}
-
-.ellipsized-path {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .icon {
   cursor: pointer;
   flex: 1;
   transition: all 0.1s ease-in-out;
-}
-
-.cp-clipboard-wrapper {
-  margin-bottom: 15px;
-  text-align: center;
-}
-
-.latest-shortcuts-wrapper {
-  position: absolute;
-  /* Using vh here allows shortcuts diagram to always appear keyboard in mobile. */
-  height: 100vh;
-  width: 100%;
-}
-
-.latest-shortcuts .shortcut-tab {
-  background: rgb(94, 94, 94);
-  border-radius: 7px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 0.7;
-  padding: 10px;
-  margin: 0 2px;
-}
-
-@keyframes toblack {
-  to {
-    color: black;
-    fill: black;
-  }
-}
-
-@keyframes towhite {
-  to {
-    color: white;
-    fill: white;
-  }
-}
-
-.gray {
-  color: #666;
-  fill: #666;
-}
-
-.advance-setting-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 2em;
-}
-
-.advance-setting-chevron {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  position: relative;
-}
-
-.advance-setting-section {
-  display: flex;
-  justify-content: center;
-  margin: 0 auto;
-  max-width: 34em;
-  flex-direction: column;
-}
-
-.rotate180 {
-  transform: rotate(180deg);
 }

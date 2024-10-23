@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
+import { css, cx } from '../../styled-system/css'
+import { textNote } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
@@ -110,11 +112,27 @@ const Note = React.memo(({ path }: { path: Path }) => {
 
   return (
     <div
-      className='note children-subheading text-note text-small'
+      aria-label='note'
+      className={cx(
+        textNote(),
+        css({
+          fontSize: 'sm',
+          lineHeight: 1.25,
+          // negative margin to compensate for line-height. See .thought-container
+          marginTop: -3,
+          position: 'relative',
+          marginBottom: '2px',
+          paddingBottom: '4px',
+          '@media (max-width: 1024px)': {
+            _android: {
+              position: 'relative',
+              marginBottom: '2px',
+              paddingBottom: '4px',
+            },
+          },
+        }),
+      )}
       style={{
-        lineHeight: 1.25,
-        // negative margin to compensate for line-height. See .thought-container
-        marginTop: -3,
         // offset editable's margin-left, which is dynamically set based on font size
         marginLeft: fontSize - 14,
       }}

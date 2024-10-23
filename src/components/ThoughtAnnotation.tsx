@@ -312,6 +312,9 @@ const ThoughtAnnotation = React.memo(
             )
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
+            // .subthought-highlight {
+            //   border-bottom: solid 1px;
+            // }
           }
           style={{
             fontFamily: isAttribute(value) ? 'monospace' : undefined,

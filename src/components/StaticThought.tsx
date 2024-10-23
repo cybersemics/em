@@ -178,9 +178,7 @@ const StaticThought = ({
             minWidth: !isTableCol1 ? '3em' : undefined,
           }),
         )}
-        style={{
-          marginRight: `${marginRight}px`,
-        }}
+        style={{ marginRight: `${marginRight}px` }}
       >
         {homeContext ? (
           // left, top are eyeballed for different font sizes

@@ -107,6 +107,18 @@ const keyframes = defineKeyframes({
       width: '1.25em',
     },
   },
+  toblack: {
+    to: {
+      color: 'black',
+      fill: 'black',
+    },
+  },
+  towhite: {
+    to: {
+      color: 'white',
+      fill: 'white',
+    },
+  },
 })
 
 const globalCss = defineGlobalStyles({

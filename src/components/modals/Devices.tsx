@@ -3,7 +3,9 @@ import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { css, cx } from '../../../styled-system/css'
 import { anchorButton, extendTap, modalText } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
 import Share from '../../@types/Share'
@@ -14,7 +16,6 @@ import permissionsModel from '../../data-providers/yjs/permissionsModel'
 import * as selection from '../../device/selection'
 import useSharedType from '../../hooks/useSharedType'
 import useStatus from '../../hooks/useStatus'
-import themeColors from '../../selectors/themeColors'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import strip from '../../util/strip'
@@ -106,7 +107,7 @@ const ShareList = React.forwardRef<
   const status = useStatus()
   const dispatch = useDispatch()
   const store = useStore()
-  const colors = useSelector(themeColors)
+
   const [showDeviceForm, setShowDeviceForm] = useState(false)
 
   // sort the owner to the top, then sort by name
@@ -148,11 +149,15 @@ const ShareList = React.forwardRef<
       {status === 'connected' ? (
         <>
           {/* Device list */}
-          <div style={{ marginBottom: '2em' }}>
+          <div className={css({ marginBottom: '2em' })}>
             {permissionsSorted.map(([accessToken, share]) => {
               const isCurrent = accessToken === accessTokenCurrent
               return (
-                <div key={accessToken} {...fastClick(() => onSelect?.(accessToken))} style={{ cursor: 'pointer' }}>
+                <div
+                  key={accessToken}
+                  {...fastClick(() => onSelect?.(accessToken))}
+                  className={css({ cursor: 'pointer' })}
+                >
                   <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
                 </div>
               )
@@ -200,15 +205,15 @@ const ShareList = React.forwardRef<
                   timeout={durations.get('mediumDuration')}
                   unmountOnExit
                 >
-                  <div style={{ marginTop: '1em' }}>
+                  <div className={css({ marginTop: '1em' })}>
                     <a
                       {...fastClick(() => setShowDeviceForm(true))}
-                      className={anchorButton({
-                        outline: true,
-                      })}
-                      style={{
-                        display: 'inline-block',
-                      }}
+                      className={cx(
+                        anchorButton({
+                          outline: true,
+                        }),
+                        css({ display: 'inline-block' }),
+                      )}
                     >
                       + Add a device
                     </a>
@@ -219,7 +224,7 @@ const ShareList = React.forwardRef<
           </TransitionGroup>
         </>
       ) : (
-        <div style={{ color: colors.gray, fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' }}>
+        <div className={css({ color: 'gray', fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' })}>
           <p>This device is currently offline</p>
           <p>Please connect to the Internet to manage sharing.</p>
         </div>
@@ -238,29 +243,29 @@ const ShareRow = React.memo(
   ({ accessToken, isCurrent, role, share }: { accessToken: string; isCurrent?: boolean; share: Share; role: Role }) => {
     return (
       <div
-        style={{
+        className={css({
           display: 'flex',
           flexDirection: 'row',
           alignSelf: 'start',
           margin: '1% auto',
           alignItems: 'center',
-        }}
+        })}
       >
-        <div style={{ display: 'inline-flex' }}>
-          <span style={{ padding: '0.75em 1em 0.75em 0' }}>
-            <span style={{ display: 'inline-block', fontWeight: 'bold', marginRight: '1em', minWidth: '8em' }}>
+        <div className={css({ display: 'inline-flex' })}>
+          <span className={css({ padding: '0.75em 1em 0.75em 0' })}>
+            <span className={css({ display: 'inline-block', fontWeight: 'bold', marginRight: '1em', minWidth: '8em' })}>
               {share?.name || 'Untitled'}
             </span>
             <RoleLabel role={role} />
           </span>{' '}
           <span
-            style={{
+            className={css({
               textAlign: 'left',
               fontStyle: 'italic',
               marginRight: '1em',
               margin: '0 10px',
               padding: '0.75em 0',
-            }}
+            })}
           >
             {isCurrent ? 'this device' : <a>view</a>}
           </span>
@@ -281,20 +286,19 @@ const AddDeviceForm = ({
   onSubmit: ({ name, role }: Pick<Share, 'name' | 'role'>) => void
   defaultName?: string
 }) => {
-  const colors = useSelector(themeColors)
   const [name, setName] = useState(defaultName ?? 'Untitled')
   return (
-    <div style={{ margin: '0 auto' }}>
+    <div className={css({ margin: '0 auto' })}>
       <div
-        style={{
+        className={css({
           borderBottom: 'solid 1px',
-          borderBottomColor: colors.gray15,
+          borderBottomColor: 'gray15',
           margin: '1em auto 3em',
           width: 'calc(100% - 4em)',
-        }}
+        })}
       />
       <div>
-        <span style={{ marginRight: '1em' }}>Name: </span>
+        <span className={css({ marginRight: '1em' })}>Name: </span>
         <input
           ref={el => el?.focus()}
           type='text'
@@ -311,14 +315,14 @@ const AddDeviceForm = ({
             }
           }}
           value={name}
-          style={{ display: 'inline', width: '10em', minWidth: '5em', marginRight: '1em' }}
+          className={css({ display: 'inline', width: '10em', minWidth: '5em', marginRight: '1em' })}
         />
       </div>
 
       <div>
-        <span style={{ marginRight: '1em' }}>Access: </span>
+        <span className={css({ marginRight: '1em' })}>Access: </span>
         <span
-          style={{
+          className={css({
             display: 'inline-block',
             fontSize: '16px',
             marginRight: '1em',
@@ -327,7 +331,7 @@ const AddDeviceForm = ({
             padding: '10px 1.75em 10px 0',
             textAlign: 'left',
             width: '10em',
-          }}
+          })}
         >
           Full Access
         </span>
@@ -336,22 +340,16 @@ const AddDeviceForm = ({
       <div>
         <a
           {...fastClick(() => onSubmit({ name, role: 'owner' }))}
-          className={anchorButton({
-            outline: true,
-          })}
-          style={{
-            display: 'inline-block',
-          }}
+          className={cx(
+            anchorButton({
+              outline: true,
+            }),
+            css({ display: 'inline-block' }),
+          )}
         >
           Add
         </a>
-        <a
-          {...fastClick(onCancel)}
-          style={{
-            color: colors.gray,
-            marginLeft: '1em',
-          }}
-        >
+        <a {...fastClick(onCancel)} className={css({ color: 'gray', marginLeft: '1em' })}>
           Cancel
         </a>
       </div>
@@ -362,11 +360,10 @@ const AddDeviceForm = ({
 /** Renders an editable name with a pencil icon to focus. */
 const EditableName = React.memo(
   ({ onChange, value }: { onChange: (e: ContentEditableEvent) => void; value: string }) => {
-    const colors = useSelector(themeColors)
     const fontSize = useSelector(state => state.fontSize)
     const ref = useRef<HTMLDivElement>(null)
     return (
-      <div style={{ position: 'relative' }}>
+      <div className={css({ position: 'relative' })}>
         <ContentEditable
           className='active-underline'
           innerRef={ref}
@@ -379,15 +376,15 @@ const EditableName = React.memo(
           {...fastClick(() => {
             selection.set(ref.current, { end: true })
           })}
-          style={{
+          className={css({
             display: 'inline-block',
             marginLeft: '1em',
             position: 'absolute',
             top: 4,
             verticalAlign: 'bottom',
-          }}
+          })}
         >
-          <PencilIcon fill={colors.gray} size={25} />
+          <PencilIcon fill={token('colors.gray')} size={25} />
         </a>
       </div>
     )
@@ -419,7 +416,7 @@ const ShareDetail = React.memo(
       const shareUrlInputRef = useRef<HTMLInputElement>(null)
       const dispatch = useDispatch()
       const fontSize = useSelector(state => state.fontSize)
-      const colors = useSelector(themeColors)
+
       // limits sharing and tells the user that they should create a new device share
       const isCurrent = accessToken === accessTokenCurrent
 
@@ -432,7 +429,7 @@ const ShareDetail = React.memo(
           const color = shareUrlInputRef.current?.style.color || ''
           const textStrokeWidth = shareUrlInputRef.current?.style['WebkitTextStrokeWidth' as any] || ''
           if (shareUrlInputRef.current) {
-            shareUrlInputRef.current.style.color = colors.highlight
+            shareUrlInputRef.current.style.color = token.var('colors.highlight')
             shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = 'medium'
           }
           setTimeout(() => {
@@ -489,14 +486,14 @@ const ShareDetail = React.memo(
 
       return (
         <div ref={ref}>
-          <div style={{ marginBottom: '0.5em' }}>
+          <div className={css({ marginBottom: '0.5em' })}>
             <EditableName onChange={onChangeName} value={share?.name || 'Untitled'} />
           </div>
 
           {!isCurrent ? (
             <QRCodeSVG
               value={url}
-              style={{
+              className={css({
                 width: '100%',
                 height: '100%',
                 minWidth: '200px',
@@ -504,50 +501,40 @@ const ShareDetail = React.memo(
                 // keep visible by sizing it to the shortest screen dimension, leaving room for the top margin and share url input
                 maxWidth: 'calc(min(100vw, 100vh - 270px))',
                 maxHeight: 'calc(min(100vw, 100vh - 270px))',
-              }}
+              })}
             />
           ) : (
             <div
-              style={{
-                fontSize,
+              className={css({
                 margin: '3em 0 4em',
-              }}
+              })}
+              style={{ fontSize }}
             >
               <p>This is the current device.</p>
             </div>
           )}
 
           {!isCurrent && (
-            <div style={{ position: 'relative' }}>
+            <div className={css({ position: 'relative' })}>
               <span>
                 <input
                   ref={shareUrlInputRef}
                   type='text'
                   value={url}
                   readOnly
-                  style={{
-                    margin: '10px',
-                    padding: '0.75em 3em 0.75em 1em',
-                    minWidth: 0,
-                    width: '75%',
-                  }}
+                  className={css({ margin: '10px', padding: '0.75em 3em 0.75em 1em', minWidth: 0, width: '75%' })}
                 />
               </span>
               <span
                 {...fastClick(copyShareUrl)}
-                style={{
-                  position: 'absolute',
-                  top: '0.75em',
-                  right: '1.25em',
-                  cursor: 'pointer',
-                }}
+                className={css({ position: 'absolute', top: '0.75em', right: '1.25em', cursor: 'pointer' })}
               >
                 <CopyClipboard size={22} />
               </span>
             </div>
           )}
 
-          <p style={{ color: colors.gray }}>
+          <p className={css({ color: 'gray' })}>
             Created: {new Date(share.created).toLocaleString()}
             <br />
             Last Accessed: {share.accessed ? new Date(share.accessed).toLocaleString() : 'never'}
@@ -556,23 +543,22 @@ const ShareDetail = React.memo(
           {onBack && (
             <a
               {...fastClick(onBack)}
-              className={anchorButton({
-                actionButton: true,
-                // extendTap overrides default button padding
-                extendTap: true,
-              })}
-              style={{
-                color: colors.bg,
-                fontSize,
-                marginBottom: '1.5em',
-              }}
+              className={cx(
+                anchorButton({
+                  actionButton: true,
+                  // extendTap overrides default button padding
+                  extendTap: true,
+                }),
+                css({ color: 'bg', marginBottom: '1.5em' }),
+              )}
+              style={{ fontSize }}
             >
               Back
             </a>
           )}
 
-          <div style={{ marginTop: '4em' }}>
-            <p style={{ color: colors.gray, marginTop: '0.5em' }}>
+          <div className={css({ marginTop: '4em' })}>
+            <p className={css({ color: 'gray', marginTop: '0.5em' })}>
               {isLastDevice
                 ? 'This is the last device with access to this thoughtspace. If you clear the thoughtspace, all thoughts will be permanently deleted.'
                 : isCurrent
@@ -585,8 +571,7 @@ const ShareDetail = React.memo(
                 permissionsModel.delete(accessToken, share)
                 onBack()
               }}
-              className={extendTap()}
-              style={{ color: colors.red }}
+              className={cx(extendTap(), css({ color: 'red' }))}
             >
               {isLastDevice ? 'Delete all thoughts' : 'Remove device'}
             </a>

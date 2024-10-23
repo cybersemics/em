@@ -363,8 +363,6 @@ const ThoughtContainer = ({
       data-editing={isEditing}
       onClick={isTouch ? undefined : handleMultiselect}
       style={{
-        // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
-        position: 'relative',
         transition: `transform ${token('durations.layoutSlowShiftDuration')} ease-out, opacity ${token('durations.layoutSlowShiftDuration')} ease-out`,
         ...style,
         ...styleContainer,
@@ -383,6 +381,8 @@ const ThoughtContainer = ({
         invalidOption && invalidOptionRecipe(),
         css({
           marginLeft: isDivider(value) ? '-125px' : undefined,
+          // so that .thought can be sized at 100% and BulletCursorOverlay bullet can be positioned correctly.
+          position: 'relative',
         }),
       )}
     >

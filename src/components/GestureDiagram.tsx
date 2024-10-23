@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
-import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
-import themeColors from '../selectors/themeColors'
 import createId from '../util/createId'
 
 interface GestureDiagramProps {
@@ -73,9 +72,9 @@ const GestureDiagram = ({
   cssRaw,
 }: GestureDiagramProps) => {
   const [id] = useState(createId())
-  const colors = useSelector(themeColors)
+
   // match signaturePad shadow in TraceGesture component
-  const dropShadow = `drop-shadow(0 0 ${(GESTURE_GLOW_BLUR * 2) / 3}px ${colors[GESTURE_GLOW_COLOR]})`
+  const dropShadow = `drop-shadow(0 0 ${(GESTURE_GLOW_BLUR * 2) / 3}px ${token(`colors.${GESTURE_GLOW_COLOR}` as const)})`
 
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
@@ -164,7 +163,11 @@ const GestureDiagram = ({
         >
           <path
             d='M 0 0 L 10 5 L 0 10 z'
-            fill={highlight != null && highlight >= path.length ? colors.vividHighlight : color || colors.fg}
+            fill={
+              highlight != null && highlight >= path.length
+                ? token('colors.vividHighlight')
+                : color || token('colors.fg')
+            }
             stroke='none'
             style={{ filter: dropShadow }}
           />
@@ -180,7 +183,7 @@ const GestureDiagram = ({
             d={`M ${x} ${y} l ${segment.dx} ${segment.dy}`}
             // segments do not change independently, so we can use index as the key
             key={i}
-            stroke={highlight != null && i < highlight ? colors.vividHighlight : color || colors.fg}
+            stroke={highlight != null && i < highlight ? token('colors.vividHighlight') : color || token('colors.fg')}
             strokeWidth={strokeWidth * 1.5}
             strokeLinecap='round'
             strokeLinejoin='round'

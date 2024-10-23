@@ -23,11 +23,7 @@ const HomeIcon = ({
         aria-label='logo'
         className={cx(className, css({ width: '24px' }, cssRaw))}
         fill={fill || token('colors.fg')}
-        style={{
-          height: sizeCalculated,
-          width: sizeCalculated,
-          ...style,
-        }}
+        style={{ height: sizeCalculated, width: sizeCalculated, ...style }}
       >
         <path d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z' />
         <path d='M0 0h24v24H0z' fill='none' />

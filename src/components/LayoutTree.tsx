@@ -2,7 +2,6 @@ import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
 import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -642,6 +641,7 @@ const LayoutTree = () => {
       ref={ref}
     >
       <div
+        className={css({ transition: `transform {durations.layoutSlowShiftDuration} ease-out` })}
         style={{
           // Set a container height that fits all thoughts.
           // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
@@ -649,7 +649,6 @@ const LayoutTree = () => {
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
           transform: `translateX(${1.5 - indent}em`,
-          transition: `transform ${token('durations.layoutSlowShiftDuration')} ease-out`,
           // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
@@ -770,12 +769,14 @@ const LayoutTree = () => {
                       return (
                         <div
                           key={'DropEnd-' + head(pathEnd)}
-                          className='z-index-subthoughts-drop-end'
-                          style={{
+                          className={css({
                             position: 'relative',
                             top: '-0.2em',
+                            transition: `left {durations.fastDuration} ease-out`,
+                            zIndex: 'subthoughtsDropEnd',
+                          })}
+                          style={{
                             left: `calc(${cliffDepth - depth}em - ${dropEndMarginLeft}px + ${isTouch ? -1 : 1}px)`,
-                            transition: `left ${token('durations.fastDuration')} ease-out`,
                           }}
                         >
                           <DropEnd

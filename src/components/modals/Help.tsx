@@ -33,15 +33,13 @@ const HelpMenuItem: FC<{ Icon: FC<Icon>; onTap: () => void; title: string; descr
 }) => {
   const fontSize = useSelector(state => state.fontSize)
   return (
-    <div {...fastClick(onTap)} style={{ display: 'flex', marginBottom: '1em' }}>
-      <div style={{ marginRight: '0.5em', paddingTop: '0.5em' }}>
+    <div {...fastClick(onTap)} className={css({ display: 'flex', marginBottom: '1em' })}>
+      <div className={css({ marginRight: '0.5em', paddingTop: '0.5em' })}>
         <Icon size={fontSize * 3} />
       </div>
       <div>
-        <a style={{ display: 'inline-block', paddingBottom: '0.25em' }}>{title}</a>
-        <p className='dim text-medium' style={{ marginBottom: '1.5em' }}>
-          {description}
-        </p>
+        <a className={css({ display: 'inline-block', paddingBottom: '0.25em' })}>{title}</a>
+        <p className={css({ color: 'dim', fontSize: 'md', marginBottom: '1.5em' })}>{description}</p>
       </div>
     </div>
   )
@@ -82,7 +80,7 @@ const Tutorials = () => {
     <section className={css({ marginBottom: '50px' })} id='tutorials'>
       <h2 className={subtitle}>Tutorials</h2>
 
-      <div className={modalClasses.actions} style={{ alignItems: 'flex-start' }}>
+      <div className={cx(modalClasses.actions, css({ alignItems: 'flex-start' }))}>
         <div>
           <a
             className={cx(anchorButton({ thin: true }), css({ marginBottom: '1em' }))}
@@ -124,7 +122,7 @@ const CommandCenter = () => <ShortcutTable />
 
 /** List the valid values for a metaprogramming attribute. */
 const Options = ({ options }: { options: string[] }) => (
-  <div className='dim text-small' style={{ marginBottom: '0.5em' }}>
+  <div className={css({ color: 'dim', fontSize: 'sm', marginBottom: '0.5em' })}>
     <b>Options</b>: {options.join(', ')}
   </div>
 )
@@ -138,7 +136,7 @@ const Metaprogramming = () => {
         Metaprogramming
       </h2>
 
-      <p className='dim' style={{ marginBottom: '2em' }}>
+      <p className={css({ color: 'dim', marginBottom: '2em' })}>
         <i>Metaprogramming attributes</i> are hidden thoughts with superpowers. Customize the appearance and behavior of
         thoughts, define style templates, and more.
       </p>
@@ -242,7 +240,7 @@ const About = () => {
   return (
     <div>
       {' '}
-      <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>
+      <div className={css({ fontSize: 'sm', marginTop: '2em', fontStyle: 'italic', opacity: 0.7 })}>
         <div>
           Context View icon by{' '}
           <a href='https://thenounproject.com/travisavery/collection/connection-power/?i=2184164'>Travis Avery</a> from
@@ -392,7 +390,7 @@ const ModalHelp = () => {
       {section === Section.Menu ? (
         <HelpMenu onSelect={setSection} />
       ) : (
-        <span className='text-small'>
+        <span className={css({ fontSize: 'sm' })}>
           &lt;{' '}
           <a {...fastClick(back)} className={extendTap()}>
             Back
@@ -413,7 +411,7 @@ const ModalHelp = () => {
       {
         // TODO: Remove Section.Tutorials condition once it has more content.
         section !== Section.Menu && section !== Section.Tutorials && (
-          <div className='text-small' style={{ marginTop: '2em' }}>
+          <div className={css({ fontSize: 'sm', marginTop: '2em' })}>
             &lt;{' '}
             <a {...fastClick(back)} className={extendTap()}>
               Back

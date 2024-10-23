@@ -2,6 +2,7 @@ import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } fro
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
@@ -10,7 +11,6 @@ import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
-import themeColors from '../selectors/themeColors'
 import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
@@ -112,7 +112,7 @@ const CommandSearch: FC<{
         onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
           onInput?.(e.target.value)
         }}
-        style={{ marginLeft: 0, marginBottom: 0, border: 'none' }}
+        className={css({ marginLeft: 0, marginBottom: 0, border: 'none' })}
       />
     </div>
   )
@@ -131,7 +131,7 @@ const CommandRow: FC<{
 }> = ({ gestureInProgress, search, last, onClick, onHover, selected, shortcut, style }) => {
   const store = useStore()
   const ref = React.useRef<HTMLDivElement>(null)
-  const colors = useSelector(themeColors)
+
   const isActive = shortcut.isActive?.(store.getState())
   const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
   const disabled = useSelector(state => !isExecutable(state, shortcut))
@@ -165,23 +165,23 @@ const CommandRow: FC<{
 
   return (
     <div
+      className={css({
+        cursor: !disabled ? 'pointer' : undefined,
+        paddingBottom: last ? (isTouch ? 0 : '4em') : '0.6em',
+        paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
+        position: 'relative',
+        textAlign: 'left',
+      })}
       ref={ref}
       onClick={e => {
         if (!disabled) {
           onClick(e, shortcut)
         }
       }}
-      style={{
-        cursor: !disabled ? 'pointer' : undefined,
-        paddingBottom: last ? (isTouch ? 0 : '4em') : '0.6em',
-        paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
-        position: 'relative',
-        textAlign: 'left',
-        ...style,
-      }}
+      style={style}
     >
       <div
-        style={{
+        className={css({
           backgroundColor: selected ? '#212121' : undefined,
           padding: selected ? '5px 0 5px 0.5em' : undefined,
           ...(!isTouch
@@ -190,13 +190,13 @@ const CommandRow: FC<{
                 margin: selected ? '-5px 0' : undefined,
               }
             : null),
-        }}
+        })}
       >
         <div>
           {/* gesture diagram */}
           {isTouch && (
             <GestureDiagram
-              color={disabled ? colors.gray : undefined}
+              color={disabled ? token('colors.gray') : undefined}
               highlight={!disabled ? gestureInProgress.length : undefined}
               path={gestureString(shortcut)}
               strokeWidth={4}
@@ -213,40 +213,30 @@ const CommandRow: FC<{
 
           {/* label */}
           <div
-            style={{
+            className={css({
               minWidth: '4em',
               whiteSpace: 'nowrap',
-              color: disabled
-                ? colors.gray
-                : gestureInProgress === shortcut.gesture
-                  ? colors.vividHighlight
-                  : colors.fg,
+              color: disabled ? 'gray' : gestureInProgress === shortcut.gesture ? 'vividHighlight' : 'fg',
               fontWeight: selected ? 'bold' : undefined,
-            }}
+            })}
           >
             <HighlightedText value={label} match={search} disabled={disabled} />
           </div>
         </div>
 
-        <div
-          style={{
-            maxHeight: !isTouch ? '1em' : undefined,
-            flexGrow: 1,
-            zIndex: 1,
-          }}
-        >
+        <div className={css({ maxHeight: !isTouch ? '1em' : undefined, flexGrow: 1, zIndex: 1 })}>
           <div
-            style={{
+            className={css({
               backgroundColor: selected ? '#212121' : undefined,
               display: 'flex',
               padding: !isTouch ? '3px 0.6em 0.3em 0.2em' : undefined,
               marginLeft: !isTouch ? '2em' : undefined,
-            }}
+            })}
           >
             {/* description */}
             {selected && (
               <div
-                style={{
+                className={css({
                   fontSize: '80%',
                   ...(!isTouch
                     ? {
@@ -254,7 +244,7 @@ const CommandRow: FC<{
                         marginLeft: '0.5em',
                       }
                     : null),
-                }}
+                })}
               >
                 {description}
               </div>
@@ -263,7 +253,7 @@ const CommandRow: FC<{
             {/* keyboard shortcut */}
             {selected && !isTouch && (
               <div
-                style={{
+                className={css({
                   fontSize: '80%',
                   position: 'relative',
                   ...(!isTouch
@@ -271,14 +261,9 @@ const CommandRow: FC<{
                         display: 'inline',
                       }
                     : null),
-                }}
+                })}
               >
-                <span
-                  style={{
-                    marginLeft: 20,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
+                <span className={css({ marginLeft: 20, whiteSpace: 'nowrap' })}>
                   {shortcut.keyboard && formatKeyboardShortcut(shortcut.keyboard)}
                 </span>
               </div>
@@ -397,22 +382,17 @@ const CommandPalette: FC = () => {
 
   return (
     <div
-      style={{
+      className={css({
         ...(gestureInProgress || !isTouch ? { paddingLeft: '4em', paddingRight: '1.8em' } : null),
         marginBottom: isTouch ? 0 : fontSize,
         textAlign: 'left',
-      }}
+      })}
     >
       {!isTouch || (gestureInProgress && shortcuts.length > 0) ? (
         <div>
           <h2
-            style={{
-              marginTop: 0,
-              marginBottom: '1em',
-              marginLeft: -fontSize * 1.8,
-              paddingLeft: 5,
-              borderBottom: 'solid 1px gray',
-            }}
+            className={css({ marginTop: 0, marginBottom: '1em', paddingLeft: 5, borderBottom: 'solid 1px gray' })}
+            style={{ marginLeft: -fontSize * 1.8 }}
           >
             {!isTouch ? (
               <CommandSearch
@@ -429,12 +409,12 @@ const CommandPalette: FC = () => {
           </h2>
 
           <div
-            style={{
+            className={css({
               marginLeft: !isTouch ? '-2.4em' : '-1.2em',
               // offset the negative marginTop on CommandRow
               paddingTop: 5,
               ...(!isTouch ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
-            }}
+            })}
           >
             {shortcuts.map(shortcut => (
               <CommandRow
@@ -448,11 +428,11 @@ const CommandPalette: FC = () => {
                 shortcut={shortcut}
               />
             ))}
-            {shortcuts.length === 0 && <span style={{ marginLeft: '1em' }}>No matching commands</span>}
+            {shortcuts.length === 0 && <span className={css({ marginLeft: '1em' })}>No matching commands</span>}
           </div>
         </div>
       ) : isTouch ? (
-        <div style={{ textAlign: 'center' }}>{GESTURE_CANCEL_ALERT_TEXT}</div>
+        <div className={css({ textAlign: 'center' })}>{GESTURE_CANCEL_ALERT_TEXT}</div>
       ) : null}
     </div>
   )

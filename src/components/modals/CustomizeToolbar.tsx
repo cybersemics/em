@@ -3,7 +3,7 @@ import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { anchorButton, extendTap, modal } from '../../../styled-system/recipes'
 import DragAndDropType from '../../@types/DragAndDropType'
 import DragShortcutZone from '../../@types/DragShortcutZone'
@@ -17,7 +17,6 @@ import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../a
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
 import { AlertText, AlertType } from '../../constants'
-import themeColors from '../../selectors/themeColors'
 import { shortcutById } from '../../shortcuts'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
@@ -108,7 +107,7 @@ const ModalCustomizeToolbar: FC = () => {
   )
 
   const dispatch = useDispatch()
-  const colors = useSelector(themeColors)
+
   const shortcutsContainerRef = useRef<HTMLDivElement>(null)
   const shortcuts = useMemo(() => [selectedShortcut], [selectedShortcut])
 
@@ -122,7 +121,7 @@ const ModalCustomizeToolbar: FC = () => {
       title=''
     >
       <h1 className={modalClasses.title}>Customize Toolbar</h1>
-      <p style={{ marginTop: '-1em', marginBottom: '1em' }}>
+      <p className={css({ marginTop: '-1em', marginBottom: '1em' })}>
         &lt;{' '}
         <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTap()}>
           Back to Settings
@@ -156,21 +155,21 @@ const ModalCustomizeToolbar: FC = () => {
         >
           <div
             ref={shortcutsContainerRef}
-            style={{
-              backgroundColor: colors.bg,
+            className={css({
+              backgroundColor: 'bg',
               // add bottom drop-shadow
               // mask gap between this and the toolbar
               // do not overlap modal close x
-              boxShadow: `0 -8px 20px 15px ${colors.bg}`,
-            }}
+              boxShadow: `0 -8px 20px 15px {colors.bg}`,
+            })}
           >
             <div
-              style={{
-                backgroundColor: colors.gray15,
+              className={css({
+                backgroundColor: 'gray15',
                 marginTop: '0.5em',
                 padding: '1em 0 1em 1em',
                 position: 'relative',
-              }}
+              })}
             >
               <ShortcutTableOnly shortcuts={shortcuts} />
             </div>
@@ -185,7 +184,7 @@ const ModalCustomizeToolbar: FC = () => {
         exit={false}
         unmountOnExit
       >
-        <div className='dim' style={{ marginTop: '2em', marginBottom: '2.645em' }}>
+        <div className={css({ marginTop: '2em', marginBottom: '2.645em', color: 'dim' })}>
           <p>Drag-and-drop to rearrange toolbar.</p>
           <p>{isTouch ? 'Tap' : 'Click'} a command for details.</p>
         </div>
@@ -195,30 +194,28 @@ const ModalCustomizeToolbar: FC = () => {
         <ShortcutTable customize selectedShortcut={selectedShortcut ?? undefined} onSelect={setSelectedShortcut} />
       </DropToRemoveFromToolbar>
 
-      <p style={{ marginTop: '2em', marginBottom: '2em' }}>
+      <p className={css({ marginTop: '2em', marginBottom: '2em' })}>
         &lt;{' '}
         <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTap()}>
           Back to Settings
         </a>
       </p>
 
-      <div className='center'>
+      <div className={css({ textAlign: 'center' })}>
         <a
           {...fastClick(() => dispatch(closeModal()))}
-          className={anchorButton({
-            actionButton: true,
-          })}
-          style={{
-            color: colors.bg,
-            marginBottom: '1em',
-            marginTop: '2em',
-          }}
+          className={cx(
+            anchorButton({
+              actionButton: true,
+            }),
+            css({ color: 'bg', marginBottom: '1em', marginTop: '2em' }),
+          )}
         >
           Close
         </a>
 
-        <div className='text-small' style={{ marginTop: '4em' }}>
-          <p style={{ color: colors.gray, marginTop: '0.5em' }}>
+        <div className={css({ fontSize: 'sm', marginTop: '4em' })}>
+          <p className={css({ color: 'gray', marginTop: '0.5em' })}>
             Reset the toolbar to its factory settings. Your current toolbar customization will be permanently deleted.
           </p>
           <a
@@ -227,10 +224,7 @@ const ModalCustomizeToolbar: FC = () => {
                 dispatch([initUserToolbar({ force: true }), alert('Toolbar reset', { clearDelay: 8000 })])
               }
             })}
-            className={extendTap()}
-            style={{
-              color: colors.red,
-            }}
+            className={cx(extendTap(), css({ color: 'red' }))}
           >
             Reset toolbar
           </a>
