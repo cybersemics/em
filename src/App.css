@@ -205,15 +205,6 @@
   opacity: 0;
 }
 
-@keyframes pulse-light {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0.5;
-  }
-}
-
 /* arrow */
 .arrow:after,
 .arrow:before {
