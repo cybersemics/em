@@ -43,9 +43,7 @@ const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = 
     <div className={css({ userSelect: 'none' })}>
       <div
         ref={ref}
-        style={{
-          ...style,
-        }}
+        style={style}
         className={css({
           background: { base: '#ebebeb', _dark: '#141414' },
           borderRadius: '3',
@@ -58,11 +56,10 @@ const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = 
         <TriangleDown
           fill={colors.fgOverlay90}
           size={fontSize}
+          cssRaw={{ position: 'absolute', width: '100%' }}
           style={{
-            position: 'absolute',
             ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }),
             top: -fontSize / 2,
-            width: '100%',
           }}
         />
 

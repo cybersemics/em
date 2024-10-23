@@ -33,6 +33,7 @@ const useEditMode = ({
   const dragHold = useSelector(state => state.dragHold)
   const dragInProgress = useSelector(state => state.dragInProgress)
   const disabledRef = useRef(false)
+  const editableNonce = useSelector(state => state.editableNonce)
 
   // focus on the ContentEditable element if editing os on desktop
   const editMode = !isTouch || editing
@@ -105,7 +106,7 @@ const useEditMode = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isEditing, editingCursorOffset, hasNoteFocus, dragInProgress, editing, transient],
+    [isEditing, editingCursorOffset, hasNoteFocus, dragInProgress, editing, editableNonce, transient],
   )
 
   useEffect(
