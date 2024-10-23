@@ -22,7 +22,8 @@ export const formatLetterCaseActionCreator =
     const updatedThoughtValue = applyLetterCase(command, originalThoughtValue)
     const simplePath = simplifyPath(state, cursor)
 
-    const savedSelection = selection.save()
+    const offset = selection.offsetThought()
+
     dispatch(
       editThought({
         oldValue: originalThoughtValue,
@@ -32,5 +33,5 @@ export const formatLetterCaseActionCreator =
       }),
     )
 
-    dispatch(setCursor({ path: simplePath, offset: savedSelection?.offset }))
+    dispatch(setCursor({ path: simplePath, offset: offset }))
   }
