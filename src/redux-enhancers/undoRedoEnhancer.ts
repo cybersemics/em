@@ -145,6 +145,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   unknownAction: false,
   updateSplitPosition: false,
   updateThoughts: false,
+  updateHoveringPath: false,
 }
 
 /** Returns if an action is undoable. */
