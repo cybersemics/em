@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
@@ -20,23 +20,41 @@ const AnimatedIcon = ({
   const newSize = size * ICON_SCALING_FACTOR
   const color = style.fill || fill || token('colors.fg')
 
-  // Local state to manage animation status
-  const [isAnimated, setIsAnimated] = useState(animated)
+  const [animationKey, setAnimationKey] = useState(0)
+  const [opacity, setOpacity] = useState(1) // Local state for opacity
 
-  useEffect(() => {
-    setIsAnimated(animated)
-  }, [animated])
+  /** Handles click event to restart animation and update opacity. */
+  const handleClick = () => {
+    setOpacity(0.2)
+    setAnimationKey(prev => prev + 1) // Increment key to force remount
 
-  /** Calls the animationComplete callback if provided. */
-  const handleAnimationComplete = () => {
-    if (animationComplete) {
-      animationComplete()
-    }
+    // Restore opacity after delay
+    setTimeout(() => {
+      setOpacity(1)
+    }, 100)
   }
 
   return (
-    <div className={cx(icon(), css(cssRaw))} style={{ width: `${newSize}px`, height: `${newSize}px`, color }}>
-      {isAnimated ? <LottieAnimation animationData={animationData} onComplete={handleAnimationComplete} /> : children}
+    <div
+      className={cx(icon(), css(cssRaw))}
+      style={{
+        ...style,
+        width: `${newSize}px`,
+        height: `${newSize}px`,
+        color,
+      }}
+      onClick={handleClick}
+    >
+      {animated ? (
+        <LottieAnimation
+          key={animationKey} // Force re-render of animation on key change
+          animationData={animationData}
+          onComplete={animationComplete}
+          style={{ opacity, transition: 'opacity 0.4s ease-in-out' }}
+        />
+      ) : (
+        children
+      )}
     </div>
   )
 }

@@ -5,6 +5,7 @@ interface LottieAnimationProps {
   animationData: any
   speed?: number
   onComplete?: () => void
+  style?: React.CSSProperties
 }
 
 /**
@@ -16,8 +17,9 @@ interface LottieAnimationProps {
  */
 const LottieAnimation: React.FC<LottieAnimationProps> = ({
   animationData,
-  speed = 1, // Default speed set to 1x
+  speed = 0.5, // Default speed set to 0.5x
   onComplete,
+  style,
 }) => {
   const lottieRef = useRef<LottieRefCurrentProps | null>(null)
 
@@ -27,7 +29,16 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
     }
   }, [speed])
 
-  return <Player animationData={animationData} lottieRef={lottieRef} autoplay loop={false} onComplete={onComplete} />
+  return (
+    <Player
+      style={style}
+      animationData={animationData}
+      lottieRef={lottieRef}
+      autoplay
+      loop={false}
+      onComplete={onComplete}
+    />
+  )
 }
 
 export default LottieAnimation
