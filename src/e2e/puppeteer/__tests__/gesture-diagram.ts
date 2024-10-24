@@ -1,5 +1,4 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import openModal from '../helpers/openModal'
 import screenshot from '../helpers/screenshot'
@@ -18,9 +17,6 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 it('GestureDiagram', async () => {
   await openModal('testGestureDiagram')
-
-  // wait for modal to fade in
-  await sleep(400)
 
   const image = await screenshot()
   expect(image).toMatchImageSnapshot()

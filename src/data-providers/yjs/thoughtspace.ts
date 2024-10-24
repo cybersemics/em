@@ -308,8 +308,10 @@ export const init = async (options: ThoughtspaceOptions) => {
             })
           })
           .catch((err: Error) => {
-            const errorMessage = `Error loading doclog block: ${err.message}`
-            onError?.(errorMessage, err)
+            const errorMessage = `Error loading doclog block ${subdoc.guid}: ${err.message}`
+            // Log error to console for now since the doclog every time with "DataError: Failed to read large IndexedDB value". The sync server is disabled anyway, and YJS will soon be replaced with a custom sync engine.
+            // onError?.(errorMessage, err)
+            console.error(errorMessage)
           })
       }
     })

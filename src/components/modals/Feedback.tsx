@@ -1,6 +1,7 @@
 import { AxiosError } from 'axios'
 import { ChangeEvent, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
+import { css } from '../../../styled-system/css'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { AlertType } from '../../constants'
 import fastClick from '../../util/fastClick'
@@ -82,7 +83,7 @@ const ModalFeedback = () => {
             isDisabled={isDisabled}
             {...fastClick(() => onSubmit({ close }))}
           />
-          <div key='cancel' style={{ fontSize: 22, marginTop: 10, opacity: 0.5 }}>
+          <div key='cancel' className={css({ fontSize: 22, marginTop: 10, opacity: 0.5 })}>
             <a id='skip-tutorial' {...fastClick(() => close())}>
               Cancel
             </a>
@@ -90,13 +91,13 @@ const ModalFeedback = () => {
         </div>
       )}
     >
-      <p style={{ fontSize: 18, marginBottom: 30 }}>Send us your bugs, hopes, and dreams!</p>
+      <p className={css({ fontSize: 18, marginBottom: 30 })}>Send us your bugs, hopes, and dreams!</p>
       <textarea
         placeholder={'Enter your message'}
         rows={1}
         value={feedback}
         onChange={onChange}
-        style={{ borderRadius: 5 }}
+        className={css({ borderRadius: 5 })}
       />
     </ModalComponent>
   )

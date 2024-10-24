@@ -1,4 +1,5 @@
 import React from 'react'
+import { css } from '../../styled-system/css'
 import { AnchorButtonVariantProps, anchorButton } from '../../styled-system/recipes'
 import fastClick from '../util/fastClick'
 import Loader from './Loader'
@@ -39,7 +40,7 @@ const ActionButton = ({
       {...restProps}
     >
       {/* TODO: Animate on loader toggle. */}
-      {isLoading && <Loader size={35} style={{ marginRight: '15px' }} />}
+      {isLoading && <Loader size={35} cssRaw={css.raw({ marginRight: '15px' })} />}
       {title}
     </a>
   )

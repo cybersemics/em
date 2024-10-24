@@ -1,6 +1,6 @@
 {
   "name": "em",
-  "version": "300.30.19",
+  "version": "300.30.25",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -129,6 +129,7 @@
     "redux-thunk": "^2.4.2",
     "reselect": "^5.1.1",
     "text-block-parser": "^1.1.1",
+    "title-case": "^4.3.2",
     "truncate-html": "^1.1.2",
     "ts-key-enum": "^2.0.12",
     "use-onclickoutside": "^0.4.1",
@@ -209,6 +210,7 @@
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.3.3",
     "puppeteer": "^22.12.1",
+    "puppeteer-screen-recorder": "3.0.3",
     "react-dnd-test-backend": "^16.0.1",
     "react-dnd-test-utils": "^16.0.1",
     "redux-mock-store": "^1.5.4",

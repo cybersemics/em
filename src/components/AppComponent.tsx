@@ -5,6 +5,7 @@ import _ from 'lodash'
 import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
+import { css } from '../../styled-system/css'
 import { updateSplitPositionActionCreator as updateSplitPosition } from '../actions/updateSplitPosition'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { Settings } from '../constants'
@@ -45,12 +46,12 @@ const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHan
 /** A gutter that toggles the sidebar. Positioned above the NavBar so that it doesn't block NavBar or Footer clicks. */
 // const SidebarGutter = () => {
 //   return (
-//     <div style={{ position: 'relative' }}>
+//     <div className={css({ position: 'relative' })}>
 //       <div
 //         {...fastClick(() => {
 //           store.dispatch(toggleSidebar({}))
 //         })}
-//         style={{ position: 'absolute', height: 9999, width: 30, bottom: 30, zIndex: 1 }}
+//         className={css({ position: 'absolute', height: 9999, width: 30, bottom: 30, zIndex: 1 })}
 //       ></div>
 //     </div>
 //   )
@@ -211,17 +212,22 @@ const AppComponent: FC = () => {
             {showTutorial ? <Tutorial /> : null}
             {DISABLE_SPLIT_PANE ? (
               // overflow: hidden is needed to prevent the content from briefly scrolling horizontally during a gesture.
-              <div style={{ position: 'relative', fontSize, overflow: 'hidden' }}>
+              <div className={css({ position: 'relative', overflow: 'hidden' })} style={{ fontSize }}>
                 <Content />
               </div>
             ) : (
               <SplitPane
-                className={isSplitting ? 'animating' : undefined}
+                className={css({
+                  position: 'relative',
+                  '& .Pane': {
+                    transition: isSplitting ? 'width 0.2s ease' : undefined,
+                  },
+                })}
                 defaultSize={!showSplitView ? '100%' : splitPosition || '50%'}
                 onChange={onSplitResize}
                 size={!showSplitView ? '100%' : splitPosition || '50%'}
                 split='vertical'
-                style={{ position: 'relative', fontSize }}
+                style={{ fontSize }}
               >
                 <Content />
                 {showSplitView ? (

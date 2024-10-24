@@ -8,13 +8,16 @@ const joinThoughts: Shortcut = {
   description: 'join all siblings and merge their children',
   keyboard: { key: 'i', alt: true, shift: true },
   multicursor: {
-    enabled: false,
-    error: 'Cannot join multiple thoughts.',
+    enabled: true,
+    clearMulticursor: true,
+    execMulticursor: (cursors, dispatch) => {
+      dispatch(join({ paths: cursors }))
+    },
   },
   svg: JoinThoughtsIcon,
   canExecute: state => !!state.cursor,
   exec: (dispatch, getState) => {
-    dispatch(join())
+    dispatch(join({}))
   },
 }
 

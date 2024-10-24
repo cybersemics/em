@@ -1,5 +1,6 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
+import durationsConfig from './src/durations.config'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
@@ -22,13 +23,27 @@ import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
 
-/** Returns duration values with a zero duration for _test. */
-const duration = (str: string) => ({
+type DurationToken = {
   value: {
-    base: str,
-    _test: '0ms',
-  },
-})
+    base: string
+    _test: string
+  }
+}
+
+/** Returns durations formatted for the PandaCSS config. */
+const durationsReducer = (pv: Record<string, DurationToken>, [key, duration]: [string, number]) => {
+  pv[key] = {
+    value: {
+      base: `${duration}ms`,
+      _test: '0ms',
+    },
+  }
+
+  return pv
+}
+
+/** Add `ms` units to raw value. */
+const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
 
 const keyframes = defineKeyframes({
   fademostlyin: {
@@ -85,6 +100,23 @@ const keyframes = defineKeyframes({
       width: '162.5%',
       height: '162.5%',
       opacity: 0,
+    },
+  },
+  ellipsis: {
+    to: {
+      width: '1.25em',
+    },
+  },
+  toblack: {
+    to: {
+      color: 'black',
+      fill: 'black',
+    },
+  },
+  towhite: {
+    to: {
+      color: 'white',
+      fill: 'white',
     },
   },
 })
@@ -326,14 +358,7 @@ export default defineConfig({
             value: 'tomato !important',
           },
         },
-        durations: {
-          highlightPulseDuration: duration('500ms'),
-          hoverPulseDuration: duration('300ms'),
-          /** The animation duration for the slower opacity transition and horizontal shift of the LayoutTree as the depth of the cursor changes. */
-          layoutSlowShiftDuration: duration('750ms'),
-          /** The animation duration of a node in the LayoutTree component. */
-          layoutNodeAnimationDuration: duration('150ms'),
-        },
+        durations,
       },
     },
   },

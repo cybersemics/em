@@ -1,9 +1,14 @@
 import { rgbToHex } from '@mui/material'
-import React, { FC, useLayoutEffect, useRef, useState } from 'react'
+import React, { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
+import { SystemStyleObject } from '../../styled-system/types'
+import { bulletColorActionCreator as bulletColor } from '../actions/bulletColor'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { isTouch } from '../browser'
 import * as selection from '../device/selection'
+import useWindowOverflow from '../hooks/useWindowOverflow'
 import getThoughtById from '../selectors/getThoughtById'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
@@ -14,26 +19,6 @@ import TextColorIcon from './icons/TextColor'
 
 /** A function that adds an alpha channel to a hex color. */
 const addAlphaToHex = (hex: string) => (hex.length === 7 ? hex + 'ff' : hex)
-
-/** A hook that returns the left and right overflow of the element outside the bounds of the screen. Do not re-calculate on every render or it will create an infinite loop when scrolling the Toolbar. */
-const useWindowOverflow = (ref: React.RefObject<HTMLElement>) => {
-  const [overflow, setOverflow] = useState({ left: 0, right: 0 })
-
-  useLayoutEffect(() => {
-    if (!ref.current) return
-    const rect = ref.current.getBoundingClientRect()
-    // Subtract the previous overflow, since that affects the client rect.
-    // Otherwise the overflow will alternate on each render as it moves on and off the screen.
-    const left = Math.max(0, -rect.x + 15 - overflow.left)
-    // add 10px for padding
-    const right = Math.max(0, rect.x + rect.width - window.innerWidth + 10 - overflow.right)
-    if (left > 0 || right > 0) {
-      setOverflow({ left, right })
-    }
-  }, [ref, overflow.left, overflow.right])
-
-  return overflow
-}
 
 /** A small, square color swatch that can be picked in the color picker. */
 const ColorSwatch: FC<{
@@ -106,25 +91,32 @@ const ColorSwatch: FC<{
     // stop toolbar button dip
     e.stopPropagation()
     e.preventDefault()
-
-    // Apply text color to the selection
     if (backgroundColor || color !== 'default') {
-      dispatch(formatSelection('foreColor', color || colors.bg, { label, selected }))
+      dispatch(formatSelection('foreColor', color || colors.bg))
     } else {
-      dispatch(formatSelection('foreColor', colors.fg, { label, selected }))
+      dispatch(formatSelection('foreColor', colors.fg))
     }
-
     // Apply background color to the selection
     if (backgroundColor && backgroundColor !== colors.bg) {
-      dispatch(
-        formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor, {
-          label,
-          selected,
-        }),
-      )
+      dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
     } else {
-      dispatch(formatSelection('backColor', colors.bg, { label, selected }))
+      dispatch(formatSelection('backColor', colors.bg))
     }
+
+    dispatch(
+      bulletColor({
+        ...(selected
+          ? {
+              color: 'default',
+            }
+          : color
+            ? { color: label }
+            : {
+                backgroundColor: label,
+              }),
+        shape,
+      }),
+    )
   }
   return (
     <span
@@ -136,32 +128,28 @@ const ColorSwatch: FC<{
       onTouchStart={toggleTextColor}
       // only add mousedown to desktop, otherwise it will activate twice on mobile
       onMouseDown={!isTouch ? toggleTextColor : undefined}
-      style={{ cursor: 'pointer' }}
+      className={css({ cursor: 'pointer' })}
     >
       {shape === 'bullet' ? (
         <span
-          style={{
-            color,
+          className={css({
             display: 'inline-block',
-            fontSize: size,
             margin: '3px 5px 5px',
-            width: size - 1,
-            height: size - 1,
             textAlign: 'center',
-          }}
+          })}
+          style={{ color, fontSize: size, width: size - 1, height: size - 1 }}
         >
           •
         </span>
       ) : (
         <TextColorIcon
-          size={size}
-          style={{
-            backgroundColor,
-            border: `solid 1px ${selected ? colors.fg : 'transparent'}`,
+          cssRaw={css.raw({
+            border: selected ? `solid 1px {colors.fg}` : `solid 1px transparent`,
             fontWeight: selected ? 'bold' : 'normal',
-            color: backgroundColor ? 'black' : color,
             margin: '3px 5px 5px',
-          }}
+          })}
+          size={size}
+          style={{ color: backgroundColor ? 'black' : color, backgroundColor }}
         />
       )}
     </span>
@@ -169,40 +157,34 @@ const ColorSwatch: FC<{
 }
 
 /** Text Color Picker component. */
-const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fontSize, style }) => {
+const ColorPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = ({ fontSize, cssRaw }) => {
   const colors = useSelector(themeColors)
   const ref = useRef<HTMLDivElement>(null)
 
   const overflow = useWindowOverflow(ref)
 
   return (
-    <div
-      style={{
-        userSelect: 'none',
-      }}
-    >
+    <div className={css({ userSelect: 'none' })}>
       <div
+        className={css(
+          {
+            backgroundColor: 'fgOverlay90',
+            borderRadius: 3,
+            display: 'inline-block',
+            padding: '0.2em 0.25em 0.25em',
+            position: 'relative',
+          },
+          cssRaw,
+        )}
         ref={ref}
-        style={{
-          backgroundColor: colors.fgOverlay90,
-          borderRadius: 3,
-          display: 'inline-block',
-          padding: '0.2em 0.25em 0.25em',
-          position: 'relative',
-          ...(overflow.left ? { left: overflow.left } : { right: overflow.right }),
-          ...style,
-        }}
+        style={{ ...(overflow.left ? { left: overflow.left } : { right: overflow.right }) }}
       >
         {/* Triangle */}
         <TriangleDown
-          fill={colors.fgOverlay90}
+          fill={token('colors.fgOverlay90')}
+          cssRaw={css.raw({ position: 'absolute', width: '100%' })}
           size={fontSize}
-          style={{
-            position: 'absolute',
-            ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }),
-            top: -fontSize / 2,
-            width: '100%',
-          }}
+          style={{ ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }), top: -fontSize / 2 }}
         />
 
         {/* Text Color */}

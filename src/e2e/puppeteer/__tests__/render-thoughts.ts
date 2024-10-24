@@ -2,9 +2,9 @@ import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
+import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import removeHUD from '../helpers/removeHUD'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import type from '../helpers/type'
@@ -25,19 +25,17 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 const testSuite = () => {
   describe('', () => {
     it('initial load', async () => {
-      await sleep(1000)
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
   })
 
   describe('', () => {
-    beforeEach(removeHUD)
+    beforeEach(hideHUD)
 
     it('one thought', async () => {
       await press('Enter')
       await type('a')
-      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -48,9 +46,6 @@ const testSuite = () => {
         - a
           - b
       `)
-
-      // wait for render animation to complete
-      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -70,9 +65,6 @@ const testSuite = () => {
 
       await press('ArrowUp')
 
-      // wait for render animation to complete
-      await sleep(800)
-
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
@@ -83,9 +75,6 @@ const testSuite = () => {
           - b
         - c
       `)
-
-      // wait for render animation to complete
-      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -101,9 +90,6 @@ const testSuite = () => {
       `)
 
       await press('ArrowUp')
-
-      // wait for render animation to complete
-      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -126,9 +112,6 @@ const testSuite = () => {
       await press('ArrowUp')
       await press('ArrowUp')
 
-      // wait for render animation to complete
-      await sleep(1000)
-
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
@@ -142,9 +125,6 @@ const testSuite = () => {
       `)
 
       await press('ArrowUp')
-
-      // wait for render animation to complete
-      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -161,9 +141,6 @@ const testSuite = () => {
 
       await press('ArrowUp')
 
-      // wait for render animation to complete
-      await sleep(1000)
-
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
@@ -177,9 +154,6 @@ describe('Font Size: 18 (default)', () => {
 
 describe('Font Size: 13', () => {
   beforeEach(async () => {
-    // TODO: identify what needs to be waited for specifically
-    await sleep(1000)
-
     await click('[data-testid=decrease-font]') // 17
     await click('[data-testid=decrease-font]') // 16
     await click('[data-testid=decrease-font]') // 15
@@ -202,9 +176,6 @@ describe('Font Size: 13', () => {
 
 describe('Font Size: 22', () => {
   beforeEach(async () => {
-    // TODO: identify what needs to be waited for specifically
-    await sleep(1000)
-
     await click('[data-testid=increase-font]') // 19
     await click('[data-testid=increase-font]') // 20
     await click('[data-testid=increase-font]') // 21

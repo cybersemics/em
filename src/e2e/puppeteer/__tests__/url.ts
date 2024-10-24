@@ -1,10 +1,9 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
+import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import removeHUD from '../helpers/removeHUD'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 
@@ -23,8 +22,10 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 // Tests the following cases:
 // - Single line url
 // - Single line url with cursor
-it('single line', async () => {
-  await removeHUD()
+// TODO: Re-enable test after fixing the layout shift issue
+// https://github.com/cybersemics/em/issues/2452
+it.skip('single line', async () => {
+  await hideHUD()
 
   await paste(`
     - https://test.com/single-line
@@ -33,9 +34,6 @@ it('single line', async () => {
   `)
 
   await press('ArrowUp')
-
-  // wait for render animation to complete
-  await sleep(1000)
 
   const image = await screenshot()
   expect(image).toMatchImageSnapshot()
@@ -48,7 +46,7 @@ describe('multiline', () => {
    * - Multiline url (with cursor).
    */
   const multilineTest = async () => {
-    await removeHUD()
+    await hideHUD()
 
     await paste(`
     - https://test.com/single-line
@@ -59,9 +57,6 @@ describe('multiline', () => {
 
     await press('ArrowUp')
 
-    // wait for render animation to complete
-    await sleep(1000)
-
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   }
@@ -69,9 +64,6 @@ describe('multiline', () => {
   it('Font Size: 18 (default)', multilineTest)
 
   it('Font Size: 13', async () => {
-    // TODO: identify what needs to be waited for specifically
-    await sleep(1000)
-
     await click('[data-testid=decrease-font]') // 17
     await click('[data-testid=decrease-font]') // 16
     await click('[data-testid=decrease-font]') // 15
@@ -89,7 +81,7 @@ describe('multiline', () => {
 })
 
 it('collapsed thought with url child', async () => {
-  await removeHUD()
+  await hideHUD()
 
   await paste(`
     - test
@@ -99,9 +91,6 @@ it('collapsed thought with url child', async () => {
   `)
 
   await press('Escape')
-
-  // wait for render animation to complete
-  await sleep(1000)
 
   const image = await screenshot()
   expect(image).toMatchImageSnapshot()

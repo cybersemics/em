@@ -11,6 +11,8 @@ const getAttribute = (key: string, node: Element) => {
 /** Check whether node is formatting tag element (<i>...</i>, <b>...</b> or <span>...</span>). */
 const isFormattingTag = (node: HimalayaNode) =>
   node.type === 'element' &&
-  (node.tagName === 'span' ? getAttribute('class', node) !== 'note' : ALLOWED_FORMATTING_TAGS.includes(node.tagName))
+  (node.tagName === 'span'
+    ? getAttribute('aria-label', node) !== 'note'
+    : ALLOWED_FORMATTING_TAGS.includes(node.tagName))
 
 export default isFormattingTag

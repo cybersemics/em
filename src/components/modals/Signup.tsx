@@ -1,5 +1,6 @@
 import { ChangeEventHandler, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
+import { css, cx } from '../../../styled-system/css'
 import { button } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
@@ -156,9 +157,8 @@ const ModalSignup = () => {
               )}
               <button
                 disabled={isSubmitting}
-                className={button()}
+                className={cx(button(), css({ textDecoration: 'underline', marginTop: 15 }))}
                 {...fastClick(() => dispatch(showModal({ id: 'auth' })))}
-                style={{ textDecoration: 'underline', marginTop: 15 }}
               >
                 Log in
               </button>
@@ -168,11 +168,11 @@ const ModalSignup = () => {
       )}
     >
       {/* Show validation in progress */}
-      {isValidatingCode && <div style={{ fontSize: '18px' }}>Validating...</div>}
+      {isValidatingCode && <div className={css({ fontSize: '18px' })}>Validating...</div>}
       {/* Show validation or submit error. */}
       {(validationError || submitError) && (
-        <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
-          <span style={{ color: 'crimson', paddingBottom: '30px', fontSize: '18px' }}>
+        <div className={css({ display: 'flex', minHeight: '100px', flexDirection: 'column' })}>
+          <span className={css({ color: 'crimson', paddingBottom: '30px', fontSize: '18px' })}>
             {validationError || submitError}
           </span>
         </div>
@@ -180,16 +180,11 @@ const ModalSignup = () => {
       {/* Show sign up form only if invitation code is valid. */}
       {!isValidatingCode && !validationError && inviteCode && (
         <>
-          <div
-            style={{
-              fontSize: '18px',
-              marginBottom: '60px',
-            }}
-          >
+          <div className={css({ fontSize: '18px', marginBottom: '60px' })}>
             You have have been gifted an invitation to <b>em</b>!{' '}
-            <InvitesIcon style={{ marginLeft: 5, verticalAlign: 'middle' }} />
+            <InvitesIcon classes={css({ marginLeft: 5, verticalAlign: 'middle' })} />
           </div>
-          <form style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
+          <form className={css({ display: 'flex', minHeight: '100px', flexDirection: 'column' })}>
             <input name='email' type='email' placeholder='email' value={formData.email} onChange={formChangeHandler} />
             <input
               name='password'

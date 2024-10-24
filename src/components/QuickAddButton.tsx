@@ -1,6 +1,6 @@
-import classNames from 'classnames'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import { toggleAbsoluteContextActionCreator as toggleAbsoluteContext } from '../actions/toggleAbsoluteContext'
 import fastClick from '../util/fastClick'
 import isAbsolute from '../util/isAbsolute'
@@ -15,9 +15,10 @@ const QuickAddButton: React.FC = () => {
 
   return (
     <div
-      className={classNames({
-        'quick-add-button': true,
-        rotate: isAbsolute(rootContext),
+      className={css({
+        display: 'inline-flex',
+        transition: 'transform {durations.fastDuration} ease-in-out',
+        rotate: isAbsolute(rootContext) ? 'rotate(135deg)' : undefined,
       })}
       {...fastClick(() => dispatch(toggleAbsoluteContext()))}
       title='Quick Add'

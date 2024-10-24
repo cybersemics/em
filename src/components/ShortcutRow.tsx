@@ -119,7 +119,10 @@ const ShortcutRow = ({
             )
           }
           {customize && indexInToolbar && (
-            <span className='dim' title={`This is the ${ordinal(indexInToolbar)} button in the toolbar`}>
+            <span
+              className={css({ color: 'dim' })}
+              title={`This is the ${ordinal(indexInToolbar)} button in the toolbar`}
+            >
               {indexInToolbar}.{' '}
             </span>
           )}

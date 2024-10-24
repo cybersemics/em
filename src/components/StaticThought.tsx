@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import React, { useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import { thought } from '../../styled-system/recipes'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -168,23 +168,25 @@ const StaticThought = ({
       />
       <div
         aria-label='thought'
-        className={thought({
-          ellipsizedUrl,
-          inverse: (dark && isBlack(styleAnnotation?.color)) || (!dark && isWhite(styleAnnotation?.color)),
-        })}
-        style={{
-          // do not set a min-width on table column 1 since there is no room for additional click area
-          minWidth: !isTableCol1 ? '3em' : undefined,
-          marginRight: `${marginRight}px`,
-        }}
+        className={cx(
+          thought({
+            ellipsizedUrl,
+            inverse: (dark && isBlack(styleAnnotation?.color)) || (!dark && isWhite(styleAnnotation?.color)),
+          }),
+          css({
+            // do not set a min-width on table column 1 since there is no room for additional click area
+            minWidth: !isTableCol1 ? '3em' : undefined,
+          }),
+        )}
+        style={{ marginRight: `${marginRight}px` }}
       >
         {homeContext ? (
           // left, top are eyeballed for different font sizes
-          <HomeIcon style={{ position: 'relative', left: fontSize - 14, top: fontSize / 4 - 1 }} />
+          <HomeIcon className={css({ position: 'relative' })} style={{ left: fontSize - 14, top: fontSize / 4 - 1 }} />
         ) : isDivider(value) ? (
           <Divider path={simplePathLive} />
         ) : /* insert padding equal to the Editable height while context ancestors are loading */ isContextPending ? (
-          <div style={{ paddingTop: '2.8em' }}></div>
+          <div className={css({ paddingTop: '2.8em' })}></div>
         ) : (
           <Editable
             editableRef={editableRef}

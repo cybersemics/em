@@ -29,6 +29,7 @@ import useIsVisible from '../../hooks/useIsVisible'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
 import { shortcutById } from '../../shortcuts'
+import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import headValue from '../../util/headValue'
 import once from '../../util/once'
@@ -45,7 +46,13 @@ const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props
 
   const Component = component
   return (
-    <CSSTransition nodeRef={nodeRef} in={true} key={Math.floor(props.transitionKey)} timeout={400} classNames='slide'>
+    <CSSTransition
+      nodeRef={nodeRef}
+      in={true}
+      key={Math.floor(props.transitionKey)}
+      timeout={durations.get('fastDuration')}
+      classNames='slide'
+    >
       <div ref={nodeRef}>
         <Component {...props} />
       </div>

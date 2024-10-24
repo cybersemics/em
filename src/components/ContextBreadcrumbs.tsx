@@ -12,6 +12,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
+import durations from '../util/durations'
 import ellipsize from '../util/ellipsize'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
@@ -244,7 +245,7 @@ const ContextBreadcrumbs = ({
             // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
             // This way it will only animate when the length of the cursor changes.
             return (
-              <CSSTransition key={i} nodeRef={nodeRef} timeout={600} classNames='fade-600'>
+              <CSSTransition key={i} nodeRef={nodeRef} timeout={durations.get('mediumDuration')} classNames='fade'>
                 <BreadCrumb
                   ref={nodeRef}
                   isOverflow={isOverflow}

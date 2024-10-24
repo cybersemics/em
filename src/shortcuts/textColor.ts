@@ -15,6 +15,7 @@ const textColor: Shortcut = {
   },
   exec: (dispatch, getState) => {
     const state = getState()
+    if (state.showLetterCase) dispatch({ type: 'toggleLetterCase' })
     dispatch({
       type: 'toggleColorPicker',
       path: state.cursor,

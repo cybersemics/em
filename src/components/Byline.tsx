@@ -1,4 +1,5 @@
 import Gravatar from 'react-gravatar'
+import { css } from '../../styled-system/css'
 import ThoughtId from '../@types/ThoughtId'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
@@ -15,10 +16,25 @@ const Byline = ({ id }: { id: ThoughtId }) => {
   const email = publishId && attribute(state, publishId, 'Email')
 
   return email || bylineChildren.length > 0 ? (
-    <div className='publish-meta'>
-      {email && <Gravatar email={email} />}
+    <div className={css({ margin: '15px 0', fontSize: '85%', overflow: 'hidden', lineHeight: '1.4' })}>
+      {email && (
+        <Gravatar
+          className={css({
+            margin: '10px 10px 10px 0',
+            borderRadius: '9999px',
+            float: 'left',
+          })}
+          email={email}
+        />
+      )}
       {bylineChildren.map(child => (
-        <div key={child.value} className='byline'>
+        <div
+          key={child.value}
+          className={css({
+            '&:first-of-type': { marginTop: '15px' },
+            '&:nth-of-type(2)': { opacity: 0.6 },
+          })}
+        >
           {child.value}
         </div>
       ))}

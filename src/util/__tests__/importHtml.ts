@@ -261,13 +261,13 @@ it.skip('WorkFlowy import with notes', () => {
 z
 <ul>
   <li>a<br>
-    <span class="note">Note</span>
+    <span aria-label="note">Note</span>
     <ul>
       <li>b</li>
     </ul>
   </li>
   <li>c<br>
-    <span class="note">Other Note</span>
+    <span aria-label="note">Other Note</span>
     <ul>
       <li>d</li>
     </ul>

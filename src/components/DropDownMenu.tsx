@@ -1,7 +1,6 @@
 import React, { CSSProperties } from 'react'
-import { useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import ExportOption from '../@types/ExportOption'
-import themeColors from '../selectors/themeColors'
 import fastClick from '../util/fastClick'
 
 interface DropDownMenuProps {
@@ -17,19 +16,35 @@ interface DropDownMenuProps {
 // eslint-disable-next-line react/display-name
 const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
   ({ isOpen, onSelect, selected, options, dark, style }, ref) => {
-    const colors = useSelector(themeColors)
     return isOpen ? (
       <div
         ref={ref}
-        className='drop-down-wrapper'
-        style={{
-          border: `1px solid ${colors.fg}`,
-          ...style,
-        }}
+        className={css({
+          boxShadow: '0 0 10px 0px black',
+          // display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-evenly',
+          position: 'absolute',
+          right: '3px',
+          // padding: '0px 5px',
+          zIndex: 'stack',
+          backgroundColor: 'bg',
+          border: `1px solid {colors.fg}`,
+          top: '120%',
+          left: 0, // position on the left edge of "Plain Text", otherwise the left side gets cut off on mobile
+          display: 'table', // the only value that seems to overflow properly within the inline-flex element
+          padding: 0,
+        })}
+        style={style}
       >
         {options.map((option, index) => (
           <div
-            className='drop-down-option-wrapper'
+            className={css({
+              cursor: 'pointer',
+              padding: '2px 0px',
+              borderTop: '1px solid #444',
+              transition: 'opacity {durations.fastDuration} ease-in',
+            })}
             // composite key is unique
             key={`${option.type}-${option.label}`}
             {...fastClick(() => {
@@ -38,7 +53,7 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
               }
             })}
           >
-            <div className='drop-down-option'>
+            <div className={css({ display: 'flex', alignItems: 'center', marginLeft: '10px' })}>
               {option.label === (selected || options[0]).label ? (
                 dark ? (
                   <svg width='16px' height='16px' viewBox='0 0 32 32'>
@@ -53,9 +68,9 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
                   </svg>
                 )
               ) : (
-                <div style={{ width: '16px', height: '16px' }}></div>
+                <div className={css({ width: '16px', height: '16px' })}></div>
               )}
-              <span className='drop-down-label'>{option.label}</span>
+              <span className={css({ marginLeft: '10px', width: '95px' })}>{option.label}</span>
             </div>
           </div>
         ))}

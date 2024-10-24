@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { token } from '../../styled-system/tokens'
+import { css } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -195,7 +195,7 @@ const useNavAndFooterHeight = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(
     _.throttle(() => {
-      const navEl = document.querySelector('.nav')
+      const navEl = document.querySelector('[aria-label="nav"]')
       const footerEl = document.querySelector('[aria-label="footer"]')
       setNavAndFooterHeight(
         (navEl?.getBoundingClientRect().height || 0) + (footerEl?.getBoundingClientRect().height || 0),
@@ -631,14 +631,17 @@ const LayoutTree = () => {
 
   return (
     <div
+      className={css({
+        marginTop: '0.501em',
+      })}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
         transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
-        marginTop: '0.501em',
       }}
       ref={ref}
     >
       <div
+        className={css({ transition: `transform {durations.layoutSlowShiftDuration} ease-out` })}
         style={{
           // Set a container height that fits all thoughts.
           // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
@@ -646,7 +649,6 @@ const LayoutTree = () => {
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
           transform: `translateX(${1.5 - indent}em`,
-          transition: `transform ${token('durations.layoutSlowShiftDuration')} ease-out`,
           // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
@@ -702,13 +704,15 @@ const LayoutTree = () => {
                 // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
                 // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
                 key={key}
-                style={{
+                className={css({
                   position: 'absolute',
+                  transition: `left {durations.layoutNodeAnimationDuration} ease-out,top {durations.layoutNodeAnimationDuration} ease-out`,
+                })}
+                style={{
                   // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
                   // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
                   left: x,
                   top: y,
-                  transition: `left ${token('durations.layoutNodeAnimationDuration')} ease-out,top ${token('durations.layoutNodeAnimationDuration')} ease-out`,
                   // Table col1 uses its exact width since cannot extend to the right edge of the screen.
                   // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
                   // 1em + 10px is an eyeball measurement at font sizes 14 and 18
@@ -765,12 +769,14 @@ const LayoutTree = () => {
                       return (
                         <div
                           key={'DropEnd-' + head(pathEnd)}
-                          className='z-index-subthoughts-drop-end'
-                          style={{
+                          className={css({
                             position: 'relative',
                             top: '-0.2em',
+                            transition: `left {durations.fastDuration} ease-out`,
+                            zIndex: 'subthoughtsDropEnd',
+                          })}
+                          style={{
                             left: `calc(${cliffDepth - depth}em - ${dropEndMarginLeft}px + ${isTouch ? -1 : 1}px)`,
-                            transition: 'left 0.15s ease-out',
                           }}
                         >
                           <DropEnd

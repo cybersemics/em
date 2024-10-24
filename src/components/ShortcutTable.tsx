@@ -1,4 +1,5 @@
 import { FC, useState } from 'react'
+import { css } from '../../styled-system/css'
 import { modalText } from '../../styled-system/recipes'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
@@ -116,21 +117,21 @@ const SearchShortcut: FC<{
   onInput?: (value: string) => void
 }> = ({ onInput }) => {
   return (
-    <div id='search' style={{ borderBottom: 'solid 1px gray' }}>
+    <div id='search' className={css({ borderBottom: 'solid 1px gray' })}>
       <input
         type='text'
         placeholder='Search commands by name...'
         onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
           onInput?.(e.target.value)
         }}
-        style={{
+        className={css({
           marginLeft: 0,
           marginBottom: 0,
           marginTop: '1em',
           border: 'none',
           boxSizing: 'border-box',
           width: '100%',
-        }}
+        })}
       />
     </div>
   )
@@ -185,7 +186,7 @@ const ShortcutTable = ({
   return (
     <div>
       <SearchShortcut onInput={setSearch} />
-      <div style={{ textAlign: 'left' }}>
+      <div className={css({ textAlign: 'left' })}>
         {search ? (
           <ShortcutGroup
             title={'Results'}

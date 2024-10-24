@@ -16,6 +16,7 @@ import { setInvalidStateActionCreator as setInvalidState } from '../actions/inva
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
+import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isIOS, isMac, isSafari, isTouch } from '../browser'
 import {
@@ -338,7 +339,7 @@ const Editable = ({
                 }),
               )
             : // Otherwise, we avoid unescaping the value to preserve escaped HTML characters.
-              e.target.value,
+              e.target.value.trim(),
         ),
       )
 
@@ -556,9 +557,9 @@ const Editable = ({
         if (!isVisible) {
           selection.clear()
 
-          if (state.showColorPicker) {
-            dispatch(toggleColorPicker({ value: false }))
-          }
+          if (state.showColorPicker) dispatch(toggleColorPicker({ value: false }))
+
+          if (state.showLetterCase) dispatch(toggleLetterCase({ value: false }))
         } else {
           setCursorOnThought()
 

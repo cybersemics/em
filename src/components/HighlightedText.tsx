@@ -1,11 +1,8 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
-import themeColors from '../selectors/themeColors'
+import { css } from '../../styled-system/css'
 
 /** Renders text with matching characters highlighted. */
 const HighlightedText: FC<{ value: string; match: string; disabled?: boolean }> = ({ value, match, disabled }) => {
-  const colors = useSelector(themeColors)
-
   // move an index forward as matches are found so that chars are only matched once each
   let index = 0
 
@@ -21,13 +18,7 @@ const HighlightedText: FC<{ value: string; match: string; disabled?: boolean }> 
 
         return (
           <span key={i}>
-            <span
-              style={{
-                color: !disabled && isMatch ? colors.vividHighlight : undefined,
-              }}
-            >
-              {char}
-            </span>
+            <span className={css({ color: !disabled && isMatch ? 'vividHighlight' : undefined })}>{char}</span>
           </span>
         )
       })}

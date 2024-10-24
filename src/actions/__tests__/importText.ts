@@ -642,7 +642,7 @@ it('text that contains br tag that has note children', () => {
   const text = `
     - a
     - b
-    - c<br><span class="note">This is c!</span>
+    - c<br><span aria-label="note">This is c!</span>
   `
   const exported = importExport(text, false)
   expect(exported.trim()).toBe(

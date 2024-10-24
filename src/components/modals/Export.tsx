@@ -34,7 +34,6 @@ import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import simplifyPath from '../../selectors/simplifyPath'
 import theme from '../../selectors/theme'
-import themeColors from '../../selectors/themeColors'
 import ellipsize from '../../util/ellipsize'
 import equalPath from '../../util/equalPath'
 import exportPhrase from '../../util/exportPhrase'
@@ -193,6 +192,12 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
 }
 
 /******************************************************************************
+ * Styles
+ *****************************************************************************/
+
+const rotate180Class = css.raw({ transform: 'rotate(180deg)' })
+
+/******************************************************************************
  * Components
  *****************************************************************************/
 
@@ -231,7 +236,6 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   const [isOpen, setIsOpen] = useState(false)
 
   const dark = useSelector(state => theme(state) !== 'Light')
-  const colors = useSelector(themeColors)
 
   const closeDropdown = useCallback(() => {
     setIsOpen(false)
@@ -241,12 +245,12 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   useOnClickOutside(dropDownRef, closeDropdown)
 
   return (
-    <span ref={dropDownRef} style={{ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' }}>
-      <a style={{ color: colors.fg }} {...fastClick(() => setIsOpen(!isOpen))}>
+    <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>
+      <a className={css({ color: 'fg' })} {...fastClick(() => setIsOpen(!isOpen))}>
         {selected.label}
       </a>
-      <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-        <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? 'rotate180' : ''} />
+      <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
+        <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} cssRaw={isOpen ? rotate180Class : undefined} />
         <span>
           <DropDownMenu
             isOpen={isOpen}
@@ -257,12 +261,6 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
             }}
             options={exportOptions}
             dark={dark}
-            style={{
-              top: '120%',
-              left: 0, // position on the left edge of "Plain Text", otherwise the left side gets cut off on mobile
-              display: 'table', // the only value that seems to overflow properly within the inline-flex element
-              padding: 0,
-            }}
           />
         </span>
       </span>
@@ -287,7 +285,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
 
   const dark = useSelector(state => theme(state) !== 'Light')
-  const colors = useSelector(themeColors)
+
   const exportWord = isTouch ? 'Share' : 'Download'
 
   const isPulling = usePullStatus()
@@ -585,27 +583,16 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       </div>
 
       {/* Preview */}
-      <div
-        style={{
-          position: 'relative',
-        }}
-      >
+      <div className={css({ position: 'relative' })}>
         {exportContent === null && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 'calc(50% - 1em)',
-              textAlign: 'center',
-              width: ' 100%',
-            }}
-          >
+          <div className={css({ position: 'absolute', top: 'calc(50% - 1em)', textAlign: 'center', width: ' 100%' })}>
             <LoadingEllipsis />
           </div>
         )}
         <textarea
           ref={textareaRef}
           readOnly
-          style={{
+          className={css({
             backgroundColor: '#111',
             border: 'none',
             borderRadius: '10px',
@@ -614,7 +601,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
             height: '120px',
             marginBottom: 'calc(max(1.2em, 20px))',
             width: '300px',
-          }}
+          })}
           value={exportContent || ''}
         ></textarea>
       </div>
@@ -642,17 +629,18 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
             lineHeight: 2,
             textDecoration: 'none',
             border: 'none',
+            color: 'bg',
+            backgroundColor: 'fg',
           })}
           disabled={exportContent === null}
           {...fastClick(onExportClick)}
-          style={{ color: colors.bg, backgroundColor: colors.fg }}
         >
           {exportWord}
         </button>
       </div>
 
       {/* Copy to clipboard */}
-      <div className='cp-clipboard-wrapper'>
+      <div className={css({ marginBottom: '15px', textAlign: 'center' })}>
         {exportContent !== null && (
           <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTap()}>
             Copy to clipboard
@@ -661,7 +649,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       </div>
 
       {/* Advanced Settings */}
-      <div className='advance-setting-wrapper'>
+      <div className={css({ display: 'flex', justifyContent: 'center', marginBottom: '2em' })}>
         <span>
           <a
             className={cx(
@@ -670,7 +658,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
                 userSelect: 'none',
                 display: 'flex',
                 position: 'relative',
-                transition: 'opacity 100ms ease-in-out',
+                transition: `opacity {durations.veryFastDuration} ease-in-out`,
                 color: 'fg',
                 opacity: advancedSettings ? 1 : 0.5,
               }),
@@ -680,18 +668,27 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
             Advanced
           </a>
         </span>
-        <span className='advance-setting-chevron'>
+        <span
+          className={css({ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative' })}
+        >
           <ChevronImg
             dark={dark}
             onClickHandle={onAdvancedClick}
-            className={advancedSettings ? 'rotate180' : ''}
-            additonalStyle={{ opacity: advancedSettings ? 1 : 0.5 }}
+            cssRaw={css.raw(advancedSettings && rotate180Class, { opacity: advancedSettings ? 1 : 0.5 })}
           />
         </span>
       </div>
 
       {advancedSettings && (
-        <div className='advance-setting-section'>
+        <div
+          className={css({
+            display: 'flex',
+            justifyContent: 'center',
+            margin: '0 auto',
+            maxWidth: '34em',
+            flexDirection: 'column',
+          })}
+        >
           {advancedSettingsArray.map(props => (
             <Checkbox key={props.id} {...props}>
               {props.description}
@@ -738,7 +735,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
                     </span>
                   )}
                 </p>
-                <p className='dim'>
+                <p className={css({color: 'dim'})}>
                   <i>
                     Note: These thoughts are published permanently. <br />
                     This action cannot be undone.

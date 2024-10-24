@@ -53,8 +53,6 @@ const glyph = cva({
       _android: {
         position: 'relative',
         marginLeft: '-16.8px',
-        opacity: 0.9,
-        transition: 'opacity 0.75s ease-in-out',
         marginRight: '-5px',
         left: '3px',
         fontSize: '16px',
@@ -64,8 +62,6 @@ const glyph = cva({
       _android: {
         position: 'relative',
         marginLeft: '-16.8px',
-        opacity: 0.8,
-        transition: 'opacity 0.75s ease-in-out',
         marginRight: '-5px',
         left: '4px',
         fontSize: '28px',
@@ -208,7 +204,7 @@ const glyph = cva({
 
 const glyphFg = cva({
   base: {
-    transition: 'transform 0.1s ease-out, fill-opacity 0.5s ease-out',
+    transition: `transform {durations.veryFastDuration} ease-out, fill-opacity {durations.mediumDuration} ease-out`,
   },
   variants: {
     gray: {
@@ -222,7 +218,6 @@ const glyphFg = cva({
         color: '#666',
         fill: '#666',
         '-webkit-animation': {
-          // TODO: not sure if this will apply TODO CHRISTINA
           base: 'toblack 400ms infinite alternate ease-in-out',
           _dark: 'towhite 400ms infinite alternate ease-in-out',
         },
@@ -283,6 +278,7 @@ const BulletLeaf = ({
   return (
     <ellipse
       aria-label='bullet-glyph'
+      data-graypulse={pending}
       className={glyphFg({
         gray: missing,
         graypulse: pending,
@@ -373,7 +369,6 @@ const BulletCursorOverlay = ({
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
   return (
     <ellipse
-      className='bullet-cursor-overlay'
       ry={bulletOverlayRadius}
       rx={bulletOverlayRadius}
       cy='300'
@@ -524,7 +519,7 @@ const Bullet = ({
           },
           '@media (min-width: 560px) and (max-width: 1024px)': {
             _android: {
-              transition: 'transform 0.1s ease-in-out',
+              transition: `transform {durations.veryFastDuration} ease-in-out`,
               marginLeft: '-3px',
             },
           },
@@ -540,9 +535,8 @@ const Bullet = ({
         }),
       )}
       style={{
-        marginTop: -extendClickHeight,
-        marginLeft: -extendClickWidth + marginLeft,
-        marginBottom: -extendClickHeight - 2,
+        top: -extendClickHeight,
+        left: -extendClickWidth + marginLeft,
         paddingTop: extendClickHeight,
         paddingLeft: extendClickWidth,
         paddingBottom: extendClickHeight + 2,

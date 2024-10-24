@@ -1,8 +1,8 @@
 import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
+import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
-import removeHUD from '../helpers/removeHUD'
 import screenshot from '../helpers/screenshot'
 
 expect.extend({
@@ -12,7 +12,7 @@ expect.extend({
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 describe('Table View', () => {
-  beforeEach(removeHUD)
+  beforeEach(hideHUD)
 
   /**
    * "col1 narrow" means that all thoughts in the first column have short text, so the first table column can be narrower in order to give plenty of room for the second column.
