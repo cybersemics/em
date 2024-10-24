@@ -116,7 +116,10 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
       lastScrollLeft.current = toolbarEl.scrollLeft
 
-      setIsAnimated(true)
+      if (!(customize && isPressing)) {
+        setIsAnimated(true)
+      }
+      //setIsAnimated(true)
 
       if (!disabled) {
         onTapDown?.(shortcutId, e)
