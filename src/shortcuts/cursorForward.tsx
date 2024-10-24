@@ -1,6 +1,6 @@
 import { css, cx } from '../../styled-system/css'
 import { icon } from '../../styled-system/recipes'
-import IconType from '../@types/Icon'
+import IconType from '../@types/IconType'
 import Shortcut from '../@types/Shortcut'
 import { cursorForwardActionCreator as cursorForward } from '../actions/cursorForward'
 

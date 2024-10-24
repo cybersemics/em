@@ -20,7 +20,15 @@ export default defineConfig({
     // Do not run vite-plugin-checker during tests, as it will clear the test output.
     // The dev server is usually running anyway, and tsc is run in lint:tsc which is triggered prepush.
     ...[!process.env.VITEST && !process.env.PUPPETEER ? checker({ typescript: true }) : undefined],
-    VitePWA({ injectRegister: null, strategies: 'injectManifest', srcDir: 'src', filename: 'service-worker.ts' }),
+    VitePWA({
+      injectRegister: null,
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'service-worker.ts',
+      injectManifest: {
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // Increase limit to 4 MiB
+      },
+    }),
     // minify and add EJS capabilities to index.html
     createHtmlPlugin({ minify: true }),
   ],

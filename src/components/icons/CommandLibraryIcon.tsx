@@ -2,7 +2,7 @@ import { FC } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import Icon from '../../@types/Icon'
+import Icon from '../../@types/IconType'
 
 /** Command Library icon that looks like a finger pressing a button. */
 const CommandLibraryIcon: FC<Icon> = ({ cssRaw, fill, style, size = 20 }) => {

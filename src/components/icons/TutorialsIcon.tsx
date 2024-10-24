@@ -2,7 +2,7 @@ import { FC } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import Icon from '../../@types/Icon'
+import Icon from '../../@types/IconType'
 
 /** Tutorials icon that shows a teacher at a board. */
 const TutorialsIcon: FC<Icon> = ({ cssRaw, fill, style, size = 20 }) => {

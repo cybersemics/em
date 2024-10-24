@@ -1,7 +1,7 @@
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import IconType from '../../@types/Icon'
+import IconType from '../../@types/IconType'
 import { ICON_SCALING_FACTOR } from '../../constants'
 
 /** Title-Case icon. */
