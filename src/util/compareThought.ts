@@ -157,9 +157,9 @@ export const makeOrderedComparator =
 const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<string>([
   compareNumberAndOther,
   compareNumbers,
-  compareDateAndOther,
   compareDateStrings,
   compareLowercase,
+  compareDateAndOther,
 ])
 
 // eslint-disable-next-line jsdoc/require-description-complete-sentence
