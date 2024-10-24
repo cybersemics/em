@@ -1,4 +1,4 @@
-import IconType from '../../@types/Icon'
+import IconType from '../../@types/IconType'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/22-trash_3.json'
 

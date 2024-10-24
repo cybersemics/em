@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import { AnimatedIconType } from '../../@types/Icon'
+import AnimatedIconType from '../../@types/AnimatedIconType'
 import { ICON_SCALING_FACTOR } from '../../constants'
 import LottieAnimation from './LottieAnimation'
 

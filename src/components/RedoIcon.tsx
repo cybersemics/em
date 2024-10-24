@@ -1,4 +1,4 @@
-import IconType from '../@types/Icon'
+import IconType from '../@types/IconType'
 import AnimatedIcon from './icons/AnimatedIcon'
 import animationData from './icons/animations/02-redo_2.json'
 

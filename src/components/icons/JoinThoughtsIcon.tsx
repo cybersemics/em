@@ -1,4 +1,4 @@
-import IconType from '../../@types/Icon'
+import IconType from '../../@types/IconType'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/30-join-thought.json'
 

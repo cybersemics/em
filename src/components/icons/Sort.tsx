@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux'
-import IconType from '../../@types/Icon'
+import IconType from '../../@types/IconType'
 import State from '../../@types/State'
 import { HOME_PATH } from '../../constants'
 import getSortPreference from '../../selectors/getSortPreference'

@@ -1,4 +1,4 @@
-import IconType from '../../@types/Icon'
+import IconType from '../../@types/IconType'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/31-parmanently-delete_2.json'
 

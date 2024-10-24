@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
-import IconType from '../../@types/Icon'
+import IconType from '../../@types/IconType'
 
 /** A home icon. */
 const HomeIcon = ({

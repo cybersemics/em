@@ -1,5 +1,5 @@
 import { css } from '../../styled-system/css'
-import Icon from '../@types/Icon'
+import Icon from '../@types/IconType'
 
 /** A down-facing triangle component. */
 const TriangleDown = ({ fill = 'black', size = 20, width, height, style, cssRaw }: Icon) => (

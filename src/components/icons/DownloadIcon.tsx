@@ -1,6 +1,6 @@
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
-import IconType from '../../@types/Icon'
+import IconType from '../../@types/IconType'
 
 /** Download icon. */
 const DownloadIcon = ({ fill, size = 20, style, cssRaw }: IconType) => {
