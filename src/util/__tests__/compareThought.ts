@@ -185,6 +185,15 @@ describe('compareReasonable', () => {
     expect(compareReasonable('🍍 The Apple', '🍍 Apple')).toBe(0)
   })
 
+  it('sort by rules in order (compareDateAndOther is last)', () => {
+    expect(
+      compareReasonable(
+        'Caracciolo, Peter. And T.s. Eliot. 1989.',
+        'Bautze-Picron C. 2008.  Image. Oxford: Archaeopress.',
+      ),
+    ).toBe(1)
+  })
+
   it('diacritics', () => {
     expect(compareReasonable('élan', 'every')).toBe(-1)
     expect(compareReasonable('élan', 'élan')).toBe(0)
