@@ -4,8 +4,8 @@
 import ShortcutId from './@types/ShortcutId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
+import colors from './colors.config'
 import emojiRegex from './emojiRegex'
-import { colors } from './selectors/themeColors'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
