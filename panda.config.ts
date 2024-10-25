@@ -141,6 +141,13 @@ const keyframes = defineKeyframes({
 })
 
 const globalCss = defineGlobalStyles({
+  '*': {
+    _mobile: {
+      _dragInProgress: {
+        userSelect: 'none',
+      },
+    },
+  },
   'html, body, #root, #app': { height: '100%', fontSize: '16px' },
   'body, textarea': {
     fontWeight: 300,
@@ -378,6 +385,7 @@ export default defineConfig({
     android: '[data-platform=android] &',
     mac: '[data-platform=mac] &',
     iphone: '[data-platform=iphone] &',
+    dragInProgress: '[data-drag-in-progress=true] &',
   },
 
   // The output directory for your css system

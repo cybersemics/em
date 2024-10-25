@@ -200,7 +200,3 @@
 /* for some reason opacity bleeds through modal*/
 
 /* higher precendence than ".dark .modal .a" */
-
-.mobile.drag-in-progress * {
-  user-select: none;
-}

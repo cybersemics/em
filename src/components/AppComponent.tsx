@@ -135,6 +135,8 @@ const AppComponent: FC = () => {
     document.body.setAttribute('data-device', isTouch ? 'mobile' : 'desktop')
     document.body.setAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
     document.body.setAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
+    document.body.setAttribute('data-drag-in-progress', dragInProgress.toString())
+
     document.body.setAttribute(
       'data-browser',
       /Chrome/.test(navigator.userAgent) ? 'chrome' : isSafari() ? 'safari' : 'other',
@@ -155,7 +157,7 @@ const AppComponent: FC = () => {
         })
       }
     }
-  }, [colors, dark])
+  }, [colors, dark, dragInProgress])
 
   useEffect(() => {
     let splitAnimationTimer: number
