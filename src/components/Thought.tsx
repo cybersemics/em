@@ -162,15 +162,16 @@ const ThoughtContainer = ({
         equalPath(cursorParent, path)
   })
 
-  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget, isDeepHovering } = useDragAndDropThought({
-    path,
-    simplePath,
-    isVisible,
-    isCursorParent,
-  })
+  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget, canDropThought, isDeepHovering } =
+    useDragAndDropThought({
+      path,
+      simplePath,
+      isVisible,
+      isCursorParent,
+    })
 
   useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
-  useDragLeave({ isDeepHovering })
+  useDragLeave({ isDeepHovering, canDropThought })
 
   // check if the cursor is editing a thought directly
   const isEditing = useSelector(state => equalPath(state.cursor, path))

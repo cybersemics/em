@@ -372,20 +372,23 @@ const LayoutTree = () => {
   )
   const scrollTop = scrollTopStore.useState()
 
-  const [bulletWidth, setBulletWidth] = useState<number | undefined>(0)
-  const toolbarHeightRef = useRef(0)
-  const distanceFromTop = useRef<number | undefined>(0)
+  // Width of thought bullet
+  const [bulletWidth, setBulletWidth] = useState(0)
+  // Height of toolbar element
+  const [toolbarHeight, setToolbarHeight] = useState(0)
+  // Distance from toolbar to the first visible thought
+  const [distanceFromTop, setDistanceFromTop] = useState(0)
 
   // set the bullet width only during drag or when simulateDrop is true
   useLayoutEffect(() => {
     if (dragInProgress || testFlags.simulateDrop) {
       const bullet = ref.current?.querySelector('[aria-label=bullet]')
-      setBulletWidth(bullet?.getBoundingClientRect().width)
+      if (bullet) setBulletWidth(bullet?.getBoundingClientRect().width)
 
       const toolbar = document.querySelector('#toolbar')
+      if (toolbar) setToolbarHeight(toolbar.getBoundingClientRect().height)
 
-      if (toolbar) toolbarHeightRef.current = toolbar?.getBoundingClientRect().height
-      distanceFromTop.current = (ref.current?.getBoundingClientRect().top ?? 0) + scrollTop
+      setDistanceFromTop((ref.current?.getBoundingClientRect().top ?? 0) + scrollTop)
     }
   }, [dragInProgress, scrollTop])
 
@@ -471,7 +474,7 @@ const LayoutTree = () => {
   const { footerHeight, navbarHeight } = useNavAndFooterHeight()
   const navAndFooterHeight = navbarHeight + footerHeight
 
-  const maxVisibleY = viewportHeight + scrollTop - ((distanceFromTop.current ?? 0) + navbarHeight)
+  const maxVisibleY = viewportHeight + scrollTop - (distanceFromTop + navbarHeight)
 
   const { isSortedContext, newRank, hoveringOnDropEnd } = useSortedContext()
 
@@ -504,7 +507,7 @@ const LayoutTree = () => {
     let yaccum = 0
     let indentCursorAncestorTables = 0
 
-    // Arrow visibility based on insertionY
+    // Arrow visibility based on the rank of drop target in sorted context.
     let hoverArrowVisibility: 'above' | 'below' | null = null
 
     // The rank of the first and last thoughts in sorted context.
@@ -626,15 +629,15 @@ const LayoutTree = () => {
 
       if (isInSortedContext) {
         const currentThought = getThoughtById(state, head(node.path))
-        // Update first and last thought ranks in sorted context
+        // Get first and last thought ranks in sorted context
         if (!firstThoughtRank) {
           firstThoughtRank = currentThought.rank
         }
         lastThoughtRank = currentThought.rank
 
         // Check if the current thought is visible
-        if (y < maxVisibleY && y > scrollTop - (toolbarHeightRef.current ?? 0)) {
-          // Update first and last visible thought ranks in sorted context
+        if (y < maxVisibleY && y > scrollTop - toolbarHeight) {
+          // Get first and last visible thought ranks in sorted context
           if (!firstVisibleThoughtRank) {
             firstVisibleThoughtRank = currentThought.rank
           }
@@ -655,7 +658,7 @@ const LayoutTree = () => {
     })
 
     // Determine hoverArrowVisibility based on newRank and the visible thoughts
-    if (isSortedContext || hoveringOnDropEnd) {
+    if (newRank > 0 && (isSortedContext || hoveringOnDropEnd)) {
       if (newRank > lastVisibleThoughtRank && lastVisibleThoughtRank !== lastThoughtRank) {
         hoverArrowVisibility = 'below'
       } else if (newRank < firstVisibleThoughtRank && firstVisibleThoughtRank !== firstThoughtRank) {
@@ -675,6 +678,7 @@ const LayoutTree = () => {
     sizes,
     maxVisibleY,
     scrollTop,
+    toolbarHeight,
     newRank,
   ])
 

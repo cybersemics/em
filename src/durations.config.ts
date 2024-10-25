@@ -24,6 +24,7 @@ const durationsMillis = {
   layoutNodeAnimationDuration: 150,
   /** The time it takes the trace TraceGesture to fade in/out. */
   traceOpacityDuration: 150,
+  arrowBobbleAnimation: 1000,
 } as const
 
 export default durationsMillis
