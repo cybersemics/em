@@ -185,7 +185,7 @@ describe('compareReasonable', () => {
     expect(compareReasonable('🍍 The Apple', '🍍 Apple')).toBe(0)
   })
 
-  it('sort by rules in order (compareDateAndOther is last)', () => {
+  it('sort strings lexicographically even if they contain dates in reverse order', () => {
     expect(
       compareReasonable(
         'Caracciolo, Peter. And T.s. Eliot. 1989.',
