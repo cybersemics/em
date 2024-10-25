@@ -91,10 +91,8 @@ const FontSize = () => {
           if (inputValue < MIN_FONT_SIZE || inputValue > MAX_FONT_SIZE) return
           dispatch(fontSizeActionCreator(inputValue))
         }}
-        style={{
-          fontSize: fontSizeSelector,
-          padding: '0.5em',
-        }}
+        className={css({ padding: '0.5em' })}
+        style={{ fontSize: fontSizeSelector }}
       />
       {fontSizeSelector !== DEFAULT_FONT_SIZE && (
         <a

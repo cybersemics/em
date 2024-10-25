@@ -322,10 +322,7 @@ const ThoughtAnnotation = React.memo(
             //   border-bottom: solid 1px;
             // }
           }
-          style={{
-            fontFamily: isAttribute(value) ? 'monospace' : undefined,
-            ...styleAnnotation,
-          }}
+          style={styleAnnotation}
         >
           <span
             className={css(
