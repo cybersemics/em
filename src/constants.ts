@@ -171,8 +171,9 @@ export const MAX_EXPAND_DEPTH = 10
 // shortcut ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
 export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
-  'undo',
-  'redo',
+  // TODO: https://github.com/cybersemics/em/issues/1631
+  // 'undo',
+  // 'redo',
   'newThought',
   'newSubthought',
   'favorite',
