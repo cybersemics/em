@@ -64,6 +64,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(state))
+
   const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({ shortcutId, customize })
   const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
   const longPress = useToolbarLongPress({
@@ -97,14 +98,12 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
       lastScrollLeft.current = toolbarEl.scrollLeft
 
-      //setIsAnimated(false)
-
       if (!disabled) {
         onTapUp?.(shortcutId, e)
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapUp, customize, isButtonExecutable, disabled, isPressing, onTapUp, lastScrollLeft, setIsAnimated],
+    [longPressTapUp, customize, isButtonExecutable, disabled, isPressing, onTapUp, lastScrollLeft],
   )
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
@@ -116,10 +115,12 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
       lastScrollLeft.current = toolbarEl.scrollLeft
 
-      if (!(customize && isPressing)) {
+      if (!isActive) {
         setIsAnimated(true)
       }
-      //setIsAnimated(true)
+      if (isActive && !isButtonActive) {
+        setIsAnimated(true)
+      }
 
       if (!disabled) {
         onTapDown?.(shortcutId, e)
@@ -130,7 +131,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapDown, customize, disabled],
+    [longPressTapDown, customize, disabled, isButtonActive, setIsAnimated, isActive],
   )
 
   /** Handles the tapCancel. */
