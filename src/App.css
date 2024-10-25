@@ -204,9 +204,3 @@
 .mobile.drag-in-progress * {
   user-select: none;
 }
-
-/* Prose View */
-
-.MuiDrawer-paperAnchorLeft {
-  top: var(--safe-area-top) !important;
-}
