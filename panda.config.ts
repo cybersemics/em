@@ -396,6 +396,7 @@ export default defineConfig({
     safari: '[data-browser=safari] &',
     mobile: '[data-device=mobile] &',
     desktop: '[data-device=desktop] &',
+    native: '[data-native=true] &',
     android: '[data-platform=android] &',
     mac: '[data-platform=mac] &',
     iphone: '[data-platform=iphone] &',

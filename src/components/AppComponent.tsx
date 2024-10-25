@@ -133,6 +133,7 @@ const AppComponent: FC = () => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
     document.body.setAttribute('data-color-mode', dark ? 'dark' : 'light')
     document.body.setAttribute('data-device', isTouch ? 'mobile' : 'desktop')
+    document.body.setAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
     document.body.setAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
     document.body.setAttribute(
       'data-browser',
@@ -174,11 +175,7 @@ const AppComponent: FC = () => {
   const componentClassNames = classNames({
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isTouch,
-    android: isAndroid,
-    native: Capacitor.isNativePlatform(),
     'drag-in-progress': dragInProgress,
-    chrome: /Chrome/.test(navigator.userAgent),
-    safari: isSafari(),
   })
 
   if (showModal && !modals[showModal]) {
