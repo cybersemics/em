@@ -42,6 +42,7 @@ const AnimatedIcon = ({
         width: `${newSize}px`,
         height: `${newSize}px`,
         color,
+        display: 'inline-flex'
       }}
       onClick={handleClick}
     >
