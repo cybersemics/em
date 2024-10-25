@@ -85,6 +85,7 @@
     "@mui/material": "^6.1.0",
     "algoliasearch": "^5.2.4",
     "axios": "^1.7.7",
+    "canvas": "^2.11.2",
     "classnames": "^2.5.1",
     "clipboard": "^2.0.11",
     "dnd-core": "^16.0.1",
