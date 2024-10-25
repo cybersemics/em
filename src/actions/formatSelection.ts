@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import { rgbToHex } from '@mui/material'
 import Thunk from '../@types/Thunk'
+import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import pathToThought from '../selectors/pathToThought'
@@ -13,10 +14,14 @@ import { editThoughtActionCreator as editThought } from './editThought'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
-  (command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor', color: string = ''): Thunk =>
+  (
+    command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor',
+    color?: ColorToken | 'default',
+  ): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     if (!state.cursor) return
+    const colors = themeColors(state)
     const thought = pathToThought(state, state.cursor)
     suppressFocusStore.update(true)
     // if there is no selection, format the entire thought by selecting the whole thought
@@ -26,17 +31,16 @@ export const formatSelectionActionCreator =
       const savedSelection = selection.save()
       // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile
       selection.select(thoughtContentEditable)
-      document.execCommand(command, false, color)
+      document.execCommand(command, false, color ? (color === 'default' ? color : colors[color]) : '')
       selection.restore(savedSelection)
     } else {
-      document.execCommand(command, false, color)
+      document.execCommand(command, false, color ? (color === 'default' ? color : colors[color]) : '')
       updateCommandState()
     }
     suppressFocusStore.update(false)
 
     if (command === 'backColor') {
-      const colors = themeColors(state)
-      if (color === colors.bg) {
+      if (color === 'bg') {
         /** Function to check if a style(background) should be removed based on the color and background-color. */
         const shouldRemoveStyle = (styleString: string) => {
           const styleLower = styleString.toLowerCase()

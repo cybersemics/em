@@ -4,7 +4,7 @@
 import ShortcutId from './@types/ShortcutId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
-import colors from './colors.config'
+import { ColorToken } from './colors.config'
 import emojiRegex from './emojiRegex'
 
 // maximum number of characters of children to allow expansion
@@ -514,4 +514,4 @@ export const THROTTLE_DISTRACTION_FREE_TYPING = 100
 export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 
 export const GESTURE_GLOW_BLUR = 10
-export const GESTURE_GLOW_COLOR: keyof typeof colors.dark = 'gray'
+export const GESTURE_GLOW_COLOR: ColorToken = 'gray'
