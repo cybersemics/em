@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { css } from '../../../styled-system/css'
 import IconType from '../../@types/Icon'
 import LetterCasePicker from '../LetterCasePicker'
 import LetterCaseIcon from './LetterCaseIcon'
@@ -36,7 +37,7 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
             width: 0,
           }}
         >
-          <LetterCasePicker fontSize={size} style={{ transform: `translate(-50%)` }} />
+          <LetterCasePicker fontSize={size} cssRaw={css.raw({ transform: `translate(-50%)` })} />
         </div>
       </CSSTransition>
     </div>
