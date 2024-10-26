@@ -392,9 +392,9 @@ const LayoutTree = () => {
       const toolbar = document.querySelector('#toolbar')
       if (toolbar) setToolbarHeight(toolbar.getBoundingClientRect().height)
 
-      setDistanceFromTop((ref.current?.getBoundingClientRect().top ?? 0) + scrollTop)
+      setDistanceFromTop(ref.current?.getBoundingClientRect().top ?? 0)
     }
-  }, [dragInProgress, scrollTop])
+  }, [dragInProgress])
 
   // singleLineHeight is the measured height of a single line thought.
   // If no sizes have been measured yet, use the estimated height.
@@ -478,7 +478,7 @@ const LayoutTree = () => {
   const { footerHeight, navbarHeight } = useNavAndFooterHeight()
   const navAndFooterHeight = navbarHeight + footerHeight
 
-  const maxVisibleY = viewportHeight + scrollTop - (distanceFromTop + navbarHeight)
+  const maxVisibleY = viewportHeight - (distanceFromTop + navbarHeight)
 
   const { isHoveringSorted, newRank } = useSortedContext()
 
