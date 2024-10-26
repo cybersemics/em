@@ -1,4 +1,4 @@
-import { token } from '../../styled-system/tokens/index.mjs'
+import { css } from '../../styled-system/css'
 
 interface HoverArrowType {
   hoverArrowVisibility: 'above' | 'below' | null
@@ -11,22 +11,22 @@ const HoverArrow = ({ hoverArrowVisibility, scrollTop, arrowBottom }: HoverArrow
   return (
     hoverArrowVisibility && (
       <div
-        style={{
-          width: '0',
-          height: '0',
+        className={css({
+          animation: `bobble {durations.arrowBobbleAnimation} infinite`,
+          borderBottom: '20px solid rgb(155, 170, 220)',
           borderLeft: '10px solid transparent',
           borderRight: '10px solid transparent',
-          position: 'absolute',
-          top: hoverArrowVisibility === 'above' ? scrollTop : undefined,
+          height: '0',
           left: '50%',
-          zIndex: 'hoverArrow',
+          position: 'absolute',
+          rotate: hoverArrowVisibility === 'below' ? '180deg' : undefined,
           transform: 'translateX(-50%)',
-          borderBottom: '20px solid rgb(155, 170, 220)',
-          ...(hoverArrowVisibility === 'below' && {
-            bottom: `${arrowBottom}px`,
-            rotate: '180deg',
-          }),
-          animation: `bobble ${token('durations.arrowBobbleAnimation')} infinite`,
+          width: '0',
+          zIndex: 'hoverArrow',
+        })}
+        style={{
+          bottom: hoverArrowVisibility === 'below' ? `${arrowBottom}px` : undefined,
+          top: hoverArrowVisibility === 'above' ? scrollTop : undefined,
         }}
       ></div>
     )
