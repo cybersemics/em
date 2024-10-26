@@ -1,6 +1,7 @@
 import React, { FC, MutableRefObject, useCallback, useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
+import { toolbarPointerEvents } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
@@ -148,35 +149,39 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       ref={node => dragSource(dropTarget(node))}
       key={shortcutId}
       title={`${shortcut.label}${(shortcut.keyboard ?? shortcut.overlay?.keyboard) ? ` (${formatKeyboardShortcut((shortcut.keyboard ?? shortcut.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
-      className={css({
-        display: 'inline-block',
-        padding: '15px 8px 5px 8px',
-        borderRadius: '3px',
-        zIndex: 'stack', // animate maxWidth to avoid having to know the exact width of the toolbar icon
-        // maxWidth just needs to exceed the width
-        maxWidth: fontSize * 2,
-        ...(dropToRemove
-          ? {
-              // offset 1toolbar-icon padding
-              marginLeft: -10,
-              maxWidth: 10,
-            }
-          : null),
-        // offset top to avoid changing container height
-        // marginBottom: isPressing ? -10 : 0,
-        // top: isButtonExecutable && isPressing ? 10 : 0,
-        transform:
-          isButtonExecutable && isPressing && !longPress.isPressed && !isDragging
-            ? `translateY(0.25em)`
-            : `translateY(0em)`,
-        position: 'relative',
-        cursor: isButtonExecutable ? 'pointer' : 'default',
-        transition:
-          'transform {durations.slowDuration} ease-out, max-width {durations.slowDuration} ease-out, margin-left {durations.slowDuration} ease-out',
-        // extend drop area down, otherwise the drop hover is blocked by the user's finger
-        // must match toolbar marginBottom
-        paddingBottom: isDraggingAny ? '7em' : 0,
-      })}
+      className={cx(
+        // Override the Toolbar's pointer-events: none to restore pointer behavior.
+        toolbarPointerEvents({ override: true }),
+        css({
+          display: 'inline-block',
+          padding: '15px 8px 5px 8px',
+          borderRadius: '3px',
+          zIndex: 'stack', // animate maxWidth to avoid having to know the exact width of the toolbar icon
+          // maxWidth just needs to exceed the width
+          maxWidth: fontSize * 2,
+          ...(dropToRemove
+            ? {
+                // offset 1toolbar-icon padding
+                marginLeft: -10,
+                maxWidth: 10,
+              }
+            : null),
+          // offset top to avoid changing container height
+          // marginBottom: isPressing ? -10 : 0,
+          // top: isButtonExecutable && isPressing ? 10 : 0,
+          transform:
+            isButtonExecutable && isPressing && !longPress.isPressed && !isDragging
+              ? `translateY(0.25em)`
+              : `translateY(0em)`,
+          position: 'relative',
+          cursor: isButtonExecutable ? 'pointer' : 'default',
+          transition:
+            'transform {durations.slowDuration} ease-out, max-width {durations.slowDuration} ease-out, margin-left {durations.slowDuration} ease-out',
+          // extend drop area down, otherwise the drop hover is blocked by the user's finger
+          // must match toolbar marginBottom
+          paddingBottom: isDraggingAny ? '7em' : 0,
+        }),
+      )}
       onMouseLeave={onMouseLeave}
       {...fastClick(tapUp, tapDown, undefined, touchMove)}
     >

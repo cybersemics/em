@@ -11,7 +11,8 @@ Test:
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
-import { css, cva } from '../../styled-system/css'
+import { css, cva, cx } from '../../styled-system/css'
+import { toolbarPointerEvents } from '../../styled-system/recipes'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import TipId from '../@types/TipId'
@@ -197,22 +198,27 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       <div
         ref={toolbarContainerRef}
         aria-label='toolbar'
-        className={css({
-          position: 'relative',
-          textAlign: 'right',
-          maxWidth: '100%',
-          userSelect: 'none',
-          WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
-          ...(!customize && {
-            position: 'fixed',
-            top: '0',
-            right: '0',
-            zIndex: 'toolbarContainer',
-            marginTop: '-500px',
-            paddingTop: '500px',
+        className={cx(
+          // Set pointer-events to none, otherwise the toolbar will block the editor when a dropdown is open.
+          // This will need to be overridden by the toolbar buttons.
+          toolbarPointerEvents(),
+          css({
+            position: 'relative',
+            textAlign: 'right',
+            maxWidth: '100%',
+            userSelect: 'none',
+            WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            ...(!customize && {
+              position: 'fixed',
+              top: '0',
+              right: '0',
+              zIndex: 'toolbarContainer',
+              marginTop: '-500px',
+              paddingTop: '500px',
+            }),
           }),
-        })}
+        )}
         style={{
           // make toolbar flush with left padding
           marginLeft: customize ? -5 : 0,

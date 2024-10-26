@@ -17,6 +17,7 @@ import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
 import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
+import toolbarPointerEventsRecipe from './src/recipes/toolbarPointerEvents'
 import tutorialBulletRecipe from './src/recipes/tutorialBullet'
 import upperRightRecipe from './src/recipes/upperRight'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
@@ -329,6 +330,7 @@ export default defineConfig({
         editable: editableRecipe,
         textNote: textNoteRecipe,
         multiline: multilineRecipe,
+        toolbarPointerEvents: toolbarPointerEventsRecipe,
         tutorialBullet: tutorialBulletRecipe,
         upperRight: upperRightRecipe,
         dropHover: dropHoverRecipe,
