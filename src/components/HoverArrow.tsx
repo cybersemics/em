@@ -19,7 +19,7 @@ const HoverArrow = ({ hoverArrowVisibility, scrollTop, arrowBottom }: HoverArrow
           position: 'absolute',
           top: hoverArrowVisibility === 'above' ? scrollTop : undefined,
           left: '50%',
-          zIndex: 'arrow',
+          zIndex: 'hoverArrow',
           transform: 'translateX(-50%)',
           borderBottom: '20px solid rgb(155, 170, 220)',
           ...(hoverArrowVisibility === 'below' && {

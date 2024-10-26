@@ -305,6 +305,7 @@ export default defineConfig({
         },
         zIndex: {
           popup: { value: 1500 },
+          hoverArrow: { value: 1400 },
           gestureTrace: { value: 50 },
           commandPalette: { value: 45 },
           modal: { value: 40 },
@@ -326,7 +327,6 @@ export default defineConfig({
           bullet: { value: 2 },
           stack: { value: 1 },
           hide: { value: -1 },
-          arrow: { value: 1400 },
         },
       },
       recipes: {
