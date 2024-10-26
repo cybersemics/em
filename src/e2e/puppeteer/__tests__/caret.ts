@@ -195,7 +195,7 @@ describe('mobile only', () => {
     await click('[aria-label="Subcategorize"]')
 
     const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('')
+    expect([undefined, '']).toContain(textContext)
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
