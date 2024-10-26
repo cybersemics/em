@@ -381,7 +381,7 @@ const LayoutTree = () => {
   // Height of toolbar element
   const [toolbarHeight, setToolbarHeight] = useState(0)
   // Distance from toolbar to the first visible thought
-  const [distanceFromTop, setDistanceFromTop] = useState(0)
+  const [layoutTop, setLayoutTop] = useState(0)
 
   // set the bullet width only during drag or when simulateDrop is true
   useLayoutEffect(() => {
@@ -392,7 +392,7 @@ const LayoutTree = () => {
       const toolbar = document.querySelector('#toolbar')
       if (toolbar) setToolbarHeight(toolbar.getBoundingClientRect().height)
 
-      setDistanceFromTop(ref.current?.getBoundingClientRect().top ?? 0)
+      setLayoutTop(ref.current?.getBoundingClientRect().top ?? 0)
     }
   }, [dragInProgress])
 
@@ -478,7 +478,7 @@ const LayoutTree = () => {
   const { footerHeight, navbarHeight } = useNavAndFooterHeight()
   const navAndFooterHeight = navbarHeight + footerHeight
 
-  const maxVisibleY = viewportHeight - (distanceFromTop + navbarHeight)
+  const maxVisibleY = viewportHeight - (layoutTop + navbarHeight)
 
   const { isHoveringSorted, newRank } = useSortedContext()
 
