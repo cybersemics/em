@@ -16,7 +16,7 @@ const HoverArrow = ({
     hoverArrowVisibility && (
       <div
         className={css({
-          animation: `bobble {durations.arrowBobbleAnimation} infinite`,
+          animation: `bobble {durations.verySlowPulseDuration} infinite`,
           borderBottom: '20px solid rgb(155, 170, 220)',
           borderLeft: '10px solid transparent',
           borderRight: '10px solid transparent',
