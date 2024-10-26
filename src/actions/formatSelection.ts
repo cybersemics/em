@@ -14,10 +14,7 @@ import { editThoughtActionCreator as editThought } from './editThought'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
-  (
-    command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor',
-    color?: ColorToken | 'default',
-  ): Thunk =>
+  (command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor', color?: ColorToken): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     if (!state.cursor) return
@@ -31,10 +28,10 @@ export const formatSelectionActionCreator =
       const savedSelection = selection.save()
       // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile
       selection.select(thoughtContentEditable)
-      document.execCommand(command, false, color ? (color === 'default' ? color : colors[color]) : '')
+      document.execCommand(command, false, color ? colors[color] : '')
       selection.restore(savedSelection)
     } else {
-      document.execCommand(command, false, color ? (color === 'default' ? color : colors[color]) : '')
+      document.execCommand(command, false, color ? colors[color] : '')
       updateCommandState()
     }
     suppressFocusStore.update(false)

@@ -23,8 +23,8 @@ const addAlphaToHex = (hex: string) => (hex.length === 7 ? hex + 'ff' : hex)
 
 /** A small, square color swatch that can be picked in the color picker. */
 const ColorSwatch: FC<{
-  backgroundColor?: ColorToken | 'inverse'
-  color?: ColorToken | 'default'
+  backgroundColor?: ColorToken
+  color?: ColorToken
   // aria-label; defaults to color or background color
   label?: string
   shape?: 'text' | 'bullet'
@@ -39,9 +39,6 @@ const ColorSwatch: FC<{
     state.foreColor ? addAlphaToHex(rgbToHex(state.foreColor as string)) : null,
   )
 
-  const appliedColor = color === 'default' ? 'fg' : color
-  const appliedBackgroundColor = backgroundColor === 'inverse' ? 'fg' : backgroundColor
-
   size = size || fontSize * 1.2
 
   const selected = useSelector(state => {
@@ -53,10 +50,8 @@ const ColorSwatch: FC<{
     */
     const colorRegex = /color="#([0-9a-fA-F]{6})"/g
     const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
-    const textHexColor = appliedColor ? addAlphaToHex(rgbToHex(themeColor[appliedColor])) : undefined
-    const backHexColor = appliedBackgroundColor
-      ? addAlphaToHex(rgbToHex(themeColor[appliedBackgroundColor]))
-      : undefined
+    const textHexColor = color ? addAlphaToHex(rgbToHex(themeColor[color])) : undefined
+    const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(themeColor[backgroundColor])) : undefined
     if (
       (!commandStateColor && !commandStateBackgroundColor) ||
       (commandStateColor === '#ccccccff' && commandStateBackgroundColor === '#333333ff') ||
@@ -96,14 +91,11 @@ const ColorSwatch: FC<{
     // stop toolbar button dip
     e.stopPropagation()
     e.preventDefault()
-    if (backgroundColor || color !== 'default') {
-      dispatch(formatSelection('foreColor', color || 'bg'))
-    } else {
-      dispatch(formatSelection('foreColor', 'fg'))
-    }
+
+    dispatch(formatSelection('foreColor', color || 'bg'))
     // Apply background color to the selection
-    if (appliedBackgroundColor && appliedBackgroundColor !== 'bg') {
-      dispatch(formatSelection('backColor', appliedBackgroundColor))
+    if (backgroundColor && backgroundColor !== 'bg') {
+      dispatch(formatSelection('backColor', backgroundColor))
     } else {
       dispatch(formatSelection('backColor', 'bg'))
     }
@@ -125,7 +117,7 @@ const ColorSwatch: FC<{
   }
   return (
     <span
-      aria-label={label || color || backgroundColor} // PROBLEM
+      aria-label={label || color || backgroundColor}
       {...fastClick(e => {
         // stop click empty space
         e.stopPropagation()
@@ -143,7 +135,7 @@ const ColorSwatch: FC<{
             textAlign: 'center',
           })}
           style={{
-            color: appliedColor && token(`colors.${appliedColor}` as const),
+            color: color && token(`colors.${color}` as const),
             fontSize: size,
             width: size - 1,
             height: size - 1,
@@ -160,8 +152,8 @@ const ColorSwatch: FC<{
           })}
           size={size}
           style={{
-            color: backgroundColor ? 'black' : appliedColor && token(`colors.${appliedColor}` as const),
-            backgroundColor: appliedBackgroundColor && token(`colors.${appliedBackgroundColor}` as const),
+            color: backgroundColor ? token('colors.bg') : color && token(`colors.${color}` as const),
+            backgroundColor: backgroundColor && token(`colors.${backgroundColor}` as const),
           }}
         />
       )}
