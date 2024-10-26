@@ -21,7 +21,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
             - e
     `,
     }),
-    setCursor(['a']),
+    setCursor(['a', 'b']),
   ])
 
   executeShortcut(toggleTableViewShortcut, { store })
@@ -45,7 +45,7 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
             - e
     `,
     }),
-    setCursor(['a']),
+    setCursor(['a', 'b']),
   ])
 
   executeShortcut(toggleTableViewShortcut, { store })
@@ -70,7 +70,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
             - e
       `,
     }),
-    setCursor(['a']),
+    setCursor(['a', 'b']),
   ])
 
   executeShortcut(toggleTableViewShortcut, { store })
@@ -97,9 +97,9 @@ describe('multicursor', () => {
               - c2
           `,
       }),
-      setCursor(['a']),
-      addMulticursor(['b']),
-      addMulticursor(['c']),
+      setCursor(['a', 'a1']),
+      addMulticursor(['b', 'b1']),
+      addMulticursor(['c', 'c1']),
     ])
 
     executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
@@ -144,9 +144,9 @@ describe('multicursor', () => {
               - c2
           `,
       }),
-      setCursor(['a']),
-      addMulticursor(['b']),
-      addMulticursor(['c']),
+      setCursor(['a', 'a1']),
+      addMulticursor(['b', 'b1']),
+      addMulticursor(['c', 'c1']),
     ])
 
     executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
@@ -183,8 +183,8 @@ describe('multicursor', () => {
                 - c2
           `,
       }),
-      setCursor(['a', 'b']),
-      addMulticursor(['a', 'c']),
+      setCursor(['a', 'b', 'b1']),
+      addMulticursor(['a', 'c', 'c1']),
     ])
 
     executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
