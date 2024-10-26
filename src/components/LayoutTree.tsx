@@ -722,7 +722,7 @@ const LayoutTree = () => {
       }}
       ref={ref}
     >
-      <HoverArrow arrowBottom={arrowBottom} hoverArrowVisibility={hoverArrowVisibility} scrollTop={scrollTop} />
+      <HoverArrow bottom={arrowBottom} hoverArrowVisibility={hoverArrowVisibility} top={scrollTop} />
       <div
         className={css({ transition: `transform {durations.layoutSlowShiftDuration} ease-out` })}
         style={{

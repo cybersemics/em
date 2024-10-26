@@ -1,13 +1,17 @@
 import { css } from '../../styled-system/css'
 
-interface HoverArrowType {
-  hoverArrowVisibility: 'above' | 'below' | null
-  scrollTop: number
-  arrowBottom: number
-}
-
 /** Renders upward/downward arrow when hovering over a sorted context. */
-const HoverArrow = ({ hoverArrowVisibility, scrollTop, arrowBottom }: HoverArrowType) => {
+const HoverArrow = ({
+  hoverArrowVisibility,
+  top,
+  bottom,
+}: {
+  hoverArrowVisibility: 'above' | 'below' | null
+  /** The distance the arrow is rendered from the top of the document (px) if hoverArrowVisibility is 'above'.  */
+  top: number
+  /** The distance the arrow is rendered from the bottom of the document (px) if hoverArrowVisibility is 'below'.  */
+  bottom: number
+}) => {
   return (
     hoverArrowVisibility && (
       <div
@@ -25,8 +29,8 @@ const HoverArrow = ({ hoverArrowVisibility, scrollTop, arrowBottom }: HoverArrow
           zIndex: 'hoverArrow',
         })}
         style={{
-          bottom: hoverArrowVisibility === 'below' ? `${arrowBottom}px` : undefined,
-          top: hoverArrowVisibility === 'above' ? scrollTop : undefined,
+          bottom: hoverArrowVisibility === 'below' ? `${bottom}px` : undefined,
+          top: hoverArrowVisibility === 'above' ? top : undefined,
         }}
       ></div>
     )
