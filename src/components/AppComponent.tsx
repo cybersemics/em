@@ -130,7 +130,6 @@ const AppComponent: FC = () => {
   useDisableLongPressToSelect()
 
   useLayoutEffect(() => {
-    document.body.classList[dark ? 'add' : 'remove']('dark')
     document.body.setAttribute('data-color-mode', dark ? 'dark' : 'light')
     document.body.setAttribute('data-device', isTouch ? 'mobile' : 'desktop')
     document.body.setAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
