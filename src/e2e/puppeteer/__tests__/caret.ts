@@ -9,6 +9,8 @@ import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
+import scrollBy from '../helpers/scrollBy'
+import scrollIntoView from '../helpers/scrollIntoView'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
@@ -186,6 +188,9 @@ describe('mobile only', () => {
 
     // close keyboard
     await clickBullet('b')
+
+    await scrollIntoView('[aria-label="Subcategorize"]')
+    await scrollBy('#toolbar', 50, 0)
 
     await click('[aria-label="Subcategorize"]')
 
