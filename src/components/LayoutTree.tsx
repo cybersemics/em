@@ -26,7 +26,6 @@ import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
-import store from '../stores/app'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
@@ -54,6 +53,7 @@ type TreeThought = {
   // index among all visible thoughts in the tree
   indexDescendant: number
   isCursor: boolean
+  isInSortedContext: boolean
   isTableCol1: boolean
   isTableCol2: boolean
   isTableCol2Child: boolean
@@ -297,6 +297,7 @@ const linearizeTree = (
 
     const isTable = attributeEquals(state, child.id, '=view', 'Table')
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
+    const isInSortedContext = attributeEquals(state, head(simplePath), '=sort', 'Alphabetical')
     const isTableCol2 = attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
     const isTableCol2Child = attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table')
     const autofocus = calculateAutofocus(state, childPath)
@@ -308,6 +309,7 @@ const linearizeTree = (
       indexChild: i,
       indexDescendant: virtualIndexNew,
       isCursor,
+      isInSortedContext,
       isTableCol1,
       isTableCol2,
       isTableCol2Child,
@@ -542,7 +544,6 @@ const LayoutTree = () => {
     const tableCol1Widths = new Map<ThoughtId, number>()
     const treeThoughtsPositioned = treeThoughts.map((node, i) => {
       const next: TreeThought | undefined = treeThoughts[i + 1]
-      const state = store.getState()
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
       // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
@@ -626,10 +627,7 @@ const LayoutTree = () => {
         (node.autofocus === 'dim' || node.autofocus === 'show') &&
         !(next?.autofocus === 'dim' || next?.autofocus === 'show')
 
-      // Check if current thought is inside a sorted context.
-      const isInSortedContext = attributeEquals(state, head(parentOf(node.path)), '=sort', 'Alphabetical')
-
-      if (isInSortedContext) {
+      if (node.isInSortedContext) {
         // Get first and last thought ranks in sorted context
         if (!firstThoughtRank) {
           firstThoughtRank = node.rank
