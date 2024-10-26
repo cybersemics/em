@@ -42,8 +42,7 @@ const useSortedContext = () => {
     const newRank = getSortedRank(state, head(contextpath), sourceThought?.value || '')
 
     return {
-      isSortedContext,
-      hoveringOnDropEnd,
+      isHoveringSorted: isSortedContext || hoveringOnDropEnd,
       newRank,
     }
   }, shallowEqual)

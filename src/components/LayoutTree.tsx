@@ -476,7 +476,7 @@ const LayoutTree = () => {
 
   const maxVisibleY = viewportHeight + scrollTop - (distanceFromTop + navbarHeight)
 
-  const { isSortedContext, newRank, hoveringOnDropEnd } = useSortedContext()
+  const { isHoveringSorted, newRank } = useSortedContext()
 
   // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
   const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
@@ -658,7 +658,7 @@ const LayoutTree = () => {
     })
 
     // Determine hoverArrowVisibility based on newRank and the visible thoughts
-    if (newRank > 0 && (isSortedContext || hoveringOnDropEnd)) {
+    if (newRank > 0 && isHoveringSorted) {
       if (newRank > lastVisibleThoughtRank && lastVisibleThoughtRank !== lastThoughtRank) {
         hoverArrowVisibility = 'below'
       } else if (newRank < firstVisibleThoughtRank && firstVisibleThoughtRank !== firstThoughtRank) {
@@ -670,16 +670,15 @@ const LayoutTree = () => {
 
     return { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility }
   }, [
-    treeThoughts,
-    isSortedContext,
-    hoveringOnDropEnd,
-    singleLineHeight,
     fontSize,
-    sizes,
+    isHoveringSorted,
     maxVisibleY,
-    scrollTop,
-    toolbarHeight,
     newRank,
+    scrollTop,
+    singleLineHeight,
+    sizes,
+    toolbarHeight,
+    treeThoughts,
   ])
 
   const spaceAboveLast = useRef(spaceAboveExtended)
