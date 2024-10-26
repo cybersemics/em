@@ -61,6 +61,7 @@ type TreeThought = {
   leaf: boolean
   path: Path
   prevChild: Thought
+  rank: number
   showContexts?: boolean
   simplePath: SimplePath
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
@@ -319,6 +320,7 @@ const linearizeTree = (
       leaf: !hasChildren(state, filteredChild.id),
       path: childPath,
       prevChild: filteredChildren[i - 1],
+      rank: child.rank,
       showContexts: contextViewActive,
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
       style,
@@ -628,20 +630,19 @@ const LayoutTree = () => {
       const isInSortedContext = attributeEquals(state, head(parentOf(node.path)), '=sort', 'Alphabetical')
 
       if (isInSortedContext) {
-        const currentThought = getThoughtById(state, head(node.path))
         // Get first and last thought ranks in sorted context
         if (!firstThoughtRank) {
-          firstThoughtRank = currentThought.rank
+          firstThoughtRank = node.rank
         }
-        lastThoughtRank = currentThought.rank
+        lastThoughtRank = node.rank
 
         // Check if the current thought is visible
         if (y < maxVisibleY && y > scrollTop - toolbarHeight) {
           // Get first and last visible thought ranks in sorted context
           if (!firstVisibleThoughtRank) {
-            firstVisibleThoughtRank = currentThought.rank
+            firstVisibleThoughtRank = node.rank
           }
-          lastVisibleThoughtRank = currentThought.rank
+          lastVisibleThoughtRank = node.rank
         }
       }
 
