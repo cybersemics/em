@@ -43,7 +43,9 @@ module.exports = {
     'jsdoc/check-types': 2,
     'jsdoc/implements-on-classes': 2,
     'jsdoc/no-types': 2,
-    'jsdoc/no-undefined-types': 2,
+    // Disable until performance issue is solved.
+    // https://github.com/gajus/eslint-plugin-jsdoc/issues/1334
+    // 'jsdoc/no-undefined-types': 2,
     'jsdoc/check-tag-names': [
       2,
       {
