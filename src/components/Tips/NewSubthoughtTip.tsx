@@ -36,6 +36,7 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
   ) : (
     `You can add a new subthought by pressing ${commandKey} + ${returnKey} on the keyboard`
   )
+
   return (
     <Tip display={display}>
       <p>
