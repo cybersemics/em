@@ -2219,14 +2219,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@es-joy/jsdoccomment@npm:~0.48.0":
-  version: 0.48.0
-  resolution: "@es-joy/jsdoccomment@npm:0.48.0"
+"@es-joy/jsdoccomment@npm:~0.49.0":
+  version: 0.49.0
+  resolution: "@es-joy/jsdoccomment@npm:0.49.0"
   dependencies:
     comment-parser: "npm:1.4.1"
     esquery: "npm:^1.6.0"
     jsdoc-type-pratt-parser: "npm:~4.1.0"
-  checksum: 10c0/8d87c7c0426fade009c30ab429d4ede53fd253d40b55079c02bdacdaa4c0fe904aaea5e3084cd98052f2bed6b3030c381d84f4a3251b343a71fee6f681a08bee
+  checksum: 10c0/16717507d557d37e7b59456fedeefbe0a3bc93aa2d9c043d5db91e24e076509b6fcb10ee6fd1dafcb0c5bbe50ae329b45de5b83541cb5994a98c9e862a45641e
   languageName: node
   linkType: hard
 
@@ -8310,7 +8310,7 @@ __metadata:
     eslint-config-react-app: "npm:^7.0.1"
     eslint-plugin-export-default-identifier: "npm:0.3.0"
     eslint-plugin-import: "npm:^2.29.1"
-    eslint-plugin-jsdoc: "npm:^50.2.2"
+    eslint-plugin-jsdoc: "npm:^50.4.3"
     eslint-plugin-jsx-a11y: "npm:^6.9.0"
     eslint-plugin-n: "npm:^17.10.2"
     eslint-plugin-node: "npm:^11.1.0"
@@ -9064,11 +9064,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:^50.2.2":
-  version: 50.2.2
-  resolution: "eslint-plugin-jsdoc@npm:50.2.2"
+"eslint-plugin-jsdoc@npm:^50.4.3":
+  version: 50.4.3
+  resolution: "eslint-plugin-jsdoc@npm:50.4.3"
   dependencies:
-    "@es-joy/jsdoccomment": "npm:~0.48.0"
+    "@es-joy/jsdoccomment": "npm:~0.49.0"
     are-docs-informative: "npm:^0.0.2"
     comment-parser: "npm:1.4.1"
     debug: "npm:^4.3.6"
@@ -9081,7 +9081,7 @@ __metadata:
     synckit: "npm:^0.9.1"
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/f41d30246f6a4b6acb55e8cd75cf4fc256315e141ab25f7740fa6fa58cdd24e08cb672b4a350da93aeb126d210bd25981310a50f97cfb108f6a7ce8668b6b90a
+  checksum: 10c0/96067f8fc3553371e9afdc6d03c166228bfd3cb004fcd70c4357d49185732f384351e20f44c21b0a13ea318c8aabbd584b627804f62a2a80376507646708a786
   languageName: node
   linkType: hard
 
