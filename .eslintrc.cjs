@@ -1,3 +1,9 @@
+/*
+  ESLINT CONFIG
+
+  Tip: Run `TIMING=1 eslint .` to output the ten slowest rules.
+*/
+
 module.exports = {
   env: {
     browser: true,
@@ -18,6 +24,15 @@ module.exports = {
     },
   },
   rules: {
+    'no-restricted-properties': [
+      2,
+      {
+        object: 'window',
+        property: 'getSelection',
+        message:
+          'Please import the appropriate helper function from /src/device/selection.ts to access the browser selection. This is done to abstract the browser selection API from the rest of the codebase.',
+      },
+    ],
     // export-default-identifier
     'export-default-identifier/export-default-identifier': [
       2,
@@ -96,6 +111,12 @@ module.exports = {
     'prefer-arrow-callback': 0,
   },
   overrides: [
+    {
+      files: ['src/e2e/**', '**/__tests__/*'],
+      rules: {
+        'no-restricted-properties': 0,
+      },
+    },
     {
       files: ['**/*.ts', '**/*.tsx'],
       env: {

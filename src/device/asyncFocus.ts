@@ -1,5 +1,6 @@
 import { isSafari, isTouch } from '../browser'
 import { noop } from '../constants'
+import * as selection from './selection'
 
 /**
  * Allow a focus to be set asynchronously on Mobile Safari.
@@ -31,8 +32,7 @@ export const AsyncFocus: () => () => void = () => {
   document.body.prepend(hiddenInput)
   return () => {
     // do not set the selection if it is already on a text node
-    const sel = window.getSelection()
-    if (sel?.focusNode?.nodeType !== Node.TEXT_NODE) {
+    if (!selection.isText()) {
       hiddenInput.focus()
     }
   }

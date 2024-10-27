@@ -60,10 +60,9 @@ const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHan
 /** Disables long-press-to-select by clearing any selections that appear during long press. */
 const useDisableLongPressToSelect = () => {
   const onSelectionChange = useCallback(() => {
-    const sel = window.getSelection()
     // when isCollapsed is false, there is a selection with at least one character
     // long-press-to-select only selects one or more characters
-    if (globals.longpressing && sel && !sel.isCollapsed) {
+    if (globals.longpressing && selection.isActive() && !selection.isCollapsed()) {
       selection.clear()
     }
   }, [])

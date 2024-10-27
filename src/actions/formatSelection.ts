@@ -18,15 +18,14 @@ export const formatSelectionActionCreator =
     const state = getState()
     if (!state.cursor) return
     const thought = pathToThought(state, state.cursor)
-    const sel = window.getSelection()
     suppressFocusStore.update(true)
     // if there is no selection, format the entire thought by selecting the whole thought
     const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
     if (!thoughtContentEditable) return
-    if (sel?.toString().length === 0 && thought.value.length !== 0) {
+    if (selection.text()?.length === 0 && thought.value.length !== 0) {
       const savedSelection = selection.save()
       // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile
-      sel?.selectAllChildren(thoughtContentEditable)
+      selection.select(thoughtContentEditable)
       document.execCommand(command, false, color)
       selection.restore(savedSelection)
     } else {
