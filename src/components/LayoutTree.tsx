@@ -657,7 +657,7 @@ const LayoutTree = () => {
     })
 
     // Determine hoverArrowVisibility based on newRank and the visible thoughts
-    if (newRank > 0 && isHoveringSorted) {
+    if (isHoveringSorted) {
       if (newRank > lastVisibleThoughtRank && lastVisibleThoughtRank !== lastThoughtRank) {
         hoverArrowVisibility = 'below'
       } else if (newRank < firstVisibleThoughtRank && firstVisibleThoughtRank !== firstThoughtRank) {
