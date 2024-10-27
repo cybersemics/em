@@ -10,6 +10,8 @@ const durationsMillis = {
   veryFastDuration: 80,
 
   /* PULSE ANIMATIONS */
+  /** A very slow pulse animation. */
+  verySlowPulseDuration: 1000,
   /** A slow pulse animation. */
   slowPulseDuration: 500,
   /** A medium pulse animation. */

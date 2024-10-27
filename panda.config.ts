@@ -120,6 +120,17 @@ const keyframes = defineKeyframes({
       fill: 'white',
     },
   },
+  bobble: {
+    '0%': {
+      transform: 'translateX(-50%) translateY(0)',
+    },
+    '50%': {
+      transform: 'translateX(-50%) translateY(10px)',
+    },
+    '100%': {
+      transform: 'translateX(-50%) translateY(0)',
+    },
+  },
 })
 
 const globalCss = defineGlobalStyles({
@@ -295,6 +306,7 @@ export default defineConfig({
         },
         zIndex: {
           popup: { value: 1500 },
+          hoverArrow: { value: 1400 },
           gestureTrace: { value: 50 },
           commandPalette: { value: 45 },
           modal: { value: 40 },
