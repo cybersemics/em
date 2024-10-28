@@ -47,11 +47,21 @@ it('escapes typed HTML', async () => {
   expect(editable).toBeTruthy()
 })
 
-it('preserves pasted HTML as text/html', async () => {
+it('preserves pasted HTML as text/html in bold case', async () => {
   await press('Enter', { delay: 10 })
   await pasteHTML('hello <b>world</b>')
-
   const editable = await waitForEditable('hello <b>world</b>')
+  expect(editable).toBeTruthy()
+})
+
+it('preserves pasted HTML as text/html with text color and background color', async () => {
+  await press('Enter', { delay: 10 })
+  await pasteHTML(
+    '<font color="#000000" style="background-color: rgb(255, 136, 0);">Hello </font><font color="#000000" style="background-color: rgb(0, 214, 136);">World</font>',
+  )
+  const editable = await waitForEditable(
+    '<span style="background-color: rgb(255, 136, 0);">Hello </span><span style="background-color: rgb(0, 214, 136);">World</span>',
+  )
   expect(editable).toBeTruthy()
 })
 

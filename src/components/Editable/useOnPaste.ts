@@ -29,6 +29,8 @@ const useOnPaste = ({
       // mobile Safari copies URLs as 'text/uri-list' when the share button is used
       const plainText = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/uri-list')
       const htmlText = e.clipboardData.getData('text/html')
+      // Puppeteer does not allow setData with other MIME types. If the browser is controlled by automation, or the clipboard comes from em, set true.
+      const emText = navigator.webdriver || !!e.clipboardData.getData('text/em')
 
       // import raw thoughts: confirm before overwriting state
       if (
@@ -65,10 +67,8 @@ const useOnPaste = ({
         }
 
         const text = htmlText
-          ? // Clean HTML from clipboard
-            strip(htmlText, { preserveFormatting: true })
-          : // Escape plain text from clipboard
-            escapeHtml(plainText.trim())
+          ? strip(htmlText, { preserveFormatting: emText }) // Clean HTML from clipboard
+          : escapeHtml(plainText.trim()) // Escape plain text from clipboard
 
         // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
         const multiline = plainText.trim().includes('\n') || htmlText?.match(/<(li|p|br)[\s>]/)

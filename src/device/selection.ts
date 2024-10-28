@@ -384,3 +384,20 @@ export const text = () => window.getSelection()?.toString() ?? null
 /** Select all text in an element. */
 // TODO: Can this be combined with selection.set()?
 export const select = (el: Element) => window.getSelection()?.selectAllChildren(el)
+
+/** Removes the current selection. */
+export const removeCurrentSelection = () => {
+  const selection = window.getSelection()
+  if (selection && selection.rangeCount > 0) document.execCommand('delete')
+}
+
+/** Returns the selection html, or null if there is no selection. */
+export const html = () => {
+  const selection = document.getSelection()
+  const range = selection?.getRangeAt(0)
+  if (!range) return null
+  const div = document.createElement('div')
+  div.appendChild(range.cloneContents())
+  const currentHtml = div.innerHTML
+  return currentHtml
+}

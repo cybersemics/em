@@ -1114,7 +1114,7 @@ it('import single line with style attributes', () => {
   expect(exported).toBe(`<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
-      <li><span style="color: rgb(255, 255, 255);font-weight: bold;background-color: rgb(0, 0, 0);">Atonement</span></li>
+      <li><span style="font-weight: bold;background-color: rgb(0, 0, 0);">Atonement</span></li>
     </ul>
   </li>
 </ul>`)

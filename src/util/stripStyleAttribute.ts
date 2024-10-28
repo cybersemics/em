@@ -18,7 +18,7 @@ const allowedStyleProperties = [
     enabled: true,
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       const background = styleProperties.find(property => property.name.startsWith('background'))
-      return !((isColorBlack(styleProperty.value) || isColorWhite(styleProperty.value)) && !background)
+      return !((isColorBlack(styleProperty.value) || isColorWhite(styleProperty.value)) && background)
     },
   },
   {
