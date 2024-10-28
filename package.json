@@ -70,7 +70,7 @@
   "resolutions": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "@pandacss/node@npm:0.45.1": "patch:@pandacss/node@npm%3A0.45.1#~/.yarn/patches/@pandacss-node-npm-0.45.1-fd00aeff2c.patch"
+    "@pandacss/node@npm:0.47.0": "patch:@pandacss/node@npm%3A0.47.0#~/.yarn/patches/@pandacss-node-npm-0.47.0.patch"
   },
   "dependencies": {
     "@capacitor/android": "^4.8.2",
