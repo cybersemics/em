@@ -34,6 +34,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import fastClick from '../util/fastClick'
@@ -43,7 +44,6 @@ import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
-import isURL from '../util/isURL'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
@@ -449,7 +449,7 @@ const ThoughtContainer = ({
           env={env}
           isContextPending={isContextPending}
           isEditing={isEditing}
-          ellipsizedUrl={!isEditing && isURL(value)}
+          ellipsizedUrl={!isEditing && containsURL(value)}
           isPublishChild={isPublishChild}
           isVisible={isVisible}
           onEdit={!isTouch ? onEdit : undefined}

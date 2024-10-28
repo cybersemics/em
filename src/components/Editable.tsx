@@ -46,11 +46,11 @@ import editingValueStore from '../stores/editingValue'
 import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
+import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
-import isURL from '../util/isURL'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
@@ -395,11 +395,11 @@ const Editable = ({
       }
 
       const newNumContext = getContexts(state, newValue).length
-      const isNewValueURL = isURL(newValue)
+      const isNewValueURL = containsURL(newValue)
 
       const contextLengthChange =
         newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
-      const urlChange = isNewValueURL || isNewValueURL !== isURL(oldValueRef.current)
+      const urlChange = isNewValueURL || isNewValueURL !== containsURL(oldValueRef.current)
 
       const isEmpty = newValue.length === 0
 

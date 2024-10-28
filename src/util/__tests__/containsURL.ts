@@ -1,4 +1,4 @@
-import isURL from '../isURL'
+import containsURL from '../containsURL'
 
 const validUrls = [
   'http://nonssl.com',
@@ -76,7 +76,7 @@ const invalidUrls = [
 describe('valid urls', () => {
   validUrls.forEach(url => {
     it(url, () => {
-      expect(isURL(url)).toBe(true)
+      expect(containsURL(url)).toBe(true)
     })
   })
 })
@@ -84,7 +84,7 @@ describe('valid urls', () => {
 describe('invalid urls', () => {
   invalidUrls.forEach(url => {
     it(url, () => {
-      expect(isURL(url)).toBe(false)
+      expect(containsURL(url)).toBe(false)
     })
   })
 })
