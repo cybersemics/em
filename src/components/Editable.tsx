@@ -623,7 +623,12 @@ const Editable = ({
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
-      onPaste={onPaste}
+      onPaste={e => {
+        // flush the last edit, otherwise if paste occurs in quick succession the pasted value can be overwritten by the throttled change
+        throttledChangeRef.current?.flush()
+
+        onPaste(e)
+      }}
       style={style}
     />
   )
