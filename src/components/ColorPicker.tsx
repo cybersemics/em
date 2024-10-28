@@ -144,7 +144,10 @@ const ColorSwatch: FC<{
       ) : (
         <TextColorIcon
           cssRaw={css.raw({
-            border: selected ? `solid 1px {colors.fg}` : `solid 1px transparent`,
+            // TODO: Why does border crash the browser?
+            // Even hardcoding 'solid 1px white' crashes the browser.
+            // See: https://github.com/cybersemics/em/issues/2508
+            // border: selected ? `solid 1px {colors.fg}` : `solid 1px transparent`,
             fontWeight: selected ? 'bold' : 'normal',
             margin: '3px 5px 5px',
           })}
