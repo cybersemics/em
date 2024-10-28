@@ -176,7 +176,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition:
-            'transform {durations.slowDuration} ease-out, max-width {durations.slowDuration} ease-out, margin-left {durations.slowDuration} ease-out',
+            'transform {durations.veryFastDuration} ease-out, max-width {durations.veryFastDuration} ease-out, margin-left {durations.veryFastDuration} ease-out',
           // extend drop area down, otherwise the drop hover is blocked by the user's finger
           // must match toolbar marginBottom
           paddingBottom: isDraggingAny ? '7em' : 0,
