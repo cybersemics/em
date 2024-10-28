@@ -219,7 +219,7 @@
     "vite-plugin-checker": "^0.8.0",
     "vite-plugin-pwa": "^0.20.5",
     "vitest": "^2.1.4",
-    "webdriverio": "^7.36.0"
+    "webdriverio": "^9.2.4"
   },
   "packageManager": "yarn@4.4.1"
 }
