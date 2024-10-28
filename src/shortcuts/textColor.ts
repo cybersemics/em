@@ -1,5 +1,5 @@
 import Shortcut from '../@types/Shortcut'
-import Icon from '../components/icons/TextColorWithColorPicker'
+import TextColorWithColorPicker from '../components/icons/TextColorWithColorPicker'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the built-in =done style to cross out an item. */
@@ -7,7 +7,7 @@ const textColor: Shortcut = {
   id: 'textColor',
   label: 'Text Color',
   description: 'Change the text color or highlight color to your liking.',
-  svg: Icon,
+  svg: TextColorWithColorPicker,
   canExecute: state => isDocumentEditable() && !!state.cursor,
   multicursor: {
     enabled: false,

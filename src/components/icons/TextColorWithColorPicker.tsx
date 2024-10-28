@@ -7,14 +7,14 @@ import durations from '../../util/durations'
 import ColorPicker from '../ColorPicker'
 import TextColorIcon from './TextColor'
 
-/** Text Color Icon Component with popup ColorPicker. */
-const Icon = ({ size = 20, style, cssRaw }: IconType) => {
+/** Text Color Icon with popup ColorPicker. */
+const TextColorWithColorPicker = ({ size = 20, style, cssRaw, animated }: IconType) => {
   const showColorPicker = useSelector(state => state.showColorPicker)
   const toolbarPopupRef = useRef<HTMLDivElement>(null)
 
   return (
     <div>
-      <TextColorIcon size={size} style={style} cssRaw={cssRaw} />
+      <TextColorIcon size={size} style={style} cssRaw={cssRaw} animated={animated} />
       <CSSTransition
         nodeRef={toolbarPopupRef}
         in={showColorPicker}
@@ -47,4 +47,4 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
   )
 }
 
-export default Icon
+export default TextColorWithColorPicker
