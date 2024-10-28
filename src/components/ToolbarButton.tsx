@@ -156,12 +156,13 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           display: 'inline-block',
           padding: '15px 8px 5px 8px',
           borderRadius: '3px',
-          zIndex: 'stack', // animate maxWidth to avoid having to know the exact width of the toolbar icon
+          zIndex: 'stack',
+          // animate maxWidth to avoid having to know the exact width of the toolbar icon
           // maxWidth just needs to exceed the width
           maxWidth: fontSize * 2,
           ...(dropToRemove
             ? {
-                // offset 1toolbar-icon padding
+                // offset toolbar-icon padding
                 marginLeft: -10,
                 maxWidth: 10,
               }
