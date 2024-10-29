@@ -10,6 +10,7 @@ import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import * as selection from '../device/selection'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
@@ -37,6 +38,7 @@ const Content: FC = () => {
   const dispatch = useDispatch()
   const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
+  const selectionRef = useRef<selection.SavedSelection | null>(null)
   const tutorial = useSelector(isTutorial)
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
   const search = useSelector(state => state.search)
@@ -63,6 +65,11 @@ const Content: FC = () => {
       state.showColorPicker ? toggleColorPicker({ value: false }) : null,
       state.showLetterCase ? toggleLetterCase({ value: false }) : null,
     ])
+
+    // restore the selection so the caret stays active
+    if (selectionRef.current) {
+      selection.restore(selectionRef.current)
+    }
   }
 
   return (
@@ -97,7 +104,12 @@ const Content: FC = () => {
             }),
         })}
         {...fastClick(() => dispatch(clickOnEmptySpace))}
-        onMouseDown={() => setIsPressed(true)}
+        onMouseDown={() => {
+          // save the selection on mouse down, as fastClick is activated on mouse up when the selection is already cleared
+          selectionRef.current = selection.save()
+
+          setIsPressed(true)
+        }}
       >
         {search != null ? (
           <Search />
