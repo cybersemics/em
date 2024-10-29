@@ -149,7 +149,12 @@ const ColorSwatch: FC<{
             margin: '3px 5px 5px',
           })}
           size={size}
-          style={{ color: backgroundColor ? 'black' : color, backgroundColor }}
+          style={{
+            color: backgroundColor ? 'black' : color,
+            backgroundColor,
+            fontWeight: selected ? 'bold' : 'normal',
+          }}
+          fill={selected ? '' : 'none'}
         />
       )}
     </span>
