@@ -18,6 +18,7 @@ import testFlags from '../e2e/testFlags'
 import globals from '../globals'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
+import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
 import useHoveringPath from '../hooks/useHoveringPath'
 import useThoughtStyle from '../hooks/useThoughtStyle'
@@ -33,6 +34,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import fastClick from '../util/fastClick'
@@ -42,7 +44,6 @@ import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
-import isURL from '../util/isURL'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
@@ -161,14 +162,17 @@ const ThoughtContainer = ({
         equalPath(cursorParent, path)
   })
 
-  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget } = useDragAndDropThought({
-    path,
-    simplePath,
-    isVisible,
-    isCursorParent,
-  })
+  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget, canDropThought, isDeepHovering } =
+    useDragAndDropThought({
+      path,
+      simplePath,
+      isVisible,
+      isCursorParent,
+    })
 
   useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
+  useDragLeave({ isDeepHovering, canDropThought })
+
   // check if the cursor is editing a thought directly
   const isEditing = useSelector(state => equalPath(state.cursor, path))
 
@@ -445,7 +449,7 @@ const ThoughtContainer = ({
           env={env}
           isContextPending={isContextPending}
           isEditing={isEditing}
-          ellipsizedUrl={!isEditing && isURL(value)}
+          ellipsizedUrl={!isEditing && containsURL(value)}
           isPublishChild={isPublishChild}
           isVisible={isVisible}
           onEdit={!isTouch ? onEdit : undefined}

@@ -17,9 +17,11 @@ import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
 import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
+import toolbarPointerEventsRecipe from './src/recipes/toolbarPointerEvents'
 import tutorialBulletRecipe from './src/recipes/tutorialBullet'
 import upperRightRecipe from './src/recipes/upperRight'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
+import keyValueBy from './src/util/keyValueBy'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
 
@@ -41,6 +43,12 @@ const durationsReducer = (pv: Record<string, DurationToken>, [key, duration]: [s
 
   return pv
 }
+
+/**
+ * Generates zIndex value entries in descending order from [n...1].
+ * @example zIndexDescending(['a', 'b', 'c']) => { a: { value: 3 }, b: { value: 2 }, c: { value: 1 } }
+ */
+const zIndexDescending = (keys: string[]) => keyValueBy(keys.reverse(), (key, i) => ({ [key]: { value: i + 1 } }))
 
 /** Add `ms` units to raw value. */
 const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
@@ -117,6 +125,17 @@ const keyframes = defineKeyframes({
     to: {
       color: 'white',
       fill: 'white',
+    },
+  },
+  bobble: {
+    '0%': {
+      transform: 'translateX(-50%) translateY(0)',
+    },
+    '50%': {
+      transform: 'translateX(-50%) translateY(10px)',
+    },
+    '100%': {
+      transform: 'translateX(-50%) translateY(0)',
     },
   },
 })
@@ -293,27 +312,30 @@ export default defineConfig({
           safeAreaBottom: { value: 'env(safe-area-inset-bottom)' },
         },
         zIndex: {
-          popup: { value: 1500 },
-          gestureTrace: { value: 50 },
-          commandPalette: { value: 45 },
-          modal: { value: 40 },
-          hamburgerMenu: { value: 30 },
-          sidebar: { value: 25 },
-          toolbarContainer: { value: 20 },
-          toolbarOverlay: { value: 15 },
-          toolbarArrow: { value: 15 },
-          toolbar: { value: 10 },
-          navbar: { value: 10 },
-          latestShortcuts: { value: 10 },
-          tutorialTraceGesture: { value: 5 },
-          dropEmpty: { value: 6 },
-          subthoughtsDropEnd: { value: 5 },
-          tutorial: { value: 3 },
-          scrollZone: { value: 2 },
-          thoughtAnnotationLink: { value: 2 },
-          resizer: { value: 2 },
-          bullet: { value: 2 },
-          stack: { value: 1 },
+          ...zIndexDescending([
+            'popup',
+            'hoverArrow',
+            'gestureTrace',
+            'commandPalette',
+            'modal',
+            'hamburgerMenu',
+            'sidebar',
+            'toolbarContainer',
+            'toolbarOverlay',
+            'toolbarArrow',
+            'toolbar',
+            'navbar',
+            'latestShortcuts',
+            'tutorialTraceGesture',
+            'dropEmpty',
+            'subthoughtsDropEnd',
+            'tutorial',
+            'scrollZone',
+            'thoughtAnnotationLink',
+            'resizer',
+            'bullet',
+            'stack',
+          ]),
           hide: { value: -1 },
         },
       },
@@ -329,6 +351,7 @@ export default defineConfig({
         editable: editableRecipe,
         textNote: textNoteRecipe,
         multiline: multilineRecipe,
+        toolbarPointerEvents: toolbarPointerEventsRecipe,
         tutorialBullet: tutorialBulletRecipe,
         upperRight: upperRightRecipe,
         dropHover: dropHoverRecipe,

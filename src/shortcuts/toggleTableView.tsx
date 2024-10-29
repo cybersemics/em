@@ -4,6 +4,7 @@ import TableViewIcon from '../components/icons/TableViewIcon'
 import { HOME_PATH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import hasMulticursor from '../selectors/hasMulticursor'
+import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 
@@ -23,7 +24,7 @@ const toggleTableViewShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
 
-    const simplePath = simplifyPath(state, cursor)
+    const simplePath = simplifyPath(state, rootedParentOf(state, cursor))
 
     dispatch(
       toggleAttribute({

@@ -16,13 +16,13 @@ import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import editingValueStore from '../stores/editingValue'
+import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isEmail from '../util/isEmail'
-import isURL from '../util/isURL'
 import isVisibleContext from '../util/isVisibleContext'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
@@ -170,8 +170,8 @@ const ThoughtAnnotationContainer = React.memo(
       (REGEX_PUNCTUATIONS.test(value.replace(REGEX_TAGS, '')) ? false : minContexts === 0 || numContexts > 1)
 
     const url = useSelector(state => {
-      const childrenUrls = filterAllChildren(state, head(simplePath), child => isURL(child.value))
-      const urlValue = isURL(value)
+      const childrenUrls = filterAllChildren(state, head(simplePath), child => containsURL(child.value))
+      const urlValue = containsURL(value)
         ? value
         : // if the only subthought is a url and the thought is not expanded, link the thought
           !isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))

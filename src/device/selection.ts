@@ -1,3 +1,5 @@
+/* eslint-disable no-restricted-properties */
+
 /** Wraps the browser Selection API in a device-agnostic interface. */
 import SplitResult from '../@types/SplitResult'
 
@@ -378,3 +380,7 @@ export const split = (el: HTMLElement): SplitResult | null => {
 
 /** Returns the selection text, or null if there is no selection. */
 export const text = () => window.getSelection()?.toString() ?? null
+
+/** Select all text in an element. */
+// TODO: Can this be combined with selection.set()?
+export const select = (el: Element) => window.getSelection()?.selectAllChildren(el)

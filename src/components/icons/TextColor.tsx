@@ -4,7 +4,7 @@ import animationData from './animations/17-text-color_2.json'
 
 /** TextColor Icon with Conditional Lottie Animation. */
 const TextColorIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
-  const strokeWidth = style.fontWeight == 'bold' ? 1.5 : 1
+  const strokeWidth = style.fontWeight === 'bold' ? 1.5 : 1
   return (
     <AnimatedIcon
       {...{

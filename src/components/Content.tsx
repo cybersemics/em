@@ -84,7 +84,8 @@ const Content: FC = () => {
           position: 'relative',
           transition: 'transform 0 ease-out, margin 0 ease-out',
           boxSizing: 'border-box',
-          maxWidth: '66%',
+          // limit line width for easier reading
+          maxWidth: '60em',
           margin: '0 auto',
           minHeight: '100vh',
           '@media (max-width: 960px)': {

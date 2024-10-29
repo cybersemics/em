@@ -11,12 +11,12 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
+import containsURL from '../util/containsURL'
 import equalArrays from '../util/equalArrays'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendant from '../util/isDescendant'
-import isURL from '../util/isURL'
 import keyValueBy from '../util/keyValueBy'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
@@ -128,7 +128,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
     grandchild &&
     !isTableColumn1(state, simplePath) &&
     // do not expand if grandchild is a url
-    !isURL(grandchild.value) &&
+    !containsURL(grandchild.value) &&
     // Do not expand only child when parent's subthoughts are pinned.
     // https://github.com/cybersemics/em/issues/1732
     !childrenPinned(state, head(parentOf(path))) &&

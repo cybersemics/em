@@ -1,4 +1,5 @@
 import { FC } from 'react'
+import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { anchorButton } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
@@ -8,7 +9,6 @@ import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../a
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
 import newThoughtShortcut from '../../shortcuts/newThought'
-import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
 import Tip from './Tip'
@@ -20,6 +20,8 @@ interface NewThoughtTipProps {
 const buttonContainerClassName = css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })
 /** A tip that explains how to add a new thought. */
 const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
+  const dispatch = useDispatch()
+
   const returnKey = isMac ? 'RETURN' : 'ENTER'
   const instructions = isTouch ? (
     <span>
@@ -34,6 +36,7 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
   ) : (
     `You can add a new thought by pressing ${returnKey} on the keyboard`
   )
+
   return (
     <Tip display={display}>
       <p>
@@ -44,7 +47,7 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
           <a
             className={anchorButton()}
             {...fastClick(() => {
-              store.dispatch(dismissTip())
+              dispatch(dismissTip())
             })}
           >
             Okay
@@ -54,8 +57,8 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
           <a
             tabIndex={-1}
             {...fastClick(() => {
-              store.dispatch(removeToolbarButton('newThought'))
-              store.dispatch(dismissTip())
+              dispatch(removeToolbarButton('newThought'))
+              dispatch(dismissTip())
             })}
             className={anchorButton()}
           >
@@ -66,7 +69,7 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
           (you can customize the toolbar in{' '}
           <a
             {...fastClick(() => {
-              store.dispatch([dismissTip(), showModal({ id: 'settings' })])
+              dispatch([dismissTip(), showModal({ id: 'settings' })])
             })}
           >
             Settings
