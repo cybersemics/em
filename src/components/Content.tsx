@@ -10,7 +10,6 @@ import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import * as selection from '../device/selection'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
@@ -48,7 +47,7 @@ const Content: FC = () => {
   })
   const isAbsoluteContext = useSelector(state => isAbsolute(state.rootContext))
 
-  /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
+  /** Closes modals and dropdowns if the click goes all the way through to the content. */
   const clickOnEmptySpace: Thunk = (dispatch: Dispatch, getState) => {
     const state = getState()
 
@@ -57,18 +56,12 @@ const Content: FC = () => {
     if (!isPressed) return
     setIsPressed(false)
 
-    dispatch([state.showColorPicker ? toggleColorPicker({ value: false }) : null])
-    dispatch([state.showLetterCase ? toggleLetterCase({ value: false }) : null])
-
-    // web only
-    // click event occured during text selection has focus node of type text unlike normal event which has node of type element
-    // prevent text selection from calling cursorBack incorrectly
-    if (selection.isText()) return
-
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     dispatch([
       state.showModal ? closeModal() : null,
       state.expandedContextThought && !state.noteFocus ? expandContextThought(null) : null,
+      state.showColorPicker ? toggleColorPicker({ value: false }) : null,
+      state.showLetterCase ? toggleLetterCase({ value: false }) : null,
     ])
   }
 
