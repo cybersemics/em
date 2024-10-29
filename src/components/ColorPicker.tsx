@@ -157,7 +157,7 @@ const ColorSwatch: FC<{
             backgroundColor,
             fontWeight: selected ? 'bold' : 'normal',
           }}
-          fill={selected ? '' : 'none'}
+          fill={selected ? token('colors.fg') : 'none'}
         />
       )}
     </span>

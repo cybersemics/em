@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 import durations from '../../util/durations'
 import ColorPicker from '../ColorPicker'
@@ -14,7 +15,7 @@ const TextColorWithColorPicker = ({ size = 20, style, cssRaw, animated }: IconTy
 
   return (
     <div>
-      <TextColorIcon size={size} style={style} cssRaw={cssRaw} animated={animated} />
+      <TextColorIcon size={size} style={style} cssRaw={cssRaw} animated={animated} fill={token('colors.fg')} />
       <CSSTransition
         nodeRef={toolbarPopupRef}
         in={showColorPicker}
