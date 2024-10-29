@@ -1,13 +1,11 @@
 import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
-import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
-import { Settings, noop } from '../constants'
-import getUserSetting from '../selectors/getUserSetting'
+import { noop } from '../constants'
 import gestureStore from '../stores/gesture'
-import scrollTopStore from '../stores/scrollTop'
+import viewportStore from '../stores/viewport'
+import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
 
 interface Point {
@@ -53,7 +51,6 @@ type MultiGestureProps = PropsWithChildren<{
   shouldCancelGesture?: () => boolean
 }>
 
-const SCROLL_ZONE_WIDTH = Math.min(window.innerWidth, window.innerHeight) * 0.39
 const TOOLBAR_HEIGHT = 50
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
@@ -80,36 +77,6 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
       : angle >= dirToRad.SE && angle < dirToRad.SW
         ? 'd'
         : 'l'
-}
-
-/** An overlay for the scroll zone that blocks pointer events. */
-const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
-  const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
-  const scrollTop = scrollTopStore.useState()
-  if (hideScrollZone) return null
-
-  return (
-    <div
-      className={css({
-        background: `url('/img/scroll-zone/stars.jpg')`,
-        backgroundPositionX: '300px',
-        backgroundSize: '2000px',
-        zIndex: 'scrollZone',
-        filter: 'grayscale(1)',
-        position: 'fixed',
-        left: leftHanded ? 0 : undefined,
-        right: leftHanded ? undefined : 0,
-        height: '100%',
-        opacity: 0.4,
-        pointerEvents: 'none',
-        transition: 'backgroundPositionY {durations.slow} ease-in-out',
-      })}
-      style={{
-        backgroundPositionY: `calc(1080px - ${scrollTop / 4}px)`,
-        width: SCROLL_ZONE_WIDTH,
-      }}
-    />
-  )
 }
 
 /** A component that handles touch gestures composed of sequential swipes. */
@@ -161,8 +128,11 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         // disable gestures in the scroll zone on the right side of the screen
         // disable scroll in the gesture zone on the left side of the screen
+        // (reverse in left-handed mode)
+        const viewport = viewportStore.getState()
+        const scrollZoneWidth = viewport.scrollZoneWidth
         const isInGestureZone =
-          (this.leftHanded ? x > SCROLL_ZONE_WIDTH : x < window.innerWidth - SCROLL_ZONE_WIDTH) && y > TOOLBAR_HEIGHT
+          (this.leftHanded ? x > scrollZoneWidth : x < viewport.innerWidth - scrollZoneWidth) && y > TOOLBAR_HEIGHT
         if (isInGestureZone && !props.shouldCancelGesture?.()) {
           this.disableScroll = true
         } else {
