@@ -7,6 +7,7 @@ import GesturePath from '../@types/GesturePath'
 import { Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import gestureStore from '../stores/gesture'
+import scrollTopStore from '../stores/scrollTop'
 import TraceGesture from './TraceGesture'
 
 interface Point {
@@ -84,23 +85,29 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
 /** An overlay for the scroll zone that blocks pointer events. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
+  const scrollTop = scrollTopStore.useState()
   if (hideScrollZone) return null
 
   return (
     <div
       className={css({
+        background: `url('/img/scroll-zone/stars.jpg')`,
+        backgroundPositionX: '300px',
+        backgroundSize: '2000px',
         zIndex: 'scrollZone',
-        background: `linear-gradient(90deg, {colors.bg} -100%, {colors.fg} 100%)`,
-        backgroundColor: 'gray50',
+        filter: 'grayscale(1)',
         position: 'fixed',
         left: leftHanded ? 0 : undefined,
         right: leftHanded ? undefined : 0,
         height: '100%',
-        opacity: 0.18,
+        opacity: 0.4,
         pointerEvents: 'none',
-        ...(leftHanded ? { borderRight: `solid 1px {colors.gray33}` } : { borderLeft: `solid 1px {colors.gray33}` }),
+        transition: 'backgroundPositionY {durations.slow} ease-in-out',
       })}
-      style={{ width: SCROLL_ZONE_WIDTH }}
+      style={{
+        backgroundPositionY: `calc(1080px - ${scrollTop / 4}px)`,
+        width: SCROLL_ZONE_WIDTH,
+      }}
     />
   )
 }
