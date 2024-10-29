@@ -91,6 +91,13 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         executeShortcutWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
+        if (!isActive) {
+          setIsAnimated(true)
+        }
+        if (isActive && !isButtonActive) {
+          setIsAnimated(true)
+        }
+
         // prevent Editable blur
         if (isTouch) {
           e.preventDefault()
@@ -115,13 +122,6 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       longPressTapDown(e)
 
       lastScrollLeft.current = toolbarEl.scrollLeft
-
-      if (!isActive) {
-        setIsAnimated(true)
-      }
-      if (isActive && !isButtonActive) {
-        setIsAnimated(true)
-      }
 
       if (!disabled) {
         onTapDown?.(shortcutId, e)
