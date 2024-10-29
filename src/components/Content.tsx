@@ -73,7 +73,16 @@ const Content: FC = () => {
   }
 
   return (
-    <div id='content-wrapper'>
+    <div
+      id='content-wrapper'
+      {...fastClick(() => dispatch(clickOnEmptySpace))}
+      onMouseDown={() => {
+        // save the selection on mouse down, as fastClick is activated on mouse up when the selection is already cleared
+        selectionRef.current = selection.save()
+
+        setIsPressed(true)
+      }}
+    >
       <div
         id='content'
         ref={contentRef}
@@ -103,13 +112,6 @@ const Content: FC = () => {
               paddingBottom: '20px',
             }),
         })}
-        {...fastClick(() => dispatch(clickOnEmptySpace))}
-        onMouseDown={() => {
-          // save the selection on mouse down, as fastClick is activated on mouse up when the selection is already cleared
-          selectionRef.current = selection.save()
-
-          setIsPressed(true)
-        }}
       >
         {search != null ? (
           <Search />
