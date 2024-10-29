@@ -24,7 +24,7 @@ const copyCursorShortcut: Shortcut = {
   hideFromHelp: true,
   multicursor: {
     enabled: true,
-    execMulticursor: async (cursors, dispatch, getState) => {
+    execMulticursor: async (cursors, dispatch, getState, e) => {
       const state = getState()
 
       const filteredCursors = cursors.reduce<Path[]>((acc, cur) => {
@@ -80,7 +80,7 @@ const copyCursorShortcut: Shortcut = {
     // do not copy cursor if there is a browser selection
     return selection.isCollapsed() && (!!state.cursor || hasMulticursor(state)) && isDocumentEditable()
   },
-  exec: async (dispatch, getState) => {
+  exec: async (dispatch, getState, event) => {
     const state = getState()
     const simplePath = simplifyPath(state, state.cursor!)
 
@@ -94,9 +94,11 @@ const copyCursorShortcut: Shortcut = {
     // get new state after pull
     const stateAfterPull = getState()
 
-    const exported = exportContext(stateAfterPull, head(simplePath), 'text/plain')
+    const exported = exportContext(stateAfterPull, head(simplePath), 'text/html')
+
     copy(exported)
 
+    // event.clipboardData?.setData('text/em', 'true')
     const numDescendants = exported ? exported.split('\n').length - 1 : 0
     const phrase = exportPhrase(head(simplePath), numDescendants, {
       value: getThoughtById(stateAfterPull, head(simplePath))?.value,

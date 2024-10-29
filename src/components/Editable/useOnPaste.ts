@@ -71,11 +71,10 @@ const useOnPaste = ({
           : escapeHtml(plainText.trim()) // Escape plain text from clipboard
 
         // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
-        const multiline = plainText.trim().includes('\n') || htmlText?.match(/<(li|p|br)[\s>]/)
+        const multiline = plainText.trim().includes('\n')
 
         // Check if the text is markdown, if so, prefer importText over importFiles
         const markdown = isMarkdown(text)
-
         // Resumable imports (via importFiles) import thoughts one at a time and can be resumed if the page is refreshed or there is another interruption. They have a progress bar and they allow duplicates pending descendants to be loaded and merged.
         // Non-resumable imports (via importText), in contrast, are atomic, fast, and preserve the browser selection. Due to the lack of support for duplicates pending descendants, they are only used for single line imports.
         if (!multiline || markdown) {

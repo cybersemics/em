@@ -1,6 +1,10 @@
 import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import * as selection from '../device/selection'
+import exportContext from '../selectors/exportContext'
+import simplifyPath from '../selectors/simplifyPath'
+import store from '../stores/app'
+import head from '../util/head'
 
 interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
   style?: React.CSSProperties
@@ -70,13 +74,23 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
 
   /** Copies the selection text and sets a text/em flag in the clipboard data to detect the source is 'em' on paste. */
   const handleCopy = (event: React.ClipboardEvent) => {
+    event.preventDefault()
+
+    const state = store.getState()
+    const simplePath = simplifyPath(state, state.cursor!)
     const currentText = selection.text()
     const currentHtml = selection.html()
     const clipboardData = event.clipboardData
     clipboardData.setData('text/plain', currentText!)
-    clipboardData.setData('text/em', 'true')
     clipboardData.setData('text/html', currentHtml!)
-    event.preventDefault()
+
+    if (!currentText) {
+      const thoughtHtml = exportContext(state, head(simplePath), 'text/html')
+      const thoughtText = exportContext(state, head(simplePath), 'text/plain')
+      clipboardData.setData('text/plain', thoughtText)
+      clipboardData.setData('text/html', thoughtHtml)
+    }
+    clipboardData.setData('text/em', 'true')
   }
 
   /** Cuts the selection text, sets a text/em flag in the clipboard data to detect the source on paste and removes the current selection. */
@@ -120,9 +134,10 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
         if (props.onBlur) props.onBlur(event)
       }}
       onInput={handleInput}
-      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-        if (props.onKeyDown) props.onKeyDown(e)
-      }}
+      // onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+      //   console.log('KeyDown')
+      //   if (props.onKeyDown) props.onKeyDown(e)
+      // }}
     />
   )
 })

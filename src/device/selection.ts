@@ -394,8 +394,28 @@ export const removeCurrentSelection = () => {
 /** Returns the selection html, or null if there is no selection. */
 export const html = () => {
   const selection = document.getSelection()
+  if (!selection || selection.rangeCount === 0) return null
   const range = selection?.getRangeAt(0)
-  if (!range) return null
+
+  if (range.startContainer.isEqualNode(range.endContainer)) {
+    let containerHtml: string | null = null
+
+    if (range && range.startContainer) {
+      let node = range.startContainer
+
+      // Check if the node is an Element using the instanceof operator
+      if (node instanceof Element) {
+        containerHtml = node.outerHTML
+      } else if (node instanceof CharacterData) {
+        // Use parentElement to ascend to the containing element if it's a Text node
+        while (node.parentElement?.tagName !== 'DIV') node = node.parentNode!
+        const parentElement = node.parentElement
+        containerHtml = parentElement ? parentElement.innerHTML : null
+      }
+    }
+    return containerHtml?.replace(range.startContainer.textContent!, selection.toString())
+  }
+
   const div = document.createElement('div')
   div.appendChild(range.cloneContents())
   const currentHtml = div.innerHTML

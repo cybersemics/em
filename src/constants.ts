@@ -273,6 +273,7 @@ export const REGEX_EMOJI_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
 export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike', 'code', 'font']
 
+export const EXTERNAL_FORMATTING_TAGS = ['b', 'i', 'u', 'strong', 'strike']
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 
 export const ALLOWED_ATTR = ['class', 'style', 'color']

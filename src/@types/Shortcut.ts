@@ -34,7 +34,7 @@ interface Shortcut {
   exec: (
     dispatch: Dispatch,
     getState: () => State,
-    e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
+    e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent | React.ClipboardEvent,
     { type }: { type: ShortcutType },
   ) => void | Promise<void>
 
