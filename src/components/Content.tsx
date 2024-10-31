@@ -38,6 +38,7 @@ const Content: FC = () => {
   const dispatch = useDispatch()
   const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
+  const selectionRef = useRef<selection.SavedSelection | null>(null)
   const tutorial = useSelector(isTutorial)
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
   const search = useSelector(state => state.search)
@@ -48,7 +49,7 @@ const Content: FC = () => {
   })
   const isAbsoluteContext = useSelector(state => isAbsolute(state.rootContext))
 
-  /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
+  /** Closes modals and dropdowns if the click goes all the way through to the content. */
   const clickOnEmptySpace: Thunk = (dispatch: Dispatch, getState) => {
     const state = getState()
 
@@ -57,29 +58,35 @@ const Content: FC = () => {
     if (!isPressed) return
     setIsPressed(false)
 
-    dispatch([state.showColorPicker ? toggleColorPicker({ value: false }) : null])
-    dispatch([state.showLetterCase ? toggleLetterCase({ value: false }) : null])
-
-    // web only
-    // click event occured during text selection has focus node of type text unlike normal event which has node of type element
-    // prevent text selection from calling cursorBack incorrectly
-    if (selection.isText()) return
-
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     dispatch([
       state.showModal ? closeModal() : null,
       state.expandedContextThought && !state.noteFocus ? expandContextThought(null) : null,
+      state.showColorPicker ? toggleColorPicker({ value: false }) : null,
+      state.showLetterCase ? toggleLetterCase({ value: false }) : null,
     ])
+
+    // restore the selection so the caret stays active
+    if (selectionRef.current) {
+      selection.restore(selectionRef.current)
+    }
   }
 
   return (
-    <div id='content-wrapper'>
+    <div
+      id='content-wrapper'
+      {...fastClick(() => dispatch(clickOnEmptySpace))}
+      onMouseDown={() => {
+        // save the selection on mouse down, as fastClick is activated on mouse up when the selection is already cleared
+        selectionRef.current = selection.save()
+
+        setIsPressed(true)
+      }}
+    >
       <div
         id='content'
         ref={contentRef}
         className={css({
-          backgroundColor: 'bg',
-          color: 'fg',
           padding: '80px 10px 153px 50px',
           position: 'relative',
           transition: 'transform 0 ease-out, margin 0 ease-out',
@@ -88,6 +95,7 @@ const Content: FC = () => {
           maxWidth: '60em',
           margin: '0 auto',
           minHeight: '100vh',
+          zIndex: 'content',
           '@media (max-width: 960px)': {
             maxWidth: '80%',
           },
@@ -103,8 +111,6 @@ const Content: FC = () => {
               paddingBottom: '20px',
             }),
         })}
-        {...fastClick(() => dispatch(clickOnEmptySpace))}
-        onMouseDown={() => setIsPressed(true)}
       >
         {search != null ? (
           <Search />

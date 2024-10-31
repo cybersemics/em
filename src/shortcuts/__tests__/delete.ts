@@ -1,13 +1,39 @@
+import { act } from '@testing-library/react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import executeShortcut, { executeShortcutWithMulticursor } from '../../util/executeShortcut'
 import deleteShortcut from '../delete'
 
 describe('delete', () => {
+  describe('DOM', () => {
+    beforeEach(createTestApp)
+    afterEach(cleanupTestApp)
+
+    it('strip formatting in alert', async () => {
+      await act(async () => {
+        store.dispatch([
+          importText({
+            text: `
+          - <b>test</b>
+        `,
+          }),
+          setCursor(['<b>test</b>']),
+        ])
+      })
+
+      executeShortcut(deleteShortcut, { store })
+
+      const popupValue = document.querySelector('[data-testid="popup-value"]')!
+      expect(popupValue.textContent).toBe('Permanently deleted test')
+    })
+  })
+
   describe('multicursor', () => {
     it('deletes multiple thoughts', async () => {
       const store = createTestStore()

@@ -7,6 +7,7 @@ import { SystemStyleObject } from '../../styled-system/types'
 import { bulletColorActionCreator as bulletColor } from '../actions/bulletColor'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { isTouch } from '../browser'
+import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import useWindowOverflow from '../hooks/useWindowOverflow'
 import getThoughtById from '../selectors/getThoughtById'
@@ -22,15 +23,14 @@ const addAlphaToHex = (hex: string) => (hex.length === 7 ? hex + 'ff' : hex)
 
 /** A small, square color swatch that can be picked in the color picker. */
 const ColorSwatch: FC<{
-  backgroundColor?: string
-  color?: string
+  backgroundColor?: ColorToken
+  color?: ColorToken
   // aria-label; defaults to color or background color
   label?: string
   shape?: 'text' | 'bullet'
   size?: number
 }> = ({ backgroundColor, color, label, shape, size }) => {
   const dispatch = useDispatch()
-  const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const commandStateBackgroundColor = commandStateStore.useSelector(state =>
     state.backColor ? addAlphaToHex(rgbToHex(state.backColor as string)) : null,
@@ -50,8 +50,8 @@ const ColorSwatch: FC<{
     */
     const colorRegex = /color="#([0-9a-fA-F]{6})"/g
     const bgColorRegex = /background-color:\s*(rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\))/g
-    const textHexColor = color ? addAlphaToHex(rgbToHex(color)) : undefined
-    const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
+    const textHexColor = color ? addAlphaToHex(rgbToHex(themeColor[color])) : undefined
+    const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(themeColor[backgroundColor])) : undefined
     if (
       (!commandStateColor && !commandStateBackgroundColor) ||
       (commandStateColor === '#ccccccff' && commandStateBackgroundColor === '#333333ff') ||
@@ -91,16 +91,13 @@ const ColorSwatch: FC<{
     // stop toolbar button dip
     e.stopPropagation()
     e.preventDefault()
-    if (backgroundColor || color !== 'default') {
-      dispatch(formatSelection('foreColor', color || colors.bg))
-    } else {
-      dispatch(formatSelection('foreColor', colors.fg))
-    }
+
+    dispatch(formatSelection('foreColor', color || 'bg'))
     // Apply background color to the selection
-    if (backgroundColor && backgroundColor !== colors.bg) {
-      dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
+    if (backgroundColor && backgroundColor !== 'bg') {
+      dispatch(formatSelection('backColor', backgroundColor))
     } else {
-      dispatch(formatSelection('backColor', colors.bg))
+      dispatch(formatSelection('backColor', 'bg'))
     }
 
     dispatch(
@@ -137,7 +134,12 @@ const ColorSwatch: FC<{
             margin: '3px 5px 5px',
             textAlign: 'center',
           })}
-          style={{ color, fontSize: size, width: size - 1, height: size - 1 }}
+          style={{
+            color: color && token(`colors.${color}` as const),
+            fontSize: size,
+            width: size - 1,
+            height: size - 1,
+          }}
         >
           •
         </span>
@@ -153,8 +155,8 @@ const ColorSwatch: FC<{
           })}
           size={size}
           style={{
-            color: backgroundColor ? 'black' : color,
-            backgroundColor,
+            color: backgroundColor ? token('colors.bg') : color && token(`colors.${color}` as const),
+            backgroundColor: backgroundColor && token(`colors.${backgroundColor}` as const),
             fontWeight: selected ? 'bold' : 'normal',
           }}
           fill={selected ? token('colors.fg') : 'none'}
@@ -166,7 +168,6 @@ const ColorSwatch: FC<{
 
 /** Text Color Picker component. */
 const ColorPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = ({ fontSize, cssRaw }) => {
-  const colors = useSelector(themeColors)
   const ref = useRef<HTMLDivElement>(null)
 
   const overflow = useWindowOverflow(ref)
@@ -196,29 +197,29 @@ const ColorPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = ({ fon
         />
 
         {/* Text Color */}
-        <div aria-label='text color swatches' style={{ whiteSpace: 'nowrap' }}>
-          <ColorSwatch color={colors.fg} label='default' />
-          <ColorSwatch color={colors.gray} label='gray' />
-          <ColorSwatch color={colors.orange} label='orange' />
-          <ColorSwatch color={colors.yellow} label='yellow' />
-          <ColorSwatch color={colors.green} label='green' />
-          <ColorSwatch color={colors.blue} label='blue' />
-          <ColorSwatch color={colors.purple} label='purple' />
-          <ColorSwatch color={colors.pink} label='pink' />
-          <ColorSwatch color={colors.red} label='red' />
+        <div aria-label='text color swatches' className={css({ whiteSpace: 'nowrap' })}>
+          <ColorSwatch color={'fg'} label='default' />
+          <ColorSwatch color={'gray'} label='gray' />
+          <ColorSwatch color={'orange'} label='orange' />
+          <ColorSwatch color={'yellow'} label='yellow' />
+          <ColorSwatch color={'green'} label='green' />
+          <ColorSwatch color={'blue'} label='blue' />
+          <ColorSwatch color={'purple'} label='purple' />
+          <ColorSwatch color={'pink'} label='pink' />
+          <ColorSwatch color={'red'} label='red' />
         </div>
 
         {/* Background Color */}
-        <div aria-label='background color swatches' style={{ whiteSpace: 'nowrap' }}>
-          <ColorSwatch backgroundColor={colors.fg} label='inverse' />
-          <ColorSwatch backgroundColor={colors.gray} label='gray' />
-          <ColorSwatch backgroundColor={colors.orange} label='orange' />
-          <ColorSwatch backgroundColor={colors.yellow} label='yellow' />
-          <ColorSwatch backgroundColor={colors.green} label='green' />
-          <ColorSwatch backgroundColor={colors.blue} label='blue' />
-          <ColorSwatch backgroundColor={colors.purple} label='purple' />
-          <ColorSwatch backgroundColor={colors.pink} label='pink' />
-          <ColorSwatch backgroundColor={colors.red} label='red' />
+        <div aria-label='background color swatches' className={css({ whiteSpace: 'nowrap' })}>
+          <ColorSwatch backgroundColor={'fg'} label='inverse' />
+          <ColorSwatch backgroundColor={'gray'} label='gray' />
+          <ColorSwatch backgroundColor={'orange'} label='orange' />
+          <ColorSwatch backgroundColor={'yellow'} label='yellow' />
+          <ColorSwatch backgroundColor={'green'} label='green' />
+          <ColorSwatch backgroundColor={'blue'} label='blue' />
+          <ColorSwatch backgroundColor={'purple'} label='purple' />
+          <ColorSwatch backgroundColor={'pink'} label='pink' />
+          <ColorSwatch backgroundColor={'red'} label='red' />
         </div>
       </div>
     </div>
