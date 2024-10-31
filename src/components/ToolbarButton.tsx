@@ -91,7 +91,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         executeShortcutWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
-        if (!isActive) {
+        if (!isActive && !commandState) {
           setIsAnimated(true)
         }
         if (isActive && !isButtonActive) {
