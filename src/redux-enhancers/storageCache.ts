@@ -84,12 +84,13 @@ const storageCacheStoreEnhancer: StoreEnhancer<any> =
 
       // generate an object with all changed selector results that can be merged into state.storageCache
       const cacheUpdates = keyValueBy(cacheControllers, (key, controller) => {
-        const value = controller.select(stateNew)
-        if (value == null) return null
-        const valueParsed = controller.parse(value)
-        return valueParsed !== stateNew.storageCache?.[key as keyof State['storageCache']]
+        const valueNewRaw = controller.select(stateNew)
+        if (valueNewRaw == null) return null
+        const valueNew = controller.parse(valueNewRaw)
+        const valueOld = stateNew.storageCache?.[key as keyof State['storageCache']]
+        return valueNew !== valueOld
           ? {
-              [key]: valueParsed,
+              [key]: valueNew,
             }
           : null
       })
