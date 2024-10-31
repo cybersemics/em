@@ -67,7 +67,7 @@ const useOnPaste = ({
         }
 
         const text = htmlText
-          ? strip(htmlText, { preserveFormatting: emText }).replace(/\n\s*\n+/g, '\n') // Clean HTML from clipboard
+          ? strip(htmlText, { preserveFormatting: emText, isExternal: !emText }).replace(/\n\s*\n+/g, '\n') // Clean HTML from clipboard
           : escapeHtml(plainText.trim()) // Escape plain text from clipboard
 
         // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
