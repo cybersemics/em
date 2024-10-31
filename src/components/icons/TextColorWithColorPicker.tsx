@@ -15,7 +15,13 @@ const TextColorWithColorPicker = ({ size = 20, style, cssRaw, animated }: IconTy
 
   return (
     <div>
-      <TextColorIcon size={size} style={style} cssRaw={cssRaw} animated={animated} fill={token('colors.fg')} />
+      <TextColorIcon
+        size={size}
+        style={style}
+        cssRaw={cssRaw}
+        animated={showColorPicker}
+        fill={style?.fill || token('colors.fg')}
+      />
       <CSSTransition
         nodeRef={toolbarPopupRef}
         in={showColorPicker}
