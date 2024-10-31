@@ -58,7 +58,7 @@ export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
 /** Returns true if the Node is an editable. */
 const isEditable = (node?: Node | null) =>
-  !!node && node.nodeType === Node.ELEMENT_NODE && !!(node as HTMLElement).classList?.contains('editable')
+  !!node && node.nodeType === Node.ELEMENT_NODE && !!(node as HTMLElement).hasAttribute?.('data-editable')
 
 /** Returns true if the selection is on a thought. */
 // We should see if it is possible to just use state.editing and selection.isActive()
@@ -161,7 +161,7 @@ export const offsetThought = (): number | null => {
         : 0
       : selection.focusOffset
   let curNode: Node | null = selection.focusNode.nodeType === Node.TEXT_NODE ? selection.focusNode : selection.focusNode
-  while (curNode && !(curNode as HTMLElement)?.classList?.contains('editable')) {
+  while (curNode && !(curNode as HTMLElement)?.hasAttribute?.('data-editable')) {
     if (curNode?.previousSibling) {
       total += curNode.previousSibling.textContent?.length || 0
       curNode = curNode.previousSibling

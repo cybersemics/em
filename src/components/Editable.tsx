@@ -454,7 +454,7 @@ const Editable = ({
       // (does not work when clicking a bullet as it is set to null)
       const isRelatedTargetEditableOrNote =
         e.relatedTarget &&
-        ((e.relatedTarget as Element).classList?.contains('editable') ||
+        ((e.relatedTarget as Element).hasAttribute?.('data-editable') ||
           !!(e.relatedTarget as Element).querySelector('[aria-label="note-editable"]'))
 
       if (isRelatedTargetEditableOrNote) return

@@ -130,10 +130,12 @@ const AppComponent: FC = () => {
   useDisableLongPressToSelect()
 
   useLayoutEffect(() => {
-    document.body.classList[dark ? 'add' : 'remove']('dark')
     document.body.setAttribute('data-color-mode', dark ? 'dark' : 'light')
     document.body.setAttribute('data-device', isTouch ? 'mobile' : 'desktop')
+    document.body.setAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
     document.body.setAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
+    document.body.setAttribute('data-drag-in-progress', dragInProgress.toString())
+
     document.body.setAttribute(
       'data-browser',
       /Chrome/.test(navigator.userAgent) ? 'chrome' : isSafari() ? 'safari' : 'other',
@@ -154,7 +156,7 @@ const AppComponent: FC = () => {
         })
       }
     }
-  }, [colors, dark])
+  }, [colors, dark, dragInProgress])
 
   useEffect(() => {
     let splitAnimationTimer: number
@@ -174,11 +176,7 @@ const AppComponent: FC = () => {
   const componentClassNames = classNames({
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isTouch,
-    android: isAndroid,
-    native: Capacitor.isNativePlatform(),
     'drag-in-progress': dragInProgress,
-    chrome: /Chrome/.test(navigator.userAgent),
-    safari: isSafari(),
   })
 
   if (showModal && !modals[showModal]) {
@@ -216,11 +214,46 @@ const AppComponent: FC = () => {
               </div>
             ) : (
               <SplitPane
-                className={css({
-                  position: 'relative',
-                  '& .Pane': {
-                    transition: isSplitting ? 'width 0.2s ease' : undefined,
+                paneClassName={css({ transition: isSplitting ? 'width 0.2s ease' : undefined, userSelect: 'none' })}
+                resizerClassName={css({
+                  background: '#fff',
+                  opacity: 0.2,
+                  zIndex: 'resizer',
+                  boxSizing: 'border-box',
+                  backgroundClip: 'padding-box',
+                  userSelect: 'none',
+                  '&:hover': {
+                    transition: 'all 0.2s ease-out',
                   },
+                  '&.horizontal': {
+                    height: '11px',
+                    margin: '-5px 0',
+                    borderTop: '5px solid rgba(255, 255, 255, 0)',
+                    borderBottom: '5px solid rgba(255, 255, 255, 0)',
+                    cursor: 'row-resize',
+                    width: '100%',
+                  },
+                  '&.horizontal:hover': {
+                    borderTop: '5px solid rgba(0, 0, 0, 0.5)',
+                    borderBottom: '5px solid rgba(0, 0, 0, 0.5)',
+                  },
+                  '&.vertical': {
+                    width: '11px',
+                    margin: '0 -5px',
+                    borderLeft: '5px solid rgba(255, 255, 255, 0)',
+                    borderRight: '5px solid rgba(255, 255, 255, 0)',
+                    cursor: 'col-resize',
+                  },
+                  '&.vertical:hover': {
+                    borderLeft: '5px solid rgba(255, 255, 255, 0.5)',
+                    borderRight: '5px solid rgba(255, 255, 255, 0.5)',
+                  },
+                  '&.disabled': { cursor: 'not-allowed' },
+                  '&.disabled:hover': { borderColor: 'transparent' },
+                })}
+                className={css({
+                  position: 'relative', // not applied due to `position: absolute` in style prop of react-split-pane
+                  userSelect: 'none',
                 })}
                 defaultSize={!showSplitView ? '100%' : splitPosition || '50%'}
                 onChange={onSplitResize}
