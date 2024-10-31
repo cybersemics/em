@@ -1,7 +1,8 @@
+import { KeyInput } from 'puppeteer'
+import executeKeyPresses from '../helpers/executeKeyPresses'
 import getEditingText from '../helpers/getEditingText'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
-import press from '../helpers/press'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -16,26 +17,31 @@ it('thought will be trimmed when paste the text', async () => {
 
 it('when change the row, thought will be trimmed.', async () => {
   await newThought('')
-  press('Space')
-  press('Space')
-  press('Space')
-  press('H')
-  press('e')
-  press('l')
-  press('l')
-  press('o')
-  press('Space')
-  press('W')
-  press('o')
-  press('r')
-  press('l')
-  press('d')
-  press('.')
-  press('Space')
-  press('Space')
-  press('Space')
-  press('Enter')
-  press('ArrowUp')
+
+  const keyPresses = [
+    'Space',
+    'Space',
+    'Space',
+    'H',
+    'e',
+    'l',
+    'l',
+    'o',
+    'Space',
+    'W',
+    'o',
+    'r',
+    'l',
+    'd',
+    '.',
+    'Space',
+    'Space',
+    'Space',
+    'Enter',
+    'ArrowUp',
+  ] as KeyInput[]
+
+  await executeKeyPresses(keyPresses)
 
   const editingText = await getEditingText()
   expect(editingText).toBe(`Hello World.`)
