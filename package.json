@@ -1,6 +1,6 @@
 {
   "name": "em",
-  "version": "300.30.29",
+  "version": "300.30.31",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -218,7 +218,7 @@
     "vite": "^5.4.10",
     "vite-plugin-checker": "^0.8.0",
     "vite-plugin-pwa": "^0.20.5",
-    "vitest": "^2.1.3",
+    "vitest": "^2.1.4",
     "webdriverio": "^7.36.0"
   },
   "packageManager": "yarn@4.4.1"
