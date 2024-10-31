@@ -46,7 +46,7 @@ const AnimatedIcon = ({
       }}
       onClick={handleClick}
     >
-      {animated ? (
+      {animated && animationKey % 2 == 0 ? (
         <LottieAnimation
           key={animationKey} // Force re-render of animation on key change
           animationData={animationData}
