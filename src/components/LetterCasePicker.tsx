@@ -1,12 +1,13 @@
 import React, { FC, memo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
+import { SystemStyleObject } from '../../styled-system/types'
 import LetterCaseType from '../@types/LetterCaseType'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/formatLetterCase'
 import { isTouch } from '../browser'
 import useWindowOverflow from '../hooks/useWindowOverflow'
 import getThoughtById from '../selectors/getThoughtById'
-import themeColors from '../selectors/themeColors'
 import applyLetterCase from '../util/applyLetterCase'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
@@ -17,8 +18,7 @@ import TitleCaseIcon from './icons/TitleCaseIcon'
 import UpperCaseIcon from './icons/UpperCaseIcon'
 
 /** Letter Case Picker component. */
-const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = memo(({ fontSize, style }) => {
-  const colors = useSelector(themeColors)
+const LetterCasePicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = memo(({ fontSize, cssRaw }) => {
   const ref = useRef<HTMLDivElement>(null)
   const dispatch = useDispatch()
   const overflow = useWindowOverflow(ref)
@@ -43,24 +43,23 @@ const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = 
     <div className={css({ userSelect: 'none' })}>
       <div
         ref={ref}
-        style={style}
-        className={css({
-          background: { base: '#ebebeb', _dark: '#141414' },
-          borderRadius: '3',
-          display: 'inline-block',
-          padding: '0.2em 0.25em 0.25em',
-          position: 'relative',
-          ...(overflow.left ? { left: `${overflow.left}` } : { right: `${overflow.right}` }),
-        })}
+        style={{ ...(overflow.left ? { left: `${overflow.left}` } : { right: `${overflow.right}` }) }}
+        className={css(
+          {
+            background: { base: '#ebebeb', _dark: '#141414' },
+            borderRadius: '3',
+            display: 'inline-block',
+            padding: '0.2em 0.25em 0.25em',
+            position: 'relative',
+          },
+          cssRaw,
+        )}
       >
         <TriangleDown
-          fill={colors.fgOverlay90}
+          fill={token('colors.fgOverlay90')}
           size={fontSize}
           cssRaw={{ position: 'absolute', width: '100%' }}
-          style={{
-            ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }),
-            top: -fontSize / 2,
-          }}
+          style={{ ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }), top: -fontSize / 2 }}
         />
 
         <div aria-label='letter case swatches' className={css({ whiteSpace: 'wrap' })}>
@@ -68,10 +67,10 @@ const LetterCasePicker: FC<{ fontSize: number; style?: React.CSSProperties }> = 
             <div
               key={type}
               title={type}
-              style={{ border: `solid 1px ${selected === type ? `${colors.fg}` : 'transparent'}` }}
               className={css({
                 margin: '2px',
                 lineHeight: '0',
+                border: selected === type ? `solid 1px {colors.fg}` : `solid 1px transparent`,
               })}
               aria-label={type}
               {...fastClick(e => e.stopPropagation())}

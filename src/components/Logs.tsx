@@ -1,3 +1,4 @@
+import { css } from '../../styled-system/css'
 import Log from '../@types/Log'
 
 /** Render the local logs in a readonly textarea. */
@@ -9,14 +10,14 @@ const Logs = ({ logs }: { logs: Log[] }) => {
     <textarea
       readOnly
       defaultValue={logs.length > 0 ? logsFormatted : 'No logs.'}
-      style={{
+      className={css({
         marginTop: 20,
         backgroundColor: '#111',
         border: 0,
         padding: 20,
         fontFamily: 'monospace',
         fontSize: 14,
-      }}
+      })}
     />
   )
 }
