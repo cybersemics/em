@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import useOnCut from './Editable/useOnCut'
 
 interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
   style?: React.CSSProperties
@@ -71,8 +70,6 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
   return (
     <div
       {...props}
-      onCopy={(e: React.ClipboardEvent<HTMLDivElement>) => props.onCopy?.(e)}
-      onCut={useOnCut}
       onPaste={(e: React.ClipboardEvent<HTMLDivElement>) => {
         allowInnerHTMLChange.current = true
         if (props.onPaste) props.onPaste(e)
