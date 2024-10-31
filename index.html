@@ -40,6 +40,7 @@
 
       // Load theme synchronously before React loads, otherwise it causes a white flash.
       const theme = localStorage.getItem('storageCache/theme')?.toLowerCase() || 'dark'
+      document.body.style.backgroundColor = theme === 'dark' ? '#000' : '#fff'
       document.body.setAttribute('data-color-mode', theme)
       document.body.setAttribute('data-env', navigator.webdriver ? 'test' : '%MODE%')
       document.body.classList.add(theme)
