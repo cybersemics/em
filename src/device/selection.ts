@@ -391,6 +391,21 @@ export const removeCurrentSelection = () => {
   if (selection && selection.rangeCount > 0) document.execCommand('delete')
 }
 
+/** Remove the useless HTMLElement from element. */
+const removeEmptyElementsRecursively = (element: HTMLElement, remainText: string) => {
+  // Loop through the child nodes of the element
+  for (let i = element.childNodes.length - 1; i >= 0; i--) {
+    const child = element.childNodes[i] as HTMLElement
+
+    // Recursively check the child element
+    removeEmptyElementsRecursively(child, remainText)
+
+    if (!child.hasChildNodes() && child.textContent !== remainText) {
+      child.remove()
+    }
+  }
+}
+
 /** Returns the selection html, or null if there is no selection. */
 export const html = () => {
   const selection = document.getSelection()
@@ -407,10 +422,14 @@ export const html = () => {
       if (node instanceof Element) {
         containerHtml = node.outerHTML
       } else if (node instanceof CharacterData) {
-        // Use parentElement to ascend to the containing element if it's a Text node
-        while (node.parentElement?.tagName !== 'DIV') node = node.parentNode!
+        while (node.parentElement?.tagName !== 'DIV') {
+          node = node.parentElement!
+        }
+
         const parentElement = node.parentElement
-        containerHtml = parentElement ? parentElement.innerHTML : null
+        const clonedElement = parentElement.cloneNode(true) as HTMLElement
+        removeEmptyElementsRecursively(clonedElement!, range.startContainer.textContent!)
+        containerHtml = clonedElement ? clonedElement.innerHTML : null
       }
     }
     return containerHtml?.replace(range.startContainer.textContent!, selection.toString())

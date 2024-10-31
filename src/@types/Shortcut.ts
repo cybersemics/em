@@ -56,6 +56,9 @@ interface Shortcut {
   /** When true, a small open dropdown indicator will be rendered beneath the icon. */
   isDropdownOpen?: (state: State) => boolean
 
+  /** When true, don't need to prevent the default activity. */
+  Permit?: boolean
+
   /** A keyboard sequence to activate the shortcut. */
   keyboard?: Key | string
 

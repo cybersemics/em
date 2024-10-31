@@ -695,11 +695,8 @@ describe('HTML content', () => {
     const expectedHTML = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
-      <li><b>a</b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li><b>b</b></li>
-        </ul>
-      </li>
+      <li><b>a</b></li>
+      <li><b> -b</b></li>
     </ul>
   </li>
 </ul>`
@@ -733,12 +730,9 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
     const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
-      <li>A${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li>B</li>
-          <li>C</li>
-        </ul>
-      </li>
+      <li>A</li>
+      <li>B</li>
+      <li>C</li>
     </ul>
   </li>
 </ul>`
@@ -783,12 +777,9 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
     const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
-      <li>A${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li>B</li>
-          <li>C</li>
-        </ul>
-      </li>
+      <li>A</li>
+      <li>B</li>
+      <li>C</li>
     </ul>
   </li>
 </ul>`
@@ -822,15 +813,13 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
     const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
-      <li><b><i>A</i></b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li><b>B</b></li>
-          <li><i>C</i></li>
-        </ul>
-      </li>
+      <li><b><i>A</i></b></li>
+      <li><b>B</b></li>
+      <li><i>C</i></li>
     </ul>
   </li>
 </ul>`
+
     expect(actual).toBe(expectedOutput)
   })
 
@@ -862,12 +851,9 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
     const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
-      <li><b>A</b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li><b><i>B</i></b></li>
-          <li><b>C</b></li>
-        </ul>
-      </li>
+      <li><b>A</b></li>
+      <li><b><i>B</i></b></li>
+      <li><b>C</b></li>
     </ul>
   </li>
 </ul>`
@@ -889,7 +875,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
     <ul>
       <li><span style="font-weight: bold;">A</span>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
         <ul>
-          <li><span style="font-weight: bold;"> B</span></li>
+          <li><span style="font-weight: bold;">B</span></li>
         </ul>
       </li>
     </ul>
@@ -1114,7 +1100,7 @@ it('import single line with style attributes', () => {
   expect(exported).toBe(`<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
-      <li><span style="font-weight: bold;background-color: rgb(0, 0, 0);">Atonement</span></li>
+      <li><span style="color: rgb(255, 255, 255);font-weight: bold;background-color: rgb(0, 0, 0);">Atonement</span></li>
     </ul>
   </li>
 </ul>`)

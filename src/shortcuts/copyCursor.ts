@@ -15,6 +15,7 @@ import someDescendants from '../selectors/someDescendants'
 import exportPhrase from '../util/exportPhrase'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
+import strip from '../util/strip'
 
 const copyCursorShortcut: Shortcut = {
   id: 'copyCursor',
@@ -76,6 +77,7 @@ const copyCursorShortcut: Shortcut = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
+  Permit: true,
   canExecute: state => {
     // do not copy cursor if there is a browser selection
     return selection.isCollapsed() && (!!state.cursor || hasMulticursor(state)) && isDocumentEditable()
@@ -94,11 +96,10 @@ const copyCursorShortcut: Shortcut = {
     // get new state after pull
     const stateAfterPull = getState()
 
-    const exported = exportContext(stateAfterPull, head(simplePath), 'text/html')
+    const exported = strip(exportContext(stateAfterPull, head(simplePath), 'text/plain'))
 
     copy(exported)
 
-    // event.clipboardData?.setData('text/em', 'true')
     const numDescendants = exported ? exported.split('\n').length - 1 : 0
     const phrase = exportPhrase(head(simplePath), numDescendants, {
       value: getThoughtById(stateAfterPull, head(simplePath))?.value,

@@ -1,10 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import * as selection from '../device/selection'
-import exportContext from '../selectors/exportContext'
-import simplifyPath from '../selectors/simplifyPath'
-import store from '../stores/app'
-import head from '../util/head'
+import useOnCut from './Editable/useOnCut'
 
 interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
   style?: React.CSSProperties
@@ -72,44 +68,13 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
     props.onChange(event)
   }
 
-  /** Copies the selection text and sets a text/em flag in the clipboard data to detect the source is 'em' on paste. */
-  const handleCopy = (event: React.ClipboardEvent) => {
-    event.preventDefault()
-
-    const state = store.getState()
-    const simplePath = simplifyPath(state, state.cursor!)
-    const currentText = selection.text()
-    const currentHtml = selection.html()
-    const clipboardData = event.clipboardData
-    clipboardData.setData('text/plain', currentText!)
-    clipboardData.setData('text/html', currentHtml!)
-
-    if (!currentText) {
-      const thoughtHtml = exportContext(state, head(simplePath), 'text/html')
-      const thoughtText = exportContext(state, head(simplePath), 'text/plain')
-      clipboardData.setData('text/plain', thoughtText)
-      clipboardData.setData('text/html', thoughtHtml)
-    }
-    clipboardData.setData('text/em', 'true')
-  }
-
-  /** Cuts the selection text, sets a text/em flag in the clipboard data to detect the source on paste and removes the current selection. */
-  const handleCut = (event: React.ClipboardEvent) => {
-    const currentText = selection.text()
-    const currentHtml = selection.html()
-    const clipboardData = event.clipboardData
-    clipboardData.setData('text/plain', currentText!)
-    clipboardData.setData('text/em', 'true')
-    clipboardData.setData('text/html', currentHtml!)
-    selection.removeCurrentSelection()
-    event.preventDefault()
-  }
-
   return (
     <div
       {...props}
-      onCopy={handleCopy}
-      onCut={handleCut}
+      onCopy={(e: React.ClipboardEvent<HTMLDivElement>) => {
+        if (props.onCopy) props.onCopy(e)
+      }}
+      onCut={useOnCut}
       onPaste={(e: React.ClipboardEvent<HTMLDivElement>) => {
         allowInnerHTMLChange.current = true
         if (props.onPaste) props.onPaste(e)

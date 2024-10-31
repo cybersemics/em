@@ -56,6 +56,7 @@ import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import * as positionFixed from './Editable/positionFixed'
 import useEditMode from './Editable/useEditMode'
+import useOnCopy from './Editable/useOnCopy'
 import useOnPaste from './Editable/useOnPaste'
 
 /** Stops propagation of an event, if CMD/CTRL is not pressed. */
@@ -423,7 +424,7 @@ const Editable = ({
 
   /** Imports text that is pasted onto the thought. */
   const onPaste = useOnPaste({ contentRef, simplePath, transient })
-
+  const onCopy = useOnCopy({ thoughtId })
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
@@ -623,6 +624,7 @@ const Editable = ({
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
+      onCopy={onCopy}
       onPaste={e => {
         // flush the last edit, otherwise if paste occurs in quick succession the pasted value can be overwritten by the throttled change
         throttledChangeRef.current?.flush()
