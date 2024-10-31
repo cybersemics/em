@@ -25,7 +25,6 @@ const useOnCopy = ({ thoughtId }: { thoughtId: ThoughtId }) => {
       }
       clipboardData.setData('text/em', 'true')
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [thoughtId],
   )
 

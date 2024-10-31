@@ -57,7 +57,7 @@ interface Shortcut {
   isDropdownOpen?: (state: State) => boolean
 
   /** When true, don't need to prevent the default activity. */
-  Permit?: boolean
+  permitDefault?: boolean
 
   /** A keyboard sequence to activate the shortcut. */
   keyboard?: Key | string

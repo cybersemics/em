@@ -71,9 +71,7 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
   return (
     <div
       {...props}
-      onCopy={(e: React.ClipboardEvent<HTMLDivElement>) => {
-        if (props.onCopy) props.onCopy(e)
-      }}
+      onCopy={(e: React.ClipboardEvent<HTMLDivElement>) => props.onCopy?.(e)}
       onCut={useOnCut}
       onPaste={(e: React.ClipboardEvent<HTMLDivElement>) => {
         allowInnerHTMLChange.current = true
@@ -99,10 +97,9 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
         if (props.onBlur) props.onBlur(event)
       }}
       onInput={handleInput}
-      // onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-      //   console.log('KeyDown')
-      //   if (props.onKeyDown) props.onKeyDown(e)
-      // }}
+      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (props.onKeyDown) props.onKeyDown(e)
+      }}
     />
   )
 })

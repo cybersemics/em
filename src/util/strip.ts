@@ -9,7 +9,7 @@ type StripOptions = {
   preserveFormatting?: boolean
   preventTrim?: boolean
   stripAttributes?: boolean
-  isExternal?: boolean
+  stripColors?: boolean
 }
 
 const REGEX_NBSP = /&nbsp;/gim
@@ -18,10 +18,14 @@ const REGEX_BR_TAG = /<br.*?>/gim
 const REGEX_SPAN_TAG_ONLY_CONTAINS_WHITESPACES = /<span[^>]*>([\s]+)<\/span>/gim
 const REGEX_EMPTY_FORMATTING_TAGS = /<[^/>][^>]*>\s*<\/[^>]+>/gim
 
-/** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim. */
+/** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim.
+ * PrserveFormatting is used to preserve the html formatting.
+ * StripColors is used to strip only colors of the html.
+ * StripAttributes is used to remove style attributes.
+ */
 const strip = (
   html: string,
-  { preserveFormatting = false, preventTrim = false, stripAttributes = true, isExternal = false }: StripOptions = {},
+  { preserveFormatting = false, preventTrim = false, stripAttributes = true, stripColors = false }: StripOptions = {},
 ) => {
   const replacedHtml = html
     .replace(/<\/p><p/g, '</p>\n<p') // <p> is a block element, if there is no newline between <p> tags add newline.
@@ -31,7 +35,7 @@ const strip = (
     .replace(REGEX_EMPTY_FORMATTING_TAGS, '') // Remove empty formatting tags
 
   const sanitizedHtml = DOMPurify.sanitize(replacedHtml, {
-    ALLOWED_TAGS: isExternal ? EXTERNAL_FORMATTING_TAGS : preserveFormatting ? ALLOWED_FORMATTING_TAGS : [],
+    ALLOWED_TAGS: stripColors ? EXTERNAL_FORMATTING_TAGS : preserveFormatting ? ALLOWED_FORMATTING_TAGS : [],
     ALLOWED_ATTR,
   })
     // DOMPurify replaces spaces with &nbsp;, so we need to replace them after sanitizing rather than in the replacedHtml replacements above

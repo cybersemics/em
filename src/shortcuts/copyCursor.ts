@@ -77,7 +77,7 @@ const copyCursorShortcut: Shortcut = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  Permit: true,
+  permitDefault: true,
   canExecute: state => {
     // do not copy cursor if there is a browser selection
     return selection.isCollapsed() && (!!state.cursor || hasMulticursor(state)) && isDocumentEditable()
