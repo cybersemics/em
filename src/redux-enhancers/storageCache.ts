@@ -87,7 +87,7 @@ const storageCacheStoreEnhancer: StoreEnhancer<any> =
         const valueNewRaw = controller.select(stateNew)
         if (valueNewRaw == null) return null
         const valueNew = controller.parse(valueNewRaw)
-        const valueOld = stateNew.storageCache?.[key as keyof State['storageCache']]
+        const valueOld = state.storageCache?.[key as keyof State['storageCache']]
         return valueNew !== valueOld
           ? {
               [key]: valueNew,
