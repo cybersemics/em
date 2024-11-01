@@ -82,7 +82,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
     // add glow
     // TODO: WHy does GESTURE_GLOW_COLOR not work?
-    signaturePad._ctx.shadowColor = 'rgba(169, 169, 169, 1)'
+    signaturePad._ctx.shadowColor = colors.highlight
     signaturePad._ctx.shadowOffsetX = 0
     signaturePad._ctx.shadowOffsetY = 0
     signaturePad._ctx.shadowBlur = GESTURE_GLOW_BLUR

@@ -515,4 +515,4 @@ export const THROTTLE_DISTRACTION_FREE_TYPING = 100
 export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 
 export const GESTURE_GLOW_BLUR = 10
-export const GESTURE_GLOW_COLOR: ColorToken = 'gray'
+export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'
