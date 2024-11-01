@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
@@ -20,13 +19,6 @@ const AnimatedIcon = ({
   const newSize = size * ICON_SCALING_FACTOR
   const color = style.fill || fill || token('colors.fg')
 
-  const [animationKey, setAnimationKey] = useState(0)
-
-  /** Handles click event to restart animation (without updating opacity). */
-  const handleClick = () => {
-    setAnimationKey(prev => prev + 1)
-  }
-
   return (
     <div
       className={cx(icon(), css(cssRaw))}
@@ -37,13 +29,8 @@ const AnimatedIcon = ({
         color,
         display: 'inline-flex',
       }}
-      onClick={handleClick}
     >
-      {animated && animationKey % 2 === 0 ? (
-        <LottieAnimation key={animationKey} animationData={animationData} onComplete={animationComplete} />
-      ) : (
-        children
-      )}
+      {animated ? <LottieAnimation animationData={animationData} onComplete={animationComplete} /> : children}
     </div>
   )
 }

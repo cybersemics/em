@@ -91,11 +91,10 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         executeShortcutWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
-        if (!isActive && !commandState) {
+        if ((!isActive && !commandState) || (isActive && !isButtonActive)) {
           setIsAnimated(true)
-        }
-        if (isActive && !isButtonActive) {
-          setIsAnimated(true)
+        } else {
+          setIsAnimated(false)
         }
 
         // prevent Editable blur
@@ -111,7 +110,20 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapUp, customize, isButtonExecutable, disabled, isPressing, onTapUp, lastScrollLeft],
+    [
+      longPressTapUp,
+      customize,
+      isButtonExecutable,
+      disabled,
+      isPressing,
+      onTapUp,
+      lastScrollLeft,
+      isActive,
+      commandState,
+      isButtonActive,
+      setIsAnimated,
+      isAnimated,
+    ],
   )
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */

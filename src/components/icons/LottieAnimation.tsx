@@ -17,7 +17,7 @@ interface LottieAnimationProps {
  */
 const LottieAnimation: React.FC<LottieAnimationProps> = ({
   animationData,
-  speed = 0.5, // Default speed set to 0.5x
+  speed = 1, // Default speed set to 1x
   onComplete,
   style,
 }) => {
