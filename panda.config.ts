@@ -248,16 +248,6 @@ const globalCss = defineGlobalStyles({
   '.modal__root': {
     '& p': { margin: '0 0 1em 0' },
   },
-  '.modal__actions': {
-    '& a': {
-      fontWeight: 'normal',
-      margin: '0 5px',
-      textDecoration: 'underline',
-      whiteSpace: 'nowrap',
-      lineHeight: 2,
-      color: 'fg',
-    },
-  },
 })
 
 export default defineConfig({
