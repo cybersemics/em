@@ -24,7 +24,7 @@ const AnimatedIcon = ({
 
   /** Handles click event to restart animation (without updating opacity). */
   const handleClick = () => {
-    setAnimationKey(prev => prev + 1) 
+    setAnimationKey(prev => prev + 1)
   }
 
   return (
@@ -40,11 +40,7 @@ const AnimatedIcon = ({
       onClick={handleClick}
     >
       {animated && animationKey % 2 === 0 ? (
-        <LottieAnimation
-          key={animationKey} 
-          animationData={animationData}
-          onComplete={animationComplete}
-        />
+        <LottieAnimation key={animationKey} animationData={animationData} onComplete={animationComplete} />
       ) : (
         children
       )}
