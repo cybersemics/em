@@ -2,8 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { CSSTransition } from 'react-transition-group'
-import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
+import { css, cx } from '../../styled-system/css'
 import {
   AlertType,
   GESTURE_CANCEL_ALERT_TEXT,
@@ -13,6 +12,7 @@ import {
   noop,
 } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
+import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import viewportStore from '../stores/viewport'
@@ -52,6 +52,8 @@ const useConditionDelay = (condition: boolean, milliseconds: number) => {
 
 /** Draws a gesture as it is being performed onto a canvas. */
 const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
+  const colors = useSelector(themeColors)
+
   // A hook that is true when there is a cancelled gesture in progress.
   // Handles GestureHint and CommandPaletteGesture which have different ways of showing a cancelled gesture.
   const cancelled = useSelector(state => {
@@ -86,11 +88,11 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad.clear()
 
     // add glow
-    signaturePad._ctx.shadowColor = token.var(`colors.${GESTURE_GLOW_COLOR}` as const)
+    signaturePad._ctx.shadowColor = colors[GESTURE_GLOW_COLOR]
     signaturePad._ctx.shadowOffsetX = 0
     signaturePad._ctx.shadowOffsetY = 0
     signaturePad._ctx.shadowBlur = GESTURE_GLOW_BLUR
-  }, [])
+  }, [colors])
 
   useEffect(() => {
     if (!signaturePadRef.current) return
@@ -137,7 +139,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         // Dim the gesture trace to 50% opacity when the gesture is cancelled.
         // Also dim when hidden, otherwise when releasing a cancelled gesture the opacity briefly goes back to 1 to start the fade-both animation. This also has the effect of immediately dimming a valid (non-cancelled) gesture as soon as it is released, which actually looks pretty good.
         opacity: cancelled || !show ? 0.5 : 1,
-        transition: `opacity {durations.traceOpacityDuration} ease-in-out`,
+        transition: 'opacity {durations.traceOpacityDuration} ease-in-out',
         pointerEvents: eventNodeRef ? 'none' : undefined,
       })}
       style={{ height: innerHeight }}
@@ -150,16 +152,17 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       >
         <div
           ref={fadeBothEnterElRef}
-          // start the opacity at 0, otherwise clicking will render small dots
-          className={css({ opacity: '0', userSelect: 'none' })}
+          // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots
+          className={cx('fade-both-enter', css({ userSelect: 'none' }))}
           // WebKitUserSelect needed in addition to userSelect in order to disable long-tap-to-select
+          style={{ WebkitUserSelect: 'none' }}
         >
           <SignaturePad
             height={innerHeight}
             // TODO: Fix type
             ref={signaturePadRef as any}
             options={{
-              penColor: token('colors.fg'),
+              penColor: colors.fg,
             }}
           />
         </div>
