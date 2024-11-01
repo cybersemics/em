@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import { Element, HimalayaNode, Text, parse } from 'himalaya'
 import _ from 'lodash'
 import Block from '../@types/Block'

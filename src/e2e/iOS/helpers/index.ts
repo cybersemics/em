@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Browser } from 'webdriverio'
 import partialWithRef from '../../../test-helpers/partialWithRef'
 // helpers

@@ -16,6 +16,7 @@ const joinThoughts: Shortcut = {
   },
   svg: JoinThoughtsIcon,
   canExecute: state => !!state.cursor,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   exec: (dispatch, getState) => {
     dispatch(join({}))
   },

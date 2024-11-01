@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import Shortcut from '../@types/Shortcut'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'

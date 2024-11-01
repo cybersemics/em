@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import reducerFlow from '../../util/reducerFlow'
 
 it('compose reducers in order', () => {

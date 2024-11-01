@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import _ from 'lodash'
 import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'

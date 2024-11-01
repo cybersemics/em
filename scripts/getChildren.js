@@ -15,6 +15,4 @@ const { thoughtIndex, lexemeIndex } = JSON.parse(fs.readFileSync(file, 'utf8'))
 const children = getChildrenByContext({ thoughtIndex }, thoughtIndex.__ROOT__, context)
 const values = children.map(child => `${child.id} ${child.value} (${Object.keys(child.childrenMap).length})`)
 if (context.length > 0) {
-  console.log(context.join('/'))
 }
-console.log(values.map(value => (context.length > 0 ? '  ' : '') + value).join('\n'))

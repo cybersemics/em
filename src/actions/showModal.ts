@@ -13,7 +13,7 @@ const showModal = (state: State, { id }: { id: Modal }) => ({
 /** Display a given modal dialog box and scroll to the top. */
 export const showModalActionCreator =
   (payload: { id: Modal }): Thunk =>
-  (dispatch, getState) => {
+  dispatch => {
     dispatch({ type: 'showModal', ...payload })
     // wait till next tick, otherwise modal may not be rendered yet
     setTimeout(() => {

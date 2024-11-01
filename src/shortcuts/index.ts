@@ -1,5 +1,3 @@
-/* eslint-disable import/prefer-default-export */
-
 export { default as archive, archiveAliases } from './archive'
 export { default as bindContext } from './bindContext'
 export { default as bumpThoughtDown } from './bumpThoughtDown'

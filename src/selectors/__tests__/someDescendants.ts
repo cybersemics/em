@@ -54,6 +54,7 @@ it('return false if no descendant fulfills the predicate', () => {
           - h
   `
   const state = importText({ text })(initialState())
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isDeep = someDescendants(state, HOME_TOKEN, thought => false)
   expect(isDeep).toEqual(false)
 })

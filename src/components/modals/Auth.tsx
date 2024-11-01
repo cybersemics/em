@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
@@ -46,6 +47,7 @@ const modes: Index<Mode> = {
 /** A modal dialog for signing up, logging in, and resetting password. */
 const ModalAuth = () => {
   /** Checks if the given mode is active. */
+  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   const isModeActive = (mode: Mode) => activeMode.name === mode.name
 
   const [activeMode, updateActiveMode] = useState(modes.login)

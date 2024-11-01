@@ -119,6 +119,7 @@ const findClosestSharedAncestor = (
  * nodeAdd will just pass ['A','B','C','K','L']  as both second (oldPath) and third parameter (newPath) for nodeChange because
  * commonPath derived from oldPath inside nodeChange will be ['A','B','C'] anyways. (This will eliminate use of DUMMY_TOKEN too)
  */
+// eslint-disable-next-line @typescript-eslint/no-use-before-define
 const nodeAdd = (state: State, tree: Tree, newPath: Path) => nodeChange(state, tree, newPath, newPath)
 
 /**

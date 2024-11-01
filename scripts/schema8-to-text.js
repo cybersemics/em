@@ -1,5 +1,5 @@
 /** Converts a database of schema v8 to plain text. Sorts children by rank. Ignores created, lastUpdated, and all Lexemes.
- * Usage: node schema8-to-text.js /Users/raine/Documents/Backups/em/schema-v8/2023-02-05.json > /Users/raine/Documents/Backups/em/schema-v8/2023-02-05.txt
+ * Usage: node schema8-to-text.js /Users/raine/Documents/Backups/em/schema-v8/2023-02-05.json > /Users/raine/Documents/Backups/em/schema-v8/2023-02-05.txt.
  */
 import fs from 'fs'
 
@@ -19,6 +19,9 @@ const input = fs.readFileSync(path, 'utf-8')
 const state = JSON.parse(input)
 const root = state.thoughtIndex.__ROOT__
 
+/**
+ *
+ */
 const traverse = (thought, { indent = 0 } = {}) => {
   const isRoot = thought.id === '__ROOT__'
   if (!isRoot) {

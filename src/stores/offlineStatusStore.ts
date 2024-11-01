@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import { HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import OfflineStatus from '../@types/OfflineStatus'
 import WebsocketStatus from '../@types/WebsocketStatus'

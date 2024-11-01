@@ -108,7 +108,7 @@ const shaker = Shaker((dispatch: Dispatch) => {
 /** Action creator for dragInProgress. */
 export const dragInProgressActionCreator =
   (payload: DragInProgressPayload): Thunk =>
-  (dispatch, getState) => {
+  dispatch => {
     const { hoveringPath, value } = payload
 
     // react-dnd stops propagation of the TouchMonitor's touchend event, so we need to turn off globals.touching here

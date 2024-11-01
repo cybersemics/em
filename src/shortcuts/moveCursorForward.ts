@@ -31,6 +31,7 @@ const moveCursorForward: Shortcut = {
   multicursor: {
     enabled: true,
     filter: 'prefer-ancestor',
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
       // Make sure we can execute for all cursors before proceeding.
       // This is shifted here to allow `e.preventDefault()` to work.

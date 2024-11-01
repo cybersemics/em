@@ -16,7 +16,7 @@ const swapNote: Shortcut = {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   svg: ConvertToNoteIcon,
-  exec: (dispatch, getState) => {
+  exec: dispatch => {
     asyncFocus()
     dispatch(swapNoteActionCreator())
   },

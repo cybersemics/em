@@ -53,6 +53,7 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     equals: (a: S, b: S) => boolean = (a, b) => a === b,
   ) => {
     let value = selector(state)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     subscribe((stateNew: T) => {
       const valueOld = value
       value = selector(state)
@@ -110,6 +111,7 @@ function compose<T, S extends any[]>(
 
   const unsubscribes = stores.map(store => store.subscribe(updateCompositeState))
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { update, ...readonlyStore } = store
 
   return {

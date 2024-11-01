@@ -1,5 +1,7 @@
 // Explicitly import test function from vitest to access retry option.
 // Otherwise global jest types override vitest/globals.
+
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import { describe } from 'vitest'
 import sleep from '../../util/sleep'
 import taskQueue from '../taskQueue'

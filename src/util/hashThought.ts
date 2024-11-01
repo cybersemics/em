@@ -3,7 +3,6 @@ import * as murmurHash3 from 'murmurhash3js'
 import ThoughtHash from '../@types/ThoughtHash'
 import normalizeThought from './normalizeThought'
 
-// eslint-disable-next-line jsdoc/require-description-complete-sentence
 /**
  * Generate a hash of a thought with the following transformations.
  *

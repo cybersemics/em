@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import { nanoid } from 'nanoid'
 import { IndexeddbPersistence, clearDocument } from 'y-indexeddb'
@@ -281,7 +282,7 @@ export const init = async (options: ThoughtspaceOptions) => {
   // TODO: Reuse websocket connection from ./index?
   const websocket = new HocuspocusProviderWebsocket({
     // disable websocket since YJS is being sunset and server is no longer deployed.
-    // eslint-disable-next-line no-constant-condition
+
     connect: false,
     url: websocketUrl,
   })
@@ -289,14 +290,13 @@ export const init = async (options: ThoughtspaceOptions) => {
   doclog = new Y.Doc({ guid: encodeDocLogDocumentName(tsid) })
 
   // bind blocks to providers on load
-  doclog.on('subdocs', ({ added, removed, loaded }: { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }) => {
+  doclog.on('subdocs', ({ loaded }: { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }) => {
     loaded.forEach((subdoc: Y.Doc) => {
       // Disable IndexedDB during tests because of TransactionInactiveError in fake-indexeddb.
       if (import.meta.env.MODE !== 'test') {
         const persistence = new IndexeddbPersistence(subdoc.guid, subdoc)
         persistence.whenSynced
           .then(() => {
-            // eslint-disable-next-line no-new
             new HocuspocusProvider({
               // disable awareness for performance
               // doclog doc has awareness enabled to keep the websocket open
@@ -332,7 +332,6 @@ export const init = async (options: ThoughtspaceOptions) => {
           blocks.push([blockNew])
         }
 
-        // eslint-disable-next-line no-new
         new HocuspocusProvider({
           // doclog doc has awareness enabled to keep the websocket open
           // disable awareness for all other websocket providers
@@ -386,11 +385,11 @@ export const init = async (options: ThoughtspaceOptions) => {
         throw new Error('Unknown DocLogAction: ' + action)
       }
     },
-    onStep: ({ completed, expected, index, total, value }) => {
+    onStep: ({ completed, expected, total }) => {
       const estimatedTotal = expected || total
       onProgress({ replicationProgress: completed / estimatedTotal })
     },
-    onEnd: total => {
+    onEnd: () => {
       onProgress({ replicationProgress: 1 })
     },
   })
@@ -400,7 +399,7 @@ export const init = async (options: ThoughtspaceOptions) => {
     // concurrency above 16 make the % go in bursts as batches of tasks are processed and awaited all at once
     // this may vary based on # of cores and network conditions
     concurrency: 16,
-    onStep: ({ completed, expected, index, total, value }) => {
+    onStep: ({ completed, expected, total }) => {
       const estimatedTotal = expected || total
       onProgress({ savingProgress: completed / estimatedTotal })
     },
@@ -1318,7 +1317,6 @@ export const updateThoughts = async ({
   thoughtIndexUpdates,
   lexemeIndexUpdates,
   lexemeIndexUpdatesOld,
-  schemaVersion,
 }: {
   thoughtIndexUpdates: Index<Thought | null>
   lexemeIndexUpdates: Index<Lexeme | null>
@@ -1382,8 +1380,8 @@ export const updateThoughts = async ({
 
 /** Clears all thoughts and lexemes from the db. */
 export const clear = async () => {
-  const deleteThoughtPromises = Array.from(thoughtDocs, ([id, doc]) => deleteThought(id as ThoughtId))
-  const deleteLexemePromises = Array.from(lexemeDocs, ([key, doc]) => deleteLexeme(key))
+  const deleteThoughtPromises = Array.from(thoughtDocs, ([id]) => deleteThought(id as ThoughtId))
+  const deleteLexemePromises = Array.from(lexemeDocs, ([key]) => deleteLexeme(key))
 
   await Promise.all([...deleteThoughtPromises, ...deleteLexemePromises])
 

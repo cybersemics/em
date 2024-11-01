@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import Index from '../@types/IndexType'
 
 type Key = string | number | symbol
@@ -29,7 +30,7 @@ function keyValueBy<
         isArray
         ? // we know that value is a valid index key since a scalar was given
           ((value => ({ [value as unknown as string | number | symbol]: keyValue })) as KeyValueGenerator<T, number, R>)
-        : (((key, value) => ({ [key]: keyValue })) as KeyValueGenerator<string, T, R>)
+        : (((key) => ({ [key]: keyValue })) as KeyValueGenerator<string, T, R>)
 
   // considerably faster than Array.prototype.reduce
   Object.entries(input || {}).forEach(([key, value], i) => {

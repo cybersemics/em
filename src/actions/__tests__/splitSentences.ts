@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import newThought from '../../actions/newThought'
 import splitSentences from '../../actions/splitSentences'
 import { HOME_TOKEN } from '../../constants'

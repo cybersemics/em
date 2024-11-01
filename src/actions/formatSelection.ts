@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { rgbToHex } from '@mui/material'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'

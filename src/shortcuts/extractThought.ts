@@ -16,6 +16,7 @@ const extractThought: Shortcut = {
   canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   exec: (dispatch, getState) => {
     dispatch(extract())
   },

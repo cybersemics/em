@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { importTextActionCreator as importText } from '../actions/importText'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'

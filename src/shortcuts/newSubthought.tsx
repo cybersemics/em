@@ -4,7 +4,6 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import Icon from '../components/icons/NewSubthoughtIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 const exec = newThought({ insertNewSubthought: true })
 
 const multicursor = {
