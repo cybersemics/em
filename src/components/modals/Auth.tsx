@@ -1,7 +1,7 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { button } from '../../../styled-system/recipes'
+import { button, modalActionLink } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { loginActionCreator as login } from '../../actions/login'
@@ -168,6 +168,7 @@ const ModalAuth = () => {
           >
             <a
               id='cancel-login'
+              className={modalActionLink()}
               {...fastClick(() => {
                 // prevent the login modal on refresh once working offline
                 storage.setItem('modal-to-show', '')

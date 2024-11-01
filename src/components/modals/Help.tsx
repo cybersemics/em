@@ -1,7 +1,7 @@
 import { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css, cx } from '../../../styled-system/css'
-import { anchorButton, extendTap, modal, modalText } from '../../../styled-system/recipes'
+import { css } from '../../../styled-system/css'
+import { extendTap, modalText } from '../../../styled-system/recipes'
 import Icon from '../../@types/IconType'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
@@ -75,15 +75,24 @@ const Tutorials = () => {
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
 
   const { subtitle } = modalText()
-  const modalClasses = modal({ stack: true })
   return (
     <section className={css({ marginBottom: '50px' })} id='tutorials'>
       <h2 className={subtitle}>Tutorials</h2>
 
-      <div className={cx(modalClasses.actions, css({ alignItems: 'flex-start' }))}>
-        <div>
-          <a
-            className={cx(anchorButton({ thin: true }), css({ marginBottom: '1em' }))}
+      <div
+        className={css({
+          textAlign: 'center',
+          '@media screen and (min-width: 480px)': {
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+          alignItems: 'flex-start',
+        })}
+      >
+        <div className={css({ marginTop: '1em', marginBottom: '1em', marginRight: '1em' })}>
+          <ActionButton
+            title='Part I: Intro'
             {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
@@ -93,13 +102,11 @@ const Tutorials = () => {
                 closeModal(),
               ])
             })}
-          >
-            Part I: Intro
-          </a>
+          ></ActionButton>
         </div>
-        <div>
-          <a
-            className={cx(anchorButton({ thin: true }), css({ marginBottom: '1em' }))}
+        <div className={css({ marginTop: '1em', marginBottom: '1em' })}>
+          <ActionButton
+            title='Part II: Contexts'
             {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
@@ -108,9 +115,7 @@ const Tutorials = () => {
                 closeModal(),
               ])
             })}
-          >
-            Part II: Contexts
-          </a>
+          />
         </div>
       </div>
     </section>

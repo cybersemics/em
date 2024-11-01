@@ -2,6 +2,7 @@ import { AxiosError } from 'axios'
 import { ChangeEvent, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
+import { modalActionLink } from '../../../styled-system/recipes'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { AlertType } from '../../constants'
 import fastClick from '../../util/fastClick'
@@ -84,7 +85,7 @@ const ModalFeedback = () => {
             {...fastClick(() => onSubmit({ close }))}
           />
           <div key='cancel' className={css({ fontSize: 22, marginTop: 10, opacity: 0.5 })}>
-            <a id='skip-tutorial' {...fastClick(() => close())}>
+            <a className={modalActionLink()} id='skip-tutorial' {...fastClick(() => close())}>
               Cancel
             </a>
           </div>

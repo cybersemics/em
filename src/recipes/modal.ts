@@ -77,24 +77,6 @@ const modalRecipe = defineSlotRecipe({
       signup: {},
       testGestureDiagram: {},
     },
-    stack: {
-      true: {
-        actions: {
-          textAlign: 'center',
-          '@media screen and (min-width: 480px)': {
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            '& > *': {
-              marginTop: '1em',
-            },
-            '& > :not(:last-child)': {
-              marginRight: '1em',
-            },
-          },
-        },
-      },
-    },
     center: {
       true: {
         root: {
