@@ -31,7 +31,10 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 0))
 
   return (
-    <div aria-label='empty-thoughtspace' className={css({ animation: '0.4s ease-out 0s normal forwards fadein' })}>
+    <div
+      aria-label='empty-thoughtspace'
+      className={css({ animation: '{durations.mediumDuration} ease-out 0s normal forwards fadein' })}
+    >
       {
         // show nothing during the preconnecting phase (See: useOfflineStatus)
         // show loading ellipsis when connecting or loading
