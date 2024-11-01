@@ -21,17 +21,10 @@ const AnimatedIcon = ({
   const color = style.fill || fill || token('colors.fg')
 
   const [animationKey, setAnimationKey] = useState(0)
-  const [opacity, setOpacity] = useState(1) // Local state for opacity
 
-  /** Handles click event to restart animation and update opacity. */
+  /** Handles click event to restart animation (without updating opacity). */
   const handleClick = () => {
-    setOpacity(0.2)
-    setAnimationKey(prev => prev + 1) // Increment key to force remount
-
-    // Restore opacity after delay
-    setTimeout(() => {
-      setOpacity(1)
-    }, 100)
+    setAnimationKey(prev => prev + 1) 
   }
 
   return (
@@ -46,12 +39,11 @@ const AnimatedIcon = ({
       }}
       onClick={handleClick}
     >
-      {animated && animationKey % 2 == 0 ? (
+      {animated && animationKey % 2 === 0 ? (
         <LottieAnimation
-          key={animationKey} // Force re-render of animation on key change
+          key={animationKey} 
           animationData={animationData}
           onComplete={animationComplete}
-          style={{ opacity, transition: 'opacity 0.4s ease-in-out' }}
         />
       ) : (
         children
