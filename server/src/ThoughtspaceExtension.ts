@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Extension, onAuthenticatePayload, onLoadDocumentPayload } from '@hocuspocus/server'
 import { isEqual, throttle } from 'lodash'
 import { MongodbPersistence } from 'y-mongodb-provider'
@@ -66,9 +67,6 @@ const log = (...args: [...any, ...([ConsoleMethod] | [])]) => {
     args = args.slice(0, -1)
     method = lastArg.method
   }
-
-  // eslint-disable-next-line no-console
-  console[method](...args)
 }
 
 /** Shows the first n characters of a string and replaces the rest with an ellipsis. */

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { unescape as decodeCharacterEntities, isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'

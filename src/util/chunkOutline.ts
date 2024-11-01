@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /** Detects the tab size of a block of text. */
 const detectTabSize = (text: string): number | undefined => {
   const indentBase = getIndent(text, { tabSize: 1 })

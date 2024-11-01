@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import ShortcutId from '../@types/ShortcutId'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'

@@ -1,4 +1,5 @@
 /** Prints a readable stack trace that omits vendor scripts and Redux middleware. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const prettyTrace = (message?: string) => {
   const err = new Error()
   console.warn(

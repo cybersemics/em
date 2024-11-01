@@ -1,11 +1,9 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import fs from 'fs'
 import _ from 'lodash'
 import * as murmurHash3 from 'murmurhash3js'
 import Child from '../../src/@types/Child'
-import Context from '../../src/@types/Context'
 import Index from '../../src/@types/Index'
-import Lexeme from '../../src/@types/Lexeme'
-import Parent from '../../src/@types/Parent'
 import { EM_TOKEN, HOME_TOKEN } from '../../src/constants'
 import hashContext from '../../src/util/hashContext'
 import hashThought from '../../src/util/hashThought'
@@ -129,7 +127,7 @@ const anonymize = {
 }
 
 /** Anonymizes all thoughts and user information in user state. Preserves ranks, lastUpdated, and shape. */
-const anonymizeState = (state: UserState, options: Options = {}) => {
+const anonymizeState = (state: UserState) => {
   anonymize.thoughtIndex(state.thoughtIndex)
   anonymize.lexemeIndex(state.lexemeIndex)
 
@@ -139,6 +137,9 @@ const anonymizeState = (state: UserState, options: Options = {}) => {
 /*****************************************************************
  * MAIN
  *****************************************************************/
+/**
+ *
+ */
 const main = () => {
   // validate
   if (process.argv.length < 3) {
@@ -162,20 +163,12 @@ const main = () => {
   const state = (db as Database).users?.[userId] || (db as UserState)
 
   const stateNew = anonymizeState(state, options)
-
-  console.log('')
-  console.log('Parents:', Object.values(stateNew.thoughtIndex).length)
-  console.log('Lexemes:', Object.values(stateNew.lexemeIndex).length)
-  console.log('')
-
   // write
   const fileOut = `${fileIn.slice(0, -'.json'.length)}.anonymized.json`
 
   if (options.dry) {
-    console.log('Done')
   } else {
     fs.writeFileSync(fileOut, JSON.stringify(stateNew, null, 2))
-    console.log(`Output state written to: ${fileOut}`)
   }
 }
 

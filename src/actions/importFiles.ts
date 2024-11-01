@@ -1,4 +1,6 @@
-/* eslint-disable import/prefer-default-export */
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
 import { nanoid } from 'nanoid'

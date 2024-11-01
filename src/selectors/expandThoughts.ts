@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'

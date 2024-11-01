@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { restoreCursorBeforeSearch } from '../actions/restoreCursorBeforeSearch'
 import { searchActionCreator as search } from '../actions/search'

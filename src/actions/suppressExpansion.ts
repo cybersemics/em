@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import globals from '../globals'

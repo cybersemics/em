@@ -1,18 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import fs from 'fs'
 import _ from 'lodash'
 import Child from '../../src/@types/Child'
-import Context from '../../src/@types/Context'
 import Index from '../../src/@types/Index'
-import Lexeme from '../../src/@types/Lexeme'
 import Parent from '../../src/@types/Parent'
-import ThoughtContext from '../../src/@types/ThoughtContext'
 import { EM_TOKEN, HOME_TOKEN } from '../../src/constants'
 import hashContext from '../../src/util/hashContext'
 import hashThought from '../../src/util/hashThought'
-import head from '../../src/util/head'
 import normalizeThought from '../../src/util/normalizeThought'
 import timestamp from '../../src/util/timestamp'
-import unroot from '../../src/util/unroot'
 
 // mock browser globals for page-lifecycle
 global.addEventListener = () => {}
@@ -58,6 +54,9 @@ let missingParents = 0
 let missingChildInParent = 0
 
 // a tiny number in the order of magnitude of 0.0001 - 0.001 that ensures new children's ranks do not conflict
+/**
+ *
+ */
 const smudge = () => Math.floor(Math.random() * 1000) / 1000000
 
 // repair functions (mutates state)
@@ -206,6 +205,9 @@ const restoreChildren = (state: UserState, options: Options = {}) => {
 /*****************************************************************
  * MAIN
  *****************************************************************/
+/**
+ *
+ */
 const main = () => {
   // validate
   if (process.argv.length < 3) {
@@ -233,26 +235,15 @@ const main = () => {
   // const fileFormatted = JSON.stringify(state, null, 2)
 
   restoreChildren(state, options)
-
-  console.log('')
-  console.log('Lexemes:', Object.values(state.lexemeIndex).length)
-  console.log('Missing lexeme.contexts:', missingLexemeContexts)
-  console.log('Missing cx.context:', missingThoughtContexts)
-  console.log('Missing parent:', missingParents)
-  console.log('Missing childInParent:', missingChildInParent)
-  console.log('')
-
   // write
   const fileOut = `${fileIn.slice(0, -'.json'.length)}.repaired.json`
 
   if (options.dry) {
-    console.log('Done')
   } else {
     // fs.writeFileSync(fileInFormatted, fileFormatted)
     // console.log(`Input state (formatted) written to: ${fileInFormatted}`)
 
     fs.writeFileSync(fileOut, JSON.stringify(state, null, 2))
-    console.log(`Output state written to: ${fileOut}`)
   }
 }
 

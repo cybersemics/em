@@ -13,6 +13,7 @@ const bulletColor = (
   {
     backgroundColor,
     color,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     shape,
     fullySelected,
   }: { backgroundColor?: string; color?: string; shape?: 'bullet' | 'text'; fullySelected?: boolean },

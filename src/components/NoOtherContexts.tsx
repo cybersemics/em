@@ -11,6 +11,7 @@ const toggleContextViewShortcut = shortcutById('toggleContextView')
 /** A message that explains that the thought is no other contexts and provides a hint for adding it to a context. */
 const NoOtherContexts = ({
   allowSingleContext,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   simplePath,
 }: {
   allowSingleContext?: boolean

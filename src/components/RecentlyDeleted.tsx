@@ -61,7 +61,7 @@ const RecentlyDeleted = () => {
 
   useEffect(() => {
     // prettier adds a semicolon and eslint tries to remove it
-    // eslint-disable-next-line no-extra-semi
+
     ;(async () => {
       await dispatch(pullDeleted())
       setLoaded(true)

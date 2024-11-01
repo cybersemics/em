@@ -14,7 +14,7 @@ interface IconProps {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const FeedbackIcon: FC<IconProps> = ({ fill, size = 20, style, className, cssRaw }) => {
+const FeedbackIcon: FC<IconProps> = ({ fill, size = 20, style, cssRaw }) => {
   return (
     <svg
       className={cx(icon(), css(cssRaw))}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import _ from 'lodash'
 import ministore from '../../stores/ministore'
 

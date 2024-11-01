@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'

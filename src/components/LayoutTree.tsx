@@ -136,6 +136,7 @@ const useSizeTracking = () => {
     ({
       height,
       width,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       id,
       isVisible,
       key,

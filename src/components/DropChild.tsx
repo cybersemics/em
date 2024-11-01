@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import React from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
@@ -56,6 +57,7 @@ const DropChildIfCollapsed = ({ depth, last, path, simplePath, isLastVisible }: 
 }
 
 /** A drop target that allows dropping as a child of a thought. It is only shown when a thought has no children or is collapsed. Only renders if there is a valid dropTarget and a drag is in progress. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildProps) => {
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const dropHoverColor = useDropHoverColor(depth || 0)

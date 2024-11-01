@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 import { Browser } from 'webdriverio'
 import waitForElement from '../helpers/waitForElement'
 import tap from './tap'

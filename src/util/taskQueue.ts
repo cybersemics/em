@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import Emitter from 'emitter20'
 
 type TaskFunction<T> = () => T | Promise<T>

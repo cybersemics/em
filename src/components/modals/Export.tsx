@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import ClipboardJS from 'clipboard'
 import React, {
   FC,

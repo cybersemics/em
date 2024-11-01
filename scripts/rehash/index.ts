@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import fs from 'fs'
 import _ from 'lodash'
 import path from 'path'
@@ -6,7 +7,6 @@ import Index from '../../src/@types/Index'
 import Parent from '../../src/@types/Parent'
 import State from '../../src/@types/State'
 import hashContext from '../../src/util/hashContext'
-import hashThought from '../../src/util/hashThought'
 
 const helpText = `Usage: npm run start -- [subcommand] em-proto-m93daff2.json
 
@@ -48,9 +48,6 @@ const subcommands = {
       {} as Index<Parent>,
     )
 
-    console.log(`Converted: ${converted}`)
-    console.log(`Missing contexts: ${missing}`)
-
     return {
       ...state,
       thoughtIndex: thoughtIndexNew,
@@ -65,6 +62,9 @@ const subcommands = {
   },
 } as Index<(state: RemoteState) => any>
 
+/**
+ *
+ */
 const main = () => {
   const [, , subcommand, inputPath] = process.argv
 

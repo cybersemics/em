@@ -18,7 +18,7 @@ import isRoot from '../util/isRoot'
 
 let undoArchiveTimer: number
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc/require-jsdoc, @typescript-eslint/no-unused-vars
 const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   const state = getState()
   const { cursor, noteFocus } = state
@@ -63,6 +63,7 @@ const archiveShortcut: Shortcut = {
     enabled: true,
     preventSetCursor: true,
     clearMulticursor: true,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
       const numThougths = cursors.length
 

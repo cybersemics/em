@@ -1,5 +1,3 @@
-/* eslint-disable import/prefer-default-export */
-
 export { default as auth } from './Auth'
 export { default as customizeToolbar } from './CustomizeToolbar'
 export { default as devices } from './Devices'

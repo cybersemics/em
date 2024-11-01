@@ -227,6 +227,7 @@ const initEvents = (store: Store<State, any>) => {
   }
 
   /** Stops the scroll-at-edge when dragging stops. */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onTouchEnd = (e: TouchEvent) => {
     scrollAtEdge.stop()
   }
@@ -282,6 +283,7 @@ const initEvents = (store: Store<State, any>) => {
     // In order to detect the end of dragging a file, we need to debounce the dragLeave event and cancel it if dragEnter occurs.
     // Inspired by: https://stackoverflow.com/questions/3144881/how-do-i-detect-a-html5-drag-event-entering-and-leaving-the-window-like-gmail-d
     setTimeout(() => {
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       dragLeave.cancel()
     })
     if (e.dataTransfer?.types.includes('Files')) {
@@ -293,6 +295,7 @@ const initEvents = (store: Store<State, any>) => {
   }
 
   /** Drag leave handler for file drag-and-drop. Does not handle drag end. */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const dragLeave = _.debounce((e: DragEvent) => {
     store.dispatch((dispatch, getState) => {
       // e.dataTransfer.types is not available in dragLeave for some reason, so we check state.draggingFile

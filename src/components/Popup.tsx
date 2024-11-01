@@ -89,6 +89,7 @@ const Popup = React.forwardRef<
       )}
       {multicursor && (
         <a
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           {...fastClick(e => {
             dispatch(clearMulticursors())
             onClose?.()

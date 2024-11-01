@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import Lexeme from '../@types/Lexeme'
 import ThoughtId from '../@types/ThoughtId'
 import Timestamp from '../@types/Timestamp'

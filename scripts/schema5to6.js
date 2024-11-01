@@ -8,6 +8,9 @@ if (!file) {
   process.exit(1)
 }
 
+/**
+ *
+ */
 const isAttribute = value => value.startsWith('=')
 
 const thoughts = JSON.parse(fs.readFileSync(file, 'utf8'))

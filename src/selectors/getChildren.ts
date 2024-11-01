@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import _ from 'lodash'
 import moize from 'moize'
 import ComparatorFunction from '../@types/ComparatorFunction'
@@ -115,7 +116,7 @@ const resortEmptyInPlace = (sorted: Thought[]): Thought[] => {
     if (sorted[emptyIndex]?.sortValue) {
       // not sure why the linter fails here since emptyIndex and i are declared outside the loop
       // See: https://eslint.org/docs/rules/no-loop-func
-      // eslint-disable-next-line no-loop-func
+
       emptyIndex = sortedFinal.findIndex((child, i) => i < emptyIndex && !child.value)
       continue
     }

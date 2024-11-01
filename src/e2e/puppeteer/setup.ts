@@ -1,8 +1,7 @@
-/* eslint-disable import/prefer-default-export */
+/* eslint-disable @typescript-eslint/no-namespace */
 import chalk from 'chalk'
 import { Browser, ConsoleMessage, Device, Page } from 'puppeteer'
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
   const browser: Browser
 }
@@ -50,8 +49,6 @@ const setup = async ({
         break
       case 'info':
       case 'log':
-        // eslint-disable-next-line no-console
-        console[messageType](text)
         break
       // ConsoleMessage 'warning needs to be converted to native console 'warn'
       case 'warn':

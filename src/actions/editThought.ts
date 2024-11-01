@@ -39,6 +39,7 @@ export interface editThoughtPayload {
 }
 
 /** Changes the text of an existing thought. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const editThought = (state: State, { force, oldValue, newValue, path, rankInContext }: editThoughtPayload) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 

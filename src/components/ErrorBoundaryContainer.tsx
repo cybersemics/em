@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { FC, PropsWithChildren, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { css, cx } from '../../styled-system/css'

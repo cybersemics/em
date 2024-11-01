@@ -23,7 +23,7 @@ const allowedStyleProperties = [
   },
   {
     property: 'font',
-    test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
+    test: (styleProperty: StyleProperty) => {
       if (styleProperty.value === 'normal' || +styleProperty.value <= 400) {
         return false
       }
@@ -48,7 +48,7 @@ const allowedStyleProperties = [
   },
   {
     property: 'text',
-    test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
+    test: (styleProperty: StyleProperty) => {
       if (styleProperty.value === 'none') {
         return false
       }

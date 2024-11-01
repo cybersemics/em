@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import isAbbreviation from './isAbbreviation'
 import once from './once'
 

@@ -12,6 +12,7 @@ import newThought from './newThought'
 
 /** Atomically insert multiple new thoughts. Excludes empty lines. */
 const insertMultipleThoughts = _.curryRight(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   (state: State, { simplePath, lines }: { simplePath: SimplePath; lines: string[] }) =>
     reducerFlow(
       lines
