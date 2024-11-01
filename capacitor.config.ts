@@ -5,8 +5,8 @@ import * as path from 'path'
 const nodeEnv = process.env.NODE_ENV || 'development'
 console.info(`Configuring ${nodeEnv} build`)
 dotenv.config({ path: path.resolve(process.cwd(), '.env') })
-dotenv.config({ path: path.resolve(process.cwd(), `.env.${nodeEnv}`) })
-dotenv.config({ path: path.resolve(process.cwd(), `.env.${nodeEnv}.local`) })
+dotenv.config({ path: path.resolve(process.cwd(), `.env.${nodeEnv}`), override: true })
+dotenv.config({ path: path.resolve(process.cwd(), `.env.${nodeEnv}.local`), override: true })
 
 const serverConfig =
   nodeEnv === 'development'
