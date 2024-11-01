@@ -31,17 +31,17 @@ const Tutorial2StepContextViewOpen = ({
   })
   const contextViewClosed = useSelector(state => {
     const cursorThoughts = state.cursor ? childIdsToThoughts(state, state.cursor) : null
-    return !contextViews[
-      contextToThoughtId(state, [
-        (cursorThoughts &&
-        cursorThoughts[0].value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
-          ? TUTORIAL_CONTEXT1_PARENT
-          : TUTORIAL_CONTEXT2_PARENT)[tutorialChoice],
-        TUTORIAL_CONTEXT[tutorialChoice],
-      ])!
-    ]
+    const thoughtId = contextToThoughtId(state, [
+      (cursorThoughts &&
+      cursorThoughts[0].value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
+        ? TUTORIAL_CONTEXT1_PARENT
+        : TUTORIAL_CONTEXT2_PARENT)[tutorialChoice],
+      TUTORIAL_CONTEXT[tutorialChoice],
+    ])
+    return Object.keys(contextViews).some(contextView => {
+      return contextView.includes(thoughtId!)
+    })
   })
-
   return cursorLost ? (
     <p>
       Oops, "{caseSensitiveValue}" is hidden because the selection changed. Select "
