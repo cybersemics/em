@@ -280,7 +280,8 @@ const Editable = ({
           newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
         ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
           Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()))
+          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
+      newValue.length > 0
     ) {
       dispatch(tutorialNext({}))
     }

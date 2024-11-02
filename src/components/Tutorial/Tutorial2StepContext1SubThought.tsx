@@ -22,7 +22,7 @@ const Tutorial2StepContext1SubThought = ({
   tutorialChoice: keyof typeof TUTORIAL_CONTEXT
   rootChildren: Thought[]
 }) => {
-  const context1SubthoughtisCreated = context1SubthoughtCreated({ rootChildren, tutorialChoice })
+  const context1SubthoughtisCreated = useSelector(state => context1SubthoughtCreated(state, { tutorialChoice }))
   const select = useSelector(
     state =>
       !state.cursor || headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
