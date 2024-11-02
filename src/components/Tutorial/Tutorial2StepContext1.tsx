@@ -21,7 +21,7 @@ const Tutorial2StepContext1 = ({
   cursor: Path | null
   tutorialChoice: keyof typeof TUTORIAL_CONTEXT
 }) => {
-  const value = useSelector(state => state.cursor && headValue(state, state.cursor))
+  const cursorValue = useSelector(state => state.cursor && headValue(state, state.cursor))
   const context1Exists = useSelector(state => {
     const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
     return rootChildren.find(
@@ -49,7 +49,7 @@ const Tutorial2StepContext1 = ({
           <TutorialHint>
             <br />
             <br />
-            {!cursor || value?.toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
+            {!cursor || cursorValue?.toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
               ? `Select "${TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". `
               : null}
             {isTouch ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to
