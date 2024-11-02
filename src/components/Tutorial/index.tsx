@@ -4,11 +4,9 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
-import Thought from '../../@types/Thought'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { isTouch } from '../../browser'
 import {
-  HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_HINT,
   TUTORIAL2_STEP_CONTEXT1_PARENT_HINT,
   TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT,
@@ -26,7 +24,6 @@ import {
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
 import useIsVisible from '../../hooks/useIsVisible'
-import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
 import { shortcutById } from '../../shortcuts'
 import durations from '../../util/durations'
@@ -37,8 +34,6 @@ import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
 import TutorialScrollUpButton from './TutorialScrollUpButton'
 import TutorialStepComponentMap from './TutorialStepComponentMap'
-
-const NO_CHILDREN: Thought[] = []
 
 /** Wrap a component in a slide CSS transition. */
 const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props: string]: any }) => {
@@ -76,7 +71,6 @@ const Tutorial: FC = () => {
 
   const dispatch = useDispatch()
   const cursor = useSelector((state: State) => state.cursor)
-  const rootChildren = useSelector((state: State) => getAllChildrenAsThoughts(state, HOME_TOKEN) || NO_CHILDREN)
   const tutorialChoice = useSelector(state => {
     const choice = +(getSetting(state, 'Tutorial Choice') || 0)
     // guard against invalid tutorialChoice and tutorialStep in case Settings/Tutorial Step is corrupted
@@ -84,9 +78,7 @@ const Tutorial: FC = () => {
   })
 
   const tutorialStepProps = {
-    cursor,
     tutorialChoice,
-    rootChildren,
     dispatch,
     transitionKey: Math.floor(tutorialStep),
   }
