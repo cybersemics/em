@@ -50,7 +50,7 @@ const TutorialStepAutoExpand = () => {
   )
 
   /** Gets the subthought that is not the cursor. */
-  const subThoughtNotCursorValue = useSelector(state => {
+  const subthoughtNotCursorValue = useSelector(state => {
     const thought =
       cursor && ancestorThoughtChildren.find(child => pathToContext(state, cursor).indexOf(child.value) === -1)
     return thought?.value || ''
@@ -84,7 +84,7 @@ const TutorialStepAutoExpand = () => {
             <>
               <> Try {isTouch ? 'tapping' : 'clicking'} on </>
               <>
-                thought "{ellipsize(subThoughtNotCursorValue)}"{' '}
+                thought "{ellipsize(subthoughtNotCursorValue)}"{' '}
                 {contextAncestor.length !== 0 && `or "${ellipsize(head(contextAncestor))}"`}{' '}
               </>
               <>
