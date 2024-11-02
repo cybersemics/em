@@ -19,7 +19,7 @@ const Tutorial2StepContext1Parent = () => {
   return (
     <>
       <p>
-        Let's begin! Create a new thought with the text “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”
+        Excellent choice. Now create a new thought with the text “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”
         {hasQuotes ? ' (without quotes)' : null}.
       </p>
       <p>

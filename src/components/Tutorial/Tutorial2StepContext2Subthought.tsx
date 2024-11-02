@@ -62,9 +62,8 @@ const Tutorial2StepContext2Subthought = () => {
     <>
       <p>Very good!</p>
       <p>
-        Notice the small number (<StaticSuperscript n={numContexts} />
-        ). This means that “{caseSensitiveValue}” appears in {numContexts} place{numContexts === 1 ? '' : 's'}, or{' '}
-        <i>contexts</i> (in our case{' '}
+        Notice the small number: <StaticSuperscript n={numContexts} />. This means that “{caseSensitiveValue}” appears
+        in {numContexts} place{numContexts === 1 ? '' : 's'}, or <i>contexts</i> (in our case{' '}
         {joinConjunction(
           contextParentThoughts
             .filter(parent => parent && parent.value !== HOME_TOKEN)
