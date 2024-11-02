@@ -17,7 +17,8 @@ import parentOf from '../../util/parentOf'
 import pathToContext from '../../util/pathToContext'
 
 /** Tutorial: Auto Expand. */
-const TutorialStepAutoExpand = ({ cursor }: { cursor?: Path } = {}) => {
+const TutorialStepAutoExpand = () => {
+  const cursor = useSelector(state => state.cursor)
   const state = store.getState()
   const tutorialStep = useSelector(state => +getSetting(state, 'Tutorial Step')!)
   const dispatch = useDispatch()
