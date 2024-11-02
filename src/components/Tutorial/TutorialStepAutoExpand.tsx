@@ -22,8 +22,14 @@ const TutorialStepAutoExpand = () => {
   const state = store.getState()
   const tutorialStep = useSelector(state => +getSetting(state, 'Tutorial Step')!)
   const dispatch = useDispatch()
-  const cursorChildren = cursor ? getAllChildrenAsThoughts(state, head(cursor)) : []
-  const isCursorLeaf = cursorChildren.length === 0
+  const isCursorLeaf = useSelector(state => {
+    const cursorChildren = cursor ? getAllChildrenAsThoughts(state, head(cursor)) : []
+    return cursorChildren.length === 0
+  })
+  const cursorChildValue = useSelector(state => {
+    const cursorChildren = cursor ? getAllChildrenAsThoughts(state, head(cursor)) : []
+    return cursorChildren[0]?.value
+  })
   const contextAncestor = cursor ? (isCursorLeaf ? parentOf(parentOf(cursor)) : parentOf(cursor)) : []
   const contextAncestorId = contextToThoughtId(state, contextAncestor)
   const pathToCollapse = useRef<Path | null>(cursor && cursor.length > 1 ? cursor : null)
@@ -78,13 +84,12 @@ const TutorialStepAutoExpand = () => {
               <>
                 {' '}
                 to hide
-                {(isCursorLeaf ? headValue(state, cursor) : cursorChildren[0].value).length === 0 && ' the empty '}{' '}
-                subthought
+                {(isCursorLeaf ? headValue(state, cursor) : cursorChildValue).length === 0 && ' the empty '} subthought
                 {ellipsize(
                   isCursorLeaf && headValue(state, cursor).length > 0
                     ? ` "${headValue(state, cursor)}"`
-                    : cursorChildren[0]?.value
-                      ? `"${cursorChildren[0]?.value}"`
+                    : cursorChildValue
+                      ? `"${cursorChildValue}"`
                       : '',
                 )}
                 .
