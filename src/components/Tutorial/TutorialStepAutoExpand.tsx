@@ -2,7 +2,6 @@ import { isEqual } from 'lodash'
 import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../../@types/Path'
-import Thought from '../../@types/Thought'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import { isTouch } from '../../browser'
 import { HOME_TOKEN } from '../../constants'
@@ -50,6 +49,13 @@ const TutorialStepAutoExpand = () => {
     state => pathToCollapse.current && !state.expanded[hashPath(parentOf(pathToCollapse.current))],
   )
 
+  /** Gets the subthought that is not the cursor. */
+  const subThoughtNotCursorValue = useSelector(state => {
+    const thought =
+      cursor && ancestorThoughtChildren.find(child => pathToContext(state, cursor).indexOf(child.value) === -1)
+    return thought?.value || ''
+  })
+
   // It is possible that pathToCollapse is null if the cursor was moved before advancing from the previous tutorial step, or if this tutorial step was selected out of order via the tutorial navigation.
   // Update pathToCollapse when the cursor becomes valid again to avoid getting stuck in this step.
   useEffect(() => {
@@ -69,10 +75,6 @@ const TutorialStepAutoExpand = () => {
     [dispatch, isParentCollapsed, setTutorialStep],
   )
 
-  /** Gets the subthought that is not the cursor. */
-  const subThoughtNotCursor = (subthoughts: Thought[]) =>
-    cursor && subthoughts.find(child => pathToContext(state, cursor).indexOf(child.value) === -1)
-
   return (
     <>
       <p>
@@ -82,7 +84,7 @@ const TutorialStepAutoExpand = () => {
             <>
               <> Try {isTouch ? 'tapping' : 'clicking'} on </>
               <>
-                thought "{ellipsize(subThoughtNotCursor(ancestorThoughtChildren)?.value || '')}"{' '}
+                thought "{ellipsize(subThoughtNotCursorValue)}"{' '}
                 {contextAncestor.length !== 0 && `or "${ellipsize(head(contextAncestor))}"`}{' '}
               </>
               <>
