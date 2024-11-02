@@ -29,30 +29,36 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
   ({ tutorialStep }: { tutorialStep: number }, ref) => {
     const dispatch = useDispatch()
 
-    const rootChildren = useSelector(state => getAllChildrenAsThoughts(state, HOME_TOKEN))
-    const tutorialChoice = useSelector(state => +(getSetting(state, 'Tutorial Choice') || 0))
-    const cursorValue = useSelector(state => (state.cursor ? headValue(state, state.cursor) : null))
-    const expanded = useSelector(state => state.expanded)
-
     useSelector(state => state.thoughts.thoughtIndex)
 
-    return [
-      TUTORIAL_STEP_START,
-      TUTORIAL_STEP_SUCCESS,
-      TUTORIAL2_STEP_START,
-      TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
-      TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
-      TUTORIAL2_STEP_SUCCESS,
-    ].includes(tutorialStep) ||
-      (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0) ||
-      ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
-        tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
-        tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER) &&
-        (!cursorValue || cursorValue.length > 0)) ||
-      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT &&
-        context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
-      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT &&
-        context2SubthoughtCreated({ rootChildren, tutorialChoice })) ? (
+    const showNextButton = useSelector(state => {
+      const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
+      const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0)
+      const cursorValue = state.cursor ? headValue(state, state.cursor) : null
+      const expanded = state.expanded
+
+      return (
+        [
+          TUTORIAL_STEP_START,
+          TUTORIAL_STEP_SUCCESS,
+          TUTORIAL2_STEP_START,
+          TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
+          TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
+          TUTORIAL2_STEP_SUCCESS,
+        ].includes(tutorialStep) ||
+        (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0) ||
+        ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
+          tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
+          tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER) &&
+          (!cursorValue || cursorValue.length > 0)) ||
+        (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT &&
+          context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
+        (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT &&
+          context2SubthoughtCreated({ rootChildren, tutorialChoice }))
+      )
+    })
+
+    return showNextButton ? (
       <TutorialNavigationButton
         clickHandler={() => dispatch(tutorialNext({}))}
         value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}
