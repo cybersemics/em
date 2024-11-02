@@ -19,6 +19,7 @@ import pathToContext from '../../util/pathToContext'
 /** Tutorial: Auto Expand. */
 const TutorialStepAutoExpand = () => {
   const cursor = useSelector(state => state.cursor)
+  const cursorValue = useSelector(state => (state.cursor ? headValue(state, state.cursor) : ''))
   const state = store.getState()
   const tutorialStep = useSelector(state => +getSetting(state, 'Tutorial Step')!)
   const dispatch = useDispatch()
@@ -90,10 +91,10 @@ const TutorialStepAutoExpand = () => {
               <>
                 {' '}
                 to hide
-                {(isCursorLeaf ? headValue(state, cursor) : cursorChildValue).length === 0 && ' the empty '} subthought
+                {(isCursorLeaf ? cursorValue : cursorChildValue).length === 0 && ' the empty '} subthought
                 {ellipsize(
-                  isCursorLeaf && headValue(state, cursor).length > 0
-                    ? ` "${headValue(state, cursor)}"`
+                  isCursorLeaf && cursorValue.length > 0
+                    ? ` "${cursorValue}"`
                     : cursorChildValue
                       ? `"${cursorChildValue}"`
                       : '',
