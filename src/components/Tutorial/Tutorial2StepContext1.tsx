@@ -1,5 +1,4 @@
 import { useSelector } from 'react-redux'
-import Path from '../../@types/Path'
 import { isMac, isTouch } from '../../browser'
 import {
   HOME_TOKEN,
@@ -14,13 +13,8 @@ import headValue from '../../util/headValue'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext1 = ({
-  cursor,
-  tutorialChoice,
-}: {
-  cursor: Path | null
-  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-}) => {
+const Tutorial2StepContext1 = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
+  const noCursor = useSelector(state => !state.cursor)
   const cursorValue = useSelector(state => state.cursor && headValue(state, state.cursor))
   const context1Exists = useSelector(state => {
     const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
@@ -49,7 +43,7 @@ const Tutorial2StepContext1 = ({
           <TutorialHint>
             <br />
             <br />
-            {!cursor || cursorValue?.toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
+            {noCursor || cursorValue?.toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
               ? `Select "${TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". `
               : null}
             {isTouch ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to
