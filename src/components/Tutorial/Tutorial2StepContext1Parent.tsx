@@ -10,9 +10,8 @@ import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1Parent = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
-  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor).startsWith('"'))
-
   const cursor = useSelector(state => state.cursor)
+  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor).startsWith('"'))
   const rootChildren = useSelector(state => getAllChildrenAsThoughts(state, HOME_TOKEN), isEqual)
 
   return (
