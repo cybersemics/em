@@ -1,8 +1,10 @@
+import { isEqual } from 'lodash'
 import { useSelector } from 'react-redux'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import { isTouch } from '../../browser'
-import { getAllChildren, getChildrenRanked } from '../../selectors/getChildren'
+import { HOME_TOKEN } from '../../constants'
+import { getAllChildren, getAllChildrenAsThoughts, getChildrenRanked } from '../../selectors/getChildren'
 import ellipsize from '../../util/ellipsize'
 
 /**
@@ -16,8 +18,11 @@ const thoughtsNoCursorWithChild = (state: State, rootChildren: Thought[]): Thoug
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const TutorialStepAutoExpandExpand = ({ rootChildren = [] }: { rootChildren: Thought[] }) => {
-  const uncle = useSelector(state => thoughtsNoCursorWithChild(state, rootChildren)[0])
+const TutorialStepAutoExpandExpand = () => {
+  const uncle = useSelector(state => {
+    const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
+    return thoughtsNoCursorWithChild(state, rootChildren)[0]
+  }, isEqual)
 
   /** Gets the first child of the first thought in the root that is not the cursor. */
   const childWithNoCursorParent = useSelector(state => (uncle ? getChildrenRanked(state, uncle.id)[0] : null))
