@@ -37,7 +37,7 @@ import TutorialScrollUpButton from './TutorialScrollUpButton'
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 
 /** Wrap a component in a slide CSS transition. */
-const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props: string]: any }) => {
+const WithCSSTransition = ({ component, transitionKey }: { component: FC; transitionKey: string }) => {
   const nodeRef = useRef(null)
 
   const Component = component
@@ -45,12 +45,12 @@ const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props
     <CSSTransition
       nodeRef={nodeRef}
       in={true}
-      key={Math.floor(props.transitionKey)}
+      key={transitionKey}
       timeout={durations.get('fastDuration')}
       classNames='slide'
     >
       <div ref={nodeRef}>
-        <Component {...props} />
+        <Component />
       </div>
     </CSSTransition>
   )
@@ -73,10 +73,6 @@ const Tutorial: FC = () => {
   const dispatch = useDispatch()
   const cursor = useSelector((state: State) => state.cursor)
   const tutorialChoice = useSelector(selectTutorialChoice)
-
-  const tutorialStepProps = {
-    transitionKey: Math.floor(tutorialStep),
-  }
 
   const tutorialStepComponent =
     TutorialStepComponentMap[Math.floor(tutorialStep) as keyof typeof TutorialStepComponentMap]
@@ -144,7 +140,10 @@ const Tutorial: FC = () => {
           <div>
             <TransitionGroup>
               {tutorialStepComponent ? (
-                <WithCSSTransition component={tutorialStepComponent} {...tutorialStepProps} />
+                <WithCSSTransition
+                  component={tutorialStepComponent}
+                  transitionKey={Math.floor(tutorialStep).toString()}
+                />
               ) : (
                 <p>
                   Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.
