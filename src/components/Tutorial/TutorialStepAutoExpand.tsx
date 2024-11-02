@@ -8,7 +8,6 @@ import { HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import { getAllChildren, getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
-import store from '../../stores/app'
 import ellipsize from '../../util/ellipsize'
 import hashPath from '../../util/hashPath'
 import head from '../../util/head'
@@ -20,7 +19,7 @@ import pathToContext from '../../util/pathToContext'
 const TutorialStepAutoExpand = () => {
   const cursor = useSelector(state => state.cursor)
   const cursorValue = useSelector(state => (state.cursor ? headValue(state, state.cursor) : ''))
-  const state = store.getState()
+  const isNoThoughts = useSelector(state => getAllChildren(state, HOME_TOKEN).length === 0)
   const tutorialStep = useSelector(state => +getSetting(state, 'Tutorial Step')!)
   const dispatch = useDispatch()
   const isCursorLeaf = useSelector(state => {
@@ -105,7 +104,7 @@ const TutorialStepAutoExpand = () => {
           ) : (
             <> Add a subthought and I'll show you.</>
           )
-        ) : getAllChildren(state, HOME_TOKEN).length === 0 ? (
+        ) : isNoThoughts ? (
           ' Oops! There are no thoughts in your thoughtspace. Please add some thoughts to continue with the tutorial.'
         ) : (
           ' Please focus on one of the thoughts.'
