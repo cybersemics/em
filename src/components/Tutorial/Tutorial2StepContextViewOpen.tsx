@@ -3,6 +3,8 @@ import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } 
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import getContexts from '../../selectors/getContexts'
+import isContextViewActive from '../../selectors/isContextViewActive'
+import thoughtToPath from '../../selectors/thoughtToPath'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewOpen = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
@@ -32,9 +34,9 @@ const Tutorial2StepContextViewOpen = ({ tutorialChoice }: { tutorialChoice: keyo
         : TUTORIAL_CONTEXT2_PARENT)[tutorialChoice],
       TUTORIAL_CONTEXT[tutorialChoice],
     ])
-    return Object.keys(state.contextViews).some(contextView => {
-      return contextView.includes(thoughtId!)
-    })
+    if (!thoughtId) return false
+    const path = thoughtToPath(state, thoughtId)
+    return !isContextViewActive(state, path)
   })
   return cursorLost ? (
     <p>
@@ -42,7 +44,7 @@ const Tutorial2StepContextViewOpen = ({ tutorialChoice }: { tutorialChoice: keyo
       {TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" or "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}" to show it again.
     </p>
   ) : contextViewClosed ? (
-    <p>Oops, somehow the context view was closed. Click the Prev button to go back.</p>
+    <p>Oops, somehow the context view was closed. Select "Relationships".</p>
   ) : (
     <>
       <p>
