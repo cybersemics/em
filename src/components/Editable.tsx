@@ -23,9 +23,7 @@ import {
   EDIT_THROTTLE,
   EM_TOKEN,
   TUTORIAL2_STEP_CONTEXT1,
-  TUTORIAL2_STEP_CONTEXT1_HINT,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
-  TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT,
   TUTORIAL2_STEP_CONTEXT2,
   TUTORIAL2_STEP_CONTEXT2_PARENT,
   TUTORIAL_CONTEXT,
@@ -275,17 +273,15 @@ const Editable = ({
     const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
     const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
     if (
-      (newValue &&
-        ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
-          (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
-            newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
-          ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
-            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
-            newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()))) ||
-      ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT ||
-        Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_HINT) &&
-        newValue.length > 0)
+      newValue &&
+      ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
+        newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
+        (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
+          newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
+        ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
+          Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
+          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
+      newValue.length > 0
     ) {
       dispatch(tutorialNext({}))
     }

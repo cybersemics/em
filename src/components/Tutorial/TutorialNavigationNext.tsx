@@ -22,6 +22,7 @@ import getSetting from '../../selectors/getSetting'
 import headValue from '../../util/headValue'
 import TutorialNavigationButton from './TutorialNavigationButton'
 import context1SubthoughtCreated from './utils/context1SubthoughtCreated'
+import context2SubthoughtCreated from './utils/context2SubthoughtCreated'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialStep: number }>(
@@ -50,7 +51,8 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
         (!cursorValue || cursorValue.length > 0)) ||
       (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT &&
         context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
-      Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT ? (
+      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT &&
+        context2SubthoughtCreated({ rootChildren, tutorialChoice })) ? (
       <TutorialNavigationButton
         clickHandler={() => dispatch(tutorialNext({}))}
         value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}
