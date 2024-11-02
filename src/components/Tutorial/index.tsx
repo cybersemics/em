@@ -75,7 +75,6 @@ const Tutorial: FC = () => {
   })
 
   const dispatch = useDispatch()
-  const contextViews = useSelector((state: State) => state.contextViews)
   const cursor = useSelector((state: State) => state.cursor)
   const rootChildren = useSelector((state: State) => getAllChildrenAsThoughts(state, HOME_TOKEN) || NO_CHILDREN)
   const tutorialChoice = useSelector(state => {
@@ -88,7 +87,6 @@ const Tutorial: FC = () => {
     cursor,
     tutorialChoice,
     rootChildren,
-    contextViews,
     dispatch,
     transitionKey: Math.floor(tutorialStep),
   }

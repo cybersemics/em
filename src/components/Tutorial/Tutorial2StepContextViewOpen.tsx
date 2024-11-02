@@ -5,13 +5,7 @@ import contextToThoughtId from '../../selectors/contextToThoughtId'
 import getContexts from '../../selectors/getContexts'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContextViewOpen = ({
-  tutorialChoice,
-  contextViews,
-}: {
-  contextViews: any
-  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-}) => {
+const Tutorial2StepContextViewOpen = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
   const caseSensitiveValue = useSelector(state =>
     getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
@@ -38,7 +32,7 @@ const Tutorial2StepContextViewOpen = ({
         : TUTORIAL_CONTEXT2_PARENT)[tutorialChoice],
       TUTORIAL_CONTEXT[tutorialChoice],
     ])
-    return Object.keys(contextViews).some(contextView => {
+    return Object.keys(state.contextViews).some(contextView => {
       return contextView.includes(thoughtId!)
     })
   })
