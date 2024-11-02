@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash'
 import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../../@types/Path'
@@ -31,12 +32,15 @@ const TutorialStepAutoExpand = () => {
     return cursorChildren[0]?.value
   })
   const contextAncestor = cursor ? (isCursorLeaf ? parentOf(parentOf(cursor)) : parentOf(cursor)) : []
-  const contextAncestorId = contextToThoughtId(state, contextAncestor)
   const pathToCollapse = useRef<Path | null>(cursor && cursor.length > 1 ? cursor : null)
 
-  const ancestorThoughtChildren = getAllChildrenAsThoughts(
-    state,
-    contextAncestor.length === 0 ? HOME_TOKEN : contextAncestorId,
+  const ancestorThoughtChildren = useSelector(
+    state =>
+      getAllChildrenAsThoughts(
+        state,
+        contextAncestor.length === 0 ? HOME_TOKEN : contextToThoughtId(state, contextAncestor),
+      ),
+    isEqual,
   )
   const isCursorRootChildren = (cursor || []).length === 1
 
