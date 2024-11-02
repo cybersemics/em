@@ -1,5 +1,4 @@
 import { useSelector } from 'react-redux'
-import Path from '../../@types/Path'
 import { isMac, isTouch } from '../../browser'
 import { HOME_TOKEN, TUTORIAL_CONTEXT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
@@ -8,19 +7,15 @@ import headValue from '../../util/headValue'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext2 = ({
-  tutorialChoice,
-  cursor,
-}: {
-  cursor: Path | null
-  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-}) => {
+const Tutorial2StepContext2 = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
   const readyToType = useSelector(state => {
     if (!state.cursor) return false
     const cursorThought = childIdsToThoughts(state, state.cursor)
     return cursorThought.length === 2 && cursorThought[0].value === TUTORIAL_CONTEXT2_PARENT[tutorialChoice]
   })
-  const select = useSelector(state => !cursor || headValue(state, cursor) !== TUTORIAL_CONTEXT2_PARENT[tutorialChoice])
+  const select = useSelector(
+    state => !state.cursor || headValue(state, state.cursor) !== TUTORIAL_CONTEXT2_PARENT[tutorialChoice],
+  )
   const context2Exists = useSelector(state => {
     const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
     return rootChildren.find(
