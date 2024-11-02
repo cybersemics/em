@@ -65,15 +65,11 @@ const TutorialStepAutoExpand = () => {
   }, [cursor])
 
   // advance tutoriral when parent is collapsed
-  useEffect(
-    () => {
-      if (isParentCollapsed) {
-        dispatch(setTutorialStep({ value: tutorialStep + 1 }))
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, isParentCollapsed, setTutorialStep],
-  )
+  useEffect(() => {
+    if (isParentCollapsed) {
+      dispatch(setTutorialStep({ value: tutorialStep + 1 }))
+    }
+  }, [dispatch, isParentCollapsed, tutorialStep])
 
   return (
     <>
