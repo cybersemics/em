@@ -11,7 +11,7 @@ const TutorialStepSubThoughtEnter = () => {
   const cursorParentValue = useSelector(state =>
     state.cursor && nonRoot ? headValue(state, parentOf(state.cursor)) : null,
   )
-  const isEmpty = useSelector(state => state.cursor && cursorValue!.length === 0)
+  const isEmpty = useSelector(state => !!state.cursor && cursorValue!.length === 0)
 
   return (
     <>
