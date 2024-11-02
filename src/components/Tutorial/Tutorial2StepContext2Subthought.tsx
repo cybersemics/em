@@ -19,6 +19,12 @@ import StaticSuperscript from '../StaticSuperscript'
 import TutorialHint from './TutorialHint'
 import context2SubthoughtCreated from './utils/context2SubthoughtCreated'
 
+/** Converts a numeral (e.g. 2) to a written word ("two"). */
+const numeralToWord = (n: number) => {
+  const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
+  return words[n] ?? n.toString()
+}
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext2Subthought = () => {
   const tutorialChoice = useSelector(selectTutorialChoice)
@@ -63,7 +69,7 @@ const Tutorial2StepContext2Subthought = () => {
       <p>Very good!</p>
       <p>
         Notice the small number: <StaticSuperscript n={numContexts} />. This means that “{caseSensitiveValue}” appears
-        in {numContexts} place{numContexts === 1 ? '' : 's'}, or <i>contexts</i> (in our case{' '}
+        in {numeralToWord(numContexts)} place{numContexts === 1 ? '' : 's'}, or <i>contexts</i> (in our case{' '}
         {joinConjunction(
           contextParentThoughts
             .filter(parent => parent && parent.value !== HOME_TOKEN)
