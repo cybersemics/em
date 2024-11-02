@@ -1,8 +1,9 @@
+import { isEqual } from 'lodash'
 import { useSelector } from 'react-redux'
 import Path from '../../@types/Path'
-import Thought from '../../@types/Thought'
 import { isTouch } from '../../browser'
-import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT } from '../../constants'
+import { HOME_TOKEN, TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT } from '../../constants'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import ellipsize from '../../util/ellipsize'
 import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
@@ -12,13 +13,13 @@ import TutorialHint from './TutorialHint'
 const Tutorial2StepContext1Parent = ({
   cursor,
   tutorialChoice,
-  rootChildren,
 }: {
   cursor: Path | null
   tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-  rootChildren: Thought[]
 }) => {
   const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor).startsWith('"'))
+
+  const rootChildren = useSelector(state => getAllChildrenAsThoughts(state, HOME_TOKEN), isEqual)
 
   return (
     <>
