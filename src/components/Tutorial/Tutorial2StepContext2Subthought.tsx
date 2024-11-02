@@ -12,6 +12,7 @@ import contextToThoughtId from '../../selectors/contextToThoughtId'
 import { getAllChildrenAsThoughts, getChildrenRanked } from '../../selectors/getChildren'
 import getContexts from '../../selectors/getContexts'
 import parentOfThought from '../../selectors/parentOfThought'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
 import StaticSuperscript from '../StaticSuperscript'
@@ -19,7 +20,8 @@ import TutorialHint from './TutorialHint'
 import context2SubthoughtCreated from './utils/context2SubthoughtCreated'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext2Subthought = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
+const Tutorial2StepContext2Subthought = () => {
+  const tutorialChoice = useSelector(selectTutorialChoice)
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
   const caseSensitiveValue = useSelector(state => (getContexts(state, value).length > 0 ? value : value.toLowerCase()))
   const numContexts = useSelector(state => getContexts(state, caseSensitiveValue).length)

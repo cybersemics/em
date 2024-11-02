@@ -1,15 +1,17 @@
 import { isEqual } from 'lodash'
 import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
-import { HOME_TOKEN, TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT } from '../../constants'
+import { HOME_TOKEN, TUTORIAL_CONTEXT1_PARENT } from '../../constants'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import ellipsize from '../../util/ellipsize'
 import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext1Parent = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
+const Tutorial2StepContext1Parent = () => {
+  const tutorialChoice = useSelector(selectTutorialChoice)
   const cursor = useSelector(state => state.cursor)
   const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor).startsWith('"'))
   const rootChildren = useSelector(state => getAllChildrenAsThoughts(state, HOME_TOKEN), isEqual)

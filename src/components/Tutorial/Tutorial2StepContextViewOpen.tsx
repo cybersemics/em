@@ -4,10 +4,12 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import getContexts from '../../selectors/getContexts'
 import isContextViewActive from '../../selectors/isContextViewActive'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import thoughtToPath from '../../selectors/thoughtToPath'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContextViewOpen = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
+const Tutorial2StepContextViewOpen = () => {
+  const tutorialChoice = useSelector(selectTutorialChoice)
   const caseSensitiveValue = useSelector(state =>
     getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]

@@ -9,11 +9,13 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext1 = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
+const Tutorial2StepContext1 = () => {
+  const tutorialChoice = useSelector(selectTutorialChoice)
   const noCursor = useSelector(state => !state.cursor)
   const cursorValue = useSelector(state => state.cursor && headValue(state, state.cursor))
   const context1Exists = useSelector(state => {

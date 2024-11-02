@@ -10,12 +10,14 @@ import {
 } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import { getAllChildrenAsThoughts, getChildrenRanked } from '../../selectors/getChildren'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
 import TutorialHint from './TutorialHint'
 import context1SubthoughtCreated from './utils/context1SubthoughtCreated'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext1SubThought = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
+const Tutorial2StepContext1SubThought = () => {
+  const tutorialChoice = useSelector(selectTutorialChoice)
   const context1SubthoughtisCreated = useSelector(state => context1SubthoughtCreated(state, { tutorialChoice }))
   const select = useSelector(
     state =>

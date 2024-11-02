@@ -25,6 +25,7 @@ import {
 } from '../../constants'
 import useIsVisible from '../../hooks/useIsVisible'
 import getSetting from '../../selectors/getSetting'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import { shortcutById } from '../../shortcuts'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
@@ -71,15 +72,9 @@ const Tutorial: FC = () => {
 
   const dispatch = useDispatch()
   const cursor = useSelector((state: State) => state.cursor)
-  const tutorialChoice = useSelector(state => {
-    const choice = +(getSetting(state, 'Tutorial Choice') || 0)
-    // guard against invalid tutorialChoice and tutorialStep in case Settings/Tutorial Step is corrupted
-    return (isNaN(choice) ? 0 : choice) as keyof typeof TUTORIAL_CONTEXT1_PARENT
-  })
+  const tutorialChoice = useSelector(selectTutorialChoice)
 
   const tutorialStepProps = {
-    tutorialChoice,
-    dispatch,
     transitionKey: Math.floor(tutorialStep),
   }
 
