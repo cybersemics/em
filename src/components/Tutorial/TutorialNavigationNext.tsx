@@ -3,13 +3,13 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutorialNext'
 import {
-  HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT,
   TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT,
   TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
   TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
   TUTORIAL2_STEP_START,
   TUTORIAL2_STEP_SUCCESS,
+  TUTORIAL_CONTEXT,
   TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
   TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
@@ -17,7 +17,6 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
-import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
 import headValue from '../../util/headValue'
 import TutorialNavigationButton from './TutorialNavigationButton'
@@ -32,8 +31,7 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
     useSelector(state => state.thoughts.thoughtIndex)
 
     const showNextButton = useSelector(state => {
-      const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
-      const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0)
+      const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as keyof typeof TUTORIAL_CONTEXT
       const cursorValue = state.cursor ? headValue(state, state.cursor) : null
       const expanded = state.expanded
 
@@ -52,9 +50,9 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
           tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER) &&
           (!cursorValue || cursorValue.length > 0)) ||
         (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT &&
-          context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
+          context1SubthoughtCreated(state, { tutorialChoice })) ||
         (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT &&
-          context2SubthoughtCreated({ rootChildren, tutorialChoice }))
+          context2SubthoughtCreated(state, { tutorialChoice }))
       )
     })
 

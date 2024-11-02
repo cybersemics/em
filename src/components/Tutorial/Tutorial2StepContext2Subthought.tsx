@@ -1,5 +1,4 @@
 import { useSelector } from 'react-redux'
-import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
 import {
@@ -11,7 +10,6 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
-import findDescendant from '../../selectors/findDescendant'
 import { getChildrenRanked } from '../../selectors/getChildren'
 import getContexts from '../../selectors/getContexts'
 import parentOfThought from '../../selectors/parentOfThought'
@@ -19,28 +17,7 @@ import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
 import StaticSuperscript from '../StaticSuperscript'
 import TutorialHint from './TutorialHint'
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const context2SubthoughtCreated = (
-  state: State,
-  {
-    rootChildren,
-    tutorialChoice,
-  }: {
-    tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-    rootChildren: Thought[]
-  },
-) => {
-  const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
-  const tutorialChoiceId =
-    tutorialChoiceParentId && findDescendant(state, tutorialChoiceParentId, TUTORIAL_CONTEXT[tutorialChoice])
-  // e.g. Work
-  return (
-    tutorialChoiceId &&
-    // e.g. Work/To Do/y
-    getChildrenRanked(state, tutorialChoiceId).length > 0
-  )
-}
+import context2SubthoughtCreated from './utils/context2SubthoughtCreated'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext2Subthought = ({
@@ -57,9 +34,7 @@ const Tutorial2StepContext2Subthought = ({
     const contexts = getContexts(state, caseSensitiveValue)
     return contexts.map(thoughtId => parentOfThought(state, thoughtId))
   })
-  const isContext2SubthoughtCreated = useSelector(state =>
-    context2SubthoughtCreated(state, { rootChildren, tutorialChoice }),
-  )
+  const isContext2SubthoughtCreated = useSelector(state => context2SubthoughtCreated(state, { tutorialChoice }))
 
   const hasChosen = useSelector(state => {
     const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
