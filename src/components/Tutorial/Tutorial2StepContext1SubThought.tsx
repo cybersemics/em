@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux'
-import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
 import {
+  HOME_TOKEN,
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_VERSION_BOOK,
@@ -9,24 +9,24 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
-import { getChildrenRanked } from '../../selectors/getChildren'
+import { getAllChildrenAsThoughts, getChildrenRanked } from '../../selectors/getChildren'
 import headValue from '../../util/headValue'
 import TutorialHint from './TutorialHint'
 import context1SubthoughtCreated from './utils/context1SubthoughtCreated'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext1SubThought = ({
-  tutorialChoice,
-  rootChildren,
-}: {
-  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-  rootChildren: Thought[]
-}) => {
+const Tutorial2StepContext1SubThought = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
   const context1SubthoughtisCreated = useSelector(state => context1SubthoughtCreated(state, { tutorialChoice }))
   const select = useSelector(
     state =>
       !state.cursor || headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
   )
+  const context1Exists = useSelector(state => {
+    const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
+    return rootChildren.find(
+      child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
+    )
+  })
   const tryItYourself = useSelector(state => {
     const tutorialChoiceId = contextToThoughtId(state, [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]])
     return (
@@ -60,9 +60,7 @@ const Tutorial2StepContext1SubThought = ({
       </p>
       {
         // e.g. Home
-        rootChildren.find(
-          child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
-        ) &&
+        context1Exists &&
         // e.g. Home/To Do
         tryItYourself ? (
           <p>
