@@ -1,14 +1,15 @@
 import { useSelector } from 'react-redux'
 import Path from '../../@types/Path'
-import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
 import {
+  HOME_TOKEN,
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_VERSION_BOOK,
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import headValue from '../../util/headValue'
 import TutorialHint from './TutorialHint'
 
@@ -16,13 +17,17 @@ import TutorialHint from './TutorialHint'
 const Tutorial2StepContext1 = ({
   cursor,
   tutorialChoice,
-  rootChildren,
 }: {
   cursor: Path | null
   tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-  rootChildren: Thought[]
 }) => {
   const value = useSelector(state => state.cursor && headValue(state, state.cursor))
+  const context1Exists = useSelector(state => {
+    const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
+    return rootChildren.find(
+      child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
+    )
+  })
 
   return (
     <>
@@ -38,9 +43,7 @@ const Tutorial2StepContext1 = ({
         Add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <i>within</i> “
         {TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”.
       </p>
-      {rootChildren.find(
-        child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
-      ) ? (
+      {context1Exists ? (
         <p>
           Do you remember how to do it?
           <TutorialHint>
