@@ -50,7 +50,7 @@ describe('multiline', () => {
 
     await paste(`
     - https://test.com/single-line
-    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url
+    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url/without-cursor
     - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url/with-cursor
     - This thought tests the line height of the above thought
   `)
