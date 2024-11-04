@@ -23,7 +23,8 @@ const allowedStyleProperties = [
   },
   {
     property: 'font',
-    test: (styleProperty: StyleProperty) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       if (styleProperty.value === 'normal' || +styleProperty.value <= 400) {
         return false
       }
@@ -48,7 +49,8 @@ const allowedStyleProperties = [
   },
   {
     property: 'text',
-    test: (styleProperty: StyleProperty) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       if (styleProperty.value === 'none') {
         return false
       }

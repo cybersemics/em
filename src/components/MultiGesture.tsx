@@ -143,8 +143,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     // Since we set this.disableScroll or this.abandon on touchstart, we need to reset them on touchend.
     // This occurs, for eample, on tap.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    window.addEventListener('touchend', e => {
+    window.addEventListener('touchend', () => {
       this.reset()
     })
 

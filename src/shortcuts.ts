@@ -143,8 +143,7 @@ let commandPaletteGesture: number | undefined
  */
 export const inputHandlers = (store: Store<State, any>) => ({
   /** Handles gesture hints when a valid segment is entered. */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  handleGestureSegment: ({ gesture, sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
+  handleGestureSegment: ({ sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
     const state = store.getState()
     const experienceMode = getUserSetting(state, Settings.experienceMode)
 

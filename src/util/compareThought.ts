@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import _ from 'lodash'
 import ComparatorFunction from '../@types/ComparatorFunction'
 import ComparatorValue from '../@types/ComparatorValue'
@@ -58,6 +57,7 @@ const parseDate = (s: string): number =>
   )
 
 /** Returns trure if the given string is an integer or decimal number. Recognizes prefixed number strings like "#1" and "$1" as numbers. */
+// eslint-disable-next-line @typescript-eslint/no-use-before-define
 const isNumber = (x: number | string): boolean => !isNaN(toNumber(x))
 
 /** Converts a string to a number. If given a number, returns it as-is. If given a string with a prefixe such as "#" or "$", strips it and returns the actual number. If given a number range, returns the start of the range. If the input cannot be converted to a number, returns NaN. */

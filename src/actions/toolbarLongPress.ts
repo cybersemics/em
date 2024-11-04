@@ -12,8 +12,7 @@ interface Payload {
 }
 
 /** Reducer for highlighting a toolbar button for dragging on tap and hold. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const toolbarLongPress = (state: State, { shortcut, sourceZone }: Payload) => ({
+const toolbarLongPress = (state: State, { shortcut }: Payload) => ({
   ...(shortcut
     ? alert(state, {
         value: AlertText.DragAndDropToolbar,

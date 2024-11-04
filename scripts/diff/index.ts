@@ -1,11 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import fs from 'fs'
 import _ from 'lodash'
+import Child from '../../src/@types/Child'
 import Context from '../../src/@types/Context'
 import Index from '../../src/@types/Index'
 import Parent from '../../src/@types/Parent'
 import { HOME_TOKEN } from '../../src/constants'
 import hashContext from '../../src/util/hashContext'
+import hashThought from '../../src/util/hashThought'
 import head from '../../src/util/head'
 import { State } from '../../src/util/initialState'
 import unroot from '../../src/util/unroot'
@@ -30,9 +31,6 @@ interface UserState {
   thoughtIndex: State['thoughts']['thoughtIndex']
 }
 
-/**
- *
- */
 const appendContext = (context: Context, child: string) => unroot([...context, child])
 
 /** Traverses the thoughtIndex, calling a function for each context. */
@@ -69,7 +67,6 @@ const renderContext = (context: Context): string => `${repeat(' ', context.lengt
 const renderThought = (parent: Parent): string => {
   const context = Object.values(parent.context)
   const children = Object.values(parent.children)
-  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   return children.map(child => renderContextWithAncestors([...context, child.value])).join('\n')
 }
 
@@ -102,9 +99,6 @@ const renderContextWithAncestors = (context: Context): string => {
 /*****************************************************************
  * MAIN
  *****************************************************************/
-/**
- *
- */
 const main = () => {
   const [, , file1, file2] = process.argv
 
@@ -115,6 +109,12 @@ const main = () => {
   }
 
   // Output file header thoughts
+  console.log('- Diff')
+  console.log(`  - ${file1}`)
+  console.log(`  - ${file2}`)
+  console.log(`- Missing`)
+  console.log(`  - =note`)
+  console.log(`    - from ${file2}`)
 
   // read
   const input1 = fs.readFileSync(file1, 'utf-8')
@@ -134,6 +134,7 @@ const main = () => {
     if (context.includes('=archive')) return
 
     if (!parent2) {
+      console.log(renderThought(parent1))
     }
   })
 }

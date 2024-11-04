@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import newThought from '../../actions/newThought'
 import splitSentences from '../../actions/splitSentences'
 import { HOME_TOKEN } from '../../constants'
@@ -6,6 +5,20 @@ import exportContext from '../../selectors/exportContext'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
+
+/**
+ * Function: splitThought.
+ *
+ * @param thought The thought that needs to be split.
+ * @returns The thought string after being split.
+ */
+function splitThought(value: string) {
+  const steps = [newThought(value), splitSentences()]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  return exported
+}
 
 describe('split by comma', () => {
   it('split single thought on comma when there are no periods', () => {
@@ -634,17 +647,3 @@ describe('complicated cases', () => {
   - IPv4: 11.11.11.111`)
   })
 })
-
-/**
- * Function: splitThought.
- *
- * @param thought The thought that needs to be split.
- * @returns The thought string after being split.
- */
-function splitThought(value: string) {
-  const steps = [newThought(value), splitSentences()]
-
-  const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-  return exported
-}

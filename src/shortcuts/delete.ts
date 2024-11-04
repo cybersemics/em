@@ -17,8 +17,8 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
-// eslint-disable-next-line jsdoc/require-jsdoc, @typescript-eslint/no-unused-vars
-const exec: Shortcut['exec'] = (dispatch, getState, e) => {
+// eslint-disable-next-line jsdoc/require-jsdoc
+const exec: Shortcut['exec'] = (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
 
@@ -60,8 +60,7 @@ const deleteShortcut: Shortcut = {
     preventSetCursor: true,
     reverse: true,
     clearMulticursor: true,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
+    execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
       const numThougths = cursors.length
 
       execAll()

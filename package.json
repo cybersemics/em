@@ -195,7 +195,7 @@
     "eslint-plugin-promise": "^7.1.0",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.14",
+    "eslint-plugin-react-refresh": "^0.4.11",
     "fake-indexeddb": "^6.0.0",
     "happy-dom": "^15.7.4",
     "it-all": "^3.0.6",

@@ -28,5 +28,7 @@ let indentationLevel = 0
 for (let i = 0; i < n; i++) {
   const indent = repeat('  ', indentationLevel)
   const line = `${indent}- ${i.toString(16)}`
+  console.log(line)
+
   indentationLevel += indentationLevel === 0 ? randUp() : randUpDown()
 }

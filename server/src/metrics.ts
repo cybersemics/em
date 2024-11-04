@@ -8,7 +8,6 @@ import './env'
 
 // import is not working in commonjs build
 // require only works with node-fetch v2
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const fetch = require('node-fetch')
 

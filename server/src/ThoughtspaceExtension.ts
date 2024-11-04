@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Extension, onAuthenticatePayload, onLoadDocumentPayload } from '@hocuspocus/server'
 import { isEqual, throttle } from 'lodash'
 import { MongodbPersistence } from 'y-mongodb-provider'
@@ -65,6 +64,7 @@ const log = (...args: [...any, ...([ConsoleMethod] | [])]) => {
   const lastArg = args[args.length - 1]
   if (typeof lastArg === 'object' && Object.keys(lastArg).length === 1 && lastArg.method) {
     args = args.slice(0, -1)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     method = lastArg.method
   }
 }
