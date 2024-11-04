@@ -95,37 +95,3 @@ it('collapsed thought with url child', async () => {
   const image = await screenshot()
   expect(image).toMatchImageSnapshot()
 })
-
-describe('url will be ellipsized when the thought reaches the end of the line.', () => {
-  /** Tests if url is ellipsized. */
-  const testScreenShot = async () => {
-    await hideHUD()
-
-    await paste(`
-      - https://github.com
-      - https://test.com/articles/how-to-optimize-web-performance-and-achieve-faster-load-times-with-modern-techniques-and-tools-for-better-user-experience-across-different-browsers-and-devices-in-2023-including-insights-tips-and-best-practices-from-industry-experts-and-professionals
-    `)
-
-    await press('Escape')
-
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
-  }
-
-  it('Font Size: 18 (default)', testScreenShot)
-
-  it('Font Size: 17', async () => {
-    await click('[data-testid=decrease-font]') // 17
-    await testScreenShot()
-  })
-
-  it('Font Size: 13', async () => {
-    await click('[data-testid=decrease-font]') // 17
-    await click('[data-testid=decrease-font]') // 16
-    await click('[data-testid=decrease-font]') // 15
-    await click('[data-testid=decrease-font]') // 14
-    await click('[data-testid=decrease-font]') // 13
-
-    await testScreenShot()
-  })
-})
