@@ -1,14 +1,28 @@
+import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { Settings } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
-import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
+
+/** Hook to use window.scrollTop immediately as it changes. Use when the throttled scrollTopStore is too slow. */
+const useScrollTop = () => {
+  const [scrollTop, setScrollTop] = useState(window.scrollY)
+
+  useEffect(() => {
+    /** Set scrollTop on scroll. */
+    const handleScroll = () => setScrollTop(window.scrollY)
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  return scrollTop
+}
 
 /** An overlay for the scroll zone that blocks pointer events. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
-  const scrollTop = scrollTopStore.useState()
+  const scrollTop = useScrollTop()
   const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
   if (hideScrollZone) return null
 
@@ -23,16 +37,16 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
         position: 'fixed',
         left: leftHanded ? 0 : undefined,
         right: leftHanded ? undefined : 0,
-        height: '100%',
+        // height must exceed all possible scroll heights
+        height: '999999px',
         opacity: 0.4,
         pointerEvents: 'none',
-        transition: 'backgroundPositionY {durations.slow} ease-in-out',
       })}
       style={{
-        backgroundPositionY: `calc(1080px - ${scrollTop / 4}px)`,
+        transform: `translateY(calc(-${scrollTop / 4 + 400}px))`,
         width: scrollZoneWidth,
       }}
-    />
+    ></div>
   )
 }
 
