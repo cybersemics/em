@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import isAbbreviation from './isAbbreviation'
 import once from './once'
 
@@ -54,6 +53,7 @@ const splitSentence = (value: string): string[] => {
      * Case1: ending with url address
      * Case2: ending with Mr., Dr., Apt., i.e., Ph.D..
      */
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     if (isAbbreviation(prevSentence, s) || isUrl(prevSentence, s)) {
       return newSentence + currSentence
     }
@@ -64,6 +64,7 @@ const splitSentence = (value: string): string[] => {
      * Hence, they are needed to be removed and added back to the end of the current sentence.
      */
     const matched = s.trimLeft().match(/^[)'"]+/)
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     const removeFront = matched !== null ? calculateRemoveFront(prevSentence, s, matched) : 0
     if (matched !== null) {
       if (removeFront === 0) return newSentence + SEPARATOR_TOKEN + currSentence

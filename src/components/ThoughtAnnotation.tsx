@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import moize from 'moize'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -191,6 +190,7 @@ const ThoughtAnnotationContainer = React.memo(
     }, [])
 
     return showSuperscript || url || email || styleAnnotation ? (
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       <ThoughtAnnotation
         {...{
           simplePath,

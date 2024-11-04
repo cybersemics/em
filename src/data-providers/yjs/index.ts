@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import { nanoid } from 'nanoid'
 import { IndexeddbPersistence } from 'y-indexeddb'
@@ -99,6 +98,7 @@ websocketThoughtspace.on('disconnect', () => {
 
 /** If there is more than one device, connects the thoughtspace Websocket provider. */
 const connectThoughtspaceProvider = () => {
+  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   if (permissionsClientMap.size > 1) {
     websocketThoughtspace.connect()
   }

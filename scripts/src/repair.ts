@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 /** Finds thought's children with parentId that do not match thought.id and repairs it. Also removes children that do not have a corresponding entry in thoughtIndex. */
 import chalk from 'chalk'
 import Table from 'cli-table'
@@ -9,8 +5,10 @@ import fs from 'fs'
 import _ from 'lodash'
 import minimist from 'minimist'
 import { nanoid } from 'nanoid'
+import path from 'path'
 import Context from '../../src/@types/Context'
 import Index from '../../src/@types/IndexType'
+import Lexeme from '../../src/@types/Lexeme'
 import LexemeDb from '../../src/@types/LexemeDb'
 import Path from '../../src/@types/Path'
 import Thought from '../../src/@types/Thought'
@@ -58,9 +56,6 @@ if (!args.w) {
   console.info('Executing dry-run')
 }
 
-/**
- *
- */
 const filterChildrenBy = (children: Index<Thought>, predicate: (thought: Thought) => boolean) =>
   Object.entries(children || {}).reduce(
     (accum, [key, id]) => ({
@@ -148,9 +143,6 @@ const moveThought = (thought: ThoughtDb, parentId: ThoughtId) => {
   }
 }
 
-/**
- *
- */
 const moveThoughtToOrphanage = (thought: ThoughtDb) => {
   // create orphanage if it doesn't exist
   if (!db.thoughtIndex.orphanage) {

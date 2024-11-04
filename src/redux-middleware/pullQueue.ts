@@ -84,8 +84,7 @@ const appendVisiblePaths = (
 }
 
 /** An action-creator that pulls the =favorite Lexeme and all contexts. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const pullFavorites = (): Thunk => async (dispatch, getState) => {
+const pullFavorites = (): Thunk => async dispatch => {
   const lexeme = await db.getLexemeById(hashThought('=favorite'))
   return dispatch(pullAncestors(lexeme?.contexts || [], { force: true, maxDepth: 0 }))
 }

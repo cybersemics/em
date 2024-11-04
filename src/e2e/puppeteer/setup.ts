@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-namespace */
 import chalk from 'chalk'
 import { Browser, ConsoleMessage, Device, Page } from 'puppeteer'
 import sleep from '../../util/sleep'
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare module global {
   const browser: Browser
 }

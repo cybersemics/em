@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
@@ -7,6 +6,7 @@ import hashPath from '../util/hashPath'
 
 /** Removes a cursor from the multicursor set. */
 const removeMulticursor = (state: State, { path }: { path: Path }): State => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { [hashPath(path)]: _, ...remainingMulticursors } = state.multicursors
 
   return {

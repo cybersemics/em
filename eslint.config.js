@@ -85,7 +85,18 @@ const commonRules = {
 
 export default [
   {
-    ignores: ['node_modules/**', 'dist/**', '**/*.spec.js', 'android/**', 'build/**', 'docs/**', 'functions/**'],
+    ignores: [
+      'node_modules/**',
+      '**/styled-system/*',
+      '**/ios/*',
+      '**/android/**',
+      '**/build/*',
+      '**/docs/*',
+      '**/functions/*',
+      '**/scripts/*',
+    ],
+  },
+  {
     languageOptions: {
       ...commonSettings,
     },

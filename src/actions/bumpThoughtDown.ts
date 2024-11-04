@@ -1,4 +1,3 @@
-/* eslint-disable */
 import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'

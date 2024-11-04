@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 /**
  * Function: isAbbreviation.
  *
@@ -8,6 +7,7 @@
  * Examples: Mr. Dr.q Apt. Prof. Ph.D.
  */
 export default function isAbbreviation(str1: string, s: string) {
+  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   return isAbbrEndSplitter(str1) || isAbbrMidSplitter(str1, s) || isAbbrDoubleSplitter(str1, s)
 }
 

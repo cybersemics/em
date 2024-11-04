@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
@@ -61,7 +60,7 @@ const ModalAuth = () => {
 
   /** Reset password using reset email. */
   const resetPassword: SubmitAction = useCallback(
-    async (closeModal, email) => {
+    async closeModal => {
       updateIsSubmitting(true)
 
       throw new Error('Not implemented')
@@ -79,7 +78,7 @@ const ModalAuth = () => {
   )
 
   /** Login with email and password. */
-  const loginWithEmailAndPassword: SubmitAction = useCallback(async (closeModal, email, password) => {
+  const loginWithEmailAndPassword: SubmitAction = useCallback(async closeModal => {
     updateIsSubmitting(true)
     throw new Error('Not implemented')
     try {

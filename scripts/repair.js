@@ -1,12 +1,12 @@
 /**
  * This script runs client-side (in the browser console) and operate directly on in-memory data using window.em and then dispatching updateThoughts to sync.
  */
+
 /** Recursively traverses the thoughtIndex starting with the root, and performs several automatic fixes on all reachable descendants (with the corresponding context in lexemeIndex as needed):
- *
- * - missing lexeme
- * - missing rank
- * - missing id
- * - inconsistent rank between `thoughtIndex` and `lexemeIndex` (BREAKS when a duplicate value exists in the same context).
+ *   - missing lexeme
+ *   - missing rank
+ *   - missing id
+ *   - inconsistent rank between thoughtIndex and lexemeIndex (BREAKS when a duplicate value exists in the same context)
  */
 let repair = (maxDepth = 100) => {
   const { thoughtIndex, lexemeIndex } = em.store.getState().thoughts
@@ -45,9 +45,6 @@ let repair = (maxDepth = 100) => {
       // compare with null to avoid false positive for ''
       a.find((thought, i) => b[i] !== thought)) == null
 
-  /**
-   *
-   */
   const generateUpdates = (context, depth = 0) => {
     if (depth >= maxDepth) return
 

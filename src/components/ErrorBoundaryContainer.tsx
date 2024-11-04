@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { FC, PropsWithChildren, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { css, cx } from '../../styled-system/css'
@@ -7,6 +6,7 @@ import { token } from '../../styled-system/tokens'
 import fastClick from '../util/fastClick'
 
 /** A triangular toggle component. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const Toggle = ({ children, expand, title }: { children?: any; expand?: boolean; title?: string }) => {
   const [expanded, setExpanded] = useState(false)
 

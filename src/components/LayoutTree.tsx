@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
@@ -136,7 +137,6 @@ const useSizeTracking = () => {
     ({
       height,
       width,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       id,
       isVisible,
       key,
