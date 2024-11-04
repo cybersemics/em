@@ -98,4 +98,57 @@ describe('all platforms', () => {
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
+
+  it.skip('on 2x cursorDown, the caret should move from the end of a cursor into the 2nd line of the new multi-line cursor.', async () => {
+    const importText = `
+  - a
+    - b
+      - c
+      - Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended.
+      - d`
+
+    await paste(importText)
+
+    const editableNodeHandle = await waitForEditable('c')
+    await click(editableNodeHandle, { edge: 'left' })
+
+    await press('ArrowDown')
+    await press('ArrowDown')
+
+    // the focus must be at the beginning of 'b' after cursor down
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe(
+      "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended.",
+    )
+
+    const offset = await getSelection().focusOffset
+    expect(offset).toBeGreaterThan(0)
+  })
+
+  it('on cursorDown, the caret should move from the beginning of a cursor into the 2nd line of the same multi-line cursor.', async () => {
+    const importText = `
+  - a
+    - b
+      - c
+      - Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended.
+      - d`
+
+    await paste(importText)
+
+    const editableNodeHandle = await waitForEditable(
+      "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended.",
+    )
+    await click(editableNodeHandle, { edge: 'left' })
+
+    await press('ArrowDown')
+
+    // the focus must be at the beginning of 'b' after cursor down
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe(
+      "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended.",
+    )
+
+    const offset = await getSelection().focusOffset
+    expect(offset).toBeGreaterThan(70)
+  })
 })
