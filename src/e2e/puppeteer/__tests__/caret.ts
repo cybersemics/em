@@ -174,7 +174,7 @@ describe('all platforms', () => {
 describe('mobile only', () => {
   beforeEach(async () => {
     await emulate(KnownDevices['iPhone 11'])
-  }, 20000)
+  }, 5000)
 
   it('After subcategorizeOne, the caret should be on the new thought', async () => {
     const importText = `
