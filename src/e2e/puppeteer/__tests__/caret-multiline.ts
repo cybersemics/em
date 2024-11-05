@@ -7,6 +7,7 @@ import waitForEditable from '../helpers/waitForEditable'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('all platforms', () => {
+  // test case 1
   it('on cursorDown, the caret should move from the beginning of a cursor to the beginning of the new cursor.', async () => {
     const importText = `
     - a
@@ -30,6 +31,7 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
+  // test case 2
   it('on cursorDown, the caret should move from the end of a cursor to the beginning of the new cursor.', async () => {
     const importText = `
   - a
@@ -53,6 +55,7 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
+  // test case 3
   it('on cursorUp, the caret should move from the beginning of a cursor to the beginning of the new cursor.', async () => {
     const importText = `
     - a
@@ -76,6 +79,7 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
+  // test case 4
   it('on cursorUp, the caret should move from the end of a cursor to the beginning of the new cursor.', async () => {
     const importText = `
   - a
@@ -99,6 +103,7 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
+  // test case 5
   it.skip('on 2x cursorDown, the caret should move from the end of a cursor into the 2nd line of the new multi-line cursor.', async () => {
     const importText = `
   - a
@@ -125,6 +130,7 @@ describe('all platforms', () => {
     expect(offset).toBeGreaterThan(70)
   })
 
+  // test case 6
   it('on cursorDown, the caret should move from the beginning of a multi-line cursor into the 2nd line of the same cursor.', async () => {
     const importText = `
   - a
@@ -138,7 +144,7 @@ describe('all platforms', () => {
     const editableNodeHandle = await waitForEditable(
       "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended.",
     )
-    await click(editableNodeHandle, { edge: 'left' })
+    await click(editableNodeHandle, { offset: 2 })
 
     await press('ArrowDown')
 
@@ -152,6 +158,7 @@ describe('all platforms', () => {
     expect(offset).toBeGreaterThan(70)
   })
 
+  // test case 7
   it('on cursorDown, the caret should move from near the end of a multi-line cursor to the beginning of a new cursor.', async () => {
     const multiLineCursor =
       "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended."
@@ -177,6 +184,7 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
+  // test case 8
   it('on cursorUp, the caret should move from near the beginning of a multi-line cursor to the beginning of the previous cursor.', async () => {
     const multiLineCursor =
       "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended."
@@ -202,6 +210,7 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
+  // test case 9
   it('on cursorUp, the caret should move from near the end of multi-line cursor to the previous line in the same cursor.', async () => {
     const multiLineCursor =
       "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended."
@@ -227,6 +236,7 @@ describe('all platforms', () => {
     expect(offset).toBeGreaterThan(70)
   })
 
+  // test case 10
   it('on cursorUp, the caret should move from the current cursor to the beginning of the multi-line cursor.', async () => {
     const multiLineCursor =
       "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended."
