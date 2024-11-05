@@ -105,11 +105,13 @@ describe('all platforms', () => {
 
   // test case 5
   it.skip('on 2x cursorDown, the caret should move from the end of a cursor into the 2nd line of the new multi-line cursor.', async () => {
+    const multiLineCursor =
+      "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended."
     const importText = `
   - a
     - b
       - c
-      - Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended.
+      - ${multiLineCursor}
       - d`
 
     await paste(importText)
@@ -122,40 +124,38 @@ describe('all platforms', () => {
 
     // the focus must be in the middle of the multi-line thought after cursor down
     const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe(
-      "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended.",
-    )
+    expect(textContext).toBe(multiLineCursor)
 
     const offset = await getSelection().focusOffset
-    expect(offset).toBeGreaterThan(70)
+    expect(offset).toBeGreaterThan(multiLineCursor.length / 3)
+    expect(offset).toBeLessThan((multiLineCursor.length * 2) / 3)
   })
 
   // test case 6
   it('on cursorDown, the caret should move from the beginning of a multi-line cursor into the 2nd line of the same cursor.', async () => {
+    const multiLineCursor =
+      "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended."
     const importText = `
   - a
     - b
       - c
-      - Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended.
+      - ${multiLineCursor}
       - d`
 
     await paste(importText)
 
-    const editableNodeHandle = await waitForEditable(
-      "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended.",
-    )
+    const editableNodeHandle = await waitForEditable(multiLineCursor)
     await click(editableNodeHandle, { offset: 2 })
 
     await press('ArrowDown')
 
     // the focus must be in the middle of the multi-line cursor after cursor down
     const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe(
-      "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended.",
-    )
+    expect(textContext).toBe(multiLineCursor)
 
     const offset = await getSelection().focusOffset
-    expect(offset).toBeGreaterThan(70)
+    expect(offset).toBeGreaterThan(multiLineCursor.length / 3)
+    expect(offset).toBeLessThan((multiLineCursor.length * 2) / 3)
   })
 
   // test case 7
@@ -233,7 +233,9 @@ describe('all platforms', () => {
     expect(textContext).toBe(multiLineCursor)
 
     const offset = await getSelection().focusOffset
-    expect(offset).toBeGreaterThan(70)
+
+    expect(offset).toBeGreaterThan(multiLineCursor.length / 3)
+    expect(offset).toBeLessThan((multiLineCursor.length * 2) / 3)
   })
 
   // test case 10
