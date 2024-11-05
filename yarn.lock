@@ -4869,7 +4869,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:^8.0.0":
+"@testing-library/dom@npm:^8.5.0":
   version: 8.20.1
   resolution: "@testing-library/dom@npm:8.20.1"
   dependencies:
@@ -4900,17 +4900,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/react@npm:^12.1.5":
-  version: 12.1.5
-  resolution: "@testing-library/react@npm:12.1.5"
+"@testing-library/react@npm:^13.0.0":
+  version: 13.4.0
+  resolution: "@testing-library/react@npm:13.4.0"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
-    "@testing-library/dom": "npm:^8.0.0"
-    "@types/react-dom": "npm:<18.0.0"
+    "@testing-library/dom": "npm:^8.5.0"
+    "@types/react-dom": "npm:^18.0.0"
   peerDependencies:
-    react: <18.0.0
-    react-dom: <18.0.0
-  checksum: 10c0/3c2433d2fdb6535261f62cd85d79657989cebd96f9072da03c098a1cfa56dec4dfec83d7c2e93633a3ccebdb178ea8578261533d11551600966edab77af00c8b
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 10c0/371bf982dd0deb27da004f368b06904353eac0f23f9c08ff0f24443c3f51a6d647009e366034417565d2484c40f1c7eff74413738abf4ec55209da9bd3253b0e
   languageName: node
   linkType: hard
 
@@ -5319,16 +5319,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:<18.0.0":
-  version: 17.0.25
-  resolution: "@types/react-dom@npm:17.0.25"
-  dependencies:
-    "@types/react": "npm:^17"
-  checksum: 10c0/18a95d4d684cacc697d97ae66e3c8402da2f866c053fa6a5982694aa8eb6229afcefd3bfaaab4175c1b0ef3494c881e4d25e2167aa669bcbbb84114fd02ae5ba
-  languageName: node
-  linkType: hard
-
-"@types/react-dom@npm:^18.3.1":
+"@types/react-dom@npm:^18.0.0, @types/react-dom@npm:^18.3.1":
   version: 18.3.1
   resolution: "@types/react-dom@npm:18.3.1"
   dependencies:
@@ -5386,17 +5377,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:^17":
-  version: 17.0.80
-  resolution: "@types/react@npm:17.0.80"
-  dependencies:
-    "@types/prop-types": "npm:*"
-    "@types/scheduler": "npm:^0.16"
-    csstype: "npm:^3.0.2"
-  checksum: 10c0/c5d2862564212a41a327ea9c7e70b9d3996d9b0f67971d39519d42d1f3ae6ddf76b183457b7b0be9d7b5d6ff0aaeed5711448423406d20018f082077c984eec4
-  languageName: node
-  linkType: hard
-
 "@types/react@npm:^18.3.12":
   version: 18.3.12
   resolution: "@types/react@npm:18.3.12"
@@ -5438,13 +5418,6 @@ __metadata:
   dependencies:
     htmlparser2: "npm:^8.0.0"
   checksum: 10c0/c6614b38f67dd6fb3a94c9163a55fa43b9aa81a845fe9584d9ffbd5da0e00e0ac8162ede9f4bde095840b2ef9db12265f5fcc40b707f48a420405c6aa7c3ff51
-  languageName: node
-  linkType: hard
-
-"@types/scheduler@npm:^0.16":
-  version: 0.16.8
-  resolution: "@types/scheduler@npm:0.16.8"
-  checksum: 10c0/f86de504945b8fc41b1f391f847444d542e2e4067cf7e5d9bfeb5d2d2393d3203b1161bc0ef3b1e104d828dabfb60baf06e8d2c27e27ff7e8258e6e618d8c4ec
   languageName: node
   linkType: hard
 
@@ -8633,7 +8606,7 @@ __metadata:
     "@sinonjs/fake-timers": "npm:^13.0.4"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/jest-dom": "npm:^6.6.2"
-    "@testing-library/react": "npm:^12.1.5"
+    "@testing-library/react": "npm:^13.0.0"
     "@testing-library/user-event": "npm:^14.5.2"
     "@total-typescript/ts-reset": "npm:^0.6.1"
     "@trivago/prettier-plugin-sort-imports": "npm:^4.3.0"
