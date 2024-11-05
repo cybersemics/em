@@ -76,7 +76,7 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
-  it('on cursorUp, the caret should move from the end of a cursor to the end of the new cursor.', async () => {
+  it('on cursorUp, the caret should move from the end of a cursor to the beginning of the new cursor.', async () => {
     const importText = `
   - a
     - b
