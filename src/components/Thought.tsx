@@ -32,7 +32,6 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
-import themeColors from '../selectors/themeColors'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
@@ -182,7 +181,6 @@ const ThoughtContainer = ({
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
-  const colors = useSelector(themeColors)
   const styleAnnotation = useSelector(
     state =>
       safeRefMerge(
@@ -261,25 +259,28 @@ const ThoughtContainer = ({
     }
   }, [])
 
-  // Styles applied to the .thought-annotation and .editable
-  // Highlight the parent of the current drop target to make it easier to drop in the intended place.
-  // Use -webkit-text-stroke-width instead of font-weight:bold, as bold changes the width of the text and can cause the thought to become multiline during a drag. This can even create an oscillation effect as the increased Thought height triggers a different hoveringPath ad infinitum (often resulting in a Shaker cancel false positive).
-  // See: https://stackoverflow.com/a/46452396/480608
   const styleThought = useMemo(
     (): React.CSSProperties => ({
-      /** Animation to apply to a parent when one of its children is being hovered over. Disabled in puppeteer tests. */
-      ...(isChildHovering
-        ? {
-            WebkitTextStrokeWidth: '0.05em',
-            animation: `pulse-light ${token('durations.slowPulseDuration')} linear infinite alternate`,
-            color: colors.highlight,
-          }
-        : null),
       // textDecoration does not inherit from inline-block elements, so we apply it here instead of .child
       textDecoration: style?.textDecoration,
     }),
-    [colors.highlight, isChildHovering, style?.textDecoration],
+    [style?.textDecoration],
   )
+
+  // Styles applied to the .thought-annotation and .editable
+  // See: https://stackoverflow.com/a/46452396/480608
+  // Use -webkit-text-stroke-width instead of font-weight:bold, as bold changes the width of the text and can cause the thought to become multiline during a drag. This can even create an oscillation effect as the increased Thought height triggers a different hoveringPath ad infinitum (often resulting in a Shaker cancel false positive).
+  // Highlight the parent of the current drop target to make it easier to drop in the intended place.
+  const cssRawThought = css.raw({
+    /** Animation to apply to a parent when one of its children is being hovered over. Disabled in puppeteer tests. */
+    ...(isChildHovering
+      ? {
+          WebkitTextStrokeWidth: '0.05em',
+          animation: `pulseLight {durations.slowPulseDuration} linear infinite alternate`,
+          color: 'highlight',
+        }
+      : null),
+  })
 
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {
   //   allowSingleContext,
@@ -455,6 +456,8 @@ const ThoughtContainer = ({
           rank={rank}
           showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
           simplePath={simplePath}
+          cssRaw={cssRawThought}
+          cssRawThought={cssRawThought}
           style={styleThought}
           styleAnnotation={styleAnnotation || undefined}
           styleThought={styleThought}

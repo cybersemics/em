@@ -34,7 +34,7 @@ interface Shortcut {
   exec: (
     dispatch: Dispatch,
     getState: () => State,
-    e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
+    e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent | React.ClipboardEvent,
     { type }: { type: ShortcutType },
   ) => void | Promise<void>
 
@@ -55,6 +55,9 @@ interface Shortcut {
 
   /** When true, a small open dropdown indicator will be rendered beneath the icon. */
   isDropdownOpen?: (state: State) => boolean
+
+  /** When true, don't need to prevent the default activity. */
+  permitDefault?: boolean
 
   /** A keyboard sequence to activate the shortcut. */
   keyboard?: Key | string

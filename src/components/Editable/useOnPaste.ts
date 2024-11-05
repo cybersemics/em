@@ -29,6 +29,8 @@ const useOnPaste = ({
       // mobile Safari copies URLs as 'text/uri-list' when the share button is used
       const plainText = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/uri-list')
       const htmlText = e.clipboardData.getData('text/html')
+      // Puppeteer does not allow setData with other MIME types. If the browser is controlled by automation, or the clipboard comes from em, set true.
+      const emText = navigator.webdriver || !!e.clipboardData.getData('text/em')
 
       // import raw thoughts: confirm before overwriting state
       if (
@@ -65,17 +67,14 @@ const useOnPaste = ({
         }
 
         const text = htmlText
-          ? // Clean HTML from clipboard
-            strip(htmlText, { preserveFormatting: true })
-          : // Escape plain text from clipboard
-            escapeHtml(plainText.trim())
+          ? strip(htmlText, { preserveFormatting: emText, stripColors: !emText }).replace(/\n\s*\n+/g, '\n') // Clean HTML from clipboard
+          : escapeHtml(plainText.trim()) // Escape plain text from clipboard
 
         // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
-        const multiline = plainText.trim().includes('\n') || htmlText?.match(/<(li|p|br)[\s>]/)
+        const multiline = plainText.trim().includes('\n')
 
         // Check if the text is markdown, if so, prefer importText over importFiles
         const markdown = isMarkdown(text)
-
         // Resumable imports (via importFiles) import thoughts one at a time and can be resumed if the page is refreshed or there is another interruption. They have a progress bar and they allow duplicates pending descendants to be loaded and merged.
         // Non-resumable imports (via importText), in contrast, are atomic, fast, and preserve the browser selection. Due to the lack of support for duplicates pending descendants, they are only used for single line imports.
         if (!multiline || markdown) {

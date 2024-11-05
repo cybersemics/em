@@ -8,6 +8,7 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
 import TutorialHint from './TutorialHint'
 
@@ -18,7 +19,8 @@ const tutorialChoiceMap = {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext2Parent = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
+const Tutorial2StepContext2Parent = () => {
+  const tutorialChoice = useSelector(selectTutorialChoice)
   const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor).startsWith('"'))
   const readyToSelect = useSelector(
     state =>

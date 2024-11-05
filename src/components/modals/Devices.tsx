@@ -368,12 +368,12 @@ const EditableName = React.memo(
     return (
       <div className={css({ position: 'relative' })}>
         <ContentEditable
-          className='active-underline'
+          className={css({ '&:focus': { borderBottom: 'solid 1px' }, display: 'inline', marginBottom: '0.5em' })}
           innerRef={ref}
           html={value}
           onChange={onChange}
           placeholder='Untitled'
-          style={{ display: 'inline', fontSize: fontSize * 1.25, marginBottom: '0.5em' }}
+          style={{ fontSize: fontSize * 1.25 }}
         />
         <a
           {...fastClick(() => {

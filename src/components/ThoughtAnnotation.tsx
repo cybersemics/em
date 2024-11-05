@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { multiline as multilineRecipe } from '../../styled-system/recipes'
+import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -99,6 +100,7 @@ const ThoughtAnnotationContainer = React.memo(
     ellipsizedUrl,
     placeholder,
     invalidState,
+    cssRaw,
     style,
     // only applied to the .subthought container
     styleAnnotation,
@@ -113,6 +115,7 @@ const ThoughtAnnotationContainer = React.memo(
     placeholder?: string
     showContextBreadcrumbs?: boolean
     simplePath: SimplePath
+    cssRaw?: SystemStyleObject
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
   }) => {
@@ -199,6 +202,7 @@ const ThoughtAnnotationContainer = React.memo(
           ellipsizedUrl: ellipsizedUrl,
           numContexts,
           showSuperscript,
+          cssRaw,
           style,
           styleAnnotation,
           email,
@@ -221,6 +225,7 @@ const ThoughtAnnotation = React.memo(
     numContexts,
     showSuperscript,
     simplePath,
+    cssRaw,
     style,
     // only applied to the .subthought container
     styleAnnotation,
@@ -235,6 +240,7 @@ const ThoughtAnnotation = React.memo(
     numContexts: number
     showSuperscript?: boolean
     simplePath: SimplePath
+    cssRaw?: SystemStyleObject
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
     url?: string | null
@@ -317,32 +323,32 @@ const ThoughtAnnotation = React.memo(
             //   border-bottom: solid 1px;
             // }
           }
-          style={{
-            fontFamily: isAttribute(value) ? 'monospace' : undefined,
-            ...styleAnnotation,
-          }}
+          style={styleAnnotation}
         >
           <span
-            className={css({
-              visibility: 'hidden',
-              position: 'relative',
-              clipPath: 'inset(0.001px 0 0.1em 0)',
-              minHeight: 'minThoughtHeight',
-              wordBreak: 'break-word',
-              ...(ellipsizedUrl && {
-                display: 'inline-block',
-                textOverflow: 'ellipsis',
-                overflow: 'hidden',
-                whiteSpace: 'nowrap',
-                maxWidth: '100%',
-                /*
+            className={css(
+              {
+                visibility: 'hidden',
+                position: 'relative',
+                clipPath: 'inset(0.001px 0 0.1em 0)',
+                minHeight: 'minThoughtHeight',
+                wordBreak: 'break-word',
+                ...(ellipsizedUrl && {
+                  display: 'inline-block',
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '100%',
+                  /*
                     vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
                     Here is the reference to the reason.
                     https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
                 */
-                verticalAlign: 'top',
-              }),
-            })}
+                  verticalAlign: 'top',
+                }),
+              },
+              cssRaw,
+            )}
             style={style}
             dangerouslySetInnerHTML={{ __html: textMarkup || placeholder || '' }}
           />
@@ -353,7 +359,7 @@ const ThoughtAnnotation = React.memo(
           {email && <EmailIconLink email={email} />}
           {
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-            showSuperscript ? <StaticSuperscript absolute n={numContexts} style={style} /> : null
+            showSuperscript ? <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} /> : null
           }
         </div>
       </div>

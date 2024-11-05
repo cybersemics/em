@@ -11,7 +11,7 @@ const TutorialStepSubThoughtEnter = () => {
   const cursorParentValue = useSelector(state =>
     state.cursor && nonRoot ? headValue(state, parentOf(state.cursor)) : null,
   )
-  const isEmpty = useSelector(state => state.cursor && cursorValue!.length === 0)
+  const isEmpty = useSelector(state => !!state.cursor && cursorValue!.length === 0)
 
   return (
     <>
@@ -19,7 +19,7 @@ const TutorialStepSubThoughtEnter = () => {
         As you can see{isTouch ? ' (if you scroll down)' : ''}, the new thought
         {nonRoot && cursorValue!.length > 0 ? <> "{ellipsize(cursorValue!)}"</> : null} is nested <i>within</i>{' '}
         {nonRoot ? <>"{ellipsize(cursorParentValue!)}"</> : 'the other thought'}. This is useful for using a thought as
-        a category, for example, but the exact meaning is up to you.
+        a category, but the exact meaning is up to you.
       </p>
       <p>You can create thoughts within thoughts within thoughts. There is no limit.</p>
       {!isEmpty ? (

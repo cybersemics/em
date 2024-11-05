@@ -1,7 +1,7 @@
 import { SemanticTokens, Tokens } from '@pandacss/dev'
-import { colors } from '../selectors/themeColors'
+import colors from '../colors.config'
 
-/** Converts theme colors to PandaCSS tokens (function will be removed after the conversion to PandaCSS is complete). */
+/** Converts theme colors to PandaCSS tokens. */
 const convertColorsToPandaCSS = () => {
   const colorTokens: Tokens['colors'] = {}
   const colorSemanticTokens: SemanticTokens['colors'] = {}

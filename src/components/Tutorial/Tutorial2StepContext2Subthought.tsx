@@ -1,6 +1,4 @@
 import { useSelector } from 'react-redux'
-import State from '../../@types/State'
-import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
 import {
   HOME_TOKEN,
@@ -11,46 +9,25 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
-import findDescendant from '../../selectors/findDescendant'
-import { getChildrenRanked } from '../../selectors/getChildren'
+import { getAllChildrenAsThoughts, getChildrenRanked } from '../../selectors/getChildren'
 import getContexts from '../../selectors/getContexts'
 import parentOfThought from '../../selectors/parentOfThought'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
 import StaticSuperscript from '../StaticSuperscript'
 import TutorialHint from './TutorialHint'
+import context2SubthoughtCreated from './utils/context2SubthoughtCreated'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const context2SubthoughtCreated = (
-  state: State,
-  {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    rootChildren,
-    tutorialChoice,
-  }: {
-    tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-    rootChildren: Thought[]
-  },
-) => {
-  const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
-  const tutorialChoiceId =
-    tutorialChoiceParentId && findDescendant(state, tutorialChoiceParentId, TUTORIAL_CONTEXT[tutorialChoice])
-  // e.g. Work
-  return (
-    tutorialChoiceId &&
-    // e.g. Work/To Do/y
-    getChildrenRanked(state, tutorialChoiceId).length > 0
-  )
+/** Converts a numeral (e.g. 2) to a written word ("two"). */
+const numeralToWord = (n: number) => {
+  const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
+  return words[n] ?? n.toString()
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext2Subthought = ({
-  tutorialChoice,
-  rootChildren,
-}: {
-  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-  rootChildren: Thought[]
-}) => {
+const Tutorial2StepContext2Subthought = () => {
+  const tutorialChoice = useSelector(selectTutorialChoice)
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
   const caseSensitiveValue = useSelector(state => (getContexts(state, value).length > 0 ? value : value.toLowerCase()))
   const numContexts = useSelector(state => getContexts(state, caseSensitiveValue).length)
@@ -58,9 +35,7 @@ const Tutorial2StepContext2Subthought = ({
     const contexts = getContexts(state, caseSensitiveValue)
     return contexts.map(thoughtId => parentOfThought(state, thoughtId))
   })
-  const isContext2SubthoughtCreated = useSelector(state =>
-    context2SubthoughtCreated(state, { rootChildren, tutorialChoice }),
-  )
+  const isContext2SubthoughtCreated = useSelector(state => context2SubthoughtCreated(state, { tutorialChoice }))
 
   const hasChosen = useSelector(state => {
     const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
@@ -74,6 +49,13 @@ const Tutorial2StepContext2Subthought = ({
       !state.cursor || headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
   )
 
+  const context2Exists = useSelector(state => {
+    const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
+    return rootChildren.find(
+      child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase(),
+    )
+  })
+
   if (isContext2SubthoughtCreated) {
     return (
       <>
@@ -86,9 +68,8 @@ const Tutorial2StepContext2Subthought = ({
     <>
       <p>Very good!</p>
       <p>
-        Notice the small number (<StaticSuperscript n={numContexts} />
-        ). This means that “{caseSensitiveValue}” appears in {numContexts} place{numContexts === 1 ? '' : 's'}, or{' '}
-        <i>contexts</i> (in our case{' '}
+        Notice the small number: <StaticSuperscript n={numContexts} />. This means that “{caseSensitiveValue}” appears
+        in {numeralToWord(numContexts)} place{numContexts === 1 ? '' : 's'}, or <i>contexts</i> (in our case{' '}
         {joinConjunction(
           contextParentThoughts
             .filter(parent => parent && parent.value !== HOME_TOKEN)
@@ -109,9 +90,7 @@ const Tutorial2StepContext2Subthought = ({
       </p>
       {
         // e.g. Work
-        rootChildren.find(
-          child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase(),
-        ) &&
+        context2Exists &&
         // e.g. Work/To Do
         hasChosen ? (
           <p>

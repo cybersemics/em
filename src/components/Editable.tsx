@@ -56,6 +56,8 @@ import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import * as positionFixed from './Editable/positionFixed'
 import useEditMode from './Editable/useEditMode'
+import useOnCopy from './Editable/useOnCopy'
+import useOnCut from './Editable/useOnCut'
 import useOnPaste from './Editable/useOnPaste'
 
 /** Stops propagation of an event, if CMD/CTRL is not pressed. */
@@ -278,7 +280,8 @@ const Editable = ({
           newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
         ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
           Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()))
+          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
+      newValue.length > 0
     ) {
       dispatch(tutorialNext({}))
     }
@@ -423,7 +426,8 @@ const Editable = ({
 
   /** Imports text that is pasted onto the thought. */
   const onPaste = useOnPaste({ contentRef, simplePath, transient })
-
+  const onCopy = useOnCopy({ thoughtId })
+  const onCut = useOnCut()
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
@@ -451,7 +455,7 @@ const Editable = ({
       // (does not work when clicking a bullet as it is set to null)
       const isRelatedTargetEditableOrNote =
         e.relatedTarget &&
-        ((e.relatedTarget as Element).classList?.contains('editable') ||
+        ((e.relatedTarget as Element).hasAttribute?.('data-editable') ||
           !!(e.relatedTarget as Element).querySelector('[aria-label="note-editable"]'))
 
       if (isRelatedTargetEditableOrNote) return
@@ -623,6 +627,13 @@ const Editable = ({
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
+      onCopy={onCopy}
+      onCut={e => {
+        // flush the last edit, otherwise if cut occurs in quick succession the new value can be overwritten by the throttled change
+        throttledChangeRef.current?.flush()
+
+        onCut(e)
+      }}
       onPaste={e => {
         // flush the last edit, otherwise if paste occurs in quick succession the pasted value can be overwritten by the throttled change
         throttledChangeRef.current?.flush()

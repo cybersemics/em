@@ -1,5 +1,4 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import hideHUD from '../helpers/hideHUD'
@@ -165,9 +164,6 @@ describe('Font Size: 13', () => {
 
     // scroll to top
     await scroll(0, 0)
-
-    // wait for toolbar size transitions to complete
-    await sleep(400)
   })
 
   // run the snapshot tests at font size 14
@@ -186,9 +182,6 @@ describe('Font Size: 22', () => {
 
     // scroll to top
     await scroll(0, 0)
-
-    // wait for toolbar size transitions to complete
-    await sleep(400)
   })
 
   // run the snapshot tests at font size 22
