@@ -475,11 +475,13 @@ describe.skip('editing', () => {
     const subthoughts = await findSubthoughts('m')
 
     const thoughtA = await findByLabelText(subthoughts[0], 'thought')
-    userEvent.click(thoughtA)
 
-    userEvent.type(thoughtA, 'z')
+    const user = userEvent.setup({ delay: null })
+    await user.click(thoughtA)
 
-    userEvent.type(thoughtA, '{esc}')
+    await user.type(thoughtA, 'z')
+
+    await user.type(thoughtA, '{esc}')
     store.dispatch(toggleContextView())
 
     const thoughtA2 = await findAllThoughtsByText('a')
