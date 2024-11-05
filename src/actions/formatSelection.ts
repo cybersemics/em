@@ -47,6 +47,29 @@ export const formatSelectionActionCreator =
           if (elementColor && isDifferentColor) return true
           return false
         }
+
+        /** Function to collect tag names without significant attributes. */
+        const collectTagsWithoutAttributes = (text: string, pattern: RegExp): string[] =>
+          Array.from(text.matchAll(pattern))
+            // Filter out tags that lack meaningful attributes
+            .filter(([, , attributes]) => {
+              const meaningfulAttributes = ['style=', 'class=', 'color=', 'background-color=']
+              // Return true if attributes are absent or do not contain any meaningful attributes
+              return !attributes || !meaningfulAttributes.some(attr => attributes.includes(attr))
+            })
+            // Map to extract the tag names from matches
+            .map(([, tagName]) => tagName)
+
+        /** Function to create a new text string with specified tags and their content removed. */
+        const removeTags = (text: string, tags: string[]): string =>
+          // Use reduce to accumulate a new string without the unwanted tags
+          tags.reduce((acc, tagName) => {
+            const openingTagPattern = new RegExp(`<${tagName}(\\s[^>]*)?>`, 'gi')
+            const closingTagPattern = new RegExp(`</${tagName}>`, 'gi')
+            // Replace both opening and closing tags with an empty string
+            return acc.replace(openingTagPattern, '').replace(closingTagPattern, '')
+          }, text)
+
         dispatch((dispatch, getState) => {
           const state = getState()
           if (!state.cursor) return
@@ -54,17 +77,19 @@ export const formatSelectionActionCreator =
           const thought = getThoughtById(state, head(state.cursor))
           const simplePath = simplifyPath(state, state.cursor)
           const styleAttrPattern = /style\s*=\s*["'][^"']*["']/gi
+          const tagWithoutStylePattern = /<(span|font)(\s[^>]*)?>/gi
 
           //Replace style attributes based on the conditions
           const newThoughtValue = thought.value.replace(styleAttrPattern, match => {
             if (shouldRemoveStyle(match)) return ''
             return match
           })
-
+          const tagsToRemove = collectTagsWithoutAttributes(newThoughtValue, tagWithoutStylePattern)
+          const newValue = removeTags(newThoughtValue, tagsToRemove)
           dispatch(
             editThought({
               oldValue: thought.value,
-              newValue: newThoughtValue,
+              newValue: newValue,
               path: simplePath,
             }),
           )
