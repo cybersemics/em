@@ -1,3 +1,5 @@
+/* eslint-disable import/prefer-default-export */
+
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
 /** Defines global keyboard shortcuts and gestures. */

@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import LetterCaseType from '../@types/LetterCaseType'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'

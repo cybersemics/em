@@ -29,7 +29,6 @@ const commonPlugins = {
 }
 
 const commonRules = {
-  'react-hooks/exhaustive-deps': 'error',
   'no-restricted-properties': [
     'error',
     {
@@ -40,28 +39,28 @@ const commonRules = {
     },
   ],
   'export-default-identifier/export-default-identifier': 'off',
-  'jsdoc/require-jsdoc': [
+
+  'import/prefer-default-export': [
     'error',
     {
-      contexts: ['VariableDeclarator > ArrowFunctionExpression'],
-      require: {
-        ClassDeclaration: true,
-        ClassExpression: true,
-        FunctionDeclaration: true,
-      },
+      // any: Any exporting file must contain a default export.
+      // single: When there is only a single export from a module, prefer using default export over named export.
+      target: 'any',
     },
   ],
-  'import/prefer-default-export': 'off',
   'jsdoc/check-alignment': 'error',
   'jsdoc/check-indentation': 'error',
   'jsdoc/check-syntax': 'error',
   'jsdoc/check-types': 'error',
   'jsdoc/implements-on-classes': 'error',
   'jsdoc/no-types': 'error',
+  // Disable until performance issue is solved.
+  // https://github.com/gajus/eslint-plugin-jsdoc/issues/1334
+  // 'jsdoc/no-undefined-types': 2,
   'jsdoc/check-tag-names': [
     'error',
     {
-      definedTags: ['packageDocumentation', 'jest-environment'],
+      definedTags: ['packageDocumentation'],
     },
   ],
   'jsdoc/require-description-complete-sentence': [
@@ -70,7 +69,21 @@ const commonRules = {
       abbreviations: ['e.g.', 'i.e.'],
     },
   ],
+  'jsdoc/require-jsdoc': [
+    'error',
+    {
+      contexts: ['VariableDeclarator > ArrowFunctionExpression'],
+      enableFixer: false,
+      require: {
+        ClassDeclaration: true,
+        ClassExpression: true,
+      },
+    },
+  ],
+  // jsx-a11y
   'jsx-a11y/anchor-is-valid': 'off',
+  // react
+
   'react/jsx-curly-spacing': 'error',
   'react/jsx-equals-spacing': 'error',
   'react/react-in-jsx-scope': 'off',
@@ -78,6 +91,11 @@ const commonRules = {
   'react/no-children-prop': 'off',
   'react/no-unescaped-entities': 'off',
   'react/prop-types': 'off',
+  // react-hooks
+
+  'react-hooks/exhaustive-deps': 'error',
+  // prettier
+
   'prettier/prettier': 'error',
   'arrow-body-style': 'off',
   'prefer-arrow-callback': 'off',
@@ -112,6 +130,14 @@ export default [
       },
     },
   },
+  // Overrides for specific folders
+  {
+    files: ['src/e2e/**', '**/__tests__/*'],
+    rules: {
+      'no-restricted-properties': 'off',
+      'jsdoc/check-tag-names': 'off',
+    },
+  },
   // Overrides for TypeScript files
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -119,7 +145,7 @@ export default [
       parser: typescriptParser,
       parserOptions: {
         ecmaFeatures: { jsx: true },
-        project: ['./tsconfig.json', './server/tsconfig.json', './tsconfig.eslint.json'],
+        project: ['./tsconfig.json', './tsconfig.eslint.json'],
       },
     },
     plugins: {
@@ -147,28 +173,25 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/array-type': 'error',
+      // jsx
+
       'jsx-quotes': ['error', 'prefer-single'],
+      // react-refresh
+
       'react-refresh/only-export-components': 'error',
     },
   },
-  // Overrides for specific folders
-  {
-    files: ['src/e2e/**', '**/__tests__/*'],
-    rules: {
-      'no-restricted-properties': 'off',
-      'jsdoc/check-tag-names': 'off',
-    },
-  },
+
   {
     files: ['./src/**/*.ts', './src/**/*.tsx'],
-    rules: {
-      'jsdoc/check-tag-names': 'off', // Specific rule to turn off for TypeScript files
-    },
-  },
-  {
-    files: ['src/special-folder/**/*.js'],
-    rules: {
-      'react/prop-types': 'warn', // Example of overriding a specific rule for files in a folder
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        ecmaVersion: 2018,
+        sourceType: 'module',
+        project: './tsconfig.json',
+      },
     },
   },
   {

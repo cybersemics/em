@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import _ from 'lodash'
 import ComparatorFunction from '../@types/ComparatorFunction'
 import ComparatorValue from '../@types/ComparatorValue'
