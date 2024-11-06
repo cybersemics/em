@@ -1,4 +1,6 @@
 import sleep from '../../../util/sleep'
+import popup from '../locators/popup'
+import quickDropPanel from '../locators/quickDropPanel'
 import { page } from '../setup'
 import getEditable from './getEditable'
 import showMousePointer from './showMousePointer'
@@ -75,6 +77,10 @@ const dragAndDropThought = async (
     await page.mouse.up()
     await sleep(500)
   }
+
+  // wait for QuickDrop panel and Alert appear so that snapshots are consistent
+  await quickDropPanel()
+  await popup()
 }
 
 export default dragAndDropThought
