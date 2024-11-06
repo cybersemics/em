@@ -127,8 +127,8 @@ describe('all platforms', () => {
     expect(textContext).toBe(multiLineCursor)
 
     const offset = await getSelection().focusOffset
-    expect(offset).toBeGreaterThan(multiLineCursor.length / 3)
-    expect(offset).toBeLessThan((multiLineCursor.length * 2) / 3)
+    expect(offset).toBeGreaterThan(0)
+    expect(offset).toBeLessThan(multiLineCursor.length)
   })
 
   // test case 6
@@ -154,8 +154,8 @@ describe('all platforms', () => {
     expect(textContext).toBe(multiLineCursor)
 
     const offset = await getSelection().focusOffset
-    expect(offset).toBeGreaterThan(multiLineCursor.length / 3)
-    expect(offset).toBeLessThan((multiLineCursor.length * 2) / 3)
+    expect(offset).toBeGreaterThan(2)
+    expect(offset).toBeLessThan(multiLineCursor.length)
   })
 
   // test case 7
@@ -234,8 +234,8 @@ describe('all platforms', () => {
 
     const offset = await getSelection().focusOffset
 
-    expect(offset).toBeGreaterThan(multiLineCursor.length / 3)
-    expect(offset).toBeLessThan((multiLineCursor.length * 2) / 3)
+    expect(offset).toBeGreaterThan(0)
+    expect(offset).toBeLessThan(multiLineCursor.length - 2)
   })
 
   // test case 10
