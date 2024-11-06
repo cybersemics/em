@@ -157,7 +157,9 @@ const ColorSwatch: FC<{
           style={{
             color: backgroundColor ? token('colors.bg') : color && token(`colors.${color}` as const),
             backgroundColor: backgroundColor && token(`colors.${backgroundColor}` as const),
+            fontWeight: selected ? 'bold' : 'normal',
           }}
+          fill={selected ? token('colors.fg') : 'none'}
         />
       )}
     </span>

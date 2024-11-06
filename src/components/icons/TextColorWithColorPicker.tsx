@@ -2,19 +2,26 @@ import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
-import IconType from '../../@types/Icon'
+import { token } from '../../../styled-system/tokens'
+import IconType from '../../@types/IconType'
 import durations from '../../util/durations'
 import ColorPicker from '../ColorPicker'
 import TextColorIcon from './TextColor'
 
-/** Text Color Icon Component with popup ColorPicker. */
-const Icon = ({ size = 20, style, cssRaw }: IconType) => {
+/** Text Color Icon with popup ColorPicker. */
+const TextColorWithColorPicker = ({ size = 20, style, cssRaw, animated }: IconType) => {
   const showColorPicker = useSelector(state => state.showColorPicker)
   const toolbarPopupRef = useRef<HTMLDivElement>(null)
 
   return (
     <div>
-      <TextColorIcon size={size} style={style} cssRaw={cssRaw} />
+      <TextColorIcon
+        size={size}
+        style={style}
+        cssRaw={cssRaw}
+        animated={showColorPicker}
+        fill={style?.fill || token('colors.fg')}
+      />
       <CSSTransition
         nodeRef={toolbarPopupRef}
         in={showColorPicker}
@@ -47,4 +54,4 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
   )
 }
 
-export default Icon
+export default TextColorWithColorPicker

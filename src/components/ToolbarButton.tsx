@@ -1,10 +1,10 @@
-import React, { FC, MutableRefObject, useCallback, useMemo } from 'react'
+import React, { FC, MutableRefObject, useCallback, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { toolbarPointerEvents } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DragShortcutZone from '../@types/DragShortcutZone'
-import Icon from '../@types/Icon'
+import Icon from '../@types/IconType'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
@@ -27,6 +27,7 @@ export interface ToolbarButtonProps {
   onMouseLeave?: () => void
   selected?: boolean
   shortcutId: ShortcutId
+  animated?: boolean
 }
 
 /** A single button in the Toolbar. */
@@ -42,6 +43,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   selected,
   shortcutId,
 }) => {
+  const [isAnimated, setIsAnimated] = useState(false)
+
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
     console.error('Missing shortcut: ' + shortcutId)
@@ -62,6 +65,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(state))
+
   const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({ shortcutId, customize })
   const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
   const longPress = useToolbarLongPress({
@@ -87,6 +91,12 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         executeShortcutWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
+        if ((!isActive && !commandState) || (isActive && !isButtonActive)) {
+          setIsAnimated(true)
+        } else {
+          setIsAnimated(false)
+        }
+
         // prevent Editable blur
         if (isTouch) {
           e.preventDefault()
@@ -100,7 +110,20 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapUp, customize, isButtonExecutable, disabled, isPressing, onTapUp],
+    [
+      longPressTapUp,
+      customize,
+      isButtonExecutable,
+      disabled,
+      isPressing,
+      onTapUp,
+      lastScrollLeft,
+      isActive,
+      commandState,
+      isButtonActive,
+      setIsAnimated,
+      isAnimated,
+    ],
   )
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
@@ -121,7 +144,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapDown, customize, disabled],
+    [longPressTapDown, customize, disabled, isButtonActive, setIsAnimated, isActive],
   )
 
   /** Handles the tapCancel. */
@@ -235,6 +258,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           transition: 'opacity {durations.fastDuration} ease-out',
         })}
         style={style}
+        animated={isAnimated}
+        animationComplete={() => setIsAnimated(false)}
       />
     </div>
   )
