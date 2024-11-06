@@ -2,6 +2,7 @@
 import { rgbToHex } from '@mui/material'
 import Thunk from '../@types/Thunk'
 import { ColorToken } from '../colors.config'
+import { ALLOWED_ATTR } from '../constants'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import pathToThought from '../selectors/pathToThought'
@@ -10,6 +11,7 @@ import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
+import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
@@ -53,7 +55,7 @@ export const formatSelectionActionCreator =
           Array.from(text.matchAll(pattern))
             // Filter out tags that lack meaningful attributes
             .filter(([, , attributes]) => {
-              const meaningfulAttributes = ['style=', 'class=', 'color=', 'background-color=']
+              const meaningfulAttributes = ALLOWED_ATTR.map(attr => `${attr}=`)
               // Return true if attributes are absent or do not contain any meaningful attributes
               return !attributes || !meaningfulAttributes.some(attr => attributes.includes(attr))
             })
@@ -80,12 +82,23 @@ export const formatSelectionActionCreator =
           const tagWithoutStylePattern = /<(span|font)(\s[^>]*)?>/gi
 
           //Replace style attributes based on the conditions
-          const newThoughtValue = thought.value.replace(styleAttrPattern, match => {
+          const styleRemovedThought = thought.value.replace(styleAttrPattern, match => {
             if (shouldRemoveStyle(match)) return ''
             return match
           })
-          const tagsToRemove = collectTagsWithoutAttributes(newThoughtValue, tagWithoutStylePattern)
-          const newValue = removeTags(newThoughtValue, tagsToRemove)
+          const tagsToRemove = collectTagsWithoutAttributes(styleRemovedThought, tagWithoutStylePattern)
+          const newValue = removeTags(styleRemovedThought, tagsToRemove)
+          if (
+            thought.value.length !== 0 &&
+            (selection.text()?.length === 0 || selection.text()?.length === strip(thought.value).length)
+          ) {
+            const savedSelection = selection.save()
+            selection.select(thoughtContentEditable)
+            document.execCommand('delete')
+            document.execCommand('insertHTML', false, newValue)
+            selection.restore(savedSelection)
+          }
+
           dispatch(
             editThought({
               oldValue: thought.value,
