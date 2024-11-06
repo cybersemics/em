@@ -27,11 +27,6 @@ const waitForDraggingState = async () => {
   await popup()
 }
 
-/** Waits for the expected post-drop state. */
-const waitForDroppedState = async () => {
-  await popup()
-}
-
 describe('drag', () => {
   beforeEach(hideHUD)
 
