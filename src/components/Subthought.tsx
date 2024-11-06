@@ -158,7 +158,7 @@ const Subthought = ({
         />
       </div>
 
-      {noOtherContexts && <NoOtherContexts simplePath={simplePath} />}
+      {noOtherContexts && <NoOtherContexts />}
     </>
   )
 }

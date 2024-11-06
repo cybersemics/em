@@ -1,17 +1,4 @@
 /**
- * Function: isAbbreviation.
- *
- * @param str1 The sentence just added into the result sentence, it contains the sentence and the splitter.
- * @param s The current sentence which is right behind the spliter.
- * @returns A boolean value that tells whether the dot comes from an Abbrev word, and shouldn't be split
- * Examples: Mr. Dr.q Apt. Prof. Ph.D.
- */
-export default function isAbbreviation(str1: string, s: string) {
-  // eslint-disable-next-line @typescript-eslint/no-use-before-define
-  return isAbbrEndSplitter(str1) || isAbbrMidSplitter(str1, s) || isAbbrDoubleSplitter(str1, s)
-}
-
-/**
  * Function: isAbbrEndSplitter.
  *
  * @param str1 The sentence just added into the result sentence, it contains the sentence and the splitter.
@@ -75,8 +62,7 @@ function isAbbrMidSplitter(str1: string, s: string) {
  * @param s The sentence after the first spliter.
  * @returns A bolean value that says whether it is an abbreviation that has double dots, such as "M.S.", "R.N.".
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function isAbbrDoubleSplitter(str1: string, s: string) {
+function isAbbrDoubleSplitter(str1: string) {
   if (str1[str1.length - 1] !== '.') return false
 
   const pairs = [
@@ -101,4 +87,15 @@ function isAbbrDoubleSplitter(str1: string, s: string) {
   const isFullPattern = !!pairs.find(p => str1.slice(len - p[0].length - p[1].length) === p[0] + p[1])
 
   return isFullPattern
+}
+/**
+ * Function: isAbbreviation.
+ *
+ * @param str1 The sentence just added into the result sentence, it contains the sentence and the splitter.
+ * @param s The current sentence which is right behind the spliter.
+ * @returns A boolean value that tells whether the dot comes from an Abbrev word, and shouldn't be split
+ * Examples: Mr. Dr.q Apt. Prof. Ph.D.
+ */
+export default function isAbbreviation(str1: string, s: string) {
+  return isAbbrEndSplitter(str1) || isAbbrMidSplitter(str1, s) || isAbbrDoubleSplitter(str1)
 }

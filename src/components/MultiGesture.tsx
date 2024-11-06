@@ -157,8 +157,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
       // NOTE: though it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      onMoveShouldSetPanResponder: (e: GestureResponderEvent) => !this.props.shouldCancelGesture?.(),
+      onMoveShouldSetPanResponder: () => !this.props.shouldCancelGesture?.(),
 
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
         if (this.abandon) {

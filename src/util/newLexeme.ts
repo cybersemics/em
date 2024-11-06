@@ -10,8 +10,6 @@ const newLexeme = ({
   created,
   id,
   lastUpdated,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  value,
 }: {
   archived?: Timestamp
   created?: Timestamp

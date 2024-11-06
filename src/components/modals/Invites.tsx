@@ -22,6 +22,7 @@ const svgClasses = css({ cursor: 'default' })
 /**
  * Get all the invite codes that belongs to the given user.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getUserInviteCodes = (userId: string): Promise<string[]> => {
   throw new Error('Not implemented')
   // return new Promise<string[]>((resolve, reject) => {
@@ -150,7 +151,7 @@ const Invites = () => {
           You get three shiny gift codes to share <b>em</b> with anyone you choose!
         </p>
         {isFetchingInvites && <p className={css({ fontSize: '18px' })}>Fetching your shiny codes ✨...</p>}
-        {Object.values(inviteCodes).map(({ used, id, hasSeen }, idx) => {
+        {Object.values(inviteCodes).map(({ used, id, hasSeen }) => {
           const selectedIconFill = focusedGiftCode !== id ? 'grey' : undefined
           const link = `${baseUrl}/signup?code=${id}`
           return (

@@ -1,7 +1,6 @@
 import { css, cx } from '../../styled-system/css'
 import { textNote } from '../../styled-system/recipes'
 import GesturePath from '../@types/GesturePath'
-import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
 import GestureDiagram from '../components/GestureDiagram'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
@@ -9,14 +8,7 @@ import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 const toggleContextViewShortcut = shortcutById('toggleContextView')
 
 /** A message that explains that the thought is no other contexts and provides a hint for adding it to a context. */
-const NoOtherContexts = ({
-  allowSingleContext,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  simplePath,
-}: {
-  allowSingleContext?: boolean
-  simplePath: SimplePath
-}) => {
+const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean }) => {
   // const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
 
   return (

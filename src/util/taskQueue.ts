@@ -9,19 +9,6 @@ interface EventListeners<T> {
   lowStep: (args: { completed: number; expected: number | null; total: number; index: number; value: T }) => void
   end: (total: number) => void
 }
-
-/** A dummy class is needed to get the typeof a generic function. */
-// See: https://stackoverflow.com/questions/50321419/typescript-returntype-of-generic-function/64919133#64919133
-// Alternatively, an explicit interface can be defined for the return value.
-class TaskQueueWrapper<T> {
-  wrapped() {
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    return taskQueue<T>()
-  }
-}
-
-export type TaskQueue<T> = ReturnType<TaskQueueWrapper<T>['wrapped']>
-
 /** Returns a new task that retries the given task up to n times if it out. */
 const retriable = <T>(
   f: TaskFunction<T>,
@@ -328,5 +315,15 @@ const taskQueue = <T = any>({
     total: () => expected || total,
   }
 }
+/** A dummy class is needed to get the typeof a generic function. */
+// See: https://stackoverflow.com/questions/50321419/typescript-returntype-of-generic-function/64919133#64919133
+// Alternatively, an explicit interface can be defined for the return value.
+class TaskQueueWrapper<T> {
+  wrapped() {
+    return taskQueue<T>()
+  }
+}
+
+export type TaskQueue<T> = ReturnType<TaskQueueWrapper<T>['wrapped']>
 
 export default taskQueue

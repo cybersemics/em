@@ -26,9 +26,8 @@ const nextContext = (state: State, path: Path) => {
   const nextContextId = contexts[index + 1]?.id
   const nextContext = nextContextId ? getThoughtById(state, nextContextId) : null
   // if next does not exist (i.e. path is the last context), call nextThought on the parent and ignore the context view to move to the next uncle in the normal view
-  return nextContext
-    ? appendToPath(parentOf(path), nextContext.parentId)
-    : nextThought(state, rootedParentOf(state, path), { ignoreChildren: true })
+  // eslint-disable-next-line prettier/prettier, @typescript-eslint/no-use-before-define
+  return nextContext ? appendToPath(parentOf(path), nextContext.parentId) : nextThought(state, rootedParentOf(state, path), { ignoreChildren: true })
 }
 
 /** Gets the first context in a context view. */
@@ -38,9 +37,8 @@ const firstContext = (state: State, path: Path): Path | null => {
 
   // if context view is empty, move to the next thought
   const firstContext = getThoughtById(state, contexts[0]?.id)
-  return contexts.length > 1
-    ? appendToPath(path, firstContext.parentId)
-    : nextThought(state, path, { ignoreChildren: true })
+  // eslint-disable-next-line @typescript-eslint/no-use-before-define, prettier/prettier
+  return contexts.length > 1 ? appendToPath(path, firstContext.parentId) : nextThought(state, path, { ignoreChildren: true })
 }
 
 /** Returns the next uncle. */
@@ -49,6 +47,7 @@ const nextUncle = (state: State, path: Path) => {
 
   // the thought is a root child, then there is no uncle
   // otherwise, recursively call nextThought on the parent and prevent traversing children
+  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   return isRoot(pathParent) ? null : nextThought(state, pathParent, { ignoreChildren: true })
 }
 

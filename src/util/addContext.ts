@@ -9,9 +9,7 @@ import timestamp from './timestamp'
 const addContext = (
   lexeme: Lexeme,
   {
-    archived,
     id,
-    lastUpdated,
   }: {
     archived?: Timestamp
     lastUpdated?: Timestamp

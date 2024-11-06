@@ -19,7 +19,6 @@ function splitThought(value: string) {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   return exported
 }
-
 describe('split by comma', () => {
   it('split single thought on comma when there are no periods', () => {
     const value = 'One, Two, Three'

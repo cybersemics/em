@@ -17,14 +17,6 @@ interface TraceGestureProps {
   eventNodeRef?: React.RefObject<HTMLElement>
 }
 
-/** Renders the TraceGesture component as long as it is not disabled in the settings. */
-const TraceGestureWrapper = (props: TraceGestureProps) => {
-  const showModal = useSelector(state => state.showModal)
-  const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
-  // eslint-disable-next-line @typescript-eslint/no-use-before-define
-  return <>{!disableGestureTracing && !showModal && <TraceGesture {...props} />}</>
-}
-
 /** A hook that returns true a given number of milliseconds after its condition is set to true. Returns false immediately if the condition becomes false. */
 const useConditionDelay = (condition: boolean, milliseconds: number) => {
   const [value, setValue] = useState(false)
@@ -164,6 +156,12 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       </CSSTransition>
     </div>
   )
+}
+/** Renders the TraceGesture component as long as it is not disabled in the settings. */
+const TraceGestureWrapper = (props: TraceGestureProps) => {
+  const showModal = useSelector(state => state.showModal)
+  const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
+  return <>{!disableGestureTracing && !showModal && <TraceGesture {...props} />}</>
 }
 
 export default TraceGestureWrapper

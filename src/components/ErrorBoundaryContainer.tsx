@@ -6,8 +6,7 @@ import { token } from '../../styled-system/tokens'
 import fastClick from '../util/fastClick'
 
 /** A triangular toggle component. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const Toggle = ({ children, expand, title }: { children?: any; expand?: boolean; title?: string }) => {
+const Toggle = ({ children, title }: { children?: any; title?: string }) => {
   const [expanded, setExpanded] = useState(false)
 
   return (

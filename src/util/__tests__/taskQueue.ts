@@ -499,6 +499,7 @@ describe('taskQueue', { retry: 10 }, () => {
     /** Increments the counter after a delay. */
     const incDelayed = async () => {
       await sleep(0)
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       completed.push(queue.completed())
     }
 
@@ -513,6 +514,7 @@ describe('taskQueue', { retry: 10 }, () => {
     /** Increments the counter after a delay. */
     const incDelayed = async () => {
       await sleep(0)
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       running.push(queue.running())
     }
 
@@ -527,6 +529,7 @@ describe('taskQueue', { retry: 10 }, () => {
     /** Increments the counter after a delay. */
     const incDelayed = async () => {
       await sleep(0)
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       total.push(queue.total())
     }
 

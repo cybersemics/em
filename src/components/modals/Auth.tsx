@@ -45,11 +45,12 @@ const modes: Index<Mode> = {
 
 /** A modal dialog for signing up, logging in, and resetting password. */
 const ModalAuth = () => {
+  const [activeMode, updateActiveMode] = useState(modes.login)
+
   /** Checks if the given mode is active. */
   // eslint-disable-next-line @typescript-eslint/no-use-before-define
   const isModeActive = (mode: Mode) => activeMode.name === mode.name
 
-  const [activeMode, updateActiveMode] = useState(modes.login)
   const [email, updateEmail] = useState('')
   const [password, updatePassword] = useState('')
   const [error, updateError] = useState<null | string>(null)

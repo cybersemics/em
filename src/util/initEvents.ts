@@ -276,6 +276,16 @@ const initEvents = (store: Store<State, any>) => {
       passiveTimeout = setTimeout(selection.clear, 10) as unknown as number
     }
   }
+  /** Drag leave handler for file drag-and-drop. Does not handle drag end. */
+  const dragLeave = _.debounce(() => {
+    store.dispatch((dispatch, getState) => {
+      // e.dataTransfer.types is not available in dragLeave for some reason, so we check state.draggingFile
+      const state = getState()
+      if (state.draggingFile) {
+        dispatch([alert(null, { alertType: AlertType.DragAndDropFile }), dragInProgress({ value: false })])
+      }
+    })
+  }, 100)
 
   /** Drag enter handler for file drag-and-drop. Sets state.dragInProgress and state.draggingFile to true. */
   const dragEnter = (e: DragEvent) => {
@@ -293,18 +303,6 @@ const initEvents = (store: Store<State, any>) => {
       ])
     }
   }
-
-  /** Drag leave handler for file drag-and-drop. Does not handle drag end. */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const dragLeave = _.debounce((e: DragEvent) => {
-    store.dispatch((dispatch, getState) => {
-      // e.dataTransfer.types is not available in dragLeave for some reason, so we check state.draggingFile
-      const state = getState()
-      if (state.draggingFile) {
-        dispatch([alert(null, { alertType: AlertType.DragAndDropFile }), dragInProgress({ value: false })])
-      }
-    })
-  }, 100)
 
   /** Drop handler for file drag-and-drop. */
   const drop = (e: DragEvent) => {
