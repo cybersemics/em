@@ -6,6 +6,8 @@ import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
+import popup from '../locators/popup'
+import quickDropPanel from '../locators/quickDropPanel'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -18,6 +20,17 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
   Jest supports automatic retries on test failures. This can be useful for browser screenshot tests which tend to have more frequent false positives. Note that when using jest.retryTimes you'll have to use a unique customSnapshotIdentifier as that's the only way to reliably identify snapshots.
 
 */
+
+/** Waits for the expected drag state. */
+const waitForDraggingState = async () => {
+  await quickDropPanel()
+  await popup()
+}
+
+/** Waits for the expected post-drop state. */
+const waitForDroppedState = async () => {
+  await popup()
+}
 
 describe('drag', () => {
   beforeEach(hideHUD)
@@ -32,6 +45,8 @@ describe('drag', () => {
 
     await dragAndDropThought('a', 'd', { position: 'after' })
 
+    await waitForDraggingState()
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -45,6 +60,8 @@ describe('drag', () => {
       `)
 
     await dragAndDropThought('a', 'b', { position: 'child' })
+
+    await waitForDraggingState()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -61,6 +78,8 @@ describe('drag', () => {
     await clickThought('a')
 
     await dragAndDropThought('x', 'c', { position: 'after' })
+
+    await waitForDraggingState()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -79,6 +98,8 @@ describe('drag', () => {
     await clickThought('b')
     await clickThought('c')
     await dragAndDropThought('c', 'e', { position: 'before', dropUncle: true })
+
+    await waitForDraggingState()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -101,6 +122,8 @@ describe('drag', () => {
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'after', dropUncle: true })
 
+    await waitForDraggingState()
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -122,6 +145,8 @@ describe('drag', () => {
     await clickThought('x')
     await dragAndDropThought('x', 'c', { position: 'after' })
 
+    await waitForDraggingState()
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -142,6 +167,8 @@ describe('drag', () => {
 
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'after' })
+
+    await waitForDraggingState()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -166,6 +193,8 @@ describe('drag', () => {
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'before' })
 
+    await waitForDraggingState()
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -187,6 +216,8 @@ describe('drag', () => {
     await clickThought('b')
     await dragAndDropThought('e', 'f', { position: 'after' })
 
+    await waitForDraggingState()
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -201,6 +232,8 @@ describe('drag', () => {
     await simulateDragAndDrop({ drop: true })
 
     await dragAndDropThought('b', 'c', { position: 'after' })
+
+    await waitForDraggingState()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -221,6 +254,7 @@ describe('drop', () => {
       `)
 
     await dragAndDropThought('a', 'd', { position: 'after', mouseUp: true })
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -248,6 +282,8 @@ describe('drop', () => {
       `)
 
       await dragAndDropThought('c', 'c', { position: 'after' })
+
+      await waitForDraggingState()
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
