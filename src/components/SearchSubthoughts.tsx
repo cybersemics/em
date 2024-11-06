@@ -33,7 +33,7 @@ const SearchSubthoughts: FC = () => {
   /**
    * Search thoughts remotely or locally and add it to pullQueue.
    */
-  const searchThoughts = async (value: string) => {
+  const searchThoughts = async () => {
     throw new Error('Not implemented')
     // const searchLocal = localSearch(store.getState())
 
@@ -52,7 +52,7 @@ const SearchSubthoughts: FC = () => {
 
   useEffect(
     () => {
-      if (search) searchThoughts(search)
+      if (search) searchThoughts()
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [search, remoteSearch],

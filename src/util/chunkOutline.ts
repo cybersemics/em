@@ -1,3 +1,12 @@
+/** Gets the number of indentations of a line. */
+const getIndent = (line: string, { tabSize = 2 }: { tabSize?: number } = {}): number => {
+  let indent = 0
+  for (let i = 0; i < line.length && line[i] === ' '; i += tabSize) {
+    indent++
+  }
+  return indent
+}
+
 /** Detects the tab size of a block of text. */
 const detectTabSize = (text: string): number | undefined => {
   const indentBase = getIndent(text, { tabSize: 1 })
@@ -9,16 +18,6 @@ const detectTabSize = (text: string): number | undefined => {
     }
   }
 }
-
-/** Gets the number of indentations of a line. */
-const getIndent = (line: string, { tabSize = 2 }: { tabSize?: number } = {}): number => {
-  let indent = 0
-  for (let i = 0; i < line.length && line[i] === ' '; i += tabSize) {
-    indent++
-  }
-  return indent
-}
-
 /** Splits a plain text outline into even chunks. Insert a line at the beginning that situates each chunk at the correct position in the overall outline, when all the chunks are imported. */
 const chunkOutline = (text: string, { chunkSize = 100 }: { chunkSize?: number } = {}): string[] => {
   const lines = text.split('\n')

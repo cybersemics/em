@@ -48,28 +48,6 @@ const publishPinAll = (state: State, context: Context) => {
   const id = contextToThoughtId(state, unroot([...context, '=publish', '=attributes']) as Context)
   return id && publishMode() && childrenPinned(state, id)
 }
-
-function expandThoughts(state: State, path: Path | null): Index<Path>
-
-/** Returns an expansion map marking all contexts that should be expanded when for the given path.
- *
- * @param suppressExpansion - Prevents expansion of non pinned expansion path.
- * @example {
- *   [hashContext(context)]: true,
- *   [hashContext([...context, childA])]: pathA,
- *   [hashContext([...context, childB])]: pathB,
- *   [hashContext([...context, childC])]: pathC,
- *   ...
- * }
- */
-function expandThoughts(state: State, path: Path | null): Index<Path | Context> {
-  if (path && !getThoughtById(state, head(path))) {
-    throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
-  }
-
-  return expandThoughtsRecursive(state, path || HOME_PATH, HOME_PATH)
-}
-
 /**
  * Recursively generate expansion map from the given path. Always expands the given path, then calculates expansion of descendants.
  *
@@ -181,6 +159,26 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
     },
     initialExpanded,
   )
+}
+function expandThoughts(state: State, path: Path | null): Index<Path>
+
+/** Returns an expansion map marking all contexts that should be expanded when for the given path.
+ *
+ * @param suppressExpansion - Prevents expansion of non pinned expansion path.
+ * @example {
+ *   [hashContext(context)]: true,
+ *   [hashContext([...context, childA])]: pathA,
+ *   [hashContext([...context, childB])]: pathB,
+ *   [hashContext([...context, childC])]: pathC,
+ *   ...
+ * }
+ */
+function expandThoughts(state: State, path: Path | null): Index<Path | Context> {
+  if (path && !getThoughtById(state, head(path))) {
+    throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
+  }
+
+  return expandThoughtsRecursive(state, path || HOME_PATH, HOME_PATH)
 }
 
 export default expandThoughts

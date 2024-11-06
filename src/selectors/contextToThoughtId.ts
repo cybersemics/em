@@ -9,7 +9,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isRoot from '../util/isRoot'
 
 /** DEPRECATED. Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. If more than one thought has the same value in the same context, traveerses the first. */
-const contextToThoughtId = (state: State, thoughts: Context, rank?: number): ThoughtId | null => {
+const contextToThoughtId = (state: State, thoughts: Context): ThoughtId | null => {
   if (isRoot(thoughts)) return thoughts[0] as ThoughtId
 
   const startsWithEM = thoughts[0] === EM_TOKEN
@@ -22,6 +22,7 @@ const contextToThoughtId = (state: State, thoughts: Context, rank?: number): Tho
 
   if (startsWithEM && thoughts.length === 1) return rootThought.id
 
+  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   const thought = recursiveThoughtFinder(state, rootThought, startsWithEM ? thoughts.slice(1) : thoughts)
   return thought?.id || null
 }

@@ -13,7 +13,6 @@ const bulletColor = (
   {
     backgroundColor,
     color,
-    shape,
     fullySelected,
   }: { backgroundColor?: string; color?: string; shape?: 'bullet' | 'text'; fullySelected?: boolean },
 ) => {

@@ -97,6 +97,7 @@ websocketThoughtspace.on('disconnect', () => {
     websocketThoughtspace.connect()
   })
 })
+const permissionsClientMap = permissionsClientDoc.getMap<Share>()
 
 /** If there is more than one device, connects the thoughtspace Websocket provider. */
 const connectThoughtspaceProvider = () => {
@@ -104,7 +105,6 @@ const connectThoughtspaceProvider = () => {
     websocketThoughtspace.connect()
   }
 }
-const permissionsClientMap = permissionsClientDoc.getMap<Share>()
 // indexeddbProviderPermissions.whenSynced.then(connectThoughtspaceProvider)
 permissionsClientMap.observe(connectThoughtspaceProvider)
 

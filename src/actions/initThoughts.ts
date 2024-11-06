@@ -35,7 +35,7 @@ const initThoughts = (state: State, { clientId }: { clientId: string }) => ({
 /** Update the initial thoughts with the clientId once it is ready. */
 export const initThoughtsActionCreator =
   (clientId: string): Thunk =>
-  (dispatch, getState) => {
+  dispatch => {
     dispatch({
       type: 'initThoughts',
       clientId,

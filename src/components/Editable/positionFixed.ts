@@ -1,7 +1,16 @@
 /* eslint-disable import/prefer-default-export */
 
 /** Position fixed breaks in mobile Safari when the keyboard is up. This module provides functionality to emulate position:fixed by changing all top navigation to position:absolute and updating on scroll. */
-
+/** Update position of toolbar elements while scrolling in order to show them always on top. */
+export const update = () => {
+  const alert = document.getElementsByClassName('alert')[0] as HTMLElement
+  const hamburgerMenu = document.querySelector('[aria-label="menu"]') as HTMLElement
+  const toolbar = document.querySelector('[aria-label="toolbar"]') as HTMLElement
+  Array.from([alert, hamburgerMenu, toolbar]).forEach(el => {
+    if (!el) return // hamburger menu and toolbar are not rendered during tutorial
+    el.style.top = `${window.scrollY}px`
+  })
+}
 /** Change position:fixed top nav to position:absolute in order to fix Safari position:fixed browser behavior when keyboard is up. */
 export const start = () => {
   document.addEventListener('scroll', update)
@@ -33,16 +42,5 @@ export const stop = () => {
     el.style.position = 'fixed'
     el.style.overflowX = ''
     el.style.top = ''
-  })
-}
-
-/** Update position of toolbar elements while scrolling in order to show them always on top. */
-export const update = () => {
-  const alert = document.getElementsByClassName('alert')[0] as HTMLElement
-  const hamburgerMenu = document.querySelector('[aria-label="menu"]') as HTMLElement
-  const toolbar = document.querySelector('[aria-label="toolbar"]') as HTMLElement
-  Array.from([alert, hamburgerMenu, toolbar]).forEach(el => {
-    if (!el) return // hamburger menu and toolbar are not rendered during tutorial
-    el.style.top = `${window.scrollY}px`
   })
 }

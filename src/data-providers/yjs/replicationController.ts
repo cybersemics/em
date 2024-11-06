@@ -198,6 +198,10 @@ const replicationController = ({
     (doc.getMap('blockSizes').get(blockId) ?? 0) >= DOCLOG_BLOCK_SIZE ||
     (replicationCursors[blockId]?.thoughts ?? -1) + 1 >= DOCLOG_BLOCK_SIZE ||
     (observationCursors[blockId]?.thoughts ?? -1) + 1 >= DOCLOG_BLOCK_SIZE
+  /** Extracts the blockId of the given doclog block from its guid. If no block is provided, gets the active block's blockId. */
+  const getBlockKey = (block: Y.Doc): string =>
+    // !: blockId must be defined since doclog subdocs always have a guid in the format /TSID/doclog/block/BLOCK_ID
+    parseDocumentName(block.guid).blockId!
 
   /** Gets the active doclog block where new thought and lexeme updates should be logged. This will typically be the last block, except in the case where multiple new blocks were created on different devices at the same time. In that case it will be the first unfilled block. Previous blocks are not loaded into memory. Precondition: The replication cursors must be initialized. */
   const getActiveBlock = (): Y.Doc => {
@@ -217,99 +221,6 @@ const replicationController = ({
     // Only log() should create a new block, otherwise it can cause an infinite loop.
     return activeBlock || blocks[blocks.length - 1]
   }
-
-  /** Extracts the blockId of the given doclog block from its guid. If no block is provided, gets the active block's blockId. */
-  const getBlockKey = (block: Y.Doc): string =>
-    // !: blockId must be defined since doclog subdocs always have a guid in the format /TSID/doclog/block/BLOCK_ID
-    parseDocumentName(block.guid).blockId!
-
-  const blocksInitializedPromise = new Promise<void>(resolve => {
-    // Precondition: The replication cursors must be initialized.
-    doc.on('subdocs', async ({ added, removed, loaded }: SubdocsEventArgs) => {
-      // load and observe the active block when there are new subdocs
-      if (added.size > 0) {
-        // When the first blocks are added, estimate the expected number of replications based on the number of blocks.
-        // Since unreplicated blocks are only loaded one at a time, we need to provide an estimate to ensure a stable progress %.
-        if (!blocksInitialized) {
-          // add 1 since blocks can be overfilled
-          const estimated = (doc.subdocs.size - Object.values(replicationCursors).length) * (DOCLOG_BLOCK_SIZE + 1)
-          if (estimated) {
-            replicationQueue.expected(estimated)
-          }
-          blocksInitialized = true
-          resolve()
-        }
-
-        const activeBlock = getActiveBlock()
-        const activeBlockId = getBlockKey(activeBlock)
-
-        activeBlock.load()
-        observeBlock(activeBlock)
-
-        // load, replicate, and subscribe to unreplicated or unfilled blocks
-        for (const block of added) {
-          const blockId = getBlockKey(block)
-          if (blockId === activeBlockId) continue
-          const blockSize = doc.getMap('blockSizes').get(blockId)
-          const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
-          if (thoughtReplicationCursor + 1 < blockSize) {
-            block.load()
-            observeBlock(block)
-          }
-        }
-      }
-
-      // When a block is removed, delete it from the observed set.
-      // It should automatically get deleted by the WeakSet, but in case the block persists in a destroyed state, explicitly delete it.
-      removed.forEach(block => {
-        blocksObserved.delete(block)
-      })
-
-      if (loaded.size > 0) {
-        const blocks: Y.Doc[] = doc.getArray('blocks').toArray()
-        unfilled = blocks.filter(block => !isFull(getBlockKey(block))).length
-      }
-    })
-  })
-
-  // Load and replicate full blocks that are overfilled due to an offline device coming back online.
-  // We need to watch blockSizes for this because blocks are normrally not loaded when full.
-  replicationCursorsInitialized.then(() => {
-    doc.getMap('blockSizes').observe((e: Y.YMapEvent<number>) => {
-      // Ignore self
-      // The important origin is WebsocketProvider.
-      // We could probably ignore IndexedDBPersistence, but we do not have access to the providers here. The blockSize will only be loaded if there is a discrepancy with the replication cursors (which may actually be a helpful safeguard).
-      if (e.transaction.origin === doc.clientID) return
-      const blockSizesMap = e.target
-      const keysChanged = [...e.keysChanged]
-
-      // need to wait a tick for some reason, otherwise replicationCursors has not yet been updated
-      setTimeout(() => {
-        keysChanged.forEach(blockId => {
-          const blockSize = blockSizesMap.get(blockId)
-          if (!blockSize) {
-            throw new Error(`Invalid blockSize for block ${blockId}: ${blockSize}`)
-          }
-          const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
-          if (thoughtReplicationCursor + 1 < blockSize) {
-            const blocks: Y.Doc[] = doc.getArray('blocks').toArray()
-            const block = blocks.find(block => getBlockKey(block) === blockId)
-            if (!block) {
-              throw new Error(
-                `blockSize changed for block ${blockId}, but no block with that id was found in existing blocks: ${blocks
-                  .map(getBlockKey)
-                  .join(', ')}.`,
-              )
-            }
-
-            block.load()
-            observeBlock(block)
-          }
-        })
-      })
-    })
-  })
-
   /** Observes the thoughtLog and lexemeLog of the given block to replicate changes from remote devices. Idempotent. */
   const observeBlock = (block: Y.Doc) => {
     if (blocksObserved.has(block)) return
@@ -447,6 +358,93 @@ const replicationController = ({
     // Otherwise the doclog observe handlers will not be added and the first thought of a new block will not get replicated until there is a refresh.
     block.emit('em:observed' as any, [blockId])
   }
+
+  const blocksInitializedPromise = new Promise<void>(resolve => {
+    // Precondition: The replication cursors must be initialized.
+    doc.on('subdocs', async ({ added, removed, loaded }: SubdocsEventArgs) => {
+      // load and observe the active block when there are new subdocs
+      if (added.size > 0) {
+        // When the first blocks are added, estimate the expected number of replications based on the number of blocks.
+        // Since unreplicated blocks are only loaded one at a time, we need to provide an estimate to ensure a stable progress %.
+        if (!blocksInitialized) {
+          // add 1 since blocks can be overfilled
+          const estimated = (doc.subdocs.size - Object.values(replicationCursors).length) * (DOCLOG_BLOCK_SIZE + 1)
+          if (estimated) {
+            replicationQueue.expected(estimated)
+          }
+          blocksInitialized = true
+          resolve()
+        }
+
+        const activeBlock = getActiveBlock()
+        const activeBlockId = getBlockKey(activeBlock)
+
+        activeBlock.load()
+        observeBlock(activeBlock)
+
+        // load, replicate, and subscribe to unreplicated or unfilled blocks
+        for (const block of added) {
+          const blockId = getBlockKey(block)
+          if (blockId === activeBlockId) continue
+          const blockSize = doc.getMap('blockSizes').get(blockId)
+          const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
+          if (thoughtReplicationCursor + 1 < blockSize) {
+            block.load()
+            observeBlock(block)
+          }
+        }
+      }
+
+      // When a block is removed, delete it from the observed set.
+      // It should automatically get deleted by the WeakSet, but in case the block persists in a destroyed state, explicitly delete it.
+      removed.forEach(block => {
+        blocksObserved.delete(block)
+      })
+
+      if (loaded.size > 0) {
+        const blocks: Y.Doc[] = doc.getArray('blocks').toArray()
+        unfilled = blocks.filter(block => !isFull(getBlockKey(block))).length
+      }
+    })
+  })
+
+  // Load and replicate full blocks that are overfilled due to an offline device coming back online.
+  // We need to watch blockSizes for this because blocks are normrally not loaded when full.
+  replicationCursorsInitialized.then(() => {
+    doc.getMap('blockSizes').observe((e: Y.YMapEvent<number>) => {
+      // Ignore self
+      // The important origin is WebsocketProvider.
+      // We could probably ignore IndexedDBPersistence, but we do not have access to the providers here. The blockSize will only be loaded if there is a discrepancy with the replication cursors (which may actually be a helpful safeguard).
+      if (e.transaction.origin === doc.clientID) return
+      const blockSizesMap = e.target
+      const keysChanged = [...e.keysChanged]
+
+      // need to wait a tick for some reason, otherwise replicationCursors has not yet been updated
+      setTimeout(() => {
+        keysChanged.forEach(blockId => {
+          const blockSize = blockSizesMap.get(blockId)
+          if (!blockSize) {
+            throw new Error(`Invalid blockSize for block ${blockId}: ${blockSize}`)
+          }
+          const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
+          if (thoughtReplicationCursor + 1 < blockSize) {
+            const blocks: Y.Doc[] = doc.getArray('blocks').toArray()
+            const block = blocks.find(block => getBlockKey(block) === blockId)
+            if (!block) {
+              throw new Error(
+                `blockSize changed for block ${blockId}, but no block with that id was found in existing blocks: ${blocks
+                  .map(getBlockKey)
+                  .join(', ')}.`,
+              )
+            }
+
+            block.load()
+            observeBlock(block)
+          }
+        })
+      })
+    })
+  })
 
   /** Append thought or lexeme logs to the active doclog block. */
   const log = async ({

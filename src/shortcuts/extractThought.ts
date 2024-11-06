@@ -16,7 +16,7 @@ const extractThought: Shortcut = {
   canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
-  exec: (dispatch, getState) => {
+  exec: dispatch => {
     dispatch(extract())
   },
 }

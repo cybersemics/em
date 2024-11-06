@@ -27,9 +27,7 @@ const Subthought = ({
   autofocus,
   debugIndex,
   depth,
-  dropUncle,
   env,
-  indexDescendant,
   isMultiColumnTable,
   leaf,
   updateSize,
@@ -160,7 +158,7 @@ const Subthought = ({
         />
       </div>
 
-      {noOtherContexts && <NoOtherContexts simplePath={simplePath} />}
+      {noOtherContexts && <NoOtherContexts />}
     </>
   )
 }

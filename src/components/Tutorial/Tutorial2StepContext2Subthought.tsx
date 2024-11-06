@@ -24,7 +24,6 @@ import TutorialHint from './TutorialHint'
 const context2SubthoughtCreated = (
   state: State,
   {
-    rootChildren,
     tutorialChoice,
   }: {
     tutorialChoice: keyof typeof TUTORIAL_CONTEXT

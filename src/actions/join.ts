@@ -38,7 +38,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
       const pathToSibling = appendToPath(parentOf(simplePath), child.id)
       const grandchildren = getAllChildren(state, child.id)
 
-      return grandchildren.map((child, j) => {
+      return grandchildren.map(child => {
         const oldPath = getChildPath(state, child, pathToSibling)
         const newPath = appendToPath(path, child)
         return moveThought({ oldPath, newPath, newRank: (minNextRank += 1) })

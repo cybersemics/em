@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
 /* eslint-disable import/prefer-default-export */
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
@@ -100,12 +102,6 @@ export const deleteResumableFile = async (id: string) => {
 
 /** Creates a small object that can be used to manage the persistence of a ResumableFile. */
 const resumeImportsManager = (file: ResumableFile) => {
-  /** Initializes the ResumeImport file manifest and raw file in IDB. */
-  const init = async (text: string) => {
-    await update(file.path, 0, file.insertBefore)
-    await idb.set(resumeImportKey(file.id), text)
-  }
-
   /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
   // TODO: throttling update breaks resume file.path for some reason
   const update = async (path: Path | null, thoughtsImported: number, insertBefore?: boolean) => {
@@ -127,6 +123,11 @@ const resumeImportsManager = (file: ResumableFile) => {
         },
       }),
     )
+  }
+  /** Initializes the ResumeImport file manifest and raw file in IDB. */
+  const init = async (text: string) => {
+    await update(file.path, 0, file.insertBefore)
+    await idb.set(resumeImportKey(file.id), text)
   }
 
   return { del: () => deleteResumableFile(file.id), init, update }
@@ -178,7 +179,7 @@ const pullDuplicateDescendants =
 
 /** Action-creator for importFiles. */
 export const importFilesActionCreator =
-  ({ files, insertBefore, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
+  ({ files, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!files && !resume) {
       throw new Error('importFiles must specify files or resume.')
@@ -222,6 +223,7 @@ export const importFilesActionCreator =
 
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
+      const manager = resumeImportsManager(file)
       /** An action-creator that imports a block. */
       const importBlock =
         ({ block, ancestors, i }: { block: Block; ancestors: Block[]; i: number }) =>
@@ -362,7 +364,6 @@ export const importFilesActionCreator =
           })
         }
 
-      const manager = resumeImportsManager(file)
       const fileProgressString = file.name + (resumableFiles.length > 1 ? ` (${i + 1}/${resumableFiles.length})` : '')
 
       // read file

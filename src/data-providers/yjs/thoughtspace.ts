@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import { nanoid } from 'nanoid'
 import { IndexeddbPersistence, clearDocument } from 'y-indexeddb'
@@ -182,22 +183,6 @@ const resolvable = <T, E = any>() => {
   return promise as ResolvablePromise<T, E>
 }
 
-/** Dispatches updateThoughts with all updates in the throttle period. */
-const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBatch[]) => {
-  const merged = batches.reduce(mergeBatch, {
-    thoughtIndexUpdates: {},
-    lexemeIndexUpdates: {},
-    lexemeIndexUpdatesOld: {},
-  })
-
-  // dispatch on next tick, since the leading edge is synchronous and can be triggered during a reducer
-  setTimeout(() => {
-    config.then(({ onUpdateThoughts: updateThoughts }) =>
-      updateThoughts?.({ ...merged, local: false, remote: false, repairCursor: true }),
-    )
-  })
-}, UPDATE_THOUGHTS_THROTTLE)
-
 /** Convert a Thought to a ThoughtDb for efficient storage. */
 const thoughtToDb = (thought: Thought): ThoughtDb => ({
   c: thought.created,
@@ -248,6 +233,22 @@ let doclog: Y.Doc
 /** The thoughtspace config that is resolved after init is called. Used to pass objects and callbacks into the thoughtspace from the UI. After they are initialized, they can be accessed synchronously on the module-level config variable. This avoids timing issues with concurrent replicateChildren calls that need conflict to check if the doc already exists. */
 const config = resolvable<ThoughtspaceConfig>()
 
+/** Dispatches updateThoughts with all updates in the throttle period. */
+const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBatch[]) => {
+  const merged = batches.reduce(mergeBatch, {
+    thoughtIndexUpdates: {},
+    lexemeIndexUpdates: {},
+    lexemeIndexUpdatesOld: {},
+  })
+
+  // dispatch on next tick, since the leading edge is synchronous and can be triggered during a reducer
+  setTimeout(() => {
+    config.then(({ onUpdateThoughts: updateThoughts }) =>
+      updateThoughts?.({ ...merged, local: false, remote: false, repairCursor: true }),
+    )
+  })
+}, UPDATE_THOUGHTS_THROTTLE)
+
 /** Cache the config for synchronous access. This is needed by replicateChildren to set thoughtDocs synchronously, otherwise it will not be idempotent. */
 let configCache: ThoughtspaceConfig
 
@@ -289,7 +290,7 @@ export const init = async (options: ThoughtspaceOptions) => {
   doclog = new Y.Doc({ guid: encodeDocLogDocumentName(tsid) })
 
   // bind blocks to providers on load
-  doclog.on('subdocs', ({ added, removed, loaded }: { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }) => {
+  doclog.on('subdocs', ({ loaded }: { loaded: Set<Y.Doc> }) => {
     loaded.forEach((subdoc: Y.Doc) => {
       // Disable IndexedDB during tests because of TransactionInactiveError in fake-indexeddb.
       if (import.meta.env.MODE !== 'test') {
@@ -386,11 +387,11 @@ export const init = async (options: ThoughtspaceOptions) => {
         throw new Error('Unknown DocLogAction: ' + action)
       }
     },
-    onStep: ({ completed, expected, index, total, value }) => {
+    onStep: ({ completed, expected, total }) => {
       const estimatedTotal = expected || total
       onProgress({ replicationProgress: completed / estimatedTotal })
     },
-    onEnd: total => {
+    onEnd: () => {
       onProgress({ replicationProgress: 1 })
     },
   })
@@ -400,7 +401,7 @@ export const init = async (options: ThoughtspaceOptions) => {
     // concurrency above 16 make the % go in bursts as batches of tasks are processed and awaited all at once
     // this may vary based on # of cores and network conditions
     concurrency: 16,
-    onStep: ({ completed, expected, index, total, value }) => {
+    onStep: ({ completed, expected, total }) => {
       const estimatedTotal = expected || total
       onProgress({ savingProgress: completed / estimatedTotal })
     },
@@ -1157,24 +1158,6 @@ const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
 
   return lexeme
 }
-
-/** Waits until the thought finishes replicating, then deallocates the cached thought and associated providers (without permanently deleting the persisted data). */
-// Note: freeThought and deleteThought are the only places where we use the id as the docKey directly.
-// This is because we want to free all of the thought's children, not the thought's siblings, which are contained in the parent Doc accessed via docKeys.
-export const freeThought = async (docKey: string): Promise<void> => {
-  thoughtRetained.delete(docKey)
-
-  // wait for idb replication, otherwise the deletion may not be saved to disk
-  await thoughtIDBSynced.get(docKey)
-
-  // TODO: How to prevent background replication from getting interrupted by editing? If a user edits a thought while its lexeme is being replicated in the background, then the provider will be destroyed and replication will halt. It should not affect the replication cursors, but will require a refresh to resume.
-  // However, we cannot wait for websocketSynced when offline.
-  // await thoughtWebsocketSynced.get(docKey)
-
-  // if the thought is retained again, it means it has been replicated in the foreground, and tryDeallocateThought will be a noop.
-  await tryDeallocateThought(docKey)
-}
-
 /** Deallocates the cached thought and associated providers (without permanently deleting the persisted data). If the thought is retained, noop. Call freeThought to both safely unretain the thought and trigger deallocation when replication completes. */
 const tryDeallocateThought = async (docKey: string): Promise<void> => {
   if (thoughtRetained.has(docKey)) return
@@ -1212,6 +1195,22 @@ const tryDeallocateThought = async (docKey: string): Promise<void> => {
   thoughtIDBSynced.delete(docKey)
   thoughtWebsocketProvider.delete(docKey)
   thoughtWebsocketSynced.delete(docKey)
+}
+/** Waits until the thought finishes replicating, then deallocates the cached thought and associated providers (without permanently deleting the persisted data). */
+// Note: freeThought and deleteThought are the only places where we use the id as the docKey directly.
+// This is because we want to free all of the thought's children, not the thought's siblings, which are contained in the parent Doc accessed via docKeys.
+export const freeThought = async (docKey: string): Promise<void> => {
+  thoughtRetained.delete(docKey)
+
+  // wait for idb replication, otherwise the deletion may not be saved to disk
+  await thoughtIDBSynced.get(docKey)
+
+  // TODO: How to prevent background replication from getting interrupted by editing? If a user edits a thought while its lexeme is being replicated in the background, then the provider will be destroyed and replication will halt. It should not affect the replication cursors, but will require a refresh to resume.
+  // However, we cannot wait for websocketSynced when offline.
+  // await thoughtWebsocketSynced.get(docKey)
+
+  // if the thought is retained again, it means it has been replicated in the foreground, and tryDeallocateThought will be a noop.
+  await tryDeallocateThought(docKey)
 }
 
 /** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
@@ -1251,19 +1250,6 @@ const deleteThought = async (docKey: string): Promise<void> => {
     }
   }
 }
-
-/** Waits until the lexeme finishes replicating, then deallocates the cached lexeme and associated providers (without permanently deleting the persisted data). */
-export const freeLexeme = async (key: string): Promise<void> => {
-  lexemeRetained.delete(key)
-  await lexemeIDBSynced.get(key)
-
-  // TODO: See freeThought for problems with awaiting websocketSynced.
-  // await lexemeWebsocketSynced.get(key)
-
-  // if the lexeme is retained again, it means it has been replicated in the foreground, and tryDeallocateLexeme will be a noop.
-  await tryDeallocateLexeme(key)
-}
-
 /** Deallocates the cached lexeme and associated providers (without permanently deleting the persisted data). If the lexeme is retained, noop. Call freeLexeme to both safely unretain the lexeme and trigger deallocation when replication completes. */
 const tryDeallocateLexeme = async (key: string): Promise<void> => {
   if (lexemeRetained.has(key)) return
@@ -1286,6 +1272,17 @@ const tryDeallocateLexeme = async (key: string): Promise<void> => {
   lexemeIDBSynced.delete(key)
   lexemeWebsocketProvider.delete(key)
   lexemeWebsocketSynced.delete(key)
+}
+/** Waits until the lexeme finishes replicating, then deallocates the cached lexeme and associated providers (without permanently deleting the persisted data). */
+export const freeLexeme = async (key: string): Promise<void> => {
+  lexemeRetained.delete(key)
+  await lexemeIDBSynced.get(key)
+
+  // TODO: See freeThought for problems with awaiting websocketSynced.
+  // await lexemeWebsocketSynced.get(key)
+
+  // if the lexeme is retained again, it means it has been replicated in the foreground, and tryDeallocateLexeme will be a noop.
+  await tryDeallocateLexeme(key)
 }
 
 /** Deletes a Lexeme and clears the doc from IndexedDB. The server-side doc will eventually get deleted by the doclog replicationController. Resolves when the local database is deleted. */
@@ -1318,7 +1315,6 @@ export const updateThoughts = async ({
   thoughtIndexUpdates,
   lexemeIndexUpdates,
   lexemeIndexUpdatesOld,
-  schemaVersion,
 }: {
   thoughtIndexUpdates: Index<Thought | null>
   lexemeIndexUpdates: Index<Lexeme | null>
@@ -1382,8 +1378,8 @@ export const updateThoughts = async ({
 
 /** Clears all thoughts and lexemes from the db. */
 export const clear = async () => {
-  const deleteThoughtPromises = Array.from(thoughtDocs, ([id, doc]) => deleteThought(id as ThoughtId))
-  const deleteLexemePromises = Array.from(lexemeDocs, ([key, doc]) => deleteLexeme(key))
+  const deleteThoughtPromises = Array.from(thoughtDocs, ([id]) => deleteThought(id as ThoughtId))
+  const deleteLexemePromises = Array.from(lexemeDocs, ([key]) => deleteLexeme(key))
 
   await Promise.all([...deleteThoughtPromises, ...deleteLexemePromises])
 
