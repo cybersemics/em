@@ -167,6 +167,38 @@ describe('all platforms', () => {
     const offset = await getSelection().focusOffset
     expect(offset).toBe(1)
   })
+
+  it('clicking backspace when the caret is at the beginning of a thought should merge it with the previous thought.', async () => {
+    const importText = `
+    - first
+    - last`
+
+    await paste(importText)
+
+    const editableNodeHandle = await waitForEditable('last')
+
+    await click(editableNodeHandle, { edge: 'left' })
+    await press('Backspace')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('firstlast')
+  })
+})
+
+it('clicking backspace when the caret is at the end of a thought should delete a character.', async () => {
+  const importText = `
+  - first
+  - last`
+
+  await paste(importText)
+
+  const editableNodeHandle = await waitForEditable('last')
+
+  await click(editableNodeHandle, { edge: 'right' })
+  await press('Backspace')
+
+  const textContext = await getSelection().focusNode?.textContent
+  expect(textContext).toBe('las')
 })
 
 describe('mobile only', () => {
