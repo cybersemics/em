@@ -22,7 +22,11 @@ const QuickDropPanel = () => {
       classNames='slide-right'
       unmountOnExit
     >
-      <div ref={quickDropPanelRef} className={css({ position: 'fixed', right: 0, top: '20vh', zIndex: 'popup' })}>
+      <div
+        ref={quickDropPanelRef}
+        className={css({ position: 'fixed', right: 0, top: '20vh', zIndex: 'popup' })}
+        data-testid='quick-drop-panel'
+      >
         <DeleteDrop />
         {
           // CopyOneDrop does not work on Mobile Safari, so temporarily disable it.

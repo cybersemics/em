@@ -1,6 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 import { rgbToHex } from '@mui/material'
 import Thunk from '../@types/Thunk'
+import { ColorToken } from '../colors.config'
+import { ALLOWED_ATTR } from '../constants'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import pathToThought from '../selectors/pathToThought'
@@ -46,6 +48,29 @@ export const formatSelectionActionCreator =
           if (elementColor && isDifferentColor) return true
           return false
         }
+
+        /** Function to collect tag names without significant attributes. */
+        const collectTagsWithoutAttributes = (text: string, pattern: RegExp): string[] =>
+          Array.from(text.matchAll(pattern))
+            // Filter out tags that lack meaningful attributes
+            .filter(([, , attributes]) => {
+              const meaningfulAttributes = ALLOWED_ATTR.map(attr => `${attr}=`)
+              // Return true if attributes are absent or do not contain any meaningful attributes
+              return !attributes || !meaningfulAttributes.some(attr => attributes.includes(attr))
+            })
+            // Map to extract the tag names from matches
+            .map(([, tagName]) => tagName)
+
+        /** Function to create a new text string with specified tags and their content removed. */
+        const removeTags = (text: string, tags: string[]): string =>
+          // Use reduce to accumulate a new string without the unwanted tags
+          tags.reduce((acc, tagName) => {
+            const openingTagPattern = new RegExp(`<${tagName}(\\s[^>]*)?>`, 'gi')
+            const closingTagPattern = new RegExp(`</${tagName}>`, 'gi')
+            // Replace both opening and closing tags with an empty string
+            return acc.replace(openingTagPattern, '').replace(closingTagPattern, '')
+          }, text)
+
         dispatch((dispatch, getState) => {
           const state = getState()
           if (!state.cursor) return
@@ -53,18 +78,24 @@ export const formatSelectionActionCreator =
           const thought = getThoughtById(state, head(state.cursor))
           const simplePath = simplifyPath(state, state.cursor)
           const styleAttrPattern = /style\s*=\s*["'][^"']*["']/gi
+          const tagWithoutStylePattern = /<(span|font)(\s[^>]*)?>/gi
 
           //Replace style attributes based on the conditions
-          const newThoughtValue = thought.value.replace(styleAttrPattern, match => {
+          const styleRemovedThought = thought.value.replace(styleAttrPattern, match => {
             if (shouldRemoveStyle(match)) return ''
             return match
           })
+          const tagsToRemove = collectTagsWithoutAttributes(styleRemovedThought, tagWithoutStylePattern)
+          const newValue = removeTags(styleRemovedThought, tagsToRemove)
 
           dispatch(
             editThought({
+              cursorOffset: selection.offsetThought() ?? undefined,
               oldValue: thought.value,
-              newValue: newThoughtValue,
+              newValue: newValue,
               path: simplePath,
+              // force the ContentEditable to update
+              force: true,
             }),
           )
         })

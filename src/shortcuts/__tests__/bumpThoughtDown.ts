@@ -1,4 +1,4 @@
-import { act } from '@testing-library/react'
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import bumpThoughtDown from '../../shortcuts/bumpThoughtDown'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'

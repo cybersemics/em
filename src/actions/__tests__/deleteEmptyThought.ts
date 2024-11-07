@@ -126,6 +126,24 @@ describe('normal view', () => {
   - ab`)
   })
 
+  it('merge thoughts multiple times', () => {
+    // set the cursor
+    const steps = [
+      newThought('a'),
+      newThought('b'),
+      newThought('c'),
+      setCursor(['c']),
+      deleteEmptyThought,
+      deleteEmptyThought,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - abc`)
+  })
+
   it(`insert second thought's children`, () => {
     const steps = [
       newThought('a'),
