@@ -11,7 +11,6 @@ import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
-import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
@@ -88,22 +87,15 @@ export const formatSelectionActionCreator =
           })
           const tagsToRemove = collectTagsWithoutAttributes(styleRemovedThought, tagWithoutStylePattern)
           const newValue = removeTags(styleRemovedThought, tagsToRemove)
-          if (
-            thought.value.length !== 0 &&
-            (selection.text()?.length === 0 || selection.text()?.length === strip(thought.value).length)
-          ) {
-            const savedSelection = selection.save()
-            selection.select(thoughtContentEditable)
-            document.execCommand('delete')
-            document.execCommand('insertHTML', false, newValue)
-            selection.restore(savedSelection)
-          }
 
           dispatch(
             editThought({
+              cursorOffset: selection.offsetThought() ?? undefined,
               oldValue: thought.value,
               newValue: newValue,
               path: simplePath,
+              // force the ContentEditable to update
+              force: true,
             }),
           )
         })
