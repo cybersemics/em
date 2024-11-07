@@ -82,7 +82,6 @@ const Sidebar = () => {
           width: '400px',
           _mobile: { width: '90%' },
         }),
-        paperAnchorLeft: css({ top: 'safeAreaTop !important' }),
       }}
       disableSwipeToOpen={!isTouch}
       ref={containerRef}

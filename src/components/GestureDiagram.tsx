@@ -74,7 +74,6 @@ const GestureDiagram = ({
   const [id] = useState(createId())
 
   // match signaturePad shadow in TraceGesture component
-  // TODO: Why isn't this working?
   const dropShadow = `drop-shadow(0 0 ${(GESTURE_GLOW_BLUR * 2) / 3}px ${token(`colors.${GESTURE_GLOW_COLOR}` as const)})`
 
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
@@ -114,6 +113,7 @@ const GestureDiagram = ({
     return { dx, dy }
   }
 
+  // eslint-disable-next-line no-extra-parens
   const pathSegments = (Array.from(path) as Direction[]).map(pathSegmentDelta)
   const sumWidth = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dx, 0))
   const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))

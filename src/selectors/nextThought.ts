@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { HOME_PATH } from '../constants'

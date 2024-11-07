@@ -33,12 +33,10 @@ const formattingNodeToHtml = (node: Element) => {
   if (newNode.tagName === 'span') {
     const styleAttributes = _.filter(newNode.attributes, { key: 'style' })
 
-    const strippedStyleAttribute = stripStyleAttribute(
-      styleAttributes
-        .filter(obj => obj.key === 'style')
-        .map(obj => obj.value.trim().replace(/;$/, ''))
-        .join('; '),
-    )
+    const strippedStyleAttribute = styleAttributes
+      .map(styleAttribute => stripStyleAttribute(styleAttribute.value))
+      .filter(strippedAttribute => strippedAttribute.length > 0)
+      .join('')
 
     return strippedStyleAttribute.length > 0
       ? `<${newNode.tagName} style="${strippedStyleAttribute}">${content}</${newNode.tagName}>`

@@ -48,7 +48,6 @@ const ModalAuth = () => {
   const [activeMode, updateActiveMode] = useState(modes.login)
 
   /** Checks if the given mode is active. */
-  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   const isModeActive = (mode: Mode) => activeMode.name === mode.name
 
   const [email, updateEmail] = useState('')

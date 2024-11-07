@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import _ from 'lodash'
 import { nanoid } from 'nanoid'
 import { useCallback, useEffect, useState } from 'react'

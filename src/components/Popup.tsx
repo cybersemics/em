@@ -73,9 +73,7 @@ const Popup = React.forwardRef<
         ...(isTouch ? useSwipeToDismissProps.style : null),
       }}
     >
-      <div data-testid='popup-value' className={css({ padding: '0.25em', backgroundColor: 'bgOverlay80' })}>
-        {children}
-      </div>
+      <div className={css({ padding: '0.25em', backgroundColor: 'bgOverlay80' })}>{children}</div>
       {importFileId && (
         <a
           onClick={() => {

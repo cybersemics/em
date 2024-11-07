@@ -115,7 +115,6 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   // Disallow dropping on context view.
   // This condition must be matched in isChildHovering to correctly highlight the hovering parent.
-  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   return !showContexts && canDropPath(thoughtsFrom, thoughtsTo)
 }
 

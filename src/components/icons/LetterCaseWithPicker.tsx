@@ -1,7 +1,6 @@
 import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
-import { css } from '../../../styled-system/css'
 import IconType from '../../@types/Icon'
 import LetterCasePicker from '../LetterCasePicker'
 import LetterCaseIcon from './LetterCaseIcon'
@@ -23,23 +22,21 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
         unmountOnExit
       >
         <div
-          className={css({
+          ref={toolbarPopupRef}
+          className='z-index-stack toolbar-popup'
+          style={{
             position: 'relative',
-            zIndex: 'stack',
+            // eyeballing it to get font sizes 14–24 to look right
+            left: (size * (size + 90)) / 200 + 600 / (size * size),
+            marginTop: size * 1.2 - 10,
             // position fixed or absolute causes the ColorPicker to get clipped by the toolbar's overflow-x: scroll
             // ideally we want overflow-x:scroll and overflow-y:visible, but Safari does not differing allow overflow-x and overflow-y
             // instead, keep position:static but set the width to 0
             // this will increase the height of the toolbar so the ColorPicker does not get clipped without taking up horizontal space
             width: 0,
-          })}
-          ref={toolbarPopupRef}
-          style={{
-            // eyeballing it to get font sizes 14–24 to look right
-            left: (size * (size + 90)) / 200 + 600 / (size * size),
-            marginTop: size * 1.2 - 10,
           }}
         >
-          <LetterCasePicker fontSize={size} cssRaw={css.raw({ transform: `translate(-50%)` })} />
+          <LetterCasePicker fontSize={size} style={{ transform: `translate(-50%)` }} />
         </div>
       </CSSTransition>
     </div>

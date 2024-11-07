@@ -98,8 +98,19 @@ const SearchSubthoughts: FC = () => {
       )
     : []
 
+  /** Sets the leaf classname dynamically. */
+  const onRef = (el: HTMLElement | null) => {
+    if (el) {
+      const parentNode = el.parentNode as HTMLElement
+      parentNode.classList.toggle('leaf', children.length === 0)
+    }
+  }
+
   return (
-    <div>
+    <div
+      // must go into DOM to modify the parent li classname since we do not want the li to re-render
+      ref={onRef}
+    >
       {!hasLexeme(store.getState(), search) && isDocumentEditable() ? (
         <NewThought path={[] as unknown as SimplePath} label={`Create "${search}"`} value={search} type='button' />
       ) : null}

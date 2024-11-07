@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux'
+import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
 import {
-  HOME_TOKEN,
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_VERSION_BOOK,
@@ -9,26 +9,24 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
-import { getAllChildrenAsThoughts, getChildrenRanked } from '../../selectors/getChildren'
-import selectTutorialChoice from '../../selectors/selectTutorialChoice'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import headValue from '../../util/headValue'
 import TutorialHint from './TutorialHint'
 import context1SubthoughtCreated from './utils/context1SubthoughtCreated'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext1SubThought = () => {
-  const tutorialChoice = useSelector(selectTutorialChoice)
-  const context1SubthoughtisCreated = useSelector(state => context1SubthoughtCreated(state, { tutorialChoice }))
+const Tutorial2StepContext1SubThought = ({
+  tutorialChoice,
+  rootChildren,
+}: {
+  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
+  rootChildren: Thought[]
+}) => {
+  const context1SubthoughtisCreated = context1SubthoughtCreated({ rootChildren, tutorialChoice })
   const select = useSelector(
     state =>
       !state.cursor || headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
   )
-  const context1Exists = useSelector(state => {
-    const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
-    return rootChildren.find(
-      child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
-    )
-  })
   const tryItYourself = useSelector(state => {
     const tutorialChoiceId = contextToThoughtId(state, [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]])
     return (
@@ -62,7 +60,9 @@ const Tutorial2StepContext1SubThought = () => {
       </p>
       {
         // e.g. Home
-        context1Exists &&
+        rootChildren.find(
+          child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
+        ) &&
         // e.g. Home/To Do
         tryItYourself ? (
           <p>

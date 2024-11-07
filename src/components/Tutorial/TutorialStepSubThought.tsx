@@ -5,7 +5,7 @@ import headValue from '../../util/headValue'
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSubThought = () => {
   const headCursorValue = useSelector(state => state.cursor && headValue(state, state.cursor))
-  const deleteBlank = useSelector(state => !!state.cursor && headCursorValue === '')
+  const deleteBlank = useSelector(state => state.cursor && headCursorValue === '')
   const noCursor = useSelector(state => !state.cursor)
   return (
     <>

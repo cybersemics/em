@@ -5,7 +5,6 @@ import { css } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSidebar'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 
 const lineClassName = css({
@@ -66,7 +65,7 @@ const HamburgerMenu = () => {
     <CSSTransition
       nodeRef={hamburgerMenuRef}
       in={!distractionFreeTyping}
-      timeout={durations.get('distractionFreeTypingDuration')}
+      timeout={600}
       classNames='fade-600'
       unmountOnExit
     >

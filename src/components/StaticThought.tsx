@@ -3,7 +3,6 @@ import React, { useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { thought } from '../../styled-system/recipes'
-import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -50,8 +49,6 @@ export interface ThoughtProps {
   showContextBreadcrumbs?: boolean
   showContexts?: boolean
   simplePath: SimplePath
-  cssRaw?: SystemStyleObject
-  cssRawThought?: SystemStyleObject
   style?: React.CSSProperties
   styleAnnotation?: React.CSSProperties
   styleContainer?: React.CSSProperties
@@ -103,8 +100,6 @@ const StaticThought = ({
   rank,
   showContextBreadcrumbs,
   simplePath,
-  cssRaw,
-  cssRawThought,
   style,
   styleThought,
   styleAnnotation,
@@ -167,7 +162,6 @@ const StaticThought = ({
         path={path}
         showContextBreadcrumbs={showContextBreadcrumbs}
         simplePath={showContexts ? parentOf(simplePath) : simplePath}
-        cssRaw={cssRawThought}
         style={styleThought}
         styleAnnotation={styleAnnotation || undefined}
       />
@@ -205,27 +199,24 @@ const StaticThought = ({
             style={style}
             simplePath={simplePathLive}
             onEdit={onEdit}
-            className={css(
-              {
-                ...(isTableCol1 && { maxWidth: '100%' }),
-                ...(isAttribute(value) && { fontFamily: 'monospace' }),
-                ...(ellipsizedUrl && {
-                  display: 'inline-block',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  maxWidth: '100%',
-                  /*
+            className={css({
+              ...(isTableCol1 && { maxWidth: '100%' }),
+              ...(isAttribute(value) && { fontFamily: 'monospace' }),
+              ...(ellipsizedUrl && {
+                display: 'inline-block',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                maxWidth: '100%',
+                /*
                       vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
                       Here is the reference to the reason.
                       https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
                     */
-                  verticalAlign: 'top',
-                  userSelect: isPressed ? 'none' : undefined,
-                }),
-              },
-              cssRaw,
-            )}
+                verticalAlign: 'top',
+                userSelect: isPressed ? 'none' : undefined,
+              }),
+            })}
           />
         )}
       </div>

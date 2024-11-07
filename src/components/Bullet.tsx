@@ -2,7 +2,6 @@ import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { bullet } from '../../styled-system/recipes'
-import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
@@ -21,6 +20,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
+import themeColors from '../selectors/themeColors'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -273,23 +273,19 @@ const BulletLeaf = ({
   showContexts?: boolean
   isBulletExpanded?: boolean
 } = {}) => {
+  const colors = useSelector(themeColors)
   const radius = isIOSSafari ? 105 : 92
   return (
     <ellipse
       aria-label='bullet-glyph'
       data-graypulse={pending}
-      className={cx(
-        glyphFg({
-          gray: missing,
-          graypulse: pending,
-          showContexts,
-          leaf: true,
-          isBulletExpanded,
-        }),
-        css({
-          fill: showContexts ? 'none' : isHighlighted ? 'highlight' : undefined,
-        }),
-      )}
+      className={glyphFg({
+        gray: missing,
+        graypulse: pending,
+        showContexts,
+        leaf: true,
+        isBulletExpanded,
+      })}
       data-bullet='leaf'
       ry={radius}
       rx={radius}
@@ -298,8 +294,8 @@ const BulletLeaf = ({
       style={{
         // allow .gray to define fill when missing
         // allow .graypulse to define fill when pending
-        fill: !showContexts && !isHighlighted ? fill : undefined,
-        stroke: !showContexts && !isHighlighted ? fill : undefined,
+        fill: showContexts ? 'none' : isHighlighted ? colors.highlight : fill,
+        stroke: showContexts ? 'none' : isHighlighted ? colors.highlight : fill,
       }}
       strokeWidth={showContexts ? 30 : undefined}
     />
@@ -323,6 +319,7 @@ const BulletParent = ({
   showContexts?: boolean
   isBulletExpanded?: boolean
 } = {}) => {
+  const colors = useSelector(themeColors)
   const path = isIOSSafari
     ? 'M194.95196151422277,180.42647327382525 L194.95196151422277,419.57354223877866 L413.24607972032067,298.0609718441649 L194.95196151422277,180.42646533261976 L194.95196151422277,180.42647327382525 z'
     : 'M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z'
@@ -352,7 +349,7 @@ const BulletParent = ({
       }}
       d={path}
       strokeWidth={showContexts ? 30 : undefined}
-      stroke={token('colors.fg85')}
+      stroke={colors.fg85}
       fill={showContexts ? 'none' : fill}
     />
   )
@@ -368,6 +365,7 @@ const BulletCursorOverlay = ({
   publish?: boolean
   simplePath: SimplePath
 }) => {
+  const colors = useSelector(themeColors)
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
   return (
     <ellipse
@@ -375,11 +373,11 @@ const BulletCursorOverlay = ({
       rx={bulletOverlayRadius}
       cy='300'
       cx='300'
-      className={css({
+      style={{
         fillOpacity: isHighlighted ? 1 : 0.25,
-        fill: isHighlighted ? 'highlight' : 'fg',
-        stroke: isHighlighted ? 'highlight' : undefined,
-      })}
+        fill: isHighlighted ? colors.highlight : colors.fg,
+        stroke: isHighlighted ? colors.highlight : undefined,
+      }}
     />
   )
 }
@@ -441,6 +439,8 @@ const Bullet = ({
     const children = getAllChildrenAsThoughts(state, thought.id)
     return children.length < Object.keys(thought.childrenMap).length
   })
+
+  const colors = useSelector(themeColors)
 
   // fill =bullet/=style override
   const fill = useSelector(state => {
@@ -545,31 +545,27 @@ const Bullet = ({
       onClick={clickHandler}
     >
       <svg
-        className={cx(
-          glyph({ isBulletExpanded, showContexts, leaf }),
-          css({
-            // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
-            // This caused the bullet slide animation to end with a jerky movement.
-            // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
-            // allowing the browser to optimize the animation.
-            willChange: 'transform',
-            ...(isHighlighted
-              ? {
-                  fillOpacity: 1,
-                  fill: 'highlight',
-                  stroke: 'highlight',
-                }
-              : null),
-          }),
-        )}
+        className={glyph({ isBulletExpanded, showContexts, leaf })}
         viewBox='0 0 600 600'
         style={{
+          // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
+          // This caused the bullet slide animation to end with a jerky movement.
+          // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
+          // allowing the browser to optimize the animation.
+          willChange: 'transform',
           height: lineHeight,
           width: lineHeight,
           marginLeft: -lineHeight,
           // required to make the distance between bullet and thought scale properly at all font sizes.
           left: lineHeight * 0.317,
           marginBottom: glyphBottomMargin,
+          ...(isHighlighted
+            ? {
+                fillOpacity: 1,
+                fill: colors.highlight,
+                stroke: colors.highlight,
+              }
+            : null),
         }}
         ref={svgElement}
       >

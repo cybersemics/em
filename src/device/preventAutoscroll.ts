@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import { isTouch } from '../browser'
 import viewportStore from '../stores/viewport'
 

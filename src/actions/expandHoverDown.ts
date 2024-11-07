@@ -11,6 +11,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import pathToContext from '../util/pathToContext'
 
+// eslint-disable-next-line prefer-const
 let expandDownTimer: Timer | null = null
 
 /** Clears active delayed dispatch. */

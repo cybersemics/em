@@ -1,3 +1,6 @@
+/* eslint-disable no-useless-constructor */
+/* eslint-disable no-console */
+
 const JsDomEnvironment = require('jest-environment-jsdom')
 const portUsed = require('tcp-port-used')
 const chalk = require('chalk')

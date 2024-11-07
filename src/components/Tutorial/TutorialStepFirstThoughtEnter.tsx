@@ -4,13 +4,12 @@ import headValue from '../../util/headValue'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepFirstThoughtEnter = () => {
-  const noCursor = useSelector(state => !state.cursor)
-  const cursorValue = useSelector(state => (state.cursor ? headValue(state, state.cursor) : ''))
+  const ready = useSelector(state => !state.cursor || headValue(state, state.cursor).length > 0)
   return (
     <>
-      <p>{cursorValue === 'Anything' ? 'Well, you took that quite literally.' : 'You did it!'}</p>
-      {noCursor || cursorValue ? (
-        <p>{isTouch ? 'Tap' : 'Click'} the Next button when you are ready to continue.</p>
+      <p>You did it!</p>
+      {ready ? (
+        <p>{isTouch ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p>
       ) : (
         <p>Now type something. Anything will do.</p>
       )}

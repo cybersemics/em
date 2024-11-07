@@ -16,6 +16,7 @@ const expandHoverUp = (state: State, { path }: { path?: Path | null }): State =>
   expandHoverUpPath: path,
 })
 
+// eslint-disable-next-line prefer-const
 let expandTopTimer: Timer | null = null
 
 /** Clears an active delayed dispatch. */

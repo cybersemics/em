@@ -1,3 +1,5 @@
+/* eslint-disable prefer-const */
+
 /** THE BAD PLACE where mutable globals are defined. */
 
 // globally tracks when a long press starts and ends
@@ -21,7 +23,7 @@ let offlineTimer = 0
 let errorTimer = 0
 
 /** On cursorNext and cursorPrev, momentarily suppress expansion of children. This avoids performance issues when desktop users hold ArrowDown or ArrowUp to move across many siblings. */
-let suppressExpansion = false
+let suppressExpansion = false // eslint-disable-line prefer-const
 
 /** These aren's so bad. They're for debugging. */
 

@@ -293,7 +293,6 @@ const initEvents = (store: Store<State, any>) => {
     // In order to detect the end of dragging a file, we need to debounce the dragLeave event and cancel it if dragEnter occurs.
     // Inspired by: https://stackoverflow.com/questions/3144881/how-do-i-detect-a-html5-drag-event-entering-and-leaving-the-window-like-gmail-d
     setTimeout(() => {
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       dragLeave.cancel()
     })
     if (e.dataTransfer?.types.includes('Files')) {

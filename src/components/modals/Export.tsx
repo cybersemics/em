@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import ClipboardJS from 'clipboard'
 import React, {
   FC,
@@ -251,7 +250,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
         {selected.label}
       </a>
       <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
-        <ChevronImg onClickHandle={() => setIsOpen(!isOpen)} cssRaw={isOpen ? rotate180Class : undefined} />
+        <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} cssRaw={isOpen ? rotate180Class : undefined} />
         <span>
           <DropDownMenu
             isOpen={isOpen}
@@ -284,6 +283,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const [shouldIncludeMarkdownFormatting, setShouldIncludeMarkdownFormatting] = useState(true)
   const [selected, setSelected] = useState(exportOptions[0])
   const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
+
+  const dark = useSelector(state => theme(state) !== 'Light')
 
   const exportWord = isTouch ? 'Share' : 'Download'
 
@@ -671,6 +672,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
           className={css({ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative' })}
         >
           <ChevronImg
+            dark={dark}
             onClickHandle={onAdvancedClick}
             cssRaw={css.raw(advancedSettings && rotate180Class, { opacity: advancedSettings ? 1 : 0.5 })}
           />

@@ -4,8 +4,8 @@
 import ShortcutId from './@types/ShortcutId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
-import { ColorToken } from './colors.config'
 import emojiRegex from './emojiRegex'
+import { colors } from './selectors/themeColors'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -130,7 +130,7 @@ export const ABSOLUTE_PATH = [ABSOLUTE_TOKEN] as SimplePath
 export const ALLOW_SINGLE_CONTEXT = false
 
 /** A void function that does nothing (noop means "no operation"). */
-export const noop = () => {}
+export const noop = () => {} // eslint-disable-line @typescript-eslint/no-empty-function
 
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200
@@ -273,7 +273,6 @@ export const REGEX_EMOJI_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
 export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike', 'code', 'font']
 
-export const EXTERNAL_FORMATTING_TAGS = ['b', 'i', 'u', 'strong', 'strike']
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 
 export const ALLOWED_ATTR = ['class', 'style', 'color']
@@ -515,4 +514,4 @@ export const THROTTLE_DISTRACTION_FREE_TYPING = 100
 export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 
 export const GESTURE_GLOW_BLUR = 10
-export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'
+export const GESTURE_GLOW_COLOR: keyof typeof colors.dark = 'gray'

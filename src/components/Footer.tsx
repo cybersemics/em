@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { FC, PropsWithChildren, useEffect, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import pkg from '../../package.json'

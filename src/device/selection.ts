@@ -58,7 +58,7 @@ export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
 /** Returns true if the Node is an editable. */
 const isEditable = (node?: Node | null) =>
-  !!node && node.nodeType === Node.ELEMENT_NODE && !!(node as HTMLElement).hasAttribute?.('data-editable')
+  !!node && node.nodeType === Node.ELEMENT_NODE && !!(node as HTMLElement).classList?.contains('editable')
 
 /** Returns true if the selection is on a thought. */
 // We should see if it is possible to just use state.editing and selection.isActive()
@@ -161,7 +161,7 @@ export const offsetThought = (): number | null => {
         : 0
       : selection.focusOffset
   let curNode: Node | null = selection.focusNode.nodeType === Node.TEXT_NODE ? selection.focusNode : selection.focusNode
-  while (curNode && !(curNode as HTMLElement)?.hasAttribute?.('data-editable')) {
+  while (curNode && !(curNode as HTMLElement)?.classList?.contains('editable')) {
     if (curNode?.previousSibling) {
       total += curNode.previousSibling.textContent?.length || 0
       curNode = curNode.previousSibling
@@ -384,59 +384,3 @@ export const text = () => window.getSelection()?.toString() ?? null
 /** Select all text in an element. */
 // TODO: Can this be combined with selection.set()?
 export const select = (el: Element) => window.getSelection()?.selectAllChildren(el)
-
-/** Removes the current selection. */
-export const removeCurrentSelection = () => {
-  const selection = window.getSelection()
-  if (selection && selection.rangeCount > 0) document.execCommand('delete')
-}
-
-/** Remove the useless HTMLElement from element. */
-const removeEmptyElementsRecursively = (element: HTMLElement, remainText: string) => {
-  // Loop through the child nodes of the element
-  for (let i = element.childNodes.length - 1; i >= 0; i--) {
-    const child = element.childNodes[i] as HTMLElement
-
-    // Recursively check the child element
-    removeEmptyElementsRecursively(child, remainText)
-
-    if (!child.hasChildNodes() && child.textContent !== remainText) {
-      child.remove()
-    }
-  }
-}
-
-/** Returns the selection html, or null if there is no selection. */
-export const html = () => {
-  const selection = document.getSelection()
-  if (!selection || selection.rangeCount === 0) return null
-  const range = selection?.getRangeAt(0)
-
-  if (range.startContainer.isEqualNode(range.endContainer)) {
-    let containerHtml: string | null = null
-
-    if (range && range.startContainer) {
-      let node = range.startContainer
-
-      // Check if the node is an Element using the instanceof operator
-      if (node instanceof Element) {
-        containerHtml = node.outerHTML
-      } else if (node instanceof CharacterData) {
-        while (node.parentElement?.tagName !== 'DIV') {
-          node = node.parentElement!
-        }
-
-        const parentElement = node.parentElement
-        const clonedElement = parentElement.cloneNode(true) as HTMLElement
-        removeEmptyElementsRecursively(clonedElement!, range.startContainer.textContent!)
-        containerHtml = clonedElement ? clonedElement.innerHTML : null
-      }
-    }
-    return containerHtml?.replace(range.startContainer.textContent!, selection.toString())
-  }
-
-  const div = document.createElement('div')
-  div.appendChild(range.cloneContents())
-  const currentHtml = div.innerHTML
-  return currentHtml
-}

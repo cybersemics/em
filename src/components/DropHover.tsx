@@ -111,7 +111,6 @@ const DropHoverIfVisible = ({
     )
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   return showDropHover ? <DropHover simplePath={simplePath} /> : null
 }
 

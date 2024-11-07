@@ -189,6 +189,7 @@ export const importFilesActionCreator =
     let abort = false
     const stateStart = getState()
     const importPath = path || HOME_PATH
+
     // if the destination thought is empty, then it will get destroyed by importText, so we need to calculate a new insertBefore and path for subsequent thoughts
     // these will be saved to the ResumableFile but ignored on the first thought
     const destThought = getThoughtById(stateStart, head(importPath))

@@ -13,7 +13,7 @@ interface DropDownMenuProps {
 }
 
 /** A custom drop down menu. */
-
+// eslint-disable-next-line react/display-name
 const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
   ({ isOpen, onSelect, selected, options, dark, style }, ref) => {
     return isOpen ? (

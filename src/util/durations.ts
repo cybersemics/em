@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import durationsConfig from '../durations.config'
 
 /** Initialize duration helper. */

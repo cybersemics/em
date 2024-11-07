@@ -37,7 +37,10 @@ const retriable = <T>(
 }
 
 /** A simple task queue with concurrency. */
-const taskQueue = <T = any>({
+const taskQueue = <
+  // task return type (that gets passed to onStep and onLowStep)
+  T = any,
+>({
   concurrency = 8,
   expected: _expected,
   onLowStep,

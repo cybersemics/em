@@ -25,28 +25,6 @@ Start the dev server for local development:
 yarn start
 ```
 
-## Testing
-
-There are two testing scripts:
-
-- `yarn test` - Unit tests covering Redux actions, reducers, util, components with react-testing-library on JSDOM.
-- `yarn test:puppeteer` - Puppeteer tests will test realistic user behavior against a headless Chrome instance. Requires Docker for platform-independent execution.
-
-### Windows
-
-You will need the bash cli in your system to run the Puppeteer tests on Windows.
-
-There are two ways to run bash on Windows:
-
-- Windows Subsystem for Linux (WSL)
-  1. Install Ubuntu in your Windows Linux Subsystem. (Search on google for installation guide.)
-  2. Run Ubuntu and you will have bash available by default.
-  3. `yarn` and `yarn start` as above.
-- Git Bash
-  1. Install git with bash cli in windows.
-  2. Open the code repository in bash cli.
-  3. `yarn` and `yarn start` as above.
-
 ## Native App Development
 
 **em** is a highly optimized PWA that runs on native platforms using [Capacitor](https://capacitorjs.com/). To get started, run `yarn cap:ios` or `yarn cap:android`.

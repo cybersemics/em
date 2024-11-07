@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
@@ -6,6 +6,7 @@ import Thought from '../@types/Thought'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import themeColors from '../selectors/themeColors'
 import head from '../util/head'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Link from './Link'
@@ -36,6 +37,8 @@ const ThoughtLink = ({
     const thought = getThoughtById(state, head(simplePath)) as Thought | undefined
     return thought?.value
   })
+  const colors = useSelector(themeColors)
+  const style = useMemo(() => ({ color: colors.fg, ...styleLink }), [colors, styleLink])
 
   return (
     <div>
@@ -50,12 +53,7 @@ const ThoughtLink = ({
           linkCssRaw={css.raw({ fontWeight: 'inherit' })}
         />
       )}
-      <Link
-        cssRaw={css.raw({ fontWeight: 'inherit', color: 'fg' })}
-        simplePath={simplePath}
-        label={value}
-        style={styleLink}
-      />
+      <Link cssRaw={css.raw({ fontWeight: 'inherit' })} simplePath={simplePath} label={value} style={style} />
       <Superscript simplePath={simplePath} />
     </div>
   )

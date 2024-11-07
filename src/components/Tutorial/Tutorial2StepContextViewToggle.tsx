@@ -3,13 +3,11 @@ import { isTouch } from '../../browser'
 import { TUTORIAL_CONTEXT } from '../../constants'
 import getContexts from '../../selectors/getContexts'
 import getSetting from '../../selectors/getSetting'
-import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import { formatKeyboardShortcut, shortcutById } from '../../shortcuts'
 import headValue from '../../util/headValue'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContextViewToggle = () => {
-  const tutorialChoice = useSelector(selectTutorialChoice)
+const Tutorial2StepContextViewToggle = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
   const caseSensitiveValue = useSelector(state =>
     getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]

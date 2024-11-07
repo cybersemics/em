@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react'
-import { css, cx } from '../../../styled-system/css'
+import { css } from '../../../styled-system/css'
 import { modal } from '../../../styled-system/recipes'
 import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
@@ -55,7 +55,7 @@ class ModalComponent extends React.Component<ModalProps> {
     this.animateAndClose = () => {
       window.removeEventListener('keydown', this.onKeyDown!, true)
       if (this.ref.current) {
-        this.ref.current.classList.add(css({ opacity: 0 }))
+        this.ref.current.classList.add('animate-fadeout')
       }
       setTimeout(() => {
         store.dispatch(closeModal())
@@ -81,7 +81,7 @@ class ModalComponent extends React.Component<ModalProps> {
     const modalClasses = modal({ id, center })
 
     return (
-      <div ref={this.ref} style={style} className={cx(modalClasses.root, css({ ...(top ? { top: 55 } : null) }))}>
+      <div ref={this.ref} style={{ ...style, ...(top ? { top: 55 } : null) }} className={modalClasses.root}>
         {!this.props.preventCloseOnEscape && !hideClose && (
           <a
             className={css({

@@ -141,12 +141,29 @@ const keyframes = defineKeyframes({
 })
 
 const globalCss = defineGlobalStyles({
-  '*': {
-    _mobile: {
-      _dragInProgress: {
-        userSelect: 'none',
-      },
-    },
+  /* z-index schedule
+   Keep these in one place to make it easier to determine interactions and prevent conflicts.
+   Javascript should use z-index-* classnames so that z-indexes themselves are all defined here. */
+  ':root': {
+    '--z-index-popup': '1500',
+    '--z-index-gesture-trace': '50',
+    '--z-index-command-palette': '45',
+    '--z-index-modal': '40',
+    '--z-index-toolbar-overlay': '15',
+    '--z-index-toolbar-arrow': '15',
+    '--z-index-toolbar': '10',
+    '--z-index-navbar': '10',
+    '--z-index-latest-shortcuts': '10',
+    '--z-index-subthoughts-drop-end': '5',
+    '--z-index-tutorial': '3',
+    '--z-index-scroll-zone': '2',
+    '--z-index-thought-annotation-link': '2',
+    '--z-index-resizer': '2',
+    '--z-index-bullet': '2',
+    '--z-index-stack': '1',
+    '--z-index-hide': '-1',
+    '--safe-area-top': 'env(safe-area-inset-top)',
+    '--safe-area-bottom': 'env(safe-area-inset-bottom)',
   },
   'html, body, #root, #app': { height: '100%', fontSize: '16px' },
   'body, textarea': {
@@ -294,8 +311,6 @@ export default defineConfig({
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
           safeAreaBottom: { value: 'env(safe-area-inset-bottom)' },
         },
-        /* z-index schedule
-        Keep these in one place to make it easier to determine interactions and prevent conflicts. */
         zIndex: {
           ...zIndexDescending([
             'popup',
@@ -315,12 +330,11 @@ export default defineConfig({
             'dropEmpty',
             'subthoughtsDropEnd',
             'tutorial',
+            'scrollZone',
             'thoughtAnnotationLink',
             'resizer',
             'bullet',
             'stack',
-            'content',
-            'scrollZone',
           ]),
           hide: { value: -1 },
         },
@@ -382,11 +396,9 @@ export default defineConfig({
     safari: '[data-browser=safari] &',
     mobile: '[data-device=mobile] &',
     desktop: '[data-device=desktop] &',
-    native: '[data-native=true] &',
     android: '[data-platform=android] &',
     mac: '[data-platform=mac] &',
     iphone: '[data-platform=iphone] &',
-    dragInProgress: '[data-drag-in-progress=true] &',
   },
 
   // The output directory for your css system

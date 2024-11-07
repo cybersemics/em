@@ -11,7 +11,6 @@ const viewportStore = reactMinistore({
   innerWidth: window.innerWidth,
   /** Height of the viewport, not including the virtual keyboard. */
   innerHeight: window.innerHeight,
-  scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * 0.39,
   virtualKeyboardHeight:
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
 })

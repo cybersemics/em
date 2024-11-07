@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import _ from 'lodash'
 import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -402,7 +399,7 @@ const ShareList = React.forwardRef<
   const permissionsSorted = _.sortBy(
     Object.entries(permissions),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ([accessToken, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
+    ([_, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
   )
 
   /** Keyboad shortcuts. */

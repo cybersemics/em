@@ -282,7 +282,7 @@ export const init = async (options: ThoughtspaceOptions) => {
   // TODO: Reuse websocket connection from ./index?
   const websocket = new HocuspocusProviderWebsocket({
     // disable websocket since YJS is being sunset and server is no longer deployed.
-
+    // eslint-disable-next-line no-constant-condition
     connect: false,
     url: websocketUrl,
   })
@@ -297,6 +297,7 @@ export const init = async (options: ThoughtspaceOptions) => {
         const persistence = new IndexeddbPersistence(subdoc.guid, subdoc)
         persistence.whenSynced
           .then(() => {
+            // eslint-disable-next-line no-new
             new HocuspocusProvider({
               // disable awareness for performance
               // doclog doc has awareness enabled to keep the websocket open
@@ -332,6 +333,7 @@ export const init = async (options: ThoughtspaceOptions) => {
           blocks.push([blockNew])
         }
 
+        // eslint-disable-next-line no-new
         new HocuspocusProvider({
           // doclog doc has awareness enabled to keep the websocket open
           // disable awareness for all other websocket providers

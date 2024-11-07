@@ -4,6 +4,12 @@
   See: https://panda-css.com/docs/concepts/writing-styles
 */
 
+/* Thoughts */
+
+[contenteditable].active-underline:focus {
+  border-bottom: solid 1px;
+}
+
 /* react-transition-group animation: fade */
 .fade-enter {
   opacity: 0;
@@ -200,3 +206,183 @@
 /* for some reason opacity bleeds through modal*/
 
 /* higher precendence than ".dark .modal .a" */
+
+.animate {
+  transition: all 0.4s ease-out;
+}
+.animate-slow {
+  transition: all 1s ease-out;
+}
+.animate-fadeout {
+  opacity: 0;
+}
+
+@keyframes pulse-light {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
+/* arrow */
+.arrow:after,
+.arrow:before {
+  border: solid transparent;
+  content: ' ';
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
+.arrow:after {
+  border-width: 10px;
+}
+.arrow:before {
+  border-width: 12px;
+}
+
+/* arrow left */
+.arrow-left:after,
+.arrow-left:before {
+  right: 100%;
+  top: 50%;
+}
+
+.arrow-left:after {
+  border-right-color: white;
+  margin-top: -10px;
+}
+
+.arrow-left:before {
+  border-right-color: rgba(0, 0, 0, 0.2);
+  margin-top: -12px;
+}
+
+.dark .arrow-left:after {
+  border-right-color: #333;
+}
+.dark .arrow-left:before {
+  border-right-color: rgba(255, 255, 255, 0.15);
+}
+
+.arrow-lefttop:after,
+.arrow-lefttop:before {
+  top: 20px;
+}
+.arrow-leftbottom:after,
+.arrow-leftbottom:before {
+  bottom: 20px;
+}
+.arrow-leftmiddle:after,
+.arrow-leftmiddle:before {
+  top: 50%;
+}
+
+/* arrow up */
+.arrow-up:after,
+.arrow-up:before {
+  bottom: 100%;
+  left: 50%;
+}
+
+.arrow-up:after {
+  border-bottom-color: white;
+  margin-left: -10px;
+}
+
+.arrow-up:before {
+  border-bottom-color: rgba(0, 0, 0, 0.2);
+  margin-left: -12px;
+}
+
+.dark .arrow-up:after {
+  border-bottom-color: #333;
+}
+.dark .arrow-up:before {
+  border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+
+.arrow-upleft:before,
+.arrow-upleft:after {
+  left: 10%;
+}
+
+.code-block {
+  display: block;
+  padding: 5px 10px;
+  margin: 2px 5px 10px;
+}
+
+.mobile.drag-in-progress * {
+  user-select: none;
+}
+
+.dragging {
+  color: lightblue;
+}
+
+/* Prose View */
+
+.SplitPane,
+.SplitPane .Resizer,
+.SplitPane .Pane {
+  user-select: none;
+}
+
+.Resizer {
+  background: #fff;
+  opacity: 0.2;
+  z-index: var(--z-index-resizer);
+  box-sizing: border-box;
+  background-clip: padding-box;
+}
+
+.Resizer:hover {
+  transition: all 0.2s ease-out;
+}
+
+.Resizer.horizontal {
+  height: 11px;
+  margin: -5px 0;
+  border-top: 5px solid rgba(255, 255, 255, 0);
+  border-bottom: 5px solid rgba(255, 255, 255, 0);
+  cursor: row-resize;
+  width: 100%;
+}
+
+.Resizer.horizontal:hover {
+  border-top: 5px solid rgba(0, 0, 0, 0.5);
+  border-bottom: 5px solid rgba(0, 0, 0, 0.5);
+}
+
+.Resizer.vertical {
+  width: 11px;
+  margin: 0 -5px;
+  border-left: 5px solid rgba(255, 255, 255, 0);
+  border-right: 5px solid rgba(255, 255, 255, 0);
+  cursor: col-resize;
+}
+
+.Resizer.vertical:hover {
+  border-left: 5px solid rgba(255, 255, 255, 0.5);
+  border-right: 5px solid rgba(255, 255, 255, 0.5);
+}
+.Resizer.disabled {
+  cursor: not-allowed;
+}
+.Resizer.disabled:hover {
+  border-color: transparent;
+}
+
+.MuiDrawer-paperAnchorLeft {
+  top: var(--safe-area-top) !important;
+}
+
+.icon {
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.1s ease-in-out;
+}

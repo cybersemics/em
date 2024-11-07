@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import _ from 'lodash'
 import { nanoid } from 'nanoid'
 import * as Y from 'yjs'

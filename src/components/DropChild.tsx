@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import React from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'

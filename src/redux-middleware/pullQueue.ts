@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import Index from '../@types/IndexType'
