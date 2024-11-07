@@ -25,6 +25,7 @@ import reducerFlow from '../util/reducerFlow'
 
 export type UpdateThoughtsOptions = Omit<PushBatch, 'lexemeIndexUpdatesOld'> & {
   contextChain?: SimplePath[]
+  cursorOffset?: number
   // callback for when the updates have been synced with IDB
   idbSynced?: () => void
   isLoading?: boolean
@@ -161,6 +162,7 @@ const dataIntegrityCheck =
 const updateThoughts = (
   state: State,
   {
+    cursorOffset,
     lexemeIndexUpdates,
     thoughtIndexUpdates,
     recentlyEdited,
@@ -224,6 +226,7 @@ const updateThoughts = (
     // update recentlyEdited, pushQueue, and thoughts
     state => ({
       ...state,
+      ...(cursorOffset ? { cursorOffset } : null),
       // disable loading screen as soon as the root is loaded
       // or isLoading can be forced by passing it directly to updateThoughts
       isLoading: state.isLoading && isStillLoading(),
