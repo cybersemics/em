@@ -1,1 +1,2 @@
+#!/bin/sh
 yarn build:styles > /dev/null &
