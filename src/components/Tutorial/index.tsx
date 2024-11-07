@@ -4,11 +4,9 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
-import Thought from '../../@types/Thought'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { isTouch } from '../../browser'
 import {
-  HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_HINT,
   TUTORIAL2_STEP_CONTEXT1_PARENT_HINT,
   TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT,
@@ -26,8 +24,8 @@ import {
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
 import useIsVisible from '../../hooks/useIsVisible'
-import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import { shortcutById } from '../../shortcuts'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
@@ -38,10 +36,8 @@ import TutorialNavigation from './TutorialNavigation'
 import TutorialScrollUpButton from './TutorialScrollUpButton'
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 
-const NO_CHILDREN: Thought[] = []
-
 /** Wrap a component in a slide CSS transition. */
-const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props: string]: any }) => {
+const WithCSSTransition = ({ component, transitionKey }: { component: FC; transitionKey: string }) => {
   const nodeRef = useRef(null)
 
   const Component = component
@@ -49,12 +45,12 @@ const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props
     <CSSTransition
       nodeRef={nodeRef}
       in={true}
-      key={Math.floor(props.transitionKey)}
+      key={transitionKey}
       timeout={durations.get('fastDuration')}
       classNames='slide'
     >
       <div ref={nodeRef}>
-        <Component {...props} />
+        <Component />
       </div>
     </CSSTransition>
   )
@@ -75,23 +71,8 @@ const Tutorial: FC = () => {
   })
 
   const dispatch = useDispatch()
-  const contextViews = useSelector((state: State) => state.contextViews)
   const cursor = useSelector((state: State) => state.cursor)
-  const rootChildren = useSelector((state: State) => getAllChildrenAsThoughts(state, HOME_TOKEN) || NO_CHILDREN)
-  const tutorialChoice = useSelector(state => {
-    const choice = +(getSetting(state, 'Tutorial Choice') || 0)
-    // guard against invalid tutorialChoice and tutorialStep in case Settings/Tutorial Step is corrupted
-    return (isNaN(choice) ? 0 : choice) as keyof typeof TUTORIAL_CONTEXT1_PARENT
-  })
-
-  const tutorialStepProps = {
-    cursor,
-    tutorialChoice,
-    rootChildren,
-    contextViews,
-    dispatch,
-    transitionKey: Math.floor(tutorialStep),
-  }
+  const tutorialChoice = useSelector(selectTutorialChoice)
 
   const tutorialStepComponent =
     TutorialStepComponentMap[Math.floor(tutorialStep) as keyof typeof TutorialStepComponentMap]
@@ -159,7 +140,10 @@ const Tutorial: FC = () => {
           <div>
             <TransitionGroup>
               {tutorialStepComponent ? (
-                <WithCSSTransition component={tutorialStepComponent} {...tutorialStepProps} />
+                <WithCSSTransition
+                  component={tutorialStepComponent}
+                  transitionKey={Math.floor(tutorialStep).toString()}
+                />
               ) : (
                 <p>
                   Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.

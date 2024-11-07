@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { isSafari, isTouch } from '../browser'
@@ -9,6 +8,7 @@ import editingValueStore from '../stores/editingValue'
 import scrollTopStore from '../stores/scrollTop'
 import syncStatusStore from '../stores/syncStatus'
 import viewportStore from '../stores/viewport'
+import durations from '../util/durations'
 
 // store the last cursor
 let cursorLast: Path | null = null
@@ -100,7 +100,7 @@ const scrollCursorIntoView = () => {
       scrollIntoViewIfNeeded(document.querySelector('[data-editing=true]'))
     },
     // If this is the result of a navigation, wait for the layout animation to complete to not get false bounding rect values
-    userInteractedAfterNavigation ? 0 : parseInt(token('durations.layoutNodeAnimationDuration')),
+    userInteractedAfterNavigation ? 0 : durations.get('layoutNodeAnimationDuration'),
   )
 }
 
@@ -110,7 +110,7 @@ editingValueStore.subscribe(
   // Throttle aggressively since scrollCursorIntoView reads from the DOM and this is called on all edits.
   _.throttle(() => {
     // we need to wait for the cursor to animate into its final position before scrollCursorIntoView can accurately determine if it is in the viewport
-    setTimeout(scrollCursorIntoView, parseInt(token('durations.layoutNodeAnimationDuration')))
+    setTimeout(scrollCursorIntoView, durations.get('layoutNodeAnimationDuration'))
   }, 400),
 )
 

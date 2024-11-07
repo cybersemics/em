@@ -3,15 +3,15 @@ import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
-import IconType from '../@types/Icon'
+import IconType from '../@types/IconType'
 import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { AlertText, AlertType } from '../constants'
-import theme from '../selectors/theme'
 import store from '../stores/app'
 
 /** Creates the props for drop. */
@@ -38,7 +38,6 @@ const QuickDropIcon = ({
   onHoverMessage: (state: State, zone: DragThoughtZone) => string
 }) => {
   const dispatch = useDispatch()
-  const dark = useSelector(state => theme(state) !== 'Light')
   const fontSize = useSelector(state => state.fontSize)
 
   /** Invokes onDrop with the DragThoughtItem. */
@@ -96,7 +95,7 @@ const QuickDropIcon = ({
       >
         <Icon
           size={fontSize * 1.5}
-          fill={isHovering ? (dark ? 'lightblue' : 'royalblue') : dark ? 'white' : 'black'}
+          fill={isHovering ? token('colors.highlight') : token('colors.fg')}
           // disable default .icon transition so that highlight is immediate
           cssRaw={css.raw({ cursor: 'move', transition: 'none', verticalAlign: 'middle' })}
         />

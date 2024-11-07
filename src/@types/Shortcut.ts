@@ -2,7 +2,7 @@ import React from 'react'
 import { GestureResponderEvent } from 'react-native'
 import Dispatch from './Dispatch'
 import GesturePath from './GesturePath'
-import Icon from './Icon'
+import IconType from './IconType'
 import Key from './Key'
 import MulticursorFilter from './MulticursorFilter'
 import Path from './Path'
@@ -34,7 +34,7 @@ interface Shortcut {
   exec: (
     dispatch: Dispatch,
     getState: () => State,
-    e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
+    e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent | React.ClipboardEvent,
     { type }: { type: ShortcutType },
   ) => void | Promise<void>
 
@@ -56,6 +56,9 @@ interface Shortcut {
   /** When true, a small open dropdown indicator will be rendered beneath the icon. */
   isDropdownOpen?: (state: State) => boolean
 
+  /** When true, don't need to prevent the default activity. */
+  permitDefault?: boolean
+
   /** A keyboard sequence to activate the shortcut. */
   keyboard?: Key | string
 
@@ -72,7 +75,7 @@ interface Shortcut {
   }
 
   // an icon that represents the shortcut in the Toolbar
-  svg: (icon: Icon) => React.ReactNode
+  svg: (icon: IconType) => React.ReactNode
 
   /** Multicursor support. If 'ignore', the shortcut will be executed as if there were no multicursors. When true, the shortcut will be executed for each cursor. Optional object for more control. */
   multicursor:

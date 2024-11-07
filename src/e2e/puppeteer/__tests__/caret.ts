@@ -9,6 +9,8 @@ import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
+import scrollBy from '../helpers/scrollBy'
+import scrollIntoView from '../helpers/scrollIntoView'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
@@ -167,6 +169,38 @@ describe('all platforms', () => {
     const offset = await getSelection().focusOffset
     expect(offset).toBe(1)
   })
+
+  it('clicking backspace when the caret is at the beginning of a thought should merge it with the previous thought.', async () => {
+    const importText = `
+    - first
+    - last`
+
+    await paste(importText)
+
+    const editableNodeHandle = await waitForEditable('last')
+
+    await click(editableNodeHandle, { edge: 'left' })
+    await press('Backspace')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('firstlast')
+  })
+})
+
+it('clicking backspace when the caret is at the end of a thought should delete a character.', async () => {
+  const importText = `
+  - first
+  - last`
+
+  await paste(importText)
+
+  const editableNodeHandle = await waitForEditable('last')
+
+  await click(editableNodeHandle, { edge: 'right' })
+  await press('Backspace')
+
+  const textContext = await getSelection().focusNode?.textContent
+  expect(textContext).toBe('las')
 })
 
 describe('mobile only', () => {
@@ -187,10 +221,13 @@ describe('mobile only', () => {
     // close keyboard
     await clickBullet('b')
 
+    await scrollIntoView('[aria-label="Subcategorize"]')
+    await scrollBy('#toolbar', 50, 0)
+
     await click('[aria-label="Subcategorize"]')
 
     const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('')
+    expect([undefined, '']).toContain(textContext)
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)

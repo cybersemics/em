@@ -74,6 +74,7 @@ const GestureDiagram = ({
   const [id] = useState(createId())
 
   // match signaturePad shadow in TraceGesture component
+  // TODO: Why isn't this working?
   const dropShadow = `drop-shadow(0 0 ${(GESTURE_GLOW_BLUR * 2) / 3}px ${token(`colors.${GESTURE_GLOW_COLOR}` as const)})`
 
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5

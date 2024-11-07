@@ -1,10 +1,9 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { icon } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
 import Index from '../@types/IndexType'
-import themeColors from '../selectors/themeColors'
 
 interface SearchIconProps {
   fill?: string
@@ -16,7 +15,6 @@ interface SearchIconProps {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const AddIcon: FC<SearchIconProps> = ({ cssRaw, fill, size = 20, style }) => {
-  const colors = useSelector(themeColors)
   return (
     <svg
       version='1.1'
@@ -26,7 +24,7 @@ const AddIcon: FC<SearchIconProps> = ({ cssRaw, fill, size = 20, style }) => {
       className={cx(icon(), css(cssRaw))}
       width={size}
       height={size}
-      fill={fill || colors.fg}
+      fill={fill || token('colors.fg')}
       style={style}
     >
       <polygon points='51.4,27.3 48.6,27.3 48.6,48.6 27.3,48.6 27.3,51.4 48.6,51.4 48.6,72.7 51.4,72.7 51.4,51.4 72.7,51.4      72.7,48.6 51.4,48.6    ' />
