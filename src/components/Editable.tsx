@@ -1,6 +1,6 @@
 import { unescape as unescapeHtml } from 'html-escaper'
 import _ from 'lodash'
-import React, { FocusEventHandler, useCallback, useEffect, useRef, useState } from 'react'
+import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
 import { editable, invalidOption, multiline as multilineRecipe } from '../../styled-system/recipes'
@@ -134,8 +134,6 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
-  const [hadSidebar, setHadSidebar] = useState(false)
-  const showSidebar = useSelector(state => state.showSidebar)
 
   /** Used to prevent edit mode from being incorrectly activated on long tap. The default browser behavior must be prevented if setCursorOnThought was just called. */
   // https://github.com/cybersemics/em/issues/1793
@@ -315,18 +313,6 @@ const Editable = ({
       contentRef.current.blur()
     }
   }, [hasMulticursor, contentRef])
-
-  // Resume focus if sidebar was just closed and isEditing is true
-  useEffect(() => {
-    if (showSidebar) {
-      setHadSidebar(true)
-    } else {
-      if (isEditing && hadSidebar) {
-        contentRef.current?.focus()
-      }
-      setHadSidebar(false)
-    }
-  }, [contentRef, hadSidebar, isEditing, showSidebar])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(

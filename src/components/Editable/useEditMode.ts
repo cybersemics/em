@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../../@types/Path'
 import { editingActionCreator as editingAction } from '../../actions/editing'
@@ -34,6 +34,8 @@ const useEditMode = ({
   const dragInProgress = useSelector(state => state.dragInProgress)
   const disabledRef = useRef(false)
   const editableNonce = useSelector(state => state.editableNonce)
+  const [hadSidebar, setHadSidebar] = useState(false)
+  const showSidebar = useSelector(state => state.showSidebar)
 
   // focus on the ContentEditable element if editing os on desktop
   const editMode = !isTouch || editing
@@ -135,6 +137,18 @@ const useEditMode = ({
       disabledRef.current = false
     })
   }, [])
+
+  // Resume focus if sidebar was just closed and isEditing is true
+  useEffect(() => {
+    if (showSidebar) {
+      setHadSidebar(true)
+    } else {
+      if (isEditing && hadSidebar) {
+        contentRef.current?.focus()
+      }
+      setHadSidebar(false)
+    }
+  }, [contentRef, hadSidebar, isEditing, showSidebar])
 
   return allowDefaultSelection
 }
