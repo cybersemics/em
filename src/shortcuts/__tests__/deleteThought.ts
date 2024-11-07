@@ -1,4 +1,4 @@
-import { act } from '@testing-library/react'
+import { act } from 'react'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../../actions/deleteThoughtWithCursor'
 import { importTextActionCreator as importText } from '../../actions/importText'

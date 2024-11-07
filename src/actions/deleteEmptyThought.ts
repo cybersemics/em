@@ -36,7 +36,6 @@ const deleteEmptyThought = (state: State): State => {
   const cursorThought = getThoughtById(state, head(cursor))
   const { value } = cursorThought
 
-  const offset = state.cursorOffset ?? 0
   const showContexts = isContextViewActive(state, rootedParentOf(state, cursor))
   const simplePath = simplifyPath(state, cursor)
   const allChildren = getChildrenRanked(state, head(cursor))
@@ -86,7 +85,7 @@ const deleteEmptyThought = (state: State): State => {
     ])(state)
   }
   // delete from beginning and merge with previous sibling
-  else if (offset === 0 && !showContexts) {
+  else if (!showContexts) {
     const { value, splitSource } = cursorThought
     const prev = prevSibling(state, cursor)
 

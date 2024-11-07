@@ -1,7 +1,7 @@
 import { Key } from 'ts-key-enum'
 import { css, cx } from '../../styled-system/css'
 import { icon } from '../../styled-system/recipes'
-import IconType from '../@types/Icon'
+import IconType from '../@types/IconType'
 import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import { deleteEmptyThoughtActionCreator as deleteEmptyThought } from '../actions/deleteEmptyThought'

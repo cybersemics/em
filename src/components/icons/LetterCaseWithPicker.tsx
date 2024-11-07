@@ -1,7 +1,8 @@
 import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
-import IconType from '../../@types/Icon'
+import { css } from '../../../styled-system/css'
+import IconType from '../../@types/IconType'
 import LetterCasePicker from '../LetterCasePicker'
 import LetterCaseIcon from './LetterCaseIcon'
 

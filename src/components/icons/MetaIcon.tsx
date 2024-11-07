@@ -2,7 +2,7 @@ import { FC } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import Icon from '../../@types/Icon'
+import Icon from '../../@types/IconType'
 
 /** Meta icon that shows code under a magnifying glass. */
 // https://thenounproject.com/icon/inspect-element-4199164/
