@@ -21,7 +21,7 @@ const GestureHintIcon: FC<{
   style?: Index<string>
   className?: string
   cssRaw?: SystemStyleObject
-}> = ({ fill, size = 20, style, className, cssRaw }) => {
+}> = ({ fill, size = 20, style, cssRaw }) => {
   return (
     <svg
       version='1.1'

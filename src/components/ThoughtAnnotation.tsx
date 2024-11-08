@@ -89,131 +89,6 @@ const EmailIconLink = React.memo(({ email }: { email: string }) => (
   </a>
 ))
 EmailIconLink.displayName = 'EmailIconLink'
-
-/** Container for ThoughtAnnotation. */
-const ThoughtAnnotationContainer = React.memo(
-  ({
-    path,
-    simplePath,
-    minContexts = 2,
-    multiline,
-    ellipsizedUrl,
-    placeholder,
-    invalidState,
-    cssRaw,
-    style,
-    // only applied to the .subthought container
-    styleAnnotation,
-  }: {
-    env?: LazyEnv
-    focusOffset?: number
-    invalidState?: boolean
-    minContexts?: number
-    multiline?: boolean
-    ellipsizedUrl?: boolean
-    path: Path
-    placeholder?: string
-    showContextBreadcrumbs?: boolean
-    simplePath: SimplePath
-    cssRaw?: SystemStyleObject
-    style?: React.CSSProperties
-    styleAnnotation?: React.CSSProperties
-  }) => {
-    // delay calculation of contexts for performance
-    // recalculate after the component has mounted
-    // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
-    const [calculateContexts, setCalculateContexts] = useState(false)
-
-    const value: string | undefined = useSelector(state => {
-      const thought = getThoughtById(state, head(path))
-      return thought?.value || ''
-    })
-
-    const isEditing = useSelector(state => equalPath(state.cursor, path))
-    const invalidStateIfEditing = useMemo(() => isEditing && invalidState, [isEditing, invalidState])
-
-    const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
-      isEditing ? editingValue : null,
-    )
-
-    // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
-    editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
-
-    const hideSuperscriptsSetting = useSelector(getUserSetting(Settings.hideSuperscripts))
-
-    const isExpanded = useSelector(state => !!state.expanded[hashPath(simplePath)])
-
-    const numContexts = useSelector(
-      moize(
-        (state: State) => {
-          if (!calculateContexts || hideSuperscriptsSetting) return 0
-
-          // only show real time update if being edited while having meta validation error
-          // do not increase numContexts when in an invalid state since the thought has not been updated in state
-          const isRealTimeContextUpdate = isEditing && invalidStateIfEditing && liveValueIfEditing !== null
-
-          const contexts = getContexts(state, isRealTimeContextUpdate ? liveValueIfEditing! : value)
-          return value === ''
-            ? 0
-            : contexts.filter(id => isVisibleContext(state, id)).length + (isRealTimeContextUpdate ? 1 : 0)
-        },
-        {
-          maxSize: 1000,
-          profileName: 'numContexts',
-          transformArgs: ([state]) => {
-            const isRealTimeContextUpdate = isEditing && invalidStateIfEditing && liveValueIfEditing !== null
-            return [resolveArray(getContexts(state, isRealTimeContextUpdate ? liveValueIfEditing! : value))]
-          },
-        },
-      ),
-    )
-
-    const showSuperscript =
-      !hideSuperscriptsSetting &&
-      (REGEX_PUNCTUATIONS.test(value.replace(REGEX_TAGS, '')) ? false : minContexts === 0 || numContexts > 1)
-
-    const url = useSelector(state => {
-      const childrenUrls = filterAllChildren(state, head(simplePath), child => containsURL(child.value))
-      const urlValue = containsURL(value)
-        ? value
-        : // if the only subthought is a url and the thought is not expanded, link the thought
-          !isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
-          ? childrenUrls[0].value
-          : null
-      return urlValue ? stripTags(urlValue) : urlValue
-    })
-
-    const email = isEmail(value) ? value : undefined
-
-    // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
-    editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
-
-    useEffect(() => {
-      setCalculateContexts(true)
-    }, [])
-
-    return showSuperscript || url || email || styleAnnotation ? (
-      <ThoughtAnnotation
-        {...{
-          simplePath,
-          isEditing,
-          multiline,
-          ellipsizedUrl: ellipsizedUrl,
-          numContexts,
-          showSuperscript,
-          cssRaw,
-          style,
-          styleAnnotation,
-          email,
-          placeholder,
-          url,
-          value,
-        }}
-      />
-    ) : null
-  },
-)
-
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = React.memo(
   ({
@@ -363,6 +238,129 @@ const ThoughtAnnotation = React.memo(
         </div>
       </div>
     )
+  },
+)
+/** Container for ThoughtAnnotation. */
+const ThoughtAnnotationContainer = React.memo(
+  ({
+    path,
+    simplePath,
+    minContexts = 2,
+    multiline,
+    ellipsizedUrl,
+    placeholder,
+    invalidState,
+    cssRaw,
+    style,
+    // only applied to the .subthought container
+    styleAnnotation,
+  }: {
+    env?: LazyEnv
+    focusOffset?: number
+    invalidState?: boolean
+    minContexts?: number
+    multiline?: boolean
+    ellipsizedUrl?: boolean
+    path: Path
+    placeholder?: string
+    showContextBreadcrumbs?: boolean
+    simplePath: SimplePath
+    cssRaw?: SystemStyleObject
+    style?: React.CSSProperties
+    styleAnnotation?: React.CSSProperties
+  }) => {
+    // delay calculation of contexts for performance
+    // recalculate after the component has mounted
+    // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
+    const [calculateContexts, setCalculateContexts] = useState(false)
+
+    const value: string | undefined = useSelector(state => {
+      const thought = getThoughtById(state, head(path))
+      return thought?.value || ''
+    })
+
+    const isEditing = useSelector(state => equalPath(state.cursor, path))
+    const invalidStateIfEditing = useMemo(() => isEditing && invalidState, [isEditing, invalidState])
+
+    const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
+      isEditing ? editingValue : null,
+    )
+
+    // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
+    editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
+
+    const hideSuperscriptsSetting = useSelector(getUserSetting(Settings.hideSuperscripts))
+
+    const isExpanded = useSelector(state => !!state.expanded[hashPath(simplePath)])
+
+    const numContexts = useSelector(
+      moize(
+        (state: State) => {
+          if (!calculateContexts || hideSuperscriptsSetting) return 0
+
+          // only show real time update if being edited while having meta validation error
+          // do not increase numContexts when in an invalid state since the thought has not been updated in state
+          const isRealTimeContextUpdate = isEditing && invalidStateIfEditing && liveValueIfEditing !== null
+
+          const contexts = getContexts(state, isRealTimeContextUpdate ? liveValueIfEditing! : value)
+          return value === ''
+            ? 0
+            : contexts.filter(id => isVisibleContext(state, id)).length + (isRealTimeContextUpdate ? 1 : 0)
+        },
+        {
+          maxSize: 1000,
+          profileName: 'numContexts',
+          transformArgs: ([state]) => {
+            const isRealTimeContextUpdate = isEditing && invalidStateIfEditing && liveValueIfEditing !== null
+            return [resolveArray(getContexts(state, isRealTimeContextUpdate ? liveValueIfEditing! : value))]
+          },
+        },
+      ),
+    )
+
+    const showSuperscript =
+      !hideSuperscriptsSetting &&
+      (REGEX_PUNCTUATIONS.test(value.replace(REGEX_TAGS, '')) ? false : minContexts === 0 || numContexts > 1)
+
+    const url = useSelector(state => {
+      const childrenUrls = filterAllChildren(state, head(simplePath), child => containsURL(child.value))
+      const urlValue = containsURL(value)
+        ? value
+        : // if the only subthought is a url and the thought is not expanded, link the thought
+          !isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
+          ? childrenUrls[0].value
+          : null
+      return urlValue ? stripTags(urlValue) : urlValue
+    })
+
+    const email = isEmail(value) ? value : undefined
+
+    // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
+    editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
+
+    useEffect(() => {
+      setCalculateContexts(true)
+    }, [])
+
+    return showSuperscript || url || email || styleAnnotation ? (
+      <ThoughtAnnotation
+        {...{
+          simplePath,
+          isEditing,
+          multiline,
+          ellipsizedUrl: ellipsizedUrl,
+          numContexts,
+          showSuperscript,
+          cssRaw,
+          style,
+          styleAnnotation,
+          email,
+          placeholder,
+          url,
+          value,
+        }}
+      />
+    ) : null
   },
 )
 

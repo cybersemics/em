@@ -25,7 +25,7 @@ const copyCursorShortcut: Shortcut = {
   hideFromHelp: true,
   multicursor: {
     enabled: true,
-    execMulticursor: async (cursors, dispatch, getState, e) => {
+    execMulticursor: async (cursors, dispatch, getState) => {
       const state = getState()
 
       const filteredCursors = cursors.reduce<Path[]>((acc, cur) => {
@@ -82,7 +82,7 @@ const copyCursorShortcut: Shortcut = {
     // do not copy cursor if there is a browser selection
     return selection.isCollapsed() && (!!state.cursor || hasMulticursor(state)) && isDocumentEditable()
   },
-  exec: async (dispatch, getState, event) => {
+  exec: async (dispatch, getState) => {
     const state = getState()
     const simplePath = simplifyPath(state, state.cursor!)
 

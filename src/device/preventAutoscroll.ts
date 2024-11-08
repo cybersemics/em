@@ -10,7 +10,18 @@ let paddingBottomOld = ''
 let paddingTopOld = ''
 
 let timeoutId: number | undefined
+/** Clean up styles from preventAutoscroll. This is called automatically 10 ms after preventAutoscroll, but it can and should be called as soon as focus has fired and the autoscroll window has safely passed. */
+export const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
+  clearTimeout(timeoutId)
+  timeoutId = undefined
 
+  if (!el) return
+
+  el.style.transform = transformOld
+  el.style.paddingBottom = paddingBottomOld
+  el.style.paddingTop = paddingTopOld
+  el.removeAttribute('data-prevent-autoscroll')
+}
 /** Prevent the browser from autoscrolling to this editable element. If the element would be hidden by the virtual keyboard, scrolls just enough to make it visible. */
 const preventAutoscroll = (
   el: HTMLElement | null | undefined,
@@ -59,19 +70,6 @@ const preventAutoscroll = (
 
   // return cleanup function
   return () => preventAutoscrollEnd(el)
-}
-
-/** Clean up styles from preventAutoscroll. This is called automatically 10 ms after preventAutoscroll, but it can and should be called as soon as focus has fired and the autoscroll window has safely passed. */
-export const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
-  clearTimeout(timeoutId)
-  timeoutId = undefined
-
-  if (!el) return
-
-  el.style.transform = transformOld
-  el.style.paddingBottom = paddingBottomOld
-  el.style.paddingTop = paddingTopOld
-  el.removeAttribute('data-prevent-autoscroll')
 }
 
 /** Returns true if preventAutoscroll is currently in progress. */

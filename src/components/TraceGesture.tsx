@@ -16,14 +16,6 @@ interface TraceGestureProps {
   // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
   eventNodeRef?: React.RefObject<HTMLElement>
 }
-
-/** Renders the TraceGesture component as long as it is not disabled in the settings. */
-const TraceGestureWrapper = (props: TraceGestureProps) => {
-  const showModal = useSelector(state => state.showModal)
-  const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
-  return <>{!disableGestureTracing && !showModal && <TraceGesture {...props} />}</>
-}
-
 /** A hook that returns true a given number of milliseconds after its condition is set to true. Returns false immediately if the condition becomes false. */
 const useConditionDelay = (condition: boolean, milliseconds: number) => {
   const [value, setValue] = useState(false)
@@ -42,7 +34,6 @@ const useConditionDelay = (condition: boolean, milliseconds: number) => {
 
   return value
 }
-
 /** Draws a gesture as it is being performed onto a canvas. */
 const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
@@ -163,6 +154,12 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       </CSSTransition>
     </div>
   )
+}
+/** Renders the TraceGesture component as long as it is not disabled in the settings. */
+const TraceGestureWrapper = (props: TraceGestureProps) => {
+  const showModal = useSelector(state => state.showModal)
+  const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
+  return <>{!disableGestureTracing && !showModal && <TraceGesture {...props} />}</>
 }
 
 export default TraceGestureWrapper

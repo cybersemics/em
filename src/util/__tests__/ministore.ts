@@ -66,7 +66,7 @@ describe('subscribeSelector', () => {
     const store = ministore({ a: 1, b: 4 })
     store.subscribeSelector(
       state => state.a,
-      a => counter++,
+      () => counter++,
     )
     store.update({ a: 2 })
     store.update({ a: 2, b: 5 })
@@ -78,7 +78,7 @@ describe('subscribeSelector', () => {
     const store = ministore({ a: 1, b: 4 })
     store.subscribeSelector(
       state => ({ x: state.a }),
-      a => counter++,
+      () => counter++,
       _.isEqual,
     )
     store.update({ a: 2 })

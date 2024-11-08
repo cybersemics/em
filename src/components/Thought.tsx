@@ -115,8 +115,6 @@ const ThoughtContainer = ({
   depth = 0,
   env,
   hideBullet: hideBulletProp,
-  isHeader,
-  isMultiColumnTable,
   isContextPending,
   isVisible,
   leaf,

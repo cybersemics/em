@@ -16,7 +16,7 @@ const joinThoughts: Shortcut = {
   },
   svg: JoinThoughtsIcon,
   canExecute: state => !!state.cursor,
-  exec: (dispatch, getState) => {
+  exec: dispatch => {
     dispatch(join({}))
   },
 }

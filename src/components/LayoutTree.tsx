@@ -136,7 +136,6 @@ const useSizeTracking = () => {
     ({
       height,
       width,
-      id,
       isVisible,
       key,
     }: {

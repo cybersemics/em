@@ -237,7 +237,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(flattenTree(json, (block, ancestors, i) => ancestors.map(b => b.scope))).toMatchObject([
+    expect(flattenTree(json, (block, ancestors) => ancestors.map(b => b.scope))).toMatchObject([
       [],
       ['a'],
       ['a', 'b'],

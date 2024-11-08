@@ -12,7 +12,7 @@ interface Payload {
 }
 
 /** Reducer for highlighting a toolbar button for dragging on tap and hold. */
-const toolbarLongPress = (state: State, { shortcut, sourceZone }: Payload) => ({
+const toolbarLongPress = (state: State, { shortcut }: Payload) => ({
   ...(shortcut
     ? alert(state, {
         value: AlertText.DragAndDropToolbar,

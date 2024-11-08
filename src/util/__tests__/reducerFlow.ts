@@ -34,7 +34,7 @@ it('no initialState', () => {
   }
   expect(
     reducerFlow<State>([
-      state => ({ a: 0, b: 0, z: 100 }),
+      () => ({ a: 0, b: 0, z: 100 }),
       state => ({ ...state, a: 1 + state.z }),
       state => ({ ...state, b: 2 + state.z }),
     ])(),

@@ -18,7 +18,7 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec: Shortcut['exec'] = (dispatch, getState, e) => {
+const exec: Shortcut['exec'] = (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
 
@@ -60,7 +60,7 @@ const deleteShortcut: Shortcut = {
     preventSetCursor: true,
     reverse: true,
     clearMulticursor: true,
-    execMulticursor(cursors, dispatch, getState, e, { type }, execAll) {
+    execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
       const numThougths = cursors.length
 
       execAll()

@@ -101,26 +101,6 @@ const findClosestSharedAncestor = (
       )
     : closestAncestor
 }
-
-/**
- * Manually adding node to the existing tree object by mutating. Uses special case of nodeChange.
- *
- * @param tree Nested object representing tree.
- * @param newPath Array of thoughts.
- * @example
- *
- * A.B.C.D.E.F
- * A.B.C.G.H.I
- *
- * If we want to add A.B.C.K.L ,we pass ['A','B','C','K','L'] will as newPath to nodeAdd
- *
- * Note: You should be sure that node A.B.C.K.L is not already available in the tree
- *
- * nodeAdd will just pass ['A','B','C','K','L']  as both second (oldPath) and third parameter (newPath) for nodeChange because
- * commonPath derived from oldPath inside nodeChange will be ['A','B','C'] anyways. (This will eliminate use of DUMMY_TOKEN too)
- */
-const nodeAdd = (state: State, tree: Tree, newPath: Path) => nodeChange(state, tree, newPath, newPath)
-
 /**
  * Adds or updates node to the existing tree object by mutating.
  *
@@ -219,6 +199,24 @@ const nodeChange = (state: State, tree: Tree, oldPath: Path, newPath: Path) => {
     }
   }
 }
+/**
+ * Manually adding node to the existing tree object by mutating. Uses special case of nodeChange.
+ *
+ * @param tree Nested object representing tree.
+ * @param newPath Array of thoughts.
+ * @example
+ *
+ * A.B.C.D.E.F
+ * A.B.C.G.H.I
+ *
+ * If we want to add A.B.C.K.L ,we pass ['A','B','C','K','L'] will as newPath to nodeAdd
+ *
+ * Note: You should be sure that node A.B.C.K.L is not already available in the tree
+ *
+ * nodeAdd will just pass ['A','B','C','K','L']  as both second (oldPath) and third parameter (newPath) for nodeChange because
+ * commonPath derived from oldPath inside nodeChange will be ['A','B','C'] anyways. (This will eliminate use of DUMMY_TOKEN too)
+ */
+const nodeAdd = (state: State, tree: Tree, newPath: Path) => nodeChange(state, tree, newPath, newPath)
 
 /**
  * Deletes node from existing tree object using mutation.

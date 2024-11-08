@@ -89,7 +89,7 @@ const Popup = React.forwardRef<
       )}
       {multicursor && (
         <a
-          {...fastClick(e => {
+          {...fastClick(() => {
             dispatch(clearMulticursors())
             onClose?.()
           })}

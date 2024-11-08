@@ -9,7 +9,7 @@ import ColorPicker from '../ColorPicker'
 import TextColorIcon from './TextColor'
 
 /** Text Color Icon with popup ColorPicker. */
-const TextColorWithColorPicker = ({ size = 20, style, cssRaw, animated }: IconType) => {
+const TextColorWithColorPicker = ({ size = 20, style, cssRaw }: IconType) => {
   const showColorPicker = useSelector(state => state.showColorPicker)
   const toolbarPopupRef = useRef<HTMLDivElement>(null)
 

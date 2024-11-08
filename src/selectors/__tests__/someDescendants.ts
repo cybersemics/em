@@ -54,6 +54,6 @@ it('return false if no descendant fulfills the predicate', () => {
           - h
   `
   const state = importText({ text })(initialState())
-  const isDeep = someDescendants(state, HOME_TOKEN, thought => false)
+  const isDeep = someDescendants(state, HOME_TOKEN, () => false)
   expect(isDeep).toEqual(false)
 })
