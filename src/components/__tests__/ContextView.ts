@@ -1,19 +1,66 @@
-import { findAllByLabelText, findByLabelText, queryByLabelText, screen } from '@testing-library/dom'
+import { findAllByLabelText, findByLabelText, queryByLabelText, queryByText, screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import dispatch from '../../test-helpers/dispatch'
 import findAllThoughtsByText from '../../test-helpers/queries/findAllThoughtsByText'
 import findSubthoughts from '../../test-helpers/queries/findSubthoughts'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getClosestByLabel from '../../test-helpers/queries/getClosestByLabel'
 import queryThoughtByText from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import pathToContext from '../../util/pathToContext'
 import series from '../../util/series'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
+
+it('Clicking a context moves the cursor to that context', async () => {
+  await dispatch([
+    importText({
+      text: `
+          - a1
+            - a2
+              - a3
+                - m
+                  - x
+          - b1
+            - b2
+              - b3
+                - m
+                  - y
+      `,
+    }),
+    setCursor(['a1', 'a2', 'a3', 'm']),
+    toggleContextView(),
+  ])
+
+  // select each context in the context view
+  const contextBreadcrumbs = document.querySelectorAll('[aria-label="context-breadcrumbs"]')
+
+  // find the context that contains b2 (ignoring context order)
+  const contextLink = (
+    await Promise.all(
+      Array.from(contextBreadcrumbs).map(async el => queryByText(el as HTMLElement, 'b2', { exact: true })),
+    )
+  ).find(Boolean)!
+
+  expect(contextLink).toBeTruthy()
+
+  // click the context link
+  const user = userEvent.setup({ delay: null })
+  await user.click(contextLink)
+
+  // cursor should exist
+  const cursor = store.getState().cursor!
+  expect(cursor).toBeTruthy()
+
+  // cursor should be on the context that was clicked
+  const cursorContext = pathToContext(store.getState(), cursor)
+  expect(cursorContext).toEqual(['b1', 'b2'])
+})
 
 // TODO: Broke after LayoutTree
 describe.skip('render', () => {
