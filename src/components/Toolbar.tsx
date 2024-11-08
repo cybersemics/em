@@ -18,6 +18,7 @@ import ShortcutId from '../@types/ShortcutId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
 import { TOOLBAR_DEFAULT_SHORTCUTS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
+import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -93,6 +94,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
   const showDropDown = useSelector(state => state.showColorPicker || state.showLetterCase)
+  const positionFixedStyles = usePositionFixed()
 
   // re-render only (why?)
   useSelector(state => state.showHiddenThoughts)
@@ -203,16 +205,12 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           // When a dropdown like ColorPicker or LetterCase is open, set pointer-events: none, otherwise the toolbar will block the editor. This will be overridden by the toolbar buttons to allow interaction.
           showDropDown && toolbarPointerEvents(),
           css({
-            position: 'relative',
             textAlign: 'right',
             maxWidth: '100%',
             userSelect: 'none',
             WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
             whiteSpace: 'nowrap',
             ...(!customize && {
-              position: 'fixed',
-              top: '0',
-              right: '0',
               zIndex: 'toolbarContainer',
               marginTop: '-500px',
               paddingTop: '500px',
@@ -220,6 +218,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           }),
         )}
         style={{
+          ...(!customize ? positionFixedStyles : null),
           // make toolbar flush with left padding
           marginLeft: customize ? -5 : 0,
           // offset extended drop area of ToolbarButton
