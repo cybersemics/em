@@ -10,12 +10,6 @@ function init() {
   const get = (key: keyof typeof durationsConfig): number => {
     return durationOrZero(durationsConfig[key])
   }
-
-  /** Override inTest state. Should only be used for testing purposes. */
-  const setInTest = (inTestOverride: boolean) => {
-    inTest = inTestOverride
-  }
-
   /** Returns the duration config with the durations or zero depending on whether we're in tests or not. */
   const reduceDurations = (pv: Record<string, number>, [key, duration]: [string, number]) => {
     pv[key] = durationOrZero(duration)
@@ -24,6 +18,11 @@ function init() {
   }
   /** Returns all durations. */
   const getAll = () => Object.entries(durationsConfig).reduce(reduceDurations, {})
+
+  /** Override inTest state. Should only be used for testing purposes. */
+  const setInTest = (inTestOverride: boolean) => {
+    inTest = inTestOverride
+  }
 
   return {
     get,

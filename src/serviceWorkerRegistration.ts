@@ -23,7 +23,6 @@ type Config = {
   onSuccess?: (registration: ServiceWorkerRegistration) => void
   onUpdate?: (registration: ServiceWorkerRegistration) => void
 }
-
 /** Registers a service worker at the given URL. */
 function registerValidSW(swUrl: string, config?: Config) {
   navigator.serviceWorker
@@ -90,7 +89,6 @@ function checkValidServiceWorker(swUrl: string, config?: Config) {
       // console.info('No internet connection found. App is running in offline mode.')
     })
 }
-
 /** Performs environment checks and registers the service worker if supported. */
 export function register(config?: Config) {
   if (import.meta.env.MODE === 'production' && 'serviceWorker' in navigator) {

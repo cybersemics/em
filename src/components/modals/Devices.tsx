@@ -75,6 +75,227 @@ const ShareRow = React.memo(
   },
 )
 ShareRow.displayName = 'ShareRow'
+/** The form that allows the user to add a new device. */
+const AddDeviceForm = ({
+  onCancel,
+  onSubmit,
+  defaultName,
+}: {
+  onCancel: () => void
+  onSubmit: ({ name, role }: Pick<Share, 'name' | 'role'>) => void
+  defaultName?: string
+}) => {
+  const [name, setName] = useState(defaultName ?? 'Untitled')
+  return (
+    <div className={css({ margin: '0 auto' })}>
+      <div
+        className={css({
+          borderBottom: 'solid 1px',
+          borderBottomColor: 'gray15',
+          margin: '1em auto 3em',
+          width: 'calc(100% - 4em)',
+        })}
+      />
+      <div>
+        <span className={css({ marginRight: '1em' })}>Name: </span>
+        <input
+          ref={el => el?.focus()}
+          type='text'
+          onChange={e => setName(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.stopPropagation()
+              onSubmit({ name, role: 'owner' })
+            }
+            // TODO: The modal escape currently takes precedence
+            else if (e.key === 'Escape') {
+              e.stopPropagation()
+              onCancel()
+            }
+          }}
+          value={name}
+          className={css({ display: 'inline', width: '10em', minWidth: '5em', marginRight: '1em' })}
+        />
+      </div>
+
+      <div>
+        <span className={css({ marginRight: '1em' })}>Access: </span>
+        <span
+          className={css({
+            display: 'inline-block',
+            fontSize: '16px',
+            marginRight: '1em',
+            marginBottom: '2vh',
+            minWidth: '5em',
+            padding: '10px 1.75em 10px 0',
+            textAlign: 'left',
+            width: '10em',
+          })}
+        >
+          Full Access
+        </span>
+      </div>
+
+      <div>
+        <a
+          {...fastClick(() => onSubmit({ name, role: 'owner' }))}
+          className={cx(
+            anchorButton({
+              outline: true,
+            }),
+            css({ display: 'inline-block' }),
+          )}
+        >
+          Add
+        </a>
+        <a {...fastClick(onCancel)} className={css({ color: 'gray', marginLeft: '1em' })}>
+          Cancel
+        </a>
+      </div>
+    </div>
+  )
+}
+
+/** The list of device shares for the thoughtspace. */
+const ShareList = React.forwardRef<
+  HTMLDivElement,
+  {
+    onAdd?: (accessToken: string) => void
+    onSelect?: (accessToken: string) => void
+    permissions: Index<Share>
+  }
+>(({ onAdd, onSelect, permissions }, ref) => {
+  const status = useStatus()
+  const dispatch = useDispatch()
+  const store = useStore()
+
+  const [showDeviceForm, setShowDeviceForm] = useState(false)
+
+  // sort the owner to the top, then sort by name
+  const permissionsSorted = _.sortBy(
+    Object.entries(permissions),
+    ([, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
+  )
+
+  /** Keyboad shortcuts. */
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      // TODO: Handle modal-specific keyboard shortcuts in a more general way so that they can be used in other modals and so this component does not need to know about showCommandPalette
+      if (e.key === 'Enter' && !showDeviceForm && !store.getState().showCommandPalette) {
+        e.stopPropagation()
+        setShowDeviceForm(true)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
+
+  useEffect(
+    () => {
+      window.addEventListener('keydown', onKeyDown)
+      return () => {
+        window.removeEventListener('keydown', onKeyDown)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
+
+  const modalClasses = modalText()
+
+  return (
+    <div ref={ref}>
+      <p className={modalClasses.description}>Add or remove devices that can access and edit this thoughtspace.</p>
+
+      {status === 'connected' ? (
+        <>
+          {/* Device list */}
+          <div className={css({ marginBottom: '2em' })}>
+            {permissionsSorted.map(([accessToken, share]) => {
+              const isCurrent = accessToken === accessTokenCurrent
+              return (
+                <div
+                  key={accessToken}
+                  {...fastClick(() => onSelect?.(accessToken))}
+                  className={css({ cursor: 'pointer' })}
+                >
+                  <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Add a device */}
+          <TransitionGroup>
+            {
+              // form
+              showDeviceForm ? (
+                <CSSTransition
+                  key='add-device-form'
+                  classNames='fade-400'
+                  exit={false}
+                  timeout={durations.get('mediumDuration')}
+                  unmountOnExit
+                >
+                  <div>
+                    <AddDeviceForm
+                      onCancel={() => setShowDeviceForm(false)}
+                      onSubmit={({ name, role }: Pick<Share, 'name' | 'role'>) => {
+                        const result: { accessToken?: string; error?: string } = permissionsModel.add({
+                          role,
+                          name: strip(name || ''),
+                        })
+                        // TODO: permissionsModel.add does not yet return { error }
+                        if (!result.error) {
+                          setShowDeviceForm(false)
+                          onAdd?.(result.accessToken!)
+                        } else {
+                          dispatch(alert('Not connected to server. Unable to add device.', { clearDelay: 2000 }))
+                        }
+                      }}
+                      defaultName={getNextDeviceName(permissions)}
+                    />
+                  </div>
+                </CSSTransition>
+              ) : (
+                // "+ Add a device" button
+                <CSSTransition
+                  key='add-a-device'
+                  classNames='fade-400'
+                  exit={false}
+                  timeout={durations.get('mediumDuration')}
+                  unmountOnExit
+                >
+                  <div className={css({ marginTop: '1em' })}>
+                    <a
+                      {...fastClick(() => setShowDeviceForm(true))}
+                      className={cx(
+                        anchorButton({
+                          outline: true,
+                        }),
+                        css({ display: 'inline-block' }),
+                      )}
+                    >
+                      + Add a device
+                    </a>
+                  </div>
+                </CSSTransition>
+              )
+            }
+          </TransitionGroup>
+        </>
+      ) : (
+        <div className={css({ color: 'gray', fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' })}>
+          <p>This device is currently offline</p>
+          <p>Please connect to the Internet to manage sharing.</p>
+        </div>
+      )}
+    </div>
+  )
+})
+
+ShareList.displayName = 'ShareList'
+
 /** Renders an editable name with a pencil icon to focus. */
 const EditableName = React.memo(
   ({ onChange, value }: { onChange: (e: ContentEditableEvent) => void; value: string }) => {
@@ -83,12 +304,12 @@ const EditableName = React.memo(
     return (
       <div className={css({ position: 'relative' })}>
         <ContentEditable
-          className='active-underline'
+          className={css({ '&:focus': { borderBottom: 'solid 1px' }, display: 'inline', marginBottom: '0.5em' })}
           innerRef={ref}
           html={value}
           onChange={onChange}
           placeholder='Untitled'
-          style={{ display: 'inline', fontSize: fontSize * 1.25, marginBottom: '0.5em' }}
+          style={{ fontSize: fontSize * 1.25 }}
         />
         <a
           {...fastClick(() => {
@@ -299,228 +520,6 @@ const ShareDetail = React.memo(
   ),
 )
 ShareDetail.displayName = 'ShareDetail'
-
-/** The form that allows the user to add a new device. */
-const AddDeviceForm = ({
-  onCancel,
-  onSubmit,
-  defaultName,
-}: {
-  onCancel: () => void
-  onSubmit: ({ name, role }: Pick<Share, 'name' | 'role'>) => void
-  defaultName?: string
-}) => {
-  const [name, setName] = useState(defaultName ?? 'Untitled')
-  return (
-    <div className={css({ margin: '0 auto' })}>
-      <div
-        className={css({
-          borderBottom: 'solid 1px',
-          borderBottomColor: 'gray15',
-          margin: '1em auto 3em',
-          width: 'calc(100% - 4em)',
-        })}
-      />
-      <div>
-        <span className={css({ marginRight: '1em' })}>Name: </span>
-        <input
-          ref={el => el?.focus()}
-          type='text'
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              e.stopPropagation()
-              onSubmit({ name, role: 'owner' })
-            }
-            // TODO: The modal escape currently takes precedence
-            else if (e.key === 'Escape') {
-              e.stopPropagation()
-              onCancel()
-            }
-          }}
-          value={name}
-          className={css({ display: 'inline', width: '10em', minWidth: '5em', marginRight: '1em' })}
-        />
-      </div>
-
-      <div>
-        <span className={css({ marginRight: '1em' })}>Access: </span>
-        <span
-          className={css({
-            display: 'inline-block',
-            fontSize: '16px',
-            marginRight: '1em',
-            marginBottom: '2vh',
-            minWidth: '5em',
-            padding: '10px 1.75em 10px 0',
-            textAlign: 'left',
-            width: '10em',
-          })}
-        >
-          Full Access
-        </span>
-      </div>
-
-      <div>
-        <a
-          {...fastClick(() => onSubmit({ name, role: 'owner' }))}
-          className={cx(
-            anchorButton({
-              outline: true,
-            }),
-            css({ display: 'inline-block' }),
-          )}
-        >
-          Add
-        </a>
-        <a {...fastClick(onCancel)} className={css({ color: 'gray', marginLeft: '1em' })}>
-          Cancel
-        </a>
-      </div>
-    </div>
-  )
-}
-/** The list of device shares for the thoughtspace. */
-const ShareList = React.forwardRef<
-  HTMLDivElement,
-  {
-    onAdd?: (accessToken: string) => void
-    onSelect?: (accessToken: string) => void
-    permissions: Index<Share>
-  }
->(({ onAdd, onSelect, permissions }, ref) => {
-  const status = useStatus()
-  const dispatch = useDispatch()
-  const store = useStore()
-
-  const [showDeviceForm, setShowDeviceForm] = useState(false)
-
-  // sort the owner to the top, then sort by name
-  const permissionsSorted = _.sortBy(
-    Object.entries(permissions),
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ([_, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
-  )
-
-  /** Keyboad shortcuts. */
-  const onKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      // TODO: Handle modal-specific keyboard shortcuts in a more general way so that they can be used in other modals and so this component does not need to know about showCommandPalette
-      if (e.key === 'Enter' && !showDeviceForm && !store.getState().showCommandPalette) {
-        e.stopPropagation()
-        setShowDeviceForm(true)
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
-
-  useEffect(
-    () => {
-      window.addEventListener('keydown', onKeyDown)
-      return () => {
-        window.removeEventListener('keydown', onKeyDown)
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
-
-  const modalClasses = modalText()
-
-  return (
-    <div ref={ref}>
-      <p className={modalClasses.description}>Add or remove devices that can access and edit this thoughtspace.</p>
-
-      {status === 'connected' ? (
-        <>
-          {/* Device list */}
-          <div className={css({ marginBottom: '2em' })}>
-            {permissionsSorted.map(([accessToken, share]) => {
-              const isCurrent = accessToken === accessTokenCurrent
-              return (
-                <div
-                  key={accessToken}
-                  {...fastClick(() => onSelect?.(accessToken))}
-                  className={css({ cursor: 'pointer' })}
-                >
-                  <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Add a device */}
-          <TransitionGroup>
-            {
-              // form
-              showDeviceForm ? (
-                <CSSTransition
-                  key='add-device-form'
-                  classNames='fade-400'
-                  exit={false}
-                  timeout={durations.get('mediumDuration')}
-                  unmountOnExit
-                >
-                  <div>
-                    <AddDeviceForm
-                      onCancel={() => setShowDeviceForm(false)}
-                      onSubmit={({ name, role }: Pick<Share, 'name' | 'role'>) => {
-                        const result: { accessToken?: string; error?: string } = permissionsModel.add({
-                          role,
-                          name: strip(name || ''),
-                        })
-                        // TODO: permissionsModel.add does not yet return { error }
-                        if (!result.error) {
-                          setShowDeviceForm(false)
-                          onAdd?.(result.accessToken!)
-                        } else {
-                          dispatch(alert('Not connected to server. Unable to add device.', { clearDelay: 2000 }))
-                        }
-                      }}
-                      defaultName={getNextDeviceName(permissions)}
-                    />
-                  </div>
-                </CSSTransition>
-              ) : (
-                // "+ Add a device" button
-                <CSSTransition
-                  key='add-a-device'
-                  classNames='fade-400'
-                  exit={false}
-                  timeout={durations.get('mediumDuration')}
-                  unmountOnExit
-                >
-                  <div className={css({ marginTop: '1em' })}>
-                    <a
-                      {...fastClick(() => setShowDeviceForm(true))}
-                      className={cx(
-                        anchorButton({
-                          outline: true,
-                        }),
-                        css({ display: 'inline-block' }),
-                      )}
-                    >
-                      + Add a device
-                    </a>
-                  </div>
-                </CSSTransition>
-              )
-            }
-          </TransitionGroup>
-        </>
-      ) : (
-        <div className={css({ color: 'gray', fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' })}>
-          <p>This device is currently offline</p>
-          <p>Please connect to the Internet to manage sharing.</p>
-        </div>
-      )}
-    </div>
-  )
-})
-
-ShareList.displayName = 'ShareList'
-
 /** Modal for Sharing and Device Management. */
 const ModalDevices = () => {
   const permissions = usePermissions()
@@ -579,7 +578,6 @@ const ModalDevices = () => {
     </ModalComponent>
   )
 }
-
 const ModalShareMemo = React.memo(ModalDevices)
 
 export default ModalShareMemo

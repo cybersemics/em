@@ -99,6 +99,7 @@ websocketThoughtspace.on('disconnect', () => {
 })
 const permissionsClientMap = permissionsClientDoc.getMap<Share>()
 
+const permissionsClientMap = permissionsClientDoc.getMap<Share>()
 /** If there is more than one device, connects the thoughtspace Websocket provider. */
 const connectThoughtspaceProvider = () => {
   if (permissionsClientMap.size > 1) {

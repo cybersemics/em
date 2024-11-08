@@ -65,7 +65,6 @@ const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFun
 
 /** Returns the absolute difference between to child ranks. */
 const rankDiff = (a: Thought, b: Thought) => Math.abs(a?.rank - b?.rank)
-
 /** Re-sorts empty thoughts in a sorted array to their point of creation. */
 const resortEmptyInPlace = (sorted: Thought[]): Thought[] => {
   if (sorted.length === 1) return sorted
@@ -130,6 +129,23 @@ const getChildrenSortedAlphabetical = moize(
     profileName: 'getChildrenSortedAlphabetical',
   },
 )
+
+/** Finds any child that matches the predicate. If there is more than one child that matches the predicate, which one is returned is non-deterministic. */
+export const findAnyChild = (
+  state: State,
+  id: ThoughtId,
+  predicate: (child: Thought) => boolean,
+): Thought | undefined => {
+  const childId = getAllChildren(state, id).find(childId => {
+    const child = getThoughtById(state, childId)
+    return child && predicate(child)
+  })
+  return childId ? getThoughtById(state, childId) : undefined
+}
+/** Returns true if the context has any visible children. */
+export const hasChildren = (state: State, id: ThoughtId): boolean =>
+  !!findAnyChild(state, id, child => state.showHiddenThoughts || isVisible(state, child))
+
 /** Gets all children of a thought sorted by rank. Returns a new object reference even if the children have not changed. */
 export const getChildrenRanked = moize(
   (state: State, thoughtId: ThoughtId | null): Thought[] => {
@@ -154,23 +170,6 @@ export const anyChild = (state: State, id: ThoughtId | undefined | null): Though
   return children.length > 0 ? getThoughtById(state, children[0]) : undefined
 }
 
-/** Finds any child that matches the predicate. If there is more than one child that matches the predicate, which one is returned is non-deterministic. */
-export const findAnyChild = (
-  state: State,
-  id: ThoughtId,
-  predicate: (child: Thought) => boolean,
-): Thought | undefined => {
-  const childId = getAllChildren(state, id).find(childId => {
-    const child = getThoughtById(state, childId)
-    return child && predicate(child)
-  })
-  return childId ? getThoughtById(state, childId) : undefined
-}
-
-/** Returns true if the context has any visible children. */
-export const hasChildren = (state: State, id: ThoughtId): boolean =>
-  !!findAnyChild(state, id, child => state.showHiddenThoughts || isVisible(state, child))
-
 /** Returns all child that match the predicate (unordered). */
 export const filterAllChildren = (state: State, id: ThoughtId, predicate: (child: Thought) => boolean): Thought[] => {
   const childIds = getAllChildren(state, id).filter(childId => {
@@ -179,7 +178,6 @@ export const filterAllChildren = (state: State, id: ThoughtId, predicate: (child
   })
   return childIdsToThoughts(state, childIds)
 }
-
 /** Checks if a child lies within the cursor path. */
 const isChildInCursor = (state: State, path: Path, child: Thought): boolean => {
   const childPath = unroot([...path, child.id])

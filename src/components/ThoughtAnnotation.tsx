@@ -31,6 +31,7 @@ import stripTags from '../util/stripTags'
 import StaticSuperscript from './StaticSuperscript'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
+import { SystemStyleObject } from '../../styled-system/types'
 
 const urlLinkStyle = css({
   /* set height of this a tag to 1em to make sure the a tag doesn't affect .thought annotation's line height */
@@ -247,6 +248,7 @@ const ThoughtAnnotationContainer = React.memo(
     ellipsizedUrl,
     placeholder,
     invalidState,
+    cssRaw,
     style,
     // only applied to the .subthought container
     styleAnnotation,
@@ -261,6 +263,7 @@ const ThoughtAnnotationContainer = React.memo(
     placeholder?: string
     showContextBreadcrumbs?: boolean
     simplePath: SimplePath
+    cssRaw?: SystemStyleObject
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
   }) => {
@@ -346,6 +349,7 @@ const ThoughtAnnotationContainer = React.memo(
           ellipsizedUrl: ellipsizedUrl,
           numContexts,
           showSuperscript,
+          cssRaw,
           style,
           styleAnnotation,
           email,

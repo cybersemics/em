@@ -49,7 +49,6 @@ const ModalAuth = () => {
 
   /** Checks if the given mode is active. */
   const isModeActive = (mode: Mode) => activeMode.name === mode.name
-
   const [email, updateEmail] = useState('')
   const [password, updatePassword] = useState('')
   const [error, updateError] = useState<null | string>(null)

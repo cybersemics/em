@@ -6,7 +6,6 @@ const getIndent = (line: string, { tabSize = 2 }: { tabSize?: number } = {}): nu
   }
   return indent
 }
-
 /** Detects the tab size of a block of text. */
 const detectTabSize = (text: string): number | undefined => {
   const indentBase = getIndent(text, { tabSize: 1 })

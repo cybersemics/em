@@ -23,7 +23,6 @@ interface TraceGestureProps {
   // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
   eventNodeRef?: React.RefObject<HTMLElement>
 }
-
 /** A hook that returns true a given number of milliseconds after its condition is set to true. Returns false immediately if the condition becomes false. */
 const useConditionDelay = (condition: boolean, milliseconds: number) => {
   const [value, setValue] = useState(false)
@@ -42,7 +41,6 @@ const useConditionDelay = (condition: boolean, milliseconds: number) => {
 
   return value
 }
-
 /** Draws a gesture as it is being performed onto a canvas. */
 const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   // A hook that is true when there is a cancelled gesture in progress.
