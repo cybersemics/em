@@ -1,23 +1,9 @@
-import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { Settings } from '../constants'
+import useScrollTop from '../hooks/useScrollTop'
 import getUserSetting from '../selectors/getUserSetting'
 import viewportStore from '../stores/viewport'
-
-/** Hook to use window.scrollTop immediately as it changes. Use when the throttled scrollTopStore is too slow. */
-const useScrollTop = () => {
-  const [scrollTop, setScrollTop] = useState(window.scrollY)
-
-  useEffect(() => {
-    /** Set scrollTop on scroll. */
-    const handleScroll = () => setScrollTop(window.scrollY)
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  return scrollTop
-}
 
 /** An overlay for the scroll zone that blocks pointer events. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {

@@ -18,7 +18,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isIOS, isMac, isSafari, isTouch } from '../browser'
+import { isMac, isTouch } from '../browser'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -54,7 +54,6 @@ import isDivider from '../util/isDivider'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
-import * as positionFixed from './Editable/positionFixed'
 import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
 import useOnCut from './Editable/useOnCut'
@@ -433,10 +432,6 @@ const Editable = ({
     e => {
       blurring = true
 
-      if (isTouch && isSafari() && !isIOS) {
-        positionFixed.stop()
-      }
-
       const { invalidState } = state
       throttledChangeRef.current.flush()
 
@@ -502,10 +497,6 @@ const Editable = ({
       if (suppressFocusStore.getState()) return
       // do not allow blur to setEditingValue when it is followed immediately by a focus
       blurring = false
-
-      if (isTouch && isSafari() && !isIOS) {
-        positionFixed.start()
-      }
 
       const { dragHold, dragInProgress } = store.getState()
       if (!dragHold && !dragInProgress) {
