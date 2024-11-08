@@ -146,7 +146,7 @@ const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComp
 }
 
 /** Sort Icon Component with Conditional Lottie Animation. */
-const SortIcon = ({ size = 20, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const SortIcon = ({ size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   const direction = useSelector(getCursorSortDirection)
   const Component = direction === 'Desc' ? IconDesc : IconAsc
   return <Component {...{ size, style, cssRaw, animated, animationComplete }} />
