@@ -85,7 +85,6 @@
     "@mui/material": "^6.1.5",
     "algoliasearch": "^5.10.2",
     "axios": "^1.7.7",
-    "canvas": "^2.11.2",
     "classnames": "^2.5.1",
     "clipboard": "^2.0.11",
     "dnd-core": "^16.0.1",
@@ -221,6 +220,7 @@
     "vite-plugin-checker": "^0.8.0",
     "vite-plugin-pwa": "^0.20.5",
     "vitest": "^2.1.4",
+    "vitest-canvas-mock": "^0.3.3",
     "webdriverio": "^7.36.0"
   },
   "packageManager": "yarn@4.5.1"

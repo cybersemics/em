@@ -4,6 +4,7 @@ import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
+import 'vitest-canvas-mock'
 
 expect.extend(matchers)
 
