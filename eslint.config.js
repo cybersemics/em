@@ -7,6 +7,7 @@ import prettier from 'eslint-plugin-prettier'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
+import stylistic from '@stylistic/eslint-plugin'
 
 const commonSettings = {
   ecmaVersion: 'latest',
@@ -18,6 +19,7 @@ const commonSettings = {
 }
 
 const commonPlugins = {
+  '@stylistic': stylistic,
   'export-default-identifier': exportDefaultIdentifier,
   jsdoc,
   react,
@@ -48,6 +50,7 @@ const commonRules = {
       target: 'any',
     },
   ],
+
   'jsdoc/check-alignment': 'error',
   'jsdoc/check-indentation': 'error',
   'jsdoc/check-syntax': 'error',
@@ -158,7 +161,7 @@ export default [
       'no-extra-parens': 'off',
       'no-unused-vars': 'off',
       'no-use-before-define': 'off',
-      '@typescript-eslint/member-delimiter-style': [
+      '@stylistic/member-delimiter-style': [
         'error',
         {
           multiline: {
@@ -166,6 +169,14 @@ export default [
           },
         },
       ],
+      // '@typescript-eslint/member-delimiter-style': [
+      //   'error',
+      //   {
+      //     multiline: {
+      //       delimiter: 'none',
+      //     },
+      //   },
+      // ],
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-use-before-define': 'error',
