@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/16-strikethrough_3.json'
 
 /** Strikethrough Icon with Conditional Lottie Animation. */
-const StrikethroughIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const StrikethroughIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

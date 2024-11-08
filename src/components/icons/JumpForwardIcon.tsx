@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/08-jump-forward.json'
 
 /** JumpForward Icon with Conditional Lottie Animation. */
-const JumpForwardIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const JumpForwardIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

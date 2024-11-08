@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/23-split-sentences_2.json'
 
 /** Split Sentences Icon with Conditional Lottie Animation. */
-const SplitSentencesIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const SplitSentencesIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

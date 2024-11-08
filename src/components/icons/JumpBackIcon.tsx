@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/07-jump-back.json'
 
 /** JumpBack Icon with Conditional Lottie Animation. */
-const JumpBackIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const JumpBackIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

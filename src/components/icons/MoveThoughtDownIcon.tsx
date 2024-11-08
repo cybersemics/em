@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/15-move-thought-down.json'
 
 /** Move Thought Down Icon with Conditional Lottie Animation. */
-const MoveThoughtDownIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const MoveThoughtDownIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

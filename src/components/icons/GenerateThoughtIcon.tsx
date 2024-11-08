@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/29-generate-thought_2.json'
 
 /** Generate Thought Icon with Conditional Lottie Animation. */
-const GenerateThoughtIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const GenerateThoughtIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

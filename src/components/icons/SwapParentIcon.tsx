@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/17-swap-parent.json'
 
 /** SwapParent Icon with Conditional Lottie Animation. */
-const SwapParentIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const SwapParentIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

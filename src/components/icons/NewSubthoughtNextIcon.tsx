@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/04-new-subthought-next_2.json'
 
 /** New Subthought Next Icon with Conditional Lottie Animation. */
-const NewSubthoughtNextIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const NewSubthoughtNextIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

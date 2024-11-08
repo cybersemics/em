@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/20-categorize_3.json'
 
 /** Sub Categorize One Icon with Conditional Lottie Animation. */
-const SubCategorizeOneIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const SubCategorizeOneIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

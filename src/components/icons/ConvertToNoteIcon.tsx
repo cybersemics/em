@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/24-convert-to-note.json'
 
 /** Convert To Note Icon with Conditional Lottie Animation. */
-const ConvertToNoteIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const ConvertToNoteIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

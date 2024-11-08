@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/15-underline_2.json'
 
 /** Underline Icon with Conditional Lottie Animation. */
-const UnderlineIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const UnderlineIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

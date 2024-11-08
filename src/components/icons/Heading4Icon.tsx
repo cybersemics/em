@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/21-heading-four.json'
 
 /** Heading4 Icon with Conditional Lottie Animation. */
-const Heading4Icon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const Heading4Icon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

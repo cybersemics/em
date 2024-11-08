@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/16-move-thought-up.json'
 
 /** MoveCursorBackward Icon with Conditional Lottie Animation. */
-const MoveCursorBackwardIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const MoveCursorBackwardIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

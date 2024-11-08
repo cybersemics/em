@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/04-favorite_3.json'
 
 /** Favorites Icon with Conditional Lottie Animation. */
-const FavoritesIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const FavoritesIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

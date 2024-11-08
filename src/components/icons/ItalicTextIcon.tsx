@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/14-italic_4.json'
 
 /** Italic Text Icon with Conditional Lottie Animation. */
-const ItalicTextIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const ItalicTextIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

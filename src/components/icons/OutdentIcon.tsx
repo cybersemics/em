@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/05-outdent_2.json'
 
 /** Outdent Icon with Conditional Lottie Animation. */
-const OutdentIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const OutdentIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

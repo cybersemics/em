@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/26-collaps_2.json'
 
 /** Collapse Icon with Conditional Lottie Animation. */
-const CollapseIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const CollapseIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

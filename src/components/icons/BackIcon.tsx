@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/06-back.json'
 
 /** Back Icon with Conditional Lottie Animation. */
-const BackIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const BackIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

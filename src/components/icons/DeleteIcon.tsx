@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/31-parmanently-delete_2.json'
 
 /** Delete Icon with Conditional Lottie Animation. */
-const DeleteIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const DeleteIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

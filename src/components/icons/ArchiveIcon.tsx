@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/22-trash_3.json'
 
 /** Archive Icon with Conditional Lottie Animation. */
-const ArchiveIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const ArchiveIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/06-indent_2.json'
 
 /** Indent Icon with Conditional Lottie Animation. */
-const IndentIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const IndentIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

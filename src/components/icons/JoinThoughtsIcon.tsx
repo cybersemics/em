@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/30-join-thought.json'
 
 /** Join Thoughts Icon with Conditional Lottie Animation. */
-const JoinThoughtsIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const JoinThoughtsIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

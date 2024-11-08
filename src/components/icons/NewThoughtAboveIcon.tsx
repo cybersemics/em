@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/05-new-thought-above_2.json'
 
 /** New Thought Above Icon with Conditional Lottie Animation. */
-const NewThoughtAboveIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const NewThoughtAboveIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

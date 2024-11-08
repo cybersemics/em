@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/32-prose-view_2.json'
 
 /** Prose View Icon with Conditional Lottie Animation. */
-const ProseViewIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const ProseViewIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

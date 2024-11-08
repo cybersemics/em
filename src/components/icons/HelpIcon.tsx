@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/13-help_2.json'
 
 /** Help Icon with Conditional Lottie Animation. */
-const HelpIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const HelpIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

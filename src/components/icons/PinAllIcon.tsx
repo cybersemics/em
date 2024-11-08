@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/08-pin-subthought_3.json'
 
 /** PinAll Icon with Conditional Lottie Animation. */
-const PinAllIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const PinAllIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style={{ ...style, width: '100%', height: '100%' }}>
