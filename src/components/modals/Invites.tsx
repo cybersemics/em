@@ -8,6 +8,7 @@ import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { alertActionCreator as alert } from '../../actions/alert'
+import modalDescriptionClass from '../../recipes/modalDescriptionClass'
 import fastClick from '../../util/fastClick'
 import timestamp from '../../util/timestamp'
 import ActionButton from './../ActionButton'
@@ -145,7 +146,7 @@ const Invites = () => {
       )}
     >
       <div className={modalClasses.wrapper}>
-        <p className={modalClasses.description}>
+        <p className={modalDescriptionClass}>
           You get three shiny gift codes to share <b>em</b> with anyone you choose!
         </p>
         {isFetchingInvites && <p className={css({ fontSize: '18px' })}>Fetching your shiny codes ✨...</p>}

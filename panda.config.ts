@@ -244,10 +244,6 @@ const globalCss = defineGlobalStyles({
     content: 'attr(placeholder)',
     cursor: 'text',
   },
-  // Sets default link color in recipes/modal color
-  '.modal__root': {
-    '& p': { margin: '0 0 1em 0' },
-  },
 })
 
 export default defineConfig({
