@@ -205,6 +205,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           // When a dropdown like ColorPicker or LetterCase is open, set pointer-events: none, otherwise the toolbar will block the editor. This will be overridden by the toolbar buttons to allow interaction.
           showDropDown && toolbarPointerEvents(),
           css({
+            backgroundColor: 'bg',
+            boxShadow: customize ? '-10px 10px 20px 0 {colors.bg}' : '10px -20px 15px 25px {colors.bg}',
             textAlign: 'right',
             maxWidth: '100%',
             userSelect: 'none',
@@ -225,27 +227,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           marginBottom: isDraggingAny ? '-7em' : 0,
         }}
       >
-        <div
-          className={css({
-            position: 'absolute',
-            /* sometimes the body peeks through with top:0 */
-            top: '-1px',
-            left: '0',
-            /* Hide the popup-close-x in the customize modal by extending the toolbar-mask to the right. Otherwise it would be too cluttered. Use just enough to cover popup-close-x without  */
-            right: '-1.75em',
-            backgroundColor: 'bg',
-            pointerEvents: 'none',
-            boxShadow: '-10px 10px 20px 0 {colors.bg}',
-            ...(!customize && {
-              boxShadow: '10px -20px 15px 25px {colors.bg}',
-              paddingTop: '500px',
-            }),
-          })}
-          style={{
-            // must scale height with fontSize, since height does not scale linearly with em or px
-            height: fontSize + 30,
-          }}
-        />
         <div>
           <span
             id='left-arrow'
