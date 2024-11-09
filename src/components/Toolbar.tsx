@@ -13,6 +13,7 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import { css, cva, cx } from '../../styled-system/css'
 import { toolbarPointerEvents } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import TipId from '../@types/TipId'
@@ -233,7 +234,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             id='left-arrow'
             className={arrow({ direction: 'left', isHidden: !leftArrowIsShown, fixed: !customize })}
           >
-            <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />
+            <TriangleLeft width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
           </span>
           <div
             id='toolbar'
@@ -278,7 +279,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             id='right-arrow'
             className={arrow({ direction: 'right', isHidden: !rightArrowIsShown, fixed: !customize })}
           >
-            <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
+            <TriangleRight width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
           </span>
         </div>
       </div>
