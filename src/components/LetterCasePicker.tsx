@@ -46,7 +46,7 @@ const LetterCasePicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = m
         style={{ ...(overflow.left ? { left: `${overflow.left}` } : { right: `${overflow.right}` }) }}
         className={css(
           {
-            background: { base: '#ebebeb', _dark: '#141414' },
+            background: 'letterCasePickerBg',
             borderRadius: '3',
             display: 'inline-block',
             padding: '0.2em 0.25em 0.25em',

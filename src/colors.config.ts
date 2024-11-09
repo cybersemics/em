@@ -27,11 +27,26 @@ const colors = {
     vividHighlight: '#63c9ea',
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
+    inputBorder: 'rgba(153, 153, 153, 1)', // #999
+    link: 'rgba(135, 206, 235, 1)', // #87ceeb
+    dim: 'rgba(255, 255, 255, 0.5)',
+    dimInverse: 'rgba(7, 7, 7, 0.5)',
+    bullet: 'rgba(217, 217, 217, 1)',
+    codeBg: 'rgba(51, 51, 51, 1)', // #333333
+    modalExportUnused: 'rgba(68, 68, 68, 1)', // #444
+    divider: 'rgba(204, 204, 204, 1)',
+    bgMuted: 'rgba(51, 51, 51, 1)', // #333
+    footerBg: 'rgba(26, 26, 26, 1)', // #1a1a1a
+    gestureDiagramWrapper: 'rgba(94, 94, 94, 1)',
+    letterCasePickerBg: 'rgba(20, 20, 20, 1)', // #141414
+    sidebarBg: 'rgba(41, 42, 43, 1)', // #292a2b
+    tutorialBg: 'rgba(33, 33, 33, 0.8)', // #212121
+    thoughtAnnotation: 'rgba(34, 34, 34, 1)', // #222
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
     bg: '#FFFFFF',
-    bgOverlay80: 'rgba(0, 0, 0, 0.8)',
+    bgOverlay80: 'rgba(255, 255, 255, 0.8)',
     bgOverlay30: 'rgba(255, 255, 255, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
@@ -56,6 +71,21 @@ const colors = {
     white: 'rgba(255, 255, 255, 1)',
     vividHighlight: '#63c9ea',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
+    inputBorder: 'rgba(238, 238, 238, 1)', // #eeeeee
+    link: 'rgba(27, 111, 154, 1)', // #1b6f9a
+    dim: 'rgba(7, 7, 7, 0.5)',
+    dimInverse: 'rgba(255, 255, 255, 0.5)',
+    bullet: 'rgba(39, 39, 39, 1)',
+    codeBg: 'rgba(204, 204, 204, 1)', // #cccccc
+    modalExportUnused: 'rgba(204, 204, 204, 1)', // #ccc
+    divider: 'rgba(193, 193, 193, 1)',
+    bgMuted: 'rgba(221, 221, 221, 1)', // #ddd
+    footerBg: 'rgba(228, 228, 228, 1)', // #e4e4e4
+    gestureDiagramWrapper: 'rgba(180, 180, 180, 1)',
+    letterCasePickerBg: 'rgba(235, 235, 235, 1)', // #ebebeb
+    sidebarBg: 'rgba(245, 245, 245, 1)', // #f5f5f5
+    tutorialBg: 'rgba(221, 221, 221, 1)', // #ddd
+    thoughtAnnotation: 'rgba(221, 221, 221, 1)', // #ddd
   },
 } as const
 

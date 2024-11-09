@@ -699,10 +699,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       {/* isDocumentEditable() && (
         <>
           <div className={css({
-            borderTop: {
-              base:"solid 1px #ccc",
-              _dark:"solid 1px #444"
-            },
+            borderTop: "solid 1px {colors.modalExportUnused}",
             marginTop: "30px",
             marginBottom: "20px",
             paddingTop: "40px",

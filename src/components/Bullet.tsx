@@ -47,7 +47,7 @@ const isIOSSafari = isTouch && isiPhone && isSafari()
 
 const glyph = cva({
   base: {
-    fill: { base: 'rgba(39, 39, 39, 1)', _dark: 'rgba(217, 217, 217, 1)' },
+    fill: 'bullet',
     position: 'relative',
     '@media (max-width: 500px)': {
       _android: {

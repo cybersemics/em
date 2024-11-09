@@ -162,7 +162,7 @@ const globalCss = defineGlobalStyles({
     cursor: 'pointer',
     textDecorationLine: 'underline',
     outline: 'none',
-    color: { base: '#1b6f9a', _dark: '#87ceeb' },
+    color: 'link',
     fontWeight: 400,
     userSelect: 'none',
   },
@@ -198,10 +198,7 @@ const globalCss = defineGlobalStyles({
     marginBottom: '2vh',
   },
   'input:focus': {
-    border: {
-      base: 'solid 1px #eee',
-      _dark: 'solid 1px #999',
-    },
+    border: 'solid 1px {colors.inputBorder}',
     outline: '0 none',
   },
   /** Aligns checkbox and label vertically. */
@@ -223,7 +220,7 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'bg',
   },
   code: {
-    backgroundColor: { base: '#ccc', _dark: '#333' },
+    backgroundColor: 'codeBg',
     fontFamily: 'monospace',
   },
   'button[disabled]': {
@@ -240,7 +237,7 @@ const globalCss = defineGlobalStyles({
   /* :empty does not work because thought may contain <br> */
   '[placeholder]:empty::before': {
     fontStyle: 'italic',
-    color: { base: 'rgba(7, 7, 7, 0.5)', _dark: 'rgba(255, 255, 255, 0.5)' },
+    color: 'dim',
     content: 'attr(placeholder)',
     cursor: 'text',
   },
@@ -339,18 +336,6 @@ export default defineConfig({
       semanticTokens: {
         colors: {
           ...colorSemanticTokens,
-          bgMuted: {
-            value: {
-              base: '#ddd',
-              _dark: '#333',
-            },
-          },
-          dim: {
-            value: {
-              base: 'rgba(7, 7, 7, 0.5)',
-              _dark: 'rgba(255, 255, 255, 0.5)',
-            },
-          },
           invalidOption: {
             value: 'tomato !important',
           },
