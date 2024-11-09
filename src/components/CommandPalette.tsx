@@ -391,7 +391,12 @@ const CommandPalette: FC = () => {
       {!isTouch || (gestureInProgress && shortcuts.length > 0) ? (
         <div>
           <h2
-            className={css({ marginTop: 0, marginBottom: '1em', paddingLeft: 5, borderBottom: 'solid 1px gray' })}
+            className={css({
+              marginTop: 0,
+              marginBottom: '1em',
+              paddingLeft: 5,
+              borderBottom: 'solid 1px {colors.gray50}',
+            })}
             style={{ marginLeft: -fontSize * 1.8 }}
           >
             {!isTouch ? (
