@@ -54,7 +54,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
         aria-label={'editable-' + head(path)}
         className={css(
           {
-            border: { base: 'solid 1px rgb(193, 193, 193)', _dark: 'solid 1px rgb(204, 204, 204)' },
+            border: 'solid 1px {colors.divider}',
             // requires editable-hash className to be selected by the cursor navigation via editableNode
           },
           cssRaw,

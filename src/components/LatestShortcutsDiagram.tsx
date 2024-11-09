@@ -60,10 +60,7 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
               <div key={shortcut.id}>
                 <div
                   className={css({
-                    background: {
-                      _dark: 'rgb(94, 94, 94)',
-                      base: 'rgb(180, 180, 180)',
-                    },
+                    background: 'gestureDiagramWrapper',
                     borderRadius: '7px',
                     display: 'flex',
                     justifyContent: 'center',
