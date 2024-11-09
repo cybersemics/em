@@ -70,7 +70,7 @@ const LetterCasePicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = m
               className={css({
                 margin: '2px',
                 lineHeight: '0',
-                border: selected === type ? `solid 1px {colors.fg}` : `solid 1px transparent`,
+                border: selected === type ? `solid 1px {colors.fg}` : `solid 1px {colors.transparent}`,
               })}
               aria-label={type}
               {...fastClick(e => e.stopPropagation())}

@@ -158,7 +158,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           ? undefined
           : isButtonExecutable && isButtonActive
             ? token('colors.fg')
-            : 'gray', // keep fill in style because some icons need the exact color
+            : token('colors.gray50'), // keep fill in style because some icons need the exact color
       width: fontSize + 4,
       height: fontSize + 4,
     }),
