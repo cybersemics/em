@@ -21,7 +21,7 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
       <div
         ref={ref}
         className={css({
-          boxShadow: '0 0 10px 0px black',
+          boxShadow: '0 0 10px 0px {colors.bg}',
           // display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-evenly',

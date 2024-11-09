@@ -81,7 +81,7 @@ const colors = {
     gray15: 'rgba(38, 38, 38, 1)', // #262626
     gray33: 'rgba(85, 85, 85, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
-    gray66: 'rgba(169, 169, 169, 1)', // #a9a9a9
+    gray66: 'rgba(169, 169, 169, 1)', // #a9a9a9 (darkgray)
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue)
