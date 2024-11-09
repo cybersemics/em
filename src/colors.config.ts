@@ -47,6 +47,9 @@ const colors = {
     transparent: 'transparent',
     bgTransparent: 'rgba(0, 0, 0, 0)',
     fgTransparent: 'rgba(255, 255, 255, 0)',
+    modalColor: 'rgba(227, 227, 227, 1)', // #e3e3e3
+    quickDropBgHover: 'rgba(40,40,40,0.8)',
+    quickDropBg: 'rgba(30,30,30,0.8)',
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -96,6 +99,9 @@ const colors = {
     transparent: 'transparent',
     fgTransparent: 'rgba(0, 0, 0, 0)',
     bgTransparent: 'rgba(255, 255, 255, 0)',
+    modalColor: 'rgba(28, 28, 28, 1)', // #1c1c1c
+    quickDropBgHover: 'rgba(215, 215, 215, 0.8)',
+    quickDropBg: 'rgba(225, 225, 225, 0.8)',
   },
 } as const
 

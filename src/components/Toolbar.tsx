@@ -211,7 +211,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             textAlign: 'right',
             maxWidth: '100%',
             userSelect: 'none',
-            WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
+            WebkitTapHighlightColor: '{colors.bgTransparent}',
             whiteSpace: 'nowrap',
             ...(!customize && {
               zIndex: 'toolbarContainer',

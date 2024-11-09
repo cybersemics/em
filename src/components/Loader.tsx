@@ -24,7 +24,7 @@ const rippleLoaderChild = {
 const Loader = ({ size = 32, style, cssRaw }: LoaderProps) => {
   return (
     <div
-      className={css({ display: 'inline-block', overflow: 'hidden', background: 'rgba(255, 255, 255, 0)' }, cssRaw)}
+      className={css({ display: 'inline-block', overflow: 'hidden', background: 'fgTransparent' }, cssRaw)}
       style={{ ...style, height: size, width: size }}
     >
       <div

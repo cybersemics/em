@@ -91,7 +91,7 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
             marginLeft: 0,
             marginTop: 0,
             width: 'calc(100% - 4em)',
-            background: isHovering ? 'rgba(155, 170, 220, 1)' : undefined,
+            background: isHovering ? 'highlight2' : undefined,
           }),
         )}
       />
