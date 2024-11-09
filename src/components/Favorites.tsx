@@ -118,7 +118,7 @@ const FavoritesOptions = ({
         <span
           {...fastClick(() => setShowOptions(!showOptions))}
           className={css({
-            color: '#444',
+            color: 'modalExportUnused',
             cursor: 'pointer',
             fontSize: '0.7em',
             fontWeight: 'bold',
@@ -150,7 +150,7 @@ const FavoritesOptions = ({
         >
           <form
             ref={formRef}
-            className={css({ fontSize: 'sm', backgroundColor: '#3e3e3e', borderRadius: '0.5em', padding: '1em' })}
+            className={css({ fontSize: 'sm', backgroundColor: 'checkboxForm', borderRadius: '0.5em', padding: '1em' })}
           >
             <Checkbox
               checked={!hideContexts}

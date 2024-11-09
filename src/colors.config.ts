@@ -29,13 +29,14 @@ const colors = {
     vividHighlight: '#63c9ea',
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
-    inputBorder: 'rgba(153, 153, 153, 1)', // #999
+    inputBorder: 'rgba(153, 153, 153, 1)', // #999, also used in navBar
+    breadcrumbs: 'rgba(153, 153, 153, 1)',
     link: 'rgba(135, 206, 235, 1)', // #87ceeb
     dim: 'rgba(255, 255, 255, 0.5)',
     dimInverse: 'rgba(7, 7, 7, 0.5)',
     bullet: 'rgba(217, 217, 217, 1)',
     codeBg: 'rgba(51, 51, 51, 1)', // #333333
-    modalExportUnused: 'rgba(68, 68, 68, 1)', // #444
+    modalExportUnused: 'rgba(68, 68, 68, 1)', // #444, used in dropdown menu
     divider: 'rgba(204, 204, 204, 1)',
     bgMuted: 'rgba(51, 51, 51, 1)', // #333
     footerBg: 'rgba(26, 26, 26, 1)', // #1a1a1a
@@ -50,6 +51,12 @@ const colors = {
     modalColor: 'rgba(227, 227, 227, 1)', // #e3e3e3
     quickDropBgHover: 'rgba(40,40,40,0.8)',
     quickDropBg: 'rgba(30,30,30,0.8)',
+    bulletGray: 'rgba(102, 102, 102, 1)', // #666
+    midPink: 'rgba(255, 123, 195, 1)', // #ff7bc3
+    purpleEggplant: '#32305f', // purple-eggplant
+    commandSelected: 'rgba(33, 33, 33, 1)', // #212121
+    eggplant: 'rgba(82, 48, 95, 1)', // eggplant
+    checkboxForm: 'rgba(62, 62, 62, 1)', // #3e3e3e
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -82,6 +89,7 @@ const colors = {
     vividHighlight: '#63c9ea',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
     inputBorder: 'rgba(238, 238, 238, 1)', // #eeeeee
+    breadcrumbs: 'rgba(102, 102, 102, 1)',
     link: 'rgba(27, 111, 154, 1)', // #1b6f9a
     dim: 'rgba(7, 7, 7, 0.5)',
     dimInverse: 'rgba(255, 255, 255, 0.5)',
@@ -102,6 +110,12 @@ const colors = {
     modalColor: 'rgba(28, 28, 28, 1)', // #1c1c1c
     quickDropBgHover: 'rgba(215, 215, 215, 0.8)',
     quickDropBg: 'rgba(225, 225, 225, 0.8)',
+    bulletGray: 'rgba(153, 153, 153, 1)', // #999999
+    midPink: 'rgba(255, 123, 195, 1)',
+    purpleEggplant: '#32305f', // purple-eggplant
+    commandSelected: 'rgba(222, 222, 222, 1)',
+    eggplant: 'rgb(85, 51, 98)', // eggplant
+    checkboxForm: 'rgba(193, 193, 193, 1)',
   },
 } as const
 

@@ -44,7 +44,7 @@ const DropUncle = ({
       className={cx(
         dropEnd(),
         css({
-          backgroundColor: testFlags.simulateDrop ? '#52305f' : undefined, // eggplant
+          backgroundColor: testFlags.simulateDrop ? 'eggplant' : undefined, // eggplant
           opacity: 0.9,
         }),
       )}
@@ -59,7 +59,7 @@ const DropUncle = ({
             // make sure label does not interfere with drop target hovering
             pointerEvents: 'none',
             left: 0,
-            color: '#ff7bc3' /* mid pink */,
+            color: 'midPink',
           })}
         >
           {strip(value)}
