@@ -3,6 +3,7 @@ const colors = {
     // Background colors in capacitor app needs to be in hexadecimal codes
     bg: '#000000',
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
+    bgOverlay50: 'rgba(0, 0, 0, 0.5)',
     bgOverlay30: 'rgba(0, 0, 0, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
@@ -11,6 +12,7 @@ const colors = {
     fg: 'rgba(255, 255, 255, 1)',
     fgOverlay80: 'rgba(20, 20, 20, 0.8)',
     fgOverlay90: 'rgba(20, 20, 20, 0.9)',
+    fgOverlay50: 'rgba(255, 255, 255, 0.5)',
     gray15: 'rgba(38, 38, 38, 1)', // #262626
     gray33: 'rgba(85, 85, 85, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
@@ -42,11 +44,15 @@ const colors = {
     sidebarBg: 'rgba(41, 42, 43, 1)', // #292a2b
     tutorialBg: 'rgba(33, 33, 33, 0.8)', // #212121
     thoughtAnnotation: 'rgba(34, 34, 34, 1)', // #222
+    transparent: 'transparent',
+    bgTransparent: 'rgba(0, 0, 0, 0)',
+    fgTransparent: 'rgba(255, 255, 255, 0)',
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
     bg: '#FFFFFF',
     bgOverlay80: 'rgba(255, 255, 255, 0.8)',
+    bgOverlay50: 'rgba(255, 255, 255, 0.5)',
     bgOverlay30: 'rgba(255, 255, 255, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
@@ -55,6 +61,7 @@ const colors = {
     fg: 'rgba(0, 0, 0, 1)',
     fgOverlay80: 'rgba(235, 235, 235, 0.8)',
     fgOverlay90: 'rgba(235, 235, 235, 0.9)',
+    fgOverlay50: 'rgba(0, 0, 0, 0.5)',
     gray15: 'rgba(38, 38, 38, 1)', // #262626
     gray33: 'rgba(85, 85, 85, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
@@ -86,6 +93,9 @@ const colors = {
     sidebarBg: 'rgba(245, 245, 245, 1)', // #f5f5f5
     tutorialBg: 'rgba(221, 221, 221, 1)', // #ddd
     thoughtAnnotation: 'rgba(221, 221, 221, 1)', // #ddd
+    transparent: 'transparent',
+    fgTransparent: 'rgba(0, 0, 0, 0)',
+    bgTransparent: 'rgba(255, 255, 255, 0)',
   },
 } as const
 
