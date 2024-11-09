@@ -591,10 +591,10 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
           ref={textareaRef}
           readOnly
           className={css({
-            backgroundColor: '#111',
+            backgroundColor: 'darkgray',
             border: 'none',
             borderRadius: '10px',
-            color: '#aaa',
+            color: 'exportTextareaColor',
             fontSize: '1em',
             height: '120px',
             marginBottom: 'calc(max(1.2em, 20px))',

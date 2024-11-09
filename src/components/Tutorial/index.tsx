@@ -118,7 +118,7 @@ const Tutorial: FC = () => {
           className={cx(
             css({
               position: 'absolute',
-              color: '#666',
+              color: 'bulletGray',
               top: '10px',
               right: '15px',
               fontSize: 'sm',

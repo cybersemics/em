@@ -37,8 +37,8 @@ const Loader = ({ size = 32, style, cssRaw }: LoaderProps) => {
           transformOrigin: '0 0',
         })}
       >
-        <div className={css(rippleLoaderChild, { borderColor: '#e90c59', animationDelay: '0s' })}></div>
-        <div className={css(rippleLoaderChild, { borderColor: '#46dff0', animationDelay: '-0.5s' })}></div>
+        <div className={css(rippleLoaderChild, { borderColor: 'pinkRed', animationDelay: '0s' })}></div>
+        <div className={css(rippleLoaderChild, { borderColor: 'brightBlue', animationDelay: '-0.5s' })}></div>
       </div>
     </div>
   )
