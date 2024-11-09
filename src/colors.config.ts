@@ -3,6 +3,7 @@ const colors = {
     // Background colors in capacitor app needs to be in hexadecimal codes
     bg: '#000000',
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
+    bgOverlay30: 'rgba(0, 0, 0, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
     darkgray: 'rgba(17, 17, 17, 1)', // #111111
@@ -31,6 +32,7 @@ const colors = {
     // Background colors in capacitor app needs to be in hexadecimal codes
     bg: '#FFFFFF',
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
+    bgOverlay30: 'rgba(255, 255, 255, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
     darkgray: 'rgba(17, 17, 17, 1)', // #111111
