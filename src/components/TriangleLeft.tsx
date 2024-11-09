@@ -1,8 +1,9 @@
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import Icon from '../@types/IconType'
 
 /** A left-facing svg triangle. */
-const TriangleLeft = ({ fill = 'black', size = 20, width, height, style, cssRaw }: Icon) => (
+const TriangleLeft = ({ fill = token('colors.bg'), size = 20, width, height, style, cssRaw }: Icon) => (
   <svg
     xmlns=''
     version='1.1'
