@@ -182,7 +182,7 @@ const CommandRow: FC<{
     >
       <div
         className={css({
-          backgroundColor: selected ? '#212121' : undefined,
+          backgroundColor: selected ? 'commandSelected' : undefined,
           padding: selected ? '5px 0 5px 0.5em' : undefined,
           ...(!isTouch
             ? {
@@ -227,7 +227,7 @@ const CommandRow: FC<{
         <div className={css({ maxHeight: !isTouch ? '1em' : undefined, flexGrow: 1, zIndex: 1 })}>
           <div
             className={css({
-              backgroundColor: selected ? '#212121' : undefined,
+              backgroundColor: selected ? 'commandSelected' : undefined,
               display: 'flex',
               padding: !isTouch ? '3px 0.6em 0.3em 0.2em' : undefined,
               marginLeft: !isTouch ? '2em' : undefined,
