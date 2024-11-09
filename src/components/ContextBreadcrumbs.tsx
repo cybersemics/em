@@ -258,7 +258,7 @@ const ContextBreadcrumbs = ({
                     {
                       color: 'inherit',
                       textDecoration: 'none',
-                      '&:active': { color: '#909090', WebkitTextStrokeWidth: '0.05em' },
+                      '&:active': { color: 'activeBreadCrumb', WebkitTextStrokeWidth: '0.05em' },
                     },
                     linkCssRaw,
                   )}

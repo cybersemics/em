@@ -36,6 +36,7 @@ const colors = {
     dimInverse: 'rgba(7, 7, 7, 0.5)',
     bullet: 'rgba(217, 217, 217, 1)',
     codeBg: 'rgba(51, 51, 51, 1)', // #333333
+    codeBgInverse: 'rgba(204, 204, 204, 1)', // #cccccc
     modalExportUnused: 'rgba(68, 68, 68, 1)', // #444, used in dropdown menu
     divider: 'rgba(204, 204, 204, 1)',
     bgMuted: 'rgba(51, 51, 51, 1)', // #333
@@ -57,6 +58,11 @@ const colors = {
     commandSelected: 'rgba(33, 33, 33, 1)', // #212121
     eggplant: 'rgba(82, 48, 95, 1)', // eggplant
     checkboxForm: 'rgba(62, 62, 62, 1)', // #3e3e3e
+    error: 'rgba(204, 34, 51, 1)',
+    activeBreadCrumb: 'rgba(144, 144, 144, 1)', // #909090
+    pinkRed: 'rgba(233, 12, 89, 1)',
+    brightBlue: 'rgba(70, 223, 240, 1)', // #46dff0
+    exportTextareaColor: 'rgba(170, 170, 170, 1)', // #aaa, also used in anchorButton
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -66,7 +72,7 @@ const colors = {
     bgOverlay30: 'rgba(255, 255, 255, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
-    darkgray: 'rgba(17, 17, 17, 1)', // #111111
+    darkgray: 'rgba(237, 237, 237, 1)', // #ededed
     fg85: 'rgba(39, 39, 39, 1)', // #272727
     fg: 'rgba(0, 0, 0, 1)',
     fgOverlay80: 'rgba(235, 235, 235, 0.8)',
@@ -95,6 +101,7 @@ const colors = {
     dimInverse: 'rgba(255, 255, 255, 0.5)',
     bullet: 'rgba(39, 39, 39, 1)',
     codeBg: 'rgba(204, 204, 204, 1)', // #cccccc
+    codeBgInverse: 'rgba(51, 51, 51, 1)', // #333333
     modalExportUnused: 'rgba(204, 204, 204, 1)', // #ccc
     divider: 'rgba(193, 193, 193, 1)',
     bgMuted: 'rgba(221, 221, 221, 1)', // #ddd
@@ -116,6 +123,11 @@ const colors = {
     commandSelected: 'rgba(222, 222, 222, 1)',
     eggplant: 'rgb(85, 51, 98)', // eggplant
     checkboxForm: 'rgba(193, 193, 193, 1)',
+    error: 'rgba(204, 34, 51, 1)',
+    activeBreadCrumb: 'rgba(144, 144, 144, 1)', // #909090
+    pinkRed: 'rgba(233, 12, 89, 1)',
+    brightBlue: 'rgba(70, 223, 240, 1)', // #46dff0
+    exportTextareaColor: 'rgba(85, 85, 85, 1)',
   },
 } as const
 
