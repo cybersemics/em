@@ -18,8 +18,8 @@ const HoverArrow = ({
         className={css({
           animation: `bobble {durations.verySlowPulseDuration} infinite`,
           borderBottom: '20px solid {colors.highlight2}',
-          borderLeft: '10px solid transparent',
-          borderRight: '10px solid transparent',
+          borderLeft: '10px solid {colors.transparent}',
+          borderRight: '10px solid {colors.transparent}',
           height: '0',
           left: '50%',
           position: 'absolute',
