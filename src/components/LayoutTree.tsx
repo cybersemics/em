@@ -94,9 +94,9 @@ const SIZE_REMOVAL_DEBOUNCE = 1000
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
 const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 
-/** A computed store that tracks the bottom of the viewport. */
+/** A computed store that tracks the bottom of the viewport. Used for list virtualization. Does not include overscroll, i.e. if the user scrolls past the top of the document viewportBottom will not change. */
 const viewportBottomStore = reactMinistore.compose(
-  (viewport, scrollTop) => scrollTop + viewport.innerHeight,
+  (viewport, scrollTop) => Math.max(scrollTop, 0) + viewport.innerHeight,
   [viewportStore, scrollTopStore],
 )
 
