@@ -352,6 +352,8 @@ describe('DOM', () => {
 
       executeShortcut(toggleSortShortcut, { store })
 
+      await vi.runOnlyPendingTimersAsync()
+
       const thoughtC = getThoughtByContext(['c'])
       expect(thoughtC).toBeTruthy()
 
@@ -374,6 +376,8 @@ describe('DOM', () => {
       ])
 
       executeShortcut(toggleSortShortcut, { store })
+
+      await vi.runOnlyPendingTimersAsync()
 
       const thought = getThoughtByContext(['a'])
       expect(thought).toBeTruthy()
@@ -399,6 +403,8 @@ describe('DOM', () => {
 
       executeShortcut(toggleSortShortcut, { store })
 
+      await vi.runOnlyPendingTimersAsync()
+
       const thought = getThoughtByContext(['c'])
       expect(thought).toBeTruthy()
 
@@ -422,6 +428,8 @@ describe('DOM', () => {
 
       executeShortcut(toggleSortShortcut, { store })
       executeShortcut(toggleSortShortcut, { store })
+
+      await vi.runOnlyPendingTimersAsync()
 
       const thoughtA = getThoughtByContext(['a'])
       expect(thoughtA).toBeTruthy()
@@ -541,6 +549,8 @@ describe('DOM', () => {
         newThought({ value: '' }),
       ])
 
+      await vi.runOnlyPendingTimersAsync()
+
       const thoughts = screen.getAllByTestId(/thought/)
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -566,6 +576,8 @@ describe('DOM', () => {
         setCursor(['c']),
         newThought({ value: '' }),
       ])
+
+      await vi.runOnlyPendingTimersAsync()
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -594,6 +606,8 @@ describe('DOM', () => {
         newThought({ value: '' }),
       ])
 
+      await vi.runOnlyPendingTimersAsync()
+
       const thoughts = screen.getAllByTestId(/thought/)
 
       const childrenString = thoughts
@@ -620,6 +634,8 @@ describe('DOM', () => {
         setCursor(['a', 'b']),
         newThought({ value: '', insertBefore: true }),
       ])
+
+      await vi.runOnlyPendingTimersAsync()
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -648,6 +664,8 @@ describe('DOM', () => {
         newThought({ value: '', insertBefore: true }),
       ])
 
+      await vi.runOnlyPendingTimersAsync()
+
       const thoughts = screen.getAllByTestId(/thought/)
 
       const childrenString = thoughts
@@ -674,6 +692,8 @@ describe('DOM', () => {
         setCursor(['f']),
         newThought({ value: '', insertBefore: true }),
       ])
+
+      await vi.runOnlyPendingTimersAsync()
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -708,6 +728,8 @@ describe('DOM', () => {
         newThought({ value: '' }),
       ])
 
+      await vi.runOnlyPendingTimersAsync()
+
       const thoughts = screen.getAllByTestId(/thought/)
 
       const childrenString = thoughts
@@ -734,6 +756,8 @@ describe('DOM', () => {
         setCursor(['a', 'b']),
         newThought({ value: '', insertNewSubthought: true }),
       ])
+
+      await vi.runOnlyPendingTimersAsync()
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -763,6 +787,8 @@ describe('DOM', () => {
         newThought({ value: '' }),
       ])
 
+      await vi.runOnlyPendingTimersAsync()
+
       const thoughts = screen.getAllByTestId(/thought/)
 
       const childrenString = thoughts
@@ -790,6 +816,8 @@ describe('DOM', () => {
         newThought({ value: '', insertNewSubthought: true }),
       ])
 
+      await vi.runOnlyPendingTimersAsync()
+
       const thoughts = screen.getAllByTestId(/thought/)
 
       const childrenString = thoughts
@@ -816,6 +844,8 @@ describe('DOM', () => {
         setCursor(['a']),
         newThought({ value: '', insertNewSubthought: true, insertBefore: true }),
       ])
+
+      await vi.runOnlyPendingTimersAsync()
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -849,6 +879,8 @@ describe('DOM', () => {
             }),
           ),
       ])
+
+      await vi.runOnlyPendingTimersAsync()
 
       const thoughts = screen.getAllByTestId(/thought/)
 
