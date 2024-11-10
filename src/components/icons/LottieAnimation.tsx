@@ -17,12 +17,12 @@ interface LottieAnimationProps {
  * allowing for dynamic control over the animation's playback rate and the color of its lines.
  *
  * Props:
- *  animationData: The JSON data that defines the Lottie animation.
- *  speed: Optional. A number that specifies the playback speed of the animation. Defaults to 1 for normal speed.
- *  color: Optional. A string representing the hex color code used to update the animation's line color. Defaults to '#FFFFFF' (white) if not specified.
- *  onComplete: Optional. A callback function that is triggered when the animation completes its playback.
- *  style: Optional. A React.CSSProperties object to apply inline styles to the player container. 
- *         This does not affect the Lottie animation's JSON content or alter its visual elements.
+ * animationData: The JSON data that defines the Lottie animation.
+ * Speed: Optional. A number that specifies the playback speed of the animation. Defaults to 1 for normal speed.
+ * Color: Optional. A string representing the hex color code used to update the animation's line color. Defaults to '#FFFFFF' (white) if not specified.
+ * OnComplete: Optional. A callback function that is triggered when the animation completes its playback.
+ * Style: Optional. A React.CSSProperties object to apply inline styles to the player container.
+ * This does not affect the Lottie animation's JSON content or alter its visual elements.
  */
 const LottieAnimation: React.FC<LottieAnimationProps> = ({
   animationData,
@@ -39,7 +39,7 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
    * @param hex - The hex color code.
    * @returns The RGBA values.
    */
-  const hexToRGBA = (hex: string): number[] => {
+  const hexToRGBA = useCallback((hex: string): number[] => {
     let r = 0,
       g = 0,
       b = 0
@@ -50,7 +50,7 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
       b = parseInt(hex.slice(5, 7), 16) / 255
     }
     return [r, g, b, a]
-  }
+  }, [])
 
   /**
    * Updates colors in a single shape item.
@@ -62,17 +62,17 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
    * structure are updated with the new color.
    *
    * @param item - The shape item object which may contain
-   *               stroke or fill color properties.
+   * stroke or fill color properties.
    * @param rgbaArray - The RGBA values to set as new color.
    */
-  const updateColorsInItem = (item: any, rgbaArray: number[]) => {
+  const updateColorsInItem = useCallback((item: any, rgbaArray: number[]) => {
     if ((item.ty === 'st' || item.ty === 'fl') && item.c) {
       item.c.k = rgbaArray
     }
     if (item.it) {
       item.it.forEach((subItem: any) => updateColorsInItem(subItem, rgbaArray))
     }
-  }
+  }, [])
 
   /**
    * Changes the color of stroke and fill attributes in the Lottie animation data.
@@ -85,21 +85,24 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
    * and replaces their color property with the computed RGBA array.
    *
    * @param data - The Lottie animation data object containing multiple layers and shapes.
-   *               Each layer is iterated through to apply the color change to eligible elements.
+   * Each layer is iterated through to apply the color change to eligible elements.
    * @param newColor - A string representing the new color to be applied, in hexadecimal format.
-   *                   This string is converted into an RGBA array to update the animation colors.
+   * This string is converted into an RGBA array to update the animation colors.
    */
-  const changeLineColor = useCallback((data: any, newColor: string): void => {
-    const rgbaArray = hexToRGBA(newColor)
+  const changeLineColor = useCallback(
+    (data: any, newColor: string): void => {
+      const rgbaArray = hexToRGBA(newColor)
 
-    data.layers.forEach((layer: any) => {
-      if (layer.shapes) {
-        layer.shapes.forEach((shape: any) => {
-          shape.it.forEach((item: any) => updateColorsInItem(item, rgbaArray))
-        })
-      }
-    })
-  }, []); // Dependencies should be empty if only relying on static functions or values
+      data.layers.forEach((layer: any) => {
+        if (layer.shapes) {
+          layer.shapes.forEach((shape: any) => {
+            shape.it.forEach((item: any) => updateColorsInItem(item, rgbaArray))
+          })
+        }
+      })
+    },
+    [hexToRGBA, updateColorsInItem],
+  )
 
   useEffect(() => {
     if (lottieRef.current) {

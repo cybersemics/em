@@ -1,8 +1,10 @@
+import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import AnimatedIconType from '../../@types/AnimatedIconType'
 import { ICON_SCALING_FACTOR } from '../../constants'
+import theme from '../../selectors/theme'
 import LottieAnimation from './LottieAnimation'
 
 /** Animated Icon with Conditional Lottie Animation. */
@@ -16,6 +18,8 @@ const AnimatedIcon = ({
   children,
   animationComplete,
 }: AnimatedIconType) => {
+  const isLightTheme = useSelector(state => theme(state) === 'Light')
+  const lottieColor = isLightTheme ? '#000000' : '#FFFFFF'
   const newSize = size * ICON_SCALING_FACTOR
   const color = style.fill || fill || token('colors.fg')
 
@@ -30,7 +34,11 @@ const AnimatedIcon = ({
         display: 'inline-flex',
       }}
     >
-      {animated ? <LottieAnimation animationData={animationData} onComplete={animationComplete} /> : children}
+      {animated ? (
+        <LottieAnimation animationData={animationData} onComplete={animationComplete} color={lottieColor} />
+      ) : (
+        children
+      )}
     </div>
   )
 }
