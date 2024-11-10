@@ -1,14 +1,10 @@
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
-import { nanoid } from 'nanoid'
 import { IndexeddbPersistence, clearDocument } from 'y-indexeddb'
 import * as Y from 'yjs'
-import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
 import Path from '../../@types/Path'
 import PushBatch from '../../@types/PushBatch'
-import ReplicationCursor from '../../@types/ReplicationCursor'
-import Storage from '../../@types/Storage'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import Timestamp from '../../@types/Timestamp'
@@ -24,14 +20,7 @@ import taskQueue, { TaskQueue } from '../../util/taskQueue'
 import throttleConcat from '../../util/throttleConcat'
 import when from '../../util/when'
 import { DataProvider } from '../DataProvider'
-import {
-  encodeDocLogBlockDocumentName,
-  encodeDocLogDocumentName,
-  encodeLexemeDocumentName,
-  encodeThoughtDocumentName,
-  parseDocumentName,
-} from './documentNameEncoder'
-import replicationController from './replicationController'
+import { encodeLexemeDocumentName, encodeThoughtDocumentName, parseDocumentName } from './documentNameEncoder'
 
 /**********************************************************************
  * Types
@@ -103,15 +92,12 @@ export interface ThoughtspaceOptions {
   onThoughtChange: (thought: Thought) => void
   onThoughtReplicated: (id: ThoughtId, thought: Thought | undefined) => void
   onUpdateThoughts: (args: UpdateThoughtsOptions) => void
-  getItem: Storage<Index<ReplicationCursor>>['getItem']
-  setItem: Storage<Index<ReplicationCursor>>['setItem']
   tsid: string
   tsidShared: string | null
   websocketUrl: string
 }
 
 type ThoughtspaceConfig = ThoughtspaceOptions & {
-  replication: ReturnType<typeof replicationController>
   updateQueue: TaskQueue<void>
   websocket: HocuspocusProviderWebsocket
 }
@@ -235,12 +221,6 @@ const lexemeWebsocketSynced = new Map<string, Promise<unknown>>()
 /** Map all known thought ids to document keys. This allows us to co-locate children in a single Doc without changing the DataProvider API. Currently the thought's parentId is used, and a special ROOT_PARENT_ID value for the root and em contexts. */
 const docKeys: Map<ThoughtId, string> = new Map([...ROOT_CONTEXTS, EM_TOKEN].map(id => [id, ROOT_PARENT_ID]))
 
-// doclog is an append-only log of all thought ids and lexeme keys that are updated.
-// Since Thoughts and Lexemes are stored in separate docs, we need a unified list of all ids to replicate.
-// They are stored as Y.Arrays to allow for replication deltas instead of repeating full replications, and regular compaction.
-// Deletes must be marked, otherwise there is no way to differentiate it from an update (because there is no way to tell if a websocket has no data for a thought, or just has not yet returned any data.)
-let doclog: Y.Doc
-
 /**********************************************************************
  * Module variables
  **********************************************************************/
@@ -256,8 +236,6 @@ export const init = async (options: ThoughtspaceOptions) => {
   const {
     isLexemeLoaded,
     isThoughtLoaded,
-    getItem,
-    setItem,
     onError,
     onProgress,
     onThoughtChange,
@@ -286,115 +264,6 @@ export const init = async (options: ThoughtspaceOptions) => {
     url: websocketUrl,
   })
 
-  doclog = new Y.Doc({ guid: encodeDocLogDocumentName(tsid) })
-
-  // bind blocks to providers on load
-  doclog.on('subdocs', ({ added, removed, loaded }: { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }) => {
-    loaded.forEach((subdoc: Y.Doc) => {
-      // Disable IndexedDB during tests because of TransactionInactiveError in fake-indexeddb.
-      if (import.meta.env.MODE !== 'test') {
-        const persistence = new IndexeddbPersistence(subdoc.guid, subdoc)
-        persistence.whenSynced
-          .then(() => {
-            // eslint-disable-next-line no-new
-            new HocuspocusProvider({
-              // disable awareness for performance
-              // doclog doc has awareness enabled to keep the websocket open
-              awareness: null,
-              websocketProvider: websocket,
-              name: subdoc.guid,
-              document: subdoc,
-              token: accessToken,
-            })
-          })
-          .catch((err: Error) => {
-            const errorMessage = `Error loading doclog block ${subdoc.guid}: ${err.message}`
-            // Log error to console for now since the doclog every time with "DataError: Failed to read large IndexedDB value". The sync server is disabled anyway, and YJS will soon be replaced with a custom sync engine.
-            // onError?.(errorMessage, err)
-            console.error(errorMessage)
-          })
-      }
-    })
-  })
-
-  // Disable IndexedDB during tests because of TransactionInactiveError in fake-indexeddb.
-  if (import.meta.env.MODE !== 'test') {
-    const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
-    doclogPersistence.whenSynced
-      .then(() => {
-        const blocks = doclog.getArray<Y.Doc>('blocks')
-        // The doclog's initial block must be created outside the replicationController, after IDB syncs. This is necessary to avoid creating a new block when one already exists.
-        // Do not create a starting block if this is shared from another device.
-        // We need to wait for the existing block(s) to load.
-        if (blocks.length === 0 && !tsidShared) {
-          const blockNew = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, nanoid(13)) })
-
-          blocks.push([blockNew])
-        }
-
-        // eslint-disable-next-line no-new
-        new HocuspocusProvider({
-          // doclog doc has awareness enabled to keep the websocket open
-          // disable awareness for all other websocket providers
-          websocketProvider: websocket,
-          name: encodeDocLogDocumentName(tsid),
-          document: doclog,
-          token: accessToken,
-        })
-      })
-      .catch((err: Error) => {
-        const errorMessage = `Error loading doclog: ${err.message}`
-        onError?.(errorMessage, err)
-      })
-  }
-
-  const replication = replicationController({
-    // begin paused and only start after initial pull has completed
-    paused: true,
-    doc: doclog,
-    storage: {
-      getItem,
-      setItem,
-    },
-    next: async ({
-      action,
-      /** Update actions use docKey as id. Delete actions will use thoughtId as id. */
-      id,
-      type,
-    }) => {
-      if (action === DocLogAction.Update) {
-        await (type === 'thought'
-          ? replicateChildren(id as ThoughtId, { background: true })
-          : replicateLexeme(id, { background: true }))
-      } else if (action === DocLogAction.Delete) {
-        updateThoughtsThrottled({
-          thoughtIndexUpdates: {},
-          lexemeIndexUpdates: {},
-          // override thought/lexemeIndexUpdates based on type
-          [`${type}IndexUpdates`]: {
-            [id]: null,
-          },
-          lexemeIndexUpdatesOld: {},
-        })
-
-        if (type === 'thought') {
-          await deleteThought(id as ThoughtId)
-        } else if (type === 'lexeme') {
-          await deleteLexeme(id)
-        }
-      } else {
-        throw new Error('Unknown DocLogAction: ' + action)
-      }
-    },
-    onStep: ({ completed, expected, index, total, value }) => {
-      const estimatedTotal = expected || total
-      onProgress({ replicationProgress: completed / estimatedTotal })
-    },
-    onEnd: total => {
-      onProgress({ replicationProgress: 1 })
-    },
-  })
-
   // limit the number of thoughts and lexemes that are updated in the Y.Doc at once
   const updateQueue = taskQueue<void>({
     // concurrency above 16 make the % go in bursts as batches of tasks are processed and awaited all at once
@@ -420,9 +289,6 @@ export const init = async (options: ThoughtspaceOptions) => {
     onThoughtIDBSynced,
     onThoughtReplicated,
     onUpdateThoughts,
-    replication,
-    getItem,
-    setItem,
     tsid,
     tsidShared,
     updateQueue,
@@ -1325,7 +1191,7 @@ export const updateThoughts = async ({
   lexemeIndexUpdatesOld: Index<Lexeme | undefined>
   schemaVersion: number
 }) => {
-  const { replication, updateQueue } = await config
+  const { updateQueue } = await config
 
   // group thought updates and deletes so that we can use the db bulk functions
   const { update: thoughtUpdates, delete: thoughtDeletes } = groupObjectBy(thoughtIndexUpdates, (id, thought) =>
@@ -1355,22 +1221,6 @@ export const updateThoughts = async ({
           updateLexeme(key, lexeme, lexemeIndexUpdatesOld[key]),
     ),
   ])
-
-  // When thought ids are pushed to the doclog, the first log is trimmed if it matches the last log.
-  // This is done to reduce the growth of the doclog during the common operation of editing a single thought.
-  // The only cost is that any clients that go offline will not replicate a delayed contiguous edit when reconnecting.
-  const ids = Object.keys(thoughtIndexUpdates || {}) as ThoughtId[]
-  const thoughtLogs: [ThoughtId, DocLogAction][] = ids.map(id =>
-    thoughtIndexUpdates[id] ? [thoughtIndexUpdates[id]!.parentId, DocLogAction.Update] : [id, DocLogAction.Delete],
-  )
-
-  const keys = Object.keys(lexemeIndexUpdates || {})
-  const lexemeLogs: [string, DocLogAction][] = keys.map(key => [
-    key,
-    lexemeIndexUpdates[key] ? DocLogAction.Update : DocLogAction.Delete,
-  ])
-
-  replication.log({ thoughtLogs, lexemeLogs })
 
   const deletePromise = updateQueue.add([
     ...(Object.keys(thoughtDeletes || {}) as ThoughtId[]).map(id => () => deleteThought(id)),
@@ -1418,19 +1268,6 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
   Promise.all(ids.map(getThoughtById))
-
-/** Pauses replication for higher priority network activity, such as push or pull. */
-export const pauseReplication = async () => {
-  const { replication } = await config
-  replication.pause()
-}
-
-/** Starts or resumes replication after being paused for higher priority network actvity such as push or pull. */
-export const startReplication = async () => {
-  // Disable replication controller as part of winding down YJS
-  // const { replication } = await config
-  // replication.start()
-}
 
 const db: DataProvider = {
   clear,
