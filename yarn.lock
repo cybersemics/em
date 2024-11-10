@@ -2618,30 +2618,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hocuspocus/common@npm:^2.13.7":
-  version: 2.13.7
-  resolution: "@hocuspocus/common@npm:2.13.7"
-  dependencies:
-    lib0: "npm:^0.2.87"
-  checksum: 10c0/5cf3adf38c5a75110ab36cb2580dd8ec4ea387c7c49b1deaa4b848837fa88144dd99952e537f10af563133c05a8905452350163159c27826f44d0d7376f04aab
-  languageName: node
-  linkType: hard
-
-"@hocuspocus/provider@npm:^2.13.7":
-  version: 2.13.7
-  resolution: "@hocuspocus/provider@npm:2.13.7"
-  dependencies:
-    "@hocuspocus/common": "npm:^2.13.7"
-    "@lifeomic/attempt": "npm:^3.0.2"
-    lib0: "npm:^0.2.87"
-    ws: "npm:^8.17.1"
-  peerDependencies:
-    y-protocols: ^1.0.6
-    yjs: ^13.6.8
-  checksum: 10c0/b75ad6a0675e3ba6ffe1f6f184defed70978a3870cff13c7a29c369ac763f02dd66e86b33474bf9d660791c15ca99f78827e4cab8d4ae8841cf84df980768f78
-  languageName: node
-  linkType: hard
-
 "@humanwhocodes/config-array@npm:^0.13.0":
   version: 0.13.0
   resolution: "@humanwhocodes/config-array@npm:0.13.0"
@@ -3149,13 +3125,6 @@ __metadata:
     "@jridgewell/resolve-uri": "npm:^3.1.0"
     "@jridgewell/sourcemap-codec": "npm:^1.4.14"
   checksum: 10c0/3d1ce6ebc69df9682a5a8896b414c6537e428a1d68b02fcc8363b04284a8ca0df04d0ee3013132252ab14f2527bc13bea6526a912ecb5658f0e39fd2860b4df4
-  languageName: node
-  linkType: hard
-
-"@lifeomic/attempt@npm:^3.0.2":
-  version: 3.1.0
-  resolution: "@lifeomic/attempt@npm:3.1.0"
-  checksum: 10c0/c9963737cb4697e62f9de9504ce235d209c7588568cc1dcd1a26c24f2cbcee0184af82a9f5efa7eec5831c020fb962d722f19819b88ff94d020b83df31f3ad20
   languageName: node
   linkType: hard
 
@@ -7644,7 +7613,6 @@ __metadata:
     "@capacitor/status-bar": "npm:^4.1.1"
     "@emotion/react": "npm:^11.13.3"
     "@emotion/styled": "npm:^11.13.0"
-    "@hocuspocus/provider": "npm:^2.13.7"
     "@mui/material": "npm:^6.1.5"
     "@pandacss/dev": "npm:^0.47.0"
     "@sinonjs/fake-timers": "npm:^13.0.4"
@@ -11761,7 +11729,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lib0@npm:^0.2.74, lib0@npm:^0.2.85, lib0@npm:^0.2.87, lib0@npm:^0.2.98":
+"lib0@npm:^0.2.74, lib0@npm:^0.2.85, lib0@npm:^0.2.98":
   version: 0.2.98
   resolution: "lib0@npm:0.2.98"
   dependencies:
@@ -18010,7 +17978,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.17.1, ws@npm:^8.18.0":
+"ws@npm:^8.18.0":
   version: 8.18.0
   resolution: "ws@npm:8.18.0"
   peerDependencies:

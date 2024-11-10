@@ -18,7 +18,7 @@ import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
-import { accessToken, clientIdReady, tsid, tsidShared, websocket, websocketUrl } from './data-providers/yjs'
+import { accessToken, clientIdReady, tsid, tsidShared } from './data-providers/yjs'
 import db, { init as initThoughtspace } from './data-providers/yjs/thoughtspace'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
@@ -82,7 +82,7 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
 
 /** Initilaize local db and window events. */
 export const initialize = async () => {
-  initOfflineStatusStore(websocket)
+  initOfflineStatusStore(/* websocket */)
 
   await initThoughtspace({
     cursor: decodeThoughtsUrl(store.getState()).path,
@@ -144,7 +144,6 @@ export const initialize = async () => {
     },
     tsid,
     tsidShared,
-    websocketUrl,
   })
 
   // load local state unless loading a public context or source url
