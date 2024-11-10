@@ -184,6 +184,8 @@ describe('expansion', () => {
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtA)
 
+    await vi.runOnlyPendingTimersAsync()
+
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('x')
   })
