@@ -207,6 +207,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           css({
             backgroundColor: 'bg',
             boxShadow: customize ? '-10px 10px 20px 0 {colors.bg}' : '10px -20px 15px 25px {colors.bg}',
+            right: 0,
             textAlign: 'right',
             maxWidth: '100%',
             userSelect: 'none',
