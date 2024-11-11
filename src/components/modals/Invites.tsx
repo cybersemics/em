@@ -21,7 +21,6 @@ const svgClasses = css({ cursor: 'default' })
 /**
  * Get all the invite codes that belongs to the given user.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getUserInviteCodes = (userId: string): Promise<string[]> => {
   throw new Error('Not implemented')
   // return new Promise<string[]>((resolve, reject) => {

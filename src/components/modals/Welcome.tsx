@@ -1,4 +1,3 @@
-/* eslint-disable no-unmodified-loop-condition */
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { clearActionCreator as clear } from '../../actions/clear'
@@ -31,7 +30,7 @@ const onRef = (el: HTMLDivElement) => {
   }
 
   /** Decreases the font size of the element. */
-  const shrinkFontSize = (el: HTMLElement) => (el.style.fontSize = --fontSize + '%') // eslint-disable-line no-return-assign
+  const shrinkFontSize = (el: HTMLElement) => (el.style.fontSize = --fontSize + '%')
 
   if (fontSize) {
     while (overflow() && fontSize >= MIN_FONT_SIZE) {

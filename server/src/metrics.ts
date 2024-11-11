@@ -107,10 +107,7 @@ const observeThrottled = throttleConcat(
 )
 
 // noop if env vars are not set
-const observeMetric = hasGraphiteCredentials
-  ? observeThrottled
-  : // eslint-disable-next-line @typescript-eslint/no-empty-function
-    () => {}
+const observeMetric = hasGraphiteCredentials ? observeThrottled : () => {}
 
 /**
  * Push default metrics to Grafana on an interval. The function client.collectDefaultMetrics must already have been called.

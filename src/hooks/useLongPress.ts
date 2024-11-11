@@ -68,7 +68,6 @@ const useLongPress = (
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
     //eslint disable rule because e use in canhover function
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (e: React.MouseEvent | React.TouchEvent) => {
       // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
       // This gives other components a chance to short circuit.

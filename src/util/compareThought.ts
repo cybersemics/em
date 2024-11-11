@@ -50,11 +50,9 @@ const normalizeCharacters = _.flow(removeEmojisAndSpaces, removeIgnoredPrefixes,
 /** Parse a date string and handle M/d (e.g. "2/1") for Safari. */
 const parseDate = (s: string): number =>
   Date.parse(
-    // eslint-disable-next-line @typescript-eslint/no-extra-parens
     REGEX_SHORT_DATE_WITH_DASH.test(s)
       ? `${s}-${CURRENT_YEAR}`
-      : // eslint-disable-next-line @typescript-eslint/no-extra-parens
-        REGEX_SHORT_DATE_WITH_SLASH.test(s)
+      : REGEX_SHORT_DATE_WITH_SLASH.test(s)
         ? `${s}/${CURRENT_YEAR}`
         : s,
   )
@@ -147,7 +145,6 @@ export const makeOrderedComparator =
         // if they are equal, move on to the next comparator
         makeOrderedComparator(comparators.slice(1))(a, b) // RECURSION
 
-// eslint-disable-next-line jsdoc/require-description-complete-sentence
 /** A comparator that sorts basic text.
  * 1. Numbers (8, 9, 10; #8, #9, #10).
  * 2. Dates (9/1, 10/1, 11/1).
@@ -161,7 +158,6 @@ const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<st
   compareDateAndOther,
 ])
 
-// eslint-disable-next-line jsdoc/require-description-complete-sentence
 /** A comparator that compares by reasonable, human-readable value:
  * 1. Empty.
  * 2. Punctuation (=, +, #hi, =test).

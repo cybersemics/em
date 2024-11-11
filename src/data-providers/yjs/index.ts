@@ -61,14 +61,12 @@ export const clientIdReady = (
 
 // Disable IndexedDB during tests because of TransactionInactiveError in fake-indexeddb.
 if (import.meta.env.MODE !== 'test') {
-  // eslint-disable-next-line no-new
   new IndexeddbPersistence(encodePermissionsDocumentName(tsid), permissionsClientDoc)
 }
 
 // websocket provider
 export const websocket = new HocuspocusProviderWebsocket({
   // disable websocket since YJS is being sunset and server is no longer deployed.
-  // eslint-disable-next-line no-constant-condition
   connect: false,
   url: websocketUrl,
 })

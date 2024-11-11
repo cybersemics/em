@@ -48,7 +48,6 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
         className,
       )}
       {...fastClick(e => {
-        // eslint-disable-line react/no-danger-with-children
         e.preventDefault()
         selection.clear()
         dispatch([

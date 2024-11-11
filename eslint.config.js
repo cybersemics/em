@@ -29,6 +29,12 @@ const commonPlugins = {
 }
 
 const commonRules = {
+  'no-irregular-whitespace': 'error',
+  'no-extra-semi': 'error',
+  'prefer-const': 'error',
+  'no-loop-func': 'warn',
+  'no-useless-constructor': 'warn',
+  'react/display-name': 'error',
   'no-restricted-properties': [
     'error',
     {
@@ -170,7 +176,7 @@ export default [
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-use-before-define': 'error',
-      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { args: 'none' }],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/array-type': 'error',

@@ -70,12 +70,10 @@ test('it returns false if there are any missing properties', () => {
   type requiredKeyTypes = 'create-email' | 'uid' | 'create-time' | 'string'
   const requiredKeys = ['create-email', 'uid', 'create-time', 'string']
   requiredKeys.forEach(key => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const invalidRoamString = JSON.stringify([
       {
         ...testData[0],
         //disable lint error because using destructuring to get the rest.
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         children: testData[0].children.map(({ [key as requiredKeyTypes]: requiredKey, ...rest }) => ({ ...rest })),
       },
     ])

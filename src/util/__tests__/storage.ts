@@ -20,11 +20,9 @@ it('types', () => {
   type NonAny<T> = T extends any ? (any extends T ? never : T) : T
 
   /** Asserts that a value is not typed as any. */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const assertNotAny = <T>(value: NonAny<T>) => true
 
   /** Asserts the type of an expression. */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const assertType = <T>(value: T) => true
 
   assertType<string[]>(testModel.get('someArray'))

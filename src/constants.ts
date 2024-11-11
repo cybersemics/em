@@ -130,7 +130,7 @@ export const ABSOLUTE_PATH = [ABSOLUTE_TOKEN] as SimplePath
 export const ALLOW_SINGLE_CONTEXT = false
 
 /** A void function that does nothing (noop means "no operation"). */
-export const noop = () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+export const noop = () => {}
 
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200
