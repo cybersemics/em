@@ -262,7 +262,7 @@ __bold__
 Here's an inline image ![Alt text](https://example.com/image.jpg "Image").
 `
     expect(markdownToText(markdown)).toBe(`
-- Here&#39;s an inline image <img src="https://example.com/image.jpg" alt="Alt text" title="Image" />.
+- Here's an inline image <img src="https://example.com/image.jpg" alt="Alt text" title="Image" />.
 `)
   })
 
