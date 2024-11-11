@@ -11,7 +11,6 @@ import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
-import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
