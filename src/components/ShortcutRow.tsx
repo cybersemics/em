@@ -134,6 +134,9 @@ const ShortcutRow = ({
           ) : (
             <b>{shortcut.label}</b>
           )}
+          {shortcut.keyboard && !isTouch ? (
+            <p className={css({ color: 'gray', marginBottom: 0 })}>{formatKeyboardShortcut(shortcut.keyboard)}</p>
+          ) : null}
           <p>{description}</p>
         </th>
         {/* center gesture diagrams on mobile */}
@@ -141,8 +144,6 @@ const ShortcutRow = ({
           {isTouch && shortcut.gesture ? (
             // GesturePath[]
             <GestureDiagram path={shortcut.gesture as GesturePath} size={48} arrowSize={12} />
-          ) : shortcut.keyboard ? (
-            formatKeyboardShortcut(shortcut.keyboard)
           ) : null}
         </td>
       </tr>
