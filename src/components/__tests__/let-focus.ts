@@ -28,7 +28,10 @@ it.skip('define =focus/Zoom in a =let expression and apply it to a thought', asy
   // Set the cursor on `a`, wait for the animation to complete, then `a` should have the zoomCursor
   // TODO: Find a way to detect if b is actually hidden
   const thoughtA = (await findThoughtByText('a')) as HTMLElement
-  userEvent.click(thoughtA)
+
+  const user = userEvent.setup({ delay: null })
+  await user.click(thoughtA)
+
   expect(subthoughts).toHaveClass('zoomCursor')
 })
 
@@ -49,6 +52,8 @@ it.skip('=focus/Zoom/=style', async () => {
   const thoughtA = (await findThoughtByText('apple'))!.closest('[aria-label="child"]')!
   expect(thoughtA).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
-  userEvent.click(thoughtA)
+  const user = userEvent.setup({ delay: null })
+  await user.click(thoughtA)
+
   expect(thoughtA).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })

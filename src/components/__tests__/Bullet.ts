@@ -158,7 +158,8 @@ describe('expansion', () => {
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
-    userEvent.click(bulletOfThoughtB)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtB)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('a')
@@ -180,7 +181,8 @@ describe('expansion', () => {
 
     const bulletOfThoughtA = getBulletByContext(['x', 'a'])
 
-    userEvent.click(bulletOfThoughtA)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtA)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('x')
@@ -201,7 +203,8 @@ describe('expansion', () => {
 
     const bulletOfThoughtA = getBulletByContext(['a'])
 
-    userEvent.click(bulletOfThoughtA)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtA)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toBeNull()
@@ -221,7 +224,8 @@ describe('expansion', () => {
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
-    userEvent.click(bulletOfThoughtB)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtB)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('b')
@@ -244,7 +248,8 @@ describe('expansion', () => {
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
-    userEvent.click(bulletOfThoughtB)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
@@ -268,7 +273,8 @@ describe('expansion', () => {
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
-    userEvent.click(bulletOfThoughtB)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
@@ -297,7 +303,8 @@ describe('expansion', () => {
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
-    userEvent.click(bulletOfThoughtB)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__

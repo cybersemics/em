@@ -1,12 +1,12 @@
 import Shortcut from '../@types/Shortcut'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import TableViewIcon from '../components/icons/TableViewIcon'
-import { HOME_PATH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import hasMulticursor from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
+import isRoot from '../util/isRoot'
 
 const toggleTableViewShortcut: Shortcut = {
   id: 'toggleTableView',
@@ -34,8 +34,8 @@ const toggleTableViewShortcut: Shortcut = {
     )
   },
   isActive: state => {
-    const { cursor } = state
-    const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
+    if (!state.cursor || isRoot(state.cursor)) return false
+    const path = simplifyPath(state, rootedParentOf(state, state.cursor))
     return attributeEquals(state, head(path), '=view', 'Table')
   },
 }

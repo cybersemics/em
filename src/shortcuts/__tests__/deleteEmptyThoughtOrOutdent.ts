@@ -1,4 +1,4 @@
-import { act } from '@testing-library/react'
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newSubthoughtActionCreator as newSubthought } from '../../actions/newSubthought'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'

@@ -1,4 +1,4 @@
-import { act } from '@testing-library/react'
+import { act } from 'react'
 import { AnyAction } from 'redux'
 import Thunk from '../@types/Thunk'
 import store from '../stores/app'
