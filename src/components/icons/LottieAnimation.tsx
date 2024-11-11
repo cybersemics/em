@@ -14,12 +14,13 @@ interface LottieAnimationProps {
  *
  * This component utilizes the 'lottie-react' Player to render a Lottie animation.
  * It accepts animation data and supports customizable speed and color properties,
- * allowing for dynamic control over the animation's playback rate and the color of its lines.
+ * allowing for dynamic control over the animation's playback rate and the stroke
+ * and fill colors of its elements.
  *
  * Props:
  * animationData: The JSON data that defines the Lottie animation.
  * Speed: Optional. A number that specifies the playback speed of the animation. Defaults to 1 for normal speed.
- * Color: Optional. A string representing the hex color code used to update the animation's line color. Defaults to '#FFFFFF' (white) if not specified.
+ * Color: Optional. A string representing the hex color code used to update the stroke and fill colors of the animation. Defaults to '#FFFFFF' (white) if not specified.
  * OnComplete: Optional. A callback function that is triggered when the animation completes its playback.
  * Style: Optional. A React.CSSProperties object to apply inline styles to the player container.
  * This does not affect the Lottie animation's JSON content or alter its visual elements.
@@ -80,9 +81,6 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
    * This function traverses the Lottie animation data structure to locate all items that
    * represent shape colors (strokes and fills) and applies a new color based on the provided
    * RGBA values derived from the 'newColor' hexadecimal string.
-   *
-   * The function specifically looks for shape elements,
-   * and replaces their color property with the computed RGBA array.
    *
    * @param data - The Lottie animation data object containing multiple layers and shapes.
    * Each layer is iterated through to apply the color change to eligible elements.
