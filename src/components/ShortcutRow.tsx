@@ -91,6 +91,15 @@ const ShortcutRow = ({
         ref={dragSource}
         onClick={onSelect ? () => onSelect(selected ? null : shortcut) : undefined}
       >
+        {/* center gesture diagrams on mobile */}
+        {isTouch && shortcut.gesture ? (
+          <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
+            {isTouch && shortcut.gesture ? (
+              // GesturePath[]
+              <GestureDiagram path={shortcut.gesture as GesturePath} size={48} arrowSize={12} />
+            ) : null}
+          </td>
+        ) : null}
         <th
           className={css({
             // create a container for the selected bar equal to the height of the row
@@ -139,13 +148,6 @@ const ShortcutRow = ({
           ) : null}
           <p>{description}</p>
         </th>
-        {/* center gesture diagrams on mobile */}
-        <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
-          {isTouch && shortcut.gesture ? (
-            // GesturePath[]
-            <GestureDiagram path={shortcut.gesture as GesturePath} size={48} arrowSize={12} />
-          ) : null}
-        </td>
       </tr>
     )
   )
