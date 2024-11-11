@@ -96,9 +96,10 @@ const ShortcutRow = ({
         {
           // selected bar
           selected && (
-            <div
+            <td
               className={css({
                 width: '0.25em',
+                padding: 0,
                 // set the height so it is flush with the bottom of the shortcut row description
                 height: 'calc(100% - 1.375em)',
                 backgroundColor: 'highlight',
@@ -113,14 +114,14 @@ const ShortcutRow = ({
         }
         {/* center gesture diagrams on mobile */}
         {isTouch && shortcut.gesture ? (
-          <div className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
+          <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
             {isTouch && shortcut.gesture ? (
               // GesturePath[]
               <GestureDiagram path={shortcut.gesture as GesturePath} size={48} arrowSize={12} />
             ) : null}
-          </div>
+          </td>
         ) : null}
-        <div
+        <td
           className={css({
             // create a container for the selected bar equal to the height of the row
             position: 'relative',
@@ -149,7 +150,7 @@ const ShortcutRow = ({
             <p className={css({ color: 'gray', marginBottom: 0 })}>{formatKeyboardShortcut(shortcut.keyboard)}</p>
           ) : null}
           <p>{description}</p>
-        </div>
+        </td>
       </tr>
     )
   )
