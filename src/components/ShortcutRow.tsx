@@ -73,6 +73,7 @@ const ShortcutRow = ({
         key={shortcut.id}
         className={css({
           display: 'flex',
+          position: 'relative',
           cursor: customize ? 'pointer' : undefined,
           ...(isDragging || selected
             ? {
@@ -92,6 +93,24 @@ const ShortcutRow = ({
         ref={dragSource}
         onClick={onSelect ? () => onSelect(selected ? null : shortcut) : undefined}
       >
+        {
+          // selected bar
+          selected && (
+            <div
+              className={css({
+                width: '0.25em',
+                // set the height so it is flush with the bottom of the shortcut row description
+                height: 'calc(100% - 1.375em)',
+                backgroundColor: 'highlight',
+                position: 'absolute',
+                // hanng off the left edge of the shortcut row
+                left: '-1em',
+                // set the top so it is flush with the top of the shortcut row label
+                top: '0.25em',
+              })}
+            />
+          )
+        }
         {/* center gesture diagrams on mobile */}
         {isTouch && shortcut.gesture ? (
           <div className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
@@ -110,24 +129,6 @@ const ShortcutRow = ({
             fontWeight: 'normal',
           })}
         >
-          {
-            // selected bar
-            selected && (
-              <div
-                className={css({
-                  width: '0.25em',
-                  // set the height so it is flush with the bottom of the shortcut row description
-                  height: 'calc(100% - 1.375em)',
-                  backgroundColor: 'highlight',
-                  position: 'absolute',
-                  // hanng off the left edge of the shortcut row
-                  left: '-1em',
-                  // set the top so it is flush with the top of the shortcut row label
-                  top: '0.25em',
-                })}
-              />
-            )
-          }
           {customize && indexInToolbar && (
             <span
               className={css({ color: 'dim' })}
