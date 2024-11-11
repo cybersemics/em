@@ -3,6 +3,7 @@ import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForTransitionEnd from '../helpers/waitForTransitionEnd'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -39,7 +40,7 @@ describe('toggle sidebar', () => {
     await click(editableNodeHandle, { offset: 2 })
 
     await click('[aria-label=menu]')
-    await new Promise(r => setTimeout(r, 1000))
+    await waitForTransitionEnd('[data-testid=sidebar]')
     await press('Escape')
 
     // the focus must be after 'e' after cursor down
