@@ -1,4 +1,3 @@
-import { Backdrop } from '@mui/material'
 import SwipeableDrawer, { SwipeableDrawerProps } from '@mui/material/SwipeableDrawer'
 import _ from 'lodash'
 import { useRef, useState } from 'react'
