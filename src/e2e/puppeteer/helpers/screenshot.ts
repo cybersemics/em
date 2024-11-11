@@ -13,7 +13,7 @@ const screenshot = async (options?: ScreenshotOptions) => {
     }
   })
 
-  return page.screenshot(options)
+  return Buffer.from(await page.screenshot(options))
 }
 
 export default screenshot
