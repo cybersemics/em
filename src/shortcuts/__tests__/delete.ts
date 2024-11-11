@@ -29,6 +29,8 @@ describe('delete', () => {
 
       executeShortcut(deleteShortcut, { store })
 
+      await vi.runOnlyPendingTimersAsync()
+
       const popupValue = document.querySelector('[data-testid="popup-value"]')!
       expect(popupValue.textContent).toBe('Permanently deleted test')
     })

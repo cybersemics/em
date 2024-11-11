@@ -16,6 +16,7 @@ import permissionsModel from '../../data-providers/yjs/permissionsModel'
 import * as selection from '../../device/selection'
 import useSharedType from '../../hooks/useSharedType'
 import useStatus from '../../hooks/useStatus'
+import modalDescriptionClass from '../../recipes/modalDescriptionClass'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import strip from '../../util/strip'
@@ -201,11 +202,9 @@ const ShareList = React.forwardRef<
     [],
   )
 
-  const modalClasses = modalText()
-
   return (
     <div ref={ref}>
-      <p className={modalClasses.description}>Add or remove devices that can access and edit this thoughtspace.</p>
+      <p className={modalDescriptionClass}>Add or remove devices that can access and edit this thoughtspace.</p>
 
       {status === 'connected' ? (
         <>

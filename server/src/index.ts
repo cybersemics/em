@@ -7,7 +7,6 @@ import express, { Request } from 'express'
 import basicAuth from 'express-basic-auth'
 import expressWebsockets from 'express-ws'
 import client, { register } from 'prom-client'
-import ThoughtspaceExtension from './ThoughtspaceExtension'
 import ai from './ai'
 import observe, { observeNodeMetrics } from './metrics'
 
@@ -20,7 +19,6 @@ const HOCUSPOCUS_METRICS_INTERVAL = 1000
 const METRICS_DISABLED_MESSAGE =
   'The /metrics endpoint is disabled because METRICS_USERNAME and METRICS_PASSWORD environment variables are not set.'
 
-const mongodbConnectionString = process.env.MONGODB_CONNECTION_STRING ?? 'mongodb://localhost:27017'
 const redisHost = process.env.REDIS_HOST
 const redisPort = process.env.REDIS_PORT ? +process.env.REDIS_PORT : undefined
 const port = process.env.PORT ? +process.env.PORT : 3001
@@ -48,10 +46,7 @@ if (hasGraphiteCredentials && process.env.METRICS_PUSH) {
 
 const server = Server.configure({
   port,
-  extensions: [
-    ...(redisHost ? [new Redis({ host: redisHost, port: redisPort })] : []),
-    new ThoughtspaceExtension({ connectionString: mongodbConnectionString }),
-  ],
+  extensions: [...(redisHost ? [new Redis({ host: redisHost, port: redisPort })] : [])],
 })
 
 // Hocuspocus server metrics

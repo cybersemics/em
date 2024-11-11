@@ -8,8 +8,8 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const underline: Shortcut = {
   id: 'underline',
   label: 'Underline',
-  description: 'Underlines a thought or selected text.',
-  descriptionInverse: 'Removes the underline from the current thought.',
+  description: 'Underlines the current thought or selected text.',
+  descriptionInverse: 'Removes the underline from the current thought or selected text.',
   svg: Icon,
   keyboard: { key: 'u', meta: true },
   multicursor: {
@@ -22,7 +22,7 @@ const underline: Shortcut = {
   exec: dispatch => {
     dispatch(formatSelection('underline'))
   },
-  // the activation logic for commands is located in ToolbarButton (isCommandActive)
+  // The isActive logic for formatting commands is handled differently than other shortcuts because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
 }
 
 export default underline

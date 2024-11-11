@@ -40,6 +40,7 @@ const modalRecipe = defineSlotRecipe({
         base: 'all 0.4s ease-out',
         _test: 'none',
       },
+      '& p': { margin: '0 0 1em 0' },
     },
     title: {
       //   fontWeight: 400, from
@@ -76,24 +77,6 @@ const modalRecipe = defineSlotRecipe({
       settings: {},
       signup: {},
       testGestureDiagram: {},
-    },
-    stack: {
-      true: {
-        actions: {
-          textAlign: 'center',
-          '@media screen and (min-width: 480px)': {
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            '& > *': {
-              marginTop: '1em',
-            },
-            '& > :not(:last-child)': {
-              marginRight: '1em',
-            },
-          },
-        },
-      },
     },
     center: {
       true: {

@@ -1,17 +1,17 @@
 import { css } from '../../styled-system/css'
+import scrollTopStore from '../stores/scrollTop'
 
 /** Renders upward/downward arrow when hovering over a sorted context. */
 const HoverArrow = ({
   hoverArrowVisibility,
-  top,
   bottom,
 }: {
   hoverArrowVisibility: 'above' | 'below' | null
-  /** The distance the arrow is rendered from the top of the document (px) if hoverArrowVisibility is 'above'.  */
-  top: number
   /** The distance the arrow is rendered from the bottom of the document (px) if hoverArrowVisibility is 'below'.  */
   bottom: number
 }) => {
+  const scrollTopIfVisible = scrollTopStore.useSelector(scrollTop => (hoverArrowVisibility ? scrollTop : 0))
+
   return (
     hoverArrowVisibility && (
       <div
@@ -29,8 +29,8 @@ const HoverArrow = ({
           zIndex: 'hoverArrow',
         })}
         style={{
-          bottom: hoverArrowVisibility === 'below' ? `${bottom}px` : undefined,
-          top: hoverArrowVisibility === 'above' ? top : undefined,
+          bottom: hoverArrowVisibility === 'below' ? `${bottom - scrollTopIfVisible}px` : undefined,
+          top: hoverArrowVisibility === 'above' ? scrollTopIfVisible : undefined,
         }}
       ></div>
     )
