@@ -5,7 +5,7 @@ import waitForEditable from '../helpers/waitForEditable'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
-describe('all platforms', () => {
+describe('toggle sidebar', () => {
   it('on toggleSidebar, the caret offset should be preserved once it closes.', async () => {
     const cursor = 'Hello'
     const importText = `
