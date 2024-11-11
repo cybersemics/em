@@ -61,7 +61,7 @@ describe('toggle sidebar', () => {
     await click(editableNodeHandle, { offset: 3 })
 
     await click('[aria-label=menu]')
-    await click('[role=presentation] [aria-hidden=true]')
+    await click('[data-testid=sidebar] [aria-hidden=true]')
 
     // the focus must be after 'l' after cursor down
     const textContext = await getSelection().focusNode?.textContent

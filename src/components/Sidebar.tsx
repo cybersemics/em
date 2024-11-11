@@ -1,3 +1,4 @@
+import { Backdrop } from '@mui/material'
 import SwipeableDrawer, { SwipeableDrawerProps } from '@mui/material/SwipeableDrawer'
 import _ from 'lodash'
 import { useRef, useState } from 'react'
@@ -74,6 +75,7 @@ const Sidebar = () => {
      * we are providing different classname to drawer based on isTouch property.
      */
     <SwipeableDrawerWithClasses
+      data-testid='sidebar'
       classes={{
         /* Increase precedence over .css-1u2w381-MuiModal-root-MuiDrawer-root z-index. */
         root: css({ userSelect: 'none', zIndex: 'sidebar !important' }),
