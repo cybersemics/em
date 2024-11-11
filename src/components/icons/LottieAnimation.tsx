@@ -1,5 +1,5 @@
 import Player, { LottieRefCurrentProps } from 'lottie-react'
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 interface LottieAnimationProps {
   animationData: any
@@ -32,6 +32,7 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
   onComplete,
   style,
 }) => {
+  const [key, setKey] = useState(0)
   const lottieRef = useRef<LottieRefCurrentProps | null>(null)
 
   /**
@@ -105,14 +106,16 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
   useEffect(() => {
     if (lottieRef.current) {
       lottieRef.current.setSpeed(speed)
-    }
-    if (animationData && color) {
-      changeLineColor(animationData, color)
+      if (animationData && color) {
+        changeLineColor(animationData, color)
+        setKey(prevKey => prevKey + 1)
+      }
     }
   }, [speed, color, animationData, changeLineColor])
 
   return (
     <Player
+      key={key} // Force re-render to apply theme changes, refreshing cached animation data with updated color settings
       style={style}
       animationData={animationData}
       lottieRef={lottieRef}
