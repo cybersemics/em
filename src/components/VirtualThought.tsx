@@ -94,7 +94,7 @@ const VirtualThought = ({
   const cursorLeaf = useSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
   const cursorDepth = useSelector(state => (state.cursor ? state.cursor.length : 0))
   const fontSize = useSelector(state => state.fontSize)
-  const note = useSelector(state => noteValue(state, thought.id))
+  const note = useSelector(state => noteValue(state, thought?.id))
   const ref = useRef<HTMLDivElement>(null)
 
   /***************************
@@ -149,11 +149,11 @@ const VirtualThought = ({
     onResize?.({
       height: heightNew,
       width: widthNew,
-      id: thought.id,
+      id: thought?.id,
       isVisible: isVisibleNew,
       key: crossContextualKey,
     })
-  }, [crossContextualKey, onResize, thought.id, autofocus])
+  }, [crossContextualKey, onResize, thought?.id, autofocus])
 
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
@@ -183,7 +183,7 @@ const VirtualThought = ({
   // TODO: useLayoutEffect does not work for some reason, causing the thought to briefly render at the incorrect height.
   const value = useSelector(state => {
     const thoughtId = head(simplePath)
-    return thoughtId ? getThoughtById(state, thoughtId).value : null
+    return thoughtId ? getThoughtById(state, thoughtId)?.value : null
   })
   useEffect(updateSize, [updateSize, value])
 
@@ -191,11 +191,11 @@ const VirtualThought = ({
   useEffect(
     () => {
       return () => {
-        onResize?.({ height: null, width: null, id: thought.id, isVisible: true, key: crossContextualKey })
+        onResize?.({ height: null, width: null, id: thought?.id, isVisible: true, key: crossContextualKey })
       }
     },
     // these should be memoized and not change for the life of the component, so this is effectively componentWillUnmount
-    [crossContextualKey, onResize, thought.id],
+    [crossContextualKey, onResize, thought?.id],
   )
 
   // Short circuit if thought has already been removed.
