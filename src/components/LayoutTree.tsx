@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { createRef, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
@@ -779,6 +779,9 @@ const LayoutTree = () => {
               // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
               if (belowCursor && !isCursor && y > viewportBottom + height) return null
 
+              // Create a ref for each node. This helps to avoid the `findDOMNode is deprecated` warning.
+              const nodeRef = createRef<HTMLDivElement>()
+
               const nextThought = isTableCol1 ? treeThoughtsPositioned[index + 1] : null
               const previousThought = isTableCol1 ? treeThoughtsPositioned[index - 1] : null
 
@@ -788,8 +791,15 @@ const LayoutTree = () => {
               const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
               return (
-                <CSSTransition key={key} timeout={durations.get('veryFastDuration')} classNames='fade' unmountOnExit>
+                <CSSTransition
+                  nodeRef={nodeRef}
+                  key={key}
+                  timeout={durations.get('veryFastDuration')}
+                  classNames='fade'
+                  unmountOnExit
+                >
                   <div
+                    ref={nodeRef}
                     aria-label='tree-node'
                     // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
                     // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
