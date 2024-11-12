@@ -69,7 +69,14 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
    */
   const updateColorsInItem = useCallback((item: any, rgbaArray: number[]) => {
     if ((item.ty === 'st' || item.ty === 'fl') && item.c) {
-      item.c.k = rgbaArray
+      // Check for animated color property
+      if (item.c.a === 1) {
+        item.c.k.forEach((keyframe: any) => {
+          keyframe.s = rgbaArray
+        })
+      } else {
+        item.c.k = rgbaArray
+      }
     }
     if (item.it) {
       item.it.forEach((subItem: any) => updateColorsInItem(subItem, rgbaArray))
