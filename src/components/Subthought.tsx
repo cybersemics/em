@@ -1,12 +1,10 @@
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { useMemo, useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
-import useChangeRef from '../hooks/useChangeRef'
 import attributeEquals from '../selectors/attributeEquals'
 import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
 import { findAnyChild } from '../selectors/getChildren'
@@ -67,7 +65,6 @@ const Subthought = ({
   const parentId = thought.parentId
   const grandparentId = simplePath[simplePath.length - 3]
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
-  const autofocusChanged = useChangeRef(autofocus)
 
   const childrenAttributeId = useSelector(
     state =>
@@ -104,40 +101,13 @@ const Subthought = ({
     [isEditingChildPath, style],
   )
 
-  // When autofocus changes, use a slow (750ms) ease-out to provide a gentle transition to non-focal thoughts.
-  // If autofocus has not changed, it means that the thought is being rendered for the first time, such as the children of a thought that was just expanded. In this case, match the tree-node top animation (150ms) to ensure that the newly rendered thoughts fade in to fill the space that is being opened up from the next uncle animating down.
-  // Note that ease-in is used in contrast to the tree-node's ease-out. This gives a little more time for the next uncle to animate down and clear space before the newly rendered thought fades in. Otherwise they overlap too much during the transition.
-  const opacity = autofocus === 'show' ? '1' : autofocus === 'dim' ? '0.5' : '0'
-  useEffect(() => {
-    if (!ref.current) return
-    // start opacity at 0 and set to actual opacity in useEffect
-    ref.current.style.opacity = opacity
-  })
-
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
   if (!thought) return null
 
   return (
     <>
-      <div
-        ref={ref}
-        className={css({
-          // Start opacity at 0 and set to actual opacity in useEffect.
-          // Do not fade in empty thoughts. An instant snap in feels better here.
-          // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropChild. Otherwise subsequent DropChild will be obscured.
-          opacity: thought.value === '' ? opacity : '0',
-          transition: autofocusChanged
-            ? `opacity {durations.layoutSlowShiftDuration} ease-out`
-            : `opacity {durations.layoutNodeAnimationDuration} ease-in`,
-          pointerEvents: !isVisible ? 'none' : undefined,
-          // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
-          // This caused the thought to jerk slightly to the left at the end of the horizontal shift animation.
-          // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
-          // allowing the browser to optimize the animation.
-          willChange: 'opacity',
-        })}
-      >
+      <div ref={ref}>
         <Thought
           debugIndex={debugIndex}
           depth={depth + 1}
