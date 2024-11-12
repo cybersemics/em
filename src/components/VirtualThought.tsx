@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import useChangeRef from '../hooks/useChangeRef'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
@@ -19,8 +21,6 @@ import noteValue from '../util/noteValue'
 import DropChild from './DropChild'
 import DropUncle from './DropUncle'
 import Subthought from './Subthought'
-import useChangeRef from '../hooks/useChangeRef';
-import { css } from '../../styled-system/css';
 
 /** A resize handler that should be called whenever a thought's height has changed. */
 export type OnResize = (args: {
