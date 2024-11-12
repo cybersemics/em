@@ -13,6 +13,7 @@ import iconRecipe from './src/recipes/icon'
 import invalidOptionRecipe from './src/recipes/invalidOption'
 import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
+import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
 import textNoteRecipe from './src/recipes/textNote'
@@ -243,20 +244,6 @@ const globalCss = defineGlobalStyles({
     content: 'attr(placeholder)',
     cursor: 'text',
   },
-  // Sets default link color in recipes/modal color
-  '.modal__root': {
-    '& p': { margin: '0 0 1em 0' },
-  },
-  '.modal__actions': {
-    '& a': {
-      fontWeight: 'normal',
-      margin: '0 5px',
-      textDecoration: 'underline',
-      whiteSpace: 'nowrap',
-      lineHeight: 2,
-      color: 'fg',
-    },
-  },
 })
 
 export default defineConfig({
@@ -337,6 +324,7 @@ export default defineConfig({
         editable: editableRecipe,
         textNote: textNoteRecipe,
         multiline: multilineRecipe,
+        modalActionLink: modalActionLinkRecipe,
         toolbarPointerEvents: toolbarPointerEventsRecipe,
         tutorialBullet: tutorialBulletRecipe,
         upperRight: upperRightRecipe,

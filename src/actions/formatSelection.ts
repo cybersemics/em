@@ -11,6 +11,7 @@ import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
+import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
@@ -25,11 +26,16 @@ export const formatSelectionActionCreator =
     // if there is no selection, format the entire thought by selecting the whole thought
     const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
     if (!thoughtContentEditable) return
-    if (selection.text()?.length === 0 && thought.value.length !== 0) {
+    if (
+      (selection.text()?.length === 0 && strip(thought.value).length !== 0) ||
+      selection.text()?.length === strip(thought.value).length
+    ) {
+      const hasCustomBackgroundColor = /background-color\s*:\s*[^;]+;?/.test(thought.value)
       const savedSelection = selection.save()
       // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile
       selection.select(thoughtContentEditable)
-      document.execCommand(command, false, color ? colors[color] : '')
+      if (!(command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor))
+        document.execCommand(command, false, color ? colors[color] : '')
       selection.restore(savedSelection)
     } else {
       document.execCommand(command, false, color ? colors[color] : '')
@@ -42,10 +48,10 @@ export const formatSelectionActionCreator =
         /** Function to check if a style(background) should be removed based on the color and background-color. */
         const shouldRemoveStyle = (styleString: string) => {
           const styleLower = styleString.toLowerCase()
-          const colorMatch = styleLower.match(/color\s*:\s*([^;]+);?/)
+          const colorMatch = styleLower.match(/background-color\s*:\s*([^;]+);?/)
           const elementColor = colorMatch ? colorMatch[1].trim() : null
-          const isDifferentColor = elementColor && elementColor !== rgbToHex(colors.bg)
-          if (elementColor && isDifferentColor) return true
+          const isSameColor = elementColor && rgbToHex(elementColor) === rgbToHex(colors.bg)
+          if (elementColor && isSameColor) return true
           return false
         }
 
@@ -87,17 +93,17 @@ export const formatSelectionActionCreator =
           })
           const tagsToRemove = collectTagsWithoutAttributes(styleRemovedThought, tagWithoutStylePattern)
           const newValue = removeTags(styleRemovedThought, tagsToRemove)
-
-          dispatch(
-            editThought({
-              cursorOffset: selection.offsetThought() ?? undefined,
-              oldValue: thought.value,
-              newValue: newValue,
-              path: simplePath,
-              // force the ContentEditable to update
-              force: true,
-            }),
-          )
+          if (newValue !== thought.value)
+            dispatch(
+              editThought({
+                cursorOffset: selection.offsetThought() ?? undefined,
+                oldValue: thought.value,
+                newValue: newValue,
+                path: simplePath,
+                // force the ContentEditable to update
+                force: true,
+              }),
+            )
         })
       }
     }

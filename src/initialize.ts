@@ -1,10 +1,8 @@
 import _ from 'lodash'
 import moize from 'moize'
 import Context from './@types/Context'
-import Index from './@types/IndexType'
 import Lexeme from './@types/Lexeme'
 import PushBatch from './@types/PushBatch'
-import ReplicationCursor from './@types/ReplicationCursor'
 import State from './@types/State'
 import Thought from './@types/Thought'
 import Thunk from './@types/Thunk'
@@ -20,8 +18,8 @@ import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
-import { accessToken, clientIdReady, tsid, tsidShared, websocket, websocketUrl } from './data-providers/yjs'
-import db, { init as initThoughtspace, pauseReplication, startReplication } from './data-providers/yjs/thoughtspace'
+import { accessToken, clientIdReady, tsid, tsidShared } from './data-providers/yjs'
+import db, { init as initThoughtspace } from './data-providers/yjs/thoughtspace'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -41,7 +39,6 @@ import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import mergeBatch from './util/mergeBatch'
 import owner from './util/owner'
-import storage from './util/storage'
 import throttleConcat from './util/throttleConcat'
 import urlDataSource from './util/urlDataSource'
 
@@ -85,7 +82,7 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
 
 /** Initilaize local db and window events. */
 export const initialize = async () => {
-  initOfflineStatusStore(websocket)
+  initOfflineStatusStore(/* websocket */)
 
   await initThoughtspace({
     cursor: decodeThoughtsUrl(store.getState()).path,
@@ -145,25 +142,9 @@ export const initialize = async () => {
     onUpdateThoughts: options => {
       store.dispatch(updateThoughtsActionCreator(options))
     },
-    getItem: (key: string) => JSON.parse(storage.getItem(key) || '{}') as Index<ReplicationCursor>,
-    setItem: (key: string, value: any) => storage.setItem(key, JSON.stringify(value)),
     tsid,
     tsidShared,
-    websocketUrl,
   })
-
-  // pause replication during pushing and pulling
-  syncStatusStore.subscribeSelector(
-    ({ isPulling, savingProgress }) => savingProgress < 1 || isPulling,
-    isPushingOrPulling => {
-      if (isPushingOrPulling) {
-        pauseReplication()
-      } else {
-        // because replicationQueue starts paused, this line starts it for the first time after the initial pull
-        startReplication()
-      }
-    },
-  )
 
   // load local state unless loading a public context or source url
   // await initDB()

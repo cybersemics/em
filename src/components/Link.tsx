@@ -31,7 +31,6 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
   const value = useSelector(state => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
   const dispatch = useDispatch()
 
-  // TODO: Fix tabIndex for accessibility
   return (
     <a
       tabIndex={-1}
@@ -58,6 +57,10 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
           toggleSidebar({ value: false }),
         ])
       })}
+      onMouseDown={e => {
+        // prevent propagation to Content component which will trigger clickOnEmptySpace
+        e.stopPropagation()
+      }}
       style={{
         userSelect: 'none',
         textDecoration: 'none',
