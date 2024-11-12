@@ -3,6 +3,7 @@ enum FormattingCommand {
   italic = 'italic',
   underline = 'underline',
   strikethrough = 'strikethrough',
+  code = 'code',
   foreColor = 'foreColor',
   backColor = 'backColor',
 }

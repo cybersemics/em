@@ -57,7 +57,7 @@ const groups: {
   },
   {
     title: 'Editing thoughts',
-    commands: ['join', 'splitSentences', 'bold', 'italic', 'strikethrough', 'underline'],
+    commands: ['join', 'splitSentences', 'bold', 'italic', 'strikethrough', 'underline', 'code'],
   },
   {
     title: 'Oops',
