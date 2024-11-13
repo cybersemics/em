@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import State from '../../@types/State'
+import State from '../@types/State'
 
 /** Pass the selector to useSelector and retain its previous value for comparison. */
 function useSelectorWithPreviousValue<T>(selector: (state: State) => T) {
