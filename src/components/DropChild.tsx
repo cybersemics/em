@@ -64,7 +64,7 @@ const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) =
               // make sure label does not interfere with drop target hovering
               pointerEvents: 'none',
               left: 0,
-              color: 'midPink' /* mid pink */,
+              color: 'midPink',
             })}
           >
             {strip(value)}
