@@ -4,10 +4,5 @@
       "**/*.ts",
       "**/*.tsx",
       "**/*.js",
-      "capacitor.config.ts",
-      "panda.config.ts",
-      "scripts/**/*.ts",
-      "vite.config.ts",
-      "vitest.workspace.ts"
     ]
   }

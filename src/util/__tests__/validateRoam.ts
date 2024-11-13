@@ -73,7 +73,6 @@ test('it returns false if there are any missing properties', () => {
     const invalidRoamString = JSON.stringify([
       {
         ...testData[0],
-        //disable lint error because using destructuring to get the rest.
         children: testData[0].children.map(({ [key as requiredKeyTypes]: requiredKey, ...rest }) => ({ ...rest })),
       },
     ])
