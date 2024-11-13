@@ -27,7 +27,6 @@ const DROPEND_FINGERSHIFT = isTouch ? 5 : 0
 /** The drop target at the end of the Subthoughts. The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts.  */
 const DropEnd = ({
   depth,
-  distance,
   // specifies if this is the last thought
   // renders the component with additional click area below and to the left since there are no thoughts below to obscure
   last,

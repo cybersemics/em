@@ -23,43 +23,6 @@ type Config = {
   onSuccess?: (registration: ServiceWorkerRegistration) => void
   onUpdate?: (registration: ServiceWorkerRegistration) => void
 }
-
-/** Performs environment checks and registers the service worker if supported. */
-export function register(config?: Config) {
-  if (import.meta.env.MODE === 'production' && 'serviceWorker' in navigator) {
-    // This code has been commented out after switching from create-react-app to vite, since vite does not set PUBLIC_URL.
-    // Do we need to do something special to handle CDN's?
-    // const publicUrl = new URL(process.env.PUBLIC_URL, window.location.href)
-    // if (publicUrl.origin !== window.location.origin) {
-    //   // Our service worker won't work if PUBLIC_URL is on a different origin
-    //   // from what our page is served on. This might happen if a CDN is used to
-    //   // serve assets; see https://github.com/facebook/create-react-app/issues/2374
-    //   return
-    // }
-
-    window.addEventListener('load', () => {
-      const swUrl = `${window.location.origin}/service-worker.js`
-
-      if (isLocalhost) {
-        // This is running on localhost. Let's check if a service worker still exists or not.
-        checkValidServiceWorker(swUrl, config)
-
-        // Add some additional logging to localhost, pointing developers to the
-        // service worker/PWA documentation.
-        // navigator.serviceWorker.ready.then(() => {
-        //   console.info(
-        //     'This web app is being served cache-first by a service ' +
-        //       'worker. To learn more, visit https://cra.link/PWA',
-        //   )
-        // })
-      } else {
-        // Is not localhost. Just register service worker
-        registerValidSW(swUrl, config)
-      }
-    })
-  }
-}
-
 /** Registers a service worker at the given URL. */
 function registerValidSW(swUrl: string, config?: Config) {
   navigator.serviceWorker
@@ -126,6 +89,41 @@ function checkValidServiceWorker(swUrl: string, config?: Config) {
     .catch(() => {
       // console.info('No internet connection found. App is running in offline mode.')
     })
+}
+/** Performs environment checks and registers the service worker if supported. */
+export function register(config?: Config) {
+  if (import.meta.env.MODE === 'production' && 'serviceWorker' in navigator) {
+    // This code has been commented out after switching from create-react-app to vite, since vite does not set PUBLIC_URL.
+    // Do we need to do something special to handle CDN's?
+    // const publicUrl = new URL(process.env.PUBLIC_URL, window.location.href)
+    // if (publicUrl.origin !== window.location.origin) {
+    //   // Our service worker won't work if PUBLIC_URL is on a different origin
+    //   // from what our page is served on. This might happen if a CDN is used to
+    //   // serve assets; see https://github.com/facebook/create-react-app/issues/2374
+    //   return
+    // }
+
+    window.addEventListener('load', () => {
+      const swUrl = `${window.location.origin}/service-worker.js`
+
+      if (isLocalhost) {
+        // This is running on localhost. Let's check if a service worker still exists or not.
+        checkValidServiceWorker(swUrl, config)
+
+        // Add some additional logging to localhost, pointing developers to the
+        // service worker/PWA documentation.
+        // navigator.serviceWorker.ready.then(() => {
+        //   console.info(
+        //     'This web app is being served cache-first by a service ' +
+        //       'worker. To learn more, visit https://cra.link/PWA',
+        //   )
+        // })
+      } else {
+        // Is not localhost. Just register service worker
+        registerValidSW(swUrl, config)
+      }
+    })
+  }
 }
 
 /** Unregister the service worker. */

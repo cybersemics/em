@@ -12,7 +12,7 @@ const dragShortcutZone = (state: State, { zone }: { zone: DragShortcutZone | nul
 /** Action-creator for dragShortcutZone. */
 export const dragShortcutZoneActionCreator =
   (zone: DragShortcutZone): Thunk =>
-  (dispatch, getState) => {
+  dispatch => {
     dispatch([{ type: 'dragShortcutZone', zone }])
   }
 
