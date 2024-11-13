@@ -3,7 +3,7 @@ import { FC, PropsWithChildren, useEffect } from 'react'
 import globals from '../globals'
 
 /** Turns off touching when app becomes hidden. */
-const onStateChange = ({ oldState, newState }: { oldState: string; newState: string }) => {
+const onStateChange = ({ newState }: { oldState: string; newState: string }) => {
   if (newState === 'hidden') {
     globals.touching = false
   }

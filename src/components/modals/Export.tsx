@@ -148,7 +148,7 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
         return replicateTree(id, {
           // TODO: Warn the user if offline or not fully replicated
           remote: false,
-          onThought: (thought, thoughtIndex) => {
+          onThought: thought => {
             if (!isMounted.current) return
             setExportingThoughtsThrottled(thought)
           },
@@ -298,7 +298,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       : (numDescendantsInState ?? 0)
     : null
 
-  const exportThoughtsPhraseFinal = useSelector(state =>
+  const exportThoughtsPhraseFinal = useSelector(() =>
     exportPhrase(
       simplePaths.map(simplePath => head(simplePath)),
       numDescendantsFinal,

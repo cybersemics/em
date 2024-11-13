@@ -126,13 +126,15 @@ const liToBlock = (node: Element): Block | Block[] => {
       firstChild.type === 'element' && firstChild.tagName === 'ul'
       ? {
           scope: '',
+          // eslint-disable-next-line @typescript-eslint/no-use-before-define
           children: himalayaToBlock((firstChild as Element).children) as Block[],
         }
-      : (himalayaToBlock(node.children) as Block[])
+      : (himalayaToBlock(node.children) as Block[]) // eslint-disable-line @typescript-eslint/no-use-before-define
 }
 
 /** Converts a <ul> element to a Block. */
 const ulToBlock = (node: Element, prevNode: Element) => {
+  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   const converted = himalayaToBlock(node.children) as Block[]
   return prevNode && prevNode.type === 'element' && getAttribute('aria-label', prevNode) === 'note'
     ? converted[0]
