@@ -44,7 +44,7 @@ const DropUncle = ({
       className={cx(
         dropEnd(),
         css({
-          backgroundColor: testFlags.simulateDrop ? 'eggplant' : undefined, // eggplant
+          backgroundColor: testFlags.simulateDrop ? 'eggplant' : undefined,
           opacity: 0.9,
         }),
       )}
