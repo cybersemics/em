@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
@@ -35,16 +35,10 @@ const AnimatedIcon = ({
 
   // Create a ref to the parent div
   const divRef = useRef<HTMLDivElement | null>(null)
-  const [dynamicColor, setDynamicColor] = useState<string | null>(null)
 
-  // Effect to calculate the color from the parent div
-  useEffect(() => {
-    if (divRef.current) {
-      const computedStyle = getComputedStyle(divRef.current)
-      const hexColor = rgbToHex(computedStyle.color) // Convert to hex
-      setDynamicColor(hexColor)
-    }
-  }, [isLightTheme, style, cssRaw]) // Dependencies that might affect the final style
+  // Calculate dynamic color directly
+  const computedStyle = divRef.current ? getComputedStyle(divRef.current) : null
+  const dynamicColor = computedStyle ? rgbToHex(computedStyle.color) : lottieColor
 
   return (
     <div
@@ -59,11 +53,7 @@ const AnimatedIcon = ({
       }}
     >
       {animated ? (
-        <LottieAnimation
-          animationData={animationData}
-          onComplete={animationComplete}
-          color={dynamicColor || lottieColor} // Use dynamic color if available
-        />
+        <LottieAnimation animationData={animationData} onComplete={animationComplete} color={dynamicColor} />
       ) : (
         children
       )}
