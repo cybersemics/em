@@ -6,11 +6,7 @@ async function waitForTransitionEnd(selector: string) {
     return new Promise<void>(resolve => {
       const transition = document.querySelector(selector)
       if (!transition) throw new Error(`'${selector}' selector not found`)
-      const onEnd = function () {
-        transition.removeEventListener('transitionend', onEnd)
-        resolve()
-      }
-      transition.addEventListener('transitionend', onEnd)
+      transition.addEventListener('transitionend', () => resolve(), { once: true })
     })
   }, selector)
 }
