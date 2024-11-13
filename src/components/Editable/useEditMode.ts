@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../../@types/Path'
 import { editingActionCreator as editingAction } from '../../actions/editing'
@@ -6,6 +6,7 @@ import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
 import preventAutoscroll from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
+import useSelectorWithPreviousValue from '../../hooks/useSelectorWithPreviousValue'
 import equalPath from '../../util/equalPath'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
@@ -34,8 +35,7 @@ const useEditMode = ({
   const dragInProgress = useSelector(state => state.dragInProgress)
   const disabledRef = useRef(false)
   const editableNonce = useSelector(state => state.editableNonce)
-  const [hadSidebar, setHadSidebar] = useState(false)
-  const showSidebar = useSelector(state => state.showSidebar)
+  const { value: showSidebar, previousValue: hadSidebar } = useSelectorWithPreviousValue(state => state.showSidebar)
 
   // focus on the ContentEditable element if editing os on desktop
   const editMode = !isTouch || editing
@@ -140,13 +140,8 @@ const useEditMode = ({
 
   // Resume focus if sidebar was just closed and isEditing is true
   useEffect(() => {
-    if (showSidebar) {
-      setHadSidebar(true)
-    } else {
-      if (isEditing && hadSidebar) {
-        contentRef.current?.focus()
-      }
-      setHadSidebar(false)
+    if (isEditing && !showSidebar && hadSidebar) {
+      contentRef.current?.focus()
     }
   }, [contentRef, hadSidebar, isEditing, showSidebar])
 
