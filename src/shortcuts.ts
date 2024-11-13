@@ -307,7 +307,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     if (!shortcut.canExecute || shortcut.canExecute(store.getState())) {
       if (!shortcut.permitDefault) e.preventDefault()
-      e.preventDefault()
 
       // execute shortcut
       executeShortcutWithMulticursor(shortcut, { event: e, type: 'keyboard', store })
