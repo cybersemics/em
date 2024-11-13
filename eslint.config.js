@@ -1,3 +1,4 @@
+import stylisticTs from '@stylistic/eslint-plugin'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import typescriptParser from '@typescript-eslint/parser'
 import exportDefaultIdentifier from 'eslint-plugin-export-default-identifier'
@@ -18,6 +19,7 @@ const commonSettings = {
 }
 
 const commonPlugins = {
+  '@stylistic/ts': stylisticTs,
   'export-default-identifier': exportDefaultIdentifier,
   jsdoc,
   react,
@@ -165,7 +167,8 @@ export default [
       'no-extra-parens': 'off',
       'no-unused-vars': 'off',
       'no-use-before-define': 'off',
-      '@typescript-eslint/member-delimiter-style': [
+      'no-unused-expressions': 'off',
+      '@stylistic/ts/member-delimiter-style': [
         'error',
         {
           multiline: {
@@ -173,10 +176,13 @@ export default [
           },
         },
       ],
+      '@typescript-eslint/no-var-requires': 'error',
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
       '@typescript-eslint/no-use-before-define': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { args: 'none' }],
+      '@typescript-eslint/no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/array-type': 'error',
