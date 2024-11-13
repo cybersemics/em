@@ -2,7 +2,7 @@
 import chalk from 'chalk'
 import { Browser, ConsoleMessage, Device, Page } from 'puppeteer'
 
-// eslint-disable-next-line @typescript-eslint/prefer-namespace-keyword
+// eslint-disable-next-line @typescript-eslint/no-namespace
 
 declare module global {
   const browser: Browser
