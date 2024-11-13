@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import durationsMillis from '../durations.config'
 import useChangeRef from '../hooks/useChangeRef'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
@@ -221,22 +221,14 @@ const VirtualThought = ({
   return (
     <div
       ref={ref}
-      className={css({
+      style={{
         // Start opacity at 0 and set to actual opacity in useEffect.
         // Do not fade in empty thoughts. An instant snap in feels better here.
         // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropChild. Otherwise subsequent DropChild will be obscured.
         opacity: thought.value === '' ? opacity : '0',
         transition: autofocusChanged
-          ? `opacity {durations.layoutSlowShiftDuration} ease-out`
-          : `opacity {durations.layoutNodeAnimationDuration} ease-in`,
-        pointerEvents: !isVisible ? 'none' : undefined,
-        // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
-        // This caused the thought to jerk slightly to the left at the end of the horizontal shift animation.
-        // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
-        // allowing the browser to optimize the animation.
-        willChange: 'opacity',
-      })}
-      style={{
+          ? `opacity ${durationsMillis.layoutSlowShiftDuration}ms ease-out`
+          : `opacity ${durationsMillis.layoutNodeAnimationDuration}ms ease-in`,
         // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
         // Must include DropChild, or it will shift when the cursor moves.
         height: shimHiddenThought && height != null ? height : undefined,

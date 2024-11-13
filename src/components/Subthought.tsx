@@ -1,5 +1,6 @@
 import React, { useMemo, useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -107,7 +108,17 @@ const Subthought = ({
 
   return (
     <>
-      <div ref={ref}>
+      <div
+        ref={ref}
+        className={css({
+          pointerEvents: !isVisible ? 'none' : undefined,
+          // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
+          // This caused the thought to jerk slightly to the left at the end of the horizontal shift animation.
+          // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
+          // allowing the browser to optimize the animation.
+          willChange: 'opacity',
+        })}
+      >
         <Thought
           debugIndex={debugIndex}
           depth={depth + 1}
