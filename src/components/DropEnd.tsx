@@ -119,7 +119,7 @@ const DropEnd = ({
             left: '0.3em',
             // make sure label does not interfere with drop target hovering
             pointerEvents: 'none',
-            color: 'midPink' /* mid pink */,
+            color: 'midPink',
           })}
         >
           {isHovering ? '*' : ''}
