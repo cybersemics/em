@@ -1,6 +1,6 @@
 import { startCase } from 'lodash'
 import Shortcut from '../@types/Shortcut'
-import { alertActionCreator as alert } from '../actions/alert'
+import { redoActionCreator as redo } from '../actions/redo'
 import RedoIcon from '../components/RedoIcon'
 import getLatestActionType from '../util/getLastActionType'
 
@@ -17,12 +17,10 @@ const redoShortcut: Shortcut = {
 
     return 'Redo'
   },
-  // keyboard: { key: 'z', meta: true, shift: true },
+  keyboard: { key: 'z', meta: true, shift: true },
   svg: RedoIcon,
   exec: dispatch => {
-    // TODO: https://github.com/cybersemics/em/issues/1631
-    // dispatch(redo())
-    dispatch(alert('Undo/Redo is currently under develeopment.'))
+    dispatch(redo())
   },
   canExecute: state => state.redoPatches.length > 0,
 }
