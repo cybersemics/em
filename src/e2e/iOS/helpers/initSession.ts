@@ -2,7 +2,7 @@ import { Browser } from 'webdriverio'
 import waitForElement from '../helpers/waitForElement'
 import tap from './tap'
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
+// eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
 declare module global {
   const browser: Browser<'async'>
 }
