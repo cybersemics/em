@@ -208,7 +208,7 @@ const ContextBreadcrumbs = ({
       className={css(
         {
           fontSize: '0.867em',
-          color: 'gray',
+          color: 'gray66',
           marginLeft: 'calc(1.3em - 14.5px)',
           marginTop: '0.533em',
           minHeight: '1em',

@@ -17,7 +17,7 @@ const colors = {
     gray33: 'rgba(85, 85, 85, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
     gray66: 'rgba(169, 169, 169, 1)', // #a9a9a9
-    gray: 'rgba(169, 169, 169, 1)', // #a9a9a9
+    gray: 'rgba(169, 169, 169, 1)', // #a9a9a9, this is used for disabled things + text color, unlike gray66 it is the same for both light and dark
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(173, 216, 230, 1)', // #add8e6 (lightblue)
     highlight2: 'rgba(155, 170, 220, 1)', // (slight variation on highlight color for alternating highlights)
