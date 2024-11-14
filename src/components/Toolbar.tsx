@@ -77,6 +77,9 @@ const arrow = cva({
   ],
 })
 
+/** Calculates the top padding for vertically centering toolbar arrows. */
+const calculatePaddingTop = (fontSize: number) => Math.floor(0.3 * fontSize + 11.6)
+
 /** Toolbar component. */
 const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const dispatch = useDispatch()
@@ -231,6 +234,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
         <div>
           <span
             id='left-arrow'
+            style={{ paddingTop: `${calculatePaddingTop(fontSize)}px` }}
             className={arrow({ direction: 'left', isHidden: !leftArrowIsShown, fixed: !customize })}
           >
             <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />
@@ -276,6 +280,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
           <span
             id='right-arrow'
+            style={{ paddingTop: `${calculatePaddingTop(fontSize)}px` }}
             className={arrow({ direction: 'right', isHidden: !rightArrowIsShown, fixed: !customize })}
           >
             <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
