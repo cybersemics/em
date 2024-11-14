@@ -54,7 +54,7 @@ const colors = {
     quickDropBg: 'rgba(30,30,30,0.8)',
     bulletGray: 'rgba(102, 102, 102, 1)', // #666
     midPink: 'rgba(255, 123, 195, 1)', // #ff7bc3
-    purpleEggplant: '#32305f', // purple-eggplant
+    purpleEggplant: '#32305f',
     commandSelected: 'rgba(33, 33, 33, 1)', // #212121
     eggplant: 'rgba(82, 48, 95, 1)',
     checkboxForm: 'rgba(62, 62, 62, 1)', // #3e3e3e
