@@ -177,7 +177,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         toolbarPointerEvents({ override: true }),
         css({
           display: 'inline-block',
-          padding: '12px 8px 5px 8px',
+          padding: '14px 8px 5px 8px',
           borderRadius: '3px',
           zIndex: 'stack',
           // animate maxWidth to avoid having to know the exact width of the toolbar icon
@@ -203,7 +203,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
             'transform {durations.veryFastDuration} ease-out, max-width {durations.veryFastDuration} ease-out, margin-left {durations.veryFastDuration} ease-out',
           // extend drop area down, otherwise the drop hover is blocked by the user's finger
           // must match toolbar marginBottom
-          paddingBottom: isDraggingAny ? '7em' : '10px',
+          paddingBottom: isDraggingAny ? '7em' : 0,
         }),
       )}
       onMouseLeave={onMouseLeave}

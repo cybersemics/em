@@ -38,7 +38,7 @@ const arrow = cva({
   base: {
     position: 'absolute',
     fontSize: '80%',
-    paddingTop: '16px',
+    paddingTop: '15px',
     verticalAlign: 'middle',
     color: 'gray',
     backgroundColor: 'bg',

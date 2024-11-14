@@ -1,13 +1,14 @@
 import { css } from '../../styled-system/css'
-import Icon from '../@types/IconType'
+import IconType from '../@types/IconType'
+import { ICON_SCALING_FACTOR } from '../constants'
 
 /** A left-facing svg triangle. */
-const TriangleLeft = ({ fill = 'black', size = 20, width, height, style, cssRaw }: Icon) => (
+const TriangleLeft = ({ fill = 'black', size = 20, width, height, style, cssRaw }: IconType) => (
   <svg
     xmlns=''
     version='1.1'
-    width={width || (height ? height / 2 : size)}
-    height={height || (width ? width * 2 : size)}
+    width={(width || (height ? height / 2 : size)) * ICON_SCALING_FACTOR}
+    height={(height || (width ? width * 2 : size)) * ICON_SCALING_FACTOR}
     fill={fill}
     style={style}
     viewBox='0 0 5 10'
