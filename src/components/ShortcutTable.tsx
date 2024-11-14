@@ -117,7 +117,7 @@ const SearchShortcut: FC<{
   onInput?: (value: string) => void
 }> = ({ onInput }) => {
   return (
-    <div id='search' className={css({ borderBottom: 'solid 1px gray' })}>
+    <div id='search' className={css({ borderBottom: 'solid 1px {colors.gray50}' })}>
       <input
         type='text'
         placeholder='Search commands by name...'

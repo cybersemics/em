@@ -172,10 +172,7 @@ const ThoughtAnnotation = React.memo(
               multiline ? multilineRecipe() : null,
               css({
                 ...(isAttribute(value) && {
-                  backgroundColor: {
-                    base: '#ddd',
-                    _dark: '#222',
-                  },
+                  backgroundColor: 'thoughtAnnotation',
                   fontFamily: 'monospace',
                 }),
                 display: 'inline-block',

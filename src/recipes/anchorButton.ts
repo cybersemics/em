@@ -78,8 +78,7 @@ const anchorButtonRecipe = defineRecipe({
     },
     inActive: {
       true: {
-        // TODO: handle light mode
-        backgroundColor: '#aaa',
+        backgroundColor: 'exportTextareaColor',
       },
     },
     inverse: {

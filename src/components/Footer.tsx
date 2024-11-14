@@ -157,7 +157,7 @@ const Footer = () => {
         textAlign: 'right',
         fontSize: '75%',
         listStyle: 'none',
-        backgroundColor: { base: '#e4e4e4', _dark: '#1a1a1a' },
+        backgroundColor: 'footerBg',
         boxSizing: 'border-box',
         width: '100%',
         zIndex: 'modal',

@@ -47,7 +47,7 @@ const isIOSSafari = isTouch && isiPhone && isSafari()
 
 const glyph = cva({
   base: {
-    fill: { base: 'rgba(39, 39, 39, 1)', _dark: 'rgba(217, 217, 217, 1)' },
+    fill: 'bullet',
     position: 'relative',
     '@media (max-width: 500px)': {
       _android: {
@@ -209,14 +209,14 @@ const glyphFg = cva({
   variants: {
     gray: {
       true: {
-        color: '#666',
-        fill: '#666',
+        color: 'bulletGray',
+        fill: 'bulletGray',
       },
     },
     graypulse: {
       true: {
-        color: '#666',
-        fill: '#666',
+        color: 'bulletGray',
+        fill: 'bulletGray',
         '-webkit-animation': {
           base: 'toblack 400ms infinite alternate ease-in-out',
           _dark: 'towhite 400ms infinite alternate ease-in-out',
