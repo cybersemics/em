@@ -237,7 +237,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         (isHovering || dropToRemove) && (
           <div
             className={css({
-              borderRight: dropToRemove ? `dashed 1px {colors.gray}` : undefined,
+              borderRight: dropToRemove ? `dashed 1px {colors.gray66}` : undefined,
               position: 'absolute',
               left: dropToRemove ? 15 : -2,
               // match the height of the inverted button

@@ -149,7 +149,7 @@ const AddDeviceForm = ({
         >
           Add
         </a>
-        <a {...fastClick(onCancel)} className={css({ color: 'gray', marginLeft: '1em' })}>
+        <a {...fastClick(onCancel)} className={css({ color: 'gray66', marginLeft: '1em' })}>
           Cancel
         </a>
       </div>
@@ -284,7 +284,7 @@ const ShareList = React.forwardRef<
           </TransitionGroup>
         </>
       ) : (
-        <div className={css({ color: 'gray', fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' })}>
+        <div className={css({ color: 'gray66', fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' })}>
           <p>This device is currently offline</p>
           <p>Please connect to the Internet to manage sharing.</p>
         </div>
@@ -322,7 +322,7 @@ const EditableName = React.memo(
             verticalAlign: 'bottom',
           })}
         >
-          <PencilIcon fill={token('colors.gray')} size={25} />
+          <PencilIcon fill={token('colors.gray66')} size={25} />
         </a>
       </div>
     )
@@ -472,7 +472,7 @@ const ShareDetail = React.memo(
             </div>
           )}
 
-          <p className={css({ color: 'gray' })}>
+          <p className={css({ color: 'gray66' })}>
             Created: {new Date(share.created).toLocaleString()}
             <br />
             Last Accessed: {share.accessed ? new Date(share.accessed).toLocaleString() : 'never'}
@@ -496,7 +496,7 @@ const ShareDetail = React.memo(
           )}
 
           <div className={css({ marginTop: '4em' })}>
-            <p className={css({ color: 'gray', marginTop: '0.5em' })}>
+            <p className={css({ color: 'gray66', marginTop: '0.5em' })}>
               {isLastDevice
                 ? 'This is the last device with access to this thoughtspace. If you clear the thoughtspace, all thoughts will be permanently deleted.'
                 : isCurrent

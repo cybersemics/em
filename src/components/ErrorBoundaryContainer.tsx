@@ -47,7 +47,7 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
       {error && (
         <div>
           <Toggle title='Details:'>
-            <pre className={css({ color: 'gray' })}>{error.stack}</pre>
+            <pre className={css({ color: 'gray66' })}>{error.stack}</pre>
           </Toggle>
         </div>
       )}
