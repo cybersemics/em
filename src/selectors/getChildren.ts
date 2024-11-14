@@ -56,26 +56,8 @@ const getVisibleThoughtsById = _.curry(
   },
 )
 
-/** Returns true if the context has any visible children. */
-export const hasChildren = (state: State, id: ThoughtId): boolean =>
-  !!findAnyChild(state, id, child => state.showHiddenThoughts || isVisible(state, child))
-
 /** Gets all visible children of an id, unordered. */
 export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughts)
-
-/** Gets all children of a Context sorted by rank or sort preference. */
-export const getAllChildrenSorted = (state: State, id: ThoughtId): Thought[] => {
-  const getThoughtsFunction =
-    getSortPreference(state, id).type === 'Alphabetical' ? getChildrenSortedAlphabetical : getChildrenRanked
-  return getThoughtsFunction(state, id)
-}
-
-/** Gets all visible children of a thought sorted by rank or sort preference.
- * Note: It doesn't check if thought lies within the cursor path or is descendant of meta cursor.
- */
-export const getChildrenSorted = (state: State, id: ThoughtId | null): Thought[] => {
-  return id ? getVisibleThoughtsById(getAllChildrenSorted, state, id) : NO_CHILDREN
-}
 
 /** Gets a list of all children of a context sorted by the given comparator function. */
 const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFunction<Thought>): Thought[] =>
@@ -83,22 +65,6 @@ const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFun
 
 /** Returns the absolute difference between to child ranks. */
 const rankDiff = (a: Thought, b: Thought) => Math.abs(a?.rank - b?.rank)
-
-/** Generates children sorted by their values. Sorts empty thoughts to their point of creation. */
-const getChildrenSortedAlphabetical = moize(
-  (state: State, id: ThoughtId): Thought[] => {
-    const comparatorFunction =
-      getSortPreference(state, id).direction === 'Desc' ? compareThoughtDescending : compareThought
-    const sorted = getChildrenSortedBy(state, id, comparatorFunction)
-    const emptyIndex = sorted.findIndex(thought => !thought.value)
-    return emptyIndex === -1 ? sorted : resortEmptyInPlace(sorted)
-  },
-  {
-    maxSize: 50,
-    profileName: 'getChildrenSortedAlphabetical',
-  },
-)
-
 /** Re-sorts empty thoughts in a sorted array to their point of creation. */
 const resortEmptyInPlace = (sorted: Thought[]): Thought[] => {
   if (sorted.length === 1) return sorted
@@ -149,6 +115,36 @@ const resortEmptyInPlace = (sorted: Thought[]): Thought[] => {
 
   return sortedFinal
 }
+/** Generates children sorted by their values. Sorts empty thoughts to their point of creation. */
+const getChildrenSortedAlphabetical = moize(
+  (state: State, id: ThoughtId): Thought[] => {
+    const comparatorFunction =
+      getSortPreference(state, id).direction === 'Desc' ? compareThoughtDescending : compareThought
+    const sorted = getChildrenSortedBy(state, id, comparatorFunction)
+    const emptyIndex = sorted.findIndex(thought => !thought.value)
+    return emptyIndex === -1 ? sorted : resortEmptyInPlace(sorted)
+  },
+  {
+    maxSize: 50,
+    profileName: 'getChildrenSortedAlphabetical',
+  },
+)
+
+/** Finds any child that matches the predicate. If there is more than one child that matches the predicate, which one is returned is non-deterministic. */
+export const findAnyChild = (
+  state: State,
+  id: ThoughtId,
+  predicate: (child: Thought) => boolean,
+): Thought | undefined => {
+  const childId = getAllChildren(state, id).find(childId => {
+    const child = getThoughtById(state, childId)
+    return child && predicate(child)
+  })
+  return childId ? getThoughtById(state, childId) : undefined
+}
+/** Returns true if the context has any visible children. */
+export const hasChildren = (state: State, id: ThoughtId): boolean =>
+  !!findAnyChild(state, id, child => state.showHiddenThoughts || isVisible(state, child))
 
 /** Gets all children of a thought sorted by rank. Returns a new object reference even if the children have not changed. */
 export const getChildrenRanked = moize(
@@ -169,19 +165,6 @@ export const anyChild = (state: State, id: ThoughtId | undefined | null): Though
   return children.length > 0 ? getThoughtById(state, children[0]) : undefined
 }
 
-/** Finds any child that matches the predicate. If there is more than one child that matches the predicate, which one is returned is non-deterministic. */
-export const findAnyChild = (
-  state: State,
-  id: ThoughtId,
-  predicate: (child: Thought) => boolean,
-): Thought | undefined => {
-  const childId = getAllChildren(state, id).find(childId => {
-    const child = getThoughtById(state, childId)
-    return child && predicate(child)
-  })
-  return childId ? getThoughtById(state, childId) : undefined
-}
-
 /** Returns all child that match the predicate (unordered). */
 export const filterAllChildren = (state: State, id: ThoughtId, predicate: (child: Thought) => boolean): Thought[] => {
   const childIds = getAllChildren(state, id).filter(childId => {
@@ -190,16 +173,6 @@ export const filterAllChildren = (state: State, id: ThoughtId, predicate: (child
   })
   return childIdsToThoughts(state, childIds)
 }
-
-/** Returns the first visible child of a sorted context. */
-export const firstVisibleChild = (state: State, id: ThoughtId): Thought | undefined => getChildrenSorted(state, id)[0]
-
-/** Returns the first visible child (with cursor check) of a context. */
-export const firstVisibleChildWithCursorCheck = (state: State, path: SimplePath) => {
-  const children = getAllChildrenSorted(state, head(path))
-  return (state.showHiddenThoughts ? children : children.filter(isChildVisibleWithCursorCheck(state, path)))[0]
-}
-
 /** Checks if a child lies within the cursor path. */
 const isChildInCursor = (state: State, path: Path, child: Thought): boolean => {
   const childPath = unroot([...path, child.id])
@@ -244,5 +217,25 @@ export const childrenFilterPredicate = _.curry((state: State, parentPath: Simple
     (!isAbsolute(state.rootContext) || isCreatedAfterAbsoluteToggle(state, child.id))
   )
 }, 3)
+/** Gets all children of a Context sorted by rank or sort preference. */
+export const getAllChildrenSorted = (state: State, id: ThoughtId): Thought[] => {
+  const getThoughtsFunction =
+    getSortPreference(state, id).type === 'Alphabetical' ? getChildrenSortedAlphabetical : getChildrenRanked
+  return getThoughtsFunction(state, id)
+}
 
+/** Gets all visible children of a thought sorted by rank or sort preference.
+ * Note: It doesn't check if thought lies within the cursor path or is descendant of meta cursor.
+ */
+export const getChildrenSorted = (state: State, id: ThoughtId | null): Thought[] => {
+  return id ? getVisibleThoughtsById(getAllChildrenSorted, state, id) : NO_CHILDREN
+}
+/** Returns the first visible child of a sorted context. */
+export const firstVisibleChild = (state: State, id: ThoughtId): Thought | undefined => getChildrenSorted(state, id)[0]
+
+/** Returns the first visible child (with cursor check) of a context. */
+export const firstVisibleChildWithCursorCheck = (state: State, path: SimplePath) => {
+  const children = getAllChildrenSorted(state, head(path))
+  return (state.showHiddenThoughts ? children : children.filter(isChildVisibleWithCursorCheck(state, path)))[0]
+}
 export default getChildren

@@ -8,8 +8,8 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const italic: Shortcut = {
   id: 'italic',
   label: 'Italic',
-  description: 'Italicizes a thought or selected text.',
-  descriptionInverse: 'Removes italic formatting from the current thought.',
+  description: 'Italicizes the current thought or selected text.',
+  descriptionInverse: 'Removes italics from the current thought or selected text. So much for being special.',
   svg: Icon,
   keyboard: { key: 'i', meta: true },
   multicursor: true,
@@ -19,7 +19,7 @@ const italic: Shortcut = {
   exec: dispatch => {
     dispatch(formatSelection('italic'))
   },
-  // the activation logic for commands is located in ToolbarButton (isCommandActive)
+  // The isActive logic for formatting commands is handled differently than other shortcuts because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
 }
 
 export default italic

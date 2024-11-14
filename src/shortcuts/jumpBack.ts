@@ -10,7 +10,7 @@ const jumpBackShortcut: Shortcut = {
   gesture: 'lul',
   multicursor: 'ignore',
   svg: JumpBackIcon,
-  exec: (dispatch, getState) => {
+  exec: dispatch => {
     dispatch(jump(-1))
   },
 }

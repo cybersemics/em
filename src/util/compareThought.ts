@@ -50,22 +50,19 @@ const normalizeCharacters = _.flow(removeEmojisAndSpaces, removeIgnoredPrefixes,
 /** Parse a date string and handle M/d (e.g. "2/1") for Safari. */
 const parseDate = (s: string): number =>
   Date.parse(
-    // eslint-disable-next-line @typescript-eslint/no-extra-parens
     REGEX_SHORT_DATE_WITH_DASH.test(s)
       ? `${s}-${CURRENT_YEAR}`
-      : // eslint-disable-next-line @typescript-eslint/no-extra-parens
-        REGEX_SHORT_DATE_WITH_SLASH.test(s)
+      : REGEX_SHORT_DATE_WITH_SLASH.test(s)
         ? `${s}/${CURRENT_YEAR}`
         : s,
   )
-
-/** Returns trure if the given string is an integer or decimal number. Recognizes prefixed number strings like "#1" and "$1" as numbers. */
-const isNumber = (x: number | string): boolean => !isNaN(toNumber(x))
-
 /** Converts a string to a number. If given a number, returns it as-is. If given a string with a prefixe such as "#" or "$", strips it and returns the actual number. If given a number range, returns the start of the range. If the input cannot be converted to a number, returns NaN. */
 const toNumber = (x: number | string): number =>
   // match hyphen, em-dash, and em-dash
   typeof x === 'number' ? x : +x.replace(/^[$₹₤₱₠₪₨€#] ?/, '').replace(/^(\d+)\s*[-–—]\s*\d+$/, '$1')
+
+/** Returns trure if the given string is an integer or decimal number. Recognizes prefixed number strings like "#1" and "$1" as numbers. */
+const isNumber = (x: number | string): boolean => !isNaN(toNumber(x))
 
 /** The default comparator that uses the ">" operator. Can be passed to Array.prototype.sort. */
 export const compare = <T>(a: T, b: T) => (a > b ? 1 : a < b ? -1 : 0)
@@ -148,7 +145,6 @@ export const makeOrderedComparator =
         // if they are equal, move on to the next comparator
         makeOrderedComparator(comparators.slice(1))(a, b) // RECURSION
 
-// eslint-disable-next-line jsdoc/require-description-complete-sentence
 /** A comparator that sorts basic text.
  * 1. Numbers (8, 9, 10; #8, #9, #10).
  * 2. Dates (9/1, 10/1, 11/1).
@@ -162,7 +158,6 @@ const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<st
   compareDateAndOther,
 ])
 
-// eslint-disable-next-line jsdoc/require-description-complete-sentence
 /** A comparator that compares by reasonable, human-readable value:
  * 1. Empty.
  * 2. Punctuation (=, +, #hi, =test).

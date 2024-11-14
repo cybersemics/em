@@ -13,6 +13,7 @@ import iconRecipe from './src/recipes/icon'
 import invalidOptionRecipe from './src/recipes/invalidOption'
 import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
+import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
 import textNoteRecipe from './src/recipes/textNote'
@@ -161,7 +162,7 @@ const globalCss = defineGlobalStyles({
     cursor: 'pointer',
     textDecorationLine: 'underline',
     outline: 'none',
-    color: { base: '#1b6f9a', _dark: '#87ceeb' },
+    color: 'link',
     fontWeight: 400,
     userSelect: 'none',
   },
@@ -197,10 +198,7 @@ const globalCss = defineGlobalStyles({
     marginBottom: '2vh',
   },
   'input:focus': {
-    border: {
-      base: 'solid 1px #eee',
-      _dark: 'solid 1px #999',
-    },
+    border: 'solid 1px {colors.inputBorder}',
     outline: '0 none',
   },
   /** Aligns checkbox and label vertically. */
@@ -222,7 +220,7 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'bg',
   },
   code: {
-    backgroundColor: { base: '#ccc', _dark: '#333' },
+    backgroundColor: 'codeBg',
     fontFamily: 'monospace',
   },
   'button[disabled]': {
@@ -239,23 +237,9 @@ const globalCss = defineGlobalStyles({
   /* :empty does not work because thought may contain <br> */
   '[placeholder]:empty::before': {
     fontStyle: 'italic',
-    color: { base: 'rgba(7, 7, 7, 0.5)', _dark: 'rgba(255, 255, 255, 0.5)' },
+    color: 'dim',
     content: 'attr(placeholder)',
     cursor: 'text',
-  },
-  // Sets default link color in recipes/modal color
-  '.modal__root': {
-    '& p': { margin: '0 0 1em 0' },
-  },
-  '.modal__actions': {
-    '& a': {
-      fontWeight: 'normal',
-      margin: '0 5px',
-      textDecoration: 'underline',
-      whiteSpace: 'nowrap',
-      lineHeight: 2,
-      color: 'fg',
-    },
   },
 })
 
@@ -337,6 +321,7 @@ export default defineConfig({
         editable: editableRecipe,
         textNote: textNoteRecipe,
         multiline: multilineRecipe,
+        modalActionLink: modalActionLinkRecipe,
         toolbarPointerEvents: toolbarPointerEventsRecipe,
         tutorialBullet: tutorialBulletRecipe,
         upperRight: upperRightRecipe,
@@ -351,18 +336,6 @@ export default defineConfig({
       semanticTokens: {
         colors: {
           ...colorSemanticTokens,
-          bgMuted: {
-            value: {
-              base: '#ddd',
-              _dark: '#333',
-            },
-          },
-          dim: {
-            value: {
-              base: 'rgba(7, 7, 7, 0.5)',
-              _dark: 'rgba(255, 255, 255, 0.5)',
-            },
-          },
           invalidOption: {
             value: 'tomato !important',
           },

@@ -83,7 +83,7 @@ const appendVisiblePaths = (
 }
 
 /** An action-creator that pulls the =favorite Lexeme and all contexts. */
-const pullFavorites = (): Thunk => async (dispatch, getState) => {
+const pullFavorites = (): Thunk => async dispatch => {
   const lexeme = await db.getLexemeById(hashThought('=favorite'))
   return dispatch(pullAncestors(lexeme?.contexts || [], { force: true, maxDepth: 0 }))
 }
@@ -177,11 +177,13 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
    */
   const updatePullQueue = ({ forceFlush, force }: { forceFlush?: boolean; force?: boolean } = {}) => {
     // if updatePullQueue is called directly, do not allow updatePullQueueDebounced to call it again
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     updatePullQueueDebounced.cancel()
 
     // If we are forcing, cancel the existing throttled flush since it could outrace this flush and pull without force.
     // This can cause remote thoughts to not be pulled on load if thoughts are already loaded from the local db.
     if (forceFlush || force) {
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       flushPullQueueThrottled.cancel()
     }
 
@@ -209,6 +211,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // do not throttle initial flush or flush on authenticate
     if (isLoaded) {
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       flushPullQueueThrottled({ force })
     } else {
       flushPullQueue({ force })

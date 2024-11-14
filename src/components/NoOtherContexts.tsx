@@ -1,5 +1,6 @@
 import { css, cx } from '../../styled-system/css'
 import { textNote } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
@@ -9,13 +10,7 @@ import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 const toggleContextViewShortcut = shortcutById('toggleContextView')
 
 /** A message that explains that the thought is no other contexts and provides a hint for adding it to a context. */
-const NoOtherContexts = ({
-  allowSingleContext,
-  simplePath,
-}: {
-  allowSingleContext?: boolean
-  simplePath: SimplePath
-}) => {
+const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean; simplePath: SimplePath }) => {
   // const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
 
   return (
@@ -52,7 +47,7 @@ const NoOtherContexts = ({
                 inGestureContainer
                 path={toggleContextViewShortcut.gesture as GesturePath}
                 size={30}
-                color='darkgray'
+                color={token('colors.gray66')}
               />
             </span>
           ) : (

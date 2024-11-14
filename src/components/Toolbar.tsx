@@ -13,11 +13,13 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import { css, cva, cx } from '../../styled-system/css'
 import { toolbarPointerEvents } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
 import { TOOLBAR_DEFAULT_SHORTCUTS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
+import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -39,7 +41,7 @@ const arrow = cva({
     fontSize: '80%',
     paddingTop: '16px',
     verticalAlign: 'middle',
-    color: 'gray',
+    color: 'gray66',
     backgroundColor: 'bg',
     display: 'inline-block',
     lineHeight: '20px',
@@ -93,6 +95,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
   const showDropDown = useSelector(state => state.showColorPicker || state.showLetterCase)
+  const positionFixedStyles = usePositionFixed()
 
   // re-render only (why?)
   useSelector(state => state.showHiddenThoughts)
@@ -203,16 +206,15 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           // When a dropdown like ColorPicker or LetterCase is open, set pointer-events: none, otherwise the toolbar will block the editor. This will be overridden by the toolbar buttons to allow interaction.
           showDropDown && toolbarPointerEvents(),
           css({
-            position: 'relative',
+            backgroundColor: 'bg',
+            boxShadow: customize ? '-10px 10px 20px 0 {colors.bg}' : '10px -20px 15px 25px {colors.bg}',
+            right: 0,
             textAlign: 'right',
             maxWidth: '100%',
             userSelect: 'none',
-            WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
+            WebkitTapHighlightColor: '{colors.bgTransparent}',
             whiteSpace: 'nowrap',
             ...(!customize && {
-              position: 'fixed',
-              top: '0',
-              right: '0',
               zIndex: 'toolbarContainer',
               marginTop: '-500px',
               paddingTop: '500px',
@@ -220,39 +222,19 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           }),
         )}
         style={{
+          ...(!customize ? positionFixedStyles : null),
           // make toolbar flush with left padding
           marginLeft: customize ? -5 : 0,
           // offset extended drop area of ToolbarButton
           marginBottom: isDraggingAny ? '-7em' : 0,
         }}
       >
-        <div
-          className={css({
-            position: 'absolute',
-            /* sometimes the body peeks through with top:0 */
-            top: '-1px',
-            left: '0',
-            /* Hide the popup-close-x in the customize modal by extending the toolbar-mask to the right. Otherwise it would be too cluttered. Use just enough to cover popup-close-x without  */
-            right: '-1.75em',
-            backgroundColor: 'bg',
-            pointerEvents: 'none',
-            boxShadow: '-10px 10px 20px 0 {colors.bg}',
-            ...(!customize && {
-              boxShadow: '10px -20px 15px 25px {colors.bg}',
-              paddingTop: '500px',
-            }),
-          })}
-          style={{
-            // must scale height with fontSize, since height does not scale linearly with em or px
-            height: fontSize + 30,
-          }}
-        />
         <div>
           <span
             id='left-arrow'
             className={arrow({ direction: 'left', isHidden: !leftArrowIsShown, fixed: !customize })}
           >
-            <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />
+            <TriangleLeft width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
           </span>
           <div
             id='toolbar'
@@ -297,7 +279,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             id='right-arrow'
             className={arrow({ direction: 'right', isHidden: !rightArrowIsShown, fixed: !customize })}
           >
-            <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
+            <TriangleRight width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
           </span>
         </div>
       </div>

@@ -92,6 +92,13 @@ const endDrag = () => {
     ])
   })
 }
+/** Memoized function that returns true if the thought can be dropped at the destination path. This does not need to account for hidden thoughts since they have pointer-events:none. This function will be called in a continuous loop by react-dnd so it needs to be fast. */
+const canDropPath = moize((from: Path, to: Path) => !isDescendantPath(to, from, { exclusive: true }), {
+  // only needs to be big enough to cache the calls within a single drag
+  // i.e. a reasonable number of destation thoughts that will be hovered over during a single drag
+  maxSize: 50,
+  profileName: 'canDropPath',
+})
 
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
 const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
@@ -110,14 +117,6 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // This condition must be matched in isChildHovering to correctly highlight the hovering parent.
   return !showContexts && canDropPath(thoughtsFrom, thoughtsTo)
 }
-
-/** Memoized function that returns true if the thought can be dropped at the destination path. This does not need to account for hidden thoughts since they have pointer-events:none. This function will be called in a continuous loop by react-dnd so it needs to be fast. */
-const canDropPath = moize((from: Path, to: Path) => !isDescendantPath(to, from, { exclusive: true }), {
-  // only needs to be big enough to cache the calls within a single drag
-  // i.e. a reasonable number of destation thoughts that will be hovered over during a single drag
-  maxSize: 50,
-  profileName: 'canDropPath',
-})
 
 /** Handles dropping a thought on a DropTarget. */
 const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {

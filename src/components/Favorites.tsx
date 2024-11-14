@@ -91,7 +91,7 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
             marginLeft: 0,
             marginTop: 0,
             width: 'calc(100% - 4em)',
-            background: isHovering ? 'rgba(155, 170, 220, 1)' : undefined,
+            background: isHovering ? 'highlight2' : undefined,
           }),
         )}
       />
@@ -118,7 +118,7 @@ const FavoritesOptions = ({
         <span
           {...fastClick(() => setShowOptions(!showOptions))}
           className={css({
-            color: '#444',
+            color: 'modalExportUnused',
             cursor: 'pointer',
             fontSize: '0.7em',
             fontWeight: 'bold',
@@ -150,7 +150,7 @@ const FavoritesOptions = ({
         >
           <form
             ref={formRef}
-            className={css({ fontSize: 'sm', backgroundColor: '#3e3e3e', borderRadius: '0.5em', padding: '1em' })}
+            className={css({ fontSize: 'sm', backgroundColor: 'checkboxForm', borderRadius: '0.5em', padding: '1em' })}
           >
             <Checkbox
               checked={!hideContexts}
@@ -190,7 +190,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
           <div>
             <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
             <div className={css({ marginTop: '1em' })}>
-              {simplePaths.map((simplePath, i) => (
+              {simplePaths.map(simplePath => (
                 <DragAndDropFavorite
                   key={head(simplePath)}
                   simplePath={simplePath}

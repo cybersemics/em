@@ -52,7 +52,7 @@ const observe = async (
     // get current unix timestamp, rounded down to the nearest second
     const time = Math.floor(Date.now() / 1000)
     const tagsArray = Object.entries({ ...tags, env: nodeEnv })
-      .filter(([key, value]) => value != null)
+      .filter(([value]) => value != null)
       .map(([key, value]) => `${key}=${value}`)
 
     const data = {
@@ -89,7 +89,7 @@ const observeThrottled = throttleConcat(
     }[],
   ) => {
     // group by name + tags
-    const groups = groupBy(observations, ({ name, value, tags }) => JSON.stringify({ name, tags }))
+    const groups = groupBy(observations, ({ name, tags }) => JSON.stringify({ name, tags }))
 
     // calculate the mean time for each group
     const meanObservations = Object.values(groups).map(groupObservations => {
@@ -107,10 +107,7 @@ const observeThrottled = throttleConcat(
 )
 
 // noop if env vars are not set
-const observeMetric = hasGraphiteCredentials
-  ? observeThrottled
-  : // eslint-disable-next-line @typescript-eslint/no-empty-function
-    () => {}
+const observeMetric = hasGraphiteCredentials ? observeThrottled : () => {}
 
 /**
  * Push default metrics to Grafana on an interval. The function client.collectDefaultMetrics must already have been called.
@@ -125,9 +122,9 @@ export const observeNodeMetrics = () => {
     const metrics = json
       // Only support for Counter and Gauge currently.
       // TODO: Add support for Histogram, which is how nodejs_gc_duration_seconds is reported.
-      .filter(({ type }) => !type || type === MetricType.Counter || type === MetricType.Gauge)
-      .flatMap(({ aggregator, help, name, type, values }) =>
-        values.map(({ value, labels }) => ({
+      .filter(({ type }: { type: any }) => !type || type === MetricType.Counter || type === MetricType.Gauge)
+      .flatMap(({ name, values }: { name: any; values: any }) =>
+        values.map(({ labels }: { labels: any }) => ({
           name: `em.server.node.${name}` as const,
           value: values[0]?.value,
           tags: keyValueBy(labels, (key, value) => ({ [key]: value?.toString() })),

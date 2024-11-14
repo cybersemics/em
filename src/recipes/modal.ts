@@ -16,7 +16,7 @@ const modalRecipe = defineSlotRecipe({
       //   boxShadow: '2px 5px 5px rgba(0, 0, 0, 0.5)',
       //   border: 'solid 1px rgba(0, 0, 0, 0.2)', // solid 1px rgba(255, 255, 255, 0.1) for dark mode
       //   padding: '15px',
-      color: '#e3e3e3',
+      color: 'modalColor',
       position: 'absolute',
       //   display: 'inline-block',
       lineHeight: 1.5,
@@ -40,6 +40,7 @@ const modalRecipe = defineSlotRecipe({
         base: 'all 0.4s ease-out',
         _test: 'none',
       },
+      '& p': { margin: '0 0 1em 0' },
     },
     title: {
       //   fontWeight: 400, from
@@ -76,24 +77,6 @@ const modalRecipe = defineSlotRecipe({
       settings: {},
       signup: {},
       testGestureDiagram: {},
-    },
-    stack: {
-      true: {
-        actions: {
-          textAlign: 'center',
-          '@media screen and (min-width: 480px)': {
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            '& > *': {
-              marginTop: '1em',
-            },
-            '& > :not(:last-child)': {
-              marginRight: '1em',
-            },
-          },
-        },
-      },
     },
     center: {
       true: {

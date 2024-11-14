@@ -1,3 +1,7 @@
+// there are multiple function callling it self (recursive) so we just disable the lint error
+
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
 /* eslint-disable import/prefer-default-export */
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
@@ -178,7 +182,7 @@ const pullDuplicateDescendants =
 
 /** Action-creator for importFiles. */
 export const importFilesActionCreator =
-  ({ files, insertBefore, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
+  ({ files, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!files && !resume) {
       throw new Error('importFiles must specify files or resume.')

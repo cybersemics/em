@@ -8,8 +8,8 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const strikethrough: Shortcut = {
   id: 'strikethrough',
   label: 'Strikethrough',
-  description: 'Formats a thought or selected text with strikethrough.',
-  descriptionInverse: 'Removes strikethrough formatting from the current thought or selected text.',
+  description: 'Formats the current thought or selected text with strikethrough.',
+  descriptionInverse: 'Removes strikethrough from the current thought or selected text.',
   svg: Icon,
   keyboard: { key: 's', meta: true },
   multicursor: true,
@@ -20,7 +20,7 @@ const strikethrough: Shortcut = {
     e.preventDefault()
     dispatch(formatSelection('strikethrough'))
   },
-  // the activation logic for commands is located in ToolbarButton (isCommandActive)
+  // The isActive logic for formatting commands is handled differently than other shortcuts because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
 }
 
 export default strikethrough

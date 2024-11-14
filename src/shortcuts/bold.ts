@@ -8,8 +8,8 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const bold: Shortcut = {
   id: 'bold',
   label: 'Bold',
-  description: 'Bolds the a thought or selected text.',
-  descriptionInverse: 'Removes bold formatting from the current thought.',
+  description: 'Bolds the current thought or selected text.',
+  descriptionInverse: 'Removes bold from the current thought or selected text.',
   multicursor: true,
   svg: Icon,
   keyboard: { key: 'b', meta: true },
@@ -19,7 +19,7 @@ const bold: Shortcut = {
   exec: dispatch => {
     dispatch(formatSelection('bold'))
   },
-  // the activation logic for commands is located in ToolbarButton (isCommandActive)
+  // The isActive logic for formatting commands is handled differently than other shortcuts because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
 }
 
 export default bold

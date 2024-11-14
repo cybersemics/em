@@ -70,7 +70,6 @@ test('it returns false if there are any missing properties', () => {
   type requiredKeyTypes = 'create-email' | 'uid' | 'create-time' | 'string'
   const requiredKeys = ['create-email', 'uid', 'create-time', 'string']
   requiredKeys.forEach(key => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const invalidRoamString = JSON.stringify([
       {
         ...testData[0],

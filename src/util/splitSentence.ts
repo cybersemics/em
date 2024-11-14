@@ -2,6 +2,52 @@ import isAbbreviation from './isAbbreviation'
 import once from './once'
 
 /**
+ * Function: calculateRemoveFront.
+ * When it ends with .' or .) or !) or ?") or ;), etc.
+ * Spliting sentences will let those symbols sit on the front of the next sentence.
+ * Hence, we calculate how many such characters needed to be removed and added back to the end of the previous sentence.
+ *
+ * @param str1 The previous sentence plus the previous spliter.
+ * @param s The current sentence, which doesn't include the current spliter.
+ * @param matched The array for the matched regular expression pattern.
+ * @returns A number that indicates how many charcaters have to be moved to the previous sentence.
+ */
+function calculateRemoveFront(str1: string, s: string, matched: string[]) {
+  const singleQ = str1.match(/'/g) || []
+  const leftSingleCalib = !!s.match(/'/) && singleQ.length % 2 === 0 ? -1 : 0
+
+  const doubleQ = str1.match(/"/g) || []
+  const leftDoubleCalib = !!s.match(/"/) && doubleQ.length % 2 === 0 ? -1 : 0
+
+  // Calculate how many spaces before the right quotation mark for the thought like: "One.  " Two.
+  const leftEmptySpace = s.length - s.trimLeft().length
+
+  return leftEmptySpace + matched[0].length + leftSingleCalib + leftDoubleCalib
+}
+
+/**
+ * Function: isUrl.
+ *
+ * @param str1 The previous sentence plus the previous spliter.
+ * @param s The current sentence, which doesn't include the current spliter.
+ * @returns A bolean that says whether the dot comes from a url.
+ */
+function isUrl(str1: string, s: string) {
+  // An empty space means the url has ended
+  if (/[!;]$/.test(str1) || (str1[str1.length - 1] === '.' && s[0] === ' ')) return false
+
+  // Regex Reference for Url from https://stackoverflow.com/questions/42618872/regex-for-website-or-url-validation with slight modification: change the + before = to *.
+  const urlPattern =
+    /((https?|ftp|smtp):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]*=[a-zA-Z0-9-%]+&?)?/
+
+  const firstPart = str1.split(' ')
+  const len = firstPart.length
+  const combinedSentence = firstPart[len - 1] + s.split(' ')[0]
+
+  return urlPattern.test(combinedSentence)
+}
+
+/**
  * Splits given value by special characters.
  */
 const splitSentence = (value: string): string[] => {
@@ -96,52 +142,6 @@ const splitSentence = (value: string): string[] => {
   }
 
   return res.map(s => s.trim())
-}
-
-/**
- * Function: calculateRemoveFront.
- * When it ends with .' or .) or !) or ?") or ;), etc.
- * Spliting sentences will let those symbols sit on the front of the next sentence.
- * Hence, we calculate how many such characters needed to be removed and added back to the end of the previous sentence.
- *
- * @param str1 The previous sentence plus the previous spliter.
- * @param s The current sentence, which doesn't include the current spliter.
- * @param matched The array for the matched regular expression pattern.
- * @returns A number that indicates how many charcaters have to be moved to the previous sentence.
- */
-function calculateRemoveFront(str1: string, s: string, matched: string[]) {
-  const singleQ = str1.match(/'/g) || []
-  const leftSingleCalib = !!s.match(/'/) && singleQ.length % 2 === 0 ? -1 : 0
-
-  const doubleQ = str1.match(/"/g) || []
-  const leftDoubleCalib = !!s.match(/"/) && doubleQ.length % 2 === 0 ? -1 : 0
-
-  // Calculate how many spaces before the right quotation mark for the thought like: "One.  " Two.
-  const leftEmptySpace = s.length - s.trimLeft().length
-
-  return leftEmptySpace + matched[0].length + leftSingleCalib + leftDoubleCalib
-}
-
-/**
- * Function: isUrl.
- *
- * @param str1 The previous sentence plus the previous spliter.
- * @param s The current sentence, which doesn't include the current spliter.
- * @returns A bolean that says whether the dot comes from a url.
- */
-function isUrl(str1: string, s: string) {
-  // An empty space means the url has ended
-  if (/[!;]$/.test(str1) || (str1[str1.length - 1] === '.' && s[0] === ' ')) return false
-
-  // Regex Reference for Url from https://stackoverflow.com/questions/42618872/regex-for-website-or-url-validation with slight modification: change the + before = to *.
-  const urlPattern =
-    /((https?|ftp|smtp):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]*=[a-zA-Z0-9-%]+&?)?/
-
-  const firstPart = str1.split(' ')
-  const len = firstPart.length
-  const combinedSentence = firstPart[len - 1] + s.split(' ')[0]
-
-  return urlPattern.test(combinedSentence)
 }
 
 export default splitSentence

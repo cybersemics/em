@@ -4,6 +4,7 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { extendTap } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
@@ -121,7 +122,7 @@ const BreadCrumb = React.memo(
           (staticText ? (
             ellipsize(decodeCharacterEntities(value))
           ) : label === HOME_TOKEN ? (
-            <HomeLink color='gray' size={16} className={css({ position: 'static' })} />
+            <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
           ) : (
             <Link
               cssRaw={css.raw(linkCssRaw)}
@@ -207,7 +208,7 @@ const ContextBreadcrumbs = ({
       className={css(
         {
           fontSize: '0.867em',
-          color: 'gray',
+          color: 'gray66',
           marginLeft: 'calc(1.3em - 14.5px)',
           marginTop: '0.533em',
           minHeight: '1em',
@@ -236,11 +237,16 @@ const ContextBreadcrumbs = ({
       - The "c/d" context will render "d" as a thought and "c" as the breadcrumbs.
     */
         !homeContext ? (
-          <HomeLink className={css({ position: 'static' })} color='gray' size={16} iconStyle={homeIconStyle} />
+          <HomeLink
+            className={css({ position: 'static' })}
+            color={token('colors.gray50')}
+            size={16}
+            iconStyle={homeIconStyle}
+          />
         ) : null
       ) : (
         <TransitionGroup childFactory={factoryManager}>
-          {ellipsizedThoughts.map(({ isOverflow, id, label, nodeRef }, i) => {
+          {ellipsizedThoughts.map(({ isOverflow, label, nodeRef }, i) => {
             // Use index as key because we actually want all segments to the right to re-render.
             // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
             // This way it will only animate when the length of the cursor changes.
@@ -258,7 +264,7 @@ const ContextBreadcrumbs = ({
                     {
                       color: 'inherit',
                       textDecoration: 'none',
-                      '&:active': { color: '#909090', WebkitTextStrokeWidth: '0.05em' },
+                      '&:active': { color: 'activeBreadCrumb', WebkitTextStrokeWidth: '0.05em' },
                     },
                     linkCssRaw,
                   )}

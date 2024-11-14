@@ -94,9 +94,12 @@ const SIZE_REMOVAL_DEBOUNCE = 1000
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
 const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 
-/** A computed store that tracks the bottom of the viewport. */
+/** A computed store that tracks the bottom of the viewport. Used for list virtualization. Does not include overscroll, i.e. if the user scrolls past the top of the document viewportBottom will not change. */
 const viewportBottomStore = reactMinistore.compose(
-  (viewport, scrollTop) => scrollTop + viewport.innerHeight,
+  (viewport, scrollTop) => {
+    const scrollTopNoOverscroll = Math.min(Math.max(scrollTop, 0), document.body.scrollHeight - viewport.innerHeight)
+    return scrollTopNoOverscroll + viewport.innerHeight
+  },
   [viewportStore, scrollTopStore],
 )
 
@@ -136,7 +139,6 @@ const useSizeTracking = () => {
     ({
       height,
       width,
-      id,
       isVisible,
       key,
     }: {
@@ -374,7 +376,9 @@ const LayoutTree = () => {
         state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
       : 0,
   )
-  const scrollTop = scrollTopStore.useState()
+
+  /** The value of scrollTop. Only enabled when there is a drag in progress for performance reasons. */
+  const scrollTopIfDragging = scrollTopStore.useSelector(scrollTop => (dragInProgress ? scrollTop : null))
 
   // Width of thought bullet
   const [bulletWidth, setBulletWidth] = useState(0)
@@ -627,7 +631,7 @@ const LayoutTree = () => {
         (node.autofocus === 'dim' || node.autofocus === 'show') &&
         !(next?.autofocus === 'dim' || next?.autofocus === 'show')
 
-      if (node.isInSortedContext) {
+      if (scrollTopIfDragging !== null && node.isInSortedContext) {
         // Get first and last thought ranks in sorted context
         if (!firstThoughtRank) {
           firstThoughtRank = node.rank
@@ -635,7 +639,7 @@ const LayoutTree = () => {
         lastThoughtRank = node.rank
 
         // Check if the current thought is visible
-        if (y < maxVisibleY && y > scrollTop - toolbarHeight) {
+        if (y < maxVisibleY && y > scrollTopIfDragging - toolbarHeight) {
           // Get first and last visible thought ranks in sorted context
           if (!firstVisibleThoughtRank) {
             firstVisibleThoughtRank = node.rank
@@ -673,7 +677,7 @@ const LayoutTree = () => {
     isHoveringSorted,
     maxVisibleY,
     newRank,
-    scrollTop,
+    scrollTopIfDragging,
     singleLineHeight,
     sizes,
     toolbarHeight,
@@ -706,9 +710,6 @@ const LayoutTree = () => {
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
-  // Calculate the position of the arrow relative to the bottom of the container.
-  const arrowBottom = totalHeight + spaceBelow - scrollTop - viewportHeight + navAndFooterHeight
-
   return (
     <div
       className={css({
@@ -720,7 +721,11 @@ const LayoutTree = () => {
       }}
       ref={ref}
     >
-      <HoverArrow bottom={arrowBottom} hoverArrowVisibility={hoverArrowVisibility} top={scrollTop} />
+      <HoverArrow
+        // Calculate the position of the arrow relative to the bottom of the container.
+        bottom={totalHeight + spaceBelow - viewportHeight + navAndFooterHeight}
+        hoverArrowVisibility={hoverArrowVisibility}
+      />
       <div
         className={css({ transition: `transform {durations.layoutSlowShiftDuration} ease-out` })}
         style={{
