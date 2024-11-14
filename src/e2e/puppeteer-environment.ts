@@ -24,7 +24,7 @@ const PuppeteerEnvironment: Environment = {
     ]
 
     const browser = await puppeteer
-      .connect({ browserWSEndpoint: `ws://localhost:7566?${args.join('&')}` })
+      .connect({ browserWSEndpoint: `ws://127.0.0.1:7566?${args.join('&')}` })
       // catch and log a launch error, otherwise it will not appear in the CI logs
       .catch((err: Error) => {
         // using `console.log` here to avoid errors or logs being swallowed by vitest
