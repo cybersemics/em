@@ -56,7 +56,7 @@ const colors = {
     midPink: 'rgba(255, 123, 195, 1)', // #ff7bc3
     purpleEggplant: '#32305f', // purple-eggplant
     commandSelected: 'rgba(33, 33, 33, 1)', // #212121
-    eggplant: 'rgba(82, 48, 95, 1)', // eggplant
+    eggplant: 'rgba(82, 48, 95, 1)',
     checkboxForm: 'rgba(62, 62, 62, 1)', // #3e3e3e
     error: 'rgba(204, 34, 51, 1)',
     activeBreadCrumb: 'rgba(144, 144, 144, 1)', // #909090
