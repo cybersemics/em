@@ -167,7 +167,6 @@ export default [
       'no-extra-parens': 'off',
       'no-unused-vars': 'off',
       'no-use-before-define': 'off',
-      'no-unused-expressions': 'off',
       '@stylistic/ts/member-delimiter-style': [
         'error',
         {
@@ -180,7 +179,6 @@ export default [
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
-      '@typescript-eslint/no-unused-expressions': 'off',
       '@typescript-eslint/no-use-before-define': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }],
       '@typescript-eslint/explicit-function-return-type': 'off',
