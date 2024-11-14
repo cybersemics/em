@@ -190,7 +190,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
           <div>
             <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
             <div className={css({ marginTop: '1em' })}>
-              {simplePaths.map((simplePath, i) => (
+              {simplePaths.map(simplePath => (
                 <DragAndDropFavorite
                   key={head(simplePath)}
                   simplePath={simplePath}

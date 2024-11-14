@@ -40,10 +40,7 @@ export interface editThoughtPayload {
 }
 
 /** Changes the text of an existing thought. */
-const editThought = (
-  state: State,
-  { cursorOffset, force, oldValue, newValue, path, rankInContext }: editThoughtPayload,
-) => {
+const editThought = (state: State, { cursorOffset, force, oldValue, newValue, path }: editThoughtPayload) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   // thoughts may exist for both the old value and the new value

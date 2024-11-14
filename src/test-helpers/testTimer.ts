@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import FakeTimer, { InstalledClock } from '@sinonjs/fake-timers'
 
 /**

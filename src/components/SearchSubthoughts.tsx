@@ -33,6 +33,7 @@ const SearchSubthoughts: FC = () => {
   /**
    * Search thoughts remotely or locally and add it to pullQueue.
    */
+  //ignore this line beacaue its call in useEffect Function
   const searchThoughts = async (value: string) => {
     throw new Error('Not implemented')
     // const searchLocal = localSearch(store.getState())

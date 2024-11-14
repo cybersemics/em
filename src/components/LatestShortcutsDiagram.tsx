@@ -55,7 +55,7 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
             ...(position === 'bottom' && { bottom: '20%' }),
           })}
         >
-          {shortcutsList.map((shortcut, index) => {
+          {shortcutsList.map(shortcut => {
             return (
               <div key={shortcut.id}>
                 <div

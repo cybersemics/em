@@ -72,6 +72,8 @@ const ShortcutRow = ({
       <tr
         key={shortcut.id}
         className={css({
+          display: 'flex',
+          position: 'relative',
           cursor: customize ? 'pointer' : undefined,
           ...(isDragging || selected
             ? {
@@ -91,7 +93,35 @@ const ShortcutRow = ({
         ref={dragSource}
         onClick={onSelect ? () => onSelect(selected ? null : shortcut) : undefined}
       >
-        <th
+        {
+          // selected bar
+          selected && (
+            <td
+              className={css({
+                width: '0.25em',
+                padding: 0,
+                // set the height so it is flush with the bottom of the shortcut row description
+                height: 'calc(100% - 1.375em)',
+                backgroundColor: 'highlight',
+                position: 'absolute',
+                // hanng off the left edge of the shortcut row
+                left: '-1em',
+                // set the top so it is flush with the top of the shortcut row label
+                top: '0.25em',
+              })}
+            />
+          )
+        }
+        {/* center gesture diagrams on mobile */}
+        {isTouch && shortcut.gesture ? (
+          <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
+            {isTouch && shortcut.gesture ? (
+              // GesturePath[]
+              <GestureDiagram path={shortcut.gesture as GesturePath} size={48} arrowSize={12} />
+            ) : null}
+          </td>
+        ) : null}
+        <td
           className={css({
             // create a container for the selected bar equal to the height of the row
             position: 'relative',
@@ -100,24 +130,6 @@ const ShortcutRow = ({
             fontWeight: 'normal',
           })}
         >
-          {
-            // selected bar
-            selected && (
-              <div
-                className={css({
-                  width: '0.25em',
-                  // set the height so it is flush with the bottom of the shortcut row description
-                  height: 'calc(100% - 1.375em)',
-                  backgroundColor: 'highlight',
-                  position: 'absolute',
-                  // hanng off the left edge of the shortcut row
-                  left: '-1em',
-                  // set the top so it is flush with the top of the shortcut row label
-                  top: '0.25em',
-                })}
-              />
-            )
-          }
           {customize && indexInToolbar && (
             <span
               className={css({ color: 'dim' })}
@@ -134,16 +146,10 @@ const ShortcutRow = ({
           ) : (
             <b>{shortcut.label}</b>
           )}
-          <p>{description}</p>
-        </th>
-        {/* center gesture diagrams on mobile */}
-        <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
-          {isTouch && shortcut.gesture ? (
-            // GesturePath[]
-            <GestureDiagram path={shortcut.gesture as GesturePath} size={48} arrowSize={12} />
-          ) : shortcut.keyboard ? (
-            formatKeyboardShortcut(shortcut.keyboard)
+          {shortcut.keyboard && !isTouch ? (
+            <p className={css({ color: 'gray', marginBottom: 0 })}>{formatKeyboardShortcut(shortcut.keyboard)}</p>
           ) : null}
+          <p>{description}</p>
         </td>
       </tr>
     )

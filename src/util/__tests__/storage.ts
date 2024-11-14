@@ -14,7 +14,7 @@ it('types', () => {
     },
     someBool: { default: false },
     someNumber: { default: 18 },
-    noDefault: { decode: (s: string | null) => 'noDefault' },
+    noDefault: { decode: () => 'noDefault' },
   })
 
   type NonAny<T> = T extends any ? (any extends T ? never : T) : T

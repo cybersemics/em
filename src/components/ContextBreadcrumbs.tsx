@@ -240,7 +240,7 @@ const ContextBreadcrumbs = ({
         ) : null
       ) : (
         <TransitionGroup childFactory={factoryManager}>
-          {ellipsizedThoughts.map(({ isOverflow, id, label, nodeRef }, i) => {
+          {ellipsizedThoughts.map(({ isOverflow, label, nodeRef }, i) => {
             // Use index as key because we actually want all segments to the right to re-render.
             // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
             // This way it will only animate when the length of the cursor changes.

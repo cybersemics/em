@@ -6,7 +6,7 @@ import { token } from '../../styled-system/tokens'
 import fastClick from '../util/fastClick'
 
 /** A triangular toggle component. */
-const Toggle = ({ children, expand, title }: { children?: any; expand?: boolean; title?: string }) => {
+const Toggle = ({ children, title }: { children?: any; expand?: boolean; title?: string }) => {
   const [expanded, setExpanded] = useState(false)
 
   return (

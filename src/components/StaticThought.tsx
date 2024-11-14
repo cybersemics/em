@@ -92,7 +92,6 @@ const isBlack = (color: string | undefined) => {
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
   allowSingleContext,
-  editing,
   // See: ThoughtProps['isContextPending']
   env,
   isContextPending,

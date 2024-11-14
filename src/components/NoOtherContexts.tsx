@@ -9,13 +9,7 @@ import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 const toggleContextViewShortcut = shortcutById('toggleContextView')
 
 /** A message that explains that the thought is no other contexts and provides a hint for adding it to a context. */
-const NoOtherContexts = ({
-  allowSingleContext,
-  simplePath,
-}: {
-  allowSingleContext?: boolean
-  simplePath: SimplePath
-}) => {
+const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean; simplePath: SimplePath }) => {
   // const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
 
   return (

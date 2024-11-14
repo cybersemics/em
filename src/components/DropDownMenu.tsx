@@ -37,7 +37,7 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
         })}
         style={style}
       >
-        {options.map((option, index) => (
+        {options.map(option => (
           <div
             className={css({
               cursor: 'pointer',
