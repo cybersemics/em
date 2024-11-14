@@ -13,7 +13,11 @@ const waitForThoughtExistInDb = async (value: string) => {
       function pollForLexeme(value: string) {
         setTimeout(async () => {
           const thoughtFromDB = await testHelpers.getLexemeFromIndexedDB(value)
-          thoughtFromDB ? resolve(thoughtFromDB) : pollForLexeme(value)
+          if (thoughtFromDB) {
+            resolve(thoughtFromDB)
+          } else {
+            pollForLexeme(value)
+          }
         }, 50)
       }
       pollForLexeme(value)
