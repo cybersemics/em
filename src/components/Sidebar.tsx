@@ -74,9 +74,10 @@ const Sidebar = () => {
      * we are providing different classname to drawer based on isTouch property.
      */
     <SwipeableDrawerWithClasses
+      data-testid='sidebar'
       classes={{
         /* Increase precedence over .css-1u2w381-MuiModal-root-MuiDrawer-root z-index. */
-        root: css({ zIndex: 'sidebar !important' }),
+        root: css({ userSelect: 'none', zIndex: 'sidebar !important' }),
         /* material drawer container css z-index override */
         paper: css({
           width: '400px',

@@ -6,6 +6,7 @@ import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
 import preventAutoscroll from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
+import usePrevious from '../../hooks/usePrevious'
 import equalPath from '../../util/equalPath'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
@@ -34,6 +35,8 @@ const useEditMode = ({
   const dragInProgress = useSelector(state => state.dragInProgress)
   const disabledRef = useRef(false)
   const editableNonce = useSelector(state => state.editableNonce)
+  const showSidebar = useSelector(state => state.showSidebar)
+  const hadSidebar = usePrevious(showSidebar)
 
   // focus on the ContentEditable element if editing os on desktop
   const editMode = !isTouch || editing
@@ -135,6 +138,13 @@ const useEditMode = ({
       disabledRef.current = false
     })
   }, [])
+
+  // Resume focus if sidebar was just closed and isEditing is true
+  useEffect(() => {
+    if (isEditing && !showSidebar && hadSidebar) {
+      contentRef.current?.focus()
+    }
+  }, [contentRef, hadSidebar, isEditing, showSidebar])
 
   return allowDefaultSelection
 }
