@@ -22,7 +22,6 @@ import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
 import waitUntil from './waitUntil'
 
-// lint disable because type is define but not using
 async function pasteOverload(text: string): Promise<void>
 async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
 /** Parameter<...> doesn't handle function overload afaik, so we need to fix the types manually before exporting. */
