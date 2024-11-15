@@ -96,10 +96,7 @@ const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 
 /** A computed store that tracks the bottom of the viewport. Used for list virtualization. Does not include overscroll, i.e. if the user scrolls past the top of the document viewportBottom will not change. */
 const viewportBottomStore = reactMinistore.compose(
-  (viewport, scrollTop) => {
-    const scrollTopNoOverscroll = Math.min(Math.max(scrollTop, 0), document.body.scrollHeight - viewport.innerHeight)
-    return scrollTopNoOverscroll + viewport.innerHeight
-  },
+  (viewport, scrollTop) => Math.max(scrollTop, 0) + viewport.innerHeight,
   [viewportStore, scrollTopStore],
 )
 
@@ -139,7 +136,6 @@ const useSizeTracking = () => {
     ({
       height,
       width,
-      id,
       isVisible,
       key,
     }: {

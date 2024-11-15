@@ -132,14 +132,8 @@ class ModalComponent extends React.Component<ModalProps> {
                   display: 'inline-block',
                   width: '11px',
                   height: '11px',
-                  color: {
-                    base: 'rgba(0, 0, 0, 0.3)',
-                    _dark: 'rgba(255, 255, 255, 0.3)',
-                  },
-                  borderColor: {
-                    base: 'rgba(0, 0, 0, 0.3)',
-                    _dark: 'rgba(255, 255, 255, 0.3)',
-                  },
+                  color: 'bgOverlay30',
+                  borderColor: 'bgOverlay30',
                 },
               })}
               {...fastClick(() => this.close())}

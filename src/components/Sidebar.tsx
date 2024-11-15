@@ -132,7 +132,7 @@ const Sidebar = () => {
         <div
           aria-label='sidebar'
           className={css({
-            background: { base: '#f5f5f5', _dark: '#292a2b' },
+            background: 'sidebarBg',
             overflowY: 'scroll',
             overscrollBehavior: 'contain',
             boxSizing: 'border-box',

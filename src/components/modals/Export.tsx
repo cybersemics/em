@@ -148,7 +148,7 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
         return replicateTree(id, {
           // TODO: Warn the user if offline or not fully replicated
           remote: false,
-          onThought: (thought, thoughtIndex) => {
+          onThought: thought => {
             if (!isMounted.current) return
             setExportingThoughtsThrottled(thought)
           },
@@ -298,7 +298,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       : (numDescendantsInState ?? 0)
     : null
 
-  const exportThoughtsPhraseFinal = useSelector(state =>
+  const exportThoughtsPhraseFinal = useSelector(() =>
     exportPhrase(
       simplePaths.map(simplePath => head(simplePath)),
       numDescendantsFinal,
@@ -591,10 +591,10 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
           ref={textareaRef}
           readOnly
           className={css({
-            backgroundColor: '#111',
+            backgroundColor: 'darkgray',
             border: 'none',
             borderRadius: '10px',
-            color: '#aaa',
+            color: 'exportTextareaColor',
             fontSize: '1em',
             height: '120px',
             marginBottom: 'calc(max(1.2em, 20px))',
@@ -699,10 +699,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       {/* isDocumentEditable() && (
         <>
           <div className={css({
-            borderTop: {
-              base:"solid 1px #ccc",
-              _dark:"solid 1px #444"
-            },
+            borderTop: "solid 1px {colors.modalExportUnused}",
             marginTop: "30px",
             marginBottom: "20px",
             paddingTop: "40px",

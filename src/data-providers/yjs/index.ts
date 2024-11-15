@@ -53,6 +53,5 @@ export const clientIdReady = (
 
 // Disable IndexedDB during tests because of TransactionInactiveError in fake-indexeddb.
 if (import.meta.env.MODE !== 'test') {
-  // eslint-disable-next-line no-new
   new IndexeddbPersistence(encodePermissionsDocumentName(tsid), permissionsClientDoc)
 }

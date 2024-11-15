@@ -13,6 +13,7 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import { css, cva, cx } from '../../styled-system/css'
 import { toolbarPointerEvents } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import TipId from '../@types/TipId'
@@ -40,7 +41,7 @@ const arrow = cva({
     fontSize: '80%',
     paddingTop: '15px',
     verticalAlign: 'middle',
-    color: 'gray',
+    color: 'gray66',
     backgroundColor: 'bg',
     display: 'inline-block',
     lineHeight: '20px',
@@ -214,7 +215,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             textAlign: 'right',
             maxWidth: '100%',
             userSelect: 'none',
-            WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
+            WebkitTapHighlightColor: '{colors.bgTransparent}',
             whiteSpace: 'nowrap',
             ...(!customize && {
               zIndex: 'toolbarContainer',
@@ -237,7 +238,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             style={{ paddingTop: `${calculatePaddingTop(fontSize)}px` }}
             className={arrow({ direction: 'left', isHidden: !leftArrowIsShown, fixed: !customize })}
           >
-            <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />
+            <TriangleLeft width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
           </span>
           <div
             id='toolbar'
@@ -283,7 +284,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             style={{ paddingTop: `${calculatePaddingTop(fontSize)}px` }}
             className={arrow({ direction: 'right', isHidden: !rightArrowIsShown, fixed: !customize })}
           >
-            <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
+            <TriangleRight width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
           </span>
         </div>
       </div>

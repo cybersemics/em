@@ -36,63 +36,124 @@ const getNextDeviceName = (permissions: Index<Share>, start?: number): string =>
     ? getNextDeviceName(permissions, nextDeviceNumber + 1)
     : `Device ${nextDeviceNumber}`
 }
+/** Permissions role label. */
+const RoleLabel = ({ role }: { role: Role }) => <>{role === 'owner' ? 'Full Access' : role}</>
 
-/** Modal for Sharing and Device Management. */
-const ModalDevices = () => {
-  const permissions = usePermissions()
-  const shareDetailRef = useRef<HTMLDivElement>(null)
-  const shareListRef = useRef<HTMLDivElement>(null)
-
-  // selected accessToken
-  const [selected, setSelected] = useState<string | null>(null)
-
-  const onBack = useCallback(() => setSelected(null), [])
-
-  const modalClasses = modalText()
-  return (
-    <ModalComponent
-      id='devices'
-      title='Device Management'
-      center
-      // do not show the close button on the detail view, since it renders the "Remove device" link at the very bottom of the page
-      actions={({ close }) =>
-        !selected ? <ActionButton key='close' title='Close' {...fastClick(() => close())} /> : null
-      }
-    >
-      <div className={modalClasses.wrapper}>
-        <TransitionGroup>
-          {selected && permissions[selected] ? (
-            <CSSTransition
-              key='share-detail'
-              nodeRef={shareDetailRef}
-              classNames='fade-400'
-              exit={false}
-              timeout={durations.get('mediumDuration')}
-              unmountOnExit
-            >
-              <ShareDetail
-                ref={shareDetailRef}
-                accessToken={selected}
-                isLastDevice={Object.keys(permissions).length === 1}
-                onBack={onBack}
-                share={permissions[selected]}
-              />
-            </CSSTransition>
-          ) : (
-            <CSSTransition
-              key='share-list'
-              nodeRef={shareListRef}
-              classNames='fade-400'
-              exit={false}
-              timeout={durations.get('mediumDuration')}
-              unmountOnExit
-            >
-              <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
-            </CSSTransition>
-          )}
-        </TransitionGroup>
+/** Renders a single device share. */
+const ShareRow = React.memo(
+  ({ isCurrent, role, share }: { accessToken: string; isCurrent?: boolean; share: Share; role: Role }) => {
+    return (
+      <div
+        className={css({
+          display: 'flex',
+          flexDirection: 'row',
+          alignSelf: 'start',
+          margin: '1% auto',
+          alignItems: 'center',
+        })}
+      >
+        <div className={css({ display: 'inline-flex' })}>
+          <span className={css({ padding: '0.75em 1em 0.75em 0' })}>
+            <span className={css({ display: 'inline-block', fontWeight: 'bold', marginRight: '1em', minWidth: '8em' })}>
+              {share?.name || 'Untitled'}
+            </span>
+            <RoleLabel role={role} />
+          </span>{' '}
+          <span
+            className={css({
+              textAlign: 'left',
+              fontStyle: 'italic',
+              marginRight: '1em',
+              margin: '0 10px',
+              padding: '0.75em 0',
+            })}
+          >
+            {isCurrent ? 'this device' : <a>view</a>}
+          </span>
+        </div>
       </div>
-    </ModalComponent>
+    )
+  },
+)
+ShareRow.displayName = 'ShareRow'
+/** The form that allows the user to add a new device. */
+const AddDeviceForm = ({
+  onCancel,
+  onSubmit,
+  defaultName,
+}: {
+  onCancel: () => void
+  onSubmit: ({ name, role }: Pick<Share, 'name' | 'role'>) => void
+  defaultName?: string
+}) => {
+  const [name, setName] = useState(defaultName ?? 'Untitled')
+  return (
+    <div className={css({ margin: '0 auto' })}>
+      <div
+        className={css({
+          borderBottom: 'solid 1px',
+          borderBottomColor: 'gray15',
+          margin: '1em auto 3em',
+          width: 'calc(100% - 4em)',
+        })}
+      />
+      <div>
+        <span className={css({ marginRight: '1em' })}>Name: </span>
+        <input
+          ref={el => el?.focus()}
+          type='text'
+          onChange={e => setName(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.stopPropagation()
+              onSubmit({ name, role: 'owner' })
+            }
+            // TODO: The modal escape currently takes precedence
+            else if (e.key === 'Escape') {
+              e.stopPropagation()
+              onCancel()
+            }
+          }}
+          value={name}
+          className={css({ display: 'inline', width: '10em', minWidth: '5em', marginRight: '1em' })}
+        />
+      </div>
+
+      <div>
+        <span className={css({ marginRight: '1em' })}>Access: </span>
+        <span
+          className={css({
+            display: 'inline-block',
+            fontSize: '16px',
+            marginRight: '1em',
+            marginBottom: '2vh',
+            minWidth: '5em',
+            padding: '10px 1.75em 10px 0',
+            textAlign: 'left',
+            width: '10em',
+          })}
+        >
+          Full Access
+        </span>
+      </div>
+
+      <div>
+        <a
+          {...fastClick(() => onSubmit({ name, role: 'owner' }))}
+          className={cx(
+            anchorButton({
+              outline: true,
+            }),
+            css({ display: 'inline-block' }),
+          )}
+        >
+          Add
+        </a>
+        <a {...fastClick(onCancel)} className={css({ color: 'gray66', marginLeft: '1em' })}>
+          Cancel
+        </a>
+      </div>
+    </div>
   )
 }
 
@@ -114,7 +175,7 @@ const ShareList = React.forwardRef<
   // sort the owner to the top, then sort by name
   const permissionsSorted = _.sortBy(
     Object.entries(permissions),
-    ([accessToken, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
+    ([, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
   )
 
   /** Keyboad shortcuts. */
@@ -223,7 +284,7 @@ const ShareList = React.forwardRef<
           </TransitionGroup>
         </>
       ) : (
-        <div className={css({ color: 'gray', fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' })}>
+        <div className={css({ color: 'gray66', fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' })}>
           <p>This device is currently offline</p>
           <p>Please connect to the Internet to manage sharing.</p>
         </div>
@@ -233,128 +294,6 @@ const ShareList = React.forwardRef<
 })
 
 ShareList.displayName = 'ShareList'
-
-/** Permissions role label. */
-const RoleLabel = ({ role }: { role: Role }) => <>{role === 'owner' ? 'Full Access' : role}</>
-
-/** Renders a single device share. */
-const ShareRow = React.memo(
-  ({ accessToken, isCurrent, role, share }: { accessToken: string; isCurrent?: boolean; share: Share; role: Role }) => {
-    return (
-      <div
-        className={css({
-          display: 'flex',
-          flexDirection: 'row',
-          alignSelf: 'start',
-          margin: '1% auto',
-          alignItems: 'center',
-        })}
-      >
-        <div className={css({ display: 'inline-flex' })}>
-          <span className={css({ padding: '0.75em 1em 0.75em 0' })}>
-            <span className={css({ display: 'inline-block', fontWeight: 'bold', marginRight: '1em', minWidth: '8em' })}>
-              {share?.name || 'Untitled'}
-            </span>
-            <RoleLabel role={role} />
-          </span>{' '}
-          <span
-            className={css({
-              textAlign: 'left',
-              fontStyle: 'italic',
-              marginRight: '1em',
-              margin: '0 10px',
-              padding: '0.75em 0',
-            })}
-          >
-            {isCurrent ? 'this device' : <a>view</a>}
-          </span>
-        </div>
-      </div>
-    )
-  },
-)
-ShareRow.displayName = 'ShareRow'
-
-/** The form that allows the user to add a new device. */
-const AddDeviceForm = ({
-  onCancel,
-  onSubmit,
-  defaultName,
-}: {
-  onCancel: () => void
-  onSubmit: ({ name, role }: Pick<Share, 'name' | 'role'>) => void
-  defaultName?: string
-}) => {
-  const [name, setName] = useState(defaultName ?? 'Untitled')
-  return (
-    <div className={css({ margin: '0 auto' })}>
-      <div
-        className={css({
-          borderBottom: 'solid 1px',
-          borderBottomColor: 'gray15',
-          margin: '1em auto 3em',
-          width: 'calc(100% - 4em)',
-        })}
-      />
-      <div>
-        <span className={css({ marginRight: '1em' })}>Name: </span>
-        <input
-          ref={el => el?.focus()}
-          type='text'
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              e.stopPropagation()
-              onSubmit({ name, role: 'owner' })
-            }
-            // TODO: The modal escape currently takes precedence
-            else if (e.key === 'Escape') {
-              e.stopPropagation()
-              onCancel()
-            }
-          }}
-          value={name}
-          className={css({ display: 'inline', width: '10em', minWidth: '5em', marginRight: '1em' })}
-        />
-      </div>
-
-      <div>
-        <span className={css({ marginRight: '1em' })}>Access: </span>
-        <span
-          className={css({
-            display: 'inline-block',
-            fontSize: '16px',
-            marginRight: '1em',
-            marginBottom: '2vh',
-            minWidth: '5em',
-            padding: '10px 1.75em 10px 0',
-            textAlign: 'left',
-            width: '10em',
-          })}
-        >
-          Full Access
-        </span>
-      </div>
-
-      <div>
-        <a
-          {...fastClick(() => onSubmit({ name, role: 'owner' }))}
-          className={cx(
-            anchorButton({
-              outline: true,
-            }),
-            css({ display: 'inline-block' }),
-          )}
-        >
-          Add
-        </a>
-        <a {...fastClick(onCancel)} className={css({ color: 'gray', marginLeft: '1em' })}>
-          Cancel
-        </a>
-      </div>
-    </div>
-  )
-}
 
 /** Renders an editable name with a pencil icon to focus. */
 const EditableName = React.memo(
@@ -383,7 +322,7 @@ const EditableName = React.memo(
             verticalAlign: 'bottom',
           })}
         >
-          <PencilIcon fill={token('colors.gray')} size={25} />
+          <PencilIcon fill={token('colors.gray66')} size={25} />
         </a>
       </div>
     )
@@ -533,7 +472,7 @@ const ShareDetail = React.memo(
             </div>
           )}
 
-          <p className={css({ color: 'gray' })}>
+          <p className={css({ color: 'gray66' })}>
             Created: {new Date(share.created).toLocaleString()}
             <br />
             Last Accessed: {share.accessed ? new Date(share.accessed).toLocaleString() : 'never'}
@@ -557,7 +496,7 @@ const ShareDetail = React.memo(
           )}
 
           <div className={css({ marginTop: '4em' })}>
-            <p className={css({ color: 'gray', marginTop: '0.5em' })}>
+            <p className={css({ color: 'gray66', marginTop: '0.5em' })}>
               {isLastDevice
                 ? 'This is the last device with access to this thoughtspace. If you clear the thoughtspace, all thoughts will be permanently deleted.'
                 : isCurrent
@@ -581,7 +520,64 @@ const ShareDetail = React.memo(
   ),
 )
 ShareDetail.displayName = 'ShareDetail'
+/** Modal for Sharing and Device Management. */
+const ModalDevices = () => {
+  const permissions = usePermissions()
+  const shareDetailRef = useRef<HTMLDivElement>(null)
+  const shareListRef = useRef<HTMLDivElement>(null)
 
+  // selected accessToken
+  const [selected, setSelected] = useState<string | null>(null)
+
+  const onBack = useCallback(() => setSelected(null), [])
+
+  const modalClasses = modalText()
+  return (
+    <ModalComponent
+      id='devices'
+      title='Device Management'
+      center
+      // do not show the close button on the detail view, since it renders the "Remove device" link at the very bottom of the page
+      actions={({ close }) =>
+        !selected ? <ActionButton key='close' title='Close' {...fastClick(() => close())} /> : null
+      }
+    >
+      <div className={modalClasses.wrapper}>
+        <TransitionGroup>
+          {selected && permissions[selected] ? (
+            <CSSTransition
+              key='share-detail'
+              nodeRef={shareDetailRef}
+              classNames='fade-400'
+              exit={false}
+              timeout={durations.get('mediumDuration')}
+              unmountOnExit
+            >
+              <ShareDetail
+                ref={shareDetailRef}
+                accessToken={selected}
+                isLastDevice={Object.keys(permissions).length === 1}
+                onBack={onBack}
+                share={permissions[selected]}
+              />
+            </CSSTransition>
+          ) : (
+            <CSSTransition
+              key='share-list'
+              nodeRef={shareListRef}
+              classNames='fade-400'
+              exit={false}
+              timeout={durations.get('mediumDuration')}
+              unmountOnExit
+            >
+              <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
+            </CSSTransition>
+          )}
+        </TransitionGroup>
+      </div>
+    </ModalComponent>
+  )
+}
 const ModalShareMemo = React.memo(ModalDevices)
 
 export default ModalShareMemo

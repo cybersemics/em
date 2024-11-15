@@ -72,6 +72,28 @@ export const hashKeyDown = (e: KeyboardEvent): string =>
   // use e.keyCode if available instead
   (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
 
+/** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
+const arrowTextToArrowCharacter = (s: string) =>
+  (
+    ({
+      ArrowLeft: '←',
+      ArrowRight: '→',
+      ArrowUp: '↑',
+      ArrowDown: '↓',
+    }) as Index
+  )[s] || s
+
+/** Formats a keyboard shortcut to display to the user. */
+export const formatKeyboardShortcut = (keyboardOrString: Key | string): string => {
+  const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString as string } : keyboardOrString
+  return (
+    (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
+    (keyboard.alt ? (isMac ? 'Option' : 'Alt') + ' + ' : '') +
+    (keyboard.control ? 'Control + ' : '') +
+    (keyboard.shift ? 'Shift + ' : '') +
+    arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
+  )
+}
 /** Initializes shortcut indices and stores conflicts. */
 const index = (): {
   shortcutKeyIndex: Index<Shortcut>
@@ -125,6 +147,8 @@ const index = (): {
 
 let commandPaletteGesture: number | undefined
 
+const { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex } = index()
+
 /**
  * Keyboard and gesture handlers factory function that binds the store to event handlers.
  *
@@ -143,7 +167,7 @@ let commandPaletteGesture: number | undefined
  */
 export const inputHandlers = (store: Store<State, any>) => ({
   /** Handles gesture hints when a valid segment is entered. */
-  handleGestureSegment: ({ gesture, sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
+  handleGestureSegment: ({ sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
     const state = store.getState()
     const experienceMode = getUserSetting(state, Settings.experienceMode)
 
@@ -290,35 +314,9 @@ export const inputHandlers = (store: Store<State, any>) => ({
   },
 })
 
-/** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
-// eslint-disable-next-line @typescript-eslint/no-extra-parens
-const arrowTextToArrowCharacter = (s: string) =>
-  (
-    ({
-      ArrowLeft: '←',
-      ArrowRight: '→',
-      ArrowUp: '↑',
-      ArrowDown: '↓',
-    }) as Index
-  )[s] || s
-
-/** Formats a keyboard shortcut to display to the user. */
-export const formatKeyboardShortcut = (keyboardOrString: Key | string): string => {
-  const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString as string } : keyboardOrString
-  return (
-    (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
-    (keyboard.alt ? (isMac ? 'Option' : 'Alt') + ' + ' : '') +
-    (keyboard.control ? 'Control + ' : '') +
-    (keyboard.shift ? 'Shift + ' : '') +
-    arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
-  )
-}
-
-/** Get a shortcut by its id. */
-export const shortcutById = (id: ShortcutId): Shortcut => shortcutIdIndex[id]
-
 /** Gets the canonical gesture of the shortcut as a string, ignoring aliases. Returns an empty string if the shortcut does not have a gesture. */
 export const gestureString = (shortcut: Shortcut): string =>
   (typeof shortcut.gesture === 'string' ? shortcut.gesture : shortcut.gesture?.[0] || '') as string
 
-const { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex } = index()
+/** Get a shortcut by its id. */
+export const shortcutById = (id: ShortcutId): Shortcut => shortcutIdIndex[id]

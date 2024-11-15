@@ -158,7 +158,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           ? undefined
           : isButtonExecutable && isButtonActive
             ? token('colors.fg')
-            : 'gray', // keep fill in style because some icons need the exact color
+            : token('colors.gray50'), // keep fill in style because some icons need the exact color
       width: fontSize + 4,
       height: fontSize + 4,
     }),
@@ -237,7 +237,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         (isHovering || dropToRemove) && (
           <div
             className={css({
-              borderRight: dropToRemove ? `dashed 1px {colors.gray}` : undefined,
+              borderRight: dropToRemove ? `dashed 1px {colors.gray66}` : undefined,
               position: 'absolute',
               left: dropToRemove ? 15 : -2,
               // match the height of the inverted button

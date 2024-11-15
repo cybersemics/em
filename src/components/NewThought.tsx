@@ -83,10 +83,7 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
               type === 'bullet'
                 ? css({
                     fontStyle: 'italic',
-                    color: {
-                      base: 'rgba(7, 7, 7, 0.5)',
-                      _dark: 'rgba(255, 255, 255, 0.5)',
-                    },
+                    color: 'dim',
                   })
                 : cx(
                     anchorButton({

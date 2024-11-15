@@ -67,6 +67,7 @@ const useLongPress = (
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
+    //eslint disable rule because e use in canhover function
     (e: React.MouseEvent | React.TouchEvent) => {
       // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
       // This gives other components a chance to short circuit.

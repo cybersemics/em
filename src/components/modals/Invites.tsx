@@ -150,7 +150,7 @@ const Invites = () => {
           You get three shiny gift codes to share <b>em</b> with anyone you choose!
         </p>
         {isFetchingInvites && <p className={css({ fontSize: '18px' })}>Fetching your shiny codes ✨...</p>}
-        {Object.values(inviteCodes).map(({ used, id, hasSeen }, idx) => {
+        {Object.values(inviteCodes).map(({ used, id, hasSeen }) => {
           const selectedIconFill = focusedGiftCode !== id ? 'grey' : undefined
           const link = `${baseUrl}/signup?code=${id}`
           return (
