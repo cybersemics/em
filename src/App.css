@@ -23,6 +23,25 @@
   transition: opacity 0.2s ease-out;
 }
 
+/* react-transition-group animation: fade */
+.very-fast-fade-enter {
+  opacity: 0;
+}
+
+.very-fast-fade-enter-active {
+  opacity: 1;
+  transition: opacity 80ms ease-out;
+}
+
+.very-fast-fade-exit {
+  opacity: 1;
+}
+
+.very-fast-fade-exit-active {
+  opacity: 0;
+  transition: opacity 80ms ease-out;
+}
+
 /* react-transition-group animation: fade-slow-out */
 .fade-slow-out-enter {
   opacity: 0;

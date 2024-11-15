@@ -792,7 +792,7 @@ const LayoutTree = () => {
                   nodeRef={nodeRef}
                   key={key}
                   timeout={durations.get('veryFastDuration')}
-                  classNames='fade'
+                  classNames='very-fast-fade'
                   unmountOnExit
                 >
                   <div
