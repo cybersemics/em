@@ -84,7 +84,10 @@ export const alertActionCreator =
     // if clearDelay is not provided i.e undefined alert should not dismiss.
     if (clearDelay) {
       // if clearAlertTimeoutId !== null, it means that previous alert hasn't been cleared yet. In this case cancel previous timeout and start new.
-      clearAlertTimeoutId && clearTimeout(clearAlertTimeoutId)
+      if (clearAlertTimeoutId) {
+        clearTimeout(clearAlertTimeoutId)
+      }
+
       clearAlertTimeoutId = setTimeout(clearOriginalAlert, clearDelay)
     }
 
