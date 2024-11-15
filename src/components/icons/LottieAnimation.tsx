@@ -1,8 +1,10 @@
 import Player, { LottieRefCurrentProps } from 'lottie-react'
 import React, { useEffect, useRef, useState } from 'react'
+import LottieData, { RGBA, ShapeItem, ShapeLayer } from '../../@types/LottieTypes'
 
+/** The props for the LottieAnimation component. */
 interface LottieAnimationProps {
-  animationData: any
+  animationData: LottieData | null
   speed?: number
   color?: string
   onComplete?: () => void
@@ -15,7 +17,7 @@ interface LottieAnimationProps {
  * @param hex - The hex color code.
  * @returns The RGBA values.
  */
-const hexToRGBA = (hex: string): number[] => {
+const hexToRGBA = (hex: string): RGBA => {
   let r = 0,
     g = 0,
     b = 0
@@ -41,19 +43,21 @@ const hexToRGBA = (hex: string): number[] => {
  * stroke or fill color properties.
  * @param rgbaArray - The RGBA values to set as new color.
  */
-const updateColorsInItem = (item: any, rgbaArray: number[]) => {
+const updateColorsInItem = (item: ShapeItem, rgbaArray: RGBA) => {
   if ((item.ty === 'st' || item.ty === 'fl') && item.c) {
     // Check for animated color property
     if (item.c.a === 1) {
-      item.c.k.forEach((keyframe: any) => {
-        keyframe.s = rgbaArray
-      })
+      if (Array.isArray(item.c.k)) {
+        item.c.k.forEach((keyframe: any) => {
+          keyframe.s = rgbaArray
+        })
+      }
     } else {
       item.c.k = rgbaArray
     }
   }
   if (item.it) {
-    item.it.forEach((subItem: any) => updateColorsInItem(subItem, rgbaArray))
+    item.it.forEach((subItem: ShapeItem) => updateColorsInItem(subItem, rgbaArray))
   }
 }
 
@@ -69,13 +73,15 @@ const updateColorsInItem = (item: any, rgbaArray: number[]) => {
  * @param newColor - A string representing the new color to be applied, in hexadecimal format.
  * This string is converted into an RGBA array to update the animation colors.
  */
-const changeLineColor = (data: any, newColor: string): void => {
+const changeLineColor = (data: LottieData, newColor: string): void => {
   const rgbaArray = hexToRGBA(newColor)
 
-  data.layers.forEach((layer: any) => {
+  data.layers.forEach((layer: ShapeLayer) => {
     if (layer.shapes) {
-      layer.shapes.forEach((shape: any) => {
-        shape.it.forEach((item: any) => updateColorsInItem(item, rgbaArray))
+      layer.shapes.forEach((shape: ShapeItem) => {
+        if (shape.it) {
+          shape.it.forEach((item: ShapeItem) => updateColorsInItem(item, rgbaArray))
+        }
       })
     }
   })
@@ -108,14 +114,19 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
   const lottieRef = useRef<LottieRefCurrentProps | null>(null)
 
   useEffect(() => {
-    if (lottieRef.current) {
+    if (lottieRef.current && animationData) {
       lottieRef.current.setSpeed(speed)
-      if (animationData && color) {
+      if (color) {
         changeLineColor(animationData, color)
-        setKey(prevKey => prevKey + 1)
+        setKey(prevKey => prevKey + 1) // Forces the re-render to apply the color change
       }
     }
   }, [speed, color, animationData])
+
+  if (!animationData) {
+    console.warn('animationData is not provided.')
+    return null // Early return if animationData is null
+  }
 
   return (
     <Player

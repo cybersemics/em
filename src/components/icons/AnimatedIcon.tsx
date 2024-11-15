@@ -45,7 +45,7 @@ const AnimatedIcon = ({
       }}
     >
       {animated ? (
-        <LottieAnimation animationData={animationData} onComplete={animationComplete} color={dynamicColor} />
+        <LottieAnimation animationData={animationData || null} onComplete={animationComplete} color={dynamicColor} />
       ) : (
         children
       )}
