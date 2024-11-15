@@ -178,6 +178,7 @@ export default [
       '@typescript-eslint/no-var-requires': 'error',
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/prefer-namespace-keyword': 'error',
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-use-before-define': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { args: 'none', caughtErrors: 'none', varsIgnorePattern: '^_' }],

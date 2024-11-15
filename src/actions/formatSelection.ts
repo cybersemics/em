@@ -13,7 +13,6 @@ import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
 import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
-import strip from '../util/strip'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
