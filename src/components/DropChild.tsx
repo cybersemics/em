@@ -45,7 +45,7 @@ const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) =
           dropEnd(),
           css({
             zIndex: 'dropEmpty',
-            backgroundColor: testFlags.simulateDrop ? '#32305f' : undefined, // purple-eggplant
+            backgroundColor: testFlags.simulateDrop ? 'purpleEggplant' : undefined,
             // shift the drop target to the right
             marginLeft: isTouch ? '33%' : 'calc(2.9em - 2px)',
             opacity: 0.9,
@@ -64,7 +64,7 @@ const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) =
               // make sure label does not interfere with drop target hovering
               pointerEvents: 'none',
               left: 0,
-              color: '#ff7bc3' /* mid pink */,
+              color: 'midPink',
             })}
           >
             {strip(value)}

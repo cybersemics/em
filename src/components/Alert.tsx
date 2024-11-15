@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
 import { anchorButton } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import { alertActionCreator } from '../actions/alert'
 import { redoActionCreator as redo } from '../actions/redo'
 import { undoActionCreator as undo } from '../actions/undo'
@@ -43,7 +44,11 @@ const Alert: FC = () => {
           dispatch(undo())
         })}
       >
-        <UndoIcon size={14} fill='black' cssRaw={css.raw({ position: 'relative', top: '0.25em', right: '0.25em' })} />
+        <UndoIcon
+          size={14}
+          fill={token('colors.bg')}
+          cssRaw={css.raw({ position: 'relative', top: '0.25em', right: '0.25em' })}
+        />
         Undo
       </a>
       <a
@@ -53,7 +58,11 @@ const Alert: FC = () => {
         })}
       >
         Redo
-        <RedoIcon size={14} fill='black' cssRaw={css.raw({ position: 'relative', top: '0.25em', left: '0.25em' })} />
+        <RedoIcon
+          size={14}
+          fill={token('colors.bg')}
+          cssRaw={css.raw({ position: 'relative', top: '0.25em', left: '0.25em' })}
+        />
       </a>
     </div>
   ) : null

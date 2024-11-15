@@ -103,7 +103,7 @@ const Tutorial: FC = () => {
     <div
       className={css({
         padding: '40px 20px 20px',
-        backgroundColor: { base: '#ddd', _dark: '#212121' },
+        backgroundColor: 'tutorialBg',
         position: 'relative',
         zIndex: 'tutorial',
         color: 'fg',
@@ -118,7 +118,7 @@ const Tutorial: FC = () => {
           className={cx(
             css({
               position: 'absolute',
-              color: '#666',
+              color: 'bulletGray',
               top: '10px',
               right: '15px',
               fontSize: 'sm',
@@ -189,7 +189,7 @@ const Tutorial: FC = () => {
               textAlign: 'center',
               left: 0,
               right: 0,
-              backgroundColor: { base: 'rgba(255, 255, 255, 0.8)', _dark: 'rgba(0, 0, 0, 0.8)' },
+              backgroundColor: 'bgOverlay80',
               paddingBottom: '50px',
             })}
           >

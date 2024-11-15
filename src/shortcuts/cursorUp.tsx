@@ -1,6 +1,7 @@
 import { Key } from 'ts-key-enum'
 import { css, cx } from '../../styled-system/css'
 import { icon } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import Dispatch from '../@types/Dispatch'
 import IconType from '../@types/IconType'
 import Shortcut from '../@types/Shortcut'
@@ -25,7 +26,7 @@ import parentOf from '../util/parentOf'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
-const Icon = ({ fill = 'black', size = 20, style, cssRaw }: IconType) => (
+const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType) => (
   <svg
     version='1.1'
     className={cx(icon(), css(cssRaw))}

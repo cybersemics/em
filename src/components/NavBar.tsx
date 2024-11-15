@@ -26,14 +26,14 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
     <ContextBreadcrumbs
       cssRaw={css.raw({
         width: '100%',
-        color: '#999',
+        color: 'breadcrumbs',
         paddingLeft: '15px',
         fontSize: '14px',
         verticalAlign: 'bottom',
         ...(position === 'bottom' && { width: 'calc(100% - 40px)', paddingLeft: '35px' }),
       })}
       linkCssRaw={css.raw({
-        color: '#999',
+        color: 'breadcrumbs',
         '&:hover': {
           color: 'fg',
         },

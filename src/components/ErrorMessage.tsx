@@ -25,7 +25,7 @@ const ErrorMessage: FC = () => {
               left: '0',
               right: '0',
               padding: '5px 25px 5px 5px',
-              backgroundColor: '#c23',
+              backgroundColor: 'error',
               color: 'white',
               textAlign: 'center',
               zIndex: 'popup',
