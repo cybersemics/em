@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react'
+import React, { useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
@@ -55,7 +55,6 @@ const Subthought = ({
   marginRight: number
 }) => {
   const state = store.getState()
-  const ref = useRef<HTMLDivElement>(null)
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
   const noOtherContexts = useSelector(
     state => isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
@@ -105,28 +104,26 @@ const Subthought = ({
 
   return (
     <>
-      <div ref={ref}>
-        <Thought
-          debugIndex={debugIndex}
-          depth={depth + 1}
-          env={env}
-          hideBullet={hideBullet}
-          isContextPending={thought.value === '__PENDING__'}
-          leaf={leaf}
-          // isHeader={isHeader}
-          isHeader={false}
-          isMultiColumnTable={isMultiColumnTable}
-          isVisible={isVisible}
-          updateSize={updateSize}
-          path={path}
-          prevChildId={prevChildId}
-          rank={thought.rank}
-          showContexts={showContexts}
-          simplePath={simplePath}
-          style={styleSelf}
-          marginRight={marginRight}
-        />
-      </div>
+      <Thought
+        debugIndex={debugIndex}
+        depth={depth + 1}
+        env={env}
+        hideBullet={hideBullet}
+        isContextPending={thought.value === '__PENDING__'}
+        leaf={leaf}
+        // isHeader={isHeader}
+        isHeader={false}
+        isMultiColumnTable={isMultiColumnTable}
+        isVisible={isVisible}
+        updateSize={updateSize}
+        path={path}
+        prevChildId={prevChildId}
+        rank={thought.rank}
+        showContexts={showContexts}
+        simplePath={simplePath}
+        style={styleSelf}
+        marginRight={marginRight}
+      />
 
       {noOtherContexts && <NoOtherContexts simplePath={simplePath} />}
     </>
