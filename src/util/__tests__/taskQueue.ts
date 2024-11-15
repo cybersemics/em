@@ -435,6 +435,8 @@ describe('taskQueue', { retry: 10 }, () => {
     const incDelayed = () => sleep(20).then(() => ++counter)
 
     /** Wrap taskQueue for typing. */
+    // lint disable because type is define but not using
+    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     const makeTaskQueue = () => taskQueue<number>()
     let queue: ReturnType<typeof makeTaskQueue> = {} as any
     const done = new Promise(resolve => {
