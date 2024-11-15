@@ -215,7 +215,7 @@ const ModalCustomizeToolbar: FC = () => {
         </a>
 
         <div className={css({ fontSize: 'sm', marginTop: '4em' })}>
-          <p className={css({ color: 'gray', marginTop: '0.5em' })}>
+          <p className={css({ color: 'gray66', marginTop: '0.5em' })}>
             Reset the toolbar to its factory settings. Your current toolbar customization will be permanently deleted.
           </p>
           <a

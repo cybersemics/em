@@ -26,13 +26,13 @@ const Tip: FC<
     >
       <div
         className={css({
-          backgroundColor: '#333',
+          backgroundColor: 'codeBg',
           display: 'inline-block',
           padding: '1em',
           maxWidth: '20em',
           borderRadius: '5',
           textAlign: 'center',
-          color: '#ccc',
+          color: 'codeBgInverse',
         })}
       >
         {children}

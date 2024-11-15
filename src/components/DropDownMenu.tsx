@@ -1,5 +1,6 @@
 import React, { CSSProperties } from 'react'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import ExportOption from '../@types/ExportOption'
 import fastClick from '../util/fastClick'
 
@@ -20,7 +21,7 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
       <div
         ref={ref}
         className={css({
-          boxShadow: '0 0 10px 0px black',
+          boxShadow: '0 0 10px 0px {colors.bg}',
           // display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-evenly',
@@ -42,7 +43,7 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
             className={css({
               cursor: 'pointer',
               padding: '2px 0px',
-              borderTop: '1px solid #444',
+              borderTop: '1px solid {colors.modalExportUnused}',
               transition: 'opacity {durations.fastDuration} ease-in',
             })}
             // composite key is unique
@@ -59,7 +60,7 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
                   <svg width='16px' height='16px' viewBox='0 0 32 32'>
                     <path
                       d='M30.171,6.131l-0.858-0.858c-0.944-0.945-2.489-0.945-3.433,0L11.294,19.859l-5.175-5.174  c-0.943-0.944-2.489-0.944-3.432,0.001l-0.858,0.857c-0.943,0.944-0.943,2.489,0,3.433l7.744,7.75c0.944,0.945,2.489,0.945,3.433,0  L30.171,9.564C31.112,8.62,31.112,7.075,30.171,6.131z'
-                      fill='#fff'
+                      fill={token('colors.fg')}
                     />
                   </svg>
                 ) : (

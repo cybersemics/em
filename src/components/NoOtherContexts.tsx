@@ -1,5 +1,6 @@
 import { css, cx } from '../../styled-system/css'
 import { textNote } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
@@ -46,7 +47,7 @@ const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean;
                 inGestureContainer
                 path={toggleContextViewShortcut.gesture as GesturePath}
                 size={30}
-                color='darkgray'
+                color={token('colors.gray66')}
               />
             </span>
           ) : (
