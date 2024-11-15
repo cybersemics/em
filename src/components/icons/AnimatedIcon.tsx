@@ -1,3 +1,4 @@
+import { rgbToHex } from '@mui/material'
 import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
@@ -7,15 +8,6 @@ import AnimatedIconType from '../../@types/AnimatedIconType'
 import { ICON_SCALING_FACTOR } from '../../constants'
 import theme from '../../selectors/theme'
 import LottieAnimation from './LottieAnimation'
-
-/** Function to Convert RGB Color to Hex. */
-const rgbToHex = (color: string): string => {
-  const result = color.match(/\d+/g)
-  if (!result) return ''
-
-  const [r, g, b] = result.map(Number)
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
-}
 
 /** Animated Icon with Conditional Lottie Animation. */
 const AnimatedIcon = ({
