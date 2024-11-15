@@ -17,11 +17,8 @@ it('new state passed to next reducer', () => {
 })
 
 it('initialState', () => {
-  // lint disable because type is define but not using
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const initialState = { a: 0, b: 0, z: 0 }
   expect(
-    reducerFlow<typeof initialState>([
+    reducerFlow<{ a: number; b: number; z: number }>([
       state => ({ ...state, a: 1 + state.z }),
       state => ({ ...state, b: 2 + state.z }),
     ])({ a: 0, b: 0, z: 100 }),

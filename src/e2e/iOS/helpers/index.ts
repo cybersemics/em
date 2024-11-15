@@ -22,7 +22,7 @@ import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
 import waitUntil from './waitUntil'
 
-// lint disable because type is define but not using
+// Only used as a type.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function pasteOverload(text: string): Promise<void>
 async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
