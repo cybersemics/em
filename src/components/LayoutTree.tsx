@@ -69,6 +69,7 @@ type TreeThought = {
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
   style?: React.CSSProperties | null
   thoughtId: string
+  value: string
   isLastVisible?: boolean
   autofocus: Autofocus
   // keys of visible children
@@ -331,6 +332,7 @@ const linearizeTree = (
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
       style,
       thoughtId: child.id,
+      value: child.value,
       ...(isTable
         ? { visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)) }
         : null),
@@ -765,6 +767,7 @@ const LayoutTree = () => {
                 singleLineHeightWithCliff,
                 style,
                 thoughtId,
+                value,
                 width,
                 autofocus,
                 x,
@@ -790,6 +793,10 @@ const LayoutTree = () => {
               // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
               const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
+              // Speed up the tree-node's transition by 50% on New (Sub)Thought only.
+              const isNewThought = value === ''
+              const layoutDuration = isNewThought ? `layoutNodeAnimationFastDuration` : `layoutNodeAnimationDuration`
+
               return (
                 <CSSTransition
                   nodeRef={nodeRef}
@@ -805,7 +812,7 @@ const LayoutTree = () => {
                     // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
                     className={css({
                       position: 'absolute',
-                      transition: `left {durations.layoutNodeAnimationDuration} ease-out,top {durations.layoutNodeAnimationDuration} ease-out`,
+                      transition: `left {durations.${layoutDuration}} ease-out,top {durations.${layoutDuration}} ease-out`,
                     })}
                     style={{
                       // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.

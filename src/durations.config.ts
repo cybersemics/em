@@ -24,6 +24,8 @@ const durationsMillis = {
   layoutSlowShiftDuration: 750,
   /** The animation duration of a node in the LayoutTree component. This animates thought positions when they are moved. */
   layoutNodeAnimationDuration: 150,
+  /** A faster alternative to layoutNodeAnimationDuration, currently used for new thoughts. */
+  layoutNodeAnimationFastDuration: 75,
   /** The time it takes the trace TraceGesture to fade in/out. */
   traceOpacityDuration: 150,
 } as const
