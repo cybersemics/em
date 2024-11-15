@@ -19,6 +19,45 @@ import head from '../util/head'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 
+/** Renders a drop-hover element unconditionally. */
+const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
+  const dropHoverColor = useDropHoverColor(simplePath.length)
+
+  const isTableCol1 = useSelector(state =>
+    attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
+  )
+
+  const animateHover = useSelector(state => {
+    const parent = parentOf(simplePath)
+    const autofocus = calculateAutofocus(state, simplePath)
+    const autofocusParent = calculateAutofocus(state, parent)
+    return autofocus === 'dim' && autofocusParent === 'hide'
+  })
+  const thoughtId = head(simplePath)
+  const insideDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
+
+  return (
+    <span
+      className={cx(
+        dropHover({ insideDivider }),
+        css({
+          /* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
+          /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
+          marginLeft: isTableCol1 ? 'calc(0.9em - 12px)' : 'calc(-0.4em - 12px)',
+          marginTop: '-0.2em',
+          _mobile: {
+            /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
+            marginLeft: 'calc(-0.4em - 14px)',
+          },
+          display: 'inline',
+          width: isTableCol1 ? '50vw' : undefined,
+          animation: animateHover ? `pulseLight {durations.mediumPulseDuration} linear infinite alternate` : undefined,
+        }),
+      )}
+      style={{ backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColor }}
+    />
+  )
+}
 /** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts. */
 const DropHoverIfVisible = ({
   isHovering,
@@ -73,46 +112,6 @@ const DropHoverIfVisible = ({
   })
 
   return showDropHover ? <DropHover simplePath={simplePath} /> : null
-}
-
-/** Renders a drop-hover element unconditionally. */
-const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
-  const dropHoverColor = useDropHoverColor(simplePath.length)
-
-  const isTableCol1 = useSelector(state =>
-    attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
-  )
-
-  const animateHover = useSelector(state => {
-    const parent = parentOf(simplePath)
-    const autofocus = calculateAutofocus(state, simplePath)
-    const autofocusParent = calculateAutofocus(state, parent)
-    return autofocus === 'dim' && autofocusParent === 'hide'
-  })
-  const thoughtId = head(simplePath)
-  const insideDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
-
-  return (
-    <span
-      className={cx(
-        dropHover({ insideDivider }),
-        css({
-          /* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
-          /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
-          marginLeft: isTableCol1 ? 'calc(0.9em - 12px)' : 'calc(-0.4em - 12px)',
-          marginTop: '-0.2em',
-          _mobile: {
-            /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
-            marginLeft: 'calc(-0.4em - 14px)',
-          },
-          display: 'inline',
-          width: isTableCol1 ? '50vw' : undefined,
-          animation: animateHover ? `pulseLight {durations.mediumPulseDuration} linear infinite alternate` : undefined,
-        }),
-      )}
-      style={{ backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColor }}
-    />
-  )
 }
 
 const DropHoverMemo = React.memo(DropHoverIfVisible)

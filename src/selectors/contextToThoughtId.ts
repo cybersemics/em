@@ -8,24 +8,6 @@ import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import getThoughtById from '../selectors/getThoughtById'
 import isRoot from '../util/isRoot'
 
-/** DEPRECATED. Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. If more than one thought has the same value in the same context, traveerses the first. */
-const contextToThoughtId = (state: State, thoughts: Context, rank?: number): ThoughtId | null => {
-  if (isRoot(thoughts)) return thoughts[0] as ThoughtId
-
-  const startsWithEM = thoughts[0] === EM_TOKEN
-  const rootThought = getThoughtById(state, startsWithEM ? EM_TOKEN : (state.rootContext[0] as ThoughtId))
-
-  if (!rootThought) {
-    console.error('hashContext: Thought for root context not found', startsWithEM ? EM_TOKEN : state.rootContext[0])
-    return null
-  }
-
-  if (startsWithEM && thoughts.length === 1) return rootThought.id
-
-  const thought = recursiveThoughtFinder(state, rootThought, startsWithEM ? thoughts.slice(1) : thoughts)
-  return thought?.id || null
-}
-
 /**
  * Recursively finds the thought for the given context.
  */
@@ -61,6 +43,23 @@ const recursiveThoughtFinder = (
     ...visitedIds,
     [child.id]: true,
   })
+}
+/** DEPRECATED. Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. If more than one thought has the same value in the same context, traveerses the first. */
+const contextToThoughtId = (state: State, thoughts: Context): ThoughtId | null => {
+  if (isRoot(thoughts)) return thoughts[0] as ThoughtId
+
+  const startsWithEM = thoughts[0] === EM_TOKEN
+  const rootThought = getThoughtById(state, startsWithEM ? EM_TOKEN : (state.rootContext[0] as ThoughtId))
+
+  if (!rootThought) {
+    console.error('hashContext: Thought for root context not found', startsWithEM ? EM_TOKEN : state.rootContext[0])
+    return null
+  }
+
+  if (startsWithEM && thoughts.length === 1) return rootThought.id
+
+  const thought = recursiveThoughtFinder(state, rootThought, startsWithEM ? thoughts.slice(1) : thoughts)
+  return thought?.id || null
 }
 
 export default contextToThoughtId

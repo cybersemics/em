@@ -10,7 +10,7 @@ const jumpForwardShortcut: Shortcut = {
   gesture: 'rur',
   multicursor: 'ignore',
   svg: JumpForwardIcon,
-  exec: (dispatch, getState) => {
+  exec: dispatch => {
     dispatch(jump(1))
   },
 }

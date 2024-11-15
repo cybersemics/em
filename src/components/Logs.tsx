@@ -12,7 +12,7 @@ const Logs = ({ logs }: { logs: Log[] }) => {
       defaultValue={logs.length > 0 ? logsFormatted : 'No logs.'}
       className={css({
         marginTop: 20,
-        backgroundColor: '#111',
+        backgroundColor: 'darkgray',
         border: 0,
         padding: 20,
         fontFamily: 'monospace',

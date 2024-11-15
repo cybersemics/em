@@ -11,6 +11,12 @@ const preconnectingTimeout = navigator.webdriver ? 0 : 500
 /** Amount of time trying to connect before changint to offline status. Disabled during E2E tests. */
 const offlineTimeout = navigator.webdriver ? 0 : WEBSOCKET_TIMEOUT
 
+let offlineTimer: ReturnType<typeof setTimeout> | null = null
+/** Clears the timer, indicating either that we have connected to the websocket server, or have entered offline mode as the client continues connecting in the background. */
+const stopConnecting = () => {
+  clearTimeout(offlineTimer!)
+  offlineTimer = null
+}
 /** Enter a connecting state and then switch to offline after a delay. */
 const startConnecting = () => {
   stopConnecting()
@@ -23,14 +29,6 @@ const startConnecting = () => {
     offlineStatusStore.update('offline')
   }, offlineTimeout)
 }
-
-/** Clears the timer, indicating either that we have connected to the websocket server, or have entered offline mode as the client continues connecting in the background. */
-const stopConnecting = () => {
-  clearTimeout(offlineTimer!)
-  offlineTimer = null
-}
-
-let offlineTimer: ReturnType<typeof setTimeout> | null = null
 
 /** Initializes the yjs data provider. */
 export const init = () => {

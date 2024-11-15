@@ -12,7 +12,7 @@ const fontSize = (state: State, { value }: { value: number }) => ({
 /** Sets fontSize in state and localStorage. */
 export const fontSizeActionCreator =
   (n: number): Thunk =>
-  (dispatch, getState) => {
+  dispatch => {
     dispatch({ type: 'fontSize', value: n })
     setTimeout(() => {
       storageModel.set('fontSize', n)
