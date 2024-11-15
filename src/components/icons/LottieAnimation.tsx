@@ -135,7 +135,11 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
   return (
     <Player
       key={key} // Force re-render to apply theme changes, refreshing cached animation data with updated color settings
-      style={style}
+      style={{
+        ...style,
+        width: '100%',
+        height: '100%',
+      }}
       animationData={animationDataWithColor}
       lottieRef={lottieRef}
       autoplay
