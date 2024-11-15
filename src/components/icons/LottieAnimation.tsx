@@ -1,5 +1,6 @@
+import _ from 'lodash'
 import Player, { LottieRefCurrentProps } from 'lottie-react'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import LottieData, { RGBA, ShapeItem, ShapeLayer } from '../../@types/LottieTypes'
 
 /** The props for the LottieAnimation component. */
@@ -69,14 +70,14 @@ const updateColorsInItem = (item: ShapeItem, rgbaArray: RGBA) => {
  * RGBA values derived from the 'newColor' hexadecimal string.
  *
  * @param data - The Lottie animation data object containing multiple layers and shapes.
- * Each layer is iterated through to apply the color change to eligible elements.
  * @param newColor - A string representing the new color to be applied, in hexadecimal format.
- * This string is converted into an RGBA array to update the animation colors.
+ * @returns A new LottieData object with updated colors.
  */
-const changeLineColor = (data: LottieData, newColor: string): void => {
+const changeLineColor = (data: LottieData, newColor: string): LottieData => {
   const rgbaArray = hexToRGBA(newColor)
+  const clonedData = _.cloneDeep(data) // Deep clone to create a new instance
 
-  data.layers.forEach((layer: ShapeLayer) => {
+  clonedData.layers.forEach((layer: ShapeLayer) => {
     if (layer.shapes) {
       layer.shapes.forEach((shape: ShapeItem) => {
         if (shape.it) {
@@ -85,6 +86,8 @@ const changeLineColor = (data: LottieData, newColor: string): void => {
       })
     }
   })
+
+  return clonedData
 }
 
 /**
@@ -113,17 +116,18 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
   const [key, setKey] = useState(0)
   const lottieRef = useRef<LottieRefCurrentProps | null>(null)
 
-  useEffect(() => {
-    if (lottieRef.current && animationData) {
-      lottieRef.current.setSpeed(speed)
-      if (color) {
-        changeLineColor(animationData, color)
-        setKey(prevKey => prevKey + 1) // Forces the re-render to apply the color change
-      }
-    }
-  }, [speed, color, animationData])
+  const animationDataWithColor = useMemo(() => {
+    return animationData ? changeLineColor(animationData, color) : null
+  }, [animationData, color])
 
-  if (!animationData) {
+  useEffect(() => {
+    if (lottieRef.current && animationDataWithColor) {
+      lottieRef.current.setSpeed(speed)
+      setKey(prevKey => prevKey + 1) // Forces the re-render to apply the color change
+    }
+  }, [speed, animationDataWithColor])
+
+  if (!animationDataWithColor) {
     console.warn('animationData is not provided.')
     return null // Early return if animationData is null
   }
@@ -132,7 +136,7 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
     <Player
       key={key} // Force re-render to apply theme changes, refreshing cached animation data with updated color settings
       style={style}
-      animationData={animationData}
+      animationData={animationDataWithColor}
       lottieRef={lottieRef}
       autoplay
       loop={false}
