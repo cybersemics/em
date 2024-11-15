@@ -462,10 +462,6 @@ export const updateLexeme = async (
     ;(Object.keys(lexemeNew) as (keyof Lexeme)[]).forEach(key => {
       if (key === 'contexts') {
         const value = lexemeNew[key]
-        if (!Array.isArray(value)) {
-          console.error('Invalid contexts value:', value)
-          return
-        }
         const contextsNew = new Set(value)
 
         value.forEach(cxid => {
@@ -476,9 +472,7 @@ export const updateLexeme = async (
               console.error(message, lexemeNew)
               throw new Error(message)
             }
-            if (typeof docKey === 'string') {
-              lexemeMap.set(`cx-${cxid}`, docKey)
-            }
+            lexemeMap.set(`cx-${cxid}`, docKey)
           }
         })
 
@@ -492,10 +486,8 @@ export const updateLexeme = async (
         const value = lexemeNew[key]
         // Only set a value if it has changed.
         // Otherwise YJS adds another update.
-        if (typeof value === 'string') {
-          if (value !== lexemeMap.get(lexemeKeyToDb[key])) {
-            lexemeMap.set(lexemeKeyToDb[key], value)
-          }
+        if (value !== lexemeMap.get(lexemeKeyToDb[key])) {
+          lexemeMap.set(lexemeKeyToDb[key], value)
         }
       }
     })
@@ -1074,12 +1066,8 @@ export const updateThoughts = async ({
 
   const deletePromise = updatePromise.then(() =>
     updateQueue.add([
-      ...(Object.keys(thoughtDeletes || {}) as ThoughtId[]).map(id => () => {
-        return deleteThought(id)
-      }),
-      ...Object.keys(lexemeDeletes || {}).map(key => () => {
-        return deleteLexeme(key)
-      }),
+      ...(Object.keys(thoughtDeletes || {}) as ThoughtId[]).map(id => () => deleteThought(id)),
+      ...Object.keys(lexemeDeletes || {}).map(key => () => deleteLexeme(key)),
     ]),
   )
 
