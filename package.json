@@ -74,12 +74,12 @@
     "@pandacss/node@npm:0.47.0": "patch:@pandacss/node@npm%3A0.47.0#~/.yarn/patches/@pandacss-node-npm-0.47.0.patch"
   },
   "dependencies": {
-    "@capacitor/android": "^6.1.2",
-    "@capacitor/clipboard": "^6.0.1",
-    "@capacitor/core": "^6.1.2",
-    "@capacitor/ios": "^6.1.2",
-    "@capacitor/keyboard": "^6.0.2",
-    "@capacitor/status-bar": "^6.0.1",
+    "@capacitor/android": "^4.8.2",
+    "@capacitor/clipboard": "^4.1.0",
+    "@capacitor/core": "^4.8.2",
+    "@capacitor/ios": "^4.8.2",
+    "@capacitor/keyboard": "^4.1.1",
+    "@capacitor/status-bar": "^4.1.1",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@mui/material": "^6.1.5",
