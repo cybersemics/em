@@ -24,7 +24,7 @@ const config: CapacitorConfig = {
   webDir: 'build',
   ...serverConfig,
   ios: {
-    backgroundColor: '000000',
+    scrollEnabled: true,
   },
   plugins: {
     Keyboard: {

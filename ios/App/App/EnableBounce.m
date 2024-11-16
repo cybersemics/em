@@ -11,6 +11,6 @@
 @implementation UIScrollView (NoBounce)
 - (void)didMoveToWindow {
    [super didMoveToWindow];
-   self.bounces = YES;
+   self.bounces = NO;
 }
 @end
