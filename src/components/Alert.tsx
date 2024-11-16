@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
 import { anchorButton } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
@@ -10,9 +10,9 @@ import { undoActionCreator as undo } from '../actions/undo'
 import { AlertType } from '../constants'
 import isUndoEnabled from '../selectors/isUndoEnabled'
 import alertStore from '../stores/alert'
-import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import strip from '../util/strip'
+import FadeTransition from './FadeTransition'
 import Popup from './Popup'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
@@ -73,19 +73,13 @@ const Alert: FC = () => {
       childFactory={(child: React.ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {alert ? (
-        <CSSTransition
-          key={0}
-          nodeRef={popupRef}
-          timeout={durations.get('slowDuration')}
-          classNames='fade-slow-out'
-          onEntering={() => setDismiss(false)}
-        >
+        <FadeTransition key={0} duration='slow' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
           {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
           <Popup {...alert} ref={popupRef} onClose={onClose} key={value}>
             {value}
             {buttons}
           </Popup>
-        </CSSTransition>
+        </FadeTransition>
       ) : null}
     </TransitionGroup>
   )

@@ -1,6 +1,6 @@
 import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Shortcut from '../@types/Shortcut'
@@ -14,8 +14,8 @@ import useFilteredCommands from '../hooks/useFilteredCommands'
 import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
-import durations from '../util/durations'
 import { executeShortcutWithMulticursor } from '../util/executeShortcut'
+import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import Popup from './Popup'
@@ -465,13 +465,7 @@ const CommandPaletteWithTransition: FC = () => {
       childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {showCommandPalette ? (
-        <CSSTransition
-          key={0}
-          nodeRef={popupRef}
-          timeout={durations.get('mediumDuration')}
-          classNames='fade'
-          onEntering={() => setDismiss(false)}
-        >
+        <FadeTransition key={0} nodeRef={popupRef} onEntering={() => setDismiss(false)}>
           <Popup
             ref={popupRef}
             // only show the close link on desktop
@@ -481,7 +475,7 @@ const CommandPaletteWithTransition: FC = () => {
           >
             <CommandPalette />
           </Popup>
-        </CSSTransition>
+        </FadeTransition>
       ) : null}
     </TransitionGroup>
   )

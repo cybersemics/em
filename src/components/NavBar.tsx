@@ -1,16 +1,15 @@
 import { useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import durations from '../util/durations'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
+import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import InvitesButton from './InvitesButton'
 import Scale from './Scale'
@@ -116,17 +115,11 @@ const NavBar = ({ position }: { position: string }) => {
                       })}
                     />
                   ) : null}
-                  <CSSTransition
-                    nodeRef={cursorBreadcrumbsWrapperRef}
-                    in={!distractionFreeTyping}
-                    timeout={durations.get('mediumDuration')}
-                    classNames='fade'
-                    unmountOnExit
-                  >
+                  <FadeTransition nodeRef={cursorBreadcrumbsWrapperRef} in={!distractionFreeTyping} unmountOnExit>
                     <div ref={cursorBreadcrumbsWrapperRef} className={css({ flexGrow: 1 })}>
                       <CursorBreadcrumbs position={position} />
                     </div>
-                  </CSSTransition>
+                  </FadeTransition>
 
                   <div
                     className={css({
