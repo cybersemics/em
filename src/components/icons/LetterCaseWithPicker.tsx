@@ -1,8 +1,8 @@
 import { useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
 import IconType from '../../@types/IconType'
+import FadeTransition from '../FadeTransition'
 import LetterCasePicker from '../LetterCasePicker'
 import LetterCaseIcon from './LetterCaseIcon'
 
@@ -14,14 +14,7 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
   return (
     <div>
       <LetterCaseIcon size={size} style={style} cssRaw={cssRaw} />
-      <CSSTransition
-        nodeRef={toolbarPopupRef}
-        in={showLetterCase}
-        timeout={200}
-        classNames='fade'
-        exit={false}
-        unmountOnExit
-      >
+      <FadeTransition nodeRef={toolbarPopupRef} in={showLetterCase} exit={false} unmountOnExit>
         <div
           className={css({
             position: 'relative',
@@ -41,7 +34,7 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
         >
           <LetterCasePicker fontSize={size} cssRaw={css.raw({ transform: `translate(-50%)` })} />
         </div>
-      </CSSTransition>
+      </FadeTransition>
     </div>
   )
 }
