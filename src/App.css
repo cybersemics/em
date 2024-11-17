@@ -42,6 +42,34 @@
   transition: opacity 80ms ease-out;
 }
 
+/* react-transition-group animation: very-fast-morph
+ * Morph transition (a combination of fade, blur, and scale)
+ */
+ .very-fast-morph-enter {
+  opacity: 0;
+}
+
+.very-fast-morph-enter-active {
+  opacity: 1;
+  transition: opacity 80ms ease-out;
+}
+
+/* Exit transition (animation occurs only when exiting) */
+.very-fast-morph-exit {
+  opacity: 1;
+  transform: scale3d(1, 1, 1);
+  filter: blur(0);
+  transform-origin: center;
+}
+
+.very-fast-morph-exit-active {
+  opacity: 0; /* Fade out */
+  transform: scale3d(0.5, 0.5, 0.5); /* Shrink */
+  filter: blur(4px); /* Apply blur */
+  transform-origin: center; /* Ensure the scaling is centered */
+  transition: opacity 80ms ease-out, transform 80ms ease-out, filter 80ms ease-out;
+}
+
 /* react-transition-group animation: fade-slow-out */
 .fade-slow-out-enter {
   opacity: 0;
