@@ -20,14 +20,14 @@ const slideTransitionRecipe = defineSlotRecipe({
         enterActive: {
           marginBottom: '1em',
           marginTop: '0px',
-          transition: 'margin {durations.quiteFastDuration} ease-out',
+          transition: 'margin {durations.veryFastDuration} ease-out',
         },
         enterDone: { marginBottom: '1em', marginTop: '0px' },
         exit: { marginBottom: '1em', marginTop: '0px' },
         exitActive: {
           marginBottom: '0px',
           marginTop: '-3em',
-          transition: 'margin {durations.quiteFastDuration} ease-out',
+          transition: 'margin {durations.veryFastDuration} ease-out',
         },
         exitDone: { marginBottom: '0px', marginTop: '-3em' },
       },
