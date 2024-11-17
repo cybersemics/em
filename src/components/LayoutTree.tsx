@@ -361,56 +361,52 @@ const linearizeTree = (
 }
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
-const TreeNode = (
-  props: TreeThoughtPositioned & {
-    thoughtKey: string
-    index: number
-    viewportBottom: number
-    treeThoughtsPositioned: TreeThoughtPositioned[]
-    bulletWidth: number
-    cursorUncleId: string | null
-    setSize: OnResize
-    cliffPaddingStyle: { paddingBottom: number }
-    dragInProgress: boolean
-    autofocusDepth: number
-  },
-) => {
-  const {
-    belowCursor,
-    cliff,
-    depth,
-    env,
-    height,
-    indexChild,
-    indexDescendant,
-    isCursor,
-    isTableCol1,
-    isTableCol2,
-    thoughtKey,
-    leaf,
-    path,
-    prevChild,
-    showContexts,
-    isLastVisible,
-    simplePath,
-    singleLineHeightWithCliff,
-    style,
-    thoughtId,
-    width,
-    autofocus,
-    x,
-    y: _y,
-    index,
-    viewportBottom,
-    treeThoughtsPositioned,
-    bulletWidth,
-    cursorUncleId,
-    setSize,
-    cliffPaddingStyle,
-    dragInProgress,
-    autofocusDepth,
-  } = props
-
+const TreeNode = ({
+  belowCursor,
+  cliff,
+  depth,
+  env,
+  height,
+  indexChild,
+  indexDescendant,
+  isCursor,
+  isTableCol1,
+  isTableCol2,
+  thoughtKey,
+  leaf,
+  path,
+  prevChild,
+  showContexts,
+  isLastVisible,
+  simplePath,
+  singleLineHeightWithCliff,
+  style,
+  thoughtId,
+  width,
+  autofocus,
+  x,
+  y: _y,
+  index,
+  viewportBottom,
+  treeThoughtsPositioned,
+  bulletWidth,
+  cursorUncleId,
+  setSize,
+  cliffPaddingStyle,
+  dragInProgress,
+  autofocusDepth,
+}: TreeThoughtPositioned & {
+  thoughtKey: string
+  index: number
+  viewportBottom: number
+  treeThoughtsPositioned: TreeThoughtPositioned[]
+  bulletWidth: number
+  cursorUncleId: string | null
+  setSize: OnResize
+  cliffPaddingStyle: { paddingBottom: number }
+  dragInProgress: boolean
+  autofocusDepth: number
+}) => {
   const [y, setY] = useState(_y)
 
   useEffect(() => {
