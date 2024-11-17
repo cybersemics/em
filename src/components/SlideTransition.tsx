@@ -23,14 +23,16 @@ const SlideTransition = ({
   duration = 'fast',
   children,
   from,
+  id = 0,
   ...props
 }: {
+  id?: string | number
   from: SlideTransitionVariant['from']
   children: ReactNode
 } & RemoveFields<TransitionProps<HTMLElement>>) => {
   const slideClasses = slideTransition({ from })
   return (
-    <CSSTransition classNames={slideClasses} timeout={durations.get(fromToDurations[from])} {...props}>
+    <CSSTransition key={id} classNames={slideClasses} timeout={durations.get(fromToDurations[from])} {...props}>
       {children}
     </CSSTransition>
   )
