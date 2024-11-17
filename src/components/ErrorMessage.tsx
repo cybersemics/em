@@ -18,7 +18,7 @@ const ErrorMessage: FC = () => {
   return (
     <TransitionGroup>
       {value ? (
-        <FadeTransition nodeRef={errorMessageRef}>
+        <FadeTransition duration='fast' nodeRef={errorMessageRef}>
           <div
             ref={errorMessageRef}
             className={css({

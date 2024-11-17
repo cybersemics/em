@@ -21,7 +21,7 @@ const TextColorWithColorPicker = ({ size = 20, style, cssRaw }: IconType) => {
         animated={showColorPicker}
         fill={style?.fill || token('colors.fg')}
       />
-      <FadeTransition nodeRef={toolbarPopupRef} in={showColorPicker} exit={false} unmountOnExit>
+      <FadeTransition duration='fast' nodeRef={toolbarPopupRef} in={showColorPicker} exit={false} unmountOnExit>
         <div
           ref={toolbarPopupRef}
           className={css({

@@ -115,7 +115,12 @@ const NavBar = ({ position }: { position: string }) => {
                       })}
                     />
                   ) : null}
-                  <FadeTransition nodeRef={cursorBreadcrumbsWrapperRef} in={!distractionFreeTyping} unmountOnExit>
+                  <FadeTransition
+                    duration='fast'
+                    nodeRef={cursorBreadcrumbsWrapperRef}
+                    in={!distractionFreeTyping}
+                    unmountOnExit
+                  >
                     <div ref={cursorBreadcrumbsWrapperRef} className={css({ flexGrow: 1 })}>
                       <CursorBreadcrumbs position={position} />
                     </div>

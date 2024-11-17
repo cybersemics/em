@@ -144,7 +144,13 @@ const ModalCustomizeToolbar: FC = () => {
         <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedShortcut?.id} />
 
         {/* selected toolbar button details */}
-        <FadeTransition nodeRef={shortcutsContainerRef} in={!!selectedShortcut} exit={false} unmountOnExit>
+        <FadeTransition
+          duration='fast'
+          nodeRef={shortcutsContainerRef}
+          in={!!selectedShortcut}
+          exit={false}
+          unmountOnExit
+        >
           <div
             ref={shortcutsContainerRef}
             className={css({
@@ -169,7 +175,7 @@ const ModalCustomizeToolbar: FC = () => {
         </FadeTransition>
       </div>
 
-      <FadeTransition in={!selectedShortcut} exit={false} unmountOnExit>
+      <FadeTransition duration='fast' in={!selectedShortcut} exit={false} unmountOnExit>
         <div className={css({ marginTop: '2em', marginBottom: '2.645em', color: 'dim' })}>
           <p>Drag-and-drop to rearrange toolbar.</p>
           <p>{isTouch ? 'Tap' : 'Click'} a command for details.</p>

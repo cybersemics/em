@@ -14,7 +14,7 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
   return (
     <div>
       <LetterCaseIcon size={size} style={style} cssRaw={cssRaw} />
-      <FadeTransition nodeRef={toolbarPopupRef} in={showLetterCase} exit={false} unmountOnExit>
+      <FadeTransition duration='fast' nodeRef={toolbarPopupRef} in={showLetterCase} exit={false} unmountOnExit>
         <div
           className={css({
             position: 'relative',

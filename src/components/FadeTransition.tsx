@@ -12,13 +12,13 @@ type RemoveFields<Type> = {
  * Fade animations for transitions.
  */
 const FadeTransition = ({
-  duration = 'fast',
+  duration,
   id = 0,
   children,
   ...props
 }: {
   id?: string | number
-  duration?: FadeTransitionVariant['duration']
+  duration: FadeTransitionVariant['duration']
   children: ReactNode
 } & RemoveFields<TransitionProps<HTMLElement>>) => {
   const fadeClasses = fadeTransition({ duration })

@@ -153,7 +153,7 @@ const Sidebar = () => {
           })}
           data-scroll-at-edge
         >
-          <FadeTransition in={showSidebar} nodeRef={sidebarMenuRef}>
+          <FadeTransition duration='fast' in={showSidebar} nodeRef={sidebarMenuRef}>
             <div
               ref={sidebarMenuRef}
               style={{
