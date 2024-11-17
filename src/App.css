@@ -4,44 +4,6 @@
   See: https://panda-css.com/docs/concepts/writing-styles
 */
 
-/* react-transition-group animation: fade */
-.fade-enter {
-  opacity: 0;
-}
-
-.fade-enter-active {
-  opacity: 1;
-  transition: opacity 0.2s ease-out;
-}
-
-.fade-exit {
-  opacity: 1;
-}
-
-.fade-exit-active {
-  opacity: 0;
-  transition: opacity 0.2s ease-out;
-}
-
-/* react-transition-group animation: fade-slow-out */
-.fade-slow-out-enter {
-  opacity: 0;
-}
-
-.fade-slow-out-enter-active {
-  opacity: 1;
-  transition: opacity 0.2s ease-out;
-}
-
-.fade-slow-out-exit {
-  opacity: 1;
-}
-
-.fade-slow-out-exit-active {
-  opacity: 0;
-  transition: opacity 0.8s ease-out;
-}
-
 /* react-transition-group animation: slidedown */
 /* use transform: translateY(-100%) for auto height animation (less smooth) */
 .slidedown-enter {
@@ -93,53 +55,6 @@
 .fade-400-exit-active {
   opacity: 0;
   transition: opacity 400ms ease 0ms;
-}
-
-/* react-transition-group animation: fade-600 */
-.fade-600-enter {
-  opacity: 0;
-}
-
-.fade-600-enter-active {
-  opacity: 1;
-  transition: opacity 600ms ease 0ms;
-}
-
-.fade-600-exit {
-  opacity: 1;
-}
-
-.fade-600-exit-active {
-  opacity: 0;
-  transition: opacity 700ms ease 0ms;
-}
-
-/* react-transition-group animation: fade-both */
-/* eases in and out  */
-.fade-both-enter {
-  opacity: 0;
-}
-
-.fade-both-enter-active {
-  opacity: 1;
-  transition: opacity 400ms ease-in-out;
-}
-
-.fade-both-enter-done {
-  opacity: 1;
-}
-
-.fade-both-exit-done {
-  opacity: 0;
-}
-
-.fade-both-exit {
-  opacity: 1;
-}
-
-.fade-both-exit-active {
-  opacity: 0;
-  transition: opacity 400ms ease-in-out;
 }
 
 /* react-transition-group animation: slide */

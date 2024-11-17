@@ -12,25 +12,17 @@ type RemoveFields<Type> = {
  * Fade animations for transitions.
  */
 const FadeTransition = ({
-  duration = 'medium',
+  duration = 'fast',
   children,
   ...props
 }: {
-  duration?: 'medium' | 'slow'
+  duration?: 'medium' | 'slow' | 'fast' | 'distractionFreeTyping' | 'mediumBoth'
   children: ReactNode
 } & RemoveFields<TransitionProps<HTMLElement>>) => {
-  const { enter, exit, enterActive, exitActive } = fadeTransition({ duration })
+  const fadeClasses = fadeTransition({ duration })
+  const durationKey = duration === 'fast' || duration === 'mediumBoth' ? 'medium' : duration
   return (
-    <CSSTransition
-      classNames={{
-        enter,
-        exit,
-        exitActive,
-        enterActive,
-      }}
-      timeout={durations.get(`${duration}Duration`)}
-      {...props}
-    >
+    <CSSTransition classNames={fadeClasses} timeout={durations.get(`${durationKey}Duration`)} {...props}>
       {children}
     </CSSTransition>
   )
