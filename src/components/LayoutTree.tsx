@@ -409,7 +409,7 @@ const TreeNode = ({
 }) => {
   const [y, setY] = useState(_y)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (y !== _y) {
       // When y changes React re-renders the component with the new value of y. It will result in a visual change in the DOM.
       // Because this is a state-driven change, React applies the updated value to the DOM, which causes the browser to recognize that
