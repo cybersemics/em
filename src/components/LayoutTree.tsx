@@ -361,7 +361,7 @@ const linearizeTree = (
 }
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
-const RenderMappedThought = (
+const TreeNode = (
   props: TreeThoughtPositioned & {
     thoughtKey: string
     index: number
@@ -911,7 +911,7 @@ const LayoutTree = () => {
         }}
       >
         {treeThoughtsPositioned.map((thought, index) => (
-          <RenderMappedThought
+          <TreeNode
             {...thought}
             index={index}
             // Pass unique key for the component
