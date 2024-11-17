@@ -17,6 +17,7 @@ import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
+import slideTransitionRecipe from './src/recipes/slideTransition'
 import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
 import toolbarPointerEventsRecipe from './src/recipes/toolbarPointerEvents'
@@ -334,6 +335,7 @@ export default defineConfig({
         modal: modalRecipe,
         modalText: modalTextRecipe,
         fadeTransition: fadeTransitionRecipe,
+        slideTransition: slideTransitionRecipe,
       },
       semanticTokens: {
         colors: {

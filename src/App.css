@@ -61,38 +61,3 @@
   opacity: 0;
 }
 
-/* react-transition-group animation: slide-right */
-.slide-right-enter {
-  transform: translateX(100%);
-}
-
-.slide-right-enter-active {
-  transform: translateX(0);
-  transition: all 200ms ease-out;
-}
-
-.slide-right-exit {
-  transform: translateX(0);
-}
-
-.slide-right-exit-active {
-  transform: translateX(100%);
-  transition: all 200ms ease-out;
-}
-
-/* autofocus */
-
-/*
-  At deeper depths, the available width becomes smaller and smaller. Due to the left-translate (above), the left edge will be kept relatively close to the left edge of the screen as one navigates deeper. However its bounding box is the same, so its width will still get smaller and smaller, although it will appear that it is getting compressed from the right. See: https://github.com/cybersemics/em/issues/752.
-
-  Offset this by adding a negative right margin.
-
-  This has the downside of causing multi-line text to reflow as one navigates deeper, as its bounding box is now dependent on its depth in the hierarchy. See: https://github.com/cybersemics/em/issues/251. Only apply this to .autofocus-hide-parent instead of both 2 & 3 so that this side effect is less pronounced. Ultimately there is a natural tradeoff, and it's more important that the full width is preserved.
-*/
-/*.autofocus-hide-parent {
-  margin-right: -1.2em;
-}*/
-
-/* for some reason opacity bleeds through modal*/
-
-/* higher precendence than ".dark .modal .a" */

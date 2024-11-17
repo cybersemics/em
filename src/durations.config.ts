@@ -6,6 +6,7 @@ const durationsMillis = {
   mediumDuration: 400,
   /* A fast animation that the user will barely notice, but still represents a state change. Snappy.  */
   fastDuration: 200,
+  quiteFastDuration: 100,
   /* A very fast animation that is near instantaneous, such as a toggle. */
   veryFastDuration: 80,
 

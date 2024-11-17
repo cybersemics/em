@@ -1,13 +1,12 @@
 import { Capacitor } from '@capacitor/core'
 import { useRef } from 'react'
 import { useSelector } from 'react-redux'
-import CSSTransition from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
 import { isTouch } from '../browser'
-import durations from '../util/durations'
 import CopyOneDrop from './CopyOneDrop'
 import DeleteDrop from './DeleteDrop'
 import ExportDrop from './ExportDrop'
+import SlideTransition from './SlideTransition'
 
 /** A panel of buttons that slides out from the right edge of the screen during drag-and-drop to quickly execute certain commands on a droppedthought. */
 const QuickDropPanel = () => {
@@ -15,13 +14,7 @@ const QuickDropPanel = () => {
   const quickDropPanelRef = useRef<HTMLDivElement>(null)
 
   return (
-    <CSSTransition
-      nodeRef={quickDropPanelRef}
-      in={isDragging}
-      timeout={durations.get('fastDuration')}
-      classNames='slide-right'
-      unmountOnExit
-    >
+    <SlideTransition nodeRef={quickDropPanelRef} in={isDragging} from='right' unmountOnExit>
       <div
         ref={quickDropPanelRef}
         className={css({ position: 'fixed', right: 0, top: '20vh', zIndex: 'popup' })}
@@ -36,7 +29,7 @@ const QuickDropPanel = () => {
         }
         <ExportDrop />
       </div>
-    </CSSTransition>
+    </SlideTransition>
   )
 }
 
