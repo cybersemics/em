@@ -25,6 +25,7 @@ const config: CapacitorConfig = {
   ...serverConfig,
   ios: {
     backgroundColor: '000000',
+    contentInset: 'always',
   },
   plugins: {
     Keyboard: {
