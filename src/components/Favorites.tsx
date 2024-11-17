@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import CSSTransition from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
 import { dropHover } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
@@ -15,11 +14,11 @@ import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import thoughtToPath from '../selectors/thoughtToPath'
-import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import nonNull from '../util/nonNull'
 import Checkbox from './Checkbox'
+import SlideTransition from './SlideTransition'
 import ThoughtLink from './ThoughtLink'
 import FavoritesIcon from './icons/FavoritesIcon'
 
@@ -141,13 +140,7 @@ const FavoritesOptions = ({
       </div>
 
       <div className={css({ overflow: 'hidden' })}>
-        <CSSTransition
-          in={showOptions}
-          nodeRef={formRef}
-          timeout={durations.get('veryFastDuration')}
-          classNames='slidedown'
-          unmountOnExit
-        >
+        <SlideTransition in={showOptions} nodeRef={formRef} from='down' unmountOnExit>
           <form
             ref={formRef}
             className={css({ fontSize: 'sm', backgroundColor: 'checkboxForm', borderRadius: '0.5em', padding: '1em' })}
@@ -160,7 +153,7 @@ const FavoritesOptions = ({
               }}
             />
           </form>
-        </CSSTransition>
+        </SlideTransition>
       </div>
     </div>
   )
