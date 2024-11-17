@@ -13,16 +13,18 @@ type RemoveFields<Type> = {
  */
 const FadeTransition = ({
   duration = 'fast',
+  id = 0,
   children,
   ...props
 }: {
+  id?: string | number
   duration?: FadeTransitionVariant['duration']
   children: ReactNode
 } & RemoveFields<TransitionProps<HTMLElement>>) => {
   const fadeClasses = fadeTransition({ duration })
   const durationKey = duration === 'fast' || duration === 'mediumBoth' ? 'medium' : duration
   return (
-    <CSSTransition classNames={fadeClasses} timeout={durations.get(`${durationKey}Duration`)} {...props}>
+    <CSSTransition key={id} classNames={fadeClasses} timeout={durations.get(`${durationKey}Duration`)} {...props}>
       {children}
     </CSSTransition>
   )

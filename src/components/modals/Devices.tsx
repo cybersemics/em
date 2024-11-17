@@ -229,7 +229,7 @@ const ShareList = React.forwardRef<
             {
               // form
               showDeviceForm ? (
-                <FadeTransition key='add-device-form' duration='medium' exit={false} unmountOnExit>
+                <FadeTransition id='add-device-form' duration='medium' exit={false} unmountOnExit>
                   <div>
                     <AddDeviceForm
                       onCancel={() => setShowDeviceForm(false)}
@@ -252,7 +252,7 @@ const ShareList = React.forwardRef<
                 </FadeTransition>
               ) : (
                 // "+ Add a device" button
-                <FadeTransition key='add-a-device' exit={false} duration='medium' unmountOnExit>
+                <FadeTransition id='add-a-device' exit={false} duration='medium' unmountOnExit>
                   <div className={css({ marginTop: '1em' })}>
                     <a
                       {...fastClick(() => setShowDeviceForm(true))}
@@ -533,7 +533,14 @@ const ModalDevices = () => {
       <div className={modalClasses.wrapper}>
         <TransitionGroup>
           {selected && permissions[selected] ? (
-            <FadeTransition key='share-detail' nodeRef={shareDetailRef} duration='medium' exit={false} unmountOnExit>
+            <FadeTransition
+              key={'share-detail'}
+              id='share-detail'
+              nodeRef={shareDetailRef}
+              duration='medium'
+              exit={false}
+              unmountOnExit
+            >
               <ShareDetail
                 ref={shareDetailRef}
                 accessToken={selected}
@@ -543,7 +550,7 @@ const ModalDevices = () => {
               />
             </FadeTransition>
           ) : (
-            <FadeTransition key='share-list' nodeRef={shareListRef} duration='medium' exit={false} unmountOnExit>
+            <FadeTransition id='share-list' nodeRef={shareListRef} duration='medium' exit={false} unmountOnExit>
               <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
             </FadeTransition>
           )}

@@ -465,7 +465,7 @@ const CommandPaletteWithTransition: FC = () => {
       childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {showCommandPalette ? (
-        <FadeTransition key={0} nodeRef={popupRef} onEntering={() => setDismiss(false)}>
+        <FadeTransition nodeRef={popupRef} onEntering={() => setDismiss(false)}>
           <Popup
             ref={popupRef}
             // only show the close link on desktop
