@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import { CSSTransition } from 'react-transition-group'
 import { TransitionProps } from 'react-transition-group/Transition'
-import { fadeTransition } from '../../styled-system/recipes'
+import { FadeTransitionVariant, fadeTransition } from '../../styled-system/recipes'
 import durations from '../util/durations'
 
 type RemoveFields<Type> = {
@@ -16,7 +16,7 @@ const FadeTransition = ({
   children,
   ...props
 }: {
-  duration?: 'medium' | 'slow' | 'fast' | 'distractionFreeTyping' | 'mediumBoth'
+  duration?: FadeTransitionVariant['duration']
   children: ReactNode
 } & RemoveFields<TransitionProps<HTMLElement>>) => {
   const fadeClasses = fadeTransition({ duration })
