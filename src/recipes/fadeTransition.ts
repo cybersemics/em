@@ -5,8 +5,8 @@ const fadeTransitionRecipe = defineSlotRecipe({
   slots: ['enter', 'exit', 'exitActive', 'enterActive', 'enterDone', 'exitDone'],
   base: {
     enter: { opacity: 0 },
-    exit: { opacity: 1 },
     enterActive: { opacity: 1 },
+    exit: { opacity: 1 },
     exitActive: { opacity: 0 },
   },
   variants: {
