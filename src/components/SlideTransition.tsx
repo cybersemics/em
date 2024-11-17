@@ -10,29 +10,24 @@ type RemoveFields<Type> = {
   [Property in keyof Type as Exclude<Property, 'timeout' | 'addEndListener'>]: Type[Property]
 }
 
-const fromToDurations: Record<SlideTransitionVariant['from'], keyof typeof durationsConfig> = {
-  right: 'fastDuration',
-  down: 'veryFastDuration',
-  screenRight: 'fastDuration',
-}
-
 /**
  * Fade animations for transitions.
  */
 const SlideTransition = ({
-  duration = 'fast',
+  duration,
   children,
   from,
   id = 0,
   ...props
 }: {
+  duration: keyof typeof durationsConfig
   id?: string | number
   from: SlideTransitionVariant['from']
   children: ReactNode
 } & RemoveFields<TransitionProps<HTMLElement>>) => {
   const slideClasses = slideTransition({ from })
   return (
-    <CSSTransition key={id} classNames={slideClasses} timeout={durations.get(fromToDurations[from])} {...props}>
+    <CSSTransition key={id} classNames={slideClasses} timeout={durations.get(duration)} du {...props}>
       {children}
     </CSSTransition>
   )

@@ -140,7 +140,7 @@ const FavoritesOptions = ({
       </div>
 
       <div className={css({ overflow: 'hidden' })}>
-        <SlideTransition in={showOptions} nodeRef={formRef} from='down' unmountOnExit>
+        <SlideTransition duration='veryFastDuration' in={showOptions} nodeRef={formRef} from='down' unmountOnExit>
           <form
             ref={formRef}
             className={css({ fontSize: 'sm', backgroundColor: 'checkboxForm', borderRadius: '0.5em', padding: '1em' })}

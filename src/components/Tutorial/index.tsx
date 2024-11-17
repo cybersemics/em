@@ -42,7 +42,7 @@ const WithCSSTransition = ({ component, transitionKey }: { component: FC; transi
 
   const Component = component
   return (
-    <SlideTransition nodeRef={nodeRef} in={true} id={transitionKey} from='screenRight'>
+    <SlideTransition duration='fastDuration' nodeRef={nodeRef} in={true} id={transitionKey} from='screenRight'>
       <div ref={nodeRef}>
         <Component />
       </div>
