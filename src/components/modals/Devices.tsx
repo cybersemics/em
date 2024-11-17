@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
 import { anchorButton, extendTap, modalText } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
@@ -17,9 +17,9 @@ import * as selection from '../../device/selection'
 import useSharedType from '../../hooks/useSharedType'
 import useStatus from '../../hooks/useStatus'
 import modalDescriptionClass from '../../recipes/modalDescriptionClass'
-import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import strip from '../../util/strip'
+import FadeTransition from '../FadeTransition'
 import ActionButton from './../ActionButton'
 import ContentEditable, { ContentEditableEvent } from './../ContentEditable'
 import CopyClipboard from './../icons/CopyClipboard'
@@ -229,13 +229,7 @@ const ShareList = React.forwardRef<
             {
               // form
               showDeviceForm ? (
-                <CSSTransition
-                  key='add-device-form'
-                  classNames='fade-400'
-                  exit={false}
-                  timeout={durations.get('mediumDuration')}
-                  unmountOnExit
-                >
+                <FadeTransition key='add-device-form' duration='medium' exit={false} unmountOnExit>
                   <div>
                     <AddDeviceForm
                       onCancel={() => setShowDeviceForm(false)}
@@ -255,16 +249,10 @@ const ShareList = React.forwardRef<
                       defaultName={getNextDeviceName(permissions)}
                     />
                   </div>
-                </CSSTransition>
+                </FadeTransition>
               ) : (
                 // "+ Add a device" button
-                <CSSTransition
-                  key='add-a-device'
-                  classNames='fade-400'
-                  exit={false}
-                  timeout={durations.get('mediumDuration')}
-                  unmountOnExit
-                >
+                <FadeTransition key='add-a-device' exit={false} duration='medium' unmountOnExit>
                   <div className={css({ marginTop: '1em' })}>
                     <a
                       {...fastClick(() => setShowDeviceForm(true))}
@@ -278,7 +266,7 @@ const ShareList = React.forwardRef<
                       + Add a device
                     </a>
                   </div>
-                </CSSTransition>
+                </FadeTransition>
               )
             }
           </TransitionGroup>
@@ -545,14 +533,7 @@ const ModalDevices = () => {
       <div className={modalClasses.wrapper}>
         <TransitionGroup>
           {selected && permissions[selected] ? (
-            <CSSTransition
-              key='share-detail'
-              nodeRef={shareDetailRef}
-              classNames='fade-400'
-              exit={false}
-              timeout={durations.get('mediumDuration')}
-              unmountOnExit
-            >
+            <FadeTransition key='share-detail' nodeRef={shareDetailRef} duration='medium' exit={false} unmountOnExit>
               <ShareDetail
                 ref={shareDetailRef}
                 accessToken={selected}
@@ -560,18 +541,11 @@ const ModalDevices = () => {
                 onBack={onBack}
                 share={permissions[selected]}
               />
-            </CSSTransition>
+            </FadeTransition>
           ) : (
-            <CSSTransition
-              key='share-list'
-              nodeRef={shareListRef}
-              classNames='fade-400'
-              exit={false}
-              timeout={durations.get('mediumDuration')}
-              unmountOnExit
-            >
+            <FadeTransition key='share-list' nodeRef={shareListRef} duration='medium' exit={false} unmountOnExit>
               <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
-            </CSSTransition>
+            </FadeTransition>
           )}
         </TransitionGroup>
       </div>

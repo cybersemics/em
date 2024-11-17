@@ -38,25 +38,6 @@
   margin-top: -3em;
 }
 
-/* react-transition-group animation: fade-400 */
-.fade-400-enter {
-  opacity: 0;
-}
-
-.fade-400-enter-active {
-  opacity: 1;
-  transition: opacity 400ms ease 0ms;
-}
-
-.fade-400-exit {
-  opacity: 1;
-}
-
-.fade-400-exit-active {
-  opacity: 0;
-  transition: opacity 400ms ease 0ms;
-}
-
 /* react-transition-group animation: slide */
 .slide-enter {
   transform: translateX(100vw);
