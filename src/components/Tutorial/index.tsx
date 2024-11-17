@@ -1,6 +1,6 @@
 import React, { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
@@ -27,11 +27,11 @@ import useIsVisible from '../../hooks/useIsVisible'
 import getSetting from '../../selectors/getSetting'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import { shortcutById } from '../../shortcuts'
-import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import headValue from '../../util/headValue'
 import once from '../../util/once'
 import GestureDiagram from '../GestureDiagram'
+import SlideTransition from '../SlideTransition'
 import TutorialNavigation from './TutorialNavigation'
 import TutorialScrollUpButton from './TutorialScrollUpButton'
 import TutorialStepComponentMap from './TutorialStepComponentMap'
@@ -42,17 +42,11 @@ const WithCSSTransition = ({ component, transitionKey }: { component: FC; transi
 
   const Component = component
   return (
-    <CSSTransition
-      nodeRef={nodeRef}
-      in={true}
-      key={transitionKey}
-      timeout={durations.get('fastDuration')}
-      classNames='slide'
-    >
+    <SlideTransition nodeRef={nodeRef} in={true} key={transitionKey} from='screenRight'>
       <div ref={nodeRef}>
         <Component />
       </div>
-    </CSSTransition>
+    </SlideTransition>
   )
 }
 
