@@ -40,7 +40,7 @@ import safeRefMerge from '../util/safeRefMerge'
 import unroot from '../util/unroot'
 import DropEnd from './DropEnd'
 import HoverArrow from './HoverArrow'
-import VirtualThought from './VirtualThought'
+import VirtualThought, { OnResize } from './VirtualThought'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
 type TreeThought = {
@@ -82,28 +82,6 @@ type TreeThoughtPositioned = TreeThought & {
   width?: number
   x: number
   y: number
-}
-
-interface SetSizeParams {
-  height: number | null
-  width?: number | null
-  id: ThoughtId
-  isVisible: boolean
-  key: string
-}
-
-/** Custom mapper component for TreeThoughtPositioned. */
-type TreeThoughtPositionedComponent = TreeThoughtPositioned & {
-  thoughtKey: string
-  index: number
-  viewportBottom: number
-  treeThoughtsPositioned: TreeThoughtPositioned[]
-  bulletWidth: number
-  cursorUncleId: string | null
-  setSize: (params: SetSizeParams) => void
-  cliffPaddingStyle: { paddingBottom: number }
-  dragInProgress: boolean
-  autofocusDepth: number
 }
 
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
@@ -383,7 +361,20 @@ const linearizeTree = (
 }
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
-const RenderMappedThought = (props: TreeThoughtPositionedComponent) => {
+const RenderMappedThought = (
+  props: TreeThoughtPositioned & {
+    thoughtKey: string
+    index: number
+    viewportBottom: number
+    treeThoughtsPositioned: TreeThoughtPositioned[]
+    bulletWidth: number
+    cursorUncleId: string | null
+    setSize: OnResize
+    cliffPaddingStyle: { paddingBottom: number }
+    dragInProgress: boolean
+    autofocusDepth: number
+  },
+) => {
   const {
     belowCursor,
     cliff,
