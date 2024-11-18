@@ -1051,7 +1051,8 @@ export const updateThoughts = async ({
     delete?: Index<null>
   }
 
-  const updatePromise = updateQueue.add([
+  // update
+  await updateQueue.add([
     ...Object.entries(thoughtUpdates || {}).map(
       ([id, thought]) =>
         () =>
@@ -1064,14 +1065,11 @@ export const updateThoughts = async ({
     ),
   ])
 
-  const deletePromise = updatePromise.then(() =>
-    updateQueue.add([
-      ...(Object.keys(thoughtDeletes || {}) as ThoughtId[]).map(id => () => deleteThought(id)),
-      ...Object.keys(lexemeDeletes || {}).map(key => () => deleteLexeme(key)),
-    ]),
-  )
-
-  return Promise.all([updatePromise, deletePromise])
+  // delete
+  await updateQueue.add([
+    ...(Object.keys(thoughtDeletes || {}) as ThoughtId[]).map(id => () => deleteThought(id)),
+    ...Object.keys(lexemeDeletes || {}).map(key => () => deleteLexeme(key)),
+  ])
 }
 
 /** Clears all thoughts and lexemes from the db. */
