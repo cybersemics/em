@@ -435,6 +435,8 @@ describe('taskQueue', { retry: 10 }, () => {
     const incDelayed = () => sleep(20).then(() => ++counter)
 
     /** Wrap taskQueue for typing. */
+    // Dummy function is needed to get the return type of a generic function. Value is not used.
+    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     const makeTaskQueue = () => taskQueue<number>()
     let queue: ReturnType<typeof makeTaskQueue> = {} as any
     const done = new Promise(resolve => {

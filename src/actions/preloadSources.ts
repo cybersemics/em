@@ -27,6 +27,8 @@ export const preloadSourcesActionCreator = (): Thunk => (dispatch, getState) => 
 
   // preload sources
   paths.forEach(path => {
-    path && dispatch(loadResource(path))
+    if (path) {
+      dispatch(loadResource(path))
+    }
   })
 }

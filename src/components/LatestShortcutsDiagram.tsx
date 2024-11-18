@@ -1,10 +1,9 @@
 import { FC, useEffect, useRef } from 'react'
-import { CSSTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import { globalShortcuts } from '../shortcuts'
-import durations from '../util/durations'
+import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 
 interface LatestShortcutsDiagramProps {
@@ -30,18 +29,7 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
 
   return (
     <div className={css({ position: 'absolute', height: '100vh', width: '100%' })}>
-      <CSSTransition
-        nodeRef={latestShortcutsElRef}
-        in={latestShortcuts.length > 0}
-        classNames={{
-          enter: css({ opacity: 0 }),
-          enterActive: css({ opacity: 1, transition: `opacity {durations.mediumDuration}` }),
-          exit: css({ opacity: 1 }),
-          exitActive: css({ opacity: 0, transition: `opacity {durations.mediumDuration}` }),
-        }}
-        timeout={durations.get('mediumDuration')}
-        unmountOnExit
-      >
+      <FadeTransition nodeRef={latestShortcutsElRef} in={latestShortcuts.length > 0} duration='medium' unmountOnExit>
         <div
           ref={latestShortcutsElRef}
           className={css({
@@ -81,7 +69,7 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
             )
           })}
         </div>
-      </CSSTransition>
+      </FadeTransition>
     </div>
   )
 }

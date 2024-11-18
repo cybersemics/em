@@ -2,7 +2,6 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
 import { anchorButton, extendTap, modal } from '../../../styled-system/recipes'
 import DragAndDropType from '../../@types/DragAndDropType'
@@ -18,8 +17,8 @@ import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
 import { AlertText, AlertType } from '../../constants'
 import { shortcutById } from '../../shortcuts'
-import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
+import FadeTransition from '../FadeTransition'
 import ShortcutTableOnly from '../ShortcutTableOnly'
 import ShortcutTable from './../ShortcutTable'
 import Toolbar from './../Toolbar'
@@ -145,11 +144,10 @@ const ModalCustomizeToolbar: FC = () => {
         <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedShortcut?.id} />
 
         {/* selected toolbar button details */}
-        <CSSTransition
+        <FadeTransition
+          duration='fast'
           nodeRef={shortcutsContainerRef}
           in={!!selectedShortcut}
-          classNames='fade'
-          timeout={durations.get('mediumDuration')}
           exit={false}
           unmountOnExit
         >
@@ -174,21 +172,15 @@ const ModalCustomizeToolbar: FC = () => {
               <ShortcutTableOnly shortcuts={shortcuts} />
             </div>
           </div>
-        </CSSTransition>
+        </FadeTransition>
       </div>
 
-      <CSSTransition
-        in={!selectedShortcut}
-        classNames='fade'
-        timeout={durations.get('mediumDuration')}
-        exit={false}
-        unmountOnExit
-      >
+      <FadeTransition duration='fast' in={!selectedShortcut} exit={false} unmountOnExit>
         <div className={css({ marginTop: '2em', marginBottom: '2.645em', color: 'dim' })}>
           <p>Drag-and-drop to rearrange toolbar.</p>
           <p>{isTouch ? 'Tap' : 'Click'} a command for details.</p>
         </div>
-      </CSSTransition>
+      </FadeTransition>
 
       <DropToRemoveFromToolbar>
         <ShortcutTable customize selectedShortcut={selectedShortcut ?? undefined} onSelect={setSelectedShortcut} />
