@@ -7780,7 +7780,7 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-error-boundary: "npm:^4.1.2"
     react-gravatar: "npm:^2.6.3"
-    react-native-gesture-handler: "npm:^2.20.2"
+    react-native-gesture-handler: "npm:^2.21.1"
     react-native-web: "npm:^0.19.13"
     react-redux: "npm:^9.1.2"
     react-signature-pad-wrapper: "npm:^3.4.0"
@@ -14696,9 +14696,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-gesture-handler@npm:^2.20.2":
-  version: 2.21.0
-  resolution: "react-native-gesture-handler@npm:2.21.0"
+"react-native-gesture-handler@npm:^2.21.1":
+  version: 2.21.1
+  resolution: "react-native-gesture-handler@npm:2.21.1"
   dependencies:
     "@egjs/hammerjs": "npm:^2.0.17"
     hoist-non-react-statics: "npm:^3.3.0"
@@ -14707,7 +14707,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/6981d5f856c6ac0e4e60ce718ce4c32282100153a88a152d08c7a4ad0eba55f9ba1a3b631a48771ab705629afd0480a412dd5ed25d383b89271d142e617d78aa
+  checksum: 10c0/63c0999504101b69440ddc69924c032a2d85a0c072dc2e995dee268ba08d92b690d062a7a172042a4cb7a2f8a46a1bc2999baf2e85f9a900b96a2301e0a7f831
   languageName: node
   linkType: hard
 
