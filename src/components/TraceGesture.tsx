@@ -128,11 +128,15 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       })}
       style={{ height: innerHeight }}
     >
-      <FadeTransition nodeRef={fadeBothEnterElRef} in={show} duration='mediumBoth'>
+      <FadeTransition
+        nodeRef={fadeBothEnterElRef}
+        in={show}
+        // use mediumBoth to start the opacity at 0, otherwise clicking will render small dots
+        duration='mediumBoth'
+      >
         <div
           ref={fadeBothEnterElRef}
-          // start the opacity at 0, otherwise clicking will render small dots
-          className={css({ userSelect: 'none', opacity: 0 })}
+          className={css({ userSelect: 'none' })}
           // WebKitUserSelect needed in addition to userSelect in order to disable long-tap-to-select
           style={{ WebkitUserSelect: 'none' }}
         >
