@@ -10,7 +10,6 @@ Test:
 */
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css, cva, cx } from '../../styled-system/css'
 import { toolbarPointerEvents } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
@@ -23,7 +22,7 @@ import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import durations from '../util/durations'
+import FadeTransition from './FadeTransition'
 import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
@@ -192,11 +191,10 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   )
 
   return (
-    <CSSTransition
+    <FadeTransition
       nodeRef={toolbarContainerRef}
       in={!distractionFreeTyping}
-      timeout={durations.get('distractionFreeTypingDuration')}
-      classNames='fade-600'
+      duration='distractionFreeTyping'
       unmountOnExit
     >
       <div
@@ -283,7 +281,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           </span>
         </div>
       </div>
-    </CSSTransition>
+    </FadeTransition>
   )
 }
 

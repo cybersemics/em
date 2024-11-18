@@ -2,14 +2,13 @@ import SwipeableDrawer, { SwipeableDrawerProps } from '@mui/material/SwipeableDr
 import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isTouch } from '../browser'
-import durations from '../util/durations'
 import fastClick from '../util/fastClick'
+import FadeTransition from './FadeTransition'
 import Favorites from './Favorites'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
@@ -154,12 +153,7 @@ const Sidebar = () => {
           })}
           data-scroll-at-edge
         >
-          <CSSTransition
-            in={showSidebar}
-            nodeRef={sidebarMenuRef}
-            timeout={durations.get('mediumDuration')}
-            classNames='fade'
-          >
+          <FadeTransition duration='fast' in={showSidebar} nodeRef={sidebarMenuRef}>
             <div
               ref={sidebarMenuRef}
               style={{
@@ -186,7 +180,7 @@ const Sidebar = () => {
                 text='Recently Deleted'
               />
             </div>
-          </CSSTransition>
+          </FadeTransition>
 
           {section === 'favorites' ? (
             <Favorites disableDragAndDrop={isSwiping} />
