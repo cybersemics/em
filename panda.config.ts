@@ -149,6 +149,7 @@ const globalCss = defineGlobalStyles({
       },
     },
   },
+  // eslint-disable-next-line 
   html: {height:'100%','overflow-y':'scroll'},
   'body, #root, #app': { height: '100%', fontSize: '16px'},
   'body, textarea': {
