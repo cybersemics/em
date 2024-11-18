@@ -7724,7 +7724,7 @@ __metadata:
     dotenv: "npm:16.4.5"
     emitter20: "npm:^2.0.0"
     emoji-regex: "npm:^10.4.0"
-    eslint: "npm:^9.0.0"
+    eslint: "npm:^9.15.0"
     eslint-config-prettier: "npm:^9.1.0"
     eslint-config-react-app: "npm:^7.0.1"
     eslint-plugin-export-default-identifier: "npm:0.3.0"
