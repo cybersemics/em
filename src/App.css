@@ -3,15 +3,7 @@
   This file is deprecated. All styles should be added inline using PandaCSS.
   See: https://panda-css.com/docs/concepts/writing-styles
 */
-html,
-body,
-#root,
-#app {
-  height: 100%;
-  font-size: 16px;
-  overflow-y: auto;
-  clip-path: inset(0 0 0 0);
-}
+
 /* react-transition-group animation: fade */
 .fade-enter {
   opacity: 0;
