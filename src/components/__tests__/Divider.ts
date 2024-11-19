@@ -34,6 +34,6 @@ describe('Divider', () => {
     const divider3 = screen.queryByLabelText('divider')
     expect(divider3).toBeTruthy()
 
-    await act(() => vitest.runAllTimersAsync())
+    await act(() => vi.runAllTimersAsync())
   })
 })
