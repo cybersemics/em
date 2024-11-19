@@ -9,6 +9,7 @@ import dropEndRecipe from './src/recipes/dropEnd'
 import dropHoverRecipe from './src/recipes/dropHover'
 import editableRecipe from './src/recipes/editable'
 import extendTapRecipe from './src/recipes/extendTap'
+import fadeTransitionRecipe from './src/recipes/fadeTransition'
 import iconRecipe from './src/recipes/icon'
 import invalidOptionRecipe from './src/recipes/invalidOption'
 import linkRecipe from './src/recipes/link'
@@ -16,6 +17,7 @@ import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
+import slideTransitionRecipe from './src/recipes/slideTransition'
 import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
 import toolbarPointerEventsRecipe from './src/recipes/toolbarPointerEvents'
@@ -332,6 +334,8 @@ export default defineConfig({
       slotRecipes: {
         modal: modalRecipe,
         modalText: modalTextRecipe,
+        fadeTransition: fadeTransitionRecipe,
+        slideTransition: slideTransitionRecipe,
       },
       semanticTokens: {
         colors: {

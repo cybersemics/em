@@ -1,11 +1,10 @@
 import { useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
-import durations from '../../util/durations'
 import ColorPicker from '../ColorPicker'
+import FadeTransition from '../FadeTransition'
 import TextColorIcon from './TextColor'
 
 /** Text Color Icon with popup ColorPicker. */
@@ -22,14 +21,7 @@ const TextColorWithColorPicker = ({ size = 18, style, cssRaw }: IconType) => {
         animated={showColorPicker}
         fill={style?.fill || token('colors.fg')}
       />
-      <CSSTransition
-        nodeRef={toolbarPopupRef}
-        in={showColorPicker}
-        timeout={durations.get('mediumDuration')}
-        classNames='fade'
-        exit={false}
-        unmountOnExit
-      >
+      <FadeTransition duration='fast' nodeRef={toolbarPopupRef} in={showColorPicker} exit={false} unmountOnExit>
         <div
           ref={toolbarPopupRef}
           className={css({
@@ -49,7 +41,7 @@ const TextColorWithColorPicker = ({ size = 18, style, cssRaw }: IconType) => {
         >
           <ColorPicker fontSize={size} cssRaw={css.raw({ transform: `translate(-50%)` })} />
         </div>
-      </CSSTransition>
+      </FadeTransition>
     </div>
   )
 }

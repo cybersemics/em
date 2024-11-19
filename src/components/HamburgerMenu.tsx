@@ -1,13 +1,12 @@
 import React, { useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSidebar'
 import usePositionFixed from '../hooks/usePositionFixed'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import durations from '../util/durations'
 import fastClick from '../util/fastClick'
+import FadeTransition from './FadeTransition'
 
 const lineClassName = css({
   display: 'block',
@@ -65,11 +64,10 @@ const HamburgerMenu = () => {
   const paddingTop = 15 + fontSize * 0.1
 
   return (
-    <CSSTransition
+    <FadeTransition
       nodeRef={hamburgerMenuRef}
       in={!distractionFreeTyping}
-      timeout={durations.get('distractionFreeTypingDuration')}
-      classNames='fade-600'
+      duration='distractionFreeTyping'
       unmountOnExit
     >
       <div
@@ -102,7 +100,7 @@ const HamburgerMenu = () => {
       >
         <Menu width={width} height={width * 0.7} strokeWidth={fontSize / 20} />
       </div>
-    </CSSTransition>
+    </FadeTransition>
   )
 }
 

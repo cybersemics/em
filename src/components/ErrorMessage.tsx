@@ -1,12 +1,12 @@
 import { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { errorActionCreator as error } from '../actions/error'
 import usePositionFixed from '../hooks/usePositionFixed'
-import durations from '../util/durations'
 import CloseButton from './CloseButton'
+import FadeTransition from './FadeTransition'
 
 /** An error message that can be dismissed with a close button. */
 const ErrorMessage: FC = () => {
@@ -18,7 +18,7 @@ const ErrorMessage: FC = () => {
   return (
     <TransitionGroup>
       {value ? (
-        <CSSTransition key={0} nodeRef={errorMessageRef} timeout={durations.get('mediumDuration')} classNames='fade'>
+        <FadeTransition duration='fast' nodeRef={errorMessageRef}>
           <div
             ref={errorMessageRef}
             className={css({
@@ -39,7 +39,7 @@ const ErrorMessage: FC = () => {
             {value.toString()}
             <CloseButton onClose={() => dispatch(error({ value: null }))} />
           </div>
-        </CSSTransition>
+        </FadeTransition>
       ) : null}
     </TransitionGroup>
   )

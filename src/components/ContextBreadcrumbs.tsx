@@ -1,7 +1,7 @@
 import { unescape as decodeCharacterEntities, isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { extendTap } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
@@ -13,13 +13,13 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
-import durations from '../util/durations'
 import ellipsize from '../util/ellipsize'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import strip from '../util/strip'
+import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import Link from './Link'
 import Superscript from './Superscript'
@@ -251,7 +251,7 @@ const ContextBreadcrumbs = ({
             // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
             // This way it will only animate when the length of the cursor changes.
             return (
-              <CSSTransition key={i} nodeRef={nodeRef} timeout={durations.get('mediumDuration')} classNames='fade'>
+              <FadeTransition duration='fast' key={i} id={i} nodeRef={nodeRef}>
                 <BreadCrumb
                   ref={nodeRef}
                   isOverflow={isOverflow}
@@ -269,7 +269,7 @@ const ContextBreadcrumbs = ({
                     linkCssRaw,
                   )}
                 />
-              </CSSTransition>
+              </FadeTransition>
             )
           })}
         </TransitionGroup>

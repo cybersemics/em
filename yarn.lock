@@ -1873,12 +1873,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/android@npm:^4.8.2":
-  version: 4.8.2
-  resolution: "@capacitor/android@npm:4.8.2"
+"@capacitor/android@npm:^6.1.2":
+  version: 6.1.2
+  resolution: "@capacitor/android@npm:6.1.2"
   peerDependencies:
-    "@capacitor/core": ^4.8.0
-  checksum: 10c0/15f38a3829836950ed73fc96c0c64055cf7b28217202aec8a7e5380c406e6fcd0f29cd2539b319c7817ed7c940347411d8a90044025cad26fde7efb23fead06f
+    "@capacitor/core": ^6.1.0
+  checksum: 10c0/fa3539b31e9d733c60f4285f2dce42e1620b4e06bbf14dca1f1f40d33b5f1aa1721632c8ecf96dec656d75e14d032dacfa027bad772e61bcee9a2fd22d6b67d6
   languageName: node
   linkType: hard
 
@@ -1911,48 +1911,48 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/clipboard@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "@capacitor/clipboard@npm:4.1.0"
+"@capacitor/clipboard@npm:^6.0.1":
+  version: 6.0.1
+  resolution: "@capacitor/clipboard@npm:6.0.1"
   peerDependencies:
-    "@capacitor/core": ^4.0.0
-  checksum: 10c0/a59672c83dd17a82fcc21a29f413c95b08bd9d895d966bb0ac20f7032e014cb4a3d737514bf4bce358623de53ce6cc881fee02224c444c20b1c9d18bebb1ad46
+    "@capacitor/core": ^6.0.0
+  checksum: 10c0/6b3e0c05c36fb2db317f552a4346e9bf06573b579e28f5a37faf84ca2a20ca75868e61cc4f91c77a19fef9d6bf46aebb7fd7415361a3ef5f06292efddd6096ba
   languageName: node
   linkType: hard
 
-"@capacitor/core@npm:^4.8.2":
-  version: 4.8.2
-  resolution: "@capacitor/core@npm:4.8.2"
+"@capacitor/core@npm:^6.1.2":
+  version: 6.1.2
+  resolution: "@capacitor/core@npm:6.1.2"
   dependencies:
     tslib: "npm:^2.1.0"
-  checksum: 10c0/a602f897819abc5e7f56c19cea6570dfd4232e73053ae4dfaed7c806a3d8510709ab1be64e0d3a9e6e7a96a0fd726940b9f85c9c212559eeb4cf7131b9f67881
+  checksum: 10c0/15e67d1cc2012bd0b5f534637cd4fc841b1645e61183ba6f37f684f42d8c3a37b7e0bbcf554058c89eeeca9b2be12eacf94f39d58ac38fdb983f546a991845d3
   languageName: node
   linkType: hard
 
-"@capacitor/ios@npm:^4.8.2":
-  version: 4.8.2
-  resolution: "@capacitor/ios@npm:4.8.2"
+"@capacitor/ios@npm:^6.1.2":
+  version: 6.1.2
+  resolution: "@capacitor/ios@npm:6.1.2"
   peerDependencies:
-    "@capacitor/core": ^4.8.0
-  checksum: 10c0/b5f2f567e7c337bbe985da017b29fe82fc47e959847b849632578434ed6e6008c3628c72bd7229a3f29df02acf7f177992e40602e1a23370231e9f06b6093849
+    "@capacitor/core": ^6.1.0
+  checksum: 10c0/d07530608ec7be4eada11339f778e161a92fa7a3c8de36edcd6895e54ccd33c0d40b416e0ca3e26307957fa9c5b5bc57a034dabaa513615853972e459d42af44
   languageName: node
   linkType: hard
 
-"@capacitor/keyboard@npm:^4.1.1":
-  version: 4.1.1
-  resolution: "@capacitor/keyboard@npm:4.1.1"
+"@capacitor/keyboard@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "@capacitor/keyboard@npm:6.0.2"
   peerDependencies:
-    "@capacitor/core": ^4.0.0
-  checksum: 10c0/ff3db64ae17a0d71e3d3949920a5956ba974bcaf9b9ce03c2c058b8b59c85182040f7109b34c63f80b76252894f2beee2aa47592ded049551d0e8a8028c1b850
+    "@capacitor/core": ^6.0.0
+  checksum: 10c0/f8c10ad7a9c8095e995206fa534f3ade19c179a271f61dcf482a45f3ecac82edf3029481bf191cc4fc53a74db6e8959500d5d6ac2193d03c28d4ab5a996f3801
   languageName: node
   linkType: hard
 
-"@capacitor/status-bar@npm:^4.1.1":
-  version: 4.1.1
-  resolution: "@capacitor/status-bar@npm:4.1.1"
+"@capacitor/status-bar@npm:^6.0.1":
+  version: 6.0.1
+  resolution: "@capacitor/status-bar@npm:6.0.1"
   peerDependencies:
-    "@capacitor/core": ^4.0.0
-  checksum: 10c0/0884a4daac6cef6e69cbc7a7cc06ff5573073ef03b70ecf85947af4883f430ffa17e6126fcb418f17c98c1729e859ab1a2758a486546f910e65d9e81936e4bbf
+    "@capacitor/core": ^6.0.0
+  checksum: 10c0/0907d4de25697a4e4d31dbb7a562f7b916b233724c7cde5a7cc5954514d16ce3808ddf092d8277808ce0227508d49b785a1eff2f9d346c72987888be6dc73711
   languageName: node
   linkType: hard
 
@@ -4677,12 +4677,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/redux-mock-store@npm:^1.0.6":
-  version: 1.0.6
-  resolution: "@types/redux-mock-store@npm:1.0.6"
+"@types/redux-mock-store@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "@types/redux-mock-store@npm:1.5.0"
   dependencies:
     redux: "npm:^4.0.5"
-  checksum: 10c0/26f3b5091f131e0bcd150e3a621f21dc1ba059352729ee4d5154812042ea0cf8d1ae2880263367e55222130db14ec912bfda0b7ca184413f4989959fd5a2a70b
+  checksum: 10c0/d23bc4fce2f504f8e42c650b8b0b798c833471078fe6513aeb7cba16ced22798464f2a2b997e8fa54afb574de8186090c749fdf61cf47fdcd7bb245aebe9113d
   languageName: node
   linkType: hard
 
@@ -7671,13 +7671,13 @@ __metadata:
   dependencies:
     "@babel/core": "npm:^7.26.0"
     "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
-    "@capacitor/android": "npm:^4.8.2"
+    "@capacitor/android": "npm:^6.1.2"
     "@capacitor/cli": "npm:^6.1.2"
-    "@capacitor/clipboard": "npm:^4.1.0"
-    "@capacitor/core": "npm:^4.8.2"
-    "@capacitor/ios": "npm:^4.8.2"
-    "@capacitor/keyboard": "npm:^4.1.1"
-    "@capacitor/status-bar": "npm:^4.1.1"
+    "@capacitor/clipboard": "npm:^6.0.1"
+    "@capacitor/core": "npm:^6.1.2"
+    "@capacitor/ios": "npm:^6.1.2"
+    "@capacitor/keyboard": "npm:^6.0.2"
+    "@capacitor/status-bar": "npm:^6.0.1"
     "@emotion/react": "npm:^11.13.3"
     "@emotion/styled": "npm:^11.13.0"
     "@mui/material": "npm:^6.1.5"
@@ -7707,7 +7707,7 @@ __metadata:
     "@types/react-native": "npm:^0.73.0"
     "@types/react-redux": "npm:^7.1.34"
     "@types/react-transition-group": "npm:^4.4.11"
-    "@types/redux-mock-store": "npm:^1.0.6"
+    "@types/redux-mock-store": "npm:^1.5.0"
     "@types/sanitize-html": "npm:^2.13.0"
     "@types/sinonjs__fake-timers": "npm:^8.1.5"
     "@typescript-eslint/eslint-plugin": "npm:^8.0.0"
@@ -7724,7 +7724,7 @@ __metadata:
     dotenv: "npm:16.4.5"
     emitter20: "npm:^2.0.0"
     emoji-regex: "npm:^10.4.0"
-    eslint: "npm:^9.0.0"
+    eslint: "npm:^9.15.0"
     eslint-config-prettier: "npm:^9.1.0"
     eslint-config-react-app: "npm:^7.0.1"
     eslint-plugin-export-default-identifier: "npm:0.3.0"
@@ -7780,7 +7780,7 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-error-boundary: "npm:^4.1.2"
     react-gravatar: "npm:^2.6.3"
-    react-native-gesture-handler: "npm:^2.20.2"
+    react-native-gesture-handler: "npm:^2.21.1"
     react-native-web: "npm:^0.19.13"
     react-redux: "npm:^9.1.2"
     react-signature-pad-wrapper: "npm:^3.4.0"
@@ -7796,7 +7796,7 @@ __metadata:
     title-case: "npm:^4.3.2"
     truncate-html: "npm:^1.1.2"
     ts-key-enum: "npm:^2.0.12"
-    typescript: "npm:5.5.4"
+    typescript: "npm:5.6.3"
     use-onclickoutside: "npm:^0.4.1"
     vite: "npm:^5.4.10"
     vite-plugin-checker: "npm:^0.8.0"
@@ -14696,9 +14696,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-gesture-handler@npm:^2.20.2":
-  version: 2.21.0
-  resolution: "react-native-gesture-handler@npm:2.21.0"
+"react-native-gesture-handler@npm:^2.21.1":
+  version: 2.21.1
+  resolution: "react-native-gesture-handler@npm:2.21.1"
   dependencies:
     "@egjs/hammerjs": "npm:^2.0.17"
     hoist-non-react-statics: "npm:^3.3.0"
@@ -14707,7 +14707,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/6981d5f856c6ac0e4e60ce718ce4c32282100153a88a152d08c7a4ad0eba55f9ba1a3b631a48771ab705629afd0480a412dd5ed25d383b89271d142e617d78aa
+  checksum: 10c0/63c0999504101b69440ddc69924c032a2d85a0c072dc2e995dee268ba08d92b690d062a7a172042a4cb7a2f8a46a1bc2999baf2e85f9a900b96a2301e0a7f831
   languageName: node
   linkType: hard
 
@@ -16928,13 +16928,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:5.5.4":
-  version: 5.5.4
-  resolution: "typescript@npm:5.5.4"
+"typescript@npm:5.6.3":
+  version: 5.6.3
+  resolution: "typescript@npm:5.6.3"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/422be60f89e661eab29ac488c974b6cc0a660fb2228003b297c3d10c32c90f3bcffc1009b43876a082515a3c376b1eefcce823d6e78982e6878408b9a923199c
+  checksum: 10c0/44f61d3fb15c35359bc60399cb8127c30bae554cd555b8e2b46d68fa79d680354b83320ad419ff1b81a0bdf324197b29affe6cc28988cd6a74d4ac60c94f9799
   languageName: node
   linkType: hard
 
@@ -16948,13 +16948,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>":
-  version: 5.5.4
-  resolution: "typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>::version=5.5.4&hash=379a07"
+"typescript@patch:typescript@npm%3A5.6.3#optional!builtin<compat/typescript>":
+  version: 5.6.3
+  resolution: "typescript@patch:typescript@npm%3A5.6.3#optional!builtin<compat/typescript>::version=5.6.3&hash=8c6c40"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/73409d7b9196a5a1217b3aaad929bf76294d3ce7d6e9766dd880ece296ee91cf7d7db6b16c6c6c630ee5096eccde726c0ef17c7dfa52b01a243e57ae1f09ef07
+  checksum: 10c0/7c9d2e07c81226d60435939618c91ec2ff0b75fbfa106eec3430f0fcf93a584bc6c73176676f532d78c3594fe28a54b36eb40b3d75593071a7ec91301533ace7
   languageName: node
   linkType: hard
 

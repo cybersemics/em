@@ -435,7 +435,6 @@ export const updateLexeme = async (
     await replicateLexeme(key)
   }
   const lexemeDoc = lexemeDocs.get(key)
-  const lexemeReplicated = getLexeme(lexemeDoc)
   const contextsOld = new Set(lexemeOld?.contexts)
 
   // The Lexeme may be deleted if the user creates and deletes a thought very quickly
@@ -465,8 +464,7 @@ export const updateLexeme = async (
         const value = lexemeNew[key]
         const contextsNew = new Set(value)
 
-        // add contexts to YJS that have been added to state
-        lexemeNew.contexts.forEach(cxid => {
+        value.forEach(cxid => {
           if (!contextsOld.has(cxid)) {
             const docKey = docKeys.get(cxid)
             if (!docKey) {
@@ -484,29 +482,15 @@ export const updateLexeme = async (
             lexemeMap.delete(`cx-${cxid}`)
           }
         })
-      }
-      // other keys
-      else {
+      } else {
         const value = lexemeNew[key]
         // Only set a value if it has changed.
         // Otherwise YJS adds another update.
-        if (value !== lexemeMap.get(key)) {
+        if (value !== lexemeMap.get(lexemeKeyToDb[key])) {
           lexemeMap.set(lexemeKeyToDb[key], value)
         }
       }
     })
-
-    // If the Lexeme was pending, we need to update state with the new Lexeme with merged cxids.
-    // Otherwise, Redux state can become out of sync with YJS, and additional edits can result in missing Lexeme cxids.
-    // (It is not entirely clear how this occurs, as the delete case does not seem to be triggered.)
-    if (!lexemeOld && lexemeReplicated) {
-      onLexemeChange({
-        target: lexemeDoc.getMap<LexemeYjs>(),
-        transaction: {
-          origin: lexemePersistence.get(key),
-        },
-      })
-    }
   }, lexemeDoc.clientID)
 
   await idbSynced
@@ -1067,7 +1051,8 @@ export const updateThoughts = async ({
     delete?: Index<null>
   }
 
-  const updatePromise = updateQueue.add([
+  // update
+  await updateQueue.add([
     ...Object.entries(thoughtUpdates || {}).map(
       ([id, thought]) =>
         () =>
@@ -1080,12 +1065,11 @@ export const updateThoughts = async ({
     ),
   ])
 
-  const deletePromise = updateQueue.add([
+  // delete
+  await updateQueue.add([
     ...(Object.keys(thoughtDeletes || {}) as ThoughtId[]).map(id => () => deleteThought(id)),
     ...Object.keys(lexemeDeletes || {}).map(key => () => deleteLexeme(key)),
   ])
-
-  return Promise.all([updatePromise, deletePromise])
 }
 
 /** Clears all thoughts and lexemes from the db. */

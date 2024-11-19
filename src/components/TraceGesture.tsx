@@ -1,15 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
-import { CSSTransition } from 'react-transition-group'
-import { css, cx } from '../../styled-system/css'
+import { css } from '../../styled-system/css'
 import { AlertType, GESTURE_CANCEL_ALERT_TEXT, GESTURE_GLOW_BLUR, Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import viewportStore from '../stores/viewport'
-import durations from '../util/durations'
+import FadeTransition from './FadeTransition'
 
 interface TraceGestureProps {
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
@@ -129,16 +128,15 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       })}
       style={{ height: innerHeight }}
     >
-      <CSSTransition
+      <FadeTransition
         nodeRef={fadeBothEnterElRef}
         in={show}
-        timeout={durations.get('mediumDuration')}
-        classNames='fade-both'
+        // use mediumBoth to start the opacity at 0, otherwise clicking will render small dots
+        duration='mediumBoth'
       >
         <div
           ref={fadeBothEnterElRef}
-          // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots
-          className={cx('fade-both-enter', css({ userSelect: 'none' }))}
+          className={css({ userSelect: 'none' })}
           // WebKitUserSelect needed in addition to userSelect in order to disable long-tap-to-select
           style={{ WebkitUserSelect: 'none' }}
         >
@@ -151,7 +149,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
             }}
           />
         </div>
-      </CSSTransition>
+      </FadeTransition>
     </div>
   )
 }
