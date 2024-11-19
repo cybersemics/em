@@ -14,7 +14,7 @@ const ItalicTextIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animati
           ...style,
           width: '100%',
           height: '100%',
-          transform: `translate(-2px, 0)`,
+          transform: `translate(-2px, 0) scale(1.04, 1.04)`,
         }}
       >
         <rect width='24' height='24' fill='none' />
