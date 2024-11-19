@@ -263,4 +263,27 @@ describe('all platforms', () => {
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
+
+  // test case 11
+  it('on cursorUp, the caret should move from the start of the 2nd line in a multi-line cursor to the start of the 1st line in the same cursor.', async () => {
+    const multiLineCursor =
+      "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended."
+    const importText = `
+  - a
+  - ${multiLineCursor}`
+
+    await paste(importText)
+
+    const editableNodeHandle = await waitForEditable(multiLineCursor)
+    await click(editableNodeHandle, { y: 1 })
+
+    await press('ArrowUp')
+
+    // the focus must be at the start of the multi-line cursor after cursor up
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe(multiLineCursor)
+
+    const offset = await getSelection().focusOffset
+    expect(offset).toBe(0)
+  })
 })
