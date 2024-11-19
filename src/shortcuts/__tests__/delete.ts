@@ -1,9 +1,9 @@
+import { screen } from '@testing-library/dom'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
-import { screen } from '@testing-library/dom'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import createTestStore from '../../test-helpers/createTestStore'
@@ -29,7 +29,7 @@ describe('delete', () => {
         ])
       })
 
-      act(() => executeShortcut(deleteShortcut, { store }));
+      act(() => executeShortcut(deleteShortcut, { store }))
 
       const popupValue = await screen.findByTestId('popup-value')!
       expect(popupValue.textContent).toBe('Permanently deleted test')

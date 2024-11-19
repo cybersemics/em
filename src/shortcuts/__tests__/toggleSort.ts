@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/dom'
-import { act } from 'react'
 import { findAllByPlaceholderText } from '@testing-library/react'
+import { act } from 'react'
 import SimplePath from '../../@types/SimplePath'
 import Thunk from '../../@types/Thunk'
 import { editThoughtActionCreator as editThought } from '../../actions/editThought'
@@ -542,7 +542,7 @@ describe('DOM', () => {
   describe('empty thought ordering is preserved at the point of creation', () => {
     it('after first thought', async () => {
       act(() => {
-          store.dispatch([
+        store.dispatch([
           importText({
             text: `
               - =sort
@@ -558,9 +558,9 @@ describe('DOM', () => {
           setCursor(['a']),
           newThought({ value: '' }),
         ])
-    })
+      })
 
-    await act(() => vi.runAllTimersAsync())
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
       const childrenString = thoughts
@@ -603,7 +603,7 @@ describe('DOM', () => {
 
     it('after last thought', async () => {
       act(() => {
-          store.dispatch([
+        store.dispatch([
           importText({
             text: `
               - =sort
@@ -634,7 +634,7 @@ describe('DOM', () => {
 
     it('before first thought', async () => {
       act(() => {
-          store.dispatch([
+        store.dispatch([
           importText({
             text: `
               - =sort
@@ -826,7 +826,7 @@ describe('DOM', () => {
     })
 
     it('except with insertNewSubthought', async () => {
-      act( () => {
+      act(() => {
         store.dispatch([
           importText({
             text: `

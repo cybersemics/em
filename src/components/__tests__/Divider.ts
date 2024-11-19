@@ -10,7 +10,6 @@ afterEach(cleanupTestApp)
 
 describe('Divider', () => {
   it('convert "---" to divider', async () => {
-    
     await act(async () => {
       windowEvent('keydown', { key: 'Enter' })
     })
