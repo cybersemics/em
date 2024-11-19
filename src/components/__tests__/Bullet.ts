@@ -9,6 +9,7 @@ import dispatch from '../../test-helpers/dispatch'
 import findCursor from '../../test-helpers/queries/findCursor'
 import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import { act } from 'react'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -184,7 +185,7 @@ describe('expansion', () => {
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtA)
 
-    await vi.runOnlyPendingTimersAsync()
+    await act(() => vi.runAllTimersAsync())
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('x')
@@ -278,6 +279,8 @@ describe('expansion', () => {
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtB)
 
+    await act(() => vi.runAllTimersAsync())
+
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
   - a
@@ -307,6 +310,8 @@ describe('expansion', () => {
 
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtB)
+
+    await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
