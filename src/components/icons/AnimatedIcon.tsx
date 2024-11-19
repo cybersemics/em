@@ -29,7 +29,7 @@ const AnimatedIcon = ({
   const divRef = useRef<HTMLDivElement | null>(null)
 
   // Calculate dynamic color directly
-  const computedStyle = divRef.current ? getComputedStyle(divRef.current) : null
+  const computedStyle = divRef.current ? window.getComputedStyle(divRef.current) : null
   const dynamicColor = computedStyle?.color ? rgbToHex(computedStyle.color) : lottieColor
 
   return (
