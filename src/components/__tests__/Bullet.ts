@@ -1,4 +1,5 @@
 import userEvent from '@testing-library/user-event'
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { HOME_TOKEN } from '../../constants'
@@ -184,7 +185,7 @@ describe('expansion', () => {
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtA)
 
-    await vi.runOnlyPendingTimersAsync()
+    await act(() => vi.runAllTimersAsync())
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('x')
@@ -278,6 +279,8 @@ describe('expansion', () => {
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtB)
 
+    await act(() => vi.runAllTimersAsync())
+
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
   - a
@@ -307,6 +310,8 @@ describe('expansion', () => {
 
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtB)
+
+    await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__

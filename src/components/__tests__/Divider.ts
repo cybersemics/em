@@ -23,14 +23,16 @@ describe('Divider', () => {
     const divider1 = screen.queryByLabelText('divider')
     expect(divider1).toBeNull()
 
-    // '--' is not a divider
+    // // '--' is not a divider
     await user.type(editable!, '-')
     const divider2 = screen.queryByLabelText('divider')
     expect(divider2).toBeNull()
 
-    // '--' is a divider
+    // // '--' is a divider
     await user.type(editable!, '-')
     const divider3 = screen.queryByLabelText('divider')
     expect(divider3).toBeTruthy()
+
+    await act(() => vi.runAllTimersAsync())
   })
 })
