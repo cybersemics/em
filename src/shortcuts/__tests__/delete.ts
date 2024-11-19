@@ -3,6 +3,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import { screen } from '@testing-library/dom'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import createTestStore from '../../test-helpers/createTestStore'
@@ -16,6 +17,7 @@ describe('delete', () => {
     afterEach(cleanupTestApp)
 
     it('strip formatting in alert', async () => {
+      vi.useFakeTimers()
       await act(async () => {
         store.dispatch([
           importText({
@@ -27,11 +29,9 @@ describe('delete', () => {
         ])
       })
 
-      executeShortcut(deleteShortcut, { store })
+      act(() => executeShortcut(deleteShortcut, { store }));
 
-      await vi.runOnlyPendingTimersAsync()
-
-      const popupValue = document.querySelector('[data-testid="popup-value"]')!
+      const popupValue = await screen.findByTestId('popup-value')!
       expect(popupValue.textContent).toBe('Permanently deleted test')
     })
   })
