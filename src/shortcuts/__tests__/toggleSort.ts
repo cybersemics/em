@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/dom'
+import { act } from 'react'
 import { findAllByPlaceholderText } from '@testing-library/react'
 import SimplePath from '../../@types/SimplePath'
 import Thunk from '../../@types/Thunk'
@@ -339,20 +340,22 @@ describe('DOM', () => {
 
   describe('local', () => {
     it('home: Asc', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - c
-            - a
-            - b
-          `,
-        }),
-        setCursor(['a']),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - c
+              - a
+              - b
+            `,
+          }),
+          setCursor(['a']),
+        ])
+      })
 
-      executeShortcut(toggleSortShortcut, { store })
+      act(() => executeShortcut(toggleSortShortcut, { store }))
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughtC = getThoughtByContext(['c'])
       expect(thoughtC).toBeTruthy()
@@ -363,21 +366,23 @@ describe('DOM', () => {
     })
 
     it('subthoughts: Asc', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - 3
-              - 1
-              - 2
-          `,
-        }),
-        setCursor(['a', '3']),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - a
+                - 3
+                - 1
+                - 2
+            `,
+          }),
+          setCursor(['a', '3']),
+        ])
+      })
 
-      executeShortcut(toggleSortShortcut, { store })
+      act(() => executeShortcut(toggleSortShortcut, { store }))
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runOnlyPendingTimersAsync())
 
       const thought = getThoughtByContext(['a'])
       expect(thought).toBeTruthy()
@@ -388,22 +393,24 @@ describe('DOM', () => {
     })
 
     it('home: Desc', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            -c
-            -a
-            -b`,
-        }),
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              -c
+              -a
+              -b`,
+          }),
 
-        setCursor(['a']),
-      ])
+          setCursor(['a']),
+        ])
+      })
 
-      executeShortcut(toggleSortShortcut, { store })
+      act(() => executeShortcut(toggleSortShortcut, { store }))
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thought = getThoughtByContext(['c'])
       expect(thought).toBeTruthy()
@@ -414,22 +421,24 @@ describe('DOM', () => {
     })
 
     it('subthoughts: Desc', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - 3
-              - 1
-              - 2
-          `,
-        }),
-        setCursor(['a', '3']),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - a
+                - 3
+                - 1
+                - 2
+            `,
+          }),
+          setCursor(['a', '3']),
+        ])
+      })
 
-      executeShortcut(toggleSortShortcut, { store })
-      executeShortcut(toggleSortShortcut, { store })
+      act(() => executeShortcut(toggleSortShortcut, { store }))
+      act(() => executeShortcut(toggleSortShortcut, { store }))
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughtA = getThoughtByContext(['a'])
       expect(thoughtA).toBeTruthy()
@@ -532,24 +541,26 @@ describe('DOM', () => {
 
   describe('empty thought ordering is preserved at the point of creation', () => {
     it('after first thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['a']),
-        newThought({ value: '' }),
-      ])
+      act(() => {
+          store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['a']),
+          newThought({ value: '' }),
+        ])
+    })
 
-      await vi.runOnlyPendingTimersAsync()
+    await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
       const childrenString = thoughts
@@ -560,24 +571,26 @@ describe('DOM', () => {
     })
 
     it('after middle thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['c']),
-        newThought({ value: '' }),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['c']),
+          newThought({ value: '' }),
+        ])
+      })
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -589,24 +602,26 @@ describe('DOM', () => {
     })
 
     it('after last thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['f']),
-        newThought({ value: '' }),
-      ])
+      act(() => {
+          store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['f']),
+          newThought({ value: '' }),
+        ])
+      })
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -618,24 +633,26 @@ describe('DOM', () => {
     })
 
     it('before first thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['a', 'b']),
-        newThought({ value: '', insertBefore: true }),
-      ])
+      act(() => {
+          store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['a', 'b']),
+          newThought({ value: '', insertBefore: true }),
+        ])
+      })
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -647,24 +664,26 @@ describe('DOM', () => {
     })
 
     it('before middle thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['c']),
-        newThought({ value: '', insertBefore: true }),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['c']),
+          newThought({ value: '', insertBefore: true }),
+        ])
+      })
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -676,24 +695,26 @@ describe('DOM', () => {
     })
 
     it('before last thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['f']),
-        newThought({ value: '', insertBefore: true }),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['f']),
+          newThought({ value: '', insertBefore: true }),
+        ])
+      })
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -705,30 +726,32 @@ describe('DOM', () => {
     })
 
     it('multiple empty thoughts', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['a']),
-        newThought({ value: '', insertBefore: true }),
-        setCursor(['a']),
-        newThought({ value: '' }),
-        setCursor(['c']),
-        newThought({ value: '' }),
-        setCursor(['f']),
-        newThought({ value: '' }),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['a']),
+          newThought({ value: '', insertBefore: true }),
+          setCursor(['a']),
+          newThought({ value: '' }),
+          setCursor(['c']),
+          newThought({ value: '' }),
+          setCursor(['f']),
+          newThought({ value: '' }),
+        ])
+      })
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -740,24 +763,26 @@ describe('DOM', () => {
     })
 
     it('only one empty subthought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['a', 'b']),
-        newThought({ value: '', insertNewSubthought: true }),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['a', 'b']),
+          newThought({ value: '', insertNewSubthought: true }),
+        ])
+      })
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -769,25 +794,27 @@ describe('DOM', () => {
     })
 
     it('multiple contiguous empty thoughts', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['c']),
-        newThought({ value: '' }),
-        newThought({ value: '' }),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['c']),
+          newThought({ value: '' }),
+          newThought({ value: '' }),
+        ])
+      })
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -799,24 +826,26 @@ describe('DOM', () => {
     })
 
     it('except with insertNewSubthought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - =sort
-                - Alphabetical
-              - b
-              - c
-              - d
-              - e
-              - f
-          `,
-        }),
-        setCursor(['a']),
-        newThought({ value: '', insertNewSubthought: true }),
-      ])
+      act( () => {
+        store.dispatch([
+          importText({
+            text: `
+              - a
+                - =sort
+                  - Alphabetical
+                - b
+                - c
+                - d
+                - e
+                - f
+            `,
+          }),
+          setCursor(['a']),
+          newThought({ value: '', insertNewSubthought: true }),
+        ])
+      })
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -828,24 +857,26 @@ describe('DOM', () => {
     })
 
     it('except with insertNewSubthought and insertBefore', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - =sort
-                - Alphabetical
-              - b
-              - c
-              - d
-              - e
-              - f
-          `,
-        }),
-        setCursor(['a']),
-        newThought({ value: '', insertNewSubthought: true, insertBefore: true }),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - a
+                - =sort
+                  - Alphabetical
+                - b
+                - c
+                - d
+                - e
+                - f
+            `,
+          }),
+          setCursor(['a']),
+          newThought({ value: '', insertNewSubthought: true, insertBefore: true }),
+        ])
+      })
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
 
@@ -857,30 +888,32 @@ describe('DOM', () => {
     })
 
     it('preserve sort order when thought is edited to empty instead of moving it back to its insertion point', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - test
-              - =sort
-                - Alphabetical
-              - a
-              - b
-              - c
-          `,
-        }),
-        setCursor(['test', 'a']),
-        // wrap in a thunk in order to access fresh state
-        (dispatch, getState) =>
-          dispatch(
-            editThought({
-              oldValue: 'a',
-              newValue: '',
-              path: contextToPath(getState(), ['test', 'a']) as SimplePath,
-            }),
-          ),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - test
+                - =sort
+                  - Alphabetical
+                - a
+                - b
+                - c
+            `,
+          }),
+          setCursor(['test', 'a']),
+          // wrap in a thunk in order to access fresh state
+          (dispatch, getState) =>
+            dispatch(
+              editThought({
+                oldValue: 'a',
+                newValue: '',
+                path: contextToPath(getState(), ['test', 'a']) as SimplePath,
+              }),
+            ),
+        ])
+      })
 
-      await vi.runOnlyPendingTimersAsync()
+      await act(() => vi.runAllTimersAsync())
 
       const thoughts = screen.getAllByTestId(/thought/)
 
