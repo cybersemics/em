@@ -8,20 +8,18 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('split thought after non-word character', async () => {
-  await act(async () => {
-    store.dispatch([
-      newThought({
-        value: '*test',
-      }),
-      {
-        type: 'splitThought',
-        splitResult: {
-          left: '*',
-          right: 'test',
-        },
+  store.dispatch([
+    newThought({
+      value: '*test',
+    }),
+    {
+      type: 'splitThought',
+      splitResult: {
+        left: '*',
+        right: 'test',
       },
-    ])
-  })
+    },
+  ])
 
   await act(async () => vi.runOnlyPendingTimersAsync())
 
