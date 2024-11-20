@@ -1,7 +1,11 @@
 import _ from 'lodash'
 import Player, { LottieRefCurrentProps } from 'lottie-react'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import LottieData, { RGBA, ShapeItem, ShapeLayer } from '../../@types/LottieTypes'
+import AnimationKeyframe from '../../@types/lottie/AnimationKeyframe'
+import LottieData from '../../@types/lottie/LottieData'
+import RGBA from '../../@types/lottie/RGBA'
+import ShapeItem from '../../@types/lottie/ShapeItem'
+import ShapeLayer from '../../@types/lottie/ShapeLayer'
 
 /** The props for the LottieAnimation component. */
 interface LottieAnimationProps {
@@ -49,7 +53,8 @@ const updateColorsInItem = (item: ShapeItem, rgbaArray: RGBA) => {
     // Check for animated color property
     if (item.c.a === 1) {
       if (Array.isArray(item.c.k)) {
-        item.c.k.forEach((keyframe: any) => {
+        const keyframes = item.c.k as AnimationKeyframe[]
+        keyframes.forEach(keyframe => {
           keyframe.s = rgbaArray
         })
       }
