@@ -9,7 +9,12 @@ const OutdentIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationC
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{
+          ...style,
+          width: '100%',
+          height: '100%',
+          transform: `translate(1px, 0) scale(1.01, 1.01)`,
+        }}
         fill='none'
       >
         <g id='Layer_2' data-name='Layer 2'>
