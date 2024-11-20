@@ -440,3 +440,14 @@ export const html = () => {
   const currentHtml = div.innerHTML
   return currentHtml
 }
+
+/** Returns the bounding rectangle for the current browser selection */
+export const getBoundingClientRect = () => {
+  const selection = window.getSelection()
+
+  if (selection && selection.rangeCount) {
+    return selection.getRangeAt(0).getBoundingClientRect()
+  }
+
+  return null
+}
