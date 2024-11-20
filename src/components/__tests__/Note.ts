@@ -5,6 +5,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import { act } from 'react'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -20,6 +21,8 @@ it('basic note', async () => {
     // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
     setCursor(null),
   ])
+
+  await act(async () => vi.runOnlyPendingTimersAsync())  
 
   const element = screen.getByText('foo')
   expect(element)
@@ -46,6 +49,8 @@ it('re-render note when =note subthought value changes', async () => {
     setCursor(null),
   ])
 
+  await act(async () => vi.runOnlyPendingTimersAsync())
+
   const element = screen.getByText('bar')
   expect(element)
 })
@@ -71,6 +76,8 @@ it('render note when subthought is edited from non-attribute', async () => {
     setCursor(null),
   ])
 
+  await act(async () => vi.runOnlyPendingTimersAsync())
+
   const element = screen.getByText('foo')
   expect(element)
 })
@@ -95,6 +102,8 @@ it('render note when subthought is edited from non-note attribute', async () => 
     // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
     setCursor(null),
   ])
+
+  await act(async () => vi.runOnlyPendingTimersAsync())
 
   const element = screen.getByText('foo')
   expect(element)
