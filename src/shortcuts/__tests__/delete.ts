@@ -29,7 +29,11 @@ describe('delete', () => {
         ])
       })
 
+      await act(async () => vi.runOnlyPendingTimersAsync())
+
       act(() => executeShortcut(deleteShortcut, { store }))
+
+      await act(async () => vi.runAllTimersAsync())
 
       const popupValue = await screen.findByTestId('popup-value')!
       expect(popupValue.textContent).toBe('Permanently deleted test')
