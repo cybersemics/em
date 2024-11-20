@@ -1,3 +1,4 @@
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
@@ -13,6 +14,8 @@ it('Strip formatting from thought values in ContextBreadcrumbs', async () => {
       `,
     }),
   ])
+
+  await act(async () => vi.runOnlyPendingTimersAsync())
 
   const contextBreadcrumbs = document.querySelector('[aria-label="context-breadcrumbs"]')!
   expect(contextBreadcrumbs.textContent).toBe('test')
