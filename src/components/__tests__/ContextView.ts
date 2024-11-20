@@ -13,6 +13,7 @@ import queryThoughtByText from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import pathToContext from '../../util/pathToContext'
 import series from '../../util/series'
+import { act } from 'react'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -37,6 +38,8 @@ it('Clicking a context moves the cursor to that context', async () => {
     toggleContextView(),
   ])
 
+  await act(async () => vi.runOnlyPendingTimersAsync())
+
   // select each context in the context view
   const contextBreadcrumbs = document.querySelectorAll('[aria-label="context-breadcrumbs"]')
 
@@ -52,6 +55,8 @@ it('Clicking a context moves the cursor to that context', async () => {
   // click the context link
   const user = userEvent.setup({ delay: null })
   await user.click(contextLink)
+
+  await act(async () => vi.runOnlyPendingTimersAsync())
 
   // cursor should exist
   const cursor = store.getState().cursor!
