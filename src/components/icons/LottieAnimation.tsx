@@ -1,3 +1,4 @@
+import { hexToRgb } from '@mui/material'
 import _ from 'lodash'
 import Player, { LottieRefCurrentProps } from 'lottie-react'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -17,22 +18,34 @@ interface LottieAnimationProps {
 }
 
 /**
- * Converts hex color to RGBA.
+ * Converts hex color to RGBA using Material UI's hexToRgb.
  *
  * @param hex - The hex color code.
- * @returns The RGBA values.
+ * @returns The RGBA values as [r, g, b, a].
  */
-const hexToRGBA = (hex: string): RGBA => {
-  let r = 0,
-    g = 0,
-    b = 0
-  const a = 1
-  if (hex.length === 7) {
-    r = parseInt(hex.slice(1, 3), 16) / 255
-    g = parseInt(hex.slice(3, 5), 16) / 255
-    b = parseInt(hex.slice(5, 7), 16) / 255
+const hexToRGBA = (hex: string): [number, number, number, number] => {
+  const rgbString = hexToRgb(hex)
+
+  if (rgbString) {
+    // Regular expression to match rgb or rgba strings
+    const regex = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*([01]?\.?\d*))?\)$/
+    const matches = rgbString.match(regex)
+
+    if (matches) {
+      const r = Number(matches[1])
+      const g = Number(matches[2])
+      const b = Number(matches[3])
+      const a = matches[4] !== undefined ? Number(matches[4]) : 1 // Default alpha to 1 if not present
+      return [r / 255, g / 255, b / 255, a]
+    } else {
+      console.warn('Invalid RGB string format. Falling back to black.')
+    }
+  } else {
+    console.warn('hexToRgb returned null. Falling back to black.')
   }
-  return [r, g, b, a]
+
+  // Fallback to black with full opacity if hex is invalid
+  return [0, 0, 0, 1]
 }
 
 /**
