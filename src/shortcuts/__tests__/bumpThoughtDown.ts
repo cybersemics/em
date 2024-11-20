@@ -19,11 +19,15 @@ it('reset content editable inner html on bumpThoughtDown', async () => {
     setCursor(['a']),
   ])
 
+  await act(async () => vi.runOnlyPendingTimersAsync())
+
   expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('a')
 
   await act(async () => {
     executeShortcut(bumpThoughtDown)
   })
+
+  await act(async () => vi.runOnlyPendingTimersAsync())
 
   expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('')
 })
