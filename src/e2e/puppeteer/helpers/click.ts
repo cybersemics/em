@@ -2,13 +2,13 @@ import { JSHandle } from 'puppeteer'
 import { page } from '../setup'
 
 interface Options {
-  // Click on the inside edge of the editable
+  /** Click on the inside edge of the editable. Default: left. */
   edge?: 'left' | 'right'
-  // Specify specific node on editable to click on. Overrides edge.
+  /** Specify specific node on editable to click on. Overrides edge. */
   offset?: number
-  // Number of pixels of x offset to add to the click coordinates
+  /** Number of pixels of x offset to add to the click coordinates of width/2. */
   x?: number
-  // Number of pixels of y offset to add to the click coordinates
+  /** Number of pixels of y offset to add to the click coordinates of height/2. */
   y?: number
 }
 
