@@ -61,7 +61,7 @@ const click = async (
 
   const coordinate = !offset
     ? {
-        x: boundingBox.x + (edge === 'left' ? 1 : edge === 'right' ? boundingBox.width - 1 : boundingBox.width / 2),
+        x: boundingBox.x + (edge === 'left' ? 1 : boundingBox.width - 1),
         y: boundingBox.y + boundingBox.height / 2,
       }
     : await offsetCoordinates()
