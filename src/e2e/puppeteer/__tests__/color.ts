@@ -1,5 +1,6 @@
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import waitForEditable from '../helpers/waitForEditable'
@@ -18,7 +19,7 @@ const extractStyleProperty = (html: string) => {
   return { color, backgroundColor }
 }
 
-it('Set the text color of the text', async () => {
+it('Set the text color of the text and bullet', async () => {
   const importText = `
   - Labrador
   - Golden Retriever`
@@ -32,7 +33,9 @@ it('Set the text color of the text', async () => {
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const cursorText = await getEditingText()
+  const bulletColor = await getBulletColor()
   const result = extractStyleProperty(cursorText!)
+  expect(bulletColor).toBe('rgb(0, 199, 230)')
   expect(result?.color).toBe('#00c7e6')
   expect(result?.backgroundColor).toBe(null)
 })
@@ -50,7 +53,9 @@ it('Set the background color of the text', async () => {
   await click('[aria-label="background color swatches"] [aria-label="green"]')
 
   const cursorText = await getEditingText()
+  const bulletColor = await getBulletColor()
   const result = extractStyleProperty(cursorText!)
+  expect(bulletColor).toBe('rgb(0, 214, 136)')
   expect(result?.backgroundColor).toBe('rgb(0, 214, 136)')
 })
 
