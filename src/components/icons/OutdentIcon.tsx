@@ -13,7 +13,7 @@ const OutdentIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationC
           ...style,
           width: '100%',
           height: '100%',
-          transform: `translate(1px, 0) scale(1.01, 1.01)`,
+          transform: `translate(4%, 0) scale(1.01, 1.01)`,
         }}
         fill='none'
       >
