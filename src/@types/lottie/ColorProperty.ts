@@ -9,7 +9,7 @@ import RGBA from './RGBA'
  */
 interface ColorProperty {
   a: number
-  k: RGBA | RGBA[] | number[] | AnimationKeyframe[]
+  k: RGBA | AnimationKeyframe[]
 }
 
 export default ColorProperty
