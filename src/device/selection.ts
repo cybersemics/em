@@ -441,7 +441,7 @@ export const html = () => {
   return currentHtml
 }
 
-/** Returns the bounding rectangle for the current browser selection */
+/** Returns the bounding rectangle for the current browser selection. */
 export const getBoundingClientRect = () => {
   const selection = window.getSelection()
 
@@ -450,4 +450,19 @@ export const getBoundingClientRect = () => {
   }
 
   return null
+}
+
+/** Returns true if the point is within 100 pixels of the browser selection. */
+export const isNear = (x: number, y: number): boolean => {
+  if (!isActive() || isCollapsed()) return false
+
+  const rect = getBoundingClientRect()
+  if (!rect) return false
+
+  const left = rect.left - 100
+  const right = rect.right + 100
+  const top = rect.top - 100
+  const bottom = rect.bottom + 100
+  console.log(x, y, left, right, top, bottom)
+  return x >= left && y >= top && x <= right && y <= bottom
 }

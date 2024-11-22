@@ -48,7 +48,7 @@ type MultiGestureProps = PropsWithChildren<{
   // related: https://github.com/cybersemics/em/issues/1268
   minDistance?: number
   /** A hook that is called on touchstart if the user is in the gesture zone. If it returns true, the gesture is abandoned. Otherwise scrolling is disabled and a gesture may be entered. */
-  shouldCancelGesture?: () => boolean
+  shouldCancelGesture?: (x?: number, y?: number) => boolean
 }>
 
 const TOOLBAR_HEIGHT = 50
@@ -133,7 +133,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         const scrollZoneWidth = viewport.scrollZoneWidth
         const isInGestureZone =
           (this.leftHanded ? x > scrollZoneWidth : x < viewport.innerWidth - scrollZoneWidth) && y > TOOLBAR_HEIGHT
-        if (isInGestureZone && !props.shouldCancelGesture?.()) {
+        if (isInGestureZone && !props.shouldCancelGesture?.(x, y)) {
           this.disableScroll = true
         } else {
           this.abandon = true

@@ -76,8 +76,8 @@ const useDisableLongPressToSelect = () => {
 }
 
 /** Cancel gesture if there is an active text selection, drag, modal, or sidebar. */
-const shouldCancelGesture = (): boolean =>
-  (selection.isActive() && !selection.isCollapsed()) ||
+const shouldCancelGesture = (x?: number, y?: number): boolean =>
+  (x && y && selection.isNear(x, y)) ||
   store.getState().dragInProgress ||
   !!store.getState().showModal ||
   store.getState().showSidebar
