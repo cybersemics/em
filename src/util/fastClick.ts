@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { isTouch } from '../browser'
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 // the number of pixels of scrolling or dragging from touchStart that is allowed to still trigger fastClick
 const MOVE_THRESHOLD = 15
@@ -27,7 +28,7 @@ const fastClick = isTouch
           const y = e.touches[0].clientY
           touchStart = { x, y }
         }
-
+        Haptics.impact({ style: ImpactStyle.Light });
         tapDown?.(e)
       },
       // cancel tap if touchmove exceeds threshold (e.g. with scrolling or dragging)
