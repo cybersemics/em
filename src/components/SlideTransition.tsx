@@ -27,7 +27,7 @@ const SlideTransition = ({
 } & RemoveFields<TransitionProps<HTMLElement>>) => {
   const slideClasses = slideTransition({ from })
   return (
-    <CSSTransition key={id} classNames={slideClasses} timeout={durations.get(duration)} du {...props}>
+    <CSSTransition key={id} classNames={slideClasses} timeout={durations.get(duration)} {...props}>
       {children}
     </CSSTransition>
   )
