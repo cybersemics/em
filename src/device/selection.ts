@@ -463,6 +463,6 @@ export const isNear = (x: number, y: number): boolean => {
   const right = rect.right + 100
   const top = rect.top - 100
   const bottom = rect.bottom + 100
-  console.log(x, y, left, right, top, bottom)
+
   return x >= left && y >= top && x <= right && y <= bottom
 }
