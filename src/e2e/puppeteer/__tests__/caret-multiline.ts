@@ -275,7 +275,10 @@ describe('all platforms', () => {
     await paste(importText)
 
     const editableNodeHandle = await waitForEditable(multiLineCursor)
-    await click(editableNodeHandle, { y: 1 })
+    // due to an outstanding bug (see test case 5), pressing ArrowDown from offset 0 will skip to the next thought
+    await click(editableNodeHandle, { offset: 1 })
+    await press('ArrowDown')
+    await press('ArrowLeft')
 
     await press('ArrowUp')
 
