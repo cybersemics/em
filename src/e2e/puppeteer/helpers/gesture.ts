@@ -13,6 +13,7 @@ const gesture = async (points: { x: number; y: number }[], complete: boolean = t
 
 export default gesture
 
+/** Draw a horizontal line gesture at a certain y coordinate on the touch screen. */
 export const drawHorizontalLineGesture = (y: number = 100) =>
   gesture(
     [
