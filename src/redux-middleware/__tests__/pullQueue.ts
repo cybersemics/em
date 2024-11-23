@@ -124,8 +124,8 @@ it('load buffered thoughts', async () => {
   await matchContextsChildren(db, ['a', 'b', 'c', 'd'], [{ value: 'e' }])
   await matchContextsChildren(db, ['a', 'b', 'c', 'd', 'e'], [])
 
-  // // clear state
-  // // call initialize again to reload from db (simulating page refresh)
+  // clear state
+  // call initialize again to reload from db (simulating page refresh)
 
   await refreshTestApp()
 
