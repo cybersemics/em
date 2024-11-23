@@ -8,20 +8,20 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('split thought after non-word character', async () => {
-  await act(async () => {
-    store.dispatch([
-      newThought({
-        value: '*test',
-      }),
-      {
-        type: 'splitThought',
-        splitResult: {
-          left: '*',
-          right: 'test',
-        },
+  store.dispatch([
+    newThought({
+      value: '*test',
+    }),
+    {
+      type: 'splitThought',
+      splitResult: {
+        left: '*',
+        right: 'test',
       },
-    ])
-  })
+    },
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   // ensure that the Lexeme is not duplicated since it is the same as the source thought
   expect(() => screen.getByText('2')).toThrow('Unable to find an element')

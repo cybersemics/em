@@ -40,5 +40,7 @@ it('set url to home after deleting last empty thought', async () => {
   expect(window.location.pathname).toBe(`/~/${thoughtA.id}`)
 
   await dispatch(deleteThoughtWithCursor({}))
+  await act(vi.runOnlyPendingTimersAsync)
+
   expect(window.location.pathname).toBe('/')
 })
