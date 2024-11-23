@@ -604,7 +604,7 @@ export const replicateChildren = async (
   // If the doc is cached, return as soon as the appropriate providers are synced.
   // Disable IDB during tests because of TransactionInactiveError in fake-indexeddb.
   // Disable websocket during tests because of infinite loop in sinon runAllAsync.
-  if (thoughtDocs.get(docKey) || import.meta.env.MODE === 'test') {
+  if (thoughtDocs.get(docKey)) {
     // The Doc exists, but it may not be populated yet if replication has not completed.
     // Wait for the appropriate replication to complete before accessing children.
     if (background && remote) {
@@ -626,7 +626,7 @@ export const replicateChildren = async (
 
     return children
   }
-
+  
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
   const idbSynced = persistence.whenSynced
@@ -722,7 +722,7 @@ export const replicateLexeme = async (
   const documentName = encodeLexemeDocumentName(tsid, key)
   const doc = lexemeDocs.get(key) || new Y.Doc({ guid: documentName })
   const lexemeMap = doc.getMap<LexemeYjs>()
-
+  
   // Foreground replication retains the lexeme in the cache even when replication completes.
   // The lexeme will only be removed after freeLexeme is called.
   if (!background) {
@@ -732,7 +732,7 @@ export const replicateLexeme = async (
   // If the doc is cached, return as soon as the appropriate providers are synced.
   // Disable IDB during tests because of TransactionInactiveError in fake-indexeddb.
   // Disable websocket during tests because of infinite loop in sinon runAllAsync.
-  if (lexemeDocs.get(key) || import.meta.env.MODE === 'test') {
+  if (lexemeDocs.get(key)) {
     if (background) {
       await lexemeWebsocketSynced.get(key)
     } else {
@@ -947,7 +947,7 @@ const deleteThought = async (docKey: string): Promise<void> => {
   children?.forEach(child => {
     docKeys.delete(child.id)
   })
-
+  
   try {
     // if there is no persistence in memory (e.g. because the thought has not been loaded or has been deallocated by freeThought), then we need to manually delete it from the db
     const deleted = persistence ? persistence.clearData() : clearDocument(encodeThoughtDocumentName(tsid, docKey))
