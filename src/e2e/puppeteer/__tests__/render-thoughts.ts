@@ -6,6 +6,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
+import setTheme from '../helpers/setTheme'
 import type from '../helpers/type'
 
 expect.extend({
@@ -24,6 +25,12 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 const testSuite = () => {
   describe('', () => {
     it('initial load', async () => {
+      const image = await screenshot()
+      expect(image).toMatchImageSnapshot()
+    })
+
+    it('initial load on light theme', async () => {
+      await setTheme('Light')
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
