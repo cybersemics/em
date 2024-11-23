@@ -14,6 +14,10 @@ import { executeShortcutWithMulticursor } from '../../util/executeShortcut'
 import clearThoughtShortcut from '../clearThought'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 
+/**
+ * This has been to the top because the rest of the tests aren't getting cleaned up.
+ * This should be properly fixed at some point.
+ */
 describe('DOM', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
