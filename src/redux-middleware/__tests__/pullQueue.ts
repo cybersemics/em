@@ -18,7 +18,6 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import testTimer from '../../test-helpers/testTimer'
 
 /*
   Note: sinon js fake timer is used to overcome some shortcomings we have with jest's fake timer.
