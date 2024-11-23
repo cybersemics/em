@@ -26,314 +26,9 @@ import executeShortcut, { executeShortcutWithMulticursor } from '../../util/exec
 import hashPath from '../../util/hashPath'
 import toggleSortShortcut from '../toggleSort'
 
-describe('store', () => {
-  describe('local', () => {
-    it('NULL -> Asc', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - d
-              - b
-              - c
-              - e
-          `,
-        }),
-        setCursor(['a', 'b']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-
-      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
-    })
-
-    it('Asc -> Desc', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - =sort
-                - Alphabetical
-                  - Asc
-              - b
-              - c
-              - d
-              - e
-          `,
-        }),
-        setCursor(['a', 'b']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-
-      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
-      expect(attributeByContext(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
-    })
-
-    it('Desc -> NULL', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - =sort
-                - Alphabetical
-                  - Desc
-              - b
-              - c
-              - d
-              - e`,
-        }),
-        setCursor(['a', 'b']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-
-      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe(null)
-    })
-
-    it('None -> Asc (home)', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - b
-              - 1
-              - 2
-            - a
-              - 3
-              - 4`,
-        }),
-
-        setCursor(['a']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-
-      expect(attributeByContext(store.getState(), [HOME_TOKEN], '=sort')).toBe('Alphabetical')
-    })
-
-    it('Asc -> Desc (home)', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            -a
-            -b`,
-        }),
-
-        setCursor(['a']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-
-      expect(attributeByContext(store.getState(), [HOME_TOKEN], '=sort')).toBe('Alphabetical')
-      expect(attributeByContext(store.getState(), ['=sort'], 'Alphabetical')).toBe('Desc')
-    })
-
-    it('sort new thoughts after toggling sort', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - c
-            - a
-            - b`,
-        }),
-        toggleSortActionCreator({ simplePath: HOME_PATH }),
-        newThought({ value: 'e', preventSetCursor: true }),
-        newThought({ value: 'd', preventSetCursor: true }),
-      ])
-
-      const state = store.getState()
-      expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
-  - =sort
-    - Alphabetical
-      - Asc
-  - a
-  - b
-  - c
-  - d
-  - e`)
-    })
-
-    it('restore sort order', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - c
-            - a
-            - b`,
-        }),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-      executeShortcut(toggleSortShortcut, { store })
-      executeShortcut(toggleSortShortcut, { store })
-
-      const state = store.getState()
-      expect(attributeByContext(state, [HOME_TOKEN], '=sort')).toBe(null)
-
-      expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
-  - c
-  - a
-  - b`)
-    })
-
-    it('restore sort order after new thoughts are added', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - c
-            - a
-            - b`,
-        }),
-        toggleSortActionCreator({ simplePath: HOME_PATH }),
-        newThought({ value: 'e', preventSetCursor: true }),
-        newThought({ value: 'd', preventSetCursor: true }),
-        toggleSortActionCreator({ simplePath: HOME_PATH }),
-        toggleSortActionCreator({ simplePath: HOME_PATH }),
-      ])
-
-      const state = store.getState()
-      const a = contextToThought(state, ['a'])!
-      const b = contextToThought(state, ['b'])!
-      const c = contextToThought(state, ['c'])!
-
-      // check that c, a, and b are in the original order
-      expect(c.rank).toBeLessThan(a.rank)
-      expect(a.rank).toBeLessThan(b.rank)
-    })
-
-    it('restore sort order after some thoughts are removed', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - d
-            - e
-            - c
-            - a
-            - b`,
-        }),
-        toggleSortActionCreator({ simplePath: HOME_PATH }),
-        deleteThoughtAtFirstMatchActionCreator(['d']),
-        deleteThoughtAtFirstMatchActionCreator(['e']),
-        toggleSortActionCreator({ simplePath: HOME_PATH }),
-        toggleSortActionCreator({ simplePath: HOME_PATH }),
-      ])
-
-      const state = store.getState()
-      expect(attributeByContext(state, [HOME_TOKEN], '=sort')).toBe(null)
-
-      expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
-  - c
-  - a
-  - b`)
-    })
-  })
-
-  describe('global sort', () => {
-    it('Asc -> NULL when global is Desc', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - =sort
-                - Alphabetical
-                  - Asc
-              - b
-              - c
-              - d
-              - e
-          `,
-        }),
-
-        toggleAttribute({
-          path: [EM_TOKEN],
-          values: ['Settings', 'Global Sort', 'Alphabetical', 'Desc'],
-        }),
-
-        setCursor(['a', 'b']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe(null)
-    })
-
-    it('NULL -> None when global is Desc', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - d
-              - b
-              - c
-              - e
-          `,
-        }),
-
-        toggleAttribute({
-          path: [EM_TOKEN],
-          values: ['Settings', 'Global Sort', 'Alphabetical', 'Desc'],
-        }),
-
-        setCursor(['a', 'b']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('None')
-    })
-
-    it('override global Asc with local Desc', () => {
-      const store = createTestStore()
-
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - d
-              - b
-              - c
-              - e
-          `,
-        }),
-
-        toggleAttribute({
-          path: [EM_TOKEN],
-          values: ['Settings', 'Global Sort', 'Alphabetical'],
-        }),
-
-        setCursor(['a', 'b']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-
-      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
-      expect(attributeByContext(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
-    })
-  })
-})
-
+/**
+ * Moved to the top because the non-DOM tests aren't properly cleaning up the store
+ */
 describe('DOM', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
@@ -352,6 +47,8 @@ describe('DOM', () => {
           setCursor(['a']),
         ])
       })
+
+      await act(async () => vi.runOnlyPendingTimersAsync())
 
       act(() => executeShortcut(toggleSortShortcut, { store }))
 
@@ -922,6 +619,314 @@ describe('DOM', () => {
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('_bc')
+    })
+  })
+})
+
+describe('store', () => {
+  describe('local', () => {
+    it('NULL -> Asc', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - d
+              - b
+              - c
+              - e
+          `,
+        }),
+        setCursor(['a', 'b']),
+      ])
+
+      executeShortcut(toggleSortShortcut, { store })
+
+      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
+    })
+
+    it('Asc -> Desc', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - =sort
+                - Alphabetical
+                  - Asc
+              - b
+              - c
+              - d
+              - e
+          `,
+        }),
+        setCursor(['a', 'b']),
+      ])
+
+      executeShortcut(toggleSortShortcut, { store })
+
+      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
+      expect(attributeByContext(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
+    })
+
+    it('Desc -> NULL', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - =sort
+                - Alphabetical
+                  - Desc
+              - b
+              - c
+              - d
+              - e`,
+        }),
+        setCursor(['a', 'b']),
+      ])
+
+      executeShortcut(toggleSortShortcut, { store })
+
+      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe(null)
+    })
+
+    it('None -> Asc (home)', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - b
+              - 1
+              - 2
+            - a
+              - 3
+              - 4`,
+        }),
+
+        setCursor(['a']),
+      ])
+
+      executeShortcut(toggleSortShortcut, { store })
+
+      expect(attributeByContext(store.getState(), [HOME_TOKEN], '=sort')).toBe('Alphabetical')
+    })
+
+    it('Asc -> Desc (home)', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - =sort
+              - Alphabetical
+            -a
+            -b`,
+        }),
+
+        setCursor(['a']),
+      ])
+
+      executeShortcut(toggleSortShortcut, { store })
+
+      expect(attributeByContext(store.getState(), [HOME_TOKEN], '=sort')).toBe('Alphabetical')
+      expect(attributeByContext(store.getState(), ['=sort'], 'Alphabetical')).toBe('Desc')
+    })
+
+    it('sort new thoughts after toggling sort', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - c
+            - a
+            - b`,
+        }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        newThought({ value: 'e', preventSetCursor: true }),
+        newThought({ value: 'd', preventSetCursor: true }),
+      ])
+
+      const state = store.getState()
+      expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Asc
+  - a
+  - b
+  - c
+  - d
+  - e`)
+    })
+
+    it('restore sort order', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - c
+            - a
+            - b`,
+        }),
+      ])
+
+      executeShortcut(toggleSortShortcut, { store })
+      executeShortcut(toggleSortShortcut, { store })
+      executeShortcut(toggleSortShortcut, { store })
+
+      const state = store.getState()
+      expect(attributeByContext(state, [HOME_TOKEN], '=sort')).toBe(null)
+
+      expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - c
+  - a
+  - b`)
+    })
+
+    it('restore sort order after new thoughts are added', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - c
+            - a
+            - b`,
+        }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        newThought({ value: 'e', preventSetCursor: true }),
+        newThought({ value: 'd', preventSetCursor: true }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+      ])
+
+      const state = store.getState()
+      const a = contextToThought(state, ['a'])!
+      const b = contextToThought(state, ['b'])!
+      const c = contextToThought(state, ['c'])!
+
+      // check that c, a, and b are in the original order
+      expect(c.rank).toBeLessThan(a.rank)
+      expect(a.rank).toBeLessThan(b.rank)
+    })
+
+    it('restore sort order after some thoughts are removed', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - d
+            - e
+            - c
+            - a
+            - b`,
+        }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        deleteThoughtAtFirstMatchActionCreator(['d']),
+        deleteThoughtAtFirstMatchActionCreator(['e']),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+      ])
+
+      const state = store.getState()
+      expect(attributeByContext(state, [HOME_TOKEN], '=sort')).toBe(null)
+
+      expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - c
+  - a
+  - b`)
+    })
+  })
+
+  describe('global sort', () => {
+    it('Asc -> NULL when global is Desc', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - =sort
+                - Alphabetical
+                  - Asc
+              - b
+              - c
+              - d
+              - e
+          `,
+        }),
+
+        toggleAttribute({
+          path: [EM_TOKEN],
+          values: ['Settings', 'Global Sort', 'Alphabetical', 'Desc'],
+        }),
+
+        setCursor(['a', 'b']),
+      ])
+
+      executeShortcut(toggleSortShortcut, { store })
+      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe(null)
+    })
+
+    it('NULL -> None when global is Desc', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - d
+              - b
+              - c
+              - e
+          `,
+        }),
+
+        toggleAttribute({
+          path: [EM_TOKEN],
+          values: ['Settings', 'Global Sort', 'Alphabetical', 'Desc'],
+        }),
+
+        setCursor(['a', 'b']),
+      ])
+
+      executeShortcut(toggleSortShortcut, { store })
+      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('None')
+    })
+
+    it('override global Asc with local Desc', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - a
+              - d
+              - b
+              - c
+              - e
+          `,
+        }),
+
+        toggleAttribute({
+          path: [EM_TOKEN],
+          values: ['Settings', 'Global Sort', 'Alphabetical'],
+        }),
+
+        setCursor(['a', 'b']),
+      ])
+
+      executeShortcut(toggleSortShortcut, { store })
+
+      expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
+      expect(attributeByContext(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
     })
   })
 })
