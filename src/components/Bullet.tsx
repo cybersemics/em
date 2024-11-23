@@ -218,10 +218,7 @@ const glyphFg = cva({
       true: {
         color: 'bulletGray',
         fill: 'bulletGray',
-        '-webkit-animation': {
-          base: 'toblack 400ms infinite alternate ease-in-out',
-          _dark: 'towhite 400ms infinite alternate ease-in-out',
-        },
+        '-webkit-animation': 'tofg 400ms infinite alternate ease-in-out',
       },
     },
     triangle: {

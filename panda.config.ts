@@ -118,16 +118,10 @@ const keyframes = defineKeyframes({
       width: '1.25em',
     },
   },
-  toblack: {
+  tofg: {
     to: {
-      color: 'black',
-      fill: 'black',
-    },
-  },
-  towhite: {
-    to: {
-      color: 'white',
-      fill: 'white',
+      color: 'fg',
+      fill: 'fg',
     },
   },
   bobble: {

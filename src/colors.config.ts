@@ -5,7 +5,7 @@ const colors = {
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
     bgOverlay50: 'rgba(0, 0, 0, 0.5)',
     bgOverlay30: 'rgba(0, 0, 0, 0.3)',
-    black: 'rgba(0, 0, 0, 1)',
+    black: 'rgba(0, 0, 0, 1)', // should be unused now
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
     darkgray: 'rgba(17, 17, 17, 1)', // #111111
     fg85: 'rgba(217, 217, 217, 1)', // #d9d9d9
@@ -31,6 +31,7 @@ const colors = {
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
     inputBorder: 'rgba(153, 153, 153, 1)', // #999, also used in navBar
     breadcrumbs: 'rgba(153, 153, 153, 1)',
+    activeBreadCrumb: 'rgba(144, 144, 144, 1)', // #909090
     link: 'rgba(135, 206, 235, 1)', // #87ceeb
     dim: 'rgba(255, 255, 255, 0.5)',
     dimInverse: 'rgba(7, 7, 7, 0.5)',
@@ -54,13 +55,12 @@ const colors = {
     quickDropBg: 'rgba(30,30,30,0.8)',
     bulletGray: 'rgba(102, 102, 102, 1)', // #666
     midPink: 'rgba(255, 123, 195, 1)', // #ff7bc3
-    purpleEggplant: '#32305f',
+    dropChildTarget: '#32305f', // purple-eggplant
     commandSelected: 'rgba(33, 33, 33, 1)', // #212121
     eggplant: 'rgba(82, 48, 95, 1)',
     checkboxForm: 'rgba(62, 62, 62, 1)', // #3e3e3e
     error: 'rgba(204, 34, 51, 1)',
-    activeBreadCrumb: 'rgba(144, 144, 144, 1)', // #909090
-    pinkRed: 'rgba(233, 12, 89, 1)',
+    pinkAgainstFg: 'rgba(233, 12, 89, 1)',
     brightBlue: 'rgba(70, 223, 240, 1)', // #46dff0
     exportTextareaColor: 'rgba(170, 170, 170, 1)', // #aaa, also used in anchorButton
   },
@@ -91,11 +91,12 @@ const colors = {
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
-    white: 'rgba(255, 255, 255, 1)',
     vividHighlight: '#63c9ea',
+    white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
     inputBorder: 'rgba(238, 238, 238, 1)', // #eeeeee
     breadcrumbs: 'rgba(102, 102, 102, 1)',
+    activeBreadCrumb: 'rgba(111, 111, 111, 1)', // #909090
     link: 'rgba(27, 111, 154, 1)', // #1b6f9a
     dim: 'rgba(7, 7, 7, 0.5)',
     dimInverse: 'rgba(255, 255, 255, 0.5)',
@@ -119,13 +120,12 @@ const colors = {
     quickDropBg: 'rgba(225, 225, 225, 0.8)',
     bulletGray: 'rgba(153, 153, 153, 1)', // #999999
     midPink: 'rgba(255, 123, 195, 1)',
-    purpleEggplant: '#32305f',
+    dropChildTarget: '#a4a2cd',
     commandSelected: 'rgba(222, 222, 222, 1)',
     eggplant: 'rgb(85, 51, 98)',
     checkboxForm: 'rgba(193, 193, 193, 1)',
     error: 'rgba(204, 34, 51, 1)',
-    activeBreadCrumb: 'rgba(144, 144, 144, 1)', // #909090
-    pinkRed: 'rgba(233, 12, 89, 1)',
+    pinkAgainstFg: 'rgba(227, 179, 196, 1)',
     brightBlue: 'rgba(70, 223, 240, 1)', // #46dff0
     exportTextareaColor: 'rgba(85, 85, 85, 1)',
   },
