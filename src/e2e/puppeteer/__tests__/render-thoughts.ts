@@ -15,6 +15,20 @@ expect.extend({
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
+/** Returns a snapshot for render-thoughts/superscript. */
+const superscriptSnapshot = async () => {
+  await paste(`
+    - a
+      - m
+    - b
+      - m
+  `)
+
+  await press('ArrowUp')
+
+  return await screenshot()
+}
+
 /* From jest-image-snapshot README:
 
   Jest supports automatic retries on test failures. This can be useful for browser screenshot tests which tend to have more frequent false positives. Note that when using jest.retryTimes you'll have to use a unique customSnapshotIdentifier as that's the only way to reliably identify snapshots.
@@ -123,16 +137,14 @@ const testSuite = () => {
     })
 
     it('superscript', async () => {
-      await paste(`
-        - a
-          - m
-        - b
-          - m
-      `)
+      const image = await superscriptSnapshot()
+      expect(image).toMatchImageSnapshot()
+    })
 
-      await press('ArrowUp')
+    it('superscript on light theme', async () => {
+      await setTheme('Light')
 
-      const image = await screenshot()
+      const image = await superscriptSnapshot()
       expect(image).toMatchImageSnapshot()
     })
 
