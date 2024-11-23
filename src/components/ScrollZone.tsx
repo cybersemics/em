@@ -3,21 +3,19 @@ import { css } from '../../styled-system/css'
 import { Settings } from '../constants'
 import useScrollTop from '../hooks/useScrollTop'
 import getUserSetting from '../selectors/getUserSetting'
-import viewportStore from '../stores/viewport'
 
 /** An overlay for the scroll zone that blocks pointer events. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
   const scrollTop = useScrollTop()
-  const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
+
   if (hideScrollZone) return null
 
   return (
     <div
       className={css({
-        background: `url('/img/scroll-zone/stars.jpg')`,
-        backgroundPositionX: '300px',
-        backgroundSize: '2000px',
+        backgroundImage: `url('/img/scroll-zone/stars_cropped.png')`,
+        backgroundRepeat: 'repeat',
         zIndex: 'scrollZone',
         filter: 'grayscale(1)',
         position: 'fixed',
@@ -30,7 +28,8 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
       })}
       style={{
         transform: `translateY(calc(-${scrollTop / 4 + 400}px))`,
-        width: scrollZoneWidth,
+        // as per viewportStore.scrollZoneWidth = 0.39, but we just go with CSS-based calc
+        width: '39vmin',
       }}
     ></div>
   )
