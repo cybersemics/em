@@ -9,7 +9,7 @@ const SwapParentIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animati
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 27'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: `translate(0, 7%) scale(1.10, 1.10)` }}
         fill='none'
       >
         <rect width='24' height='24' fill='none' />

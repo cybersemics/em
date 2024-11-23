@@ -6,7 +6,16 @@ import animationData from './animations/07-pin_3.json'
 const PinIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
-      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style={{ ...style, width: '100%', height: '100%' }}>
+      <svg
+        xmlns='http://www.w3.org/2000/svg'
+        viewBox='0 0 24 24'
+        style={{
+          ...style,
+          width: '100%',
+          height: '100%',
+          transform: `translate(5%, 5%)`,
+        }}
+      >
         <g id='Layer_2' data-name='Layer 2'>
           <g id='Layer_3' data-name='Layer 3'>
             <g id='_07-pin' data-name='07-pin'>

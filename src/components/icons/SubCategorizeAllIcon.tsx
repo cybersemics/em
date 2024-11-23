@@ -9,7 +9,12 @@ const SubCategorizeAllIcon = ({ fill, size = 18, style = {}, cssRaw, animated, a
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{
+          ...style,
+          width: '100%',
+          height: '100%',
+          transform: `translate(0, 4%) scale(0.98, 0.98)`,
+        }}
         fill='none'
       >
         <path

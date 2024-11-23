@@ -8,8 +8,13 @@ const SubCategorizeOneIcon = ({ fill, size = 18, style = {}, cssRaw, animated, a
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
-        viewBox='0 0 24 24'
-        style={{ ...style, width: '100%', height: '100%' }}
+        viewBox='1 1 25 25'
+        style={{
+          ...style,
+          width: '100%',
+          height: '100%',
+          transform: `translate(6%, 6%) scale(0.95, 0.95)`,
+        }}
         fill='none'
       >
         <circle
@@ -23,7 +28,7 @@ const SubCategorizeOneIcon = ({ fill, size = 18, style = {}, cssRaw, animated, a
         />
         <circle
           cx='12'
-          cy='19.43'
+          cy='21.43'
           r='2.5'
           fill='none'
           stroke='currentColor'
@@ -34,7 +39,7 @@ const SubCategorizeOneIcon = ({ fill, size = 18, style = {}, cssRaw, animated, a
           x1='12'
           y1='7.07'
           x2='12'
-          y2='16.93'
+          y2='18.93'
           fill='none'
           stroke='currentColor'
           strokeLinecap='round'
