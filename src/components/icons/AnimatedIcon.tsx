@@ -21,7 +21,7 @@ const AnimatedIcon = ({
   animationComplete,
 }: AnimatedIconType) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
-  const lottieColor = isLightTheme ? '#000000' : '#FFFFFF'
+  const defaultColor = isLightTheme ? '#000000' : '#FFFFFF'
   const newSize = size * ICON_SCALING_FACTOR
   const color = style.fill || fill || token('colors.fg')
 
@@ -30,7 +30,7 @@ const AnimatedIcon = ({
 
   // Calculate dynamic color directly
   const computedStyle = divRef.current ? window.getComputedStyle(divRef.current) : null
-  const dynamicColor = computedStyle?.color ? rgbToHex(computedStyle.color) : lottieColor
+  const dynamicColor = computedStyle?.color ? rgbToHex(computedStyle.color) : defaultColor
 
   return (
     <div
