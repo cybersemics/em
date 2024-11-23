@@ -14,7 +14,7 @@ it('Set Lower Case to the current thought', async () => {
   await dispatch([newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' })])
   await click('[data-testid="toolbar-icon"][aria-label="LetterCase"]')
   await click('[aria-label="letter case swatches"] [aria-label="LowerCase"]')
-  
+
   await act(async () => vi.runOnlyPendingTimersAsync())
 
   const state = store.getState()

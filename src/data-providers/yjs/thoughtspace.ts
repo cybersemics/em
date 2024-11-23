@@ -626,7 +626,7 @@ export const replicateChildren = async (
 
     return children
   }
-  
+
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
   const idbSynced = persistence.whenSynced
@@ -722,7 +722,7 @@ export const replicateLexeme = async (
   const documentName = encodeLexemeDocumentName(tsid, key)
   const doc = lexemeDocs.get(key) || new Y.Doc({ guid: documentName })
   const lexemeMap = doc.getMap<LexemeYjs>()
-  
+
   // Foreground replication retains the lexeme in the cache even when replication completes.
   // The lexeme will only be removed after freeLexeme is called.
   if (!background) {
@@ -947,7 +947,7 @@ const deleteThought = async (docKey: string): Promise<void> => {
   children?.forEach(child => {
     docKeys.delete(child.id)
   })
-  
+
   try {
     // if there is no persistence in memory (e.g. because the thought has not been loaded or has been deallocated by freeThought), then we need to manually delete it from the db
     const deleted = persistence ? persistence.clearData() : clearDocument(encodeThoughtDocumentName(tsid, docKey))

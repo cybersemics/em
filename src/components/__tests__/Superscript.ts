@@ -1,9 +1,9 @@
 import { screen } from '@testing-library/dom'
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleHiddenThoughtsActionCreator } from '../../actions/toggleHiddenThoughts'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
-import { act } from 'react'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)

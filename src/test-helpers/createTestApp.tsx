@@ -15,7 +15,7 @@ let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
   await act(async () => {
-    vi.useFakeTimers({loopLimit: 100000})
+    vi.useFakeTimers({ loopLimit: 100000 })
 
     // calls initEvents, which must be manually cleaned up
     const init = await initialize()

@@ -1,5 +1,6 @@
 import { findAllByLabelText, findByLabelText, queryByLabelText, queryByText, screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import store from '../../stores/app'
@@ -13,7 +14,6 @@ import queryThoughtByText from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import pathToContext from '../../util/pathToContext'
 import series from '../../util/series'
-import { act } from 'react'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)

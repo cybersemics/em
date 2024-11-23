@@ -53,7 +53,7 @@ describe('DOM', () => {
   })
 })
 
-it ('do nothing when there is no cursor', () => {
+it('do nothing when there is no cursor', () => {
   const store = createTestStore()
 
   store.dispatch([{ type: 'newThought', value: 'a' }, setCursor(null)])

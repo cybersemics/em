@@ -1,11 +1,11 @@
 import { screen } from '@testing-library/dom'
+import { act } from 'react'
 import SimplePath from '../../@types/SimplePath'
 import { editThoughtActionCreator as editThought } from '../../actions/editThought'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import { act } from 'react'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -22,7 +22,7 @@ it('basic note', async () => {
     setCursor(null),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())  
+  await act(async () => vi.runOnlyPendingTimersAsync())
 
   const element = screen.getByText('foo')
   expect(element)

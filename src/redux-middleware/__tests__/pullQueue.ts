@@ -19,22 +19,17 @@ import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
-import sleep from '../../util/sleep'
 
 /*
   Note: sinon js fake timer is used to overcome some shortcomings we have with jest's fake timer.
   For details: https://github.com/cybersemics/em/issues/919#issuecomment-739135971
 */
 
-const fakeTimer = testTimer()
-
 /**
  * Match given children with for given context.
  */
 const matchContextsChildren = async (provider: DataProvider, context: Context, children: Partial<Thought>[]) => {
-  console.log('context', context)
   const parentThought = await getContext(provider, context)
-  console.log("parentThought", parentThought)
   expect(parentThought).toBeTruthy()
   const childrenThoughts = await provider.getThoughtsByIds(Object.values(parentThought!.childrenMap))
   expect(childrenThoughts).toMatchObject(children)
@@ -122,7 +117,7 @@ it('load buffered thoughts', async () => {
   const thoughtC = contextToThought(store.getState(), ['a', 'b', 'c'])!
   const thoughtD = contextToThought(store.getState(), ['a', 'b', 'c', 'd'])!
   const thoughtE = contextToThought(store.getState(), ['a', 'b', 'c', 'd', 'e'])!
-  
+
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'a' }])
   await matchContextsChildren(db, ['a'], [{ value: 'b' }])
   await matchContextsChildren(db, ['a', 'b'], [{ value: 'c' }])

@@ -27,7 +27,7 @@ import hashPath from '../../util/hashPath'
 import toggleSortShortcut from '../toggleSort'
 
 /**
- * Moved to the top because the non-DOM tests aren't properly cleaning up the store
+ * Moved to the top because the non-DOM tests aren't properly cleaning up the store.
  */
 describe('DOM', () => {
   beforeEach(createTestApp)
