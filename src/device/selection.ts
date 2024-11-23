@@ -93,7 +93,7 @@ export const isOnFirstLine = (): boolean => {
   const clientRects = selection.getRangeAt(0).getClientRects()
   if (!clientRects?.length) return true
 
-  const { y: rangeY } = clientRects[0]
+  const { y: rangeY } = clientRects[clientRects.length - 1]
   if (!rangeY) return true
 
   const baseNodeParentEl = baseNode?.parentElement as HTMLElement
