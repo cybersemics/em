@@ -4355,15 +4355,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/classnames@npm:^2.3.4":
-  version: 2.3.4
-  resolution: "@types/classnames@npm:2.3.4"
-  dependencies:
-    classnames: "npm:*"
-  checksum: 10c0/25de08662e5c68314d23527671a29c2125e399c015d67ffd4b304aa3330f1aacd452bcc74964e04eaad35999c4d474ded4fbb8c4c920026e43783f76560d6b0c
-  languageName: node
-  linkType: hard
-
 "@types/clipboard@npm:^2.0.10":
   version: 2.0.10
   resolution: "@types/clipboard@npm:2.0.10"
@@ -6579,13 +6570,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:*, classnames@npm:^2.5.1":
-  version: 2.5.1
-  resolution: "classnames@npm:2.5.1"
-  checksum: 10c0/afff4f77e62cea2d79c39962980bf316bacb0d7c49e13a21adaadb9221e1c6b9d3cdb829d8bb1b23c406f4e740507f37e1dcf506f7e3b7113d17c5bab787aa69
-  languageName: node
-  linkType: hard
-
 "clean-css@npm:^5.2.2":
   version: 5.3.3
   resolution: "clean-css@npm:5.3.3"
@@ -7691,7 +7675,6 @@ __metadata:
     "@testing-library/user-event": "npm:^14.5.2"
     "@total-typescript/ts-reset": "npm:^0.6.1"
     "@trivago/prettier-plugin-sort-imports": "npm:^4.3.0"
-    "@types/classnames": "npm:^2.3.4"
     "@types/clipboard": "npm:^2.0.10"
     "@types/dompurify": "npm:^3.0.5"
     "@types/html-escaper": "npm:^3.0.2"
@@ -7717,7 +7700,6 @@ __metadata:
     axios: "npm:^1.7.7"
     browserstack-local: "npm:^1.5.5"
     chalk: "npm:^5.3.0"
-    classnames: "npm:^2.5.1"
     clipboard: "npm:^2.0.11"
     dnd-core: "npm:^16.0.1"
     dompurify: "npm:^3.1.7"
