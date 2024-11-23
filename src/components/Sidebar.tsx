@@ -35,6 +35,7 @@ const SidebarLink = ({
   return (
     <a
       {...fastClick(() => setSection(section))}
+      data-testid={`sidebar-${section}`}
       className={css({
         color: active ? 'fg' : 'gray50',
         display: 'inline-block',
