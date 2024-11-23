@@ -14,7 +14,42 @@ import { executeShortcutWithMulticursor } from '../../util/executeShortcut'
 import clearThoughtShortcut from '../clearThought'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 
-it('do nothing when there is no cursor', () => {
+describe('DOM', () => {
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
+
+  it('delete the thought when user triggered clearThought and then hit back', async () => {
+    await act(async () => {
+      store.dispatch([
+        newThought({ value: 'a' }),
+        newThought({ value: 'b', insertNewSubthought: true }),
+        setCursor(['a', 'b']),
+      ])
+    })
+
+    await act(async () => vi.runOnlyPendingTimersAsync())
+
+    // This ensures that the thought b exists so we can confirm later that it is deleted.
+    const initialExportedData = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(initialExportedData).toBe(`- __ROOT__
+  - a
+    - b`)
+
+    await act(async () => {
+      executeShortcut(clearThoughtShortcut)
+      executeShortcut(deleteEmptyThoughtOrOutdent)
+    })
+
+    await act(async () => vi.runOnlyPendingTimersAsync())
+
+    // This ensures that the thought b doesn't exist now.
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - a`)
+  })
+})
+
+it ('do nothing when there is no cursor', () => {
   const store = createTestStore()
 
   store.dispatch([{ type: 'newThought', value: 'a' }, setCursor(null)])
@@ -81,37 +116,6 @@ it('do not outdent thought with siblings', () => {
       - cd`
 
   expect(exported).toEqual(expectedOutput)
-})
-
-describe('DOM', () => {
-  beforeEach(createTestApp)
-  afterEach(cleanupTestApp)
-
-  it('delete the thought when user triggered clearThought and then hit back', async () => {
-    await act(async () => {
-      store.dispatch([
-        newThought({ value: 'a' }),
-        newThought({ value: 'b', insertNewSubthought: true }),
-        setCursor(['a', 'b']),
-      ])
-    })
-
-    // This ensures that the thought b exists so we can confirm later that it is deleted.
-    const initialExportedData = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(initialExportedData).toBe(`- __ROOT__
-  - a
-    - b`)
-
-    await act(async () => {
-      executeShortcut(clearThoughtShortcut)
-      executeShortcut(deleteEmptyThoughtOrOutdent)
-    })
-
-    // This ensures that the thought b doesn't exist now.
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
-  - a`)
-  })
 })
 
 describe('multicursor', () => {
