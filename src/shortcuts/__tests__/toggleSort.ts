@@ -48,7 +48,7 @@ describe('DOM', () => {
         ])
       })
 
-      await act(async () => vi.runOnlyPendingTimersAsync())
+      await act(vi.runOnlyPendingTimersAsync)
 
       act(() => executeShortcut(toggleSortShortcut, { store }))
 

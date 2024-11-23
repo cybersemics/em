@@ -19,7 +19,7 @@ it('reset content editable inner html on bumpThoughtDown', async () => {
     setCursor(['a']),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('a')
 
@@ -27,7 +27,7 @@ it('reset content editable inner html on bumpThoughtDown', async () => {
     executeShortcut(bumpThoughtDown)
   })
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('')
 })

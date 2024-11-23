@@ -27,7 +27,7 @@ it('headings should set font weight', async () => {
     }),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   // normal text should not be bold
   const thought0 = await findThoughtByText('Normal Text')
@@ -52,7 +52,7 @@ it('headings should set font weight', async () => {
   // child should not be bold
   store.dispatch(setCursor(['My Heading 1', '=heading1']))
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thought1Child = await findThoughtByText('=heading1')
   expect(thought1Child).not.toHaveStyle({ fontWeight: 700 })

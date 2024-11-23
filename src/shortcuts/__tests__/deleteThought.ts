@@ -26,7 +26,7 @@ describe('mount', () => {
       store.dispatch([{ type: 'newThought', value: 'apple' }, { type: 'newThought' }, { type: 'deleteEmptyThought' }])
     })
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
     // In this case, the selection is at the end of the apple element.
@@ -48,7 +48,7 @@ describe('mount', () => {
       ])
     })
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
     // In this case, the selection is in the applebanana text node, in between apple and banana.

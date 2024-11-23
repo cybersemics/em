@@ -22,7 +22,7 @@ it('basic note', async () => {
     setCursor(null),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const element = screen.getByText('foo')
   expect(element)
@@ -49,7 +49,7 @@ it('re-render note when =note subthought value changes', async () => {
     setCursor(null),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const element = screen.getByText('bar')
   expect(element)
@@ -76,7 +76,7 @@ it('render note when subthought is edited from non-attribute', async () => {
     setCursor(null),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const element = screen.getByText('foo')
   expect(element)
@@ -103,7 +103,7 @@ it('render note when subthought is edited from non-note attribute', async () => 
     setCursor(null),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const element = screen.getByText('foo')
   expect(element)

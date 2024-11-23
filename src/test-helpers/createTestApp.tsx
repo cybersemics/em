@@ -77,7 +77,7 @@ export const refreshTestApp = async () => {
     await initialize()
   })
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 }
 
 export default createTestApp

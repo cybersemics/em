@@ -38,7 +38,7 @@ it('Clicking a context moves the cursor to that context', async () => {
     toggleContextView(),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   // select each context in the context view
   const contextBreadcrumbs = document.querySelectorAll('[aria-label="context-breadcrumbs"]')
@@ -56,7 +56,7 @@ it('Clicking a context moves the cursor to that context', async () => {
   const user = userEvent.setup({ delay: null })
   await user.click(contextLink)
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   // cursor should exist
   const cursor = store.getState().cursor!

@@ -26,7 +26,7 @@ describe('render', () => {
       }),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const bullets = document.querySelectorAll('[aria-label="bullet"]')
     expect(bullets.length).toBe(3)
@@ -43,7 +43,7 @@ describe('render', () => {
       }),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     // =bullet is hidden so only a is shown
     // a should not have a bullet
@@ -65,7 +65,7 @@ describe('render', () => {
       }),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     // =bullet is hidden so only a, b, c are shown
     // only a should have a bullet
@@ -88,7 +88,7 @@ describe('render', () => {
       toggleHiddenThoughts(),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     // =children should not have a bullet since =bullet/None is applied
     const bullets = document.querySelectorAll('[aria-label="bullet"]')
@@ -112,7 +112,7 @@ describe('render', () => {
       }),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     // only a and b should have bullets
     const bullets = document.querySelectorAll('[aria-label="bullet"]')
@@ -133,7 +133,7 @@ describe('render', () => {
       toggleHiddenThoughts(),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const bullets = document.querySelectorAll('[aria-label="bullet"]')
     expect(bullets.length).toBe(4)
@@ -150,7 +150,7 @@ describe('render', () => {
       toggleHiddenThoughts(),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const bullets = document.querySelectorAll('[data-bullet="parent"]')
     expect(bullets.length).toBe(1)
@@ -171,14 +171,14 @@ describe('expansion', () => {
       setCursor(['a', 'b']),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtB)
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('a')
@@ -198,14 +198,14 @@ describe('expansion', () => {
       setCursor(['x', 'a', 'b', 'c']),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const bulletOfThoughtA = getBulletByContext(['x', 'a'])
 
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtA)
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('x')
@@ -224,14 +224,14 @@ describe('expansion', () => {
       setCursor(['a', 'b', 'c']),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const bulletOfThoughtA = getBulletByContext(['a'])
 
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtA)
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toBeNull()
@@ -249,14 +249,14 @@ describe('expansion', () => {
       }),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtB)
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('b')
@@ -277,14 +277,14 @@ describe('expansion', () => {
       }),
     ])
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
     const user = userEvent.setup({ delay: null })
     await user.click(bulletOfThoughtB)
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__

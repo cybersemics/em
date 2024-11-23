@@ -15,7 +15,7 @@ it('Set Lower Case to the current thought', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="LetterCase"]')
   await click('[aria-label="letter case swatches"] [aria-label="LowerCase"]')
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
 
@@ -29,7 +29,7 @@ it('Set Upper Case to the current thought', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="LetterCase"]')
   await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
 
@@ -43,7 +43,7 @@ it('Set Sentence Case to the current thought', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="LetterCase"]')
   await click('[aria-label="letter case swatches"] [aria-label="SentenceCase"]')
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
 
@@ -57,7 +57,7 @@ it('Set Title Case to the current thought', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="LetterCase"]')
   await click('[aria-label="letter case swatches"] [aria-label="TitleCase"]')
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
 

@@ -46,7 +46,7 @@ it('load thought', async () => {
   // create a thought, which will get persisted to local db
   await dispatch(newThought({ value: 'a' }))
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thoughtA = contextToThought(store.getState(), ['a'])!
 
@@ -85,7 +85,7 @@ it('do not repopulate deleted thought', async () => {
     setCursor(null),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const root = contextToThought(store.getState(), [HOME_TOKEN])
   expect(root).toMatchObject({
@@ -109,7 +109,7 @@ it('load buffered thoughts', async () => {
     }),
   )
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thoughtA = contextToThought(store.getState(), ['a'])!
   const thoughtB = contextToThought(store.getState(), ['a', 'b'])!
@@ -154,7 +154,7 @@ it.skip('delete thought with buffered descendants', async () => {
     setCursor(['x']),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
   await matchContextsChildren(db, ['a'], [{ value: 'b' }])
@@ -194,7 +194,7 @@ it('move thought with buffered descendants', async () => {
     setCursor(['x']),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thoughtX = contextToThought(store.getState(), ['x'])!
   const thoughtA = contextToThought(store.getState(), ['a'])!
@@ -227,7 +227,7 @@ it('move thought with buffered descendants', async () => {
     }),
   )
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }])
   expect(await getContext(db, ['a'])).toBeFalsy()
@@ -261,7 +261,7 @@ it.skip('edit thought with buffered descendants', async () => {
     setCursor(['x']),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
   await matchContextsChildren(db, ['a'], [{ value: 'm' }, { value: 'b' }])
@@ -271,14 +271,14 @@ it.skip('edit thought with buffered descendants', async () => {
   await matchContextsChildren(db, ['a', 'b', 'c', 'd'], [{ value: 'e' }])
   await matchContextsChildren(db, ['a', 'b', 'c', 'd', 'e'], [])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   await refreshTestApp()
 
   // edit thought with buffered descendants
   await dispatch(editThought(['a'], 'k'))
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'k' }])
   expect(await getContext(db, ['a'])).toBeFalsy()

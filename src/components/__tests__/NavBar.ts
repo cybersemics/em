@@ -15,7 +15,7 @@ it('Strip formatting from thought values in ContextBreadcrumbs', async () => {
     }),
   ])
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const contextBreadcrumbs = document.querySelector('[aria-label="context-breadcrumbs"]')!
   expect(contextBreadcrumbs.textContent).toBe('test')

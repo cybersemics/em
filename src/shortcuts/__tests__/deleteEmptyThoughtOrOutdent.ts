@@ -31,7 +31,7 @@ describe('DOM', () => {
       ])
     })
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     // This ensures that the thought b exists so we can confirm later that it is deleted.
     const initialExportedData = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -44,7 +44,7 @@ describe('DOM', () => {
       executeShortcut(deleteEmptyThoughtOrOutdent)
     })
 
-    await act(async () => vi.runOnlyPendingTimersAsync())
+    await act(vi.runOnlyPendingTimersAsync)
 
     // This ensures that the thought b doesn't exist now.
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')

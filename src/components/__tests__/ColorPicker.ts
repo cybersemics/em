@@ -18,7 +18,7 @@ it('Set the bullet color using the ColorPicker', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
 
@@ -47,7 +47,7 @@ it('Set the bullet color from another color using the ColorPicker', async () => 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="red"]')
 
-  await act(async () => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
