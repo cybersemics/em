@@ -10,7 +10,7 @@ const NewThoughtAboveIcon = ({ fill, size = 18, style = {}, cssRaw, animated, an
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
         fill='none'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: 'translate(0, 1%) scale(1.02, 1.02)' }}
       >
         <rect width='24' height='24' fill='none' />
         <circle cx='3.56' cy='16.88' r='1.25' fill='currentColor' />

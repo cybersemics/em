@@ -14,7 +14,7 @@ const UnderlineIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animatio
           ...style,
           width: '100%',
           height: '100%',
-          transform: `scale(0.98, 0.98)`,
+          transform: `translate(0, 1%) scale(0.98, 0.98)`,
         }}
       >
         <rect width='24' height='24' fill='none' />

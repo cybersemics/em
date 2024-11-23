@@ -13,7 +13,7 @@ const SubCategorizeOneIcon = ({ fill, size = 18, style = {}, cssRaw, animated, a
           ...style,
           width: '100%',
           height: '100%',
-          transform: `translate(6%, 6%) scale(0.95, 0.95)`,
+          transform: `translate(6%, 6%) scale(0.97, 0.97)`,
         }}
         fill='none'
       >

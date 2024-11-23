@@ -10,7 +10,7 @@ const Heading1Icon = ({ fill, size = 18, style = {}, cssRaw, animated, animation
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
         fill='none'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: 'translate(1%, -2%) scale(1.07, 1.07)' }}
       >
         <rect width='24' height='24' fill='none' />
         <path d='M3.61,18.18V6.72H5.13v4.71h6V6.72H12.6V18.18H11.08v-5.4H5.13v5.4Z' fill={fill || 'currentColor'} />

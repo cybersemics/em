@@ -13,7 +13,7 @@ const PinIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationCompl
           ...style,
           width: '100%',
           height: '100%',
-          transform: `translate(5%, 5%)`,
+          transform: `translate(4%, 6%) scale(0.98, 0.98)`,
         }}
       >
         <g id='Layer_2' data-name='Layer 2'>
