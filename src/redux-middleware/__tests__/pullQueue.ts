@@ -41,7 +41,7 @@ const getContextAsync = async (provider: DataProvider, context: Context) => {
   const ctxPromise = getContext(provider, context)
   await vi.runAllTimersAsync()
 
-  return await ctxPromise
+  return ctxPromise
 }
 
 beforeEach(createTestApp)
@@ -51,7 +51,6 @@ it('disable isLoading after initialize', async () => {
   expect(store.getState().isLoading).toBe(false)
 })
 
-// y-indexeddb breaks tests
 it('load thought', async () => {
   // create a thought, which will get persisted to local db
   await dispatch(newThought({ value: 'a' }))
@@ -106,7 +105,6 @@ it('do not repopulate deleted thought', async () => {
   expect(parentEntryChild).toBe(null)
 })
 
-// y-indexeddb breaks tests
 it('load buffered thoughts', async () => {
   await dispatch(
     importText({
@@ -148,7 +146,6 @@ it('load buffered thoughts', async () => {
   expect(getAllChildrenByContext(state, ['a', 'b', 'c', 'd', 'e'])).toMatchObject([])
 })
 
-// y-indexeddb breaks tests
 it('delete thought with buffered descendants', async () => {
   await dispatch([
     importText({
@@ -187,7 +184,6 @@ it('delete thought with buffered descendants', async () => {
   expect(await getContextAsync(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
 })
 
-// y-indexeddb breaks tests
 it('move thought with buffered descendants', async () => {
   await dispatch([
     importText({
@@ -254,7 +250,6 @@ it('move thought with buffered descendants', async () => {
   await matchContextsChildren(db, ['x', 'a', 'b', 'c', 'd', 'e'], [])
 })
 
-// y-indexeddb breaks tests
 it('edit thought with buffered descendants', async () => {
   await dispatch([
     importText({
@@ -283,7 +278,7 @@ it('edit thought with buffered descendants', async () => {
 
   await refreshTestApp()
 
-  // // edit thought with buffered descendants
+  // edit thought with buffered descendants
   await dispatch(editThought(['a'], 'k'))
 
   await act(vi.runOnlyPendingTimersAsync)
