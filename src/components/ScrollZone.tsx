@@ -8,8 +8,8 @@ import viewportStore from '../stores/viewport'
 /** An overlay for the scroll zone that blocks pointer events. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
-  const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
   const scrollTop = useScrollTop()
+  const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
 
   if (hideScrollZone) return null
 
