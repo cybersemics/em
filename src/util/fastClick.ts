@@ -28,7 +28,6 @@ const fastClick = isTouch
           const y = e.touches[0].clientY
           touchStart = { x, y }
         }
-        Haptics.impact({ style: ImpactStyle.Light })
         tapDown?.(e)
       },
       // cancel tap if touchmove exceeds threshold (e.g. with scrolling or dragging)
@@ -43,6 +42,7 @@ const fastClick = isTouch
         }
       }, 16.666),
       onTouchEnd: (e: React.TouchEvent) => {
+        Haptics.impact({ style: ImpactStyle.Light })
         let cancel = !touchStart
 
         if (touchStart && e.changedTouches.length > 0) {

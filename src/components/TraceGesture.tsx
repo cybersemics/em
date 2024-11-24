@@ -9,6 +9,7 @@ import { gestureString, globalShortcuts } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import viewportStore from '../stores/viewport'
 import FadeTransition from './FadeTransition'
+import { Haptics } from '@capacitor/haptics'
 
 interface TraceGestureProps {
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
@@ -65,6 +66,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   // Clear the signature pad when the stroke starts.
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
   const onBeginStroke = useCallback(() => {
+    Haptics.selectionStart()
     clearTimeout(fadeTimer.current)
     if (!signaturePadRef.current) return
     const signaturePad = signaturePadRef.current.signaturePad
