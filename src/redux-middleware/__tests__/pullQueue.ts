@@ -35,7 +35,7 @@ const matchContextsChildren = async (provider: DataProvider, context: Context, c
 }
 
 /**
- * getContext but automatically runs the timers forward
+ * Calls getContext but automatically runs the timers forward.
  */
 const getContextAsync = async (provider: DataProvider, context: Context) => {
   const ctxPromise = getContext(provider, context)
