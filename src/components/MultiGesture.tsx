@@ -113,6 +113,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       'touchmove',
       e => {
         if (this.disableScroll && e.cancelable) {
+          Haptics.selectionChanged()
           e.preventDefault()
         }
       },
