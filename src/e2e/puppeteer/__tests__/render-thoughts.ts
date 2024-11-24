@@ -1,6 +1,7 @@
 import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -205,4 +206,25 @@ describe('Font Size: 22', () => {
 
   // run the snapshot tests at font size 22
   testSuite()
+})
+
+describe('Colored Thoughts', () => {
+  it('colored and highlighted text', async () => {
+    const importText = `
+    - Labrador
+    - Golden Retriever`
+
+    await paste(importText)
+
+    await clickThought('Golden Retriever')
+    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+    await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+    await clickThought('Labrador')
+    await click('[aria-label="text color swatches"] [aria-label="purple"]')
+
+    await hideHUD()
+
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
 })
