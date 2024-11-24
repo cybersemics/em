@@ -283,8 +283,6 @@ it('edit thought with buffered descendants', async () => {
 
   await refreshTestApp()
 
-  // await act(vi.runOnlyPendingTimersAsync)
-
   // // edit thought with buffered descendants
   await dispatch(editThought(['a'], 'k'))
 
