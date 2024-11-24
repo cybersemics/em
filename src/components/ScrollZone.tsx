@@ -16,7 +16,7 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   return (
     <div
       className={css({
-        backgroundImage: `url('/img/scroll-zone/stars_cropped.png')`,
+        backgroundImage: `url('/img/scroll-zone/stars.webp')`,
         backgroundRepeat: 'repeat',
         zIndex: 'scrollZone',
         filter: 'grayscale(1)',
