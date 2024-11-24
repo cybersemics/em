@@ -1,6 +1,6 @@
+import { Haptics } from '@capacitor/haptics'
 import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
-import { Haptics } from '@capacitor/haptics'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import { noop } from '../constants'

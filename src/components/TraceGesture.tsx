@@ -69,7 +69,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     if (!signaturePadRef.current) return
     const signaturePad = signaturePadRef.current.signaturePad
     signaturePad.clear()
-    console.log('onBeginStroke')
+
     // add glow
     // TODO: WHy does GESTURE_GLOW_COLOR not work?
     signaturePad._ctx.shadowColor = colors.highlight
@@ -91,12 +91,10 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     eventNode?.addEventListener('pointerdown', e => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
-      console.log('pointerdown')
       e.preventDefault = noop
       handlePointerStart(e)
     })
     eventNode?.addEventListener('pointermove', e => {
-      console.log('pointermove')
       e.preventDefault = noop
       handlePointerMove(e)
     })
