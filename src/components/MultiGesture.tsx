@@ -1,5 +1,6 @@
 import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
+import { Haptics } from '@capacitor/haptics'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import { noop } from '../constants'
@@ -121,6 +122,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // enable/disable scrolling based on where the user clicks
     // TODO: Could this be moved to onMoveShouldSetResponder?
     document.body.addEventListener('touchstart', e => {
+      
       if (e?.touches.length > 0) {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
@@ -134,6 +136,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         const isInGestureZone =
           (this.leftHanded ? x > scrollZoneWidth : x < viewport.innerWidth - scrollZoneWidth) && y > TOOLBAR_HEIGHT
         if (isInGestureZone && !props.shouldCancelGesture?.()) {
+          Haptics.selectionStart()
           this.disableScroll = true
         } else {
           this.abandon = true

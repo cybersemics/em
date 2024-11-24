@@ -9,7 +9,6 @@ import { gestureString, globalShortcuts } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import viewportStore from '../stores/viewport'
 import FadeTransition from './FadeTransition'
-import { Haptics } from '@capacitor/haptics'
 
 interface TraceGestureProps {
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
@@ -66,12 +65,11 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   // Clear the signature pad when the stroke starts.
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
   const onBeginStroke = useCallback(() => {
-    Haptics.selectionStart()
     clearTimeout(fadeTimer.current)
     if (!signaturePadRef.current) return
     const signaturePad = signaturePadRef.current.signaturePad
     signaturePad.clear()
-
+    console.log('onBeginStroke')
     // add glow
     // TODO: WHy does GESTURE_GLOW_COLOR not work?
     signaturePad._ctx.shadowColor = colors.highlight
@@ -93,10 +91,12 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     eventNode?.addEventListener('pointerdown', e => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
+      console.log('pointerdown')
       e.preventDefault = noop
       handlePointerStart(e)
     })
     eventNode?.addEventListener('pointermove', e => {
+      console.log('pointermove')
       e.preventDefault = noop
       handlePointerMove(e)
     })
