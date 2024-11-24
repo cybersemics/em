@@ -34,6 +34,9 @@ const matchContextsChildren = async (provider: DataProvider, context: Context, c
   expect(childrenThoughts).toMatchObject(children)
 }
 
+/**
+ * getContext but automatically runs the timers forward
+ */
 const getContextAsync = async (provider: DataProvider, context: Context) => {
   const ctxPromise = getContext(provider, context)
   await vi.runAllTimersAsync()
