@@ -7,14 +7,17 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { isTouch } from '../browser'
 import useChangeRef from '../hooks/useChangeRef'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
+import usePrevious from '../hooks/usePrevious'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import editingValueStore from '../stores/editingValue'
 import viewportStore from '../stores/viewport'
+import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
@@ -63,6 +66,7 @@ const VirtualThought = ({
   isLastVisible,
   autofocus,
   marginRight,
+  indent,
 }: {
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
@@ -86,6 +90,7 @@ const VirtualThought = ({
   isLastVisible?: boolean
   autofocus: Autofocus
   marginRight: number
+  indent: number
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
@@ -100,6 +105,8 @@ const VirtualThought = ({
   const ref = useRef<HTMLDivElement>(null)
   const refOpacity = useRef<HTMLDivElement>(null)
   const autofocusChanged = useChangeRef(autofocus)
+  const [transitionWidth, setTransitionWidth] = useState<number | null>()
+  const previousIndent = usePrevious(indent)
 
   /***************************
    * VirtualThought properties
@@ -117,6 +124,16 @@ const VirtualThought = ({
         (autofocus === 'hide-parent' && autofocusNew === 'hide-parent')) &&
       !!height,
   })
+
+  useLayoutEffect(() => {
+    if (ref.current) {
+      const timeout = setTimeout(() => setTransitionWidth(null), durations.get('layoutSlowShiftDuration'))
+
+      setTransitionWidth(ref.current.getBoundingClientRect().width)
+
+      return () => clearTimeout(timeout)
+    }
+  }, [indent])
 
   // console.info('<VirtualThought>', prettyPath(childPath))
   // useWhyDidYouUpdate('<VirtualThought> ' + prettyPath(state, childPath), {
@@ -165,7 +182,9 @@ const VirtualThought = ({
 
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
-  useLayoutEffect(updateSize, [
+  useLayoutEffect(() => {
+    window.requestAnimationFrame(updateSize)
+  }, [
     cursorDepth,
     cursorLeaf,
     fontSize,
@@ -226,6 +245,9 @@ const VirtualThought = ({
         // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
         // Must include DropChild, or it will shift when the cursor moves.
         height: shimHiddenThought && height != null ? height : undefined,
+        width: transitionWidth
+          ? `calc(${transitionWidth + (isTouch ? 0 : previousIndent > indent ? 10 : -10)}px + ${indent - previousIndent + Number(!isTouch)}em)`
+          : undefined,
       }}
     >
       {

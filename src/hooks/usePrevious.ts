@@ -1,14 +1,18 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 /** Retains & returns the previous value passed in each time the hook is invoked. */
-function usePrevious<T>(value: T): T | undefined {
-  const ref = useRef<T>()
+function usePrevious<T>(value: T): T {
+  const [current, setCurrent] = useState(() => value)
+  const [previous, setPrevious] = useState(() => value)
 
   useEffect(() => {
-    ref.current = value
-  }, [value])
+    if (current !== value) {
+      setPrevious(current)
+      setCurrent(value)
+    }
+  }, [current, value])
 
-  return ref.current
+  return previous
 }
 
 export default usePrevious

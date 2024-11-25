@@ -395,6 +395,7 @@ const TreeNode = ({
   cliffPaddingStyle,
   dragInProgress,
   autofocusDepth,
+  indent,
 }: TreeThoughtPositioned & {
   thoughtKey: string
   index: number
@@ -406,6 +407,7 @@ const TreeNode = ({
   cliffPaddingStyle: { paddingBottom: number }
   dragInProgress: boolean
   autofocusDepth: number
+  indent: number
 }) => {
   const [y, setY] = useState(_y)
 
@@ -481,6 +483,7 @@ const TreeNode = ({
         isLastVisible={isLastVisible}
         autofocus={autofocus}
         marginRight={isTableCol1 ? marginRight : 0}
+        indent={indent}
       />
 
       {/* DropEnd (cliff) */}
@@ -895,14 +898,16 @@ const LayoutTree = () => {
         hoverArrowVisibility={hoverArrowVisibility}
       />
       <div
-        className={css({ transition: `transform {durations.layoutSlowShiftDuration} ease-out` })}
+        className={css({
+          transition: `transform {durations.layoutSlowShiftDuration} ease-out,margin {durations.layoutSlowShiftDuration} ease-out`,
+        })}
         style={{
           // Set a container height that fits all thoughts.
           // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
           height: totalHeight + spaceBelow,
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
-          transform: `translateX(${1.5 - indent}em`,
+          transform: `translateX(${1.5 - indent}em)`,
           // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
@@ -924,6 +929,7 @@ const LayoutTree = () => {
               cliffPaddingStyle,
               dragInProgress,
               autofocusDepth,
+              indent,
             }}
           />
         ))}
