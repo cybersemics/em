@@ -1911,12 +1911,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/clipboard@npm:^6.0.1":
-  version: 6.0.1
-  resolution: "@capacitor/clipboard@npm:6.0.1"
+"@capacitor/clipboard@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "@capacitor/clipboard@npm:6.0.2"
   peerDependencies:
     "@capacitor/core": ^6.0.0
-  checksum: 10c0/6b3e0c05c36fb2db317f552a4346e9bf06573b579e28f5a37faf84ca2a20ca75868e61cc4f91c77a19fef9d6bf46aebb7fd7415361a3ef5f06292efddd6096ba
+  checksum: 10c0/c28ddc9cfa73c97c5497d76178a61330fb1d09a4784a65775072a005dcbd8359802085e8e493d86375777b09a716109e1a62cf7b3e792c01eb620f947b190113
   languageName: node
   linkType: hard
 
@@ -7618,7 +7618,7 @@ __metadata:
     "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
     "@capacitor/android": "npm:^6.1.2"
     "@capacitor/cli": "npm:^6.1.2"
-    "@capacitor/clipboard": "npm:^6.0.1"
+    "@capacitor/clipboard": "npm:^6.0.2"
     "@capacitor/core": "npm:^6.2.0"
     "@capacitor/ios": "npm:^6.1.2"
     "@capacitor/keyboard": "npm:^6.0.2"
