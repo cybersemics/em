@@ -504,6 +504,9 @@ const Bullet = ({
       const bgColorMatch = value.match(/style="[^"]*background-color:\s*([^;"'>]+)[^"]*"/i)
       if (bgColorMatch) return bgColorMatch[1]
 
+      const colorMatch = value.match(/style="[^"]*color:\s*([^;"'>]+)[^"]*"/i)
+      if (colorMatch) return colorMatch[1]
+
       // If no background-color, check for font color
       const fontColorMatch = value.match(/<font[^>]*color="([^"]+)"[^>]*>/i)
       if (fontColorMatch) return fontColorMatch[1]
