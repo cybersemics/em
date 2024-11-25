@@ -7655,7 +7655,7 @@ __metadata:
     "@types/sanitize-html": "npm:^2.13.0"
     "@types/sinonjs__fake-timers": "npm:^8.1.5"
     "@typescript-eslint/eslint-plugin": "npm:^8.0.0"
-    "@typescript-eslint/parser": "npm:^8.0.0"
+    "@typescript-eslint/parser": "npm:^8.15.0"
     "@vitejs/plugin-react": "npm:^4.3.3"
     algoliasearch: "npm:^5.15.0"
     axios: "npm:^1.7.7"
