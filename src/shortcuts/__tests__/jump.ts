@@ -10,6 +10,9 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import head from '../../util/head'
 import pathToContext from '../../util/pathToContext'
 
+beforeEach(vi.useFakeTimers)
+afterEach(vi.useRealTimers)
+
 describe('jump history', () => {
   it('add edited path to jump history', () => {
     const store = createTestStore()
