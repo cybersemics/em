@@ -81,7 +81,7 @@
     "@capacitor/keyboard": "^6.0.2",
     "@capacitor/status-bar": "^6.0.1",
     "@emotion/react": "^11.13.3",
-    "@emotion/styled": "^11.13.0",
+    "@emotion/styled": "^11.13.5",
     "@mui/material": "^6.1.5",
     "@stylistic/eslint-plugin-ts": "^2.10.1",
     "algoliasearch": "^5.10.2",
