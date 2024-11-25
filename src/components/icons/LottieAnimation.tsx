@@ -25,7 +25,8 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
 
   useEffect(() => {
     if (lottieRef.current) {
-      lottieRef.current.setSpeed(speed)
+      // skip the animation in Puppeteer tests to avoid inconsistent snapshots
+      lottieRef.current.setSpeed(navigator.webdriver ? 999 : speed)
     }
   }, [speed])
 

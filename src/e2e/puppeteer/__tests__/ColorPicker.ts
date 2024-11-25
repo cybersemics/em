@@ -1,4 +1,5 @@
 import path from 'path'
+import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
@@ -31,6 +32,9 @@ it('ColorPicker', async () => {
   await hideVisibility('[aria-label="menu"]')
   await hideVisibility('[aria-label="nav"]')
   await hideVisibility('[data-testid="toolbar-icon"]:not([aria-label="Text Color"])')
+
+  // TODO: Why does GitHub Actions render the ColorPicker differently than localhost?
+  await sleep(100)
 
   expect(await screenshot()).toMatchImageSnapshot()
 })
