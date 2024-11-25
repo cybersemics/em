@@ -443,6 +443,14 @@ const Bullet = ({
 
   /** Check if the entire value is wrapped in a single font or span tag. */
   const isWrappedInSingleTag = (str: string): boolean => {
+    // Check if there's any text before the first tag or after the last tag
+    const firstTagIndex = str.indexOf('<')
+    const lastTagIndex = str.lastIndexOf('>')
+
+    if (firstTagIndex > 0 || lastTagIndex < str.length - 1) {
+      return false
+    }
+
     const tagStack: string[] = []
     let currentPos = 0
 
@@ -481,7 +489,7 @@ const Bullet = ({
     }
 
     // Valid if exactly one tag remains in stack (the outer tag)
-    return tagStack.length === 1 && tagStack[0] === 'font'
+    return tagStack.length === 1 && (tagStack[0] === 'font' || tagStack[0] === 'span')
   }
 
   const fill = useSelector(state => {
@@ -489,7 +497,6 @@ const Bullet = ({
     if (!thought) return undefined
 
     const value = thought.value
-
     // Check if the entire value is wrapped in a single font or span tag
     const isWrappedInTag = isWrappedInSingleTag(value)
     if (isWrappedInTag) {

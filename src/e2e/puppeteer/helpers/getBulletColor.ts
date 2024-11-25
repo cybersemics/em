@@ -1,7 +1,7 @@
 import { page } from '../setup'
 
 /**
- * Get the thought value that cursor on.
+ * Get the color of the bullet that cursor is on.
  */
 const getBulletColor = () =>
   page.evaluate(() => {
