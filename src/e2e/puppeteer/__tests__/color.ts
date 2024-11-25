@@ -3,6 +3,7 @@ import clickThought from '../helpers/clickThought'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
+import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
@@ -104,6 +105,25 @@ it('Clear the text color when setting background color', async () => {
   cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe('rgb(170, 128, 255)')
   expect(extractStyleProperty(cursorText!)?.color).toBe('#000000')
+})
+
+it('Bullet remains the default color when a substring color is set', async () => {
+  const importText = `
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await waitForEditable('Golden Retriever')
+  await clickThought('Golden Retriever')
+
+  await setSelection(0, 6)
+  // Set color for selected text
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  // Verify bullet color remains default and only substring is colored
+  const bulletColor = await getBulletColor()
+  expect(bulletColor).toBe(null)
 })
 
 it('Empty <font> element will be removed after setting color to default.', async () => {
