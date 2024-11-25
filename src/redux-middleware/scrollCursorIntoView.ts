@@ -97,7 +97,7 @@ const scrollCursorIntoView = () => {
 
   setTimeout(
     () => {
-      scrollIntoViewIfNeeded(document.querySelector('[data-editing=true]'))
+      if (document && document.querySelector) scrollIntoViewIfNeeded(document.querySelector('[data-editing=true]'))
     },
     // If this is the result of a navigation, wait for the layout animation to complete to not get false bounding rect values
     userInteractedAfterNavigation ? 0 : durations.get('layoutNodeAnimationDuration'),
