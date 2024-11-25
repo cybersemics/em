@@ -1,5 +1,5 @@
 import Player, { LottieRefCurrentProps } from 'lottie-react'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useLayoutEffect, useRef } from 'react'
 
 interface LottieAnimationProps {
   animationData: any
@@ -23,10 +23,20 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
 }) => {
   const lottieRef = useRef<LottieRefCurrentProps | null>(null)
 
+  // skip the animation in Puppeteer tests to avoid inconsistent snapshots
+  if (navigator.webdriver) {
+    useLayoutEffect(() => {
+      if (!lottieRef.current) return
+
+      const lastFrame = lottieRef.current.getDuration(true)! - 1
+      lottieRef.current.goToAndStop(lastFrame)
+      onComplete?.()
+    }, [onComplete])
+  }
+
   useEffect(() => {
     if (lottieRef.current) {
-      // skip the animation in Puppeteer tests to avoid inconsistent snapshots
-      lottieRef.current.setSpeed(navigator.webdriver ? 999 : speed)
+      lottieRef.current.setSpeed(speed)
     }
   }, [speed])
 
@@ -35,7 +45,8 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
       style={style}
       animationData={animationData}
       lottieRef={lottieRef}
-      autoplay
+      // turn off autoplay in puppeteer tests
+      autoplay={!navigator.webdriver}
       loop={false}
       onComplete={onComplete}
     />

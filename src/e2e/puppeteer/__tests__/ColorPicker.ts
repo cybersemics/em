@@ -21,8 +21,6 @@ expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
-vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
-
 it('ColorPicker', async () => {
   await paste('Hello world')
 
@@ -33,7 +31,8 @@ it('ColorPicker', async () => {
   await hideVisibility('[aria-label="nav"]')
   await hideVisibility('[data-testid="toolbar-icon"]:not([aria-label="Text Color"])')
 
-  // TODO: Why does GitHub Actions render the ColorPicker differently than localhost?
+  // ColorPicker swatches have small pixel differences if we do not wait 50–100ms.
+  // Possibly an animation that has not been turned off?
   await sleep(100)
 
   expect(await screenshot()).toMatchImageSnapshot()
