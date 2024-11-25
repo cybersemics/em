@@ -7728,7 +7728,7 @@ __metadata:
     react-signature-pad-wrapper: "npm:^3.4.0"
     react-split-pane: "npm:^0.1.92"
     react-transition-group: "npm:^4.4.5"
-    redux: "npm:^4.2.1"
+    redux: "npm:^5.0.1"
     redux-devtools-extension: "npm:^2.13.9"
     redux-mock-store: "npm:^1.5.5"
     redux-thunk: "npm:^2.4.2"
@@ -14902,12 +14902,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux@npm:^4.0.0, redux@npm:^4.0.5, redux@npm:^4.2.0, redux@npm:^4.2.1":
+"redux@npm:^4.0.0, redux@npm:^4.0.5, redux@npm:^4.2.0":
   version: 4.2.1
   resolution: "redux@npm:4.2.1"
   dependencies:
     "@babel/runtime": "npm:^7.9.2"
   checksum: 10c0/136d98b3d5dbed1cd6279c8c18a6a74c416db98b8a432a46836bdd668475de6279a2d4fd9d1363f63904e00f0678a8a3e7fa532c897163340baf1e71bb42c742
+  languageName: node
+  linkType: hard
+
+"redux@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "redux@npm:5.0.1"
+  checksum: 10c0/b10c28357194f38e7d53b760ed5e64faa317cc63de1fb95bc5d9e127fab956392344368c357b8e7a9bedb0c35b111e7efa522210cfdc3b3c75e5074718e9069c
   languageName: node
   linkType: hard
 
