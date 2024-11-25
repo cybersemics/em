@@ -6,7 +6,6 @@ import fastClick from '../util/fastClick'
 /** A close button with an ✕. */
 const CloseButton = ({ onClose, disableSwipeToDismiss }: { onClose: () => void; disableSwipeToDismiss?: boolean }) => {
   const fontSize = useSelector(state => state.fontSize)
-  const padding = fontSize / 2 + 2
   return (
     <a
       {...fastClick(onClose)}
@@ -15,12 +14,12 @@ const CloseButton = ({ onClose, disableSwipeToDismiss }: { onClose: () => void; 
         css({
           fontSize: 'sm',
           color: 'inherit',
-          right: '0',
+          right: '10',
           textDecoration: 'none',
-          top: '0',
+          top: '5',
         }),
       )}
-      style={{ fontSize, padding: `${padding}px ${padding * 1.25}px` }}
+      style={{ fontSize }}
       aria-label={disableSwipeToDismiss ? 'no-swipe-to-dismiss' : undefined}
       data-testid='close-button'
     >
