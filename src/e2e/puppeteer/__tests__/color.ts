@@ -109,6 +109,7 @@ it('Clear the text color when setting background color', async () => {
 
 it('Bullet remains the default color when a substring color is set', async () => {
   const importText = `
+  - Labrador
   - Golden Retriever`
 
   await paste(importText)

@@ -43,6 +43,8 @@ interface BulletProps {
 }
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
+const styleRegex = /style="[^"]*(background-)?color:\s*([^;"'>]+)[^"]*"/i
+const fontColorRegex = /<font[^>]*color="([^"]+)"[^>]*>/i
 
 const glyph = cva({
   base: {
@@ -500,15 +502,12 @@ const Bullet = ({
     // Check if the entire value is wrapped in a single font or span tag
     const isWrappedInTag = isWrappedInSingleTag(value)
     if (isWrappedInTag) {
-      // Check for background-color in style attribute
-      const bgColorMatch = value.match(/style="[^"]*background-color:\s*([^;"'>]+)[^"]*"/i)
-      if (bgColorMatch) return bgColorMatch[1]
-
-      const colorMatch = value.match(/style="[^"]*color:\s*([^;"'>]+)[^"]*"/i)
-      if (colorMatch) return colorMatch[1]
+      // Check for background-color and color in style attribute
+      const styleMatch = value.match(styleRegex)
+      if (styleMatch) return styleMatch[2]
 
       // If no background-color, check for font color
-      const fontColorMatch = value.match(/<font[^>]*color="([^"]+)"[^>]*>/i)
+      const fontColorMatch = value.match(fontColorRegex)
       if (fontColorMatch) return fontColorMatch[1]
     }
 
