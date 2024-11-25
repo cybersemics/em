@@ -1920,12 +1920,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/core@npm:^6.1.2":
-  version: 6.1.2
-  resolution: "@capacitor/core@npm:6.1.2"
+"@capacitor/core@npm:^6.2.0":
+  version: 6.2.0
+  resolution: "@capacitor/core@npm:6.2.0"
   dependencies:
     tslib: "npm:^2.1.0"
-  checksum: 10c0/15e67d1cc2012bd0b5f534637cd4fc841b1645e61183ba6f37f684f42d8c3a37b7e0bbcf554058c89eeeca9b2be12eacf94f39d58ac38fdb983f546a991845d3
+  checksum: 10c0/3057805b51423018a1aa29858f9b443720ff9a5de205b230eda635412b29049484be39f2dc5335d124bc31cb56c72316d67a69d7278d1a10dbd7cc20ea80b793
   languageName: node
   linkType: hard
 
@@ -7562,7 +7562,7 @@ __metadata:
     "@capacitor/android": "npm:^6.1.2"
     "@capacitor/cli": "npm:^6.1.2"
     "@capacitor/clipboard": "npm:^6.0.1"
-    "@capacitor/core": "npm:^6.1.2"
+    "@capacitor/core": "npm:^6.2.0"
     "@capacitor/ios": "npm:^6.1.2"
     "@capacitor/keyboard": "npm:^6.0.2"
     "@capacitor/status-bar": "npm:^6.0.1"
