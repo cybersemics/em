@@ -1,5 +1,5 @@
-import AnimationKeyframe from './AnimationKeyframe'
-import RGBA from './RGBA'
+import AnimatedColor from './AnimatedColor'
+import StaticColor from './StaticColor'
 
 /**
  * ColorProperty Interface.
@@ -7,14 +7,6 @@ import RGBA from './RGBA'
  * Defines color properties for shape items, allowing static colors,
  * animated colors, and keyframe animations based on the value of `a`.
  */
-type ColorProperty =
-  | {
-      a: 0 // Static color
-      k: RGBA
-    }
-  | {
-      a: 1 // Animated color
-      k: AnimationKeyframe[]
-    }
+type ColorProperty = StaticColor | AnimatedColor
 
 export default ColorProperty

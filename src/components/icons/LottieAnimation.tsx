@@ -2,10 +2,13 @@ import { hexToRgb } from '@mui/material'
 import _ from 'lodash'
 import Player, { LottieRefCurrentProps } from 'lottie-react'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import AnimatedColor from '../../@types/lottie/AnimatedColor'
+import ColorProperty from '../../@types/lottie/ColorProperty'
 import LottieData from '../../@types/lottie/LottieData'
 import RGBA from '../../@types/lottie/RGBA'
 import ShapeItem from '../../@types/lottie/ShapeItem'
 import ShapeLayer from '../../@types/lottie/ShapeLayer'
+import StaticColor from '../../@types/lottie/StaticColor'
 
 /** The props for the LottieAnimation component. */
 interface LottieAnimationProps {
@@ -47,6 +50,16 @@ const hexToRGBA = (hex: string): RGBA => {
   return [0, 0, 0, 1]
 }
 
+/** Checks if the ColorProperty is a StaticColor. */
+function isStaticColor(color: ColorProperty): color is StaticColor {
+  return color.a === 0
+}
+
+/** Checks if the ColorProperty is an AnimatedColor. */
+function isAnimatedColor(color: ColorProperty): color is AnimatedColor {
+  return color.a === 1
+}
+
 /**
  * Updates colors in a single shape item.
  *
@@ -59,23 +72,24 @@ const hexToRGBA = (hex: string): RGBA => {
  * @param item - The shape item object which may contain
  * stroke or fill color properties.
  * @param rgbaArray - The RGBA values to set as new color.
+ * @returns The updated ShapeItem with colors changed.
  */
-const updateColorsInItem = (item: ShapeItem, rgbaArray: RGBA) => {
+const updateColorsInItem = (item: ShapeItem, rgbaArray: RGBA): ShapeItem => {
   if ((item.ty === 'st' || item.ty === 'fl') && item.c) {
-    // Check for animated color property
-    if (item.c.a === 1) {
-      if (Array.isArray(item.c.k)) {
-        item.c.k.forEach(keyframe => {
-          keyframe.s = rgbaArray
-        })
-      }
-    } else {
+    if (isAnimatedColor(item.c)) {
+      item.c.k = item.c.k.map(keyframe => {
+        keyframe.s = rgbaArray
+        return keyframe
+      })
+    }
+    if (isStaticColor(item.c)) {
       item.c.k = rgbaArray
     }
   }
   if (item.it) {
-    item.it.forEach((subItem: ShapeItem) => updateColorsInItem(subItem, rgbaArray))
+    item.it = item.it.map((subItem: ShapeItem) => updateColorsInItem(subItem, rgbaArray))
   }
+  return item
 }
 
 /**
@@ -93,14 +107,16 @@ const changeLineColor = (data: LottieData, newColor: string): LottieData => {
   const rgbaArray = hexToRGBA(newColor)
   const clonedData = _.cloneDeep(data) // Deep clone to create a new instance
 
-  clonedData.layers.forEach((layer: ShapeLayer) => {
+  clonedData.layers = clonedData.layers.map((layer: ShapeLayer) => {
     if (layer.shapes) {
-      layer.shapes.forEach((shape: ShapeItem) => {
+      layer.shapes = layer.shapes.map((shape: ShapeItem) => {
         if (shape.it) {
-          shape.it.forEach((item: ShapeItem) => updateColorsInItem(item, rgbaArray))
+          shape.it = shape.it.map((item: ShapeItem) => updateColorsInItem(item, rgbaArray))
         }
+        return shape
       })
     }
+    return layer
   })
 
   return clonedData
