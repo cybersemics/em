@@ -7686,7 +7686,7 @@ __metadata:
     vite: "npm:^5.4.10"
     vite-plugin-checker: "npm:^0.8.0"
     vite-plugin-html: "npm:^3.2.2"
-    vite-plugin-pwa: "npm:^0.20.5"
+    vite-plugin-pwa: "npm:^0.21.0"
     vitest: "npm:^2.1.4"
     vitest-canvas-mock: "npm:^0.3.3"
     webdriverio: "npm:^7.36.0"
@@ -16436,7 +16436,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinyglobby@npm:^0.2.0":
+"tinyglobby@npm:^0.2.10":
   version: 0.2.10
   resolution: "tinyglobby@npm:0.2.10"
   dependencies:
@@ -17180,24 +17180,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite-plugin-pwa@npm:^0.20.5":
-  version: 0.20.5
-  resolution: "vite-plugin-pwa@npm:0.20.5"
+"vite-plugin-pwa@npm:^0.21.0":
+  version: 0.21.0
+  resolution: "vite-plugin-pwa@npm:0.21.0"
   dependencies:
     debug: "npm:^4.3.6"
     pretty-bytes: "npm:^6.1.1"
-    tinyglobby: "npm:^0.2.0"
-    workbox-build: "npm:^7.1.0"
-    workbox-window: "npm:^7.1.0"
+    tinyglobby: "npm:^0.2.10"
+    workbox-build: "npm:^7.3.0"
+    workbox-window: "npm:^7.3.0"
   peerDependencies:
     "@vite-pwa/assets-generator": ^0.2.6
     vite: ^3.1.0 || ^4.0.0 || ^5.0.0
-    workbox-build: ^7.1.0
-    workbox-window: ^7.1.0
+    workbox-build: ^7.3.0
+    workbox-window: ^7.3.0
   peerDependenciesMeta:
     "@vite-pwa/assets-generator":
       optional: true
-  checksum: 10c0/b0b26fab553d758185608941652cccdf7a6365fa3c749120edc83e1173de8103bf948d2ed52a159eea6b3ffe08b983077b68e78593fb2bf0e307fc517dc09065
+  checksum: 10c0/d5757dbd3fc30e02e004dfc760f5ebb9edca000fb17a4e933d3480d484ede5854c7081d699e91007103afae9496b1a2ac7eb4fe6759a635b120c31c4058516e0
   languageName: node
   linkType: hard
 
@@ -17660,7 +17660,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-build@npm:^7.1.0, workbox-build@npm:^7.1.1":
+"workbox-build@npm:^7.1.1, workbox-build@npm:^7.3.0":
   version: 7.3.0
   resolution: "workbox-build@npm:7.3.0"
   dependencies:
@@ -17821,7 +17821,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-window@npm:7.3.0, workbox-window@npm:^7.1.0":
+"workbox-window@npm:7.3.0, workbox-window@npm:^7.1.0, workbox-window@npm:^7.3.0":
   version: 7.3.0
   resolution: "workbox-window@npm:7.3.0"
   dependencies:
