@@ -22,7 +22,7 @@ interface LottieAnimationProps {
  * @param hex - The hex color code.
  * @returns The RGBA values as [r, g, b, a].
  */
-const hexToRGBA = (hex: string): [number, number, number, number] => {
+const hexToRGBA = (hex: string): RGBA => {
   const rgbString = hexToRgb(hex)
 
   if (rgbString) {
