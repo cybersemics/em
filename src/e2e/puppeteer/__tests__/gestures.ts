@@ -39,7 +39,7 @@ describe('gestures', () => {
 
     await page.touchscreen.tap(rect.left + 10, rect.top + 10)
     await page.touchscreen.tap(rect.left + 10, rect.top + 10)
-    await drawHorizontalLineGesture(rect.bottom + 10)
+    await drawHorizontalLineGesture(rect.top)
 
     // the command palette should not open
     const popupValue = await page.$('[data-testid=popup-value]')
