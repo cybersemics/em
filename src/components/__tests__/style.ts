@@ -1,3 +1,4 @@
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -19,6 +20,8 @@ it('apply =style attribute to a thought', async () => {
       `,
     }),
   ])
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="child"]')
   expect(thoughtRazzle).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
@@ -44,6 +47,8 @@ it('apply =children/=style to all children', async () => {
       `,
     }),
   ])
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   // do not apply to thought itself
   expect(await findThoughtByText('a')).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
@@ -95,6 +100,8 @@ it('apply =grandchildren/=style to all grandchildren', async () => {
     }),
   ])
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   // do not apply to thought itself
   expect(await findThoughtByText('a')).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
@@ -123,6 +130,8 @@ it('as an exception, do not apply =grandchildren/=style to =grandchildren itself
     }),
     toggleHiddenThoughts(),
   ])
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   expect(await findThoughtByText('=grandchildren')).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })

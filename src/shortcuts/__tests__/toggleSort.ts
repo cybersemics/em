@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/dom'
 import { findAllByPlaceholderText } from '@testing-library/react'
+import { act } from 'react'
 import SimplePath from '../../@types/SimplePath'
 import Thunk from '../../@types/Thunk'
 import { editThoughtActionCreator as editThought } from '../../actions/editThought'
@@ -24,6 +25,603 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import executeShortcut, { executeShortcutWithMulticursor } from '../../util/executeShortcut'
 import hashPath from '../../util/hashPath'
 import toggleSortShortcut from '../toggleSort'
+
+/**
+ * Moved to the top because the non-DOM tests aren't properly cleaning up the store.
+ */
+describe('DOM', () => {
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
+
+  describe('local', () => {
+    it('home: Asc', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - c
+              - a
+              - b
+            `,
+          }),
+          setCursor(['a']),
+        ])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      act(() => executeShortcut(toggleSortShortcut, { store }))
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughtC = getThoughtByContext(['c'])
+      expect(thoughtC).toBeTruthy()
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['a', 'b', 'c'])
+    })
+
+    it('subthoughts: Asc', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - a
+                - 3
+                - 1
+                - 2
+            `,
+          }),
+          setCursor(['a', '3']),
+        ])
+      })
+
+      act(() => executeShortcut(toggleSortShortcut, { store }))
+
+      await act(() => vi.runOnlyPendingTimersAsync())
+
+      const thought = getThoughtByContext(['a'])
+      expect(thought).toBeTruthy()
+
+      const subthoughtsOfA = getDescendantsOfContext(['a'])
+
+      expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
+    })
+
+    it('home: Desc', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              -c
+              -a
+              -b`,
+          }),
+
+          setCursor(['a']),
+        ])
+      })
+
+      act(() => executeShortcut(toggleSortShortcut, { store }))
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thought = getThoughtByContext(['c'])
+      expect(thought).toBeTruthy()
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c', 'b', 'a'])
+    })
+
+    it('subthoughts: Desc', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - a
+                - 3
+                - 1
+                - 2
+            `,
+          }),
+          setCursor(['a', '3']),
+        ])
+      })
+
+      act(() => executeShortcut(toggleSortShortcut, { store }))
+      act(() => executeShortcut(toggleSortShortcut, { store }))
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughtA = getThoughtByContext(['a'])
+      expect(thoughtA).toBeTruthy()
+
+      const subthoughtsOfA = getDescendantsOfContext(['a'])
+
+      expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '2', '1'])
+    })
+  })
+
+  describe.skip('global', () => {
+    it('home: Asc', async () => {
+      store.dispatch([
+        newThought({ value: 'c' }),
+        newThought({ value: 'b' }),
+        newThought({ value: 'a' }),
+        setCursor(['a']),
+
+        ((dispatch, getState) =>
+          dispatch(
+            editThought({
+              oldValue: 'None',
+              newValue: 'Alphabetical',
+              path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
+            }),
+          )) as Thunk,
+      ])
+
+      const thought = await findThoughtByText('c')
+      expect(thought).toBeTruthy()
+
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+
+      expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['a', 'b', 'c'])
+    })
+
+    it('subthoughts: Asc', async () => {
+      store.dispatch([
+        newThought({ value: 'a' }),
+        newThought({ value: '3', insertNewSubthought: true }),
+        newThought({ value: '1' }),
+        newThought({ value: '2' }),
+        setCursor(['a', 'b']),
+        ((dispatch, getState) =>
+          dispatch(
+            editThought({
+              oldValue: 'None',
+              newValue: 'Alphabetical',
+              path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
+            }),
+          )) as Thunk,
+      ])
+
+      const thought = await findThoughtByText('a')
+      expect(thought).toBeTruthy()
+
+      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
+      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
+
+      expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
+    })
+
+    it('subthoughts: override global Asc with None', async () => {
+      store.dispatch([
+        newThought({ value: 'a' }),
+        newThought({ value: '3', insertNewSubthought: true }),
+        newThought({ value: '1' }),
+        newThought({ value: '2' }),
+
+        setCursor(['a', 'b']),
+
+        ((dispatch, getState) =>
+          dispatch(
+            editThought({
+              oldValue: 'None',
+              newValue: 'Alphabetical',
+              path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
+            }),
+          )) as Thunk,
+
+        (dispatch, getState) =>
+          dispatch(
+            toggleAttribute({
+              path: contextToPath(getState(), ['a']),
+              values: ['=sort', 'None'],
+            }),
+          ),
+      ])
+
+      const thought = await findThoughtByText('a')
+      expect(thought).toBeTruthy()
+
+      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
+      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
+
+      expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '1', '2'])
+    })
+  })
+
+  describe('empty thought ordering is preserved at the point of creation', () => {
+    it('after first thought', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['a']),
+          newThought({ value: '' }),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('a_bcdef')
+    })
+
+    it('after middle thought', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['c']),
+          newThought({ value: '' }),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('abc_def')
+    })
+
+    it('after last thought', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['f']),
+          newThought({ value: '' }),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('abcdef_')
+    })
+
+    it('before first thought', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['a', 'b']),
+          newThought({ value: '', insertBefore: true }),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('_abcdef')
+    })
+
+    it('before middle thought', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['c']),
+          newThought({ value: '', insertBefore: true }),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('ab_cdef')
+    })
+
+    it('before last thought', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['f']),
+          newThought({ value: '', insertBefore: true }),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('abcde_f')
+    })
+
+    it('multiple empty thoughts', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['a']),
+          newThought({ value: '', insertBefore: true }),
+          setCursor(['a']),
+          newThought({ value: '' }),
+          setCursor(['c']),
+          newThought({ value: '' }),
+          setCursor(['f']),
+          newThought({ value: '' }),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('_a_bc_def_')
+    })
+
+    it('only one empty subthought', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['a', 'b']),
+          newThought({ value: '', insertNewSubthought: true }),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('_')
+    })
+
+    it('multiple contiguous empty thoughts', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - =sort
+                - Alphabetical
+              - a
+              - b
+              - c
+              - d
+              - e
+              - f
+            `,
+          }),
+          setCursor(['c']),
+          newThought({ value: '' }),
+          newThought({ value: '' }),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('abc__def')
+    })
+
+    it('except with insertNewSubthought', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - a
+                - =sort
+                  - Alphabetical
+                - b
+                - c
+                - d
+                - e
+                - f
+            `,
+          }),
+          setCursor(['a']),
+          newThought({ value: '', insertNewSubthought: true }),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('bcdef_')
+    })
+
+    it('except with insertNewSubthought and insertBefore', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - a
+                - =sort
+                  - Alphabetical
+                - b
+                - c
+                - d
+                - e
+                - f
+            `,
+          }),
+          setCursor(['a']),
+          newThought({ value: '', insertNewSubthought: true, insertBefore: true }),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('_bcdef')
+    })
+
+    it('preserve sort order when thought is edited to empty instead of moving it back to its insertion point', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - test
+                - =sort
+                  - Alphabetical
+                - a
+                - b
+                - c
+            `,
+          }),
+          setCursor(['test', 'a']),
+          // wrap in a thunk in order to access fresh state
+          (dispatch, getState) =>
+            dispatch(
+              editThought({
+                oldValue: 'a',
+                newValue: '',
+                path: contextToPath(getState(), ['test', 'a']) as SimplePath,
+              }),
+            ),
+        ])
+      })
+
+      await act(() => vi.runAllTimersAsync())
+
+      const thoughts = screen.getAllByTestId(/thought/)
+
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('_bc')
+    })
+  })
+})
 
 describe('store', () => {
   describe('local', () => {
@@ -329,566 +927,6 @@ describe('store', () => {
 
       expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
       expect(attributeByContext(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
-    })
-  })
-})
-
-describe('DOM', () => {
-  beforeEach(createTestApp)
-  afterEach(cleanupTestApp)
-
-  describe('local', () => {
-    it('home: Asc', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - c
-            - a
-            - b
-          `,
-        }),
-        setCursor(['a']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughtC = getThoughtByContext(['c'])
-      expect(thoughtC).toBeTruthy()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['a', 'b', 'c'])
-    })
-
-    it('subthoughts: Asc', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - 3
-              - 1
-              - 2
-          `,
-        }),
-        setCursor(['a', '3']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thought = getThoughtByContext(['a'])
-      expect(thought).toBeTruthy()
-
-      const subthoughtsOfA = getDescendantsOfContext(['a'])
-
-      expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
-    })
-
-    it('home: Desc', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            -c
-            -a
-            -b`,
-        }),
-
-        setCursor(['a']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thought = getThoughtByContext(['c'])
-      expect(thought).toBeTruthy()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c', 'b', 'a'])
-    })
-
-    it('subthoughts: Desc', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - 3
-              - 1
-              - 2
-          `,
-        }),
-        setCursor(['a', '3']),
-      ])
-
-      executeShortcut(toggleSortShortcut, { store })
-      executeShortcut(toggleSortShortcut, { store })
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughtA = getThoughtByContext(['a'])
-      expect(thoughtA).toBeTruthy()
-
-      const subthoughtsOfA = getDescendantsOfContext(['a'])
-
-      expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '2', '1'])
-    })
-  })
-
-  describe.skip('global', () => {
-    it('home: Asc', async () => {
-      store.dispatch([
-        newThought({ value: 'c' }),
-        newThought({ value: 'b' }),
-        newThought({ value: 'a' }),
-        setCursor(['a']),
-
-        ((dispatch, getState) =>
-          dispatch(
-            editThought({
-              oldValue: 'None',
-              newValue: 'Alphabetical',
-              path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
-            }),
-          )) as Thunk,
-      ])
-
-      const thought = await findThoughtByText('c')
-      expect(thought).toBeTruthy()
-
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-
-      expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['a', 'b', 'c'])
-    })
-
-    it('subthoughts: Asc', async () => {
-      store.dispatch([
-        newThought({ value: 'a' }),
-        newThought({ value: '3', insertNewSubthought: true }),
-        newThought({ value: '1' }),
-        newThought({ value: '2' }),
-        setCursor(['a', 'b']),
-        ((dispatch, getState) =>
-          dispatch(
-            editThought({
-              oldValue: 'None',
-              newValue: 'Alphabetical',
-              path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
-            }),
-          )) as Thunk,
-      ])
-
-      const thought = await findThoughtByText('a')
-      expect(thought).toBeTruthy()
-
-      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
-      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
-
-      expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
-    })
-
-    it('subthoughts: override global Asc with None', async () => {
-      store.dispatch([
-        newThought({ value: 'a' }),
-        newThought({ value: '3', insertNewSubthought: true }),
-        newThought({ value: '1' }),
-        newThought({ value: '2' }),
-
-        setCursor(['a', 'b']),
-
-        ((dispatch, getState) =>
-          dispatch(
-            editThought({
-              oldValue: 'None',
-              newValue: 'Alphabetical',
-              path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
-            }),
-          )) as Thunk,
-
-        (dispatch, getState) =>
-          dispatch(
-            toggleAttribute({
-              path: contextToPath(getState(), ['a']),
-              values: ['=sort', 'None'],
-            }),
-          ),
-      ])
-
-      const thought = await findThoughtByText('a')
-      expect(thought).toBeTruthy()
-
-      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
-      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
-
-      expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '1', '2'])
-    })
-  })
-
-  describe('empty thought ordering is preserved at the point of creation', () => {
-    it('after first thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['a']),
-        newThought({ value: '' }),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('a_bcdef')
-    })
-
-    it('after middle thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['c']),
-        newThought({ value: '' }),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('abc_def')
-    })
-
-    it('after last thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['f']),
-        newThought({ value: '' }),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('abcdef_')
-    })
-
-    it('before first thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['a', 'b']),
-        newThought({ value: '', insertBefore: true }),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('_abcdef')
-    })
-
-    it('before middle thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['c']),
-        newThought({ value: '', insertBefore: true }),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('ab_cdef')
-    })
-
-    it('before last thought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['f']),
-        newThought({ value: '', insertBefore: true }),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('abcde_f')
-    })
-
-    it('multiple empty thoughts', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['a']),
-        newThought({ value: '', insertBefore: true }),
-        setCursor(['a']),
-        newThought({ value: '' }),
-        setCursor(['c']),
-        newThought({ value: '' }),
-        setCursor(['f']),
-        newThought({ value: '' }),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('_a_bc_def_')
-    })
-
-    it('only one empty subthought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['a', 'b']),
-        newThought({ value: '', insertNewSubthought: true }),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('_')
-    })
-
-    it('multiple contiguous empty thoughts', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - =sort
-              - Alphabetical
-            - a
-            - b
-            - c
-            - d
-            - e
-            - f
-          `,
-        }),
-        setCursor(['c']),
-        newThought({ value: '' }),
-        newThought({ value: '' }),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('abc__def')
-    })
-
-    it('except with insertNewSubthought', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - =sort
-                - Alphabetical
-              - b
-              - c
-              - d
-              - e
-              - f
-          `,
-        }),
-        setCursor(['a']),
-        newThought({ value: '', insertNewSubthought: true }),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('bcdef_')
-    })
-
-    it('except with insertNewSubthought and insertBefore', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - a
-              - =sort
-                - Alphabetical
-              - b
-              - c
-              - d
-              - e
-              - f
-          `,
-        }),
-        setCursor(['a']),
-        newThought({ value: '', insertNewSubthought: true, insertBefore: true }),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('_bcdef')
-    })
-
-    it('preserve sort order when thought is edited to empty instead of moving it back to its insertion point', async () => {
-      store.dispatch([
-        importText({
-          text: `
-            - test
-              - =sort
-                - Alphabetical
-              - a
-              - b
-              - c
-          `,
-        }),
-        setCursor(['test', 'a']),
-        // wrap in a thunk in order to access fresh state
-        (dispatch, getState) =>
-          dispatch(
-            editThought({
-              oldValue: 'a',
-              newValue: '',
-              path: contextToPath(getState(), ['test', 'a']) as SimplePath,
-            }),
-          ),
-      ])
-
-      await vi.runOnlyPendingTimersAsync()
-
-      const thoughts = screen.getAllByTestId(/thought/)
-
-      const childrenString = thoughts
-        .map((child: HTMLElement) => child.textContent)
-        .map(value => value || '_')
-        .join('')
-      expect(childrenString).toMatch('_bc')
     })
   })
 })

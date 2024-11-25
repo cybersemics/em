@@ -1,3 +1,4 @@
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
@@ -16,6 +17,8 @@ it('Set the bullet color using the ColorPicker', async () => {
   await dispatch([newThought({ value: 'a' })])
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
 
@@ -43,6 +46,8 @@ it('Set the bullet color from another color using the ColorPicker', async () => 
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__

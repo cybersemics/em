@@ -154,7 +154,8 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
 
   useEffect(() => {
     if (lottieRef.current && animationDataWithColor) {
-      lottieRef.current.setSpeed(speed)
+      // skip the animation in Puppeteer tests to avoid inconsistent snapshots
+      lottieRef.current.setSpeed(navigator.webdriver ? 999 : speed)
       setKey(prevKey => prevKey + 1) // Forces the re-render to apply the color change
     }
   }, [speed, animationDataWithColor])

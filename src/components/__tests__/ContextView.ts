@@ -1,5 +1,6 @@
 import { findAllByLabelText, findByLabelText, queryByLabelText, queryByText, screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import store from '../../stores/app'
@@ -37,6 +38,8 @@ it('Clicking a context moves the cursor to that context', async () => {
     toggleContextView(),
   ])
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   // select each context in the context view
   const contextBreadcrumbs = document.querySelectorAll('[aria-label="context-breadcrumbs"]')
 
@@ -52,6 +55,8 @@ it('Clicking a context moves the cursor to that context', async () => {
   // click the context link
   const user = userEvent.setup({ delay: null })
   await user.click(contextLink)
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   // cursor should exist
   const cursor = store.getState().cursor!

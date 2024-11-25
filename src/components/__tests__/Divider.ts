@@ -32,5 +32,7 @@ describe('Divider', () => {
     await user.type(editable!, '-')
     const divider3 = screen.queryByLabelText('divider')
     expect(divider3).toBeTruthy()
+
+    await act(() => vi.runAllTimersAsync())
   })
 })
