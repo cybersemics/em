@@ -1,4 +1,4 @@
-import { Haptics } from '@capacitor/haptics'
+import { Haptics, NotificationType } from '@capacitor/haptics'
 import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
 import Direction from '../@types/Direction'
@@ -113,7 +113,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       'touchmove',
       e => {
         if (this.disableScroll && e.cancelable) {
-          Haptics.selectionChanged()
           e.preventDefault()
         }
       },
@@ -152,6 +151,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     // touchcancel is fired when the user switches apps by swiping from the bottom of the screen
     window.addEventListener('touchcancel', e => {
+      Haptics.notification({ type: NotificationType.Warning })
       this.props.onCancel?.({ clientStart: this.clientStart, e })
       this.reset()
     })
@@ -223,6 +223,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             x: gestureState.moveX,
             y: gestureState.moveY,
           }
+          Haptics.selectionEnd()
           this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
         }
         this.reset()

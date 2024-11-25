@@ -1,3 +1,4 @@
+import { Haptics } from '@capacitor/haptics'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragShortcutZone from '../@types/DragShortcutZone'
@@ -29,6 +30,7 @@ const useToolbarLongPress = ({
     if (disabled) return
     setIsPressed(true)
     dispatch(toolbarLongPress({ shortcut, sourceZone }))
+    Haptics.selectionStart()
   }, [disabled, dispatch, shortcut, sourceZone])
 
   /** Turn off isPressed and dismiss an alert when long press ends. */

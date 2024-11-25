@@ -1,3 +1,4 @@
+import { Haptics } from '@capacitor/haptics'
 import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
@@ -322,6 +323,11 @@ const CommandPalette: FC = () => {
 
   // Select the first shortcut when the input changes.
   useEffect(() => {
+    if (shortcuts[0]) {
+      if (shortcuts[0].id != 'favorite' && shortcuts[0].id != 'cursorBack') {
+        Haptics.selectionChanged()
+      }
+    }
     setSelectedShortcut(shortcuts[0])
   }, [search, shortcuts, setSelectedShortcut])
 
