@@ -34,6 +34,16 @@ const matchContextsChildren = async (provider: DataProvider, context: Context, c
   expect(childrenThoughts).toMatchObject(children)
 }
 
+/**
+ * Calls getContext but automatically runs the timers forward.
+ */
+const getContextAsync = async (provider: DataProvider, context: Context) => {
+  const ctxPromise = getContext(provider, context)
+  await vi.runAllTimersAsync()
+
+  return ctxPromise
+}
+
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
@@ -41,7 +51,6 @@ it('disable isLoading after initialize', async () => {
   expect(store.getState().isLoading).toBe(false)
 })
 
-// y-indexeddb breaks tests
 it('load thought', async () => {
   // create a thought, which will get persisted to local db
   await dispatch(newThought({ value: 'a' }))
@@ -96,7 +105,6 @@ it('do not repopulate deleted thought', async () => {
   expect(parentEntryChild).toBe(null)
 })
 
-// y-indexeddb breaks tests
 it('load buffered thoughts', async () => {
   await dispatch(
     importText({
@@ -138,8 +146,7 @@ it('load buffered thoughts', async () => {
   expect(getAllChildrenByContext(state, ['a', 'b', 'c', 'd', 'e'])).toMatchObject([])
 })
 
-// y-indexeddb breaks tests
-it.skip('delete thought with buffered descendants', async () => {
+it('delete thought with buffered descendants', async () => {
   await dispatch([
     importText({
       text: `
@@ -170,14 +177,13 @@ it.skip('delete thought with buffered descendants', async () => {
   await dispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }])
-  expect(await getContext(db, ['a'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
 })
 
-// y-indexeddb breaks tests
 it('move thought with buffered descendants', async () => {
   await dispatch([
     importText({
@@ -244,8 +250,7 @@ it('move thought with buffered descendants', async () => {
   await matchContextsChildren(db, ['x', 'a', 'b', 'c', 'd', 'e'], [])
 })
 
-// y-indexeddb breaks tests
-it.skip('edit thought with buffered descendants', async () => {
+it('edit thought with buffered descendants', async () => {
   await dispatch([
     importText({
       text: `
@@ -271,8 +276,6 @@ it.skip('edit thought with buffered descendants', async () => {
   await matchContextsChildren(db, ['a', 'b', 'c', 'd'], [{ value: 'e' }])
   await matchContextsChildren(db, ['a', 'b', 'c', 'd', 'e'], [])
 
-  await act(vi.runOnlyPendingTimersAsync)
-
   await refreshTestApp()
 
   // edit thought with buffered descendants
@@ -281,11 +284,12 @@ it.skip('edit thought with buffered descendants', async () => {
   await act(vi.runOnlyPendingTimersAsync)
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'k' }])
-  expect(await getContext(db, ['a'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
+
+  expect(await getContextAsync(db, ['a'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
 
   await matchContextsChildren(db, ['k'], [{ value: 'm' }, { value: 'b' }])
   await matchContextsChildren(db, ['k!', 'b'], [{ value: 'c' }])
