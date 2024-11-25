@@ -1882,13 +1882,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/cli@npm:^6.1.2":
-  version: 6.1.2
-  resolution: "@capacitor/cli@npm:6.1.2"
+"@capacitor/cli@npm:^6.2.0":
+  version: 6.2.0
+  resolution: "@capacitor/cli@npm:6.2.0"
   dependencies:
     "@ionic/cli-framework-output": "npm:^2.2.5"
     "@ionic/utils-fs": "npm:^3.1.6"
-    "@ionic/utils-process": "npm:^2.1.11"
     "@ionic/utils-subprocess": "npm:2.1.11"
     "@ionic/utils-terminal": "npm:^2.3.3"
     commander: "npm:^9.3.0"
@@ -1907,7 +1906,7 @@ __metadata:
   bin:
     cap: bin/capacitor
     capacitor: bin/capacitor
-  checksum: 10c0/4e681cce285bcc3a2a9337c941b192b914d07a7561f430ee4be6d6bcfe65745d5ba343a7a512b90af23168d067d2417411dcf2b7b86a535565c84cfb4a4ebe72
+  checksum: 10c0/d572b360524fddcd38a81799120e888df4fd3b2c286da3a393cf305009cd10ed143f1732658e4d703d7216b86a1ad461f4e0b8fdc5986149f9fd5917d7ed25eb
   languageName: node
   linkType: hard
 
@@ -2708,16 +2707,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ionic/utils-object@npm:2.1.6":
-  version: 2.1.6
-  resolution: "@ionic/utils-object@npm:2.1.6"
-  dependencies:
-    debug: "npm:^4.0.0"
-    tslib: "npm:^2.0.1"
-  checksum: 10c0/17b55abb65008d6be72db8cd4d3fffd2fdf103de11b38f48b65c9f6f8fe0501ff19bb7dd972014852b19dce79cf4029d0a905628e041894be10f4d2fd19f601f
-  languageName: node
-  linkType: hard
-
 "@ionic/utils-process@npm:2.1.10":
   version: 2.1.10
   resolution: "@ionic/utils-process@npm:2.1.10"
@@ -2729,20 +2718,6 @@ __metadata:
     tree-kill: "npm:^1.2.2"
     tslib: "npm:^2.0.1"
   checksum: 10c0/872ef083b85c84f04f68454c694a141d7f475ca32e98a6a39aad074f83d382fd8c921c595d492eddc458a14708d702a510c448c9a7c842b9f208f0671b66be50
-  languageName: node
-  linkType: hard
-
-"@ionic/utils-process@npm:^2.1.11":
-  version: 2.1.12
-  resolution: "@ionic/utils-process@npm:2.1.12"
-  dependencies:
-    "@ionic/utils-object": "npm:2.1.6"
-    "@ionic/utils-terminal": "npm:2.3.5"
-    debug: "npm:^4.0.0"
-    signal-exit: "npm:^3.0.3"
-    tree-kill: "npm:^1.2.2"
-    tslib: "npm:^2.0.1"
-  checksum: 10c0/0ee9c9810080fcf77dd7bed457f65dd074009d799b7c4efa147f3c53049993d08c73409653bc402fa9c7bf67b691d3c8cce7cd6836db4fdb75334e179ae325fa
   languageName: node
   linkType: hard
 
@@ -7680,7 +7655,7 @@ __metadata:
     "@babel/core": "npm:^7.26.0"
     "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
     "@capacitor/android": "npm:^6.1.2"
-    "@capacitor/cli": "npm:^6.1.2"
+    "@capacitor/cli": "npm:^6.2.0"
     "@capacitor/clipboard": "npm:^6.0.2"
     "@capacitor/core": "npm:^6.2.0"
     "@capacitor/ios": "npm:^6.2.0"
