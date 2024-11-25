@@ -10,9 +10,6 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import head from '../../util/head'
 import pathToContext from '../../util/pathToContext'
 
-/**
- * Use fake timers to ensure that cursor scrolling helpers complete.
- */
 beforeEach(vi.useFakeTimers)
 afterEach(vi.useRealTimers)
 
