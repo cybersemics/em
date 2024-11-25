@@ -182,9 +182,7 @@ const VirtualThought = ({
 
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
-  useLayoutEffect(() => {
-    window.requestAnimationFrame(updateSize)
-  }, [
+  useLayoutEffect(updateSize, [
     cursorDepth,
     cursorLeaf,
     fontSize,
