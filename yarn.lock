@@ -1929,12 +1929,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/ios@npm:^6.1.2":
-  version: 6.1.2
-  resolution: "@capacitor/ios@npm:6.1.2"
+"@capacitor/ios@npm:^6.2.0":
+  version: 6.2.0
+  resolution: "@capacitor/ios@npm:6.2.0"
   peerDependencies:
-    "@capacitor/core": ^6.1.0
-  checksum: 10c0/d07530608ec7be4eada11339f778e161a92fa7a3c8de36edcd6895e54ccd33c0d40b416e0ca3e26307957fa9c5b5bc57a034dabaa513615853972e459d42af44
+    "@capacitor/core": ^6.2.0
+  checksum: 10c0/480c5016e4bb55e6c48136bca2a08e24ae956ecadb3a5f0db93c3301502b2e8e9a4b4f4eb9ba32aa178fb9d31f140f919a9fd52b9c41ef2dbae943e0830a9acd
   languageName: node
   linkType: hard
 
@@ -7620,7 +7620,7 @@ __metadata:
     "@capacitor/cli": "npm:^6.1.2"
     "@capacitor/clipboard": "npm:^6.0.1"
     "@capacitor/core": "npm:^6.2.0"
-    "@capacitor/ios": "npm:^6.1.2"
+    "@capacitor/ios": "npm:^6.2.0"
     "@capacitor/keyboard": "npm:^6.0.2"
     "@capacitor/status-bar": "npm:^6.0.1"
     "@emotion/react": "npm:^11.13.5"
