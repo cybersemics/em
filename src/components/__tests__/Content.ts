@@ -1,3 +1,4 @@
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
@@ -20,6 +21,8 @@ it('do not render EmptyThoughtspace when there are thoughts in the root context'
     }),
   )
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   expect(document.querySelector('[aria-label="empty-thoughtspace"]')).toBeNull()
 })
 
@@ -31,6 +34,8 @@ it('render EmptyThoughtspace when there are only invisible thoughts in the root 
     `,
     }),
   )
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   expect(document.querySelector('[aria-label="empty-thoughtspace"]')).toBeTruthy()
 })

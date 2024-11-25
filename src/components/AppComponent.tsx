@@ -1,6 +1,5 @@
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
-import classNames from 'classnames'
 import _ from 'lodash'
 import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -173,12 +172,6 @@ const AppComponent: FC = () => {
     }
   }, [showSplitView])
 
-  const componentClassNames = classNames({
-    // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
-    mobile: isTouch,
-    'drag-in-progress': dragInProgress,
-  })
-
   if (showModal && !modals[showModal]) {
     throw new Error(`Missing component for Modal type: ${showModal}`)
   }
@@ -186,7 +179,7 @@ const AppComponent: FC = () => {
   const Modal = showModal ? modals[showModal] : null
 
   return (
-    <div className={componentClassNames}>
+    <div>
       <Alert />
       <Tips />
       <CommandPalette />

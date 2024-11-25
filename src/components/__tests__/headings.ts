@@ -9,7 +9,7 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('headings should set font weight', async () => {
-  await act(async () => {
+  act(() =>
     store.dispatch([
       importText({
         text: `
@@ -26,8 +26,10 @@ it('headings should set font weight', async () => {
           - =heading5
       `,
       }),
-    ])
-  })
+    ]),
+  )
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   // normal text should not be bold
   const thought0 = await findThoughtByText('Normal Text')
@@ -50,9 +52,9 @@ it('headings should set font weight', async () => {
   expect(thought5).toHaveStyle({ fontWeight: 600 })
 
   // child should not be bold
-  await act(async () => {
-    store.dispatch(setCursor(['My Heading 1', '=heading1']))
-  })
+  act(() => store.dispatch(setCursor(['My Heading 1', '=heading1'])))
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thought1Child = await findThoughtByText('=heading1')
   expect(thought1Child).not.toHaveStyle({ fontWeight: 700 })
