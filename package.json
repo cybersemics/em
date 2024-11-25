@@ -220,7 +220,7 @@
     "vite-plugin-pwa": "^0.21.0",
     "vitest": "^2.1.4",
     "vitest-canvas-mock": "^0.3.3",
-    "webdriverio": "^7.36.0"
+    "webdriverio": "^9.3.1"
   },
   "packageManager": "yarn@4.5.1"
 }
