@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
-import { bulletColorActionCreator as bulletColor } from '../actions/bulletColor'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
@@ -99,21 +98,6 @@ const ColorSwatch: FC<{
     } else {
       dispatch(formatSelection('backColor', 'bg'))
     }
-
-    dispatch(
-      bulletColor({
-        ...(selected
-          ? {
-              color: 'default',
-            }
-          : color
-            ? { color: label }
-            : {
-                backgroundColor: label,
-              }),
-        shape,
-      }),
-    )
   }
   return (
     <span

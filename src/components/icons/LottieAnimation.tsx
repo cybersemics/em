@@ -1,7 +1,7 @@
 import { hexToRgb } from '@mui/material'
 import _ from 'lodash'
 import Player, { LottieRefCurrentProps } from 'lottie-react'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import AnimatedColor from '../../@types/lottie/AnimatedColor'
 import ColorProperty from '../../@types/lottie/ColorProperty'
 import LottieData from '../../@types/lottie/LottieData'
@@ -152,10 +152,20 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
     return animationData ? changeLineColor(animationData, color) : null
   }, [animationData, color])
 
+  // skip the animation in Puppeteer tests to avoid inconsistent snapshots
+  if (navigator.webdriver) {
+    useLayoutEffect(() => {
+      if (!lottieRef.current) return
+
+      const lastFrame = lottieRef.current.getDuration(true)! - 1
+      lottieRef.current.goToAndStop(lastFrame)
+      onComplete?.()
+    }, [onComplete])
+  }
+
   useEffect(() => {
     if (lottieRef.current && animationDataWithColor) {
-      // skip the animation in Puppeteer tests to avoid inconsistent snapshots
-      lottieRef.current.setSpeed(navigator.webdriver ? 999 : speed)
+      lottieRef.current.setSpeed(speed)
       setKey(prevKey => prevKey + 1) // Forces the re-render to apply the color change
     }
   }, [speed, animationDataWithColor])
@@ -175,7 +185,8 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
       }}
       animationData={animationDataWithColor}
       lottieRef={lottieRef}
-      autoplay
+      // turn off autoplay in puppeteer tests
+      autoplay={!navigator.webdriver}
       loop={false}
       onComplete={onComplete}
     />
