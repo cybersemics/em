@@ -134,7 +134,6 @@
     "ts-key-enum": "^2.0.12",
     "use-onclickoutside": "^0.4.1",
     "vite-plugin-html": "^3.2.2",
-    "webview-background": "./em_plugins/webview_background",
     "workbox-build": "^7.1.1",
     "workbox-core": "^7.1.0",
     "workbox-expiration": "^7.1.0",

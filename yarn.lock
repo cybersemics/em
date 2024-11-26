@@ -7805,7 +7805,7 @@ __metadata:
     vitest: "npm:^2.1.4"
     vitest-canvas-mock: "npm:^0.3.3"
     webdriverio: "npm:^7.36.0"
-    webview-background: ./em-plugins/webview-background
+    webview-background: ./em_plugins/webview_background
     workbox-build: "npm:^7.1.1"
     workbox-core: "npm:^7.1.0"
     workbox-expiration: "npm:^7.1.0"
@@ -17611,9 +17611,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webview-background@file:./em-plugins/webview-background::locator=em%40workspace%3A.":
+"webview-background@file:./em_plugins/webview_background::locator=em%40workspace%3A.":
   version: 0.0.2
-  resolution: "webview-background@file:./em-plugins/webview-background#./em-plugins/webview-background::hash=bd0425&locator=em%40workspace%3A."
+  resolution: "webview-background@file:./em_plugins/webview_background#./em_plugins/webview_background::hash=bd0425&locator=em%40workspace%3A."
   peerDependencies:
     "@capacitor/core": ^6.0.0
   checksum: 10c0/d98fe4803cfbea73a94b39da24042537d9e11be486b9d027174d338b2273d188162c408a367affa328afec6e80874e3b0585bbc74dc471c1c0f63a2f76bd4428
