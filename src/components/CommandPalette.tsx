@@ -20,6 +20,7 @@ import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import Popup from './Popup'
+import { Capacitor } from '@capacitor/core'
 
 /**********************************************************************
  * Constants
@@ -325,7 +326,9 @@ const CommandPalette: FC = () => {
   useEffect(() => {
     if (shortcuts[0]) {
       if (shortcuts[0].id != 'favorite' && shortcuts[0].id != 'cursorBack') {
-        Haptics.selectionChanged()
+        if (Capacitor.isNativePlatform()) {
+          Haptics.selectionChanged()
+        }
       }
     }
     setSelectedShortcut(shortcuts[0])

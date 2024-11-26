@@ -8,6 +8,7 @@ import gestureStore from '../stores/gesture'
 import isInGestureZone from '../util/isInGestureZone'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
+import { Capacitor } from '@capacitor/core'
 
 interface Point {
   x: number
@@ -130,7 +131,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // disable scroll in the gesture zone on the left side of the screen
         // (reverse in left-handed mode)
         if (inGestureZone && !props.shouldCancelGesture?.()) {
-          Haptics.selectionStart()
+          if (Capacitor.isNativePlatform()) {
+            Haptics.selectionStart()
+          }
           this.disableScroll = true
         } else {
           this.abandon = true
@@ -146,7 +149,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     // touchcancel is fired when the user switches apps by swiping from the bottom of the screen
     window.addEventListener('touchcancel', e => {
-      Haptics.notification({ type: NotificationType.Warning })
+      if (Capacitor.isNativePlatform()) {
+        Haptics.notification({ type: NotificationType.Warning })
+      }
       this.props.onCancel?.({ clientStart: this.clientStart, e })
       this.reset()
     })
@@ -218,7 +223,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             x: gestureState.moveX,
             y: gestureState.moveY,
           }
-          Haptics.selectionEnd()
+          if (Capacitor.isNativePlatform()) {
+            Haptics.selectionEnd()
+          }
           this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
         }
         this.reset()

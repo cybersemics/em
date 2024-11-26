@@ -7,6 +7,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { toolbarLongPressActionCreator as toolbarLongPress } from '../actions/toolbarLongPress'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import useLongPress from './useLongPress'
+import { Capacitor } from '@capacitor/core'
 
 /** Set state.toolbarLongPress when long pressing a toolbar button in the customize modal. */
 const useToolbarLongPress = ({
@@ -30,7 +31,9 @@ const useToolbarLongPress = ({
     if (disabled) return
     setIsPressed(true)
     dispatch(toolbarLongPress({ shortcut, sourceZone }))
-    Haptics.selectionStart()
+    if (Capacitor.isNativePlatform()) {
+      Haptics.selectionStart()
+    }
   }, [disabled, dispatch, shortcut, sourceZone])
 
   /** Turn off isPressed and dismiss an alert when long press ends. */

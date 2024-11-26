@@ -10,6 +10,7 @@ import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import useLongPress from './useLongPress'
+import { Capacitor } from '@capacitor/core'
 
 /** Set state.dragHold on longPress. */
 const useDragHold = ({
@@ -36,7 +37,9 @@ const useDragHold = ({
       if (disabled) return
       setIsPressed(true)
       dispatch([dragHold({ value: true, simplePath, sourceZone })])
-      Haptics.selectionStart()
+      if (Capacitor.isNativePlatform()) {
+        Haptics.selectionStart()
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -53,7 +56,9 @@ const useDragHold = ({
 
         if (state.dragHold) {
           dispatch([dragHold({ value: false }), !hasMulticursor(state) ? alert(null) : null])
-          Haptics.selectionEnd()
+          if (Capacitor.isNativePlatform()) {
+            Haptics.selectionEnd()
+          }
           if (toggleMulticursorOnLongPress) {
             dispatch(toggleMulticursor({ path: simplePath }))
           }

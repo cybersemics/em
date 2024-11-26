@@ -1,6 +1,7 @@
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import _ from 'lodash'
 import { isTouch } from '../browser'
+import { Capacitor } from '@capacitor/core'
 
 // the number of pixels of scrolling or dragging from touchStart that is allowed to still trigger fastClick
 const MOVE_THRESHOLD = 15
@@ -42,7 +43,9 @@ const fastClick = isTouch
         }
       }, 16.666),
       onTouchEnd: (e: React.TouchEvent) => {
-        Haptics.impact({ style: ImpactStyle.Light })
+        if (Capacitor.isNativePlatform()) {
+          Haptics.impact({ style: ImpactStyle.Light })
+        }
         let cancel = !touchStart
 
         if (touchStart && e.changedTouches.length > 0) {
