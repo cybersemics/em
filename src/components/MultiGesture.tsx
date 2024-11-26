@@ -129,11 +129,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // disable gestures in the scroll zone on the right side of the screen
         // disable scroll in the gesture zone on the left side of the screen
         // (reverse in left-handed mode)
-        const viewport = viewportStore.getState()
-        const scrollZoneWidth = viewport.scrollZoneWidth
-        const isInGestureZone =
-          (this.leftHanded ? x > scrollZoneWidth : x < viewport.innerWidth - scrollZoneWidth) && y > TOOLBAR_HEIGHT
-        if (isInGestureZone && !props.shouldCancelGesture?.()) {
+        if (inGestureZone && !props.shouldCancelGesture?.()) {
           Haptics.selectionStart()
           this.disableScroll = true
         } else {
