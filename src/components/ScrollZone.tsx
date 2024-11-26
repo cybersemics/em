@@ -1,17 +1,18 @@
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { Settings } from '../constants'
-import useScrollTop from '../hooks/useScrollTop'
+import useTouchMoveTop from '../hooks/useTouchMoveTop'
 import getUserSetting from '../selectors/getUserSetting'
 import viewportStore from '../stores/viewport'
 
 /** An overlay for the scroll zone that blocks pointer events. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
-  const scrollTop = useScrollTop()
+  const scrollTop = useTouchMoveTop()
   const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
   if (hideScrollZone) return null
 
+  console.log(scrollTop, `-${scrollTop / 4 + 400}px`)
   return (
     <div
       className={css({
@@ -28,9 +29,9 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
         pointerEvents: 'none',
       })}
       style={{
-        transform: `translateY(-${scrollTop / 4 + 400}px)`,
+        transform: `translateY(-${scrollTop / 4 + 100}px)`,
         width: scrollZoneWidth,
-        transition: 'transform 0.1s ease-in-out',
+        transition: 'transform 0.25s ease-out',
       }}
     ></div>
   )
