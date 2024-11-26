@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { Haptics } from '@capacitor/haptics'
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
@@ -10,7 +11,6 @@ import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import useLongPress from './useLongPress'
-import { Capacitor } from '@capacitor/core'
 
 /** Set state.dragHold on longPress. */
 const useDragHold = ({

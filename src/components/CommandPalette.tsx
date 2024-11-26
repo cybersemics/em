@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { Haptics } from '@capacitor/haptics'
 import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
@@ -20,7 +21,6 @@ import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import Popup from './Popup'
-import { Capacitor } from '@capacitor/core'
 
 /**********************************************************************
  * Constants

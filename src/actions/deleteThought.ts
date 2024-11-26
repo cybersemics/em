@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { Haptics, NotificationType } from '@capacitor/haptics'
 import _ from 'lodash'
 import Index from '../@types/IndexType'
@@ -28,7 +29,7 @@ import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
 import timestamp from '../util/timestamp'
-import { Capacitor } from '@capacitor/core'
+
 
 interface Payload {
   pathParent: Path

@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { Haptics, NotificationType } from '@capacitor/haptics'
 import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
@@ -8,7 +9,6 @@ import gestureStore from '../stores/gesture'
 import isInGestureZone from '../util/isInGestureZone'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
-import { Capacitor } from '@capacitor/core'
 
 interface Point {
   x: number

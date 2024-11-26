@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { Haptics } from '@capacitor/haptics'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
@@ -7,7 +8,6 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { toolbarLongPressActionCreator as toolbarLongPress } from '../actions/toolbarLongPress'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import useLongPress from './useLongPress'
-import { Capacitor } from '@capacitor/core'
 
 /** Set state.toolbarLongPress when long pressing a toolbar button in the customize modal. */
 const useToolbarLongPress = ({
