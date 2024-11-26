@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
+import { WebviewBackground } from 'webview-background'
 import classNames from 'classnames'
 import _ from 'lodash'
 import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -34,6 +35,7 @@ import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import * as modals from './modals'
+
 
 // This can be removed once Split Pane is working.
 const DISABLE_SPLIT_PANE = true
@@ -135,6 +137,15 @@ const AppComponent: FC = () => {
     document.body.setAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
     document.body.setAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
     document.body.setAttribute('data-drag-in-progress', dragInProgress.toString())
+
+    if (Capacitor.getPlatform() == 'ios') {
+      if (dark) {
+        WebviewBackground.changeBackgroundColor({ color: '#000000' })
+      } else {
+        WebviewBackground.changeBackgroundColor({ color: '#ffffff' })
+      }
+    }
+
 
     document.body.setAttribute(
       'data-browser',

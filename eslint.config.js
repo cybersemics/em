@@ -114,7 +114,7 @@ export default [
   {
     ignores: [
       'node_modules/**',
-      'em_plugins',
+      'packages',
       '**/styled-system/*',
       '**/ios/*',
       '**/android/**',
