@@ -1,7 +1,6 @@
 import { KnownDevices } from 'puppeteer'
 import { drawHorizontalLineGesture } from '../helpers/gesture'
 import paste from '../helpers/paste'
-import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
