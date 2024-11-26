@@ -1,14 +1,22 @@
 import { debounce } from 'lodash'
 import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { updateHoveringPathActionCreator } from '../actions/updateHoveringPath'
+import Thunk from '../@types/Thunk'
+import { updateHoveringPathActionCreator as updateHoveringPath } from '../actions/updateHoveringPath'
 
 const DEBOUNCE_DELAY = 50
 let hoverCount = 0
 let debouncedSetHoveringPath: ReturnType<typeof debounce> | null = null
 
+/** Clears state.hoveringPath if it is set. */
+const clearHoveringPath: Thunk = (dispatch, getState) => {
+  if (getState().hoveringPath) {
+    dispatch(updateHoveringPath({ path: undefined }))
+  }
+}
+
 /**
- * Hook to capture the dragleave event and dispatch the dragInProgress action.
+ * Hook to capture the dragleave event and dispatch the updateHoveringPath action.
  */
 const useDragLeave = ({ isDeepHovering, canDropThought }: { isDeepHovering: boolean; canDropThought: boolean }) => {
   const dispatch = useDispatch()
@@ -20,7 +28,7 @@ const useDragLeave = ({ isDeepHovering, canDropThought }: { isDeepHovering: bool
   if (!debouncedSetHoveringPath) {
     debouncedSetHoveringPath = debounce(() => {
       // Only set hoveringPath to undefined if hoverCount is still zero
-      dispatch(updateHoveringPathActionCreator({ path: undefined }))
+      dispatch(clearHoveringPath)
     }, DEBOUNCE_DELAY)
   }
 
@@ -34,7 +42,7 @@ const useDragLeave = ({ isDeepHovering, canDropThought }: { isDeepHovering: bool
 
     // If canDrop is false return
     if (!canDropThought) {
-      dispatch(updateHoveringPathActionCreator({ path: undefined }))
+      dispatch(clearHoveringPath)
       return
     }
 
