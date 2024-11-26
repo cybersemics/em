@@ -604,7 +604,7 @@ export const replicateChildren = async (
   // If the doc is cached, return as soon as the appropriate providers are synced.
   // Disable IDB during tests because of TransactionInactiveError in fake-indexeddb.
   // Disable websocket during tests because of infinite loop in sinon runAllAsync.
-  if (thoughtDocs.get(docKey) || import.meta.env.MODE === 'test') {
+  if (thoughtDocs.get(docKey)) {
     // The Doc exists, but it may not be populated yet if replication has not completed.
     // Wait for the appropriate replication to complete before accessing children.
     if (background && remote) {
@@ -732,7 +732,7 @@ export const replicateLexeme = async (
   // If the doc is cached, return as soon as the appropriate providers are synced.
   // Disable IDB during tests because of TransactionInactiveError in fake-indexeddb.
   // Disable websocket during tests because of infinite loop in sinon runAllAsync.
-  if (lexemeDocs.get(key) || import.meta.env.MODE === 'test') {
+  if (lexemeDocs.get(key)) {
     if (background) {
       await lexemeWebsocketSynced.get(key)
     } else {

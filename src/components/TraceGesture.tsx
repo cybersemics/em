@@ -8,6 +8,7 @@ import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import viewportStore from '../stores/viewport'
+import isInGestureZone from '../util/isInGestureZone'
 import FadeTransition from './FadeTransition'
 
 interface TraceGestureProps {
@@ -36,6 +37,7 @@ const useConditionDelay = (condition: boolean, milliseconds: number) => {
 /** Draws a gesture as it is being performed onto a canvas. */
 const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
+  const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
 
   // A hook that is true when there is a cancelled gesture in progress.
   // Handles GestureHint and CommandPaletteGesture which have different ways of showing a cancelled gesture.
@@ -92,7 +94,10 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
       e.preventDefault = noop
-      handlePointerStart(e)
+      const shouldActivateGesture = isInGestureZone(e.clientX, e.clientY, leftHanded)
+      if (shouldActivateGesture) {
+        handlePointerStart(e)
+      }
     })
     eventNode?.addEventListener('pointermove', e => {
       e.preventDefault = noop
@@ -111,7 +116,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       eventNode?.removeEventListener('pointermove', handlePointerMove)
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
-  }, [eventNodeRef, onBeginStroke])
+  }, [eventNodeRef, onBeginStroke, leftHanded])
 
   return (
     <div

@@ -102,12 +102,12 @@ const DropEnd = ({
           // offset marginLeft, minus 1em for bullet
           // otherwise drop-hover will be too far left
           paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
-          // use transform to avoid conflicting with margin, which is currently spread out across multiple components and App.css
         }),
       )}
       style={{
         backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
         height: isRootPath ? '8em' : `${1.9 + dropTargetHeight}em`,
+        // use transform to avoid conflicting with margin, which is currently spread out across multiple components
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
       }}
       ref={dropTarget}
