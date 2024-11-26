@@ -6,12 +6,11 @@ import { settingsActionCreator as setting } from '../actions/settings'
 import theme from '../selectors/theme'
 import Checkbox from './Checkbox'
 
-
 /** A ThemeSwitch Component with a title and description. */
 const ThemeSwitch: FC = () => {
   const dispatch = useDispatch()
   const light = useSelector(state => theme(state) === 'Light')
-  
+
   if (Capacitor.getPlatform() == 'ios') {
     if (light) {
       WebviewBackground.changeBackgroundColor({ color: '#ffffff' })

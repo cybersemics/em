@@ -1,11 +1,11 @@
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
-import { WebviewBackground } from 'webview-background'
 import classNames from 'classnames'
 import _ from 'lodash'
 import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
+import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
 import { updateSplitPositionActionCreator as updateSplitPosition } from '../actions/updateSplitPosition'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
@@ -35,7 +35,6 @@ import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import * as modals from './modals'
-
 
 // This can be removed once Split Pane is working.
 const DISABLE_SPLIT_PANE = true
@@ -145,7 +144,6 @@ const AppComponent: FC = () => {
         WebviewBackground.changeBackgroundColor({ color: '#ffffff' })
       }
     }
-
 
     document.body.setAttribute(
       'data-browser',
