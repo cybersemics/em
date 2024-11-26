@@ -5,7 +5,6 @@ import _ from 'lodash'
 import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
-// import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
 import { updateSplitPositionActionCreator as updateSplitPosition } from '../actions/updateSplitPosition'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
@@ -136,14 +135,6 @@ const AppComponent: FC = () => {
     document.body.setAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
     document.body.setAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
     document.body.setAttribute('data-drag-in-progress', dragInProgress.toString())
-
-    // if (Capacitor.getPlatform() == 'ios') {
-    //   // if (dark) {
-    //     WebviewBackground.changeBackgroundColor({ color: colors.bg })
-    //   // } else {
-    //   //   WebviewBackground.changeBackgroundColor({ color: '#ffffff' })
-    //   // }
-    // }
 
     document.body.setAttribute(
       'data-browser',

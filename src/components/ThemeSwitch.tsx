@@ -1,4 +1,3 @@
-// import { Capacitor } from '@capacitor/core'
 import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
