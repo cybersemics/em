@@ -11,10 +11,7 @@ const useTouchMoveTop = () => {
     handleScroll()
     window.addEventListener('touchmove', handleScroll)
 
-    return () => {
-      console.log('remove')
-      return window.removeEventListener('touchmove', handleScroll)
-    }
+    return () => window.removeEventListener('touchmove', handleScroll)
   }, [])
 
   return scrollTop
