@@ -12,7 +12,7 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
   if (hideScrollZone) return null
 
-  return (  
+  return (
     <div
       className={css({
         backgroundColor: 'black',
@@ -28,9 +28,9 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
         pointerEvents: 'none',
       })}
       style={{
-        transform: `translateY(-${scrollTop / 4 + 400}px)`,
+        transform: `translateY(-${scrollTop / 4 + 300}px)`,
         width: scrollZoneWidth,
-        transition: 'transform 0.25s ease-out',
+        transition: 'transform 0.5s ease-in-out',
       }}
     ></div>
   )
