@@ -1,9 +1,9 @@
 import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { WebviewBackground } from 'webview-background'
 import { settingsActionCreator as setting } from '../actions/settings'
 import theme from '../selectors/theme'
 import Checkbox from './Checkbox'
-import { WebviewBackground } from 'webview-background';
 
 /** A ThemeSwitch Component with a title and description. */
 const ThemeSwitch: FC = () => {
