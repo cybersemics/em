@@ -1,0 +1,1 @@
+{"version":3,"file":"definitions.js","sourceRoot":"","sources":["../../src/definitions.ts"],"names":[],"mappings":"","sourcesContent":["export interface WebviewBackgroundPlugin {\n  changeBackgroundColor(options: { color: string }): Promise<void>;\n}\n"]}

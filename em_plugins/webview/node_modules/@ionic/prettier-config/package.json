@@ -1,0 +1,23 @@
+{
+  "name": "@ionic/prettier-config",
+  "version": "4.0.0",
+  "description": "Prettier config for Ionic and Capacitor",
+  "keywords": [],
+  "homepage": "https://github.com/ionic-team/prettier-config#readme",
+  "bugs": {
+    "url": "https://github.com/ionic-team/prettier-config/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ionic-team/prettier-config.git"
+  },
+  "license": "MIT",
+  "author": "Ionic <hi@ionicframework.com>",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "peerDependencies": {
+    "prettier": "^2.4.0 || ^3.0.0"
+  }
+}
