@@ -15,13 +15,12 @@
     "WebviewBackground.podspec"
   ],
   "author": "Matheu DeWitt",
-  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/msdewittdev.git"
+    "url": "git+https://github.com/cybersemics/em"
   },
   "bugs": {
-    "url": "https://github.com/msdewittdev/issues"
+    "url": "https://github.com/cybersemics/em/issues"
   },
   "keywords": [
     "capacitor",

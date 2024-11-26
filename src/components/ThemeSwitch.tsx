@@ -1,23 +1,18 @@
-import { Capacitor } from '@capacitor/core'
+// import { Capacitor } from '@capacitor/core'
 import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
 import { settingsActionCreator as setting } from '../actions/settings'
 import theme from '../selectors/theme'
+import themeColors from '../selectors/themeColors'
 import Checkbox from './Checkbox'
 
 /** A ThemeSwitch Component with a title and description. */
 const ThemeSwitch: FC = () => {
   const dispatch = useDispatch()
   const light = useSelector(state => theme(state) === 'Light')
-
-  if (Capacitor.getPlatform() == 'ios') {
-    if (light) {
-      WebviewBackground.changeBackgroundColor({ color: '#ffffff' })
-    } else {
-      WebviewBackground.changeBackgroundColor({ color: '#000000' })
-    }
-  }
+  const colors = useSelector(themeColors)
+  WebviewBackground.changeBackgroundColor({ color: colors.bg })
 
   return (
     <Checkbox

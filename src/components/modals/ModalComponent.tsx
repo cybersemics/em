@@ -69,6 +69,7 @@ class ModalComponent extends React.Component<ModalProps> {
   close = () => {
     this.animateAndClose!()
     this.props.onClose?.()
+    window.location.reload()
   }
 
   componentWillUnmount() {
