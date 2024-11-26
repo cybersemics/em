@@ -30,7 +30,6 @@ import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
 import timestamp from '../util/timestamp'
 
-
 interface Payload {
   pathParent: Path
   thoughtId: ThoughtId

@@ -3,7 +3,6 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import _ from 'lodash'
 import { isTouch } from '../browser'
 
-
 // the number of pixels of scrolling or dragging from touchStart that is allowed to still trigger fastClick
 const MOVE_THRESHOLD = 15
 
