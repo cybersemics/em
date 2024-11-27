@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core'
-import { Haptics, NotificationType } from '@capacitor/haptics'
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
 import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
 import Direction from '../@types/Direction'
@@ -131,9 +131,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // disable scroll in the gesture zone on the left side of the screen
         // (reverse in left-handed mode)
         if (inGestureZone && !props.shouldCancelGesture?.()) {
-          if (Capacitor.isNativePlatform()) {
-            Haptics.selectionStart()
-          }
           this.disableScroll = true
         } else {
           this.abandon = true
@@ -170,6 +167,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         if (this.props.shouldCancelGesture?.()) {
           this.props.onCancel?.({ clientStart: this.clientStart, e })
           gestureStore.update('')
+          if (Capacitor.isNativePlatform()) {
+            Haptics.selectionEnd()
+          }
           this.abandon = true
           return
         }
@@ -187,6 +187,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           this.scrollYStart = window.scrollY
           if (this.props.onStart) {
             this.props.onStart({ clientStart: this.clientStart!, e })
+            if (Capacitor.isNativePlatform()) {
+              Haptics.impact({ style: ImpactStyle.Light })
+              Haptics.selectionStart()
+            }
           }
           return
         }
@@ -223,10 +227,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             x: gestureState.moveX,
             y: gestureState.moveY,
           }
+          this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
           if (Capacitor.isNativePlatform()) {
             Haptics.selectionEnd()
           }
-          this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
         }
         this.reset()
       },
