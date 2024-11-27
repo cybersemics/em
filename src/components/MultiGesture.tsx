@@ -168,7 +168,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           this.props.onCancel?.({ clientStart: this.clientStart, e })
           gestureStore.update('')
           if (Capacitor.isNativePlatform()) {
-            Haptics.selectionEnd()
+            Haptics.notification({ type: NotificationType.Warning })
           }
           this.abandon = true
           return
@@ -189,7 +189,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             this.props.onStart({ clientStart: this.clientStart!, e })
             if (Capacitor.isNativePlatform()) {
               Haptics.impact({ style: ImpactStyle.Light })
-              Haptics.selectionStart()
             }
           }
           return
@@ -216,7 +215,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             this.sequence += g
             this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
             if (Capacitor.isNativePlatform()) {
-              Haptics.selectionChanged()
+              Haptics.impact({ style: ImpactStyle.Light })
             }
             gestureStore.update(this.sequence)
           }
@@ -232,7 +231,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           }
           this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
           if (Capacitor.isNativePlatform()) {
-            Haptics.selectionEnd()
+            for (let i = 0; i < this.sequence.length; i++) {
+              Haptics.impact({ style: ImpactStyle.Light })
+            }
           }
         }
         this.reset()
