@@ -26,7 +26,7 @@
     "cap:android": "yarn cap:sync && cap open android",
     "cap:copy:prod": "NODE_ENV=production && cap copy",
     "cap:copy": "NODE_ENV=development && cap copy",
-    "cap:ios": "yarn cap:sync && cap open ios",
+    "cap:ios": "npm run add:plugin && yarn cap:sync && cap open ios",
     "cap:sync:prod": "yarn build && NODE_ENV=production cap sync",
     "cap:sync": "NODE_ENV=development && cap sync",
     "clean": "rm -rf ./node_modules/.cache && rm -rf ./node_modules/.vite && rm -rf .eslintcache",
