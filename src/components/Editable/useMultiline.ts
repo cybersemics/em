@@ -25,7 +25,8 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
     if (!contentRef.current) return
 
     const height = contentRef.current.getBoundingClientRect().height
-    const singleLineHeight = fontSize * 1.87
+    // must match line-height as defined in thought-container
+    const singleLineHeight = fontSize * 2
     // .editable.multiline gets 5px of padding-top to offset the collapsed line-height
     // we need to account for padding-top, otherwise it can cause a false positive
     const paddingTop = parseInt(window.getComputedStyle(contentRef.current).paddingTop)
