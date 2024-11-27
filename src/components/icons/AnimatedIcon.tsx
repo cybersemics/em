@@ -20,7 +20,7 @@ const AnimatedIcon = ({
   children,
   animationComplete,
 }: AnimatedIconType) => {
-  const isLightTheme = useSelector(state => theme(state) === 'Light')
+  const isLightTheme = useSelector(theme) === 'Light'
   const defaultColor = isLightTheme ? '#000000' : '#FFFFFF'
   const newSize = size * ICON_SCALING_FACTOR
   const color = style.fill || fill || token('colors.fg')
