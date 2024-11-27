@@ -5,7 +5,7 @@ const colors = {
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
     bgOverlay50: 'rgba(0, 0, 0, 0.5)',
     bgOverlay30: 'rgba(0, 0, 0, 0.3)',
-    black: 'rgba(0, 0, 0, 1)', // should be unused now
+    black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
     darkgray: 'rgba(17, 17, 17, 1)', // #111111
     fg85: 'rgba(217, 217, 217, 1)', // #d9d9d9
