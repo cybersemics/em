@@ -7805,7 +7805,6 @@ __metadata:
     vitest: "npm:^2.1.4"
     vitest-canvas-mock: "npm:^0.3.3"
     webdriverio: "npm:^7.36.0"
-    webview-background: ./packages/webview
     workbox-build: "npm:^7.1.1"
     workbox-core: "npm:^7.1.0"
     workbox-expiration: "npm:^7.1.0"
