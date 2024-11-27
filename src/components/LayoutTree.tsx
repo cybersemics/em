@@ -860,6 +860,9 @@ const LayoutTree = () => {
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
   const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
 
+  // Set an 'animating' flag while the transition between different depth levels is animating.
+  // Using a CSS animation combined with resetting after the 'onAnimationEnd' event fires didn't work because,
+  // when reducing the indent level, 'onAnimationEnd' fires immediately.
   const [animating, setAnimating] = useState(false)
   useEffect(() => {
     setAnimating(true)
