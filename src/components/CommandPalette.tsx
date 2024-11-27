@@ -324,11 +324,10 @@ const CommandPalette: FC = () => {
 
   // Select the first shortcut when the input changes.
   useEffect(() => {
-    if (shortcuts[0]) {
-      if (shortcuts[0].id != 'favorite' && shortcuts[0].id != 'cursorBack') {
-        if (Capacitor.isNativePlatform()) {
-          Haptics.selectionChanged()
-        }
+    const [shortcut] = shortcuts
+    if (shortcut && shortcut.id != 'favorite' && shortcut.id != 'cursorBack') {
+      if (Capacitor.isNativePlatform()) {
+        Haptics.selectionChanged()
       }
     }
     setSelectedShortcut(shortcuts[0])
