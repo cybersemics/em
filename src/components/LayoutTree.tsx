@@ -13,6 +13,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
+import usePrevious from '../hooks/usePrevious'
 import useSortedContext from '../hooks/useSortedContext'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
@@ -858,6 +859,7 @@ const LayoutTree = () => {
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
   const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
+  const previousIndent = usePrevious(indent)
 
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
@@ -881,6 +883,7 @@ const LayoutTree = () => {
   return (
     <div
       className={css({
+        animation: indent !== previousIndent ? 'hideCaret {durations.layoutSlowShiftDuration} linear' : undefined,
         marginTop: '0.501em',
       })}
       style={{

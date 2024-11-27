@@ -141,6 +141,17 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
+  hideCaret: {
+    '0%': {
+      caretColor: 'transparent',
+    },
+    '99%': {
+      caretColor: 'transparent',
+    },
+    '100%': {
+      caretColor: 'auto',
+    },
+  },
 })
 
 const globalCss = defineGlobalStyles({
