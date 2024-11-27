@@ -7,6 +7,7 @@ function usePrevious<T>(value: T): T | undefined {
 
   useEffect(() => {
     if (current !== value) {
+      console.log(`indent: ${value}`)
       setPrevious(current)
       setCurrent(value)
     }
