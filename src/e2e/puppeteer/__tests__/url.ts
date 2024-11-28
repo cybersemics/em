@@ -95,3 +95,21 @@ it('collapsed thought with url child', async () => {
   const image = await screenshot()
   expect(image).toMatchImageSnapshot()
 })
+
+it('thought height should not change when moving cursor', async () => {
+  await hideHUD()
+
+  await paste(`
+    - a
+      - test.com
+    - b
+  `)
+  await press('Escape')
+  await press('ArrowDown')
+  const image1 = await screenshot()
+  expect(image1).toMatchImageSnapshot()
+
+  await press('ArrowDown')
+  const image2 = await screenshot()
+  expect(image2).toMatchImageSnapshot()
+})
