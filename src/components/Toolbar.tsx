@@ -8,6 +8,7 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
+import { Haptics } from '@capacitor/haptics'
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
@@ -137,6 +138,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
       if (scrollDifference >= 5) {
         deselectPressingToolbarId()
+        Haptics.selectionChanged()
       }
 
       updateArrows()
