@@ -109,7 +109,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     document.body.addEventListener(
       'touchmove',
       e => {
-        if (this.disableScroll && e.cancelable) {
+        if (this.disableScroll) {
           e.preventDefault()
         }
       },
