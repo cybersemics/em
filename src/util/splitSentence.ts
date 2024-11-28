@@ -64,12 +64,12 @@ const splitSentence = (value: string): string[] => {
   const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(value.trim()))
 
   // if we're sub-sentence or in one sentence territory, split by comma and "and"
-  // e.g. "john, johnson, and john doe" or "- john - johnson - john doe"
+  // e.g. "john, johnson, and john doe" -> "- john - johnson - john doe"
   if (!sentenceSplitters || hasOnlyPeriodAtEnd())
     return value
-      .split(/\s*,\s*|\s*and\s*/i) // we have to check for extra space near "," and "and"
-      .filter(s => s !== '')
+      .split(/,|and/i)
       .map(s => s.trim())
+      .filter(s => s !== '')
 
   /**
    * When the setences can be split, it has multiple situations.
