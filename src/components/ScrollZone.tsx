@@ -15,7 +15,6 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   return (
     <div
       className={css({
-        backgroundColor: 'black',
         backgroundImage: `url('/img/scroll-zone/stardust.png')`,
         backgroundRepeat: 'repeat',
         zIndex: 'scrollZone',
@@ -30,7 +29,6 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
       style={{
         transform: `translateY(-${scrollTop / 4 + 300}px)`,
         width: scrollZoneWidth,
-        transition: 'transform 0.5s ease-in-out',
       }}
     ></div>
   )
