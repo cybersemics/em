@@ -230,11 +230,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             y: gestureState.moveY,
           }
           this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
-          if (Capacitor.isNativePlatform()) {
-            for (let i = 0; i < this.sequence.length; i++) {
-              Haptics.impact({ style: ImpactStyle.Light })
-            }
-          }
         }
         this.reset()
       },
