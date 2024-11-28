@@ -54,7 +54,12 @@ const publishPinAll = (state: State, context: Context) => {
  * @param expansionBasePath - The base path for the original, nonrecursive call to expandThoughts.
  * @param path - Current path.
  */
-function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Path, collapse?: boolean): Index<Path | Context> {
+function expandThoughtsRecursive(
+  state: State,
+  expansionBasePath: Path,
+  path: Path,
+  collapse?: boolean,
+): Index<Path | Context> {
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
     path.length - expansionBasePath.length + 1 >
@@ -76,12 +81,14 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
   const showContexts = isContextViewActive(state, path)
-  const childrenUnfiltered = collapse ? [] : showContexts
-    ? childIdsToThoughts(state, getContexts(state, thought.value))
-    : // when getting normal view children, make sure to use simplePath head rather than path head
-      // otherwise it will retrieve the children of the context view, not the children of the context instance
-      // See ContextView test "Expand grandchildren of contexts"
-      getAllChildrenAsThoughts(state, head(simplePath))
+  const childrenUnfiltered = collapse
+    ? []
+    : showContexts
+      ? childIdsToThoughts(state, getContexts(state, thought.value))
+      : // when getting normal view children, make sure to use simplePath head rather than path head
+        // otherwise it will retrieve the children of the context view, not the children of the context instance
+        // See ContextView test "Expand grandchildren of contexts"
+        getAllChildrenAsThoughts(state, head(simplePath))
 
   // Note: A path that is ancestor of the expansion path or expansion path itself should always be expanded.
   const visibleChildren = state.showHiddenThoughts

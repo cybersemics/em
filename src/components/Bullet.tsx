@@ -584,7 +584,7 @@ const Bullet = ({
         ])
       })
     },
-    [dispatch, dragHold, path, simplePath],
+    [dispatch, dragHold, path, simplePath, setIsCollapsed],
   )
 
   return (
