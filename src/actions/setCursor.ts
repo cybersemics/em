@@ -39,6 +39,7 @@ const setCursor = (
     path,
     replaceContextViews,
     preserveMulticursor,
+    collapse,
   }: {
     contextChain?: SimplePath[]
     cursorHistoryClear?: boolean
@@ -49,6 +50,7 @@ const setCursor = (
     path: Path | null
     replaceContextViews?: Index<boolean>
     preserveMulticursor?: boolean
+    collapse?: boolean
   },
 ): State => {
   if (path && path.length > 1 && path[0] === HOME_TOKEN) {
@@ -102,7 +104,7 @@ const setCursor = (
   // setCursor will be re-triggered after expansion is unsuppressed.
   const expanded = globals.suppressExpansion
     ? state.expanded
-    : expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved)
+    : expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved, collapse)
 
   const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)

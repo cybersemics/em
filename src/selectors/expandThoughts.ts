@@ -54,7 +54,7 @@ const publishPinAll = (state: State, context: Context) => {
  * @param expansionBasePath - The base path for the original, nonrecursive call to expandThoughts.
  * @param path - Current path.
  */
-function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Path): Index<Path | Context> {
+function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Path, collapse?: boolean): Index<Path | Context> {
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
     path.length - expansionBasePath.length + 1 >
@@ -76,7 +76,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
   const showContexts = isContextViewActive(state, path)
-  const childrenUnfiltered = showContexts
+  const childrenUnfiltered = collapse ? [] : showContexts
     ? childIdsToThoughts(state, getContexts(state, thought.value))
     : // when getting normal view children, make sure to use simplePath head rather than path head
       // otherwise it will retrieve the children of the context view, not the children of the context instance
@@ -160,7 +160,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
     initialExpanded,
   )
 }
-function expandThoughts(state: State, path: Path | null): Index<Path>
+function expandThoughts(state: State, path: Path | null, collapse?: boolean): Index<Path>
 
 /** Returns an expansion map marking all contexts that should be expanded when for the given path.
  *
@@ -173,12 +173,12 @@ function expandThoughts(state: State, path: Path | null): Index<Path>
  *   ...
  * }
  */
-function expandThoughts(state: State, path: Path | null): Index<Path | Context> {
+function expandThoughts(state: State, path: Path | null, collapse?: boolean): Index<Path | Context> {
   if (path && !getThoughtById(state, head(path))) {
     throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
 
-  return expandThoughtsRecursive(state, path || HOME_PATH, HOME_PATH)
+  return expandThoughtsRecursive(state, path || HOME_PATH, HOME_PATH, collapse)
 }
 
 export default expandThoughts

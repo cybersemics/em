@@ -85,6 +85,7 @@ interface EditableProps {
     2. It also sets focus to itself on render.
   */
   transient?: boolean
+  setIsCollapsed?: React.Dispatch<React.SetStateAction<boolean>>
   onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
 }
 
@@ -113,6 +114,7 @@ const Editable = ({
   style,
   className,
   transient,
+  setIsCollapsed,
 }: EditableProps) => {
   const state = store.getState()
   const dispatch = useDispatch()
@@ -212,6 +214,9 @@ const Editable = ({
 
       // Prevent the cursor offset from being restored after the initial setCursorOnThought.
       cursorOffsetInitialized = true
+      if (setIsCollapsed) {
+        setIsCollapsed(false)
+      }
 
       dispatch(
         setCursor({

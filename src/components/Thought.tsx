@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { child, invalidOption as invalidOptionRecipe } from '../../styled-system/recipes'
@@ -128,6 +128,7 @@ const ThoughtContainer = ({
   updateSize,
   marginRight,
 }: ThoughtContainerProps) => {
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false)
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
   const children = useSelector<Thought[]>(
@@ -436,6 +437,8 @@ const ThoughtContainer = ({
             publish={publish}
             simplePath={simplePath}
             thoughtId={thoughtId}
+            isCollapsed={isCollapsed}
+            setIsCollapsed={setIsCollapsed}
             // debugIndex={debugIndex}
             // depth={depth}
           />
@@ -465,6 +468,7 @@ const ThoughtContainer = ({
           view={view}
           marginRight={marginRight}
           isPressed={dragHoldResult.isPressed}
+          setIsCollapsed={setIsCollapsed}
         />
         <Note path={simplePath} />
       </div>

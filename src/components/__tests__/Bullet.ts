@@ -211,7 +211,7 @@ describe('expansion', () => {
     expect(thoughtCursor).toHaveTextContent('x')
   })
 
-  it('tapping an expanded root thought bullet should set the cursor to null', async () => {
+  it('tapping an expanded root thought bullet should not set the cursor to null.', async () => {
     await dispatch([
       importText({
         text: `
@@ -234,7 +234,8 @@ describe('expansion', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     const thoughtCursor = await findCursor()
-    expect(thoughtCursor).toBeNull()
+    expect(thoughtCursor).not.toBeNull()
+    expect(thoughtCursor).toHaveTextContent('a')
   })
 
   it('tapping on a collapsed non-cursor bullet should move the cursor to that thought', async () => {
