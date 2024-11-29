@@ -576,6 +576,7 @@ const Bullet = ({
     <span
       data-testid={'bullet-' + hashPath(path)}
       aria-label='bullet'
+      data-highlighted={isHighlighted}
       className={cx(
         bullet({ invalid }),
         css({
