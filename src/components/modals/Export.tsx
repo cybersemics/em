@@ -556,7 +556,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         })}
       >
         <span>
-          <span>
+          <span data-testid='export-phrase-container'>
             {exportWord}{' '}
             {
               // application/json will ignore the cursor and downlaod the raw thought state as-is
