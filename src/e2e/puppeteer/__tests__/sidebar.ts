@@ -13,14 +13,14 @@ expect.extend({
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 /** Open sidebar and wait for it to slide all the way open. */
-const fullyOpenSidebar = async () => {
+const openSidebar = async () => {
   await click('[aria-label=menu]')
   await new Promise(resolve => setTimeout(resolve, 2000))
 }
 
 describe('sidebar', () => {
   it('empty sidebar on dark theme', async () => {
-    await fullyOpenSidebar()
+    await openSidebar()
 
     expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'sidebar-empty' })
     await setTheme('Light')
@@ -31,7 +31,7 @@ describe('sidebar', () => {
     await press('Enter')
     await type('a')
 
-    await fullyOpenSidebar()
+    await openSidebar()
     await click('[data-testid=sidebar-recentEdited]')
 
     expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'sidebar-recently-edited' })
