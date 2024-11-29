@@ -1,5 +1,5 @@
 import { rgbToHex } from '@mui/material'
-import { ReactNode, useRef } from 'react'
+import { ReactNode } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
@@ -7,11 +7,13 @@ import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 import LottieData from '../../@types/lottie/LottieData'
 import { ICON_SCALING_FACTOR } from '../../constants'
-import theme from '../../selectors/theme'
+import themeColors from '../../selectors/themeColors'
 import LottieAnimation from './LottieAnimation'
 
 interface AnimatedIconType extends IconType {
+  /** Animation data for Lottie. */
   animationData?: LottieData | null
+  /** Child elements to render when not animated. */
   children?: ReactNode
 }
 
@@ -26,21 +28,13 @@ const AnimatedIcon = ({
   children,
   animationComplete,
 }: AnimatedIconType) => {
-  const isLightTheme = useSelector(theme) === 'Light'
-  const defaultColor = isLightTheme ? '#000000' : '#FFFFFF'
+  const colors = useSelector(themeColors)
   const newSize = size * ICON_SCALING_FACTOR
   const color = style.fill || fill || token('colors.fg')
-
-  // Create a ref to the parent div
-  const divRef = useRef<HTMLDivElement | null>(null)
-
-  // Calculate dynamic color directly
-  const computedStyle = divRef.current ? window.getComputedStyle(divRef.current) : null
-  const dynamicColor = computedStyle?.color ? rgbToHex(computedStyle.color) : defaultColor
+  const dynamicColor = rgbToHex(colors.fg)
 
   return (
     <div
-      ref={divRef}
       className={cx(icon(), css(cssRaw))}
       style={{
         ...style,
