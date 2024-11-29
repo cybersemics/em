@@ -27,7 +27,7 @@ const superscriptSnapshot = async () => {
 
   await press('ArrowUp')
 
-  return await screenshot()
+  return screenshot()
 }
 
 /* From jest-image-snapshot README:
