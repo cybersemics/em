@@ -1,8 +1,8 @@
-import sleep from '../../../util/sleep'
 import { page } from '../setup'
 import getEditable from './getEditable'
 import hide from './hide'
 import showMousePointer from './showMousePointer'
+import waitUntil from './waitUntil'
 
 /** Performs Drag and Drop functionality on a thought in Puppeteer browser. */
 const dragAndDropThought = async (
@@ -91,11 +91,6 @@ const dragAndDropThought = async (
     await page.mouse.move(dropPosition.x, dropPosition.y)
   }
 
-  if (mouseUp) {
-    await page.mouse.up()
-    await sleep(500)
-  }
-
   // Hide QuickDropPanel by defafult.
   // Otherwise wait for QuickDropPanel  to appear so that snapshots are consistent.
   if (!showQuickDropPanel) {
@@ -110,6 +105,11 @@ const dragAndDropThought = async (
     await hide('[data-testid="alert"]')
   } else {
     await page.locator('[data-testid="popup-value"]').wait()
+  }
+
+  if (mouseUp) {
+    await page.mouse.up()
+    await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
   }
 }
 
