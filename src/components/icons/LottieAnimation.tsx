@@ -14,7 +14,7 @@ import StaticColor from '../../@types/lottie/StaticColor'
 interface LottieAnimationProps {
   animationData: LottieData | null
   speed?: number
-  color?: string
+  color: string
   onComplete?: () => void
   style?: React.CSSProperties
 }
@@ -138,13 +138,7 @@ const changeLineColor = (data: LottieData, newColor: string): LottieData => {
  * Style: Optional. A React.CSSProperties object to apply inline styles to the player container.
  * This does not affect the Lottie animation's JSON content or alter its visual elements.
  */
-const LottieAnimation: React.FC<LottieAnimationProps> = ({
-  animationData,
-  speed = 1,
-  color = '#FFFFFF',
-  onComplete,
-  style,
-}) => {
+const LottieAnimation: React.FC<LottieAnimationProps> = ({ animationData, speed = 1, color, onComplete, style }) => {
   const [key, setKey] = useState(0)
   const lottieRef = useRef<LottieRefCurrentProps | null>(null)
 
@@ -171,7 +165,7 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
   }, [speed, animationDataWithColor])
 
   if (!animationDataWithColor) {
-    return null 
+    return null
   }
 
   return (
