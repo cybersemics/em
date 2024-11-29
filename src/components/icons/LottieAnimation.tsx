@@ -1,7 +1,7 @@
 import { hexToRgb } from '@mui/material'
 import _ from 'lodash'
 import Player, { LottieRefCurrentProps } from 'lottie-react'
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import AnimatedColor from '../../@types/lottie/AnimatedColor'
 import ColorProperty from '../../@types/lottie/ColorProperty'
 import LottieData from '../../@types/lottie/LottieData'
@@ -139,7 +139,6 @@ const changeLineColor = (data: LottieData, newColor: string): LottieData => {
  * This does not affect the Lottie animation's JSON content or alter its visual elements.
  */
 const LottieAnimation: React.FC<LottieAnimationProps> = ({ animationData, speed = 1, color, onComplete, style }) => {
-  const [key, setKey] = useState(0)
   const lottieRef = useRef<LottieRefCurrentProps | null>(null)
 
   const animationDataWithColor = useMemo(() => {
@@ -160,7 +159,6 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({ animationData, speed 
   useEffect(() => {
     if (lottieRef.current && animationDataWithColor) {
       lottieRef.current.setSpeed(speed)
-      setKey(prevKey => prevKey + 1) // Forces the re-render to apply the color change
     }
   }, [speed, animationDataWithColor])
 
@@ -170,7 +168,6 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({ animationData, speed 
 
   return (
     <Player
-      key={key} // Force re-render to apply theme changes, refreshing cached animation data with updated color settings
       style={{
         ...style,
         width: '100%',
