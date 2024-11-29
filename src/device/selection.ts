@@ -452,17 +452,22 @@ export const getBoundingClientRect = () => {
   return null
 }
 
-/** Returns true if the point is within 100 pixels of the browser selection. */
-export const isNear = (x: number, y: number): boolean => {
+/** Returns true if the point is within the given number of pixels from the browser selection. */
+export const isNear = (
+  x: number,
+  y: number,
+  /** Distance from the point (px). */
+  distance: number,
+): boolean => {
   if (!isActive() || isCollapsed()) return false
 
   const rect = getBoundingClientRect()
   if (!rect) return false
 
-  const left = rect.left - 100
-  const right = rect.right + 100
-  const top = rect.top - 100
-  const bottom = rect.bottom + 100
+  const left = rect.left - distance
+  const right = rect.right + distance
+  const top = rect.top - distance
+  const bottom = rect.bottom + distance
 
   return x >= left && y >= top && x <= right && y <= bottom
 }
