@@ -43,12 +43,6 @@ const testSuite = () => {
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
-
-    it('initial load on light theme', async () => {
-      await setTheme('Light')
-      const image = await screenshot()
-      expect(image).toMatchImageSnapshot()
-    })
   })
 
   describe('', () => {
@@ -208,7 +202,13 @@ describe('Font Size: 22', () => {
   testSuite()
 })
 
-describe('Colored Thoughts', () => {
+describe('Color Theme', () => {
+  it('initial load on light theme', async () => {
+    await setTheme('Light')
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
   it('colored and highlighted text', async () => {
     const importText = `
     - Labrador
