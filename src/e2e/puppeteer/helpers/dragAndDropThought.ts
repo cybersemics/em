@@ -1,28 +1,35 @@
 import sleep from '../../../util/sleep'
-import popup from '../locators/popup'
-import quickDropPanel from '../locators/quickDropPanel'
 import { page } from '../setup'
 import getEditable from './getEditable'
+import hide from './hide'
 import showMousePointer from './showMousePointer'
-
-interface DragAndDropOptions {
-  /** Determines where the destination thought is dropped, relative to the source thought.
-    - after: drop the source thought as a sibling after the destination thought.
-    - before: drop the source thought as a sibling before the destination thought.
-    - child: drop the source thought as a child of the destination thought.
-   */
-  position: 'after' | 'before' | 'child'
-  /** If true, the mouse button is released after the drop. */
-  mouseUp?: boolean
-  /** If true, the source thought is dropped as a sibling to the hidden uncle. */
-  dropUncle?: boolean
-}
 
 /** Performs Drag and Drop functionality on a thought in Puppeteer browser. */
 const dragAndDropThought = async (
   sourceValue: string,
   destValue: string,
-  { position, mouseUp, dropUncle }: DragAndDropOptions,
+  {
+    dropUncle,
+    mouseUp,
+    position,
+    showAlert,
+    showQuickDropPanel,
+  }: {
+    /** If true, the source thought is dropped as a sibling to the hidden uncle. */
+    dropUncle?: boolean
+    /** If true, the mouse button is released after the drop. */
+    mouseUp?: boolean
+    /** Determines where the destination thought is dropped, relative to the source thought.
+    - after: drop the source thought as a sibling after the destination thought.
+    - before: drop the source thought as a sibling before the destination thought.
+    - child: drop the source thought as a child of the destination thought.
+     */
+    position: 'after' | 'before' | 'child'
+    /** Show the drag-and-drop Alert. Hidden by default. */
+    showAlert?: boolean
+    /** Show the QuickDropPanel. Hidden by default. */
+    showQuickDropPanel?: boolean
+  },
 ) => {
   const sourceElement = await getEditable(sourceValue)
   const destElement = await getEditable(destValue)
@@ -78,9 +85,21 @@ const dragAndDropThought = async (
     await sleep(500)
   }
 
-  // wait for QuickDrop panel and Alert appear so that snapshots are consistent
-  await quickDropPanel()
-  await popup()
+  // Hide QuickDropPanel by defafult.
+  // Otherwise wait for QuickDropPanel  to appear so that snapshots are consistent.
+  if (!showQuickDropPanel) {
+    await hide('[data-testid="quick-drop-panel"]')
+  } else {
+    await page.locator('[data-testid="quick-drop-panel"]').wait()
+  }
+
+  // Hide Alert by default.
+  // Otherwise wait for Alert value to appear so that snapshots are consistent.
+  if (!showAlert) {
+    await hide('[data-testid="alert"]')
+  } else {
+    await page.locator('[data-testid="popup-value"]').wait()
+  }
 }
 
 export default dragAndDropThought
