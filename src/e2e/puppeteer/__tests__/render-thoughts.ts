@@ -136,13 +136,6 @@ const testSuite = () => {
       expect(image).toMatchImageSnapshot()
     })
 
-    it('superscript on light theme', async () => {
-      await setTheme('Light')
-
-      const image = await superscriptSnapshot()
-      expect(image).toMatchImageSnapshot()
-    })
-
     // TODO: Superscript position is off
     it.skip('superscript on multiline thought', async () => {
       await paste(`
@@ -206,6 +199,13 @@ describe('Color Theme', () => {
   it('initial load on light theme', async () => {
     await setTheme('Light')
     const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('superscript on light theme', async () => {
+    await setTheme('Light')
+
+    const image = await superscriptSnapshot()
     expect(image).toMatchImageSnapshot()
   })
 
