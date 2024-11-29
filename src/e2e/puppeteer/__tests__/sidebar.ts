@@ -1,6 +1,7 @@
 import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
+import hideVisibility from '../helpers/hideVisibility'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
@@ -19,6 +20,9 @@ const openSidebar = async () => {
 }
 
 describe('sidebar', () => {
+  beforeEach(async () => {
+    await hideVisibility('[data-testid="toolbar-icon"]')
+  })
   it('empty sidebar on dark theme', async () => {
     await openSidebar()
 
