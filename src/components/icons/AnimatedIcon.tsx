@@ -1,13 +1,19 @@
 import { rgbToHex } from '@mui/material'
-import { useRef } from 'react'
+import { ReactNode, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { icon } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import AnimatedIconType from '../../@types/AnimatedIconType'
+import IconType from '../../@types/IconType'
+import LottieData from '../../@types/lottie/LottieData'
 import { ICON_SCALING_FACTOR } from '../../constants'
 import theme from '../../selectors/theme'
 import LottieAnimation from './LottieAnimation'
+
+interface AnimatedIconType extends IconType {
+  animationData?: LottieData | null
+  children?: ReactNode
+}
 
 /** Animated Icon with Conditional Lottie Animation. */
 const AnimatedIcon = ({
