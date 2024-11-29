@@ -171,8 +171,7 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({
   }, [speed, animationDataWithColor])
 
   if (!animationDataWithColor) {
-    console.warn('animationData is not provided.')
-    return null // Early return if animationData is null
+    return null 
   }
 
   return (
