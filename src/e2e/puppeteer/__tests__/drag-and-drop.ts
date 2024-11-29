@@ -22,6 +22,20 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 describe('drag', () => {
   beforeEach(hideHUD)
 
+  it('Alert and QuickDropPanel', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        - d
+      `)
+
+    await dragAndDropThought('a', null, { position: 'none', showAlert: true, showQuickDropPanel: true })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
   it('DragAndDropThought', async () => {
     await paste(`
         - a
