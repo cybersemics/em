@@ -16,7 +16,6 @@ interface LottieAnimationProps {
   speed?: number
   color: string
   onComplete?: () => void
-  style?: React.CSSProperties
 }
 
 /**
@@ -135,10 +134,9 @@ const changeLineColor = (data: LottieData, newColor: string): LottieData => {
  * Speed: Optional. A number that specifies the playback speed of the animation. Defaults to 1 for normal speed.
  * Color: Optional. A string representing the hex color code used to update the stroke and fill colors of the animation. Defaults to '#FFFFFF' (white) if not specified.
  * OnComplete: Optional. A callback function that is triggered when the animation completes its playback.
- * Style: Optional. A React.CSSProperties object to apply inline styles to the player container.
  * This does not affect the Lottie animation's JSON content or alter its visual elements.
  */
-const LottieAnimation: React.FC<LottieAnimationProps> = ({ animationData, speed = 1, color, onComplete, style }) => {
+const LottieAnimation: React.FC<LottieAnimationProps> = ({ animationData, speed = 1, color, onComplete }) => {
   const [key, setKey] = useState(0)
   const lottieRef = useRef<LottieRefCurrentProps | null>(null)
 
@@ -172,7 +170,6 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({ animationData, speed 
     <Player
       key={key} // Force re-render to apply theme changes, refreshing cached animation data with updated color settings
       style={{
-        ...style,
         width: '100%',
         height: '100%',
       }}
