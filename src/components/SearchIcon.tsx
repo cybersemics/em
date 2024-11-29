@@ -3,14 +3,14 @@ import AnimatedIcon from './icons/AnimatedIcon'
 import animationData from './icons/animations/12-search.json'
 
 /** Search Icon with Conditional Lottie Animation. */
-const SearchIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const SearchIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
         fill='none'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: 'translate(0, -2%)' }}
       >
         <rect width='24' height='24' fill='none' />
         <path

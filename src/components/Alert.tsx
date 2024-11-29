@@ -27,6 +27,8 @@ const Alert: FC = () => {
   const value = strip(alertStoreValue ?? alert?.value ?? '')
   const undoEnabled = useSelector(isUndoEnabled)
   const redoEnabled = useSelector(state => state.redoPatches.length > 0)
+  const fontSize = useSelector(state => state.fontSize)
+  const iconSize = 0.78 * fontSize
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
@@ -45,7 +47,7 @@ const Alert: FC = () => {
         })}
       >
         <UndoIcon
-          size={14}
+          size={iconSize}
           fill={token('colors.bg')}
           cssRaw={css.raw({ position: 'relative', top: '0.25em', right: '0.25em' })}
         />
@@ -59,7 +61,7 @@ const Alert: FC = () => {
       >
         Redo
         <RedoIcon
-          size={14}
+          size={iconSize}
           fill={token('colors.bg')}
           cssRaw={css.raw({ position: 'relative', top: '0.25em', left: '0.25em' })}
         />

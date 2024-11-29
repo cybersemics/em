@@ -8,7 +8,7 @@ import FadeTransition from '../FadeTransition'
 import TextColorIcon from './TextColor'
 
 /** Text Color Icon with popup ColorPicker. */
-const TextColorWithColorPicker = ({ size = 20, style, cssRaw }: IconType) => {
+const TextColorWithColorPicker = ({ size = 18, style, cssRaw }: IconType) => {
   const showColorPicker = useSelector(state => state.showColorPicker)
   const toolbarPopupRef = useRef<HTMLDivElement>(null)
 
