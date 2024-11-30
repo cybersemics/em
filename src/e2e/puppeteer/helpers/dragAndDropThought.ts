@@ -112,9 +112,9 @@ const dragAndDropThought = async (
     await page.mouse.up()
     await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
 
-    // The drop/DragAndDropThought still fails intermittently without a small delay here.
+    // TODO: The drop/DragAndDropThought still fails intermittently without a delay here.
     // When it fails, the drag appears to still be in progress. The bullet is highlighted and the QuickDropPanel is visible (though it should be hidden at this point)
-    await sleep(100)
+    await sleep(500)
   }
 }
 
