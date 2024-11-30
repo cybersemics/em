@@ -21,9 +21,6 @@ export const formatWithTagActionCreator =
 
     const tagRegExp = new RegExp(`<${tag}[^>]*>|<\/${tag}>`, 'g')
 
-    const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
-    if (!thoughtContentEditable) return
-
     const thoughtSelected =
       (selection.text()?.length === 0 && strip(thought.value).length !== 0) ||
       selection.text()?.length === strip(thought.value).length
