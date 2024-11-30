@@ -1,13 +1,11 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import useChangeRef from '../hooks/useChangeRef'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
@@ -98,8 +96,6 @@ const VirtualThought = ({
   const fontSize = useSelector(state => state.fontSize)
   const note = useSelector(state => noteValue(state, thought.id))
   const ref = useRef<HTMLDivElement>(null)
-  const refOpacity = useRef<HTMLDivElement>(null)
-  const autofocusChanged = useChangeRef(autofocus)
 
   /***************************
    * VirtualThought properties
@@ -108,14 +104,10 @@ const VirtualThought = ({
   // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
   // Wait until the fade out animation has completed before removing.
   // Only shim 'hide', not 'hide-parent', thoughts, otherwise hidden parents snap in instead of fading in when moving up the tree.
-  const opacity = autofocus === 'show' ? '1' : autofocus === 'dim' ? '0.5' : '0'
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
     delay: 750,
-    selector: autofocusNew =>
-      ((autofocus === 'hide' && autofocusNew === 'hide') ||
-        (autofocus === 'hide-parent' && autofocusNew === 'hide-parent')) &&
-      !!height,
+    selector: autofocusNew => autofocus === 'hide' && autofocusNew === 'hide' && !!height,
   })
 
   // console.info('<VirtualThought>', prettyPath(childPath))
@@ -206,15 +198,6 @@ const VirtualThought = ({
     [crossContextualKey, onResize, thought.id],
   )
 
-  // When autofocus changes, use a slow (750ms) ease-out to provide a gentle transition to non-focal thoughts.
-  // If autofocus has not changed, it means that the thought is being rendered for the first time, such as the children of a thought that was just expanded. In this case, match the tree-node top animation (150ms) to ensure that the newly rendered thoughts fade in to fill the space that is being opened up from the next uncle animating down.
-  // Note that ease-in is used in contrast to the tree-node's ease-out. This gives a little more time for the next uncle to animate down and clear space before the newly rendered thought fades in. Otherwise they overlap too much during the transition.
-  useEffect(() => {
-    if (!refOpacity.current) return
-    // start opacity at 0 and set to actual opacity in useEffect
-    refOpacity.current.style.opacity = opacity
-  })
-
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
   if (!thought) return null
@@ -241,45 +224,26 @@ const VirtualThought = ({
         !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
       }
 
-      <div
-        ref={refOpacity}
-        className={css({
-          // Start opacity at 0 and set to actual opacity in useEffect.
-          // Do not fade in empty thoughts. An instant snap in feels better here.
-          // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropChild. Otherwise subsequent DropChild will be obscured.
-          opacity: thought.value === '' ? opacity : '0',
-          transition: autofocusChanged
-            ? `opacity {durations.layoutSlowShiftDuration} ease-out`
-            : `opacity {durations.layoutNodeAnimationDuration} ease-in`,
-          pointerEvents: !isVisible ? 'none' : undefined,
-          // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
-          // This caused the thought to jerk slightly to the left at the end of the horizontal shift animation.
-          // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
-          // allowing the browser to optimize the animation.
-          willChange: 'opacity',
-        })}
-      >
-        {!shimHiddenThought && (
-          <Subthought
-            autofocus={autofocus}
-            debugIndex={debugIndex}
-            depth={depth + 1}
-            dropUncle={dropUncle}
-            env={env}
-            indexDescendant={indexDescendant}
-            isMultiColumnTable={isMultiColumnTable}
-            leaf={leaf}
-            updateSize={updateSize}
-            path={path}
-            prevChildId={prevChildId}
-            showContexts={showContexts}
-            simplePath={simplePath}
-            style={style}
-            zoomCursor={zoomCursor}
-            marginRight={marginRight}
-          />
-        )}
-      </div>
+      {!shimHiddenThought && (
+        <Subthought
+          autofocus={autofocus}
+          debugIndex={debugIndex}
+          depth={depth + 1}
+          dropUncle={dropUncle}
+          env={env}
+          indexDescendant={indexDescendant}
+          isMultiColumnTable={isMultiColumnTable}
+          leaf={leaf}
+          updateSize={updateSize}
+          path={path}
+          prevChildId={prevChildId}
+          showContexts={showContexts}
+          simplePath={simplePath}
+          style={style}
+          zoomCursor={zoomCursor}
+          marginRight={marginRight}
+        />
+      )}
 
       {isVisible && (
         <DropChild
