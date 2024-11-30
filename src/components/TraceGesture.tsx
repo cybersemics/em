@@ -126,19 +126,13 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         top: 0,
         left: 0,
         // Dim the gesture trace to 50% opacity when the gesture is cancelled.
-        // Also dim when hidden, otherwise when releasing a cancelled gesture the opacity briefly goes back to 1 to start the fade-both animation. This also has the effect of immediately dimming a valid (non-cancelled) gesture as soon as it is released, which actually looks pretty good.
-        opacity: cancelled || !show ? 0.5 : 1,
+        opacity: show ? (cancelled ? 0.5 : 1) : 0,
         transition: 'opacity {durations.traceOpacityDuration} ease-in-out',
         pointerEvents: eventNodeRef ? 'none' : undefined,
       })}
       style={{ height: innerHeight }}
     >
-      <FadeTransition
-        nodeRef={fadeBothEnterElRef}
-        in={show}
-        // use mediumBoth to start the opacity at 0, otherwise clicking will render small dots
-        duration='mediumBoth'
-      >
+      <FadeTransition nodeRef={fadeBothEnterElRef} in={show} duration='mediumBoth'>
         <div
           ref={fadeBothEnterElRef}
           className={css({ userSelect: 'none' })}
