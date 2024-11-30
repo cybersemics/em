@@ -9,6 +9,7 @@ import dropEndRecipe from './src/recipes/dropEnd'
 import dropHoverRecipe from './src/recipes/dropHover'
 import editableRecipe from './src/recipes/editable'
 import extendTapRecipe from './src/recipes/extendTap'
+import fadeTransitionRecipe from './src/recipes/fadeTransition'
 import iconRecipe from './src/recipes/icon'
 import invalidOptionRecipe from './src/recipes/invalidOption'
 import linkRecipe from './src/recipes/link'
@@ -16,6 +17,7 @@ import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
+import slideTransitionRecipe from './src/recipes/slideTransition'
 import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
 import toolbarPointerEventsRecipe from './src/recipes/toolbarPointerEvents'
@@ -262,6 +264,13 @@ export default defineConfig({
       keyframes,
       tokens: {
         colors: colorTokens,
+        easings: {
+          // Ease in even slower at the beginning of the animation.
+          // For reference, ease-in is equivalent to cubic-bezier(.42, 0, 1, 1).
+          easeInSlow: {
+            value: 'cubic-bezier(.84, 0, 1, 1)',
+          },
+        },
         fontSizes: {
           sm: {
             value: '80%',
@@ -269,9 +278,6 @@ export default defineConfig({
           md: {
             value: '90%',
           },
-        },
-        sizes: {
-          minThoughtHeight: { value: '1.9em' },
         },
         spacing: {
           modalPadding: { value: '8%' },
@@ -332,6 +338,8 @@ export default defineConfig({
       slotRecipes: {
         modal: modalRecipe,
         modalText: modalTextRecipe,
+        fadeTransition: fadeTransitionRecipe,
+        slideTransition: slideTransitionRecipe,
       },
       semanticTokens: {
         colors: {

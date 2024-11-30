@@ -7,29 +7,27 @@ import viewportStore from '../stores/viewport'
 
 /** An overlay for the scroll zone that blocks pointer events. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
-  const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
   const scrollTop = useScrollTop()
   const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
+  const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
   if (hideScrollZone) return null
 
   return (
     <div
       className={css({
-        background: `url('/img/scroll-zone/stars.jpg')`,
-        backgroundPositionX: '300px',
-        backgroundSize: '2000px',
+        backgroundImage: `url('/img/scroll-zone/stardust.png')`,
+        backgroundRepeat: 'repeat',
         zIndex: 'scrollZone',
-        filter: 'grayscale(1)',
+        backgroundSize: '800px',
         position: 'fixed',
         left: leftHanded ? 0 : undefined,
         right: leftHanded ? undefined : 0,
         // height must exceed all possible scroll heights
         height: '999999px',
-        opacity: 0.4,
         pointerEvents: 'none',
       })}
       style={{
-        transform: `translateY(calc(-${scrollTop / 4 + 400}px))`,
+        transform: `translateY(-${scrollTop / 4 + 300}px)`,
         width: scrollZoneWidth,
       }}
     ></div>

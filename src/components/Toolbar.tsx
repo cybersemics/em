@@ -10,7 +10,6 @@ Test:
 */
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css, cva, cx } from '../../styled-system/css'
 import { toolbarPointerEvents } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
@@ -23,7 +22,7 @@ import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import durations from '../util/durations'
+import FadeTransition from './FadeTransition'
 import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
@@ -39,7 +38,7 @@ const arrow = cva({
   base: {
     position: 'absolute',
     fontSize: '80%',
-    paddingTop: '16px',
+    paddingTop: '15px',
     verticalAlign: 'middle',
     color: 'gray66',
     backgroundColor: 'bg',
@@ -77,6 +76,9 @@ const arrow = cva({
     },
   ],
 })
+
+/** Calculates the top padding for vertically centering toolbar arrows. */
+const calculatePaddingTop = (fontSize: number) => Math.floor(0.3 * fontSize + 11.6)
 
 /** Toolbar component. */
 const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
@@ -192,11 +194,10 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   )
 
   return (
-    <CSSTransition
+    <FadeTransition
       nodeRef={toolbarContainerRef}
       in={!distractionFreeTyping}
-      timeout={durations.get('distractionFreeTypingDuration')}
-      classNames='fade-600'
+      duration='distractionFreeTyping'
       unmountOnExit
     >
       <div
@@ -206,8 +207,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           // When a dropdown like ColorPicker or LetterCase is open, set pointer-events: none, otherwise the toolbar will block the editor. This will be overridden by the toolbar buttons to allow interaction.
           showDropDown && toolbarPointerEvents(),
           css({
-            backgroundColor: 'bg',
-            boxShadow: customize ? '-10px 10px 20px 0 {colors.bg}' : '10px -20px 15px 25px {colors.bg}',
             right: 0,
             textAlign: 'right',
             maxWidth: '100%',
@@ -229,9 +228,31 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           marginBottom: isDraggingAny ? '-7em' : 0,
         }}
       >
+        <div
+          className={css({
+            position: 'absolute',
+            /* sometimes the body peeks through with top:0 */
+            top: '-1px',
+            left: '0',
+            /* Hide the popup-close-x in the customize modal by extending the toolbar-mask to the right. Otherwise it would be too cluttered. Use just enough to cover popup-close-x without  */
+            right: '-1.75em',
+            backgroundColor: 'bg',
+            pointerEvents: 'none',
+            boxShadow: '-10px 10px 20px 0 {colors.bg}',
+            ...(!customize && {
+              boxShadow: '10px -20px 15px 25px {colors.bg}',
+              paddingTop: '500px',
+            }),
+          })}
+          style={{
+            // must scale height with fontSize, since height does not scale linearly with em or px
+            height: fontSize + 30,
+          }}
+        />
         <div>
           <span
             id='left-arrow'
+            style={{ paddingTop: `${calculatePaddingTop(fontSize)}px` }}
             className={arrow({ direction: 'left', isHidden: !leftArrowIsShown, fixed: !customize })}
           >
             <TriangleLeft width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
@@ -277,13 +298,14 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
           <span
             id='right-arrow'
+            style={{ paddingTop: `${calculatePaddingTop(fontSize)}px` }}
             className={arrow({ direction: 'right', isHidden: !rightArrowIsShown, fixed: !customize })}
           >
             <TriangleRight width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
           </span>
         </div>
       </div>
-    </CSSTransition>
+    </FadeTransition>
   )
 }
 

@@ -210,7 +210,6 @@ const StaticThought = ({
                 ...(isTableCol1 && { maxWidth: '100%' }),
                 ...(isAttribute(value) && { fontFamily: 'monospace' }),
                 ...(ellipsizedUrl && {
-                  display: 'inline-block',
                   textOverflow: 'ellipsis',
                   overflow: 'hidden',
                   whiteSpace: 'nowrap',

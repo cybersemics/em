@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/24-show-hidden-thoughts_4.json'
 
 /** Hidden Thoughts Icon with Conditional Lottie Animation. */
-const HiddenThoughtsIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const HiddenThoughtsIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

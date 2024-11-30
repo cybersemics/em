@@ -19,7 +19,7 @@ const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean;
         textNote(),
         css({
           fontSize: 'sm',
-          lineHeight: 1.72,
+          lineHeight: '1.87',
           // use padding instead of margin to ensure it affects height for LayoutTree node y calculation
           paddingBottom: '0.75em',
         }),

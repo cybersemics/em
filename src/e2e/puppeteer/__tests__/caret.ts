@@ -9,10 +9,9 @@ import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
-import scrollBy from '../helpers/scrollBy'
-import scrollIntoView from '../helpers/scrollIntoView'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 
@@ -221,13 +220,11 @@ describe('mobile only', () => {
     // close keyboard
     await clickBullet('b')
 
-    await scrollIntoView('[aria-label="Subcategorize"]')
-    await scrollBy('#toolbar', 50, 0)
-
+    await waitForSelector('[aria-label="Subcategorize"]')
     await click('[aria-label="Subcategorize"]')
 
     const textContext = await getSelection().focusNode?.textContent
-    expect([undefined, '']).toContain(textContext)
+    expect(textContext).toBe('')
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)

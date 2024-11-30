@@ -93,7 +93,7 @@ export const isOnFirstLine = (): boolean => {
   const clientRects = selection.getRangeAt(0).getClientRects()
   if (!clientRects?.length) return true
 
-  const { y: rangeY } = clientRects[0]
+  const { y: rangeY } = clientRects[clientRects.length - 1]
   if (!rangeY) return true
 
   const baseNodeParentEl = baseNode?.parentElement as HTMLElement
@@ -439,4 +439,35 @@ export const html = () => {
   div.appendChild(range.cloneContents())
   const currentHtml = div.innerHTML
   return currentHtml
+}
+
+/** Returns the bounding rectangle for the current browser selection. */
+export const getBoundingClientRect = () => {
+  const selection = window.getSelection()
+
+  if (selection && selection.rangeCount) {
+    return selection.getRangeAt(0).getBoundingClientRect()
+  }
+
+  return null
+}
+
+/** Returns true if the point is within the given number of pixels from the browser selection. */
+export const isNear = (
+  x: number,
+  y: number,
+  /** Distance from the point (px). */
+  distance: number,
+): boolean => {
+  if (!isActive() || isCollapsed()) return false
+
+  const rect = getBoundingClientRect()
+  if (!rect) return false
+
+  const left = rect.left - distance
+  const right = rect.right + distance
+  const top = rect.top - distance
+  const bottom = rect.bottom + distance
+
+  return x >= left && y >= top && x <= right && y <= bottom
 }

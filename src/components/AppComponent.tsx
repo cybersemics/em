@@ -1,6 +1,5 @@
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
-import classNames from 'classnames'
 import _ from 'lodash'
 import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -76,11 +75,16 @@ const useDisableLongPressToSelect = () => {
 }
 
 /** Cancel gesture if there is an active text selection, drag, modal, or sidebar. */
-const shouldCancelGesture = (): boolean =>
-  (selection.isActive() && !selection.isCollapsed()) ||
-  store.getState().dragInProgress ||
-  !!store.getState().showModal ||
-  store.getState().showSidebar
+const shouldCancelGesture = (
+  /** The x coordinate of the touch event. If x and y are provided, cancels the gesture if the touch point is too close to the selection. See selection.isNear. */
+  x?: number,
+  /** The y coordinate of the touch event. If x and y are provided, cancels the gesture if the touch point is too close to the selection. See selection.isNear. */
+  y?: number,
+): boolean => {
+  const state = store.getState()
+  const distance = state.fontSize * 2
+  return (x && y && selection.isNear(x, y, distance)) || state.dragInProgress || !!state.showModal || state.showSidebar
+}
 
 /**
  * Wrap an element in the MultiGesture component if the user has a touch screen.
@@ -173,12 +177,6 @@ const AppComponent: FC = () => {
     }
   }, [showSplitView])
 
-  const componentClassNames = classNames({
-    // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
-    mobile: isTouch,
-    'drag-in-progress': dragInProgress,
-  })
-
   if (showModal && !modals[showModal]) {
     throw new Error(`Missing component for Modal type: ${showModal}`)
   }
@@ -186,7 +184,7 @@ const AppComponent: FC = () => {
   const Modal = showModal ? modals[showModal] : null
 
   return (
-    <div className={componentClassNames}>
+    <div>
       <Alert />
       <Tips />
       <CommandPalette />

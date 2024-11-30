@@ -1,3 +1,4 @@
+import { screen } from '@testing-library/dom'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
@@ -16,6 +17,7 @@ describe('delete', () => {
     afterEach(cleanupTestApp)
 
     it('strip formatting in alert', async () => {
+      vi.useFakeTimers()
       await act(async () => {
         store.dispatch([
           importText({
@@ -27,11 +29,13 @@ describe('delete', () => {
         ])
       })
 
-      executeShortcut(deleteShortcut, { store })
+      await act(vi.runOnlyPendingTimersAsync)
 
-      await vi.runOnlyPendingTimersAsync()
+      act(() => executeShortcut(deleteShortcut, { store }))
 
-      const popupValue = document.querySelector('[data-testid="popup-value"]')!
+      await act(vi.runAllTimersAsync)
+
+      const popupValue = await screen.findByTestId('popup-value')!
       expect(popupValue.textContent).toBe('Permanently deleted test')
     })
   })

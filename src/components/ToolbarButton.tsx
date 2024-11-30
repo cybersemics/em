@@ -177,7 +177,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         toolbarPointerEvents({ override: true }),
         css({
           display: 'inline-block',
-          padding: '15px 8px 5px 8px',
+          padding: '14px 8px 5px 8px',
           borderRadius: '3px',
           zIndex: 'stack',
           // animate maxWidth to avoid having to know the exact width of the toolbar icon

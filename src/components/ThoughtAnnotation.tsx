@@ -202,7 +202,6 @@ const ThoughtAnnotation = React.memo(
                 visibility: 'hidden',
                 position: 'relative',
                 clipPath: 'inset(0.001px 0 0.1em 0)',
-                minHeight: 'minThoughtHeight',
                 wordBreak: 'break-word',
                 ...(ellipsizedUrl && {
                   display: 'inline-block',

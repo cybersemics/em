@@ -3,14 +3,14 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/19-heading-two.json'
 
 /** Heading2 Icon with Conditional Lottie Animation. */
-const Heading2Icon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const Heading2Icon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
         fill='none'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: 'translate(2%, -2%) scale(1.07, 1.07)' }}
       >
         <rect width='24' height='24' fill='none' />
         <path d='M3.3,18.18V6.72H4.82v4.71h5.95V6.72h1.52V18.18H10.77v-5.4H4.82v5.4Z' fill={fill || 'currentColor'} />
