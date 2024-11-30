@@ -1,3 +1,4 @@
+import sleep from '../../../util/sleep'
 import { page } from '../setup'
 import getEditable from './getEditable'
 import hide from './hide'
@@ -110,6 +111,10 @@ const dragAndDropThought = async (
   if (mouseUp) {
     await page.mouse.up()
     await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
+
+    // The drop/DragAndDropThought still fails intermittently without a small delay here.
+    // When it fails, the drag appears to still be in progress. The bullet is highlighted and the QuickDropPanel is visible (though it should be hidden at this point)
+    await sleep(100)
   }
 }
 
