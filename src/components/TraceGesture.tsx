@@ -15,6 +15,7 @@ interface TraceGestureProps {
   // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
   eventNodeRef?: React.RefObject<HTMLElement>
 }
+
 /** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and CommandPaletteGesture which have different ways of showing a cancelled gesture. */
 const useGestureCancelled = () => {
   const showCommandPalette = useSelector(state => state.showCommandPalette)
@@ -40,13 +41,14 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const show = gestureStore.useSelector(gesturePath => gesturePath.length > 0)
   const cancelled = useGestureCancelled()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
-  const signaturePadRef = useRef<{ minHeight: number; signaturePad: SignaturePad['signaturePad'] } | null>(null)
+  const signaturePadRef = useRef<SignaturePad | null>(null)
 
   // Clear the signature pad when the stroke starts.
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
   const onBeginStroke = useCallback(() => {
     if (!signaturePadRef.current) return
-    const signaturePad = signaturePadRef.current.signaturePad
+    // use bracket notation to access private member variable
+    const signaturePad = signaturePadRef.current['signaturePad']
     signaturePad.clear()
 
     // add glow
@@ -59,7 +61,8 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
   useEffect(() => {
     if (!signaturePadRef.current) return
-    const signaturePad = signaturePadRef.current.signaturePad
+    // use bracket notation to access private member variable
+    const signaturePad = signaturePadRef.current['signaturePad']
     const eventNode = eventNodeRef?.current
 
     // Attach pointer handlers to a provided node rather than the signature pad canvas.
@@ -121,8 +124,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       >
         <SignaturePad
           height={innerHeight}
-          // TODO: Fix type
-          ref={signaturePadRef as any}
+          ref={signaturePadRef}
           options={{
             penColor: colors.fg,
           }}
