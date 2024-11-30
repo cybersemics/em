@@ -3,7 +3,7 @@ import FormattingCommand from '../@types/FormattingCommand'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
-import simplifyPath from '../selectors/simplifyPath'
+import thoughtToPath from '../selectors/thoughtToPath'
 import suppressFocusStore from '../stores/suppressFocus'
 import getCommandState from '../util/getCommandState'
 import strip from '../util/strip'
@@ -16,7 +16,7 @@ export const formatWithTagActionCreator =
     const state = getState()
     if (!state.cursor) return
     const thought = pathToThought(state, state.cursor)
-    const simplePath = simplifyPath(state, state.cursor)
+    const simplePath = thoughtToPath(state, thought.id)
     suppressFocusStore.update(true)
 
     const tagRegExp = new RegExp(`<${tag}[^>]*>|<\/${tag}>`, 'g')
