@@ -41,12 +41,10 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const cancelled = useGestureCancelled()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const signaturePadRef = useRef<{ minHeight: number; signaturePad: SignaturePad['signaturePad'] } | null>(null)
-  const fadeTimer = useRef(0)
 
   // Clear the signature pad when the stroke starts.
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
   const onBeginStroke = useCallback(() => {
-    clearTimeout(fadeTimer.current)
     if (!signaturePadRef.current) return
     const signaturePad = signaturePadRef.current.signaturePad
     signaturePad.clear()
