@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { css } from '../../styled-system/css'
@@ -15,25 +15,6 @@ interface TraceGestureProps {
   // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
   eventNodeRef?: React.RefObject<HTMLElement>
 }
-/** A hook that returns true a given number of milliseconds after its condition is set to true. Returns false immediately if the condition becomes false. */
-const useConditionDelay = (condition: boolean, milliseconds: number) => {
-  const [value, setValue] = useState(false)
-  const timer = useRef<ReturnType<typeof setTimeout>>()
-
-  useEffect(() => {
-    clearTimeout(timer.current!)
-    if (condition) {
-      timer.current = setTimeout(() => {
-        setValue(true)
-      }, milliseconds)
-    } else {
-      setValue(false)
-    }
-  }, [condition, milliseconds])
-
-  return value
-}
-
 /** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and CommandPaletteGesture which have different ways of showing a cancelled gesture. */
 const useGestureCancelled = () => {
   const showCommandPalette = useSelector(state => state.showCommandPalette)
@@ -56,10 +37,7 @@ const useGestureCancelled = () => {
 const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
   const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
-  const gestureStarted = gestureStore.useSelector(gesturePath => gesturePath.length > 0)
-  // 100 millisecond delay before gesture trace is rendered feels about right given the fade in
-  // it correctly avoids rendering quick gestures like back/forward
-  const show = useConditionDelay(gestureStarted, 100)
+  const show = gestureStore.useSelector(gesturePath => gesturePath.length > 0)
   const cancelled = useGestureCancelled()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const signaturePadRef = useRef<{ minHeight: number; signaturePad: SignaturePad['signaturePad'] } | null>(null)
@@ -126,11 +104,14 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         position: 'fixed',
         top: 0,
         left: 0,
-        // Dim the gesture trace to 50% opacity when the gesture is cancelled.
+        // Dim the gesture trace to 50% opacity when the gesture is cancelled or invalid.
         opacity: show ? (cancelled ? 0.5 : 1) : 0,
-        transition: show
-          ? 'opacity {durations.traceOpacityDuration} ease-in-out'
-          : 'opacity {durations.mediumDuration} ease-in-out',
+        // Fade in quickly. A custom easing function is used to simulate a slight delay at the beginning. This effectively hides very quickly entered gestures like forward/backward.
+        // Fade out slowly.
+        transition:
+          show && !cancelled
+            ? 'opacity {durations.fastDuration} {easings.easeInSlow}'
+            : 'opacity {durations.mediumDuration} ease-out',
         pointerEvents: eventNodeRef ? 'none' : undefined,
       })}
       style={{ height: innerHeight }}

@@ -264,6 +264,13 @@ export default defineConfig({
       keyframes,
       tokens: {
         colors: colorTokens,
+        easings: {
+          // Ease in even slower at the beginning of the animation.
+          // For reference, ease-in is equivalent to cubic-bezier(.42, 0, 1, 1).
+          easeInSlow: {
+            value: 'cubic-bezier(.84, 0, 1, 1)',
+          },
+        },
         fontSizes: {
           sm: {
             value: '80%',
