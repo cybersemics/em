@@ -272,9 +272,6 @@ export default defineConfig({
             value: '90%',
           },
         },
-        sizes: {
-          minThoughtHeight: { value: '1.9em' },
-        },
         spacing: {
           modalPadding: { value: '8%' },
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
