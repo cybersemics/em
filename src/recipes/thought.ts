@@ -22,9 +22,6 @@ const thoughtRecipe = defineRecipe({
     /** Assign annotation height on single line truncated url. */
     ellipsizedUrl: {
       true: {
-        /**
-          .single-line element has display: inline-block property, it affects the height calculation of the .thought div so we need to set the height manually.
-         */
         maxWidth: 'calc(100% - 1em)',
       },
     },
