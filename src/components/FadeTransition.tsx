@@ -22,9 +22,8 @@ const FadeTransition = ({
   children: ReactNode
 } & RemoveFields<TransitionProps<HTMLElement>>) => {
   const fadeClasses = fadeTransition({ duration })
-  const durationKey = duration === 'mediumBoth' ? 'medium' : duration
   return (
-    <CSSTransition key={id} classNames={fadeClasses} timeout={durations.get(`${durationKey}Duration`)} {...props}>
+    <CSSTransition key={id} classNames={fadeClasses} timeout={durations.get(`${duration}Duration`)} {...props}>
       {children}
     </CSSTransition>
   )
