@@ -881,7 +881,10 @@ const LayoutTree = () => {
   return (
     <div
       className={css({
-        animation: `${indentDepth % 2 === 0 ? 'hideCaretEven' : 'hideCaretOdd'} {durations.layoutSlowShiftDuration} linear`,
+        animation:
+          indentDepth % 2 === 0
+            ? 'hideCaretEven {durations.layoutSlowShiftDuration} linear'
+            : 'hideCaretOdd {durations.layoutSlowShiftDuration} linear',
         marginTop: '0.501em',
       })}
       style={{
