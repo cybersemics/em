@@ -33,31 +33,34 @@ const useConditionDelay = (condition: boolean, milliseconds: number) => {
 
   return value
 }
+
+/** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and CommandPaletteGesture which have different ways of showing a cancelled gesture. */
+const useGestureCancelled = () => {
+  const showCommandPalette = useSelector(state => state.showCommandPalette)
+
+  const alertShowsGestureCancelled = useSelector(
+    state => state.alert?.alertType === AlertType.GestureHint && state.alert?.value === GESTURE_CANCEL_ALERT_TEXT,
+  )
+
+  const invalidGesture = gestureStore.useSelector(
+    gesturePath =>
+      gesturePath &&
+      showCommandPalette &&
+      !globalShortcuts.some(shortcut => !shortcut.hideFromHelp && gestureString(shortcut) === gesturePath),
+  )
+
+  return alertShowsGestureCancelled || invalidGesture
+}
+
 /** Draws a gesture as it is being performed onto a canvas. */
 const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
   const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
-
-  // A hook that is true when there is a cancelled gesture in progress.
-  // Handles GestureHint and CommandPaletteGesture which have different ways of showing a cancelled gesture.
-  const cancelled = useSelector(state => {
-    const alert = state.alert
-    if (!alert || !alert.value) return false
-    // GestureHint
-    else if (alert.alertType === AlertType.GestureHint && alert.value === GESTURE_CANCEL_ALERT_TEXT) return true
-    // CommandPaletteGesture
-    else if (state.showCommandPalette) {
-      // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
-      return !globalShortcuts.some(shortcut => !shortcut.hideFromHelp && gestureString(shortcut) === alert.value)
-    }
-
-    return false
-  })
-
   const gestureStarted = gestureStore.useSelector(gesturePath => gesturePath.length > 0)
   // 100 millisecond delay before gesture trace is rendered feels about right given the fade in
   // it correctly avoids rendering quick gestures like back/forward
   const show = useConditionDelay(gestureStarted, 100)
+  const cancelled = useGestureCancelled()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const signaturePadRef = useRef<{ minHeight: number; signaturePad: SignaturePad['signaturePad'] } | null>(null)
   const fadeTimer = useRef(0)
