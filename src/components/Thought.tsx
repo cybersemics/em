@@ -420,7 +420,7 @@ const ThoughtContainer = ({
         className={css({
           /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
           /* must match value used in Editable useMultiline */
-          lineHeight: '1.72',
+          lineHeight: '1.87',
           // ensure that ThoughtAnnotation is positioned correctly
           position: 'relative',
           ...(hideBullet ? { marginLeft: -12 } : null),
