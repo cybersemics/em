@@ -56,6 +56,21 @@ const zIndexDescending = (keys: string[]) => keyValueBy(keys.reverse(), (key, i)
 /** Add `ms` units to raw value. */
 const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
 
+const hideCaret = {
+  '0%': {
+    caretColor: 'auto',
+  },
+  '1%': {
+    caretColor: 'transparent',
+  },
+  '99%': {
+    caretColor: 'transparent',
+  },
+  '100%': {
+    caretColor: 'auto',
+  },
+}
+
 const keyframes = defineKeyframes({
   fademostlyin: {
     from: {
@@ -141,6 +156,8 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
+  hideCaretEven: hideCaret,
+  hideCaretOdd: hideCaret,
 })
 
 const globalCss = defineGlobalStyles({

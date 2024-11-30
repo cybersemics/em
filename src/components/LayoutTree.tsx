@@ -30,7 +30,6 @@ import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
-import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -860,16 +859,6 @@ const LayoutTree = () => {
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
   const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
 
-  // Set an 'animating' flag while the transition between different depth levels is animating.
-  // Using a CSS animation combined with resetting after the 'onAnimationEnd' event fires didn't work because,
-  // when reducing the indent level, 'onAnimationEnd' fires immediately.
-  const [animating, setAnimating] = useState(false)
-  useEffect(() => {
-    setAnimating(true)
-    const timeout = setTimeout(() => setAnimating(false), durations.get('layoutSlowShiftDuration'))
-    return () => clearTimeout(timeout)
-  }, [indent])
-
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
 
@@ -892,8 +881,7 @@ const LayoutTree = () => {
   return (
     <div
       className={css({
-        caretColor: animating ? 'transparent' : undefined,
-        animationDirection: 'alternate',
+        animation: `${indentDepth % 2 === 0 ? 'hideCaretEven' : 'hideCaretOdd'} {durations.layoutSlowShiftDuration} linear`,
         marginTop: '0.501em',
       })}
       style={{
