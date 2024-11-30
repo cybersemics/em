@@ -109,6 +109,7 @@ const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
 const useSizeTracking = () => {
   // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
   const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
+  const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
 
   // Track debounced height removals
@@ -146,17 +147,24 @@ const useSizeTracking = () => {
       key: string
     }) => {
       if (height !== null) {
+        // To create the correct selection behavior, thoughts must clipped on the top and bottom. This creates a gap between thoughts. To eliminate this gap, thoughts are rendered with a slight overlap.
+        // See: clipPath in the editable recipe
+        const lineHeightOverlap = fontSize / 8
+        const heightClipped = height - lineHeightOverlap
+
         // cancel thought removal timeout
         clearTimeout(sizeRemovalTimeouts.current.get(key))
         sizeRemovalTimeouts.current.delete(key)
 
         setSizes(sizesOld =>
-          height === sizesOld[key]?.height && width === sizesOld[key]?.width && isVisible === sizesOld[key]?.isVisible
+          heightClipped === sizesOld[key]?.height &&
+          width === sizesOld[key]?.width &&
+          isVisible === sizesOld[key]?.isVisible
             ? sizesOld
             : {
                 ...sizesOld,
                 [key]: {
-                  height,
+                  height: heightClipped,
                   width: width || undefined,
                   isVisible,
                 },
@@ -166,7 +174,7 @@ const useSizeTracking = () => {
         removeSize(key)
       }
     },
-    [removeSize],
+    [fontSize, removeSize],
   )
 
   useEffect(() => {
