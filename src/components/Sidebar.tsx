@@ -88,10 +88,7 @@ const Sidebar = () => {
       }}
       disableSwipeToOpen={!isTouch}
       ref={containerRef}
-      transitionDuration={{
-        enter: durations.get('muiEnteringScreenDuration'),
-        exit: durations.get('muiLeavingScreenDuration'),
-      }}
+      transitionDuration={durations.get('fastDuration')}
       SwipeAreaProps={{
         style: {
           // Set width here since setting style with SwipeAreaProps will override the swipeAreaWidth prop.

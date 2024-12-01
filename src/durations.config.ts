@@ -24,10 +24,6 @@ const durationsMillis = {
   layoutSlowShiftDuration: 750,
   /** The animation duration of a node in the LayoutTree component. This animates thought positions when they are moved. */
   layoutNodeAnimationDuration: 150,
-
-  // MUI duration defaults https://mui.com/material-ui/customization/transitions/#durations
-  muiEnteringScreenDuration: 225,
-  muiLeavingScreenDuration: 195,
 } as const
 
 export default durationsMillis
