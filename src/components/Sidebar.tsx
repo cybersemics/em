@@ -7,6 +7,7 @@ import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isTouch } from '../browser'
+import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import FadeTransition from './FadeTransition'
 import Favorites from './Favorites'
@@ -87,6 +88,10 @@ const Sidebar = () => {
       }}
       disableSwipeToOpen={!isTouch}
       ref={containerRef}
+      transitionDuration={{
+        enter: durations.get('muiEnteringScreenDuration'),
+        exit: durations.get('muiLeavingScreenDuration'),
+      }}
       SwipeAreaProps={{
         style: {
           // Set width here since setting style with SwipeAreaProps will override the swipeAreaWidth prop.

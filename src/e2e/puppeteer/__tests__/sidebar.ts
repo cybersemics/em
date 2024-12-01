@@ -16,7 +16,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 /** Open sidebar and wait for it to slide all the way open. */
 const openSidebar = async () => {
   await click('[aria-label=menu]')
-  await new Promise(resolve => setTimeout(resolve, 2000))
+  await new Promise(resolve => setTimeout(resolve, 100))
 }
 
 describe('sidebar', () => {
