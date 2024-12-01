@@ -26,7 +26,7 @@ const Toggle = ({ children, title }: { children?: any; expand?: boolean; title?:
               className={css({
                 transform: expanded ? 'rotate(90deg) translateX(10px)' : '',
                 transformOrigin: 'center center',
-                transition: `transform {durations.veryFastDuration} ease-out`,
+                transition: `transform {durations.veryFast} ease-out`,
               })}
             />
           </g>

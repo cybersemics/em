@@ -205,7 +205,7 @@ const glyph = cva({
 
 const glyphFg = cva({
   base: {
-    transition: `transform {durations.veryFastDuration} ease-out, fill-opacity {durations.mediumDuration} ease-out`,
+    transition: `transform {durations.veryFast} ease-out, fill-opacity {durations.medium} ease-out`,
   },
   variants: {
     gray: {
@@ -582,7 +582,7 @@ const Bullet = ({
           },
           '@media (min-width: 560px) and (max-width: 1024px)': {
             _android: {
-              transition: `transform {durations.veryFastDuration} ease-in-out`,
+              transition: `transform {durations.veryFast} ease-in-out`,
               marginLeft: '-3px',
             },
           },

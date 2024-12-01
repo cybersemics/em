@@ -88,7 +88,7 @@ const Sidebar = () => {
       }}
       disableSwipeToOpen={!isTouch}
       ref={containerRef}
-      transitionDuration={durations.get('fastDuration')}
+      transitionDuration={durations.get('fast')}
       SwipeAreaProps={{
         style: {
           // Set width here since setting style with SwipeAreaProps will override the swipeAreaWidth prop.
