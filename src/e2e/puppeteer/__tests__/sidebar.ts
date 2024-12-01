@@ -6,6 +6,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
 import type from '../helpers/type'
+import { page } from '../setup'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -16,19 +17,22 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 /** Open sidebar and wait for it to slide all the way open. */
 const openSidebar = async () => {
   await click('[aria-label=menu]')
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await page.locator('[data-testid="sidebar"]').wait()
+}
+
+/** Screenshot without the toolbar. */
+const screenshotWithoutToolbar = async () => {
+  await hideVisibility('[data-testid="toolbar-icon"]')
+  return screenshot()
 }
 
 describe('sidebar', () => {
-  beforeEach(async () => {
-    await hideVisibility('[data-testid="toolbar-icon"]')
-  })
   it('empty sidebar on dark theme', async () => {
     await openSidebar()
 
-    expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'sidebar-empty' })
+    expect(await screenshotWithoutToolbar()).toMatchImageSnapshot({ customSnapshotIdentifier: 'sidebar-empty' })
     await setTheme('Light')
-    expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'sidebar-empty-light' })
+    expect(await screenshotWithoutToolbar()).toMatchImageSnapshot({ customSnapshotIdentifier: 'sidebar-empty-light' })
   })
 
   it('recently edited thoughts', async () => {
@@ -38,9 +42,14 @@ describe('sidebar', () => {
     await openSidebar()
     await click('[data-testid=sidebar-recentEdited]')
 
-    expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'sidebar-recently-edited' })
+    expect(await screenshotWithoutToolbar()).toMatchImageSnapshot({
+      customSnapshotIdentifier: 'sidebar-recently-edited',
+    })
 
     await setTheme('Light')
-    expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'sidebar-recently-edited-light' })
+
+    expect(await screenshotWithoutToolbar()).toMatchImageSnapshot({
+      customSnapshotIdentifier: 'sidebar-recently-edited-light',
+    })
   })
 })

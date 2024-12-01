@@ -198,6 +198,7 @@ describe('Font Size: 22', () => {
 describe('Color Theme', () => {
   it('initial load on light theme', async () => {
     await setTheme('Light')
+    await hideHUD()
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -205,6 +206,7 @@ describe('Color Theme', () => {
   it('superscript on light theme', async () => {
     await setTheme('Light')
 
+    await hideHUD()
     const image = await superscriptSnapshot()
     expect(image).toMatchImageSnapshot()
   })
