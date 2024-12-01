@@ -58,7 +58,7 @@ const TutorialNavigation = ({
                   fontSize: '32px',
                   marginLeft: '1px',
                   marginRight: '1px',
-                  transition: `all {durations.tutorialStepNavigationDuration} ease-in-out`,
+                  transition: `all {durations.medium} ease-in-out`,
                   opacity: step === Math.floor(tutorialStep) ? 1 : 0.25,
                 })}
                 key={step}
