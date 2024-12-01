@@ -10,7 +10,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useSortedContext from '../hooks/useSortedContext'
@@ -882,7 +882,7 @@ const LayoutTree = () => {
     <div
       className={css({
         animation:
-          indentDepth % 2 === 0
+          isTouch && indentDepth % 2 === 0 && isSafari()
             ? 'hideCaretEven {durations.layoutSlowShiftDuration} linear'
             : 'hideCaretOdd {durations.layoutSlowShiftDuration} linear',
         marginTop: '0.501em',
