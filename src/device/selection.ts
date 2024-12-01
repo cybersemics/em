@@ -408,7 +408,7 @@ const removeEmptyElementsRecursively = (element: HTMLElement, remainText: string
 
 /** Returns the selection html, or null if there is no selection. */
 export const html = () => {
-  const selection = document.getSelection()
+  const selection = document?.getSelection()
   if (!selection || selection.rangeCount === 0) return null
   const range = selection?.getRangeAt(0)
 
