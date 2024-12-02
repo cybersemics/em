@@ -20,6 +20,7 @@ const durationsMillis = {
   /* SPECIFIC ANIMATIONS */
   /** The time it takes the HUD to fade out when the user starts typing on desktop. */
   distractionFreeTyping: 600,
+  distractionFreeTypingThrottle: 100,
   /** The animation duration for the slower opacity transition and horizontal shift of the LayoutTree as the depth of the cursor changes. */
   layoutSlowShift: 750,
   /** The animation duration of a node in the LayoutTree component. This animates thought positions when they are moved. */
