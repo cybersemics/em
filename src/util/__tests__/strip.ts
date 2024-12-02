@@ -69,3 +69,29 @@ it('preserve bold with newlines in attribute', () => {
     ),
   ).toBe('Hello <b>red</b> world!')
 })
+
+it('strips spaces inside formatting tags', () => {
+  expect(strip('<i><b> Hello, world! </b></i>', { preserveFormatting: true })).toBe('<i><b>Hello, world!</b></i>')
+})
+
+it('does not strip spaces between formatting tags', () => {
+  expect(strip('<i><b> foo </b>bar<b> baz </b></i>', { preserveFormatting: true })).toBe(
+    '<i><b>foo </b>bar<b> baz</b></i>',
+  )
+})
+
+it('preserves nested formatting tags', () => {
+  expect(strip('<b><i>Hello</i> world</b>', { preserveFormatting: true })).toBe('<b><i>Hello</i> world</b>')
+})
+
+it('preventTrim preserves leading and trailing whitespace', () => {
+  expect(strip('   Hello   ', { preventTrim: true })).toBe('   Hello   ')
+})
+
+it('input with only whitespace', () => {
+  expect(strip('   ')).toBe('')
+})
+
+it('empty input returns empty string', () => {
+  expect(strip('')).toBe('')
+})

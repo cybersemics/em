@@ -341,7 +341,7 @@ const Editable = ({
                 }),
               )
             : // Otherwise, we avoid unescaping the value to preserve escaped HTML characters.
-              e.target.value.trim(),
+              strip(e.target.value, { preserveFormatting: true }),
         ),
       )
 
