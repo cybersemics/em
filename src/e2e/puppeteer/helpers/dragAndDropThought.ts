@@ -1,4 +1,3 @@
-import sleep from '../../../util/sleep'
 import { page } from '../setup'
 import getEditable from './getEditable'
 import hide from './hide'
