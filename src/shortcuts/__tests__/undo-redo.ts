@@ -1,3 +1,4 @@
+import { act } from 'react'
 import { archiveThoughtActionCreator as archiveThought } from '../../actions/archiveThought'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { cursorBackActionCreator as cursorBack } from '../../actions/cursorBack'
@@ -16,9 +17,6 @@ import appStore from '../../stores/app'
 import createTestStore from '../../test-helpers/createTestStore'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import testTimer from '../../test-helpers/testTimer'
-
-const timer = testTimer()
 
 /******************************************************************
  * UNDO
@@ -150,16 +148,10 @@ describe('undo', () => {
     expect(cursorThoughts).toMatchObject(expectedCursor)
   })
 
-  // TODO: Cursor is null in test, but correct when testing manually
-  it.skip('cursor should restore correctly after undo archive', async () => {
-    timer.useFakeTimer()
-    initialize()
-    await timer.runAllAsync()
+  it('cursor should restore correctly after undo archive', async () => {
+    await initialize()
 
     appStore.dispatch([newThought({ value: 'a' }), setCursor(['a']), { type: 'archiveThought' }, undo()])
-    await timer.runAllAsync()
-
-    timer.useRealTimer()
 
     const stateNew = appStore.getState()
     const expectedCursor = [{ value: 'a', rank: 0 }]
