@@ -92,29 +92,24 @@ const dragAndDropThought = async (
     await page.mouse.move(dropPosition.x, dropPosition.y)
   }
 
+  await page.locator('[data-testid="quick-drop-panel"]').wait()
+  await page.locator('[data-testid="popup-value"]').wait()
+
+  if (mouseUp) {
+    await page.mouse.up()
+    await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
+  }
+
   // Hide QuickDropPanel by defafult.
   // Otherwise wait for QuickDropPanel  to appear so that snapshots are consistent.
   if (!showQuickDropPanel) {
     await hide('[data-testid="quick-drop-panel"]')
-  } else {
-    await page.locator('[data-testid="quick-drop-panel"]').wait()
   }
 
   // Hide Alert by default.
   // Otherwise wait for Alert value to appear so that snapshots are consistent.
   if (!showAlert) {
     await hide('[data-testid="alert"]')
-  } else {
-    await page.locator('[data-testid="popup-value"]').wait()
-  }
-
-  if (mouseUp) {
-    await page.mouse.up()
-    await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
-
-    // TODO: The drop/DragAndDropThought still fails intermittently without a delay here.
-    // When it fails, the drag appears to still be in progress. The bullet is highlighted and the QuickDropPanel is visible (though it should be hidden at this point)
-    await sleep(500)
   }
 }
 
