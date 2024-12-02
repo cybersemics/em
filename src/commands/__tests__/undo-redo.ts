@@ -1,4 +1,3 @@
-import { act } from 'react'
 import { archiveThoughtActionCreator as archiveThought } from '../../actions/archiveThought'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { cursorBackActionCreator as cursorBack } from '../../actions/cursorBack'
