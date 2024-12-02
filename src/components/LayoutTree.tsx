@@ -881,10 +881,41 @@ const LayoutTree = () => {
   return (
     <div
       className={css({
+        // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
         animation:
-          isTouch && indentDepth % 2 === 0 && isSafari()
-            ? 'hideCaretEven {durations.layoutSlowShiftDuration} linear'
-            : 'hideCaretOdd {durations.layoutSlowShiftDuration} linear',
+          isTouch && isSafari()
+            ? indentDepth % 16 === 0
+              ? 'hideCaret0 {durations.layoutSlowShiftDuration} linear'
+              : indentDepth % 16 === 1
+                ? 'hideCaret1 {durations.layoutSlowShiftDuration} linear'
+                : indentDepth % 16 === 2
+                  ? 'hideCaret2 {durations.layoutSlowShiftDuration} linear'
+                  : indentDepth % 16 === 3
+                    ? 'hideCaret3 {durations.layoutSlowShiftDuration} linear'
+                    : indentDepth % 16 === 4
+                      ? 'hideCaret4 {durations.layoutSlowShiftDuration} linear'
+                      : indentDepth % 16 === 5
+                        ? 'hideCaret5 {durations.layoutSlowShiftDuration} linear'
+                        : indentDepth % 16 === 6
+                          ? 'hideCaret6 {durations.layoutSlowShiftDuration} linear'
+                          : indentDepth % 16 === 7
+                            ? 'hideCaret7 {durations.layoutSlowShiftDuration} linear'
+                            : indentDepth % 16 === 8
+                              ? 'hideCaret8 {durations.layoutSlowShiftDuration} linear'
+                              : indentDepth % 16 === 9
+                                ? 'hideCaret9 {durations.layoutSlowShiftDuration} linear'
+                                : indentDepth % 16 === 10
+                                  ? 'hideCaretA {durations.layoutSlowShiftDuration} linear'
+                                  : indentDepth % 16 === 11
+                                    ? 'hideCaretB {durations.layoutSlowShiftDuration} linear'
+                                    : indentDepth % 16 === 12
+                                      ? 'hideCaretC {durations.layoutSlowShiftDuration} linear'
+                                      : indentDepth % 16 === 13
+                                        ? 'hideCaretD {durations.layoutSlowShiftDuration} linear'
+                                        : indentDepth % 16 === 14
+                                          ? 'hideCaretE {durations.layoutSlowShiftDuration} linear'
+                                          : 'hideCaretF {durations.layoutSlowShiftDuration} linear'
+            : undefined,
         marginTop: '0.501em',
       })}
       style={{

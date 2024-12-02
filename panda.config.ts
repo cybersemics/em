@@ -58,9 +58,6 @@ const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
 
 const hideCaret = {
   '0%': {
-    caretColor: 'auto',
-  },
-  '1%': {
     caretColor: 'transparent',
   },
   '99%': {
@@ -156,8 +153,22 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
-  hideCaretEven: hideCaret,
-  hideCaretOdd: hideCaret,
+  hideCaret0: hideCaret,
+  hideCaret1: hideCaret,
+  hideCaret2: hideCaret,
+  hideCaret3: hideCaret,
+  hideCaret4: hideCaret,
+  hideCaret5: hideCaret,
+  hideCaret6: hideCaret,
+  hideCaret7: hideCaret,
+  hideCaret8: hideCaret,
+  hideCaret9: hideCaret,
+  hideCaretA: hideCaret,
+  hideCaretB: hideCaret,
+  hideCaretC: hideCaret,
+  hideCaretD: hideCaret,
+  hideCaretE: hideCaret,
+  hideCaretF: hideCaret,
 })
 
 const globalCss = defineGlobalStyles({
