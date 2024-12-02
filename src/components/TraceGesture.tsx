@@ -110,9 +110,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         // Fade in quickly. A custom easing function is used to simulate a slight delay at the beginning. This effectively hides very quickly entered gestures like forward/backward.
         // Fade out slowly.
         transition:
-          show && !cancelled
-            ? 'opacity {durations.fastDuration} {easings.easeInSlow}'
-            : 'opacity {durations.mediumDuration} ease-out',
+          show && !cancelled ? 'opacity {durations.fast} {easings.easeInSlow}' : 'opacity {durations.medium} ease-out',
         pointerEvents: eventNodeRef ? 'none' : undefined,
       })}
       style={{ height: innerHeight }}

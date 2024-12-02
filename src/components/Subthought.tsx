@@ -126,8 +126,8 @@ const Subthought = ({
           // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropChild. Otherwise subsequent DropChild will be obscured.
           opacity: thought.value === '' ? opacity : '0',
           transition: autofocusChanged
-            ? `opacity {durations.layoutSlowShiftDuration} ease-out`
-            : `opacity {durations.layoutNodeAnimationDuration} ease-in`,
+            ? `opacity {durations.layoutSlowShift} ease-out`
+            : `opacity {durations.layoutNodeAnimation} ease-in`,
           pointerEvents: !isVisible ? 'none' : undefined,
           // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
           // This caused the thought to jerk slightly to the left at the end of the horizontal shift animation.

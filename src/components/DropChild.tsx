@@ -45,7 +45,7 @@ const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) =
           dropEnd(),
           css({
             zIndex: 'dropEmpty',
-            backgroundColor: testFlags.simulateDrop ? 'purpleEggplant' : undefined,
+            backgroundColor: testFlags.simulateDrop ? 'dropChildTarget' : undefined,
             // shift the drop target to the right
             marginLeft: isTouch ? '33%' : 'calc(2.9em - 2px)',
             opacity: 0.9,

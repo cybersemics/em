@@ -128,7 +128,7 @@ const FavoritesOptions = ({
             className={css({
               display: 'inline-block',
               transform: showOptions ? `rotate(90deg)` : `rotate(0deg)`,
-              transition: `transform {durations.veryFastDuration} ease-out`,
+              transition: `transform {durations.veryFast} ease-out`,
               // avoid position:absolute to trivially achieve correct vertical alignment with text
               marginLeft: '-1em',
             })}
@@ -140,7 +140,7 @@ const FavoritesOptions = ({
       </div>
 
       <div className={css({ overflow: 'hidden' })}>
-        <SlideTransition duration='veryFastDuration' in={showOptions} nodeRef={formRef} from='down' unmountOnExit>
+        <SlideTransition duration='veryFast' in={showOptions} nodeRef={formRef} from='down' unmountOnExit>
           <form
             ref={formRef}
             className={css({ fontSize: 'sm', backgroundColor: 'checkboxForm', borderRadius: '0.5em', padding: '1em' })}

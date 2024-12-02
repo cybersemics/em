@@ -441,7 +441,7 @@ const TreeNode = ({
       // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
       className={css({
         position: 'absolute',
-        transition: `left {durations.layoutNodeAnimationDuration} ease-out,top {durations.layoutNodeAnimationDuration} ease-out`,
+        transition: `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`,
       })}
       style={{
         // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
@@ -507,7 +507,7 @@ const TreeNode = ({
                 className={css({
                   position: 'relative',
                   top: '-0.2em',
-                  transition: `left {durations.fastDuration} ease-out`,
+                  transition: `left {durations.fast} ease-out`,
                   zIndex: 'subthoughtsDropEnd',
                 })}
                 style={{
@@ -895,7 +895,7 @@ const LayoutTree = () => {
         hoverArrowVisibility={hoverArrowVisibility}
       />
       <div
-        className={css({ transition: `transform {durations.layoutSlowShiftDuration} ease-out` })}
+        className={css({ transition: `transform {durations.layoutSlowShift} ease-out` })}
         style={{
           // Set a container height that fits all thoughts.
           // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.

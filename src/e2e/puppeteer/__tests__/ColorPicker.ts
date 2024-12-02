@@ -3,19 +3,9 @@ import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import hideVisibility from '../helpers/hideVisibility'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
-import { page } from '../setup'
-
-/** Hides all DOM nodes that match the selector from the DOM by setting visibility: hidden. Do nothing if the selector is empty. */
-const hideVisibility = async (selector: string) => {
-  return page.evaluate((selector: string) => {
-    const els = Array.from(document.querySelectorAll(selector)) as HTMLElement[]
-    els.forEach(el => {
-      el.style.visibility = 'hidden'
-    })
-  }, selector)
-}
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),

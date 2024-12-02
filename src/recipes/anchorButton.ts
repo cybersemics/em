@@ -34,7 +34,7 @@ const anchorButtonRecipe = defineRecipe({
         display: 'inline-flex',
         justifyContent: 'center',
         alignItems: 'center',
-        transition: 'all 100ms ease-in-out',
+        transition: 'all {durations.fast} ease-in-out',
       },
     },
     extendTap: {

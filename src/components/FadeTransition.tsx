@@ -23,7 +23,7 @@ const FadeTransition = ({
 } & RemoveFields<TransitionProps<HTMLElement>>) => {
   const fadeClasses = fadeTransition({ duration })
   return (
-    <CSSTransition key={id} classNames={fadeClasses} timeout={durations.get(`${duration}Duration`)} {...props}>
+    <CSSTransition key={id} classNames={fadeClasses} timeout={durations.get(duration)} {...props}>
       {children}
     </CSSTransition>
   )

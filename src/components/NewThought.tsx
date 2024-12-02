@@ -74,7 +74,7 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
   }, [dispatch, distance, path, value])
 
   return show ? (
-    <ul className={css({ transition: `all {durations.slowDuration} ease-out`, marginTop: 0 })}>
+    <ul className={css({ transition: `all {durations.slow} ease-out`, marginTop: 0 })}>
       <li className={child()}>
         {type === 'bullet' ? <span className={bullet()} /> : null}
         <div className={thought()}>

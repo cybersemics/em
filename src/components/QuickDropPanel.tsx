@@ -14,7 +14,7 @@ const QuickDropPanel = () => {
   const quickDropPanelRef = useRef<HTMLDivElement>(null)
 
   return (
-    <SlideTransition duration='fastDuration' nodeRef={quickDropPanelRef} in={isDragging} from='right' unmountOnExit>
+    <SlideTransition duration='fast' nodeRef={quickDropPanelRef} in={isDragging} from='right' unmountOnExit>
       <div
         ref={quickDropPanelRef}
         className={css({ position: 'fixed', right: 0, top: '20vh', zIndex: 'popup' })}
