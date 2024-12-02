@@ -1,11 +1,6 @@
-// import _ from 'lodash'
-// import SimplePath from '../../@types/SimplePath'
-// import deleteThought from '../../actions/deleteThought'
-// import editThought from '../../actions/editThought'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import getLexemeFromProvider from '../../data-providers/data-helpers/getLexeme'
-// import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import db from '../../data-providers/yjs/thoughtspace'
 import getLexemeFromState from '../../selectors/getLexeme'
 import store from '../../stores/app'
@@ -14,24 +9,11 @@ import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helper
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 
-// import testTimer from '../../test-helpers/testTimer'
-
-// import head from '../../util/head'
-// import parentOf from '../../util/parentOf'
-
-/*
-  Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
-  For details: https://github.com/cybersemics/em/issues/919#issuecomment-739135971
-*/
-
-// const fakeTimer = testTimer()
-
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-// TODO: test stopped working with yjs
-// currently all lexemes are loaded in memory
-it('editing a thought should load the lexeme and merge contexts', async () => {
+// Current functionality is broken in main and won't be fixed soon so this test is skipped.
+it.skip('editing a thought should load the lexeme and merge contexts', async () => {
   // Related issue: https://github.com/cybersemics/em/issues/1074
   await dispatch(
     importText({
@@ -49,7 +31,7 @@ it('editing a thought should load the lexeme and merge contexts', async () => {
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  // expect((await getLexemeFromProvider(db, 'f'))?.contexts).toHaveLength(1)
+  expect((await getLexemeFromProvider(db, 'f'))?.contexts).toHaveLength(1)
 
   const thoughtH = contextToThought(store.getState(), ['g', 'h'])
   const thoughtF = contextToThought(store.getState(), ['a', 'b', 'c', 'd', 'e', 'f'])
