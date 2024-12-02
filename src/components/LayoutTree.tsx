@@ -10,7 +10,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { isSafari, isTouch } from '../browser'
+import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useSortedContext from '../hooks/useSortedContext'
@@ -31,6 +31,7 @@ import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
+import hideCaret, { getHideCaretAnimationName } from '../util/getHideCaretAnimationName'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
@@ -880,45 +881,8 @@ const LayoutTree = () => {
 
   return (
     <div
-      className={css({
-        animationDuration: '{durations.layoutSlowShiftDuration}',
-        // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
-        animationName:
-          isTouch && isSafari()
-            ? indentDepth % 16 === 0
-              ? 'hideCaret0'
-              : indentDepth % 16 === 1
-                ? 'hideCaret1'
-                : indentDepth % 16 === 2
-                  ? 'hideCaret2'
-                  : indentDepth % 16 === 3
-                    ? 'hideCaret3'
-                    : indentDepth % 16 === 4
-                      ? 'hideCaret4'
-                      : indentDepth % 16 === 5
-                        ? 'hideCaret5'
-                        : indentDepth % 16 === 6
-                          ? 'hideCaret6'
-                          : indentDepth % 16 === 7
-                            ? 'hideCaret7'
-                            : indentDepth % 16 === 8
-                              ? 'hideCaret8'
-                              : indentDepth % 16 === 9
-                                ? 'hideCaret9'
-                                : indentDepth % 16 === 10
-                                  ? 'hideCaretA'
-                                  : indentDepth % 16 === 11
-                                    ? 'hideCaretB'
-                                    : indentDepth % 16 === 12
-                                      ? 'hideCaretC'
-                                      : indentDepth % 16 === 13
-                                        ? 'hideCaretD'
-                                        : indentDepth % 16 === 14
-                                          ? 'hideCaretE'
-                                          : 'hideCaretF'
-            : undefined,
-        marginTop: '0.501em',
-      })}
+      // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
+      className={hideCaret({ animation: getHideCaretAnimationName(indentDepth) })}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
         transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
