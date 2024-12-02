@@ -277,7 +277,6 @@ export default defineConfig({
     extend: {
       keyframes,
       tokens: {
-        animations: hideCaretAnimationNames.reduce((accum, value) => ({ ...accum, [value]: { value } }), {}),
         colors: colorTokens,
         fontSizes: {
           sm: {
