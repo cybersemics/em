@@ -2,7 +2,7 @@ import React, { FC, useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
-import { anchorButton } from '../../styled-system/recipes'
+import { anchorButtonRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator } from '../actions/alert'
 import { redoActionCreator as redo } from '../actions/redo'
@@ -41,7 +41,7 @@ const Alert: FC = () => {
   const buttons = undoOrRedo ? (
     <div className={css({ marginTop: '0.5em' })}>
       <a
-        className={cx(anchorButton({ small: true, isDisabled: !undoEnabled }), css({ margin: '0.25em' }))}
+        className={cx(anchorButtonRecipe({ small: true, isDisabled: !undoEnabled }), css({ margin: '0.25em' }))}
         {...fastClick(() => {
           dispatch(undo())
         })}
@@ -54,7 +54,7 @@ const Alert: FC = () => {
         Undo
       </a>
       <a
-        className={cx(anchorButton({ small: true, isDisabled: !redoEnabled }), css({ margin: '0.25em' }))}
+        className={cx(anchorButtonRecipe({ small: true, isDisabled: !redoEnabled }), css({ margin: '0.25em' }))}
         {...fastClick(() => {
           dispatch(redo())
         })}

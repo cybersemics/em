@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { child, invalidOption as invalidOptionRecipe } from '../../styled-system/recipes'
+import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -380,7 +380,7 @@ const ThoughtContainer = ({
           : null),
       }}
       className={cx(
-        child(),
+        childRecipe(),
         invalidOption && invalidOptionRecipe(),
         css({
           marginLeft: isDivider(value) ? '-125px' : undefined,

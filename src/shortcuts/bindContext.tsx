@@ -1,5 +1,5 @@
 import { css, cx } from '../../styled-system/css'
-import { icon } from '../../styled-system/recipes'
+import { iconRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import IconType from '../@types/IconType'
 import Shortcut from '../@types/Shortcut'
@@ -15,7 +15,7 @@ import pathToContext from '../util/pathToContext'
 const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType) => (
   <svg
     version='1.1'
-    className={cx(icon(), css(cssRaw))}
+    className={cx(iconRecipe(), css(cssRaw))}
     xmlns='http://www.w3.org/2000/svg'
     width={size}
     height={size}

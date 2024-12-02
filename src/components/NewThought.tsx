@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { anchorButton, bullet, child, thought } from '../../styled-system/recipes'
+import { anchorButtonRecipe, bulletRecipe, childRecipe, thoughtRecipe } from '../../styled-system/recipes'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
@@ -75,9 +75,9 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
 
   return show ? (
     <ul className={css({ transition: `all {durations.slow} ease-out`, marginTop: 0 })}>
-      <li className={child()}>
-        {type === 'bullet' ? <span className={bullet()} /> : null}
-        <div className={thought()}>
+      <li className={childRecipe()}>
+        {type === 'bullet' ? <span className={bulletRecipe()} /> : null}
+        <div className={thoughtRecipe()}>
           <a
             className={
               type === 'bullet'
@@ -86,7 +86,7 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
                     color: 'dim',
                   })
                 : cx(
-                    anchorButton({
+                    anchorButtonRecipe({
                       variableWidth: true,
                     }),
                     /* TODO: Fix the markup rather than overriding the margin; */

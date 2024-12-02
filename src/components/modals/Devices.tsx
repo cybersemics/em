@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
-import { anchorButton, extendTap, modalText } from '../../../styled-system/recipes'
+import { anchorButtonRecipe, extendTapRecipe, modalTextRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
@@ -141,7 +141,7 @@ const AddDeviceForm = ({
         <a
           {...fastClick(() => onSubmit({ name, role: 'owner' }))}
           className={cx(
-            anchorButton({
+            anchorButtonRecipe({
               outline: true,
             }),
             css({ display: 'inline-block' }),
@@ -257,7 +257,7 @@ const ShareList = React.forwardRef<
                     <a
                       {...fastClick(() => setShowDeviceForm(true))}
                       className={cx(
-                        anchorButton({
+                        anchorButtonRecipe({
                           outline: true,
                         }),
                         css({ display: 'inline-block' }),
@@ -470,7 +470,7 @@ const ShareDetail = React.memo(
             <a
               {...fastClick(onBack)}
               className={cx(
-                anchorButton({
+                anchorButtonRecipe({
                   actionButton: true,
                   // extendTap overrides default button padding
                   extendTap: true,
@@ -497,7 +497,7 @@ const ShareDetail = React.memo(
                 permissionsModel.delete(accessToken, share)
                 onBack()
               }}
-              className={cx(extendTap(), css({ color: 'red' }))}
+              className={cx(extendTapRecipe(), css({ color: 'red' }))}
             >
               {isLastDevice ? 'Delete all thoughts' : 'Remove device'}
             </a>
@@ -519,7 +519,7 @@ const ModalDevices = () => {
 
   const onBack = useCallback(() => setSelected(null), [])
 
-  const modalClasses = modalText()
+  const modalClasses = modalTextRecipe()
   return (
     <ModalComponent
       id='devices'

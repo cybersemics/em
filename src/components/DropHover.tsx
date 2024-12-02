@@ -1,7 +1,7 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { dropHover } from '../../styled-system/recipes'
+import { dropHoverRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
@@ -39,7 +39,7 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
   return (
     <span
       className={cx(
-        dropHover({ insideDivider }),
+        dropHoverRecipe({ insideDivider }),
         css({
           /* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
           /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */

@@ -1,7 +1,7 @@
 import React, { FC, MutableRefObject, useCallback, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { toolbarPointerEvents } from '../../styled-system/recipes'
+import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/IconType'
@@ -174,7 +174,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       title={`${shortcut.label}${(shortcut.keyboard ?? shortcut.overlay?.keyboard) ? ` (${formatKeyboardShortcut((shortcut.keyboard ?? shortcut.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
       className={cx(
         // Override the Toolbar's pointer-events: none to restore pointer behavior.
-        toolbarPointerEvents({ override: true }),
+        toolbarPointerEventsRecipe({ override: true }),
         css({
           display: 'inline-block',
           padding: '14px 8px 5px 8px',

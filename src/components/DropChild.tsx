@@ -1,7 +1,7 @@
 import React from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { dropEnd, dropHover } from '../../styled-system/recipes'
+import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -42,7 +42,7 @@ const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) =
     <li className={css({ position: 'relative' })}>
       <span
         className={cx(
-          dropEnd(),
+          dropEndRecipe(),
           css({
             zIndex: 'dropEmpty',
             backgroundColor: testFlags.simulateDrop ? 'dropChildTarget' : undefined,
@@ -74,7 +74,7 @@ const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) =
         {(testFlags.simulateDrag || isHovering) && (
           <span
             className={cx(
-              dropHover({ insideDropEnd: true, insideDivider: isDivider(value) }),
+              dropHoverRecipe({ insideDropEnd: true, insideDivider: isDivider(value) }),
               css({
                 // offset drop-end (above) and add 0.25em to slightly  exaggerate the indentation for better drop perception.
                 marginLeft: isTouch ? 'calc(-33% - 8px)' : 'calc(-2em - 10px)',

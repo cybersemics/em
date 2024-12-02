@@ -1,7 +1,7 @@
 import { ChangeEventHandler, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { button } from '../../../styled-system/recipes'
+import { buttonRecipe } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
@@ -157,7 +157,7 @@ const ModalSignup = () => {
               )}
               <button
                 disabled={isSubmitting}
-                className={cx(button(), css({ textDecoration: 'underline', marginTop: 15 }))}
+                className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
                 {...fastClick(() => dispatch(showModal({ id: 'auth' })))}
               >
                 Log in

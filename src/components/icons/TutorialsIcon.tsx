@@ -1,6 +1,6 @@
 import { FC } from 'react'
 import { css, cx } from '../../../styled-system/css'
-import { icon } from '../../../styled-system/recipes'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/IconType'
 
@@ -11,7 +11,7 @@ const TutorialsIcon: FC<Icon> = ({ cssRaw, fill, style, size = 20 }) => {
       x='0'
       y='0'
       viewBox='90 100 600 600'
-      className={cx(icon(), css(cssRaw))}
+      className={cx(iconRecipe(), css(cssRaw))}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

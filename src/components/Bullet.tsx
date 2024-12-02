@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
-import { bullet } from '../../styled-system/recipes'
+import { bulletRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -575,7 +575,7 @@ const Bullet = ({
       aria-label='bullet'
       data-highlighted={isHighlighted}
       className={cx(
-        bullet({ invalid }),
+        bulletRecipe({ invalid }),
         css({
           _mobile: {
             marginRight: showContexts ? '-1.5px' : undefined,
