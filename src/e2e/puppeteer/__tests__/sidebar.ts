@@ -42,13 +42,14 @@ describe('sidebar', () => {
     await openSidebar()
     await click('[data-testid=sidebar-recentEdited]')
 
-    expect(await screenshotWithoutToolbar()).toMatchImageSnapshot({
+    await hideVisibility('[data-testid="toolbar-icon"]')
+    expect(await screenshot()).toMatchImageSnapshot({
       customSnapshotIdentifier: 'sidebar-recently-edited',
     })
 
     await setTheme('Light')
 
-    expect(await screenshotWithoutToolbar()).toMatchImageSnapshot({
+    expect(await screenshot()).toMatchImageSnapshot({
       customSnapshotIdentifier: 'sidebar-recently-edited-light',
     })
   })
