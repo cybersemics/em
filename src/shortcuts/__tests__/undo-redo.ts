@@ -1,4 +1,3 @@
-import { act } from 'react'
 import { archiveThoughtActionCreator as archiveThought } from '../../actions/archiveThought'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { cursorBackActionCreator as cursorBack } from '../../actions/cursorBack'
@@ -163,13 +162,7 @@ describe('undo', () => {
 
   // TODO
   it.skip('persists undo thought change', async () => {
-    /**
-     * Note: we can't use await with initialize as that results in a timeout error. It's handled using the usetestTimer from Sinon.
-     * More on that here - https://github.com/cybersemics/em/issues/919#issuecomment-739135971.
-     */
-    initialize()
-
-    timer.useFakeTimer()
+    await initialize()
 
     appStore.dispatch([
       importText({
@@ -181,15 +174,10 @@ describe('undo', () => {
       newThought({ value: 'alpha', insertNewSubthought: true }),
       undo(),
     ])
-    await timer.runAllAsync()
-
-    timer.useRealTimer()
 
     // clear and call initialize again to reload from local db (simulating page refresh)
     appStore.dispatch(clear())
-    timer.useFakeTimer()
     initialize()
-    await timer.runAllAsync()
 
     const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
 
