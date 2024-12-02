@@ -1,6 +1,7 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import durationsConfig from './src/durations.config'
+import hideCaretAnimationNames from './src/hideCaret.config'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
@@ -153,22 +154,7 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
-  hideCaret0: hideCaret,
-  hideCaret1: hideCaret,
-  hideCaret2: hideCaret,
-  hideCaret3: hideCaret,
-  hideCaret4: hideCaret,
-  hideCaret5: hideCaret,
-  hideCaret6: hideCaret,
-  hideCaret7: hideCaret,
-  hideCaret8: hideCaret,
-  hideCaret9: hideCaret,
-  hideCaretA: hideCaret,
-  hideCaretB: hideCaret,
-  hideCaretC: hideCaret,
-  hideCaretD: hideCaret,
-  hideCaretE: hideCaret,
-  hideCaretF: hideCaret,
+  ...hideCaretAnimationNames.reduce((accum, name) => ({ ...accum, [name]: hideCaret }), {}),
 })
 
 const globalCss = defineGlobalStyles({
