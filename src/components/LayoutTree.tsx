@@ -881,40 +881,41 @@ const LayoutTree = () => {
   return (
     <div
       className={css({
+        animationDuration: '{durations.layoutSlowShiftDuration}',
         // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
-        animation:
+        animationName:
           isTouch && isSafari()
             ? indentDepth % 16 === 0
-              ? 'hideCaret0 {durations.layoutSlowShiftDuration} linear'
+              ? 'hideCaret0'
               : indentDepth % 16 === 1
-                ? 'hideCaret1 {durations.layoutSlowShiftDuration} linear'
+                ? 'hideCaret1'
                 : indentDepth % 16 === 2
-                  ? 'hideCaret2 {durations.layoutSlowShiftDuration} linear'
+                  ? 'hideCaret2'
                   : indentDepth % 16 === 3
-                    ? 'hideCaret3 {durations.layoutSlowShiftDuration} linear'
+                    ? 'hideCaret3'
                     : indentDepth % 16 === 4
-                      ? 'hideCaret4 {durations.layoutSlowShiftDuration} linear'
+                      ? 'hideCaret4'
                       : indentDepth % 16 === 5
-                        ? 'hideCaret5 {durations.layoutSlowShiftDuration} linear'
+                        ? 'hideCaret5'
                         : indentDepth % 16 === 6
-                          ? 'hideCaret6 {durations.layoutSlowShiftDuration} linear'
+                          ? 'hideCaret6'
                           : indentDepth % 16 === 7
-                            ? 'hideCaret7 {durations.layoutSlowShiftDuration} linear'
+                            ? 'hideCaret7'
                             : indentDepth % 16 === 8
-                              ? 'hideCaret8 {durations.layoutSlowShiftDuration} linear'
+                              ? 'hideCaret8'
                               : indentDepth % 16 === 9
-                                ? 'hideCaret9 {durations.layoutSlowShiftDuration} linear'
+                                ? 'hideCaret9'
                                 : indentDepth % 16 === 10
-                                  ? 'hideCaretA {durations.layoutSlowShiftDuration} linear'
+                                  ? 'hideCaretA'
                                   : indentDepth % 16 === 11
-                                    ? 'hideCaretB {durations.layoutSlowShiftDuration} linear'
+                                    ? 'hideCaretB'
                                     : indentDepth % 16 === 12
-                                      ? 'hideCaretC {durations.layoutSlowShiftDuration} linear'
+                                      ? 'hideCaretC'
                                       : indentDepth % 16 === 13
-                                        ? 'hideCaretD {durations.layoutSlowShiftDuration} linear'
+                                        ? 'hideCaretD'
                                         : indentDepth % 16 === 14
-                                          ? 'hideCaretE {durations.layoutSlowShiftDuration} linear'
-                                          : 'hideCaretF {durations.layoutSlowShiftDuration} linear'
+                                          ? 'hideCaretE'
+                                          : 'hideCaretF'
             : undefined,
         marginTop: '0.501em',
       })}
