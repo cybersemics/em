@@ -221,7 +221,7 @@ const AppComponent: FC = () => {
                   backgroundClip: 'padding-box',
                   userSelect: 'none',
                   '&:hover': {
-                    transition: 'all 0.2s ease-out',
+                    transition: 'all {durations.fast} ease-out',
                   },
                   '&.horizontal': {
                     height: '11px',

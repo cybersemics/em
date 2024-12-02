@@ -21,18 +21,22 @@ const openSidebar = async () => {
 }
 
 /** Screenshot without the toolbar. */
-const screenshotWithoutToolbar = async () => {
+const screenshotWithoutToolbarIcons = async () => {
   await hideVisibility('[data-testid="toolbar-icon"]')
   return screenshot()
 }
 
 describe('sidebar', () => {
-  it('empty sidebar on dark theme', async () => {
+  it('empty sidebar', async () => {
     await openSidebar()
 
-    expect(await screenshotWithoutToolbar()).toMatchImageSnapshot({ customSnapshotIdentifier: 'sidebar-empty' })
+    expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot({ customSnapshotIdentifier: 'sidebar-empty' })
+
     await setTheme('Light')
-    expect(await screenshotWithoutToolbar()).toMatchImageSnapshot({ customSnapshotIdentifier: 'sidebar-empty-light' })
+
+    expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot({
+      customSnapshotIdentifier: 'sidebar-empty-light',
+    })
   })
 
   it('recently edited thoughts', async () => {
@@ -42,14 +46,13 @@ describe('sidebar', () => {
     await openSidebar()
     await click('[data-testid=sidebar-recentEdited]')
 
-    await hideVisibility('[data-testid="toolbar-icon"]')
-    expect(await screenshot()).toMatchImageSnapshot({
+    expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot({
       customSnapshotIdentifier: 'sidebar-recently-edited',
     })
 
     await setTheme('Light')
 
-    expect(await screenshot()).toMatchImageSnapshot({
+    expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot({
       customSnapshotIdentifier: 'sidebar-recently-edited-light',
     })
   })
