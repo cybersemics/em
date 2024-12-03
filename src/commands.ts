@@ -92,14 +92,14 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | string): string =
     arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
   )
 }
-/** Initializes shortcut indices and stores conflicts. */
+/** Initializes command indices and stores conflicts. */
 const index = (): {
-  shortcutKeyIndex: Index<Command>
-  shortcutIdIndex: Index<Command>
-  shortcutGestureIndex: Index<Command>
+  commandKeyIndex: Index<Command>
+  commandIdIndex: Index<Command>
+  commandGestureIndex: Index<Command>
 } => {
-  // index shortcuts for O(1) lookup by keyboard
-  const shortcutKeyIndex: Index<Command> = keyValueBy(globalCommands, (command, i, accum) => {
+  // index commands for O(1) lookup by keyboard
+  const commandKeyIndex: Index<Command> = keyValueBy(globalCommands, (command, i, accum) => {
     if (!command.keyboard) return null
 
     const hash = hashCommand(command)
@@ -112,7 +112,7 @@ const index = (): {
     }
 
     return {
-      // if there is a conflict, append the shortcut id to the conflicts property so that the conflicts can be displayed to the user
+      // if there is a conflict, append the command id to the conflicts property so that the conflicts can be displayed to the user
       [hash]: conflict
         ? {
             ...command,
@@ -122,16 +122,16 @@ const index = (): {
     }
   })
 
-  // index shortcuts for O(1) lookup by id
-  const shortcutIdIndex: Index<Command> = keyValueBy(globalCommands, command =>
+  // index command for O(1) lookup by id
+  const commandIdIndex: Index<Command> = keyValueBy(globalCommands, command =>
     command.id ? { [command.id]: command } : null,
   )
 
-  // index shortcuts for O(1) lookup by gesture
-  const shortcutGestureIndex: Index<Command> = keyValueBy(globalCommands, command =>
+  // index command for O(1) lookup by gesture
+  const commandGestureIndex: Index<Command> = keyValueBy(globalCommands, command =>
     command.gesture
       ? {
-          // shortcut.gesture may be a string or array of strings
+          // command.gesture may be a string or array of strings
           // normalize intro array of strings
           ...keyValueBy(Array.prototype.concat([], command.gesture), gesture => ({
             [gesture]: command,
@@ -140,12 +140,16 @@ const index = (): {
       : null,
   )
 
-  return { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex }
+  return {
+    commandKeyIndex,
+    commandIdIndex,
+    commandGestureIndex,
+  }
 }
 
 let commandPaletteGesture: number | undefined
 
-const { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex } = index()
+const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 
 /**
  * Keyboard and gesture handlers factory function that binds the store to event handlers.
@@ -156,9 +160,9 @@ const { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex } = index()
  *
  * There is no automated test coverage since timers are so messed up in the current Jest version. It may be possible to write tests if Jest is upgraded. Manual test cases.
  * - Basic gesture hint.
- * - Preserve gesture hint for valid shortcut.
+ * - Preserve gesture hint for valid command.
  * - Only show "Cancel gesture" if gesture hint is already activated.
- * - Dismiss gesture hint after release for invalid shortcut.
+ * - Dismiss gesture hint after release for invalid command.
  * - command palette  on hold.
  * - command palette  from invalid gesture (e.g. ←↓, hold, ←↓←).
  * - Change command palette  to basic gesture hint on gesture end.
@@ -171,7 +175,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     if (state.showModal || state.dragInProgress) return
 
-    const shortcut = shortcutGestureIndex[sequence as string]
+    const command = commandGestureIndex[sequence as string]
 
     // basic gesture hint (training mode only)
     if (
@@ -179,16 +183,16 @@ export const inputHandlers = (store: Store<State, any>) => ({
       // only show basic gesture hint if the command palette is not already being shown
       !state.showCommandPalette &&
       // ignore back
-      shortcut?.id !== 'cursorBack' &&
+      command?.id !== 'cursorBack' &&
       // ignore forward
-      shortcut?.id !== 'cursorForward' &&
+      command?.id !== 'cursorForward' &&
       // only show
-      (shortcut || state.alert?.alertType === AlertType.GestureHint)
+      (command || state.alert?.alertType === AlertType.GestureHint)
     ) {
       store.dispatch(
-        // alert the shortcut label if it is a valid gesture
+        // alert the command label if it is a valid gesture
         // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
-        alert(shortcut ? shortcut?.label : GESTURE_CANCEL_ALERT_TEXT, {
+        alert(command ? command?.label : GESTURE_CANCEL_ALERT_TEXT, {
           alertType: AlertType.GestureHint,
           clearDelay: 5000,
           showCloseLink: false,
@@ -217,14 +221,14 @@ export const inputHandlers = (store: Store<State, any>) => ({
   handleGestureEnd: ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
     const state = store.getState()
 
-    // Get the shortcut from the shortcut gesture index.
+    // Get the command from the command gesture index.
     // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
     const command =
-      !state.showCommandPalette || !shortcutGestureIndex[sequence as string]?.hideFromHelp
-        ? shortcutGestureIndex[sequence as string]
+      !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
+        ? commandGestureIndex[sequence as string]
         : null
 
-    // execute shortcut
+    // execute command
     // do not execute when modal is displayed or a drag is in progress
     if (command && !state.showModal && !state.dragInProgress) {
       commandEmitter.trigger('command', command)
@@ -250,7 +254,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
           } else {
             dispatch(
               alert(
-                // clear alert if gesture is cancelled (no shortcut)
+                // clear alert if gesture is cancelled (no command)
                 // clear alert if back/forward
                 !experienceMode && command && command?.id !== 'cursorForward' && command?.id !== 'cursorBack'
                   ? command.label
@@ -295,26 +299,26 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // disable if command palette is displayed
     if (state.showCommandPalette) return
 
-    const command = shortcutKeyIndex[hashKeyDown(e)]
+    const command = commandKeyIndex[hashKeyDown(e)]
 
-    // disable if modal is shown, except for navigation shortcuts
+    // disable if modal is shown, except for navigation commands
     if (!command || (state.showModal && !command.allowExecuteFromModal)) return
 
-    // execute the shortcut
+    // execute the command
     commandEmitter.trigger('command', command)
 
     if (!command.canExecute || command.canExecute(store.getState())) {
       if (!command.permitDefault) e.preventDefault()
 
-      // execute shortcut
+      // execute command
       executeCommandWithMulticursor(command, { event: e, type: 'keyboard', store })
     }
   },
 })
 
-/** Gets the canonical gesture of the shortcut as a string, ignoring aliases. Returns an empty string if the shortcut does not have a gesture. */
-export const gestureString = (shortcut: Command): string =>
-  (typeof shortcut.gesture === 'string' ? shortcut.gesture : shortcut.gesture?.[0] || '') as string
+/** Gets the canonical gesture of the command as a string, ignoring aliases. Returns an empty string if the command does not have a gesture. */
+export const gestureString = (command: Command): string =>
+  (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string
 
 /** Get a command by its id. */
-export const commandById = (id: CommandId): Command => shortcutIdIndex[id]
+export const commandById = (id: CommandId): Command => commandIdIndex[id]
