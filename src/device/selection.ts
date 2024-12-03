@@ -73,8 +73,7 @@ export const isThought = (): boolean => {
 /** Returns true if the selection is on a thought. */
 export const isOnThought = (): boolean => {
   let focusNode = window.getSelection()?.focusNode
-  if (!focusNode) return false
-  while ((focusNode as HTMLElement)?.tagName !== 'DIV') {
+  while (focusNode && (focusNode as HTMLElement)?.tagName !== 'DIV') {
     if (isEditable(focusNode)) return true
     focusNode = focusNode?.parentNode
   }
@@ -408,7 +407,7 @@ const removeEmptyElementsRecursively = (element: HTMLElement, remainText: string
 
 /** Returns the selection html, or null if there is no selection. */
 export const html = () => {
-  const selection = document.getSelection()
+  const selection = document?.getSelection()
   if (!selection || selection.rangeCount === 0) return null
   const range = selection?.getRangeAt(0)
 

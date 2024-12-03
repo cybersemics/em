@@ -16,7 +16,10 @@ import { editThoughtActionCreator as editThought } from './editThought'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
-  (command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor', color?: ColorToken): Thunk =>
+  (
+    command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'code' | 'foreColor' | 'backColor',
+    color?: ColorToken,
+  ): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     if (!state.cursor) return
