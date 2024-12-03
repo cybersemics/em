@@ -13,7 +13,7 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
-import ShortcutType from '../@types/Command'
+import CommandType from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
@@ -30,7 +30,7 @@ import TriangleRight from './TriangleRight'
 interface ToolbarProps {
   // places the toolbar into customize mode where buttons can be dragged and dropped.
   customize?: boolean
-  onSelect?: (shortcut: ShortcutType) => void
+  onSelect?: (shortcut: CommandType) => void
   selected?: CommandId
 }
 

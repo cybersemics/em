@@ -1,13 +1,13 @@
 import React from 'react'
 import { GestureResponderEvent } from 'react-native'
 import CommandId from './CommandId'
+import CommandType from './CommandType'
 import Dispatch from './Dispatch'
 import GesturePath from './GesturePath'
 import IconType from './IconType'
 import Key from './Key'
 import MulticursorFilter from './MulticursorFilter'
 import Path from './Path'
-import ShortcutType from './ShortcutType'
 import State from './State'
 
 interface Command {
@@ -35,7 +35,7 @@ interface Command {
     dispatch: Dispatch,
     getState: () => State,
     e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent | React.ClipboardEvent,
-    { type }: { type: ShortcutType },
+    { type }: { type: CommandType },
   ) => void | Promise<void>
 
   /** A MultiGesture sequence to activate the command on touch screens. */
@@ -92,7 +92,7 @@ interface Command {
           dispatch: Dispatch,
           getState: () => State,
           e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
-          { type }: { type: ShortcutType },
+          { type }: { type: CommandType },
           execAll: () => void,
         ) => void
         /** Prevent the cursor from being set back at the end of the command execution. */

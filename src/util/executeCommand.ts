@@ -1,9 +1,9 @@
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
 import Command from '../@types/Command'
+import CommandType from '../@types/CommandType'
 import MulticursorFilter from '../@types/MulticursorFilter'
 import Path from '../@types/Path'
-import ShortcutType from '../@types/ShortcutType'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
@@ -23,7 +23,7 @@ import UnreachableError from './unreachable'
 
 interface Options {
   store?: Store<State, any>
-  type?: ShortcutType
+  type?: CommandType
   event?: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent
 }
 
