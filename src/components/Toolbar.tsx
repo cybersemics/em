@@ -30,7 +30,7 @@ import TriangleRight from './TriangleRight'
 interface ToolbarProps {
   // places the toolbar into customize mode where buttons can be dragged and dropped.
   customize?: boolean
-  onSelect?: (shortcut: CommandType) => void
+  onSelect?: (command: CommandType) => void
   selected?: CommandId
 }
 
@@ -173,9 +173,9 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
   // custom user toolbar
   // fall back to defaults if user does not have Settings defined
-  const shortcutIds = useSelector(state => {
-    const userShortcutIds = getUserToolbar(state)
-    return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_COMMANDS
+  const commandIds = useSelector(state => {
+    const userCommandIds = getUserToolbar(state)
+    return userCommandIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_COMMANDS
   }, shallowEqual)
 
   const onTapUp = useCallback(
@@ -278,7 +278,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             data-scroll-at-edge={customize}
             onScroll={onScroll}
           >
-            {shortcutIds.map(id => {
+            {commandIds.map(id => {
               return (
                 <ToolbarButton
                   customize={customize}
@@ -290,7 +290,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                   onTapUp={onTapUp}
                   onMouseLeave={deselectPressingToolbarId}
                   selected={selected === id}
-                  shortcutId={id}
+                  commandId={id}
                 />
               )
             })}

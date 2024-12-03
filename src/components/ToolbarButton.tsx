@@ -26,7 +26,7 @@ export interface ToolbarButtonProps {
   onTapUp?: (id: CommandId, e: React.MouseEvent | React.TouchEvent) => void
   onMouseLeave?: () => void
   selected?: boolean
-  shortcutId: CommandId
+  commandId: CommandId
   animated?: boolean
 }
 
@@ -41,7 +41,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   onTapUp,
   onMouseLeave,
   selected,
-  shortcutId,
+  commandId: shortcutId,
 }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
