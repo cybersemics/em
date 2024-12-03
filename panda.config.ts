@@ -294,7 +294,7 @@ export default defineConfig({
             'toolbarArrow',
             'toolbar',
             'navbar',
-            'latestShortcuts',
+            'latestCommands',
             'tutorialTraceGesture',
             'dropEmpty',
             'subthoughtsDropEnd',

@@ -32,7 +32,7 @@ const LatestCommandsDiagram: FC<{ position?: 'middle' | 'bottom' }> = ({ positio
             width: '100%',
             display: 'flex',
             justifyContent: 'center',
-            zIndex: 'latestShortcuts',
+            zIndex: 'latestCommands',
             pointerEvents: 'none',
             ...(position === 'middle' && { top: '30%' }),
             ...(position === 'bottom' && { bottom: '20%' }),
