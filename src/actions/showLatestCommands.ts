@@ -21,7 +21,7 @@ const clearTimer = () => {
 /**
  * Adds latest shortcuts diagram to be shown in the screen. Also clears after certain interval.
  */
-export const showLatestShortcutsActionCreator =
+export const showLatestCommandsActionCreator =
   (shortcut?: Command, { clear }: Options = {}): Thunk =>
   (dispatch, getState) => {
     if (clear) {

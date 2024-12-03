@@ -1,6 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-
-/** Defines global keyboard shortcuts and gestures. */
 import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
@@ -13,7 +11,7 @@ import Key from './@types/Key'
 import State from './@types/State'
 import { alertActionCreator as alert } from './actions/alert'
 import { commandPaletteActionCreator as commandPalette } from './actions/commandPalette'
-import { showLatestShortcutsActionCreator as showLatestShortcuts } from './actions/showLatestShortcuts'
+import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
@@ -231,7 +229,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     if (shortcut && !state.showModal && !state.dragInProgress) {
       shortcutEmitter.trigger('shortcut', shortcut)
       executeShortcutWithMulticursor(shortcut, { event: e, type: 'gesture', store })
-      if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestShortcuts(shortcut))
+      if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(shortcut))
     }
 
     // clear gesture hint
