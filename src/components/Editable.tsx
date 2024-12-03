@@ -19,6 +19,7 @@ import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isTouch } from '../browser'
+import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -40,7 +41,6 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
-import { shortcutEmitter } from '../shortcuts'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import storageModel from '../stores/storageModel'
@@ -296,13 +296,13 @@ const Editable = ({
   useEffect(() => {
     /** Flushes pending edits. */
     const flush = () => throttledChangeRef.current.flush()
-    shortcutEmitter.on('shortcut', flush)
+    commandEmitter.on('command', flush)
 
     // flush edits and remove handler on unmount
     return () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
       throttledChangeRef.current.flush()
-      shortcutEmitter.off('shortcut', flush)
+      commandEmitter.off('command', flush)
     }
   }, [])
 

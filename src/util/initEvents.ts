@@ -10,11 +10,11 @@ import { dragInProgressActionCreator as dragInProgress } from '../actions/dragIn
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
+import { inputHandlers } from '../commands'
 import { AlertText, AlertType } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
-import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -185,7 +185,7 @@ const initEvents = (store: Store<State, any>) => {
     const state = store.getState()
     const target = e.target as HTMLElement
 
-    if (state.dragShortcut) {
+    if (state.dragCommand) {
       const x = e.touches[0].clientX
       if (x < TOOLBAR_SCROLLATEDGE_SIZE) {
         const rate = 1 + ((TOOLBAR_SCROLLATEDGE_SIZE - x) * TOOLBAR_SCROLLATEDGE_SPEED) / TOOLBAR_SCROLLATEDGE_SIZE

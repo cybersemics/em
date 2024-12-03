@@ -4,10 +4,10 @@ import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
+import { commandById, formatKeyboardShortcut } from '../commands'
 import GestureDiagram from '../components/GestureDiagram'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 
-const toggleContextViewShortcut = shortcutById('toggleContextView')
+const toggleContextViewShortcut = commandById('toggleContextView')
 
 /** A message that explains that the thought is no other contexts and provides a hint for adding it to a context. */
 const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean; simplePath: SimplePath }) => {

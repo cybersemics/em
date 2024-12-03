@@ -10,7 +10,7 @@ import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
 import ActionButton from './../ActionButton'
-import ShortcutTable from './../ShortcutTable'
+import CommandTable from './../CommandTable'
 import CommandLibraryIcon from './../icons/CommandLibraryIcon'
 import MetaIcon from './../icons/MetaIcon'
 import TutorialsIcon from './../icons/TutorialsIcon'
@@ -122,8 +122,8 @@ const Tutorials = () => {
   )
 }
 
-/** A help section to view all gestures, shortcuts, and toolbar buttons. */
-const CommandCenter = () => <ShortcutTable />
+/** A help section to view all gestures, commands, and toolbar buttons. */
+const CommandCenter = () => <CommandTable />
 
 /** List the valid values for a metaprogramming attribute. */
 const Options = ({ options }: { options: string[] }) => (
@@ -380,7 +380,7 @@ const About = () => {
   )
 }
 
-/** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
+/** A modal that offers links to the tutorial, a list of commands, and other helpful things. */
 const ModalHelp = () => {
   const [section, setSection] = useState(Section.Menu)
   const fontSize = useSelector(state => state.fontSize)

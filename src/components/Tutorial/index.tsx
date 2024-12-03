@@ -6,6 +6,7 @@ import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { isTouch } from '../../browser'
+import { commandById } from '../../commands'
 import {
   TUTORIAL2_STEP_CONTEXT1_HINT,
   TUTORIAL2_STEP_CONTEXT1_PARENT_HINT,
@@ -26,7 +27,6 @@ import {
 import useIsVisible from '../../hooks/useIsVisible'
 import getSetting from '../../selectors/getSetting'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
-import { shortcutById } from '../../shortcuts'
 import fastClick from '../../util/fastClick'
 import headValue from '../../util/headValue'
 import once from '../../util/once'
@@ -51,7 +51,7 @@ const WithCSSTransition = ({ component, transitionKey }: { component: FC; transi
 }
 
 // assert shortcut at load time
-const newThoughtShortcut = shortcutById('newThought')
+const newThoughtShortcut = commandById('newThought')
 if (!newThoughtShortcut) {
   throw new Error('newThought shortcut not found.')
 }
@@ -77,15 +77,15 @@ const Tutorial: FC = () => {
       tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
       tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
       tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
-        ? shortcutById('newThought')?.gesture
+        ? commandById('newThought')?.gesture
         : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
             tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ||
             tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT ||
             tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ||
             tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT
-          ? shortcutById('newSubthought')?.gesture
+          ? commandById('newSubthought')?.gesture
           : tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
-            ? shortcutById('toggleContextView')?.gesture
+            ? commandById('toggleContextView')?.gesture
             : null) || null) as GesturePath | null, // Why does it add 'string' to the type union without this?
   )
 

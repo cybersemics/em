@@ -1,10 +1,10 @@
 import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
+import { commandById, formatKeyboardShortcut } from '../../commands'
 import { TUTORIAL_CONTEXT } from '../../constants'
 import getContexts from '../../selectors/getContexts'
 import getSetting from '../../selectors/getSetting'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
-import { formatKeyboardShortcut, shortcutById } from '../../shortcuts'
 import headValue from '../../util/headValue'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -36,7 +36,7 @@ const Tutorial2StepContextViewToggle = () => {
           <p>
             {isTouch
               ? 'Trace the line below'
-              : `Hit ${formatKeyboardShortcut(shortcutById('toggleContextView')!.keyboard!)}`}{' '}
+              : `Hit ${formatKeyboardShortcut(commandById('toggleContextView')!.keyboard!)}`}{' '}
             to view the current thought's contexts.
           </p>
         </>
