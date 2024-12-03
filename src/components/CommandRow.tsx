@@ -3,10 +3,10 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import DragAndDropType from '../@types/DragAndDropType'
-import DragShortcutZone from '../@types/DragShortcutZone'
+import DragCommandZone from '../@types/DragCommandZone'
 import DragToolbarItem from '../@types/DragToolbarItem'
 import GesturePath from '../@types/GesturePath'
-import { dragShortcutActionCreator as dragShortcut } from '../actions/dragShortcut'
+import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
 import { formatKeyboardShortcut } from '../commands'
 import { noop } from '../constants'
@@ -46,11 +46,11 @@ const CommandRow = ({
   const [{ isDragging }, dragSource] = useDrag({
     type: DragAndDropType.ToolbarButton,
     item: (): DragToolbarItem => {
-      store.dispatch(dragShortcut(command?.id || null))
-      return { shortcut: command!, zone: DragShortcutZone.Remove }
+      store.dispatch(dragCommand(command?.id || null))
+      return { command: command!, zone: DragCommandZone.Remove }
     },
     canDrag: () => !!command && !!customize,
-    end: () => store.dispatch(dragShortcut(null)),
+    end: () => store.dispatch(dragCommand(null)),
     collect: (monitor: DragSourceMonitor) => {
       const item = monitor.getItem() as DragToolbarItem
 

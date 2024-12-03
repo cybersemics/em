@@ -3,7 +3,7 @@ import Alert from './Alert'
 import Command from './Command'
 import CommandId from './CommandId'
 import Context from './Context'
-import DragShortcutZone from './DragShortcutZone'
+import DragCommandZone from './DragCommandZone'
 import Index from './IndexType'
 import Modal from './Modal'
 import Patch from './Patch'
@@ -53,10 +53,10 @@ interface State {
   draggingFile?: boolean
   /** Set to the dragging thought during dragInProgress. */
   draggingThought?: SimplePath
-  /** Dragging a shortcut or toolbar button in the customizeToolbar modal. */
-  dragShortcut?: CommandId | null
+  /** Dragging a command or toolbar button in the customizeToolbar modal. */
+  dragCommand?: CommandId | null
   /** Type of toolbar-sbutton drop target being hovered over. */
-  dragShortcutZone?: DragShortcutZone
+  dragCommandZone?: DragCommandZone
   /** Set to true while the user is long pressing a thought in preparation for a drag. */
   dragHold?: boolean
   /**

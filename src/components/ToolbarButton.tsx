@@ -4,7 +4,7 @@ import { css, cx } from '../../styled-system/css'
 import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import CommandId from '../@types/CommandId'
-import DragShortcutZone from '../@types/DragShortcutZone'
+import DragCommandZone from '../@types/DragCommandZone'
 import Icon from '../@types/IconType'
 import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut } from '../commands'
@@ -61,18 +61,18 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const isShortcutActive = useSelector(state => !isActive || isActive(state))
   const isButtonActive = customize ? selected : commandState !== undefined ? commandState : isShortcutActive
 
-  const dragShortcutZone = useSelector(state => state.dragShortcutZone)
-  const isDraggingAny = useSelector(state => !!state.dragShortcut)
+  const dragCommandZone = useSelector(state => state.dragCommandZone)
+  const isDraggingAny = useSelector(state => !!state.dragCommand)
   const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(state))
 
   const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({ shortcutId, customize })
-  const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
+  const dropToRemove = isDragging && dragCommandZone === DragCommandZone.Remove
   const longPress = useToolbarLongPress({
     disabled: !customize,
     isDragging,
     shortcut,
-    sourceZone: DragShortcutZone.Toolbar,
+    sourceZone: DragCommandZone.Toolbar,
   })
   const longPressTapUp = longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']
   const longPressTapDown = longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown']

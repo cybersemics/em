@@ -5,16 +5,16 @@ import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { AlertText, AlertType } from '../constants'
 
-/** Reducer for dragging a shortcut in the customizeToolbar modal. */
-const dragShortcut = (state: State, { shortcutId }: { shortcutId: CommandId | null }) => ({
+/** Reducer for dragging a command in the customizeToolbar modal. */
+const dragCommand = (state: State, { commandId }: { commandId: CommandId | null }) => ({
   ...state,
-  dragShortcut: shortcutId,
-  ...(!shortcutId ? { dragShortcutZone: null } : null),
+  dragCommand: commandId,
+  ...(!commandId ? { dragCommandZone: null } : null),
 })
 
-/** Action-creator for dragShortcut. */
-export const dragShortcutActionCreator =
-  (shortcutId: CommandId | null): Thunk =>
+/** Action-creator for dragCommand. */
+export const dragCommandActionCreator =
+  (commandId: CommandId | null): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     const alertType = state.alert?.alertType
@@ -24,7 +24,7 @@ export const dragShortcutActionCreator =
 
     dispatch([
       // do not show the alert if the alert would cover the sticky toolbar
-      shortcutId && toolbarTop >= toolbarHeight
+      commandId && toolbarTop >= toolbarHeight
         ? alert(AlertText.DragAndDropToolbar, {
             alertType: AlertType.DragAndDropToolbarHint,
             showCloseLink: false,
@@ -34,8 +34,8 @@ export const dragShortcutActionCreator =
             alertType === AlertType.DragAndDropToolbarHint
           ? alert(null)
           : null,
-      { type: 'dragShortcut', shortcutId },
+      { type: 'dragCommand', commandId },
     ])
   }
 
-export default _.curryRight(dragShortcut)
+export default _.curryRight(dragCommand)

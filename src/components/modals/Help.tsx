@@ -122,7 +122,7 @@ const Tutorials = () => {
   )
 }
 
-/** A help section to view all gestures, shortcuts, and toolbar buttons. */
+/** A help section to view all gestures, commands, and toolbar buttons. */
 const CommandCenter = () => <CommandTable />
 
 /** List the valid values for a metaprogramming attribute. */
@@ -380,7 +380,7 @@ const About = () => {
   )
 }
 
-/** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
+/** A modal that offers links to the tutorial, a list of commands, and other helpful things. */
 const ModalHelp = () => {
   const [section, setSection] = useState(Section.Menu)
   const fontSize = useSelector(state => state.fontSize)

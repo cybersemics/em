@@ -6,11 +6,11 @@ import { css, cx } from '../../../styled-system/css'
 import { anchorButtonRecipe, extendTapRecipe, modalRecipe } from '../../../styled-system/recipes'
 import Command from '../../@types/Command'
 import DragAndDropType from '../../@types/DragAndDropType'
-import DragShortcutZone from '../../@types/DragShortcutZone'
+import DragCommandZone from '../../@types/DragCommandZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
-import { dragShortcutZoneActionCreator as dragShortcutZone } from '../../actions/dragShortcutZone'
+import { dragCommandZoneActionCreator as dragCommandZone } from '../../actions/dragCommandZone'
 import { initUserToolbarActionCreator as initUserToolbar } from '../../actions/initUserToolbar'
 import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
@@ -39,15 +39,15 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
   const [{ isHovering, sourceZone }, dropTarget] = useDrop({
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],
     drop: (item: DragToolbarItem) => {
-      dispatch(removeToolbarButton(item.shortcut.id))
+      dispatch(removeToolbarButton(item.command.id))
     },
     collect: dropCollect,
   })
-  const dragShortcut = useSelector(state => state.dragShortcut)
+  const dragCommand = useSelector(state => state.dragCommand)
 
   useEffect(() => {
-    // clear toolbar drag-and-drop alert when dragShortcut disappears
-    if (!dragShortcut) {
+    // clear toolbar drag-and-drop alert when dragCommand disappears
+    if (!dragCommand) {
       dispatch((dispatch, getState) => {
         const state = getState()
         const alertType = state.alert?.alertType
@@ -62,7 +62,7 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
       return
     }
 
-    dispatch(dragShortcutZone(isHovering ? DragShortcutZone.Remove : DragShortcutZone.Toolbar))
+    dispatch(dragCommandZone(isHovering ? DragCommandZone.Remove : DragCommandZone.Toolbar))
 
     // get the screen-relative y coordinate of the toolbar
     // do not show the alert if the toolbar is within 50px of the top of screen, otherwise it blocks the toolbar
@@ -70,24 +70,24 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
 
     if (toolbarTop < 50) {
       dispatch(alert(null))
-    } else if (sourceZone === DragShortcutZone.Remove) {
+    } else if (sourceZone === DragCommandZone.Remove) {
       dispatch(
         alert(AlertText.DragAndDropToolbarAdd, {
           alertType: AlertType.ToolbarButtonRemoveHint,
           showCloseLink: false,
         }),
       )
-    } else if (sourceZone === DragShortcutZone.Toolbar) {
+    } else if (sourceZone === DragCommandZone.Toolbar) {
       if (isHovering) {
         dispatch([
-          alert(`Drop to remove ${commandById(dragShortcut).label} from toolbar`, {
+          alert(`Drop to remove ${commandById(dragCommand).label} from toolbar`, {
             alertType: AlertType.ToolbarButtonRemoveHint,
             showCloseLink: false,
           }),
         ])
       }
     }
-  }, [dispatch, dragShortcut, isHovering, sourceZone])
+  }, [dispatch, dragCommand, isHovering, sourceZone])
 
   return (
     <div data-drop-to-remove-from-toolbar-hovering={isHovering ? '' : undefined} ref={dropTarget}>

@@ -92,7 +92,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const [rightArrowIsShown, setRightArrowIsShown] = useState(true)
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
   const [latestPress, setLatestPress] = useState(0)
-  const isDraggingAny = useSelector(state => !!state.dragShortcut)
+  const isDraggingAny = useSelector(state => !!state.dragCommand)
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3

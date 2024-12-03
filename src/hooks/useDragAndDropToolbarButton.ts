@@ -3,8 +3,8 @@ import { NativeTypes } from 'react-dnd-html5-backend'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import DragAndDropType from '../@types/DragAndDropType'
-import DragShortcutZone from '../@types/DragShortcutZone'
-import { dragShortcutActionCreator as dragShortcut } from '../actions/dragShortcut'
+import DragCommandZone from '../@types/DragCommandZone'
+import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { initUserToolbarActionCreator as initUserToolbar } from '../actions/initUserToolbar'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
@@ -22,7 +22,7 @@ const drop = (shortcutId: CommandId, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { shortcut } = monitor.getItem() as { shortcut: Command; zone: DragShortcutZone }
+  const { shortcut } = monitor.getItem() as { shortcut: Command; zone: DragCommandZone }
   const from = shortcut
   const to = commandById(shortcutId)!
 
@@ -76,12 +76,12 @@ const useDragAndDropToolbarButton = ({ shortcutId, customize }: { shortcutId: Co
   const [{ isDragging }, dragSource, dragPreview] = useDrag({
     type: DragAndDropType.ToolbarButton,
     item: () => {
-      store.dispatch(dragShortcut(shortcutId))
+      store.dispatch(dragCommand(shortcutId))
       const shortcut = commandById(shortcutId)
-      return { shortcut, zone: DragShortcutZone.Toolbar }
+      return { shortcut, zone: DragCommandZone.Toolbar }
     },
     canDrag: () => !!customize,
-    end: () => store.dispatch(dragShortcut(null)),
+    end: () => store.dispatch(dragCommand(null)),
     collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),
@@ -91,7 +91,7 @@ const useDragAndDropToolbarButton = ({ shortcutId, customize }: { shortcutId: Co
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],
     drop: (item, monitor) => drop(shortcutId, monitor),
     collect: monitor => ({
-      dropZone: DragShortcutZone.Toolbar,
+      dropZone: DragCommandZone.Toolbar,
       isHovering: monitor.isOver({ shallow: true }),
     }),
   })

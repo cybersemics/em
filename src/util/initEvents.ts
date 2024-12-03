@@ -185,7 +185,7 @@ const initEvents = (store: Store<State, any>) => {
     const state = store.getState()
     const target = e.target as HTMLElement
 
-    if (state.dragShortcut) {
+    if (state.dragCommand) {
       const x = e.touches[0].clientX
       if (x < TOOLBAR_SCROLLATEDGE_SIZE) {
         const rate = 1 + ((TOOLBAR_SCROLLATEDGE_SIZE - x) * TOOLBAR_SCROLLATEDGE_SPEED) / TOOLBAR_SCROLLATEDGE_SIZE
