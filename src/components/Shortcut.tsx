@@ -1,6 +1,6 @@
 import ShortcutInterface from '../@types/Command'
 import { isTouch } from '../browser'
-import { formatKeyboardShortcut } from '../shortcuts'
+import { formatKeyboardShortcut } from '../commands'
 import GestureDiagram from './GestureDiagram'
 
 /** Renders the keyboard shortcut or gesture for a given shortcut. */

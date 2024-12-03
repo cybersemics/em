@@ -8,12 +8,12 @@ import { dragShortcutActionCreator as dragShortcut } from '../actions/dragShortc
 import { initUserToolbarActionCreator as initUserToolbar } from '../actions/initUserToolbar'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
+import { commandById } from '../commands'
 import { EM_TOKEN } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
-import { shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 
@@ -24,7 +24,7 @@ const drop = (shortcutId: CommandId, monitor: DropTargetMonitor) => {
 
   const { shortcut } = monitor.getItem() as { shortcut: Command; zone: DragShortcutZone }
   const from = shortcut
-  const to = shortcutById(shortcutId)!
+  const to = commandById(shortcutId)!
 
   // initialize EM/Settings/Toolbar/Visible with default shortcuts
   store.dispatch([
@@ -77,7 +77,7 @@ const useDragAndDropToolbarButton = ({ shortcutId, customize }: { shortcutId: Co
     type: DragAndDropType.ToolbarButton,
     item: () => {
       store.dispatch(dragShortcut(shortcutId))
-      const shortcut = shortcutById(shortcutId)
+      const shortcut = commandById(shortcutId)
       return { shortcut, zone: DragShortcutZone.Toolbar }
     },
     canDrag: () => !!customize,

@@ -5,10 +5,10 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { gestureString, globalShortcuts } from '../shortcuts'
+import { gestureString, globalCommands } from '../commands'
 import gestureStore from '../stores/gesture'
 
-const visibleShortcuts = globalShortcuts.filter(shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp)
+const visibleShortcuts = globalCommands.filter(shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp)
 
 /** Returns true if the shortcut can be executed. */
 const isExecutable = (state: State, shortcut: Command) =>

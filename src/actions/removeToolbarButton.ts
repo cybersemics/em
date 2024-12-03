@@ -4,17 +4,17 @@ import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
 import { initUserToolbarActionCreator as initUserToolbar } from '../actions/initUserToolbar'
+import { commandById } from '../commands'
 import { AlertType, EM_TOKEN } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
-import { shortcutById } from '../shortcuts'
 
 /** Removes a toolbar button. */
 export const removeToolbarButtonActionCreator =
   (shortcutId: CommandId): Thunk =>
   (dispatch, getState) => {
-    const shortcut = shortcutById(shortcutId)
+    const shortcut = commandById(shortcutId)
 
     // initialize EM/Settings/Toolbar/Visible with default shortcuts
     dispatch(initUserToolbar())

@@ -17,10 +17,10 @@ import ShortcutType from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
+import { commandById } from '../commands'
 import { TOOLBAR_DEFAULT_SHORTCUTS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
 import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
-import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import FadeTransition from './FadeTransition'
 import ToolbarButton from './ToolbarButton'
@@ -188,7 +188,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           dispatch(showTip({ tip: TipId.NewSubthought }))
         }
       }
-      onSelect?.(shortcutById(id))
+      onSelect?.(commandById(id))
     },
     [onSelect, deselectPressingToolbarId, dispatch, customize],
   )

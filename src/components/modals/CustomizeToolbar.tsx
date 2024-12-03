@@ -15,8 +15,8 @@ import { initUserToolbarActionCreator as initUserToolbar } from '../../actions/i
 import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
+import { commandById } from '../../commands'
 import { AlertText, AlertType } from '../../constants'
-import { shortcutById } from '../../shortcuts'
 import fastClick from '../../util/fastClick'
 import FadeTransition from '../FadeTransition'
 import ShortcutTableOnly from '../ShortcutTableOnly'
@@ -80,7 +80,7 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
     } else if (sourceZone === DragShortcutZone.Toolbar) {
       if (isHovering) {
         dispatch([
-          alert(`Drop to remove ${shortcutById(dragShortcut).label} from toolbar`, {
+          alert(`Drop to remove ${commandById(dragShortcut).label} from toolbar`, {
             alertType: AlertType.ToolbarButtonRemoveHint,
             showCloseLink: false,
           }),

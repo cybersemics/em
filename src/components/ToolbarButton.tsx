@@ -7,9 +7,9 @@ import CommandId from '../@types/CommandId'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/IconType'
 import { isTouch } from '../browser'
+import { commandById, formatKeyboardShortcut } from '../commands'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
 import { executeShortcutWithMulticursor } from '../util/executeShortcut'
@@ -45,7 +45,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
-  const shortcut = shortcutById(shortcutId)
+  const shortcut = commandById(shortcutId)
   if (!shortcut) {
     console.error('Missing shortcut: ' + shortcutId)
   }

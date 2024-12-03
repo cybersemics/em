@@ -1,6 +1,6 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
-import bumpThoughtDown from '../../shortcuts/bumpThoughtDown'
+import bumpThoughtDown from '../../commands/bumpThoughtDown'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'

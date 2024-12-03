@@ -2,7 +2,7 @@ import { FC, useEffect, useRef } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
-import { globalShortcuts } from '../shortcuts'
+import { globalCommands } from '../commands'
 import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 
@@ -15,7 +15,7 @@ interface LatestShortcutsDiagramProps {
  */
 const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'middle' }) => {
   // const latestShortcuts = useSelector(state => state.latestShortcuts)
-  const latestShortcuts = globalShortcuts.slice(0, 2)
+  const latestShortcuts = globalCommands.slice(0, 2)
 
   const latestShortcutsRef = useRef(latestShortcuts)
   const latestShortcutsElRef = useRef<HTMLDivElement>(null)

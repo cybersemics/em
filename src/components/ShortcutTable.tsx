@@ -4,8 +4,8 @@ import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import { isTouch } from '../browser'
+import { commandById, globalCommands } from '../commands'
 import useFilteredCommands from '../hooks/useFilteredCommands'
-import { globalShortcuts, shortcutById } from '../shortcuts'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import ShortcutTableOnly from './ShortcutTableOnly'
@@ -99,7 +99,7 @@ const shortcutsGroupedMap = keyValueBy(
   groups.flatMap(group => group.shortcuts),
   true,
 )
-const shortcutsUngrouped = globalShortcuts.filter(
+const shortcutsUngrouped = globalCommands.filter(
   shortcut =>
     !shortcutsGroupedMap[shortcut.id] && !shortcut.hideFromHelp && (isTouch ? shortcut.gesture : shortcut.keyboard),
 )
@@ -199,7 +199,7 @@ const ShortcutTable = ({
         ) : (
           groups.map(group => {
             const shortcuts = group.shortcuts
-              .map(shortcutById)
+              .map(commandById)
               .filter((shortcut): shortcut is Command => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
 
             // do not render groups with no shortcuts on this platform

@@ -1,7 +1,7 @@
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
+import { commandById } from '../commands'
 import { EM_TOKEN } from '../constants'
-import { shortcutById } from '../shortcuts'
 import findDescendant from './findDescendant'
 import { getChildrenRanked } from './getChildren'
 
@@ -11,7 +11,7 @@ const getUserToolbar = (state: State): CommandId[] | null => {
   const shortcutIds = (userToolbarThoughtId ? getChildrenRanked(state, userToolbarThoughtId) : [])
     .map(subthought => subthought.value)
     // filter out invalid shortcutIds
-    .filter((shortcutIdString): shortcutIdString is CommandId => !!shortcutById(shortcutIdString as CommandId))
+    .filter((shortcutIdString): shortcutIdString is CommandId => !!commandById(shortcutIdString as CommandId))
   return shortcutIds.length > 0 ? shortcutIds : null
 }
 

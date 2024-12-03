@@ -7,11 +7,11 @@ import Command from '../@types/Command'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
+import { commandById, formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut } from '../commands'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
-import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import { executeShortcutWithMulticursor } from '../util/executeShortcut'
@@ -27,7 +27,7 @@ import Popup from './Popup'
 /** The maximum number of recent commands to store for the command palette. */
 const MAX_RECENT_COMMANDS = 5
 
-const commandPaletteShortcut = shortcutById('commandPalette')
+const commandPaletteShortcut = commandById('commandPalette')
 
 /**********************************************************************
  * Helper Functions

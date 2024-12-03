@@ -16,14 +16,14 @@ import { commandPaletteActionCreator as commandPalette } from './actions/command
 import { showLatestShortcutsActionCreator as showLatestShortcuts } from './actions/showLatestShortcuts'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { isMac } from './browser'
+import * as commandsObject from './commands/index'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, GESTURE_CANCEL_ALERT_TEXT, Settings } from './constants'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
-import * as shortcutObject from './shortcuts/index'
 import { executeShortcutWithMulticursor } from './util/executeShortcut'
 import keyValueBy from './util/keyValueBy'
 
-export const globalShortcuts: Command[] = Object.values(shortcutObject)
+export const globalCommands: Command[] = Object.values(commandsObject)
 
 export const shortcutEmitter = new Emitter()
 
@@ -101,7 +101,7 @@ const index = (): {
   shortcutGestureIndex: Index<Command>
 } => {
   // index shortcuts for O(1) lookup by keyboard
-  const shortcutKeyIndex: Index<Command> = keyValueBy(globalShortcuts, (shortcut, i, accum) => {
+  const shortcutKeyIndex: Index<Command> = keyValueBy(globalCommands, (shortcut, i, accum) => {
     if (!shortcut.keyboard) return null
 
     const hash = hashShortcut(shortcut)
@@ -125,12 +125,12 @@ const index = (): {
   })
 
   // index shortcuts for O(1) lookup by id
-  const shortcutIdIndex: Index<Command> = keyValueBy(globalShortcuts, shortcut =>
+  const shortcutIdIndex: Index<Command> = keyValueBy(globalCommands, shortcut =>
     shortcut.id ? { [shortcut.id]: shortcut } : null,
   )
 
   // index shortcuts for O(1) lookup by gesture
-  const shortcutGestureIndex: Index<Command> = keyValueBy(globalShortcuts, shortcut =>
+  const shortcutGestureIndex: Index<Command> = keyValueBy(globalCommands, shortcut =>
     shortcut.gesture
       ? {
           // shortcut.gesture may be a string or array of strings
@@ -318,5 +318,5 @@ export const inputHandlers = (store: Store<State, any>) => ({
 export const gestureString = (shortcut: Command): string =>
   (typeof shortcut.gesture === 'string' ? shortcut.gesture : shortcut.gesture?.[0] || '') as string
 
-/** Get a shortcut by its id. */
-export const shortcutById = (id: CommandId): Command => shortcutIdIndex[id]
+/** Get a command by its id. */
+export const commandById = (id: CommandId): Command => shortcutIdIndex[id]
