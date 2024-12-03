@@ -1,5 +1,5 @@
 import { Store, applyMiddleware, compose, createStore } from 'redux'
-import thunk from 'redux-thunk'
+import { thunk } from 'redux-thunk'
 import State from '../@types/State'
 import appReducer from '../actions/app'
 import pushQueue from '../redux-enhancers/pushQueue'
