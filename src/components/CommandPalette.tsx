@@ -3,7 +3,7 @@ import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
@@ -34,7 +34,7 @@ const commandPaletteShortcut = shortcutById('commandPalette')
  **********************************************************************/
 
 /** Returns true if the shortcut can be executed. */
-const isExecutable = (state: State, shortcut: Shortcut) =>
+const isExecutable = (state: State, shortcut: Command) =>
   (!shortcut.canExecute || shortcut.canExecute(state)) && (shortcut.allowExecuteFromModal || !state.showModal)
 
 /**********************************************************************
@@ -123,10 +123,10 @@ const CommandRow: FC<{
   gestureInProgress: string
   search: string
   last?: boolean
-  onClick: (e: React.MouseEvent, shortcut: Shortcut) => void
-  onHover: (e: MouseEvent, shortcut: Shortcut) => void
+  onClick: (e: React.MouseEvent, shortcut: Command) => void
+  onHover: (e: MouseEvent, shortcut: Command) => void
   selected?: boolean
-  shortcut: Shortcut
+  shortcut: Command
   style?: React.CSSProperties
 }> = ({ gestureInProgress, search, last, onClick, onHover, selected, shortcut, style }) => {
   const store = useStore()
@@ -289,11 +289,11 @@ const CommandPalette: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
-  const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(shortcuts[0])
+  const [selectedShortcut, setSelectedShortcut] = useState<Command>(shortcuts[0])
 
   /** Execute a shortcut. */
   const onExecute = useCallback(
-    (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, shortcut: Shortcut) => {
+    (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, shortcut: Command) => {
       e.stopPropagation()
       e.preventDefault()
       if (
@@ -318,7 +318,7 @@ const CommandPalette: FC = () => {
   )
 
   /** Select shortcuts on hover. */
-  const onHover = useCallback((e: MouseEvent, shortcut: Shortcut) => setSelectedShortcut(shortcut), [])
+  const onHover = useCallback((e: MouseEvent, shortcut: Command) => setSelectedShortcut(shortcut), [])
 
   // Select the first shortcut when the input changes.
   useEffect(() => {

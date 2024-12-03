@@ -1,11 +1,11 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { outdentActionCreator as outdent } from '../actions/outdent'
 import OutdentIcon from '../components/icons/OutdentIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorBackward from './moveCursorBackward'
 
-const outdentShortcut: Shortcut = {
+const outdentShortcut: Command = {
   id: 'outdent',
   label: 'Outdent',
   description: 'Outdent? De-indent? Whatever the opposite of indent is. Move the current thought up a level.',

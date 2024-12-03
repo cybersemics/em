@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
+import Command from '../@types/Command'
 import DragShortcutZone from '../@types/DragShortcutZone'
-import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toolbarLongPressActionCreator as toolbarLongPress } from '../actions/toolbarLongPress'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
@@ -16,7 +16,7 @@ const useToolbarLongPress = ({
 }: {
   disabled: boolean
   isDragging: boolean
-  shortcut: Shortcut
+  shortcut: Command
   sourceZone: DragShortcutZone
 }) => {
   // Set .pressed so that user-select: none can be applied to disable long press to select on iOS. If user-select: none is added after touchstart, it does not prevent magnifying glass text selection (unresolved). -webkit-touch-callout does not help. It seems the only way to disable it fully is to preventDefault on touchstart. However, this would break navigation in edit mode.

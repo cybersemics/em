@@ -1,9 +1,9 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import Icon from '../components/icons/LetterCaseWithPicker'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the letter case picker. */
-const letterCase: Shortcut = {
+const letterCase: Command = {
   id: 'letterCase',
   label: 'LetterCase',
   description: 'Change the Letter case.',

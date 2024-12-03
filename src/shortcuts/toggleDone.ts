@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { toggleThoughtActionCreator as toggleThought } from '../actions/toggleThought'
 import Icon from '../components/icons/Check'
 import findDescendant from '../selectors/findDescendant'
@@ -7,7 +7,7 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the built-in =done style to cross out an item. */
-const toggleDone: Shortcut = {
+const toggleDone: Command = {
   id: 'toggleDone',
   label: 'Mark as done',
   labelInverse: 'Unmark as done',

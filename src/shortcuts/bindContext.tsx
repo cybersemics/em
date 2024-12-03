@@ -1,8 +1,8 @@
 import { css, cx } from '../../styled-system/css'
 import { iconRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
+import Command from '../@types/Command'
 import IconType from '../@types/IconType'
-import Shortcut from '../@types/Shortcut'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import isContextViewActive from '../selectors/isContextViewActive'
 import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
@@ -30,7 +30,7 @@ const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType)
   </svg>
 )
 
-const bindContextShortcut: Shortcut = {
+const bindContextShortcut: Command = {
   id: 'bindContext',
   label: 'Bind Context',
   svg: Icon,

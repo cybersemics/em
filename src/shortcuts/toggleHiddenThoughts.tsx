@@ -1,8 +1,8 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../actions/toggleHiddenThoughts'
 import HiddenThoughtsIcon from '../components/icons/HiddenThoughtsIcon'
 
-const toggleHiddenThoughtsShortcut: Shortcut = {
+const toggleHiddenThoughtsShortcut: Command = {
   id: 'toggleHiddenThoughts',
   label: 'Show Hidden Thoughts',
   labelInverse: 'Hide Hidden Thoughts',

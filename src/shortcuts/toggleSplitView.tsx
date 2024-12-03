@@ -1,7 +1,7 @@
 import { css, cx } from '../../styled-system/css'
 import { iconRecipe } from '../../styled-system/recipes'
+import Command from '../@types/Command'
 import IconType from '../@types/IconType'
-import Shortcut from '../@types/Shortcut'
 import { toggleSplitViewActionCreator as toggleSplitView } from '../actions/toggleSplitView'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
@@ -15,7 +15,7 @@ const Icon = ({ fill, size = 20, style, cssRaw }: IconType) => (
   </svg>
 )
 
-const toggleSplitViewShortcut: Shortcut = {
+const toggleSplitViewShortcut: Command = {
   id: 'toggleSplitView',
   label: 'Split View',
   description: 'Render two independent views for side-by-side editing.',

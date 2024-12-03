@@ -1,8 +1,8 @@
 import { FC, useState } from 'react'
 import { css } from '../../styled-system/css'
 import { modalTextRecipe } from '../../styled-system/recipes'
-import Shortcut from '../@types/Shortcut'
-import ShortcutId from '../@types/ShortcutId'
+import Command from '../@types/Command'
+import CommandId from '../@types/CommandId'
 import { isTouch } from '../browser'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import { globalShortcuts, shortcutById } from '../shortcuts'
@@ -13,7 +13,7 @@ import ShortcutTableOnly from './ShortcutTableOnly'
 // define the grouping and ordering of shortcuts
 const groups: {
   title: string
-  shortcuts: ShortcutId[]
+  shortcuts: CommandId[]
 }[] = [
   {
     title: 'Navigation',
@@ -147,11 +147,11 @@ const ShortcutGroup: ({
   search,
 }: {
   customize?: boolean
-  onSelect?: (shortcut: Shortcut | null) => void
-  selectedShortcut?: Shortcut
+  onSelect?: (shortcut: Command | null) => void
+  selectedShortcut?: Command
   title: string
   search?: string
-  shortcuts: (Shortcut | null)[]
+  shortcuts: (Command | null)[]
 }) => JSX.Element = ({ customize, onSelect, selectedShortcut, shortcuts, title, search }) => {
   const modalClasses = modalTextRecipe()
 
@@ -177,8 +177,8 @@ const ShortcutTable = ({
   selectedShortcut,
 }: {
   customize?: boolean
-  onSelect?: (shortcut: Shortcut | null) => void
-  selectedShortcut?: Shortcut
+  onSelect?: (shortcut: Command | null) => void
+  selectedShortcut?: Command
 }) => {
   const [search, setSearch] = useState('')
   const shortcuts = useFilteredCommands(search, { platformShortcutsOnly: true })
@@ -200,7 +200,7 @@ const ShortcutTable = ({
           groups.map(group => {
             const shortcuts = group.shortcuts
               .map(shortcutById)
-              .filter((shortcut): shortcut is Shortcut => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
+              .filter((shortcut): shortcut is Command => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
 
             // do not render groups with no shortcuts on this platform
             return shortcuts.length > 0 ? (

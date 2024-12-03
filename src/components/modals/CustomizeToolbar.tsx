@@ -4,10 +4,10 @@ import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { anchorButtonRecipe, extendTapRecipe, modalRecipe } from '../../../styled-system/recipes'
+import Command from '../../@types/Command'
 import DragAndDropType from '../../@types/DragAndDropType'
 import DragShortcutZone from '../../@types/DragShortcutZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
-import Shortcut from '../../@types/Shortcut'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { dragShortcutZoneActionCreator as dragShortcutZone } from '../../actions/dragShortcutZone'
@@ -98,10 +98,10 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
 
 /** Customize Toolbar modal. */
 const ModalCustomizeToolbar: FC = () => {
-  const [selectedShortcut, setSelectedShortcut] = useState<Shortcut | null>(null)
+  const [selectedShortcut, setSelectedShortcut] = useState<Command | null>(null)
   /** Toggles a shortcut selected. */
   const toggleSelectedShortcut = useCallback(
-    (shortcut: Shortcut) => setSelectedShortcut(oldShortcut => (oldShortcut === shortcut ? null : shortcut)),
+    (shortcut: Command) => setSelectedShortcut(oldShortcut => (oldShortcut === shortcut ? null : shortcut)),
     [],
   )
 

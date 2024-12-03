@@ -1,8 +1,8 @@
 import { css, cx } from '../../styled-system/css'
 import { iconRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
+import Command from '../@types/Command'
 import IconType from '../@types/IconType'
-import Shortcut from '../@types/Shortcut'
 import { cursorForwardActionCreator as cursorForward } from '../actions/cursorForward'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
@@ -24,7 +24,7 @@ const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType)
   </svg>
 )
 
-const cursorForwardShortcut: Shortcut = {
+const cursorForwardShortcut: Command = {
   id: 'cursorForward',
   description: 'Move the cursor down a level.',
   label: 'Forward',

@@ -1,12 +1,12 @@
 import _ from 'lodash'
-import ShortcutId from '../@types/ShortcutId'
+import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { AlertText, AlertType } from '../constants'
 
 /** Reducer for dragging a shortcut in the customizeToolbar modal. */
-const dragShortcut = (state: State, { shortcutId }: { shortcutId: ShortcutId | null }) => ({
+const dragShortcut = (state: State, { shortcutId }: { shortcutId: CommandId | null }) => ({
   ...state,
   dragShortcut: shortcutId,
   ...(!shortcutId ? { dragShortcutZone: null } : null),
@@ -14,7 +14,7 @@ const dragShortcut = (state: State, { shortcutId }: { shortcutId: ShortcutId | n
 
 /** Action-creator for dragShortcut. */
 export const dragShortcutActionCreator =
-  (shortcutId: ShortcutId | null): Thunk =>
+  (shortcutId: CommandId | null): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     const alertType = state.alert?.alertType

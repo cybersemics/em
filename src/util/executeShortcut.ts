@@ -1,8 +1,8 @@
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
+import Command from '../@types/Command'
 import MulticursorFilter from '../@types/MulticursorFilter'
 import Path from '../@types/Path'
-import Shortcut from '../@types/Shortcut'
 import ShortcutType from '../@types/ShortcutType'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
@@ -90,7 +90,7 @@ const recomputePath = (state: State, thoughtId: ThoughtId) => {
 }
 
 /** Execute a single shortcut. Defaults to global store and keyboard shortcut. Use `executeShortcutWithMulticursor` to execute a shortcut with multicursor mode. */
-const executeShortcut = (shortcut: Shortcut, { store, type, event }: Options = {}) => {
+const executeShortcut = (shortcut: Command, { store, type, event }: Options = {}) => {
   store = store ?? globalStore
   type = type ?? 'keyboard'
   event = event ?? eventNoop
@@ -104,7 +104,7 @@ const executeShortcut = (shortcut: Shortcut, { store, type, event }: Options = {
 }
 
 /** Execute shortcut. Defaults to global store and keyboard shortcut. */
-export const executeShortcutWithMulticursor = (shortcut: Shortcut, { store, type, event }: Options = {}) => {
+export const executeShortcutWithMulticursor = (shortcut: Command, { store, type, event }: Options = {}) => {
   store = store ?? globalStore
   type = type ?? 'keyboard'
   event = event ?? eventNoop

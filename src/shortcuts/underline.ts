@@ -1,11 +1,11 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import Icon from '../components/icons/UnderlineIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggles formatting of the current browser selection as underline. If there is no selection, formats the entire thought. */
-const underline: Shortcut = {
+const underline: Command = {
   id: 'underline',
   label: 'Underline',
   description: 'Underlines the current thought or selected text.',

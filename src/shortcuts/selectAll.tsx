@@ -1,10 +1,10 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { addAllMulticursorActionCreator as addAllMulticursor } from '../actions/addAllMulticursor'
 import { isTouch } from '../browser'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const selectAllShortcut: Shortcut = {
+const selectAllShortcut: Command = {
   id: 'selectAll',
   label: 'Select All',
   svg: () => null,

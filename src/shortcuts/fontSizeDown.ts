@@ -1,8 +1,8 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import fontSizeDown from '../actions/fontSizeDown'
 import SettingsIcon from '../components/icons/SettingsIcon'
 
-const fontSizeDownShortcut: Shortcut = {
+const fontSizeDownShortcut: Command = {
   id: 'fontSizeDown',
   label: 'Decrease Font Size',
   description: 'Decrease the font size. Get your reading glasses.',

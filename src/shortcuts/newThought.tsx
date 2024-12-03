@@ -1,6 +1,6 @@
 import { head } from 'lodash'
 import { Key } from 'ts-key-enum'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import SplitResult from '../@types/SplitResult'
 import State from '../@types/State'
 import { errorActionCreator } from '../actions/error'
@@ -37,7 +37,7 @@ const split = (state: State, el: HTMLElement): SplitResult | null => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string }) => {
+const exec: Command['exec'] = (dispatch, getState, e, { type }: { type: string }) => {
   const state = getState()
   const { cursor } = state
 
@@ -65,7 +65,7 @@ const multicursor = {
   error: 'Cannot create a new thought with multiple thoughts.',
 }
 
-const newThoughtShortcut: Shortcut = {
+const newThoughtShortcut: Command = {
   id: 'newThought',
   label: 'New Thought',
   description: 'Create a shiny new thought.',
@@ -78,7 +78,7 @@ const newThoughtShortcut: Shortcut = {
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const newThoughtAliases: Shortcut = {
+export const newThoughtAliases: Command = {
   id: 'newThoughtAliases',
   label: 'New Thought',
   hideFromHelp: true,

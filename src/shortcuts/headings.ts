@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { headingActionCreator as heading } from '../actions/heading'
 import Heading1Icon from '../components/icons/Heading1Icon'
 import Heading2Icon from '../components/icons/Heading2Icon'
@@ -29,7 +29,7 @@ const iconMap = {
 export type HeadingLevel = 0 | 1 | 2 | 3 | 4 | 5
 
 /** Creates a heading shortcut at a given level (h1, h2, etc). */
-const headingShortcut = (level: HeadingLevel): Shortcut => ({
+const headingShortcut = (level: HeadingLevel): Command => ({
   id: `heading${level}`,
   label: level === 0 ? 'Normal Text' : `Heading ${level}`,
   description: level

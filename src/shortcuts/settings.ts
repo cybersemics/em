@@ -1,8 +1,8 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import SettingsIcon from '../components/icons/SettingsIcon'
 
-const shortcut: Shortcut = {
+const shortcut: Command = {
   id: 'settings',
   label: 'Settings',
   description: 'Customize your experience of em.',

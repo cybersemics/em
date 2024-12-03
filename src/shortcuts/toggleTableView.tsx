@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import TableViewIcon from '../components/icons/TableViewIcon'
 import attributeEquals from '../selectors/attributeEquals'
@@ -8,7 +8,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const toggleTableViewShortcut: Shortcut = {
+const toggleTableViewShortcut: Command = {
   id: 'toggleTableView',
   label: 'Table View',
   description: 'Display the current thought as a table, where each subthought is a separate column.',

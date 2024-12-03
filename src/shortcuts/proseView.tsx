@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import ProseViewIcon from '../components/icons/ProseViewIcon'
 import { HOME_PATH } from '../constants'
@@ -8,7 +8,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const proseViewShortcut: Shortcut = {
+const proseViewShortcut: Command = {
   id: 'proseView',
   label: 'Prose View',
   description: 'Display subthoughts of the current thought as indented paragraphs.',

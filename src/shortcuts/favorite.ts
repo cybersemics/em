@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import FavoritesIcon from '../components/icons/FavoritesIcon'
@@ -8,7 +8,7 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const favorite: Shortcut = {
+const favorite: Command = {
   id: 'favorite',
   label: 'Add to Favorites',
   labelInverse: 'Remove from Favorites',

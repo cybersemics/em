@@ -1,5 +1,7 @@
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Alert from './Alert'
+import Command from './Command'
+import CommandId from './CommandId'
 import Context from './Context'
 import DragShortcutZone from './DragShortcutZone'
 import Index from './IndexType'
@@ -8,8 +10,6 @@ import Patch from './Patch'
 import Path from './Path'
 import PushBatch from './PushBatch'
 import RecentlyEditedTree from './RecentlyEditedTree'
-import Shortcut from './Shortcut'
-import ShortcutId from './ShortcutId'
 import SimplePath from './SimplePath'
 import StorageCache from './StorageCache'
 import ThoughtIndices from './ThoughtIndices'
@@ -54,7 +54,7 @@ interface State {
   /** Set to the dragging thought during dragInProgress. */
   draggingThought?: SimplePath
   /** Dragging a shortcut or toolbar button in the customizeToolbar modal. */
-  dragShortcut?: ShortcutId | null
+  dragShortcut?: CommandId | null
   /** Type of toolbar-sbutton drop target being hovered over. */
   dragShortcutZone?: DragShortcutZone
   /** Set to true while the user is long pressing a thought in preparation for a drag. */
@@ -109,7 +109,7 @@ interface State {
    * Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward.
    */
   jumpIndex: number
-  latestShortcuts: Shortcut[]
+  latestShortcuts: Command[]
   /** When a context is sorted, the manual sort order is saved so that it can be recovered when they cycle back through the sort options. If new thoughts have been added, their order relative to the original thoughts will be indeterminate, but both the old thoughts and the new thoughts will be sorted relative to themselves. The outer Index is keyed by parent ThoughtId, and the inner Index stores the manual ranks of each child at the time the context is sorted. This is stored in memory only and is lost when the app refreshes. */
   manualSortMap: Index<Index<number>>
   modals: Index<{ complete?: boolean }>
@@ -161,8 +161,8 @@ interface State {
   storageCache?: StorageCache
   thoughts: ThoughtIndices
   tips: Tip[]
-  /** Shortcut of a toolbar button that is being long pressed in the customize modal. */
-  toolbarLongPress?: Shortcut
+  /** Command of a toolbar button that is being long pressed in the customize modal. */
+  toolbarLongPress?: Command
   transientFocus?: boolean
   undoPatches: Patch[]
 }

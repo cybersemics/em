@@ -1,11 +1,11 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
 /**
  * Add latest gesture to show on the screen.
  */
-const addLatestShortcuts = (state: State, shortcut: Shortcut): State => ({
+const addLatestShortcuts = (state: State, shortcut: Command): State => ({
   ...state,
   latestShortcuts: [...state.latestShortcuts, shortcut],
 })

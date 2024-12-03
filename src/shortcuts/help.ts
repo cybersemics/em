@@ -1,10 +1,10 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { isTouch } from '../browser'
 import HelpIcon from '../components/icons/HelpIcon'
 import scrollTo from '../device/scrollTo'
 
-const openHelpShortcut: Shortcut = {
+const openHelpShortcut: Command = {
   id: 'help',
   label: 'Help',
   description: `Opens the Help screen, which contains the tutorials and a list of all ${

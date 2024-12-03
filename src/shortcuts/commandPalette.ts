@@ -1,8 +1,8 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import CommandPaletteIcon from '../components/icons/CommandPaletteIcon'
 
-const commandPaletteShortcut: Shortcut = {
+const commandPaletteShortcut: Command = {
   id: 'commandPalette',
   label: 'Command Palette',
   description: 'Opens the command palette where commands can be executed by name.',

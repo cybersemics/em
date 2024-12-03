@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { Dispatch } from 'react'
 import { Action } from 'redux'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { splitSentencesActionCreator as splitSentences } from '../actions/splitSentences'
@@ -16,7 +16,7 @@ import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
 import splitSentence from '../util/splitSentence'
 
-const splitSentencesShortcut: Shortcut = {
+const splitSentencesShortcut: Command = {
   id: 'splitSentences',
   label: 'Split Sentences',
   description: 'Splits multiple sentences in a single thought into separate thoughts.',

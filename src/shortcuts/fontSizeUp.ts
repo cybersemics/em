@@ -1,8 +1,8 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import fontSizeUp from '../actions/fontSizeUp'
 import SettingsIcon from '../components/icons/SettingsIcon'
 
-const fontSizeUpShortcut: Shortcut = {
+const fontSizeUpShortcut: Command = {
   id: 'fontSizeUp',
   label: 'Increase Font Size',
   description: 'Increase the font size. Bigger is better!',

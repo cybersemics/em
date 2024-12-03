@@ -1,5 +1,5 @@
 import { Key } from 'ts-key-enum'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import Icon from '../components/icons/NewSubthoughtIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -11,7 +11,7 @@ const multicursor = {
   error: 'Cannot create a new subthought with multiple thoughts.',
 }
 
-const newSubthoughtShortcut: Shortcut = {
+const newSubthoughtShortcut: Command = {
   id: 'newSubthought',
   label: 'New Subthought',
   description: 'Create a new subthought in the current thought. Adds it to the bottom of any existing subthoughts.',
@@ -24,7 +24,7 @@ const newSubthoughtShortcut: Shortcut = {
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const newSubthoughtAliases: Shortcut = {
+export const newSubthoughtAliases: Command = {
   id: 'newSubthoughtAliases',
   label: 'New Subthought',
   hideFromHelp: true,

@@ -1,11 +1,11 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { subCategorizeOneActionCreator as subCategorizeOne } from '../actions/subCategorizeOne'
 import { subcategorizeMulticursorActionCreator as subcategorizeMulticursor } from '../actions/subcategorizeMulticursor'
 import SubCategorizeOneIcon from '../components/icons/SubCategorizeOneIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const multicursor: Shortcut['multicursor'] = {
+const multicursor: Command['multicursor'] = {
   enabled: true,
   execMulticursor: (_cursors, dispatch) => dispatch(subcategorizeMulticursor()),
   preventSetCursor: true,
@@ -13,7 +13,7 @@ const multicursor: Shortcut['multicursor'] = {
 }
 
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
-const subCategorizeOneShortcut: Shortcut = {
+const subCategorizeOneShortcut: Command = {
   id: 'subcategorizeOne',
   label: 'Subcategorize',
   description: 'Move the current thought into a new, empty thought at the same level.',
@@ -28,7 +28,7 @@ const subCategorizeOneShortcut: Shortcut = {
 }
 
 // a shortcut for Raine until we have custom user shortcuts
-export const subCategorizeOneShortcutAlias: Shortcut = {
+export const subCategorizeOneShortcutAlias: Command = {
   id: 'subcategorizeOneAlias',
   label: 'Subcategorize',
   hideFromHelp: true,

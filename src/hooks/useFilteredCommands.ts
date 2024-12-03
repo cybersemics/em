@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import { useMemo } from 'react'
 import { useStore } from 'react-redux'
-import Shortcut from '../@types/Shortcut'
-import ShortcutId from '../@types/ShortcutId'
+import Command from '../@types/Command'
+import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { gestureString, globalShortcuts } from '../shortcuts'
@@ -11,7 +11,7 @@ import gestureStore from '../stores/gesture'
 const visibleShortcuts = globalShortcuts.filter(shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp)
 
 /** Returns true if the shortcut can be executed. */
-const isExecutable = (state: State, shortcut: Shortcut) =>
+const isExecutable = (state: State, shortcut: Command) =>
   (!shortcut.canExecute || shortcut.canExecute(state)) && (shortcut.allowExecuteFromModal || !state.showModal)
 
 /** A hook that filters and sorts commands based on a search or the current gesture or keyboard input. */
@@ -24,7 +24,7 @@ const useFilteredCommands = (
   }: {
     /** Only include commands that have shortcuts on the current platform (keyboard on desktop/gestures on mobile). */
     platformShortcutsOnly?: boolean
-    recentCommands?: ShortcutId[]
+    recentCommands?: CommandId[]
     /** The search term to filter commands that match. */
     sortActiveCommandsFirst?: boolean
   },

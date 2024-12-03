@@ -1,6 +1,6 @@
 import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import getUserToolbar from '../selectors/getUserToolbar'
 import ShortcutRow from './ShortcutRow'
@@ -14,10 +14,10 @@ const ShortcutTableOnly = ({
   applyIndexInToolbar,
   search,
 }: {
-  shortcuts: (Shortcut | null)[]
-  selectedShortcut?: Shortcut
+  shortcuts: (Command | null)[]
+  selectedShortcut?: Command
   customize?: boolean
-  onSelect?: (shortcut: Shortcut | null) => void
+  onSelect?: (shortcut: Command | null) => void
   applyIndexInToolbar?: boolean
   /** Search text that will be highlighted within the matched shortcut title. */
   search?: string

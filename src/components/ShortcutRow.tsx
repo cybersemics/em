@@ -1,11 +1,11 @@
 import { DragSourceMonitor, useDrag } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import Command from '../@types/Command'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import DragToolbarItem from '../@types/DragToolbarItem'
 import GesturePath from '../@types/GesturePath'
-import Shortcut from '../@types/Shortcut'
 import { dragShortcutActionCreator as dragShortcut } from '../actions/dragShortcut'
 import { isTouch } from '../browser'
 import { noop } from '../constants'
@@ -37,9 +37,9 @@ const ShortcutRow = ({
 }: {
   customize?: boolean
   indexInToolbar?: number | null
-  onSelect?: (shortcut: Shortcut | null) => void
+  onSelect?: (shortcut: Command | null) => void
   selected?: boolean
-  shortcut: Shortcut | null
+  shortcut: Command | null
   /** Search text that will be highlighted within the matched shortcut title. */
   search?: string
 }) => {

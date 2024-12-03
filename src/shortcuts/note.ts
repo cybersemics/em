@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import PencilIcon from '../components/icons/PencilIcon'
 import { HOME_PATH } from '../constants'
@@ -8,7 +8,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const noteShortcut: Shortcut = {
+const noteShortcut: Command = {
   id: 'note',
   label: 'Note',
   description: 'Add a small note beneath a thought. Cute!',

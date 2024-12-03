@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import PinIcon from '../components/icons/PinIcon'
@@ -8,7 +8,7 @@ import isPinned from '../selectors/isPinned'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 
-const pinShortcut: Shortcut = {
+const pinShortcut: Command = {
   id: 'pin',
   label: 'Pin',
   labelInverse: 'Unpin',

@@ -1,6 +1,6 @@
 import { Dispatch } from 'react'
 import { Key } from 'ts-key-enum'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import MoveCursorForwardIcon from '../components/icons/MoveCursorForwardIcon'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildren } from '../selectors/getChildren'
@@ -23,7 +23,7 @@ interface Indent {
   type: 'indent'
 }
 
-const moveCursorForward: Shortcut = {
+const moveCursorForward: Command = {
   id: 'moveCursorForward',
   label: 'Move Cursor Forward',
   description: 'Move the current thought to the end of the previous thought or to next column in table view.',

@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import { addLatestShortcutsActionCreator } from '../actions/addLatestShortcuts'
@@ -22,7 +22,7 @@ const clearTimer = () => {
  * Adds latest shortcuts diagram to be shown in the screen. Also clears after certain interval.
  */
 export const showLatestShortcutsActionCreator =
-  (shortcut?: Shortcut, { clear }: Options = {}): Thunk =>
+  (shortcut?: Command, { clear }: Options = {}): Thunk =>
   (dispatch, getState) => {
     if (clear) {
       clearTimer()

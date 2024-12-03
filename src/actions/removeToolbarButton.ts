@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import ShortcutId from '../@types/ShortcutId'
+import CommandId from '../@types/CommandId'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
@@ -12,7 +12,7 @@ import { shortcutById } from '../shortcuts'
 
 /** Removes a toolbar button. */
 export const removeToolbarButtonActionCreator =
-  (shortcutId: ShortcutId): Thunk =>
+  (shortcutId: CommandId): Thunk =>
   (dispatch, getState) => {
     const shortcut = shortcutById(shortcutId)
 

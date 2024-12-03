@@ -1,4 +1,4 @@
-import ShortcutInterface from '../@types/Shortcut'
+import ShortcutInterface from '../@types/Command'
 import { isTouch } from '../browser'
 import { formatKeyboardShortcut } from '../shortcuts'
 import GestureDiagram from './GestureDiagram'

@@ -1,5 +1,5 @@
 import { Key } from 'ts-key-enum'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../actions/deleteThoughtWithCursor'
 import { errorActionCreator as error } from '../actions/error'
@@ -18,7 +18,7 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec: Shortcut['exec'] = (dispatch, getState) => {
+const exec: Command['exec'] = (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
 
@@ -50,7 +50,7 @@ const exec: Shortcut['exec'] = (dispatch, getState) => {
   }
 }
 
-const deleteShortcut: Shortcut = {
+const deleteShortcut: Command = {
   id: 'delete',
   label: 'Delete',
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',

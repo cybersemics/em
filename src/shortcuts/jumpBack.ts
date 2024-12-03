@@ -1,8 +1,8 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { jumpActionCreator as jump } from '../actions/jump'
 import JumpBackIcon from '../components/icons/JumpBackIcon'
 
-const jumpBackShortcut: Shortcut = {
+const jumpBackShortcut: Command = {
   id: 'jumpBack',
   label: 'Jump Back',
   description: 'Move the cursor to the last thought that was edited.',

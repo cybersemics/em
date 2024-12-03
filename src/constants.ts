@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 
 /** Defines app-wide constants. */
-import ShortcutId from './@types/ShortcutId'
+import CommandId from './@types/CommandId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
 import { ColorToken } from './colors.config'
@@ -170,7 +170,7 @@ export const MAX_EXPAND_DEPTH = 10
 
 // shortcut ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
-export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
+export const TOOLBAR_DEFAULT_SHORTCUTS: CommandId[] = [
   'undo',
   'redo',
   'newThought',

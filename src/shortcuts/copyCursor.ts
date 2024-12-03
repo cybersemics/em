@@ -1,5 +1,5 @@
+import Command from '../@types/Command'
 import Path from '../@types/Path'
-import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { pullActionCreator as pull } from '../actions/pull'
 import SettingsIcon from '../components/icons/SettingsIcon'
@@ -17,7 +17,7 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 
-const copyCursorShortcut: Shortcut = {
+const copyCursorShortcut: Command = {
   id: 'copyCursor',
   label: 'Copy Cursor',
   description: 'Copies the cursor and all descendants.',

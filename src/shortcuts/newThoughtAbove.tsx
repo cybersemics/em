@@ -1,11 +1,11 @@
 import { Key } from 'ts-key-enum'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { isTouch } from '../browser'
 import NewThoughtAboveIcon from '../components/icons/NewThoughtAboveIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const newThoughtAboveShortcut: Shortcut = {
+const newThoughtAboveShortcut: Command = {
   id: 'newThoughtAbove',
   label: 'New Thought (above)',
   description: 'Create a new thought immediately above the current thought.',

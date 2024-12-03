@@ -1,9 +1,9 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import TextColorWithColorPicker from '../components/icons/TextColorWithColorPicker'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the built-in =done style to cross out an item. */
-const textColor: Shortcut = {
+const textColor: Command = {
   id: 'textColor',
   label: 'Text Color',
   description: 'Change the text color or highlight color to your liking.',

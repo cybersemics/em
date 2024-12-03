@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
@@ -16,7 +16,7 @@ import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
 
 /** Generate a thought using AI. */
-const generateThought: Shortcut = {
+const generateThought: Command = {
   id: 'generateThought',
   label: 'Generate Thought',
   description: 'Generates a thought using AI.',

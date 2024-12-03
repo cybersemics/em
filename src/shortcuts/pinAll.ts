@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
@@ -16,7 +16,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const pinAllShortcut: Shortcut = {
+const pinAllShortcut: Command = {
   id: 'pinAll',
   label: 'Pin All',
   labelInverse: 'Unpin All',

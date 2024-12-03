@@ -1,10 +1,10 @@
 import { Dispatch } from 'react'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import Thunk from '../@types/Thunk'
 import { homeActionCreator as home } from '../actions/home'
 import HomeToolbarIcon from '../components/icons/HomeToolbarIcon'
 
-const homeShortcut: Shortcut = {
+const homeShortcut: Command = {
   id: 'home',
   label: 'Home',
   description: 'Navigate to Home.',

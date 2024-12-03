@@ -1,10 +1,10 @@
 import { startCase } from 'lodash'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { redoActionCreator as redo } from '../actions/redo'
 import RedoIcon from '../components/RedoIcon'
 import getLatestActionType from '../util/getLastActionType'
 
-const redoShortcut: Shortcut = {
+const redoShortcut: Command = {
   id: 'redo',
   label: 'Redo',
   multicursor: 'ignore',

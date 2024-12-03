@@ -1,11 +1,11 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import ShareIcon from '../components/icons/ShareIcon'
 import { HOME_TOKEN } from '../constants'
 import { getAllChildren } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 
-const shortcut: Shortcut = {
+const shortcut: Command = {
   id: 'exportContext',
   label: 'Export',
   description: 'Download or copy the current context as plaintext or html.',

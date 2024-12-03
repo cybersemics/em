@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
 import { isTouch } from '../browser'
@@ -8,7 +8,7 @@ import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorBackShortcut: Shortcut = {
+const cursorBackShortcut: Command = {
   id: 'cursorBack',
   label: 'Back',
   description: 'Move the cursor up a level.',

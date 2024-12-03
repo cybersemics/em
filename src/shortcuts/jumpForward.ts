@@ -1,8 +1,8 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { jumpActionCreator as jump } from '../actions/jump'
 import JumpForwardIcon from '../components/icons/JumpForwardIcon'
 
-const jumpForwardShortcut: Shortcut = {
+const jumpForwardShortcut: Command = {
   id: 'jumpForward',
   label: 'Jump Forward',
   description: 'Move the cursor to the next edit point. Reverses jump back.',

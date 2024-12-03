@@ -1,10 +1,10 @@
 import { Key } from 'ts-key-enum'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { cursorPrevActionCreator as cursorPrev } from '../actions/cursorPrev'
 import PrevIcon from '../components/icons/PrevIcon'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorPrevShortcut: Shortcut = {
+const cursorPrevShortcut: Command = {
   id: 'cursorPrev',
   label: 'Previous Thought',
   description: 'Move the cursor to the previous thought.',

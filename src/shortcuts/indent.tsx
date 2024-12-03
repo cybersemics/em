@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { indentActionCreator as indent } from '../actions/indent'
 import IndentIcon from '../components/icons/IndentIcon'
 import attributeEquals from '../selectors/attributeEquals'
@@ -9,7 +9,7 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorForward from './moveCursorForward'
 
-const indentShortcut: Shortcut = {
+const indentShortcut: Command = {
   id: 'indent',
   label: 'Indent',
   description: 'Indent the current thought one level deeper.',

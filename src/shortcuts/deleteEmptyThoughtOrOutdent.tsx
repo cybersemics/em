@@ -2,8 +2,8 @@ import { Key } from 'ts-key-enum'
 import { css, cx } from '../../styled-system/css'
 import { iconRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
+import Command from '../@types/Command'
 import IconType from '../@types/IconType'
-import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import { deleteEmptyThoughtActionCreator as deleteEmptyThought } from '../actions/deleteEmptyThought'
 import { outdentActionCreator as outdent } from '../actions/outdent'
@@ -63,7 +63,7 @@ const canExecute = (state: State) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec: Shortcut['exec'] = (dispatch, getState) => {
+const exec: Command['exec'] = (dispatch, getState) => {
   const state = getState()
   if (state.cursorCleared) {
     dispatch(deleteEmptyThought)
@@ -93,7 +93,7 @@ const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType)
   </svg>
 )
 
-const deleteEmptyThoughtOrOutdent: Shortcut = {
+const deleteEmptyThoughtOrOutdent: Command = {
   id: 'deleteEmptyThoughtOrOutdent',
   label: 'Delete Empty Thought Or Outdent',
   keyboard: { key: Key.Backspace },
@@ -109,7 +109,7 @@ const deleteEmptyThoughtOrOutdent: Shortcut = {
 }
 
 // also match Shift + Backspace
-export const deleteEmptyThoughtOrOutdentAlias: Shortcut = {
+export const deleteEmptyThoughtOrOutdentAlias: Command = {
   id: 'deleteEmptyThoughtOrOutdentAlias',
   label: 'Delete Empty Thought Or Outdent (alias)',
   keyboard: { key: Key.Backspace, shift: true },

@@ -13,8 +13,8 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
-import ShortcutType from '../@types/Shortcut'
-import ShortcutId from '../@types/ShortcutId'
+import ShortcutType from '../@types/Command'
+import CommandId from '../@types/CommandId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
 import { TOOLBAR_DEFAULT_SHORTCUTS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
@@ -31,7 +31,7 @@ interface ToolbarProps {
   // places the toolbar into customize mode where buttons can be dragged and dropped.
   customize?: boolean
   onSelect?: (shortcut: ShortcutType) => void
-  selected?: ShortcutId
+  selected?: CommandId
 }
 
 const arrow = cva({
@@ -179,7 +179,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   }, shallowEqual)
 
   const onTapUp = useCallback(
-    (id: ShortcutId) => {
+    (id: CommandId) => {
       deselectPressingToolbarId()
       if (!customize) {
         if (id === 'newThought') {

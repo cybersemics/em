@@ -1,11 +1,11 @@
 import { startCase } from 'lodash'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { undoActionCreator as undo } from '../actions/undo'
 import UndoIcon from '../components/UndoIcon'
 import isUndoEnabled from '../selectors/isUndoEnabled'
 import getLatestActionType from '../util/getLastActionType'
 
-const undoShortcut: Shortcut = {
+const undoShortcut: Command = {
   id: 'undo',
   label: 'Undo',
   multicursor: 'ignore',

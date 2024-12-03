@@ -2,9 +2,9 @@ import { Key } from 'ts-key-enum'
 import { css, cx } from '../../styled-system/css'
 import { iconRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
+import Command from '../@types/Command'
 import Dispatch from '../@types/Dispatch'
 import IconType from '../@types/IconType'
-import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { cursorUpActionCreator as cursorUp } from '../actions/cursorUp'
@@ -44,7 +44,7 @@ const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType)
   </svg>
 )
 
-const cursorUpShortcut: Shortcut = {
+const cursorUpShortcut: Command = {
   id: 'cursorUp',
   label: 'Cursor Up',
   keyboard: { key: Key.ArrowUp },
@@ -133,7 +133,7 @@ const cursorUpShortcut: Shortcut = {
   }),
 }
 
-export const cursorUpAlias: Shortcut = {
+export const cursorUpAlias: Command = {
   ...cursorUpShortcut,
   id: 'cursorUpAlias',
   gesture: undefined,

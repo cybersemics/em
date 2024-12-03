@@ -1,8 +1,8 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { joinActionCreator as join } from '../actions/join'
 import JoinThoughtsIcon from '../components/icons/JoinThoughtsIcon'
 
-const joinThoughts: Shortcut = {
+const joinThoughts: Command = {
   id: 'join',
   label: 'Join Thoughts',
   description: 'join all siblings and merge their children',

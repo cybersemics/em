@@ -3,9 +3,9 @@ import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
+import CommandId from '../@types/CommandId'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/IconType'
-import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
@@ -22,11 +22,11 @@ export interface ToolbarButtonProps {
   fontSize: number
   isPressing: boolean
   lastScrollLeft: MutableRefObject<number>
-  onTapDown?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
-  onTapUp?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
+  onTapDown?: (id: CommandId, e: React.MouseEvent | React.TouchEvent) => void
+  onTapUp?: (id: CommandId, e: React.MouseEvent | React.TouchEvent) => void
   onMouseLeave?: () => void
   selected?: boolean
-  shortcutId: ShortcutId
+  shortcutId: CommandId
   animated?: boolean
 }
 

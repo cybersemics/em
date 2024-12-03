@@ -1,9 +1,9 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { extractThoughtActionCreator as extract } from '../actions/extractThought'
 import ExtractThoughtIcon from '../components/icons/ExtractThoughtIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 
-const extractThought: Shortcut = {
+const extractThought: Command = {
   id: 'extractThought',
   label: 'Extract',
   description: 'Extract selected part of a thought as its child',

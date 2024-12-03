@@ -4,12 +4,12 @@
 import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
+import Command from './@types/Command'
+import CommandId from './@types/CommandId'
 import Direction from './@types/Direction'
 import GesturePath from './@types/GesturePath'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
-import Shortcut from './@types/Shortcut'
-import ShortcutId from './@types/ShortcutId'
 import State from './@types/State'
 import { alertActionCreator as alert } from './actions/alert'
 import { commandPaletteActionCreator as commandPalette } from './actions/commandPalette'
@@ -23,7 +23,7 @@ import * as shortcutObject from './shortcuts/index'
 import { executeShortcutWithMulticursor } from './util/executeShortcut'
 import keyValueBy from './util/keyValueBy'
 
-export const globalShortcuts: Shortcut[] = Object.values(shortcutObject)
+export const globalShortcuts: Command[] = Object.values(shortcutObject)
 
 export const shortcutEmitter = new Emitter()
 
@@ -52,7 +52,7 @@ const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
 }))
 
 /** Hash all the properties of a shortcut into a string that can be compared with the result of hashKeyDown. */
-export const hashShortcut = (shortcut: Shortcut): string => {
+export const hashShortcut = (shortcut: Command): string => {
   const keyboard = typeof shortcut.keyboard === 'string' ? { key: shortcut.keyboard } : shortcut.keyboard || ({} as Key)
   return (
     (keyboard.meta ? 'META_' : '') +
@@ -96,12 +96,12 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | string): string =
 }
 /** Initializes shortcut indices and stores conflicts. */
 const index = (): {
-  shortcutKeyIndex: Index<Shortcut>
-  shortcutIdIndex: Index<Shortcut>
-  shortcutGestureIndex: Index<Shortcut>
+  shortcutKeyIndex: Index<Command>
+  shortcutIdIndex: Index<Command>
+  shortcutGestureIndex: Index<Command>
 } => {
   // index shortcuts for O(1) lookup by keyboard
-  const shortcutKeyIndex: Index<Shortcut> = keyValueBy(globalShortcuts, (shortcut, i, accum) => {
+  const shortcutKeyIndex: Index<Command> = keyValueBy(globalShortcuts, (shortcut, i, accum) => {
     if (!shortcut.keyboard) return null
 
     const hash = hashShortcut(shortcut)
@@ -125,12 +125,12 @@ const index = (): {
   })
 
   // index shortcuts for O(1) lookup by id
-  const shortcutIdIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut =>
+  const shortcutIdIndex: Index<Command> = keyValueBy(globalShortcuts, shortcut =>
     shortcut.id ? { [shortcut.id]: shortcut } : null,
   )
 
   // index shortcuts for O(1) lookup by gesture
-  const shortcutGestureIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut =>
+  const shortcutGestureIndex: Index<Command> = keyValueBy(globalShortcuts, shortcut =>
     shortcut.gesture
       ? {
           // shortcut.gesture may be a string or array of strings
@@ -315,8 +315,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
 })
 
 /** Gets the canonical gesture of the shortcut as a string, ignoring aliases. Returns an empty string if the shortcut does not have a gesture. */
-export const gestureString = (shortcut: Shortcut): string =>
+export const gestureString = (shortcut: Command): string =>
   (typeof shortcut.gesture === 'string' ? shortcut.gesture : shortcut.gesture?.[0] || '') as string
 
 /** Get a shortcut by its id. */
-export const shortcutById = (id: ShortcutId): Shortcut => shortcutIdIndex[id]
+export const shortcutById = (id: CommandId): Command => shortcutIdIndex[id]

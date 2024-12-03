@@ -1,8 +1,8 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSidebar'
 import SettingsIcon from '../components/icons/SettingsIcon'
 
-const toggleSidebarShortcut: Shortcut = {
+const toggleSidebarShortcut: Command = {
   id: 'toggleSidebar',
   label: 'Toggle Recently Edited',
   keyboard: { key: 'r', alt: true },

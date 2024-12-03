@@ -1,4 +1,4 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toggleSortActionCreator as toggleSort } from '../actions/toggleSort'
 import Icon from '../components/icons/Sort'
@@ -9,7 +9,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const toggleSortShortcut: Shortcut = {
+const toggleSortShortcut: Command = {
   id: 'toggleSort',
   label: 'Sort',
   description:

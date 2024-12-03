@@ -1,5 +1,5 @@
 import { Key } from 'ts-key-enum'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { errorActionCreator as error } from '../actions/error'
@@ -19,7 +19,7 @@ import isRoot from '../util/isRoot'
 let undoArchiveTimer: number
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec: Shortcut['exec'] = (dispatch, getState) => {
+const exec: Command['exec'] = (dispatch, getState) => {
   const state = getState()
   const { cursor, noteFocus } = state
 
@@ -54,7 +54,7 @@ const exec: Shortcut['exec'] = (dispatch, getState) => {
   }
 }
 
-const archiveShortcut: Shortcut = {
+const archiveShortcut: Command = {
   id: 'archive',
   label: 'Archive',
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
@@ -86,7 +86,7 @@ const archiveShortcut: Shortcut = {
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const archiveAliases: Shortcut = {
+export const archiveAliases: Command = {
   id: 'archiveAliases',
   svg: ArchiveIcon,
   label: 'Archive',

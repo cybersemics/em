@@ -1,5 +1,5 @@
 import { Key } from 'ts-key-enum'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../actions/moveThoughtDown'
 import MoveThoughtDownIcon from '../components/icons/MoveThoughtDownIcon'
 import nextSibling from '../selectors/nextSibling'
@@ -7,7 +7,7 @@ import appendToPath from '../util/appendToPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 
-const moveThoughtDownShortcut: Shortcut = {
+const moveThoughtDownShortcut: Command = {
   id: 'moveThoughtDown',
   label: 'Move Thought Down',
   description: 'Move the current thought down.',

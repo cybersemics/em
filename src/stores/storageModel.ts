@@ -1,5 +1,5 @@
+import CommandId from '../@types/CommandId'
 import Path from '../@types/Path'
-import ShortcutId from '../@types/ShortcutId'
 import storage from '../util/storage'
 
 type CursorStorageType = { path: Path | null; offset: number | null }
@@ -22,7 +22,7 @@ const storageModel = storage.model({
   },
   // recent commands executed from the command palette
   recentCommands: {
-    default: [] as ShortcutId[],
+    default: [] as CommandId[],
   },
 })
 

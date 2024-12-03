@@ -1,9 +1,9 @@
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import { toggleContextViewActionCreator as toggleContextView } from '../actions/toggleContextView'
 import ContextViewIcon from '../components/icons/ContextViewIcon'
 import isContextViewActive from '../selectors/isContextViewActive'
 
-const toggleContextViewShortcut: Shortcut = {
+const toggleContextViewShortcut: Command = {
   id: 'toggleContextView',
   label: 'Context View',
   description:
