@@ -18,9 +18,9 @@ import { isTouch } from '../../browser'
 import { commandById } from '../../commands'
 import { AlertText, AlertType } from '../../constants'
 import fastClick from '../../util/fastClick'
+import CommandTableOnly from '../CommandTableOnly'
 import FadeTransition from '../FadeTransition'
-import ShortcutTableOnly from '../ShortcutTableOnly'
-import ShortcutTable from './../ShortcutTable'
+import CommandTable from './../CommandTable'
 import Toolbar from './../Toolbar'
 import ModalComponent from './ModalComponent'
 
@@ -98,7 +98,7 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
 
 /** Customize Toolbar modal. */
 const ModalCustomizeToolbar: FC = () => {
-  const [selectedShortcut, setSelectedShortcut] = useState<Command | null>(null)
+  const [selectedCommand, setSelectedShortcut] = useState<Command | null>(null)
   /** Toggles a shortcut selected. */
   const toggleSelectedShortcut = useCallback(
     (shortcut: Command) => setSelectedShortcut(oldShortcut => (oldShortcut === shortcut ? null : shortcut)),
@@ -108,7 +108,7 @@ const ModalCustomizeToolbar: FC = () => {
   const dispatch = useDispatch()
 
   const shortcutsContainerRef = useRef<HTMLDivElement>(null)
-  const shortcuts = useMemo(() => [selectedShortcut], [selectedShortcut])
+  const commands = useMemo(() => [selectedCommand], [selectedCommand])
 
   const id = 'customizeToolbar'
   const modalClasses = modalRecipe({ id })
@@ -130,7 +130,7 @@ const ModalCustomizeToolbar: FC = () => {
       <div
         className={css({
           // mask the selected bar that is rendered outside thn left edge of the ShortcutRow
-          backgroundColor: selectedShortcut ? 'bg' : undefined,
+          backgroundColor: selectedCommand ? 'bg' : undefined,
           position: 'sticky',
           top: '0px',
           marginBottom: '1em',
@@ -141,13 +141,13 @@ const ModalCustomizeToolbar: FC = () => {
           zIndex: 1,
         })}
       >
-        <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedShortcut?.id} />
+        <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedCommand?.id} />
 
         {/* selected toolbar button details */}
         <FadeTransition
           duration='fast'
           nodeRef={shortcutsContainerRef}
-          in={!!selectedShortcut}
+          in={!!selectedCommand}
           exit={false}
           unmountOnExit
         >
@@ -169,13 +169,13 @@ const ModalCustomizeToolbar: FC = () => {
                 position: 'relative',
               })}
             >
-              <ShortcutTableOnly shortcuts={shortcuts} />
+              <CommandTableOnly commands={commands} />
             </div>
           </div>
         </FadeTransition>
       </div>
 
-      <FadeTransition duration='fast' in={!selectedShortcut} exit={false} unmountOnExit>
+      <FadeTransition duration='fast' in={!selectedCommand} exit={false} unmountOnExit>
         <div className={css({ marginTop: '2em', marginBottom: '2.645em', color: 'dim' })}>
           <p>Drag-and-drop to rearrange toolbar.</p>
           <p>{isTouch ? 'Tap' : 'Click'} a command for details.</p>
@@ -183,7 +183,7 @@ const ModalCustomizeToolbar: FC = () => {
       </FadeTransition>
 
       <DropToRemoveFromToolbar>
-        <ShortcutTable customize selectedShortcut={selectedShortcut ?? undefined} onSelect={setSelectedShortcut} />
+        <CommandTable customize selectedCommand={selectedCommand ?? undefined} onSelect={setSelectedShortcut} />
       </DropToRemoveFromToolbar>
 
       <p className={css({ marginTop: '2em', marginBottom: '2em' })}>

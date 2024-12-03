@@ -6,16 +6,16 @@ import getUserToolbar from '../selectors/getUserToolbar'
 import ShortcutRow from './ShortcutRow'
 
 /** Renders a table of shortcuts, with nothing else added. */
-const ShortcutTableOnly = ({
-  shortcuts,
-  selectedShortcut,
+const CommandTableOnly = ({
+  commands,
+  selectedCommand,
   customize,
   onSelect,
   applyIndexInToolbar,
   search,
 }: {
-  shortcuts: (Command | null)[]
-  selectedShortcut?: Command
+  commands: (Command | null)[]
+  selectedCommand?: Command
   customize?: boolean
   onSelect?: (shortcut: Command | null) => void
   applyIndexInToolbar?: boolean
@@ -32,16 +32,16 @@ const ShortcutTableOnly = ({
   return (
     <table className={css({ fontSize: '14px' })}>
       <tbody>
-        {shortcuts.map(shortcut => {
-          const indexInToolbar = shortcutIds.findIndex(id => id === shortcut?.id)
+        {commands.map(command => {
+          const indexInToolbar = shortcutIds.findIndex(id => id === command?.id)
           return (
             <ShortcutRow
               customize={customize}
-              key={shortcut?.id}
+              key={command?.id}
               indexInToolbar={indexInToolbar !== -1 && applyIndexInToolbar ? indexInToolbar + 1 : null}
               onSelect={onSelect}
-              selected={selectedShortcut && shortcut?.id === selectedShortcut.id}
-              shortcut={shortcut}
+              selected={selectedCommand && command?.id === selectedCommand.id}
+              shortcut={command}
               search={search}
             />
           )
@@ -50,4 +50,4 @@ const ShortcutTableOnly = ({
     </table>
   )
 }
-export default ShortcutTableOnly
+export default CommandTableOnly

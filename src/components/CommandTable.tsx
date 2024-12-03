@@ -8,7 +8,7 @@ import { commandById, globalCommands } from '../commands'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
-import ShortcutTableOnly from './ShortcutTableOnly'
+import CommandTableOnly from './CommandTableOnly'
 
 // define the grouping and ordering of shortcuts
 const groups: {
@@ -106,7 +106,7 @@ const shortcutsUngrouped = globalCommands.filter(
 
 if (shortcutsUngrouped.length > 0) {
   throw new Error(
-    `ShortcutTable groups are missing shortcut(s). Please add ${conjunction(
+    `CommandTable groups are missing shortcut(s). Please add ${conjunction(
       shortcutsUngrouped.map(shortcut => shortcut.id),
     )} to the appropriate group, or add hideFromHelp: true to the Shortcut.`,
   )
@@ -141,26 +141,26 @@ const SearchShortcut: FC<{
 const ShortcutGroup: ({
   customize,
   onSelect,
-  selectedShortcut,
+  selectedCommand,
   title,
-  shortcuts,
+  commands,
   search,
 }: {
   customize?: boolean
   onSelect?: (shortcut: Command | null) => void
-  selectedShortcut?: Command
+  selectedCommand?: Command
   title: string
   search?: string
-  shortcuts: (Command | null)[]
-}) => JSX.Element = ({ customize, onSelect, selectedShortcut, shortcuts, title, search }) => {
+  commands: (Command | null)[]
+}) => JSX.Element = ({ customize, onSelect, selectedCommand, commands, title, search }) => {
   const modalClasses = modalTextRecipe()
 
   return (
     <div>
       <h2 className={modalClasses.subtitle}>{title}</h2>
-      <ShortcutTableOnly
-        shortcuts={shortcuts}
-        selectedShortcut={selectedShortcut}
+      <CommandTableOnly
+        commands={commands}
+        selectedCommand={selectedCommand}
         customize={customize}
         onSelect={onSelect}
         search={search}
@@ -170,18 +170,18 @@ const ShortcutGroup: ({
   )
 }
 
-/** Renders a table of shortcuts. */
-const ShortcutTable = ({
+/** Renders a table of commands. */
+const CommandTable = ({
   customize,
   onSelect,
-  selectedShortcut,
+  selectedCommand: selectedCommand,
 }: {
   customize?: boolean
-  onSelect?: (shortcut: Command | null) => void
-  selectedShortcut?: Command
+  onSelect?: (command: Command | null) => void
+  selectedCommand?: Command
 }) => {
   const [search, setSearch] = useState('')
-  const shortcuts = useFilteredCommands(search, { platformShortcutsOnly: true })
+  const commands = useFilteredCommands(search, { platformShortcutsOnly: true })
 
   return (
     <div>
@@ -190,27 +190,27 @@ const ShortcutTable = ({
         {search ? (
           <ShortcutGroup
             title={'Results'}
-            shortcuts={shortcuts}
-            selectedShortcut={selectedShortcut}
+            commands={commands}
+            selectedCommand={selectedCommand}
             customize={customize}
             onSelect={onSelect}
             search={search}
           />
         ) : (
           groups.map(group => {
-            const shortcuts = group.shortcuts
+            const commands = group.shortcuts
               .map(commandById)
-              .filter((shortcut): shortcut is Command => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
+              .filter((command): command is Command => (isTouch ? !!command.gesture : !!command.keyboard))
 
             // do not render groups with no shortcuts on this platform
-            return shortcuts.length > 0 ? (
+            return commands.length > 0 ? (
               <ShortcutGroup
                 title={group.title}
-                shortcuts={shortcuts}
+                commands={commands}
                 key={group.title}
                 customize={customize}
                 onSelect={onSelect}
-                selectedShortcut={selectedShortcut}
+                selectedCommand={selectedCommand}
               />
             ) : null
           })
@@ -220,4 +220,4 @@ const ShortcutTable = ({
   )
 }
 
-export default ShortcutTable
+export default CommandTable
