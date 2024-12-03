@@ -18,52 +18,6 @@ const REGEX_BR_TAG = /<br.*?>/gim
 const REGEX_SPAN_TAG_ONLY_CONTAINS_WHITESPACES = /<span[^>]*>([\s]+)<\/span>/gim
 const REGEX_EMPTY_FORMATTING_TAGS = /<[^/>][^>]*>\s*<\/[^>]+>/gim
 
-/** Trims leading whitespace from the first text node. */
-const trimFirstTextNode = (nodes: HimalayaNode[]): HimalayaNode[] => {
-  if (nodes.length === 0) {
-    return nodes
-  }
-  const firstNode = nodes[0]
-  let trimmedFirstNode: HimalayaNode
-  if (firstNode.type === 'text') {
-    trimmedFirstNode = {
-      ...firstNode,
-      content: firstNode.content.trimStart(),
-    }
-  } else if (firstNode.type === 'comment') {
-    trimmedFirstNode = firstNode
-  } else {
-    trimmedFirstNode = {
-      ...firstNode,
-      children: trimFirstTextNode(firstNode.children),
-    }
-  }
-  return [trimmedFirstNode, ...nodes.slice(1)]
-}
-
-/** Trims trailing whitespace from the last text node. */
-const trimLastTextNode = (nodes: HimalayaNode[]): HimalayaNode[] => {
-  if (nodes.length === 0) {
-    return nodes
-  }
-  const lastNode = nodes[nodes.length - 1]
-  let trimmedLastNode: HimalayaNode
-  if (lastNode.type === 'text') {
-    trimmedLastNode = {
-      ...lastNode,
-      content: lastNode.content.trimEnd(),
-    }
-  } else if (lastNode.type === 'comment') {
-    trimmedLastNode = lastNode
-  } else {
-    trimmedLastNode = {
-      ...lastNode,
-      children: trimLastTextNode(lastNode.children),
-    }
-  }
-  return [...nodes.slice(0, -1), trimmedLastNode]
-}
-
 /** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim.
  * PrserveFormatting is used to preserve the html formatting.
  * StripColors is used to strip only colors of the html.
@@ -87,27 +41,24 @@ const strip = (
     // DOMPurify replaces spaces with &nbsp;, so we need to replace them after sanitizing rather than in the replacedHtml replacements above
     .replace(REGEX_NBSP, ' ')
 
-  let nodes = parse(sanitizedHtml)
-  if (!preventTrim) {
-    nodes = trimFirstTextNode(nodes)
-    nodes = trimLastTextNode(nodes)
-  }
+  let finalHtml = sanitizedHtml
 
   // if enabled, remove style attributes
-  // by default, strip does not remove style attributes
+  // by default, strip does not remove style attributes since it requires HTML parsing
   if (stripAttributes) {
+    const nodes = parse(sanitizedHtml)
+
     if (nodes.some(isFormattingTag)) {
-      nodes = _.takeWhile(nodes, node => isFormattingTag(node) || node.type === 'text')
+      const tagsToMerge = _.takeWhile(nodes, node => isFormattingTag(node) || node.type === 'text')
+      finalHtml = tagsToMerge.reduce((accum: string, current: HimalayaNode) => {
+        const appendContent =
+          current.type === 'text' ? current.content : current.type === 'comment' ? '' : formattingNodeToHtml(current)
+        return accum + appendContent
+      }, '')
     }
   }
 
-  const finalHtml = nodes.reduce((accum: string, current: HimalayaNode) => {
-    const appendContent =
-      current.type === 'text' ? current.content : current.type === 'comment' ? '' : formattingNodeToHtml(current)
-    return accum + appendContent
-  }, '')
-
-  return finalHtml
+  return preventTrim ? finalHtml : finalHtml.trim()
 }
 
 export default strip
