@@ -53,6 +53,7 @@ import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
+import trimHtml from '../util/trimHtml'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
@@ -341,7 +342,7 @@ const Editable = ({
                 }),
               )
             : // Otherwise, we avoid unescaping the value to preserve escaped HTML characters.
-              e.target.value.trim(),
+              trimHtml(e.target.value),
         ),
       )
 
