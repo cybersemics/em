@@ -1,21 +1,25 @@
 import { page } from '../setup'
 
 /** Draw a gesture on the screen. */
-const gesture = async (points: { x: number; y: number }[], complete: boolean = true) => {
+const swipePoints = async (points: { x: number; y: number }[], complete: boolean = true) => {
   const start = points[0]
 
   await page.touchscreen.touchStart(start.x, start.y)
 
-  for (let i = 1; i < points.length; i++) await page.touchscreen.touchMove(points[i].x, points[i].y)
+  for (let i = 1; i < points.length; i++) {
+    await page.touchscreen.touchMove(points[i].x, points[i].y)
+  }
 
-  if (complete) await page.touchscreen.touchEnd()
+  if (complete) {
+    await page.touchscreen.touchEnd()
+  }
 }
 
-export default gesture
-
-/** Draw a horizontal line gesture at a certain y coordinate on the touch screen. */
-export const drawHorizontalLineGesture = (y: number = 100) =>
-  gesture(
+/** Swipe right. */
+// TODO: Support other directions and multiple swipes.
+const swipe = async (direction: 'r') => {
+  const y = 100
+  await swipePoints(
     [
       { x: 100, y },
       { x: 110, y },
@@ -41,3 +45,6 @@ export const drawHorizontalLineGesture = (y: number = 100) =>
     ],
     false,
   )
+}
+
+export default swipe
