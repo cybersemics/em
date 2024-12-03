@@ -1,4 +1,4 @@
-import { Dispatch } from 'react'
+import { Dispatch } from 'redux'
 import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import MoveCursorForwardIcon from '../components/icons/MoveCursorForwardIcon'
