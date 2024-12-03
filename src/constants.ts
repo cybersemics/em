@@ -170,7 +170,7 @@ export const MAX_EXPAND_DEPTH = 10
 
 // shortcut ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
-export const TOOLBAR_DEFAULT_SHORTCUTS: CommandId[] = [
+export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'undo',
   'redo',
   'newThought',

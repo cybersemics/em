@@ -18,7 +18,7 @@ import CommandId from '../@types/CommandId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
 import { commandById } from '../commands'
-import { TOOLBAR_DEFAULT_SHORTCUTS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
+import { TOOLBAR_DEFAULT_COMMANDS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
 import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -175,7 +175,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // fall back to defaults if user does not have Settings defined
   const shortcutIds = useSelector(state => {
     const userShortcutIds = getUserToolbar(state)
-    return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_SHORTCUTS
+    return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_COMMANDS
   }, shallowEqual)
 
   const onTapUp = useCallback(

@@ -27,11 +27,11 @@ const ordinal = (n: number) => {
 }
 
 /** Renders all of a shortcut's details as a table row. */
-const ShortcutRow = ({
+const CommandRow = ({
   customize,
   onSelect,
   selected,
-  shortcut,
+  command,
   indexInToolbar,
   search,
 }: {
@@ -39,17 +39,17 @@ const ShortcutRow = ({
   indexInToolbar?: number | null
   onSelect?: (shortcut: Command | null) => void
   selected?: boolean
-  shortcut: Command | null
+  command: Command | null
   /** Search text that will be highlighted within the matched shortcut title. */
   search?: string
 }) => {
   const [{ isDragging }, dragSource] = useDrag({
     type: DragAndDropType.ToolbarButton,
     item: (): DragToolbarItem => {
-      store.dispatch(dragShortcut(shortcut?.id || null))
-      return { shortcut: shortcut!, zone: DragShortcutZone.Remove }
+      store.dispatch(dragShortcut(command?.id || null))
+      return { shortcut: command!, zone: DragShortcutZone.Remove }
     },
-    canDrag: () => !!shortcut && !!customize,
+    canDrag: () => !!command && !!customize,
     end: () => store.dispatch(dragShortcut(null)),
     collect: (monitor: DragSourceMonitor) => {
       const item = monitor.getItem() as DragToolbarItem
@@ -63,14 +63,14 @@ const ShortcutRow = ({
   })
 
   const description = useSelector(state => {
-    if (!shortcut) return ''
-    return typeof shortcut.description === 'function' ? shortcut.description(state) : shortcut.description
+    if (!command) return ''
+    return typeof command.description === 'function' ? command.description(state) : command.description
   })
 
   return (
-    shortcut && (
+    command && (
       <tr
-        key={shortcut.id}
+        key={command.id}
         className={css({
           display: 'flex',
           position: 'relative',
@@ -91,7 +91,7 @@ const ShortcutRow = ({
             : null),
         })}
         ref={dragSource}
-        onClick={onSelect ? () => onSelect(selected ? null : shortcut) : undefined}
+        onClick={onSelect ? () => onSelect(selected ? null : command) : undefined}
       >
         {
           // selected bar
@@ -113,11 +113,11 @@ const ShortcutRow = ({
           )
         }
         {/* center gesture diagrams on mobile */}
-        {isTouch && shortcut.gesture ? (
+        {isTouch && command.gesture ? (
           <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
-            {isTouch && shortcut.gesture ? (
+            {isTouch && command.gesture ? (
               // GesturePath[]
-              <GestureDiagram path={shortcut.gesture as GesturePath} size={48} arrowSize={12} />
+              <GestureDiagram path={command.gesture as GesturePath} size={48} arrowSize={12} />
             ) : null}
           </td>
         ) : null}
@@ -141,13 +141,13 @@ const ShortcutRow = ({
 
           {search && search.length > 0 ? (
             <b>
-              <HighlightedText value={shortcut.label} match={search} />
+              <HighlightedText value={command.label} match={search} />
             </b>
           ) : (
-            <b>{shortcut.label}</b>
+            <b>{command.label}</b>
           )}
-          {shortcut.keyboard && !isTouch ? (
-            <p className={css({ color: 'gray', marginBottom: 0 })}>{formatKeyboardShortcut(shortcut.keyboard)}</p>
+          {command.keyboard && !isTouch ? (
+            <p className={css({ color: 'gray', marginBottom: 0 })}>{formatKeyboardShortcut(command.keyboard)}</p>
           ) : null}
           <p>{description}</p>
         </td>
@@ -156,4 +156,4 @@ const ShortcutRow = ({
   )
 }
 
-export default ShortcutRow
+export default CommandRow

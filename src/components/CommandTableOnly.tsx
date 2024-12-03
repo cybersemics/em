@@ -1,11 +1,11 @@
 import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
-import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import { TOOLBAR_DEFAULT_COMMANDS } from '../constants'
 import getUserToolbar from '../selectors/getUserToolbar'
-import ShortcutRow from './ShortcutRow'
+import CommandRow from './CommandRow'
 
-/** Renders a table of shortcuts, with nothing else added. */
+/** Renders a table of commands, with nothing else added. */
 const CommandTableOnly = ({
   commands,
   selectedCommand,
@@ -17,31 +17,31 @@ const CommandTableOnly = ({
   commands: (Command | null)[]
   selectedCommand?: Command
   customize?: boolean
-  onSelect?: (shortcut: Command | null) => void
+  onSelect?: (command: Command | null) => void
   applyIndexInToolbar?: boolean
-  /** Search text that will be highlighted within the matched shortcut title. */
+  /** Search text that will be highlighted within the matched command title. */
   search?: string
 }) => {
   // custom user toolbar
   // fall back to defaults if user does not have Settings defined
-  const shortcutIds = useSelector(state => {
-    const userShortcutIds = getUserToolbar(state)
-    return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_SHORTCUTS
+  const commandIds = useSelector(state => {
+    const userCommandIds = getUserToolbar(state)
+    return userCommandIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_COMMANDS
   }, shallowEqual)
 
   return (
     <table className={css({ fontSize: '14px' })}>
       <tbody>
         {commands.map(command => {
-          const indexInToolbar = shortcutIds.findIndex(id => id === command?.id)
+          const indexInToolbar = commandIds.findIndex(id => id === command?.id)
           return (
-            <ShortcutRow
+            <CommandRow
               customize={customize}
               key={command?.id}
               indexInToolbar={indexInToolbar !== -1 && applyIndexInToolbar ? indexInToolbar + 1 : null}
               onSelect={onSelect}
               selected={selectedCommand && command?.id === selectedCommand.id}
-              shortcut={command}
+              command={command}
               search={search}
             />
           )
