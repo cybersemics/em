@@ -9,7 +9,16 @@ import animationData from './animations/10-sort_4.json'
 import animationDataDesc from './animations/11-sort-descanding_7.json'
 
 /** Cursor Sort Direction. */
-const getCursorSortDirection = (state: State) => getSortPreference(state, head(state.cursor || HOME_PATH)).direction
+const getCursorSortDirection = (state: State) => {
+  const cursorId = head(state.cursor || HOME_PATH)
+  const sortPref = getSortPreference(state, cursorId)
+  // Return null particularly if sort type is "None", clearly log to confirm absence
+  if (sortPref.type === 'None') {
+    return null
+  }
+
+  return sortPref?.direction || null
+}
 
 /** Ascending Sort Icon Component with Conditional Lottie Animation. */
 const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
