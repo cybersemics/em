@@ -49,9 +49,9 @@ const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
   [48 + i]: i.toString(),
 }))
 
-/** Hash all the properties of a shortcut into a string that can be compared with the result of hashKeyDown. */
-export const hashShortcut = (shortcut: Command): string => {
-  const keyboard = typeof shortcut.keyboard === 'string' ? { key: shortcut.keyboard } : shortcut.keyboard || ({} as Key)
+/** Hash all the properties of a command into a string that can be compared with the result of hashKeyDown. */
+export const hashCommand = (command: Command): string => {
+  const keyboard = typeof command.keyboard === 'string' ? { key: command.keyboard } : command.keyboard || ({} as Key)
   return (
     (keyboard.meta ? 'META_' : '') +
     (keyboard.alt ? 'ALT_' : '') +
@@ -60,7 +60,7 @@ export const hashShortcut = (shortcut: Command): string => {
   )
 }
 
-/** Hash all the properties of a keydown event into a string that can be compared with the result of hashShortcut. */
+/** Hash all the properties of a keydown event into a string that can be compared with the result of hashCommand. */
 export const hashKeyDown = (e: KeyboardEvent): string =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
   (e.altKey ? 'ALT_' : '') +
@@ -99,15 +99,15 @@ const index = (): {
   shortcutGestureIndex: Index<Command>
 } => {
   // index shortcuts for O(1) lookup by keyboard
-  const shortcutKeyIndex: Index<Command> = keyValueBy(globalCommands, (shortcut, i, accum) => {
-    if (!shortcut.keyboard) return null
+  const shortcutKeyIndex: Index<Command> = keyValueBy(globalCommands, (command, i, accum) => {
+    if (!command.keyboard) return null
 
-    const hash = hashShortcut(shortcut)
+    const hash = hashCommand(command)
     const conflict = !!accum[hash]
 
     if (conflict) {
       console.error(
-        `"${shortcut.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(shortcut.keyboard)}"`,
+        `"${command.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(command.keyboard)}"`,
       )
     }
 
@@ -115,26 +115,26 @@ const index = (): {
       // if there is a conflict, append the shortcut id to the conflicts property so that the conflicts can be displayed to the user
       [hash]: conflict
         ? {
-            ...shortcut,
-            conflicts: [...(shortcut.conflicts || [accum[hash].id]), shortcut.id],
+            ...command,
+            conflicts: [...(command.conflicts || [accum[hash].id]), command.id],
           }
-        : shortcut,
+        : command,
     }
   })
 
   // index shortcuts for O(1) lookup by id
-  const shortcutIdIndex: Index<Command> = keyValueBy(globalCommands, shortcut =>
-    shortcut.id ? { [shortcut.id]: shortcut } : null,
+  const shortcutIdIndex: Index<Command> = keyValueBy(globalCommands, command =>
+    command.id ? { [command.id]: command } : null,
   )
 
   // index shortcuts for O(1) lookup by gesture
-  const shortcutGestureIndex: Index<Command> = keyValueBy(globalCommands, shortcut =>
-    shortcut.gesture
+  const shortcutGestureIndex: Index<Command> = keyValueBy(globalCommands, command =>
+    command.gesture
       ? {
           // shortcut.gesture may be a string or array of strings
           // normalize intro array of strings
-          ...keyValueBy(Array.prototype.concat([], shortcut.gesture), gesture => ({
-            [gesture]: shortcut,
+          ...keyValueBy(Array.prototype.concat([], command.gesture), gesture => ({
+            [gesture]: command,
           })),
         }
       : null,
