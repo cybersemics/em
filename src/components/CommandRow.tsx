@@ -26,7 +26,7 @@ const ordinal = (n: number) => {
         : s + 'th'
 }
 
-/** Renders all of a shortcut's details as a table row. */
+/** Renders all of a command's details as a table row. */
 const CommandRow = ({
   customize,
   onSelect,
@@ -37,10 +37,10 @@ const CommandRow = ({
 }: {
   customize?: boolean
   indexInToolbar?: number | null
-  onSelect?: (shortcut: Command | null) => void
+  onSelect?: (command: Command | null) => void
   selected?: boolean
   command: Command | null
-  /** Search text that will be highlighted within the matched shortcut title. */
+  /** Search text that will be highlighted within the matched command title. */
   search?: string
 }) => {
   const [{ isDragging }, dragSource] = useDrag({
@@ -100,13 +100,13 @@ const CommandRow = ({
               className={css({
                 width: '0.25em',
                 padding: 0,
-                // set the height so it is flush with the bottom of the shortcut row description
+                // set the height so it is flush with the bottom of the command row description
                 height: 'calc(100% - 1.375em)',
                 backgroundColor: 'highlight',
                 position: 'absolute',
-                // hanng off the left edge of the shortcut row
+                // hanng off the left edge of the command row
                 left: '-1em',
-                // set the top so it is flush with the top of the shortcut row label
+                // set the top so it is flush with the top of the command row label
                 top: '0.25em',
               })}
             />
