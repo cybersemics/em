@@ -73,8 +73,7 @@ export const isThought = (): boolean => {
 /** Returns true if the selection is on a thought. */
 export const isOnThought = (): boolean => {
   let focusNode = window.getSelection()?.focusNode
-  if (!focusNode) return false
-  while ((focusNode as HTMLElement)?.tagName !== 'DIV') {
+  while (focusNode && (focusNode as HTMLElement)?.tagName !== 'DIV') {
     if (isEditable(focusNode)) return true
     focusNode = focusNode?.parentNode
   }
