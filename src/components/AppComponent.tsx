@@ -24,7 +24,7 @@ import Content from './Content'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
-import LatestShortcutsDiagram from './LatestShortcutsDiagram'
+import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import QuickDropPanel from './QuickDropPanel'
@@ -117,7 +117,7 @@ const AppComponent: FC = () => {
   const colors = useSelector(themeColors)
   const dark = useSelector(state => theme(state) !== 'Light')
   const dragInProgress = useSelector(state => state.dragInProgress)
-  const enableLatestShortcutsDiagram = useSelector(state => state.enableLatestShortcutsDiagram)
+  const enableLatestCommandsDiagram = useSelector(state => state.enableLatestCommandsDiagram)
   const showTutorial = useSelector(state => isTutorial(state) && !state.isLoading)
   const fontSize = useSelector(state => state.fontSize)
   const showSplitView = useSelector(state => state.showSplitView)
@@ -189,7 +189,7 @@ const AppComponent: FC = () => {
       <Tips />
       <CommandPalette />
       <ErrorMessage />
-      {enableLatestShortcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
+      {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       {isDocumentEditable() && !tutorial && !showModal && (
         <>
           <Sidebar />

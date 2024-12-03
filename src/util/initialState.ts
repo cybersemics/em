@@ -118,7 +118,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     dragInProgress: false,
     editableNonce: 0,
     editing: null,
-    enableLatestShortcutsDiagram: false,
+    enableLatestCommandsDiagram: false,
     error: null,
     expanded: {},
     fontSize: storageModel.get('fontSize'),

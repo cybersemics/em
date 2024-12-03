@@ -6,32 +6,27 @@ import { globalCommands } from '../commands'
 import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 
-interface LatestShortcutsDiagramProps {
-  position?: 'middle' | 'bottom'
-}
-
 /**
- * Shows latest activated shortcuts diagram.
+ * Shows latest activated commands diagram.
  */
-const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'middle' }) => {
-  // const latestShortcuts = useSelector(state => state.latestShortcuts)
-  const latestShortcuts = globalCommands.slice(0, 2)
+const LatestCommandsDiagram: FC<{ position?: 'middle' | 'bottom' }> = ({ position = 'middle' }) => {
+  const latestCommands = globalCommands.slice(0, 2)
 
-  const latestShortcutsRef = useRef(latestShortcuts)
-  const latestShortcutsElRef = useRef<HTMLDivElement>(null)
+  const latestCommandsRef = useRef(latestCommands)
+  const latestCommandsElRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    latestShortcutsRef.current = latestShortcuts
-  }, [latestShortcuts])
+    latestCommandsRef.current = latestCommands
+  }, [latestCommands])
 
   // Note: On exiting we don't want to abruptly remove everything, so using previous data until component unmounts
-  const shortcutsList = latestShortcuts.length === 0 ? latestShortcutsRef.current : latestShortcuts
+  const commandsList = latestCommands.length === 0 ? latestCommandsRef.current : latestCommands
 
   return (
     <div className={css({ position: 'absolute', height: '100vh', width: '100%' })}>
-      <FadeTransition nodeRef={latestShortcutsElRef} in={latestShortcuts.length > 0} duration='medium' unmountOnExit>
+      <FadeTransition nodeRef={latestCommandsElRef} in={latestCommands.length > 0} duration='medium' unmountOnExit>
         <div
-          ref={latestShortcutsElRef}
+          ref={latestCommandsElRef}
           className={css({
             position: 'absolute',
             width: '100%',
@@ -43,9 +38,9 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
             ...(position === 'bottom' && { bottom: '20%' }),
           })}
         >
-          {shortcutsList.map(shortcut => {
+          {commandsList.map(command => {
             return (
-              <div key={shortcut.id}>
+              <div key={command.id}>
                 <div
                   className={css({
                     background: 'gestureDiagramWrapper',
@@ -59,7 +54,7 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
                   })}
                 >
                   <GestureDiagram
-                    path={shortcut.gesture as GesturePath}
+                    path={command.gesture as GesturePath}
                     size={30}
                     color={token('colors.fg')}
                     strokeWidth={2}
@@ -74,4 +69,4 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
   )
 }
 
-export default LatestShortcutsDiagram
+export default LatestCommandsDiagram

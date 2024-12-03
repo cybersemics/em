@@ -74,7 +74,7 @@ interface State {
   /** True if there is an active browser selection, or on mobile when the virtual keyboard is up. On mobile the first tap moves the cursor, and the second tap opens the keyboard. */
   editing: boolean | null
   /** Show the latest activated shortcuts at the bottom of the screen for webcasts. */
-  enableLatestShortcutsDiagram: boolean
+  enableLatestCommandsDiagram: boolean
   error?: string | null
   /** A map of all Paths that are expanded. Recalculated whenever the cursor moves or the thoughts change. Keyed by hashPath(path). */
   expanded: Index<Path>
