@@ -10,14 +10,14 @@ import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import CommandTableOnly from './CommandTableOnly'
 
-// define the grouping and ordering of shortcuts
+// define the grouping and ordering of commands
 const groups: {
   title: string
-  shortcuts: CommandId[]
+  commands: CommandId[]
 }[] = [
   {
     title: 'Navigation',
-    shortcuts: [
+    commands: [
       'cursorBack',
       'cursorForward',
       'cursorNext',
@@ -34,7 +34,7 @@ const groups: {
   },
   {
     title: 'Creating thoughts',
-    shortcuts: [
+    commands: [
       'newThought',
       'newThoughtAbove',
       'newSubthought',
@@ -49,23 +49,23 @@ const groups: {
   },
   {
     title: 'Deleting thoughts',
-    shortcuts: ['delete', 'archive', 'collapseContext', 'clearThought'],
+    commands: ['delete', 'archive', 'collapseContext', 'clearThought'],
   },
   {
     title: 'Moving thoughts',
-    shortcuts: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp'],
+    commands: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp'],
   },
   {
     title: 'Editing thoughts',
-    shortcuts: ['join', 'splitSentences', 'bold', 'italic', 'strikethrough', 'underline'],
+    commands: ['join', 'splitSentences', 'bold', 'italic', 'strikethrough', 'underline'],
   },
   {
     title: 'Oops',
-    shortcuts: ['undo', 'redo'],
+    commands: ['undo', 'redo'],
   },
   {
     title: 'Special Views',
-    shortcuts: [
+    commands: [
       'note',
       'swapNote',
       'toggleContextView',
@@ -82,38 +82,37 @@ const groups: {
   },
   {
     title: 'Visibility',
-    shortcuts: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
+    commands: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
   },
   {
     title: 'Settings',
-    shortcuts: ['customizeToolbar'],
+    commands: ['customizeToolbar'],
   },
   {
     title: 'Help',
-    shortcuts: ['help'],
+    commands: ['help'],
   },
 ]
 
-// assert that groups include all necessary shortcuts
-const shortcutsGroupedMap = keyValueBy(
-  groups.flatMap(group => group.shortcuts),
+// assert that groups include all necessary commands
+const commandsGroupedMap = keyValueBy(
+  groups.flatMap(group => group.commands),
   true,
 )
-const shortcutsUngrouped = globalCommands.filter(
-  shortcut =>
-    !shortcutsGroupedMap[shortcut.id] && !shortcut.hideFromHelp && (isTouch ? shortcut.gesture : shortcut.keyboard),
+const commandsUngrouped = globalCommands.filter(
+  command => !commandsGroupedMap[command.id] && !command.hideFromHelp && (isTouch ? command.gesture : command.keyboard),
 )
 
-if (shortcutsUngrouped.length > 0) {
+if (commandsUngrouped.length > 0) {
   throw new Error(
-    `CommandTable groups are missing shortcut(s). Please add ${conjunction(
-      shortcutsUngrouped.map(shortcut => shortcut.id),
-    )} to the appropriate group, or add hideFromHelp: true to the Shortcut.`,
+    `CommandTable groups are missing command(s). Please add ${conjunction(
+      commandsUngrouped.map(command => command.id),
+    )} to the appropriate group, or add hideFromHelp: true to the Command.`,
   )
 }
 
-/** Search bar for filtering shortcuts. */
-const SearchShortcut: FC<{
+/** Search bar for filtering commands. */
+const SearchCommands: FC<{
   onInput?: (value: string) => void
 }> = ({ onInput }) => {
   return (
@@ -137,8 +136,8 @@ const SearchShortcut: FC<{
   )
 }
 
-/** Renders a group of shortcuts with a heading. */
-const ShortcutGroup: ({
+/** Renders a group of commands with a heading. */
+const CommandsGroup: ({
   customize,
   onSelect,
   selectedCommand,
@@ -147,7 +146,7 @@ const ShortcutGroup: ({
   search,
 }: {
   customize?: boolean
-  onSelect?: (shortcut: Command | null) => void
+  onSelect?: (command: Command | null) => void
   selectedCommand?: Command
   title: string
   search?: string
@@ -181,14 +180,14 @@ const CommandTable = ({
   selectedCommand?: Command
 }) => {
   const [search, setSearch] = useState('')
-  const commands = useFilteredCommands(search, { platformShortcutsOnly: true })
+  const commands = useFilteredCommands(search, { platformCommandsOnly: true })
 
   return (
     <div>
-      <SearchShortcut onInput={setSearch} />
+      <SearchCommands onInput={setSearch} />
       <div className={css({ textAlign: 'left' })}>
         {search ? (
-          <ShortcutGroup
+          <CommandsGroup
             title={'Results'}
             commands={commands}
             selectedCommand={selectedCommand}
@@ -198,13 +197,13 @@ const CommandTable = ({
           />
         ) : (
           groups.map(group => {
-            const commands = group.shortcuts
+            const commands = group.commands
               .map(commandById)
               .filter((command): command is Command => (isTouch ? !!command.gesture : !!command.keyboard))
 
-            // do not render groups with no shortcuts on this platform
+            // do not render groups with no commands on this platform
             return commands.length > 0 ? (
-              <ShortcutGroup
+              <CommandsGroup
                 title={group.title}
                 commands={commands}
                 key={group.title}
