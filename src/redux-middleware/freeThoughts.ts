@@ -4,6 +4,7 @@ import State from '../@types/State'
 import { Thunk } from '../@types/Thunk'
 import { freeThoughtsActionCreator as freeThoughts } from '../actions/freeThoughts'
 import { FREE_THOUGHTS_THRESHOLD, FREE_THOUGHTS_THROTTLE } from '../constants'
+import { isAction } from 'redux'
 
 /** Checks if the thought cache has exceeded its memory limit. If so, dispatches freeThoughts which frees memory in the thoughtIndex, lexemeIndex, and YJS providers. */
 const checkThreshold: Thunk = (dispatch, getState): void => {
@@ -22,7 +23,7 @@ const freeThoughtsMiddleware: ThunkMiddleware<State> = ({ dispatch, getState }) 
     next(action)
 
     // do not run checkThrottled on freeThoughts action to avoid infinite loop
-    if (action.type !== 'freeThoughts') {
+    if (isAction(action) && action.type !== 'freeThoughts') {
       checkThrottled(dispatch, getState)
     }
   }
