@@ -8,6 +8,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
     enterActive: { opacity: 1 },
     exit: { opacity: 1 },
     exitActive: { opacity: 0 },
+    exitDone: { opacity: 0 },
   },
   variants: {
     duration: {
@@ -26,6 +27,10 @@ const fadeTransitionRecipe = defineSlotRecipe({
       distractionFreeTyping: {
         enterActive: { transition: `opacity {durations.distractionFreeTyping} ease 0ms` },
         exitActive: { transition: `opacity {durations.slow} ease 0ms` },
+      },
+      nodeOpacity: {
+        enterActive: { transition: `opacity {durations.nodeOpacity} cubic-bezier(0.4, 0, 0.6, 1)` },
+        exitActive: { transition: `opacity {durations.nodeOpacity} ease-out` },
       },
     },
   },
