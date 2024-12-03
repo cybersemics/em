@@ -11,7 +11,7 @@ Test:
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
-import { toolbarPointerEvents } from '../../styled-system/recipes'
+import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
@@ -205,7 +205,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
         aria-label='toolbar'
         className={cx(
           // When a dropdown like ColorPicker or LetterCase is open, set pointer-events: none, otherwise the toolbar will block the editor. This will be overridden by the toolbar buttons to allow interaction.
-          showDropDown && toolbarPointerEvents(),
+          showDropDown && toolbarPointerEventsRecipe(),
           css({
             right: 0,
             textAlign: 'right',

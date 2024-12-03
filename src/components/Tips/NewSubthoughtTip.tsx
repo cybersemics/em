@@ -1,7 +1,7 @@
 import { FC } from 'react'
 import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import { anchorButton } from '../../../styled-system/recipes'
+import { anchorButtonRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import GesturePath from '../../@types/GesturePath'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
@@ -45,7 +45,7 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
       <div>
         <div className={css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })}>
           <a
-            className={anchorButton()}
+            className={anchorButtonRecipe()}
             {...fastClick(() => {
               dispatch(dismissTip())
             })}
@@ -59,7 +59,7 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
             {...fastClick(() => {
               dispatch([removeToolbarButton('newSubthought'), dismissTip()])
             })}
-            className={anchorButton()}
+            className={anchorButtonRecipe()}
           >
             Remove this icon from the toolbar
           </a>

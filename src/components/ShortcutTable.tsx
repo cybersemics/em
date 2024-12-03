@@ -1,6 +1,6 @@
 import { FC, useState } from 'react'
 import { css } from '../../styled-system/css'
-import { modalText } from '../../styled-system/recipes'
+import { modalTextRecipe } from '../../styled-system/recipes'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
@@ -153,7 +153,7 @@ const ShortcutGroup: ({
   search?: string
   shortcuts: (Shortcut | null)[]
 }) => JSX.Element = ({ customize, onSelect, selectedShortcut, shortcuts, title, search }) => {
-  const modalClasses = modalText()
+  const modalClasses = modalTextRecipe()
 
   return (
     <div>

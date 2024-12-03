@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { dropHover } from '../../styled-system/recipes'
+import { dropHoverRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
@@ -48,7 +48,7 @@ const DragAndDropFavorite = ({
       {!disableDragAndDrop && isHovering && (
         <span
           className={cx(
-            dropHover(),
+            dropHoverRecipe(),
             css({
               backgroundColor: 'highlight',
               marginLeft: 0,
@@ -85,7 +85,7 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
     <div className={css({ height: '4em' })} ref={dropTarget}>
       <span
         className={cx(
-          dropHover(),
+          dropHoverRecipe(),
           css({
             marginLeft: 0,
             marginTop: 0,

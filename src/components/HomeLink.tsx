@@ -1,7 +1,7 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { extendTap } from '../../styled-system/recipes'
+import { extendTapRecipe } from '../../styled-system/recipes'
 import { homeActionCreator as home } from '../actions/home'
 import fastClick from '../util/fastClick'
 import HomeIcon from './icons/HomeIcon'
@@ -28,7 +28,7 @@ const HomeLink = ({ color, size, iconStyle, className, breadcrumb }: HomeLinkPro
         })}
       >
         <HomeIcon
-          className={extendTap()}
+          className={extendTapRecipe()}
           fill={color}
           size={size}
           style={iconStyle}

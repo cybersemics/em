@@ -2,7 +2,7 @@ import { rgbToHex } from '@mui/material'
 import { ReactNode } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { icon } from '../../../styled-system/recipes'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 import LottieData from '../../@types/lottie/LottieData'
@@ -35,7 +35,7 @@ const AnimatedIcon = ({
 
   return (
     <div
-      className={cx(icon(), css(cssRaw))}
+      className={cx(iconRecipe(), css(cssRaw))}
       style={{
         ...style,
         width: `${newSize}px`,

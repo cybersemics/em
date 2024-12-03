@@ -1,7 +1,7 @@
 import { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import { extendTap, modalText } from '../../../styled-system/recipes'
+import { extendTapRecipe, modalTextRecipe } from '../../../styled-system/recipes'
 import Icon from '../../@types/IconType'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
@@ -74,7 +74,7 @@ const Tutorials = () => {
   const dispatch = useDispatch()
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
 
-  const { subtitle } = modalText()
+  const { subtitle } = modalTextRecipe()
   return (
     <section className={css({ marginBottom: '50px' })} id='tutorials'>
       <h2 className={subtitle}>Tutorials</h2>
@@ -134,7 +134,7 @@ const Options = ({ options }: { options: string[] }) => (
 
 /** A help section that lists all metaprogramming attributes. */
 const Metaprogramming = () => {
-  const modalClasses = modalText({ compact: true })
+  const modalClasses = modalTextRecipe({ compact: true })
   return (
     <div>
       <h2 id='meta' className={modalClasses.subtitle}>
@@ -397,7 +397,7 @@ const ModalHelp = () => {
       ) : (
         <span className={css({ fontSize: 'sm' })}>
           &lt;{' '}
-          <a {...fastClick(back)} className={extendTap()}>
+          <a {...fastClick(back)} className={extendTapRecipe()}>
             Back
           </a>
         </span>
@@ -418,7 +418,7 @@ const ModalHelp = () => {
         section !== Section.Menu && section !== Section.Tutorials && (
           <div className={css({ fontSize: 'sm', marginTop: '2em' })}>
             &lt;{' '}
-            <a {...fastClick(back)} className={extendTap()}>
+            <a {...fastClick(back)} className={extendTapRecipe()}>
               Back
             </a>
           </div>
