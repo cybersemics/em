@@ -23,7 +23,7 @@ import keyValueBy from './util/keyValueBy'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
 
-export const shortcutEmitter = new Emitter()
+export const commandEmitter = new Emitter()
 
 /* A mapping of key codes to uppercase letters.
  * {
@@ -219,17 +219,17 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     // Get the shortcut from the shortcut gesture index.
     // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
-    const shortcut =
+    const command =
       !state.showCommandPalette || !shortcutGestureIndex[sequence as string]?.hideFromHelp
         ? shortcutGestureIndex[sequence as string]
         : null
 
     // execute shortcut
     // do not execute when modal is displayed or a drag is in progress
-    if (shortcut && !state.showModal && !state.dragInProgress) {
-      shortcutEmitter.trigger('shortcut', shortcut)
-      executeShortcutWithMulticursor(shortcut, { event: e, type: 'gesture', store })
-      if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(shortcut))
+    if (command && !state.showModal && !state.dragInProgress) {
+      commandEmitter.trigger('command', command)
+      executeShortcutWithMulticursor(command, { event: e, type: 'gesture', store })
+      if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
     }
 
     // clear gesture hint
@@ -252,8 +252,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
               alert(
                 // clear alert if gesture is cancelled (no shortcut)
                 // clear alert if back/forward
-                !experienceMode && shortcut && shortcut?.id !== 'cursorForward' && shortcut?.id !== 'cursorBack'
-                  ? shortcut.label
+                !experienceMode && command && command?.id !== 'cursorForward' && command?.id !== 'cursorBack'
+                  ? command.label
                   : null,
                 { alertType: AlertType.GestureHint, clearDelay: 5000 },
               ),
@@ -295,19 +295,19 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // disable if command palette is displayed
     if (state.showCommandPalette) return
 
-    const shortcut = shortcutKeyIndex[hashKeyDown(e)]
+    const command = shortcutKeyIndex[hashKeyDown(e)]
 
     // disable if modal is shown, except for navigation shortcuts
-    if (!shortcut || (state.showModal && !shortcut.allowExecuteFromModal)) return
+    if (!command || (state.showModal && !command.allowExecuteFromModal)) return
 
     // execute the shortcut
-    shortcutEmitter.trigger('shortcut', shortcut)
+    commandEmitter.trigger('command', command)
 
-    if (!shortcut.canExecute || shortcut.canExecute(store.getState())) {
-      if (!shortcut.permitDefault) e.preventDefault()
+    if (!command.canExecute || command.canExecute(store.getState())) {
+      if (!command.permitDefault) e.preventDefault()
 
       // execute shortcut
-      executeShortcutWithMulticursor(shortcut, { event: e, type: 'keyboard', store })
+      executeShortcutWithMulticursor(command, { event: e, type: 'keyboard', store })
     }
   },
 })
