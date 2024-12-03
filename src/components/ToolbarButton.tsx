@@ -1,7 +1,7 @@
 import React, { FC, MutableRefObject, useCallback, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { toolbarPointerEvents } from '../../styled-system/recipes'
+import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/IconType'
@@ -174,10 +174,10 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       title={`${shortcut.label}${(shortcut.keyboard ?? shortcut.overlay?.keyboard) ? ` (${formatKeyboardShortcut((shortcut.keyboard ?? shortcut.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
       className={cx(
         // Override the Toolbar's pointer-events: none to restore pointer behavior.
-        toolbarPointerEvents({ override: true }),
+        toolbarPointerEventsRecipe({ override: true }),
         css({
           display: 'inline-block',
-          padding: '15px 8px 5px 8px',
+          padding: '14px 8px 5px 8px',
           borderRadius: '3px',
           zIndex: 'stack',
           // animate maxWidth to avoid having to know the exact width of the toolbar icon
@@ -200,7 +200,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition:
-            'transform {durations.veryFastDuration} ease-out, max-width {durations.veryFastDuration} ease-out, margin-left {durations.veryFastDuration} ease-out',
+            'transform {durations.veryFast} ease-out, max-width {durations.veryFast} ease-out, margin-left {durations.veryFast} ease-out',
           // extend drop area down, otherwise the drop hover is blocked by the user's finger
           // must match toolbar marginBottom
           paddingBottom: isDraggingAny ? '7em' : 0,
@@ -255,7 +255,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           position: 'relative' as const,
           cursor: isButtonExecutable ? 'pointer' : 'default',
           opacity: dropToRemove ? 0 : 1,
-          transition: 'opacity {durations.fastDuration} ease-out',
+          transition: 'opacity {durations.fast} ease-out',
         })}
         style={style}
         animated={isAnimated}

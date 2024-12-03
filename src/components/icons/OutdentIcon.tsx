@@ -3,13 +3,18 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/05-outdent_2.json'
 
 /** Outdent Icon with Conditional Lottie Animation. */
-const OutdentIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const OutdentIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{
+          ...style,
+          width: '100%',
+          height: '100%',
+          transform: `translate(4%, 0) scale(0.99, 0.99)`,
+        }}
         fill='none'
       >
         <g id='Layer_2' data-name='Layer 2'>

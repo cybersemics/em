@@ -118,16 +118,10 @@ const keyframes = defineKeyframes({
       width: '1.25em',
     },
   },
-  toblack: {
+  tofg: {
     to: {
-      color: 'black',
-      fill: 'black',
-    },
-  },
-  towhite: {
-    to: {
-      color: 'white',
-      fill: 'white',
+      color: 'fg',
+      fill: 'fg',
     },
   },
   bobble: {
@@ -264,6 +258,13 @@ export default defineConfig({
       keyframes,
       tokens: {
         colors: colorTokens,
+        easings: {
+          // Ease in even slower at the beginning of the animation.
+          // For reference, ease-in is equivalent to cubic-bezier(.42, 0, 1, 1).
+          easeInSlow: {
+            value: 'cubic-bezier(.84, 0, 1, 1)',
+          },
+        },
         fontSizes: {
           sm: {
             value: '80%',
@@ -271,9 +272,6 @@ export default defineConfig({
           md: {
             value: '90%',
           },
-        },
-        sizes: {
-          minThoughtHeight: { value: '1.9em' },
         },
         spacing: {
           modalPadding: { value: '8%' },
@@ -312,30 +310,30 @@ export default defineConfig({
         },
       },
       recipes: {
-        icon: iconRecipe,
-        child: childRecipe,
-        anchorButton: anchorButtonRecipe,
-        button: buttonRecipe,
-        bullet: bulletRecipe,
-        link: linkRecipe,
-        extendTap: extendTapRecipe,
-        thought: thoughtRecipe,
-        editable: editableRecipe,
-        textNote: textNoteRecipe,
-        multiline: multilineRecipe,
-        modalActionLink: modalActionLinkRecipe,
-        toolbarPointerEvents: toolbarPointerEventsRecipe,
-        tutorialBullet: tutorialBulletRecipe,
-        upperRight: upperRightRecipe,
-        dropHover: dropHoverRecipe,
-        dropEnd: dropEndRecipe,
-        invalidOption: invalidOptionRecipe,
+        iconRecipe,
+        childRecipe,
+        anchorButtonRecipe,
+        buttonRecipe,
+        bulletRecipe,
+        linkRecipe,
+        extendTapRecipe,
+        thoughtRecipe,
+        editableRecipe,
+        textNoteRecipe,
+        multilineRecipe,
+        modalActionLinkRecipe,
+        toolbarPointerEventsRecipe,
+        tutorialBulletRecipe,
+        upperRightRecipe,
+        dropHoverRecipe,
+        dropEndRecipe,
+        invalidOptionRecipe,
       },
       slotRecipes: {
-        modal: modalRecipe,
-        modalText: modalTextRecipe,
-        fadeTransition: fadeTransitionRecipe,
-        slideTransition: slideTransitionRecipe,
+        modalRecipe,
+        modalTextRecipe,
+        fadeTransitionRecipe,
+        slideTransitionRecipe,
       },
       semanticTokens: {
         colors: {

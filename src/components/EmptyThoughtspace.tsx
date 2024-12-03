@@ -1,7 +1,7 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { textNote } from '../../styled-system/recipes'
+import { textNoteRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import { isTouch } from '../browser'
@@ -33,7 +33,7 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
   return (
     <div
       aria-label='empty-thoughtspace'
-      className={css({ animation: '{durations.mediumDuration} ease-out 0s normal forwards fadein' })}
+      className={css({ animation: '{durations.medium} ease-out 0s normal forwards fadein' })}
     >
       {
         // show nothing during the preconnecting phase (See: useOfflineStatus)
@@ -46,7 +46,7 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
         isTutorial ? (
           tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isTouch ? (
             <div className={css({ textAlign: 'center', marginLeft: '-30px' })}>
-              <i className={textNote()}>Ahhh. Open space. Unlimited possibilities.</i>
+              <i className={textNoteRecipe()}>Ahhh. Open space. Unlimited possibilities.</i>
             </div>
           ) : // hide on mobile during TUTORIAL_STEP_FIRSTTHOUGHT since the gesture diagram is displayed
           null

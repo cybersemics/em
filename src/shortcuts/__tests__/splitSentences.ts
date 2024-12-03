@@ -69,6 +69,52 @@ describe('splitSentences', () => {
   - I'm fine, thanks.`)
   })
 
+  it('splits by comma if have only one sentence', () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+          - Gödel, Escher, Bach
+        `,
+      }),
+      setCursor(['Gödel, Escher, Bach']),
+    ])
+
+    executeShortcut(splitSentencesShortcut, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - Gödel
+  - Escher
+  - Bach`)
+  })
+
+  it('splits by "and" also, if have only one sentence', () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+          - me, you, he and she, them, thus, and, me
+        `,
+      }),
+      setCursor(['me, you, he and she, them, thus, and, me']),
+    ])
+
+    executeShortcut(splitSentencesShortcut, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - me
+  - you
+  - he
+  - she
+  - them
+  - thus
+  - me`)
+  })
+
   describe('multicursor', () => {
     it('splits sentences in multiple thoughts', async () => {
       const store = createTestStore()

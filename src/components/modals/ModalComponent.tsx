@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from 'react'
 import { css, cx } from '../../../styled-system/css'
-import { modal } from '../../../styled-system/recipes'
+import { modalRecipe } from '../../../styled-system/recipes'
 import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { FADEOUT_DURATION } from '../../constants'
@@ -78,7 +78,7 @@ class ModalComponent extends React.Component<ModalProps> {
   render() {
     const { actions, center, children, hideClose, hideModalActions, id, style, title, top } = this.props
 
-    const modalClasses = modal({ id, center })
+    const modalClasses = modalRecipe({ id, center })
 
     return (
       <div ref={this.ref} style={style} className={cx(modalClasses.root, css({ ...(top ? { top: 55 } : null) }))}>

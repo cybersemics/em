@@ -11,23 +11,23 @@ const slideTransitionRecipe = defineSlotRecipe({
     from: {
       right: {
         enter: { transform: 'translateX(100%)' },
-        enterActive: { transform: 'translateX(0)', transition: 'all {durations.fastDuration} ease-out' },
+        enterActive: { transform: 'translateX(0)', transition: 'all {durations.fast} ease-out' },
         exit: { transform: 'translateX(0)' },
-        exitActive: { transform: 'translateX(100%)', transition: 'all {durations.fastDuration} ease-out' },
+        exitActive: { transform: 'translateX(100%)', transition: 'all {durations.fast} ease-out' },
       },
       down: {
         enter: { marginBottom: '0px', marginTop: '-3em' },
         enterActive: {
           marginBottom: '1em',
           marginTop: '0px',
-          transition: 'margin {durations.veryFastDuration} ease-out',
+          transition: 'margin {durations.veryFast} ease-out',
         },
         enterDone: { marginBottom: '1em', marginTop: '0px' },
         exit: { marginBottom: '1em', marginTop: '0px' },
         exitActive: {
           marginBottom: '0px',
           marginTop: '-3em',
-          transition: 'margin {durations.veryFastDuration} ease-out',
+          transition: 'margin {durations.veryFast} ease-out',
         },
         exitDone: { marginBottom: '0px', marginTop: '-3em' },
       },
@@ -39,7 +39,7 @@ const slideTransitionRecipe = defineSlotRecipe({
             // to override opacity
             transform: 'translateX(0)',
             opacity: 1,
-            transition: 'all {durations.fastDuration} ease-in-out {durations.fastDuration}',
+            transition: 'all {durations.fast} ease-in-out {durations.fast}',
           },
         },
         exit: { transform: 'translateX(0)', opacity: 1 },

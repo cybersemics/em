@@ -13,7 +13,7 @@ import React, {
 import { useDispatch, useSelector } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
 import { css, cx } from '../../../styled-system/css'
-import { extendTap } from '../../../styled-system/recipes'
+import { extendTapRecipe } from '../../../styled-system/recipes'
 import ExportOption from '../../@types/ExportOption'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -556,7 +556,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         })}
       >
         <span>
-          <span>
+          <span data-testid='export-phrase-container'>
             {exportWord}{' '}
             {
               // application/json will ignore the cursor and downlaod the raw thought state as-is
@@ -640,7 +640,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       {/* Copy to clipboard */}
       <div className={css({ marginBottom: '15px', textAlign: 'center' })}>
         {exportContent !== null && (
-          <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTap()}>
+          <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTapRecipe()}>
             Copy to clipboard
           </a>
         )}
@@ -651,12 +651,12 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         <span>
           <a
             className={cx(
-              extendTap(),
+              extendTapRecipe(),
               css({
                 userSelect: 'none',
                 display: 'flex',
                 position: 'relative',
-                transition: `opacity {durations.veryFastDuration} ease-in-out`,
+                transition: `opacity {durations.veryFast} ease-in-out`,
                 color: 'fg',
                 opacity: advancedSettings ? 1 : 0.5,
               }),

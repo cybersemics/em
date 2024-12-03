@@ -1,9 +1,21 @@
+import { rgbToHex } from '@mui/material'
+import { ReactNode } from 'react'
+import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { icon } from '../../../styled-system/recipes'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import AnimatedIconType from '../../@types/AnimatedIconType'
+import IconType from '../../@types/IconType'
+import LottieData from '../../@types/lottie/LottieData'
 import { ICON_SCALING_FACTOR } from '../../constants'
+import themeColors from '../../selectors/themeColors'
 import LottieAnimation from './LottieAnimation'
+
+interface AnimatedIconType extends IconType {
+  /** Animation data for Lottie. */
+  animationData?: LottieData | null
+  /** Child elements to render when not animated. */
+  children?: ReactNode
+}
 
 /** Animated Icon with Conditional Lottie Animation. */
 const AnimatedIcon = ({
@@ -16,12 +28,14 @@ const AnimatedIcon = ({
   children,
   animationComplete,
 }: AnimatedIconType) => {
+  const colors = useSelector(themeColors)
   const newSize = size * ICON_SCALING_FACTOR
   const color = style.fill || fill || token('colors.fg')
+  const dynamicColor = rgbToHex(colors.fg)
 
   return (
     <div
-      className={cx(icon(), css(cssRaw))}
+      className={cx(iconRecipe(), css(cssRaw))}
       style={{
         ...style,
         width: `${newSize}px`,
@@ -30,7 +44,11 @@ const AnimatedIcon = ({
         display: 'inline-flex',
       }}
     >
-      {animated ? <LottieAnimation animationData={animationData} onComplete={animationComplete} /> : children}
+      {animated ? (
+        <LottieAnimation animationData={animationData || null} onComplete={animationComplete} color={dynamicColor} />
+      ) : (
+        children
+      )}
     </div>
   )
 }

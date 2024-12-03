@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/12-mark-as-done_3.json'
 
 /** Check Icon Component used for toggleDone with Conditional Lottie Animation. */
-const CheckIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const CheckIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg

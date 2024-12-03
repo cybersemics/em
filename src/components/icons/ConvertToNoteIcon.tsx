@@ -3,13 +3,13 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/24-convert-to-note.json'
 
 /** Convert To Note Icon with Conditional Lottie Animation. */
-const ConvertToNoteIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const ConvertToNoteIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: 'translate(1%, 1%) scale(0.96, 0.96)' }}
         fill='none'
       >
         <rect width='24' height='24' fill='none' />

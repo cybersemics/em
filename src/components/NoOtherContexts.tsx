@@ -1,5 +1,5 @@
 import { css, cx } from '../../styled-system/css'
-import { textNote } from '../../styled-system/recipes'
+import { textNoteRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import SimplePath from '../@types/SimplePath'
@@ -16,10 +16,10 @@ const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean;
   return (
     <div
       className={cx(
-        textNote(),
+        textNoteRecipe(),
         css({
           fontSize: 'sm',
-          lineHeight: 1.72,
+          lineHeight: '1.87',
           // use padding instead of margin to ensure it affects height for LayoutTree node y calculation
           paddingBottom: '0.75em',
         }),

@@ -3,13 +3,13 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/19-note_2.json'
 
 /** Pencil Icon with Conditional Lottie Animation. */
-const PencilIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const PencilIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: `scale(0.97, 0.97)` }}
         fill='none'
       >
         <g id='Layer_2' data-name='Layer 2'>

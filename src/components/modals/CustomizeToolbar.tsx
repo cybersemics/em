@@ -3,7 +3,7 @@ import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { anchorButton, extendTap, modal } from '../../../styled-system/recipes'
+import { anchorButtonRecipe, extendTapRecipe, modalRecipe } from '../../../styled-system/recipes'
 import DragAndDropType from '../../@types/DragAndDropType'
 import DragShortcutZone from '../../@types/DragShortcutZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
@@ -111,7 +111,7 @@ const ModalCustomizeToolbar: FC = () => {
   const shortcuts = useMemo(() => [selectedShortcut], [selectedShortcut])
 
   const id = 'customizeToolbar'
-  const modalClasses = modal({ id })
+  const modalClasses = modalRecipe({ id })
 
   return (
     <ModalComponent
@@ -122,7 +122,7 @@ const ModalCustomizeToolbar: FC = () => {
       <h1 className={modalClasses.title}>Customize Toolbar</h1>
       <p className={css({ marginTop: '-1em', marginBottom: '1em' })}>
         &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTap()}>
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
           Back to Settings
         </a>
       </p>
@@ -188,7 +188,7 @@ const ModalCustomizeToolbar: FC = () => {
 
       <p className={css({ marginTop: '2em', marginBottom: '2em' })}>
         &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTap()}>
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
           Back to Settings
         </a>
       </p>
@@ -197,7 +197,7 @@ const ModalCustomizeToolbar: FC = () => {
         <a
           {...fastClick(() => dispatch(closeModal()))}
           className={cx(
-            anchorButton({
+            anchorButtonRecipe({
               actionButton: true,
             }),
             css({ color: 'bg', marginBottom: '1em', marginTop: '2em' }),
@@ -216,7 +216,7 @@ const ModalCustomizeToolbar: FC = () => {
                 dispatch([initUserToolbar({ force: true }), alert('Toolbar reset', { clearDelay: 8000 })])
               }
             })}
-            className={cx(extendTap(), css({ color: 'red' }))}
+            className={cx(extendTapRecipe(), css({ color: 'red' }))}
           >
             Reset toolbar
           </a>

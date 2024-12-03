@@ -16,9 +16,6 @@ import appStore from '../../stores/app'
 import createTestStore from '../../test-helpers/createTestStore'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import testTimer from '../../test-helpers/testTimer'
-
-const timer = testTimer()
 
 /******************************************************************
  * UNDO
@@ -150,16 +147,10 @@ describe('undo', () => {
     expect(cursorThoughts).toMatchObject(expectedCursor)
   })
 
-  // TODO: Cursor is null in test, but correct when testing manually
-  it.skip('cursor should restore correctly after undo archive', async () => {
-    timer.useFakeTimer()
-    initialize()
-    await timer.runAllAsync()
+  it('cursor should restore correctly after undo archive', async () => {
+    await initialize()
 
     appStore.dispatch([newThought({ value: 'a' }), setCursor(['a']), { type: 'archiveThought' }, undo()])
-    await timer.runAllAsync()
-
-    timer.useRealTimer()
 
     const stateNew = appStore.getState()
     const expectedCursor = [{ value: 'a', rank: 0 }]
@@ -171,13 +162,7 @@ describe('undo', () => {
 
   // TODO
   it.skip('persists undo thought change', async () => {
-    /**
-     * Note: we can't use await with initialize as that results in a timeout error. It's handled using the usetestTimer from Sinon.
-     * More on that here - https://github.com/cybersemics/em/issues/919#issuecomment-739135971.
-     */
-    initialize()
-
-    timer.useFakeTimer()
+    await initialize()
 
     appStore.dispatch([
       importText({
@@ -189,15 +174,10 @@ describe('undo', () => {
       newThought({ value: 'alpha', insertNewSubthought: true }),
       undo(),
     ])
-    await timer.runAllAsync()
-
-    timer.useRealTimer()
 
     // clear and call initialize again to reload from local db (simulating page refresh)
     appStore.dispatch(clear())
-    timer.useFakeTimer()
     initialize()
-    await timer.runAllAsync()
 
     const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
 

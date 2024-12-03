@@ -91,7 +91,8 @@ const ColorSwatch: FC<{
     e.stopPropagation()
     e.preventDefault()
 
-    dispatch(formatSelection('foreColor', color || 'bg'))
+    dispatch(formatSelection('foreColor', color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg')))
+
     // Apply background color to the selection
     if (backgroundColor && backgroundColor !== 'bg') {
       dispatch(formatSelection('backColor', backgroundColor))

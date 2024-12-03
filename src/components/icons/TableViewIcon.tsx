@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/09-tabel-view_2.json'
 
 /** TableView Icon with Conditional Lottie Animation. */
-const TableViewIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const TableViewIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
