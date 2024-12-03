@@ -12,7 +12,7 @@ import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
-import { executeShortcutWithMulticursor } from '../util/executeShortcut'
+import { executeCommandWithMulticursor } from '../util/executeCommand'
 import fastClick from '../util/fastClick'
 
 export interface ToolbarButtonProps {
@@ -89,7 +89,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       const toolbarEl = iconEl.closest('#toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
-        executeShortcutWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
+        executeCommandWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
         if ((!isActive && !commandState) || (isActive && !isButtonActive)) {
           setIsAnimated(true)

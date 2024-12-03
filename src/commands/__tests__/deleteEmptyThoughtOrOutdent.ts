@@ -9,8 +9,8 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeShortcut from '../../util/executeShortcut'
-import { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import executeCommand from '../../util/executeCommand'
+import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import clearThoughtShortcut from '../clearThought'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 
@@ -40,8 +40,8 @@ describe('DOM', () => {
     - b`)
 
     await act(async () => {
-      executeShortcut(clearThoughtShortcut)
-      executeShortcut(deleteEmptyThoughtOrOutdent)
+      executeCommand(clearThoughtShortcut)
+      executeCommand(deleteEmptyThoughtOrOutdent)
     })
 
     await act(vi.runOnlyPendingTimersAsync)
@@ -58,7 +58,7 @@ it('do nothing when there is no cursor', () => {
 
   store.dispatch([{ type: 'newThought', value: 'a' }, setCursor(null)])
 
-  executeShortcut(deleteEmptyThoughtOrOutdent, { store })
+  executeCommand(deleteEmptyThoughtOrOutdent, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -83,7 +83,7 @@ it('outdent on pressing backspace at the beginning of the thought', () => {
     setCursor(['a', 'b', 'c']),
   ])
 
-  executeShortcut(deleteEmptyThoughtOrOutdent, { store })
+  executeCommand(deleteEmptyThoughtOrOutdent, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -110,7 +110,7 @@ it('do not outdent thought with siblings', () => {
     setCursor(['a', 'b', 'd']),
   ])
 
-  executeShortcut(deleteEmptyThoughtOrOutdent, { store })
+  executeCommand(deleteEmptyThoughtOrOutdent, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -138,7 +138,7 @@ describe('multicursor', () => {
       addMulticursor(['b', '']),
     ])
 
-    executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
+    executeCommandWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     const expectedOutput = `- ${HOME_TOKEN}
@@ -166,7 +166,7 @@ describe('multicursor', () => {
       addMulticursor(['b', 'b1']),
     ])
 
-    executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
+    executeCommandWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     const expectedOutput = `- ${HOME_TOKEN}
@@ -200,7 +200,7 @@ describe('multicursor', () => {
       addMulticursor(['c', 'c1']),
     ])
 
-    executeShortcutWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
+    executeCommandWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     const expectedOutput = `- ${HOME_TOKEN}

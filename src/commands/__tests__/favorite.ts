@@ -5,7 +5,7 @@ import exportContext from '../../selectors/exportContext'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeShortcut, { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import favorite from '../favorite'
 
 describe('favorite', () => {
@@ -14,7 +14,7 @@ describe('favorite', () => {
 
     store.dispatch([newThought({ value: 'A' }), setCursor(['A'])])
 
-    executeShortcut(favorite, { store })
+    executeCommand(favorite, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     const expectedOutput = `- ${HOME_TOKEN}
@@ -37,7 +37,7 @@ describe('favorite', () => {
       setCursor(['A']),
     ])
 
-    executeShortcut(favorite, { store })
+    executeCommand(favorite, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     const expectedOutput = `- ${HOME_TOKEN}
@@ -62,7 +62,7 @@ describe('favorite', () => {
         addMulticursor(['B']),
       ])
 
-      executeShortcutWithMulticursor(favorite, { store })
+      executeCommandWithMulticursor(favorite, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       const expectedOutput = `- ${HOME_TOKEN}
@@ -93,7 +93,7 @@ describe('favorite', () => {
         addMulticursor(['B']),
       ])
 
-      executeShortcutWithMulticursor(favorite, { store })
+      executeCommandWithMulticursor(favorite, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       const expectedOutput = `- ${HOME_TOKEN}
@@ -122,7 +122,7 @@ describe('favorite', () => {
         addMulticursor(['C']),
       ])
 
-      executeShortcutWithMulticursor(favorite, { store })
+      executeCommandWithMulticursor(favorite, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       const expectedOutput = `- ${HOME_TOKEN}

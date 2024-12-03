@@ -4,7 +4,7 @@ import exportContext from '../../selectors/exportContext'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeShortcut, { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import toggleDoneShortcut from '../toggleDone'
 
 describe('toggleDone', () => {
@@ -22,7 +22,7 @@ describe('toggleDone', () => {
       setCursor(['a', 'b']),
     ])
 
-    executeShortcut(toggleDoneShortcut, { store })
+    executeCommand(toggleDoneShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -47,7 +47,7 @@ describe('toggleDone', () => {
       setCursor(['a', 'b']),
     ])
 
-    executeShortcut(toggleDoneShortcut, { store })
+    executeCommand(toggleDoneShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -75,7 +75,7 @@ describe('toggleDone', () => {
         addMulticursor(['d', 'e']),
       ])
 
-      executeShortcutWithMulticursor(toggleDoneShortcut, { store })
+      executeCommandWithMulticursor(toggleDoneShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- __ROOT__
@@ -110,7 +110,7 @@ describe('toggleDone', () => {
         addMulticursor(['d', 'f']),
       ])
 
-      executeShortcutWithMulticursor(toggleDoneShortcut, { store })
+      executeCommandWithMulticursor(toggleDoneShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- __ROOT__

@@ -14,7 +14,7 @@ import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
-import { executeShortcutWithMulticursor } from '../util/executeShortcut'
+import { executeCommandWithMulticursor } from '../util/executeCommand'
 import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
@@ -304,7 +304,7 @@ const CommandPalette: FC = () => {
         return
       const commandsNew = [shortcut.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
       dispatch(commandPalette())
-      executeShortcutWithMulticursor(shortcut, { event: e, type: 'commandPalette', store })
+      executeCommandWithMulticursor(shortcut, { event: e, type: 'commandPalette', store })
       storageModel.set('recentCommands', commandsNew)
       setRecentCommands(commandsNew)
     },

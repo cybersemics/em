@@ -3,7 +3,7 @@ import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeShortcut from '../../util/executeShortcut'
+import executeCommand from '../../util/executeCommand'
 import pinAllShortcut from '../pinAll'
 
 it('toggle on when there is no =children attribute', () => {
@@ -25,7 +25,7 @@ it('toggle on when there is no =children attribute', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeShortcut(pinAllShortcut, { store })
+  executeCommand(pinAllShortcut, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -63,7 +63,7 @@ it('toggle on when =children/=pin is false', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeShortcut(pinAllShortcut, { store })
+  executeCommand(pinAllShortcut, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -101,7 +101,7 @@ it('remove =children when toggling off from =pin/true', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeShortcut(pinAllShortcut, { store })
+  executeCommand(pinAllShortcut, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -135,7 +135,7 @@ it('remove =children when toggling off from =pin', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeShortcut(pinAllShortcut, { store })
+  executeCommand(pinAllShortcut, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -173,7 +173,7 @@ it('remove =pin/false from all subthoughts when toggling on', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeShortcut(pinAllShortcut, { store })
+  executeCommand(pinAllShortcut, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__

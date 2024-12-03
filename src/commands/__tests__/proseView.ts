@@ -4,7 +4,7 @@ import exportContext from '../../selectors/exportContext'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeShortcut, { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import proseViewShortcut from '../proseView'
 
 it('toggle on prose view of parent of cursor (initial state without =view attribute)', () => {
@@ -21,7 +21,7 @@ it('toggle on prose view of parent of cursor (initial state without =view attrib
     setCursor(['a']),
   ])
 
-  executeShortcut(proseViewShortcut, { store })
+  executeCommand(proseViewShortcut, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- __ROOT__
@@ -48,7 +48,7 @@ it('toggle on prose view of parent of cursor (initial state with =view attribute
     setCursor(['a']),
   ])
 
-  executeShortcut(proseViewShortcut, { store })
+  executeCommand(proseViewShortcut, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- __ROOT__
@@ -75,7 +75,7 @@ it('toggle off prose view of parent of cursor', () => {
     setCursor(['a']),
   ])
 
-  executeShortcut(proseViewShortcut, { store })
+  executeCommand(proseViewShortcut, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- __ROOT__
@@ -107,7 +107,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    executeShortcutWithMulticursor(proseViewShortcut, { store })
+    executeCommandWithMulticursor(proseViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -154,7 +154,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    executeShortcutWithMulticursor(proseViewShortcut, { store })
+    executeCommandWithMulticursor(proseViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -197,7 +197,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    executeShortcutWithMulticursor(proseViewShortcut, { store })
+    executeCommandWithMulticursor(proseViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__

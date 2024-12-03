@@ -4,7 +4,7 @@ import exportContext from '../../selectors/exportContext'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import archiveShortcut from '../archive'
 
 describe('archive', () => {
@@ -25,7 +25,7 @@ describe('archive', () => {
         addMulticursor(['c']),
       ])
 
-      executeShortcutWithMulticursor(archiveShortcut, { store })
+      executeCommandWithMulticursor(archiveShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -57,7 +57,7 @@ describe('archive', () => {
         addMulticursor(['d', 'f']),
       ])
 
-      executeShortcutWithMulticursor(archiveShortcut, { store })
+      executeCommandWithMulticursor(archiveShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -91,7 +91,7 @@ describe('archive', () => {
         addMulticursor(['c']),
       ])
 
-      executeShortcutWithMulticursor(archiveShortcut, { store })
+      executeCommandWithMulticursor(archiveShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -122,7 +122,7 @@ describe('archive', () => {
         addMulticursor(['=archive', 'y']),
       ])
 
-      executeShortcutWithMulticursor(archiveShortcut, { store })
+      executeCommandWithMulticursor(archiveShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -152,7 +152,7 @@ describe('archive', () => {
         addMulticursor(['c', '']),
       ])
 
-      executeShortcutWithMulticursor(archiveShortcut, { store })
+      executeCommandWithMulticursor(archiveShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

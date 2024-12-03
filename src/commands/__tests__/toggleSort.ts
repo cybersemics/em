@@ -22,7 +22,7 @@ import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getDescendantsOfContext from '../../test-helpers/queries/getDescendantsOfContext'
 import getThoughtByContext from '../../test-helpers/queries/getThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeShortcut, { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import hashPath from '../../util/hashPath'
 import toggleSortShortcut from '../toggleSort'
 
@@ -50,7 +50,7 @@ describe('DOM', () => {
 
       await act(vi.runOnlyPendingTimersAsync)
 
-      act(() => executeShortcut(toggleSortShortcut, { store }))
+      act(() => executeCommand(toggleSortShortcut, { store }))
 
       await act(() => vi.runAllTimersAsync())
 
@@ -77,7 +77,7 @@ describe('DOM', () => {
         ])
       })
 
-      act(() => executeShortcut(toggleSortShortcut, { store }))
+      act(() => executeCommand(toggleSortShortcut, { store }))
 
       await act(() => vi.runOnlyPendingTimersAsync())
 
@@ -105,7 +105,7 @@ describe('DOM', () => {
         ])
       })
 
-      act(() => executeShortcut(toggleSortShortcut, { store }))
+      act(() => executeCommand(toggleSortShortcut, { store }))
 
       await act(() => vi.runAllTimersAsync())
 
@@ -132,8 +132,8 @@ describe('DOM', () => {
         ])
       })
 
-      act(() => executeShortcut(toggleSortShortcut, { store }))
-      act(() => executeShortcut(toggleSortShortcut, { store }))
+      act(() => executeCommand(toggleSortShortcut, { store }))
+      act(() => executeCommand(toggleSortShortcut, { store }))
 
       await act(() => vi.runAllTimersAsync())
 
@@ -641,7 +641,7 @@ describe('store', () => {
         setCursor(['a', 'b']),
       ])
 
-      executeShortcut(toggleSortShortcut, { store })
+      executeCommand(toggleSortShortcut, { store })
 
       expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
     })
@@ -665,7 +665,7 @@ describe('store', () => {
         setCursor(['a', 'b']),
       ])
 
-      executeShortcut(toggleSortShortcut, { store })
+      executeCommand(toggleSortShortcut, { store })
 
       expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
       expect(attributeByContext(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
@@ -689,7 +689,7 @@ describe('store', () => {
         setCursor(['a', 'b']),
       ])
 
-      executeShortcut(toggleSortShortcut, { store })
+      executeCommand(toggleSortShortcut, { store })
 
       expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe(null)
     })
@@ -711,7 +711,7 @@ describe('store', () => {
         setCursor(['a']),
       ])
 
-      executeShortcut(toggleSortShortcut, { store })
+      executeCommand(toggleSortShortcut, { store })
 
       expect(attributeByContext(store.getState(), [HOME_TOKEN], '=sort')).toBe('Alphabetical')
     })
@@ -731,7 +731,7 @@ describe('store', () => {
         setCursor(['a']),
       ])
 
-      executeShortcut(toggleSortShortcut, { store })
+      executeCommand(toggleSortShortcut, { store })
 
       expect(attributeByContext(store.getState(), [HOME_TOKEN], '=sort')).toBe('Alphabetical')
       expect(attributeByContext(store.getState(), ['=sort'], 'Alphabetical')).toBe('Desc')
@@ -776,9 +776,9 @@ describe('store', () => {
         }),
       ])
 
-      executeShortcut(toggleSortShortcut, { store })
-      executeShortcut(toggleSortShortcut, { store })
-      executeShortcut(toggleSortShortcut, { store })
+      executeCommand(toggleSortShortcut, { store })
+      executeCommand(toggleSortShortcut, { store })
+      executeCommand(toggleSortShortcut, { store })
 
       const state = store.getState()
       expect(attributeByContext(state, [HOME_TOKEN], '=sort')).toBe(null)
@@ -871,7 +871,7 @@ describe('store', () => {
         setCursor(['a', 'b']),
       ])
 
-      executeShortcut(toggleSortShortcut, { store })
+      executeCommand(toggleSortShortcut, { store })
       expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe(null)
     })
 
@@ -897,7 +897,7 @@ describe('store', () => {
         setCursor(['a', 'b']),
       ])
 
-      executeShortcut(toggleSortShortcut, { store })
+      executeCommand(toggleSortShortcut, { store })
       expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('None')
     })
 
@@ -923,7 +923,7 @@ describe('store', () => {
         setCursor(['a', 'b']),
       ])
 
-      executeShortcut(toggleSortShortcut, { store })
+      executeCommand(toggleSortShortcut, { store })
 
       expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
       expect(attributeByContext(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
@@ -947,7 +947,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    executeShortcutWithMulticursor(toggleSortShortcut, { store })
+    executeCommandWithMulticursor(toggleSortShortcut, { store })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -990,7 +990,7 @@ describe('multicursor', () => {
       addMulticursor(['x', 'c']),
     ])
 
-    executeShortcutWithMulticursor(toggleSortShortcut, { store })
+    executeCommandWithMulticursor(toggleSortShortcut, { store })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -1031,7 +1031,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ])
 
-    executeShortcutWithMulticursor(toggleSortShortcut, { store })
+    executeCommandWithMulticursor(toggleSortShortcut, { store })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')

@@ -4,7 +4,7 @@ import bumpThoughtDown from '../../commands/bumpThoughtDown'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeShortcut from '../../util/executeShortcut'
+import executeCommand from '../../util/executeCommand'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -24,7 +24,7 @@ it('reset content editable inner html on bumpThoughtDown', async () => {
   expect(document.querySelector(`div[data-editable]`)?.textContent).toBe('a')
 
   await act(async () => {
-    executeShortcut(bumpThoughtDown)
+    executeCommand(bumpThoughtDown)
   })
 
   await act(vi.runOnlyPendingTimersAsync)

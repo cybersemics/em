@@ -89,44 +89,44 @@ const recomputePath = (state: State, thoughtId: ThoughtId) => {
   return path
 }
 
-/** Execute a single shortcut. Defaults to global store and keyboard shortcut. Use `executeShortcutWithMulticursor` to execute a shortcut with multicursor mode. */
-const executeShortcut = (shortcut: Command, { store, type, event }: Options = {}) => {
+/** Execute a single command. Defaults to global store and keyboard command. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
+const executeCommand = (command: Command, { store, type, event }: Options = {}) => {
   store = store ?? globalStore
   type = type ?? 'keyboard'
   event = event ?? eventNoop
 
-  const canExecute = !shortcut.canExecute || shortcut.canExecute(store.getState())
-  // Exit early if the shortcut cannot execute
+  const canExecute = !command.canExecute || command.canExecute(store.getState())
+  // Exit early if the command cannot execute
   if (!canExecute) return
 
-  // execute single shortcut
-  shortcut.exec(store.dispatch, store.getState, event, { type })
+  // execute single command
+  command.exec(store.dispatch, store.getState, event, { type })
 }
 
-/** Execute shortcut. Defaults to global store and keyboard shortcut. */
-export const executeShortcutWithMulticursor = (shortcut: Command, { store, type, event }: Options = {}) => {
+/** Execute command. Defaults to global store and keyboard command. */
+export const executeCommandWithMulticursor = (command: Command, { store, type, event }: Options = {}) => {
   store = store ?? globalStore
   type = type ?? 'keyboard'
   event = event ?? eventNoop
 
   const state = store.getState()
 
-  const shouldExecuteMulticursor = hasMulticursor(state) && shortcut.multicursor !== 'ignore'
+  const shouldExecuteMulticursor = hasMulticursor(state) && command.multicursor !== 'ignore'
 
-  // If we don't have active multicursors or the shortcut ignores multicursors, execute the shortcut normally.
-  if (!shouldExecuteMulticursor) return executeShortcut(shortcut, { store, type, event })
+  // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
+  if (!shouldExecuteMulticursor) return executeCommand(command, { store, type, event })
 
   const multicursorConfig =
-    typeof shortcut.multicursor === 'object'
-      ? shortcut.multicursor
-      : shortcut.multicursor
+    typeof command.multicursor === 'object'
+      ? command.multicursor
+      : command.multicursor
         ? { enabled: true }
         : { enabled: false }
 
-  // multicursor is not enabled for this shortcut, alert and exit early
+  // multicursor is not enabled for this command, alert and exit early
   if (!multicursorConfig.enabled) {
     const errorMessage = !multicursorConfig.error
-      ? 'Cannot execute this shortcut with multiple thoughts.'
+      ? 'Cannot execute this command with multiple thoughts.'
       : typeof multicursorConfig.error === 'function'
         ? multicursorConfig.error(store.getState())
         : multicursorConfig.error
@@ -142,38 +142,36 @@ export const executeShortcutWithMulticursor = (shortcut: Command, { store, type,
   // Save the cursor before execution
   const cursorBeforeExecution = state.cursor
 
-  // For each multicursor, place the cursor on the path and execute the shortcut by calling executeShortcut.
+  // For each multicursor, place the cursor on the path and execute the command by calling executeCommand.
   const paths = documentSort(state, Object.values(state.multicursors))
 
   const filteredPaths = filterCursors(state, paths, multicursorConfig.filter)
 
-  const canExecute = filteredPaths.every(
-    path => !shortcut.canExecute || shortcut.canExecute({ ...state, cursor: path }),
-  )
+  const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
 
-  // Exit early if the shortcut cannot execute
+  // Exit early if the command cannot execute
   if (!canExecute) return
 
-  // Reverse the order of the cursors if the shortcut has reverse multicursor mode enabled.
+  // Reverse the order of the cursors if the command has reverse multicursor mode enabled.
   if (multicursorConfig.reverse) {
     filteredPaths.reverse()
   }
 
   /** Multicursor execution loop. */
   const execMulticursor = () => {
-    // Execute the shortcut for each multicursor path and restore the cursor to its original position.
+    // Execute the command for each multicursor path and restore the cursor to its original position.
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
       const recomputedPath = recomputePath(store.getState(), head(path))
       if (!recomputedPath) continue
 
       store.dispatch(setCursor({ path: recomputedPath }))
-      executeShortcut(shortcut, { store, type, event })
+      executeCommand(command, { store, type, event })
     }
   }
 
   if (multicursorConfig.execMulticursor) {
-    // The shortcut has their own multicursor logic, so delegate to it and pass in the default execMulticursor function.
+    // The command has their own multicursor logic, so delegate to it and pass in the default execMulticursor function.
     multicursorConfig.execMulticursor(filteredPaths, store.dispatch, store.getState, event, { type }, execMulticursor)
   } else {
     execMulticursor()
@@ -199,4 +197,4 @@ export const executeShortcutWithMulticursor = (shortcut: Command, { store, type,
   }
 }
 
-export default executeShortcut
+export default executeCommand

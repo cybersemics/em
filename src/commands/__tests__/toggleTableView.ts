@@ -5,7 +5,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import attributeByContext from '../../test-helpers/attributeByContext'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeShortcut, { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import toggleTableViewShortcut from '../toggleTableView'
 
 it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
@@ -24,7 +24,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
     setCursor(['a', 'b']),
   ])
 
-  executeShortcut(toggleTableViewShortcut, { store })
+  executeCommand(toggleTableViewShortcut, { store })
 
   // parent of cursor should have =view attribute set to Table
   expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Table')
@@ -48,7 +48,7 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
     setCursor(['a', 'b']),
   ])
 
-  executeShortcut(toggleTableViewShortcut, { store })
+  executeCommand(toggleTableViewShortcut, { store })
 
   // parent of cursor should have =view attribute set to Table
   expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Table')
@@ -73,7 +73,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
     setCursor(['a', 'b']),
   ])
 
-  executeShortcut(toggleTableViewShortcut, { store })
+  executeCommand(toggleTableViewShortcut, { store })
 
   // parent of cursor should not have =view attribute set to Table
   expect(attributeByContext(store.getState(), ['a'], '=view')).toBe(null)
@@ -102,7 +102,7 @@ describe('multicursor', () => {
       addMulticursor(['c', 'c1']),
     ])
 
-    executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
+    executeCommandWithMulticursor(toggleTableViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -149,7 +149,7 @@ describe('multicursor', () => {
       addMulticursor(['c', 'c1']),
     ])
 
-    executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
+    executeCommandWithMulticursor(toggleTableViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -187,7 +187,7 @@ describe('multicursor', () => {
       addMulticursor(['a', 'c', 'c1']),
     ])
 
-    executeShortcutWithMulticursor(toggleTableViewShortcut, { store })
+    executeCommandWithMulticursor(toggleTableViewShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__

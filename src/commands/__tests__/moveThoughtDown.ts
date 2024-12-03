@@ -4,7 +4,7 @@ import exportContext from '../../selectors/exportContext'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import moveThoughtDownShortcut from '../moveThoughtDown'
 
 describe('moveThoughtDown', () => {
@@ -22,7 +22,7 @@ describe('moveThoughtDown', () => {
       setCursor(['b']),
     ])
 
-    executeShortcutWithMulticursor(moveThoughtDownShortcut, { store })
+    executeCommandWithMulticursor(moveThoughtDownShortcut, { store })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -50,7 +50,7 @@ describe('moveThoughtDown', () => {
         addMulticursor(['d']),
       ])
 
-      executeShortcutWithMulticursor(moveThoughtDownShortcut, { store })
+      executeCommandWithMulticursor(moveThoughtDownShortcut, { store })
 
       const state = store.getState()
       const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -83,7 +83,7 @@ describe('moveThoughtDown', () => {
         addMulticursor(['c', 'c2']),
       ])
 
-      executeShortcutWithMulticursor(moveThoughtDownShortcut, { store })
+      executeCommandWithMulticursor(moveThoughtDownShortcut, { store })
 
       const state = store.getState()
       const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -113,7 +113,7 @@ describe('moveThoughtDown', () => {
         addMulticursor(['c']),
       ])
 
-      executeShortcutWithMulticursor(moveThoughtDownShortcut, { store })
+      executeCommandWithMulticursor(moveThoughtDownShortcut, { store })
 
       const state = store.getState()
       const exported = exportContext(state, [HOME_TOKEN], 'text/plain')

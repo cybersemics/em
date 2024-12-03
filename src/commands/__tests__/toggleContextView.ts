@@ -3,7 +3,7 @@ import contextToPath from '../../selectors/contextToPath'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import hashPath from '../../util/hashPath'
 import toggleContextViewShortcut from '../toggleContextView'
 
@@ -27,7 +27,7 @@ describe('toggleContextView', () => {
         addMulticursor(['b', 'm']),
       ])
 
-      executeShortcutWithMulticursor(toggleContextViewShortcut, { store })
+      executeCommandWithMulticursor(toggleContextViewShortcut, { store })
 
       const stateNew = store.getState()
 

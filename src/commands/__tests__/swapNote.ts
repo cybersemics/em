@@ -4,7 +4,7 @@ import exportContext from '../../selectors/exportContext'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import executeShortcut, { executeShortcutWithMulticursor } from '../../util/executeShortcut'
+import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import swapNoteShortcut from '../swapNote'
 
 describe('swapNote', () => {
@@ -21,7 +21,7 @@ describe('swapNote', () => {
       setCursor(['a', 'b']),
     ])
 
-    executeShortcut(swapNoteShortcut, { store })
+    executeCommand(swapNoteShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -45,7 +45,7 @@ describe('swapNote', () => {
       setCursor(['a']),
     ])
 
-    executeShortcut(swapNoteShortcut, { store })
+    executeCommand(swapNoteShortcut, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -73,7 +73,7 @@ describe('swapNote', () => {
         addMulticursor(['e', 'f']),
       ])
 
-      executeShortcutWithMulticursor(swapNoteShortcut, { store })
+      executeCommandWithMulticursor(swapNoteShortcut, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- __ROOT__
