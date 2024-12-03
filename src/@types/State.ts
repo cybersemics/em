@@ -73,7 +73,7 @@ interface State {
   editableNonce: number
   /** True if there is an active browser selection, or on mobile when the virtual keyboard is up. On mobile the first tap moves the cursor, and the second tap opens the keyboard. */
   editing: boolean | null
-  /** Show the latest activated shortcuts at the bottom of the screen for webcasts. */
+  /** Show the latest activated commands at the bottom of the screen for webcasts. */
   enableLatestCommandsDiagram: boolean
   error?: string | null
   /** A map of all Paths that are expanded. Recalculated whenever the cursor moves or the thoughts change. Keyed by hashPath(path). */
@@ -109,7 +109,7 @@ interface State {
    * Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward.
    */
   jumpIndex: number
-  latestShortcuts: Command[]
+  latestCommands: Command[]
   /** When a context is sorted, the manual sort order is saved so that it can be recovered when they cycle back through the sort options. If new thoughts have been added, their order relative to the original thoughts will be indeterminate, but both the old thoughts and the new thoughts will be sorted relative to themselves. The outer Index is keyed by parent ThoughtId, and the inner Index stores the manual ranks of each child at the time the context is sorted. This is stored in memory only and is lost when the app refreshes. */
   manualSortMap: Index<Index<number>>
   modals: Index<{ complete?: boolean }>

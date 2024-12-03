@@ -4,7 +4,7 @@ import Thunk from '../@types/Thunk'
 /**
  * Clear all the latest shortcuts to show on the screen.
  */
-const clearLatestShortcuts = (state: State): State => ({ ...state, latestShortcuts: [] })
+const clearLatestShortcuts = (state: State): State => ({ ...state, latestCommands: [] })
 
 /** Action-creator for clearLatestShortcuts. */
 export const clearLatestShortcutsActionCreator = (): Thunk => dispatch => dispatch({ type: 'clearLatestShortcuts' })

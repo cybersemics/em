@@ -7,7 +7,7 @@ import Thunk from '../@types/Thunk'
  */
 const addLatestShortcuts = (state: State, shortcut: Command): State => ({
   ...state,
-  latestShortcuts: [...state.latestShortcuts, shortcut],
+  latestCommands: [...state.latestCommands, shortcut],
 })
 
 /** Action-creator for addLatestShortcuts. */

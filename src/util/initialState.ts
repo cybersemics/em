@@ -128,7 +128,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     isLoading: true,
     jumpHistory: storageModel.get('jumpHistory'),
     jumpIndex: 0,
-    latestShortcuts: [],
+    latestCommands: [],
     manualSortMap: {},
     modals: {},
     multicursors: {},

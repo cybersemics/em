@@ -31,7 +31,7 @@ export const showLatestCommandsActionCreator =
     }
 
     if (shortcut) {
-      const exceedsLimit = getState().latestShortcuts.length + 1 > LATEST_SHORTCUT_LIMIT
+      const exceedsLimit = getState().latestCommands.length + 1 > LATEST_SHORTCUT_LIMIT
 
       // Clear shortcuts if exceeds limit
       if (exceedsLimit) dispatch(clearLatestShortcuts())
