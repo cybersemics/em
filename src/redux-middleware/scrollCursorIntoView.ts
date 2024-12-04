@@ -77,8 +77,17 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
+  const top = Math.max(1, scrollYNew)
+
+  const scrollDistance = Math.abs(scrollYNew - window.scrollY)
+  const viewportHeight = viewport.innerHeight
+  const behavior = scrollDistance < viewportHeight ? 'smooth' : 'auto'
+
   startForcedScrolling()
-  window.scrollTo(0, Math.max(1, scrollYNew))
+  window.scrollTo({
+    top,
+    behavior,
+  })
 }
 
 /** Scrolls the cursor into view if needed. */
