@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -882,7 +882,7 @@ const LayoutTree = () => {
   return (
     <div
       // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
-      className={hideCaret({ animation: getHideCaretAnimationName(indentDepth) })}
+      className={cx(css({ marginTop: '0.501em' }), hideCaret({ animation: getHideCaretAnimationName(indentDepth) }))}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
         transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
