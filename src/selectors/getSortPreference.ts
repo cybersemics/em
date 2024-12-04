@@ -24,9 +24,9 @@ const getSortDirection = (sortType: string, state: State, sortId: ThoughtId): So
 }
 
 /** Find the parent ID of a given thought ID. */
-const findParentId = (state: State, thoughtId: ThoughtId): ThoughtId => {
+const findParentId = (state: State, thoughtId: ThoughtId): ThoughtId | null => {
   const thought = getThoughtById(state, thoughtId)
-  return thought?.parentId
+  return thought ? thought.parentId : null
 }
 
 /** Get the sort setting from the given context meta or, if not provided, the global sort. */
@@ -35,9 +35,14 @@ const getSortPreference = (state: State, id: ThoughtId): SortPreference => {
   let childrenSort = sortId ? getAllChildrenAsThoughts(state, sortId) : []
 
   // If no direct sort is found, iteratively check parent context
-  let currentId = id
-  while ((!sortId || childrenSort.length === 0) && currentId !== '__ROOT__') {
-    currentId = findParentId(state, currentId)
+  let currentId: ThoughtId | null = id
+  while ((!sortId || childrenSort.length === 0) && currentId && currentId !== '__ROOT__') {
+    const parentId = findParentId(state, currentId)
+    if (!parentId || parentId === currentId) {
+      // No parent found or parent same as current, breaking to prevent infinite loop
+      break
+    }
+    currentId = parentId
     sortId = findDescendant(state, currentId, ['=sort'])
     if (sortId) {
       childrenSort = getAllChildrenAsThoughts(state, sortId)
