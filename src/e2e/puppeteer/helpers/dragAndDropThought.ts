@@ -1,3 +1,4 @@
+import sleep from '../../../util/sleep'
 import { page } from '../setup'
 import getEditable from './getEditable'
 import hide from './hide'
@@ -97,6 +98,10 @@ const dragAndDropThought = async (
   if (mouseUp) {
     await page.mouse.up()
     await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
+
+    // TODO: Why does drop/DragAndDropThought test fails intermittently without a small delay?
+    // QuickDropPanel and bullet highlight are visible.
+    await sleep(500)
   }
 
   // Hide QuickDropPanel by defafult.

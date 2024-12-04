@@ -3,16 +3,16 @@ import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
-import DragShortcutZone from '../@types/DragShortcutZone'
+import CommandId from '../@types/CommandId'
+import DragCommandZone from '../@types/DragCommandZone'
 import Icon from '../@types/IconType'
-import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
+import { commandById, formatKeyboardShortcut } from '../commands'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
-import { executeShortcutWithMulticursor } from '../util/executeShortcut'
+import { executeCommandWithMulticursor } from '../util/executeCommand'
 import fastClick from '../util/fastClick'
 
 export interface ToolbarButtonProps {
@@ -22,11 +22,11 @@ export interface ToolbarButtonProps {
   fontSize: number
   isPressing: boolean
   lastScrollLeft: MutableRefObject<number>
-  onTapDown?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
-  onTapUp?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
+  onTapDown?: (id: CommandId, e: React.MouseEvent | React.TouchEvent) => void
+  onTapUp?: (id: CommandId, e: React.MouseEvent | React.TouchEvent) => void
   onMouseLeave?: () => void
   selected?: boolean
-  shortcutId: ShortcutId
+  commandId: CommandId
   animated?: boolean
 }
 
@@ -41,11 +41,11 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   onTapUp,
   onMouseLeave,
   selected,
-  shortcutId,
+  commandId: shortcutId,
 }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
-  const shortcut = shortcutById(shortcutId)
+  const shortcut = commandById(shortcutId)
   if (!shortcut) {
     console.error('Missing shortcut: ' + shortcutId)
   }
@@ -61,18 +61,18 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const isShortcutActive = useSelector(state => !isActive || isActive(state))
   const isButtonActive = customize ? selected : commandState !== undefined ? commandState : isShortcutActive
 
-  const dragShortcutZone = useSelector(state => state.dragShortcutZone)
-  const isDraggingAny = useSelector(state => !!state.dragShortcut)
+  const dragCommandZone = useSelector(state => state.dragCommandZone)
+  const isDraggingAny = useSelector(state => !!state.dragCommand)
   const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(state))
 
   const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({ shortcutId, customize })
-  const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
+  const dropToRemove = isDragging && dragCommandZone === DragCommandZone.Remove
   const longPress = useToolbarLongPress({
     disabled: !customize,
     isDragging,
     shortcut,
-    sourceZone: DragShortcutZone.Toolbar,
+    sourceZone: DragCommandZone.Toolbar,
   })
   const longPressTapUp = longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']
   const longPressTapDown = longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown']
@@ -89,7 +89,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       const toolbarEl = iconEl.closest('#toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
-        executeShortcutWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
+        executeCommandWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
         if ((!isActive && !commandState) || (isActive && !isButtonActive)) {
           setIsAnimated(true)

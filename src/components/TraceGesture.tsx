@@ -2,10 +2,10 @@ import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { css } from '../../styled-system/css'
+import { gestureString, globalCommands } from '../commands'
 import { AlertType, GESTURE_CANCEL_ALERT_TEXT, GESTURE_GLOW_BLUR, Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
-import { gestureString, globalShortcuts } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import viewportStore from '../stores/viewport'
 import isInGestureZone from '../util/isInGestureZone'
@@ -28,7 +28,7 @@ const useGestureCancelled = () => {
     gesturePath =>
       gesturePath &&
       showCommandPalette &&
-      !globalShortcuts.some(shortcut => !shortcut.hideFromHelp && gestureString(shortcut) === gesturePath),
+      !globalCommands.some(shortcut => !shortcut.hideFromHelp && gestureString(shortcut) === gesturePath),
   )
 
   return alertShowsGestureCancelled || invalidGesture

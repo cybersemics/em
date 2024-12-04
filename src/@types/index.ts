@@ -1,3 +1,4 @@
+import { UnknownAction } from 'redux'
 import Thunk from './Thunk'
 
 declare global {
@@ -37,7 +38,7 @@ declare module 'redux' {
   export interface Dispatch {
     <T = void>(thunks: Thunk<T>[]): T[]
     <T = void>(thunk: Thunk<T>): T
-    (actions: (AnyAction | Thunk)[]): void
-    (action: AnyAction | Thunk): void
+    (actions: (UnknownAction | Thunk)[]): void
+    (action: UnknownAction | Thunk): void
   }
 }
