@@ -6,6 +6,7 @@ import getContexts from '../../selectors/getContexts'
 import getSetting from '../../selectors/getSetting'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
+import TutorialGestureDiagram from './TutorialGestureDiagram'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewToggle = () => {
@@ -39,6 +40,7 @@ const Tutorial2StepContextViewToggle = () => {
               : `Hit ${formatKeyboardShortcut(commandById('toggleContextView')!.keyboard!)}`}{' '}
             to view the current thought's contexts.
           </p>
+          <TutorialGestureDiagram gesture={commandById('toggleContextView')?.gesture} />
         </>
       )}
     </>

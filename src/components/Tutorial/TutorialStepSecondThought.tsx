@@ -1,4 +1,6 @@
 import { isTouch } from '../../browser'
+import { commandById } from '../../commands'
+import TutorialGestureDiagram from './TutorialGestureDiagram'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -11,6 +13,7 @@ const TutorialStepSecondThought = () => (
         <br />
         <br />
         {isTouch ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought.
+        <TutorialGestureDiagram gesture={commandById('newThought')?.gesture} />
       </TutorialHint>
     </p>
   </>

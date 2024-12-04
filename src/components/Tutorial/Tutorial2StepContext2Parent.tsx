@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
+import { commandById } from '../../commands'
 import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
@@ -10,6 +11,7 @@ import {
 } from '../../constants'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
+import TutorialGestureDiagram from './TutorialGestureDiagram'
 import TutorialHint from './TutorialHint'
 
 const tutorialChoiceMap = {
@@ -48,6 +50,7 @@ const Tutorial2StepContext2Parent = () => {
               {TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".
             </>
           )}
+          {!readyToSelect && <TutorialGestureDiagram gesture={commandById('newThought')?.gesture} />}
         </TutorialHint>
       </p>
     </>

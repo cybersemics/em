@@ -2,35 +2,13 @@ import React, { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
-import GesturePath from '../../@types/GesturePath'
-import State from '../../@types/State'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { isTouch } from '../../browser'
 import { commandById } from '../../commands'
-import {
-  TUTORIAL2_STEP_CONTEXT1_HINT,
-  TUTORIAL2_STEP_CONTEXT1_PARENT_HINT,
-  TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT,
-  TUTORIAL2_STEP_CONTEXT2_HINT,
-  TUTORIAL2_STEP_CONTEXT2_PARENT_HINT,
-  TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT,
-  TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE,
-  TUTORIAL2_STEP_SUCCESS,
-  TUTORIAL_CONTEXT,
-  TUTORIAL_CONTEXT1_PARENT,
-  TUTORIAL_CONTEXT2_PARENT,
-  TUTORIAL_STEP_FIRSTTHOUGHT,
-  TUTORIAL_STEP_SECONDTHOUGHT_HINT,
-  TUTORIAL_STEP_SUBTHOUGHT,
-  TUTORIAL_STEP_SUCCESS,
-} from '../../constants'
+import { TUTORIAL2_STEP_SUCCESS, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import useIsVisible from '../../hooks/useIsVisible'
 import getSetting from '../../selectors/getSetting'
-import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import fastClick from '../../util/fastClick'
-import headValue from '../../util/headValue'
-import once from '../../util/once'
-import GestureDiagram from '../GestureDiagram'
 import SlideTransition from '../SlideTransition'
 import TutorialNavigation from './TutorialNavigation'
 import TutorialScrollUpButton from './TutorialScrollUpButton'
@@ -65,33 +43,9 @@ const Tutorial: FC = () => {
   })
 
   const dispatch = useDispatch()
-  const cursor = useSelector((state: State) => state.cursor)
-  const tutorialChoice = useSelector(selectTutorialChoice)
 
   const tutorialStepComponent =
     TutorialStepComponentMap[Math.floor(tutorialStep) as keyof typeof TutorialStepComponentMap]
-
-  const gesture = once(
-    () =>
-      ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ||
-      tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
-      tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
-      tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
-        ? commandById('newThought')?.gesture
-        : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
-            tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ||
-            tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT ||
-            tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ||
-            tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT
-          ? commandById('newSubthought')?.gesture
-          : tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
-            ? commandById('toggleContextView')?.gesture
-            : null) || null) as GesturePath | null, // Why does it add 'string' to the type union without this?
-  )
-
-  const cursorHeadValue = useSelector(state => state.cursor && headValue(state, state.cursor))
-
-  const gesturePath = gesture()
 
   return (
     <div
@@ -148,34 +102,9 @@ const Tutorial: FC = () => {
           <TutorialNavigation nextRef={nextRef} tutorialStep={tutorialStep} />
         </div>
 
-        {isTouch &&
-        (tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ||
-          tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
-          tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
-          tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ||
-          tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
-          (tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT &&
-            cursor &&
-            cursorHeadValue &&
-            cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
-          (tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT &&
-            cursor &&
-            cursorHeadValue &&
-            cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) ||
-          (tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT &&
-            cursor &&
-            cursorHeadValue &&
-            cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
-          (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT &&
-            cursor &&
-            cursorHeadValue &&
-            cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
-          (tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT &&
-            cursor &&
-            cursorHeadValue &&
-            cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
-        gesturePath ? (
+        {isTouch && (
           <div
+            id='tutorial-gesture-diagram-portal'
             className={css({
               position: 'absolute',
               marginTop: '50px',
@@ -186,16 +115,8 @@ const Tutorial: FC = () => {
               backgroundColor: 'bgOverlay80',
               paddingBottom: '50px',
             })}
-          >
-            <GestureDiagram
-              path={gesturePath}
-              size={160}
-              strokeWidth={10}
-              arrowSize={5}
-              cssRaw={css.raw({ animation: 'pulse 1s infinite alternate' })}
-            />
-          </div>
-        ) : null}
+          />
+        )}
       </div>
       <TutorialScrollUpButton show={!isVisible} />
     </div>
