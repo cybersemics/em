@@ -290,9 +290,7 @@ const linearizeTree = (
     // As soon as the cursor is found, set belowCursor to true. It will be propagated to every subsequent thought.
     // See: TreeThought.belowCursor
     const isCursor = !belowCursor && equalPath(childPath, state.cursor)
-    if (isCursor) {
-      belowCursor = true
-    }
+    belowCursor = true
 
     const isTable = attributeEquals(state, child.id, '=view', 'Table')
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
@@ -348,11 +346,6 @@ const linearizeTree = (
       ),
       styleFromGrandparent: getStyle(state, grandchildrenAttributeId),
     })
-
-    // In order to mark every thought after the cursor as belowCursor, we need to update belowCursor before the next sibling is processed. Otherwise, the recursive belowCursor will not be propagated up the call stack and will still be undefined on the next uncle.
-    if (!belowCursor && descendants[descendants.length - 1]?.belowCursor) {
-      belowCursor = true
-    }
 
     return [...accum, node, ...descendants]
   }, [])

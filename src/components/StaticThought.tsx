@@ -59,7 +59,6 @@ export interface ThoughtProps {
   view?: string | null
   marginRight: number
   isPressed: boolean
-  setIsCollapsed?: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 /** Returns true if a color is white, in rgb, rgba, hex, or color name. */
@@ -112,7 +111,6 @@ const StaticThought = ({
   marginRight,
   updateSize,
   isPressed,
-  setIsCollapsed,
 }: ThoughtProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
@@ -207,7 +205,6 @@ const StaticThought = ({
             style={style}
             simplePath={simplePathLive}
             onEdit={onEdit}
-            setIsCollapsed={setIsCollapsed}
             className={css(
               {
                 ...(isTableCol1 && { maxWidth: '100%' }),

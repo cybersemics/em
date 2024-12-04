@@ -40,8 +40,6 @@ interface BulletProps {
   // debugIndex?: number
   isCursorGrandparent?: boolean
   isCursorParent?: boolean
-  isCollapsed?: boolean
-  setIsCollapsed?: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
@@ -231,14 +229,12 @@ const glyphFg = cva({
     },
     showContexts: { true: {} },
     isBulletExpanded: { true: {} },
-    isCollapsed: { true: {} },
   },
   compoundVariants: [
     {
       leaf: false,
       triangle: true,
       isBulletExpanded: true,
-      isCollapsed: false,
       css: {
         transform: 'rotate(90deg) translateX(10px)',
       },
@@ -316,7 +312,6 @@ const BulletParent = ({
   pending,
   showContexts,
   isBulletExpanded,
-  isCollapsed,
 }: {
   currentScale?: number
   fill?: string
@@ -325,7 +320,6 @@ const BulletParent = ({
   pending?: boolean
   showContexts?: boolean
   isBulletExpanded?: boolean
-  isCollapsed?: boolean
 } = {}) => {
   const path = isIOSSafari
     ? 'M194.95196151422277,180.42647327382525 L194.95196151422277,419.57354223877866 L413.24607972032067,298.0609718441649 L194.95196151422277,180.42646533261976 L194.95196151422277,180.42647327382525 z'
@@ -347,7 +341,6 @@ const BulletParent = ({
         gray: childrenMissing,
         graypulse: pending,
         isBulletExpanded,
-        isCollapsed,
         showContexts,
         leaf: false,
       })}
@@ -401,8 +394,6 @@ const Bullet = ({
   thoughtId,
   isCursorGrandparent,
   isCursorParent,
-  isCollapsed,
-  setIsCollapsed,
   // depth,
   // debugIndex,
 }: BulletProps) => {
@@ -561,11 +552,6 @@ const Bullet = ({
         const shouldCollapse = isExpanded && children.length > 0
         const pathParent = path.length > 1 ? parentOf(path) : null
         const parentChildren = pathParent ? getChildren(state, head(pathParent)) : null
-        const collapse = shouldCollapse && pathParent === null
-
-        if (setIsCollapsed) {
-          setIsCollapsed(shouldCollapse !== undefined && pathParent === null)
-        }
 
         // if thought is not expanded, set the cursor on the thought
         // if thought is expanded, collapse it by moving the cursor to its parent
@@ -577,11 +563,11 @@ const Bullet = ({
             ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
             : [deleteAttribute({ path: simplePath, value: '=pin' })]),
           // move cursor
-          setCursor({ path: shouldCollapse && pathParent ? pathParent : path, preserveMulticursor: true, collapse }),
+          setCursor({ path: shouldCollapse ? pathParent : path, preserveMulticursor: true }),
         ])
       })
     },
-    [dispatch, dragHold, path, simplePath, setIsCollapsed],
+    [dispatch, dragHold, path, simplePath],
   )
 
   return (
@@ -679,7 +665,6 @@ const Bullet = ({
               pending={pending}
               showContexts={showContexts}
               isBulletExpanded={isBulletExpanded}
-              isCollapsed={isCollapsed}
             />
           )}
         </g>
