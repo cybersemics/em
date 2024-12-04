@@ -12,7 +12,6 @@ import animationDataDesc from './animations/11-sort-descanding_7.json'
 const getCursorSortDirection = (state: State) => {
   const cursorId = head(state.cursor || HOME_PATH)
   const sortPref = getSortPreference(state, cursorId)
-  // Return null particularly if sort type is "None", clearly log to confirm absence
   if (sortPref.type === 'None') {
     return null
   }
@@ -158,7 +157,8 @@ const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComp
 const SortIcon = ({ size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   const direction = useSelector(getCursorSortDirection)
   const Component = direction === 'Desc' ? IconDesc : IconAsc
-  return <Component {...{ size, style, cssRaw, animated, animationComplete }} />
+  const isAnimated = direction === 'Desc' ? true : animated
+  return <Component {...{ size, style, cssRaw, animated: isAnimated, animationComplete }} />
 }
 
 export default SortIcon
