@@ -31,31 +31,30 @@ const findParentId = (state: State, thoughtId: ThoughtId): ThoughtId | null => {
 
 /** Get the sort setting from the given context meta or, if not provided, the global sort. */
 const getSortPreference = (state: State, id: ThoughtId): SortPreference => {
+  // Attempt to find '=sort' under the current id
   let sortId = findDescendant(state, id, ['=sort'])
   let childrenSort = sortId ? getAllChildrenAsThoughts(state, sortId) : []
 
-  // If no direct sort is found, iteratively check parent context
-  let currentId: ThoughtId | null = id
-  while ((!sortId || childrenSort.length === 0) && currentId && currentId !== '__ROOT__') {
-    const parentId = findParentId(state, currentId)
-    if (!parentId || parentId === currentId) {
-      // No parent found or parent same as current, breaking to prevent infinite loop
-      break
-    }
-    currentId = parentId
-    sortId = findDescendant(state, currentId, ['=sort'])
-    if (sortId) {
-      childrenSort = getAllChildrenAsThoughts(state, sortId)
+  // If '=sort' not found or has no children, check the immediate parent
+  if ((!sortId || childrenSort.length === 0) && id !== '__ROOT__') {
+    const parentId = findParentId(state, id)
+    if (parentId && parentId !== id) {
+      sortId = findDescendant(state, parentId, ['=sort'])
+      if (sortId) {
+        childrenSort = getAllChildrenAsThoughts(state, sortId)
+      }
     }
   }
 
+  // If still not found, fallback to global sort preference
   if (!sortId || childrenSort.length === 0) {
     return getGlobalSortPreference(state)
   }
 
+  // Return the sort preference found
   return {
     type: childrenSort[0].value,
-    direction: getSortDirection(childrenSort[0].value, state, sortId!),
+    direction: getSortDirection(childrenSort[0].value, state, sortId),
   }
 }
 
