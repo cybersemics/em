@@ -4,9 +4,12 @@ import Command from '../../@types/Command'
 import GesturePath from '../../@types/GesturePath'
 import GestureDiagram from '../GestureDiagram'
 
+/** During the totirla, a portal is used for rendering gestures on top of the thought space. It's the ID for the portal element. */
+const TUTORIAL_GESTURE_PORTAL_DOM_ID = 'tutorial-gesture-diagram-portal'
+
 /** A portal for conditionally rendering Gesture hints. Used to show an appropriate gesture  below the tutorial UI up top, thus Portal. */
 const TutorialGestureDiagram = ({ gesture }: { gesture: Command['gesture'] }) => {
-  const target = document.getElementById('tutorial-gesture-diagram-portal')
+  const target = document.getElementById(TUTORIAL_GESTURE_PORTAL_DOM_ID)
 
   return (
     gesture &&
@@ -35,6 +38,11 @@ const TutorialGestureDiagram = ({ gesture }: { gesture: Command['gesture'] }) =>
       target,
     )
   )
+}
+
+/** The element that serves as the portal target for the TutorialGestureDiagram. */
+export const TutorialGesturePortal = () => {
+  return <div id={TUTORIAL_GESTURE_PORTAL_DOM_ID} className={css({ display: 'contents' })} />
 }
 
 export default TutorialGestureDiagram
