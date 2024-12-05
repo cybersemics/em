@@ -25,8 +25,8 @@ const durationsMillis = {
   layoutSlowShift: 750,
   /** The animation duration of a node in the LayoutTree component. This animates thought positions when they are moved. */
   layoutNodeAnimation: 150,
-  /* A fade out animation that matches the duration of layoutNodeAnimation and is triggered when a node unmounts. See autofocusChanged for normal opacity animations. */
-  nodeFadeOut: 150,
+  /* A fade out animation that is triggered when a node unmounts. See autofocusChanged for normal opacity animations. */
+  nodeFadeOut: 80,
 } as const
 
 export default durationsMillis
