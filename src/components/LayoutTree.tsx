@@ -412,6 +412,7 @@ const TreeNode = ({
   autofocusDepth: number
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
+  const fadeThoughtRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -437,7 +438,6 @@ const TreeNode = ({
   const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
   // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
-  const fadeThoughtRef = useRef<HTMLDivElement>(null)
 
   return (
     <div
