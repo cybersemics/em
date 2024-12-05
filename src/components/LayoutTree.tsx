@@ -290,7 +290,13 @@ const linearizeTree = (
     // As soon as the cursor is found, set belowCursor to true. It will be propagated to every subsequent thought.
     // See: TreeThought.belowCursor
     const isCursor = !belowCursor && equalPath(childPath, state.cursor)
-    belowCursor = true
+    if (isCursor) {
+      belowCursor = true
+    }
+
+    if (!state.cursor) {
+      belowCursor = true
+    }
 
     const isTable = attributeEquals(state, child.id, '=view', 'Table')
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
