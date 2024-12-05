@@ -11,6 +11,12 @@ import animationDataDesc from './animations/11-sort-descanding_7.json'
 /** Cursor Sort Direction. */
 const getCursorSortDirection = (state: State) => {
   const cursorId = head(state.cursor || HOME_PATH)
+
+  // Disable animation for HOME_PATH
+  if (cursorId === head(HOME_PATH)) {
+    return null
+  }
+
   const sortPref = getSortPreference(state, cursorId)
   if (sortPref.type === 'None') {
     return null
@@ -156,8 +162,11 @@ const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComp
 /** Sort Icon Component with Conditional Lottie Animation. */
 const SortIcon = ({ size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   const direction = useSelector(getCursorSortDirection)
+
+  // Disable animation for HOME_PATH or no direction
+  const isAnimated = direction === 'Desc' ? true : animated && direction !== null
+
   const Component = direction === 'Desc' ? IconDesc : IconAsc
-  const isAnimated = direction === 'Desc' ? true : animated
   return <Component {...{ size, style, cssRaw, animated: isAnimated, animationComplete }} />
 }
 
