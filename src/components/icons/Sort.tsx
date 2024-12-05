@@ -1,23 +1,30 @@
 import { useSelector } from 'react-redux'
 import IconType from '../../@types/IconType'
 import State from '../../@types/State'
+import ThoughtId from '../../@types/ThoughtId'
 import { HOME_PATH } from '../../constants'
 import getSortPreference from '../../selectors/getSortPreference'
+import getThoughtById from '../../selectors/getThoughtById'
 import head from '../../util/head'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/10-sort_4.json'
 import animationDataDesc from './animations/11-sort-descanding_7.json'
 
+/** Find the parent ID of a given thought ID. */
+const findParentId = (state: State, thoughtId: ThoughtId): ThoughtId | null => {
+  const thought = getThoughtById(state, thoughtId)
+  return thought ? thought.parentId : null
+}
+
 /** Cursor Sort Direction. */
 const getCursorSortDirection = (state: State) => {
   const cursorId = head(state.cursor || HOME_PATH)
 
-  // Disable animation for HOME_PATH
-  if (cursorId === head(HOME_PATH)) {
-    return null
-  }
+  // Find the parent of cursorId
+  const parentId = findParentId(state, cursorId)
 
-  const sortPref = getSortPreference(state, cursorId)
+  // Get the sort preference using the parentId
+  const sortPref = getSortPreference(state, parentId!)
   if (sortPref.type === 'None') {
     return null
   }
