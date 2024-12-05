@@ -462,7 +462,13 @@ const TreeNode = ({
         textAlign: isTableCol1 ? 'right' : undefined,
       }}
     >
-      <FadeTransition id={thoughtKey} duration='nodeOpacity' nodeRef={fadeThoughtRef} in={transitionGroupsProps.in}>
+      <FadeTransition
+        id={thoughtKey}
+        duration='nodeOpacity'
+        nodeRef={fadeThoughtRef}
+        in={transitionGroupsProps.in}
+        unmountOnExit
+      >
         <div ref={fadeThoughtRef}>
           <VirtualThought
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
