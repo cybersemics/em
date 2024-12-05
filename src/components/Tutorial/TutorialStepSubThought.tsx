@@ -27,7 +27,7 @@ const TutorialStepSubThought = () => {
           .
         </p>
       )}
-      <TutorialGestureDiagram gesture={commandById('newSubthought')?.gesture} />
+      <TutorialGestureDiagram gesture={commandById('newSubthought').gesture} />
     </>
   )
 }

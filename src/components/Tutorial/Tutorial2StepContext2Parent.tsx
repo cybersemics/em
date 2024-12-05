@@ -50,7 +50,7 @@ const Tutorial2StepContext2Parent = () => {
               {TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".
             </>
           )}
-          {!readyToSelect && <TutorialGestureDiagram gesture={commandById('newThought')?.gesture} />}
+          {!readyToSelect && <TutorialGestureDiagram gesture={commandById('newThought').gesture} />}
         </TutorialHint>
       </p>
     </>

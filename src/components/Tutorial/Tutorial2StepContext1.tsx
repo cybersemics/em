@@ -49,7 +49,7 @@ const Tutorial2StepContext1 = () => {
             {readyToSelect ? `Select "${chosenTutorialText}". ` : null}
             {isTouch ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to
             create a new thought <i>within</i> "{chosenTutorialText}". Then type "{TUTORIAL_CONTEXT[tutorialChoice]}".
-            {!readyToSelect && <TutorialGestureDiagram gesture={commandById('newSubthought')?.gesture} />}
+            {!readyToSelect && <TutorialGestureDiagram gesture={commandById('newSubthought').gesture} />}
           </TutorialHint>
         </p>
       ) : (

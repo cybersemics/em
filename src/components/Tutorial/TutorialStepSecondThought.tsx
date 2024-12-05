@@ -13,7 +13,7 @@ const TutorialStepSecondThought = () => (
         <br />
         <br />
         {isTouch ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought.
-        <TutorialGestureDiagram gesture={commandById('newThought')?.gesture} />
+        <TutorialGestureDiagram gesture={commandById('newThought').gesture} />
       </TutorialHint>
     </p>
   </>

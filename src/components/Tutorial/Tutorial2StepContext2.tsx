@@ -52,7 +52,7 @@ const Tutorial2StepContext2 = () => {
                   to create a new thought <i>within</i> "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".
                 </>
               )}
-              {!select && <TutorialGestureDiagram gesture={commandById('newSubthought')?.gesture} />}
+              {!select && <TutorialGestureDiagram gesture={commandById('newSubthought').gesture} />}
             </TutorialHint>
           </p>
         ) : (

@@ -41,7 +41,7 @@ const Tutorial2StepContext1Parent = () => {
           ) : null}
           {isTouch ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought. Then type "
           {TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}".
-          <TutorialGestureDiagram gesture={commandById('newThought')?.gesture} />
+          <TutorialGestureDiagram gesture={commandById('newThought').gesture} />
         </TutorialHint>
       </p>
     </>

@@ -11,7 +11,7 @@ const TutorialStepFirstThought = () => {
         {isTouch ? 'gesture' : 'keyboard shortcut'}. Just follow the instructions; this tutorial will stay open.
       </p>
       <p>{isTouch ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought.</p>
-      <TutorialGestureDiagram gesture={commandById('newThought')?.gesture} />
+      <TutorialGestureDiagram gesture={commandById('newThought').gesture} />
     </>
   )
 }

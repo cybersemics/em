@@ -40,7 +40,7 @@ const Tutorial2StepContextViewToggle = () => {
               : `Hit ${formatKeyboardShortcut(commandById('toggleContextView')!.keyboard!)}`}{' '}
             to view the current thought's contexts.
           </p>
-          <TutorialGestureDiagram gesture={commandById('toggleContextView')?.gesture} />
+          <TutorialGestureDiagram gesture={commandById('toggleContextView').gesture} />
         </>
       )}
     </>
