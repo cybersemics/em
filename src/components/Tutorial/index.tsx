@@ -10,6 +10,7 @@ import useIsVisible from '../../hooks/useIsVisible'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
 import SlideTransition from '../SlideTransition'
+import { TutorialGesturePortal } from './TutorialGestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
 import TutorialScrollUpButton from './TutorialScrollUpButton'
 import TutorialStepComponentMap from './TutorialStepComponentMap'
@@ -102,7 +103,7 @@ const Tutorial: FC = () => {
           <TutorialNavigation nextRef={nextRef} tutorialStep={tutorialStep} />
         </div>
 
-        {isTouch && <div id='tutorial-gesture-diagram-portal' className={css({ display: 'contents' })} />}
+        {isTouch && <TutorialGesturePortal />}
       </div>
       <TutorialScrollUpButton show={!isVisible} />
     </div>
