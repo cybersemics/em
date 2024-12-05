@@ -12,13 +12,26 @@ const TutorialGestureDiagram = ({ gesture }: { gesture: Command['gesture'] }) =>
     gesture &&
     target &&
     createPortal(
-      <GestureDiagram
-        path={gesture as GesturePath}
-        size={160}
-        strokeWidth={10}
-        arrowSize={5}
-        cssRaw={css.raw({ animation: 'pulse 1s infinite alternate' })}
-      />,
+      <div
+        className={css({
+          position: 'absolute',
+          marginTop: '50px',
+          zIndex: 'tutorialTraceGesture',
+          textAlign: 'center',
+          left: 0,
+          right: 0,
+          backgroundColor: 'bgOverlay80',
+          paddingBottom: '50px',
+        })}
+      >
+        <GestureDiagram
+          path={gesture as GesturePath}
+          size={160}
+          strokeWidth={10}
+          arrowSize={5}
+          cssRaw={css.raw({ animation: 'pulse 1s infinite alternate' })}
+        />
+      </div>,
       target,
     )
   )

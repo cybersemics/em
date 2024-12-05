@@ -102,21 +102,7 @@ const Tutorial: FC = () => {
           <TutorialNavigation nextRef={nextRef} tutorialStep={tutorialStep} />
         </div>
 
-        {isTouch && (
-          <div
-            id='tutorial-gesture-diagram-portal'
-            className={css({
-              position: 'absolute',
-              marginTop: '50px',
-              zIndex: 'tutorialTraceGesture',
-              textAlign: 'center',
-              left: 0,
-              right: 0,
-              backgroundColor: 'bgOverlay80',
-              paddingBottom: '50px',
-            })}
-          />
-        )}
+        {isTouch && <div id='tutorial-gesture-diagram-portal' className={css({ display: 'contents' })} />}
       </div>
       <TutorialScrollUpButton show={!isVisible} />
     </div>
