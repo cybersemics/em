@@ -1,6 +1,8 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
+import { TransitionGroup } from 'react-transition-group'
+import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
@@ -39,6 +41,7 @@ import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
 import unroot from '../util/unroot'
 import DropEnd from './DropEnd'
+import FadeTransition from './FadeTransition'
 import HoverArrow from './HoverArrow'
 import VirtualThought, { OnResize } from './VirtualThought'
 
@@ -394,6 +397,7 @@ const TreeNode = ({
   cliffPaddingStyle,
   dragInProgress,
   autofocusDepth,
+  ...transitionGroupsProps
 }: TreeThoughtPositioned & {
   thoughtKey: string
   index: number
@@ -405,8 +409,9 @@ const TreeNode = ({
   cliffPaddingStyle: { paddingBottom: number }
   dragInProgress: boolean
   autofocusDepth: number
-}) => {
+} & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
+  const fadeThoughtRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -456,31 +461,43 @@ const TreeNode = ({
         textAlign: isTableCol1 ? 'right' : undefined,
       }}
     >
-      <VirtualThought
-        debugIndex={testFlags.simulateDrop ? indexChild : undefined}
-        depth={depth}
-        dropUncle={thoughtId === cursorUncleId}
-        env={env}
-        indexDescendant={indexDescendant}
-        // isMultiColumnTable={isMultiColumnTable}
-        isMultiColumnTable={false}
-        leaf={leaf}
-        onResize={setSize}
-        path={path}
-        prevChildId={prevChild?.id}
-        showContexts={showContexts}
-        simplePath={simplePath}
-        singleLineHeight={singleLineHeightWithCliff}
-        // Add a bit of space after a cliff to give nested lists some breathing room.
-        // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-        // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
-        style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
-        crossContextualKey={thoughtKey}
-        prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
-        isLastVisible={isLastVisible}
-        autofocus={autofocus}
-        marginRight={isTableCol1 ? marginRight : 0}
-      />
+      <FadeTransition
+        id={thoughtKey}
+        // The FadeTransition is only responsible for fade out on unmount.
+        // See autofocusChanged for normal opacity transition.
+        duration='nodeFadeOut'
+        nodeRef={fadeThoughtRef}
+        in={transitionGroupsProps.in}
+        unmountOnExit
+      >
+        <div ref={fadeThoughtRef}>
+          <VirtualThought
+            debugIndex={testFlags.simulateDrop ? indexChild : undefined}
+            depth={depth}
+            dropUncle={thoughtId === cursorUncleId}
+            env={env}
+            indexDescendant={indexDescendant}
+            // isMultiColumnTable={isMultiColumnTable}
+            isMultiColumnTable={false}
+            leaf={leaf}
+            onResize={setSize}
+            path={path}
+            prevChildId={prevChild?.id}
+            showContexts={showContexts}
+            simplePath={simplePath}
+            singleLineHeight={singleLineHeightWithCliff}
+            // Add a bit of space after a cliff to give nested lists some breathing room.
+            // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+            // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
+            style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
+            crossContextualKey={thoughtKey}
+            prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
+            isLastVisible={isLastVisible}
+            autofocus={autofocus}
+            marginRight={isTableCol1 ? marginRight : 0}
+          />
+        </div>
+      </FadeTransition>
 
       {/* DropEnd (cliff) */}
       {dragInProgress &&
@@ -906,26 +923,28 @@ const LayoutTree = () => {
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
       >
-        {treeThoughtsPositioned.map((thought, index) => (
-          <TreeNode
-            {...thought}
-            index={index}
-            // Pass unique key for the component
-            key={thought.key}
-            // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
-            thoughtKey={thought.key}
-            {...{
-              viewportBottom,
-              treeThoughtsPositioned,
-              bulletWidth,
-              cursorUncleId,
-              setSize,
-              cliffPaddingStyle,
-              dragInProgress,
-              autofocusDepth,
-            }}
-          />
-        ))}
+        <TransitionGroup>
+          {treeThoughtsPositioned.map((thought, index) => (
+            <TreeNode
+              {...thought}
+              index={index}
+              // Pass unique key for the component
+              key={thought.key}
+              // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
+              thoughtKey={thought.key}
+              {...{
+                viewportBottom,
+                treeThoughtsPositioned,
+                bulletWidth,
+                cursorUncleId,
+                setSize,
+                cliffPaddingStyle,
+                dragInProgress,
+                autofocusDepth,
+              }}
+            />
+          ))}
+        </TransitionGroup>
       </div>
     </div>
   )
