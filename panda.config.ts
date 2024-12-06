@@ -1,6 +1,7 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import durationsConfig from './src/durations.config'
+import hideCaretAnimationNames from './src/hideCaret.config'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
@@ -55,6 +56,18 @@ const zIndexDescending = (keys: string[]) => keyValueBy(keys.reverse(), (key, i)
 
 /** Add `ms` units to raw value. */
 const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
+
+const hideCaret = {
+  '0%': {
+    caretColor: 'transparent',
+  },
+  '99%': {
+    caretColor: 'transparent',
+  },
+  '100%': {
+    caretColor: 'auto',
+  },
+}
 
 const keyframes = defineKeyframes({
   fademostlyin: {
@@ -135,6 +148,7 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
+  ...hideCaretAnimationNames.reduce((accum, name) => ({ ...accum, [name]: hideCaret }), {}),
 })
 
 const globalCss = defineGlobalStyles({
