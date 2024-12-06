@@ -54,7 +54,7 @@ const toggleSortShortcut: Command = {
   error: state => {
     if (!state.cursor || isRoot(state.cursor)) return null
 
-    const simplePath = simplifyPath(state, state.cursor)
+    const simplePath = simplifyPath(state, rootedParentOf(state, state.cursor))
     const id = head(simplePath)
     const sortPreference = getSortPreference(state, id)
     if (sortPreference.type === 'None') return null
