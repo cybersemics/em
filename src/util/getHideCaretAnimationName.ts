@@ -23,7 +23,7 @@ export const hideCaretAnimationNames = [
 
 const hideCaret = cva({
   base: {
-    animationDuration: '{durations.layoutSlowShiftDuration}',
+    animationDuration: '{durations.layoutSlowShift}',
   },
   variants: {
     animation: hideCaretAnimationNames.reduce(
