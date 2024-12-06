@@ -356,6 +356,11 @@ const linearizeTree = (
       styleFromGrandparent: getStyle(state, grandchildrenAttributeId),
     })
 
+    // In order to mark every thought after the cursor as belowCursor, we need to update belowCursor before the next sibling is processed. Otherwise, the recursive belowCursor will not be propagated up the call stack and will still be undefined on the next uncle.
+    if (!belowCursor && descendants[descendants.length - 1]?.belowCursor) {
+      belowCursor = true
+    }
+
     return [...accum, node, ...descendants]
   }, [])
 
