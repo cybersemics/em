@@ -938,12 +938,12 @@ it('should strip tags whose font weight is less than or equal to 400', () => {
 })
 
 it('should convert font weight to 700 if the font weight in a tag is greater than or equal to 500', () => {
-  const paste = `<span style="font-weight: 500;">Hello world. </span><span style="font-weight: 800;">This is a test </span>`
+  const paste = `<span style="font-weight: 500;">Hello world. </span><span style="font-weight: 800;">This is a test</span>`
   const actual = importExport(paste)
   const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
-      <li><span style="font-weight: 700;">Hello world. </span><span style="font-weight: 700;">This is a test </span></li>
+      <li><span style="font-weight: 700;">Hello world. </span><span style="font-weight: 700;">This is a test</span></li>
     </ul>
   </li>
 </ul>`

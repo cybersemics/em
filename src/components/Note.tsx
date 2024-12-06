@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { textNote } from '../../styled-system/recipes'
+import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
@@ -114,7 +114,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
     <div
       aria-label='note'
       className={cx(
-        textNote(),
+        textNoteRecipe(),
         css({
           fontSize: 'sm',
           lineHeight: 1.25,

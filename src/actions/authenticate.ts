@@ -25,4 +25,6 @@ export const authenticateActionCreator =
   dispatch =>
     dispatch({ type: 'authenticate', ...payload })
 
+export type AuthenticateAction = { type: 'authenticate' } & Parameters<typeof authenticate>[1]
+
 export default _.curryRight(authenticate)

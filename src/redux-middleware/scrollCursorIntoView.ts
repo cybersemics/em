@@ -77,8 +77,17 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
+  const top = Math.max(1, scrollYNew)
+
+  const scrollDistance = Math.abs(scrollYNew - window.scrollY)
+  const viewportHeight = viewport.innerHeight
+  const behavior = scrollDistance < viewportHeight ? 'smooth' : 'auto'
+
   startForcedScrolling()
-  window.scrollTo(0, Math.max(1, scrollYNew))
+  window.scrollTo({
+    top,
+    behavior,
+  })
 }
 
 /** Scrolls the cursor into view if needed. */
@@ -100,7 +109,7 @@ const scrollCursorIntoView = () => {
       scrollIntoViewIfNeeded(document.querySelector('[data-editing=true]'))
     },
     // If this is the result of a navigation, wait for the layout animation to complete to not get false bounding rect values
-    userInteractedAfterNavigation ? 0 : durations.get('layoutNodeAnimationDuration'),
+    userInteractedAfterNavigation ? 0 : durations.get('layoutNodeAnimation'),
   )
 }
 
@@ -110,7 +119,7 @@ editingValueStore.subscribe(
   // Throttle aggressively since scrollCursorIntoView reads from the DOM and this is called on all edits.
   _.throttle(() => {
     // we need to wait for the cursor to animate into its final position before scrollCursorIntoView can accurately determine if it is in the viewport
-    setTimeout(scrollCursorIntoView, durations.get('layoutNodeAnimationDuration'))
+    setTimeout(scrollCursorIntoView, durations.get('layoutNodeAnimation'))
   }, 400),
 )
 

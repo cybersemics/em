@@ -3,13 +3,13 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/02-new-subthought_2.json'
 
 /** New Subthought Icon with Conditional Lottie Animation. */
-const NewSubthoughtIcon = ({ fill, size = 20, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const NewSubthoughtIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: `scale(1.02, 1.02)` }}
         fill='none'
       >
         <g id='Layer_2' data-name='Layer 2'>

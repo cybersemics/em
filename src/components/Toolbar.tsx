@@ -11,16 +11,16 @@ Test:
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
-import { toolbarPointerEvents } from '../../styled-system/recipes'
+import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
-import ShortcutType from '../@types/Shortcut'
-import ShortcutId from '../@types/ShortcutId'
+import CommandType from '../@types/Command'
+import CommandId from '../@types/CommandId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
-import { TOOLBAR_DEFAULT_SHORTCUTS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
+import { commandById } from '../commands'
+import { TOOLBAR_DEFAULT_COMMANDS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
 import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
-import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import FadeTransition from './FadeTransition'
 import ToolbarButton from './ToolbarButton'
@@ -30,15 +30,15 @@ import TriangleRight from './TriangleRight'
 interface ToolbarProps {
   // places the toolbar into customize mode where buttons can be dragged and dropped.
   customize?: boolean
-  onSelect?: (shortcut: ShortcutType) => void
-  selected?: ShortcutId
+  onSelect?: (command: CommandType) => void
+  selected?: CommandId
 }
 
 const arrow = cva({
   base: {
     position: 'absolute',
     fontSize: '80%',
-    paddingTop: '16px',
+    paddingTop: '15px',
     verticalAlign: 'middle',
     color: 'gray66',
     backgroundColor: 'bg',
@@ -77,6 +77,9 @@ const arrow = cva({
   ],
 })
 
+/** Calculates the top padding for vertically centering toolbar arrows. */
+const calculatePaddingTop = (fontSize: number) => Math.floor(0.3 * fontSize + 11.6)
+
 /** Toolbar component. */
 const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const dispatch = useDispatch()
@@ -89,7 +92,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const [rightArrowIsShown, setRightArrowIsShown] = useState(true)
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
   const [latestPress, setLatestPress] = useState(0)
-  const isDraggingAny = useSelector(state => !!state.dragShortcut)
+  const isDraggingAny = useSelector(state => !!state.dragCommand)
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
@@ -170,13 +173,13 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
   // custom user toolbar
   // fall back to defaults if user does not have Settings defined
-  const shortcutIds = useSelector(state => {
-    const userShortcutIds = getUserToolbar(state)
-    return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_SHORTCUTS
+  const commandIds = useSelector(state => {
+    const userCommandIds = getUserToolbar(state)
+    return userCommandIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_COMMANDS
   }, shallowEqual)
 
   const onTapUp = useCallback(
-    (id: ShortcutId) => {
+    (id: CommandId) => {
       deselectPressingToolbarId()
       if (!customize) {
         if (id === 'newThought') {
@@ -185,7 +188,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           dispatch(showTip({ tip: TipId.NewSubthought }))
         }
       }
-      onSelect?.(shortcutById(id))
+      onSelect?.(commandById(id))
     },
     [onSelect, deselectPressingToolbarId, dispatch, customize],
   )
@@ -202,7 +205,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
         aria-label='toolbar'
         className={cx(
           // When a dropdown like ColorPicker or LetterCase is open, set pointer-events: none, otherwise the toolbar will block the editor. This will be overridden by the toolbar buttons to allow interaction.
-          showDropDown && toolbarPointerEvents(),
+          showDropDown && toolbarPointerEventsRecipe(),
           css({
             right: 0,
             textAlign: 'right',
@@ -249,6 +252,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
         <div>
           <span
             id='left-arrow'
+            style={{ paddingTop: `${calculatePaddingTop(fontSize)}px` }}
             className={arrow({ direction: 'left', isHidden: !leftArrowIsShown, fixed: !customize })}
           >
             <TriangleLeft width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
@@ -274,7 +278,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             data-scroll-at-edge={customize}
             onScroll={onScroll}
           >
-            {shortcutIds.map(id => {
+            {commandIds.map(id => {
               return (
                 <ToolbarButton
                   customize={customize}
@@ -286,7 +290,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                   onTapUp={onTapUp}
                   onMouseLeave={deselectPressingToolbarId}
                   selected={selected === id}
-                  shortcutId={id}
+                  commandId={id}
                 />
               )
             })}
@@ -294,6 +298,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
           <span
             id='right-arrow'
+            style={{ paddingTop: `${calculatePaddingTop(fontSize)}px` }}
             className={arrow({ direction: 'right', isHidden: !rightArrowIsShown, fixed: !customize })}
           >
             <TriangleRight width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />

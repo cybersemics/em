@@ -3,13 +3,13 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/17-swap-parent.json'
 
 /** SwapParent Icon with Conditional Lottie Animation. */
-const SwapParentIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const SwapParentIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 27'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: `translate(0, 7%) scale(1.10, 1.10)` }}
         fill='none'
       >
         <rect width='24' height='24' fill='none' />

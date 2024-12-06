@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { isAction } from 'redux'
 import { ThunkMiddleware } from 'redux-thunk'
 import State from '../@types/State'
 import { Thunk } from '../@types/Thunk'
@@ -22,7 +23,7 @@ const freeThoughtsMiddleware: ThunkMiddleware<State> = ({ dispatch, getState }) 
     next(action)
 
     // do not run checkThrottled on freeThoughts action to avoid infinite loop
-    if (action.type !== 'freeThoughts') {
+    if (isAction(action) && action.type !== 'freeThoughts') {
       checkThrottled(dispatch, getState)
     }
   }

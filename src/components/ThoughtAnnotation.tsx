@@ -2,7 +2,7 @@ import moize from 'moize'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { multiline as multilineRecipe } from '../../styled-system/recipes'
+import { multilineRecipe } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -202,7 +202,6 @@ const ThoughtAnnotation = React.memo(
                 visibility: 'hidden',
                 position: 'relative',
                 clipPath: 'inset(0.001px 0 0.1em 0)',
-                minHeight: 'minThoughtHeight',
                 wordBreak: 'break-word',
                 ...(ellipsizedUrl && {
                   display: 'inline-block',

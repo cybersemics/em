@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
-import ShortcutId from '../@types/ShortcutId'
+import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import StorageCache from '../@types/StorageCache'
 import ValueOf from '../@types/ValueOf'
@@ -42,8 +42,8 @@ const cacheControllers: { [key: string]: CacheController<ValueOf<StorageCache>> 
     select: state => getStateSetting(state, 'Tutorial Step'),
   },
   userToolbar: {
-    decode: s => (s ? (s.split(',') as ShortcutId[]) : undefined),
-    parse: s => (s ? (s.split(',') as ShortcutId[]) : undefined),
+    decode: s => (s ? (s.split(',') as CommandId[]) : undefined),
+    parse: s => (s ? (s.split(',') as CommandId[]) : undefined),
     select: state => getUserToolbar(state)?.join(','),
   },
 }

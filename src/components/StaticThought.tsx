@@ -2,7 +2,7 @@ import _ from 'lodash'
 import React, { useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { thought } from '../../styled-system/recipes'
+import { thoughtRecipe } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -174,7 +174,7 @@ const StaticThought = ({
       <div
         aria-label='thought'
         className={cx(
-          thought({
+          thoughtRecipe({
             ellipsizedUrl,
             inverse: (dark && isBlack(styleAnnotation?.color)) || (!dark && isWhite(styleAnnotation?.color)),
           }),
@@ -210,7 +210,6 @@ const StaticThought = ({
                 ...(isTableCol1 && { maxWidth: '100%' }),
                 ...(isAttribute(value) && { fontFamily: 'monospace' }),
                 ...(ellipsizedUrl && {
-                  display: 'inline-block',
                   textOverflow: 'ellipsis',
                   overflow: 'hidden',
                   whiteSpace: 'nowrap',

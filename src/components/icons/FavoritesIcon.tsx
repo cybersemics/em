@@ -3,13 +3,13 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/04-favorite_3.json'
 
 /** Favorites Icon with Conditional Lottie Animation. */
-const FavoritesIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const FavoritesIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: 'translate(0, 0) scale(0.95, 0.95)' }}
         fill='none'
       >
         <g id='Layer_2' data-name='Layer 2'>

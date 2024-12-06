@@ -1,6 +1,8 @@
 import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
+import { commandById } from '../../commands'
 import headValue from '../../util/headValue'
+import TutorialGestureDiagram from './TutorialGestureDiagram'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSubThought = () => {
@@ -25,6 +27,7 @@ const TutorialStepSubThought = () => {
           .
         </p>
       )}
+      <TutorialGestureDiagram gesture={commandById('newSubthought').gesture} />
     </>
   )
 }

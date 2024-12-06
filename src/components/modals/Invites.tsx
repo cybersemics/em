@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid'
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import { modalText } from '../../../styled-system/recipes'
+import { modalTextRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
@@ -132,7 +132,7 @@ const Invites = () => {
   //   return <div>You arent allowed to view this page. </div>
   // }
 
-  const modalClasses = modalText()
+  const modalClasses = modalTextRecipe()
 
   return (
     <ModalComponent

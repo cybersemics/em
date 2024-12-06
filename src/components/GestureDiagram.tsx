@@ -115,6 +115,43 @@ const GestureDiagram = ({
   }
 
   const pathSegments = (Array.from(path) as Direction[]).map(pathSegmentDelta)
+
+  // Compute the positions of all points
+  const positions = pathSegments.reduce(
+    (accum, segment) => {
+      const prevPos = accum[accum.length - 1]
+      const x = prevPos.x + segment.dx
+      const y = prevPos.y + segment.dy
+      return [...accum, { x, y }]
+    },
+    [{ x: 50, y: 50 }],
+  )
+
+  // Detect if the last position overlaps with any previous position
+  const lastPosition = positions[positions.length - 1]
+  const overlapsWithPrevious = positions
+    .slice(0, positions.length - 1)
+    .some(pos => pos.x === lastPosition.x && pos.y === lastPosition.y)
+
+  // Shorten the last segment if it overlaps with a previous segment
+  if (overlapsWithPrevious) {
+    const lastSegmentStartPos = positions[positions.length - 2]
+    const lastSegment = pathSegments[pathSegments.length - 1]
+
+    // Shorten to 60% of the original length
+    const scale = 0.6
+
+    // Update the last segment
+    lastSegment.dx *= scale
+    lastSegment.dy *= scale
+
+    // Update the last position
+    positions[positions.length - 1] = {
+      x: lastSegmentStartPos.x + lastSegment.dx,
+      y: lastSegmentStartPos.y + lastSegment.dy,
+    }
+  }
+
   const sumWidth = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dx, 0))
   const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))
 
@@ -175,9 +212,7 @@ const GestureDiagram = ({
       </defs>
 
       {pathSegments.map((segment, i) => {
-        const { x, y } = pathSegments
-          .slice(0, i)
-          .reduce((accum, segment) => ({ x: accum.x + segment.dx, y: accum.y + segment.dy }), { x: 50, y: 50 })
+        const { x, y } = positions[i]
         return (
           <path
             d={`M ${x} ${y} l ${segment.dx} ${segment.dy}`}

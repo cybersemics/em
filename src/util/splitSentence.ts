@@ -55,26 +55,21 @@ const splitSentence = (value: string): string[] => {
   // pattern2, multiple symbols: ?! !!! ...
   const mainSplitRegex = /[.;!?]+/g
 
-  const splitters = value.match(mainSplitRegex)
-
-  // When it cannot be split by the main spliter, spliter by ','
-  if (!splitters)
-    return value
-      .split(',')
-      .filter(s => s !== '')
-      .map(s => s.trim())
+  const sentenceSplitters = value.match(mainSplitRegex)
 
   /**
-   * Checks if the value has no other main split characters  except one period at the end.
+   * Checks if the value has no other main split characters  except one period at the end, i.e. value is just one sentence.
    * If so, allow split on comma only if there are no main split characters in the value or has only one period at the end.
    */
   const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(value.trim()))
 
-  if (hasOnlyPeriodAtEnd())
+  // if we're sub-sentence or in one sentence territory, split by comma and "and"
+  // e.g. "john, johnson, and john doe" -> "- john - johnson - john doe"
+  if (!sentenceSplitters || hasOnlyPeriodAtEnd())
     return value
-      .split(',')
+      .split(/,|and/i)
+      .map(s => s.trim())
       .filter(s => s !== '')
-      .map(s => `${s.trim()}`)
 
   /**
    * When the setences can be split, it has multiple situations.
@@ -88,11 +83,11 @@ const splitSentence = (value: string): string[] => {
   const initialValue = sentences[0]
 
   const resultSentences = sentences.reduce((newSentence: string, s: string, i: number) => {
-    if (i === 0) return newSentence + splitters[0]
+    if (i === 0) return newSentence + sentenceSplitters[0]
 
     const seperatorIndex = newSentence.lastIndexOf(SEPARATOR_TOKEN)
     const prevSentence = seperatorIndex < 0 ? newSentence : newSentence.slice(seperatorIndex + 7)
-    const currSentence = splitters[i] ? s + splitters[i] : s
+    const currSentence = sentenceSplitters[i] ? s + sentenceSplitters[i] : s
 
     /**
      * Combine the current sentence with the previous sentence to form one new sentence if it is the below conditions:

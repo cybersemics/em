@@ -7,8 +7,8 @@ const commands = Object.values(FormattingCommand)
  * This is a utility for creating opening and closing markup tag.
  */
 const createTag = (tag: string) => ({
-  open: `<${tag}>`,
-  close: `</${tag}>`,
+  open: new RegExp(`^<${tag}[^>]*>`, 'i'),
+  close: new RegExp(`^</${tag}>`, 'i'),
 })
 
 const tags = {
@@ -16,6 +16,7 @@ const tags = {
   italic: createTag('i'),
   underline: createTag('u'),
   strikethrough: createTag('strike'),
+  code: createTag('code'),
   foreColor: createTag('span'),
   backColor: createTag('span'),
 }
@@ -51,6 +52,7 @@ const getCommandState = (value: string): CommandState => {
       italic: false,
       underline: false,
       strikethrough: false,
+      code: false,
       foreColor: undefined,
       backColor: undefined,
     }
@@ -61,6 +63,7 @@ const getCommandState = (value: string): CommandState => {
     italic: true,
     underline: true,
     strikethrough: true,
+    code: true,
     foreColor: undefined,
     backColor: undefined,
   }
@@ -70,8 +73,17 @@ const getCommandState = (value: string): CommandState => {
     italic: false,
     underline: false,
     strikethrough: false,
+    code: false,
     foreColor: undefined,
     backColor: undefined,
+  }
+  // Tracks whether a command was ever applied in the input
+  const commandEverApplied: Record<string, boolean> = {
+    bold: false,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    code: false,
   }
   // Walk through the value until the end is reached, checking for markup tag
   const savedValue = value
@@ -79,17 +91,20 @@ const getCommandState = (value: string): CommandState => {
     let foundTag = false
     for (const command of commands) {
       // Check for an opening tag and parse it
-      if (!currentCommandState[command] && value.startsWith(tags[command].open)) {
+      if (!currentCommandState[command] && tags[command].open.test(value)) {
         foundTag = true
         currentCommandState[command] = true
-        value = value.substring(tags[command].open.length)
+        commandEverApplied[command] = true
+        const match = value.match(tags[command].open)
+        value = value.substring(match?.[0].length ?? 1)
         continue
       }
       // Check for a closing tag and parse it
-      if (currentCommandState[command] && value.startsWith(tags[command].close)) {
+      if (currentCommandState[command] && tags[command].close.test(value)) {
         foundTag = true
         currentCommandState[command] = false
-        value = value.substring(tags[command].close.length)
+        const match = value.match(tags[command].close)
+        value = value.substring(match?.[0].length ?? 1)
         continue
       }
     }
@@ -102,9 +117,17 @@ const getCommandState = (value: string): CommandState => {
     // Default to parsing a single `<` character if it has been determined to be a non-tag character
     const length = nonTagCharacters?.[0].length ?? 1
     value = value.substring(length)
+    // If any command is not applied during text, set matches[command] to false
     for (const command of commands) {
-      // The value does not fully match the command if the character does not
-      matches[command] &&= currentCommandState[command]
+      if (!currentCommandState[command]) {
+        matches[command] = false
+      }
+    }
+  }
+  // After processing, set matches[command] to false if command was never applied
+  for (const command of commands) {
+    if (!commandEverApplied[command]) {
+      matches[command] = false
     }
   }
   if (savedValue.length > 0) {

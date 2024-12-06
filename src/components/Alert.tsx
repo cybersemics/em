@@ -2,7 +2,7 @@ import React, { FC, useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
-import { anchorButton } from '../../styled-system/recipes'
+import { anchorButtonRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator } from '../actions/alert'
 import { redoActionCreator as redo } from '../actions/redo'
@@ -27,6 +27,8 @@ const Alert: FC = () => {
   const value = strip(alertStoreValue ?? alert?.value ?? '')
   const undoEnabled = useSelector(isUndoEnabled)
   const redoEnabled = useSelector(state => state.redoPatches.length > 0)
+  const fontSize = useSelector(state => state.fontSize)
+  const iconSize = 0.78 * fontSize
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
@@ -39,27 +41,27 @@ const Alert: FC = () => {
   const buttons = undoOrRedo ? (
     <div className={css({ marginTop: '0.5em' })}>
       <a
-        className={cx(anchorButton({ small: true, isDisabled: !undoEnabled }), css({ margin: '0.25em' }))}
+        className={cx(anchorButtonRecipe({ small: true, isDisabled: !undoEnabled }), css({ margin: '0.25em' }))}
         {...fastClick(() => {
           dispatch(undo())
         })}
       >
         <UndoIcon
-          size={14}
+          size={iconSize}
           fill={token('colors.bg')}
           cssRaw={css.raw({ position: 'relative', top: '0.25em', right: '0.25em' })}
         />
         Undo
       </a>
       <a
-        className={cx(anchorButton({ small: true, isDisabled: !redoEnabled }), css({ margin: '0.25em' }))}
+        className={cx(anchorButtonRecipe({ small: true, isDisabled: !redoEnabled }), css({ margin: '0.25em' }))}
         {...fastClick(() => {
           dispatch(redo())
         })}
       >
         Redo
         <RedoIcon
-          size={14}
+          size={iconSize}
           fill={token('colors.bg')}
           cssRaw={css.raw({ position: 'relative', top: '0.25em', left: '0.25em' })}
         />
@@ -70,6 +72,7 @@ const Alert: FC = () => {
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
     <TransitionGroup
+      data-testid='alert'
       childFactory={(child: React.ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {alert ? (

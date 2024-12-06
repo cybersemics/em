@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { modalActionLink } from '../../../styled-system/recipes'
+import { modalActionLinkRecipe } from '../../../styled-system/recipes'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
@@ -93,7 +93,7 @@ const ModalWelcome = () => {
               <a
                 id='skip-tutorial'
                 className={cx(
-                  modalActionLink(),
+                  modalActionLinkRecipe(),
                   css({ fontSize: 'sm', marginBottom: '-1em', paddingBottom: '1em', textDecoration: 'none' }),
                 )}
                 {...fastClick(() => {

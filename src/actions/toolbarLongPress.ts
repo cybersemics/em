@@ -1,14 +1,14 @@
 import _ from 'lodash'
-import DragShortcutZone from '../@types/DragShortcutZone'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
+import DragCommandZone from '../@types/DragCommandZone'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertText, AlertType } from '../constants'
 import alert from './alert'
 
 interface Payload {
-  shortcut: Shortcut | null
-  sourceZone?: DragShortcutZone
+  shortcut: Command | null
+  sourceZone?: DragCommandZone
 }
 
 /** Reducer for highlighting a toolbar button for dragging on tap and hold. */

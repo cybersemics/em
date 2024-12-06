@@ -1,7 +1,7 @@
 import { FC, PropsWithChildren } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { anchorButton } from '../../../styled-system/recipes'
+import { anchorButtonRecipe } from '../../../styled-system/recipes'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
@@ -17,7 +17,7 @@ const TutorialHint: FC<PropsWithChildren> = ({ children }) => {
     <>
       <a
         className={cx(
-          anchorButton({
+          anchorButtonRecipe({
             variableWidth: true,
             lessPadding: true,
             dim: hint,

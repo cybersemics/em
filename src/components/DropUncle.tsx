@@ -1,7 +1,7 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { dropEnd, dropHover } from '../../styled-system/recipes'
+import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -42,7 +42,7 @@ const DropUncle = ({
   return (
     <span
       className={cx(
-        dropEnd(),
+        dropEndRecipe(),
         css({
           backgroundColor: testFlags.simulateDrop ? 'eggplant' : undefined,
           opacity: 0.9,
@@ -67,7 +67,7 @@ const DropUncle = ({
         </span>
       )}
       {(testFlags.simulateDrag || isHovering) && (
-        <span className={dropHover({ insideDropEnd: true })} style={{ backgroundColor: dropHoverColor }} />
+        <span className={dropHoverRecipe({ insideDropEnd: true })} style={{ backgroundColor: dropHoverColor }} />
       )}
     </span>
   )
