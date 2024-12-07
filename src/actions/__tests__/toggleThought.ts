@@ -114,6 +114,30 @@ it('preserve siblings when toggling on single value', () => {
     - c`)
 })
 
+it('toggle on meta attribute above siblings', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - b
+      `,
+    }),
+    (state: State) =>
+      toggleThought(state, {
+        path: contextToPath(state, ['a']),
+        values: ['=test'],
+      }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =test
+    - b`)
+})
+
 it('preserve ancestors when toggling on deep value', () => {
   const steps = [
     importText({
