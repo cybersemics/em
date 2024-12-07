@@ -14,12 +14,14 @@ export const AsyncFocus: () => () => void = () => {
 
   // create invisible dummy input to receive the focus
   const hiddenInput = document.createElement('input')
-
   hiddenInput.setAttribute('type', 'text')
+
+  // disable virtual keyboard
+  hiddenInput.inputMode = 'none'
+
+  // even with position:absolute, having a positive width can affect the body width at very small screen sizes
   hiddenInput.style.position = 'absolute'
   hiddenInput.style.opacity = '0'
-
-  // even with position:absolute having a positive width can affect the body width at very small screen sizes
   hiddenInput.style.height = '0'
   hiddenInput.style.width = '0'
   hiddenInput.style.minWidth = '0'
@@ -30,6 +32,7 @@ export const AsyncFocus: () => () => void = () => {
   hiddenInput.style.fontSize = '16px'
 
   document.body.prepend(hiddenInput)
+
   return () => {
     // do not set the selection if it is already on a text node
     if (!selection.isText()) {
