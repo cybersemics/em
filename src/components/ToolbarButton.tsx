@@ -207,7 +207,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         }),
       )}
       onMouseLeave={onMouseLeave}
-      {...fastClick(tapUp, true, tapDown, undefined, touchMove)}
+      {...disabled? fastClick(tapUp, false, tapDown, undefined, touchMove): fastClick(tapUp, true, tapDown, undefined, touchMove)}
     >
       {
         // selected top dash

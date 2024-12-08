@@ -146,9 +146,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     // touchcancel is fired when the user switches apps by swiping from the bottom of the screen
     window.addEventListener('touchcancel', e => {
-      if (Capacitor.isNativePlatform()) {
-        Haptics.notification({ type: NotificationType.Warning })
-      }
       this.props.onCancel?.({ clientStart: this.clientStart, e })
       this.reset()
     })
@@ -214,7 +211,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             // append the gesture to the sequence and call the onGesture handler
             this.sequence += g
             this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
-            if (Capacitor.isNativePlatform()) {
+            console.log('gesture: ', g)
+            console.log('sequence: ', this.sequence)
+            if (Capacitor.isNativePlatform() && !this.props.shouldCancelGesture?.()) {
               Haptics.impact({ style: ImpactStyle.Light })
             }
             gestureStore.update(this.sequence)
