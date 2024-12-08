@@ -48,6 +48,14 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
     return
   }
 
+  // soft fail if document is undefined which can happen in tests
+  if (typeof document === 'undefined') {
+    console.warn(
+      'document is not defined. This probably means that the timers from an async operation or middleware were not run to completion in a test.',
+    )
+    return
+  }
+
   if (!el) return
 
   // determine if the elements is above or below the viewport
