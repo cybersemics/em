@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import React, { PropsWithChildren } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { modalRecipe } from '../../../styled-system/recipes'
@@ -69,6 +70,9 @@ class ModalComponent extends React.Component<ModalProps> {
   close = () => {
     this.animateAndClose!()
     this.props.onClose?.()
+    if (Capacitor.isNativePlatform()) {
+      window.location.reload()
+    }
   }
 
   componentWillUnmount() {

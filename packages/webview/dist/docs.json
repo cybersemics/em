@@ -1,0 +1,31 @@
+{
+  "api": {
+    "name": "WebviewBackgroundPlugin",
+    "slug": "webviewbackgroundplugin",
+    "docs": "",
+    "tags": [],
+    "methods": [
+      {
+        "name": "changeBackgroundColor",
+        "signature": "(options: { color: string; }) => Promise<void>",
+        "parameters": [
+          {
+            "name": "options",
+            "docs": "",
+            "type": "{ color: string; }"
+          }
+        ],
+        "returns": "Promise<void>",
+        "tags": [],
+        "docs": "",
+        "complexTypes": [],
+        "slug": "changebackgroundcolor"
+      }
+    ],
+    "properties": []
+  },
+  "interfaces": [],
+  "enums": [],
+  "typeAliases": [],
+  "pluginConfigs": []
+}
