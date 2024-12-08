@@ -3,13 +3,15 @@ import * as dotenv from 'dotenv'
 import * as path from 'path'
 
 const nodeEnv = process.env.NODE_ENV || 'development'
-console.info(`Configuring ${nodeEnv} build`)
+const buildMode = process.env.BUILD_MODE || 'server'
+console.info(`Configuring ${nodeEnv} build in ${buildMode} mode`)
+
 dotenv.config({ path: path.resolve(process.cwd(), '.env') })
-dotenv.config({ path: path.resolve(process.cwd(), `.env.${nodeEnv}`) })
-dotenv.config({ path: path.resolve(process.cwd(), `.env.${nodeEnv}.local`) })
+dotenv.config({ path: path.resolve(process.cwd(), `.env.${nodeEnv}`), override: true })
+dotenv.config({ path: path.resolve(process.cwd(), `.env.${nodeEnv}.local`), override: true })
 
 const serverConfig =
-  nodeEnv === 'development'
+  nodeEnv === 'development' && buildMode === 'server'
     ? {
         server: {
           url: process.env.CAPACITOR_SERVER_URL,
