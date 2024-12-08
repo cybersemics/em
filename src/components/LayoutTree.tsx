@@ -298,6 +298,10 @@ const linearizeTree = (
       belowCursor = true
     }
 
+    if (!state.cursor) {
+      belowCursor = true
+    }
+
     const isTable = attributeEquals(state, child.id, '=view', 'Table')
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
     const isInSortedContext = attributeEquals(state, head(simplePath), '=sort', 'Alphabetical')
