@@ -1,7 +1,6 @@
 import Command from '../@types/Command'
 import { swapNoteActionCreator } from '../actions/swapNote'
 import ConvertToNoteIcon from '../components/icons/ConvertToNoteIcon'
-import asyncFocus from '../device/asyncFocus'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -17,7 +16,6 @@ const swapNote: Command = {
   },
   svg: ConvertToNoteIcon,
   exec: dispatch => {
-    asyncFocus()
     dispatch(swapNoteActionCreator())
   },
 }
