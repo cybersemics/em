@@ -1,3 +1,4 @@
+import { Haptics } from '@capacitor/haptics'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { editingActionCreator as editing } from '../actions/editing'
@@ -41,6 +42,7 @@ const useLongPress = (
         clientCoords.current = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
       }
       onTouchStart?.()
+      Haptics.selectionStart()
 
       // cast Timeout to number for compatibility with clearTimeout
       clearTimeout(timerIdRef.current)

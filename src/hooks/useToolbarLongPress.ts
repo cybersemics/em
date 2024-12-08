@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+import { Haptics } from '@capacitor/haptics'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import Command from '../@types/Command'
@@ -29,6 +31,9 @@ const useToolbarLongPress = ({
     if (disabled) return
     setIsPressed(true)
     dispatch(toolbarLongPress({ shortcut, sourceZone }))
+    if (Capacitor.isNativePlatform()) {
+      Haptics.selectionStart()
+    }
   }, [disabled, dispatch, shortcut, sourceZone])
 
   /** Turn off isPressed and dismiss an alert when long press ends. */

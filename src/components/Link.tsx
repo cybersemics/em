@@ -55,7 +55,7 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
           setCursor({ path: simplePath }),
           toggleSidebar({ value: false }),
         ])
-      })}
+      }, true)}
       onMouseDown={e => {
         // prevent propagation to Content component which will trigger clickOnEmptySpace
         e.stopPropagation()
