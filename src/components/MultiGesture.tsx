@@ -211,7 +211,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             // append the gesture to the sequence and call the onGesture handler
             this.sequence += g
             this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
-            if (Capacitor.isNativePlatform() && this.sequence.length > 1) {
+            if (Capacitor.isNativePlatform() && this.sequence.length > 1 && this.sequence.length < 5) {
               Haptics.impact({ style: ImpactStyle.Light })
             }
             gestureStore.update(this.sequence)

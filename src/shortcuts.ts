@@ -22,6 +22,7 @@ import getUserSetting from './selectors/getUserSetting'
 import * as shortcutObject from './shortcuts/index'
 import { executeShortcutWithMulticursor } from './util/executeShortcut'
 import keyValueBy from './util/keyValueBy'
+import { Haptics, NotificationType } from '@capacitor/haptics'
 
 export const globalShortcuts: Shortcut[] = Object.values(shortcutObject)
 
@@ -187,6 +188,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       // only show
       (shortcut || state.alert?.alertType === AlertType.GestureHint)
     ) {
+      Haptics.notification({ type: NotificationType.Warning })
       store.dispatch(
         // alert the shortcut label if it is a valid gesture
         // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
@@ -195,6 +197,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
           clearDelay: 5000,
           showCloseLink: false,
         }),
+        
       )
     }
 
