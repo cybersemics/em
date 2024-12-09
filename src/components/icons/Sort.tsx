@@ -1,35 +1,8 @@
 import { useSelector } from 'react-redux'
 import IconType from '../../@types/IconType'
-import State from '../../@types/State'
-import ThoughtId from '../../@types/ThoughtId'
-import { HOME_PATH } from '../../constants'
-import getSortPreference from '../../selectors/getSortPreference'
-import getThoughtById from '../../selectors/getThoughtById'
-import head from '../../util/head'
+import getCursorSortDirection from '../../util/getCursorSortDirection'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/10-sort_4.json'
-
-/** Find the parent ID of a given thought ID. */
-const findParentId = (state: State, thoughtId: ThoughtId): ThoughtId => {
-  const thought = getThoughtById(state, thoughtId)
-  return thought?.parentId
-}
-
-/** Cursor Sort Direction. */
-const getCursorSortDirection = (state: State) => {
-  const cursorId = head(state.cursor || HOME_PATH)
-
-  // Find the parent of cursorId
-  const parentId = findParentId(state, cursorId)
-
-  // Get the sort preference using the parentId
-  const sortPref = getSortPreference(state, parentId)
-  if (sortPref.type === 'None') {
-    return null
-  }
-
-  return sortPref?.direction || null
-}
 
 /** Ascending Sort Icon Component with Conditional Lottie Animation. */
 const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
@@ -183,6 +156,7 @@ const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComp
 /** Sort Icon Component with Conditional Lottie Animation. */
 const SortIcon = ({ size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   const direction = useSelector(getCursorSortDirection)
+
   const Component = direction === 'Desc' ? IconDesc : IconAsc
 
   return (
@@ -191,7 +165,7 @@ const SortIcon = ({ size = 18, style = {}, cssRaw, animated, animationComplete }
         size,
         style,
         cssRaw,
-        animated: direction === 'Desc' || direction === 'Asc' ? animated : false,
+        animated,
         animationComplete,
       }}
     />

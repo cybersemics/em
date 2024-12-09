@@ -6,6 +6,7 @@ import { token } from '../../styled-system/tokens'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/IconType'
 import ShortcutId from '../@types/ShortcutId'
+import State from '../@types/State'
 import { isTouch } from '../browser'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
@@ -14,6 +15,7 @@ import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
 import { executeShortcutWithMulticursor } from '../util/executeShortcut'
 import fastClick from '../util/fastClick'
+import getCursorSortDirection from '../util/getCursorSortDirection'
 
 export interface ToolbarButtonProps {
   // see ToolbarProps.customize
@@ -81,6 +83,28 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
 
+  // Get the direction if the shortcut is 'toggleSort'
+  const direction = useSelector((state: State) => {
+    if (shortcutId !== 'toggleSort') return null
+    return getCursorSortDirection(state)
+  })
+
+  /** Determines whether to animate the toolbar button based on the shortcut and state. */
+  const shouldAnimate = () => {
+    // Handle the 'toggleSort' shortcut separately
+    if (shortcutId === 'toggleSort') {
+      return direction === null || direction === 'Asc'
+    }
+
+    // General condition for other shortcuts
+    if ((!isActive && !commandState) || (isActive && !isButtonActive)) {
+      return true
+    }
+
+    // If none of the above conditions are met, do not animate
+    return false
+  }
+
   /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
   const tapUp = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
@@ -92,7 +116,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         executeShortcutWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
-        if ((!isActive && !commandState) || (isActive && (!isButtonActive || shortcutId === 'toggleSort'))) {
+        if (shouldAnimate()) {
           setIsAnimated(true)
         } else {
           setIsAnimated(false)
