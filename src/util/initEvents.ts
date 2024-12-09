@@ -121,18 +121,20 @@ const initEvents = (store: Store<State, any>) => {
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
     const state = store.getState()
-
     const { path, contextViews } = decodeThoughtsUrl(state)
 
+    // Initialize lastPath with current cursor if not set
     if (!lastPath) {
       lastPath = state.cursor
     }
 
     if (!path || !pathExists(state, pathToContext(state, path)) || equalPath(lastPath, path)) {
       window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
+      return
     }
 
-    lastPath = path && pathExists(state, pathToContext(state, path)) ? path : lastPath
+    // Store the current cursor as lastPath before updating
+    lastPath = state.cursor
     lastState = e.state
 
     const toRoot = !path || isRoot(path)
