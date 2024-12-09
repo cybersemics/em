@@ -28,6 +28,9 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enterActive: { transition: `opacity {durations.distractionFreeTyping} ease 0ms` },
         exitActive: { transition: `opacity {durations.slow} ease 0ms` },
       },
+      nodeFadeIn: {
+        enterActive: { transition: `opacity {durations.nodeFadeIn} ease-in-out` },
+      },
       nodeFadeOut: {
         enter: { opacity: 1 },
         exitActive: { transition: `opacity {durations.nodeFadeOut} ease-out` },
