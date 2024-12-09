@@ -8,12 +8,11 @@ import getThoughtById from '../../selectors/getThoughtById'
 import head from '../../util/head'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/10-sort_4.json'
-import animationDataDesc from './animations/11-sort-descanding_7.json'
 
 /** Find the parent ID of a given thought ID. */
-const findParentId = (state: State, thoughtId: ThoughtId): ThoughtId | null => {
+const findParentId = (state: State, thoughtId: ThoughtId): ThoughtId => {
   const thought = getThoughtById(state, thoughtId)
-  return thought ? thought.parentId : null
+  return thought?.parentId
 }
 
 /** Cursor Sort Direction. */
@@ -24,7 +23,7 @@ const getCursorSortDirection = (state: State) => {
   const parentId = findParentId(state, cursorId)
 
   // Get the sort preference using the parentId
-  const sortPref = getSortPreference(state, parentId!)
+  const sortPref = getSortPreference(state, parentId)
   if (sortPref.type === 'None') {
     return null
   }
@@ -101,8 +100,23 @@ const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationCompl
 
 /** Descending Sort Icon Component with Conditional Lottie Animation. */
 const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+  const iconStyle = {
+    ...style,
+    ...(animated && { transform: 'rotateX(180deg)' }),
+  }
+
   return (
-    <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData: animationDataDesc, animationComplete }}>
+    <AnimatedIcon
+      {...{
+        fill,
+        size,
+        style: iconStyle,
+        cssRaw,
+        animated,
+        animationData,
+        animationComplete,
+      }}
+    >
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
@@ -169,12 +183,19 @@ const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComp
 /** Sort Icon Component with Conditional Lottie Animation. */
 const SortIcon = ({ size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   const direction = useSelector(getCursorSortDirection)
-
-  // Disable animation for HOME_PATH or no direction
-  const isAnimated = direction === 'Desc' ? true : animated && direction !== null
-
   const Component = direction === 'Desc' ? IconDesc : IconAsc
-  return <Component {...{ size, style, cssRaw, animated: isAnimated, animationComplete }} />
+
+  return (
+    <Component
+      {...{
+        size,
+        style,
+        cssRaw,
+        animated: direction === 'Desc' || direction === 'Asc' ? animated : false,
+        animationComplete,
+      }}
+    />
+  )
 }
 
 export default SortIcon

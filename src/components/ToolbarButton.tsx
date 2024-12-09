@@ -88,10 +88,11 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
+
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         executeShortcutWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
-        if ((!isActive && !commandState) || (isActive && !isButtonActive)) {
+        if ((!isActive && !commandState) || (isActive && (!isButtonActive || shortcutId === 'toggleSort'))) {
           setIsAnimated(true)
         } else {
           setIsAnimated(false)
