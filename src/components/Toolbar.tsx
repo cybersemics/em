@@ -130,7 +130,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       setRightArrowIsShown(el.offsetWidth + el.scrollLeft < el.scrollWidth - 20)
     }
   }, [])
-  let diff = 0;
+  let diff = 0
   /** Handles toolbar scroll event. */
   const onScroll = useCallback(
     (e: React.UIEvent<HTMLElement>) => {
@@ -140,8 +140,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
         deselectPressingToolbarId()
       }
 
-      if ((scrollDifference - diff) >= 50) {
-        diff = diff+50;
+      if (scrollDifference - diff >= 50) {
+        diff = diff + 50
         Haptics.selectionChanged()
       }
 
