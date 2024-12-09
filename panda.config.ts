@@ -1,6 +1,7 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import durationsConfig from './src/durations.config'
+import hideCaretAnimationNames from './src/hideCaret.config'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
@@ -55,6 +56,18 @@ const zIndexDescending = (keys: string[]) => keyValueBy(keys.reverse(), (key, i)
 
 /** Add `ms` units to raw value. */
 const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
+
+const hideCaret = {
+  '0%': {
+    caretColor: 'transparent',
+  },
+  '99%': {
+    caretColor: 'transparent',
+  },
+  '100%': {
+    caretColor: 'auto',
+  },
+}
 
 const keyframes = defineKeyframes({
   fademostlyin: {
@@ -118,16 +131,10 @@ const keyframes = defineKeyframes({
       width: '1.25em',
     },
   },
-  toblack: {
+  tofg: {
     to: {
-      color: 'black',
-      fill: 'black',
-    },
-  },
-  towhite: {
-    to: {
-      color: 'white',
-      fill: 'white',
+      color: 'fg',
+      fill: 'fg',
     },
   },
   bobble: {
@@ -141,6 +148,7 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
+  ...hideCaretAnimationNames.reduce((accum, name) => ({ ...accum, [name]: hideCaret }), {}),
 })
 
 const globalCss = defineGlobalStyles({
@@ -300,7 +308,7 @@ export default defineConfig({
             'toolbarArrow',
             'toolbar',
             'navbar',
-            'latestShortcuts',
+            'latestCommands',
             'tutorialTraceGesture',
             'dropEmpty',
             'subthoughtsDropEnd',
@@ -316,30 +324,30 @@ export default defineConfig({
         },
       },
       recipes: {
-        icon: iconRecipe,
-        child: childRecipe,
-        anchorButton: anchorButtonRecipe,
-        button: buttonRecipe,
-        bullet: bulletRecipe,
-        link: linkRecipe,
-        extendTap: extendTapRecipe,
-        thought: thoughtRecipe,
-        editable: editableRecipe,
-        textNote: textNoteRecipe,
-        multiline: multilineRecipe,
-        modalActionLink: modalActionLinkRecipe,
-        toolbarPointerEvents: toolbarPointerEventsRecipe,
-        tutorialBullet: tutorialBulletRecipe,
-        upperRight: upperRightRecipe,
-        dropHover: dropHoverRecipe,
-        dropEnd: dropEndRecipe,
-        invalidOption: invalidOptionRecipe,
+        iconRecipe,
+        childRecipe,
+        anchorButtonRecipe,
+        buttonRecipe,
+        bulletRecipe,
+        linkRecipe,
+        extendTapRecipe,
+        thoughtRecipe,
+        editableRecipe,
+        textNoteRecipe,
+        multilineRecipe,
+        modalActionLinkRecipe,
+        toolbarPointerEventsRecipe,
+        tutorialBulletRecipe,
+        upperRightRecipe,
+        dropHoverRecipe,
+        dropEndRecipe,
+        invalidOptionRecipe,
       },
       slotRecipes: {
-        modal: modalRecipe,
-        modalText: modalTextRecipe,
-        fadeTransition: fadeTransitionRecipe,
-        slideTransition: slideTransitionRecipe,
+        modalRecipe,
+        modalTextRecipe,
+        fadeTransitionRecipe,
+        slideTransitionRecipe,
       },
       semanticTokens: {
         colors: {

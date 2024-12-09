@@ -19,7 +19,7 @@ const Tip: FC<
         // disable pointer revents when hidden, otherwise it will block clicks on the NavBar
         pointerEvents: display ? 'auto' : 'none',
         transform: display ? 'translateY(0)' : 'translateY(100%)',
-        transition: `transform {durations.fastDuration} ease-in-out, opacity {durations.fastDuration} ease-in-out`,
+        transition: `transform {durations.fast} ease-in-out, opacity {durations.fast} ease-in-out`,
         opacity: display ? '1' : '0',
         zIndex: 'popup',
       })}

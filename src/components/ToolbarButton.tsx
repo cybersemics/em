@@ -1,19 +1,19 @@
 import React, { FC, MutableRefObject, useCallback, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { toolbarPointerEvents } from '../../styled-system/recipes'
+import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
-import DragShortcutZone from '../@types/DragShortcutZone'
+import CommandId from '../@types/CommandId'
+import DragCommandZone from '../@types/DragCommandZone'
 import Icon from '../@types/IconType'
-import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
+import { commandById, formatKeyboardShortcut } from '../commands'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
-import { executeShortcutWithMulticursor } from '../util/executeShortcut'
+import { executeCommandWithMulticursor } from '../util/executeCommand'
 import fastClick from '../util/fastClick'
 import getCursorSortDirection from '../util/getCursorSortDirection'
 
@@ -24,11 +24,11 @@ export interface ToolbarButtonProps {
   fontSize: number
   isPressing: boolean
   lastScrollLeft: MutableRefObject<number>
-  onTapDown?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
-  onTapUp?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
+  onTapDown?: (id: CommandId, e: React.MouseEvent | React.TouchEvent) => void
+  onTapUp?: (id: CommandId, e: React.MouseEvent | React.TouchEvent) => void
   onMouseLeave?: () => void
   selected?: boolean
-  shortcutId: ShortcutId
+  commandId: CommandId
   animated?: boolean
 }
 
@@ -43,11 +43,11 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   onTapUp,
   onMouseLeave,
   selected,
-  shortcutId,
+  commandId: shortcutId,
 }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
-  const shortcut = shortcutById(shortcutId)
+  const shortcut = commandById(shortcutId)
   if (!shortcut) {
     console.error('Missing shortcut: ' + shortcutId)
   }
@@ -63,18 +63,18 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const isShortcutActive = useSelector(state => !isActive || isActive(state))
   const isButtonActive = customize ? selected : commandState !== undefined ? commandState : isShortcutActive
 
-  const dragShortcutZone = useSelector(state => state.dragShortcutZone)
-  const isDraggingAny = useSelector(state => !!state.dragShortcut)
+  const dragCommandZone = useSelector(state => state.dragCommandZone)
+  const isDraggingAny = useSelector(state => !!state.dragCommand)
   const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(state))
 
   const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({ shortcutId, customize })
-  const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
+  const dropToRemove = isDragging && dragCommandZone === DragCommandZone.Remove
   const longPress = useToolbarLongPress({
     disabled: !customize,
     isDragging,
     shortcut,
-    sourceZone: DragShortcutZone.Toolbar,
+    sourceZone: DragCommandZone.Toolbar,
   })
   const longPressTapUp = longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']
   const longPressTapDown = longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown']
@@ -114,7 +114,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
 
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
-        executeShortcutWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
+        executeCommandWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
         if (shouldAnimate()) {
           setIsAnimated(true)
@@ -199,7 +199,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       title={`${shortcut.label}${(shortcut.keyboard ?? shortcut.overlay?.keyboard) ? ` (${formatKeyboardShortcut((shortcut.keyboard ?? shortcut.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
       className={cx(
         // Override the Toolbar's pointer-events: none to restore pointer behavior.
-        toolbarPointerEvents({ override: true }),
+        toolbarPointerEventsRecipe({ override: true }),
         css({
           display: 'inline-block',
           padding: '14px 8px 5px 8px',
@@ -225,7 +225,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition:
-            'transform {durations.veryFastDuration} ease-out, max-width {durations.veryFastDuration} ease-out, margin-left {durations.veryFastDuration} ease-out',
+            'transform {durations.veryFast} ease-out, max-width {durations.veryFast} ease-out, margin-left {durations.veryFast} ease-out',
           // extend drop area down, otherwise the drop hover is blocked by the user's finger
           // must match toolbar marginBottom
           paddingBottom: isDraggingAny ? '7em' : 0,
@@ -280,7 +280,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           position: 'relative' as const,
           cursor: isButtonExecutable ? 'pointer' : 'default',
           opacity: dropToRemove ? 0 : 1,
-          transition: 'opacity {durations.fastDuration} ease-out',
+          transition: 'opacity {durations.fast} ease-out',
         })}
         style={style}
         animated={isAnimated}

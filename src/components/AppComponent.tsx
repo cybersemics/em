@@ -7,6 +7,7 @@ import SplitPane from 'react-split-pane'
 import { css } from '../../styled-system/css'
 import { updateSplitPositionActionCreator as updateSplitPosition } from '../actions/updateSplitPosition'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
+import { inputHandlers } from '../commands'
 import { Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
@@ -15,7 +16,6 @@ import getUserSetting from '../selectors/getUserSetting'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
-import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
@@ -24,7 +24,7 @@ import Content from './Content'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
-import LatestShortcutsDiagram from './LatestShortcutsDiagram'
+import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import QuickDropPanel from './QuickDropPanel'
@@ -117,7 +117,7 @@ const AppComponent: FC = () => {
   const colors = useSelector(themeColors)
   const dark = useSelector(state => theme(state) !== 'Light')
   const dragInProgress = useSelector(state => state.dragInProgress)
-  const enableLatestShortcutsDiagram = useSelector(state => state.enableLatestShortcutsDiagram)
+  const enableLatestCommandsDiagram = useSelector(state => state.enableLatestCommandsDiagram)
   const showTutorial = useSelector(state => isTutorial(state) && !state.isLoading)
   const fontSize = useSelector(state => state.fontSize)
   const showSplitView = useSelector(state => state.showSplitView)
@@ -189,7 +189,7 @@ const AppComponent: FC = () => {
       <Tips />
       <CommandPalette />
       <ErrorMessage />
-      {enableLatestShortcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
+      {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       {isDocumentEditable() && !tutorial && !showModal && (
         <>
           <Sidebar />
@@ -221,7 +221,7 @@ const AppComponent: FC = () => {
                   backgroundClip: 'padding-box',
                   userSelect: 'none',
                   '&:hover': {
-                    transition: 'all 0.2s ease-out',
+                    transition: 'all {durations.fast} ease-out',
                   },
                   '&.horizontal': {
                     height: '11px',

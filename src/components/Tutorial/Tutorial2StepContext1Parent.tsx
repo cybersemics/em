@@ -1,12 +1,14 @@
 import { isEqual } from 'lodash'
 import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
+import { commandById } from '../../commands'
 import { HOME_TOKEN, TUTORIAL_CONTEXT1_PARENT } from '../../constants'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import ellipsize from '../../util/ellipsize'
 import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
+import TutorialGestureDiagram from './TutorialGestureDiagram'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -39,6 +41,7 @@ const Tutorial2StepContext1Parent = () => {
           ) : null}
           {isTouch ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought. Then type "
           {TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}".
+          <TutorialGestureDiagram gesture={commandById('newThought').gesture} />
         </TutorialHint>
       </p>
     </>

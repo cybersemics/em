@@ -1,7 +1,7 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { dropEnd, dropHover } from '../../styled-system/recipes'
+import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
@@ -95,7 +95,7 @@ const DropEnd = ({
   return (
     <li
       className={cx(
-        dropEnd(),
+        dropEndRecipe(),
         css({
           display: 'list-item',
           marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
@@ -129,7 +129,7 @@ const DropEnd = ({
       )}
       {(showDropHover || testFlags.simulateDrag) && (
         <span
-          className={dropHover({ insideDropEnd: true })}
+          className={dropHoverRecipe({ insideDropEnd: true })}
           style={{
             backgroundColor: dropHoverColor,
             // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch

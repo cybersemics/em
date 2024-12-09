@@ -28,6 +28,20 @@ export default defineConfig({
       injectManifest: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // Increase limit to 4 MiB
       },
+      manifest: {
+        name: 'em',
+        short_name: 'em',
+        icons: [
+          {
+            src: 'favicon.ico',
+            sizes: '64x64 32x32 24x24 16x16',
+            type: 'image/x-icon',
+          },
+        ],
+        background_color: '#ffffff',
+        display: 'standalone',
+        theme_color: '#000000',
+      },
     }),
     // minify and add EJS capabilities to index.html
     createHtmlPlugin({ minify: true }),

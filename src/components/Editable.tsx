@@ -3,7 +3,7 @@ import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
-import { editable, invalidOption, multiline as multilineRecipe } from '../../styled-system/recipes'
+import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
@@ -19,6 +19,7 @@ import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isTouch } from '../browser'
+import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -40,7 +41,6 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
-import { shortcutEmitter } from '../shortcuts'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import storageModel from '../stores/storageModel'
@@ -53,6 +53,7 @@ import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
+import trimHtml from '../util/trimHtml'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
@@ -166,7 +167,7 @@ const Editable = ({
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
-    contentRef.current && contentRef.current.classList[value ? 'add' : 'remove'](invalidOption())
+    contentRef.current && contentRef.current.classList[value ? 'add' : 'remove'](invalidOptionRecipe())
 
   // side effect to set old value ref to head value from updated simplePath. Also update editing value, if it is different from current value.
   useEffect(
@@ -296,13 +297,13 @@ const Editable = ({
   useEffect(() => {
     /** Flushes pending edits. */
     const flush = () => throttledChangeRef.current.flush()
-    shortcutEmitter.on('shortcut', flush)
+    commandEmitter.on('command', flush)
 
     // flush edits and remove handler on unmount
     return () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
       throttledChangeRef.current.flush()
-      shortcutEmitter.off('shortcut', flush)
+      commandEmitter.off('command', flush)
     }
   }, [])
 
@@ -341,7 +342,7 @@ const Editable = ({
                 }),
               )
             : // Otherwise, we avoid unescaping the value to preserve escaped HTML characters.
-              e.target.value.trim(),
+              trimHtml(e.target.value),
         ),
       )
 
@@ -590,7 +591,7 @@ const Editable = ({
       data-editable
       className={cx(
         multiline ? multilineRecipe() : null,
-        editable({
+        editableRecipe({
           preventAutoscroll: true,
         }),
         className,

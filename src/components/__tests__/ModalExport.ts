@@ -1,19 +1,16 @@
 import { screen } from '@testing-library/dom'
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import testTimer from '../../test-helpers/testTimer'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-const fakeTimer = testTimer()
-
-// TODO: replicateThought is returning undefined. Either replication is broken in the tests or it is a timing issue.
-it.skip('Export a single thought', async () => {
+it('Export a single thought', async () => {
   await dispatch([
     importText({
       text: `
@@ -24,13 +21,14 @@ it.skip('Export a single thought', async () => {
 
   await dispatch(showModal({ id: 'export' }))
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   // get the first match since there is a Download button also
   const exportPhraseElement = (await screen.findAllByText('Download'))[0]
   expect(exportPhraseElement.textContent).toEqual('Download "a" as Plain Text')
 })
 
-// TODO
-it.skip('Export a couple thoughts', async () => {
+it('Export a couple thoughts', async () => {
   await dispatch([
     importText({
       text: `
@@ -42,13 +40,14 @@ it.skip('Export a couple thoughts', async () => {
 
   await dispatch(showModal({ id: 'export' }))
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   // get the first match since there is a Download button also
   const exportPhraseElement = (await screen.findAllByText('Download'))[0]
   expect(exportPhraseElement.textContent).toEqual('Download "a" and 1 subthought as Plain Text')
 })
 
-// TODO
-it.skip('Export the cursor and all descendants', async () => {
+it('Export the cursor and all descendants', async () => {
   await dispatch([
     importText({
       text: `
@@ -61,15 +60,14 @@ it.skip('Export the cursor and all descendants', async () => {
     showModal({ id: 'export' }),
   ])
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   // get the first match since there is a Download button also
   const exportPhraseElement = (await screen.findAllByText('Download'))[0]
   expect(exportPhraseElement.textContent).toEqual('Download "b" and 1 subthought as Plain Text')
 })
 
-// unable to figure out timer issues
-// it either doesn't wait for the push to resolve, or it goes into an infinite loop
-it.skip('Export buffered thoughts', async () => {
-  fakeTimer.useFakeTimer()
+it('Export buffered thoughts', async () => {
   await dispatch([
     importText({
       text: `
@@ -84,12 +82,12 @@ it.skip('Export buffered thoughts', async () => {
     setCursor(null),
   ])
 
-  // await refreshTestApp()
+  act(() => store.dispatch([showModal({ id: 'export' })]))
 
-  await store.dispatch([showModal({ id: 'export' })])
+  await act(vi.runOnlyPendingTimersAsync)
 
   // get the first match since there is a Download button also
-  const exportPhraseElement = (await screen.findAllByText('Download'))[0]
-  await screen.findAllByText('Download')
+  const exportPhraseElement = await screen.findByTestId('export-phrase-container')
+
   expect(exportPhraseElement.textContent).toEqual('Download all 6 thoughts as Plain Text')
 })

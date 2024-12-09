@@ -1,6 +1,6 @@
 import React from 'react'
 import { cx } from '../../../styled-system/css'
-import { anchorButton } from '../../../styled-system/recipes'
+import { anchorButtonRecipe } from '../../../styled-system/recipes'
 import fastClick from '../../util/fastClick'
 
 const TutorialNavigationButton = React.forwardRef<
@@ -13,7 +13,7 @@ const TutorialNavigationButton = React.forwardRef<
   }
 >(({ clickHandler, value, disabled = false, classes }, ref) => (
   <a
-    className={cx(anchorButton({ variableWidth: true, smallGapX: true }), classes)}
+    className={cx(anchorButtonRecipe({ variableWidth: true, smallGapX: true }), classes)}
     onClick={clickHandler}
     {...{ disabled }}
     {...fastClick(clickHandler)}

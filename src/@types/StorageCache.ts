@@ -1,10 +1,10 @@
-import ShortcutId from './ShortcutId'
+import CommandId from './CommandId'
 
 interface StorageCache {
   theme?: 'Dark' | 'Light'
   tutorialComplete?: boolean
   tutorialStep?: number
-  userToolbar?: ShortcutId[]
+  userToolbar?: CommandId[]
 }
 
 export default StorageCache
