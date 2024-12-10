@@ -13,6 +13,7 @@ import storageModel from '../stores/storageModel'
 import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import { updateLastPath } from '../util/initEvents'
 import isRoot from '../util/isRoot'
 
 interface Options {
@@ -88,7 +89,7 @@ const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: O
   // nothing to update if the cursor has not changed
   if (state.isLoading || equalPath(pathPrev, path)) return
   pathPrev = path
-
+  updateLastPath(path)
   const decoded = decodeThoughtsUrl(state)
   const encoded = head(path || HOME_PATH)
 

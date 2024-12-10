@@ -113,10 +113,16 @@ const scrollAtEdge = (() => {
   return { start, stop }
 })()
 
+let lastPath: Path | null
+
+/** Update the LastPath. */
+export const updateLastPath = (path: Path) => {
+  lastPath = path
+}
+
 /** Add window event handlers. */
 const initEvents = (store: Store<State, any>) => {
   let lastState: number
-  let lastPath: Path | null
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
@@ -126,15 +132,16 @@ const initEvents = (store: Store<State, any>) => {
     // Initialize lastPath with current cursor if not set
     if (!lastPath) {
       lastPath = state.cursor
+      lastState = e.state
     }
-
-    if (!path || !pathExists(state, pathToContext(state, path)) || equalPath(lastPath, path)) {
+    // Update lastPath before navigation check
+    const previousPath = lastPath
+    lastPath = path
+    if (!path || !pathExists(state, pathToContext(state, path)) || equalPath(previousPath, path)) {
       window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
       return
     }
 
-    // Store the current cursor as lastPath before updating
-    lastPath = state.cursor
     lastState = e.state
 
     const toRoot = !path || isRoot(path)
