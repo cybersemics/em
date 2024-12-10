@@ -24,6 +24,7 @@ export const AsyncFocus: () => () => void = () => {
   hiddenInput.style.width = '0'
   hiddenInput.style.minWidth = '0'
   hiddenInput.style.minHeight = '0'
+  hiddenInput.disabled = true
 
   // disable auto zoom
   // See: https://stackoverflow.com/questions/2989263/disable-auto-zoom-in-input-text-tag-safari-on-iphone
@@ -33,7 +34,10 @@ export const AsyncFocus: () => () => void = () => {
   return () => {
     // do not set the selection if it is already on a text node
     if (!selection.isText()) {
+      hiddenInput.disabled = false
       hiddenInput.focus()
+      // the hidden input should not be a valid focus target unless this function was invoked
+      hiddenInput.disabled = true
     }
   }
 }
