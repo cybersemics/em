@@ -425,6 +425,8 @@ const TreeNode = ({
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const lastPatches = useSelector(state => state.undoPatches[state.undoPatches.length - 1])
+  const isLastActionNewThought = lastPatches?.filter(patch => patch.actions[0] === 'newThought')
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -452,10 +454,9 @@ const TreeNode = ({
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
   // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
-  const layoutTransition =
-    prevChild?.value === ''
-      ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
-      : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
+  const layoutTransition = isLastActionNewThought
+    ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
+    : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
 
   return (
     <div
