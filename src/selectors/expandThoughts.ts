@@ -28,6 +28,11 @@ import pinned from './isPinned'
 
 const EXPAND_THOUGHTS_REGEX = new RegExp(`${EXPAND_THOUGHT_CHAR}(</[^>]>)*$`, 'g')
 
+/** Returns true if a thought is marked as done. */
+const isDone = (state: State, id: ThoughtId | null): boolean => {
+  return !!findDescendant(state, id, '=done')
+}
+
 /** Returns true if a thought's children are pinned with =children/=pin/true, false if =children/=pin/false, and null if not pinned. */
 const childrenPinned = (state: State, id: ThoughtId): boolean | null => {
   const childrenAttributeId = findDescendant(state, id, '=children')
@@ -110,8 +115,9 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
     // Do not expand only child when parent's subthoughts are pinned.
     // https://github.com/cybersemics/em/issues/1732
     !childrenPinned(state, head(parentOf(path))) &&
-    // do not expand if thought or parent's subthoughts have =pin/false
+    // do not expand if thought or parent's subthoughts have =pin/false or =done
     pinned(state, visibleChildren[0].id) !== false &&
+    !isDone(state, visibleChildren[0].id) &&
     childrenPinned(state, thoughtId) !== false
 
   const childrenExpanded =
@@ -140,7 +146,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
             isExpansionBasePath() ||
             isHiddenAttribute() ||
             pinned(state, child.id) ||
-            (childrenPinned(state, thoughtId) && pinned(state, child.id) === null) ||
+            (childrenPinned(state, thoughtId) && pinned(state, child.id) === null && !isDone(state, child.id)) ||
             EXPAND_THOUGHTS_REGEX.test(child.value)
           )
         })
