@@ -1,8 +1,7 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { HOME_PATH } from '../constants'
+import { HOME_TOKEN } from '../constants'
 import getSortPreference from '../selectors/getSortPreference'
-import head from '../util/head'
 
 /** Retrieves the parent ID from the state's cursor. */
 const getParentIdFromCursor = (state: State): ThoughtId | null => {
@@ -10,7 +9,7 @@ const getParentIdFromCursor = (state: State): ThoughtId | null => {
 
   if (!cursor || cursor.length < 2) {
     // No cursor or cursor has less than 2 items (no parent)
-    return head(HOME_PATH)
+    return HOME_TOKEN
   }
 
   // Return the parent ID, which is the second last item in the cursor
