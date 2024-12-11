@@ -73,6 +73,7 @@ type TreeThought = {
   thoughtId: string
   isLastVisible?: boolean
   autofocus: Autofocus
+  value: string
   // keys of visible children
   // only used in table view to calculate the width of column 1
   visibleChildrenKeys?: string[]
@@ -330,6 +331,7 @@ const linearizeTree = (
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
       style,
       thoughtId: child.id,
+      value: child.value,
       ...(isTable
         ? { visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)) }
         : null),
@@ -399,6 +401,7 @@ const TreeNode = ({
   cliffPaddingStyle,
   dragInProgress,
   autofocusDepth,
+  value,
   ...transitionGroupsProps
 }: TreeThoughtPositioned & {
   thoughtKey: string
@@ -414,6 +417,8 @@ const TreeNode = ({
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const lastPatches = useSelector(state => state.undoPatches[state.undoPatches.length - 1])
+  const isLastActionNewThought = lastPatches?.filter(patch => patch.actions[0] === 'newThought')
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -440,6 +445,11 @@ const TreeNode = ({
   // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
+  // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
+  const layoutTransition = isLastActionNewThought
+    ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
+    : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
+
   return (
     <div
       aria-label='tree-node'
@@ -447,7 +457,7 @@ const TreeNode = ({
       // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
       className={css({
         position: 'absolute',
-        transition: `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`,
+        transition: layoutTransition,
       })}
       style={{
         // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
@@ -465,9 +475,10 @@ const TreeNode = ({
     >
       <FadeTransition
         id={thoughtKey}
-        // The FadeTransition is only responsible for fade out on unmount.
+        // The FadeTransition is only responsible for fade out on unmount;
+        // or for fade in on mounting of a new thought.
         // See autofocusChanged for normal opacity transition.
-        duration='nodeFadeOut'
+        duration={value === '' ? 'nodeFadeIn' : 'nodeFadeOut'}
         nodeRef={fadeThoughtRef}
         in={transitionGroupsProps.in}
         unmountOnExit
