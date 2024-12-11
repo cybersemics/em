@@ -9,6 +9,7 @@ import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
 import Share from '../../@types/Share'
+import State from '../../@types/State'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { isMac } from '../../browser'
 import { accessToken as accessTokenCurrent, permissionsClientDoc, tsid } from '../../data-providers/yjs'
@@ -182,7 +183,7 @@ const ShareList = React.forwardRef<
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
       // TODO: Handle modal-specific keyboard shortcuts in a more general way so that they can be used in other modals and so this component does not need to know about showCommandPalette
-      if (e.key === 'Enter' && !showDeviceForm && !store.getState().showCommandPalette) {
+      if (e.key === 'Enter' && !showDeviceForm && !(store.getState() as State).showCommandPalette) {
         e.stopPropagation()
         setShowDeviceForm(true)
       }

@@ -227,7 +227,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     const state = getState()
 
     // reset internal state variables when clear action is dispatched
-    if (action.type === 'clear') {
+    if ((action as { type: string }).type === 'clear') {
       lastContextViews = {}
       lastExpandedPaths = {}
       lastSearchContexts = {}
@@ -235,7 +235,11 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     }
     // Update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates.
     // Otherwise, because thoughts are previously loaded from local storage which turns off pending on the root context, a normal pull will short circuit and remote thoughts will not be loaded.
-    else if (action.type === 'authenticate' && action.value && action.connected) {
+    else if (
+      (action as { type: string }).type === 'authenticate' &&
+      (action as { value: string }).value &&
+      (action as { connected: string }).connected
+    ) {
       pullQueue = { ...pullQueue, ...initialPullQueue() }
       // do not debounce, as forceRemote could be overwritten by other calls to the debounced function
       updatePullQueue({ force: true })
