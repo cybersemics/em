@@ -57,8 +57,14 @@ export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
 /** Returns true if the Node is an editable. */
-const isEditable = (node?: Node | null) =>
-  !!node && node.nodeType === Node.ELEMENT_NODE && !!(node as HTMLElement).hasAttribute?.('data-editable')
+const isEditable = (node?: Node | null) => {
+  const element = node as HTMLElement
+  return (
+    !!element &&
+    element.nodeType === Node.ELEMENT_NODE &&
+    (element.hasAttribute('data-editable') || element.ariaLabel === 'note-editable')
+  )
+}
 
 /** Returns true if the selection is on a thought. */
 // We should see if it is possible to just use state.editing and selection.isActive()
