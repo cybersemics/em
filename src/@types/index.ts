@@ -1,3 +1,4 @@
+import { AnyAction } from 'redux'
 import Thunk from './Thunk'
 
 declare global {
