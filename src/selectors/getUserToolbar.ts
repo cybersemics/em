@@ -1,7 +1,7 @@
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import { EM_TOKEN } from '../constants'
-import { shortcutById } from '../shortcuts'
+import { shortcutById } from '../commands'
 import findDescendant from './findDescendant'
 import { getChildrenRanked } from './getChildren'
 

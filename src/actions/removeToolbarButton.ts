@@ -8,7 +8,7 @@ import { AlertType, EM_TOKEN } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
-import { shortcutById } from '../shortcuts'
+import { shortcutById } from '../commands'
 
 /** Removes a toolbar button. */
 export const removeToolbarButtonActionCreator =

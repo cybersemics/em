@@ -14,7 +14,7 @@ import { AlertText, AlertType, THROTTLE_DISTRACTION_FREE_TYPING } from '../const
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
-import { inputHandlers } from '../shortcuts'
+import { inputHandlers } from '../commands'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'

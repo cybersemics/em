@@ -16,7 +16,7 @@ import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../a
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
 import { AlertText, AlertType } from '../../constants'
-import { shortcutById } from '../../shortcuts'
+import { shortcutById } from '../../commands'
 import fastClick from '../../util/fastClick'
 import FadeTransition from '../FadeTransition'
 import ShortcutTableOnly from '../ShortcutTableOnly'

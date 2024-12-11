@@ -13,7 +13,7 @@ import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
-import { shortcutById } from '../shortcuts'
+import { shortcutById } from '../commands'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 

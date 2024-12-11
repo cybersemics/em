@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import GesturePath from '../../@types/GesturePath'
 import { isTouch } from '../../browser'
-import { shortcutById } from '../../shortcuts'
+import { shortcutById } from '../../commands'
 import headValue from '../../util/headValue'
 import GestureDiagram from '../GestureDiagram'
 

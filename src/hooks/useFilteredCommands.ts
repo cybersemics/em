@@ -5,7 +5,7 @@ import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { gestureString, globalShortcuts } from '../shortcuts'
+import { gestureString, globalShortcuts } from '../commands'
 import gestureStore from '../stores/gesture'
 
 const visibleShortcuts = globalShortcuts.filter(shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp)

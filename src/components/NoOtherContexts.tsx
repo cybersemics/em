@@ -5,7 +5,7 @@ import GesturePath from '../@types/GesturePath'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
 import GestureDiagram from '../components/GestureDiagram'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
+import { formatKeyboardShortcut, shortcutById } from '../commands'
 
 const toggleContextViewShortcut = shortcutById('toggleContextView')
 

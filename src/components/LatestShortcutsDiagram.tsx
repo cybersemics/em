@@ -2,7 +2,7 @@ import { FC, useEffect, useRef } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
-import { globalShortcuts } from '../shortcuts'
+import { globalShortcuts } from '../commands'
 import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 
