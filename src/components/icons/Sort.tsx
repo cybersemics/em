@@ -3,6 +3,7 @@ import IconType from '../../@types/IconType'
 import getCursorSortDirection from '../../util/getCursorSortDirection'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/10-sort_4.json'
+import animationDataDesc from './animations/11-sort-descanding_7.json'
 
 /** Ascending Sort Icon Component with Conditional Lottie Animation. */
 const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
@@ -73,20 +74,15 @@ const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationCompl
 
 /** Descending Sort Icon Component with Conditional Lottie Animation. */
 const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
-  const iconStyle = {
-    ...style,
-    ...(animated && { transform: 'rotateX(180deg)' }),
-  }
-
   return (
     <AnimatedIcon
       {...{
         fill,
         size,
-        style: iconStyle,
+        style,
         cssRaw,
         animated,
-        animationData,
+        animationData: animationDataDesc,
         animationComplete,
       }}
     >
