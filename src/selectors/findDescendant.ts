@@ -12,10 +12,14 @@ const findDescendant = (state: State, thoughtId: ThoughtId | null, values: strin
   if (!thoughtId || values.length === 0) return thoughtId
   if (!Array.isArray(values)) values = [values]
   // if the value is a meta attribute, use childrenMap for O(1) lookup
+
+  const currentThought = getThoughtById(state, thoughtId)
+
   const child =
-    isAttribute(values[0]) && getThoughtById(state, thoughtId)
-      ? getThoughtByIdGuarded(state, getThoughtById(state, thoughtId)?.childrenMap[values[0]])
+    isAttribute(values[0]) && currentThought
+      ? getThoughtByIdGuarded(state, currentThought.childrenMap[values[0]])
       : findAnyChild(state, thoughtId, child => child.value === values[0])
+
   return child ? findDescendant(state, child.id, values.slice(1)) : null
 }
 
