@@ -8,12 +8,12 @@ import { dragShortcutActionCreator as dragShortcut } from '../actions/dragShortc
 import { initUserToolbarActionCreator as initUserToolbar } from '../actions/initUserToolbar'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
+import { shortcutById } from '../commands'
 import { EM_TOKEN } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
-import { shortcutById } from '../commands'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 
