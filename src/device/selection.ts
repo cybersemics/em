@@ -57,14 +57,8 @@ export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
 /** Returns true if the Node is an editable. */
-const isEditable = (node?: Node | null) => {
-  const element = node as HTMLElement
-  return (
-    !!element &&
-    element.nodeType === Node.ELEMENT_NODE &&
-    (element.hasAttribute('data-editable') || element.ariaLabel === 'note-editable')
-  )
-}
+const isEditable = (node?: Node | null) =>
+  !!node && node.nodeType === Node.ELEMENT_NODE && !!(node as HTMLElement).hasAttribute?.('data-editable')
 
 /** Returns true if the selection is on a thought. */
 // We should see if it is possible to just use state.editing and selection.isActive()
@@ -205,10 +199,31 @@ export const restore = (savedSelection: SavedSelection | null): void => {
   }
 
   const sel = window.getSelection()
+  if (!sel) return
 
-  if (savedSelection.node) {
-    sel?.removeAllRanges()
-    sel?.collapse(savedSelection.node, savedSelection.offset)
+  try {
+    sel.removeAllRanges()
+
+    // Validate the node and offset before attempting to collapse
+    const node = savedSelection.node
+    let offset = savedSelection.offset
+
+    // If it's an element node, ensure offset doesn't exceed number of children
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      offset = Math.min(offset, node.childNodes.length)
+    }
+    // If it's a text node, ensure offset doesn't exceed text length
+    else if (node.nodeType === Node.TEXT_NODE && node.textContent) {
+      offset = Math.min(offset, node.textContent.length)
+    }
+    // Default to 0 if we can't determine a valid offset
+    else {
+      offset = 0
+    }
+
+    sel.collapse(node, offset)
+  } catch (e) {
+    clear()
   }
 }
 
