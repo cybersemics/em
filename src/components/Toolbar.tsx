@@ -130,11 +130,12 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       setRightArrowIsShown(el.offsetWidth + el.scrollLeft < el.scrollWidth - 20)
     }
   }, [])
+  let diff = 0
   /** Handles toolbar scroll event. */
   const onScroll = useCallback(
     (e: React.UIEvent<HTMLElement>) => {
       const scrollDifference = e.target ? Math.abs(lastScrollLeft.current - (e.target as HTMLElement).scrollLeft) : 0
-      let diff = 0
+
       if (scrollDifference >= 5) {
         deselectPressingToolbarId()
       }
