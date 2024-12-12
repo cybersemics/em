@@ -31,12 +31,30 @@ const ColorSwatch: FC<{
 }> = ({ backgroundColor, color, label, shape, size }) => {
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
-  const commandStateBackgroundColor = commandStateStore.useSelector(state =>
-    state.backColor ? addAlphaToHex(rgbToHex(state.backColor as string)) : null,
-  )
-  const commandStateColor = commandStateStore.useSelector(state =>
-    state.foreColor ? addAlphaToHex(rgbToHex(state.foreColor as string)) : null,
-  )
+  const commandStateBackgroundColor = commandStateStore.useSelector(state => {
+    if (!state.backColor) return null
+    // Extract clean color value from potential HTML-like string
+    const colorMatch = typeof state.backColor === 'string' ? state.backColor.match(/#[0-9a-fA-F]{6}/) : null
+    const cleanColor = colorMatch ? colorMatch[0] : state.backColor
+    try {
+      return cleanColor && typeof cleanColor === 'string' ? addAlphaToHex(rgbToHex(cleanColor)) : null
+    } catch (e) {
+      console.warn('Invalid color format:', cleanColor)
+      return null
+    }
+  })
+  const commandStateColor = commandStateStore.useSelector(state => {
+    if (!state.foreColor) return null
+    // Extract clean color value from potential HTML-like string
+    const colorMatch = typeof state.foreColor === 'string' ? state.foreColor.match(/#[0-9a-fA-F]{6}/) : null
+    const cleanColor = colorMatch ? colorMatch[0] : state.foreColor
+    try {
+      return cleanColor && typeof cleanColor === 'string' ? addAlphaToHex(rgbToHex(cleanColor)) : null
+    } catch (e) {
+      console.warn('Invalid color format:', cleanColor)
+      return null
+    }
+  })
 
   size = size || fontSize * 1.2
 
