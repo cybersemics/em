@@ -22,7 +22,7 @@ const freeThoughtsMiddleware: ThunkMiddleware<State> = ({ dispatch, getState }) 
     next(action)
 
     // do not run checkThrottled on freeThoughts action to avoid infinite loop
-    if ((action as { type: string }).type !== 'freeThoughts') {
+    if (action.type !== 'freeThoughts') {
       checkThrottled(dispatch, getState)
     }
   }

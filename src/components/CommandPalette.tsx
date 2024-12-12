@@ -7,11 +7,11 @@ import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
-import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../commands'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
+import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../commands'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import { executeShortcutWithMulticursor } from '../util/executeShortcut'
@@ -132,7 +132,7 @@ const CommandRow: FC<{
   const store = useStore()
   const ref = React.useRef<HTMLDivElement>(null)
 
-  const isActive = shortcut.isActive?.(store.getState() as State)
+  const isActive = shortcut.isActive?.(store.getState())
   const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
   const disabled = useSelector(state => !isExecutable(state, shortcut))
 
@@ -298,8 +298,8 @@ const CommandPalette: FC = () => {
       e.preventDefault()
       if (
         unmounted.current ||
-        (shortcut.canExecute && !shortcut.canExecute(store.getState() as State)) ||
-        ((store.getState() as State).showModal && !shortcut.allowExecuteFromModal)
+        (shortcut.canExecute && !shortcut.canExecute(store.getState())) ||
+        (store.getState().showModal && !shortcut.allowExecuteFromModal)
       )
         return
       const commandsNew = [shortcut.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)

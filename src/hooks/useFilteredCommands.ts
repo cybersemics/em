@@ -51,7 +51,7 @@ const useFilteredCommands = (
         if (!search) return true
 
         const label = (
-          sortActiveCommandsFirst && shortcut.labelInverse && shortcut.isActive?.(store.getState() as State)
+          sortActiveCommandsFirst && shortcut.labelInverse && shortcut.isActive?.(store.getState())
             ? shortcut.labelInverse!
             : shortcut.label
         ).toLowerCase()
@@ -69,13 +69,13 @@ const useFilteredCommands = (
     // sorted shortcuts
     const sorted = _.sortBy(possibleShortcuts, shortcut => {
       const label = (
-        shortcut.labelInverse && shortcut.isActive?.(store.getState() as State) ? shortcut.labelInverse : shortcut.label
+        shortcut.labelInverse && shortcut.isActive?.(store.getState()) ? shortcut.labelInverse : shortcut.label
       ).toLowerCase()
 
       // always sort exact match to top
       if (gestureInProgress === shortcut.gesture || search.trim().toLowerCase() === label) return '\x00'
       // sort inactive shortcuts to the bottom alphabetically
-      else if (sortActiveCommandsFirst && !isExecutable(store.getState() as State, shortcut)) return `\x99${label}`
+      else if (sortActiveCommandsFirst && !isExecutable(store.getState(), shortcut)) return `\x99${label}`
       // sort gesture by length and then label
       // no padding of length needed since no gesture exceeds a single digit
       else if (gestureInProgress) return `\x01${label}`
