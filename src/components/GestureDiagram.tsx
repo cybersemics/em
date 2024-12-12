@@ -91,7 +91,7 @@ const GestureDiagram = ({
 
     const clockwisePrev = rotateClockwise(prev) === dir
     const clockwiseAfterNext = rotateClockwise(next) === afterNext
-    const reversal = i > 0 && i < path.length - 1 && next === oppositeDirection(dir)
+    const reversal = i < path.length - 1 && next === oppositeDirection(dir) && afterNext !== dir
 
     // shorten the segment to make up for a reversal
     const shorten =
