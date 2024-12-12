@@ -426,7 +426,7 @@ const TreeNode = ({
   const [y, setY] = useState(_y)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
   const lastPatches = useSelector(state => state.undoPatches[state.undoPatches.length - 1])
-  const isLastActionNewThought = lastPatches?.filter(patch => patch.actions[0] === 'newThought')
+  const isLastActionNewThought = lastPatches?.some(patch => patch.actions[0] === 'newThought')
 
   useLayoutEffect(() => {
     if (y !== _y) {
