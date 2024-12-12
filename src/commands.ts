@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 
 /** Defines global keyboard shortcuts and gestures. */
+import { Haptics, NotificationType } from '@capacitor/haptics'
 import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
@@ -22,7 +23,6 @@ import getUserSetting from './selectors/getUserSetting'
 import * as shortcutObject from './shortcuts/index'
 import { executeShortcutWithMulticursor } from './util/executeShortcut'
 import keyValueBy from './util/keyValueBy'
-import { Haptics, NotificationType } from '@capacitor/haptics'
 
 export const globalShortcuts: Shortcut[] = Object.values(shortcutObject)
 
@@ -197,7 +197,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
           clearDelay: 5000,
           showCloseLink: false,
         }),
-        
       )
     }
 
