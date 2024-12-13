@@ -1,7 +1,6 @@
 import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
-import { Store } from 'redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Shortcut from '../@types/Shortcut'
