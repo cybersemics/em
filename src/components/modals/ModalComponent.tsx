@@ -1,6 +1,7 @@
 import React, { PropsWithChildren } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { modalRecipe } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { FADEOUT_DURATION } from '../../constants'
@@ -89,11 +90,14 @@ class ModalComponent extends React.Component<ModalProps> {
               padding: '10px 20px',
               margin: '-10px -20px',
               position: 'fixed',
-              top: 'calc(9px - 0.2em)',
               right: '11px',
               color: 'inherit',
               textDecoration: 'none',
             })}
+            style={{
+              /* spacing.safeAreaTop applies for rounded screens */
+              top: `calc(${token('spacing.safeAreaTop')} + 9px - 0.2em)`,
+            }}
             {...fastClick(this.close)}
           >
             ✕

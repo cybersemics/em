@@ -33,6 +33,7 @@ const ErrorMessage: FC = () => {
             })}
             style={{
               ...positionFixedStyles,
+              /* spacing.safeAreaTop applies for rounded screens */
               top: `calc(${token('spacing.safeAreaTop')} + ${positionFixedStyles.top}px)`,
             }}
           >
