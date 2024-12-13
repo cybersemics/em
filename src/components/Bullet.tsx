@@ -552,7 +552,6 @@ const Bullet = ({
         const shouldCollapse = isExpanded && children.length > 0
         const pathParent = path.length > 1 ? parentOf(path) : null
         const parentChildren = pathParent ? getChildren(state, head(pathParent)) : null
-
         // if thought is not expanded, set the cursor on the thought
         // if thought is expanded, collapse it by moving the cursor to its parent
         dispatch([
