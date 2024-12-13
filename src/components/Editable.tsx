@@ -130,6 +130,7 @@ const Editable = ({
   const fontSize = useSelector(state => state.fontSize)
   const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
   const hasMulticursor = useSelector(hasMulticursorSelector)
+  const showSidebar = useSelector(state => state.showSidebar)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
@@ -431,6 +432,8 @@ const Editable = ({
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
+      if (showSidebar) return
+
       blurring = true
 
       const { invalidState } = state
@@ -485,7 +488,7 @@ const Editable = ({
       })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [simplePath],
+    [showSidebar, simplePath],
   )
 
   /**
