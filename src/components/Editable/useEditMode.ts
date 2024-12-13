@@ -141,10 +141,10 @@ const useEditMode = ({
 
   // Resume focus if sidebar was just closed and isEditing is true
   useEffect(() => {
-    if (isEditing && !showSidebar && hadSidebar) {
+    if (isEditing && editing && !showSidebar && hadSidebar) {
       contentRef.current?.focus()
     }
-  }, [contentRef, hadSidebar, isEditing, showSidebar])
+  }, [contentRef, editing, hadSidebar, isEditing, showSidebar])
 
   return allowDefaultSelection
 }
