@@ -1,6 +1,7 @@
 import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
+import { Store } from 'redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Shortcut from '../@types/Shortcut'
@@ -277,7 +278,7 @@ const CommandRow: FC<{
 
 /** Render a command palette with keyboard or gesture autocomplete. */
 const CommandPalette: FC = () => {
-  const store = useStore()
+  const store = useStore() as Store<State, any, object>
   const dispatch = useDispatch()
   const gestureInProgress = gestureStore.useState()
   const fontSize = useSelector(state => state.fontSize)
