@@ -1,4 +1,5 @@
-const durationsMillis = {
+/** Animation durations that are imported into the panda config. See recipes/fadeTransition for corresponding FadeTransition animations. */
+const durationsConfig = {
   /* GENERAL ANIMATIONS */
   /* A slow animation that intentionally lags behind user interaction, such as autofocus. Gives the transition the appearance of going at its own pace. Only use in special circumstances. */
   slow: 750,
@@ -29,4 +30,4 @@ const durationsMillis = {
   nodeFadeOut: 80,
 } as const
 
-export default durationsMillis
+export default durationsConfig

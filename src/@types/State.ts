@@ -123,6 +123,7 @@ interface State {
    */
   pushQueue: PushBatch[]
   recentlyEdited: RecentlyEditedTree
+  /** Redo history. Contains diffs that can be applied to State to restore actions that were reverted with undo. State.redoPatches[0] is the oldest action that was undone. */
   redoPatches: Patch[]
   remoteSearch: boolean
   resourceCache: Index<string>
@@ -164,6 +165,7 @@ interface State {
   /** Command of a toolbar button that is being long pressed in the customize modal. */
   toolbarLongPress?: Command
   transientFocus?: boolean
+  /** Undo history. Contains diffs that can be applied to State to revert actions. State.undoPatches[0] is the oldest. */
   undoPatches: Patch[]
 }
 
