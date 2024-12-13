@@ -26,7 +26,7 @@ import {
 import useIsVisible from '../../hooks/useIsVisible'
 import getSetting from '../../selectors/getSetting'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
-import { shortcutById } from '../../commands'
+import { shortcutById } from '../../shortcuts'
 import fastClick from '../../util/fastClick'
 import headValue from '../../util/headValue'
 import once from '../../util/once'
