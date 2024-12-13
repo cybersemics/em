@@ -278,7 +278,7 @@ const CommandRow: FC<{
 
 /** Render a command palette with keyboard or gesture autocomplete. */
 const CommandPalette: FC = () => {
-  const store = useStore() as Store<State, any, object>
+  const store = useStore()
   const dispatch = useDispatch()
   const gestureInProgress = gestureStore.useState()
   const fontSize = useSelector(state => state.fontSize)
