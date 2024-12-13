@@ -19,7 +19,6 @@ import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isTouch } from '../browser'
-import { shortcutEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -41,6 +40,7 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
+import { shortcutEmitter } from '../commands'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import storageModel from '../stores/storageModel'

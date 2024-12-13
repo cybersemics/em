@@ -4,8 +4,8 @@ import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
-import { formatKeyboardShortcut, shortcutById } from '../commands'
 import GestureDiagram from '../components/GestureDiagram'
+import { formatKeyboardShortcut, shortcutById } from '../commands'
 
 const toggleContextViewShortcut = shortcutById('toggleContextView')
 

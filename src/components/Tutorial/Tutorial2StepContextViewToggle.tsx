@@ -1,10 +1,10 @@
 import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
-import { formatKeyboardShortcut, shortcutById } from '../../commands'
 import { TUTORIAL_CONTEXT } from '../../constants'
 import getContexts from '../../selectors/getContexts'
 import getSetting from '../../selectors/getSetting'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
+import { formatKeyboardShortcut, shortcutById } from '../../commands'
 import headValue from '../../util/headValue'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

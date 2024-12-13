@@ -6,7 +6,6 @@ import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { isTouch } from '../../browser'
-import { shortcutById } from '../../commands'
 import {
   TUTORIAL2_STEP_CONTEXT1_HINT,
   TUTORIAL2_STEP_CONTEXT1_PARENT_HINT,
@@ -27,6 +26,7 @@ import {
 import useIsVisible from '../../hooks/useIsVisible'
 import getSetting from '../../selectors/getSetting'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
+import { shortcutById } from '../../commands'
 import fastClick from '../../util/fastClick'
 import headValue from '../../util/headValue'
 import once from '../../util/once'
