@@ -294,7 +294,7 @@ const linearizeTree = (
     // As soon as the cursor is found, set belowCursor to true. It will be propagated to every subsequent thought.
     // See: TreeThought.belowCursor
     const isCursor = !belowCursor && equalPath(childPath, state.cursor)
-    if (isCursor) {
+    if (isCursor || !state.cursor) {
       belowCursor = true
     }
 
