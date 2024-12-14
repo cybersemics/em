@@ -2,7 +2,6 @@ import { page } from '../setup'
 import getEditable from './getEditable'
 import hide from './hide'
 import showMousePointer from './showMousePointer'
-import waitUntil from './waitUntil'
 
 /** Performs Drag and Drop functionality on a thought in Puppeteer browser. */
 const dragAndDropThought = async (
@@ -99,11 +98,11 @@ const dragAndDropThought = async (
 
     // Wait until highlighted bullet is unrendered.
     // Waiting for state.dragInProgress or data-drag-in-progress on its own is not sufficient.
-    await waitUntil(
-      () =>
-        !document.querySelector('[data-drag-in-progress="true"]') &&
-        !document.querySelector('[data-highlighted="true"]'),
-    )
+    // await waitUntil(
+    //   () =>
+    //     !document.querySelector('[data-drag-in-progress="true"]') &&
+    //     !document.querySelector('[data-highlighted="true"]'),
+    // )
   }
 
   // Hide QuickDropPanel by defafult.
