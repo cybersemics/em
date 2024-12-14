@@ -158,6 +158,11 @@ const globalCss = defineGlobalStyles({
         userSelect: 'none',
       },
     },
+    _test: {
+      // Caret should be invisible in puppeteer tests as the blink timing differs between runs and will fail the screenshot tests.
+      // Do this here rather than programmatically in order to avoid an extra page.evaluate.
+      caretColor: 'transparent',
+    },
   },
   'html, body, #root, #app': { height: '100%', fontSize: '16px' },
   'body, textarea': {
