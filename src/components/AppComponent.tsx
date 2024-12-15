@@ -5,7 +5,6 @@ import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, 
 import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
 import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
 import { updateSplitPositionActionCreator as updateSplitPosition } from '../actions/updateSplitPosition'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { inputHandlers } from '../commands'
@@ -186,10 +185,10 @@ const AppComponent: FC = () => {
 
   return (
     <div
-      style={{
-        /* spacing.safeAreaTop applies for rounded screens */
-        paddingTop: token('spacing.safeAreaTop'),
-      }}
+      className={css({
+        /* safeAreaTop applies for rounded screens */
+        paddingTop: 'safeAreaTop',
+      })}
     >
       <Alert />
       <Tips />

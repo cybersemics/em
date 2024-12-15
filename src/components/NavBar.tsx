@@ -64,7 +64,7 @@ const NavBar = ({ position }: { position: string }) => {
           ? {
               position: 'sticky',
               /* spacing.safeAreaBottom applies for rounded screens */
-              bottom: 'calc(max(11px, {spacing.safeAreaBottom}))',
+              bottom: 'calc(max(11px, token(spacing.safeAreaBottom)))',
             }
           : undefined),
       })}
