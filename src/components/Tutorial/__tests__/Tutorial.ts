@@ -11,6 +11,7 @@ import { cleanupTestApp, createTestAppWithTutorial } from '../../../test-helpers
 import dispatch from '../../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../../test-helpers/setCursorFirstMatch'
 
+/** Ensures that a hint shows up on screen with text. TODO remove or use more. */
 async function hintShows(hint: string) {
   const user = userEvent.setup({ delay: null })
   await user.click(screen.getByText('hint'))
@@ -324,5 +325,3 @@ describe('Tutorial 2', async () => {
     expect(() => screen.getByTestId('tutorial-step')).toThrow('Unable to find an element')
   })
 })
-
-
