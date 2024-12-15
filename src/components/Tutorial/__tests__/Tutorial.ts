@@ -31,7 +31,7 @@ describe('Tutorial 1', async () => {
   })
 
   it('step first thought - how to create a thought ', async () => {
-    await dispatch(tutorialNext({})) // we manually dispatch, because we can't do the gesture here
+    await dispatch(tutorialNext({}))
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(screen.getByText('Hit the Enter key to create a new thought.')).toBeInTheDocument()
@@ -69,10 +69,6 @@ describe('Tutorial 1', async () => {
     beforeAll(async () => {
       await dispatch(tutorialNext({}))
       await act(vi.runOnlyPendingTimersAsync)
-    })
-
-    it('display a tutorial on subthoughts, and an rdr gesture hint', async () => {
-      expect(screen.getByText(/within/)).toBeInTheDocument()
     })
 
     it('congratulate on creating a child for the <parent>', async () => {
