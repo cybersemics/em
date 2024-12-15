@@ -57,6 +57,7 @@ type TreeThought = {
   // index among all visible thoughts in the tree
   indexDescendant: number
   isCursor: boolean
+  isEmpty: boolean
   isInSortedContext: boolean
   isTableCol1: boolean
   isTableCol2: boolean
@@ -73,7 +74,6 @@ type TreeThought = {
   thoughtId: string
   isLastVisible?: boolean
   autofocus: Autofocus
-  value: string
   // keys of visible children
   // only used in table view to calculate the width of column 1
   visibleChildrenKeys?: string[]
@@ -307,6 +307,7 @@ const linearizeTree = (
       belowCursor = true
     }
 
+    const isEmpty = child.value === ''
     const isTable = attributeEquals(state, child.id, '=view', 'Table')
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
     const isInSortedContext = attributeEquals(state, head(simplePath), '=sort', 'Alphabetical')
@@ -321,6 +322,7 @@ const linearizeTree = (
       indexChild: i,
       indexDescendant: virtualIndexNew,
       isCursor,
+      isEmpty,
       isInSortedContext,
       isTableCol1,
       isTableCol2,
@@ -339,7 +341,6 @@ const linearizeTree = (
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
       style,
       thoughtId: child.id,
-      value: child.value,
       ...(isTable
         ? { visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)) }
         : null),
@@ -384,6 +385,7 @@ const TreeNode = ({
   indexChild,
   indexDescendant,
   isCursor,
+  isEmpty,
   isTableCol1,
   isTableCol2,
   thoughtKey,
@@ -409,7 +411,6 @@ const TreeNode = ({
   cliffPaddingStyle,
   dragInProgress,
   autofocusDepth,
-  value,
   ...transitionGroupsProps
 }: TreeThoughtPositioned & {
   thoughtKey: string
@@ -425,8 +426,10 @@ const TreeNode = ({
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
-  const lastPatches = useSelector(state => state.undoPatches[state.undoPatches.length - 1])
-  const isLastActionNewThought = lastPatches?.some(patch => patch.actions[0] === 'newThought')
+  const isLastActionNewThought = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'newThought')
+  })
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -486,7 +489,7 @@ const TreeNode = ({
         // The FadeTransition is only responsible for fade out on unmount;
         // or for fade in on mounting of a new thought.
         // See autofocusChanged for normal opacity transition.
-        duration={value === '' ? 'nodeFadeIn' : 'nodeFadeOut'}
+        duration={isEmpty ? 'nodeFadeIn' : 'nodeFadeOut'}
         nodeRef={fadeThoughtRef}
         in={transitionGroupsProps.in}
         unmountOnExit
