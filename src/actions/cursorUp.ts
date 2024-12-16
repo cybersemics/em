@@ -1,36 +1,31 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import setCursor from '../actions/setCursor'
-import { HOME_PATH, HOME_TOKEN } from '../constants'
+import { HOME_TOKEN } from '../constants'
 import { getChildrenSorted } from '../selectors/getChildren'
-import prevSibling from '../selectors/prevSibling'
-import rootedParentOf from '../selectors/rootedParentOf'
-import appendToPath from '../util/appendToPath'
-import isRoot from '../util/isRoot'
-import parentOf from '../util/parentOf'
+import prevThought from '../selectors/prevThought'
 
-/** Moves the cursor to the previous sibling. Works in normal or context view. If there is no cursor, sets the cursor on the last thought of in the home context. */
+/** Moves the cursor to the previous visible thought in visual order. If there is no cursor, sets the cursor on the last thought in the home context. */
 const cursorUp = (state: State, { preserveMulticursor }: { preserveMulticursor?: boolean } = {}) => {
   const { cursor } = state
-  const path = cursor || HOME_PATH
-  const pathParent = rootedParentOf(state, path)
 
-  const prevThought = cursor
-    ? // if cursor exists, get the previous sibling
-      prevSibling(state, cursor)
+  const path = cursor
+    ? // if cursor exists, get the previous thought in visual order
+      prevThought(state, cursor)
     : // otherwise, get the last thought in the home context
-      getChildrenSorted(state, HOME_TOKEN).slice(-1)[0]
-
-  const prevPath = prevThought
-    ? // non-first child path
-      appendToPath(parentOf(path), prevThought.id)
-    : // when the cursor is on the first child in a context, move up a level
-      !isRoot(pathParent)
-      ? pathParent
+      getChildrenSorted(state, HOME_TOKEN).slice(-1)[0]?.id
+      ? [getChildrenSorted(state, HOME_TOKEN).slice(-1)[0].id]
       : null
 
   // noop if there is no previous path, i.e. the cursor is on the very first thought
-  return prevPath ? setCursor(state, { path: prevPath, preserveMulticursor }) : state
+  return path && path.length > 0
+    ? setCursor(state, {
+        path: [path[0], ...path.slice(1)],
+        cursorHistoryClear: true,
+        editing: true,
+        preserveMulticursor,
+      })
+    : state
 }
 
 /** Action-creator for cursorUp. */
