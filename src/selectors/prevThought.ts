@@ -1,6 +1,5 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
-import { HOME_TOKEN } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
 import { getAllChildrenAsThoughts, isVisible } from '../selectors/getChildren'
 import prevSibling from '../selectors/prevSibling'
@@ -39,38 +38,33 @@ const lastVisibleDescendant = (state: State, path: Path): Path => {
   return lastVisibleDescendant(state, childPath)
 }
 
+/** Gets the previous visible sibling, recursively skipping hidden thoughts if needed. */
+const getPreviousVisibleSibling = (state: State, path: Path, currentSibling: Path | null = null): Path | null => {
+  const currentPath = currentSibling || path
+  const prevSiblingThought = prevSibling(state, currentPath)
+
+  if (!prevSiblingThought) return null
+
+  // Skip hidden thoughts only when showHiddenThoughts is false
+  const isHidden = !state.showHiddenThoughts && !isVisible(state, prevSiblingThought)
+  if (!isHidden) {
+    const prevSiblingPath = appendToPath(parentOf(path), prevSiblingThought.id)
+    return lastVisibleDescendant(state, prevSiblingPath)
+  }
+
+  const prevPath = appendToPath(parentOf(path), prevSiblingThought.id)
+  return getPreviousVisibleSibling(state, path, prevPath)
+}
+
 /** Gets the previous thought in visual order. */
 const prevThought = (state: State, path?: Path): Path | null => {
-  if (!path) {
-    // Get all root children, showing hidden thoughts if showHiddenThoughts is true
-    const rootChildren = state.showHiddenThoughts
-      ? getAllChildrenAsThoughts(state, HOME_TOKEN)
-      : getAllChildrenAsThoughts(state, HOME_TOKEN).filter(child => isVisible(state, child))
-
-    if (rootChildren.length === 0) return null
-
-    // Return the last visible root child
-    const lastChild = rootChildren[rootChildren.length - 1]
-    return [lastChild.id]
-  }
+  if (!path) return null
 
   const pathParent = rootedParentOf(state, path)
   const isRootLevel = isRoot(pathParent)
 
-  // Get previous visible sibling
-  let prevSiblingThought = prevSibling(state, path)
-
-  // Skip hidden thoughts only when showHiddenThoughts is false
-  while (!state.showHiddenThoughts && prevSiblingThought && !isVisible(state, prevSiblingThought)) {
-    const prevPath = appendToPath(parentOf(path), prevSiblingThought.id)
-    prevSiblingThought = prevSibling(state, prevPath)
-  }
-
-  if (prevSiblingThought) {
-    // If previous sibling exists, get its last visible descendant
-    const prevSiblingPath = appendToPath(parentOf(path), prevSiblingThought.id)
-    return lastVisibleDescendant(state, prevSiblingPath)
-  }
+  const prevSiblingPath = getPreviousVisibleSibling(state, path)
+  if (prevSiblingPath) return prevSiblingPath
 
   // If at root level, stop here - don't traverse up to parent
   if (isRootLevel) return null
