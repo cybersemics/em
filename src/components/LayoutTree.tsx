@@ -57,6 +57,7 @@ type TreeThought = {
   // index among all visible thoughts in the tree
   indexDescendant: number
   isCursor: boolean
+  isEmpty: boolean
   isInSortedContext: boolean
   isTableCol1: boolean
   isTableCol2: boolean
@@ -306,6 +307,7 @@ const linearizeTree = (
       belowCursor = true
     }
 
+    const isEmpty = child.value === ''
     const isTable = attributeEquals(state, child.id, '=view', 'Table')
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
     const isInSortedContext = attributeEquals(state, head(simplePath), '=sort', 'Alphabetical')
@@ -320,6 +322,7 @@ const linearizeTree = (
       indexChild: i,
       indexDescendant: virtualIndexNew,
       isCursor,
+      isEmpty,
       isInSortedContext,
       isTableCol1,
       isTableCol2,
@@ -382,6 +385,7 @@ const TreeNode = ({
   indexChild,
   indexDescendant,
   isCursor,
+  isEmpty,
   isTableCol1,
   isTableCol2,
   thoughtKey,
@@ -422,6 +426,10 @@ const TreeNode = ({
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const isLastActionNewThought = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'newThought')
+  })
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -448,6 +456,11 @@ const TreeNode = ({
   // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
+  // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
+  const layoutTransition = isLastActionNewThought
+    ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
+    : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
+
   return (
     <div
       aria-label='tree-node'
@@ -455,7 +468,7 @@ const TreeNode = ({
       // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
       className={css({
         position: 'absolute',
-        transition: `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`,
+        transition: layoutTransition,
       })}
       style={{
         // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
@@ -473,9 +486,10 @@ const TreeNode = ({
     >
       <FadeTransition
         id={thoughtKey}
-        // The FadeTransition is only responsible for fade out on unmount.
+        // The FadeTransition is only responsible for fade out on unmount;
+        // or for fade in on mounting of a new thought.
         // See autofocusChanged for normal opacity transition.
-        duration='nodeFadeOut'
+        duration={isEmpty ? 'nodeFadeIn' : 'nodeFadeOut'}
         nodeRef={fadeThoughtRef}
         in={transitionGroupsProps.in}
         unmountOnExit
