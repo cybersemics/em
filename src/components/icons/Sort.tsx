@@ -12,7 +12,7 @@ import animationDataDesc from './animations/11-sort-descanding_7.json'
 const getCursorSortDirection = (state: State) => getSortPreference(state, head(state.cursor || HOME_PATH)).direction
 
 /** Ascending Sort Icon Component with Conditional Lottie Animation. */
-const IconAsc = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
@@ -79,7 +79,7 @@ const IconAsc = ({ fill, size, style = {}, cssRaw, animated, animationComplete }
 }
 
 /** Descending Sort Icon Component with Conditional Lottie Animation. */
-const IconDesc = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData: animationDataDesc, animationComplete }}>
       <svg
@@ -146,7 +146,7 @@ const IconDesc = ({ fill, size, style = {}, cssRaw, animated, animationComplete 
 }
 
 /** Sort Icon Component with Conditional Lottie Animation. */
-const SortIcon = ({ size = 20, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const SortIcon = ({ size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   const direction = useSelector(getCursorSortDirection)
   const Component = direction === 'Desc' ? IconDesc : IconAsc
   return <Component {...{ size, style, cssRaw, animated, animationComplete }} />

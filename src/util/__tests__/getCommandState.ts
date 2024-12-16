@@ -6,6 +6,7 @@ it('empty thought', () => {
     italic: false,
     underline: false,
     strikethrough: false,
+    code: false,
     foreColor: undefined,
     backColor: undefined,
   })
@@ -17,6 +18,7 @@ it('bold thought', () => {
     italic: false,
     underline: false,
     strikethrough: false,
+    code: false,
     foreColor: undefined,
     backColor: undefined,
   })
@@ -28,6 +30,7 @@ it('italic thought', () => {
     italic: true,
     underline: false,
     strikethrough: false,
+    code: false,
     foreColor: undefined,
     backColor: undefined,
   })
@@ -39,6 +42,7 @@ it('underline thought', () => {
     italic: false,
     underline: true,
     strikethrough: false,
+    code: false,
     foreColor: undefined,
     backColor: undefined,
   })
@@ -50,17 +54,33 @@ it('strikethrough thought', () => {
     italic: false,
     underline: false,
     strikethrough: true,
+    code: false,
+    foreColor: undefined,
+    backColor: undefined,
+  })
+})
+
+it('code thought', () => {
+  expect(getCommandState('<code>text</code>')).toStrictEqual({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    code: true,
     foreColor: undefined,
     backColor: undefined,
   })
 })
 
 it('partially styled thought', () => {
-  expect(getCommandState('<b>Bold</b><i>Italic</i><u>Underline</u><strike>strikethrough</strike>')).toStrictEqual({
+  expect(
+    getCommandState('<b>Bold</b><i>Italic</i><u>Underline</u><strike>strikethrough</strike><code>code</code>'),
+  ).toStrictEqual({
     bold: false,
     italic: false,
     underline: false,
     strikethrough: false,
+    code: false,
     foreColor: undefined,
     backColor: undefined,
   })
@@ -72,6 +92,7 @@ it('text color thought', () => {
     italic: false,
     underline: false,
     strikethrough: false,
+    code: false,
     foreColor: 'rgb(255, 0, 0)',
     backColor: undefined,
   })
@@ -83,6 +104,7 @@ it('background color thought', () => {
     italic: false,
     underline: false,
     strikethrough: false,
+    code: false,
     foreColor: undefined,
     backColor: 'rgb(0, 0, 255)',
   })
@@ -91,13 +113,30 @@ it('background color thought', () => {
 it('fully styled thought', () => {
   expect(
     getCommandState(
-      '<b><i><u><strike><font color="rgb(255, 0, 0)"><span style="background-color: rgb(0, 0, 255)">text</span></font></strike></u></i></b>',
+      '<b><i><u><strike><code><font color="rgb(255, 0, 0)"><span style="background-color: rgb(0, 0, 255)">text</span></font></code></strike></u></i></b>',
     ),
   ).toStrictEqual({
     bold: true,
     italic: true,
     underline: true,
     strikethrough: true,
+    code: true,
+    foreColor: 'rgb(255, 0, 0)',
+    backColor: 'rgb(0, 0, 255)',
+  })
+})
+
+it('fully styled thought without text content', () => {
+  expect(
+    getCommandState(
+      '<b><i><u><strike><code><font color="rgb(255, 0, 0)"><span style="background-color: rgb(0, 0, 255)"></span></font></code></strike></u></i></b>',
+    ),
+  ).toStrictEqual({
+    bold: true,
+    italic: true,
+    underline: true,
+    strikethrough: true,
+    code: true,
     foreColor: 'rgb(255, 0, 0)',
     backColor: 'rgb(0, 0, 255)',
   })

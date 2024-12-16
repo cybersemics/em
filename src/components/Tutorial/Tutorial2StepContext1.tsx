@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
+import { commandById } from '../../commands'
 import {
   HOME_TOKEN,
   TUTORIAL_CONTEXT,
@@ -11,19 +12,20 @@ import {
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
+import TutorialGestureDiagram from './TutorialGestureDiagram'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1 = () => {
   const tutorialChoice = useSelector(selectTutorialChoice)
-  const noCursor = useSelector(state => !state.cursor)
-  const cursorValue = useSelector(state => state.cursor && headValue(state, state.cursor))
+  const chosenTutorialText = TUTORIAL_CONTEXT1_PARENT[tutorialChoice]
   const context1Exists = useSelector(state => {
     const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
-    return rootChildren.find(
-      child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
-    )
+    return rootChildren.find(child => child.value.toLowerCase() === chosenTutorialText.toLowerCase())
   })
+  const readyToSelect = useSelector(
+    state => !state.cursor || headValue(state, state.cursor).toLowerCase() !== chosenTutorialText.toLowerCase(),
+  )
 
   return (
     <>
@@ -36,8 +38,7 @@ const Tutorial2StepContext1 = () => {
             : tutorialChoice === TUTORIAL_VERSION_BOOK
               ? `you hear a podcast on ${TUTORIAL_CONTEXT[tutorialChoice]}.`
               : null}{' '}
-        Add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <i>within</i> “
-        {TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”.
+        Add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <i>within</i> “{chosenTutorialText}”.
       </p>
       {context1Exists ? (
         <p>
@@ -45,19 +46,14 @@ const Tutorial2StepContext1 = () => {
           <TutorialHint>
             <br />
             <br />
-            {noCursor || cursorValue?.toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
-              ? `Select "${TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". `
-              : null}
+            {readyToSelect ? `Select "${chosenTutorialText}". ` : null}
             {isTouch ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to
-            create a new thought <i>within</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". Then type "
-            {TUTORIAL_CONTEXT[tutorialChoice]}".
+            create a new thought <i>within</i> "{chosenTutorialText}". Then type "{TUTORIAL_CONTEXT[tutorialChoice]}".
+            {!readyToSelect && <TutorialGestureDiagram gesture={commandById('newSubthought').gesture} />}
           </TutorialHint>
         </p>
       ) : (
-        <p>
-          Oops, somehow “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}” was changed or deleted. Click the Prev button to go
-          back.
-        </p>
+        <p>Oops, somehow “{chosenTutorialText}” was changed or deleted. Click the Prev button to go back.</p>
       )}
     </>
   )

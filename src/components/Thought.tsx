@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { child, invalidOption as invalidOptionRecipe } from '../../styled-system/recipes'
+import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -276,7 +276,7 @@ const ThoughtContainer = ({
     ...(isChildHovering
       ? {
           WebkitTextStrokeWidth: '0.05em',
-          animation: `pulseLight {durations.slowPulseDuration} linear infinite alternate`,
+          animation: `pulseLight {durations.slowPulse} linear infinite alternate`,
           color: 'highlight',
         }
       : null),
@@ -366,7 +366,7 @@ const ThoughtContainer = ({
       data-editing={isEditing}
       onClick={isTouch ? undefined : handleMultiselect}
       style={{
-        transition: `transform ${token('durations.layoutSlowShiftDuration')} ease-out, opacity ${token('durations.layoutSlowShiftDuration')} ease-out`,
+        transition: `transform ${token('durations.layoutSlowShift')} ease-out, opacity ${token('durations.layoutSlowShift')} ease-out`,
         ...style,
         ...styleContainer,
         // extend the click area to the left (except if table column 2)
@@ -380,7 +380,7 @@ const ThoughtContainer = ({
           : null),
       }}
       className={cx(
-        child(),
+        childRecipe(),
         invalidOption && invalidOptionRecipe(),
         css({
           marginLeft: isDivider(value) ? '-125px' : undefined,
@@ -420,7 +420,7 @@ const ThoughtContainer = ({
         className={css({
           /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
           /* must match value used in Editable useMultiline */
-          lineHeight: '1.72',
+          lineHeight: '2',
           // ensure that ThoughtAnnotation is positioned correctly
           position: 'relative',
           ...(hideBullet ? { marginLeft: -12 } : null),

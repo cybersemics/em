@@ -3,14 +3,14 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/14-bump-thought-down_2.json'
 
 /** Bump Thought Down Icon with Conditional Lottie Animation. */
-const BumpThoughtDownIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const BumpThoughtDownIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
         fill='none'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: `translate(-1%, 2%)` }}
       >
         <rect fill='none' width='24' height='24' />
         <circle stroke='currentColor' strokeLinejoin='round' fill='none' cx='20.07' cy='18.08' r='2.49' />

@@ -34,7 +34,7 @@ const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
           width: '100%',
           // for some reason without the additional height the button gets cropped
           paddingBottom: `${BUTTON_HEIGHT}em`,
-          transition: `opacity {durations.fastDuration} ease-in-out, transform {durations.fastDuration} ease-in-out`,
+          transition: `opacity {durations.fast} ease-in-out, transform {durations.fast} ease-in-out`,
           display: 'flex',
           justifyContent: 'center',
         })}

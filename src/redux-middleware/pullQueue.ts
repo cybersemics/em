@@ -1,10 +1,12 @@
 import _ from 'lodash'
+import { UnknownAction, isAction } from 'redux'
 import { ThunkMiddleware } from 'redux-thunk'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
+import { AuthenticateAction } from '../actions/authenticate'
 import { pullActionCreator as pull } from '../actions/pull'
 import { pullAncestorsActionCreator as pullAncestors } from '../actions/pullAncestors'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
@@ -86,6 +88,12 @@ const appendVisiblePaths = (
 const pullFavorites = (): Thunk => async dispatch => {
   const lexeme = await db.getLexemeById(hashThought('=favorite'))
   return dispatch(pullAncestors(lexeme?.contexts || [], { force: true, maxDepth: 0 }))
+}
+
+/** See if the given action is the AUTH one. Mostly an extraction of TS horror of `action` now being `unknown` in Redux v5. */
+const isAuthenticateAction = (action: unknown): action is AuthenticateAction => {
+  const { type, value, connected } = action as UnknownAction
+  return Boolean(type === 'authenticate' && value && connected)
 }
 
 /** Middleware that manages the in-memory thought cache (state.thoughts). Marks contexts to be loaded based on cursor and expanded contexts. Queues missing contexts every (debounced) action so that they may be fetched from the data providers and flushes the queue at a throttled interval.
@@ -222,12 +230,12 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   const updatePullQueueDebounced = _.debounce(updatePullQueue, updatePullQueueDelay)
   const flushPullQueueThrottled = _.throttle(flushPullQueue, flushPullQueueDelay)
 
-  return next => async action => {
+  return next => action => {
     next(action)
     const state = getState()
 
     // reset internal state variables when clear action is dispatched
-    if (action.type === 'clear') {
+    if (isAction(action) && action.type === 'clear') {
       lastContextViews = {}
       lastExpandedPaths = {}
       lastSearchContexts = {}
@@ -235,7 +243,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     }
     // Update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates.
     // Otherwise, because thoughts are previously loaded from local storage which turns off pending on the root context, a normal pull will short circuit and remote thoughts will not be loaded.
-    else if (action.type === 'authenticate' && action.value && action.connected) {
+    else if (isAuthenticateAction(action)) {
       pullQueue = { ...pullQueue, ...initialPullQueue() }
       // do not debounce, as forceRemote could be overwritten by other calls to the debounced function
       updatePullQueue({ force: true })

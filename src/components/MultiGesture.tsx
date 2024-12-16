@@ -50,7 +50,7 @@ type MultiGestureProps = PropsWithChildren<{
   // related: https://github.com/cybersemics/em/issues/1268
   minDistance?: number
   /** A hook that is called on touchstart if the user is in the gesture zone. If it returns true, the gesture is abandoned. Otherwise scrolling is disabled and a gesture may be entered. */
-  shouldCancelGesture?: () => boolean
+  shouldCancelGesture?: (x?: number, y?: number) => boolean
 }>
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
@@ -111,7 +111,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     document.body.addEventListener(
       'touchmove',
       e => {
-        if (this.disableScroll && e.cancelable) {
+        if (this.disableScroll) {
           e.preventDefault()
         }
       },
@@ -127,10 +127,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         this.clientStart = { x, y }
         const inGestureZone = isInGestureZone(x, y, this.leftHanded)
 
-        // disable gestures in the scroll zone on the right side of the screen
-        // disable scroll in the gesture zone on the left side of the screen
-        // (reverse in left-handed mode)
-        if (inGestureZone && !props.shouldCancelGesture?.()) {
+        if (inGestureZone && !props.shouldCancelGesture?.(x, y)) {
           this.disableScroll = true
         } else {
           this.abandon = true

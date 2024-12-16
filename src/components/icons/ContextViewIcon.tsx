@@ -3,13 +3,13 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/18-context-view_3.json'
 
 /** Context View Icon with Conditional Lottie Animation. */
-const ContextViewIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const ContextViewIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: `translate(0, -2%) scale(0.96, 0.96)` }}
         fill='none'
       >
         <g id='Layer_2' data-name='Layer 2'>

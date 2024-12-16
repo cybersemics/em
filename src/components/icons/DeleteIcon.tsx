@@ -3,13 +3,18 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/31-parmanently-delete_2.json'
 
 /** Delete Icon with Conditional Lottie Animation. */
-const DeleteIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const DeleteIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{
+          ...style,
+          width: '100%',
+          height: '100%',
+          transform: `translate(1%, 1%)`,
+        }}
         fill='none'
       >
         <g id='Layer_2' data-name='Layer 2'>

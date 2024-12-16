@@ -6,7 +6,7 @@ import Thunk from '../@types/Thunk'
  */
 const toggleShortcutsDiagram = (state: State): State => ({
   ...state,
-  enableLatestShortcutsDiagram: !state.enableLatestShortcutsDiagram,
+  enableLatestCommandsDiagram: !state.enableLatestCommandsDiagram,
 })
 
 /** Action-creator for toggleShortcutsDiagram. */

@@ -1,10 +1,12 @@
 import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
+import { commandById } from '../../commands'
 import { HOME_TOKEN, TUTORIAL_CONTEXT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
+import TutorialGestureDiagram from './TutorialGestureDiagram'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -50,6 +52,7 @@ const Tutorial2StepContext2 = () => {
                   to create a new thought <i>within</i> "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".
                 </>
               )}
+              {!select && <TutorialGestureDiagram gesture={commandById('newSubthought').gesture} />}
             </TutorialHint>
           </p>
         ) : (

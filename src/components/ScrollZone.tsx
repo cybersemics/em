@@ -15,20 +15,19 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   return (
     <div
       className={css({
-        backgroundImage: `url('/img/scroll-zone/stars.webp')`,
+        backgroundImage: `url('/img/scroll-zone/stardust.png')`,
         backgroundRepeat: 'repeat',
         zIndex: 'scrollZone',
-        filter: 'grayscale(1)',
+        backgroundSize: '800px',
         position: 'fixed',
         left: leftHanded ? 0 : undefined,
         right: leftHanded ? undefined : 0,
         // height must exceed all possible scroll heights
         height: '999999px',
-        opacity: 0.4,
         pointerEvents: 'none',
       })}
       style={{
-        transform: `translateY(calc(-${scrollTop / 4 + 400}px))`,
+        transform: `translateY(-${scrollTop / 4 + 300}px)`,
         width: scrollZoneWidth,
       }}
     ></div>

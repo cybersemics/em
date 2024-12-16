@@ -3,14 +3,14 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/25-clear-thought.json'
 
 /** Clear Thought Icon with Conditional Lottie Animation. */
-const ClearThoughtIcon = ({ fill, size, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const ClearThoughtIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
         fill='none'
-        style={{ ...style, width: '100%', height: '100%' }}
+        style={{ ...style, width: '100%', height: '100%', transform: `translate(-2%, 3%) scale(0.98, 0.98)` }}
       >
         <rect width='24' height='24' fill='none' />
         <path

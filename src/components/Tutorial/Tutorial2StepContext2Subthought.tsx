@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
+import { commandById } from '../../commands'
 import {
   HOME_TOKEN,
   TUTORIAL_CONTEXT,
@@ -16,6 +17,7 @@ import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
 import StaticSuperscript from '../StaticSuperscript'
+import TutorialGestureDiagram from './TutorialGestureDiagram'
 import TutorialHint from './TutorialHint'
 import context2SubthoughtCreated from './utils/context2SubthoughtCreated'
 
@@ -101,6 +103,7 @@ const Tutorial2StepContext2Subthought = () => {
               {selectChoice ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
               {isTouch ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}
               to create a new thought <i>within</i> "{TUTORIAL_CONTEXT[tutorialChoice]}".
+              {!selectChoice && <TutorialGestureDiagram gesture={commandById('newSubthought').gesture} />}
             </TutorialHint>
           </p>
         ) : (

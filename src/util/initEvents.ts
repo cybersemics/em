@@ -10,11 +10,11 @@ import { dragInProgressActionCreator as dragInProgress } from '../actions/dragIn
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
-import { AlertText, AlertType, THROTTLE_DISTRACTION_FREE_TYPING } from '../constants'
+import { inputHandlers } from '../commands'
+import { AlertText, AlertType } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
-import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -24,6 +24,7 @@ import syncStatusStore from '../stores/syncStatus'
 import { updateSize } from '../stores/viewport'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
+import durations from './durations'
 import equalPath from './equalPath'
 
 declare global {
@@ -170,9 +171,13 @@ const initEvents = (store: Store<State, any>) => {
   }
 
   /** MouseMove event listener. */
-  const onMouseMove = _.debounce(() => distractionFreeTypingStore.update(false), THROTTLE_DISTRACTION_FREE_TYPING, {
-    leading: true,
-  })
+  const onMouseMove = _.debounce(
+    () => distractionFreeTypingStore.update(false),
+    durations.get('distractionFreeTypingThrottle'),
+    {
+      leading: true,
+    },
+  )
 
   /** Handles scroll-at-edge on drag near the edge of the screen on mobile. */
   // TOOD: Scroll-at-edge for desktop. mousemove is not propagated when drag-and-drop is activated. We may need to tap into canDrop.
@@ -180,7 +185,7 @@ const initEvents = (store: Store<State, any>) => {
     const state = store.getState()
     const target = e.target as HTMLElement
 
-    if (state.dragShortcut) {
+    if (state.dragCommand) {
       const x = e.touches[0].clientX
       if (x < TOOLBAR_SCROLLATEDGE_SIZE) {
         const rate = 1 + ((TOOLBAR_SCROLLATEDGE_SIZE - x) * TOOLBAR_SCROLLATEDGE_SPEED) / TOOLBAR_SCROLLATEDGE_SIZE

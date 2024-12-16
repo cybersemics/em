@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
-import { bullet } from '../../styled-system/recipes'
+import { bulletRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -205,7 +205,7 @@ const glyph = cva({
 
 const glyphFg = cva({
   base: {
-    transition: `transform {durations.veryFastDuration} ease-out, fill-opacity {durations.mediumDuration} ease-out`,
+    transition: `transform {durations.veryFast} ease-out, fill-opacity {durations.medium} ease-out`,
   },
   variants: {
     gray: {
@@ -218,10 +218,7 @@ const glyphFg = cva({
       true: {
         color: 'bulletGray',
         fill: 'bulletGray',
-        '-webkit-animation': {
-          base: 'toblack 400ms infinite alternate ease-in-out',
-          _dark: 'towhite 400ms infinite alternate ease-in-out',
-        },
+        '-webkit-animation': 'tofg 400ms infinite alternate ease-in-out',
       },
     },
     triangle: {
@@ -576,15 +573,16 @@ const Bullet = ({
     <span
       data-testid={'bullet-' + hashPath(path)}
       aria-label='bullet'
+      data-highlighted={isHighlighted}
       className={cx(
-        bullet({ invalid }),
+        bulletRecipe({ invalid }),
         css({
           _mobile: {
             marginRight: showContexts ? '-1.5px' : undefined,
           },
           '@media (min-width: 560px) and (max-width: 1024px)': {
             _android: {
-              transition: `transform {durations.veryFastDuration} ease-in-out`,
+              transition: `transform {durations.veryFast} ease-in-out`,
               marginLeft: '-3px',
             },
           },

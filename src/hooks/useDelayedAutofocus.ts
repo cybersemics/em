@@ -13,6 +13,7 @@ const useDelayedAutofocus = <T = string>(
   // This ensures that the component is only re-rendered when the selector result changes, not every time the delayed autofocus value changes.
   const [autofocusDelayed, setAutofocusDelayed] = useState(selector(autofocus))
   const lastAutofocusRef = useRef(autofocus)
+  const unmounted = useRef(false)
   const autofocusTimerRef = useRef<number>(0)
   useEffect(
     () => {
@@ -23,12 +24,17 @@ const useDelayedAutofocus = <T = string>(
         (lastAutofocusRef.current === 'show' || lastAutofocusRef.current === 'dim')
       ) {
         autofocusTimerRef.current = setTimeout(() => {
+          if (unmounted.current) return
           setAutofocusDelayed(selector(autofocus))
           lastAutofocusRef.current = autofocus
         }, delay) as unknown as number
       } else {
         setAutofocusDelayed(selector(autofocus))
         lastAutofocusRef.current = autofocus
+      }
+
+      return () => {
+        unmounted.current = true
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
