@@ -6,6 +6,7 @@ import newThought from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import expandThoughts from '../../selectors/expandThoughts'
+import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
@@ -821,5 +822,29 @@ describe('=done', () => {
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'd'])).toBeFalsy()
+  })
+})
+
+describe('multicursor', () => {
+  it('selected thoughts should not be expanded', () => {
+    const text = `
+      - a
+        - b
+          - c
+        - d
+          - e
+    `
+
+    const steps = [importText({ text }), setCursor(['a', 'b']), addMulticursorAtFirstMatch(['a', 'd'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // Selected thoughts should not be expanded
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'd'])).toBeFalsy()
+
+    // Their children should not be expanded
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'd', 'e'])).toBeFalsy()
   })
 })
