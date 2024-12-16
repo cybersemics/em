@@ -6,164 +6,160 @@ import { newSubthoughtActionCreator as newSubthought } from '../../../actions/ne
 import { newThoughtActionCreator as newThought } from '../../../actions/newThought'
 import { tutorialNextActionCreator as tutorialNext } from '../../../actions/tutorialNext'
 import { tutorialStepActionCreator as tutorialStep } from '../../../actions/tutorialStep'
-import { TUTORIAL2_STEP_START, TUTORIAL_STEP_SECONDTHOUGHT } from '../../../constants'
+import {
+  TUTORIAL2_STEP_START,
+  TUTORIAL_STEP_AUTOEXPAND,
+  TUTORIAL_STEP_AUTOEXPAND_EXPAND,
+  TUTORIAL_STEP_SECONDTHOUGHT,
+  TUTORIAL_STEP_SUBTHOUGHT,
+  TUTORIAL_STEP_SUCCESS,
+} from '../../../constants'
 import { cleanupTestApp, createTestAppWithTutorial } from '../../../test-helpers/createTestApp'
 import dispatch from '../../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../../test-helpers/setCursorFirstMatch'
 
-/** Ensures that a hint shows up on screen with text. TODO remove or use more. */
-async function hintShows(hint: string) {
-  const user = userEvent.setup({ delay: null })
-  await user.click(screen.getByText('hint'))
-  await act(vi.runOnlyPendingTimersAsync)
-  expect(getByText(screen.getByTestId('tutorial-step')!, hint, { exact: false })).toBeInTheDocument()
-}
+beforeEach(createTestAppWithTutorial)
+afterEach(cleanupTestApp)
 
 describe('Tutorial 1', async () => {
-  beforeEach(createTestAppWithTutorial)
-  afterEach(cleanupTestApp)
+  describe('step start', () => {
+    it('shows the welcome text', () => {
+      expect(screen.getByText('Welcome to your personal thoughtspace.')).toBeInTheDocument()
+    })
 
-  it('step start - welcome text', async () => {
-    const welcomeText = screen.getByText('Welcome to your personal thoughtspace.')
-    await act(vi.runOnlyPendingTimersAsync)
-
-    expect(welcomeText).toBeInTheDocument()
+    it('shows the "Next" button, that leads to the first step', async () => {
+      const user = userEvent.setup({ delay: null })
+      await user.click(screen.getByText('Next'))
+      await act(vi.runOnlyPendingTimersAsync)
+      expect(
+        screen.getByText('First, let me show you how to create a new thought', { exact: false }),
+      ).toBeInTheDocument()
+    })
   })
 
   it('step first thought - how to create a thought ', async () => {
-    await dispatch(tutorialNext({}))
-    await act(vi.runOnlyPendingTimersAsync)
-
     expect(screen.getByText('Hit the Enter key to create a new thought.')).toBeInTheDocument()
-    const user = userEvent.setup({ delay: null })
-    await user.keyboard('{Enter}')
-    await act(vi.runOnlyPendingTimersAsync)
 
+    const user = userEvent.setup({ delay: null })
+    await act(() => user.keyboard('{Enter}'))
     expect(screen.getByText('You did it!')).toBeInTheDocument()
-    user.click(screen.getByText('Next'))
+    expect(screen.getByText('Now type something. Anything will do.')).toBeInTheDocument()
+
+    await dispatch(newThought({ value: 'my first thought' }))
+    await act(vi.runOnlyPendingTimersAsync)
+    expect(screen.getByText('Click the Next button when you are ready to continue.')).toBeInTheDocument()
   })
 
   describe('step second thought - create another thought', () => {
-    it('reminds us how to create a thought', async () => {
-      await dispatch(tutorialStep({ value: TUTORIAL_STEP_SECONDTHOUGHT }))
-      await act(vi.runOnlyPendingTimersAsync)
-
-      expect(screen.getByText('Try adding another thought. Do you remember how to do it?')).toBeInTheDocument()
-    })
-
     it('prompts to type some text to the created thought, then congratulates on typing', async () => {
-      await dispatch(newThought({}))
+      await dispatch([
+        newThought({ value: 'already created thought' }),
+        tutorialStep({ value: TUTORIAL_STEP_SECONDTHOUGHT }),
+      ])
       await act(vi.runOnlyPendingTimersAsync)
+      expect(screen.getByText('Try adding another thought. Do you remember how to do it?')).toBeInTheDocument()
 
-      expect(screen.getByText('Now type some text for the new thought.')).toBeInTheDocument()
-
-      const user = userEvent.setup({ delay: null })
-      await user.type(document.querySelector('[contenteditable="true"]')!, 'a rather banale thing')
+      await dispatch(newThought({ value: 'another thought' }))
       await act(vi.runOnlyPendingTimersAsync)
-      expect(screen.getByText(/a rather banale thing/)).toBeInTheDocument()
-      expect(screen.getByText(/Wonderful\./)).toBeInTheDocument()
+      expect(screen.getByText('Good work!')).toBeInTheDocument()
     })
   })
 
-  describe('step subthought - how to create a thought inside thought', async () => {
-    beforeAll(async () => {
-      await dispatch(tutorialNext({}))
-      await act(vi.runOnlyPendingTimersAsync)
-    })
+  it('step subthought - how to create a thought inside thought', async () => {
+    await dispatch([
+      tutorialStep({ value: TUTORIAL_STEP_SUBTHOUGHT }),
+      newThought({
+        value: 'parent',
+      }),
+      newThought({
+        value: 'child',
+        insertNewSubthought: true,
+      }),
+    ])
+    await act(vi.runOnlyPendingTimersAsync)
 
-    it('congratulate on creating a child for the <parent>', async () => {
-      const PARENT_NAME = 'papa'
-      await dispatch([
-        newThought({
-          value: PARENT_NAME,
-        }),
-      ])
-
-      await dispatch(newSubthought())
-      await act(vi.runOnlyPendingTimersAsync)
-
-      const tutorialContainer = screen.getByTestId('tutorial-step')
-      expect(getByText(tutorialContainer, PARENT_NAME, { exact: false })).toBeInTheDocument()
-    })
+    expect(screen.getByText(`As you can see, the new thought "child" is nested`, { exact: false })).toBeInTheDocument()
+    expect(getByText(screen.getByTestId('tutorial-step'), 'parent', { exact: false })).toBeInTheDocument()
   })
 
   describe('step autoexpand - show that thoughts expand and collapse on outside click', async () => {
-    beforeAll(async () => {
-      await dispatch([tutorialNext({})])
-      await act(vi.runOnlyPendingTimersAsync)
+    beforeAll(() => dispatch(tutorialStep({ value: TUTORIAL_STEP_AUTOEXPAND })))
+    it('tells us about thoughts being hidden when clicked away', async () => {
+      expect(
+        screen.getByText('thoughts are automatically hidden when you click away', { exact: false }),
+      ).toBeInTheDocument()
     })
 
-    it('display a tutorial on autoexpand', async () => {
-      expect(screen.getByText(/thoughts are automatically hidden when you/, { exact: false })).toBeInTheDocument()
-    })
+    it('asks for a nested structure, then shows how child is hidden when clicked away', async () => {
+      expect(
+        screen.getByText('Oops! There are no thoughts in your thoughtspace.', { exact: false }),
+      ).toBeInTheDocument()
 
-    it('prompts for adding a subthought', async () => {
-      await dispatch([
-        newThought({
-          value: 'uncle',
+      await dispatch(
+        importText({
+          text: `
+        - uncle
+        - parent`,
         }),
-      ])
+      )
+      await act(vi.runOnlyPendingTimersAsync)
+      expect(screen.getByText("Add a subthought and I'll show you.", { exact: false })).toBeInTheDocument()
 
-      expect(screen.getByText('Add a subthought', { exact: false })).toBeInTheDocument()
+      await dispatch(newThought({ value: 'child', insertNewSubthought: true }))
+      await act(vi.runOnlyPendingTimersAsync)
+      expect(
+        screen.getByText(`Try clicking on thought "uncle" to hide subthought "child".`, { exact: false }),
+      ).toBeInTheDocument()
+
+      await dispatch(setCursorFirstMatch(['uncle']))
+      await act(vi.runOnlyPendingTimersAsync)
+      expect(screen.getByText('Notice that "child" is hidden now.')).toBeInTheDocument()
     })
 
     it('tells us to click away from the subthought to collapse the tree', async () => {
       await dispatch([
-        newThought({
-          value: 'uncle',
+        importText({
+          text: `
+      - parent
+        - child
+      - uncle
+      `,
         }),
-        newThought({
-          value: 'father',
-        }),
-        newThought({
-          value: 'child',
-          insertNewSubthought: true,
-        }),
+        setCursorFirstMatch(['uncle']),
+        tutorialStep({ value: TUTORIAL_STEP_AUTOEXPAND_EXPAND }),
       ])
       await act(vi.runOnlyPendingTimersAsync)
+      expect(screen.getByText('Click "parent" to reveal its subthought "child".', { exact: false })).toBeInTheDocument()
 
-      const tutorialContainer = screen.getByTestId('tutorial-step')
-
-      expect(
-        screen.getByText(`Try clicking on thought "uncle"`, { exact: false, collapseWhitespace: true }),
-      ).toBeInTheDocument()
-      expect(screen.getByText('to hide subthought "child"', { exact: false })).toBeInTheDocument()
-      const user = userEvent.setup({ delay: null })
-      await user.click(screen.getByText('uncle'))
+      await dispatch(setCursorFirstMatch(['parent']))
       await act(vi.runOnlyPendingTimersAsync)
-
-      expect(getByText(tutorialContainer, `Notice that "child" is hidden now.`)).toBeInTheDocument()
-      expect(
-        getByText(tutorialContainer, `Click "father" to reveal its subthought "child".`, { exact: false }),
-      ).toBeInTheDocument()
+      expect(screen.getByText('Lovely. You have completed the tutorial', { exact: false })).toBeInTheDocument()
     })
   })
 
-  describe('step success - ', async () => {
-    beforeAll(async () => {
-      await dispatch(tutorialNext({}))
-      await act(vi.runOnlyPendingTimersAsync)
-    })
+  describe('step success - congratulates on completing first tutorial', async () => {
+    beforeAll(() => dispatch(tutorialStep({ value: TUTORIAL_STEP_SUCCESS })))
     it('congratulate on completing first tutorial', async () => {
       expect(screen.getByText('Lovely. You have completed the tutorial', { exact: false })).toBeInTheDocument()
+    })
+
+    it('asks to continue with tutorial or play on own', async () => {
       expect(screen.getByText('Play on my own')).toBeInTheDocument()
       expect(screen.getByText('Learn more')).toBeInTheDocument()
+    })
 
-      const user = userEvent.setup({ delay: null })
-      user.click(screen.getByText('Learn more'))
-      // await act(vi.runOnlyPendingTimersAsync)
+    it('hides tutorial after clicking "Play on my own"', async () => {
+      userEvent.click(screen.getByText('Play on my own'))
+      await act(vi.runOnlyPendingTimersAsync)
+      expect(() => screen.getByTestId('tutorial-step')).toThrow('Unable to find an element')
     })
   })
 })
 
 describe('Tutorial 2', async () => {
-  beforeEach(createTestAppWithTutorial)
-  afterEach(cleanupTestApp)
-
   it('step start - tell about context menu', async () => {
     await dispatch(tutorialStep({ value: TUTORIAL2_STEP_START }))
     await act(vi.runOnlyPendingTimersAsync)
-
     expect(screen.getByText('If the same thought appears in more than one place', { exact: false })).toBeInTheDocument()
   })
 
@@ -176,8 +172,6 @@ describe('Tutorial 2', async () => {
     expect(screen.getByText('To-Do List')).toBeInTheDocument()
     expect(screen.getByText('Journal Theme')).toBeInTheDocument()
     expect(screen.getByText('Book/Podcast Notes')).toBeInTheDocument()
-
-    // expect(screen.getByText('Project 2')).toBeInTheDocument()
   })
 
   it('step context 1 parent, prompt for creating a first todo', async () => {
@@ -232,7 +226,9 @@ describe('Tutorial 2', async () => {
     ).toBeInTheDocument()
 
     const user = userEvent.setup({ delay: null })
-    await hintShows('Select "Home."')
+    await user.click(screen.getByText('hint'))
+    await act(vi.runOnlyPendingTimersAsync)
+    expect(getByText(screen.getByTestId('tutorial-step')!, 'Select "Home."', { exact: false })).toBeInTheDocument()
     await user.click(screen.getByText('Home'))
     await act(vi.runOnlyPendingTimersAsync)
     expect(screen.getByText(`Hit the Enter key to create a new thought`, { exact: false })).toBeInTheDocument()
@@ -255,8 +251,6 @@ describe('Tutorial 2', async () => {
     expect(screen.getByText('Very good!')).toBeInTheDocument()
     expect(screen.getAllByRole('superscript')[0]).toHaveTextContent('2')
     expect(screen.getByText('This means that “To Do” appears in two places', { exact: false })).toBeInTheDocument()
-
-    // ** test adding a grandchild of Work, which I'm struggling with
   })
 
   it('step context view open - showcase multiple contexts', async () => {
