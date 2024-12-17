@@ -67,7 +67,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
     // Attach pointer handlers to a provided node rather than the signature pad canvas.
     // See: eventNodeRef
-    const handlePointerStart = signaturePad._handlePointerStart.bind(signaturePad)
+    const handlePointerStart = signaturePad._handlePointerDown.bind(signaturePad)
     const handlePointerMove = signaturePad._handlePointerMove.bind(signaturePad)
 
     eventNode?.addEventListener('pointerdown', e => {
