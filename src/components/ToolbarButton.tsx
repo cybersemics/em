@@ -6,6 +6,7 @@ import { token } from '../../styled-system/tokens'
 import CommandId from '../@types/CommandId'
 import DragCommandZone from '../@types/DragCommandZone'
 import Icon from '../@types/IconType'
+import State from '../@types/State'
 import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut } from '../commands'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
@@ -14,6 +15,7 @@ import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
 import { executeCommandWithMulticursor } from '../util/executeCommand'
 import fastClick from '../util/fastClick'
+import getCursorSortDirection from '../util/getCursorSortDirection'
 
 export interface ToolbarButtonProps {
   // see ToolbarProps.customize
@@ -81,6 +83,12 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
 
+  // Get the direction if the shortcut is 'toggleSort'
+  const direction = useSelector((state: State) => {
+    if (shortcutId !== 'toggleSort') return null
+    return getCursorSortDirection(state)
+  })
+
   /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
   const tapUp = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
@@ -88,14 +96,19 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
+
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         executeCommandWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
-        if ((!isActive && !commandState) || (isActive && !isButtonActive)) {
-          setIsAnimated(true)
-        } else {
-          setIsAnimated(false)
-        }
+        // only animate from inactive -> active
+        // only animate toggleSort from Manual -> Asc or Asc to Desc
+        setIsAnimated(
+          shortcutId === 'toggleSort'
+            ? direction === null || direction === 'Asc'
+            : isActive
+              ? !isButtonActive
+              : !commandState,
+        )
 
         // prevent Editable blur
         if (isTouch) {
