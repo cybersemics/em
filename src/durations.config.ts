@@ -1,4 +1,5 @@
-const durationsMillis = {
+/** Animation durations that are imported into the panda config. See recipes/fadeTransition for corresponding FadeTransition animations. */
+const durationsConfig = {
   /* GENERAL ANIMATIONS */
   /* A slow animation that intentionally lags behind user interaction, such as autofocus. Gives the transition the appearance of going at its own pace. Only use in special circumstances. */
   slow: 750,
@@ -25,8 +26,12 @@ const durationsMillis = {
   layoutSlowShift: 750,
   /** The animation duration of a node in the LayoutTree component. This animates thought positions when they are moved. */
   layoutNodeAnimation: 150,
+  /** A faster alternative to layoutNodeAnimation, currently used for new thoughts. */
+  layoutNodeAnimationFast: 75,
+  /* A fade in animation that is triggered for new thoughts. */
+  nodeFadeIn: 80,
   /* A fade out animation that is triggered when a node unmounts. See autofocusChanged for normal opacity animations. */
   nodeFadeOut: 80,
 } as const
 
-export default durationsMillis
+export default durationsConfig

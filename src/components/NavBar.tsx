@@ -63,8 +63,9 @@ const NavBar = ({ position }: { position: string }) => {
         ...(!isTouch || !editing
           ? {
               position: 'sticky',
-              // cannot use safe-area-inset because of mobile Safari z-index issues
-              bottom: 0,
+              /* spacing.safeAreaBottom applies for rounded screens */
+              bottom: 'calc(max(11px, token(spacing.safeAreaBottom)))',
+              marginBottom: '10px',
             }
           : undefined),
       })}
@@ -96,8 +97,6 @@ const NavBar = ({ position }: { position: string }) => {
                   width: '100%',
                   display: 'flex',
                   alignItems: 'flex-end',
-                  /* rounded screens */
-                  paddingBottom: 'calc(max(10px, {spacing.safeAreaBottom}))',
                 }),
               })}
             >

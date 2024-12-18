@@ -3,12 +3,12 @@ import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import hideHUD from '../helpers/hideHUD'
+import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
-import type from '../helpers/type'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -50,7 +50,7 @@ const testSuite = () => {
 
     it('one thought', async () => {
       await press('Enter')
-      await type('a')
+      await keyboard.type('a')
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()

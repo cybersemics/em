@@ -2,10 +2,10 @@ import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import hideVisibility from '../helpers/hideVisibility'
+import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
-import type from '../helpers/type'
 import { page } from '../setup'
 
 expect.extend({
@@ -41,7 +41,7 @@ describe('sidebar', () => {
 
   it('recently edited thoughts', async () => {
     await press('Enter')
-    await type('a')
+    await keyboard.type('a')
 
     await openSidebar()
     await click('[data-testid=sidebar-recentEdited]')

@@ -57,6 +57,7 @@ type TreeThought = {
   // index among all visible thoughts in the tree
   indexDescendant: number
   isCursor: boolean
+  isEmpty: boolean
   isInSortedContext: boolean
   isTableCol1: boolean
   isTableCol2: boolean
@@ -113,6 +114,7 @@ const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
 const useSizeTracking = () => {
   // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
   const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
+  const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
 
   // Track debounced height removals
@@ -150,17 +152,24 @@ const useSizeTracking = () => {
       key: string
     }) => {
       if (height !== null) {
+        // To create the correct selection behavior, thoughts must be clipped on the top and bottom. Otherwise the top and bottom 1px cause the caret to move to the beginning or end of the editable. But clipPath creates a gap between thoughts. To eliminate this gap, thoughts are rendered with a slight overlap by subtracting a small amount from each thought's measured height, thus affecting their y positions as they are rendered.
+        // See: clipPath in recipes/editable.ts
+        const lineHeightOverlap = fontSize / 8
+        const heightClipped = height - lineHeightOverlap
+
         // cancel thought removal timeout
         clearTimeout(sizeRemovalTimeouts.current.get(key))
         sizeRemovalTimeouts.current.delete(key)
 
         setSizes(sizesOld =>
-          height === sizesOld[key]?.height && width === sizesOld[key]?.width && isVisible === sizesOld[key]?.isVisible
+          heightClipped === sizesOld[key]?.height &&
+          width === sizesOld[key]?.width &&
+          isVisible === sizesOld[key]?.isVisible
             ? sizesOld
             : {
                 ...sizesOld,
                 [key]: {
-                  height,
+                  height: heightClipped,
                   width: width || undefined,
                   isVisible,
                 },
@@ -170,7 +179,7 @@ const useSizeTracking = () => {
         removeSize(key)
       }
     },
-    [removeSize],
+    [fontSize, removeSize],
   )
 
   useEffect(() => {
@@ -294,10 +303,11 @@ const linearizeTree = (
     // As soon as the cursor is found, set belowCursor to true. It will be propagated to every subsequent thought.
     // See: TreeThought.belowCursor
     const isCursor = !belowCursor && equalPath(childPath, state.cursor)
-    if (isCursor) {
+    if (isCursor || !state.cursor) {
       belowCursor = true
     }
 
+    const isEmpty = child.value === ''
     const isTable = attributeEquals(state, child.id, '=view', 'Table')
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
     const isInSortedContext = attributeEquals(state, head(simplePath), '=sort', 'Alphabetical')
@@ -312,6 +322,7 @@ const linearizeTree = (
       indexChild: i,
       indexDescendant: virtualIndexNew,
       isCursor,
+      isEmpty,
       isInSortedContext,
       isTableCol1,
       isTableCol2,
@@ -374,6 +385,7 @@ const TreeNode = ({
   indexChild,
   indexDescendant,
   isCursor,
+  isEmpty,
   isTableCol1,
   isTableCol2,
   thoughtKey,
@@ -414,6 +426,10 @@ const TreeNode = ({
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const isLastActionNewThought = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'newThought')
+  })
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -440,6 +456,11 @@ const TreeNode = ({
   // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
+  // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
+  const layoutTransition = isLastActionNewThought
+    ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
+    : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
+
   return (
     <div
       aria-label='tree-node'
@@ -447,7 +468,7 @@ const TreeNode = ({
       // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
       className={css({
         position: 'absolute',
-        transition: `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`,
+        transition: layoutTransition,
       })}
       style={{
         // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
@@ -465,9 +486,10 @@ const TreeNode = ({
     >
       <FadeTransition
         id={thoughtKey}
-        // The FadeTransition is only responsible for fade out on unmount.
+        // The FadeTransition is only responsible for fade out on unmount;
+        // or for fade in on mounting of a new thought.
         // See autofocusChanged for normal opacity transition.
-        duration='nodeFadeOut'
+        duration={isEmpty ? 'nodeFadeIn' : 'nodeFadeOut'}
         nodeRef={fadeThoughtRef}
         in={transitionGroupsProps.in}
         unmountOnExit

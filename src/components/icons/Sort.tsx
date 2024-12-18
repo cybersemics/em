@@ -1,15 +1,9 @@
 import { useSelector } from 'react-redux'
 import IconType from '../../@types/IconType'
-import State from '../../@types/State'
-import { HOME_PATH } from '../../constants'
-import getSortPreference from '../../selectors/getSortPreference'
-import head from '../../util/head'
+import getCursorSortDirection from '../../util/getCursorSortDirection'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/10-sort_4.json'
 import animationDataDesc from './animations/11-sort-descanding_7.json'
-
-/** Cursor Sort Direction. */
-const getCursorSortDirection = (state: State) => getSortPreference(state, head(state.cursor || HOME_PATH)).direction
 
 /** Ascending Sort Icon Component with Conditional Lottie Animation. */
 const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
@@ -33,6 +27,7 @@ const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationCompl
         />
         <polyline
           stroke='currentColor'
+          fill='none'
           strokeLinecap='round'
           strokeLinejoin='round'
           points='2.27 16.42 5.51 19.66 8.81 16.36'
@@ -81,7 +76,17 @@ const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationCompl
 /** Descending Sort Icon Component with Conditional Lottie Animation. */
 const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
-    <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData: animationDataDesc, animationComplete }}>
+    <AnimatedIcon
+      {...{
+        fill,
+        size,
+        style,
+        cssRaw,
+        animated,
+        animationData: animationDataDesc,
+        animationComplete,
+      }}
+    >
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
@@ -100,6 +105,7 @@ const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComp
         />
         <polyline
           stroke='currentColor'
+          fill='none'
           strokeLinecap='round'
           strokeLinejoin='round'
           points='2.27 7.57 5.51 4.33 8.81 7.63'
@@ -148,8 +154,20 @@ const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComp
 /** Sort Icon Component with Conditional Lottie Animation. */
 const SortIcon = ({ size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   const direction = useSelector(getCursorSortDirection)
+
   const Component = direction === 'Desc' ? IconDesc : IconAsc
-  return <Component {...{ size, style, cssRaw, animated, animationComplete }} />
+
+  return (
+    <Component
+      {...{
+        size,
+        style,
+        cssRaw,
+        animated,
+        animationComplete,
+      }}
+    />
+  )
 }
 
 export default SortIcon

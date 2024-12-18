@@ -1,5 +1,5 @@
+import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
-import type from '../helpers/type'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
 
@@ -40,7 +40,7 @@ const pasteHTML = async (html: string) => {
 
 it('escapes typed HTML', async () => {
   await press('Enter', { delay: 10 })
-  await type('hello <b>world</b>')
+  await keyboard.type('hello <b>world</b>')
   await press('Enter', { delay: 10 })
 
   const editable = await waitForEditable('hello &lt;b&gt;world&lt;/b&gt;')

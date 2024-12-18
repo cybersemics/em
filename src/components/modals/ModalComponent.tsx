@@ -89,10 +89,11 @@ class ModalComponent extends React.Component<ModalProps> {
               padding: '10px 20px',
               margin: '-10px -20px',
               position: 'fixed',
-              top: 'calc(9px - 0.2em)',
               right: '11px',
               color: 'inherit',
               textDecoration: 'none',
+              /* spacing.safeAreaTop applies for rounded screens */
+              top: 'calc(token(spacing.safeAreaTop) + 9px - 0.2em)',
             })}
             {...fastClick(this.close)}
           >
