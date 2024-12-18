@@ -12,15 +12,12 @@ import simplifyPath from './simplifyPath'
 
 /** Gets the last visible descendant of a thought. */
 const lastVisibleDescendant = (state: State, path: Path): Path => {
-  // Use simplifyPath only if we're in context view mode
-  const isInContextView = Object.keys(state.contextViews).length > 0 && path.length > 1
-  const effectivePath = isInContextView ? simplifyPath(state, path) : path
-  const id = head(effectivePath)
+  const simplePath = simplifyPath(state, path)
 
   // Only traverse children if the thought or its parent is expanded
-  if (!state.expanded[hashPath(effectivePath)]) return path
+  if (!state.expanded[hashPath(simplePath)]) return path
 
-  const children = getChildren(state, id)
+  const children = getChildren(state, head(simplePath))
   // If no children, return current path
   if (children.length === 0) return path
 
