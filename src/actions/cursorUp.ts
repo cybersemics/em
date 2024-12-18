@@ -15,7 +15,7 @@ const cursorUp = (state: State, { preserveMulticursor }: { preserveMulticursor?:
       prevThought(state, cursor)
     : // otherwise, get the last thought in the home context
       getChildrenSorted(state, HOME_TOKEN).at(-1)?.id
-      ? ([getChildrenSorted(state, HOME_TOKEN).at(-1)!.id] as unknown as Path)
+      ? ([getChildrenSorted(state, HOME_TOKEN).at(-1)!.id] as Path)
       : null
 
   // noop if there is no previous path, i.e. the cursor is on the very first thought

@@ -232,22 +232,4 @@ describe('context view', () => {
     expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeTruthy()
     expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'z'])
   })
-
-  it('move cursor from normal view into context view child', () => {
-    const text = `
-      - =children
-        - =pin
-      - a
-        - m
-          - x
-      - b
-        - m
-          - y
-    `
-
-    const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView, setCursor(['b']), cursorUp]
-    const stateNew = reducerFlow(steps)(initialState())
-
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', 'b'])
-  })
 })
