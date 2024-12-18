@@ -22,6 +22,19 @@ describe('normal view', () => {
     expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
   })
 
+  it('move cursor to previous collapsed sibling', () => {
+    const text = `
+      - a
+        - a1
+      - b
+    `
+    const steps = [importText({ text }), setCursor(['b']), cursorUp]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
+  })
+
   it('move cursor to previous attribute when showHiddenThoughts is true', () => {
     const steps = [
       toggleHiddenThoughts,
