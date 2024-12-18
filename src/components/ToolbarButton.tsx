@@ -89,22 +89,6 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     return getCursorSortDirection(state)
   })
 
-  /** Determines whether to animate the toolbar button based on the shortcut and state. */
-  const shouldAnimate = () => {
-    // Handle the 'toggleSort' shortcut separately
-    if (shortcutId === 'toggleSort') {
-      return direction === null || direction === 'Asc'
-    }
-
-    // General condition for other shortcuts
-    if ((!isActive && !commandState) || (isActive && !isButtonActive)) {
-      return true
-    }
-
-    // If none of the above conditions are met, do not animate
-    return false
-  }
-
   /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
   const tapUp = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
@@ -116,11 +100,15 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         executeCommandWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
 
-        if (shouldAnimate()) {
-          setIsAnimated(true)
-        } else {
-          setIsAnimated(false)
-        }
+        // only animate from inactive -> active
+        // only animate toggleSort from Manual -> Asc or Asc to Desc
+        setIsAnimated(
+          shortcutId === 'toggleSort'
+            ? direction === null || direction === 'Asc'
+            : isActive
+              ? !isButtonActive
+              : !commandState,
+        )
 
         // prevent Editable blur
         if (isTouch) {
