@@ -27,6 +27,7 @@ const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationCompl
         />
         <polyline
           stroke='currentColor'
+          fill='none'
           strokeLinecap='round'
           strokeLinejoin='round'
           points='2.27 16.42 5.51 19.66 8.81 16.36'
@@ -104,6 +105,7 @@ const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComp
         />
         <polyline
           stroke='currentColor'
+          fill='none'
           strokeLinecap='round'
           strokeLinejoin='round'
           points='2.27 7.57 5.51 4.33 8.81 7.63'
