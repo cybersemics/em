@@ -2,7 +2,6 @@ import { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
 import { errorActionCreator as error } from '../actions/error'
 import usePositionFixed from '../hooks/usePositionFixed'
 import CloseButton from './CloseButton'
@@ -33,7 +32,6 @@ const ErrorMessage: FC = () => {
             })}
             style={{
               ...positionFixedStyles,
-              top: `calc(${token('spacing.safeAreaTop')} + ${positionFixedStyles.top}px)`,
             }}
           >
             {value.toString()}

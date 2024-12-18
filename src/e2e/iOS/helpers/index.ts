@@ -13,11 +13,11 @@ import getSelection from './getSelection'
 import hideKeyboardByTappingDone from './hideKeyboardByTappingDone'
 import initSession from './initSession'
 import isKeyboardShown from './isKeyboardShown'
+import keyboard from './keyboard'
 import newThought from './newThought'
 import paste from './paste'
 import tap from './tap'
 import tapReturnKey from './tapReturnKey'
-import type from './type'
 import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
 import waitUntil from './waitUntil'
@@ -47,7 +47,7 @@ const helpers = {
   paste,
   tap,
   tapReturnKey,
-  type,
+  type: keyboard.type,
   waitForEditable,
   waitForElement,
   waitUntil,

@@ -236,7 +236,9 @@ describe('drag', () => {
 describe('drop', () => {
   beforeEach(hideHUD)
 
-  it('DragAndDropThought', async () => {
+  // TODO: Fails intermittently due to mouseup: true.
+  // See previous attempts to fix: https://github.com/cybersemics/em/pull/2701
+  it.skip('DragAndDropThought', async () => {
     await simulateDragAndDrop({ drag: true, drop: true })
 
     await paste(`

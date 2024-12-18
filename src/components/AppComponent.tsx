@@ -184,7 +184,12 @@ const AppComponent: FC = () => {
   const Modal = showModal ? modals[showModal] : null
 
   return (
-    <div>
+    <div
+      className={css({
+        /* safeAreaTop applies for rounded screens */
+        paddingTop: 'safeAreaTop',
+      })}
+    >
       <Alert />
       <Tips />
       <CommandPalette />

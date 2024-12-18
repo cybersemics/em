@@ -730,3 +730,96 @@ describe('expand with : char', () => {
     expect(isContextExpanded(stateNew, ['<b>b:</b>', '<b><i>c:</i></b>'])).toBeTruthy()
   })
 })
+
+describe('=done', () => {
+  it('only child descendants are not expanded with =done', () => {
+    const text = `
+      - a
+        - b
+          - =done
+            - c
+    `
+
+    const steps = [importText({ text }), setCursor(['a'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
+  })
+
+  it('child with =done is not expanded by =children/=pin/true', () => {
+    const text = `
+    - a
+      - =children
+        - =pin
+          - true
+      - b
+        - =done
+        - c
+      - d
+    `
+
+    const steps = [importText({ text }), setCursor(['a'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
+  })
+
+  it('child with =done is expanded by cursor despite =children/=pin/true on parent', () => {
+    const text = `
+      - a
+        - =children
+          - =pin
+            - true
+        - b
+          - =done
+            - c
+    `
+
+    const steps = [importText({ text }), setCursor(['a', 'b'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+  })
+
+  it('children of cursor should always be visible, it should take precedence over =done', () => {
+    const text = `
+      - a
+        - =done
+        - b
+          - c
+    `
+
+    const steps = [importText({ text }), setCursor(['a', 'b'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+  })
+
+  it('siblings of thoughts with =done should not be expanded', () => {
+    const text = `
+      - a
+        - b
+          - =done
+            - c
+          - d
+            - e
+    `
+
+    const steps = [importText({ text }), setCursor(['a'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'd'])).toBeFalsy()
+  })
+})
