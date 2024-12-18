@@ -29,13 +29,8 @@ const lastVisibleDescendant = (state: State, path: Path): Path => {
  * Gets the last visible descendant of the previous sibling.
  * If the previous sibling is hidden, recursively tries the next previous sibling.
  */
-const getLastVisibleDescendantOfPreviousSibling = (
-  state: State,
-  path: Path,
-  currentSibling: Path | null = null,
-): Path | null => {
-  const currentPath = currentSibling || path
-  const prevSiblingThought = prevSibling(state, currentPath)
+const getLastVisibleDescendantOfPreviousSibling = (state: State, path: Path): Path | null => {
+  const prevSiblingThought = prevSibling(state, path)
 
   if (!prevSiblingThought) return null
 
@@ -46,7 +41,7 @@ const getLastVisibleDescendantOfPreviousSibling = (
   }
 
   const prevPath = appendToPath(parentOf(path), prevSiblingThought.id)
-  return getLastVisibleDescendantOfPreviousSibling(state, path, prevPath)
+  return getLastVisibleDescendantOfPreviousSibling(state, prevPath)
 }
 
 /** Gets the previous thought in visual order. */
