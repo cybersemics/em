@@ -95,7 +95,6 @@ const cursorUpShortcut: Command = {
       const isPrevPathMulticursor = prevPath && isMulticursorPath(state, prevPath)
 
       dispatch([
-        setCursor({ path: prevPath, preserveMulticursor: true }),
         dispatch => {
           // New multicursor set
           if (isMulticursorEmpty) {
@@ -124,6 +123,7 @@ const cursorUpShortcut: Command = {
             return
           }
         },
+        setCursor({ path: prevPath, preserveMulticursor: true }),
       ])
 
       requestAnimationFrame(() => {
