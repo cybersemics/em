@@ -9,6 +9,7 @@ import contextToThoughtId from '../selectors/contextToThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import containsURL from '../util/containsURL'
@@ -78,6 +79,12 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
   }
 
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
+
+  // Do not expand thoughts that are part of multiselection
+  if (isMulticursorPath(state, simplePath)) {
+    return {}
+  }
+
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
   const showContexts = isContextViewActive(state, path)
@@ -183,7 +190,6 @@ function expandThoughts(state: State, path: Path | null): Index<Path | Context> 
   if (path && !getThoughtById(state, head(path))) {
     throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
-
   return expandThoughtsRecursive(state, path || HOME_PATH, HOME_PATH)
 }
 
