@@ -1,3 +1,4 @@
+import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { editingActionCreator as editing } from '../actions/editing'
@@ -46,6 +47,7 @@ const useLongPress = (
       clearTimeout(timerIdRef.current)
       timerIdRef.current = setTimeout(() => {
         globals.longpressing = true
+        Haptics.impact({ style: ImpactStyle.Light })
         onLongPressStart?.()
         lock = true
         if (!unmounted.current) {

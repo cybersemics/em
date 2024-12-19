@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
 import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
 import Direction from '../@types/Direction'
@@ -159,6 +161,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         if (this.props.shouldCancelGesture?.()) {
           this.props.onCancel?.({ clientStart: this.clientStart, e })
           gestureStore.update('')
+          if (Capacitor.isNativePlatform()) {
+            Haptics.notification({ type: NotificationType.Warning })
+          }
           this.abandon = true
           return
         }
@@ -176,6 +181,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           this.scrollYStart = window.scrollY
           if (this.props.onStart) {
             this.props.onStart({ clientStart: this.clientStart!, e })
+            if (Capacitor.isNativePlatform()) {
+              Haptics.impact({ style: ImpactStyle.Light })
+            }
           }
           return
         }
@@ -200,6 +208,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             // append the gesture to the sequence and call the onGesture handler
             this.sequence += g
             this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
+            if (Capacitor.isNativePlatform() && this.sequence.length > 1 && this.sequence.length < 5) {
+              Haptics.impact({ style: ImpactStyle.Light })
+            }
             gestureStore.update(this.sequence)
           }
         }

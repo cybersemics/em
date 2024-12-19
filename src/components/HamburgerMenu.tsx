@@ -96,7 +96,7 @@ const HamburgerMenu = () => {
           setTimeout(() => {
             dispatch(toggleSidebar({}))
           }, 10)
-        })}
+        }, true)}
       >
         <Menu width={width} height={width * 0.7} strokeWidth={fontSize / 20} />
       </div>

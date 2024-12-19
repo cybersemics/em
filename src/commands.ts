@@ -1,4 +1,7 @@
 /* eslint-disable import/prefer-default-export */
+
+/** Defines global keyboard shortcuts and gestures. */
+import { Haptics, NotificationType } from '@capacitor/haptics'
 import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
@@ -189,6 +192,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       // only show
       (command || state.alert?.alertType === AlertType.GestureHint)
     ) {
+      Haptics.notification({ type: NotificationType.Warning })
       store.dispatch(
         // alert the command label if it is a valid gesture
         // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
