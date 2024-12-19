@@ -89,6 +89,10 @@ const Sidebar = () => {
       disableSwipeToOpen={!isTouch}
       ref={containerRef}
       transitionDuration={durations.get('fast')}
+      // On iOS Safari, restoring focus works when tapping the backdrop to close the sidebar, but not when tapping the hamburger
+      // menu to close the sidebar. Hopefully the hamburger menu can be fixed and focus can be restored properly in all cases.
+      // Until then, letting the backdrop (correctly) restore focus results in inconsistent behavior.
+      ModalProps={{ disableRestoreFocus: true }}
       SwipeAreaProps={{
         style: {
           // Set width here since setting style with SwipeAreaProps will override the swipeAreaWidth prop.
