@@ -200,7 +200,7 @@ const VirtualThought = ({
 
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
-  if (!thought) return null
+  if (!thought) return <span>deleted</span>
 
   return (
     <div
