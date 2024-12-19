@@ -21,6 +21,8 @@ import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../.
 beforeEach(createTestAppWithTutorial)
 afterEach(cleanupTestApp)
 
+const user = userEvent.setup({ delay: null })
+
 describe('Tutorial 1', async () => {
   describe('step start', () => {
     it('shows the welcome text', () => {
@@ -28,7 +30,6 @@ describe('Tutorial 1', async () => {
     })
 
     it('shows the "Next" button, that leads to the first step', async () => {
-      const user = userEvent.setup({ delay: null })
       await user.click(screen.getByText('Next'))
       await act(vi.runOnlyPendingTimersAsync)
       expect(
@@ -40,7 +41,6 @@ describe('Tutorial 1', async () => {
   it('step first thought - how to create a thought ', async () => {
     expect(screen.getByText('Hit the Enter key to create a new thought.')).toBeInTheDocument()
 
-    const user = userEvent.setup({ delay: null })
     await act(() => user.keyboard('{Enter}'))
     expect(screen.getByText('You did it!')).toBeInTheDocument()
     expect(screen.getByText('Now type something. Anything will do.')).toBeInTheDocument()
@@ -178,7 +178,6 @@ describe('Tutorial 2', async () => {
     await dispatch(tutorialNext({}))
     await act(vi.runOnlyPendingTimersAsync)
 
-    const user = userEvent.setup({ delay: null })
     expect(
       screen.getByText('Excellent choice. Now create a new thought with the text “Home”', { exact: false }),
     ).toBeInTheDocument()
@@ -225,7 +224,6 @@ describe('Tutorial 2', async () => {
       screen.getByText(`Now we are going to create a different "To Do" list.`, { exact: false }),
     ).toBeInTheDocument()
 
-    const user = userEvent.setup({ delay: null })
     await user.click(screen.getByText('hint'))
     await act(vi.runOnlyPendingTimersAsync)
     expect(getByText(screen.getByTestId('tutorial-step')!, 'Select "Home."', { exact: false })).toBeInTheDocument()
@@ -278,7 +276,6 @@ describe('Tutorial 2', async () => {
 
     expect(screen.getByText("Hit Alt + Shift + S to view the current thought's contexts.")).toBeInTheDocument()
 
-    const user = userEvent.setup({ delay: null })
     await user.keyboard('{Alt>}{Shift>}S{/Shift}{/Alt}')
     await act(vi.runOnlyPendingTimersAsync)
     expect(
@@ -308,7 +305,6 @@ describe('Tutorial 2', async () => {
       screen.getByText('Congratulations! You have completed Part II of the tutorial.', { exact: false }),
     ).toBeInTheDocument()
 
-    const user = userEvent.setup({ delay: null })
     user.click(screen.getByText('Finish'))
     await act(vi.runOnlyPendingTimersAsync)
 
