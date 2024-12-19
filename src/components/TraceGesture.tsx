@@ -12,7 +12,7 @@ import isInGestureZone from '../util/isInGestureZone'
 
 interface TraceGestureProps {
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
-  // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
+  // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handleTouchStart and _handleTouchMove are added to eventNode and user-events:none is set on the signature pad canvas.
   eventNodeRef?: React.RefObject<HTMLElement>
 }
 
@@ -65,23 +65,23 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     const signaturePad = signaturePadRef.current['signaturePad']
     const eventNode = eventNodeRef?.current
 
-    // Attach pointer handlers to a provided node rather than the signature pad canvas.
+    // Attach touch handlers to a provided node rather than the signature pad canvas.
     // See: eventNodeRef
-    const handlePointerStart = signaturePad._handlePointerStart.bind(signaturePad)
-    const handlePointerMove = signaturePad._handlePointerMove.bind(signaturePad)
+    const handleTouchStart = signaturePad._handleTouchStart.bind(signaturePad)
+    const handleTouchMove = signaturePad._handleTouchMove.bind(signaturePad)
 
-    eventNode?.addEventListener('pointerdown', e => {
+    eventNode?.addEventListener('touchstart', e => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
       e.preventDefault = noop
-      const shouldActivateGesture = isInGestureZone(e.clientX, e.clientY, leftHanded)
+      const shouldActivateGesture = isInGestureZone(e.touches[0].clientX, e.touches[0].clientY, leftHanded)
       if (shouldActivateGesture) {
-        handlePointerStart(e)
+        handleTouchStart(e)
       }
     })
-    eventNode?.addEventListener('pointermove', e => {
+    eventNode?.addEventListener('touchmove', e => {
       e.preventDefault = noop
-      handlePointerMove(e)
+      handleTouchMove(e)
     })
 
     signaturePad.addEventListener('beginStroke', onBeginStroke)
@@ -92,8 +92,8 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad.canvas.height = signaturePad.canvas.offsetHeight
 
     return () => {
-      eventNode?.removeEventListener('pointerdown', handlePointerStart)
-      eventNode?.removeEventListener('pointermove', handlePointerMove)
+      eventNode?.removeEventListener('touchstart', handleTouchStart)
+      eventNode?.removeEventListener('touchmove', handleTouchMove)
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
   }, [eventNodeRef, onBeginStroke, leftHanded])
