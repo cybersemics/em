@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSidebar'
+import { isSafari, isTouch } from '../browser'
 import usePositionFixed from '../hooks/usePositionFixed'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import fastClick from '../util/fastClick'
@@ -90,12 +91,16 @@ const HamburgerMenu = () => {
           // Therefore, position the HamburgerMenu at top: 1px so that the sidebar is not accidentally opened on tab change.
           top: `calc(${positionFixedStyles.top} + 1px)`,
         }}
-        {...fastClick(() => {
+        {...fastClick(e => {
           // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?
           // onClick does not have the same problem
           setTimeout(() => {
             dispatch(toggleSidebar({}))
           }, 10)
+          // The Editables need to ignore the click event and its corresponding blur, fired after all of the touch events.
+          if (isTouch && isSafari()) {
+            e.preventDefault()
+          }
         })}
       >
         <Menu width={width} height={width * 0.7} strokeWidth={fontSize / 20} />
