@@ -97,7 +97,8 @@ const HamburgerMenu = () => {
           setTimeout(() => {
             dispatch(toggleSidebar({}))
           }, 10)
-          // The Editables need to ignore the click event and its corresponding blur, fired after all of the touch events.
+          // There is no click event fired when the sidebar is opened on iOS Safari, but there is one fired when it is closed via hamburger menu. This extraneous click event doesn't
+          // interfere as long as we want the keyboard to stay closed when users close the sidebar, but if we want to restore focus to an Editable then it will need to be suppressed.
           if (isTouch && isSafari()) {
             e.preventDefault()
           }
