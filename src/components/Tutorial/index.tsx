@@ -86,7 +86,7 @@ const Tutorial: FC = () => {
           ✕ close tutorial
         </a>
         <div className={css({ clear: 'both' })}>
-          <div>
+          <div data-testid='tutorial-step'>
             <TransitionGroup>
               {tutorialStepComponent ? (
                 <WithCSSTransition
