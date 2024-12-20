@@ -432,6 +432,10 @@ const TreeNode = ({
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
   })
+  const isLastActionDeleteThought = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'deleteThoughtWithCursor')
+  })
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -491,7 +495,7 @@ const TreeNode = ({
         // The FadeTransition is only responsible for fade out on unmount;
         // or for fade in on mounting of a new thought.
         // See autofocusChanged for normal opacity transition.
-        duration={isEmpty ? 'nodeFadeIn' : 'nodeFadeOut'}
+        duration={isEmpty ? 'nodeFadeIn' : isLastActionDeleteThought ? 'nodeDissolve' : 'nodeFadeOut'}
         nodeRef={fadeThoughtRef}
         in={transitionGroupsProps.in}
         unmountOnExit
