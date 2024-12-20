@@ -23,7 +23,10 @@ const addMulticursor = (state: State, { path, ignoreCursor }: { path: Path; igno
         // on desktop, add the cursor to the multicursor set if it's empty
         ...(isEmpty && !ignoreCursor && state.cursor && !isTouch ? { [hashPath(state.cursor)]: state.cursor } : {}),
       },
-      // update expanded state to include both cursor and new multicursor path
+    }),
+    // update expanded state after multicursors have been updated
+    state => ({
+      ...state,
       expanded: expandThoughts(state, path),
     }),
     // on desktop, set the cursor to the new multicursor if none exists

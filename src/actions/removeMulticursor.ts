@@ -12,8 +12,8 @@ const removeMulticursor = (state: State, { path }: { path: Path }): State => {
   return {
     ...state,
     multicursors: remainingMulticursors,
-    // Update expanded state based on remaining cursor or multicursors
-    expanded: expandThoughts(state, state.cursor),
+    // Update expanded state based on remaining cursor or multicursors, using updated state
+    expanded: expandThoughts({ ...state, multicursors: remainingMulticursors }, state.cursor),
   }
 }
 

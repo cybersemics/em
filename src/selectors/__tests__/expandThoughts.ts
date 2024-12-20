@@ -1,5 +1,6 @@
 import Context from '../../@types/Context'
 import State from '../../@types/State'
+import clearMulticursors from '../../actions/clearMulticursors'
 import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
@@ -846,5 +847,27 @@ describe('multicursor', () => {
     // Their children should not be expanded
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'd', 'e'])).toBeFalsy()
+  })
+
+  it('should expand thoughts after clearing multicursor selection', () => {
+    const text = `
+      - a
+        - b
+          - c
+        - d
+          - e
+    `
+
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'b']),
+      addMulticursorAtFirstMatch(['a', 'd']),
+      clearMulticursors,
+      setCursor(['a', 'd']),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    // After clearing multicursor, thoughts should be expanded again
+    expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
   })
 })
