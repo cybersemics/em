@@ -139,9 +139,11 @@ const useEditMode = ({
     })
   }, [])
 
-  // Resume focus if sidebar was just closed and isEditing is true
+  // Resume focus if sidebar was just closed and isEditing is true.
+  // Disable focus restoration on mobile until the hamburger menu & sidebar backdrop can be made to
+  // produce consistent results when clicked to close the sidebar.
   useEffect(() => {
-    if (isEditing && !showSidebar && hadSidebar) {
+    if (!isTouch && isEditing && !showSidebar && hadSidebar) {
       contentRef.current?.focus()
     }
   }, [contentRef, hadSidebar, isEditing, showSidebar])
