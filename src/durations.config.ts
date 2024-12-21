@@ -32,6 +32,8 @@ const durationsConfig = {
   nodeFadeIn: 80,
   /* A fade out animation that is triggered when a node unmounts. See autofocusChanged for normal opacity animations. */
   nodeFadeOut: 80,
+  /* A dissolve animation that is triggered when a node is deleted. */
+  nodeDissolve: 80,
 } as const
 
 export default durationsConfig
