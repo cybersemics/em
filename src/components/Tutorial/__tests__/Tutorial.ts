@@ -13,7 +13,11 @@ import {
 } from '../../../constants'
 import exportContext from '../../../selectors/exportContext'
 import store from '../../../stores/app'
-import { cleanupTestApp, createTestAppWithTutorial, default as createTestApp } from '../../../test-helpers/createTestApp'
+import {
+  cleanupTestApp,
+  default as createTestApp,
+  createTestAppWithTutorial,
+} from '../../../test-helpers/createTestApp'
 import dispatch from '../../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../../test-helpers/setCursorFirstMatch'
 
@@ -31,6 +35,7 @@ describe.only('A curious case of me not being able to grasp keyboard', () => {
     expect(screen.getByText('Socrates')).toBeInTheDocument()
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
+    // eslint-disable-next-line no-console
     console.debug('gotta be one thought', exported)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -42,7 +47,8 @@ describe.only('A curious case of me not being able to grasp keyboard', () => {
     await user.keyboard('{Enter}')
     expect(screen.getByText('Socrates')).toBeInTheDocument()
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    
+
+    // eslint-disable-next-line no-console
     console.debug('after pressing enter', exported)
     expect(exported).toBe(`- ${HOME_TOKEN}
     - Socrates`)
@@ -56,7 +62,9 @@ describe.only('A curious case of me not being able to grasp keyboard', () => {
     await user.keyboard('{Enter}')
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    console.debug('two thoughts',exported)
+
+    // eslint-disable-next-line no-console
+    console.debug('two thoughts', exported)
   })
 
   it('nested thoughts are broken', async () => {
@@ -68,7 +76,9 @@ describe.only('A curious case of me not being able to grasp keyboard', () => {
     await user.keyboard('{Enter}')
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    console.debug('subthoughts',exported)
+
+    // eslint-disable-next-line no-console
+    console.debug('subthoughts', exported)
   })
 
   it('nested thoughts are broken', async () => {
@@ -78,12 +88,14 @@ describe.only('A curious case of me not being able to grasp keyboard', () => {
     // await user.keyboard('{Control>}{Enter}{/Control}')
     await user.type(document.querySelectorAll('[contenteditable="true"]')[1], 'Plato')
     await user.keyboard('{Meta>}{Enter}{/Meta}')
-    
+
     await user.type(document.querySelectorAll('[contenteditable="true"]')[2], 'Aristole')
     await user.keyboard('{Enter}')
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    console.debug('subthoughts',exported)
+
+    // eslint-disable-next-line no-console
+    console.debug('subthoughts', exported)
   })
 })
 
@@ -196,7 +208,6 @@ describe('Tutorial 1', async () => {
 })
 
 describe('Tutorial 2', async () => {
-  
   it('step start - tell about context menu', async () => {
     expect(store.getState().storageCache?.tutorialStep).toBe(TUTORIAL_STEP_SUCCESS)
 
@@ -216,9 +227,9 @@ describe('Tutorial 2', async () => {
     expect(screen.getByText('To-Do List')).toBeInTheDocument()
     expect(screen.getByText('Journal Theme')).toBeInTheDocument()
     expect(screen.getByText('Book/Podcast Notes')).toBeInTheDocument()
-    // await cleanupTestApp()  
+    // await cleanupTestApp()
   })
-  
+
   it('step context 1 parent, prompt for creating a first todo', async () => {
     // await createTestAppWithTutorial()
     await user.click(screen.getByText('To-Do List'))
@@ -237,16 +248,12 @@ describe('Tutorial 2', async () => {
     expect(screen.getByText(`Let's say that you want to make a list of things`, { exact: false })).toBeInTheDocument()
     expect(screen.getByText(`Add a thought with the text "To Do"`, { exact: false })).toBeInTheDocument()
 
-    
-    await dispatch([
-      setCursorFirstMatch(['Home']),
-    ])
+    await dispatch([setCursorFirstMatch(['Home'])])
     await act(vi.runOnlyPendingTimersAsync)
     await user.keyboard('{Meta>}{Enter}{/Meta}')
     await user.type(document.querySelectorAll('[contenteditable="true"]')[1], 'To Do')
 
     await user.keyboard('{Enter}')
-    console.log(exportContext(store.getState(), [HOME_TOKEN], 'text/plain'))
     expect(screen.getByText(`Now add a thought to “To Do”`, { exact: false })).toBeInTheDocument()
     screen.getByText('To Do').focus()
     fireEvent.keyUp(screen.getByText('To Do'), {
