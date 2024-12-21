@@ -59,6 +59,8 @@ const Subthought = ({
 }) => {
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
+  // Cache the DOM before it is deleted
+  const cachedHTMLRef = useRef<string | null>(null)
   const thought = useSelector(state => getThoughtById(state, head(simplePath)) as ThoughtType | undefined, shallowEqual)
   const noOtherContexts = useSelector(
     state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
@@ -114,6 +116,18 @@ const Subthought = ({
     // start opacity at 0 and set to actual opacity in useEffect
     ref.current.style.opacity = opacity
   })
+
+  // Capture the static HTML string when the thought is first rendered
+  useEffect(() => {
+    if (thought && ref.current) {
+      cachedHTMLRef.current = ref.current.innerHTML
+    }
+  }, [thought])
+
+  // If the thought is deleted, return the cached static HTML from the ref
+  if (!thought && cachedHTMLRef.current) {
+    return <div dangerouslySetInnerHTML={{ __html: cachedHTMLRef.current }} />
+  }
 
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
