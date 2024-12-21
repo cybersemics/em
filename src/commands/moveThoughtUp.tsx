@@ -16,6 +16,7 @@ const moveThoughtUpShortcut: Command = {
   gesture: 'udu',
   keyboard: { key: Key.ArrowUp, meta: true, shift: true },
   multicursor: true,
+  preventDefault: true,
   svg: MoveThoughtUpIcon,
   canExecute: state => {
     const { cursor } = state

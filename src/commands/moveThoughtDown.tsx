@@ -17,6 +17,7 @@ const moveThoughtDownShortcut: Command = {
     enabled: true,
     reverse: true,
   },
+  preventDefault: true,
   svg: MoveThoughtDownIcon,
   canExecute: state => {
     const { cursor } = state
