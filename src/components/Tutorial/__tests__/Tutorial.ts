@@ -13,11 +13,79 @@ import {
 } from '../../../constants'
 import exportContext from '../../../selectors/exportContext'
 import store from '../../../stores/app'
-import { cleanupTestApp, createTestAppWithTutorial } from '../../../test-helpers/createTestApp'
+import { cleanupTestApp, createTestAppWithTutorial, default as createTestApp } from '../../../test-helpers/createTestApp'
 import dispatch from '../../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../../test-helpers/setCursorFirstMatch'
 
+// as per https://testing-library.com/docs/user-event/options/#advancetimers
+// we should avoid using { delay: null }, and use jest.advanceTimersByTime instead
 const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
+
+describe.only('A curious case of me not being able to grasp keyboard', () => {
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
+
+  it('creates a thought with two empty thoughts below it', async () => {
+    await user.keyboard('{Enter}')
+    await user.type(document.querySelectorAll('[contenteditable="true"]')[0], 'Socrates')
+    expect(screen.getByText('Socrates')).toBeInTheDocument()
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    console.debug('gotta be one thought', exported)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+    - Socrates`)
+  })
+  it('creates a thought with six empty thoughts below it, if you press enter', async () => {
+    await user.keyboard('{Enter}')
+    await user.type(document.querySelectorAll('[contenteditable="true"]')[0], 'Socrates')
+    await user.keyboard('{Enter}')
+    expect(screen.getByText('Socrates')).toBeInTheDocument()
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    
+    console.debug('after pressing enter', exported)
+    expect(exported).toBe(`- ${HOME_TOKEN}
+    - Socrates`)
+  })
+
+  it('creating two thoughts produces something strange', async () => {
+    await user.keyboard('{Enter}')
+    await user.type(document.querySelectorAll('[contenteditable="true"]')[0], 'Socrates')
+    await user.keyboard('{Enter}')
+    await user.type(document.querySelectorAll('[contenteditable="true"]')[1], 'Plato')
+    await user.keyboard('{Enter}')
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    console.debug('two thoughts',exported)
+  })
+
+  it('nested thoughts are broken', async () => {
+    await user.keyboard('{Enter}')
+    await user.type(document.querySelectorAll('[contenteditable="true"]')[0], 'Socrates')
+    await user.keyboard('{Meta>}{Enter}{/Meta}')
+    // await user.keyboard('{Control>}{Enter}{/Control}')
+    await user.type(document.querySelectorAll('[contenteditable="true"]')[1], 'Plato')
+    await user.keyboard('{Enter}')
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    console.debug('subthoughts',exported)
+  })
+
+  it('nested thoughts are broken', async () => {
+    await user.keyboard('{Enter}')
+    await user.type(document.querySelectorAll('[contenteditable="true"]')[0], 'Socrates')
+    await user.keyboard('{Meta>}{Enter}{/Meta}')
+    // await user.keyboard('{Control>}{Enter}{/Control}')
+    await user.type(document.querySelectorAll('[contenteditable="true"]')[1], 'Plato')
+    await user.keyboard('{Meta>}{Enter}{/Meta}')
+    
+    await user.type(document.querySelectorAll('[contenteditable="true"]')[2], 'Aristole')
+    await user.keyboard('{Enter}')
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    console.debug('subthoughts',exported)
+  })
+})
 
 beforeEach(createTestAppWithTutorial)
 afterAll(cleanupTestApp)
@@ -169,11 +237,13 @@ describe('Tutorial 2', async () => {
     expect(screen.getByText(`Let's say that you want to make a list of things`, { exact: false })).toBeInTheDocument()
     expect(screen.getByText(`Add a thought with the text "To Do"`, { exact: false })).toBeInTheDocument()
 
+    
     await dispatch([
       setCursorFirstMatch(['Home']),
-      newThought({ value: 'To Do', insertNewSubthought: true }),
     ])
     await act(vi.runOnlyPendingTimersAsync)
+    await user.keyboard('{Meta>}{Enter}{/Meta}')
+    await user.type(document.querySelectorAll('[contenteditable="true"]')[1], 'To Do')
 
     await user.keyboard('{Enter}')
     console.log(exportContext(store.getState(), [HOME_TOKEN], 'text/plain'))
