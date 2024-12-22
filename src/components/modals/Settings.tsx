@@ -1,4 +1,3 @@
-import { Capacitor } from '@capacitor/core'
 import { FC, PropsWithChildren, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
@@ -124,10 +123,10 @@ const ModalSettings = () => {
             key='close'
             title='Close'
             {...fastClick(() => {
-              close()
-              if (Capacitor.isNativePlatform()) {
-                window.location.reload()
-              }
+              close(true)
+              // if (Capacitor.isNativePlatform()) {
+              //   window.location.reload()
+              // }
             })}
           />
         </div>
