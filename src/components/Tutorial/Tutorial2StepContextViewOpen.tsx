@@ -46,7 +46,7 @@ const Tutorial2StepContextViewOpen = () => {
       {TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" or "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}" to show it again.
     </p>
   ) : contextViewClosed ? (
-    <p>Oops, somehow the context view was closed. Select "Relationships".</p>
+    <p>Oops, somehow the context view was closed. Select "{TUTORIAL_CONTEXT[tutorialChoice]}".</p>
   ) : (
     <>
       <p>
