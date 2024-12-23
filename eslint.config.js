@@ -1,3 +1,4 @@
+import panda from '@pandacss/eslint-plugin'
 import stylisticTs from '@stylistic/eslint-plugin'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import typescriptParser from '@typescript-eslint/parser'
@@ -28,6 +29,7 @@ const commonPlugins = {
   '@typescript-eslint': typescriptEslint,
   import: importPlugin,
   'react-hooks': reactHooks,
+  '@pandacss': panda,
 }
 
 const commonRules = {
@@ -191,6 +193,15 @@ export default [
       // react-refresh
 
       'react-refresh/only-export-components': 'error',
+      // pandacss
+
+      ...panda.configs.recommended.rules,
+      '@pandacss/no-config-function-in-source': 'off',
+      '@pandacss/prefer-longhand-properties': 'error',
+      '@pandacss/no-dynamic-styling': 'off',
+      '@pandacss/no-hardcoded-color': 'error',
+      '@pandacss/no-unsafe-token-fn-usage': 'off',
+      '@pandacss/no-property-renaming': 'error',
     },
   },
 
