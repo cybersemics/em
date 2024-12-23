@@ -1,7 +1,9 @@
+import State from '../../@types/State'
 import cursorUp from '../../actions/cursorUp'
 import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
+import toggleAttribute from '../../actions/toggleAttribute'
 import toggleContextView from '../../actions/toggleContextView'
 import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
@@ -170,6 +172,33 @@ describe('normal view', () => {
     const state = reducerFlow(steps)(initialState())
     const cursor = state.cursor
     expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a'])
+  })
+
+  it('should navigate correctly in descending sorted list with formatted text', () => {
+    const text = `
+      - fruits
+        - =sort
+          - Alphabetical
+            - Desc
+        - apple
+        - orange
+        - banana
+        - pear
+    `
+    const steps = [
+      importText({ text }),
+      // Make apple bold
+      (state: State) =>
+        toggleAttribute(state, {
+          path: contextToPath(state, ['fruits', 'apple']),
+          values: ['=style', 'bold'],
+        }),
+      setCursor(['fruits', 'pear']),
+      cursorUp,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['fruits', 'banana'])
   })
 })
 

@@ -2,7 +2,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { getChildrenSorted } from '../selectors/getChildren'
+import { getShownChildrenRanked } from '../selectors/getChildren'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
@@ -17,7 +17,7 @@ const nextSibling = (state: State, idOrPath: ThoughtId | Path): Thought | null =
   const thought = getThoughtById(state, id)
   if (!thought || (!state.showHiddenThoughts && isAttribute(thought.value))) return null
 
-  const siblings = getChildrenSorted(state, thought.parentId)
+  const siblings = getShownChildrenRanked(state, thought.parentId)
   const index = siblings.findIndex(child => child.id === id)
 
   if (index === -1) {

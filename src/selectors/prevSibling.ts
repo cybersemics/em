@@ -1,7 +1,7 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import { getChildrenSorted } from '../selectors/getChildren'
+import { getShownChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import head from '../util/head'
@@ -32,7 +32,7 @@ export const prevSibling = (
   // siblings, including the current thought
   const siblings = showContexts
     ? getContextsSortedAndRanked(state, getThoughtById(state, head(parentPath)).value)
-    : getChildrenSorted(state, thought.parentId)
+    : getShownChildrenRanked(state, thought.parentId)
 
   // in context view, we need to match the context's parentId, since all context's ids refer to lexeme instances
   const index = siblings.findIndex(child => (showContexts ? child.parentId : child.id) === id)
