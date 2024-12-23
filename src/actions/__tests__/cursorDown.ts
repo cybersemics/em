@@ -65,10 +65,16 @@ describe('normal view', () => {
   })
 
   it('work for sorted thoughts', () => {
+    const text = `
+      - a
+        - =sort
+          - Alphabetical
+            - Asc
+        - m
+        - n
+    `
     const steps = [
-      newThought('a'),
-      newSubthought('n'),
-      newThought('m'),
+      importText({ text }),
       setCursor(['a']),
       (state: State) =>
         toggleAttribute(state, { path: contextToPath(state, ['a']), values: ['=sort', 'Alphabetical'] }),
@@ -78,6 +84,33 @@ describe('normal view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
+  })
+
+  it('should navigate correctly in descending sorted list with formatted text', () => {
+    const text = `
+      - fruits
+        - =sort
+          - Alphabetical
+            - Desc
+        - apple
+        - orange
+        - banana
+        - pear
+    `
+    const steps = [
+      importText({ text }),
+      // Make apple bold
+      (state: State) =>
+        toggleAttribute(state, {
+          path: contextToPath(state, ['fruits', 'apple']),
+          values: ['=style', 'bold'],
+        }),
+      setCursor(['fruits', 'apple']),
+      cursorDown,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['fruits', 'orange'])
   })
 })
 

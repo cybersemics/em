@@ -158,6 +158,21 @@ export const getChildrenRanked = moize(
   },
 )
 
+export const getShownChildrenRanked = moize(
+  (state: State, thoughtId: ThoughtId | null): Thought[] => {
+    const allChildren = childIdsToThoughts(state, getAllChildren(state, thoughtId))
+    // Filter visible children before sorting
+    const visibleChildren = state.showHiddenThoughts
+      ? allChildren
+      : allChildren.filter(child => isVisible(state, child))
+    return sort(visibleChildren, compareByRank)
+  },
+  {
+    maxSize: 50,
+    profileName: 'getChildrenRanked',
+  },
+)
+
 /** Returns any child of a thought. Only use on a thought with a single child. Also see: firstVisibleChild. */
 export const anyChild = (state: State, id: ThoughtId | undefined | null): Thought | undefined => {
   if (!id) return undefined
@@ -231,7 +246,8 @@ export const getChildrenSorted = (state: State, id: ThoughtId | null): Thought[]
   return id ? getVisibleThoughtsById(getAllChildrenSorted, state, id) : NO_CHILDREN
 }
 /** Returns the first visible child of a sorted context. */
-export const firstVisibleChild = (state: State, id: ThoughtId): Thought | undefined => getChildrenSorted(state, id)[0]
+export const firstVisibleChild = (state: State, id: ThoughtId): Thought | undefined =>
+  getShownChildrenRanked(state, id)[0]
 
 /** Returns the first visible child (with cursor check) of a context. */
 export const firstVisibleChildWithCursorCheck = (state: State, path: SimplePath) => {

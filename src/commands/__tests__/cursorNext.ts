@@ -1,12 +1,12 @@
 import { cursorNextActionCreator as cursorNext } from '../../actions/cursorNext'
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import globals from '../../globals'
-import contextToPath from '../../selectors/contextToPath'
 import createTestStore from '../../test-helpers/createTestStore'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import { executeCommandWithMulticursor } from '../../util/executeCommand'
+import toggleSortShortcut from '../toggleSort'
 
 describe('normal view', () => {
   it('move cursor to next sibling', () => {
@@ -75,25 +75,17 @@ describe('normal view', () => {
     store.dispatch([
       importText({
         text: `
-          - SORT
             - a
               - a1
             - c
             - b`,
       }),
-      (dispatch, getState) =>
-        dispatch(
-          toggleAttribute({
-            path: contextToPath(getState(), ['SORT']),
-            values: ['=sort', 'Alphabetical'],
-          }),
-        ),
-      setCursor(['SORT', 'a']),
-      cursorNext(),
     ])
-
+    setCursor(['a'])
+    executeCommandWithMulticursor(toggleSortShortcut, { store })
+    cursorNext()
     const stateNew = store.getState()
-    expectPathToEqual(stateNew, stateNew.cursor, ['SORT', 'b'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
 
   it('skip descendants', () => {
