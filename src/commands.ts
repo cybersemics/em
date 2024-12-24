@@ -307,8 +307,10 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // execute the command
     commandEmitter.trigger('command', command)
 
-    if (!command.canExecute || command.canExecute(store.getState())) {
-      if (!command.permitDefault) e.preventDefault()
+    if (!command.canExecute || command.preventDefault || command.canExecute(store.getState())) {
+      if (!command.permitDefault) {
+        e.preventDefault()
+      }
 
       // execute command
       executeCommandWithMulticursor(command, { event: e, type: 'keyboard', store })

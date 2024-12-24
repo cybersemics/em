@@ -5,6 +5,7 @@ import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import ThoughtType from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import useChangeRef from '../hooks/useChangeRef'
 import attributeEquals from '../selectors/attributeEquals'
@@ -58,23 +59,25 @@ const Subthought = ({
 }) => {
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
-  const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
+  const thought = useSelector(state => getThoughtById(state, head(simplePath)) as ThoughtType | undefined, shallowEqual)
   const noOtherContexts = useSelector(
-    state => isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
+    state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
   )
-  const parentId = thought.parentId
   const grandparentId = simplePath[simplePath.length - 3]
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
   const autofocusChanged = useChangeRef(autofocus)
 
   const childrenAttributeId = useSelector(
     state =>
-      (thought.value !== '=children' && findAnyChild(state, parentId, child => child.value === '=children')?.id) ||
+      (thought &&
+        thought.value !== '=children' &&
+        findAnyChild(state, thought.parentId, child => child.value === '=children')?.id) ||
       null,
   )
   const grandchildrenAttributeId = useSelector(
     state =>
-      (thought.value !== '=style' &&
+      (thought &&
+        thought.value !== '=style' &&
         findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) ||
       null,
   )
@@ -82,13 +85,13 @@ const Subthought = ({
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
     if (hideBulletsChildren) return true
     const hideBulletsGrandchildren =
-      thought.value !== '=bullet' && attributeEquals(state, grandchildrenAttributeId, '=bullet', 'None')
+      thought && thought.value !== '=bullet' && attributeEquals(state, grandchildrenAttributeId, '=bullet', 'None')
     if (hideBulletsGrandchildren) return true
     return false
   })
 
   /****************************/
-  const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: thought.id, env }))
+  const childEnvZoomId = once(() => (thought ? findFirstEnvContextWithZoom(state, { id: thought.id, env }) : null))
 
   /** Returns true if the cursor is contained within the thought path, i.e. the thought is a descendant of the cursor. */
   const isEditingChildPath = isDescendantPath(state.cursor, path)

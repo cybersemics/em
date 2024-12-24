@@ -56,8 +56,11 @@ interface Command {
   /** When true, a small open dropdown indicator will be rendered beneath the icon. */
   isDropdownOpen?: (state: State) => boolean
 
-  /** When true, don't need to prevent the default activity. */
+  /** When true, do not prevent the default browser behavior even when canExecute returns true. */
   permitDefault?: boolean
+
+  /** When true, prevent the default browser behavior even when canExecute returns false. */
+  preventDefault?: boolean
 
   /** A keyboard sequence to activate the command. */
   keyboard?: Key | string
