@@ -23,11 +23,6 @@ module.exports = {
     // https://gitlab.com/nfriend/ts-key-enum#which-version-should-i-use
     'ts-key-enum',
 
-    // Breaks on mobile Safari.
-    // undefined is not an object (evaluating signaturePad._handlePonterStart.bind')
-    // https://github.com/szimek/signature_pad/releases/tag/v5.0.0
-    'react-signature-pad-wrapper',
-
     // customSnapshotIdentifier breaks in puppeteer snapshot tests on puppeteer v23.
     // Error running image diff: Unknown Error
     // https://github.com/vitest-dev/vitest/releases/tag/v2.0.0

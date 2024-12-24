@@ -65,23 +65,36 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     const signaturePad = signaturePadRef.current['signaturePad']
     const eventNode = eventNodeRef?.current
 
-    // Attach pointer handlers to a provided node rather than the signature pad canvas.
+    // Attach touch handlers to a provided node rather than the signature pad canvas.
     // See: eventNodeRef
-    const handlePointerStart = signaturePad._handlePointerStart.bind(signaturePad)
-    const handlePointerMove = signaturePad._handlePointerMove.bind(signaturePad)
+    const handleTouchStart = signaturePad._handleTouchStart.bind(signaturePad)
+    const handleTouchMove = signaturePad._handleTouchMove.bind(signaturePad)
+    const handleTouchEnd = signaturePad._handleTouchEnd.bind(signaturePad)
 
-    eventNode?.addEventListener('pointerdown', e => {
+    eventNode?.addEventListener('touchstart', e => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
       e.preventDefault = noop
-      const shouldActivateGesture = isInGestureZone(e.clientX, e.clientY, leftHanded)
-      if (shouldActivateGesture) {
-        handlePointerStart(e)
+
+      const touch = e.touches[0]
+      if (isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
+        handleTouchStart(e)
       }
     })
-    eventNode?.addEventListener('pointermove', e => {
+
+    eventNode?.addEventListener('touchmove', e => {
+      const touch = e.touches[0]
+      if (isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
+        handleTouchMove(e)
+      }
+    })
+
+    eventNode?.addEventListener('touchend', e => {
+      // Make preventDefault a noop otherwise tap-to-edit is broken.
+      // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
       e.preventDefault = noop
-      handlePointerMove(e)
+
+      handleTouchEnd(e)
     })
 
     signaturePad.addEventListener('beginStroke', onBeginStroke)
@@ -92,8 +105,9 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad.canvas.height = signaturePad.canvas.offsetHeight
 
     return () => {
-      eventNode?.removeEventListener('pointerdown', handlePointerStart)
-      eventNode?.removeEventListener('pointermove', handlePointerMove)
+      eventNode?.removeEventListener('touchstart', handleTouchStart)
+      eventNode?.removeEventListener('touchmove', handleTouchMove)
+      eventNode?.removeEventListener('touchend', handleTouchEnd)
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
   }, [eventNodeRef, onBeginStroke, leftHanded])
