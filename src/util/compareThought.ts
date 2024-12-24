@@ -183,5 +183,12 @@ const reverse =
 export const compareThought: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
   compareReasonable(a.sortValue || a.value, b.sortValue || b.value)
 
-/** A comparator that sorts in descending order. */
-export const compareThoughtDescending = reverse(compareThought)
+/** A comparator that sorts in descending order, with formatted text prioritized first. */
+export const compareThoughtDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought): ComparatorValue => {
+  // First check formatting - formatted text should come first
+  const formatCompare = compareFormatting(a.sortValue || a.value, b.sortValue || b.value)
+  if (formatCompare !== 0) return formatCompare
+
+  // Then compare values in descending order
+  return reverse(compareThought)(a, b)
+}
