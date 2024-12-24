@@ -116,12 +116,28 @@ const Subthought = ({
     ref.current.style.opacity = opacity
   })
 
+  /**
+   * Cleans up editable classes from the provided HTML string.
+   *
+   * @param htmlString - The HTML string to clean up.
+   * @returns The cleaned HTML string.
+   */
+  const cleanUpEditableClasses = (htmlString: string) => {
+    const container = document.createElement('div')
+    container.innerHTML = htmlString
+    const editableElements = container.querySelectorAll('.editable--preventAutoscroll_true')
+    editableElements.forEach(element => {
+      element.classList.remove('editable--preventAutoscroll_true')
+    })
+    return container.innerHTML
+  }
+
   // Capture the static HTML string when the thought is first rendered
   useEffect(() => {
     if (thought && ref.current) {
-      cachedHTMLRef.current = ref.current.innerHTML
+      cachedHTMLRef.current = cleanUpEditableClasses(ref.current.innerHTML)
     }
-  }, [thought])
+  }, [thought, ref])
 
   // If the thought is deleted, return the cached static HTML from the ref
   if (!thought && cachedHTMLRef.current) {
