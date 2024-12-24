@@ -17573,7 +17573,7 @@ __metadata:
   resolution: "webview-background@file:./packages/webview#./packages/webview::hash=d157bb&locator=em%40workspace%3A."
   peerDependencies:
     "@capacitor/core": ^6.0.0
-  checksum: 10c0/d0fe2526194f0780b5d263b81677a8121078aefa3ec55cfccd649478381ab2cf0350c21cf8611938a082b119ebed9a3b1fd8f3e37d987778be7cafa4b203cde8
+  checksum: 10c0/3682d2b107e32e2ea9d42ceacf961336ed986d1f8ae3669e23290b7a6e1c89f92e06fd7896259de77574024ea42cf5d4362c3df3bb766c8c2464522e026506cb
   languageName: node
   linkType: hard
 
