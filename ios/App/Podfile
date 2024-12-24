@@ -14,6 +14,7 @@ def capacitor_pods
   pod 'CapacitorClipboard', :path => '../../node_modules/@capacitor/clipboard'
   pod 'CapacitorKeyboard', :path => '../../node_modules/@capacitor/keyboard'
   pod 'CapacitorStatusBar', :path => '../../node_modules/@capacitor/status-bar'
+  pod 'WebviewBackground', :path => '../../node_modules/webview-background'
 end
 
 target 'App' do

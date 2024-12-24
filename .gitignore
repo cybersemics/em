@@ -31,3 +31,13 @@ __diff_output__
 ## PandaCSS
 styled-system
 styled-system-studio
+
+## Custom Capacitor Plugin
+/packages/webview/node_modules
+/packages/webview/.DS_Store
+/packages/webview/xcuserdata/
+/packages/webview/DerivedData/
+/packages/webview/.swiftpm/configuration/registries.json
+/packages/webview/.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+/packages/webview/.netrc
+
