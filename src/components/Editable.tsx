@@ -353,7 +353,6 @@ const Editable = ({
         setTimeout(() => {
           dispatch(
             newThought({
-              at: rootedParentOf(state, path),
               value: next.trim(),
             }),
           )
