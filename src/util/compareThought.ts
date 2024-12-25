@@ -181,11 +181,11 @@ const reverse =
 
 export const compareReasonableDescending: ComparatorFunction<string> = makeOrderedComparator<string>([
   compareFormatting,
-  (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
-  reverse(compareStringsWithEmoji),
-  reverse(compareStringsWithMetaAttributes),
-  reverse(comparePunctuationAndOther),
   reverse(compareEmpty),
+  reverse(comparePunctuationAndOther),
+  reverse(compareStringsWithMetaAttributes),
+  reverse(compareStringsWithEmoji),
+  (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
 ])
 
 /** Compare the value of two thoughts. If the thought has a sortValue, it takes precedence over value. This preserves the sort order of a thought edited to empty instead of moving it to the top of thi list. */
