@@ -179,16 +179,19 @@ const reverse =
   (a: T, b: T) =>
     comparator(b, a)
 
+export const compareReasonableDescending: ComparatorFunction<string> = makeOrderedComparator<string>([
+  compareFormatting,
+  (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
+  reverse(compareStringsWithEmoji),
+  reverse(compareStringsWithMetaAttributes),
+  reverse(comparePunctuationAndOther),
+  reverse(compareEmpty),
+])
+
 /** Compare the value of two thoughts. If the thought has a sortValue, it takes precedence over value. This preserves the sort order of a thought edited to empty instead of moving it to the top of thi list. */
 export const compareThought: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
   compareReasonable(a.sortValue || a.value, b.sortValue || b.value)
 
 /** A comparator that sorts in descending order, with formatted text prioritized first. */
-export const compareThoughtDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought): ComparatorValue => {
-  // First check formatting - formatted text should come first
-  const formatCompare = compareFormatting(a.sortValue || a.value, b.sortValue || b.value)
-  if (formatCompare !== 0) return formatCompare
-
-  // Then compare values in descending order
-  return reverse(compareThought)(a, b)
-}
+export const compareThoughtDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
+  compareReasonableDescending(a.sortValue || a.value, b.sortValue || b.value)
