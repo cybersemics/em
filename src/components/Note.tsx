@@ -23,16 +23,18 @@ import strip from '../util/strip'
 /** Sets the cursor on the note's thought as it is being edited. */
 const setCursorOnLiveThought = ({ path }: { path: Path }) => {
   const state = store.getState()
-  const simplePath = simplifyPath(state, path) || path
+  const simplePath = simplifyPath(state, path)
 
-  store.dispatch(
-    setCursor({
-      path: simplePath,
-      cursorHistoryClear: true,
-      editing: true,
-      noteFocus: true,
-    }),
-  )
+  if (simplePath?.length > 0) {
+    store.dispatch(
+      setCursor({
+        path: simplePath,
+        cursorHistoryClear: true,
+        editing: true,
+        noteFocus: true,
+      }),
+    )
+  }
 }
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
