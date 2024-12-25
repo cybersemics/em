@@ -58,7 +58,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
 
   // guard against missing lexeme
   // while this ideally shouldn't happen, there are some concurrency issues that can cause it to happen, as well as freeThoughts, so we should print an error and just delete the Parent
-  if (deletedThought && !hasLexeme(state, value)) {
+  if (!hasLexeme(state, value)) {
     console.warn(`Lexeme not found for thought value: ${value}. Deleting thought anyway.`)
   }
 
