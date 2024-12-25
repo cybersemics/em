@@ -49,14 +49,16 @@ interface ThoughtUpdates {
 // @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directly. Find a better way to handle this.
 const deleteThought = (state: State, { local = true, pathParent, thoughtId, orphaned, remote = true }: Payload) => {
   const deletedThought = getThoughtById(state, thoughtId) as Thought | undefined
-  const value = deletedThought?.value
+  if (!deletedThought) return state
+
+  const { value } = deletedThought
 
   // See: Payload.local
   const persist = local || remote
 
   // guard against missing lexeme
   // while this ideally shouldn't happen, there are some concurrency issues that can cause it to happen, as well as freeThoughts, so we should print an error and just delete the Parent
-  if (deletedThought && !hasLexeme(state, value!)) {
+  if (!hasLexeme(state, value)) {
     console.warn(`Lexeme not found for thought value: ${value}. Deleting thought anyway.`)
   }
 
