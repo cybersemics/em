@@ -3,6 +3,7 @@ import State from '../../@types/State'
 import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
+import toggleContextView from '../../actions/toggleContextView'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import expandThoughts from '../../selectors/expandThoughts'
@@ -399,6 +400,25 @@ describe('pin', () => {
       const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    })
+
+    it('pinned thoughts are not expanded in context view', () => {
+      const text = `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - =pin
+            - y
+      `
+
+      const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(isContextExpanded(stateNew, ['a', 'm', 'a'])).toBeFalsy()
+      expect(isContextExpanded(stateNew, ['a', 'm', 'b'])).toBeFalsy()
     })
   })
 
