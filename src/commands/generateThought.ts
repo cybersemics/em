@@ -41,6 +41,7 @@ const generateThought: Command = {
 
     const simplePath = simplifyPath(state, state.cursor!)
     const thought = getThoughtById(state, head(simplePath))
+    if (!thought) return
     const valuePending = `${thought.value}...`
 
     // prompt with ancestors and siblings

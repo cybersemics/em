@@ -28,6 +28,11 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
   const children = paths
     ? paths.map(path => getThoughtById(state, head(path)))
     : getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
+
+  // getThoughtById -> Thought | undefined, so we need to filter out possible undefined children
+  // and here we ignore missing thoughts, as every function below assumes that the thought exists
+  // it's very unlikely that thought is missing, but we wanna be safe
+  const onlyExistingChildren = children.filter(Boolean)
   const thoughtId = head(simplePath)
   const thought = getThoughtById(state, thoughtId)
   if (!thought) return state
@@ -35,7 +40,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
 
   let minNextRank = getNextRank(state, parentId)
 
-  const moveThoughtReducers = children
+  const moveThoughtReducers = onlyExistingChildren
     .map(child => {
       const pathToSibling = appendToPath(parentOf(simplePath), child.id)
       const grandchildren = getAllChildren(state, child.id)
@@ -50,11 +55,11 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
 
   const editThoughtReducer = editThought({
     oldValue: value,
-    newValue: children.reduce((acc, { value }) => `${acc} ${value}`, '').trim(),
+    newValue: onlyExistingChildren.reduce((acc, { value }) => `${acc} ${value}`, '').trim(),
     path: simplePath,
   })
 
-  const siblings = children.filter(child => child.id !== thoughtId)
+  const siblings = onlyExistingChildren.filter(child => child.id !== thoughtId)
   const deleteThoughtReducers = siblings.map(sibling =>
     deleteThought({
       pathParent: parentOf(simplePath),

@@ -26,7 +26,8 @@ const exec: Command['exec'] = (dispatch, getState) => {
   // otherwise Chrome/Brave will open "Clear browsing data"
   if (!cursor) return
 
-  const value = getThoughtById(state, head(simplifyPath(state, cursor))).value
+  const value = getThoughtById(state, head(simplifyPath(state, cursor)))?.value
+  if (!value) return
 
   if (isEM(cursor) || isRoot(cursor)) {
     dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` }))

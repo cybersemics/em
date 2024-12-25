@@ -24,10 +24,11 @@ const exec: Command['exec'] = (dispatch, getState) => {
   const { cursor, noteFocus } = state
 
   if (cursor) {
-    const cursorThought = getThoughtById(state, head(cursor))
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be archived.` }))
     } else if (findDescendant(state, head(cursor), '=readonly')) {
+      const cursorThought = getThoughtById(state, head(cursor))
+      if (!cursorThought) return 
       dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH

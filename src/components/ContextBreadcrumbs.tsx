@@ -180,7 +180,7 @@ const ContextBreadcrumbs = ({
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const pathFiltered = useSelector(
-    state => (hideArchive ? (path.filter(id => getThoughtById(state, id).value !== '=archive') as Path) : path),
+    state => (hideArchive ? (path.filter(id => getThoughtById(state, id)?.value !== '=archive') as Path) : path),
     shallowEqual,
   )
   const ellipsizedThoughts = useEllipsizedThoughts(pathFiltered, { charLimit, disabled, thoughtsLimit })

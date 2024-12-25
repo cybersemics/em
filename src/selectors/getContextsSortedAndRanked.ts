@@ -12,6 +12,7 @@ import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
 import rootedParentOf from './rootedParentOf'
 import thoughtToPath from './thoughtToPath'
+import ThoughtId from '../@types/ThoughtId'
 
 // sort missing thoughts to end
 const MISSING_TOKEN = `${String.fromCharCode(Number.MAX_SAFE_INTEGER)}__MISSING__`
@@ -28,12 +29,14 @@ const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
         ...(thought || {
           id: cxid,
           childrenMap: {},
-          parentId: '', // ???
+          parentId: '' as ThoughtId, // ???
           pending: true,
           rank: i, // overwritten by contextSorted
           value: PENDING_TOKEN,
           lastUpdated: never(),
           updatedBy: '',
+          created: never(),
+        
         }),
       }
       return thoughtRanked
