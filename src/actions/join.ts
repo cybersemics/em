@@ -31,7 +31,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
 
   // getThoughtById -> Thought | undefined, so we need to filter out possible undefined children
   // and here we ignore missing thoughts, as every function below assumes that the thought exists
-  // it's very unlikely that thought is missing, but we wanna be safe
+  // it's very unlikely that thought is missing, but we wanna be safe, see getThoughtById
   const onlyExistingChildren = children.filter(Boolean)
   const thoughtId = head(simplePath)
   const thought = getThoughtById(state, thoughtId)
