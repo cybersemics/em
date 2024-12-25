@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isRoot from '../util/isRoot'
@@ -12,7 +13,6 @@ import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
 import rootedParentOf from './rootedParentOf'
 import thoughtToPath from './thoughtToPath'
-import ThoughtId from '../@types/ThoughtId'
 
 // sort missing thoughts to end
 const MISSING_TOKEN = `${String.fromCharCode(Number.MAX_SAFE_INTEGER)}__MISSING__`
@@ -36,7 +36,6 @@ const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
           lastUpdated: never(),
           updatedBy: '',
           created: never(),
-        
         }),
       }
       return thoughtRanked
