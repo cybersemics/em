@@ -181,7 +181,7 @@ const reverse =
 
 export const compareReasonableDescending: ComparatorFunction<string> = makeOrderedComparator<string>([
   compareFormatting,
-  reverse(compareEmpty),
+  compareEmpty,
   reverse(comparePunctuationAndOther),
   reverse(compareStringsWithMetaAttributes),
   reverse(compareStringsWithEmoji),
