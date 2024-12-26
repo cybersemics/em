@@ -78,7 +78,7 @@ const pushQueue: StoreEnhancer<any> =
         Object.entries(settingsIds).forEach(([name, id]) => {
           for (const batch of dbQueue ?? []) {
             if (id && id in batch.thoughtIndexUpdates) {
-              const thought = getThoughtById(stateNew, id) as Thought | undefined
+              const thought = getThoughtById(stateNew, id)
               cacheSetting(name, thought?.value || null)
             }
           }

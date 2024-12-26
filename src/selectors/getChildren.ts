@@ -182,8 +182,10 @@ const isChildInCursor = (state: State, path: Path, child: Thought): boolean => {
 /** Check if the cursor is a meta attribute && the given Path is the descendant of the cursor.  */
 const isDescendantOfMetaCursor = (state: State, path: Path): boolean => {
   if (!state.cursor) return false
+  const thought = getThoughtById(state, head(state.cursor))
+  if (!thought) return false
 
-  const { value: cursorValue } = getThoughtById(state, head(state.cursor))
+  const { value: cursorValue } = thought;
 
   return isAttribute(cursorValue) && isDescendantPath(path, state.cursor)
 }
@@ -201,7 +203,7 @@ const isChildVisibleWithCursorCheck = _.curry(
 /** Checks if the child is created after latest absolute context toggle. */
 const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: ThoughtId | ThoughtContext): boolean => {
   const thought = getThoughtById(state, child)
-  return !!thought.lastUpdated && !!state.absoluteContextTime && thought.lastUpdated > state.absoluteContextTime
+  return !!thought && !!thought.lastUpdated && !!state.absoluteContextTime && thought.lastUpdated > state.absoluteContextTime
 })
 
 /**

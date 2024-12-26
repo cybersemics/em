@@ -145,6 +145,10 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const sameParent = equalPath(parentOf(thoughtsFrom), parentOf(thoughtsTo))
 
+  if (!toThought || !fromThought) {
+    console.warn('toThought or fromThought not defined')
+    return
+  }
   // cannot move root or em context
   if (isRootOrEM && !sameParent) {
     store.dispatch(

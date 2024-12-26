@@ -40,7 +40,8 @@ const getEmThought = (state: State, context: Context | string): string | undefin
     return child && !isAttribute(child.value)
   })
 
-  const value = valueId ? getThoughtById(state, valueId).value : head(context)
+  const thought = valueId && getThoughtById(state, valueId)
+  const value = thought ? thought.value : head(context)
 
   // cache to local storage
   if (!cached) {

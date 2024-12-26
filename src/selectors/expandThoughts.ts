@@ -80,6 +80,10 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
+  if (!thought) {
+    console.error(new Error('expandThoughtsRecursive: Invalid Thought; No thought found with id ' + thoughtId))
+    return {}
+  }
   const showContexts = isContextViewActive(state, path)
   const childrenUnfiltered = showContexts
     ? childIdsToThoughts(state, getContexts(state, thought.value))

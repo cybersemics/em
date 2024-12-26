@@ -11,6 +11,7 @@ import rootedParentOf from './rootedParentOf'
 const getRankAfter = (state: State, simplePath: SimplePath) => {
   const thoughtId = head(simplePath)
   const thought = getThoughtById(state, thoughtId)
+  if (!thought) return 0
   const { value, rank } = thought
   const parentPath = rootedParentOf(state, simplePath)
   const children = getChildrenRanked(state, head(parentPath))

@@ -117,7 +117,7 @@ async function* fetchDescendants(
     // Though it results in redundant fetches, this approach is far less complex and far fewer implications than adding pause/resume support or a shared queue.
     // TODO: Avoid redundant cursor fetches
     const cursor = getState().cursor
-    const cursorThought = cursor ? (getThoughtById(getState(), head(cursor)) as Thought | null) : null
+    const cursorThought = cursor ? getThoughtById(getState(), head(cursor)) : null
     const isCursorPending = cursor && (!cursorThought || cursorThought?.pending) && !cursorPendingIds.has(head(cursor))
     if (isCursorPending) {
       cursorPendingIds.add(head(cursor!))
