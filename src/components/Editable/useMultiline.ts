@@ -58,7 +58,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   // TODO: useLayoutEffect does not work for some reason, causing the thought to briefly render at the incorrect height.
   const splitThoughtValue = useSelector(state => {
     const thoughtId = head(simplePath)
-    return thoughtId ? getThoughtById(state, thoughtId).value : null
+    return thoughtId ? getThoughtById(state, thoughtId)?.value : null
   })
   useEffect(updateMultiline, [splitThoughtValue, updateMultiline])
 

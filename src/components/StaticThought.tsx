@@ -116,7 +116,7 @@ const StaticThought = ({
   const fontSize = useSelector(state => state.fontSize)
   const dark = useSelector(state => theme(state) !== 'Light')
   const homeContext = showContexts && isRoot(simplePath) && !isContextPending
-  const value = useSelector(state => getThoughtById(state, head(simplePath)).value)
+  const value = useSelector(state => getThoughtById(state, head(simplePath))?.value) ?? ''
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
   const multiline = useMultiline(editableRef, simplePath, isEditing)

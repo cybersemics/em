@@ -46,7 +46,7 @@ const DropEnd = ({
   }
   const thoughtId = head(path)
   const isRootPath = isRoot(path)
-  const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
+  const value = useSelector(state => getThoughtById(state, thoughtId)?.value) ?? ''
   const dropHoverColor = useDropHoverColor(depth + 1)
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })

@@ -33,7 +33,7 @@ const ThoughtLink = ({
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const parentPath = useSelector(state => rootedParentOf(state, path), shallowEqual)
   const value = useSelector(state => {
-    const thought = getThoughtById(state, head(simplePath)) as Thought | undefined
+    const thought = getThoughtById(state, head(simplePath))
     return thought?.value
   })
 

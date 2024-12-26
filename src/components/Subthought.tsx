@@ -59,7 +59,7 @@ const Subthought = ({
 }) => {
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
-  const thought = useSelector(state => getThoughtById(state, head(simplePath)) as ThoughtType | undefined, shallowEqual)
+  const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
   const noOtherContexts = useSelector(
     state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
   )
