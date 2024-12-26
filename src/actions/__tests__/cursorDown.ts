@@ -5,6 +5,7 @@ import { importTextActionCreator as importTextAction } from '../../actions/impor
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
+import newSubthoughtTopShortcut from '../../commands/newSubthoughtTop'
 import toggleSortShortcut from '../../commands/toggleSort'
 import createTestStore from '../../test-helpers/createTestStore'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -87,6 +88,28 @@ describe('normal view', () => {
     })
     const stateNew = cursorDown(store.getState())
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
+  })
+
+  it('move cursor from empty thought to next thought', () => {
+    const store = createTestStore()
+    act(() => {
+      store.dispatch([
+        importTextAction({
+          text: `
+              - x
+                - b
+                - a
+                - =sort
+                  - Alphabetical
+                    - Desc
+            `,
+        }),
+        setCursorAction(['x']),
+      ])
+    })
+    act(() => executeCommand(newSubthoughtTopShortcut, { store }))
+    const stateNew = cursorDown(store.getState())
+    expectPathToEqual(stateNew, stateNew.cursor, ['x', 'b'])
   })
 })
 

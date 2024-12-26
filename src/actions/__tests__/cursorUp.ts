@@ -1,14 +1,21 @@
+import { act } from 'react-dom/test-utils'
 import cursorUp from '../../actions/cursorUp'
 import importText from '../../actions/importText'
+import { importTextActionCreator as importTextAction } from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
 import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
+import newSubthoughtTopShortcut from '../../commands/newSubthoughtTop'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import prevThought from '../../selectors/prevThought'
+import createTestStore from '../../test-helpers/createTestStore'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
+import executeCommand from '../../util/executeCommand'
 import initialState from '../../util/initialState'
 import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
@@ -170,6 +177,28 @@ describe('normal view', () => {
     const state = reducerFlow(steps)(initialState())
     const cursor = state.cursor
     expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a'])
+  })
+
+  it('move cursor from empty thought to previous thought', () => {
+    const store = createTestStore()
+    act(() => {
+      store.dispatch([
+        importTextAction({
+          text: `
+              - x
+                - b
+                - a
+                - =sort
+                  - Alphabetical
+                    - Desc
+            `,
+        }),
+        setCursorAction(['x']),
+      ])
+    })
+    act(() => executeCommand(newSubthoughtTopShortcut, { store }))
+    const stateNew = cursorUp(store.getState())
+    expectPathToEqual(stateNew, stateNew.cursor, ['x'])
   })
 })
 
