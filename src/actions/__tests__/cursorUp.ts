@@ -179,7 +179,7 @@ describe('normal view', () => {
     expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a'])
   })
 
-  it('move cursor from empty thought to previous thought', () => {
+  it('move cursor from empty thought to previous thought in context sorted in descending order', () => {
     const store = createTestStore()
     act(() => {
       store.dispatch([

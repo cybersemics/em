@@ -90,7 +90,7 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
   })
 
-  it('move cursor from empty thought to next thought', () => {
+  it('move cursor from empty thought to next thought in context sorted in descending order', () => {
     const store = createTestStore()
     act(() => {
       store.dispatch([
