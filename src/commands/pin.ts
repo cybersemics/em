@@ -56,7 +56,7 @@ const pinShortcut: Command = {
   isActive: state => {
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
-    return isPinned(state, head(path)) ?? false
+    return !!isPinned(state, head(path))
   },
 }
 

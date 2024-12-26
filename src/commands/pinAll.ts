@@ -4,7 +4,6 @@ import { deleteAttributeActionCreator as deleteAttribute } from '../actions/dele
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import PinAllIcon from '../components/icons/PinAllIcon'
-import { HOME_PATH } from '../constants'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
@@ -86,10 +85,10 @@ const pinAllShortcut: Command = {
     ])
   },
   isActive: state => {
-    const { cursor } = state
-    const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
+    if (!state.cursor || isRoot(state.cursor)) return false
+    const path = simplifyPath(state, rootedParentOf(state, state.cursor))
     const childrenAttributeId = findDescendant(state, head(path), '=children')
-    return isPinned(state, childrenAttributeId) ?? false
+    return !!isPinned(state, childrenAttributeId)
   },
 }
 
