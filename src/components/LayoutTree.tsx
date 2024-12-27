@@ -396,7 +396,7 @@ const TreeContextNode = ({ x, y, path }: TreeContextBreadcrumbs) => {
   return null
 }
 
-/** Renders a thought component for mapped treeThoughtsPositioned. */
+/** Renders a thought component for mapped treeNodesPositioned. */
 const TreeNode = ({
   belowCursor,
   cliff,
@@ -425,7 +425,7 @@ const TreeNode = ({
   y: _y,
   index,
   viewportBottom,
-  treeThoughtsPositioned,
+  treeNodesPositioned,
   bulletWidth,
   cursorUncleId,
   setSize,
@@ -437,7 +437,7 @@ const TreeNode = ({
   thoughtKey: string
   index: number
   viewportBottom: number
-  treeThoughtsPositioned: (TreeThoughtPositioned | TreeContextBreadcrumbs)[]
+  treeNodesPositioned: (TreeThoughtPositioned | TreeContextBreadcrumbs)[]
   bulletWidth: number
   cursorUncleId: string | null
   setSize: OnResize
@@ -469,8 +469,8 @@ const TreeNode = ({
   // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
   if (belowCursor && !isCursor && y > viewportBottom + height) return null
 
-  const nextThought = isTableCol1 ? treeThoughtsPositioned[index + 1] : null
-  const previousThought = isTableCol1 ? treeThoughtsPositioned[index - 1] : null
+  const nextThought = isTableCol1 ? treeNodesPositioned[index + 1] : null
+  const previousThought = isTableCol1 ? treeNodesPositioned[index - 1] : null
 
   // Adjust col1 width to remove dead zones between col1 and col2, increase the width by the difference between col1 and col2 minus bullet width
   const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
@@ -482,7 +482,7 @@ const TreeNode = ({
     ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
     : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
 
-  const prevThoughtNode = treeThoughtsPositioned[index - 1]
+  const prevThoughtNode = treeNodesPositioned[index - 1]
 
   return (
     <div
@@ -732,12 +732,12 @@ const LayoutTree = () => {
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
   const {
     indentCursorAncestorTables,
-    treeThoughtsPositioned,
+    treeNodesPositioned,
     hoverArrowVisibility,
   }: {
     // the global indent based on the depth of the cursor and how many ancestors are tables
     indentCursorAncestorTables: number
-    treeThoughtsPositioned: (TreeThoughtPositioned | TreeContextBreadcrumbs)[]
+    treeNodesPositioned: (TreeThoughtPositioned | TreeContextBreadcrumbs)[]
     hoverArrowVisibility: 'above' | 'below' | null
   } = useMemo(() => {
     // y increases monotically, so it is more efficent to accumulate than to calculate each time
@@ -777,7 +777,7 @@ const LayoutTree = () => {
     // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
     // key thoughtId of thought with =table attribute
     const tableCol1Widths = new Map<ThoughtId, number>()
-    const treeThoughtsPositioned = treeThoughts.map((node, i) => {
+    const treeNodesPositioned = treeThoughts.map((node, i) => {
       const next: TreeThought | undefined = treeThoughts[i + 1]
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
@@ -903,7 +903,7 @@ const LayoutTree = () => {
       }
     }
 
-    return { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility }
+    return { indentCursorAncestorTables, treeNodesPositioned, hoverArrowVisibility }
   }, [
     fontSize,
     isHoveringSorted,
@@ -971,7 +971,7 @@ const LayoutTree = () => {
         }}
       >
         <TransitionGroup>
-          {treeThoughtsPositioned.map((thought, index) =>
+          {treeNodesPositioned.map((thought, index) =>
             isThoughtNode(thought) ? (
               <TreeNode
                 {...thought}
@@ -982,7 +982,7 @@ const LayoutTree = () => {
                 thoughtKey={thought.key}
                 {...{
                   viewportBottom,
-                  treeThoughtsPositioned,
+                  treeNodesPositioned,
                   bulletWidth,
                   cursorUncleId,
                   setSize,
