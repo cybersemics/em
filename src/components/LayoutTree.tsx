@@ -81,6 +81,7 @@ type TreeThought = {
 
 /** 2nd Pass: A thought with position information after its height has been measured. */
 type TreeThoughtPositioned = TreeThought & {
+  type: 'thought'
   cliff: number
   height: number
   singleLineHeightWithCliff: number
@@ -88,6 +89,19 @@ type TreeThoughtPositioned = TreeThought & {
   x: number
   y: number
 }
+
+/** 2nd Pass: A context breadcrumb. */
+type TreeContextBreadcrumbs = {
+  type: 'context'
+  path: Path
+  x: number
+  y: number
+}
+
+/** Returns true if the positioned node is a thought node. */
+const isThoughtNode = (
+  thought: TreeThoughtPositioned | TreeContextBreadcrumbs | undefined,
+): thought is TreeThoughtPositioned => thought?.type === 'thought'
 
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
 const CONTENT_PADDING_BOTTOM = 153
@@ -377,6 +391,11 @@ const linearizeTree = (
   return thoughts
 }
 
+/** A positioned context breadcrumbs component. */
+const TreeContextNode = ({ x, y, path }: TreeContextBreadcrumbs) => {
+  return null
+}
+
 /** Renders a thought component for mapped treeThoughtsPositioned. */
 const TreeNode = ({
   belowCursor,
@@ -418,7 +437,7 @@ const TreeNode = ({
   thoughtKey: string
   index: number
   viewportBottom: number
-  treeThoughtsPositioned: TreeThoughtPositioned[]
+  treeThoughtsPositioned: (TreeThoughtPositioned | TreeContextBreadcrumbs)[]
   bulletWidth: number
   cursorUncleId: string | null
   setSize: OnResize
@@ -462,6 +481,8 @@ const TreeNode = ({
   const transition = isLastActionNewThought
     ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
     : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
+
+  const prevThoughtNode = treeThoughtsPositioned[index - 1]
 
   return (
     <div
@@ -517,7 +538,7 @@ const TreeNode = ({
             // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
             style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
             crossContextualKey={thoughtKey}
-            prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
+            prevCliff={isThoughtNode(prevThoughtNode) ? prevThoughtNode?.cliff : undefined}
             isLastVisible={isLastVisible}
             autofocus={autofocus}
             marginRight={isTableCol1 ? marginRight : 0}
@@ -541,7 +562,7 @@ const TreeNode = ({
             // This correctly positions the drop target for dropping after the table view.
             // Otherwise it would be too far to the right.
             const dropEndMarginLeft =
-              isTableCol2 && cliffDepth - depth < 0 ? treeThoughtsPositioned[index - 1].width || 0 : 0
+              isThoughtNode(prevThoughtNode) && isTableCol2 && cliffDepth - depth < 0 ? prevThoughtNode.width || 0 : 0
 
             return (
               <div
@@ -716,7 +737,7 @@ const LayoutTree = () => {
   }: {
     // the global indent based on the depth of the cursor and how many ancestors are tables
     indentCursorAncestorTables: number
-    treeThoughtsPositioned: TreeThoughtPositioned[]
+    treeThoughtsPositioned: (TreeThoughtPositioned | TreeContextBreadcrumbs)[]
     hoverArrowVisibility: 'above' | 'below' | null
   } = useMemo(() => {
     // y increases monotically, so it is more efficent to accumulate than to calculate each time
@@ -859,6 +880,7 @@ const LayoutTree = () => {
       }
 
       return {
+        type: 'thought' as 'thought' | 'context',
         ...node,
         cliff,
         height,
@@ -949,26 +971,30 @@ const LayoutTree = () => {
         }}
       >
         <TransitionGroup>
-          {treeThoughtsPositioned.map((thought, index) => (
-            <TreeNode
-              {...thought}
-              index={index}
-              // Pass unique key for the component
-              key={thought.key}
-              // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
-              thoughtKey={thought.key}
-              {...{
-                viewportBottom,
-                treeThoughtsPositioned,
-                bulletWidth,
-                cursorUncleId,
-                setSize,
-                cliffPaddingStyle,
-                dragInProgress,
-                autofocusDepth,
-              }}
-            />
-          ))}
+          {treeThoughtsPositioned.map((thought, index) =>
+            isThoughtNode(thought) ? (
+              <TreeNode
+                {...thought}
+                index={index}
+                // Pass unique key for the component
+                key={thought.key}
+                // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
+                thoughtKey={thought.key}
+                {...{
+                  viewportBottom,
+                  treeThoughtsPositioned,
+                  bulletWidth,
+                  cursorUncleId,
+                  setSize,
+                  cliffPaddingStyle,
+                  dragInProgress,
+                  autofocusDepth,
+                }}
+              />
+            ) : (
+              <TreeContextNode {...thought} />
+            ),
+          )}
         </TransitionGroup>
       </div>
     </div>
