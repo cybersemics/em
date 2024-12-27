@@ -20,7 +20,7 @@ const usePlaceholder = ({ isEditing, simplePath }: { isEditing: boolean | undefi
     if (!thought) return ''
 
     const { value } = thought
-    if (!isCursorCleared) return value
+    if (!isCursorCleared && value) return value
 
     // strip formatting tags for clearThought placeholder
     const valueStripped = isCursorCleared ? unescapeHtml(strip(value, { preserveFormatting: false })) : null
