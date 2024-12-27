@@ -41,6 +41,7 @@ import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
 import unroot from '../util/unroot'
+import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DropEnd from './DropEnd'
 import FadeTransition from './FadeTransition'
 import HoverArrow from './HoverArrow'
@@ -93,9 +94,11 @@ type TreeThoughtPositioned = TreeThought & {
 /** 2nd Pass: A context breadcrumb. */
 type TreeContextBreadcrumbs = {
   type: 'context'
-  path: Path
+  key: string
   x: number
   y: number
+  path: Path
+  simplePath: SimplePath
 }
 
 /** Returns true if the positioned node is a thought node. */
@@ -392,8 +395,70 @@ const linearizeTree = (
 }
 
 /** A positioned context breadcrumbs component. */
-const TreeContextNode = ({ x, y, path }: TreeContextBreadcrumbs) => {
-  return null
+const TreeContextNode = ({
+  x,
+  y: _y,
+  path,
+  simplePath,
+  thoughtKey,
+  ...transitionGroupsProps
+}: TreeContextBreadcrumbs & {
+  // cannot pass React key as prop, so use a new prop
+  thoughtKey: string
+} & Pick<CSSTransitionProps, 'in'>) => {
+  const [y, setY] = useState(_y)
+  const fadeThoughtRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    if (y !== _y) {
+      // When y changes React re-renders the component with the new value of y. It will result in a visual change in the DOM.
+      // Because this is a state-driven change, React applies the updated value to the DOM, which causes the browser to recognize that
+      // a CSS property has changed, thereby triggering the CSS transition.
+      // Without this additional render, updates get batched and subsequent CSS transitions may not work properly. For example, when moving a thought down, it would not animate.
+      setY(_y)
+    }
+  }, [y, _y])
+
+  const homeContext = useSelector(state => {
+    const pathParent = rootedParentOf(state, path)
+    const showContexts = isContextViewActive(state, path)
+    return showContexts && isRoot(pathParent)
+  })
+
+  // List Virtualization
+  // Do not render thoughts that are below the viewport.
+  // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
+  // Render virtualized thoughts with their estimated height so that document height is relatively stable.
+  // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
+  // if (belowCursor && !isCursor && y > viewportBottom + height) return null
+
+  return (
+    <div
+      aria-label='tree-node'
+      // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
+      // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
+      className={css({
+        position: 'absolute',
+        transition: 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
+      })}
+      style={{
+        left: x,
+        top: y,
+      }}
+    >
+      <FadeTransition
+        id={thoughtKey}
+        duration='nodeFadeIn'
+        nodeRef={fadeThoughtRef}
+        in={transitionGroupsProps.in}
+        unmountOnExit
+      >
+        <div ref={fadeThoughtRef}>
+          <ContextBreadcrumbs homeContext={homeContext} path={parentOf(simplePath)} />
+        </div>
+      </FadeTransition>
+    </div>
+  )
 }
 
 /** Renders a thought component for mapped treeNodesPositioned. */
@@ -777,7 +842,7 @@ const LayoutTree = () => {
     // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
     // key thoughtId of thought with =table attribute
     const tableCol1Widths = new Map<ThoughtId, number>()
-    const treeNodesPositioned = treeThoughts.map((node, i) => {
+    const treeNodesPositioned = treeThoughts.flatMap((node, i) => {
       const next: TreeThought | undefined = treeThoughts[i + 1]
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
@@ -846,10 +911,11 @@ const LayoutTree = () => {
 
       // capture the y position of the current thought before it is incremented by its own height
       const y = yaccum
+      const contextBreadcrumbsHeight = singleLineHeight * 0.7
 
       // increase y by the height of the current thought
       if (!node.isTableCol1 || node.leaf) {
-        yaccum += height
+        yaccum += height + (node.showContexts ? contextBreadcrumbsHeight : 0)
       }
 
       // if the current thought is in table col1, push its y and depth onto the stack so that the next node after it can be positioned below it instead of overlapping it
@@ -879,17 +945,31 @@ const LayoutTree = () => {
         }
       }
 
-      return {
-        type: 'thought' as 'thought' | 'context',
-        ...node,
-        cliff,
-        height,
-        singleLineHeightWithCliff,
-        width: tableCol1Widths.get(head(parentOf(node.path))),
-        isLastVisible,
-        x,
-        y,
-      }
+      return [
+        ...(node.showContexts
+          ? [
+              {
+                type: 'context' as 'thought' | 'context',
+                key: node.key,
+                x,
+                y,
+                path: node.path,
+                simplePath: node.simplePath,
+              },
+            ]
+          : []),
+        {
+          type: 'thought' as 'thought' | 'context',
+          ...node,
+          cliff,
+          height,
+          singleLineHeightWithCliff,
+          width: tableCol1Widths.get(head(parentOf(node.path))),
+          isLastVisible,
+          x,
+          y: y + (node.showContexts ? contextBreadcrumbsHeight : 0),
+        },
+      ] as (TreeThoughtPositioned | TreeContextBreadcrumbs)[]
     })
 
     // Determine hoverArrowVisibility based on newRank and the visible thoughts
@@ -971,15 +1051,15 @@ const LayoutTree = () => {
         }}
       >
         <TransitionGroup>
-          {treeNodesPositioned.map((thought, index) =>
-            isThoughtNode(thought) ? (
+          {treeNodesPositioned.map((node, index) =>
+            isThoughtNode(node) ? (
               <TreeNode
-                {...thought}
+                {...node}
                 index={index}
                 // Pass unique key for the component
-                key={thought.key}
+                key={node.key}
                 // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
-                thoughtKey={thought.key}
+                thoughtKey={node.key}
                 {...{
                   viewportBottom,
                   treeNodesPositioned,
@@ -992,7 +1072,11 @@ const LayoutTree = () => {
                 }}
               />
             ) : (
-              <TreeContextNode {...thought} />
+              <TreeContextNode
+                {...node}
+                thoughtKey={`context-breadcrumbs-${node.key}`}
+                key={`context-breadcrumbs-${node.key}`}
+              />
             ),
           )}
         </TransitionGroup>
