@@ -44,11 +44,14 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
   const thought = getThoughtById(state, head(simplePath))
 
+  if (!thought) return state
+
   /** Returns true if the context view needs to be closed after deleting . Specifically, returns true if there is only one context left after the delete or if the deleted path is a cyclic context, e.g. a/m~/a. */
   const shouldCloseContextView = once(() => {
     const parentPath = rootedParentOf(state, path)
     const showContexts = isContextViewActive(state, parentPath)
-    const numContexts = showContexts ? getContexts(state, getThoughtById(state, head(parentPath)).value).length : 0
+    const parentThought = getThoughtById(state, head(parentPath))
+    const numContexts = showContexts && parentThought ? getContexts(state, parentThought.value).length : 0
     const isCyclic = head(path) === head(parentOf(parentOf(path)))
     return isCyclic || numContexts <= 2
   })

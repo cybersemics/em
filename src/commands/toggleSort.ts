@@ -59,10 +59,12 @@ const toggleSortShortcut: Command = {
     const sortPreference = getSortPreference(state, id)
     if (sortPreference.type === 'None') return null
 
-    const childrenSorted = getAllChildrenSorted(state, id)
-    const childrenRanked = getChildrenRanked(state, id)
+    // ignore empty thoughts since they are not sorted
+    const childrenSorted = getAllChildrenSorted(state, id).filter(child => child.value)
+    const childrenRanked = getChildrenRanked(state, id).filter(child => child.value)
+
     return childrenSorted.length === childrenRanked.length &&
-      !childrenRanked.every((childRanked, i) => childRanked.id === childrenSorted[i].id)
+      !childrenRanked.every((_, i) => childrenRanked[i].id === childrenSorted[i].id)
       ? 'Ranks do not match sort condition'
       : null
   },

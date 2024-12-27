@@ -29,7 +29,9 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
     ? paths.map(path => getThoughtById(state, head(path)))
     : getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
   const thoughtId = head(simplePath)
-  const { value } = getThoughtById(state, thoughtId)
+  const thought = getThoughtById(state, thoughtId)
+  if (!thought) return state
+  const { value } = thought
 
   let minNextRank = getNextRank(state, parentId)
 

@@ -11,7 +11,7 @@ import isRoot from '../util/isRoot'
 const toggleTableViewShortcut: Command = {
   id: 'toggleTableView',
   label: 'Table View',
-  description: 'Display the current thought as a table, where each subthought is a separate column.',
+  description: 'Display the current list as a table, with subthoughts rendered in the second column.',
   gesture: 'rdlu',
   keyboard: { key: 't', alt: true, shift: true },
   multicursor: true,

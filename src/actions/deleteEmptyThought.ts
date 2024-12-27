@@ -34,6 +34,8 @@ const deleteEmptyThought = (state: State): State => {
   if (!cursor) return state
 
   const cursorThought = getThoughtById(state, head(cursor))
+  if (!cursorThought) return state
+
   const { value } = cursorThought
 
   const showContexts = isContextViewActive(state, rootedParentOf(state, cursor))

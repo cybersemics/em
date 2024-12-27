@@ -162,11 +162,13 @@ resumeImportsManager.getFiles = async (): Promise<ResumableFile[]> => {
 const pullDuplicateDescendants =
   (id: ThoughtId, context: Context): Thunk =>
   async (dispatch, getState) => {
-    if (context.length === 0) return
+    const thought = getThoughtById(getState(), id)
+    if (!thought || context.length === 0) return
+
     const stateBeforePull = getState()
 
     // if thought is pending, pull it
-    if (isPending(stateBeforePull, getThoughtById(stateBeforePull, id))) {
+    if (isPending(stateBeforePull, thought)) {
       // Must be forced, otherwise thoughts can be missed.
       // (Not sure how, since pull calls getPendingDescentants, which should be the same.)
       await dispatch(pull([id], { force: true, maxDepth: 1 }))
@@ -196,7 +198,7 @@ export const importFilesActionCreator =
     // these will be saved to the ResumableFile but ignored on the first thought
     const destThought = getThoughtById(stateStart, head(importPath))
     const destIsLeaf = !anyChild(stateStart, head(importPath))
-    const destEmpty = destThought.value === '' && destIsLeaf
+    const destEmpty = destThought?.value === '' && destIsLeaf
     const siblingAfter = destEmpty ? nextSibling(stateStart, importPath) : null
     const insertBeforeNew = destEmpty && !!siblingAfter
     const pathNew = destEmpty

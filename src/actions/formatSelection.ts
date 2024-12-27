@@ -85,6 +85,7 @@ export const formatSelectionActionCreator =
           if (!state.cursor) return
 
           const thought = getThoughtById(state, head(state.cursor))
+          if (!thought) return
           const simplePath = simplifyPath(state, state.cursor)
           const styleAttrPattern = /style\s*=\s*["'][^"']*["']/gi
           const tagWithoutStylePattern = /<(span|font)(\s[^>]*)?>/gi
