@@ -1,4 +1,5 @@
 import sleep from '../../../util/sleep'
+import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
@@ -131,4 +132,39 @@ it('set the cursor on click after cursorBack sets it to null', async () => {
 
   const thoughtValue = await getEditingText()
   expect(thoughtValue).toBe('a')
+})
+
+it('move cursor from formatted thought to first unformatted thought in descending order', async () => {
+  await paste(`
+    - fruits
+      - apple
+      - orange
+      - banana
+      - pear
+  `)
+
+  // Wait for the thought to be editable and click it
+  await waitForEditable('apple')
+  await clickThought('apple')
+
+  // Toggle sort twice (ascending then descending)
+  await click('[data-testid="toolbar-icon"][aria-label="Sort"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Sort"]')
+
+  // Make text bold using the toolbar
+  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+
+  // Press arrow down to move cursor
+  await press('ArrowDown')
+
+  // Verify cursor moved to 'pear' (when cursorDown)
+  const downThoughtValue = await getEditingText()
+  expect(downThoughtValue).toBe('pear')
+
+  await press('ArrowUp')
+  await press('ArrowUp')
+
+  // Verify cursor moved to 'fruits' (when cursorUp)
+  const upThoughtValue = await getEditingText()
+  expect(upThoughtValue).toBe('fruits')
 })

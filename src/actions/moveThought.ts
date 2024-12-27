@@ -73,6 +73,13 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   const sourceParentThought = getThoughtById(state, sourceParentId)
   const destinationThought = getThoughtById(state, destinationThoughtId)
 
+  if (!sourceParentThought || !destinationThought) {
+    console.warn(
+      `Missing sourceParentThought${sourceParentId} or destinationThought${destinationThoughtId}. Aborting moveThought.`,
+    )
+    return state
+  }
+
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
 
