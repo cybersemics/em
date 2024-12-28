@@ -1,8 +1,10 @@
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import { exportContext } from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -10,6 +12,7 @@ import dispatch from '../../test-helpers/dispatch'
 import findCursor from '../../test-helpers/queries/findCursor'
 import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -154,6 +157,38 @@ describe('render', () => {
 
     const bullets = document.querySelectorAll('[data-bullet="parent"]')
     expect(bullets.length).toBe(1)
+  })
+
+  it('render bullets in context view entries even when parent has =view/Table', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - a1
+            - m
+              - x
+        - b
+          - =view
+            - Table
+          - b1
+            - m
+              - y
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Set cursor to a/a1/m
+    await dispatch([setCursor(['a', 'a1', 'm'])])
+
+    // Activate context view
+    await dispatch([toggleContextView()])
+
+    await act(vi.runOnlyPendingTimersAsync)
+    const path = hashPath(contextToPath(store.getState(), ['a', 'a1', 'm', 'b1']))
+    const bullet = document.querySelector(`[data-testid="bullet-${path}"]`)
+    expect(bullet).toBeInTheDocument()
   })
 })
 

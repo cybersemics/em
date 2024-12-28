@@ -178,8 +178,9 @@ const ThoughtContainer = ({
   const isTableCol2 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
+  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
-  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
+  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, isInContextView, thoughtId })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
   const styleAnnotation = useSelector(
     state =>
@@ -436,6 +437,7 @@ const ThoughtContainer = ({
             publish={publish}
             simplePath={simplePath}
             thoughtId={thoughtId}
+            isInContextView={isInContextView}
             // debugIndex={debugIndex}
             // depth={depth}
           />
