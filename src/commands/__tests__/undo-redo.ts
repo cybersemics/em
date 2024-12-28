@@ -21,6 +21,47 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
  * UNDO
  ******************************************************************/
 
+/**
+ * This was originally combined with the 'undo' tests but, for some reason, if it doesn't
+ * run first then there are errors, likely related to some state remaining in the store
+ * from previous tests.
+ */
+describe('undo persistence', () => {
+  it('persists undo thought change', async () => {
+    await initialize()
+
+    appStore.dispatch([
+      importText({
+        text: `
+        - a
+        - b`,
+      }),
+      setCursor(['a']),
+      newThought({ value: 'alpha', insertNewSubthought: true }),
+      undo(),
+    ])
+
+    // clear and call initialize again to reload from local db (simulating page refresh)
+    appStore.dispatch(clear())
+
+    // Use fake timers here to ensure that the store operations run after loading into the db
+    vi.useFakeTimers()
+    await initialize()
+    await vi.runAllTimersAsync()
+
+    const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
+
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - b`
+
+    expect(exported).toEqual(expectedOutput)
+
+    await vi.runAllTimersAsync()
+    vi.useRealTimers()
+  })
+})
+
 describe('undo', () => {
   it('undo edit', () => {
     const store = createTestStore()
@@ -158,34 +199,6 @@ describe('undo', () => {
     const cursorThoughts = stateNew.cursor && childIdsToThoughts(stateNew, stateNew.cursor)
 
     expect(cursorThoughts).toMatchObject(expectedCursor)
-  })
-
-  // TODO
-  it.skip('persists undo thought change', async () => {
-    await initialize()
-
-    appStore.dispatch([
-      importText({
-        text: `
-        - a
-        - b`,
-      }),
-      setCursor(['a']),
-      newThought({ value: 'alpha', insertNewSubthought: true }),
-      undo(),
-    ])
-
-    // clear and call initialize again to reload from local db (simulating page refresh)
-    appStore.dispatch(clear())
-    initialize()
-
-    const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
-
-    const expectedOutput = `- ${HOME_TOKEN}
-  - a
-  - b`
-
-    expect(exported).toEqual(expectedOutput)
   })
 })
 
