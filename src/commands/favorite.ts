@@ -49,6 +49,7 @@ const favorite: Command = {
     const cursor = state.cursor!
     const id = head(cursor)
     const thought = getThoughtById(state, id)
+    if (!thought) return
     const isFavorite = findDescendant(state, id, '=favorite')
     dispatch([
       // TODO: Fix single value to not overwrite other thought

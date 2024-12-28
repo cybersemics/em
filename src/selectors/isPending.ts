@@ -3,7 +3,7 @@ import Thought from '../@types/Thought'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Returns true if the context has not been loaded from the remote yet, or if the children are not loaded. */
-const isPending = (state: State, thought: Thought | null): boolean => {
+const isPending = (state: State, thought: Thought | null | undefined): boolean => {
   if (thought?.pending) return true
   if (!thought) return false
   const children = getAllChildrenAsThoughts(state, thought.id)

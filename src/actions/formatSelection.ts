@@ -23,8 +23,9 @@ export const formatSelectionActionCreator =
   (dispatch, getState) => {
     const state = getState()
     if (!state.cursor) return
-    const colors = themeColors(state)
     const thought = pathToThought(state, state.cursor)
+    if (!thought) return
+    const colors = themeColors(state)
     suppressFocusStore.update(true)
     // if there is no selection, format the entire thought by selecting the whole thought
     const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)

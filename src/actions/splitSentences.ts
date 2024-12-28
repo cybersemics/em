@@ -17,6 +17,7 @@ const splitSentences = (state: State) => {
   const { cursor } = state
   if (!cursor) return state
   const cursorThought = getThoughtById(state, head(cursor))
+  if (!cursorThought) return state
   const { value, rank } = cursorThought
 
   const sentences = splitSentence(value)

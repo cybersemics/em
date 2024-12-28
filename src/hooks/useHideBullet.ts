@@ -38,6 +38,7 @@ const useHideBullet = ({
     const thought = getThoughtById(state, thoughtId)
     // bullet may be set from =children or =grandchildren and passed as a prop
     if (hideBulletProp) return true
+    if (!thought) return false
 
     /** Returns true if the bullet should be hidden. */
     const hideBullet = () =>

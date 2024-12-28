@@ -207,6 +207,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
           const ranksTooClose = children.some((thought, i) => {
             if (i === 0) return false
             const secondThought = getThoughtById(state, children[i - 1].id)
+            if (!secondThought) return false
             return Math.abs(thought.rank - secondThought.rank) < rankPrecision
           })
           // TODO: Explicitly converting to simplePath becauase context view has not been implemented yet and later we would want to change oldPath and newPath to be sourceThoughtId and destinationThoughtId instead.

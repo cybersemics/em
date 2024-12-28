@@ -76,7 +76,7 @@ const DropHoverIfVisible = ({
     const sameContext =
       state.draggingThought &&
       equalPath(rootedParentOf(state, state.draggingThought), rootedParentOf(state, simplePath))
-    const isParentSorted = getSortPreference(state, parentId).type === 'Alphabetical'
+    const isParentSorted = parentId && getSortPreference(state, parentId).type === 'Alphabetical'
     if (!isParentSorted || sameContext) return testFlags.simulateDrag || isHovering
     else if (!state.dragInProgress) return false
 

@@ -29,6 +29,7 @@ const useStyleContainer = ({
 }) => {
   const styleContainer = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
+    if (!thought) return
 
     /** Returns thought-container style from env and self. */
     const styleContainerNew = () => {

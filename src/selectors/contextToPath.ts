@@ -38,17 +38,17 @@ const contextToPath = (state: State, context: string[]): SimplePath | null => {
         const firstChildId =
           childIds.find(childId => {
             const child = getThoughtById(state, childId)
+            if (!child) return false
             return (showContexts ? getThoughtById(state, child.parentId)?.value : child.value) === value
           }) || null
 
         if (!firstChildId) throw Error('Thought not found')
+        const firstChild = getThoughtById(state, firstChildId)
+        if (!firstChild) throw Error('Thought not found')
 
         const isEm = i === 0 && value === EM_TOKEN
 
-        return appendToPath(
-          acc,
-          isEm ? EM_TOKEN : showContexts ? getThoughtById(state, firstChildId).parentId : firstChildId,
-        )
+        return appendToPath(acc, isEm ? EM_TOKEN : showContexts ? firstChild.parentId : firstChildId)
       },
       [] as any as Path,
     )

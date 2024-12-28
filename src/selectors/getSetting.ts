@@ -15,7 +15,7 @@ export const getStateSetting = (state: State, context: Context | string): string
     const child = getThoughtById(state, childId)
     return child && !isAttribute(child.value)
   })
-  return valueId && getThoughtById(state, valueId).value
+  return valueId && getThoughtById(state, valueId)?.value
 }
 
 /** Returns subthoughts of /em/Settings/...context, not including meta subthoughts. Falls back to localStorage. */

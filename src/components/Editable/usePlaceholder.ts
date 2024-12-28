@@ -16,7 +16,10 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 const usePlaceholder = ({ isEditing, simplePath }: { isEditing: boolean | undefined; simplePath: SimplePath }) =>
   useSelector(state => {
     const isCursorCleared = isEditing && state.cursorCleared
-    const value = getThoughtById(state, head(simplePath)).value
+    const thought = getThoughtById(state, head(simplePath))
+    if (!thought) return ''
+
+    const { value } = thought
     if (!isCursorCleared && value) return value
 
     // strip formatting tags for clearThought placeholder
@@ -25,14 +28,13 @@ const usePlaceholder = ({ isEditing, simplePath }: { isEditing: boolean | undefi
     if (valueStripped) return valueStripped
 
     const parentId = head(rootedParentOf(state, simplePath))
-    const lastUpdated = getThoughtById(state, head(simplePath)).lastUpdated
     const isTableColumn1 = attributeEquals(state, parentId, '=view', 'Table')
     const experienceMode = getUserSetting(state, Settings.experienceMode)
     const emptyValue =
       experienceMode || isTableColumn1
         ? ''
         : // only check the time if value is non-empty, otherwise the result will change for non-empty thoughts and cause the ContentEditable to re-render even when the placeholder is not displayed.
-          Date.now() - lastUpdated > EMPTY_THOUGHT_TIMEOUT
+          Date.now() - thought.lastUpdated > EMPTY_THOUGHT_TIMEOUT
           ? 'This is an empty thought'
           : 'Add a thought'
 

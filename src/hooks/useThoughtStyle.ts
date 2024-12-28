@@ -30,7 +30,7 @@ const useThoughtStyle = ({
     if (!thought) return undefined
 
     // may return null if context ancestors have not yet loaded
-    const parent = getThoughtById(state, thought.parentId) as Thought | null
+    const parent = getThoughtById(state, thought.parentId)
 
     const styleSelf =
       thought.value !== '=children' && thought.value !== '=grandchildren' && parent?.value !== '=let'

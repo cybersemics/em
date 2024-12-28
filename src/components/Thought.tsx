@@ -213,7 +213,7 @@ const ThoughtContainer = ({
   // true if the thought has an invalid option
   const invalidOption = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
-    if (!thought) return false
+    if (!thought || value === undefined) return false
 
     const parentId = head(rootedParentOf(state, simplePath))
     const optionsId = findDescendant(state, parentId, '=options')
