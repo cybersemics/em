@@ -31,7 +31,6 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
       paths.map(path => getThoughtById(state, head(path))).filter(Boolean)
     : getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
 
-  // const children = childrenUnchecked.filter(Boolean)
   const thoughtId = head(simplePath)
   const thought = getThoughtById(state, thoughtId)
   if (!thought) return state

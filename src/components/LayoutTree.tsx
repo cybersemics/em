@@ -268,7 +268,6 @@ const linearizeTree = (
 
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
-  // if the thought is suddenly undefined, we opt for a blank tree, see getThoughtById
   const simplePath = simplifyPath(state, path)
   const contextViewActive = isContextViewActive(state, path)
   const contextChainNew = contextViewActive ? [...(contextChain || []), simplePath] : contextChain
