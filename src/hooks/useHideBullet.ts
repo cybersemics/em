@@ -36,8 +36,7 @@ const useHideBullet = ({
     const thought = getThoughtById(state, thoughtId)
     // bullet may be set from =children or =grandchildren and passed as a prop
     if (hideBulletProp) return true
-    // and if the thought is somehow not found, we just pass the `undefinedness` up the chain
-    if (!thought) return
+    if (!thought) return false
 
     /** Returns true if the bullet should be hidden. */
     const hideBullet = () =>

@@ -80,13 +80,10 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
-  if (!thought) {
-    console.error(new Error('expandThoughtsRecursive: Invalid Thought; No thought found with id ' + thoughtId))
-    return {}
-  }
+
   const showContexts = isContextViewActive(state, path)
   const childrenUnfiltered = showContexts
-    ? childIdsToThoughts(state, getContexts(state, thought.value))
+    ? childIdsToThoughts(state, thought ? getContexts(state, thought.value) : [])
     : // when getting normal view children, make sure to use simplePath head rather than path head
       // otherwise it will retrieve the children of the context view, not the children of the context instance
       // See ContextView test "Expand grandchildren of contexts"

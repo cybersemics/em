@@ -269,12 +269,11 @@ const linearizeTree = (
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
   // if the thought is suddenly undefined, we opt for a blank tree, see getThoughtById
-  if (!thought) return []
   const simplePath = simplifyPath(state, path)
   const contextViewActive = isContextViewActive(state, path)
   const contextChainNew = contextViewActive ? [...(contextChain || []), simplePath] : contextChain
   const children = contextViewActive
-    ? getContextsSortedAndRanked(state, thought.value)
+    ? thought ? getContextsSortedAndRanked(state, thought.value) : []
     : // context children should render the children of a specific Lexeme instance to avoid repeating the Lexeme.
       // See: contextId (above)
       getChildrenRanked(state, contextId || thoughtId)
