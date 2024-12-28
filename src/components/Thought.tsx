@@ -183,7 +183,7 @@ const ThoughtContainer = ({
     /** Check if the thought is in the context view. */
     const checkContextView = (currentPath: Path): boolean => {
       if (currentPath.length <= 1) return false
-      return isContextViewActive(state, currentPath) || checkContextView(parentOf(currentPath))
+      return isContextViewActive(state, parentOf(currentPath))
     }
     return checkContextView(path)
   })

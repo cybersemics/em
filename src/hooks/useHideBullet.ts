@@ -45,9 +45,8 @@ const useHideBullet = ({
 
     /** Returns true if the bullet should be hidden because it is in table column 1 and is not the cursor. */
     const hideBulletTable = () => {
-      // Don't hide bullets in context view
-      if (isInContextView) return false
       return (
+        !isInContextView &&
         !equalPath(simplePath, state.cursor) &&
         attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
       )
