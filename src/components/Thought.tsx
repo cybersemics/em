@@ -178,15 +178,7 @@ const ThoughtContainer = ({
   const isTableCol2 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
-
-  const isInContextView = useSelector(state => {
-    /** Check if the thought is in the context view. */
-    const checkContextView = (currentPath: Path): boolean => {
-      if (currentPath.length <= 1) return false
-      return isContextViewActive(state, parentOf(currentPath))
-    }
-    return checkContextView(path)
-  })
+  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, isInContextView, thoughtId })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
