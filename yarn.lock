@@ -2415,7 +2415,7 @@
     "@pandacss/types" "0.47.1"
     cac "6.7.14"
 
-"@pandacss/eslint-plugin@^0.2.2":
+"@pandacss/eslint-plugin@^0.2.3":
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/@pandacss/eslint-plugin/-/eslint-plugin-0.2.3.tgz#8a6ecaba1dba7185e59e2c76608a7f4cdfa7af49"
   integrity sha512-gsZLkmZpzQpozCOgW8pUSU6DzxFx0HuXenJaBEBGjBwlIYifzouN7T55Fn7SmYPd2lliRqsjuuEzG1ql0KPbRw==
@@ -7812,11 +7812,6 @@ is-typed-array@^1.1.13, is-typed-array@^1.1.14, is-typed-array@^1.1.15:
   integrity sha512-p3EcsicXjit7SaskXHs1hA91QxgTw46Fv6EFKKGS5DRFLD8yKnohjF3hxoju94b/OcMZoQukzpPpBE9uLVKzgQ==
   dependencies:
     which-typed-array "^1.1.16"
-
-is-unicode-supported@^1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/is-unicode-supported/-/is-unicode-supported-1.3.0.tgz#d824984b616c292a2e198207d4a609983842f714"
-  integrity sha512-43r2mRvz+8JRIKnWJ+3j8JtjRKZ6GmjzfaE/qiBJnikNnYv/6bagRJ1kUhNk8R5EX/GkobD+r+sfxCPJsiKBLQ==
 
 is-url@^1.2.4:
   version "1.2.4"

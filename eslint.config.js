@@ -200,7 +200,6 @@ export default [
       '@pandacss/prefer-longhand-properties': 'error',
       '@pandacss/no-dynamic-styling': 'off',
       '@pandacss/no-hardcoded-color': 'error',
-      '@pandacss/no-unsafe-token-fn-usage': 'off',
       '@pandacss/no-property-renaming': 'error',
     },
   },
