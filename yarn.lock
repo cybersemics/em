@@ -17570,10 +17570,10 @@ __metadata:
 
 "webview-background@file:./packages/webview::locator=em%40workspace%3A.":
   version: 0.0.2
-  resolution: "webview-background@file:./packages/webview#./packages/webview::hash=d157bb&locator=em%40workspace%3A."
+  resolution: "webview-background@file:./packages/webview#./packages/webview::hash=659222&locator=em%40workspace%3A."
   peerDependencies:
     "@capacitor/core": ^6.0.0
-  checksum: 10c0/3682d2b107e32e2ea9d42ceacf961336ed986d1f8ae3669e23290b7a6e1c89f92e06fd7896259de77574024ea42cf5d4362c3df3bb766c8c2464522e026506cb
+  checksum: 10c0/cba709f4c7c8004c3ea6ebdc93206247c02e26aa54588d309c0ff5ad48b33c5cb17d965e17ec24372bff6819eea66d0f8f7bd17c9160787491f579cdb2b75f59
   languageName: node
   linkType: hard
 
