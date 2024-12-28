@@ -9,7 +9,7 @@ const noteValue = (state: State, id: ThoughtId) => {
   const noteId = findDescendant(state, id, '=note')
   if (!noteId) return null
   const noteThought = getThoughtById(state, noteId)
-  if (noteThought.pending) return null
+  if (noteThought?.pending) return null
   return firstVisibleChild(state, noteId!)?.value ?? null
 }
 

@@ -16,6 +16,7 @@ export const formatWithTagActionCreator =
     const state = getState()
     if (!state.cursor) return
     const thought = pathToThought(state, state.cursor)
+    if (!thought) return
     const simplePath = thoughtToPath(state, thought.id)
     suppressFocusStore.update(true)
 

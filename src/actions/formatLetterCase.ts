@@ -17,7 +17,9 @@ export const formatLetterCaseActionCreator =
     if (!cursor) return
 
     const thought = pathToThought(state, cursor)
-    const originalThoughtValue = thought.value
+    const originalThoughtValue = thought?.value
+
+    if (originalThoughtValue === undefined) return
 
     const updatedThoughtValue = applyLetterCase(command, originalThoughtValue)
     const simplePath = simplifyPath(state, cursor)

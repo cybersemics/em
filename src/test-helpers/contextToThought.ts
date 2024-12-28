@@ -9,7 +9,7 @@ import getThoughtById from '../selectors/getThoughtById'
  */
 const contextToThought = (state: State, context: Context): Thought | null => {
   const id = contextToThoughtId(state, context)
-  return id ? getThoughtById(state, id) : null
+  return id ? (getThoughtById(state, id) ?? null) : null
 }
 
 export default contextToThought

@@ -12,7 +12,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 /**
  * Get thought and context for the given unranked path.
  */
-const getThoughtAndParentPath = (state: State, at: string[]): [Thought, Path] => {
+const getThoughtAndParentPath = (state: State, at: string[]): [Thought | undefined, Path] => {
   const path = contextToPath(state, at)
 
   if (!path) throw new Error(`Ranked thoughts not found for context: ${at}`)
@@ -28,6 +28,10 @@ const getThoughtAndParentPath = (state: State, at: string[]): [Thought, Path] =>
  */
 const deleteThoughtAtFirstMatch = _.curryRight((state: State, at: string[]) => {
   const [thought, pathParent] = getThoughtAndParentPath(state, at)
+  if (!thought) {
+    console.warn(`Aborting deleteThoughtAtFirstMatch for ${at} because thought not found`)
+    return state
+  }
   return deleteThought(state, {
     pathParent,
     thoughtId: thought.id,
@@ -41,6 +45,10 @@ export const deleteThoughtAtFirstMatchActionCreator =
   (at: Context): Thunk =>
   (dispatch, getState) => {
     const [thought, pathParent] = getThoughtAndParentPath(getState(), at)
+    if (!thought) {
+      console.warn(`Aborting deleteThoughtAtFirstMatch for ${at} because thought not found`)
+      return
+    }
     dispatch(
       deleteThoughtActionCreator({
         pathParent,
