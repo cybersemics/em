@@ -15,7 +15,7 @@ import ShareIcon from './icons/ShareIcon'
 /** Export the thought on drop. */
 const drop = (state: State, { simplePath }: DragThoughtItem) => {
   const value = getThoughtById(state, head(simplePath))?.value
-  if (!value) {
+  if (value === undefined) {
     console.error(`Could not find thought at ${simplePath}. Aborting drop.`)
     return
   }

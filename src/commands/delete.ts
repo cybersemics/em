@@ -27,7 +27,7 @@ const exec: Command['exec'] = (dispatch, getState) => {
   if (!cursor) return
 
   const value = getThoughtById(state, head(simplifyPath(state, cursor)))?.value
-  if (!value) return
+  if (value === undefined) return
 
   if (isEM(cursor) || isRoot(cursor)) {
     dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` }))

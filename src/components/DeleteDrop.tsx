@@ -15,7 +15,7 @@ import DeleteIcon from './icons/DeleteIcon'
 /** Copy the thought on drop. */
 const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
   const value = getThoughtById(state, head(simplePath))?.value
-  if (!value) {
+  if (value === undefined) {
     console.warn(`Missing thought for path ${simplePath}. Aborting deleteDrop.`)
     return
   }
