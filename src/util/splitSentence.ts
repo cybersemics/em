@@ -47,10 +47,26 @@ function isUrl(str1: string, s: string) {
   return urlPattern.test(combinedSentence)
 }
 
+interface SplitResult {
+  value: string
+  insertNewSubThought?: boolean
+}
+
 /**
  * Splits given value by special characters.
  */
-const splitSentence = (value: string): string[] => {
+const splitSentence = (value: string): SplitResult[] => {
+  // Check for parenthetical content at the end of the thought first
+  // pattern : ), ).
+  // "This is a thought (and a subthought)" -> "-This is a thought   -and a subthought"
+  const parentheticalMatch = value.match(/^(.*?)\s*\((.*?)\)\.?$/)
+  if (parentheticalMatch) {
+    const [_, mainThought, subThought] = parentheticalMatch
+    return [{ value: mainThought.trim() }, { value: subThought.trim(), insertNewSubThought: true }].filter(
+      s => s.value !== '',
+    )
+  }
+
   // pattern1, single symbol: . ; ! ?
   // pattern2, multiple symbols: ?! !!! ...
   const mainSplitRegex = /[.;!?]+/g
@@ -70,6 +86,7 @@ const splitSentence = (value: string): string[] => {
       .split(/,|and/i)
       .map(s => s.trim())
       .filter(s => s !== '')
+      .map(value => ({ value }))
 
   /**
    * When the setences can be split, it has multiple situations.
@@ -133,10 +150,10 @@ const splitSentence = (value: string): string[] => {
       .replace(/,/g, `${SEPARATOR_TOKEN}`)
       .split(SEPARATOR_TOKEN)
       .filter(s => /\S+/.test(s))
-      .map(s => s.trim())
+      .map(s => ({ value: s.trim() }))
   }
 
-  return res.map(s => s.trim())
+  return res.map(s => ({ value: s.trim() }))
 }
 
 export default splitSentence
