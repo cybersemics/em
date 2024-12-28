@@ -25,14 +25,13 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
   const path = cursor
   const simplePath = simplifyPath(state, path)
   const parentId = head(parentOf(simplePath))
+
   const children = paths
-    ? paths.map(path => getThoughtById(state, head(path)))
+    ? // getThoughtById -> Thought | undefined, so if we (unlikely) get undefined, we filter it out, see getThoughtById
+      paths.map(path => getThoughtById(state, head(path))).filter(Boolean)
     : getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
 
-  // getThoughtById -> Thought | undefined, so we need to filter out possible undefined children
-  // and here we ignore missing thoughts, as every function below assumes that the thought exists
-  // it's very unlikely that thought is missing, but we wanna be safe, see getThoughtById
-  const onlyExistingChildren = children.filter(Boolean)
+  // const children = childrenUnchecked.filter(Boolean)
   const thoughtId = head(simplePath)
   const thought = getThoughtById(state, thoughtId)
   if (!thought) return state
@@ -40,7 +39,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
 
   let minNextRank = getNextRank(state, parentId)
 
-  const moveThoughtReducers = onlyExistingChildren
+  const moveThoughtReducers = children
     .map(child => {
       const pathToSibling = appendToPath(parentOf(simplePath), child.id)
       const grandchildren = getAllChildren(state, child.id)
@@ -55,11 +54,11 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
 
   const editThoughtReducer = editThought({
     oldValue: value,
-    newValue: onlyExistingChildren.reduce((acc, { value }) => `${acc} ${value}`, '').trim(),
+    newValue: children.reduce((acc, { value }) => `${acc} ${value}`, '').trim(),
     path: simplePath,
   })
 
-  const siblings = onlyExistingChildren.filter(child => child.id !== thoughtId)
+  const siblings = children.filter(child => child.id !== thoughtId)
   const deleteThoughtReducers = siblings.map(sibling =>
     deleteThought({
       pathParent: parentOf(simplePath),
