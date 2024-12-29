@@ -172,7 +172,7 @@ const ModalSignup = () => {
       {/* Show validation or submit error. */}
       {(validationError || submitError) && (
         <div className={css({ display: 'flex', minHeight: '100px', flexDirection: 'column' })}>
-          <span className={css({ color: 'crimson', paddingBottom: '30px', fontSize: '18px' })}>
+          <span className={css({ color: 'error', paddingBottom: '30px', fontSize: '18px' })}>
             {validationError || submitError}
           </span>
         </div>

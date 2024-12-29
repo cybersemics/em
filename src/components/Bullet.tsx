@@ -414,9 +414,7 @@ const Bullet = ({
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging || isMulticursor
   })
-  const bulletIsDivider = useSelector(state =>
-    isDivider(getThoughtById(state, thoughtId)?.value) ? 'none' : undefined,
-  )
+  const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
   /** Returns true if the thought is pending. */
   const pending = useSelector(state => {
@@ -593,7 +591,7 @@ const Bullet = ({
               marginLeft: '-3px',
             },
           },
-          display: bulletIsDivider,
+          display: bulletIsDivider ? 'none' : undefined,
           position: 'absolute',
           verticalAlign: 'top',
           cursor: 'pointer',

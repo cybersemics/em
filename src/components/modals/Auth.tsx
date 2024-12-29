@@ -194,7 +194,7 @@ const ModalAuth = () => {
           </button>
         )}
 
-        {error && <span className={css({ color: 'crimson' })}>{error}</span>}
+        {error && <span className={css({ color: 'error' })}>{error}</span>}
       </div>
     </ModalComponent>
   )
