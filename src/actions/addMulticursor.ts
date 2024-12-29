@@ -5,15 +5,12 @@ import Thunk from '../@types/Thunk'
 import { isTouch } from '../browser'
 import hashPath from '../util/hashPath'
 import reducerFlow from '../util/reducerFlow'
-import setCursor from './setCursor'
 
 /** Adds a cursor to the multicursor set. */
 const addMulticursor = (state: State, { path, ignoreCursor }: { path: Path; ignoreCursor?: boolean }): State => {
   const isEmpty = !Object.keys(state.multicursors).length
 
   return reducerFlow([
-    // for touch, unset the cursor before adding multicursor
-    isTouch && isEmpty ? setCursor({ path: null }) : null,
     state => ({
       ...state,
       multicursors: {
@@ -23,8 +20,6 @@ const addMulticursor = (state: State, { path, ignoreCursor }: { path: Path; igno
         ...(isEmpty && !ignoreCursor && state.cursor && !isTouch ? { [hashPath(state.cursor)]: state.cursor } : {}),
       },
     }),
-    // on desktop, set the cursor to the new multicursor if none exists
-    !state.cursor && !isTouch ? setCursor({ path, preserveMulticursor: true }) : null,
   ])(state)
 }
 
