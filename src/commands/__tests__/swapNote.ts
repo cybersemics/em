@@ -70,6 +70,7 @@ describe('swapNote', () => {
           `,
         }),
         setCursor(['a', 'b']),
+        addMulticursor(['a', 'b']),
         addMulticursor(['e', 'f']),
       ])
 

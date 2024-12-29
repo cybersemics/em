@@ -59,6 +59,7 @@ describe('favorite', () => {
           `,
         }),
         setCursor(['A']),
+        addMulticursor(['A']),
         addMulticursor(['B']),
       ])
 
@@ -90,6 +91,7 @@ describe('favorite', () => {
           `,
         }),
         setCursor(['A']),
+        addMulticursor(['A']),
         addMulticursor(['B']),
       ])
 
@@ -118,6 +120,7 @@ describe('favorite', () => {
           `,
         }),
         setCursor(['A']),
+        addMulticursor(['A']),
         addMulticursor(['B']),
         addMulticursor(['C']),
       ])

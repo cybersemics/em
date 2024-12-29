@@ -128,6 +128,7 @@ describe('splitSentences', () => {
           `,
         }),
         setCursor(['A. This is A. More A.']),
+        addMulticursor(['A. This is A. More A.']),
         addMulticursor(['C. This is C. More C.']),
       ])
 
@@ -156,6 +157,7 @@ describe('splitSentences', () => {
           `,
         }),
         setCursor(['One sentence only.']),
+        addMulticursor(['One sentence only.']),
         addMulticursor(['Two sentences here. And the second one.']),
         addMulticursor(['Three now. Middle sentence. Last one.']),
       ])

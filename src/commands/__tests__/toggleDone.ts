@@ -72,6 +72,7 @@ describe('toggleDone', () => {
           `,
         }),
         setCursor(['a', 'b']),
+        addMulticursor(['a', 'b']),
         addMulticursor(['d', 'e']),
       ])
 
@@ -106,6 +107,7 @@ describe('toggleDone', () => {
           `,
         }),
         setCursor(['a', 'b']),
+        addMulticursor(['a', 'b']),
         addMulticursor(['d', 'e']),
         addMulticursor(['d', 'f']),
       ])

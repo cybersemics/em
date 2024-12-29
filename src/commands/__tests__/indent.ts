@@ -22,6 +22,7 @@ describe('indent', () => {
           `,
         }),
         setCursor(['b']),
+        addMulticursor(['b']),
         addMulticursor(['c']),
       ])
 
@@ -53,6 +54,7 @@ describe('indent', () => {
           `,
         }),
         setCursor(['a', 'c']),
+        addMulticursor(['a', 'c']),
         addMulticursor(['d', 'f']),
       ])
 
@@ -84,6 +86,7 @@ describe('indent', () => {
           `,
         }),
         setCursor(['b']),
+        addMulticursor(['b']),
         addMulticursor(['c']),
       ])
 
@@ -115,6 +118,7 @@ describe('indent', () => {
           `,
         }),
         setCursor(['c']),
+        addMulticursor(['c']),
         addMulticursor(['c', 'd']),
         addMulticursor(['e']),
       ])

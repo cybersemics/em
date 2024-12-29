@@ -25,6 +25,7 @@ describe('collapseContext', () => {
           `,
         }),
         setCursor(['a']),
+        addMulticursor(['a']),
         addMulticursor(['b']),
       ])
 
@@ -62,6 +63,7 @@ describe('collapseContext', () => {
           `,
         }),
         setCursor(['a', 'b']),
+        addMulticursor(['a', 'b']),
         addMulticursor(['d', 'e']),
       ])
 
@@ -97,6 +99,7 @@ describe('collapseContext', () => {
           `,
         }),
         setCursor(['a']),
+        addMulticursor(['a']),
         addMulticursor(['b']),
         addMulticursor(['c']),
       ])
@@ -129,6 +132,7 @@ describe('collapseContext', () => {
           `,
         }),
         setCursor(['a', 'b']),
+        addMulticursor(['a', 'b']),
         addMulticursor(['e', 'f']),
       ])
 

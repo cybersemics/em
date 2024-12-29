@@ -191,7 +191,7 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
       paths.map(path => (dispatch, getState) => {
         const recomputedPath = recomputePath(getState(), head(path))
         if (!recomputedPath) return
-        dispatch(addMulticursor({ path: recomputedPath, ignoreCursor: true }))
+        dispatch(addMulticursor({ path: recomputedPath }))
       }),
     )
   }

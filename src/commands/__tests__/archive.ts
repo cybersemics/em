@@ -22,6 +22,7 @@ describe('archive', () => {
           `,
         }),
         setCursor(['b']),
+        addMulticursor(['b']),
         addMulticursor(['c']),
       ])
 
@@ -54,6 +55,7 @@ describe('archive', () => {
           `,
         }),
         setCursor(['a', 'b']),
+        addMulticursor(['a', 'b']),
         addMulticursor(['d', 'f']),
       ])
 
@@ -88,6 +90,7 @@ describe('archive', () => {
           `,
         }),
         setCursor(['a']),
+        addMulticursor(['a']),
         addMulticursor(['c']),
       ])
 
@@ -119,6 +122,7 @@ describe('archive', () => {
           `,
         }),
         setCursor(['=archive', 'x']),
+        addMulticursor(['=archive', 'x']),
         addMulticursor(['=archive', 'y']),
       ])
 
@@ -149,6 +153,7 @@ describe('archive', () => {
           `,
         }),
         setCursor(['']),
+        addMulticursor(['']),
         addMulticursor(['c', '']),
       ])
 

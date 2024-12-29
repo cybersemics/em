@@ -47,6 +47,7 @@ describe('moveThoughtDown', () => {
           `,
         }),
         setCursor(['b']),
+        addMulticursor(['b']),
         addMulticursor(['d']),
       ])
 
@@ -79,6 +80,7 @@ describe('moveThoughtDown', () => {
           `,
         }),
         setCursor(['a', 'a1']),
+        addMulticursor(['a', 'a1']),
         addMulticursor(['b']),
         addMulticursor(['c', 'c2']),
       ])
@@ -110,6 +112,7 @@ describe('moveThoughtDown', () => {
           `,
         }),
         setCursor(['b']),
+        addMulticursor(['b']),
         addMulticursor(['c']),
       ])
 

@@ -58,6 +58,7 @@ describe('copyCursor', () => {
           `,
         }),
         setCursor(['a']),
+        addMulticursor(['a']),
         addMulticursor(['c']),
       ])
 
@@ -89,6 +90,7 @@ describe('copyCursor', () => {
           `,
         }),
         setCursor(['a']),
+        addMulticursor(['a']),
         addMulticursor(['a', 'a1']),
       ])
 
@@ -121,6 +123,7 @@ describe('copyCursor', () => {
           `,
         }),
         setCursor(['a']),
+        addMulticursor(['a']),
         addMulticursor(['a', 'a1']),
         addMulticursor(['b', 'b1']),
         addMulticursor(['c']),

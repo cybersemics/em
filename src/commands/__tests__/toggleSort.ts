@@ -944,6 +944,7 @@ describe('multicursor', () => {
         `,
       }),
       setCursor(['b']),
+      addMulticursor(['b']),
       addMulticursor(['c']),
     ])
 
@@ -981,6 +982,7 @@ describe('multicursor', () => {
         `,
       }),
       setCursor(['y']),
+      addMulticursor(['y']),
       addMulticursor(['y', 'd']),
       addMulticursor(['y', 'e']),
       addMulticursor(['y', 'f']),
@@ -1027,6 +1029,7 @@ describe('multicursor', () => {
         `,
       }),
       setCursor(['a']),
+      addMulticursor(['a']),
       addMulticursor(['b']),
       addMulticursor(['c']),
     ])

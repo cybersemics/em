@@ -54,6 +54,7 @@ describe('delete', () => {
           `,
         }),
         setCursor(['b']),
+        addMulticursor(['b']),
         addMulticursor(['c']),
       ])
 
@@ -83,6 +84,7 @@ describe('delete', () => {
           `,
         }),
         setCursor(['a', 'b']),
+        addMulticursor(['a', 'b']),
         addMulticursor(['d', 'f']),
       ])
 
@@ -113,6 +115,7 @@ describe('delete', () => {
           `,
         }),
         setCursor(['a']),
+        addMulticursor(['a']),
         addMulticursor(['c']),
       ])
 

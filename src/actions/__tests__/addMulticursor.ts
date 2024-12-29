@@ -19,11 +19,9 @@ describe('addMulticursor', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    const a = contextToPath(stateNew, ['a'])!
     const b = contextToPath(stateNew, ['b'])!
 
     expect(stateNew.multicursors).toEqual({
-      [hashPath(a)]: a,
       [hashPath(b)]: b,
     })
   })
@@ -125,7 +123,7 @@ describe('addMulticursor', () => {
       newThought('a'),
       newThought('b'),
       setCursor(['a']),
-      (state: State) => addMulticursor(state, { path: contextToPath(state, ['b'])!, ignoreCursor: true }),
+      (state: State) => addMulticursor(state, { path: contextToPath(state, ['b'])! }),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())

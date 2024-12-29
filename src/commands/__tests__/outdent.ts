@@ -22,6 +22,7 @@ describe('outdent', () => {
           `,
         }),
         setCursor(['a', 'b']),
+        addMulticursor(['a', 'b']),
         addMulticursor(['a', 'c']),
       ])
 
@@ -53,6 +54,7 @@ describe('outdent', () => {
           `,
         }),
         setCursor(['a', 'b', 'c']),
+        addMulticursor(['a', 'b', 'c']),
         addMulticursor(['d', 'e', 'f']),
       ])
 
@@ -84,6 +86,7 @@ describe('outdent', () => {
           `,
         }),
         setCursor(['a', 'b']),
+        addMulticursor(['a', 'b']),
         addMulticursor(['a', 'c']),
       ])
 
@@ -115,6 +118,7 @@ describe('outdent', () => {
           `,
         }),
         setCursor(['a', 'c']),
+        addMulticursor(['a', 'c']),
         addMulticursor(['a', 'c', 'd']),
         addMulticursor(['a', 'e']),
       ])

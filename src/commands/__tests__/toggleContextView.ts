@@ -24,6 +24,7 @@ describe('toggleContextView', () => {
           `,
         }),
         setCursor(['a', 'm']),
+        addMulticursor(['a', 'm']),
         addMulticursor(['b', 'm']),
       ])
 

@@ -135,6 +135,7 @@ describe('multicursor', () => {
       setCursor(['b']),
       newThought({ value: 'c' }),
       setCursor(['a', '']),
+      addMulticursor(['a', '']),
       addMulticursor(['b', '']),
     ])
 
@@ -163,6 +164,7 @@ describe('multicursor', () => {
           `,
       }),
       setCursor(['a', 'a1']),
+      addMulticursor(['a', 'a1']),
       addMulticursor(['b', 'b1']),
     ])
 
@@ -196,6 +198,7 @@ describe('multicursor', () => {
       setCursor(['a']),
       newSubthought(),
       setCursor(['a', '']),
+      addMulticursor(['a', '']),
       addMulticursor(['b', 'b1']),
       addMulticursor(['c', 'c1']),
     ])
