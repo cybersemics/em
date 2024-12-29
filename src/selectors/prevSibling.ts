@@ -47,9 +47,10 @@ export const prevSibling = (
   }
 
   const prev = siblings[index - 1]
-  const prevParent = getThoughtById(state, prev.parentId) ?? null
+  if (!prev) return null
+
   // in context view, we select then parent since prev again refers to the lexeme instance
-  return prev ? (showContexts ? prevParent : prev) : null
+  return showContexts ? (getThoughtById(state, prev.parentId) ?? null) : prev
 }
 
 export default prevSibling
