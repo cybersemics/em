@@ -229,9 +229,9 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // Otherwise use the normal command lookup
     const command = sequence?.toString().endsWith(helpGesture)
       ? helpCommand
-      : (!state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
+      : !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
-        : null)
+        : null
 
     // execute command
     // do not execute when modal is displayed or a drag is in progress
