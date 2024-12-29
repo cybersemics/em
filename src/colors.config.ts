@@ -65,6 +65,8 @@ const colors = {
     exportTextareaColor: 'rgba(170, 170, 170, 1)', // #aaa, also used in anchorButton
     inherit: 'inherit',
     currentColor: 'currentColor',
+    alertBorder: 'rgba(36, 36, 36, 1)',
+    alertBg: 'rgba(23, 23, 23, 1)', // #171717
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -132,6 +134,8 @@ const colors = {
     exportTextareaColor: 'rgba(85, 85, 85, 1)',
     inherit: 'inherit',
     currentColor: 'currentColor',
+    alertBorder: 'rgba(219, 219, 219, 1)',
+    alertBg: 'rgba(232, 232, 232, 1)', // #171717
   },
 } as const
 
