@@ -221,12 +221,17 @@ export const inputHandlers = (store: Store<State, any>) => ({
   handleGestureEnd: ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
     const state = store.getState()
 
-    // Get the command from the command gesture index.
-    // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
-    const command =
-      !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
+    // Get the help command and its gesture
+    const helpCommand = commandIdIndex['help']
+    const helpGesture = helpCommand?.gesture as string
+
+    // If sequence ends with help gesture, use help command
+    // Otherwise use the normal command lookup
+    const command = sequence?.toString().endsWith(helpGesture)
+      ? helpCommand
+      : (!state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
-        : null
+        : null)
 
     // execute command
     // do not execute when modal is displayed or a drag is in progress
