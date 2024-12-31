@@ -15,6 +15,8 @@ import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
+import useChangeRef from '../hooks/useChangeRef'
+import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSortedContext from '../hooks/useSortedContext'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
@@ -49,6 +51,7 @@ import VirtualThought, { OnResize } from './VirtualThought'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
 type TreeThought = {
+  autofocus: Autofocus
   /** If true, the thought is rendered below the cursor (i.e. with a higher y value). This is used to crop hidden thoughts. */
   belowCursor: boolean
   depth: number
@@ -74,7 +77,6 @@ type TreeThought = {
   style?: React.CSSProperties | null
   thoughtId: string
   isLastVisible?: boolean
-  autofocus: Autofocus
   // keys of visible children
   // only used in table view to calculate the width of column 1
   visibleChildrenKeys?: string[]
@@ -93,6 +95,7 @@ type TreeThoughtPositioned = TreeThought & {
 
 /** 2nd Pass: A context breadcrumb. */
 type TreeContextBreadcrumbs = {
+  autofocus: Autofocus
   type: 'context'
   key: string
   x: number
@@ -396,6 +399,7 @@ const linearizeTree = (
 
 /** A positioned context breadcrumbs component. */
 const TreeContextNode = ({
+  autofocus,
   x,
   y: _y,
   path,
@@ -407,7 +411,9 @@ const TreeContextNode = ({
   thoughtKey: string
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
+  const ref = useRef<HTMLDivElement>(null)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const autofocusChanged = useChangeRef(autofocus)
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -423,6 +429,25 @@ const TreeContextNode = ({
     const pathParent = rootedParentOf(state, path)
     const showContexts = isContextViewActive(state, path)
     return showContexts && isRoot(pathParent)
+  })
+
+  // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
+  // Wait until the fade out animation has completed before removing.
+  // Only shim 'hide', not 'hide-parent', thoughts, otherwise hidden parents snap in instead of fading in when moving up the tree.
+  const isVisible = autofocus === 'show' || autofocus === 'dim'
+  const shimHiddenThought = useDelayedAutofocus(autofocus, {
+    delay: 750,
+    selector: autofocusNew => autofocus === 'hide' && autofocusNew === 'hide',
+  })
+
+  // When autofocus changes, use a slow (750ms) ease-out to provide a gentle transition to non-focal thoughts.
+  // If autofocus has not changed, it means that the thought is being rendered for the first time, such as the children of a thought that was just expanded. In this case, match the tree-node top animation (150ms) to ensure that the newly rendered thoughts fade in to fill the space that is being opened up from the next uncle animating down.
+  // Note that ease-in is used in contrast to the tree-node's ease-out. This gives a little more time for the next uncle to animate down and clear space before the newly rendered thought fades in. Otherwise they overlap too much during the transition.
+  const opacity = autofocus === 'show' ? '1' : autofocus === 'dim' ? '0.5' : '0'
+  useEffect(() => {
+    if (!ref.current) return
+    // start opacity at 0 and set to actual opacity in useEffect
+    ref.current.style.opacity = opacity
   })
 
   // List Virtualization
@@ -454,7 +479,29 @@ const TreeContextNode = ({
         unmountOnExit
       >
         <div ref={fadeThoughtRef}>
-          <ContextBreadcrumbs homeContext={homeContext} path={parentOf(simplePath)} />
+          <div
+            ref={ref}
+            className={css({
+              // Start opacity at 0 and set to actual opacity in useEffect.
+              // Do not fade in empty thoughts. An instant snap in feels better here.
+              // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropChild. Otherwise subsequent DropChild will be obscured.
+              opacity: '0',
+              transition: autofocusChanged
+                ? `opacity {durations.layoutSlowShift} ease-out`
+                : `opacity {durations.layoutNodeAnimation} ease-in`,
+              pointerEvents: !isVisible ? 'none' : undefined,
+              // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
+              // This caused the thought to jerk slightly to the left at the end of the horizontal shift animation.
+              // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
+              // allowing the browser to optimize the animation.
+              willChange: 'opacity',
+              // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
+              // Must include DropChild, or it will shift when the cursor moves.
+              // height: shimHiddenThought && height != null ? height : undefined,
+            })}
+          >
+            {!shimHiddenThought && <ContextBreadcrumbs homeContext={homeContext} path={parentOf(simplePath)} />}
+          </div>
         </div>
       </FadeTransition>
     </div>
@@ -949,6 +996,7 @@ const LayoutTree = () => {
         ...(node.showContexts
           ? [
               {
+                autofocus: node.autofocus,
                 type: 'context' as 'thought' | 'context',
                 key: node.key,
                 x,
