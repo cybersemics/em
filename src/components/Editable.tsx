@@ -1,6 +1,6 @@
 import { unescape as unescapeHtml } from 'html-escaper'
 import _ from 'lodash'
-import React, { FocusEventHandler, useCallback, useEffect, useRef, useState } from 'react'
+import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styled-system/recipes'
@@ -138,7 +138,6 @@ const Editable = ({
   /** Used to prevent edit mode from being incorrectly activated on long tap. The default browser behavior must be prevented if setCursorOnThought was just called. */
   // https://github.com/cybersemics/em/issues/1793
   const disableTapRef = useRef(false)
-  const [inputMethod, setInputMethod] = useState<'typing' | 'dictation' | null>(null)
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -347,7 +346,7 @@ const Editable = ({
         ),
       )
 
-      if (inputMethod === 'dictation' && newValue.toLowerCase().indexOf(' new thought') > 0) {
+      if (newValue.toLowerCase().indexOf(' new thought') > 0) {
         const [prev, next] = newValue.split(/new thought/i)
         newValue = prev.trim()
 
@@ -435,14 +434,8 @@ const Editable = ({
       } else throttledChangeRef.current(newValue, { rank, simplePath })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [readonly, uneditable, inputMethod /* TODO: options */],
+    [readonly, uneditable /* TODO: options */],
   )
-
-  const onKeyDown = useCallback(() => {
-    if (inputMethod !== 'typing') {
-      setInputMethod('typing')
-    }
-  }, [inputMethod])
 
   /** Imports text that is pasted onto the thought. */
   const onPaste = useOnPaste({ contentRef, simplePath, transient })
@@ -451,8 +444,6 @@ const Editable = ({
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
-      setInputMethod(null)
-
       blurring = true
 
       const { invalidState } = state
@@ -516,9 +507,6 @@ const Editable = ({
    */
   const onFocus = useCallback(
     () => {
-      // assume dictation by default
-      setInputMethod('dictation')
-
       preventAutoscrollEnd(contentRef.current)
       if (suppressFocusStore.getState()) return
       // do not allow blur to setEditingValue when it is followed immediately by a focus
@@ -644,7 +632,6 @@ const Editable = ({
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
-      onKeyDown={onKeyDown}
       onCopy={onCopy}
       onCut={e => {
         // flush the last edit, otherwise if cut occurs in quick succession the new value can be overwritten by the throttled change
