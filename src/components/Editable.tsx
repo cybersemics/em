@@ -346,9 +346,10 @@ const Editable = ({
         ),
       )
 
-      if (newValue.toLowerCase().indexOf(' new thought') > 0) {
-        const [prev, next] = newValue.split(/new thought/i)
-        newValue = prev.trim()
+      const diff = newValue.replace(oldValue, '').trim()
+      if (diff.toLowerCase().indexOf('new thought') === 0) {
+        const next = diff.replace(/^new thought/i, '')
+        newValue = oldValue
 
         setTimeout(() => {
           dispatch(
