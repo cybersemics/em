@@ -124,9 +124,6 @@ const ModalSettings = () => {
             title='Close'
             {...fastClick(() => {
               close(true)
-              // if (Capacitor.isNativePlatform()) {
-              //   window.location.reload()
-              // }
             })}
           />
         </div>
