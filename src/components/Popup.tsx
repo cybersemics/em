@@ -18,7 +18,7 @@ const Popup = React.forwardRef<
   return (
     <PopupBase
       ref={ref}
-      className={css(
+      cssRaw={css.raw(
         {
           boxShadow: 'none',
           border: 'none',

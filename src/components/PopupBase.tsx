@@ -1,5 +1,7 @@
 import React, { PropsWithChildren } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
+import { SystemStyleObject } from '../../styled-system/types'
 import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { deleteResumableFile } from '../actions/importFiles'
@@ -19,13 +21,18 @@ export type PopupBaseProps = PropsWithChildren<
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
     disableTop?: boolean
+    cssRaw?: SystemStyleObject
     closeButtonSize?: 'sm' | 'md'
-  } & React.HTMLAttributes<HTMLDivElement>
+    showXOnHover?: boolean
+  } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
 >
 
 /** A popup component that can be dismissed. */
 const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
-  ({ children, importFileId, onClose, className, style, disableTop = false, closeButtonSize, ...props }, ref) => {
+  (
+    { children, importFileId, onClose, cssRaw, style, disableTop = false, closeButtonSize, showXOnHover, ...props },
+    ref,
+  ) => {
     const dispatch = useDispatch()
 
     const fontSize = useSelector(state => state.fontSize)
@@ -42,7 +49,16 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
 
     return (
       <div
-        className={className}
+        className={css(
+          showXOnHover && {
+            '&:hover': {
+              '& [data-close-button]': {
+                visibility: 'visible',
+              },
+            },
+          },
+          cssRaw,
+        )}
         {...(isTouch ? useSwipeToDismissProps : null)}
         ref={combinedRefs}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
@@ -76,7 +92,14 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
             cancel
           </a>
         )}
-        {onClose ? <CloseButton size={closeButtonSize} onClose={onClose} disableSwipeToDismiss /> : null}
+        {onClose ? (
+          <CloseButton
+            cssRaw={showXOnHover ? { visibility: 'hidden' } : undefined}
+            size={closeButtonSize}
+            onClose={onClose}
+            disableSwipeToDismiss
+          />
+        ) : null}
       </div>
     )
   },
