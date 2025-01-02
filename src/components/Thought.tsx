@@ -10,7 +10,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { expandContextThoughtActionCreator as expandContextThought } from '../actions/expandContextThought'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isTouch } from '../browser'
 import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
@@ -36,19 +35,16 @@ import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
-import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
-import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
 import Bullet from './Bullet'
 import Byline from './Byline'
-import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DropHover from './DropHover'
 import Note from './Note'
 import StaticThought from './StaticThought'
@@ -202,12 +198,6 @@ const ThoughtContainer = ({
     simplePath,
     sourceZone: DragThoughtZone.Thoughts,
     toggleMulticursorOnLongPress: true,
-  })
-
-  const homeContext = useSelector(state => {
-    const pathParent = rootedParentOf(state, path)
-    const showContexts = isContextViewActive(state, path)
-    return showContexts && isRoot(pathParent)
   })
 
   // true if the thought has an invalid option
@@ -390,31 +380,6 @@ const ThoughtContainer = ({
         }),
       )}
     >
-      {showContexts && simplePath.length > 1 ? (
-        <ContextBreadcrumbs
-          cssRaw={css.raw({
-            /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
-            marginBottom: '-0.25em',
-            /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
-              Otherwise the accumulated y value will not be correct. */
-            paddingTop: '0.5em',
-          })}
-          path={parentOf(simplePath)}
-          homeContext={homeContext}
-        />
-      ) : showContexts && simplePath.length > 2 ? (
-        <span className={css({ fontSize: '75%' })}>
-          <a
-            tabIndex={-1}
-            {...fastClick(() => {
-              dispatch(expandContextThought(path))
-            })}
-          >
-            ...{' '}
-          </a>
-        </span>
-      ) : null}
-
       <div
         aria-label='thought-container'
         data-testid={'thought-' + hashPath(path)}
