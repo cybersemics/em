@@ -20,6 +20,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
+import fastClick, { type FastClickEvent } from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -531,16 +532,15 @@ const Bullet = ({
   // expand or collapse on click
   // has some additional logic to make it work intuitively with pin true/false
   const clickHandler = useCallback(
-    (e: React.MouseEvent) => {
-      // stop click event from bubbling up to Content.clickOnEmptySpace
-      e.stopPropagation()
+    (e: FastClickEvent) => {
       // short circuit if dragHold
       // useLongPress stop is activated in onMouseUp but is delayed to ensure that dragHold is still true here
       // stopping propagation from useLongPress was not working either due to bubbling order or mismatched event type
       if (dragHold) return
 
       // short circuit if toggling multiselect
-      if (!isTouch && (isMac ? e.metaKey : e.ctrlKey)) {
+      // e should always be a MouseEvent if !isTouch, but getting the type system to believe it is another story
+      if (!isTouch && e instanceof MouseEvent && (isMac ? e.metaKey : e.ctrlKey)) {
         dispatch(toggleMulticursor({ path }))
         return
       }
@@ -605,7 +605,9 @@ const Bullet = ({
         paddingBottom: extendClickHeight + 2,
         width,
       }}
-      onClick={clickHandler}
+      {...fastClick(clickHandler)}
+      // stop click event from bubbling up to Content.clickOnEmptySpace
+      onClick={e => e.stopPropagation()}
     >
       <svg
         className={cx(
