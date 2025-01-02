@@ -51,7 +51,7 @@ const Alert: FC = () => {
           {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
           <PopupBase
             disableTop
-            className={css({
+            cssRaw={css.raw({
               position: 'fixed',
               boxSizing: 'border-box',
               display: 'flex',
@@ -73,6 +73,7 @@ const Alert: FC = () => {
             data-testid='alert-content'
             onClose={onClose}
             closeButtonSize='sm'
+            showXOnHover
           >
             {renderedIcon}
             {value}
