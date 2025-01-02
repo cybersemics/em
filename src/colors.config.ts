@@ -63,8 +63,8 @@ const colors = {
     pinkAgainstFg: 'rgba(233, 12, 89, 1)',
     brightBlue: 'rgba(70, 223, 240, 1)', // #46dff0
     exportTextareaColor: 'rgba(170, 170, 170, 1)', // #aaa, also used in anchorButton
-    alertBorder: 'rgba(36, 36, 36, 1)',
-    alertBg: 'rgba(23, 23, 23, 1)', // #171717
+    panelBorder: 'rgba(36, 36, 36, 1)',
+    panelBg: 'rgba(23, 23, 23, 1)', // #171717
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -130,8 +130,8 @@ const colors = {
     pinkAgainstFg: 'rgba(227, 179, 196, 1)',
     brightBlue: 'rgba(70, 223, 240, 1)', // #46dff0
     exportTextareaColor: 'rgba(85, 85, 85, 1)',
-    alertBorder: 'rgba(219, 219, 219, 1)',
-    alertBg: 'rgba(232, 232, 232, 1)', // #171717
+    panelBorder: 'rgba(219, 219, 219, 1)',
+    panelBg: 'rgba(232, 232, 232, 1)', // #171717
   },
 } as const
 

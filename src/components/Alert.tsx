@@ -51,8 +51,8 @@ const Alert: FC = () => {
               bottom: '36px',
               left: '50%',
               transform: 'translateX(-50%)',
-              background: 'alertBg',
-              border: '1px solid {colors.alertBorder}',
+              background: 'panelBg',
+              border: '1px solid {colors.panelBorder}',
               borderRadius: '8px',
               zIndex: 'popup',
             })}
