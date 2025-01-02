@@ -34,6 +34,7 @@ import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
+import checkIfPathShareSubcontext from '../util/checkIfPathShareSubcontext'
 import equalPath from '../util/equalPath'
 import hideCaret, { getHideCaretAnimationName } from '../util/getHideCaretAnimationName'
 import hashPath from '../util/hashPath'
@@ -96,6 +97,7 @@ type TreeThoughtPositioned = TreeThought & {
 /** 2nd Pass: A context breadcrumb. */
 type TreeContextBreadcrumbs = {
   autofocus: Autofocus
+  contextBasePath?: SimplePath | null
   type: 'context'
   key: string
   x: number
@@ -890,6 +892,7 @@ const LayoutTree = () => {
     // key thoughtId of thought with =table attribute
     const tableCol1Widths = new Map<ThoughtId, number>()
     const treeNodesPositioned = treeThoughts.flatMap((node, i) => {
+      const prev: TreeThought | undefined = treeThoughts[i - 1]
       const next: TreeThought | undefined = treeThoughts[i + 1]
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
@@ -939,6 +942,10 @@ const LayoutTree = () => {
                 : 0)
       }
 
+      const prevSimplePath = node.showContexts && prev?.showContexts ? prev.simplePath : null
+      const index = prevSimplePath ? checkIfPathShareSubcontext(prevSimplePath, node.simplePath) : 0
+      const contextBasePath = prevSimplePath ? (node.simplePath.slice(0, index + 1) as SimplePath) : null
+
       const x =
         // indentation
         fontSize * node.depth +
@@ -958,11 +965,13 @@ const LayoutTree = () => {
 
       // capture the y position of the current thought before it is incremented by its own height
       const y = yaccum
-      const contextBreadcrumbsHeight = singleLineHeight * 0.7
+      const showContextBreadcrumbs =
+        node.showContexts && (!contextBasePath || contextBasePath.length < node.simplePath.length - 1)
+      const contextBreadcrumbsHeight = showContextBreadcrumbs ? singleLineHeight * 0.7 : 0
 
       // increase y by the height of the current thought
       if (!node.isTableCol1 || node.leaf) {
-        yaccum += height + (node.showContexts ? contextBreadcrumbsHeight : 0)
+        yaccum += height + (showContextBreadcrumbs ? contextBreadcrumbsHeight : 0)
       }
 
       // if the current thought is in table col1, push its y and depth onto the stack so that the next node after it can be positioned below it instead of overlapping it
@@ -993,10 +1002,11 @@ const LayoutTree = () => {
       }
 
       return [
-        ...(node.showContexts
+        ...(showContextBreadcrumbs
           ? [
               {
                 autofocus: node.autofocus,
+                contextBasePath,
                 type: 'context' as 'thought' | 'context',
                 key: node.key,
                 x,
@@ -1015,7 +1025,7 @@ const LayoutTree = () => {
           width: tableCol1Widths.get(head(parentOf(node.path))),
           isLastVisible,
           x,
-          y: y + (node.showContexts ? contextBreadcrumbsHeight : 0),
+          y: y + (showContextBreadcrumbs ? contextBreadcrumbsHeight : 0),
         },
       ] as (TreeThoughtPositioned | TreeContextBreadcrumbs)[]
     })
