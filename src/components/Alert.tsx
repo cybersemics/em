@@ -1,12 +1,15 @@
-import React, { FC, useRef, useState } from 'react'
+import React, { FC, useCallback, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
+import { alertActionCreator } from '../actions/alert'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
 import strip from '../util/strip'
 import FadeTransition from './FadeTransition'
+import PopupBase from './PopupBase'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
 
@@ -24,6 +27,14 @@ const Alert: FC = () => {
   const value = strip(alertStoreValue ?? alert?.value ?? '')
   const fontSize = useSelector(state => state.fontSize)
   const iconSize = 0.78 * fontSize
+  const dispatch = useDispatch()
+
+  /** Dismiss the alert on close. */
+  const onClose = useCallback(() => {
+    if (!alert?.showCloseLink) return
+    setDismiss(true)
+    dispatch(alertActionCreator(null))
+  }, [alert, dispatch])
 
   const Icon =
     alert?.alertType && alert.alertType in alertToIcon ? alertToIcon[alert.alertType as keyof typeof alertToIcon] : null
@@ -38,7 +49,8 @@ const Alert: FC = () => {
       {alert ? (
         <FadeTransition duration='slow' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
           {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
-          <div
+          <PopupBase
+            disableTop
             className={css({
               position: 'fixed',
               boxSizing: 'border-box',
@@ -59,10 +71,12 @@ const Alert: FC = () => {
             ref={popupRef}
             key={value}
             data-testid='alert-content'
+            onClose={onClose}
+            closeButtonSize='sm'
           >
             {renderedIcon}
             {value}
-          </div>
+          </PopupBase>
         </FadeTransition>
       ) : null}
     </TransitionGroup>

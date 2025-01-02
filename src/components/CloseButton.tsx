@@ -5,23 +5,28 @@ import fastClick from '../util/fastClick'
 import haptics from '../util/haptics'
 
 /** A close button with an ✕. */
-const CloseButton = ({ onClose, disableSwipeToDismiss }: { onClose: () => void; disableSwipeToDismiss?: boolean }) => {
+const CloseButton = ({
+  onClose,
+  disableSwipeToDismiss,
+  size = 'md',
+}: {
+  onClose: () => void
+  disableSwipeToDismiss?: boolean
+  size?: 'sm' | 'md'
+}) => {
   const fontSize = useSelector(state => state.fontSize)
-  const padding = fontSize / 2 + 2
+  const padding = (fontSize / 2 + 2) / (size === 'sm' ? 2 : 1)
   return (
     <a
       {...fastClick(onClose, { tapDown: haptics.medium })}
       className={cx(
         upperRightRecipe(),
         css({
-          fontSize: 'sm',
           color: 'inherit',
-          right: '0',
           textDecoration: 'none',
-          top: '0',
         }),
       )}
-      style={{ fontSize, padding: `${padding}px ${padding * 1.25}px` }}
+      style={{ fontSize: size === 'sm' ? fontSize / 2 : fontSize, padding: `${padding}px ${padding * 1.25}px` }}
       aria-label={disableSwipeToDismiss ? 'no-swipe-to-dismiss' : undefined}
       data-testid='close-button'
     >

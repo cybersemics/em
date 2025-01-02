@@ -277,12 +277,8 @@ export default defineConfig({
           },
         },
         fontSizes: {
-          sm: {
-            value: '80%',
-          },
-          md: {
-            value: '90%',
-          },
+          sm: { value: '80%' },
+          md: { value: '90%' },
         },
         spacing: {
           modalPadding: { value: '8%' },

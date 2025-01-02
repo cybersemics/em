@@ -24,10 +24,14 @@ const initEventHandler = once(() => {
   }
 })
 
-/** Emulates position fixed on mobile Safari with position absolute. Returns { position, top } in absolute mode. */
-const usePositionFixed = (): {
+/** Emulates position fixed on mobile Safari with positon absolute. Returns { position, overflowX, top } in absolute mode. */
+const usePositionFixed = ({
+  disableTop,
+}: {
+  disableTop?: boolean
+} = {}): {
   position: 'fixed' | 'absolute'
-  top: string
+  top?: string
 } => {
   const position = positionFixedStore.useState()
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
@@ -37,7 +41,7 @@ const usePositionFixed = (): {
   return {
     position: position ?? 'fixed',
     /* spacing.safeAreaTop applies for rounded screens */
-    top: position === 'absolute' ? `${scrollTop}px` : token('spacing.safeAreaTop'),
+    top: disableTop ? undefined : position === 'absolute' ? `${scrollTop}px` : token('spacing.safeAreaTop'),
   }
 }
 
