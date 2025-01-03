@@ -125,15 +125,18 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     return
   }
 
-  if (thoughtTo) {
-    store.dispatch(
-      moveThought({
-        oldPath: thoughtsFrom,
-        newPath: pathTo,
-        newRank: (dropTop ? getPrevRank : getNextRank)(state, thoughtTo.id),
-      }),
-    )
+  if (!thoughtTo) {
+    console.warn(`Cannot drop ${thoughtFrom} on itself. Aborting drop.`)
+    return
   }
+
+  store.dispatch(
+    moveThought({
+      oldPath: thoughtsFrom,
+      newPath: pathTo,
+      newRank: (dropTop ? getPrevRank : getNextRank)(state, thoughtTo.id),
+    }),
+  )
 
   // alert user of move to another context
   if (!sameContext && thoughtTo && thoughtFrom) {

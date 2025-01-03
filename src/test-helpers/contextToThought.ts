@@ -7,9 +7,9 @@ import getThoughtById from '../selectors/getThoughtById'
 /**
  * Converts a Context to a Thought. If more than one thought has the same value in the same context, traveerses the first.
  */
-const contextToThought = (state: State, context: Context): Thought | null => {
+const contextToThought = (state: State, context: Context): Thought | undefined => {
   const id = contextToThoughtId(state, context)
-  return id ? (getThoughtById(state, id) ?? null) : null
+  return id ? getThoughtById(state, id) : undefined
 }
 
 export default contextToThought

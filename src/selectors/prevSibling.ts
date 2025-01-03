@@ -31,10 +31,11 @@ export const prevSibling = (
   const showContexts = showContextsForced ?? isContextViewActive(state, parentPath)
 
   // siblings, including the current thought
-  const siblings =
-    showContexts && parent
+  const siblings = showContexts
+    ? parent
       ? getContextsSortedAndRanked(state, parent.value)
-      : getChildrenSorted(state, thought.parentId)
+      : []
+    : getChildrenSorted(state, thought.parentId)
 
   // in context view, we need to match the context's parentId, since all context's ids refer to lexeme instances
   const index = siblings.findIndex(child => (showContexts ? child.parentId : child.id) === id)

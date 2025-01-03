@@ -208,7 +208,7 @@ const windowEm = {
     return contexts
       .map(id => getThoughtById(state, id))
       .filter(Boolean)
-      .map(context => context.parentId)
+      .map(thought => thoughtToContext(state, thought.parentId))
   }),
   getAllChildrenByContext: withState((state: State, context: Context) =>
     getAllChildren(state, contextToThoughtId(state, context) || null),

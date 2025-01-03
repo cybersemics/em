@@ -63,7 +63,7 @@ const insertThought = (
   },
 ) => {
   const thoughtOld = getThoughtById(state, id)
-  if (!thoughtOld) return
+  if (!thoughtOld) return null
   const childLastUpdated = block.children[0]?.lastUpdated
   const childCreated = block.children[0]?.created
   const lastUpdatedInherited =
