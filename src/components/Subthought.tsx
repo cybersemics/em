@@ -6,6 +6,7 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
+import useCachedNode from '../hooks/useCachedNode'
 import useChangeRef from '../hooks/useChangeRef'
 import attributeEquals from '../selectors/attributeEquals'
 import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
@@ -58,9 +59,9 @@ const Subthought = ({
 }) => {
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
-  // Cache the DOM before it is deleted
-  const cachedHTMLRef = useRef<string | null>(null)
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
+  // Cache the DOM before it is deleted
+  const cachedHTMLRef = useCachedNode({ thought, elementRef: ref })
   const noOtherContexts = useSelector(
     state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
   )
@@ -115,29 +116,6 @@ const Subthought = ({
     // start opacity at 0 and set to actual opacity in useEffect
     ref.current.style.opacity = opacity
   })
-
-  /**
-   * Cleans up editable classes from the provided HTML string.
-   *
-   * @param htmlString - The HTML string to clean up.
-   * @returns The cleaned HTML string.
-   */
-  const cleanUpEditableClasses = (htmlString: string) => {
-    const container = document.createElement('div')
-    container.innerHTML = htmlString
-    const editableElements = container.querySelectorAll('.editable--preventAutoscroll_true')
-    editableElements.forEach(element => {
-      element.classList.remove('editable--preventAutoscroll_true')
-    })
-    return container.innerHTML
-  }
-
-  // Capture the static HTML string when the thought is first rendered
-  useEffect(() => {
-    if (thought && ref.current) {
-      cachedHTMLRef.current = cleanUpEditableClasses(ref.current.innerHTML)
-    }
-  }, [thought, ref])
 
   // If the thought is deleted, return the cached static HTML from the ref
   if (!thought && cachedHTMLRef.current) {
