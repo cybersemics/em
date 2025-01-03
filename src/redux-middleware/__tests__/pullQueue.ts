@@ -102,7 +102,7 @@ it('do not repopulate deleted thought', async () => {
   })
 
   const parentEntryChild = contextToThought(store.getState(), [''])
-  expect(parentEntryChild).toBe(null)
+  expect(parentEntryChild).toBe(undefined)
 })
 
 it('load buffered thoughts', async () => {

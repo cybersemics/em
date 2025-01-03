@@ -63,6 +63,7 @@ const insertThought = (
   },
 ) => {
   const thoughtOld = getThoughtById(state, id)
+  if (!thoughtOld) return null
   const childLastUpdated = block.children[0]?.lastUpdated
   const childCreated = block.children[0]?.created
   const lastUpdatedInherited =
@@ -233,10 +234,10 @@ const importJSON = (
   { lastUpdated = timestamp(), updatedBy = clientId, skipRoot = false }: ImportJSONOptions = {},
 ) => {
   const destThought = pathToThought(state, simplePath)
-  const destEmpty = destThought.value === '' && !anyChild(state, head(simplePath))
+  const destEmpty = destThought?.value === '' && !anyChild(state, head(simplePath))
   // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it
-  const rankStart = destEmpty ? destThought.rank : getNextRank(state, head(simplePath))
-  const rankIncrement = getRankIncrement(state, blocks, destThought, rankStart)
+  const rankStart = destEmpty ? destThought?.rank : getNextRank(state, head(simplePath))
+  const rankIncrement = destEmpty ? getRankIncrement(state, blocks, destThought, rankStart) : 1
   const pathParent = rootedParentOf(state, simplePath)
   const parentId = head(pathParent)
 

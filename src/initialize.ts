@@ -205,7 +205,10 @@ const windowEm = {
   getLexeme: withState(getLexeme),
   getLexemeContexts: withState((state: State, value: string) => {
     const contexts = getLexeme(state, value)?.contexts || []
-    return contexts.map(id => thoughtToContext(state, getThoughtById(state, id)?.parentId))
+    return contexts
+      .map(id => getThoughtById(state, id))
+      .filter(Boolean)
+      .map(thought => thoughtToContext(state, thought.parentId))
   }),
   getAllChildrenByContext: withState((state: State, context: Context) =>
     getAllChildren(state, contextToThoughtId(state, context) || null),

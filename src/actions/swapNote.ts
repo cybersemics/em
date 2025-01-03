@@ -73,15 +73,17 @@ const swapNote = (state: State) => {
             const newRank = getRankAfter(state, appendToPath(simplePath, noteId))
             const note = pathToThought(state, oldPath)
 
-            return reducerFlow([
-              moveThought({ oldPath, newPath, newRank }),
-              // delete =note
-              deleteThought({
-                pathParent: cursor,
-                thoughtId: noteId,
-              }),
-              setCursor({ offset: note.value.length, path: newPath }),
-            ])(state)
+            return note
+              ? reducerFlow([
+                  moveThought({ oldPath, newPath, newRank }),
+                  // delete =note
+                  deleteThought({
+                    pathParent: cursor,
+                    thoughtId: noteId,
+                  }),
+                  setCursor({ offset: note.value.length, path: newPath }),
+                ])(state)
+              : null
           },
         ]
       : // if the cursor thought does not have a note, swap it with its parent's note (or create a note if one does not exist)

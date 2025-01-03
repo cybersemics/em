@@ -18,9 +18,9 @@ import parentOf from '../util/parentOf'
 const nextContext = (state: State, path: Path) => {
   // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
   const parent = getThoughtById(state, head(rootedParentOf(state, path)))
-  const contexts = getContextsSortedAndRanked(state, parent.value)
+  const contexts = parent ? getContextsSortedAndRanked(state, parent.value) : []
   // find the thought in the context view
-  const index = contexts.findIndex(cx => getThoughtById(state, cx.id).parentId === head(path))
+  const index = contexts.findIndex(cx => getThoughtById(state, cx.id)?.parentId === head(path))
   // get the next context
   const nextContextId = contexts[index + 1]?.id
   const nextContext = nextContextId ? getThoughtById(state, nextContextId) : null
@@ -33,11 +33,11 @@ const nextContext = (state: State, path: Path) => {
 /** Gets the first context in a context view. */
 const firstContext = (state: State, path: Path): Path | null => {
   const thought = getThoughtById(state, head(path))
-  const contexts = getContextsSortedAndRanked(state, thought.value)
+  const contexts = thought ? getContextsSortedAndRanked(state, thought.value) : []
 
   // if context view is empty, move to the next thought
   const firstContext = getThoughtById(state, contexts[0]?.id)
-  return contexts.length > 1
+  return firstContext && contexts.length > 1
     ? appendToPath(path, firstContext.parentId)
     : nextThought(state, path, { ignoreChildren: true }) // eslint-disable-line @typescript-eslint/no-use-before-define
 }

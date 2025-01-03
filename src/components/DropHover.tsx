@@ -100,14 +100,15 @@ const DropHoverIfVisible = ({
     // const distance = state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0
 
     const value = getThoughtById(state, head(simplePath))?.value
-
+    const prevChild = prevChildId && getThoughtById(state, prevChildId)
     return (
+      value !== undefined &&
       (isThoughtHovering || isSubthoughtsHovering) &&
       draggingThoughtValue &&
       // check if it's alphabetically previous to current thought
       compareReasonable(draggingThoughtValue, value) <= 0 &&
       // check if it's alphabetically next to previous thought if it exists
-      (!prevChildId || compareReasonable(draggingThoughtValue, getThoughtById(state, prevChildId).value) === 1)
+      (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
     )
   })
 
