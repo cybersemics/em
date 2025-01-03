@@ -23,7 +23,7 @@ const Tutorial2StepContext1SubThought = () => {
   const context1SubthoughtisCreated = useSelector(state => context1SubthoughtCreated(state, { tutorialChoice }))
   const select = useSelector(
     state =>
-      !state.cursor || headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
+      !state.cursor || headValue(state, state.cursor)?.toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
   )
   const context1Exists = useSelector(state => {
     const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)

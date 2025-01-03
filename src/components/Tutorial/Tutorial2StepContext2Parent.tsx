@@ -23,11 +23,11 @@ const tutorialChoiceMap = {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext2Parent = () => {
   const tutorialChoice = useSelector(selectTutorialChoice)
-  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor).startsWith('"'))
+  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor)?.startsWith('"'))
   const readyToSelect = useSelector(
     state =>
       !state.cursor ||
-      headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
+      headValue(state, state.cursor)?.toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
   )
 
   return (

@@ -52,7 +52,7 @@ const canExecuteOutdent = (state: State) => {
     cursor &&
     selection.offset() === 0 &&
     isDocumentEditable() &&
-    headValue(state, cursor).length !== 0 &&
+    headValue(state, cursor)?.length !== 0 &&
     getChildren(state, head(rootedParentOf(state, cursor))).length === 1
   )
 }

@@ -24,7 +24,7 @@ const Tutorial2StepContext1 = () => {
     return rootChildren.find(child => child.value.toLowerCase() === chosenTutorialText.toLowerCase())
   })
   const readyToSelect = useSelector(
-    state => !state.cursor || headValue(state, state.cursor).toLowerCase() !== chosenTutorialText.toLowerCase(),
+    state => !state.cursor || headValue(state, state.cursor)?.toLowerCase() !== chosenTutorialText.toLowerCase(),
   )
 
   return (
