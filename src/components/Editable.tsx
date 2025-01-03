@@ -545,7 +545,7 @@ const Editable = ({
       if (
         disabled ||
         // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-        (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
+        (isTouch && !globals.touching && !state.dragInProgress && !state.dragHold)
       ) {
         // do not set cursor on hidden thought
         e.preventDefault()
@@ -557,7 +557,7 @@ const Editable = ({
 
           if (state.showLetterCase) dispatch(toggleLetterCase({ value: false }))
         } else {
-          setCursorOnThought()
+          setCursorOnThought({ editing: editingOrOnCursor })
 
           // When the the cursor is first set on a thought, prevent the default browser behavior to avoid activating edit mode.
           // Do not reset until the long tap is definitely over.
