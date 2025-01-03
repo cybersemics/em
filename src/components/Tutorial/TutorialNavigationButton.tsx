@@ -14,7 +14,7 @@ const TutorialNavigationButton = React.forwardRef<
 >(({ clickHandler, value, disabled = false, classes }, ref) => (
   <a
     className={cx(anchorButtonRecipe({ variableWidth: true, smallGapX: true }), classes)}
-    onClick={clickHandler}
+    // onClick={clickHandler}
     {...{ disabled }}
     {...fastClick(clickHandler)}
     ref={ref}
