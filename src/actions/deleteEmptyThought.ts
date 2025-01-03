@@ -147,7 +147,7 @@ export const deleteEmptyThoughtActionCreator: Thunk = (dispatch, getState) => {
   const uneditable = contextOfCursor && findDescendant(state, head(cursor), '=uneditable')
 
   if (prevThought && uneditable) {
-    dispatch(error({ value: `'${ellipsize(headValue(state, cursor))}' is uneditable and cannot be merged.` }))
+    dispatch(error({ value: `'${ellipsize(headValue(state, cursor) ?? 'MISSING_THOUGHT')}' is uneditable and cannot be merged.` }))
     return
   }
 
