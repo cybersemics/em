@@ -25,9 +25,10 @@ const Alert: FC = () => {
   const alert = useSelector(state => state.alert)
   const alertStoreValue = alertStore.useState()
   const value = strip(alertStoreValue ?? alert?.value ?? '')
-  const fontSize = useSelector(state => state.fontSize)
-  const iconSize = 0.78 * fontSize
+  const iconSize = useSelector(state => 0.78 * state.fontSize)
   const dispatch = useDispatch()
+  const paddingInline = useSelector(state => (state.fontSize * 16) / 14)
+  const paddingBlock = paddingInline * 0.75
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
@@ -74,6 +75,7 @@ const Alert: FC = () => {
             onClose={onClose}
             closeButtonSize='sm'
             showXOnHover
+            style={{ padding: `${paddingBlock}px ${paddingInline}px` }}
           >
             {renderedIcon}
             {value}
