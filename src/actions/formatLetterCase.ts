@@ -16,18 +16,18 @@ export const formatLetterCaseActionCreator =
     const cursor = state.cursor
     if (!cursor) return
 
-    const originalThoughtValue = pathToThought(state, cursor)?.value
-    if (originalThoughtValue === undefined) return
+    const thought = pathToThought(state, cursor)
+    if (!thought) return state
 
-    const updatedThoughtValue = applyLetterCase(command, originalThoughtValue)
+    const oldValue = thought.value
+    const newValue = applyLetterCase(command, oldValue)
     const simplePath = simplifyPath(state, cursor)
-
     const offset = selection.offsetThought()
 
     dispatch(
       editThought({
-        oldValue: originalThoughtValue,
-        newValue: updatedThoughtValue,
+        oldValue,
+        newValue,
         path: simplePath,
         force: true,
       }),

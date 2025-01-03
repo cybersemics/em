@@ -115,18 +115,13 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   const dropTop = !isExpanded && attributeEquals(state, parentIdTo, '=drop', 'top')
 
   // cannot drop on itself
-  if (equalPath(thoughtsFrom, props.simplePath)) return
+  if (!thoughtFrom || !thoughtTo || equalPath(thoughtsFrom, props.simplePath)) return
 
   // cannot move root or em context or target is divider
   if (isDivider(thoughtTo?.value) || (isRootOrEM && !sameContext)) {
     store.dispatch(
       error({ value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.` }),
     )
-    return
-  }
-
-  if (!thoughtTo) {
-    console.warn(`Cannot drop ${thoughtFrom} on itself. Aborting drop.`)
     return
   }
 
@@ -139,7 +134,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   )
 
   // alert user of move to another context
-  if (!sameContext && thoughtTo && thoughtFrom) {
+  if (!sameContext) {
     // wait until after MultiGesture has cleared the error so this alert does no get cleared
     setTimeout(() => {
       const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
