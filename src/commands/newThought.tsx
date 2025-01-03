@@ -82,7 +82,7 @@ export const newThoughtAliases: Command = {
   id: 'newThoughtAliases',
   label: 'New Thought',
   hideFromHelp: true,
-  gesture: ['rdld', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
+  gesture: ['rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   multicursor,
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   // smuggle it in with the aliases

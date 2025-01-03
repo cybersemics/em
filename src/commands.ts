@@ -223,8 +223,14 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     // Get the command from the command gesture index.
     // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
-    const command =
-      !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
+    const helpCommand = commandIdIndex['help']
+    const helpGesture = helpCommand?.gesture as string
+
+    // If sequence ends with help gesture, use help command
+    // Otherwise use the normal command lookup
+    const command = sequence?.toString().endsWith(helpGesture)
+      ? helpCommand
+      : !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
         : null
 
