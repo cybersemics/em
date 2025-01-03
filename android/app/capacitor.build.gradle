@@ -12,6 +12,7 @@ dependencies {
     implementation project(':capacitor-clipboard')
     implementation project(':capacitor-keyboard')
     implementation project(':capacitor-status-bar')
+    implementation project(':webview-background')
 
 }
 
