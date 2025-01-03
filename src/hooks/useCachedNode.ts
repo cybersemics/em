@@ -3,8 +3,13 @@ import { cx } from '../../styled-system/css'
 import { editableRecipe } from '../../styled-system/recipes'
 import Thought from '../@types/Thought'
 
-/** Renders a thought with style. */
-// TODO: These selectors can be optimized by calculating them once for all children, since they are the same among siblings. However siblings are not rendered contiguously (virtualTree), so they need to be calculated higher up.
+/**
+ * Custom hook to capture and cache the static HTML string of a node.
+ *
+ * @param thought - The thought object.
+ * @param elementRef - The ref of the node.
+ * @returns The cached HTML string.
+ */
 const useCachedNode = ({
   thought,
   elementRef: ref,
