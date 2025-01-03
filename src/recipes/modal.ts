@@ -37,7 +37,7 @@ const modalRecipe = defineSlotRecipe({
       boxSizing: 'border-box',
       backgroundColor: 'bg',
       transition: {
-        base: 'all 0.4s ease-out',
+        base: 'all {durations.medium} ease-out',
         _test: 'none',
       },
       '& p': { margin: '0 0 1em 0' },

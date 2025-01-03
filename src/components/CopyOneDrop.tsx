@@ -13,6 +13,10 @@ import CopyClipboard from './icons/CopyClipboard'
 /** Copy the thought on drop. */
 const drop = (state: State, { simplePath }: DragThoughtItem) => {
   const value = getThoughtById(state, head(simplePath))?.value
+  if (value === undefined) {
+    console.warn(`Missing thought for path ${simplePath}. Aborting copyOneDrop.`)
+    return
+  }
   copy(value)
   store.dispatch([
     alert(`Copied ${ellipsize(value)} to the clipboard`, {

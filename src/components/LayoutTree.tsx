@@ -1,7 +1,9 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { TransitionGroup } from 'react-transition-group'
+import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
+import { css, cx } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -31,6 +33,7 @@ import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
+import hideCaret, { getHideCaretAnimationName } from '../util/getHideCaretAnimationName'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
@@ -39,6 +42,7 @@ import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
 import unroot from '../util/unroot'
 import DropEnd from './DropEnd'
+import FadeTransition from './FadeTransition'
 import HoverArrow from './HoverArrow'
 import VirtualThought, { OnResize } from './VirtualThought'
 
@@ -53,6 +57,7 @@ type TreeThought = {
   // index among all visible thoughts in the tree
   indexDescendant: number
   isCursor: boolean
+  isEmpty: boolean
   isInSortedContext: boolean
   isTableCol1: boolean
   isTableCol2: boolean
@@ -109,6 +114,7 @@ const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
 const useSizeTracking = () => {
   // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
   const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
+  const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
 
   // Track debounced height removals
@@ -146,17 +152,24 @@ const useSizeTracking = () => {
       key: string
     }) => {
       if (height !== null) {
+        // To create the correct selection behavior, thoughts must be clipped on the top and bottom. Otherwise the top and bottom 1px cause the caret to move to the beginning or end of the editable. But clipPath creates a gap between thoughts. To eliminate this gap, thoughts are rendered with a slight overlap by subtracting a small amount from each thought's measured height, thus affecting their y positions as they are rendered.
+        // See: clipPath in recipes/editable.ts
+        const lineHeightOverlap = fontSize / 8
+        const heightClipped = height - lineHeightOverlap
+
         // cancel thought removal timeout
         clearTimeout(sizeRemovalTimeouts.current.get(key))
         sizeRemovalTimeouts.current.delete(key)
 
         setSizes(sizesOld =>
-          height === sizesOld[key]?.height && width === sizesOld[key]?.width && isVisible === sizesOld[key]?.isVisible
+          heightClipped === sizesOld[key]?.height &&
+          width === sizesOld[key]?.width &&
+          isVisible === sizesOld[key]?.isVisible
             ? sizesOld
             : {
                 ...sizesOld,
                 [key]: {
-                  height,
+                  height: heightClipped,
                   width: width || undefined,
                   isVisible,
                 },
@@ -166,7 +179,7 @@ const useSizeTracking = () => {
         removeSize(key)
       }
     },
-    [removeSize],
+    [fontSize, removeSize],
   )
 
   useEffect(() => {
@@ -259,7 +272,9 @@ const linearizeTree = (
   const contextViewActive = isContextViewActive(state, path)
   const contextChainNew = contextViewActive ? [...(contextChain || []), simplePath] : contextChain
   const children = contextViewActive
-    ? getContextsSortedAndRanked(state, thought.value)
+    ? thought
+      ? getContextsSortedAndRanked(state, thought.value)
+      : []
     : // context children should render the children of a specific Lexeme instance to avoid repeating the Lexeme.
       // See: contextId (above)
       getChildrenRanked(state, contextId || thoughtId)
@@ -290,10 +305,11 @@ const linearizeTree = (
     // As soon as the cursor is found, set belowCursor to true. It will be propagated to every subsequent thought.
     // See: TreeThought.belowCursor
     const isCursor = !belowCursor && equalPath(childPath, state.cursor)
-    if (isCursor) {
+    if (isCursor || !state.cursor) {
       belowCursor = true
     }
 
+    const isEmpty = child.value === ''
     const isTable = attributeEquals(state, child.id, '=view', 'Table')
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
     const isInSortedContext = attributeEquals(state, head(simplePath), '=sort', 'Alphabetical')
@@ -308,6 +324,7 @@ const linearizeTree = (
       indexChild: i,
       indexDescendant: virtualIndexNew,
       isCursor,
+      isEmpty,
       isInSortedContext,
       isTableCol1,
       isTableCol2,
@@ -370,6 +387,7 @@ const TreeNode = ({
   indexChild,
   indexDescendant,
   isCursor,
+  isEmpty,
   isTableCol1,
   isTableCol2,
   thoughtKey,
@@ -395,6 +413,7 @@ const TreeNode = ({
   cliffPaddingStyle,
   dragInProgress,
   autofocusDepth,
+  ...transitionGroupsProps
 }: TreeThoughtPositioned & {
   thoughtKey: string
   index: number
@@ -406,8 +425,13 @@ const TreeNode = ({
   cliffPaddingStyle: { paddingBottom: number }
   dragInProgress: boolean
   autofocusDepth: number
-}) => {
+} & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
+  const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const isLastActionNewThought = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'newThought')
+  })
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -434,6 +458,11 @@ const TreeNode = ({
   // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
+  // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
+  const transition = isLastActionNewThought
+    ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
+    : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
+
   return (
     <div
       aria-label='tree-node'
@@ -441,7 +470,7 @@ const TreeNode = ({
       // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
       className={css({
         position: 'absolute',
-        transition: `left {durations.layoutNodeAnimationDuration} ease-out,top {durations.layoutNodeAnimationDuration} ease-out`,
+        transition,
       })}
       style={{
         // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
@@ -457,31 +486,44 @@ const TreeNode = ({
         textAlign: isTableCol1 ? 'right' : undefined,
       }}
     >
-      <VirtualThought
-        debugIndex={testFlags.simulateDrop ? indexChild : undefined}
-        depth={depth}
-        dropUncle={thoughtId === cursorUncleId}
-        env={env}
-        indexDescendant={indexDescendant}
-        // isMultiColumnTable={isMultiColumnTable}
-        isMultiColumnTable={false}
-        leaf={leaf}
-        onResize={setSize}
-        path={path}
-        prevChildId={prevChild?.id}
-        showContexts={showContexts}
-        simplePath={simplePath}
-        singleLineHeight={singleLineHeightWithCliff}
-        // Add a bit of space after a cliff to give nested lists some breathing room.
-        // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-        // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
-        style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
-        crossContextualKey={thoughtKey}
-        prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
-        isLastVisible={isLastVisible}
-        autofocus={autofocus}
-        marginRight={isTableCol1 ? marginRight : 0}
-      />
+      <FadeTransition
+        id={thoughtKey}
+        // The FadeTransition is only responsible for fade out on unmount;
+        // or for fade in on mounting of a new thought.
+        // See autofocusChanged for normal opacity transition.
+        duration={isEmpty ? 'nodeFadeIn' : 'nodeFadeOut'}
+        nodeRef={fadeThoughtRef}
+        in={transitionGroupsProps.in}
+        unmountOnExit
+      >
+        <div ref={fadeThoughtRef}>
+          <VirtualThought
+            debugIndex={testFlags.simulateDrop ? indexChild : undefined}
+            depth={depth}
+            dropUncle={thoughtId === cursorUncleId}
+            env={env}
+            indexDescendant={indexDescendant}
+            // isMultiColumnTable={isMultiColumnTable}
+            isMultiColumnTable={false}
+            leaf={leaf}
+            onResize={setSize}
+            path={path}
+            prevChildId={prevChild?.id}
+            showContexts={showContexts}
+            simplePath={simplePath}
+            singleLineHeight={singleLineHeightWithCliff}
+            // Add a bit of space after a cliff to give nested lists some breathing room.
+            // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+            // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
+            style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
+            crossContextualKey={thoughtKey}
+            prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
+            isLastVisible={isLastVisible}
+            autofocus={autofocus}
+            marginRight={isTableCol1 ? marginRight : 0}
+          />
+        </div>
+      </FadeTransition>
 
       {/* DropEnd (cliff) */}
       {dragInProgress &&
@@ -507,7 +549,7 @@ const TreeNode = ({
                 className={css({
                   position: 'relative',
                   top: '-0.2em',
-                  transition: `left {durations.fastDuration} ease-out`,
+                  transition: `left {durations.fast} ease-out`,
                   zIndex: 'subthoughtsDropEnd',
                 })}
                 style={{
@@ -880,9 +922,8 @@ const LayoutTree = () => {
 
   return (
     <div
-      className={css({
-        marginTop: '0.501em',
-      })}
+      // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
+      className={cx(css({ marginTop: '0.501em' }), hideCaret({ animation: getHideCaretAnimationName(indentDepth) }))}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
         transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
@@ -895,7 +936,7 @@ const LayoutTree = () => {
         hoverArrowVisibility={hoverArrowVisibility}
       />
       <div
-        className={css({ transition: `transform {durations.layoutSlowShiftDuration} ease-out` })}
+        className={css({ transition: `transform {durations.layoutSlowShift} ease-out` })}
         style={{
           // Set a container height that fits all thoughts.
           // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
@@ -907,26 +948,28 @@ const LayoutTree = () => {
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
       >
-        {treeThoughtsPositioned.map((thought, index) => (
-          <TreeNode
-            {...thought}
-            index={index}
-            // Pass unique key for the component
-            key={thought.key}
-            // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
-            thoughtKey={thought.key}
-            {...{
-              viewportBottom,
-              treeThoughtsPositioned,
-              bulletWidth,
-              cursorUncleId,
-              setSize,
-              cliffPaddingStyle,
-              dragInProgress,
-              autofocusDepth,
-            }}
-          />
-        ))}
+        <TransitionGroup>
+          {treeThoughtsPositioned.map((thought, index) => (
+            <TreeNode
+              {...thought}
+              index={index}
+              // Pass unique key for the component
+              key={thought.key}
+              // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
+              thoughtKey={thought.key}
+              {...{
+                viewportBottom,
+                treeThoughtsPositioned,
+                bulletWidth,
+                cursorUncleId,
+                setSize,
+                cliffPaddingStyle,
+                dragInProgress,
+                autofocusDepth,
+              }}
+            />
+          ))}
+        </TransitionGroup>
       </div>
     </div>
   )

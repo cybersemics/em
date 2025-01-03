@@ -79,6 +79,8 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
   if (!thought) {
     console.error(`achiveThought: Thought not found for id ${head(simplePath)}`)
+
+    return state
   }
   const thoughts = pathToContext(state, simplePath)
 

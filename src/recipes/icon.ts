@@ -6,7 +6,7 @@ const iconRecipe = defineRecipe({
   base: {
     cursor: 'pointer',
     flex: 1,
-    transition: 'all 0.1s ease-in-out',
+    transition: 'all {durations.fast} ease-in-out',
   },
 })
 

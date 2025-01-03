@@ -1,5 +1,5 @@
 import { css, cx } from '../../../styled-system/css'
-import { icon } from '../../../styled-system/recipes'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 import { ICON_SCALING_FACTOR } from '../../constants'
@@ -11,7 +11,7 @@ const CopyClipboard = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
 
   return (
     <svg
-      className={cx(icon(), css(cssRaw))}
+      className={cx(iconRecipe(), css(cssRaw))}
       xmlns='http://www.w3.org/2000/svg'
       viewBox='0 0 15 18'
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}

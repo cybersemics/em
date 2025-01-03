@@ -3,7 +3,6 @@ import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import Index from '../@types/IndexType'
 import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
-import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
 import db from '../data-providers/yjs/thoughtspace'
@@ -78,7 +77,7 @@ const pushQueue: StoreEnhancer<any> =
         Object.entries(settingsIds).forEach(([name, id]) => {
           for (const batch of dbQueue ?? []) {
             if (id && id in batch.thoughtIndexUpdates) {
-              const thought = getThoughtById(stateNew, id) as Thought | undefined
+              const thought = getThoughtById(stateNew, id)
               cacheSetting(name, thought?.value || null)
             }
           }

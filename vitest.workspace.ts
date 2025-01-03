@@ -7,7 +7,7 @@ export default defineWorkspace([
       name: 'unit',
       globals: true,
       include: ['**/__tests__/**/*.ts'],
-      exclude: ['node_modules/**', '**/e2e/**'],
+      exclude: ['node_modules/**', '**/e2e/**', 'packages/**'],
       environment: 'jsdom',
       mockReset: false,
       setupFiles: ['src/setupTests.js'],

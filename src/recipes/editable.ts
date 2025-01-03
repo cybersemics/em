@@ -16,7 +16,6 @@ const editableRecipe = defineRecipe({
     /* create stacking order to position above thought-annotation so that function background color does not mask thought */
     position: 'relative',
     /* Prevent the selection from being incorrectly set to the beginning of the thought when the top edge is clicked, and the end of the thought when the bottom edge is clicked. Instead, we want the usual behavior of the selection being placed near the click. */
-
     clipPath: 'inset(0.001px 0 0.1em 0)',
     wordBreak: 'break-word' /* breaks urls; backwards-compatible with regular text unlike break-all */,
     marginTop: {

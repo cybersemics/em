@@ -2,7 +2,7 @@ import _ from 'lodash'
 import React, { useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { thought } from '../../styled-system/recipes'
+import { thoughtRecipe } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -116,7 +116,7 @@ const StaticThought = ({
   const fontSize = useSelector(state => state.fontSize)
   const dark = useSelector(state => theme(state) !== 'Light')
   const homeContext = showContexts && isRoot(simplePath) && !isContextPending
-  const value = useSelector(state => getThoughtById(state, head(simplePath)).value)
+  const value = useSelector(state => getThoughtById(state, head(simplePath))?.value) ?? ''
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
   const multiline = useMultiline(editableRef, simplePath, isEditing)
@@ -174,7 +174,7 @@ const StaticThought = ({
       <div
         aria-label='thought'
         className={cx(
-          thought({
+          thoughtRecipe({
             ellipsizedUrl,
             inverse: (dark && isBlack(styleAnnotation?.color)) || (!dark && isWhite(styleAnnotation?.color)),
           }),

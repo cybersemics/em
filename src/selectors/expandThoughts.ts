@@ -28,6 +28,11 @@ import pinned from './isPinned'
 
 const EXPAND_THOUGHTS_REGEX = new RegExp(`${EXPAND_THOUGHT_CHAR}(</[^>]>)*$`, 'g')
 
+/** Returns true if a thought is marked as done. */
+const isDone = (state: State, id: ThoughtId | null): boolean => {
+  return !!findDescendant(state, id, '=done')
+}
+
 /** Returns true if a thought's children are pinned with =children/=pin/true, false if =children/=pin/false, and null if not pinned. */
 const childrenPinned = (state: State, id: ThoughtId): boolean | null => {
   const childrenAttributeId = findDescendant(state, id, '=children')
@@ -75,9 +80,10 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
+
   const showContexts = isContextViewActive(state, path)
   const childrenUnfiltered = showContexts
-    ? childIdsToThoughts(state, getContexts(state, thought.value))
+    ? childIdsToThoughts(state, thought ? getContexts(state, thought.value) : [])
     : // when getting normal view children, make sure to use simplePath head rather than path head
       // otherwise it will retrieve the children of the context view, not the children of the context instance
       // See ContextView test "Expand grandchildren of contexts"
@@ -110,8 +116,9 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
     // Do not expand only child when parent's subthoughts are pinned.
     // https://github.com/cybersemics/em/issues/1732
     !childrenPinned(state, head(parentOf(path))) &&
-    // do not expand if thought or parent's subthoughts have =pin/false
+    // do not expand if thought or parent's subthoughts have =pin/false or =done
     pinned(state, visibleChildren[0].id) !== false &&
+    !isDone(state, visibleChildren[0].id) &&
     childrenPinned(state, thoughtId) !== false
 
   const childrenExpanded =
@@ -139,8 +146,10 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
             isAncestor() ||
             isExpansionBasePath() ||
             isHiddenAttribute() ||
-            pinned(state, child.id) ||
-            (childrenPinned(state, thoughtId) && pinned(state, child.id) === null) ||
+            // Only apply pin expansion if not in context view
+            (!showContexts &&
+              (pinned(state, child.id) ||
+                (childrenPinned(state, thoughtId) && pinned(state, child.id) === null && !isDone(state, child.id)))) ||
             EXPAND_THOUGHTS_REGEX.test(child.value)
           )
         })

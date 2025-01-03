@@ -1,5 +1,5 @@
 import { css, cx } from '../../styled-system/css'
-import { textNote } from '../../styled-system/recipes'
+import { textNoteRecipe } from '../../styled-system/recipes'
 
 /** Renders text with an animated '...'. */
 const LoadingEllipsis = ({
@@ -53,7 +53,7 @@ const LoadingEllipsis = ({
               }
             : undefined),
         }),
-        center && textNote(),
+        center && textNoteRecipe(),
       )}
     >
       {text}

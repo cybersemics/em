@@ -1,13 +1,17 @@
-import State from '../../@types/State'
+import { act } from 'react'
 import cursorDown from '../../actions/cursorDown'
 import importText from '../../actions/importText'
+import { importTextActionCreator as importTextAction } from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
-import toggleAttribute from '../../actions/toggleAttribute'
 import toggleContextView from '../../actions/toggleContextView'
-import contextToPath from '../../selectors/contextToPath'
+import newSubthoughtTopShortcut from '../../commands/newSubthoughtTop'
+import toggleSortShortcut from '../../commands/toggleSort'
+import createTestStore from '../../test-helpers/createTestStore'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import executeCommand from '../../util/executeCommand'
 import initialState from '../../util/initialState'
 import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
@@ -64,20 +68,48 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
 
-  it('work for sorted thoughts', () => {
-    const steps = [
-      newThought('a'),
-      newSubthought('n'),
-      newThought('m'),
-      setCursor(['a']),
-      (state: State) =>
-        toggleAttribute(state, { path: contextToPath(state, ['a']), values: ['=sort', 'Alphabetical'] }),
-      cursorDown,
-    ]
-
-    const stateNew = reducerFlow(steps)(initialState())
-
+  it('work for sorted thoughts', async () => {
+    const store = createTestStore()
+    act(() => {
+      store.dispatch([
+        importTextAction({
+          text: `
+              - a
+                - n
+                - m
+          `,
+        }),
+        setCursorAction(['a', 'n']),
+      ])
+    })
+    act(() => executeCommand(toggleSortShortcut, { store }))
+    act(() => {
+      store.dispatch([setCursorAction(['a'])])
+    })
+    const stateNew = cursorDown(store.getState())
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
+  })
+
+  it('move cursor from empty thought to next thought in context sorted in descending order', () => {
+    const store = createTestStore()
+    act(() => {
+      store.dispatch([
+        importTextAction({
+          text: `
+              - x
+                - b
+                - a
+                - =sort
+                  - Alphabetical
+                    - Desc
+            `,
+        }),
+        setCursorAction(['x']),
+      ])
+    })
+    act(() => executeCommand(newSubthoughtTopShortcut, { store }))
+    const stateNew = cursorDown(store.getState())
+    expectPathToEqual(stateNew, stateNew.cursor, ['x', 'b'])
   })
 })
 

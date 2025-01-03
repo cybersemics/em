@@ -1,5 +1,6 @@
 /** Position fixed breaks in mobile Safari when the keyboard is up. This module provides functionality to emulate position:fixed by changing all top navigation to position:absolute and updating on scroll. */
 import { useEffect } from 'react'
+import { token } from '../../styled-system/tokens'
 import { isIOS, isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
 import reactMinistore from '../stores/react-ministore'
@@ -27,7 +28,7 @@ const initEventHandler = once(() => {
 const usePositionFixed = (): {
   position: 'fixed' | 'absolute'
   overflowX?: 'hidden' | 'visible'
-  top: number
+  top: string
 } => {
   const position = positionFixedStore.useState()
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
@@ -37,7 +38,8 @@ const usePositionFixed = (): {
   return {
     position: position ?? 'fixed',
     overflowX: position === 'absolute' ? 'hidden' : 'visible',
-    top: position === 'absolute' ? scrollTop : 0,
+    /* spacing.safeAreaTop applies for rounded screens */
+    top: position === 'absolute' ? `${scrollTop}px` : token('spacing.safeAreaTop'),
   }
 }
 

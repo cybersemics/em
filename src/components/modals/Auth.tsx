@@ -1,7 +1,7 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { button, modalActionLink } from '../../../styled-system/recipes'
+import { buttonRecipe, modalActionLinkRecipe } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { loginActionCreator as login } from '../../actions/login'
@@ -144,7 +144,7 @@ const ModalAuth = () => {
           {!isModeActive(modes.login) && (
             <button
               disabled={isSubmitting}
-              className={cx(button(), css({ textDecoration: 'underline', marginTop: 15 }))}
+              className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
               {...fastClick(showLogin)}
             >
               {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
@@ -154,7 +154,7 @@ const ModalAuth = () => {
           {!isModeActive(modes.resetPassword) && (
             <button
               disabled={isSubmitting}
-              className={cx(button(), css({ textDecoration: 'underline', marginTop: 15 }))}
+              className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
               {...fastClick(signInWithGoogle)}
             >
               Sign in with Google
@@ -163,12 +163,12 @@ const ModalAuth = () => {
 
           <button
             disabled={isSubmitting}
-            className={cx(button(), css({ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }))}
+            className={cx(buttonRecipe(), css({ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }))}
             key='cancel'
           >
             <a
               id='cancel-login'
-              className={modalActionLink()}
+              className={modalActionLinkRecipe()}
               {...fastClick(() => {
                 // prevent the login modal on refresh once working offline
                 storage.setItem('modal-to-show', '')
@@ -194,7 +194,7 @@ const ModalAuth = () => {
           </button>
         )}
 
-        {error && <span className={css({ color: 'crimson' })}>{error}</span>}
+        {error && <span className={css({ color: 'error' })}>{error}</span>}
       </div>
     </ModalComponent>
   )

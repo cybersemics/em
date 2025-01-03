@@ -25,11 +25,16 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
   const path = cursor
   const simplePath = simplifyPath(state, path)
   const parentId = head(parentOf(simplePath))
+
   const children = paths
-    ? paths.map(path => getThoughtById(state, head(path)))
+    ? // getThoughtById -> Thought | undefined, so if we (unlikely) get undefined, we filter it out, see getThoughtById
+      paths.map(path => getThoughtById(state, head(path))).filter(Boolean)
     : getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
+
   const thoughtId = head(simplePath)
-  const { value } = getThoughtById(state, thoughtId)
+  const thought = getThoughtById(state, thoughtId)
+  if (!thought) return state
+  const { value } = thought
 
   let minNextRank = getNextRank(state, parentId)
 

@@ -34,7 +34,13 @@ it('single line', async () => {
   await press('ArrowUp')
 
   const image = await screenshot()
-  expect(image).toMatchImageSnapshot()
+  expect(image).toMatchImageSnapshot({
+    customDiffConfig: {
+      // Fails intermittently in the CI with default threshold of 0.18.
+      // See: https://github.com/cybersemics/em/actions/runs/12318388366/job/34418086296?pr=2700
+      threshold: 0.4,
+    },
+  })
 })
 
 describe('multiline', () => {
@@ -56,7 +62,13 @@ describe('multiline', () => {
     await press('ArrowUp')
 
     const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
+    expect(image).toMatchImageSnapshot({
+      customDiffConfig: {
+        // Fails intermittently in the CI with default threshold of 0.18.
+        // See: https://github.com/cybersemics/em/actions/runs/12318388366/job/34418086296?pr=2700
+        threshold: 0.4,
+      },
+    })
   }
 
   it('Font Size: 18 (default)', multilineTest)

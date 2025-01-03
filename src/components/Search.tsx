@@ -3,7 +3,7 @@ import React, { FC, useRef } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { child, editable, thought } from '../../styled-system/recipes'
+import { childRecipe, editableRecipe, thoughtRecipe } from '../../styled-system/recipes'
 import { searchActionCreator as search } from '../actions/search'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import store from '../stores/app'
@@ -67,7 +67,7 @@ const Search: FC = () => {
 
   return (
     <ul className={css({ marginTop: 0 })}>
-      <li className={child()}>
+      <li className={childRecipe()}>
         <div className={css({ display: 'flex' })}>
           <span
             className={css({
@@ -80,10 +80,10 @@ const Search: FC = () => {
           >
             <SearchIcon size={16} />
           </span>
-          <div className={thought({ flex: true })}>
+          <div className={thoughtRecipe({ flex: true })}>
             <ContentEditable
               className={cx(
-                editable(),
+                editableRecipe(),
                 css({
                   '&[contenteditable]': {
                     display: 'block',

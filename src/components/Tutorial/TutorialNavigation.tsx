@@ -1,7 +1,7 @@
 import { Ref } from 'react'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { tutorialBullet } from '../../../styled-system/recipes'
+import { tutorialBulletRecipe } from '../../../styled-system/recipes'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialChoiceActionCreator as tutorialChoice } from '../../actions/tutorialChoice'
 import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutorialNext'
@@ -58,7 +58,7 @@ const TutorialNavigation = ({
                   fontSize: '32px',
                   marginLeft: '1px',
                   marginRight: '1px',
-                  transition: `all {durations.tutorialStepNavigationDuration} ease-in-out`,
+                  transition: `all {durations.medium} ease-in-out`,
                   opacity: step === Math.floor(tutorialStep) ? 1 : 0.25,
                 })}
                 key={step}
@@ -83,7 +83,7 @@ const TutorialNavigation = ({
           {tutorialOptions.map(({ key, value, textValue }) => (
             <li
               className={cx(
-                tutorialBullet(),
+                tutorialBulletRecipe(),
                 css({
                   listStyle: 'none',
                   width: '240px',

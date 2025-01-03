@@ -16,7 +16,7 @@ describe('subcategorizeMulticursor', () => {
       newThought('b'),
       newThought('c'),
       newThought('d'),
-      setCursor(['b']),
+      addMulticursorAtFirstMatch(['b']),
       addMulticursorAtFirstMatch(['c']),
       subcategorizeMulticursor,
     ]
@@ -58,6 +58,7 @@ describe('subcategorizeMulticursor', () => {
         - c`,
       }),
       setCursor(['a', 'b']),
+      addMulticursorAtFirstMatch(['a', 'b']),
       addMulticursorAtFirstMatch(['c']),
       subcategorizeMulticursor,
     ]
@@ -89,6 +90,7 @@ describe('subcategorizeMulticursor', () => {
           - E`,
       }),
       setCursor(['A', 'C']),
+      addMulticursorAtFirstMatch(['A', 'C']),
       addMulticursorAtFirstMatch(['A', 'D']),
       subcategorizeMulticursor,
     ]

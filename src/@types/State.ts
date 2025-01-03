@@ -1,15 +1,15 @@
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Alert from './Alert'
+import Command from './Command'
+import CommandId from './CommandId'
 import Context from './Context'
-import DragShortcutZone from './DragShortcutZone'
+import DragCommandZone from './DragCommandZone'
 import Index from './IndexType'
 import Modal from './Modal'
 import Patch from './Patch'
 import Path from './Path'
 import PushBatch from './PushBatch'
 import RecentlyEditedTree from './RecentlyEditedTree'
-import Shortcut from './Shortcut'
-import ShortcutId from './ShortcutId'
 import SimplePath from './SimplePath'
 import StorageCache from './StorageCache'
 import ThoughtIndices from './ThoughtIndices'
@@ -53,10 +53,10 @@ interface State {
   draggingFile?: boolean
   /** Set to the dragging thought during dragInProgress. */
   draggingThought?: SimplePath
-  /** Dragging a shortcut or toolbar button in the customizeToolbar modal. */
-  dragShortcut?: ShortcutId | null
+  /** Dragging a command or toolbar button in the customizeToolbar modal. */
+  dragCommand?: CommandId | null
   /** Type of toolbar-sbutton drop target being hovered over. */
-  dragShortcutZone?: DragShortcutZone
+  dragCommandZone?: DragCommandZone
   /** Set to true while the user is long pressing a thought in preparation for a drag. */
   dragHold?: boolean
   /**
@@ -73,8 +73,8 @@ interface State {
   editableNonce: number
   /** True if there is an active browser selection, or on mobile when the virtual keyboard is up. On mobile the first tap moves the cursor, and the second tap opens the keyboard. */
   editing: boolean | null
-  /** Show the latest activated shortcuts at the bottom of the screen for webcasts. */
-  enableLatestShortcutsDiagram: boolean
+  /** Show the latest activated commands at the bottom of the screen for webcasts. */
+  enableLatestCommandsDiagram: boolean
   error?: string | null
   /** A map of all Paths that are expanded. Recalculated whenever the cursor moves or the thoughts change. Keyed by hashPath(path). */
   expanded: Index<Path>
@@ -109,7 +109,7 @@ interface State {
    * Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward.
    */
   jumpIndex: number
-  latestShortcuts: Shortcut[]
+  latestCommands: Command[]
   /** When a context is sorted, the manual sort order is saved so that it can be recovered when they cycle back through the sort options. If new thoughts have been added, their order relative to the original thoughts will be indeterminate, but both the old thoughts and the new thoughts will be sorted relative to themselves. The outer Index is keyed by parent ThoughtId, and the inner Index stores the manual ranks of each child at the time the context is sorted. This is stored in memory only and is lost when the app refreshes. */
   manualSortMap: Index<Index<number>>
   modals: Index<{ complete?: boolean }>
@@ -123,6 +123,7 @@ interface State {
    */
   pushQueue: PushBatch[]
   recentlyEdited: RecentlyEditedTree
+  /** Redo history. Contains diffs that can be applied to State to restore actions that were reverted with undo. State.redoPatches[0] is the oldest action that was undone. */
   redoPatches: Patch[]
   remoteSearch: boolean
   resourceCache: Index<string>
@@ -161,9 +162,10 @@ interface State {
   storageCache?: StorageCache
   thoughts: ThoughtIndices
   tips: Tip[]
-  /** Shortcut of a toolbar button that is being long pressed in the customize modal. */
-  toolbarLongPress?: Shortcut
+  /** Command of a toolbar button that is being long pressed in the customize modal. */
+  toolbarLongPress?: Command
   transientFocus?: boolean
+  /** Undo history. Contains diffs that can be applied to State to revert actions. State.undoPatches[0] is the oldest. */
   undoPatches: Patch[]
 }
 

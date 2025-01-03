@@ -15,6 +15,8 @@ const ModalTestGestureDiagram = () => {
       <GestureDiagram path='dud' size={48} arrowSize={12} />
       <GestureDiagram path='rdlu' size={48} arrowSize={12} />
       <GestureDiagram path='rdrul' size={48} arrowSize={12} />
+      <GestureDiagram path='rl' size={48} arrowSize={12} />
+      <GestureDiagram path='rld' size={48} arrowSize={12} />
     </ModalComponent>
   )
 }

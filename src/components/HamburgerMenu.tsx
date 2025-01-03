@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSidebar'
-import { isIOS } from '../browser'
+import { isIOS, isSafari, isTouch } from '../browser'
 import usePositionFixed from '../hooks/usePositionFixed'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import fastClick from '../util/fastClick'
@@ -89,17 +89,22 @@ const HamburgerMenu = () => {
           padding: `${paddingTop}px 15px 10px 15px`,
           // On macOS, if the user cancels a drag and then switches tabs, upon returning mouseup will fire at coordinates (0,0), triggering fastClick on any element located at (0,0).
           // Therefore, position the HamburgerMenu at top: 1px so that the sidebar is not accidentally opened on tab change.
-          top: positionFixedStyles.top + 1,
+          top: `calc(${positionFixedStyles.top} + 1px)`,
           ...(isIOS && {
             marginTop: '48px',
           }),
         }}
-        {...fastClick(() => {
+        {...fastClick(e => {
           // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?
           // onClick does not have the same problem
           setTimeout(() => {
             dispatch(toggleSidebar({}))
           }, 10)
+          // There is no click event fired when the sidebar is opened on iOS Safari, but there is one fired when it is closed via hamburger menu. This extraneous click event doesn't
+          // interfere as long as we want the keyboard to stay closed when users close the sidebar, but if we want to restore focus to an Editable then it will need to be suppressed.
+          if (isTouch && isSafari()) {
+            e.preventDefault()
+          }
         })}
       >
         <Menu width={width} height={width * 0.7} strokeWidth={fontSize / 20} />

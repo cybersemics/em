@@ -3,7 +3,7 @@ import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
-import { extendTap } from '../../styled-system/recipes'
+import { extendTapRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
@@ -126,7 +126,7 @@ const BreadCrumb = React.memo(
           ) : (
             <Link
               cssRaw={css.raw(linkCssRaw)}
-              className={extendTap({ size: 'small' })}
+              className={extendTapRecipe({ size: 'small' })}
               simplePath={simplePath}
               label={label}
             />
@@ -180,7 +180,7 @@ const ContextBreadcrumbs = ({
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const pathFiltered = useSelector(
-    state => (hideArchive ? (path.filter(id => getThoughtById(state, id).value !== '=archive') as Path) : path),
+    state => (hideArchive ? (path.filter(id => getThoughtById(state, id)?.value !== '=archive') as Path) : path),
     shallowEqual,
   )
   const ellipsizedThoughts = useEllipsizedThoughts(pathFiltered, { charLimit, disabled, thoughtsLimit })

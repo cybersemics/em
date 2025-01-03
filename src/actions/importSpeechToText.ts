@@ -33,9 +33,11 @@ const importSpeechToText = _.curryRight(
       .map(line => line.replace('</div>', ''))
       .slice(1)
 
-    if (lines.length === 0) return state
+    const thought = getThoughtById(state, head(simplePath))
 
-    const rank = getThoughtById(state, head(simplePath)).rank
+    if (lines.length === 0 || !thought) return state
+
+    const { rank } = thought
 
     reducerFlow([
       // edit original thought to first line

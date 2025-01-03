@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import React, { PropsWithChildren } from 'react'
 import { css, cx } from '../../../styled-system/css'
-import { modal } from '../../../styled-system/recipes'
+import { modalRecipe } from '../../../styled-system/recipes'
 import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { isIOS } from '../../browser'
@@ -83,7 +83,7 @@ class ModalComponent extends React.Component<ModalProps> {
   render() {
     const { actions, center, children, hideClose, hideModalActions, id, style, title, top } = this.props
 
-    const modalClasses = modal({ id, center })
+    const modalClasses = modalRecipe({ id, center })
 
     return (
       <div ref={this.ref} style={style} className={cx(modalClasses.root, css({ ...(top ? { top: 55 } : null) }))}>
@@ -94,10 +94,11 @@ class ModalComponent extends React.Component<ModalProps> {
               padding: '10px 20px',
               margin: '-10px -20px',
               position: 'fixed',
-              top: 'calc(9px - 0.2em)',
               right: '11px',
               color: 'inherit',
               textDecoration: 'none',
+              /* spacing.safeAreaTop applies for rounded screens */
+              top: 'calc(token(spacing.safeAreaTop) + 9px - 0.2em)',
               ...(isIOS && {
                 marginTop: '48px',
               }),

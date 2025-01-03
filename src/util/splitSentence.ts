@@ -4,11 +4,11 @@ import once from './once'
 /**
  * Function: calculateRemoveFront.
  * When it ends with .' or .) or !) or ?") or ;), etc.
- * Spliting sentences will let those symbols sit on the front of the next sentence.
+ * Splitting sentences will let those symbols sit on the front of the next sentence.
  * Hence, we calculate how many such characters needed to be removed and added back to the end of the previous sentence.
  *
- * @param str1 The previous sentence plus the previous spliter.
- * @param s The current sentence, which doesn't include the current spliter.
+ * @param str1 The previous sentence plus the previous splitter.
+ * @param s The current sentence, which doesn't include the current splitter.
  * @param matched The array for the matched regular expression pattern.
  * @returns A number that indicates how many charcaters have to be moved to the previous sentence.
  */
@@ -28,9 +28,9 @@ function calculateRemoveFront(str1: string, s: string, matched: string[]) {
 /**
  * Function: isUrl.
  *
- * @param str1 The previous sentence plus the previous spliter.
- * @param s The current sentence, which doesn't include the current spliter.
- * @returns A bolean that says whether the dot comes from a url.
+ * @param str1 The previous sentence plus the previous splitter.
+ * @param s The current sentence, which doesn't include the current splitter.
+ * @returns A boolean that says whether the dot comes from a url.
  */
 function isUrl(str1: string, s: string) {
   // An empty space means the url has ended
@@ -47,10 +47,26 @@ function isUrl(str1: string, s: string) {
   return urlPattern.test(combinedSentence)
 }
 
+interface SplitResult {
+  value: string
+  insertNewSubThought?: boolean
+}
+
 /**
  * Splits given value by special characters.
  */
-const splitSentence = (value: string): string[] => {
+const splitSentence = (value: string): SplitResult[] => {
+  // Check for parenthetical content at the end of the thought first
+  // pattern : ), ).
+  // "This is a thought (and a subthought)" -> "-This is a thought   -and a subthought"
+  const parentheticalMatch = value.match(/^(.*?)\s*\((.*?)\)\.?$/)
+  if (parentheticalMatch) {
+    const [_, mainThought, subThought] = parentheticalMatch
+    return [{ value: mainThought.trim() }, { value: subThought.trim(), insertNewSubThought: true }].filter(
+      s => s.value !== '',
+    )
+  }
+
   // pattern1, single symbol: . ; ! ?
   // pattern2, multiple symbols: ?! !!! ...
   const mainSplitRegex = /[.;!?]+/g
@@ -70,6 +86,7 @@ const splitSentence = (value: string): string[] => {
       .split(/,|and/i)
       .map(s => s.trim())
       .filter(s => s !== '')
+      .map(value => ({ value }))
 
   /**
    * When the setences can be split, it has multiple situations.
@@ -85,8 +102,8 @@ const splitSentence = (value: string): string[] => {
   const resultSentences = sentences.reduce((newSentence: string, s: string, i: number) => {
     if (i === 0) return newSentence + sentenceSplitters[0]
 
-    const seperatorIndex = newSentence.lastIndexOf(SEPARATOR_TOKEN)
-    const prevSentence = seperatorIndex < 0 ? newSentence : newSentence.slice(seperatorIndex + 7)
+    const separatorIndex = newSentence.lastIndexOf(SEPARATOR_TOKEN)
+    const prevSentence = separatorIndex < 0 ? newSentence : newSentence.slice(separatorIndex + 7)
     const currSentence = sentenceSplitters[i] ? s + sentenceSplitters[i] : s
 
     /**
@@ -121,22 +138,22 @@ const splitSentence = (value: string): string[] => {
      */
     if (prevSentence[prevSentence.length - 1] === '.' && s[0] !== ' ') return newSentence + currSentence
 
-    // On other conditions,the original spliter is the real splitter
+    // On other conditions,the original splitter is the real splitter
     return newSentence + SEPARATOR_TOKEN + currSentence
   }, initialValue)
 
   // if the return string is one sentence that ends with no other main split characters except one period at the end, split the thought by comma
   const res = resultSentences.split(SEPARATOR_TOKEN).filter(s => /\S+/.test(s))
-  const hasOnlyPeoriodSpliterAtEnd = !/;!?$/.test(resultSentences)
-  if (res.length === 1 && hasOnlyPeoriodSpliterAtEnd) {
+  const hasOnlyPeriodSplitterAtEnd = !/;!?$/.test(resultSentences)
+  if (res.length === 1 && hasOnlyPeriodSplitterAtEnd) {
     return resultSentences
       .replace(/,/g, `${SEPARATOR_TOKEN}`)
       .split(SEPARATOR_TOKEN)
       .filter(s => /\S+/.test(s))
-      .map(s => s.trim())
+      .map(s => ({ value: s.trim() }))
   }
 
-  return res.map(s => s.trim())
+  return res.map(s => ({ value: s.trim() }))
 }
 
 export default splitSentence

@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
-import { bullet } from '../../styled-system/recipes'
+import { bulletRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -40,6 +40,7 @@ interface BulletProps {
   // debugIndex?: number
   isCursorGrandparent?: boolean
   isCursorParent?: boolean
+  isInContextView?: boolean
 }
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
@@ -205,7 +206,7 @@ const glyph = cva({
 
 const glyphFg = cva({
   base: {
-    transition: `transform {durations.veryFastDuration} ease-out, fill-opacity {durations.mediumDuration} ease-out`,
+    transition: `transform {durations.veryFast} ease-out, fill-opacity {durations.medium} ease-out`,
   },
   variants: {
     gray: {
@@ -218,10 +219,7 @@ const glyphFg = cva({
       true: {
         color: 'bulletGray',
         fill: 'bulletGray',
-        '-webkit-animation': {
-          base: 'toblack 400ms infinite alternate ease-in-out',
-          _dark: 'towhite 400ms infinite alternate ease-in-out',
-        },
+        '-webkit-animation': 'tofg 400ms infinite alternate ease-in-out',
       },
     },
     triangle: {
@@ -397,6 +395,7 @@ const Bullet = ({
   thoughtId,
   isCursorGrandparent,
   isCursorParent,
+  isInContextView,
   // depth,
   // debugIndex,
 }: BulletProps) => {
@@ -415,9 +414,7 @@ const Bullet = ({
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging || isMulticursor
   })
-  const bulletIsDivider = useSelector(state =>
-    isDivider(getThoughtById(state, thoughtId)?.value) ? 'none' : undefined,
-  )
+  const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
   /** Returns true if the thought is pending. */
   const pending = useSelector(state => {
@@ -528,7 +525,7 @@ const Bullet = ({
 
   // calculate position of bullet for different font sizes
   // Table column 1 needs more space between the bullet and thought for some reason
-  const width = 11 - (fontSize - 9) * 0.5 + (isTableCol1 ? fontSize / 4 : 0)
+  const width = 11 - (fontSize - 9) * 0.5 + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
   const marginLeft = -width
 
   // expand or collapse on click
@@ -578,14 +575,14 @@ const Bullet = ({
       aria-label='bullet'
       data-highlighted={isHighlighted}
       className={cx(
-        bullet({ invalid }),
+        bulletRecipe({ invalid }),
         css({
           _mobile: {
             marginRight: showContexts ? '-1.5px' : undefined,
           },
           '@media (min-width: 560px) and (max-width: 1024px)': {
             _android: {
-              transition: `transform {durations.veryFastDuration} ease-in-out`,
+              transition: `transform {durations.veryFast} ease-in-out`,
               marginLeft: '-3px',
             },
           },
@@ -594,7 +591,7 @@ const Bullet = ({
               marginLeft: '-3px',
             },
           },
-          display: bulletIsDivider,
+          display: bulletIsDivider ? 'none' : undefined,
           position: 'absolute',
           verticalAlign: 'top',
           cursor: 'pointer',

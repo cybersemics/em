@@ -1,13 +1,21 @@
+import { act } from 'react-dom/test-utils'
 import cursorUp from '../../actions/cursorUp'
 import importText from '../../actions/importText'
+import { importTextActionCreator as importTextAction } from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
 import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
+import newSubthoughtTopShortcut from '../../commands/newSubthoughtTop'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import isContextViewActive from '../../selectors/isContextViewActive'
+import prevThought from '../../selectors/prevThought'
+import createTestStore from '../../test-helpers/createTestStore'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
+import executeCommand from '../../util/executeCommand'
 import initialState from '../../util/initialState'
 import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
@@ -15,6 +23,19 @@ import reducerFlow from '../../util/reducerFlow'
 describe('normal view', () => {
   it('move cursor to previous sibling', () => {
     const steps = [newThought('a'), newThought('b'), cursorUp]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
+  })
+
+  it('move cursor to previous collapsed sibling', () => {
+    const text = `
+      - a
+        - a1
+      - b
+    `
+    const steps = [importText({ text }), setCursor(['b']), cursorUp]
 
     const stateNew = reducerFlow(steps)(initialState())
 
@@ -61,6 +82,123 @@ describe('normal view', () => {
     const stateNew = cursorUp(initialState())
 
     expect(stateNew.cursor).toBe(null)
+  })
+
+  it('should return previous sibling in same context', () => {
+    const text = `
+      - a
+        - a1
+          - a1.1
+          - a1.2
+    `
+    const steps = [importText({ text }), setCursor(['a', 'a1', 'a1.2'])]
+    const state = reducerFlow(steps)(initialState())
+    const cursor = state.cursor
+    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a', 'a1', 'a1.1'])
+  })
+
+  it('should return parent when no previous sibling exists', () => {
+    const text = `
+      - a
+        - a1
+          - first
+    `
+    const steps = [importText({ text }), setCursor(['a', 'a1', 'first'])]
+    const state = reducerFlow(steps)(initialState())
+    const cursor = state.cursor
+    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a', 'a1'])
+  })
+
+  it('should handle thoughts ending with colon', () => {
+    const text = `
+      - planning:
+        - task1
+        - task2
+      - b
+    `
+    const steps = [importText({ text }), setCursor(['b'])]
+    const state = reducerFlow(steps)(initialState())
+    const cursor = state.cursor
+    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['planning:', 'task2'])
+  })
+
+  it('should handle thoughts with =pin attribute', () => {
+    const text = `
+      - a
+        - =pin
+          - true
+        - a1
+        - a2
+      - b
+    `
+    const steps = [importText({ text }), setCursor(['b'])]
+    const state = reducerFlow(steps)(initialState())
+    const cursor = state.cursor
+    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a', 'a2'])
+  })
+
+  it('should handle thoughts with =children/=pin', () => {
+    const text = `
+      - a
+        - =children
+          - =pin
+            - true
+        - b
+          - c
+        - d
+          - e
+    `
+    const steps = [importText({ text }), setCursor(['a', 'd'])]
+    const state = reducerFlow(steps)(initialState())
+    const cursor = state.cursor
+    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('should skip hidden thoughts', () => {
+    const text = `
+      - a
+      - =test
+      - b
+    `
+    const steps = [importText({ text }), toggleHiddenThoughts, setCursor(['b']), toggleHiddenThoughts, cursorUp]
+    const state = reducerFlow(steps)(initialState())
+    expect(pathToContext(state, state.cursor!)).toEqual(['a'])
+  })
+
+  it('should handle thoughts with =view', () => {
+    const text = `
+      - a
+        - =view
+          - Table
+        - b
+          - c
+    `
+    const steps = [importText({ text }), setCursor(['a', 'b'])]
+    const state = reducerFlow(steps)(initialState())
+    const cursor = state.cursor
+    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a'])
+  })
+
+  it('move cursor from empty thought to previous thought in context sorted in descending order', () => {
+    const store = createTestStore()
+    act(() => {
+      store.dispatch([
+        importTextAction({
+          text: `
+              - x
+                - b
+                - a
+                - =sort
+                  - Alphabetical
+                    - Desc
+            `,
+        }),
+        setCursorAction(['x']),
+      ])
+    })
+    act(() => executeCommand(newSubthoughtTopShortcut, { store }))
+    const stateNew = cursorUp(store.getState())
+    expectPathToEqual(stateNew, stateNew.cursor, ['x'])
   })
 })
 

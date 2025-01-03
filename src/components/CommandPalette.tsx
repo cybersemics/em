@@ -3,18 +3,18 @@ import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
-import { isIOS, isTouch } from '../browser'
+import { isIOS,isTouch } from '../browser'
+import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
-import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
-import { executeShortcutWithMulticursor } from '../util/executeShortcut'
+import { executeCommandWithMulticursor } from '../util/executeCommand'
 import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
@@ -27,14 +27,14 @@ import Popup from './Popup'
 /** The maximum number of recent commands to store for the command palette. */
 const MAX_RECENT_COMMANDS = 5
 
-const commandPaletteShortcut = shortcutById('commandPalette')
+const commandPaletteShortcut = commandById('commandPalette')
 
 /**********************************************************************
  * Helper Functions
  **********************************************************************/
 
 /** Returns true if the shortcut can be executed. */
-const isExecutable = (state: State, shortcut: Shortcut) =>
+const isExecutable = (state: State, shortcut: Command) =>
   (!shortcut.canExecute || shortcut.canExecute(state)) && (shortcut.allowExecuteFromModal || !state.showModal)
 
 /**********************************************************************
@@ -59,7 +59,7 @@ const CommandSearch: FC<{
       if (
         e.key === 'Escape' ||
         // manually check if the commandPalette shortcut is entered since global shortcuts are disabled while the command palette is open
-        hashKeyDown(e) === hashShortcut(commandPaletteShortcut)
+        hashKeyDown(e) === hashCommand(commandPaletteShortcut)
       ) {
         e.preventDefault()
         e.stopPropagation()
@@ -123,10 +123,10 @@ const CommandRow: FC<{
   gestureInProgress: string
   search: string
   last?: boolean
-  onClick: (e: React.MouseEvent, shortcut: Shortcut) => void
-  onHover: (e: MouseEvent, shortcut: Shortcut) => void
+  onClick: (e: React.MouseEvent, shortcut: Command) => void
+  onHover: (e: MouseEvent, shortcut: Command) => void
   selected?: boolean
-  shortcut: Shortcut
+  shortcut: Command
   style?: React.CSSProperties
 }> = ({ gestureInProgress, search, last, onClick, onHover, selected, shortcut, style }) => {
   const store = useStore()
@@ -289,11 +289,11 @@ const CommandPalette: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
-  const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(shortcuts[0])
+  const [selectedShortcut, setSelectedShortcut] = useState<Command>(shortcuts[0])
 
   /** Execute a shortcut. */
   const onExecute = useCallback(
-    (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, shortcut: Shortcut) => {
+    (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, shortcut: Command) => {
       e.stopPropagation()
       e.preventDefault()
       if (
@@ -304,7 +304,7 @@ const CommandPalette: FC = () => {
         return
       const commandsNew = [shortcut.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
       dispatch(commandPalette())
-      executeShortcutWithMulticursor(shortcut, { event: e, type: 'commandPalette', store })
+      executeCommandWithMulticursor(shortcut, { event: e, type: 'commandPalette', store })
       storageModel.set('recentCommands', commandsNew)
       setRecentCommands(commandsNew)
     },
@@ -318,7 +318,7 @@ const CommandPalette: FC = () => {
   )
 
   /** Select shortcuts on hover. */
-  const onHover = useCallback((e: MouseEvent, shortcut: Shortcut) => setSelectedShortcut(shortcut), [])
+  const onHover = useCallback((e: MouseEvent, shortcut: Command) => setSelectedShortcut(shortcut), [])
 
   // Select the first shortcut when the input changes.
   useEffect(() => {

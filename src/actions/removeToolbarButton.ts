@@ -1,20 +1,20 @@
 /* eslint-disable import/prefer-default-export */
-import ShortcutId from '../@types/ShortcutId'
+import CommandId from '../@types/CommandId'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
 import { initUserToolbarActionCreator as initUserToolbar } from '../actions/initUserToolbar'
+import { commandById } from '../commands'
 import { AlertType, EM_TOKEN } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
-import { shortcutById } from '../shortcuts'
 
 /** Removes a toolbar button. */
 export const removeToolbarButtonActionCreator =
-  (shortcutId: ShortcutId): Thunk =>
+  (shortcutId: CommandId): Thunk =>
   (dispatch, getState) => {
-    const shortcut = shortcutById(shortcutId)
+    const shortcut = commandById(shortcutId)
 
     // initialize EM/Settings/Toolbar/Visible with default shortcuts
     dispatch(initUserToolbar())

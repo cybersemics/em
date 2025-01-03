@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 
 /** Defines app-wide constants. */
-import ShortcutId from './@types/ShortcutId'
+import CommandId from './@types/CommandId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
 import { ColorToken } from './colors.config'
@@ -170,7 +170,7 @@ export const MAX_EXPAND_DEPTH = 10
 
 // shortcut ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
-export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
+export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'undo',
   'redo',
   'newThought',
@@ -506,9 +506,6 @@ export const FREE_THOUGHTS_THRESHOLD = 500
 
 /** Throttle rate for the freeThoughts middleware to check memory pressure and deallocate thoughts from the thoughtIndex. */
 export const FREE_THOUGHTS_THROTTLE = 1000
-
-/** Controls the delay when enabling distraction free typing. */
-export const THROTTLE_DISTRACTION_FREE_TYPING = 100
 
 /** The animation duration for a toolbar button press. */
 export const TOOLBAR_PRESS_ANIMATION_DURATION = 80

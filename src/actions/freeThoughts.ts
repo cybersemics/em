@@ -61,15 +61,15 @@ const freeThoughts = (state: State) => {
     // preserve expanded thoughts and their children
     ...Object.values(state.expanded).flatMap(path => {
       const showContexts = isContextViewActive(state, path)
+      const thought = getThoughtById(state, head(path))
+
       return [
         ...path,
         // preserve normal children even if context view is active, so that it is instantly available when the user switches back
         ...getAllChildren(state, head(path)),
         // preserve context view (including context ancestors)
-        ...(showContexts
-          ? (getContexts(state, getThoughtById(state, head(path)).value).flatMap(cxid =>
-              thoughtToPath(state, cxid),
-            ) as ThoughtId[])
+        ...(showContexts && thought
+          ? (getContexts(state, thought.value).flatMap(cxid => thoughtToPath(state, cxid)) as ThoughtId[])
           : []),
       ]
     }),

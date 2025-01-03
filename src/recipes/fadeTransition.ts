@@ -8,24 +8,32 @@ const fadeTransitionRecipe = defineSlotRecipe({
     enterActive: { opacity: 1 },
     exit: { opacity: 1 },
     exitActive: { opacity: 0 },
+    exitDone: { opacity: 0 },
   },
   variants: {
     duration: {
       fast: {
-        enterActive: { transition: `opacity {durations.fastDuration} ease-out` },
-        exitActive: { transition: `opacity {durations.fastDuration} ease-out` },
+        enterActive: { transition: `opacity {durations.fast} ease-out` },
+        exitActive: { transition: `opacity {durations.fast} ease-out` },
       },
       slow: {
-        enterActive: { transition: `opacity {durations.fastDuration} ease-out` },
-        exitActive: { transition: `opacity {durations.slowDuration} ease-out` },
+        enterActive: { transition: `opacity {durations.fast} ease-out` },
+        exitActive: { transition: `opacity {durations.slow} ease-out` },
       },
       medium: {
-        enterActive: { transition: `opacity {durations.mediumDuration} ease 0ms` },
-        exitActive: { transition: `opacity {durations.mediumDuration} ease 0ms` },
+        enterActive: { transition: `opacity {durations.medium} ease 0ms` },
+        exitActive: { transition: `opacity {durations.medium} ease 0ms` },
       },
       distractionFreeTyping: {
-        enterActive: { transition: `opacity {durations.distractionFreeTypingDuration} ease 0ms` },
-        exitActive: { transition: `opacity {durations.slowDuration} ease 0ms` },
+        enterActive: { transition: `opacity {durations.distractionFreeTyping} ease 0ms` },
+        exitActive: { transition: `opacity {durations.slow} ease 0ms` },
+      },
+      nodeFadeIn: {
+        enterActive: { transition: `opacity {durations.nodeFadeIn} ease-in-out` },
+      },
+      nodeFadeOut: {
+        enter: { opacity: 1 },
+        exitActive: { transition: `opacity {durations.nodeFadeOut} ease-out` },
       },
     },
   },

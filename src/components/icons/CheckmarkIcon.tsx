@@ -1,6 +1,6 @@
 import { FC } from 'react'
 import { cx } from '../../../styled-system/css'
-import { icon } from '../../../styled-system/recipes'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
 
@@ -15,7 +15,7 @@ export interface IconProps {
 const CheckmarkIcon: FC<IconProps> = ({ fill, size = 20, style, classes }) => {
   return (
     <svg
-      className={cx(icon(), classes)}
+      className={cx(iconRecipe(), classes)}
       x='0px'
       y='0px'
       viewBox='0 0 21 21'

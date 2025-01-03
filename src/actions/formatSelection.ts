@@ -16,12 +16,16 @@ import { editThoughtActionCreator as editThought } from './editThought'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
-  (command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor', color?: ColorToken): Thunk =>
+  (
+    command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'code' | 'foreColor' | 'backColor',
+    color?: ColorToken,
+  ): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     if (!state.cursor) return
-    const colors = themeColors(state)
     const thought = pathToThought(state, state.cursor)
+    if (!thought) return
+    const colors = themeColors(state)
     suppressFocusStore.update(true)
     // if there is no selection, format the entire thought by selecting the whole thought
     const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
@@ -82,6 +86,7 @@ export const formatSelectionActionCreator =
           if (!state.cursor) return
 
           const thought = getThoughtById(state, head(state.cursor))
+          if (!thought) return
           const simplePath = simplifyPath(state, state.cursor)
           const styleAttrPattern = /style\s*=\s*["'][^"']*["']/gi
           const tagWithoutStylePattern = /<(span|font)(\s[^>]*)?>/gi
