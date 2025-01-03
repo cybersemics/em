@@ -6,7 +6,7 @@ import { css } from '../../styled-system/css'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
-import { isTouch } from '../browser'
+import { isIOS, isTouch } from '../browser'
 import fastClick from '../util/fastClick'
 import FadeTransition from './FadeTransition'
 import Favorites from './Favorites'
@@ -83,6 +83,7 @@ const Sidebar = () => {
           _mobile: { width: '90%' },
         }),
         paperAnchorLeft: css({ top: 'safeAreaTop !important' }),
+        marginTop: '48px',
       }}
       disableSwipeToOpen={!isTouch}
       ref={containerRef}
@@ -159,6 +160,9 @@ const Sidebar = () => {
               style={{
                 // match HamburgerMenu width + padding
                 marginLeft: fontSize * 1.3 + 30,
+                ...(isIOS && {
+                  marginTop: '48px',
+                }),
               }}
             >
               <SidebarLink

@@ -4,6 +4,7 @@ import { css, cx } from '../../../styled-system/css'
 import { modal } from '../../../styled-system/recipes'
 import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
+import { isIOS } from '../../browser'
 import { FADEOUT_DURATION } from '../../constants'
 import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
@@ -97,6 +98,9 @@ class ModalComponent extends React.Component<ModalProps> {
               right: '11px',
               color: 'inherit',
               textDecoration: 'none',
+              ...(isIOS && {
+                marginTop: '48px',
+              }),
             })}
             {...fastClick(this.close)}
           >

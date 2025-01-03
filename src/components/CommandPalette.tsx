@@ -6,7 +6,7 @@ import { token } from '../../styled-system/tokens'
 import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
-import { isTouch } from '../browser'
+import { isIOS, isTouch } from '../browser'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
@@ -449,7 +449,12 @@ const CommandPaletteWithTransition: FC = () => {
   const dispatch = useDispatch()
   const popupRef = useRef<HTMLDivElement>(null)
 
-  const popUpStyles = css.raw({ zIndex: 'commandPalette' })
+  const popUpStyles = css.raw({
+    zIndex: 'commandPalette',
+    ...(isIOS && {
+      marginTop: '48px',
+    }),
+  })
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
