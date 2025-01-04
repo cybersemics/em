@@ -27,10 +27,6 @@ const useCachedNode = ({
    * @returns The cleaned HTML string.
    */
   const cleanUpEditableClasses = (htmlString: string) => {
-    // Create a temporary container to parse the HTML string
-    const container = document.createElement('div')
-    container.innerHTML = htmlString
-
     // Get the class name for editable elements
     const editableClass = cx(
       editableRecipe({
@@ -38,21 +34,15 @@ const useCachedNode = ({
       }),
     ).split(' ')
 
-    // Find all elements with the editable variant class
-    const editableElements = container.querySelectorAll(`.${editableClass.join('.')}`)
+    // Filter classes containing '--' to identify variant classes
+    const modifiers = editableClass.filter(cls => cls.includes('--'))
 
-    // Remove each class from the classList
-    editableElements.forEach(element => {
-      // Filter classes containing '--' to identify BEM modifiers and remove them
-      editableClass
-        .filter(cls => cls.includes('--'))
-        .forEach(cls => {
-          element.classList.remove(cls)
-        })
-    })
+    // Create a regular expression to match and remove BEM modifier (variant) classes
+    const regex = new RegExp(`\\b(${modifiers.join('|')})\\b`, 'g')
 
-    // Return the cleaned HTML string
-    return container.innerHTML
+    // Replace BEM modifier classes with an empty string
+    // The first replace removes BEM modifier classes
+    return htmlString.replace(regex, '').trim()
   }
 
   // Capture the static HTML string when the thought is first rendered
