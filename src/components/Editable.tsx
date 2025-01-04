@@ -18,7 +18,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -202,6 +202,8 @@ const Editable = ({
 
       // set offset to null to allow the browser to set the position of the selection
       let offset = null
+
+      if (isTouch && isSafari() && contentRef.current?.innerHTML.length) offset = contentRef.current.innerHTML.length
 
       // if running for the first time, restore the offset if the path matches the restored cursor
       if (!cursorOffsetInitialized) {
@@ -545,7 +547,7 @@ const Editable = ({
       if (
         disabled ||
         // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-        (isTouch && !globals.touching && !state.dragInProgress && !state.dragHold)
+        (isTouch && isSafari() && !globals.touching && !state.dragInProgress && !state.dragHold)
       ) {
         // do not set cursor on hidden thought
         e.preventDefault()
