@@ -1,5 +1,8 @@
 import _ from 'lodash'
+import React from 'react'
 import { isTouch } from '../browser'
+
+export type FastClickEvent = React.TouchEvent<Element> | React.MouseEvent<Element, MouseEvent>
 
 // the number of pixels of scrolling or dragging from touchStart that is allowed to still trigger fastClick
 const MOVE_THRESHOLD = 15
@@ -12,13 +15,13 @@ const fastClick = isTouch
   ? (
       // triggered on mouseup or touchend
       // cancelled if the user scroll or drags
-      tapUp: (e: React.TouchEvent) => void,
+      tapUp: (e: FastClickEvent) => void,
       // triggered on mousedown or touchstart
-      tapDown?: (e: React.TouchEvent) => void,
+      tapDown?: (e: FastClickEvent) => void,
       // triggered when tapUp is cancelled due to scrolling or dragging
       // does not work with drag-and-drop on desktop (onMouseUp does not trigger)
-      tapCancel?: (e: React.TouchEvent) => void,
-      // triggered with touchMove
+      tapCancel?: (e: FastClickEvent) => void,
+      // triggered with touchMove, which can never be a MouseEvent
       touchMove?: (e: React.TouchEvent) => void,
     ) => ({
       onTouchStart: (e: React.TouchEvent) => {
