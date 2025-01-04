@@ -6,6 +6,7 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
+import useCachedNode from '../hooks/useCachedNode'
 import useChangeRef from '../hooks/useChangeRef'
 import attributeEquals from '../selectors/attributeEquals'
 import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
@@ -59,6 +60,8 @@ const Subthought = ({
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
+  // Cache the DOM before it is deleted
+  const cachedHTMLRef = useCachedNode({ thought, elementRef: ref })
   const noOtherContexts = useSelector(
     state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
   )
@@ -113,6 +116,11 @@ const Subthought = ({
     // start opacity at 0 and set to actual opacity in useEffect
     ref.current.style.opacity = opacity
   })
+
+  // If the thought is deleted, return the cached static HTML from the ref
+  if (!thought && cachedHTMLRef.current) {
+    return <div dangerouslySetInnerHTML={{ __html: cachedHTMLRef.current }} />
+  }
 
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
