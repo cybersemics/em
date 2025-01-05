@@ -18,7 +18,7 @@ const cursorForward = (state: State) => {
   const cursorFromHistory = last(state.cursorHistory)
   const cursor = state.cursor || HOME_PATH
   const showContexts = isContextViewActive(state, cursor)
-  
+
   // context view
   let cursorNew, isValidChild
   const cursorValue = headValue(state, cursor)
