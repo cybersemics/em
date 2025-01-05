@@ -98,7 +98,6 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     (insertNewSubthought && Math.floor(tutorialStep) === TUTORIAL_STEP_SUBTHOUGHT) ||
     // enter after typing text
     (cursorValue &&
-      cursorValue.length > 0 &&
       (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER || tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER))
 
   const path = at || state.cursor || getRootPath(state)

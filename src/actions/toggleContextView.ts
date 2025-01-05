@@ -1,5 +1,4 @@
 import { produce } from 'immer'
-import { isString } from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import settings from '../actions/settings'
@@ -41,7 +40,7 @@ const toggleContextView = (state: State) => {
     state => {
       const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
       const cursorValue = state.cursor && headValue(state, state.cursor)
-      return Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE && isString(cursorValue)
+      return Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE && cursorValue
         ? settings(state, {
             key: 'Tutorial Step',
             value: (tutorialStep + (getContexts(state, cursorValue).length > 1 ? 1 : 0.1)).toString(),
