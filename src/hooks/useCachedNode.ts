@@ -3,6 +3,19 @@ import { cx } from '../../styled-system/css'
 import { editableRecipe } from '../../styled-system/recipes'
 import Thought from '../@types/Thought'
 
+// Create a regular expression to match and remove BEM modifier (variant) classes
+const editableClass = cx(
+  editableRecipe({
+    preventAutoscroll: true,
+  }),
+).split(' ')
+
+// Filter classes containing '--' to identify variant classes
+const modifiers = editableClass.filter(cls => cls.includes('--'))
+
+// Precompile the regex once, so it's not recreated on each render
+const regex = new RegExp(`\\b(${modifiers.join('|')})\\b`, 'g')
+
 /**
  * Custom hook to capture and cache the static HTML string of a node.
  *
@@ -27,21 +40,7 @@ const useCachedNode = ({
    * @returns The cleaned HTML string.
    */
   const cleanUpEditableClasses = (htmlString: string) => {
-    // Get the class name for editable elements
-    const editableClass = cx(
-      editableRecipe({
-        preventAutoscroll: true,
-      }),
-    ).split(' ')
-
-    // Filter classes containing '--' to identify variant classes
-    const modifiers = editableClass.filter(cls => cls.includes('--'))
-
-    // Create a regular expression to match and remove BEM modifier (variant) classes
-    const regex = new RegExp(`\\b(${modifiers.join('|')})\\b`, 'g')
-
     // Replace BEM modifier classes with an empty string
-    // The first replace removes BEM modifier classes
     return htmlString.replace(regex, '').trim()
   }
 
