@@ -14,18 +14,18 @@ const editableClass = cx(
 const modifiers = editableClass.filter(cls => cls.includes('--'))
 
 // Precompile the regex once, so it's not recreated on each render
-const regex = new RegExp(`\\b(${modifiers.join('|')})\\b`, 'g')
+const regexPreventAutoscroll = new RegExp(`\\b(${modifiers.join('|')})\\b`, 'g')
 
 /**
- * Custom hook to capture and cache the static HTML string of a node.
+ * Custom hook to capture and cache the static HTML string of a node. Useful for animating a thought after it has been deleted. Removes preventAutoscroll classes to avoid accidentally rendering at 0% opacity.
  *
  * @param thought - The thought object.
- * @param elementRef - The ref of the node.
+ * @param elementRef - The ref of the Thought container element.
  * @returns The cached HTML string.
  */
-const useCachedNode = ({
+const useCachedThoughtHtml = ({
   thought,
-  elementRef: ref,
+  elementRef,
 }: {
   thought: Thought
   elementRef: React.RefObject<HTMLDivElement>
@@ -33,25 +33,14 @@ const useCachedNode = ({
   // Cache the DOM before it is deleted
   const cachedHTMLRef = useRef<string | null>(null)
 
-  /**
-   * Cleans up editable classes from the provided HTML string.
-   *
-   * @param htmlString - The HTML string to clean up.
-   * @returns The cleaned HTML string.
-   */
-  const cleanUpEditableClasses = (htmlString: string) => {
-    // Replace BEM modifier classes with an empty string
-    return htmlString.replace(regex, '').trim()
-  }
-
-  // Capture the static HTML string when the thought is first rendered
+  // Capture the static innerHTML of the thought container whenever the thought changes
   useEffect(() => {
-    if (thought && ref.current) {
-      cachedHTMLRef.current = cleanUpEditableClasses(ref.current.innerHTML)
+    if (thought && elementRef.current) {
+      cachedHTMLRef.current = elementRef.current.innerHTML.replace(regexPreventAutoscroll, '').trim()
     }
-  }, [thought, ref])
+  }, [thought, elementRef])
 
   return cachedHTMLRef
 }
 
-export default useCachedNode
+export default useCachedThoughtHtml
