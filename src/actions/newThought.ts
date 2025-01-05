@@ -88,6 +88,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   }: NewThoughtPayload = payload
 
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
+  const cursorValue = state.cursor && headValue(state, state.cursor)
   const tutorialStepNewThoughtCompleted =
     // new thought
     (!insertNewSubthought &&
@@ -96,8 +97,8 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     // new thought in context
     (insertNewSubthought && Math.floor(tutorialStep) === TUTORIAL_STEP_SUBTHOUGHT) ||
     // enter after typing text
-    (state.cursor &&
-      headValue(state, state.cursor).length > 0 &&
+    (cursorValue &&
+      cursorValue.length > 0 &&
       (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER || tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER))
 
   const path = at || state.cursor || getRootPath(state)
@@ -172,7 +173,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       ? createThought({
           path: [ABSOLUTE_TOKEN, newThoughtId] as unknown as SimplePath,
           rank: 0,
-          value: headValue(state, insertNewSubthought ? path : parentOf(path)),
+          value: headValue(state, insertNewSubthought ? path : parentOf(path)) ?? '',
           id: newContextId!,
           splitSource,
         })

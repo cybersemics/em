@@ -25,10 +25,12 @@ import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 
 /** Given a path to a thought within the context view (a/m~/b), find the associated thought (b/m). This is nontrivial since the associated thought (b/m) is a different Lexeme instance than the context view thought (a/m). */
-const getContext = (state: State, path: Path) =>
-  getContexts(state, headValue(state, parentOf(path))).find(
-    cxid => getThoughtById(state, cxid)?.parentId === head(path),
-  )
+const getContext = (state: State, path: Path) => {
+  const contextValue = headValue(state, parentOf(path))
+  return contextValue
+    ? getContexts(state, contextValue).find(cxid => getThoughtById(state, cxid)?.parentId === head(path))
+    : undefined
+}
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. Works in normal view and context view. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
@@ -149,7 +151,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         ? setCursor(state, {
             path: cursorNew,
             editing: state.editing,
-            offset: next() ? 0 : headValue(state, cursorNew).length,
+            offset: next() ? 0 : headValue(state, cursorNew)?.length,
           })
         : cursorBack(state)
     },
