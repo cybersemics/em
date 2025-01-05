@@ -35,6 +35,29 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enter: { opacity: 1 },
         exitActive: { transition: `opacity {durations.nodeFadeOut} ease-out` },
       },
+      nodeDissolve: {
+        enter: {
+          transform: 'scale3d(1, 1, 1)',
+          filter: 'blur(0)',
+        },
+        enterActive: {
+          transform: 'scale3d(1, 1, 1)',
+          filter: 'blur(0)',
+          transition: `opacity {durations.nodeDissolve} ease-out, transform {durations.nodeDissolve} ease-out, filter {durations.nodeDissolve} ease-out`,
+        },
+        exit: {
+          transform: 'scale3d(1, 1, 1)',
+          filter: 'blur(0)',
+          transformOrigin: 'left',
+        },
+        exitActive: {
+          opacity: 0,
+          transform: 'scale3d(0.5, 0.5, 0.5)',
+          filter: 'blur(4px)',
+          transformOrigin: 'left',
+          transition: `opacity {durations.nodeDissolve} ease-out, transform {durations.nodeDissolve} ease-out, filter {durations.nodeDissolve} ease-out`,
+        },
+      },
     },
   },
   staticCss: ['*'],

@@ -6,6 +6,7 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
+import useCachedThoughtHtml from '../hooks/useCachedThoughtHtml'
 import useChangeRef from '../hooks/useChangeRef'
 import attributeEquals from '../selectors/attributeEquals'
 import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
@@ -59,6 +60,8 @@ const Subthought = ({
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
+  // Cache the thought HTML before it is deleted so that we can animate on unmount
+  const cachedThoughtHtmlRef = useCachedThoughtHtml({ thought, elementRef: ref })
   const noOtherContexts = useSelector(
     state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
   )
@@ -114,9 +117,12 @@ const Subthought = ({
     ref.current.style.opacity = opacity
   })
 
-  // Short circuit if thought has already been removed.
-  // This can occur in a re-render even when thought is defined in the parent component.
-  if (!thought) return null
+  // If the thought has unmounted, return the cached static HTML from the ref so that it can animate out.
+  if (!thought) {
+    return cachedThoughtHtmlRef.current ? (
+      <div dangerouslySetInnerHTML={{ __html: cachedThoughtHtmlRef.current }} />
+    ) : null
+  }
 
   return (
     <>

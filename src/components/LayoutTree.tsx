@@ -491,7 +491,7 @@ const TreeNode = ({
         // The FadeTransition is only responsible for fade out on unmount;
         // or for fade in on mounting of a new thought.
         // See autofocusChanged for normal opacity transition.
-        duration={isEmpty ? 'nodeFadeIn' : 'nodeFadeOut'}
+        duration={isEmpty ? 'nodeFadeIn' : 'nodeDissolve'}
         nodeRef={fadeThoughtRef}
         in={transitionGroupsProps.in}
         unmountOnExit
