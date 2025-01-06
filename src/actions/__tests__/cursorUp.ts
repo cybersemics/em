@@ -11,8 +11,9 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import prevThought from '../../selectors/prevThought'
-import createTestStore from '../../test-helpers/createTestStore'
+import store from '../../stores/app'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand from '../../util/executeCommand'
@@ -180,7 +181,8 @@ describe('normal view', () => {
   })
 
   it('move cursor from empty thought to previous thought in context sorted in descending order', () => {
-    const store = createTestStore()
+    initStore()
+
     act(() => {
       store.dispatch([
         importTextAction({

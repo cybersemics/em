@@ -2,16 +2,17 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import favorite from '../favorite'
 
+beforeEach(initStore)
+
 describe('favorite', () => {
   it('adds a thought to favorites', () => {
-    const store = createTestStore()
-
     store.dispatch([newThought({ value: 'A' }), setCursor(['A'])])
 
     executeCommand(favorite, { store })
@@ -25,8 +26,6 @@ describe('favorite', () => {
   })
 
   it('removes a thought from favorites', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -48,8 +47,6 @@ describe('favorite', () => {
 
   describe('multicursor', () => {
     it('adds multiple thoughts to favorites', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -77,8 +74,6 @@ describe('favorite', () => {
     })
 
     it('removes multiple thoughts from favorites', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -108,8 +103,6 @@ describe('favorite', () => {
     })
 
     it('handles mixed scenarios correctly', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `

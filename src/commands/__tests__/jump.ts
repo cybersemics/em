@@ -4,8 +4,9 @@ import { indentActionCreator as indent } from '../../actions/indent'
 import { jumpActionCreator as jump } from '../../actions/jump'
 import { newSubthoughtActionCreator as newSubthought } from '../../actions/newSubthought'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
-import createTestStore from '../../test-helpers/createTestStore'
+import store from '../../stores/app'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import head from '../../util/head'
 import pathToContext from '../../util/pathToContext'
@@ -13,13 +14,14 @@ import pathToContext from '../../util/pathToContext'
 /**
  * Use fake timers to ensure that cursor scrolling helpers complete.
  */
-beforeEach(vi.useFakeTimers)
+beforeEach(() => {
+  vi.useFakeTimers()
+  initStore()
+})
 afterEach(vi.useRealTimers)
 
 describe('jump history', () => {
   it('add edited path to jump history', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -39,8 +41,6 @@ describe('jump history', () => {
   })
 
   it('navigaton does not push to jump history', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -64,8 +64,6 @@ describe('jump history', () => {
   })
 
   it('replace last jump when editing a sibling', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -90,8 +88,6 @@ describe('jump history', () => {
   })
 
   it('replace last jump when editing a child', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -114,8 +110,6 @@ describe('jump history', () => {
 
   // TODO: We should probably merge ancestors.
   it('do not merge ancestors (?)', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -139,8 +133,6 @@ describe('jump history', () => {
 
 describe('jump back', () => {
   it('jump back to the last edit point', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -164,8 +156,6 @@ describe('jump back', () => {
   })
 
   it('replace the last jump point when editing its parent', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -211,8 +201,6 @@ describe('jump back', () => {
   })
 
   it('replace the last jump point when editing its child', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -258,8 +246,6 @@ describe('jump back', () => {
   })
 
   it('replace the last jump point when editing its sibling', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -308,8 +294,6 @@ describe('jump back', () => {
   })
 
   it('jump back to edit after indent', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -334,8 +318,6 @@ describe('jump back', () => {
   })
 
   it('jump back after new subthought', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -357,8 +339,6 @@ describe('jump back', () => {
   })
 
   it('jump back to edit after delete', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -392,8 +372,6 @@ describe('jump back', () => {
   })
 
   it('jump back to parent of delete', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -427,8 +405,6 @@ describe('jump back', () => {
   })
 
   it('jump back from null cursor', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -449,8 +425,6 @@ describe('jump back', () => {
 
 describe('jump forward', () => {
   it('jump back then forward should restore the cursor to where it was before jump back', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -474,8 +448,6 @@ describe('jump forward', () => {
   })
 
   it('jump back then forward then back should be equivalent to a single jump back', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -509,8 +481,6 @@ describe('jump forward', () => {
   })
 
   it('jump back then forward after indent', () => {
-    const store = createTestStore()
-
     store.dispatch([
       newThought({ value: '' }),
       editThought([''], 'a'),
@@ -526,8 +496,6 @@ describe('jump forward', () => {
   })
 
   it('do nothing if jump back was not activated', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -550,8 +518,6 @@ describe('jump forward', () => {
   })
 
   it('do nothing if already on most recent edit', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -577,8 +543,6 @@ describe('jump forward', () => {
   })
 
   it('ignore jump back if already back to the beginning', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -606,8 +570,6 @@ describe('jump forward', () => {
   })
 
   it('jump forward to parent after delete', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
