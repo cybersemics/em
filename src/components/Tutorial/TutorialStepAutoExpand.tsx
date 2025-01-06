@@ -88,7 +88,7 @@ const TutorialStepAutoExpand = () => {
                 to hide
                 {(isCursorLeaf ? cursorValue : cursorChildValue)?.length === 0 && ' the empty '} subthought
                 {ellipsize(
-                  isCursorLeaf && cursorValue && cursorValue.length > 0
+                  isCursorLeaf && cursorValue !== undefined && cursorValue.length > 0
                     ? ` "${cursorValue}"`
                     : cursorChildValue
                       ? `"${cursorChildValue}"`

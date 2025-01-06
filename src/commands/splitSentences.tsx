@@ -23,8 +23,8 @@ const splitSentencesShortcut: Command = {
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
     const state = getState()
     const { cursor } = state
-    const value = cursor && headValue(state, cursor)
-    const sentences = value ? splitSentence(value) : []
+    const value = cursor ? headValue(state, cursor) : undefined
+    const sentences = value !== undefined ? splitSentence(value) : []
 
     if (sentences.length <= 1) {
       dispatch(

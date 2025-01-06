@@ -27,7 +27,7 @@ import reducerFlow from '../util/reducerFlow'
 /** Given a path to a thought within the context view (a/m~/b), find the associated thought (b/m). This is nontrivial since the associated thought (b/m) is a different Lexeme instance than the context view thought (a/m). */
 const getContext = (state: State, path: Path) => {
   const contextValue = headValue(state, parentOf(path))
-  const context = contextValue ? getContexts(state, contextValue) : []
+  const context = contextValue !== undefined ? getContexts(state, contextValue) : []
   return context.find(cxid => getThoughtById(state, cxid)?.parentId === head(path))
 }
 
