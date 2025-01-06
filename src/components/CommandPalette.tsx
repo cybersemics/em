@@ -1,4 +1,4 @@
-import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
+import React, { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
@@ -7,7 +7,14 @@ import Command from '../@types/Command'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
-import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
+import {
+  commandById,
+  formatKeyboardShortcut,
+  gestureString,
+  globalCommands,
+  hashCommand,
+  hashKeyDown,
+} from '../commands'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
@@ -197,7 +204,25 @@ const CommandRow: FC<{
           {isTouch && (
             <GestureDiagram
               color={disabled ? token('colors.gray') : undefined}
-              highlight={!disabled ? gestureInProgress.length : undefined}
+              highlight={
+                !disabled
+                  ? shortcut.id === 'help'
+                    ? // For help command, only highlight the matching portion at the end
+                      (() => {
+                        const helpGesture = gestureString(shortcut)
+                        // If the current gesture ends with part of the help gesture, highlight only the matching portion
+                        for (let i = helpGesture.length; i > 0; i--) {
+                          const helpSubsequence = helpGesture.slice(0, i)
+                          if (gestureInProgress.endsWith(helpSubsequence)) {
+                            return helpSubsequence.length
+                          }
+                        }
+                        return 0
+                      })()
+                    : // For other commands, use normal highlighting
+                      gestureInProgress.length
+                  : undefined
+              }
               path={gestureString(shortcut)}
               strokeWidth={4}
               cssRaw={css.raw({
@@ -290,6 +315,10 @@ const CommandPalette: FC = () => {
   })
 
   const [selectedShortcut, setSelectedShortcut] = useState<Command>(shortcuts[0])
+
+  // Get help command info for gesture matching
+  const helpCommand = useMemo(() => globalCommands.find((cmd: Command) => cmd.id === 'help'), [])
+  const helpGesture = helpCommand?.gesture as string
 
   /** Execute a shortcut. */
   const onExecute = useCallback(
@@ -421,18 +450,26 @@ const CommandPalette: FC = () => {
               ...(!isTouch ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
             })}
           >
-            {shortcuts.map(shortcut => (
-              <CommandRow
-                search={search}
-                gestureInProgress={gestureInProgress as string}
-                key={shortcut.id}
-                last={shortcut === shortcuts[shortcuts.length - 1]}
-                onClick={onExecute}
-                onHover={onHover}
-                selected={!isTouch ? shortcut === selectedShortcut : gestureInProgress === shortcut.gesture}
-                shortcut={shortcut}
-              />
-            ))}
+            {shortcuts.map(shortcut => {
+              // Check if the current gesture sequence ends with help gesture
+              const isHelpMatch =
+                shortcut.id === 'help' && (gestureInProgress as string)?.toString().endsWith(helpGesture)
+
+              return (
+                <CommandRow
+                  search={search}
+                  gestureInProgress={gestureInProgress as string}
+                  key={shortcut.id}
+                  last={shortcut === shortcuts[shortcuts.length - 1]}
+                  onClick={onExecute}
+                  onHover={onHover}
+                  selected={
+                    !isTouch ? shortcut === selectedShortcut : isHelpMatch || gestureInProgress === shortcut.gesture
+                  }
+                  shortcut={shortcut}
+                />
+              )
+            })}
             {shortcuts.length === 0 && <span className={css({ marginLeft: '1em' })}>No matching commands</span>}
           </div>
         </div>
