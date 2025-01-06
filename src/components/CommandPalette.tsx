@@ -210,14 +210,11 @@ const CommandRow: FC<{
                     ? // For help command, only highlight the matching portion at the end
                       (() => {
                         const helpGesture = gestureString(shortcut)
-                        // If the current gesture ends with part of the help gesture, highlight only the matching portion
-                        for (let i = helpGesture.length; i > 0; i--) {
-                          const helpSubsequence = helpGesture.slice(0, i)
-                          if (gestureInProgress.endsWith(helpSubsequence)) {
-                            return helpSubsequence.length
-                          }
-                        }
-                        return 0
+                        const subsequences = Array.from({ length: helpGesture.length }, (_, i) =>
+                          helpGesture.slice(0, helpGesture.length - i),
+                        )
+                        const matchingSubsequence = subsequences.find(seq => gestureInProgress.endsWith(seq))
+                        return matchingSubsequence?.length || 0
                       })()
                     : // For other commands, use normal highlighting
                       gestureInProgress.length
