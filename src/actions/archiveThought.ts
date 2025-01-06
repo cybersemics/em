@@ -111,8 +111,8 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   /** Gets the next sibling context in the context view. */
   const nextContext = (): ThoughtContext => {
     const thoughtsContextView = thoughtsEditingFromChain(state, path)
-    const head = headValue(state, thoughtsContextView)
-    const contexts = showContexts && head !== undefined ? getContextsSortedAndRanked(state, head) : []
+    const value = headValue(state, thoughtsContextView)
+    const contexts = showContexts && value !== undefined ? getContextsSortedAndRanked(state, value) : []
     const contextsFiltered = contexts.filter(({ id }) => {
       const parentThought = parentOfThought(state, id)
       return parentThought?.value !== '=archive'
