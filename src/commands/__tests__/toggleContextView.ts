@@ -1,17 +1,18 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import contextToPath from '../../selectors/contextToPath'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import hashPath from '../../util/hashPath'
 import toggleContextViewCommand from '../toggleContextView'
 
+beforeEach(initStore)
+
 describe('toggleContextView', () => {
   describe('multicursor', () => {
     it('toggles context view for multiple thoughts', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `

@@ -16,8 +16,8 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import attributeByContext from '../../test-helpers/attributeByContext'
 import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import createTestStore from '../../test-helpers/createTestStore'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
+import initStore from '../../test-helpers/initStore'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getDescendantsOfContext from '../../test-helpers/queries/getDescendantsOfContext'
 import getThoughtByContext from '../../test-helpers/queries/getThoughtByContext'
@@ -624,10 +624,10 @@ describe('DOM', () => {
 })
 
 describe('store', () => {
+  beforeEach(initStore)
+
   describe('local', () => {
     it('NULL -> Asc', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -647,8 +647,6 @@ describe('store', () => {
     })
 
     it('Asc -> Desc', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -672,8 +670,6 @@ describe('store', () => {
     })
 
     it('Desc -> NULL', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -695,8 +691,6 @@ describe('store', () => {
     })
 
     it('None -> Asc (home)', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -717,8 +711,6 @@ describe('store', () => {
     })
 
     it('Asc -> Desc (home)', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -738,8 +730,6 @@ describe('store', () => {
     })
 
     it('sort new thoughts after toggling sort', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -765,8 +755,6 @@ describe('store', () => {
     })
 
     it('restore sort order', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -790,8 +778,6 @@ describe('store', () => {
     })
 
     it('restore sort order after new thoughts are added', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -817,8 +803,6 @@ describe('store', () => {
     })
 
     it('restore sort order after some thoughts are removed', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -847,8 +831,6 @@ describe('store', () => {
 
   describe('global sort', () => {
     it('Asc -> NULL when global is Desc', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -876,8 +858,6 @@ describe('store', () => {
     })
 
     it('NULL -> None when global is Desc', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -902,8 +882,6 @@ describe('store', () => {
     })
 
     it('override global Asc with local Desc', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -932,9 +910,9 @@ describe('store', () => {
 })
 
 describe('multicursor', () => {
-  it('should sort the cursors with first-sibling filter', async () => {
-    const store = createTestStore()
+  beforeEach(initStore)
 
+  it('should sort the cursors with first-sibling filter', async () => {
     store.dispatch([
       importText({
         text: `
@@ -963,8 +941,6 @@ describe('multicursor', () => {
   })
 
   it('should handle nested thoughts', async () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -1018,8 +994,6 @@ describe('multicursor', () => {
   })
 
   it('should maintain multicursor after sorting', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `

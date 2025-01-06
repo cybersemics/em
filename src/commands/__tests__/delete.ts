@@ -6,10 +6,12 @@ import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import deleteCommand from '../delete'
+
+beforeEach(initStore)
 
 describe('delete', () => {
   describe('DOM', () => {
@@ -42,8 +44,6 @@ describe('delete', () => {
 
   describe('multicursor', () => {
     it('deletes multiple thoughts', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -70,8 +70,6 @@ describe('delete', () => {
     })
 
     it('deletes thoughts at different levels', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -102,8 +100,6 @@ describe('delete', () => {
     })
 
     it('does not delete read-only thoughts', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `

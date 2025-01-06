@@ -1,17 +1,18 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import collapseContextCommand from '../collapseContext'
 
+beforeEach(initStore)
+
 describe('collapseContext', () => {
   describe('multicursor', () => {
     it('collapses multiple thoughts', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -44,8 +45,6 @@ describe('collapseContext', () => {
     })
 
     it('collapses thoughts at different levels', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -86,8 +85,6 @@ describe('collapseContext', () => {
     })
 
     it('does not collapse thoughts without children', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -117,8 +114,6 @@ describe('collapseContext', () => {
     })
 
     it('collapses nested thoughts correctly', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `

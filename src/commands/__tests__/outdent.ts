@@ -1,17 +1,18 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import outdentCommand from '../outdent'
 
+beforeEach(initStore)
+
 describe('outdent', () => {
   describe('multicursor', () => {
     it('outdents multiple thoughts', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -40,8 +41,6 @@ describe('outdent', () => {
     })
 
     it('outdents thoughts at different levels', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -74,8 +73,6 @@ describe('outdent', () => {
     })
 
     it('does not outdent thoughts already at the root level', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -104,8 +101,6 @@ describe('outdent', () => {
     })
 
     it('outdents parent/child thoughts', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `

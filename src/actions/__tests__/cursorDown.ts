@@ -5,10 +5,11 @@ import { importTextActionCreator as importTextAction } from '../../actions/impor
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
-import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
-import toggleSortCommand from '../../commands/toggleSort'
-import createTestStore from '../../test-helpers/createTestStore'
+import newSubthoughtTopShortcut from '../../commands/newSubthoughtTop'
+import toggleSortShortcut from '../../commands/toggleSort'
+import store from '../../stores/app'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import executeCommand from '../../util/executeCommand'
@@ -68,48 +69,50 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
 
-  it('work for sorted thoughts', async () => {
-    const store = createTestStore()
-    act(() => {
-      store.dispatch([
-        importTextAction({
-          text: `
-              - a
-                - n
-                - m
-          `,
-        }),
-        setCursorAction(['a', 'n']),
-      ])
-    })
-    act(() => executeCommand(toggleSortCommand, { store }))
-    act(() => {
-      store.dispatch([setCursorAction(['a'])])
-    })
-    const stateNew = cursorDown(store.getState())
-    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
-  })
+  describe('use store', () => {
+    beforeEach(initStore)
 
-  it('move cursor from empty thought to next thought in context sorted in descending order', () => {
-    const store = createTestStore()
-    act(() => {
-      store.dispatch([
-        importTextAction({
-          text: `
-              - x
-                - b
+    it('work for sorted thoughts', async () => {
+      act(() => {
+        store.dispatch([
+          importTextAction({
+            text: `
                 - a
-                - =sort
-                  - Alphabetical
-                    - Desc
+                  - n
+                  - m
             `,
-        }),
-        setCursorAction(['x']),
-      ])
+          }),
+          setCursorAction(['a', 'n']),
+        ])
+      })
+      act(() => executeCommand(toggleSortShortcut, { store }))
+      act(() => {
+        store.dispatch([setCursorAction(['a'])])
+      })
+      const stateNew = cursorDown(store.getState())
+      expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
     })
-    act(() => executeCommand(newSubthoughtTopCommand, { store }))
-    const stateNew = cursorDown(store.getState())
-    expectPathToEqual(stateNew, stateNew.cursor, ['x', 'b'])
+
+    it('move cursor from empty thought to next thought in context sorted in descending order', () => {
+      act(() => {
+        store.dispatch([
+          importTextAction({
+            text: `
+                - x
+                  - b
+                  - a
+                  - =sort
+                    - Alphabetical
+                      - Desc
+              `,
+          }),
+          setCursorAction(['x']),
+        ])
+      })
+      act(() => executeCommand(newSubthoughtTopShortcut, { store }))
+      const stateNew = cursorDown(store.getState())
+      expectPathToEqual(stateNew, stateNew.cursor, ['x', 'b'])
+    })
   })
 })
 

@@ -1,15 +1,16 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import proseViewCommand from '../proseView'
 
-it('toggle on prose view of parent of cursor (initial state without =view attribute)', () => {
-  const store = createTestStore()
+beforeEach(initStore)
 
+it('toggle on prose view of parent of cursor (initial state without =view attribute)', () => {
   store.dispatch([
     importText({
       text: `
@@ -33,8 +34,6 @@ it('toggle on prose view of parent of cursor (initial state without =view attrib
 })
 
 it('toggle on prose view of parent of cursor (initial state with =view attribute set to Table)', () => {
-  const store = createTestStore()
-
   store.dispatch([
     importText({
       text: `
@@ -60,8 +59,6 @@ it('toggle on prose view of parent of cursor (initial state with =view attribute
 })
 
 it('toggle off prose view of parent of cursor', () => {
-  const store = createTestStore()
-
   store.dispatch([
     importText({
       text: `
@@ -86,8 +83,6 @@ it('toggle off prose view of parent of cursor', () => {
 
 describe('multicursor', () => {
   it('toggles prose view on multiple thoughts', async () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -130,8 +125,6 @@ describe('multicursor', () => {
   })
 
   it('toggles prose view off for thoughts that already have it', async () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -174,8 +167,6 @@ describe('multicursor', () => {
   })
 
   it('handles mixed scenarios correctly', async () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
