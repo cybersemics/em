@@ -27,7 +27,7 @@ const initEventHandler = once(() => {
 /** Emulates position fixed on mobile Safari with positon absolute. Returns { position, overflowX, top } in absolute mode. */
 const usePositionFixed = (): {
   position: 'fixed' | 'absolute'
-  overflowX?: 'hidden' | 'visible'
+  overflowX?: 'visible'
   top: string
 } => {
   const position = positionFixedStore.useState()
@@ -37,7 +37,7 @@ const usePositionFixed = (): {
 
   return {
     position: position ?? 'fixed',
-    overflowX: position === 'absolute' ? 'hidden' : 'visible',
+    overflowX: 'visible',
     /* spacing.safeAreaTop applies for rounded screens */
     top: position === 'absolute' ? `${scrollTop}px` : token('spacing.safeAreaTop'),
   }
