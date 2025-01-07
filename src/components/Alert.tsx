@@ -27,8 +27,6 @@ const Alert: FC = () => {
   const value = strip(alertStoreValue ?? alert?.value ?? '')
   const iconSize = useSelector(state => 0.78 * state.fontSize)
   const dispatch = useDispatch()
-  const paddingInline = useSelector(state => (state.fontSize * 16) / 14)
-  const paddingBlock = paddingInline * 0.75
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
@@ -55,14 +53,7 @@ const Alert: FC = () => {
           <PopupBase
             disableTop
             cssRaw={css.raw({
-              position: 'fixed',
               boxSizing: 'border-box',
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'flex-start',
-              padding: '12px 16px',
-              gap: '8px',
               bottom: '36px',
               left: '50%',
               transform: 'translateX(-50%)',
@@ -73,14 +64,23 @@ const Alert: FC = () => {
             })}
             ref={popupRef}
             key={value}
-            data-testid='alert-content'
-            onClose={onClose}
-            closeButtonSize='sm'
+            circledCloseButton
             showXOnHover
-            style={{ padding: `${paddingBlock}px ${paddingInline}px` }}
           >
-            {renderedIcon}
-            {value}
+            <div
+              data-testid='alert-content'
+              className={css({
+                gap: '12px',
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+                padding: '0.85em 1.1em',
+              })}
+            >
+              {renderedIcon}
+              {value}
+            </div>
           </PopupBase>
         </FadeTransition>
       ) : null}

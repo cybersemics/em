@@ -22,7 +22,7 @@ export type PopupBaseProps = PropsWithChildren<
     onClose?: () => void
     disableTop?: boolean
     cssRaw?: SystemStyleObject
-    closeButtonSize?: 'sm' | 'md'
+    circledCloseButton?: boolean
     showXOnHover?: boolean
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
 >
@@ -30,7 +30,7 @@ export type PopupBaseProps = PropsWithChildren<
 /** A popup component that can be dismissed. */
 const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
   (
-    { children, importFileId, onClose, cssRaw, style, disableTop = false, closeButtonSize, showXOnHover, ...props },
+    { children, importFileId, onClose, cssRaw, style, disableTop = false, circledCloseButton, showXOnHover, ...props },
     ref,
   ) => {
     const dispatch = useDispatch()
@@ -94,8 +94,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         )}
         {onClose ? (
           <CloseButton
+            circled={circledCloseButton}
             cssRaw={showXOnHover ? { visibility: 'hidden' } : undefined}
-            size={closeButtonSize}
             onClose={onClose}
             disableSwipeToDismiss
           />
