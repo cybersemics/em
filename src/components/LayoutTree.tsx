@@ -433,6 +433,16 @@ const TreeNode = ({
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
   })
 
+  const isLastActionDeleteThought = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'deleteThoughtWithCursor')
+  })
+
+  const isLastActionCollapseContext = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'collapseContext')
+  })
+
   useLayoutEffect(() => {
     if (y !== _y) {
       // When y changes React re-renders the component with the new value of y. It will result in a visual change in the DOM.
@@ -463,6 +473,9 @@ const TreeNode = ({
     ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
     : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
 
+  // Limit the fade/shrink/blur animation to the delete and collapseContext commands
+  const shouldDissolve = isLastActionDeleteThought || isLastActionCollapseContext
+
   return (
     <div
       aria-label='tree-node'
@@ -491,7 +504,7 @@ const TreeNode = ({
         // The FadeTransition is only responsible for fade out on unmount;
         // or for fade in on mounting of a new thought.
         // See autofocusChanged for normal opacity transition.
-        duration={isEmpty ? 'nodeFadeIn' : 'nodeDissolve'}
+        duration={isEmpty ? 'nodeFadeIn' : shouldDissolve ? 'nodeDissolve' : 'nodeFadeOut'}
         nodeRef={fadeThoughtRef}
         in={transitionGroupsProps.in}
         unmountOnExit
