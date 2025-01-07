@@ -13,7 +13,7 @@ import PopupBase from './PopupBase'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
 
-const alertToIcon = {
+const alertToIcon: { [key in AlertType]?: typeof UndoIcon } = {
   [AlertType.Undo]: UndoIcon,
   [AlertType.Redo]: RedoIcon,
 }
@@ -37,8 +37,8 @@ const Alert: FC = () => {
     dispatch(alertActionCreator(null))
   }, [alert, dispatch])
 
-  const Icon =
-    alert?.alertType && alert.alertType in alertToIcon ? alertToIcon[alert.alertType as keyof typeof alertToIcon] : null
+  const alertType = alert?.alertType
+  const Icon = alertType ? alertToIcon[alertType] : null
   const renderedIcon = Icon ? <Icon size={iconSize} fill={token('colors.fg')} /> : null
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
