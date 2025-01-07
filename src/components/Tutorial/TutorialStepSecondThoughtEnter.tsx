@@ -13,7 +13,7 @@ const TutorialStepSecondThoughtEnter = () => {
   const ready = useSelector(state => {
     if (!state.cursor) return true
     const headCursorValue = headValue(state, state.cursor)
-    return headCursorValue?.length > 0
+    return headCursorValue !== undefined && headCursorValue.length > 0
   })
 
   return (

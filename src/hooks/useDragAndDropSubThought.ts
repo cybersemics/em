@@ -139,7 +139,9 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     setTimeout(() => {
       const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
       const alertTo = parentIdTo === HOME_TOKEN ? 'home' : '"' + ellipsize(thoughtTo.value) + '"'
-      const inContext = props.showContexts ? ` in the context of ${ellipsize(headValue(state, props.simplePath))}` : ''
+      const inContext = props.showContexts
+        ? ` in the context of ${ellipsize(headValue(state, props.simplePath) ?? 'MISSING_CONTEXT')}`
+        : ''
 
       store.dispatch(
         alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {

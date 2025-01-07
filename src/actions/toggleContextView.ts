@@ -39,12 +39,11 @@ const toggleContextView = (state: State) => {
     // advance tutorial from context view toggle step
     state => {
       const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
-      return Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
+      const cursorValue = state.cursor ? headValue(state, state.cursor) : undefined
+      return Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE && cursorValue !== undefined
         ? settings(state, {
             key: 'Tutorial Step',
-            value: (
-              tutorialStep + (getContexts(state, headValue(state, state.cursor!)).length > 1 ? 1 : 0.1)
-            ).toString(),
+            value: (tutorialStep + (getContexts(state, cursorValue).length > 1 ? 1 : 0.1)).toString(),
           })
         : state
     },

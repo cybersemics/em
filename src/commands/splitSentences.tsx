@@ -23,10 +23,10 @@ const splitSentencesShortcut: Command = {
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
     const state = getState()
     const { cursor } = state
-    const value = headValue(state, cursor!)
-    const sentences = splitSentence(value)
+    const value = cursor ? headValue(state, cursor) : undefined
+    const sentences = value !== undefined ? splitSentence(value) : []
 
-    if (!sentences || sentences.length <= 1) {
+    if (sentences.length <= 1) {
       dispatch(
         alert('Cannot split sentences: thought is an empty thought or has only one sentence.', {
           clearDelay: 3000,

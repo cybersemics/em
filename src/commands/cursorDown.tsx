@@ -60,7 +60,9 @@ const cursorDownShortcut: Command = {
     // use default browser behavior in prose mode
     const parentId = head(rootedParentOf(state, cursor))
     const isProseView = attributeEquals(state, parentId, '=view', 'Prose')
-    const isProseMode = isProseView && selection.isActive() && selection.offset()! < headValue(state, cursor).length - 1
+    const cursorValue = headValue(state, cursor)
+    const isProseMode =
+      isProseView && selection.isActive() && cursorValue !== undefined && cursorValue.length - 1 > selection.offset()!
     if (isProseMode) return false
 
     // use default browser behavior (i.e. caret down) if there is a valid selection and it's not on the last line of a multi-line editable
