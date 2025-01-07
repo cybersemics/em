@@ -197,7 +197,22 @@ const CommandRow: FC<{
           {isTouch && (
             <GestureDiagram
               color={disabled ? token('colors.gray') : undefined}
-              highlight={!disabled ? gestureInProgress.length : undefined}
+              highlight={
+                !disabled
+                  ? shortcut.id === 'help'
+                    ? // For help command, find the longest matching end portion
+                      (() => {
+                        const helpGesture = gestureString(shortcut)
+                        return (
+                          [...helpGesture]
+                            .map((_, i) => helpGesture.length - i)
+                            .find(len => gestureInProgress.endsWith(helpGesture.slice(0, len))) ?? 0
+                        )
+                      })()
+                    : // For other commands, use normal highlighting
+                      gestureInProgress.length
+                  : undefined
+              }
               path={gestureString(shortcut)}
               strokeWidth={4}
               cssRaw={css.raw({
@@ -421,18 +436,27 @@ const CommandPalette: FC = () => {
               ...(!isTouch ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
             })}
           >
-            {shortcuts.map(shortcut => (
-              <CommandRow
-                search={search}
-                gestureInProgress={gestureInProgress as string}
-                key={shortcut.id}
-                last={shortcut === shortcuts[shortcuts.length - 1]}
-                onClick={onExecute}
-                onHover={onHover}
-                selected={!isTouch ? shortcut === selectedShortcut : gestureInProgress === shortcut.gesture}
-                shortcut={shortcut}
-              />
-            ))}
+            {shortcuts.map(shortcut => {
+              // Check if the current gesture sequence ends with help gesture
+              const helpCommand = commandById('help')
+              const isHelpMatch =
+                shortcut.id === 'help' && (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+
+              return (
+                <CommandRow
+                  search={search}
+                  gestureInProgress={gestureInProgress as string}
+                  key={shortcut.id}
+                  last={shortcut === shortcuts[shortcuts.length - 1]}
+                  onClick={onExecute}
+                  onHover={onHover}
+                  selected={
+                    !isTouch ? shortcut === selectedShortcut : isHelpMatch || gestureInProgress === shortcut.gesture
+                  }
+                  shortcut={shortcut}
+                />
+              )
+            })}
             {shortcuts.length === 0 && <span className={css({ marginLeft: '1em' })}>No matching commands</span>}
           </div>
         </div>
