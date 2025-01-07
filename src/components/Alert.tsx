@@ -39,7 +39,9 @@ const Alert: FC = () => {
 
   const alertType = alert?.alertType
   const Icon = alertType ? alertToIcon[alertType] : null
-  const renderedIcon = Icon ? <Icon size={iconSize} fill={token('colors.fg')} /> : null
+  const renderedIcon = Icon ? (
+    <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} />
+  ) : null
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
