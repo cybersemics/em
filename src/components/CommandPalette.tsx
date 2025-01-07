@@ -1,4 +1,4 @@
-import React, { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
@@ -7,14 +7,7 @@ import Command from '../@types/Command'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
-import {
-  commandById,
-  formatKeyboardShortcut,
-  gestureString,
-  globalCommands,
-  hashCommand,
-  hashKeyDown,
-} from '../commands'
+import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
@@ -207,14 +200,14 @@ const CommandRow: FC<{
               highlight={
                 !disabled
                   ? shortcut.id === 'help'
-                    ? // For help command, only highlight the matching portion at the end
+                    ? // For help command, find the longest matching end portion
                       (() => {
                         const helpGesture = gestureString(shortcut)
-                        const subsequences = Array.from({ length: helpGesture.length }, (_, i) =>
-                          helpGesture.slice(0, helpGesture.length - i),
+                        return (
+                          [...helpGesture]
+                            .map((_, i) => helpGesture.length - i)
+                            .find(len => gestureInProgress.endsWith(helpGesture.slice(0, len))) ?? 0
                         )
-                        const matchingSubsequence = subsequences.find(seq => gestureInProgress.endsWith(seq))
-                        return matchingSubsequence?.length || 0
                       })()
                     : // For other commands, use normal highlighting
                       gestureInProgress.length
@@ -312,10 +305,6 @@ const CommandPalette: FC = () => {
   })
 
   const [selectedShortcut, setSelectedShortcut] = useState<Command>(shortcuts[0])
-
-  // Get help command info for gesture matching
-  const helpCommand = useMemo(() => globalCommands.find((cmd: Command) => cmd.id === 'help'), [])
-  const helpGesture = helpCommand?.gesture as string
 
   /** Execute a shortcut. */
   const onExecute = useCallback(
@@ -449,8 +438,9 @@ const CommandPalette: FC = () => {
           >
             {shortcuts.map(shortcut => {
               // Check if the current gesture sequence ends with help gesture
+              const helpCommand = commandById('help')
               const isHelpMatch =
-                shortcut.id === 'help' && (gestureInProgress as string)?.toString().endsWith(helpGesture)
+                shortcut.id === 'help' && (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
 
               return (
                 <CommandRow
