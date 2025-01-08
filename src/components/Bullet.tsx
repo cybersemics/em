@@ -539,8 +539,7 @@ const Bullet = ({
       if (dragHold) return
 
       // short circuit if toggling multiselect
-      // e should always be a MouseEvent if !isTouch, but getting the type system to believe it is another story
-      if (!isTouch && e instanceof MouseEvent && (isMac ? e.metaKey : e.ctrlKey)) {
+      if (!isTouch && (isMac ? e.metaKey : e.ctrlKey)) {
         dispatch(toggleMulticursor({ path }))
         return
       }
