@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
+import ActionType from '../@types/ActionType'
 import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -435,7 +436,12 @@ const TreeNode = ({
 
   // true if the last action is any of archive/delete/collapse
   const isLastActionDelete = useSelector(state => {
-    const deleteActions = ['archiveThought', 'collapseContext', 'deleteThought', 'deleteThoughtWithCursor']
+    const deleteActions: ActionType[] = [
+      'archiveThought',
+      'collapseContext',
+      'deleteThought',
+      'deleteThoughtWithCursor',
+    ]
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })

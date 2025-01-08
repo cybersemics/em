@@ -1,8 +1,5 @@
 import _ from 'lodash'
-import { Dispatch } from 'react'
-import { Action } from 'redux'
 import Command from '../@types/Command'
-import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { splitSentencesActionCreator as splitSentences } from '../actions/splitSentences'
 import SplitSentencesIcon from '../components/icons/SplitSentencesIcon'
@@ -20,7 +17,7 @@ const splitSentencesShortcut: Command = {
   canExecute: state => {
     return !!state.cursor || hasMulticursor(state)
   },
-  exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
+  exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
     const value = cursor ? headValue(state, cursor) : undefined
