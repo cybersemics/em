@@ -135,6 +135,7 @@ const CommandRow: FC<{
   const isActive = command.isActive?.(store.getState())
   const label = command.labelInverse && isActive ? command.labelInverse! : command.label
   const disabled = useSelector(state => !isExecutable(state, command))
+  const Icon = command.svg
 
   // convert the description to a string
   const description = useSelector(state => {
@@ -188,13 +189,18 @@ const CommandRow: FC<{
             ? {
                 display: 'flex',
                 margin: selected ? '-5px 0' : undefined,
+                flexDirection: 'row',
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+                gap: '0.5em',
               }
             : null),
         })}
       >
+        {/* div used to contain width:100% and height:100% of icons while in a flex box */}
         <div>
           {/* gesture diagram */}
-          {isTouch && (
+          {isTouch ? (
             <GestureDiagram
               color={disabled ? token('colors.gray') : undefined}
               highlight={
@@ -219,27 +225,30 @@ const CommandRow: FC<{
               }
               path={command.id === 'cancel' ? null : gestureString(command)}
               strokeWidth={4}
-              cssRaw={css.raw(
-                command.id === 'cancel'
-                  ? {
-                      position: 'absolute',
-                      marginLeft: selected ? 5 : 15,
-                      left: '-2.3em',
-                      top: selected ? '-0.2em' : '-0.75em',
-                    }
-                  : {
-                      position: 'absolute',
-                      marginLeft: selected ? 5 : 15,
-                      left: selected ? '-1.75em' : '-2.2em',
-                      top: selected ? '-0.2em' : '-0.75em',
-                    },
-              )}
+              cssRaw={css.raw({
+                position: 'absolute',
+                marginLeft: selected ? 5 : 15,
+                left: command.id == 'cancel' ? '-2.3em' : selected ? '-1.75em' : '-2.2em',
+                top: selected ? '-0.2em' : '-0.75em',
+              })}
               width={45}
               height={45}
               rounded={command.rounded}
             />
+          ) : (
+            Icon && <Icon fill='white' />
           )}
+        </div>
 
+        {/* label + description vertical styling*/}
+        <div
+          className={css({
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: '0.2em',
+          })}
+        >
           {/* label */}
           <div
             className={css({
@@ -259,51 +268,46 @@ const CommandRow: FC<{
           >
             <HighlightedText value={label} match={search} disabled={disabled} />
           </div>
-        </div>
 
-        <div className={css({ maxHeight: !isTouch ? '1em' : undefined, flexGrow: 1, zIndex: 1 })}>
-          <div
-            className={css({
-              display: 'flex',
-              padding: !isTouch ? '3px 0.6em 0.3em 0.2em' : undefined,
-              marginLeft: !isTouch ? '2em' : undefined,
-            })}
-          >
-            {/* description */}
-            {selected && (
+          <div className={css({ maxHeight: !isTouch ? '1em' : undefined, flexGrow: 1, zIndex: 1 })}>
+            <div
+              className={css({
+                display: 'flex',
+              })}
+            >
+              {/* description */}
               <div
                 className={css({
                   fontSize: '80%',
                   ...(!isTouch
                     ? {
                         flexGrow: 1,
-                        marginLeft: '0.5em',
                       }
                     : null),
                 })}
               >
                 {description}
               </div>
-            )}
 
-            {/* keyboard shortcut */}
-            {selected && !isTouch && (
-              <div
-                className={css({
-                  fontSize: '80%',
-                  position: 'relative',
-                  ...(!isTouch
-                    ? {
-                        display: 'inline',
-                      }
-                    : null),
-                })}
-              >
-                <span className={css({ marginLeft: 20, whiteSpace: 'nowrap' })}>
-                  {command.keyboard && formatKeyboardShortcut(command.keyboard)}
-                </span>
-              </div>
-            )}
+              {/* keyboard shortcut */}
+              {!isTouch && (
+                <div
+                  className={css({
+                    fontSize: '80%',
+                    position: 'relative',
+                    ...(!isTouch
+                      ? {
+                          display: 'inline',
+                        }
+                      : null),
+                  })}
+                >
+                  <span className={css({ marginLeft: 20, whiteSpace: 'nowrap' })}>
+                    {command.keyboard && formatKeyboardShortcut(command.keyboard)}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
