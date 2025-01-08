@@ -14,10 +14,18 @@ const Popup = React.forwardRef<
   const padding = useSelector(state => state.fontSize / 2 + 2)
 
   return (
-    <div className={css({ color: 'gray50' })}>
+    <div
+      className={css({
+        zIndex: 'commandPalette',
+        width: '100%',
+        height: '100%',
+        color: 'gray50',
+        backgroundColor: 'gray',
+      })}
+    >
       <PopupBase
         ref={ref}
-        fullWidth
+        fullScreen
         // scale with font size to stay vertically centered over toolbar
         padding={`${padding}px 0 ${padding}px`}
         textAlign={textAlign}

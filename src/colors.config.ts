@@ -1,18 +1,23 @@
 const colors = {
   dark: {
     // Background colors in capacitor app needs to be in hexadecimal codes
+    cpBorder: 'rgba(36, 36, 36, 1)', // #242424
+    cpBackground: 'rgba(23, 23, 23, 1)', // #171717
     bg: '#000000',
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
     bgOverlay50: 'rgba(0, 0, 0, 0.5)',
+    bgOverlay57: 'rgba(0, 0, 0, 0.57)',
     bgOverlay30: 'rgba(0, 0, 0, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
+    blueHighlight: 'rgba(100, 199, 234, 1)', // #64c7ea
     caret: 'rgba(0, 199, 230, 0.75)', // #00c7e6
     darkgray: 'rgba(17, 17, 17, 1)', // #111111
     fg85: 'rgba(217, 217, 217, 1)', // #d9d9d9
     fg: 'rgba(255, 255, 255, 1)',
     fgOverlay10: 'rgba(255, 255, 255, 0.1)',
     fgOverlay20: 'rgba(255, 255, 255, 0.2)',
+    fgOverlay30: 'rgba(255, 255, 255, 0.3)',
     fgOverlay50: 'rgba(255, 255, 255, 0.5)',
     fgOverlay70: 'rgba(255, 255, 255, 0.7)',
     fgOverlay80: 'rgba(20, 20, 20, 0.8)',
@@ -30,7 +35,7 @@ const colors = {
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
-    vividHighlight: '#63c9ea',
+    vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
     inputBorder: 'rgba(153, 153, 153, 1)', // #999, also used in navBar
@@ -60,7 +65,7 @@ const colors = {
     bulletGray: 'rgba(102, 102, 102, 1)', // #666
     midPink: 'rgba(255, 123, 195, 1)', // #ff7bc3
     dropChildTarget: '#32305f', // purple-eggplant
-    commandSelected: 'rgba(33, 33, 33, 1)', // #212121
+    commandSelected: 'rgba(100, 199, 234, 0.15)', // #64c7ea26
     eggplant: 'rgba(82, 48, 95, 1)',
     checkboxForm: 'rgba(62, 62, 62, 1)', // #3e3e3e
     error: 'rgba(204, 34, 51, 1)',
@@ -72,18 +77,23 @@ const colors = {
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
+    cpBorder: 'rgba(36, 36, 36, 1)', // #242424
+    cpBackground: 'rgba(23, 23, 23, 1)', // #171717
     bg: '#FFFFFF',
     bgOverlay80: 'rgba(255, 255, 255, 0.8)',
     bgOverlay50: 'rgba(255, 255, 255, 0.5)',
+    bgOverlay57: 'rgba(255, 255, 255, 0.57)',
     bgOverlay30: 'rgba(255, 255, 255, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
+    blueHighlight: 'rgba(100, 199, 234, 1)', // #64c7ea
     caret: 'rgba(0, 199, 230, 0.75)', // #00c7e6
     darkgray: 'rgba(237, 237, 237, 1)', // #ededed
     fg85: 'rgba(39, 39, 39, 1)', // #272727
     fg: 'rgba(0, 0, 0, 1)',
     fgOverlay10: 'rgba(0, 0, 0, 0.1)',
     fgOverlay20: 'rgba(0, 0, 0, 0.2)',
+    fgOverlay30: 'rgba(0, 0, 0, 0.3)',
     fgOverlay50: 'rgba(0, 0, 0, 0.5)',
     fgOverlay70: 'rgba(0, 0, 0, 0.7)',
     fgOverlay80: 'rgba(235, 235, 235, 0.8)',
@@ -101,7 +111,7 @@ const colors = {
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
-    vividHighlight: '#63c9ea',
+    vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
     inputBorder: 'rgba(238, 238, 238, 1)', // #eeeeee
