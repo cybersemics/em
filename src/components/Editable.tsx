@@ -49,6 +49,7 @@ import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
@@ -612,7 +613,7 @@ const Editable = ({
       placeholder={placeholder}
       // stop propagation to prevent default content onClick (which removes the cursor)
       onClick={stopPropagation}
-      onTouchEnd={onTap}
+      {...fastClick(onTap)}
       // must call onMouseDown on mobile since onTap cannot preventDefault
       // otherwise gestures and scrolling can trigger cursorBack (#1054)
       onMouseDown={onTap}
