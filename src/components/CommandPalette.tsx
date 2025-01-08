@@ -248,9 +248,11 @@ const CommandRow: FC<{
               color: disabled
                 ? 'gray'
                 : isTouch
-                  ? selected || gestureInProgress === command.gesture
-                    ? 'vividHighlight'
-                    : 'fg'
+                  ? selected
+                    ? '#64C7EA'
+                    : gestureInProgress === command.gesture
+                      ? 'vividHighlight'
+                      : 'fg'
                   : 'fg',
               fontWeight: selected ? 'bold' : undefined,
             })}
@@ -262,7 +264,6 @@ const CommandRow: FC<{
         <div className={css({ maxHeight: !isTouch ? '1em' : undefined, flexGrow: 1, zIndex: 1 })}>
           <div
             className={css({
-              backgroundColor: selected ? 'commandSelected' : undefined,
               display: 'flex',
               padding: !isTouch ? '3px 0.6em 0.3em 0.2em' : undefined,
               marginLeft: !isTouch ? '2em' : undefined,
@@ -551,3 +552,4 @@ const CommandPaletteWithTransition: FC = () => {
 }
 
 export default CommandPaletteWithTransition
+

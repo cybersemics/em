@@ -60,7 +60,7 @@ const colors = {
     bulletGray: 'rgba(102, 102, 102, 1)', // #666
     midPink: 'rgba(255, 123, 195, 1)', // #ff7bc3
     dropChildTarget: '#32305f', // purple-eggplant
-    commandSelected: 'rgba(33, 33, 33, 1)', // #212121
+    commandSelected: 'rgba(100, 199, 234, 0.15)', // #64c7ea26
     eggplant: 'rgba(82, 48, 95, 1)',
     checkboxForm: 'rgba(62, 62, 62, 1)', // #3e3e3e
     error: 'rgba(204, 34, 51, 1)',
