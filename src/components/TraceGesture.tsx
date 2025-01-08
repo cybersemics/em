@@ -83,6 +83,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     })
 
     eventNode?.addEventListener('touchmove', e => {
+      if (!show) return
       const touch = e.touches[0]
       if (isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
         handleTouchMove(e)
@@ -110,7 +111,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       eventNode?.removeEventListener('touchend', handleTouchEnd)
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
-  }, [eventNodeRef, onBeginStroke, leftHanded])
+  }, [eventNodeRef, onBeginStroke, leftHanded, show])
 
   return (
     <div
