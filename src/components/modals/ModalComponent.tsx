@@ -81,7 +81,18 @@ class ModalComponent extends React.Component<ModalProps> {
     const modalClasses = modalRecipe({ id, center })
 
     return (
-      <div ref={this.ref} style={style} className={cx(modalClasses.root, css({ overflow: 'visible', position: 'relative', ...(top ? { top: 55 } : null) }))}>
+      <div
+        ref={this.ref}
+        style={style}
+        className={cx(
+          modalClasses.root,
+          css({
+            overflow: 'visible',
+            position: 'relative',
+            ...(top ? { top: 55 } : null),
+          }),
+        )}
+      >
         {!this.props.preventCloseOnEscape && !hideClose && (
           <a
             className={css({
@@ -107,7 +118,7 @@ class ModalComponent extends React.Component<ModalProps> {
           className={css({
             maxWidth: '40em',
             margin: '0 auto',
-            maxHeight: 'none'
+            maxHeight: 'none',
           })}
         >
           {title && <h1 className={modalClasses.title}>{title}</h1>}
