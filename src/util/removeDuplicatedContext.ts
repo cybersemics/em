@@ -16,7 +16,7 @@ const removeDuplicatedContext = (state: State, lexeme: Lexeme, context: Context)
     ...lexeme,
     contexts: (lexeme.contexts || []).filter(child => {
       const thought = getThoughtById(state, child)
-      return thought.parentId !== contextToThoughtId(state, context)
+      return thought?.parentId !== contextToThoughtId(state, context)
     }),
   }
 }

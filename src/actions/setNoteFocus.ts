@@ -8,7 +8,7 @@ const setNoteFocus = (state: State, { value }: { value: boolean }): State => ({
   ...state,
   // set the cursor offset to the end of the cursor thought
   // we cannot use state.editingValue since it is set to null when the Editable is blurred
-  ...(!value && state.cursor ? { cursorOffset: headValue(state, state.cursor).length } : null),
+  ...(!value && state.cursor ? { cursorOffset: headValue(state, state.cursor)?.length } : null),
   noteFocus: value,
   // always enter edit mode when there is note focus
   // it will be set in the Note's onFocus anyway, but set it here so that we are not as dependent on what happens there

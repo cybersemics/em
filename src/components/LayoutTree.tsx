@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
+import ActionType from '../@types/ActionType'
 import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -433,6 +434,18 @@ const TreeNode = ({
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
   })
 
+  // true if the last action is any of archive/delete/collapse
+  const isLastActionDelete = useSelector(state => {
+    const deleteActions: ActionType[] = [
+      'archiveThought',
+      'collapseContext',
+      'deleteThought',
+      'deleteThoughtWithCursor',
+    ]
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
+  })
+
   useLayoutEffect(() => {
     if (y !== _y) {
       // When y changes React re-renders the component with the new value of y. It will result in a visual change in the DOM.
@@ -491,7 +504,8 @@ const TreeNode = ({
         // The FadeTransition is only responsible for fade out on unmount;
         // or for fade in on mounting of a new thought.
         // See autofocusChanged for normal opacity transition.
-        duration={isEmpty ? 'nodeFadeIn' : 'nodeFadeOut'}
+        // Limit the fade/shrink/blur animation to the archive, delete, and collapseContext actions.
+        duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
         nodeRef={fadeThoughtRef}
         in={transitionGroupsProps.in}
         unmountOnExit

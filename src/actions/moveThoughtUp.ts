@@ -37,19 +37,19 @@ const moveThoughtUp = (state: State) => {
   // metaprogramming functions that prevent moving
   if (findDescendant(state, thoughtId, '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, cursor))}" is read-only and cannot be moved.`,
+      value: `"${ellipsize(headValue(state, cursor) ?? 'MISSING_THOUGHT')}" is read-only and cannot be moved.`,
     })
   } else if (findDescendant(state, thoughtId, '=immovable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, cursor))}" is immovable.`,
+      value: `"${ellipsize(headValue(state, cursor) ?? 'MISSING_THOUGHT')}" is immovable.`,
     })
   } else if (findDescendant(state, parentId, '=readonly')) {
     return alert(state, {
-      value: `Subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" are read-only and cannot be moved.`,
+      value: `Subthoughts of "${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" are read-only and cannot be moved.`,
     })
   } else if (findDescendant(state, parentId, '=immovable')) {
     return alert(state, {
-      value: `Subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" are immovable.`,
+      value: `Subthoughts of "${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" are immovable.`,
     })
   }
 

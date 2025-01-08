@@ -66,6 +66,11 @@ const invalidUrls = [
   'http://.www.foo.bar./',
   'a.b.c',
   'test@test.com',
+  'one:two',
+  'key:value',
+  'v1.10',
+  'v2:latest',
+  'version:1.0',
 ]
 
 describe('valid urls', () => {

@@ -19,6 +19,8 @@ const getThoughtAndParentPath = (state: State, at: string[]): [Thought, Path] =>
 
   const thought = pathToThought(state, path)
 
+  if (!thought) throw new Error(`Thought not found for path: ${path}`)
+
   const pathParent = rootedParentOf(state, path)
 
   return [thought, pathParent]
@@ -28,6 +30,7 @@ const getThoughtAndParentPath = (state: State, at: string[]): [Thought, Path] =>
  */
 const deleteThoughtAtFirstMatch = _.curryRight((state: State, at: string[]) => {
   const [thought, pathParent] = getThoughtAndParentPath(state, at)
+
   return deleteThought(state, {
     pathParent,
     thoughtId: thought.id,
@@ -41,6 +44,7 @@ export const deleteThoughtAtFirstMatchActionCreator =
   (at: Context): Thunk =>
   (dispatch, getState) => {
     const [thought, pathParent] = getThoughtAndParentPath(getState(), at)
+
     dispatch(
       deleteThoughtActionCreator({
         pathParent,

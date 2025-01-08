@@ -29,7 +29,9 @@ export const bulletColorActionCreator =
   (payload: Parameters<typeof bulletColor>[1]): Thunk =>
   (dispatch, getState) => {
     const state = getState()
-    const thought = pathToThought(state, state.cursor!)
+    if (!state.cursor) return
+    const thought = pathToThought(state, state.cursor)
+    if (!thought) return
     const thoughtText = stripTags(thought.value)
     const fullySelected =
       (selection.text()?.length === 0 && thoughtText.length !== 0) || selection.text()?.length === thoughtText.length

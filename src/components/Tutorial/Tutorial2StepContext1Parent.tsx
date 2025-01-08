@@ -15,7 +15,7 @@ import TutorialHint from './TutorialHint'
 const Tutorial2StepContext1Parent = () => {
   const tutorialChoice = useSelector(selectTutorialChoice)
   const cursor = useSelector(state => state.cursor)
-  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor).startsWith('"'))
+  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor)?.startsWith('"'))
   const rootChildren = useSelector(state => getAllChildrenAsThoughts(state, HOME_TOKEN), isEqual)
 
   return (

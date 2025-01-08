@@ -9,9 +9,9 @@ import rootedParentOf from './rootedParentOf'
 const prevContext = (state: State, path: Path) => {
   // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
   const parent = getThoughtById(state, head(rootedParentOf(state, path)))
-  const contexts = getContextsSortedAndRanked(state, parent.value)
+  const contexts = parent ? getContextsSortedAndRanked(state, parent.value) : []
   // find the thought in the context view
-  const index = contexts.findIndex(cx => getThoughtById(state, cx.id).parentId === head(path))
+  const index = contexts.findIndex(cx => getThoughtById(state, cx.id)?.parentId === head(path))
   const context = contexts[index - 1]
   return context ? getThoughtById(state, context.parentId) : null
 }

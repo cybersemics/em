@@ -2,12 +2,12 @@ import { Operation, applyPatch, compare } from 'fast-json-patch'
 import { produce } from 'immer'
 import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
+import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import * as reducers from '../actions'
 import updateThoughts from '../actions/updateThoughts'
 import getThoughtById from '../selectors/getThoughtById'
 import headValue from '../util/headValue'
@@ -15,7 +15,7 @@ import reducerFlow from '../util/reducerFlow'
 
 // a map of action types to boolean
 type ActionFlags = {
-  [key in keyof typeof reducers]: boolean
+  [key in ActionType]: boolean
 }
 
 // Actions representing any cursor movements.
