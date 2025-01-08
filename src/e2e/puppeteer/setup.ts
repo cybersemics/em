@@ -50,7 +50,6 @@ const setup = async ({
         break
       case 'info':
       case 'log':
-        console[messageType](text)
         break
       // ConsoleMessage 'warning needs to be converted to native console 'warn'
       case 'warn':
