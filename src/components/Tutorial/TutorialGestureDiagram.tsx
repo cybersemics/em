@@ -29,9 +29,9 @@ const TutorialGestureDiagram = ({ gesture }: { gesture: Command['gesture'] }) =>
       >
         <GestureDiagram
           path={gesture as GesturePath}
-          size={160}
-          strokeWidth={10}
-          arrowSize={5}
+          size={250}
+          strokeWidth={5}
+          arrowSize={50}
           cssRaw={css.raw({ animation: 'pulse 1s infinite alternate' })}
         />
       </div>,
