@@ -384,7 +384,6 @@ const ThoughtContainer = ({
         childRecipe(),
         invalidOption && invalidOptionRecipe(),
         css({
-          marginLeft: isDivider(value) ? '-125px' : undefined,
           // so that .thought can be sized at 100% and BulletCursorOverlay bullet can be positioned correctly.
           position: 'relative',
         }),
