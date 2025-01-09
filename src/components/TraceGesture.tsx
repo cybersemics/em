@@ -123,10 +123,12 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         left: 0,
         // Dim the gesture trace to 50% opacity when the gesture is cancelled or invalid.
         opacity: show ? (cancelled ? 0.5 : 1) : 0,
-        // Fade in quickly. A custom easing function is used to simulate a slight delay at the beginning. This effectively hides very quickly entered gestures like forward/backward.
-        // Fade out slowly.
         transition:
-          show && !cancelled ? 'opacity {durations.fast} {easings.easeInSlow}' : 'opacity {durations.medium} ease-out',
+          show && !cancelled
+            ? // Fade in quickly. A custom easing function is used to simulate a slight delay at the beginning. This effectively hides very quickly entered gestures like forward/backward.
+              'opacity {durations.traceGestureIn} {easings.easeInSlow}'
+            : // Fade out slowly.
+              'opacity {durations.medium} ease-out',
         pointerEvents: eventNodeRef ? 'none' : undefined,
       })}
       style={{ height: innerHeight }}
