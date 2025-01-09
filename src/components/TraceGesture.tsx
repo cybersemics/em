@@ -83,10 +83,10 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     })
 
     eventNode?.addEventListener('touchmove', e => {
-      const isGesturizing = gestureStore.getState().length > 0
+      const isGestureInProgress = gestureStore.getState().length > 0
       const touch = e.touches[0]
 
-      if (isGesturizing && isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
+      if (isGestureInProgress && isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
         handleTouchMove(e)
       }
     })
