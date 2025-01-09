@@ -463,9 +463,13 @@ const TreeNode = ({
     ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
     : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
 
+  const parentId = path.length > 1 ? path[path.length - 2] : null
+
   return (
     <div
       aria-label='tree-node'
+      data-id={thoughtId}
+      data-parent-id={parentId}
       // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
       // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
       className={css({
