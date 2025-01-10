@@ -76,15 +76,16 @@ export const hashKeyDown = (e: KeyboardEvent): string =>
   (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
 
 /** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
-const arrowTextToArrowCharacter = (s: string) =>
-  (
+export const arrowTextToArrowCharacter = (s: string) => {
+  return ((
     ({
       ArrowLeft: '←',
       ArrowRight: '→',
       ArrowUp: '↑',
       ArrowDown: '↓',
     }) as Index
-  )[s] || s
+  )[s] || s)
+}
 
 /** Formats a keyboard shortcut to display to the user. */
 export const formatKeyboardShortcut = (keyboardOrString: Key | string): string => {
