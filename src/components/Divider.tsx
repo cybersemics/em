@@ -99,7 +99,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
 
         // Determine the maximum width
         const maxWidth = widths.length > 0 ? Math.max(...widths) : DIVIDER_MIN_WIDTH
-        setDividerWidth(Math.round(maxWidth))
+        setDividerWidth(Math.round(Math.max(maxWidth, DIVIDER_MIN_WIDTH)))
       }
     }
   }
