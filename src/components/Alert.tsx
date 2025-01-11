@@ -66,6 +66,7 @@ const Alert: FC = () => {
             key={value}
             circledCloseButton
             showXOnHover
+            onClose={alert.showCloseLink ? onClose : undefined}
           >
             <div
               data-testid='alert-content'
