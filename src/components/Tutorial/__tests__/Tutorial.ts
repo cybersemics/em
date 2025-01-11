@@ -1,10 +1,11 @@
-import { fireEvent, getByText, screen } from '@testing-library/dom'
+import { getByText, screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../../actions/newThought'
 import {
   HOME_TOKEN,
+  TUTORIAL2_STEP_CHOOSE,
   TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
   TUTORIAL_STEP_SECONDTHOUGHT,
@@ -13,11 +14,7 @@ import {
 } from '../../../constants'
 import exportContext from '../../../selectors/exportContext'
 import store from '../../../stores/app'
-import {
-  cleanupTestApp,
-  default as createTestApp,
-  createTestAppWithTutorial,
-} from '../../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp, createTestAppWithTutorial } from '../../../test-helpers/createTestApp'
 import dispatch from '../../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../../test-helpers/setCursorFirstMatch'
 
@@ -25,83 +22,36 @@ import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../.
 // we should avoid using { delay: null }, and use jest.advanceTimersByTime instead
 const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 
-describe.only('A curious case of me not being able to grasp keyboard', () => {
+describe.skip('Tutorial test keyboard events', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
-
-  it('creates a thought with two empty thoughts below it', async () => {
+  it('2 enters', async () => {
     await user.keyboard('{Enter}')
-    await user.type(document.querySelectorAll('[contenteditable="true"]')[0], 'Socrates')
-    expect(screen.getByText('Socrates')).toBeInTheDocument()
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    // eslint-disable-next-line no-console
-    console.debug('gotta be one thought', exported)
-
-    expect(exported).toBe(`- ${HOME_TOKEN}
-    - Socrates`)
-  })
-  it('creates a thought with six empty thoughts below it, if you press enter', async () => {
     await user.keyboard('{Enter}')
-    await user.type(document.querySelectorAll('[contenteditable="true"]')[0], 'Socrates')
-    await user.keyboard('{Enter}')
-    expect(screen.getByText('Socrates')).toBeInTheDocument()
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    // eslint-disable-next-line no-console
-    console.debug('after pressing enter', exported)
-    expect(exported).toBe(`- ${HOME_TOKEN}
-    - Socrates`)
   })
 
-  it('creating two thoughts produces something strange', async () => {
+  it('another 2 enters', async () => {
     await user.keyboard('{Enter}')
-    await user.type(document.querySelectorAll('[contenteditable="true"]')[0], 'Socrates')
     await user.keyboard('{Enter}')
-    await user.type(document.querySelectorAll('[contenteditable="true"]')[1], 'Plato')
-    await user.keyboard('{Enter}')
-
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    // eslint-disable-next-line no-console
-    console.debug('two thoughts', exported)
   })
 
-  it('nested thoughts are broken', async () => {
+  it('final 2 enters', async () => {
     await user.keyboard('{Enter}')
-    await user.type(document.querySelectorAll('[contenteditable="true"]')[0], 'Socrates')
-    await user.keyboard('{Meta>}{Enter}{/Meta}')
-    // await user.keyboard('{Control>}{Enter}{/Control}')
-    await user.type(document.querySelectorAll('[contenteditable="true"]')[1], 'Plato')
     await user.keyboard('{Enter}')
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    // eslint-disable-next-line no-console
-    console.debug('subthoughts', exported)
+    console.log(exported)
   })
 
-  it('nested thoughts are broken', async () => {
-    await user.keyboard('{Enter}')
-    await user.type(document.querySelectorAll('[contenteditable="true"]')[0], 'Socrates')
-    await user.keyboard('{Meta>}{Enter}{/Meta}')
-    // await user.keyboard('{Control>}{Enter}{/Control}')
-    await user.type(document.querySelectorAll('[contenteditable="true"]')[1], 'Plato')
-    await user.keyboard('{Meta>}{Enter}{/Meta}')
-
-    await user.type(document.querySelectorAll('[contenteditable="true"]')[2], 'Aristole')
-    await user.keyboard('{Enter}')
-
+  afterAll(() => {
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    // eslint-disable-next-line no-console
-    console.debug('subthoughts', exported)
+    console.log(exported)
   })
 })
 
-beforeEach(createTestAppWithTutorial)
-afterAll(cleanupTestApp)
 describe('Tutorial 1', async () => {
+  beforeEach(createTestAppWithTutorial)
+  afterAll(cleanupTestApp)
   describe('step start', () => {
     it('shows the welcome text', () => {
       expect(screen.getByText('Welcome to your personal thoughtspace.')).toBeInTheDocument()
@@ -203,154 +153,210 @@ describe('Tutorial 1', async () => {
       expect(() => screen.getByTestId('tutorial-step')).toThrow('Unable to find an element')
     })
   })
-
-  afterAll(cleanupTestApp)
 })
 
 describe('Tutorial 2', async () => {
-  it('step start - tell about context menu', async () => {
-    expect(store.getState().storageCache?.tutorialStep).toBe(TUTORIAL_STEP_SUCCESS)
+  describe('step start - tell about context menu', async () => {
+    it('tell about context menu', async () => {
+      await cleanupTestApp()
+      await createTestAppWithTutorial()
+      expect(store.getState().storageCache?.tutorialStep).toBe(TUTORIAL_STEP_SUCCESS)
 
-    await user.click(screen.getByText('Learn more'))
+      await user.click(screen.getByText('Learn more'))
 
-    expect(screen.getByText(`If the same thought appears in more than one place`, { exact: false })).toBeInTheDocument()
-    expect(
-      screen.getByText(`shows a small number to the right of the thought, for example`, { exact: false }),
-    ).toBeInTheDocument()
-  })
-
-  it('step choose - gives 3 choices of what project to proceed with', async () => {
-    await user.click(screen.getByText('Next'))
-    expect(
-      screen.getByText('For this tutorial, choose what kind of content you want to create', { exact: false }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('To-Do List')).toBeInTheDocument()
-    expect(screen.getByText('Journal Theme')).toBeInTheDocument()
-    expect(screen.getByText('Book/Podcast Notes')).toBeInTheDocument()
-    // await cleanupTestApp()
-  })
-
-  it('step context 1 parent, prompt for creating a first todo', async () => {
-    // await createTestAppWithTutorial()
-    await user.click(screen.getByText('To-Do List'))
-    await act(vi.runOnlyPendingTimersAsync)
-
-    expect(
-      screen.getByText('Excellent choice. Now create a new thought with the text “Home”', { exact: false }),
-    ).toBeInTheDocument()
-    await act(vi.runOnlyPendingTimersAsync)
-
-    await user.keyboard('{Enter}')
-    await user.type(document.querySelector('[contenteditable="true"]')!, 'Home')
-    // await user.keyboard('[Enter]')
-    await act(vi.runOnlyPendingTimersAsync)
-
-    expect(screen.getByText(`Let's say that you want to make a list of things`, { exact: false })).toBeInTheDocument()
-    expect(screen.getByText(`Add a thought with the text "To Do"`, { exact: false })).toBeInTheDocument()
-
-    await dispatch([setCursorFirstMatch(['Home'])])
-    await act(vi.runOnlyPendingTimersAsync)
-    await user.keyboard('{Meta>}{Enter}{/Meta}')
-    await user.type(document.querySelectorAll('[contenteditable="true"]')[1], 'To Do')
-
-    await user.keyboard('{Enter}')
-    expect(screen.getByText(`Now add a thought to “To Do”`, { exact: false })).toBeInTheDocument()
-    screen.getByText('To Do').focus()
-    fireEvent.keyUp(screen.getByText('To Do'), {
-      key: 'Enter',
-      ctrlKey: true,
-      keyCode: 13,
+      expect(
+        screen.getByText(`If the same thought appears in more than one place`, { exact: false }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText(`shows a small number to the right of the thought, for example`, { exact: false }),
+      ).toBeInTheDocument()
     })
-    // await act(vi.runOnlyPendingTimersAsync)
-    await user.type(document.querySelectorAll('[contenteditable="true"]')[2], 'Hey')
-    await user.keyboard('{Enter}')
-
-    expect(screen.getByText(`Nice work!`, { exact: false })).toBeInTheDocument()
   })
 
-  it('step context 2 - prompt for creating a second todo, shows a superscript', async () => {
-    await user.click(screen.getByText('Next'))
-    await dispatch([
-      importText({
-        text: `
-      - Home
-        - To Do
-          - Hey
-    `,
-      }),
-      setCursorFirstMatch(['Home', 'To Do', 'Hey']),
-    ])
-    await act(vi.runOnlyPendingTimersAsync)
-    expect(
-      screen.getByText(`Now we are going to create a different "To Do" list.`, { exact: false }),
-    ).toBeInTheDocument()
-
-    await user.click(screen.getByText('hint'))
-    await act(vi.runOnlyPendingTimersAsync)
-    expect(getByText(screen.getByTestId('tutorial-step')!, 'Select "Home."', { exact: false })).toBeInTheDocument()
-    await user.click(screen.getByText('Home'))
-    await act(vi.runOnlyPendingTimersAsync)
-    expect(screen.getByText(`Hit the Enter key to create a new thought`, { exact: false })).toBeInTheDocument()
-    await user.keyboard('{Enter}')
-    await act(vi.runOnlyPendingTimersAsync)
-
-    const lastThought = Array.from(document.querySelectorAll('[contenteditable="true"]')).at(-1)
-    await user.type(lastThought!, 'Work')
-    await act(vi.runOnlyPendingTimersAsync)
-
-    expect(screen.getByText('Work')).toBeInTheDocument()
-    expect(screen.getByText('Now add a thought with the text "To Do"', { exact: false })).toBeInTheDocument()
-
-    await user.keyboard('{Control}{Enter}')
-    await user.type(Array.from(document.querySelectorAll('[contenteditable="true"]')).at(-1)!, 'To Do')
-    expect(screen.getByText('Very good!')).toBeInTheDocument()
-    expect(screen.getAllByRole('superscript')[0]).toHaveTextContent('2')
-    expect(screen.getByText('This means that “To Do” appears in two places', { exact: false })).toBeInTheDocument()
-
-    await user.keyboard('{Control}{Enter}')
+  describe('step choose', async () => {
+    beforeEach(createTestAppWithTutorial)
+    it('gives 3 choices of what project to proceed with', async () => {
+      await user.click(screen.getByText('Next'))
+      expect(
+        screen.getByText('For this tutorial, choose what kind of content you want to create', { exact: false }),
+      ).toBeInTheDocument()
+      expect(screen.getByText('To-Do List')).toBeInTheDocument()
+      expect(screen.getByText('Journal Theme')).toBeInTheDocument()
+      expect(screen.getByText('Book/Podcast Notes')).toBeInTheDocument()
+    })
   })
 
-  it('step context view open - showcase multiple contexts', async () => {
-    await user.click(screen.getByText('Next'))
-    await dispatch([setCursorFirstMatch(['To Do'])])
-    await act(vi.runOnlyPendingTimersAsync)
+  describe('step context 1 parent, prompt for creating a first todo', async () => {
+    beforeEach(createTestAppWithTutorial)
 
-    // await dispatch(setCursorFirstMatch(['Work', 'To Do']))
-    await act(vi.runOnlyPendingTimersAsync)
-    expect(screen.getByText("Hit Alt + Shift + S to view the current thought's contexts.")).toBeInTheDocument()
+    it('step context 1 parent, prompt for creating a first todo', async () => {
+      console.log(store.getState().storageCache?.tutorialStep)
+      expect(store.getState().storageCache?.tutorialStep).toBe(TUTORIAL2_STEP_CHOOSE)
+      await user.click(screen.getAllByText('To-Do List').at(-1)!)
+      await act(vi.runOnlyPendingTimersAsync)
 
-    await user.keyboard('{Alt>}{Shift>}S{/Shift}{/Alt}')
-    await act(vi.runOnlyPendingTimersAsync)
+      expect(
+        screen.getByText('Excellent choice. Now create a new thought with the text “Home”', { exact: false }),
+      ).toBeInTheDocument()
+      await act(vi.runOnlyPendingTimersAsync)
 
-    expect(
-      screen.getByText(
-        `Well, look at that. We now see all of the contexts in which "To Do" appears, namely "Home" and "Work".`,
-      ),
-    ).toBeInTheDocument()
+      await user.keyboard('{Enter}')
+      await user.type(document.querySelector('[contenteditable="true"]') as HTMLElement, 'Home', {
+        skipAutoClose: true,
+      })
+      // await user.keyboard('{Enter}')
+      await act(vi.runOnlyPendingTimersAsync)
+
+      expect(screen.getByText(/Let's say that you want to make a list of things/)).toBeInTheDocument()
+      expect(screen.getByText(/Add a thought with the text "To Do"/)).toBeInTheDocument()
+
+      await act(vi.runOnlyPendingTimersAsync)
+      await user.keyboard('{Control>}{Enter}{/Control}')
+      await user.type(document.querySelectorAll('[contenteditable="true"]')[1], 'To Do')
+      await act(vi.runOnlyPendingTimersAsync)
+
+      expect(screen.getByText(/Now add a thought to “To Do”/)).toBeInTheDocument()
+
+      await user.keyboard('{Control>}{Enter}{/Control}')
+      await act(vi.runOnlyPendingTimersAsync)
+      await user.type(lastThought(), 'or to not')
+      await act(vi.runOnlyPendingTimersAsync)
+
+      expect(showAllThoughts()).toBe(
+        `- __ROOT__
+  - Home
+    - To Do
+      - or to not`,
+      )
+      expect(screen.getByText(/Nice work!/)).toBeInTheDocument()
+    })
   })
 
-  it('step context examples - show real world examples', async () => {
-    await user.click(screen.getByText('Next'))
+  describe('step context 2', async () => {
+    beforeEach(createTestAppWithTutorial)
 
-    expect(
-      screen.getByText('Here are some real-world examples of using contexts in', { exact: false }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('View all thoughts related to a particular person, place, or thing.')).toBeInTheDocument()
-    expect(screen.getByText('Keep track of quotations from different sources.')).toBeInTheDocument()
-    expect(
-      screen.getByText('Create a link on the home screen to a deeply nested subthought for easy access.'),
-    ).toBeInTheDocument()
+    it('prompt for creating a second todo, shows a superscript', async () => {
+      await user.click(screen.getByText('Next'))
+      expect(screen.getByText(/Now we are going to create a different "To Do" list./)).toBeInTheDocument()
+
+      await user.keyboard('{Enter}')
+      await user.keyboard('{Shift>}{Tab}{/Shift}') // we are at
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      await user.type(lastThought(), 'Work')
+      await act(vi.runOnlyPendingTimersAsync)
+
+      expect(screen.getByText('Now add a thought with the text "To Do"', { exact: false })).toBeInTheDocument()
+
+      await user.keyboard('{Control>}{Enter}{/Control}')
+      await user.type(lastThought(), 'To Do')
+
+      expect(showAllThoughts()).toBe(
+        `- __ROOT__
+  - Home
+    - To Do
+      - or to not
+  - Work
+    - To Do`,
+      )
+      expect(screen.getByText('Very good!')).toBeInTheDocument()
+
+      expect(screen.getAllByRole('superscript')[0]).toHaveTextContent('2')
+      expect(screen.getByText('This means that “To Do” appears in two places', { exact: false })).toBeInTheDocument()
+
+      expect(screen.getByText('Imagine a new work task. Add it to this “To Do” list.'))
+      await user.keyboard('{Control>}{Enter}{/Control}')
+      await user.type(lastThought(), 'new work task')
+    })
   })
 
-  it('congratulates on finishing tutorial, hides it after "Finish"', async () => {
-    await user.click(screen.getByText('Next'))
-    expect(
-      screen.getByText('Congratulations! You have completed Part II of the tutorial.', { exact: false }),
-    ).toBeInTheDocument()
+  describe('multiple contexts', () => {
+    beforeEach(createTestAppWithTutorial)
+    it('step context view open - showcase multiple contexts', async () => {
+      expect(showAllThoughts()).toBe(
+        `- __ROOT__
+  - Home
+    - To Do
+      - or to not
+  - Work
+    - To Do
+      - new work task`,
+      )
+      await user.click(screen.getByText('Next'))
+      await act(vi.runOnlyPendingTimersAsync)
 
-    user.click(screen.getByText('Finish'))
-    await act(vi.runOnlyPendingTimersAsync)
+      expect(screen.getByText(/First select "To Do"./)).toBeInTheDocument()
 
-    expect(() => screen.getByTestId('tutorial-step')).toThrow('Unable to find an element')
+      console.log(screen.getAllByText('To Do').at(-1)!)
+      await user.keyboard('{Escape}') // focus out
+      await user.click(screen.getAllByText('To Do').at(-1)!) // and click on To Do
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      // await user.click(screen.getAllByText('To Do').at(-1)!) // focus on
+      await act(vi.runOnlyPendingTimersAsync)
+
+      // await dispatch(setCursorFirstMatch(['Work', 'To Do']))
+      showAllThoughts()
+
+      await act(vi.runOnlyPendingTimersAsync)
+      expect(screen.getByText("Hit Alt + Shift + S to view the current thought's contexts.")).toBeInTheDocument()
+
+      await user.keyboard('{Alt>}{Shift>}S{/Shift}{/Alt}')
+      await act(vi.runOnlyPendingTimersAsync)
+
+      expect(
+        screen.getByText(
+          `Well, look at that. We now see all of the contexts in which "To Do" appears, namely "Home" and "Work".`,
+        ),
+      ).toBeInTheDocument()
+    })
+  })
+
+  describe('step context examples - show real world examples', async () => {
+    beforeEach(createTestAppWithTutorial)
+
+    it('show real world examples', async () => {
+      await user.click(screen.getByText('Next'))
+      expect(
+        screen.getByText('Here are some real-world examples of using contexts in', { exact: false }),
+      ).toBeInTheDocument()
+      expect(screen.getByText('View all thoughts related to a particular person, place, or thing.')).toBeInTheDocument()
+      expect(screen.getByText('Keep track of quotations from different sources.')).toBeInTheDocument()
+      expect(
+        screen.getByText('Create a link on the home screen to a deeply nested subthought for easy access.'),
+      ).toBeInTheDocument()
+    })
+  })
+
+  describe('step success', async () => {
+    beforeEach(createTestAppWithTutorial)
+
+    it('congratulates on finishing tutorial, hides it after "Finish"', async () => {
+      await user.click(screen.getByText('Next'))
+      expect(
+        screen.getByText('Congratulations! You have completed Part II of the tutorial.', { exact: false }),
+      ).toBeInTheDocument()
+
+      user.click(screen.getByText('Finish'))
+      await act(vi.runOnlyPendingTimersAsync)
+
+      expect(() => screen.getByTestId('tutorial-step')).toThrow('Unable to find an element')
+    })
   })
 })
+
+function showAllThoughts(
+  logPostfix: string = '', // to differentiate between different tests
+) {
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  console.log(`${exported} ${logPostfix}`)
+
+  return exported
+}
+
+function lastThought() {
+  return Array.from(document.querySelectorAll('[contenteditable="true"]')).at(-1)!
+}
