@@ -262,6 +262,8 @@ const ContextBreadcrumbs = ({
                   staticText={staticText}
                   linkCssRaw={css.raw(
                     {
+                      // inherit not yet supported by plugin
+                      // eslint-disable-next-line @pandacss/no-hardcoded-color
                       color: 'inherit',
                       textDecoration: 'none',
                       '&:active': { color: 'activeBreadCrumb', WebkitTextStrokeWidth: '0.05em' },

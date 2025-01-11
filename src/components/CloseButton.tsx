@@ -14,6 +14,8 @@ const CloseButton = ({ onClose, disableSwipeToDismiss }: { onClose: () => void; 
         upperRightRecipe(),
         css({
           fontSize: 'sm',
+          // inherit not yet supported by plugin
+          // eslint-disable-next-line @pandacss/no-hardcoded-color
           color: 'inherit',
           right: '0',
           textDecoration: 'none',
