@@ -79,7 +79,7 @@ export const refreshTestApp = async () => {
   await act(vi.runOnlyPendingTimersAsync)
 }
 
-/** Clear exisiting event listeners, but without clearing the app. */
+/** Clear existing event listeners(e.g. keyboard, gestures), but without clearing the app. */
 export const cleanupTestEventHandlers = async () => {
   await act(async () => {
     if (cleanup) {
