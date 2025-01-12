@@ -1,14 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
+import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { DIVIDER_MIN_WIDTH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
+import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 
 /** A custom horizontal rule. */
@@ -19,18 +22,54 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   // State to store the calculated width
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
 
-  // Check if the node is in Table View by inspecting the parent and grandparent
-  const isTableView = useSelector(state => {
-    const parentPath = parentOf(path)
-    const parentId = head(parentPath) as ThoughtId | undefined
-    const grandParentPath = parentOf(parentPath)
-    const grandParentId = head(grandParentPath) as ThoughtId | undefined
-    const isTable =
+  const dividerId = head(path) as ThoughtId
+  const parentPath = parentOf(path)
+  const parentId = head(parentPath) as ThoughtId | undefined
+  const grandParentPath = parentOf(parentPath)
+  const grandParentId = head(grandParentPath) as ThoughtId | undefined
+
+  // Use useSelector to get the necessary data from the state
+  const { isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useSelector((state: State) => {
+    // Get immediate children of the parent
+    const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
+
+    // Exclude dividers
+    const childrenWithoutDividers = children.filter(child => !isDivider(child.value))
+
+    // Determine if the divider is the only child (excluding dividers)
+    const isOnlyChild = childrenWithoutDividers.length === 0
+
+    // Check if the node is in Table View by inspecting the parent and grandparent
+    const isTableView =
       (parentId && attributeEquals(state, parentId, '=view', 'Table')) ||
       (grandParentId && attributeEquals(state, grandParentId, '=view', 'Table')) ||
       false
 
-    return isTable
+    let thoughtsAtSameDepth: { id: ThoughtId; value: string }[] = []
+
+    if (isTableView && isOnlyChild && grandParentId) {
+      // In Table View and divider is the only child
+
+      // Get siblings of the parent (children of grandparent)
+      const parentSiblings = getAllChildrenAsThoughts(state, grandParentId)
+
+      // Include the parent itself if parentId is defined
+      const allParents = parentId ? [{ id: parentId, value: '' }, ...parentSiblings] : [...parentSiblings]
+
+      // For each parent (siblings and the parent itself), get their immediate children
+      thoughtsAtSameDepth = allParents.flatMap(parent => {
+        const childrenOfParent = parent.id ? getAllChildrenAsThoughts(state, parent.id) : []
+        // Exclude dividers
+        return childrenOfParent.filter(child => !isDivider(child.value))
+      })
+    }
+
+    return {
+      isOnlyChild,
+      isTableView,
+      children,
+      thoughtsAtSameDepth,
+    }
   })
 
   /** Sets the cursor to the divider. */
@@ -39,61 +78,63 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     dispatch(setCursor({ path }))
   }
 
-  /** Calculates and updates the Divider's width. */
-  const updateDividerWidth = () => {
-    if (dividerRef.current) {
-      const currentTreeNode = dividerRef.current.closest('[aria-label="tree-node"]') as HTMLElement | null
-      if (!currentTreeNode) {
-        return
-      }
-
-      // Get the data-parent-id of the current tree node
-      const currentParentId = currentTreeNode.getAttribute('data-parent-id')
-      if (currentParentId) {
-        const parentElement = currentTreeNode.parentElement
-        if (!parentElement) return
-
-        // Get all tree-node elements within the parent element
-        const allTreeNodes = Array.from(parentElement.querySelectorAll('[aria-label="tree-node"]')) as HTMLElement[]
-
-        // Find all siblings (nodes with the same data-parent-id)
-        const siblingTreeNodes = allTreeNodes.filter(node => node.getAttribute('data-parent-id') === currentParentId)
-
-        // Determine if the divider is the only child
-        const isOnlyChild = siblingTreeNodes.length === 1
-
-        // If the divider is the only child and we're not in Table View, set the width to DIVIDER_MIN_WIDTH
+  useLayoutEffect(() => {
+    /** Calculates and updates the Divider's width based on sibling thought widths. */
+    const updateDividerWidth = () => {
+      if (dividerRef.current) {
         if (isOnlyChild && !isTableView) {
+          // If the divider is the only child and we're not in Table View
           setDividerWidth(DIVIDER_MIN_WIDTH)
-          return // Early exit since we don't need further calculations
+          return
         }
 
         let widths: number[] = []
 
         if (isTableView && isOnlyChild) {
-          // Table View Mode and Divider is the only item
-          // Get the depth from data-depth attribute
-          const thoughtDepth = parseInt(currentTreeNode.getAttribute('data-depth') || '0', 10)
+          // In Table View and divider is the only child
 
-          // Get all tree-nodes and filter by matching depth within the parent element
-          const sameDepthNodes = allTreeNodes.filter(node => {
-            const nodeDepth = parseInt(node.getAttribute('data-depth') || '0', 10)
-            return nodeDepth === thoughtDepth
-          })
+          if (thoughtsAtSameDepth.length === 0) {
+            // If there are no thoughts at the same depth (excluding dividers)
+            setDividerWidth(DIVIDER_MIN_WIDTH)
+            return
+          }
 
-          // Measure widths of all "thought" elements in same-depth nodes
-          widths = sameDepthNodes.map(treeNode => {
-            const thoughtElement = treeNode.querySelector('[aria-label="thought"]') as HTMLElement | null
-            return thoughtElement ? thoughtElement.getBoundingClientRect().width : 0
+          // Get widths of thoughts at the same depth by querying the DOM
+          widths = thoughtsAtSameDepth.map(thought => {
+            const innerThoughtElement = document.querySelector(
+              `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
+            ) as HTMLElement
+
+            if (innerThoughtElement) {
+              const width = innerThoughtElement.getBoundingClientRect().width
+              return width
+            } else {
+              return 0
+            }
           })
         } else {
           // Non-table View Mode or Divider is not the only item
-          // Exclude the divider itself when calculating widths
-          const siblingTreeNodesWithoutDivider = siblingTreeNodes.filter(node => node !== currentTreeNode)
-          // Measure widths of sibling "thought" elements, excluding the divider itself
-          widths = siblingTreeNodesWithoutDivider.map(treeNode => {
-            const thoughtElement = treeNode.querySelector('[aria-label="thought"]') as HTMLElement | null
-            return thoughtElement ? thoughtElement.getBoundingClientRect().width : 0
+
+          // Get sibling thoughts excluding the divider itself and dividers
+          const siblingThoughts = children.filter(child => child.id !== dividerId && !isDivider(child.value))
+
+          if (siblingThoughts.length === 0) {
+            setDividerWidth(DIVIDER_MIN_WIDTH)
+            return
+          }
+
+          // Get widths of sibling thoughts by querying the DOM
+          widths = siblingThoughts.map(thought => {
+            const innerThoughtElement = document.querySelector(
+              `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
+            ) as HTMLElement
+
+            if (innerThoughtElement) {
+              const width = innerThoughtElement.getBoundingClientRect().width
+              return width
+            } else {
+              return 0
+            }
           })
         }
 
@@ -102,12 +143,10 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
         setDividerWidth(Math.round(Math.max(maxWidth, DIVIDER_MIN_WIDTH)))
       }
     }
-  }
 
-  useEffect(() => {
     updateDividerWidth()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTableView, path])
+  }, [isOnlyChild, isTableView])
 
   return (
     <div
