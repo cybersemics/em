@@ -32,7 +32,7 @@ const createTestApp = async ({ tutorial } = { tutorial: false }) => {
     )
 
     store.dispatch([
-      // sometimes we wan't to show tutorial on test runs, sometimes we don't
+      // there are cases where we want to show tutorial on test runs, whilst mostly we don't
       { type: 'tutorial', value: tutorial },
 
       // close welcome modal
