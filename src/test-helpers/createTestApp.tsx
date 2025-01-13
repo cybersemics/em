@@ -13,7 +13,7 @@ import storage from '../util/storage'
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
 /** Set up testing and mock document and window functions. */
-const createTestApp = async ({ tutorial } = { tutorial: false }) => {
+const createTestApp = async ({ tutorial }: { tutorial?: boolean } = {}) => {
   await act(async () => {
     vi.useFakeTimers({ loopLimit: 100000 })
     // calls initEvents, which must be manually cleaned up
@@ -33,7 +33,7 @@ const createTestApp = async ({ tutorial } = { tutorial: false }) => {
 
     store.dispatch([
       // there are cases where we want to show tutorial on test runs, whilst mostly we don't
-      { type: 'tutorial', value: tutorial },
+      { type: 'tutorial', value: !!tutorial },
 
       // close welcome modal
       { type: 'closeModal' },
