@@ -4,8 +4,6 @@ import IconType from '../../@types/IconType'
 
 /** ctrl key Icon */
 const CtrlIcon = ({ cssRaw, fill, style, size = 20 }: IconType) => {
-  console.log("css raw")
-  console.log(cssRaw)
   return (
     <svg
       className={cx(css(cssRaw))}
