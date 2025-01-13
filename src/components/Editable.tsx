@@ -136,7 +136,7 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
-  const { isAnimating, setIsAnimating } = useTreeNodeAnimation()
+  const { isAnimating } = useTreeNodeAnimation()
 
   /** Used to prevent edit mode from being incorrectly activated on long tap. The default browser behavior must be prevented if setCursorOnThought was just called. */
   // https://github.com/cybersemics/em/issues/1793
@@ -226,9 +226,6 @@ const Editable = ({
           path,
         }),
       )
-
-      // Reset isAnimating to false after the cursor is set.
-      setIsAnimating(false)
     },
     // When isEditing changes, we need to reset the cursor on the thought.
     // eslint-disable-next-line react-hooks/exhaustive-deps
