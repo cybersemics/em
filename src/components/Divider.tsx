@@ -22,11 +22,11 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   // State to store the calculated width
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
 
-  const dividerId = head(path) as ThoughtId
+  const dividerId = head(path)
   const parentPath = parentOf(path)
-  const parentId = head(parentPath) as ThoughtId | undefined
+  const parentId = head(parentPath)
   const grandParentPath = parentOf(parentPath)
-  const grandParentId = head(grandParentPath) as ThoughtId | undefined
+  const grandParentId = head(grandParentPath)
 
   // Use useSelector to get the necessary data from the state
   const { isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useSelector((state: State) => {
