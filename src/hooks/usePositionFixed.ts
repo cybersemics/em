@@ -42,13 +42,11 @@ const usePositionFixed = ({
 
   useEffect(initEventHandler, [])
 
-  const applyBottomProperty = fromBottom && position !== 'absolute'
-
   let top, bottom
   if (position === 'absolute') {
     top = fromBottom ? `${scrollTop + window.innerHeight - offset}px` : `${scrollTop + offset}px`
   } else if (fromBottom) {
-    bottom = applyBottomProperty ? `calc(${token('spacing.safeAreaBottom')} + ${offset}px)` : undefined
+    bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset}px)`
   } else {
     top = `calc(${token('spacing.safeAreaTop')} + ${offset}px)`
   }
