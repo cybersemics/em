@@ -51,10 +51,10 @@ const Alert: FC = () => {
         <FadeTransition duration='slow' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
           {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
           <PopupBase
-            disableTop
+            anchorFromBottom
+            anchorOffset={36}
             cssRaw={css.raw({
               boxSizing: 'border-box',
-              bottom: '36px',
               left: '50%',
               transform: 'translateX(-50%)',
               background: 'panelBg',

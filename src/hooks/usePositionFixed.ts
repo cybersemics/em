@@ -26,24 +26,39 @@ const initEventHandler = once(() => {
 
 /** Emulates position fixed on mobile Safari with positon absolute. Returns { position, overflowX, top } in absolute mode. */
 const usePositionFixed = ({
-  disableTop,
+  fromBottom,
+  offset = 0,
 }: {
-  disableTop?: boolean
+  fromBottom?: boolean
+  offset?: number
 } = {}): {
   position: 'fixed' | 'absolute'
   overflowX?: 'hidden' | 'visible'
   top?: string
+  bottom?: string
 } => {
   const position = positionFixedStore.useState()
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
 
   useEffect(initEventHandler, [])
 
+  const applyBottomProperty = fromBottom && position !== 'absolute'
+
+  let top, bottom
+  if (position === 'absolute') {
+    top = fromBottom ? `${scrollTop + window.innerHeight - offset}px` : `${scrollTop + offset}px`
+  } else if (fromBottom) {
+    bottom = applyBottomProperty ? `calc(${token('spacing.safeAreaBottom')} + ${offset}px)` : undefined
+  } else {
+    top = `calc(${token('spacing.safeAreaTop')} + ${offset}px)`
+  }
+
   return {
     position: position ?? 'fixed',
     overflowX: position === 'absolute' ? 'hidden' : 'visible',
     /* spacing.safeAreaTop applies for rounded screens */
-    top: disableTop ? undefined : position === 'absolute' ? `${scrollTop}px` : token('spacing.safeAreaTop'),
+    top,
+    bottom,
   }
 }
 

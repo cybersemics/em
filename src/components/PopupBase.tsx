@@ -20,7 +20,8 @@ export type PopupBaseProps = PropsWithChildren<
     importFileId?: string
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
-    disableTop?: boolean
+    anchorFromBottom?: boolean
+    anchorOffset?: number
     cssRaw?: SystemStyleObject
     circledCloseButton?: boolean
     showXOnHover?: boolean
@@ -30,14 +31,25 @@ export type PopupBaseProps = PropsWithChildren<
 /** A popup component that can be dismissed. */
 const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
   (
-    { children, importFileId, onClose, cssRaw, style, disableTop = false, circledCloseButton, showXOnHover, ...props },
+    {
+      children,
+      importFileId,
+      onClose,
+      cssRaw,
+      style,
+      anchorFromBottom,
+      anchorOffset,
+      circledCloseButton,
+      showXOnHover,
+      ...props
+    },
     ref,
   ) => {
     const dispatch = useDispatch()
 
     const fontSize = useSelector(state => state.fontSize)
     const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
-    const positionFixedStyles = usePositionFixed({ disableTop })
+    const positionFixedStyles = usePositionFixed({ fromBottom: anchorFromBottom, offset: anchorOffset })
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar
       onDismissEnd: () => {
