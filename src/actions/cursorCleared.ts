@@ -1,6 +1,5 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import asyncFocus from '../device/asyncFocus'
 
 /**
  * Sets state.cursorCleared which controls a special state in which the cursor is rendered as an empty string. In this state the thought can be deleted or edited, but if the user navigates away the thought is restored to its previous value.
@@ -26,7 +25,6 @@ export const cursorClearedActionCreator =
     // This can occur when switching windows which triggers onBlur.
     // See: https://github.com/cybersemics/em/issues/1556
     if (getState().cursorCleared !== value) {
-      asyncFocus()
       dispatch({ type: 'cursorCleared', value })
     }
   }
