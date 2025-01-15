@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react'
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
@@ -77,12 +77,18 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     dispatch(setCursor({ path }))
   }
 
+  // Derive values from the arrays to use in the dependency array, including .value changes
+  const childrenData = useMemo(() => children.map(child => `${child.id}:${child.value}`).join('|'), [children])
+  const thoughtsAtSameDepthData = useMemo(
+    () => thoughtsAtSameDepth.map(thought => `${thought.id}:${thought.value}`).join('|'),
+    [thoughtsAtSameDepth],
+  )
+
   useLayoutEffect(() => {
     /** Calculates and updates the Divider's width based on sibling thought widths. */
     const updateDividerWidth = () => {
       if (!dividerRef.current) return
 
-      // If the divider is the only child and we're not in Table View
       if (isOnlyChild && !isTableView) {
         setDividerWidth(DIVIDER_MIN_WIDTH)
         return
@@ -115,7 +121,13 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
 
     updateDividerWidth()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnlyChild, isTableView])
+  }, [
+    isOnlyChild,
+    isTableView,
+    dividerId,
+    childrenData, // Include the derived data that reflects .value changes
+    thoughtsAtSameDepthData, // Include the derived data that reflects .value changes
+  ])
 
   return (
     <div
