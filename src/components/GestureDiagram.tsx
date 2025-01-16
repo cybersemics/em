@@ -114,7 +114,13 @@ const GestureDiagram = ({
     return { dx, dy }
   }
 
-  const pathSegments = (Array.from(path) as Direction[]).map(pathSegmentDelta)
+  // Convert path string to array of directions
+  // Special cases:
+  // - Extend the last segment of →↓← so that the New Uncle gesture is more intuitive
+  // - Extend the middle segment of ←↓→ so that the Select All gesture is more intuitive
+  const extendedPath = path === 'rdl' ? 'rdll' : path === 'ldr' ? 'lddr' : path
+  const extendedIndex = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
+  const pathSegments = (Array.from(extendedPath) as Direction[]).map(pathSegmentDelta)
 
   // Compute the positions of all points
   const positions = pathSegments.reduce(
@@ -218,7 +224,14 @@ const GestureDiagram = ({
             d={`M ${x} ${y} l ${segment.dx} ${segment.dy}`}
             // segments do not change independently, so we can use index as the key
             key={i}
-            stroke={highlight != null && i < highlight ? token('colors.vividHighlight') : color || token('colors.fg')}
+            stroke={
+              // Highlight the segment if its index is less than the highlight index.
+              // Special Case: Highlight the extended segment and all segments after it.
+              highlight != null &&
+              (i < highlight || highlight === path.length || (highlight === extendedIndex && i === extendedIndex))
+                ? token('colors.vividHighlight')
+                : color || token('colors.fg')
+            }
             strokeWidth={strokeWidth * 1.5}
             strokeLinecap='round'
             strokeLinejoin='round'

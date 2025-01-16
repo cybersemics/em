@@ -1,10 +1,13 @@
 import React, { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
+import attributeEquals from '../selectors/attributeEquals'
+import rootedParentOf from '../selectors/rootedParentOf'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 
@@ -36,12 +39,18 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
 
   useEffect(setStyle)
 
+  const isTableView = useSelector(state => {
+    const parentId = head(rootedParentOf(state, path))
+    return attributeEquals(state, parentId, '=view', 'Table')
+  })
+
   return (
     <div
       aria-label='divider'
       ref={dividerSetWidth}
       className={css({
         margin: '-2px -4px -5px',
+        marginLeft: isTableView ? '0px' : '-20px',
         maxWidth: '100%',
         padding: '10px 4px 16px',
         position: 'relative',

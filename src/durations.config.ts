@@ -34,6 +34,8 @@ const durationsConfig = {
   nodeFadeOut: 80,
   /* A dissolve animation that is triggered when a node is deleted. */
   nodeDissolve: 80,
+  /* TraceGesture needs to fade in medium-fast so that it does not appear for quickly entered gestures like → and ←, but is snappy otherwise. */
+  traceGestureIn: 250,
 } as const
 
 export default durationsConfig

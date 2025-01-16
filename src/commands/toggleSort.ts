@@ -14,6 +14,7 @@ const toggleSortShortcut: Command = {
   label: 'Sort',
   description:
     'Change the sorting option for the current context. Rotates through manual, alphabetical, and reverse alphabetical.',
+  gesture: 'lurd',
   keyboard: { key: 's', meta: true, alt: true },
   multicursor: {
     enabled: true,
