@@ -35,7 +35,7 @@ const useFilteredCommands = (
   const possibleCommandsSorted = useMemo(() => {
     const possibleCommands = visibleCommands.filter(command => {
       // Always include help command in gesture mode
-      if (isTouch && command.id === 'help') return true
+      if (isTouch && (command.id === 'help' || command.id === 'cancel')) return true
 
       // gesture
       if (isTouch) {
@@ -75,7 +75,7 @@ const useFilteredCommands = (
       ).toLowerCase()
 
       // In gesture mode, help command should always be at the end
-      if (isTouch && command.id === 'help') return '\x99'
+      if (isTouch && (command.id === 'help' || command.id === 'cancel')) return '\x99'
       // always sort exact match to top
       if (gestureInProgress === command.gesture || search.trim().toLowerCase() === label) return '\x00'
       // sort inactive commands to the bottom alphabetically

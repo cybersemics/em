@@ -15,7 +15,7 @@ import { showLatestCommandsActionCreator as showLatestCommands } from './actions
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
-import { AlertType, COMMAND_PALETTE_TIMEOUT, GESTURE_CANCEL_ALERT_TEXT, Settings } from './constants'
+import { AlertType, COMMAND_PALETTE_TIMEOUT, Settings } from './constants'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
 import { executeCommandWithMulticursor } from './util/executeCommand'
@@ -198,8 +198,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     ) {
       store.dispatch(
         // alert the command label if it is a valid gesture
-        // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
-        alert(command ? command?.label : GESTURE_CANCEL_ALERT_TEXT, {
+        alert(command && command?.label, {
           alertType: AlertType.GestureHint,
           clearDelay: 5000,
           showCloseLink: false,
@@ -215,7 +214,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
         store.dispatch((dispatch, getState) => {
           // do not show "Cancel gesture" if already being shown by basic gesture hint
           const state = getState()
-          if (getState().alert?.value === GESTURE_CANCEL_ALERT_TEXT || state.showCommandPalette) return
+          if (state.showCommandPalette) return
           dispatch(commandPalette())
         })
       },
@@ -249,6 +248,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
       executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
       if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
     }
+
+    // if no command was found, execute the cancel command
 
     // clear gesture hint
     clearTimeout(commandPaletteGesture)
