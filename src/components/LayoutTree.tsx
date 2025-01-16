@@ -944,7 +944,9 @@ const LayoutTree = () => {
       // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
       className={cx(
         css({ marginTop: '0.501em' }),
-        hideCaret({ animation: getHideCaretAnimationName(indentDepth + tableDepth) }),
+        hideCaret({
+          animation: getHideCaretAnimationName(indentDepth + tableDepth),
+        }),
       )}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
