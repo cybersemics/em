@@ -940,7 +940,7 @@ const LayoutTree = () => {
       className={cx(
         css({ marginTop: '0.501em' }),
         hideCaret({
-          animation: treeThoughts.length > 1 ? getHideCaretAnimationName(indentDepth) : 'none',
+          animation: getHideCaretAnimationName(indentDepth),
         }),
       )}
       style={{

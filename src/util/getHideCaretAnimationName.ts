@@ -23,7 +23,9 @@ export const hideCaretAnimationNames = [
 
 const hideCaret = cva({
   base: {
-    animationDuration: 'layoutSlowShift',
+    '&:has([aria-label=tree-node]:nth-child(2))': {
+      animationDuration: 'layoutSlowShift',
+    },
   },
   variants: {
     animation: hideCaretAnimationNames.reduce(
