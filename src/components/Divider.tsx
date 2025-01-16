@@ -10,7 +10,6 @@ import attributeEquals from '../selectors/attributeEquals'
 import rootedParentOf from '../selectors/rootedParentOf'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
-import parentOf from '../util/parentOf'
 
 /** A custom horizontal rule. */
 const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) => {
@@ -41,9 +40,8 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   useEffect(setStyle)
 
   const isTableView = useSelector(state => {
-    const parentId = head(parentOf(path)) || head(rootedParentOf(state, path))
-    const result = attributeEquals(state, parentId, '=view', 'Table')
-    return result
+    const parentId = head(rootedParentOf(state, path))
+    return attributeEquals(state, parentId, '=view', 'Table')
   })
 
   return (
