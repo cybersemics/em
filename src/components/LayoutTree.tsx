@@ -908,13 +908,12 @@ const LayoutTree = () => {
     treeThoughts,
   ])
 
-  const cursor = useSelector(state => state.cursor)
   const spaceAboveLast = useRef(spaceAboveExtended)
-  const treeThought = treeThoughts.find(thought => equalPath(thought.path, cursor))
   // When the cursor is in a table, all thoughts beneath the table are hidden,
   // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
-  const tableDepth = treeThought?.isTableCol2 ? 1 : 0
-
+  const tableDepth = useSelector(state =>
+    state.cursor && attributeEquals(state, head(rootedParentOf(state, state.cursor)), '=view', 'Table') ? 1 : 0,
+  )
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
