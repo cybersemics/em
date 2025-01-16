@@ -908,7 +908,12 @@ const LayoutTree = () => {
     treeThoughts,
   ])
 
+  const cursor = useSelector(state => state.cursor)
   const spaceAboveLast = useRef(spaceAboveExtended)
+  const treeThought = treeThoughts.find(thought => equalPath(thought.path, cursor))
+  // When the cursor is in a table, all thoughts beneath the table are hidden,
+  // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
+  const tableDepth = treeThought?.isTableCol2 ? 1 : 0
 
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
@@ -937,7 +942,10 @@ const LayoutTree = () => {
   return (
     <div
       // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
-      className={cx(css({ marginTop: '0.501em' }), hideCaret({ animation: getHideCaretAnimationName(indentDepth) }))}
+      className={cx(
+        css({ marginTop: '0.501em' }),
+        hideCaret({ animation: getHideCaretAnimationName(indentDepth + tableDepth) }),
+      )}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
         transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
