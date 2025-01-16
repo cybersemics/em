@@ -23,6 +23,9 @@ export const hideCaretAnimationNames = [
 
 const hideCaret = cva({
   base: {
+    // apply the animation to the LayoutTree in all circumstances so that it will not "change" when a new thought is added,
+    // but only "play" the animation if there are multiple thoughts
+    // the depth level will change as it always has, but the animation will not play at depth 0 when a new thought is added
     '&:has([aria-label=tree-node]:nth-child(2))': {
       animationDuration: 'layoutSlowShift',
     },
