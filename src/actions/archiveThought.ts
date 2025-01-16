@@ -93,7 +93,8 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(state, path)
-    const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(state, thoughtsContextView)) : []
+    const value = headValue(state, thoughtsContextView)
+    const contexts = showContexts && value !== undefined ? getContextsSortedAndRanked(state, value) : []
     const contextsFiltered = contexts.filter(({ id }) => {
       const parentThought = parentOfThought(state, id)
       return parentThought?.value !== '=archive'
@@ -110,7 +111,8 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   /** Gets the next sibling context in the context view. */
   const nextContext = (): ThoughtContext => {
     const thoughtsContextView = thoughtsEditingFromChain(state, path)
-    const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(state, thoughtsContextView)) : []
+    const value = headValue(state, thoughtsContextView)
+    const contexts = showContexts && value !== undefined ? getContextsSortedAndRanked(state, value) : []
     const contextsFiltered = contexts.filter(({ id }) => {
       const parentThought = parentOfThought(state, id)
       return parentThought?.value !== '=archive'

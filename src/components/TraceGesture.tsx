@@ -65,23 +65,38 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     const signaturePad = signaturePadRef.current['signaturePad']
     const eventNode = eventNodeRef?.current
 
-    // Attach pointer handlers to a provided node rather than the signature pad canvas.
+    // Attach touch handlers to a provided node rather than the signature pad canvas.
     // See: eventNodeRef
-    const handlePointerStart = signaturePad._handlePointerStart.bind(signaturePad)
-    const handlePointerMove = signaturePad._handlePointerMove.bind(signaturePad)
+    const handleTouchStart = signaturePad._handleTouchStart.bind(signaturePad)
+    const handleTouchMove = signaturePad._handleTouchMove.bind(signaturePad)
+    const handleTouchEnd = signaturePad._handleTouchEnd.bind(signaturePad)
 
-    eventNode?.addEventListener('pointerdown', e => {
+    eventNode?.addEventListener('touchstart', e => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
       e.preventDefault = noop
-      const shouldActivateGesture = isInGestureZone(e.clientX, e.clientY, leftHanded)
-      if (shouldActivateGesture) {
-        handlePointerStart(e)
+
+      const touch = e.touches[0]
+      if (isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
+        handleTouchStart(e)
       }
     })
-    eventNode?.addEventListener('pointermove', e => {
+
+    eventNode?.addEventListener('touchmove', e => {
+      const isGestureInProgress = gestureStore.getState().length > 0
+      const touch = e.touches[0]
+
+      if (isGestureInProgress && isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
+        handleTouchMove(e)
+      }
+    })
+
+    eventNode?.addEventListener('touchend', e => {
+      // Make preventDefault a noop otherwise tap-to-edit is broken.
+      // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
       e.preventDefault = noop
-      handlePointerMove(e)
+
+      handleTouchEnd(e)
     })
 
     signaturePad.addEventListener('beginStroke', onBeginStroke)
@@ -92,8 +107,9 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad.canvas.height = signaturePad.canvas.offsetHeight
 
     return () => {
-      eventNode?.removeEventListener('pointerdown', handlePointerStart)
-      eventNode?.removeEventListener('pointermove', handlePointerMove)
+      eventNode?.removeEventListener('touchstart', handleTouchStart)
+      eventNode?.removeEventListener('touchmove', handleTouchMove)
+      eventNode?.removeEventListener('touchend', handleTouchEnd)
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
   }, [eventNodeRef, onBeginStroke, leftHanded])
@@ -107,10 +123,12 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         left: 0,
         // Dim the gesture trace to 50% opacity when the gesture is cancelled or invalid.
         opacity: show ? (cancelled ? 0.5 : 1) : 0,
-        // Fade in quickly. A custom easing function is used to simulate a slight delay at the beginning. This effectively hides very quickly entered gestures like forward/backward.
-        // Fade out slowly.
         transition:
-          show && !cancelled ? 'opacity {durations.fast} {easings.easeInSlow}' : 'opacity {durations.medium} ease-out',
+          show && !cancelled
+            ? // Fade in quickly. A custom easing function is used to simulate a slight delay at the beginning. This effectively hides very quickly entered gestures like forward/backward.
+              'opacity {durations.traceGestureIn} {easings.easeInSlow}'
+            : // Fade out slowly.
+              'opacity {durations.medium} ease-out',
         pointerEvents: eventNodeRef ? 'none' : undefined,
       })}
       style={{ height: innerHeight }}

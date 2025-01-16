@@ -273,7 +273,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const dispatch = useDispatch()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const id = head(simplePaths[0])
-  const title = useSelector(state => (isRoot(simplePaths[0]) ? 'home' : headValue(state, simplePaths[0])))
+  const title = useSelector(state => (isRoot(simplePaths[0]) ? 'home' : headValue(state, simplePaths[0]))) ?? ''
   const titleShort = ellipsize(title)
   // const titleMedium = ellipsize(title, 25)
 

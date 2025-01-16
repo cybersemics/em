@@ -71,7 +71,7 @@ const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor): boole
   const distance = state.cursor ? state.cursor.length - thoughtsTo.length - 1 : 0
   const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
   const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom)
-  const divider = isDivider(getThoughtById(state, head(thoughtsTo)).value)
+  const divider = isDivider(getThoughtById(state, head(thoughtsTo))?.value)
 
   const showContexts = thoughtsTo && isContextViewActive(state, thoughtsTo)
 
@@ -115,10 +115,10 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   const dropTop = !isExpanded && attributeEquals(state, parentIdTo, '=drop', 'top')
 
   // cannot drop on itself
-  if (equalPath(thoughtsFrom, props.simplePath)) return
+  if (!thoughtFrom || !thoughtTo || equalPath(thoughtsFrom, props.simplePath)) return
 
   // cannot move root or em context or target is divider
-  if (isDivider(thoughtTo.value) || (isRootOrEM && !sameContext)) {
+  if (isDivider(thoughtTo?.value) || (isRootOrEM && !sameContext)) {
     store.dispatch(
       error({ value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.` }),
     )
@@ -139,7 +139,9 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     setTimeout(() => {
       const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
       const alertTo = parentIdTo === HOME_TOKEN ? 'home' : '"' + ellipsize(thoughtTo.value) + '"'
-      const inContext = props.showContexts ? ` in the context of ${ellipsize(headValue(state, props.simplePath))}` : ''
+      const inContext = props.showContexts
+        ? ` in the context of ${ellipsize(headValue(state, props.simplePath) ?? 'MISSING_CONTEXT')}`
+        : ''
 
       store.dispatch(
         alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {

@@ -48,7 +48,7 @@ const Tutorial2StepContext2Subthought = () => {
 
   const selectChoice = useSelector(
     state =>
-      !state.cursor || headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
+      !state.cursor || headValue(state, state.cursor)?.toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
   )
 
   const context2Exists = useSelector(state => {

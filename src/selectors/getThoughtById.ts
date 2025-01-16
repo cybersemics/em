@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 
 /**
@@ -7,6 +8,6 @@ import ThoughtId from '../@types/ThoughtId'
  * circumstances after an async operation or unmount, e.g. CSSTransition,
  * but it is possible nonetheless and should be typed accordingly.
  */
-const getThoughtById = (state: State, id: ThoughtId) => state.thoughts.thoughtIndex[id]
+const getThoughtById = (state: State, id: ThoughtId): Thought | undefined => state.thoughts.thoughtIndex[id]
 
 export default getThoughtById

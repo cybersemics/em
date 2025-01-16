@@ -151,6 +151,13 @@ let commandPaletteGesture: number | undefined
 
 const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 
+/** Gets the canonical gesture of the command as a string, ignoring aliases. Returns an empty string if the command does not have a gesture. */
+export const gestureString = (command: Command): string =>
+  (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string
+
+/** Get a command by its id. */
+export const commandById = (id: CommandId): Command => commandIdIndex[id]
+
 /**
  * Keyboard and gesture handlers factory function that binds the store to event handlers.
  *
@@ -223,8 +230,15 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     // Get the command from the command gesture index.
     // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
-    const command =
-      !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
+
+    const helpCommand = commandById('help')
+    const helpGesture = gestureString(helpCommand)
+
+    // If sequence ends with help gesture, use help command
+    // Otherwise use the normal command lookup
+    const command = sequence?.toString().endsWith(helpGesture)
+      ? helpCommand
+      : !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
         : null
 
@@ -317,10 +331,3 @@ export const inputHandlers = (store: Store<State, any>) => ({
     }
   },
 })
-
-/** Gets the canonical gesture of the command as a string, ignoring aliases. Returns an empty string if the command does not have a gesture. */
-export const gestureString = (command: Command): string =>
-  (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string
-
-/** Get a command by its id. */
-export const commandById = (id: CommandId): Command => commandIdIndex[id]

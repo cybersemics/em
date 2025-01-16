@@ -8,7 +8,7 @@ const parentOfThought = (state: State, thoughtId: ThoughtId): Thought | null => 
   const thought = getThoughtById(state, thoughtId)
   if (!thought) return null
   const parentThought = getThoughtById(state, thought.parentId)
-  return parentThought
+  return parentThought ?? null
 }
 
 export default parentOfThought
