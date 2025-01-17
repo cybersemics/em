@@ -55,12 +55,14 @@ const Alert: FC = () => {
             anchorOffset={36}
             cssRaw={css.raw({
               boxSizing: 'border-box',
-              left: '50%',
-              transform: 'translateX(-50%)',
               background: 'panelBg',
               border: '1px solid {colors.panelBorder}',
               borderRadius: '8px',
               zIndex: 'popup',
+              marginInline: 'auto',
+              left: 0,
+              right: 0,
+              width: 'max-content',
             })}
             ref={popupRef}
             key={value}
