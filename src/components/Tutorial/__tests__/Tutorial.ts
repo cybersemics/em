@@ -10,8 +10,11 @@ import createTestApp, { cleanupTestApp, cleanupTestEventHandlers } from '../../.
 // we should avoid using { delay: null }, and use jest.advanceTimersByTime instead
 const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 
-/** Get last created thought in the document, used mostly after `user.keyboard('{Enter}')`. */
-const lastThought = () => Array.from(document.querySelectorAll('[contenteditable="true"]')).at(-1)!
+/** Get last created empty thought in the document. Gets the last thought that is not empty. Mostly used after `user.keyboard('{Enter}')` to get the new thought. */
+const lastThought = () =>
+  Array.from(document.querySelectorAll('[data-editable="true"]'))
+    .filter(it => !it.textContent)
+    .at(-1)!
 
 describe('Tutorial 1', async () => {
   beforeEach(() => createTestApp({ tutorial: true }))
@@ -71,6 +74,7 @@ describe('Tutorial 1', async () => {
     await user.keyboard('{Backspace}')
     await user.keyboard('{Control>}{Enter}{/Control}')
     await act(vi.runOnlyPendingTimersAsync)
+    console.log(Array.from(document.querySelectorAll('[data-editable="true"]')).map(it => it.textContent))
 
     await user.type(lastThought(), 'child')
     await act(vi.runOnlyPendingTimersAsync)
@@ -81,6 +85,7 @@ describe('Tutorial 1', async () => {
   - third thought
     - child`,
     )
+
     // as you can see, the new thought "child" is nested within "third thought"
     expect(screen.getByText(/As you can see, the new thought "child" is nested/)).toBeInTheDocument()
     expect(getByText(screen.getByTestId('tutorial-step'), /"third thought"/)).toBeInTheDocument()
