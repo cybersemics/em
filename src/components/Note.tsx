@@ -7,35 +7,16 @@ import Path from '../@types/Path'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { editingActionCreator as editing } from '../actions/editing'
-import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
-import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import strip from '../util/strip'
-
-/** Sets the cursor on the note's thought as it is being edited. */
-const setCursorOnLiveThought = ({ path }: { path: Path }) => {
-  const state = store.getState()
-  const simplePath = simplifyPath(state, path)
-
-  if (simplePath?.length > 0) {
-    store.dispatch(
-      setCursor({
-        path: simplePath,
-        cursorHistoryClear: true,
-        editing: true,
-        noteFocus: true,
-      }),
-    )
-  }
-}
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = React.memo(({ path }: { path: Path }) => {
@@ -113,6 +94,9 @@ const Note = React.memo(({ path }: { path: Path }) => {
     }
   }
 
+  /** Sets the cursor on the note's thought as it is being edited. */
+  const onFocus = () => store.dispatch(setNoteFocus({ value: true }))
+
   return (
     <div
       aria-label='note'
@@ -157,7 +141,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
           setJustPasted(true)
         }}
         onBlur={onBlur}
-        onFocus={() => setCursorOnLiveThought({ path })}
+        onFocus={onFocus}
       />
     </div>
   )
