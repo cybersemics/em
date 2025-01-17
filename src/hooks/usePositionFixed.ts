@@ -28,9 +28,12 @@ const initEventHandler = once(() => {
 const usePositionFixed = ({
   fromBottom,
   offset = 0,
+  height,
 }: {
   fromBottom?: boolean
   offset?: number
+  /** Only for if `fromBottom = true`. For calculating position on mobile safari. */
+  height?: number
 } = {}): {
   position: 'fixed' | 'absolute'
   overflowX?: 'hidden' | 'visible'
@@ -44,7 +47,7 @@ const usePositionFixed = ({
 
   let top, bottom
   if (position === 'absolute') {
-    top = fromBottom ? `${scrollTop + window.innerHeight - offset}px` : `${scrollTop + offset}px`
+    top = fromBottom ? `${scrollTop + window.innerHeight - (height ?? 0) - offset}px` : `${scrollTop + offset}px`
   } else if (fromBottom) {
     bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset}px)`
   } else {
