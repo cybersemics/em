@@ -67,6 +67,7 @@ const Alert: FC = () => {
             circledCloseButton
             showXOnHover
             onClose={alert.showCloseLink ? onClose : undefined}
+            calculatedHeight={popupRef.current?.getBoundingClientRect().height || 50}
           >
             <div
               data-testid='alert-content'
