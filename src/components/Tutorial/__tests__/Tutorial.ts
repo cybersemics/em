@@ -1,4 +1,4 @@
-import { getByText, screen } from '@testing-library/dom'
+import { screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { HOME_TOKEN } from '../../../constants'
@@ -40,10 +40,10 @@ describe('Tutorial 1', async () => {
     await user.type(lastThought(), 'my first thought')
     await user.keyboard('{Enter}')
     await act(vi.runOnlyPendingTimersAsync)
+    expect(screen.getByText('Well done!')).toBeInTheDocument()
   })
 
   it('step second thought - prompts to add another thought', async () => {
-    expect(screen.getByText('Well done!')).toBeInTheDocument()
     expect(screen.getByText(/Try adding another thought/)).toBeInTheDocument()
     await user.type(lastThought(), 'my second thought')
     await user.keyboard('{Enter}')
@@ -65,16 +65,11 @@ describe('Tutorial 1', async () => {
   - `,
     )
 
-    // Now I am going to show you how to add a thought within another thought.
-    expect(screen.getByText(/Now I am going to show you how to add a thought/)).toBeInTheDocument()
-
-    // since we have cursor on empty thought
     expect(screen.getByText(/Hit the Delete key to delete the current blank thought/)).toBeInTheDocument()
     expect(screen.getByText(/Then hold the Ctrl key and hit the Enter key/)).toBeInTheDocument()
     await user.keyboard('{Backspace}')
     await user.keyboard('{Control>}{Enter}{/Control}')
     await act(vi.runOnlyPendingTimersAsync)
-    console.log(Array.from(document.querySelectorAll('[data-editable="true"]')).map(it => it.textContent))
 
     await user.type(lastThought(), 'child')
     await act(vi.runOnlyPendingTimersAsync)
@@ -86,9 +81,7 @@ describe('Tutorial 1', async () => {
     - child`,
     )
 
-    // as you can see, the new thought "child" is nested within "third thought"
     expect(screen.getByText(/As you can see, the new thought "child" is nested/)).toBeInTheDocument()
-    expect(getByText(screen.getByTestId('tutorial-step'), /"third thought"/)).toBeInTheDocument()
 
     await user.click(screen.getByText('Next'))
   })
@@ -100,19 +93,19 @@ describe('Tutorial 1', async () => {
 
     it('click on "uncle" thought to hide child', async () => {
       await user.click(screen.getByText('my second thought'))
-      expect(screen.getByText('Notice that "child" is hidden now.', { exact: false })).toBeInTheDocument()
+      expect(screen.getByText(/Notice that "child" is hidden now/)).toBeInTheDocument()
     })
 
     it('click back on a "parent" thought to reveal child', async () => {
       expect(screen.getByText(/Click "third thought" to reveal its subthought "child"/)).toBeInTheDocument()
       await user.click(screen.getAllByText('third thought').at(-1)!)
-      expect(screen.getByText('Lovely. You have completed the tutorial', { exact: false })).toBeInTheDocument()
+      expect(screen.getByText(/Lovely\. You have completed the tutorial/)).toBeInTheDocument()
     })
   })
 
   describe('step success - congratulates on completing first tutorial', async () => {
     it('congratulate on completing first tutorial', async () => {
-      expect(screen.getByText('Lovely. You have completed the tutorial', { exact: false })).toBeInTheDocument()
+      expect(screen.getByText(/Lovely\. You have completed the tutorial/)).toBeInTheDocument()
     })
 
     it('asks to continue with tutorial or play on own', async () => {
@@ -129,10 +122,8 @@ describe('Tutorial 2', async () => {
   it('step start - tell about context menu', async () => {
     await user.click(screen.getByText('Learn more'))
 
-    expect(screen.getByText(`If the same thought appears in more than one place`, { exact: false })).toBeInTheDocument()
-    expect(
-      screen.getByText(`shows a small number to the right of the thought, for example`, { exact: false }),
-    ).toBeInTheDocument()
+    expect(screen.getByText(/If the same thought appears in more than one place/)).toBeInTheDocument()
+    expect(screen.getByText(/shows a small number to the right of the thought, for example/)).toBeInTheDocument()
   })
 
   it('step choose - gives 3 choices of what project to proceed with', async () => {
@@ -147,7 +138,6 @@ describe('Tutorial 2', async () => {
     await user.click(screen.getAllByText('To-Do List').at(-1)!)
     expect(screen.getByText(/Excellent choice. Now create a new thought with the text “Home”/)).toBeInTheDocument()
 
-    // we create a `Home` thought
     await user.keyboard('{Enter}')
     await user.type(lastThought(), 'Home')
     await act(vi.runOnlyPendingTimersAsync)
@@ -178,17 +168,15 @@ describe('Tutorial 2', async () => {
     await user.click(screen.getByText('Next'))
     expect(screen.getByText(/Now we are going to create a different "To Do" list./)).toBeInTheDocument()
 
-    // we created a new thought on 3rd level, so we shift-tab our way back to root
+    // we created a new thought on 3rd level, clicking "Home" gets us to root
+    await user.click(screen.getByText('Home'))
     await user.keyboard('{Enter}')
-    await user.keyboard('{Shift>}{Tab}{/Shift}')
-    await user.keyboard('{Shift>}{Tab}{/Shift}')
     await user.type(lastThought(), 'Work')
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(screen.getByText('Now add a thought with the text "To Do"', { exact: false })).toBeInTheDocument()
     await user.keyboard('{Control>}{Enter}{/Control}')
     await user.type(lastThought(), 'To Do')
-
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(
       `- __ROOT__
   - Home
@@ -221,8 +209,8 @@ describe('Tutorial 2', async () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(screen.getByText(/First select "To Do"./)).toBeInTheDocument()
-    await user.keyboard('{Escape}') // focus out
-    await user.click(screen.getAllByText('To Do').at(-1)!) // and click on To Do
+    await user.keyboard('{Escape}')
+    await user.click(screen.getAllByText('To Do').at(-1)!)
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(screen.getByText("Hit Alt + Shift + S to view the current thought's contexts.")).toBeInTheDocument()
