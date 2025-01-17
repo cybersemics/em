@@ -84,10 +84,10 @@ const GestureDiagram = ({
   if (path === null) {
     return (
       <svg
-        width={25}
-        height={25}
+        width={20}
+        height={24}
         className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
-        style={{ ...style, marginTop: '15px', marginBottom: '10px' }}
+        style={{ ...style, marginTop: '12px', marginBottom: '20px', marginLeft: '20px' }}
         viewBox='0 0 24 24'
       >
         <path
@@ -204,7 +204,7 @@ const GestureDiagram = ({
     <svg
       width={width || '100'}
       height={height || '100'}
-      className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
+      className={css(inGestureContainer && { position: 'relative' }, cssRaw)}
       style={style}
       ref={onRef}
       viewBox={viewBox}

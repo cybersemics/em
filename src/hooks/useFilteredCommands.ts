@@ -36,6 +36,7 @@ const useFilteredCommands = (
     const possibleCommands = visibleCommands.filter(command => {
       // Always include help command in gesture mode
       if (isTouch && (command.id === 'help' || command.id === 'cancel')) return true
+      if (!isTouch && command.id === 'cancel') return false
 
       // gesture
       if (isTouch) {

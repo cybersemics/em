@@ -1,17 +1,14 @@
 import Command from '../@types/Command'
+import { noop } from '../constants'
 
 const cancelShortcut: Command = {
   id: 'cancel',
   label: 'Cancel',
   description: 'Cancel the current gesture.',
   gesture: undefined,
-  keyboard: { key: ',', meta: true },
   multicursor: 'ignore',
   svg: () => null,
-  exec: dispatch => {
-    alert('cancel')
-  },
-  allowExecuteFromModal: true,
+  exec: noop,
 }
 
 export default cancelShortcut
