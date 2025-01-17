@@ -1,5 +1,5 @@
-import React, { useCallback, useRef, useState } from 'react'
-import { useDispatch } from 'react-redux'
+import React, { useEffect, useRef, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
@@ -7,13 +7,50 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { DIVIDER_MIN_WIDTH } from '../constants'
-import useSelectorEffect from '../hooks/useSelectorEffect'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import editingValueStore from '../stores/editingValue'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
+
+/** Custom hook to fetch divider-related data from the state. */
+const useDividerData = (path: Path) => {
+  const dividerId = head(path)
+  const parentPath = parentOf(path)
+  const parentId = head(parentPath)
+  const grandParentPath = parentOf(parentPath)
+  const grandParentId = head(grandParentPath)
+
+  return useSelector((state: State) => {
+    const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
+    const childrenWithoutDividers = children.filter(child => !isDivider(child.value))
+    const isOnlyChild = childrenWithoutDividers.length === 0
+    const isTableView =
+      (parentId && attributeEquals(state, parentId, '=view', 'Table')) ||
+      (grandParentId && attributeEquals(state, grandParentId, '=view', 'Table'))
+
+    let thoughtsAtSameDepth: { id: ThoughtId; value: string }[] = []
+
+    if (isTableView && isOnlyChild && grandParentId) {
+      const parentSiblings = getAllChildrenAsThoughts(state, grandParentId)
+      thoughtsAtSameDepth = parentSiblings.flatMap(parent => {
+        const childrenOfParent = parent.id ? getAllChildrenAsThoughts(state, parent.id) : []
+        return childrenOfParent.filter(child => !isDivider(child.value))
+      })
+    }
+
+    return {
+      dividerId,
+      parentId,
+      isOnlyChild,
+      isTableView,
+      children,
+      thoughtsAtSameDepth,
+    }
+  })
+}
 
 /** Helper function to get widths of thoughts by querying the DOM. */
 const getThoughtWidths = (thoughts: { id: ThoughtId }[]) => {
@@ -21,7 +58,7 @@ const getThoughtWidths = (thoughts: { id: ThoughtId }[]) => {
     const innerThoughtElement = document.querySelector(
       `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
     )
-    return innerThoughtElement ? innerThoughtElement.getBoundingClientRect().width : 0
+    return innerThoughtElement?.getBoundingClientRect().width ?? 0
   })
 }
 
@@ -31,48 +68,19 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
 
-  const dividerId = head(path)
-  const parentPath = parentOf(path)
-  const parentId = head(parentPath)
-  const grandParentPath = parentOf(parentPath)
-  const grandParentId = head(grandParentPath)
+  // Use the custom hook to get necessary data
+  const { dividerId, isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
+  const editingValue = editingValueStore.useSelector(state => state)
 
-  /** Selector function to fetch necessary data from the state. */
-  const selectDividerData = useCallback(
-    (state: State) => {
-      const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
-      const childrenWithoutDividers = children.filter(child => !isDivider(child.value))
-      const isOnlyChild = childrenWithoutDividers.length === 0
-      const isTableView =
-        (parentId && attributeEquals(state, parentId, '=view', 'Table')) ||
-        (grandParentId && attributeEquals(state, grandParentId, '=view', 'Table')) ||
-        false
+  /** Sets the cursor to the divider. */
+  const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation()
+    dispatch(setCursor({ path }))
+  }
 
-      let thoughtsAtSameDepth: { id: ThoughtId; value: string }[] = []
-
-      if (isTableView && isOnlyChild && grandParentId) {
-        const parentSiblings = getAllChildrenAsThoughts(state, grandParentId)
-        thoughtsAtSameDepth = parentSiblings.flatMap(parent => {
-          const childrenOfParent = parent.id ? getAllChildrenAsThoughts(state, parent.id) : []
-          return childrenOfParent.filter(child => !isDivider(child.value))
-        })
-      }
-
-      return {
-        isOnlyChild,
-        isTableView,
-        children,
-        thoughtsAtSameDepth,
-      }
-    },
-    [parentId, grandParentId],
-  )
-
-  /** Updates the Divider's width based on sibling thought widths. */
-  const updateDividerWidth = useCallback(
-    (dividerData: ReturnType<typeof selectDividerData>) => {
-      const { isOnlyChild, isTableView, children, thoughtsAtSameDepth } = dividerData
-
+  useEffect(() => {
+    /** Calculates and updates the Divider's width based on sibling thought widths. */
+    const updateDividerWidth = () => {
       if (!dividerRef.current) return
 
       if (isOnlyChild && !isTableView) {
@@ -89,7 +97,9 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
         }
         widths = getThoughtWidths(thoughtsAtSameDepth)
       } else {
+        // Non-Table View or Divider is not the only item
         const siblingThoughts = children.filter(child => child.id !== dividerId && !isDivider(child.value))
+
         if (siblingThoughts.length === 0) {
           setDividerWidth(DIVIDER_MIN_WIDTH)
           return
@@ -97,20 +107,15 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
         widths = getThoughtWidths(siblingThoughts)
       }
 
+      // Determine the maximum width
       const maxWidth = widths.length > 0 ? Math.max(...widths) : DIVIDER_MIN_WIDTH
       setDividerWidth(Math.round(Math.max(maxWidth, DIVIDER_MIN_WIDTH)))
-    },
-    [dividerRef, dividerId],
-  )
+    }
 
-  // Use useSelectorEffect to watch for changes in the necessary state slices
-  useSelectorEffect(updateDividerWidth, selectDividerData)
+    updateDividerWidth()
 
-  /** Sets the cursor to the divider. */
-  const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation()
-    dispatch(setCursor({ path }))
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnlyChild, isTableView, editingValue, dividerId])
 
   return (
     <div
