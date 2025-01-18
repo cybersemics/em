@@ -23,8 +23,4 @@ const rootedParentOf = <T extends Context | Path>(state: State, thoughts: T): T 
       : (state.rootContext as T)
 }
 
-/** Calls rootedParentOf twice to get the rooted grandparent of a thought. */
-export const rootedGrandparentOf = <T extends Context | Path>(state: State, thoughts: T): T =>
-  rootedParentOf(state, rootedParentOf(state, thoughts))
-
 export default rootedParentOf
