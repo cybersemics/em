@@ -467,7 +467,7 @@ const ThoughtContainer = ({
           marginRight={marginRight}
           isPressed={dragHoldResult.isPressed}
         />
-        <Note path={simplePath} />
+        <Note path={path} />
       </div>
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
