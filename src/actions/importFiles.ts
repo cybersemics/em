@@ -271,8 +271,12 @@ export const importFilesActionCreator =
           )
           const parentContext =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
-          // TODO: It would be better to get the id from importText rather than contextToPath
-          const parentPath = contextToPath(stateAfterPull, parentContext)
+
+          // Special handling for empty parent nodes
+          const parentPath =
+            parentContext.length === 1 && parentContext[0] === ''
+              ? path // Use the current path for empty parent nodes
+              : contextToPath(stateAfterPull, parentContext)
 
           // validate parentPath
           if (!parentPath) {
