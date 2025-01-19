@@ -25,6 +25,7 @@
 
   </head>
   <body>
+    <div style="position: relative; overflow: hidden;">
     <div id="root"></div>
 
     <script>
@@ -45,5 +46,6 @@
       document.body.setAttribute('data-env', navigator.webdriver ? 'test' : '%MODE%')
     </script>
     <script type="module" src="/src/index.tsx"></script>
+  </div>
   </body>
 </html>

@@ -81,7 +81,18 @@ class ModalComponent extends React.Component<ModalProps> {
     const modalClasses = modalRecipe({ id, center })
 
     return (
-      <div ref={this.ref} style={style} className={cx(modalClasses.root, css({ ...(top ? { top: 55 } : null) }))}>
+      <div
+        ref={this.ref}
+        style={style}
+        className={cx(
+          modalClasses.root,
+          css({
+            overflow: 'visible',
+            position: 'relative',
+            ...(top ? { top: 55 } : null),
+          }),
+        )}
+      >
         {!this.props.preventCloseOnEscape && !hideClose && (
           <a
             className={css({
