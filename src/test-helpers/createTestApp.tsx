@@ -13,10 +13,9 @@ import storage from '../util/storage'
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
 /** Set up testing and mock document and window functions. */
-const createTestApp = async () => {
+const createTestApp = async ({ tutorial }: { tutorial?: boolean } = {}) => {
   await act(async () => {
     vi.useFakeTimers({ loopLimit: 100000 })
-
     // calls initEvents, which must be manually cleaned up
     const init = await initialize()
     cleanup = init.cleanup
@@ -33,8 +32,8 @@ const createTestApp = async () => {
     )
 
     store.dispatch([
-      // skip tutorial
-      { type: 'tutorial', value: false },
+      // there are cases where we want to show tutorial on test runs, whilst mostly we don't
+      { type: 'tutorial', value: !!tutorial },
 
       // close welcome modal
       { type: 'closeModal' },
@@ -78,6 +77,15 @@ export const refreshTestApp = async () => {
   })
 
   await act(vi.runOnlyPendingTimersAsync)
+}
+
+/** Clear existing event listeners(e.g. keyboard, gestures), but without clearing the app. */
+export const cleanupTestEventHandlers = async () => {
+  await act(async () => {
+    if (cleanup) {
+      cleanup()
+    }
+  })
 }
 
 export default createTestApp
