@@ -121,7 +121,7 @@ describe('Tutorial 2', async () => {
   beforeEach(() => createTestApp({ tutorial: true }))
   afterEach(cleanupTestEventHandlers)
   afterAll(cleanupTestApp)
-  it('we learn about context indicators', async () => {
+  it('we learn about context view', async () => {
     await user.click(screen.getByText('Learn more'))
 
     expect(screen.getByText(/shows a small number to the right of the thought, for example/)).toBeInTheDocument()
@@ -141,29 +141,29 @@ describe('Tutorial 2', async () => {
   })
 
   describe('step context 1 - create a "Home" to-do list', () => {
-    it('we create a Home thought', async () => {
+    it('we create a "Home" thought', async () => {
       await user.keyboard('{Enter}')
       await user.type(lastEmptyThought(), 'Home')
       await act(vi.runOnlyPendingTimersAsync)
       expect(screen.getByText(/Add a thought with the text "To Do"/)).toBeInTheDocument()
     })
 
-    it('we add a Home->To Do subthought', async () => {
+    it('we add a "Home" • "To Do" subthought', async () => {
       await user.keyboard('{Control>}{Enter}{/Control}')
       await user.type(lastEmptyThought(), 'To Do')
       await act(vi.runOnlyPendingTimersAsync)
       expect(screen.getByText(/Now add a thought to “To Do”/)).toBeInTheDocument()
     })
 
-    it('we add a Home->To Do->or to not subthought sub-subthought', async () => {
+    it('we add a "Home" • "To Do" • "Or to not subthought" sub-subthought', async () => {
       await user.keyboard('{Control>}{Enter}{/Control}')
-      await user.type(lastEmptyThought(), 'or to not')
+      await user.type(lastEmptyThought(), 'Or to not')
       await act(vi.runOnlyPendingTimersAsync)
 
       /* thoughts:
       - Home
         - To Do
-          - or to not
+          - Or to not
       */
       expect(screen.getByText(/Nice work!/)).toBeInTheDocument()
     })
@@ -191,18 +191,18 @@ describe('Tutorial 2', async () => {
       expect(screen.getByText(/Now add a thought with the text "To Do"/)).toBeInTheDocument()
     })
 
-    it('we add another Work->To Do thought', async () => {
+    it('we add another "Work" • "To Do" thought', async () => {
       await user.keyboard('{Control>}{Enter}{/Control}')
       await user.type(lastEmptyThought(), 'To Do')
       expect(screen.getByText('Imagine a new work task. Add it to this “To Do” list.'))
     })
 
-    it('we see context indicators', async () => {
+    it('we see contexts with a superscript', async () => {
       expect(screen.getAllByRole('superscript')[0]).toHaveTextContent('2')
       expect(screen.getByText(/This means that “To Do” appears in two places/)).toBeInTheDocument()
     })
 
-    it('we add a Work->To Do->Text boss', async () => {
+    it('we add a "Work" • "To Do" • "Text boss" thought', async () => {
       await user.keyboard('{Control>}{Enter}{/Control}')
       await user.type(lastEmptyThought(), 'Text boss')
       await act(vi.runOnlyPendingTimersAsync)
