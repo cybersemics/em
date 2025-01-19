@@ -27,6 +27,7 @@ export type PopupBaseProps = PropsWithChildren<
     cssRaw?: SystemStyleObject
     circledCloseButton?: boolean
     showXOnHover?: boolean
+    swipeDownToDismiss?: boolean
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
 >
 
@@ -44,6 +45,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       calculatedHeight,
       circledCloseButton,
       showXOnHover,
+      swipeDownToDismiss,
       ...props
     },
     ref,
@@ -61,6 +63,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       onDismissEnd: () => {
         dispatch(alert(null))
       },
+      swipeDown: swipeDownToDismiss,
     })
 
     const combinedRefs = useCombinedRefs(isTouch ? [useSwipeToDismissProps.ref, ref] : [ref])
