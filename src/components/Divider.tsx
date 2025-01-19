@@ -23,33 +23,43 @@ const useDividerData = (path: Path) => {
   const grandParentPath = parentOf(parentPath)
   const grandParentId = head(grandParentPath)
 
-  return useSelector((state: State) => {
-    const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
-    const childrenWithoutDividers = children.filter(child => !isDivider(child.value))
-    const isOnlyChild = childrenWithoutDividers.length === 0
-    const isTableView =
-      (parentId && attributeEquals(state, parentId, '=view', 'Table')) ||
-      (grandParentId && attributeEquals(state, grandParentId, '=view', 'Table'))
+  return useSelector(
+    (state: State) => {
+      const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
+      const childrenWithoutDividers = children.filter(child => !isDivider(child.value))
+      const isOnlyChild = childrenWithoutDividers.length === 0
+      const isTableView =
+        (parentId && attributeEquals(state, parentId, '=view', 'Table')) ||
+        (grandParentId && attributeEquals(state, grandParentId, '=view', 'Table'))
 
-    let thoughtsAtSameDepth: { id: ThoughtId; value: string }[] = []
+      let thoughtsAtSameDepth: { id: ThoughtId; value: string }[] = []
 
-    if (isTableView && isOnlyChild && grandParentId) {
-      const parentSiblings = getAllChildrenAsThoughts(state, grandParentId)
-      thoughtsAtSameDepth = parentSiblings.flatMap(parent => {
-        const childrenOfParent = parent.id ? getAllChildrenAsThoughts(state, parent.id) : []
-        return childrenOfParent.filter(child => !isDivider(child.value))
-      })
-    }
+      if (isTableView && isOnlyChild && grandParentId) {
+        const parentSiblings = getAllChildrenAsThoughts(state, grandParentId)
+        thoughtsAtSameDepth = parentSiblings.flatMap(parent => {
+          const childrenOfParent = parent.id ? getAllChildrenAsThoughts(state, parent.id) : []
+          return childrenOfParent.filter(child => !isDivider(child.value))
+        })
+      }
 
-    return {
-      dividerId,
-      parentId,
-      isOnlyChild,
-      isTableView,
-      children,
-      thoughtsAtSameDepth,
-    }
-  })
+      return {
+        dividerId,
+        parentId,
+        isOnlyChild,
+        isTableView,
+        children,
+        thoughtsAtSameDepth,
+      }
+    },
+    (prev, next) => {
+      return (
+        prev.dividerId === next.dividerId &&
+        prev.parentId === next.parentId &&
+        prev.isOnlyChild === next.isOnlyChild &&
+        prev.isTableView === next.isTableView
+      )
+    },
+  )
 }
 
 const canvas = document.createElement('canvas')
