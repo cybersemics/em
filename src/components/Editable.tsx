@@ -34,6 +34,7 @@ import {
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import useTreeNodeAnimation from '../hooks/useTreeNodeAnimation'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
@@ -135,6 +136,7 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
+  const { isAnimating } = useTreeNodeAnimation()
 
   /** Used to prevent edit mode from being incorrectly activated on long tap. The default browser behavior must be prevented if setCursorOnThought was just called. */
   // https://github.com/cybersemics/em/issues/1793
@@ -593,7 +595,7 @@ const Editable = ({
       className={cx(
         multiline ? multilineRecipe() : null,
         editableRecipe({
-          preventAutoscroll: true,
+          preventAutoscroll: !isAnimating,
         }),
         className,
       )}
