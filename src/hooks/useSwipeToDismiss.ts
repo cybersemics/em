@@ -5,6 +5,7 @@ const defaultOptions = {
   dx: 0,
   snapbackDuration: 0.1,
   snapbackEasing: 'ease-out',
+  swipeDown: false,
 }
 
 /** Custom hook to manage swipe to dismiss alerts. */
@@ -28,10 +29,13 @@ const useSwipeToDismiss = (
 
     // easing function to animate the element back into place after releasing
     snapbackEasing?: string
+
+    // whether to swipe down to dismiss (true) or swipe up (false)
+    swipeDown?: boolean
   } = {},
 ) => {
   // initialize default options
-  const { dismissThreshold, dx, onDismiss, onDismissEnd, snapbackDuration, snapbackEasing } = {
+  const { dismissThreshold, dx, onDismiss, onDismissEnd, snapbackDuration, snapbackEasing, swipeDown } = {
     ...defaultOptions,
     ...options,
   }
@@ -74,12 +78,16 @@ const useSwipeToDismiss = (
       // check for dismiss threshold
       // if specified as a percentage of height, use percentage of element height
       const isPercentageOfHeight = typeof dismissThreshold === 'string' && dismissThreshold.endsWith('%')
-      const dismissThresholdPx = isPercentageOfHeight
-        ? (-parseFloat(dismissThreshold as string) * height) / 100
-        : -parseFloat(dismissThreshold as string)
+      const thresholdValue = isPercentageOfHeight
+        ? (parseFloat(dismissThreshold as string) * height) / 100
+        : parseFloat(dismissThreshold as string)
 
-      if (dy < dismissThresholdPx) {
-        setDY(-height * 2)
+      // Check threshold based on swipe direction
+      const dismissThresholdPx = swipeDown ? thresholdValue : -thresholdValue
+      const shouldDismiss = swipeDown ? dy > dismissThresholdPx : dy < -dismissThresholdPx
+
+      if (shouldDismiss) {
+        setDY(swipeDown ? height * 2 : -height * 2)
         onDismiss?.()
         setTimeout(() => {
           onDismissEnd?.()
@@ -98,11 +106,17 @@ const useSwipeToDismiss = (
       const y = e.touches?.[0].pageY
       const dy = y - y0
 
-      // resist dragging down by taking the square root of positive dy
-      const dyResistant = dy < 0 ? dy : Math.sqrt(dy)
+      // Apply resistance in the non-dismissal direction
+      const dyResistant = swipeDown
+        ? dy < 0
+          ? Math.sqrt(-dy) * -1
+          : dy // resist upward motion when swipeDown
+        : dy > 0
+          ? Math.sqrt(dy)
+          : dy // resist dragging down by taking square root of positive dy
       setDY(dyResistant)
     },
-    [y0],
+    [y0, swipeDown],
   )
 
   return {
