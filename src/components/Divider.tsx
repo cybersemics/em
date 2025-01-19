@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
@@ -9,7 +9,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { DIVIDER_MIN_WIDTH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import editingValueStore from '../stores/editingValue'
+import editingValueStoreUntrimmed from '../stores/editingValueUntrimmed'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -52,12 +52,34 @@ const useDividerData = (path: Path) => {
   })
 }
 
-/** Helper function to get widths of thoughts by querying the DOM. */
-const getThoughtWidths = (thoughts: { id: ThoughtId }[]) => {
+const canvas = document.createElement('canvas')
+const context = canvas.getContext('2d')
+
+/** Helper function to calculate text width including trailing spaces. */
+const calculateTextWidth = (text: string, element: Element | null) => {
+  if (!element || !context) return 0
+
+  const computedStyle = window.getComputedStyle(element)
+  context.font = computedStyle.font
+  return Math.ceil(context.measureText(text).width)
+}
+
+/**
+ * Calculates the width of the thought text, including trailing spaces, to ensure the divider width matches the visual representation.
+ * Specifically handles the currently edited thought by using the untrimmed editing value.
+ */
+const getThoughtWidths = (thoughts: { id: ThoughtId }[], editingValueUntrimmed: string | null) => {
   return thoughts.map(thought => {
     const innerThoughtElement = document.querySelector(
       `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
     )
+
+    // Use untrimmed value for currently edited thought
+    if (editingValueUntrimmed && innerThoughtElement?.getAttribute('data-id') === thought.id) {
+      return calculateTextWidth(editingValueUntrimmed, innerThoughtElement)
+    }
+
+    // Use DOM widths for others
     return innerThoughtElement?.getBoundingClientRect().width ?? 0
   })
 }
@@ -68,10 +90,9 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
 
-  // Use the custom hook to get necessary data
-  const { dividerId, isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
-  const editingValue = editingValueStore.useSelector(state => state)
+  const editingValueUntrimmed = editingValueStoreUntrimmed.useSelector(state => state)
 
+  const { dividerId, isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
@@ -95,7 +116,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
           setDividerWidth(DIVIDER_MIN_WIDTH)
           return
         }
-        widths = getThoughtWidths(thoughtsAtSameDepth)
+        widths = getThoughtWidths(thoughtsAtSameDepth, editingValueUntrimmed)
       } else {
         // Non-Table View or Divider is not the only item
         const siblingThoughts = children.filter(child => child.id !== dividerId && !isDivider(child.value))
@@ -104,10 +125,9 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
           setDividerWidth(DIVIDER_MIN_WIDTH)
           return
         }
-        widths = getThoughtWidths(siblingThoughts)
+        widths = getThoughtWidths(siblingThoughts, editingValueUntrimmed)
       }
 
-      // Determine the maximum width
       const maxWidth = widths.length > 0 ? Math.max(...widths) : DIVIDER_MIN_WIDTH
       setDividerWidth(Math.round(Math.max(maxWidth, DIVIDER_MIN_WIDTH)))
     }
@@ -115,7 +135,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     updateDividerWidth()
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnlyChild, isTableView, editingValue, dividerId])
+  }, [isOnlyChild, isTableView, editingValueUntrimmed, dividerId])
 
   return (
     <div
