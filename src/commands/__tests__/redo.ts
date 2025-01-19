@@ -8,13 +8,14 @@ import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
-import createTestStore from '../../test-helpers/createTestStore'
+import store from '../../stores/app'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
-it('redo thought change', () => {
-  const store = createTestStore()
+beforeEach(initStore)
 
+it('redo thought change', () => {
   store.dispatch([
     importText({
       text: `
@@ -47,8 +48,6 @@ it('redo thought change', () => {
 })
 
 it('group contiguous navigation actions preceding a thought change on redo', () => {
-  const store = createTestStore()
-
   store.dispatch([
     importText({
       text: `
@@ -92,8 +91,6 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
 })
 
 it('redo contiguous changes', () => {
-  const store = createTestStore()
-
   store.dispatch([
     importText({
       text: `

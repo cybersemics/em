@@ -13,9 +13,12 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import appStore from '../../stores/app'
-import createTestStore from '../../test-helpers/createTestStore'
+import store from '../../stores/app'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+
+beforeEach(initStore)
 
 /******************************************************************
  * UNDO
@@ -64,8 +67,6 @@ describe('undo persistence', () => {
 
 describe('undo', () => {
   it('undo edit', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -98,8 +99,6 @@ describe('undo', () => {
   })
 
   it('state remains unchanged if there is nothing to undo', () => {
-    const store = createTestStore()
-
     store.dispatch(
       importText({
         text: `
@@ -120,8 +119,6 @@ describe('undo', () => {
   })
 
   it('ingore alerts', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -142,15 +139,12 @@ describe('undo', () => {
   })
 
   it('non-undoable actions are ignored', () => {
-    const store = createTestStore()
     store.dispatch([{ type: 'search', value: 'New' }, { type: 'showModal', id: 'welcome' }, { type: 'toggleSidebar' }])
 
     expect(store.getState().undoPatches.length).toEqual(0)
   })
 
   it('undo importText', () => {
-    const store = createTestStore()
-
     store.dispatch([
       newThought({}),
       importText({
@@ -167,8 +161,6 @@ describe('undo', () => {
   })
 
   it('cursor should restore to same thought if the thought has been edited after undo', () => {
-    const store = createTestStore()
-
     store.dispatch([
       newThought({}),
       setCursor(['']),
@@ -208,8 +200,6 @@ describe('undo', () => {
 
 describe('redo', () => {
   it('redo edit', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -237,8 +227,6 @@ describe('redo', () => {
   })
 
   it('redo importText', () => {
-    const store = createTestStore()
-
     store.dispatch([
       newThought({}),
       importText({
@@ -261,8 +249,6 @@ describe('redo', () => {
   })
 
   it('clear redo history after a new action is taken', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -291,8 +277,6 @@ describe('redo', () => {
 
 describe('grouping', () => {
   it('group all navigation actions following an undoable(non-navigation) action and undo them together', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -340,8 +324,6 @@ describe('grouping', () => {
   })
 
   it('newThought action should be grouped with the succeeding patch', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -366,8 +348,6 @@ describe('grouping', () => {
   })
 
   it('contiguous changes should be grouped', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -389,8 +369,6 @@ describe('grouping', () => {
   })
 
   it('ignore dead actions and combine dispensible actions with the preceding patch', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `

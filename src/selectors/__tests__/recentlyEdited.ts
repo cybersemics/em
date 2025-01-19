@@ -1,14 +1,15 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
-import createTestStore from '../../test-helpers/createTestStore'
+import store from '../../stores/app'
 import { deleteThoughtAtFirstMatchActionCreator as deleteThought } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import pathToContext from '../../util/pathToContext'
 import recentlyEdited from '../recentlyEdited'
 
-it('default', () => {
-  const store = createTestStore()
+beforeEach(initStore)
 
+it('default', () => {
   store.dispatch([
     importText({
       text: `
@@ -37,8 +38,6 @@ it('default', () => {
 })
 
 it('filter out deleted thoughts', () => {
-  const store = createTestStore()
-
   store.dispatch([
     importText({
       text: `
@@ -63,8 +62,6 @@ it('filter out deleted thoughts', () => {
 })
 
 it('filter out adjacent ancestors', () => {
-  const store = createTestStore()
-
   store.dispatch([
     importText({
       text: `
