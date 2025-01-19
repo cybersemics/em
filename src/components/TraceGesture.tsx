@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { css } from '../../styled-system/css'
 import { gestureString, globalCommands } from '../commands'
-import { AlertType, GESTURE_CANCEL_ALERT_TEXT, GESTURE_GLOW_BLUR, Settings, noop } from '../constants'
+import { GESTURE_GLOW_BLUR, Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import gestureStore from '../stores/gesture'
@@ -20,10 +20,6 @@ interface TraceGestureProps {
 const useGestureCancelled = () => {
   const showCommandPalette = useSelector(state => state.showCommandPalette)
 
-  const alertShowsGestureCancelled = useSelector(
-    state => state.alert?.alertType === AlertType.GestureHint && state.alert?.value === GESTURE_CANCEL_ALERT_TEXT,
-  )
-
   const invalidGesture = gestureStore.useSelector(
     gesturePath =>
       gesturePath &&
@@ -31,7 +27,7 @@ const useGestureCancelled = () => {
       !globalCommands.some(shortcut => !shortcut.hideFromHelp && gestureString(shortcut) === gesturePath),
   )
 
-  return alertShowsGestureCancelled || invalidGesture
+  return invalidGesture
 }
 
 /** Draws a gesture as it is being performed onto a canvas. */
