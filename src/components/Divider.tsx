@@ -56,7 +56,9 @@ const useDividerData = (path: Path) => {
         prev.dividerId === next.dividerId &&
         prev.parentId === next.parentId &&
         prev.isOnlyChild === next.isOnlyChild &&
-        prev.isTableView === next.isTableView
+        prev.isTableView === next.isTableView &&
+        prev.children.length === next.children.length &&
+        prev.thoughtsAtSameDepth.length === next.thoughtsAtSameDepth.length
       )
     },
   )
