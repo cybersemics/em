@@ -103,6 +103,8 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const editingValueUntrimmed = editingValueStoreUntrimmed.useSelector(state => state)
 
   const { dividerId, isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
+  const fontSize = useSelector(state => state.fontSize)
+
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
@@ -145,7 +147,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     updateDividerWidth()
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnlyChild, isTableView, editingValueUntrimmed, dividerId])
+  }, [isOnlyChild, isTableView, editingValueUntrimmed, dividerId, fontSize])
 
   return (
     <div
