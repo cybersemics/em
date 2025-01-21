@@ -209,9 +209,11 @@ const CommandRow: FC<{
                         )
                       })()
                     : // For other commands, use normal highlighting
-                      shortcut.id === 'cancel' && gestureInProgress.length > 0
+                      shortcut.id === 'cancel' && selected
                       ? 1 // Highlight the cancel gesture when any gesture is in progress
-                      : gestureInProgress.length
+                      : shortcut.id === 'cancel'
+                        ? undefined
+                        : gestureInProgress.length
                   : undefined
               }
               path={shortcut.id === 'cancel' ? null : gestureString(shortcut)}
@@ -241,7 +243,15 @@ const CommandRow: FC<{
             className={css({
               minWidth: '4em',
               whiteSpace: 'nowrap',
-              color: disabled ? 'gray' : selected ? 'vividHighlight' : 'fg',
+              color: disabled
+                ? 'gray'
+                : isTouch
+                  ? selected
+                    ? 'vividHighlight'
+                    : 'fg'
+                  : gestureInProgress === shortcut.gesture
+                    ? 'vividHighlight'
+                    : 'fg',
               fontWeight: selected ? 'bold' : undefined,
             })}
           >
@@ -450,8 +460,6 @@ const CommandPalette: FC = () => {
               <>
                 {(() => {
                   const helpCommand = commandById('help')
-                  // const cancelCommand = commandById('cancel')
-
                   // Check if current gesture matches any command's gesture once
                   const hasMatchingCommand = shortcuts.some(cmd => gestureInProgress === cmd.gesture)
 
