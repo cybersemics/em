@@ -209,11 +209,11 @@ const CommandRow: FC<{
                         )
                       })()
                     : // For other commands, use normal highlighting
-                      shortcut.id === 'cancel' && selected
-                      ? 1 // Highlight the cancel gesture when any gesture is in progress
-                      : shortcut.id === 'cancel'
-                        ? undefined
-                        : gestureInProgress.length
+                      shortcut.id === 'cancel'
+                      ? selected
+                        ? 1
+                        : undefined
+                      : gestureInProgress.length
                   : undefined
               }
               path={shortcut.id === 'cancel' ? null : gestureString(shortcut)}
@@ -246,12 +246,10 @@ const CommandRow: FC<{
               color: disabled
                 ? 'gray'
                 : isTouch
-                  ? selected
+                  ? selected || gestureInProgress === shortcut.gesture
                     ? 'vividHighlight'
                     : 'fg'
-                  : gestureInProgress === shortcut.gesture
-                    ? 'vividHighlight'
-                    : 'fg',
+                  : 'fg',
               fontWeight: selected ? 'bold' : undefined,
             })}
           >
