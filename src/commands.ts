@@ -81,8 +81,8 @@ const arrowTextToArrowCharacter = (s: string) =>
     }) as Index
   )[s] || s
 
-/** Formats a keyboard shortcut to display to the user. */
-export const formatKeyboardShortcut = (keyboardOrString: Key | string): string => {
+/** Formats a keyboard command to display to the user. */
+export const formatKeyboardCommand = (keyboardOrString: Key | string): string => {
   const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString as string } : keyboardOrString
   return (
     (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
@@ -107,7 +107,7 @@ const index = (): {
 
     if (conflict) {
       console.error(
-        `"${command.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(command.keyboard)}"`,
+        `"${command.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardCommand(command.keyboard)}"`,
       )
     }
 

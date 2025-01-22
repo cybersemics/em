@@ -8,7 +8,7 @@ import DragToolbarItem from '../@types/DragToolbarItem'
 import GesturePath from '../@types/GesturePath'
 import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
-import { formatKeyboardShortcut } from '../commands'
+import { formatKeyboardCommand } from '../commands'
 import { noop } from '../constants'
 import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
@@ -147,7 +147,7 @@ const CommandRow = ({
             <b>{command.label}</b>
           )}
           {command.keyboard && !isTouch ? (
-            <p className={css({ color: 'gray', marginBottom: 0 })}>{formatKeyboardShortcut(command.keyboard)}</p>
+            <p className={css({ color: 'gray', marginBottom: 0 })}>{formatKeyboardCommand(command.keyboard)}</p>
           ) : null}
           <p>{description}</p>
         </td>

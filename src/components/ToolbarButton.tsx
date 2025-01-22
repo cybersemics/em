@@ -8,7 +8,7 @@ import DragCommandZone from '../@types/DragCommandZone'
 import Icon from '../@types/IconType'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { commandById, formatKeyboardShortcut } from '../commands'
+import { commandById, formatKeyboardCommand } from '../commands'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import store from '../stores/app'
@@ -184,7 +184,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       data-testid='toolbar-icon'
       ref={node => dragSource(dropTarget(node))}
       key={shortcutId}
-      title={`${shortcut.label}${(shortcut.keyboard ?? shortcut.overlay?.keyboard) ? ` (${formatKeyboardShortcut((shortcut.keyboard ?? shortcut.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
+      title={`${shortcut.label}${(shortcut.keyboard ?? shortcut.overlay?.keyboard) ? ` (${formatKeyboardCommand((shortcut.keyboard ?? shortcut.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
       className={cx(
         // Override the Toolbar's pointer-events: none to restore pointer behavior.
         toolbarPointerEventsRecipe({ override: true }),

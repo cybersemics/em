@@ -4,7 +4,7 @@ import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
-import { commandById, formatKeyboardShortcut } from '../commands'
+import { commandById, formatKeyboardCommand } from '../commands'
 import GestureDiagram from '../components/GestureDiagram'
 
 const toggleContextViewShortcut = commandById('toggleContextView')
@@ -51,7 +51,7 @@ const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean;
               />
             </span>
           ) : (
-            <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
+            <span>Type {formatKeyboardCommand(toggleContextViewShortcut.keyboard!)}</span>
           )}{' '}
           to toggle context view off.
         </div>
