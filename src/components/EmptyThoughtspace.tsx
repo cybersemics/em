@@ -58,6 +58,9 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
                 <span>
                   Swipe{' '}
                   <GestureDiagram
+                    cssRaw={css.raw({
+                      marginBottom: '-10px !important',
+                    })}
                     inGestureContainer
                     path={newThoughtShortcut.gesture as GesturePath}
                     size={30}
