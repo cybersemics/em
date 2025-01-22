@@ -2,7 +2,6 @@ import { KnownDevices } from 'puppeteer'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
-import down from '../helpers/down'
 import emulate from '../helpers/emulate'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
@@ -160,8 +159,7 @@ describe('all platforms', () => {
     // await press('Enter')
     await press('End')
     await press('Tab')
-    await down('Shift')
-    await press('Tab')
+    await press('Tab', { shift: true })
 
     const nodeType = await getSelection().focusNode?.nodeType
     expect(nodeType).toBe(Node.ELEMENT_NODE)

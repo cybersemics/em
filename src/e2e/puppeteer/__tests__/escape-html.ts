@@ -16,9 +16,7 @@ const pastePlainText = async (text: string) => {
     ])
   }, text)
 
-  await page.keyboard.down('Shift')
-  await page.keyboard.press('Insert')
-  await page.keyboard.up('Shift')
+  await press('Insert', { shift: true })
 }
 
 /** Custom helper for pasting HTML, avoiding the existing `paste` helper that uses `importText` internally. */
@@ -33,9 +31,7 @@ const pasteHTML = async (html: string) => {
     ])
   }, html)
 
-  await page.keyboard.down('Shift')
-  await page.keyboard.press('Insert')
-  await page.keyboard.up('Shift')
+  await press('Insert', { shift: true })
 }
 
 it('escapes typed HTML', async () => {

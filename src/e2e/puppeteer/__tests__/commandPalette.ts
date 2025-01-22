@@ -1,6 +1,5 @@
 import path from 'path'
 import { KnownDevices } from 'puppeteer'
-import { isMac } from '../../../browser'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import paste from '../helpers/paste'
@@ -17,13 +16,7 @@ expect.extend({
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 it('open with keyboard', async () => {
-  // Simulate pressing Ctrl + P or Command + P
-  //    process.platform === 'darwin'
-  const modifierKey = isMac ? 'Meta' : 'Control' // Use Meta for macOS, Control for others
-
-  await page.keyboard.down(modifierKey)
-  await press('P')
-  await page.keyboard.up(modifierKey)
+  await press('P', { meta: true })
 
   // TODO: Replace sleep with wait
   await sleep(200)
