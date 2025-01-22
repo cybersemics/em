@@ -15,12 +15,6 @@ import head from '../util/head'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 
-/** Utility function to compare two arrays shallowly. */
-const compareArrays = (array1: any[], array2: any[]) => {
-  if (array1.length !== array2.length) return false
-  return array1.every((item, index) => item === array2[index])
-}
-
 /** Custom hook to fetch divider-related data from the state. */
 const useDividerData = (path: Path) => {
   const dividerId = head(path)
@@ -62,9 +56,7 @@ const useDividerData = (path: Path) => {
         prev.dividerId === next.dividerId &&
         prev.parentId === next.parentId &&
         prev.isOnlyChild === next.isOnlyChild &&
-        prev.isTableView === next.isTableView &&
-        compareArrays(prev.children, next.children) &&
-        compareArrays(prev.thoughtsAtSameDepth, next.thoughtsAtSameDepth)
+        prev.isTableView === next.isTableView
       )
     },
   )
