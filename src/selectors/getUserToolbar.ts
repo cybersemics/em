@@ -8,11 +8,11 @@ import { getChildrenRanked } from './getChildren'
 /** Gets an ordered list of ShortcutIds if the user has customized their toolbar. Returns null otherwise. */
 const getUserToolbar = (state: State): CommandId[] | null => {
   const userToolbarThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
-  const shortcutIds = (userToolbarThoughtId ? getChildrenRanked(state, userToolbarThoughtId) : [])
+  const commandIds = (userToolbarThoughtId ? getChildrenRanked(state, userToolbarThoughtId) : [])
     .map(subthought => subthought.value)
-    // filter out invalid shortcutIds
-    .filter((shortcutIdString): shortcutIdString is CommandId => !!commandById(shortcutIdString as CommandId))
-  return shortcutIds.length > 0 ? shortcutIds : null
+    // filter out invalid commandIds
+    .filter((commandIdString): commandIdString is CommandId => !!commandById(commandIdString as CommandId))
+  return commandIds.length > 0 ? commandIds : null
 }
 
 export default getUserToolbar

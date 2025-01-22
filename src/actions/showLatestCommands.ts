@@ -19,10 +19,10 @@ const clearTimer = () => {
 }
 
 /**
- * Adds latest shortcuts diagram to be shown in the screen. Also clears after certain interval.
+ * Adds latest commands diagram to be shown in the screen. Also clears after certain interval.
  */
 export const showLatestCommandsActionCreator =
-  (shortcut?: Command, { clear }: Options = {}): Thunk =>
+  (command?: Command, { clear }: Options = {}): Thunk =>
   (dispatch, getState) => {
     if (clear) {
       clearTimer()
@@ -30,14 +30,14 @@ export const showLatestCommandsActionCreator =
       return
     }
 
-    if (shortcut) {
+    if (command) {
       const exceedsLimit = getState().latestCommands.length + 1 > LATEST_SHORTCUT_LIMIT
 
-      // Clear shortcuts if exceeds limit
+      // Clear commands if exceeds limit
       if (exceedsLimit) dispatch(clearLatestShortcuts())
 
       clearTimer()
-      dispatch(addLatestShortcutsActionCreator(shortcut))
+      dispatch(addLatestShortcutsActionCreator(command))
       timeoutId = setTimeout(() => {
         dispatch(clearLatestShortcuts())
         clearTimer()

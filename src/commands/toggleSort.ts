@@ -31,7 +31,7 @@ const toggleSortShortcut: Command = {
 
     dispatch(toggleSort({ simplePath }))
 
-    // if the user used the keyboard to activate the shortcut, show an alert describing the sort direction
+    // if the user used the keyboard to activate the command, show an alert describing the sort direction
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
     if (type === 'keyboard') {
       const stateNew = getState()

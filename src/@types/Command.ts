@@ -17,7 +17,7 @@ interface Command {
   /** A selector that returns true if the command can be executed with the current state. */
   canExecute?: (state: State) => boolean
 
-  /** An ad hoc property to track conflicting shortcuts. */
+  /** An ad hoc property to track conflicting commands. */
   // TODO: Refactor so this is not in the main Command type.
   conflicts?: string[]
 
@@ -68,7 +68,7 @@ interface Command {
   /** Short label. */
   label: string
 
-  /** For toggling shortcuts, a short label that indicates the inverse action from the current state (e.g. "Add to Favorites" and "Remove from Favorites"). */
+  /** For toggling commands, a short label that indicates the inverse action from the current state (e.g. "Add to Favorites" and "Remove from Favorites"). */
   labelInverse?: string
 
   /** Specify backup gesture or keyboard that is shown in the Toolbar overlay. */

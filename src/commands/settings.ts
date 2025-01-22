@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import SettingsIcon from '../components/icons/SettingsIcon'
 
-const shortcut: Command = {
+const command: Command = {
   id: 'settings',
   label: 'Settings',
   description: 'Customize your experience of em.',
@@ -12,4 +12,4 @@ const shortcut: Command = {
   allowExecuteFromModal: true,
 }
 
-export default shortcut
+export default command

@@ -12,25 +12,25 @@ import { getChildrenRanked } from '../selectors/getChildren'
 
 /** Removes a toolbar button. */
 export const removeToolbarButtonActionCreator =
-  (shortcutId: CommandId): Thunk =>
+  (commandId: CommandId): Thunk =>
   (dispatch, getState) => {
-    const shortcut = commandById(shortcutId)
+    const command = commandById(commandId)
 
-    // initialize EM/Settings/Toolbar/Visible with default shortcuts
+    // initialize EM/Settings/Toolbar/Visible with default commands
     dispatch(initUserToolbar())
     const state = getState()
     const userToolbarThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
     const userShortcutChildren = getChildrenRanked(getState(), userToolbarThoughtId)
     const userShortcutIds = userShortcutChildren.map(subthought => subthought.value)
 
-    // user shortcuts must exist since it was created above
+    // user commands must exist since it was created above
     const userShortcutsPath = contextToPath(getState(), [EM_TOKEN, 'Settings', 'Toolbar'])!
-    const fromIndex = userShortcutIds.indexOf(shortcutId)
+    const fromIndex = userShortcutIds.indexOf(commandId)
     if (fromIndex === -1) return
     const fromThoughtId = userShortcutChildren[fromIndex].id
 
     dispatch([
-      alert(`Removed ${shortcut.label} from toolbar`, {
+      alert(`Removed ${command.label} from toolbar`, {
         alertType: AlertType.ToolbarButtonRemoved,
         clearDelay: 5000,
       }),

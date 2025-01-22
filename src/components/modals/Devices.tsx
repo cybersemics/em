@@ -178,10 +178,10 @@ const ShareList = React.forwardRef<
     ([, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
   )
 
-  /** Keyboad shortcuts. */
+  /** Keyboad commands. */
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      // TODO: Handle modal-specific keyboard shortcuts in a more general way so that they can be used in other modals and so this component does not need to know about showCommandPalette
+      // TODO: Handle modal-specific keyboard commands in a more general way so that they can be used in other modals and so this component does not need to know about showCommandPalette
       if (e.key === 'Enter' && !showDeviceForm && !store.getState().showCommandPalette) {
         e.stopPropagation()
         setShowDeviceForm(true)
@@ -386,7 +386,7 @@ const ShareDetail = React.memo(
           if (
             e.key === 'c' &&
             (isMac ? e.metaKey : e.ctrlKey) &&
-            // do not override copy shortcut if user has text selected
+            // do not override copy command if user has text selected
             selection.isCollapsed() !== false &&
             // input selection is not reflected in window.getSelection()
             shareUrlInputRef.current?.selectionStart === shareUrlInputRef.current?.selectionEnd

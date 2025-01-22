@@ -1,9 +1,9 @@
 import ShortcutInterface from '../@types/Command'
 import { isTouch } from '../browser'
-import { formatKeyboardCommand } from '../commands'
+import { formatKeyboardShortcut } from '../commands'
 import GestureDiagram from './GestureDiagram'
 
-/** Renders the keyboard shortcut or gesture for a given shortcut. */
+/** Renders the keyboard command or gesture for a given command. */
 const Shortcut = ({ gesture, keyboard, overlay }: ShortcutInterface): JSX.Element | null => {
   const key = overlay && overlay.keyboard ? overlay.keyboard : keyboard
   return isTouch ? (
@@ -11,7 +11,7 @@ const Shortcut = ({ gesture, keyboard, overlay }: ShortcutInterface): JSX.Elemen
       <GestureDiagram path={gesture} />
     ) : null
   ) : key ? (
-    <>{formatKeyboardCommand(key)}</>
+    <>{formatKeyboardShortcut(key)}</>
   ) : null
 }
 

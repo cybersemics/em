@@ -14,7 +14,7 @@ const Tutorial2StepContextViewSelect = () => {
   )
   return (
     <>
-      <p>Now I'm going to show you the {isTouch ? 'gesture' : 'keyboard shortcut'} to view multiple contexts.</p>
+      <p>Now I'm going to show you the {isTouch ? 'gesture' : 'keyboard command'} to view multiple contexts.</p>
       <p>First select "{caseSensitiveValue}".</p>
     </>
   )

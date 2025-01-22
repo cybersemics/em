@@ -152,6 +152,9 @@ export const MIN_LINE_HEIGHT = 26
 // the maximum number of characters of a thought to display before ellipsizing in links and tutorial
 export const THOUGHT_ELLIPSIZED_CHARS = 16
 
+// The text that is alerted when a gesture is made that does not correspond to a valid command.
+export const GESTURE_CANCEL_ALERT_TEXT = '✗ Cancel gesture'
+
 // delay after gesture hint is activated before command palette appears
 export const COMMAND_PALETTE_TIMEOUT = 400
 
@@ -165,7 +168,7 @@ export const URL_MAX_CHARS = 40
 export const EXPAND_THOUGHT_CHAR = ':'
 export const MAX_EXPAND_DEPTH = 10
 
-// shortcut ids of default buttons that appear in the toolbar
+// command ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
 export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'undo',
@@ -439,7 +442,7 @@ export enum AlertType {
   DragAndDropHint = 'DragAndDropHint',
   // shown when dragging a toolbar button
   DragAndDropToolbarHint = 'DragAndDropToolbarHint',
-  // shown when dragging a toolbar button from the shortcut table
+  // shown when dragging a toolbar button from the command table
   DragAndDropToolbarAdd = 'DragAndDropToolbarAdd',
   // shown when a dragged thought is hovering over the ExportDrop component
   ExportDropHint = 'ExportDropHint',

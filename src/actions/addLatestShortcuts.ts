@@ -5,9 +5,9 @@ import Thunk from '../@types/Thunk'
 /**
  * Add latest gesture to show on the screen.
  */
-const addLatestShortcuts = (state: State, shortcut: Command): State => ({
+const addLatestShortcuts = (state: State, command: Command): State => ({
   ...state,
-  latestCommands: [...state.latestCommands, shortcut],
+  latestCommands: [...state.latestCommands, command],
 })
 
 /** Action-creator for addLatestShortcuts. */

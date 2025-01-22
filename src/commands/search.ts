@@ -8,7 +8,7 @@ import * as selection from '../device/selection'
 const searchShortcut: Command = {
   id: 'search',
   label: 'Search',
-  description: 'Open the Search input. Use the same shortcut to close.',
+  description: 'Open the Search input. Use the same command to close.',
   svg: SearchIcon,
   multicursor: 'ignore',
   keyboard: { key: 'f', meta: true, alt: true },

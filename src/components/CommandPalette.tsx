@@ -7,7 +7,8 @@ import Command from '../@types/Command'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
-import { commandById, formatKeyboardCommand, gestureString, hashCommand, hashKeyDown } from '../commands'
+import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
+import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -291,7 +292,7 @@ const CommandRow: FC<{
                 })}
               >
                 <span className={css({ marginLeft: 20, whiteSpace: 'nowrap' })}>
-                  {command.keyboard && formatKeyboardCommand(command.keyboard)}
+                  {command.keyboard && formatKeyboardShortcut(command.keyboard)}
                 </span>
               </div>
             )}

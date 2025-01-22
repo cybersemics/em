@@ -29,10 +29,10 @@ const WithCSSTransition = ({ component, transitionKey }: { component: FC; transi
   )
 }
 
-// assert shortcut at load time
+// assert command at load time
 const newThoughtShortcut = commandById('newThought')
 if (!newThoughtShortcut) {
-  throw new Error('newThought shortcut not found.')
+  throw new Error('newThought command not found.')
 }
 
 /** Tutorial component. */

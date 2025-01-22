@@ -28,7 +28,7 @@ const iconMap = {
 }
 export type HeadingLevel = 0 | 1 | 2 | 3 | 4 | 5
 
-/** Creates a heading shortcut at a given level (h1, h2, etc). */
+/** Creates a heading command at a given level (h1, h2, etc). */
 const headingShortcut = (level: HeadingLevel): Command => ({
   id: `heading${level}`,
   label: level === 0 ? 'Normal Text' : `Heading ${level}`,

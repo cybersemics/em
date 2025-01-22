@@ -2,7 +2,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
 /**
- * Clear all the latest shortcuts to show on the screen.
+ * Clear all the latest commands to show on the screen.
  */
 const clearLatestShortcuts = (state: State): State => ({ ...state, latestCommands: [] })
 

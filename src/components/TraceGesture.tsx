@@ -24,7 +24,7 @@ const useGestureCancelled = () => {
     gesturePath =>
       gesturePath &&
       showCommandPalette &&
-      !globalCommands.some(shortcut => !shortcut.hideFromHelp && gestureString(shortcut) === gesturePath),
+      !globalCommands.some(command => !command.hideFromHelp && gestureString(command) === gesturePath),
   )
 
   return invalidGesture

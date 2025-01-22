@@ -7,20 +7,20 @@ import { AlertText, AlertType } from '../constants'
 import alert from './alert'
 
 interface Payload {
-  shortcut: Command | null
+  command: Command | null
   sourceZone?: DragCommandZone
 }
 
 /** Reducer for highlighting a toolbar button for dragging on tap and hold. */
-const toolbarLongPress = (state: State, { shortcut }: Payload) => ({
-  ...(shortcut
+const toolbarLongPress = (state: State, { command }: Payload) => ({
+  ...(command
     ? alert(state, {
         value: AlertText.DragAndDropToolbar,
         alertType: AlertType.DragAndDropToolbarHint,
         showCloseLink: false,
       })
     : state),
-  toolbarLongPress: shortcut,
+  toolbarLongPress: command,
   // Prevent setting new draggedThoughtRanked before, if previous value wasn't reset to undefined
   // draggedSimplePath: state.draggedSimplePath ? (!simplePath ? undefined : state.draggedSimplePath) : simplePath,
 })

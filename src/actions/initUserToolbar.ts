@@ -11,7 +11,7 @@ export const initUserToolbarActionCreator =
   ({
     force,
   }: {
-    // resets the toolbar to the default shortcuts
+    // resets the toolbar to the default commands
     force?: boolean
   } = {}): Thunk =>
   (dispatch, getState) => {
@@ -28,7 +28,7 @@ export const initUserToolbarActionCreator =
             text: `
           - Settings
             - Toolbar
-${TOOLBAR_DEFAULT_COMMANDS.map(shortcutId => '              - ' + shortcutId).join('\n')}
+${TOOLBAR_DEFAULT_COMMANDS.map(commandId => '              - ' + commandId).join('\n')}
         `,
             preventSetCursor: true,
           })

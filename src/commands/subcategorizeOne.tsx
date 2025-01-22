@@ -12,7 +12,7 @@ const multicursor: Command['multicursor'] = {
   clearMulticursor: true,
 }
 
-// NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
+// NOTE: The keyboard command for New Uncle handled in New Thought command until it is confirmed that commands are evaluated in the correct order
 const subCategorizeOneShortcut: Command = {
   id: 'subcategorizeOne',
   label: 'Subcategorize',
@@ -27,7 +27,7 @@ const subCategorizeOneShortcut: Command = {
   exec: dispatch => dispatch(subCategorizeOne()),
 }
 
-// a shortcut for Raine until we have custom user shortcuts
+// a command for Raine until we have custom user commands
 export const subCategorizeOneShortcutAlias: Command = {
   id: 'subcategorizeOneAlias',
   label: 'Subcategorize',

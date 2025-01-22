@@ -23,7 +23,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
-// import directly since util/index is not loaded yet when shortcut is initialized
+// import directly since util/index is not loaded yet when command is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components

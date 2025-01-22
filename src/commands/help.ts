@@ -8,7 +8,7 @@ const openHelpShortcut: Command = {
   id: 'help',
   label: 'Help',
   description: `Opens the Help screen, which contains the tutorials and a list of all ${
-    isTouch ? 'gestures' : 'keyboard shortcuts'
+    isTouch ? 'gestures' : 'keyboard commands'
   }.`,
   gesture: 'rdld',
   keyboard: { key: '/', meta: true },
