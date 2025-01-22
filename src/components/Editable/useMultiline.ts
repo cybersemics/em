@@ -29,10 +29,14 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
     const singleLineHeight = fontSize * 2
     // .editable.multiline gets 5px of padding-top to offset the collapsed line-height
     // we need to account for padding-top, otherwise it can cause a false positive
-    const paddingTop = parseInt(window.getComputedStyle(contentRef.current).paddingTop)
-    // The element is multiline if its height is twice the single line height.
-    // (Actually we just check if it is over 1.5x the single line height for a more forgiving condition.)
-    setMultiline(height - paddingTop > singleLineHeight * 1.5)
+    const style = window.getComputedStyle(contentRef.current)
+    const paddingTop = parseInt(style.paddingTop)
+    const paddingBottom = parseInt(style.paddingBottom)
+    // 2x the single line height would indicate that the thought was multiline if it weren't for the change in line-height and padding.
+    // 1.2x is used for a more forgiving condition.
+    // 1.5x can cause multiline to alternate in Safari for some reason. There may be a mistake in the height calculation or the inclusion of padding that is causing this. Padding was added to the calculation in commit 113c692. Further investigation is needed.
+    // See: https://github.com/cybersemics/em/issues/2778#issuecomment-2605083798
+    setMultiline(height - paddingTop - paddingBottom > singleLineHeight * 1.2)
   }, [contentRef, fontSize])
 
   // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
