@@ -33,14 +33,14 @@ const commonPlugins = {
 }
 
 const commonRules = {
-  'no-irregular-whitespace': 'error',
-  'no-extra-semi': 'error',
-  'prefer-const': 'error',
-  'no-loop-func': 'warn',
-  'no-useless-constructor': 'warn',
-  'react/display-name': 'error',
+  'no-irregular-whitespace': 2,
+  'no-extra-semi': 2,
+  'prefer-const': 2,
+  'no-loop-func': 1,
+  'no-useless-constructor': 1,
+  'react/display-name': 2,
   'no-restricted-properties': [
-    'error',
+    2,
     {
       object: 'window',
       property: 'getSelection',
@@ -48,10 +48,10 @@ const commonRules = {
         'Please import the appropriate helper function from /src/device/selection.ts to access the browser selection. This is done to abstract the browser selection API from the rest of the codebase.',
     },
   ],
-  'export-default-identifier/export-default-identifier': 'off',
+  'export-default-identifier/export-default-identifier': 0,
 
   'import/prefer-default-export': [
-    'error',
+    2,
     {
       // any: Any exporting file must contain a default export.
       // single: When there is only a single export from a module, prefer using default export over named export.
@@ -59,27 +59,27 @@ const commonRules = {
     },
   ],
 
-  'jsdoc/check-alignment': 'error',
-  'jsdoc/check-indentation': 'error',
-  'jsdoc/check-syntax': 'error',
-  'jsdoc/check-types': 'error',
-  'jsdoc/implements-on-classes': 'error',
-  'jsdoc/no-types': 'error',
-  'jsdoc/no-undefined-types': 'error',
+  'jsdoc/check-alignment': 2,
+  'jsdoc/check-indentation': 2,
+  'jsdoc/check-syntax': 2,
+  'jsdoc/check-types': 2,
+  'jsdoc/implements-on-classes': 2,
+  'jsdoc/no-types': 2,
+  'jsdoc/no-undefined-types': 2,
   'jsdoc/check-tag-names': [
-    'error',
+    2,
     {
       definedTags: ['packageDocumentation'],
     },
   ],
   'jsdoc/require-description-complete-sentence': [
-    'error',
+    2,
     {
       abbreviations: ['e.g.', 'i.e.'],
     },
   ],
   'jsdoc/require-jsdoc': [
-    'error',
+    2,
     {
       contexts: ['VariableDeclarator > ArrowFunctionExpression'],
       enableFixer: false,
@@ -90,24 +90,24 @@ const commonRules = {
     },
   ],
   // jsx-a11y
-  'jsx-a11y/anchor-is-valid': 'off',
+  'jsx-a11y/anchor-is-valid': 0,
   // react
 
-  'react/jsx-curly-spacing': 'error',
-  'react/jsx-equals-spacing': 'error',
-  'react/react-in-jsx-scope': 'off',
-  'react/jsx-tag-spacing': ['error', { beforeSelfClosing: 'allow' }],
-  'react/no-children-prop': 'off',
-  'react/no-unescaped-entities': 'off',
-  'react/prop-types': 'off',
+  'react/jsx-curly-spacing': 2,
+  'react/jsx-equals-spacing': 2,
+  'react/react-in-jsx-scope': 0,
+  'react/jsx-tag-spacing': [2, { beforeSelfClosing: 'allow' }],
+  'react/no-children-prop': 0,
+  'react/no-unescaped-entities': 0,
+  'react/prop-types': 0,
   // react-hooks
 
-  'react-hooks/exhaustive-deps': 'error',
+  'react-hooks/exhaustive-deps': 2,
   // prettier
 
-  'prettier/prettier': 'error',
-  'arrow-body-style': 'off',
-  'prefer-arrow-callback': 'off',
+  'prettier/prettier': 2,
+  'arrow-body-style': 0,
+  'prefer-arrow-callback': 0,
 }
 
 export default [
@@ -143,8 +143,8 @@ export default [
   {
     files: ['src/e2e/**', '**/__tests__/*'],
     rules: {
-      'no-restricted-properties': 'off',
-      'jsdoc/check-tag-names': 'off',
+      'no-restricted-properties': 0,
+      'jsdoc/check-tag-names': 0,
     },
   },
   // Overrides for TypeScript files
@@ -163,42 +163,42 @@ export default [
     rules: {
       ...typescriptEslint.configs['eslint-recommended'].rules,
       ...typescriptEslint.configs.recommended.rules,
-      semi: ['error', 'never'],
-      'no-extra-parens': 'off',
-      'no-unused-vars': 'off',
-      'no-use-before-define': 'off',
+      semi: [2, 'never'],
+      'no-extra-parens': 0,
+      'no-unused-vars': 0,
+      'no-use-before-define': 0,
       '@stylistic/ts/member-delimiter-style': [
-        'error',
+        2,
         {
           multiline: {
             delimiter: 'none',
           },
         },
       ],
-      '@typescript-eslint/no-var-requires': 'error',
-      '@typescript-eslint/no-require-imports': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/prefer-namespace-keyword': 'error',
-      '@typescript-eslint/no-non-null-assertion': 'off',
-      '@typescript-eslint/no-use-before-define': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { args: 'none', caughtErrors: 'none', varsIgnorePattern: '^_' }],
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/array-type': 'error',
+      '@typescript-eslint/no-var-requires': 2,
+      '@typescript-eslint/no-require-imports': 0,
+      '@typescript-eslint/no-explicit-any': 0,
+      '@typescript-eslint/prefer-namespace-keyword': 2,
+      '@typescript-eslint/no-non-null-assertion': 0,
+      '@typescript-eslint/no-use-before-define': 2,
+      '@typescript-eslint/no-unused-vars': [2, { args: 'none', caughtErrors: 'none', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/explicit-function-return-type': 0,
+      '@typescript-eslint/explicit-module-boundary-types': 0,
+      '@typescript-eslint/array-type': 2,
       // jsx
 
-      'jsx-quotes': ['error', 'prefer-single'],
+      'jsx-quotes': [2, 'prefer-single'],
       // react-refresh
 
-      'react-refresh/only-export-components': 'error',
+      'react-refresh/only-export-components': 2,
       // pandacss
 
       ...panda.configs.recommended.rules,
-      '@pandacss/no-config-function-in-source': 'off',
-      '@pandacss/prefer-longhand-properties': 'error',
-      '@pandacss/no-dynamic-styling': 'off',
-      '@pandacss/no-hardcoded-color': 'error',
-      '@pandacss/no-property-renaming': 'error',
+      '@pandacss/no-config-function-in-source': 0,
+      '@pandacss/prefer-longhand-properties': 2,
+      '@pandacss/no-dynamic-styling': 0,
+      '@pandacss/no-hardcoded-color': 2,
+      '@pandacss/no-property-renaming': 2,
     },
   },
 
@@ -217,7 +217,7 @@ export default [
   {
     files: ['./src/e2e/**/*.ts'],
     rules: {
-      'jsdoc/check-tag-names': 'off',
+      'jsdoc/check-tag-names': 0,
     },
   },
 ]
