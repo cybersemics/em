@@ -43,7 +43,7 @@ import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
-import editingValueStoreUntrimmed from '../stores/editingValueUntrimmed'
+import editingValueStoreUpdatedAt from '../stores/editingValueUpdatedAt'
 import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
@@ -360,7 +360,7 @@ const Editable = ({
           6. editingValueStore must be updated, otherwise it will retain the stale value aa
       */
       editingValueStore.update(newValue)
-      editingValueStoreUntrimmed.update(e.target.value)
+      editingValueStoreUpdatedAt.update(Date.now())
 
       // TODO: Disable keypress
       // e.preventDefault() does not work
