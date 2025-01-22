@@ -2,7 +2,6 @@ import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
-import down from '../helpers/down'
 import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import keyboard from '../helpers/keyboard'
@@ -11,7 +10,6 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
-import { page } from '../setup'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -245,15 +243,11 @@ describe('Undo/Redo', () => {
 
     // edit "hello" to "hello world"
     await clickThought('hello')
-    await page.keyboard.down('Control')
-    await press('ArrowRight')
-    await page.keyboard.up('Control')
+    await press('ArrowRight', { ctrl: true })
     await keyboard.type(' world')
 
     // undo
-    await page.keyboard.down('Control')
-    await press('z')
-    await page.keyboard.up('Control')
+    await press('z', { meta: true })
 
     const thoughtValue = await getEditingText()
     expect(thoughtValue).toBe('hello')
