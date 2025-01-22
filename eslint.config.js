@@ -65,9 +65,7 @@ const commonRules = {
   'jsdoc/check-types': 'error',
   'jsdoc/implements-on-classes': 'error',
   'jsdoc/no-types': 'error',
-  // Disable until performance issue is solved.
-  // https://github.com/gajus/eslint-plugin-jsdoc/issues/1334
-  // 'jsdoc/no-undefined-types': 2,
+  'jsdoc/no-undefined-types': 'error',
   'jsdoc/check-tag-names': [
     'error',
     {
