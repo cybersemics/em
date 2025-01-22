@@ -92,6 +92,10 @@ const groups: {
     title: 'Help',
     commands: ['help'],
   },
+  {
+    title: 'Cancel',
+    commands: ['cancel'],
+  },
 ]
 
 // assert that groups include all necessary commands

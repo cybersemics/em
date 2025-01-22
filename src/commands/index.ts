@@ -3,6 +3,7 @@
 export { default as archive, archiveAliases } from './archive'
 export { default as bindContext } from './bindContext'
 export { default as bumpThoughtDown } from './bumpThoughtDown'
+export { default as cancel } from './cancel'
 export { default as clearThought } from './clearThought'
 export { default as code } from './code'
 export { default as collapseContext } from './collapseContext'

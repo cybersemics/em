@@ -8,7 +8,6 @@ import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
-import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -210,17 +209,30 @@ const CommandRow: FC<{
                         )
                       })()
                     : // For other commands, use normal highlighting
-                      gestureInProgress.length
+                      shortcut.id === 'cancel'
+                      ? selected
+                        ? 1
+                        : undefined
+                      : gestureInProgress.length
                   : undefined
               }
-              path={gestureString(shortcut)}
+              path={shortcut.id === 'cancel' ? null : gestureString(shortcut)}
               strokeWidth={4}
-              cssRaw={css.raw({
-                position: 'absolute',
-                marginLeft: selected ? 5 : 15,
-                left: selected ? '-1.75em' : '-2.2em',
-                top: selected ? '-0.2em' : '-0.75em',
-              })}
+              cssRaw={css.raw(
+                shortcut.id === 'cancel'
+                  ? {
+                      position: 'absolute',
+                      marginLeft: selected ? 5 : 15,
+                      left: '-2.3em',
+                      top: selected ? '-0.2em' : '-0.75em',
+                    }
+                  : {
+                      position: 'absolute',
+                      marginLeft: selected ? 5 : 15,
+                      left: selected ? '-1.75em' : '-2.2em',
+                      top: selected ? '-0.2em' : '-0.75em',
+                    },
+              )}
               width={45}
               height={45}
             />
@@ -231,7 +243,13 @@ const CommandRow: FC<{
             className={css({
               minWidth: '4em',
               whiteSpace: 'nowrap',
-              color: disabled ? 'gray' : gestureInProgress === shortcut.gesture ? 'vividHighlight' : 'fg',
+              color: disabled
+                ? 'gray'
+                : isTouch
+                  ? selected || gestureInProgress === shortcut.gesture
+                    ? 'vividHighlight'
+                    : 'fg'
+                  : 'fg',
               fontWeight: selected ? 'bold' : undefined,
             })}
           >
@@ -436,32 +454,47 @@ const CommandPalette: FC = () => {
               ...(!isTouch ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
             })}
           >
-            {shortcuts.map(shortcut => {
-              // Check if the current gesture sequence ends with help gesture
-              const helpCommand = commandById('help')
-              const isHelpMatch =
-                shortcut.id === 'help' && (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+            {shortcuts.length > 0 ? (
+              <>
+                {(() => {
+                  const helpCommand = commandById('help')
+                  // Check if current gesture matches any command's gesture once
+                  const hasMatchingCommand = shortcuts.some(cmd => gestureInProgress === cmd.gesture)
 
-              return (
-                <CommandRow
-                  search={search}
-                  gestureInProgress={gestureInProgress as string}
-                  key={shortcut.id}
-                  last={shortcut === shortcuts[shortcuts.length - 1]}
-                  onClick={onExecute}
-                  onHover={onHover}
-                  selected={
-                    !isTouch ? shortcut === selectedShortcut : isHelpMatch || gestureInProgress === shortcut.gesture
-                  }
-                  shortcut={shortcut}
-                />
-              )
-            })}
-            {shortcuts.length === 0 && <span className={css({ marginLeft: '1em' })}>No matching commands</span>}
+                  return shortcuts.map(shortcut => {
+                    const isHelpMatch =
+                      shortcut.id === 'help' &&
+                      (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+
+                    const isCancelMatch =
+                      shortcut.id === 'cancel' &&
+                      !hasMatchingCommand &&
+                      !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+
+                    return (
+                      <CommandRow
+                        search={search}
+                        gestureInProgress={gestureInProgress as string}
+                        key={shortcut.id}
+                        last={shortcut === shortcuts[shortcuts.length - 1]}
+                        onClick={onExecute}
+                        onHover={onHover}
+                        selected={
+                          !isTouch
+                            ? shortcut === selectedShortcut
+                            : isHelpMatch || gestureInProgress == shortcut.gesture || isCancelMatch
+                        }
+                        shortcut={shortcut}
+                      />
+                    )
+                  })
+                })()}
+              </>
+            ) : (
+              <span className={css({ marginLeft: '1em' })}>No matching commands</span>
+            )}
           </div>
         </div>
-      ) : isTouch ? (
-        <div className={css({ textAlign: 'center' })}>{GESTURE_CANCEL_ALERT_TEXT}</div>
       ) : null}
     </div>
   )

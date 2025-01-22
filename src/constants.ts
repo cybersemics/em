@@ -152,9 +152,6 @@ export const MIN_LINE_HEIGHT = 26
 // the maximum number of characters of a thought to display before ellipsizing in links and tutorial
 export const THOUGHT_ELLIPSIZED_CHARS = 16
 
-// The text that is alerted when a gesture is made that does not correspond to a valid shortcut.
-export const GESTURE_CANCEL_ALERT_TEXT = '✗ Cancel gesture'
-
 // delay after gesture hint is activated before command palette appears
 export const COMMAND_PALETTE_TIMEOUT = 400
 
