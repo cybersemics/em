@@ -204,7 +204,7 @@ const GestureDiagram = ({
     <svg
       width={width || '100'}
       height={height || '100'}
-      className={css(inGestureContainer && { position: 'relative' }, cssRaw)}
+      className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
       style={style}
       ref={onRef}
       viewBox={viewBox}
