@@ -5,7 +5,7 @@ import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import hashPath from '../../util/hashPath'
-import toggleContextViewShortcut from '../toggleContextView'
+import toggleContextViewCommand from '../toggleContextView'
 
 describe('toggleContextView', () => {
   describe('multicursor', () => {
@@ -28,7 +28,7 @@ describe('toggleContextView', () => {
         addMulticursor(['b', 'm']),
       ])
 
-      executeCommandWithMulticursor(toggleContextViewShortcut, { store })
+      executeCommandWithMulticursor(toggleContextViewCommand, { store })
 
       const stateNew = store.getState()
 

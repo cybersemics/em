@@ -20,14 +20,14 @@ export const removeToolbarButtonActionCreator =
     dispatch(initUserToolbar())
     const state = getState()
     const userToolbarThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
-    const userShortcutChildren = getChildrenRanked(getState(), userToolbarThoughtId)
-    const userShortcutIds = userShortcutChildren.map(subthought => subthought.value)
+    const userCommandChildren = getChildrenRanked(getState(), userToolbarThoughtId)
+    const userCommandIds = userCommandChildren.map(subthought => subthought.value)
 
     // user commands must exist since it was created above
-    const userShortcutsPath = contextToPath(getState(), [EM_TOKEN, 'Settings', 'Toolbar'])!
-    const fromIndex = userShortcutIds.indexOf(commandId)
+    const userCommandsPath = contextToPath(getState(), [EM_TOKEN, 'Settings', 'Toolbar'])!
+    const fromIndex = userCommandIds.indexOf(commandId)
     if (fromIndex === -1) return
-    const fromThoughtId = userShortcutChildren[fromIndex].id
+    const fromThoughtId = userCommandChildren[fromIndex].id
 
     dispatch([
       alert(`Removed ${command.label} from toolbar`, {
@@ -36,7 +36,7 @@ export const removeToolbarButtonActionCreator =
       }),
       deleteThought({
         thoughtId: fromThoughtId,
-        pathParent: userShortcutsPath,
+        pathParent: userCommandsPath,
       }),
     ])
   }

@@ -5,8 +5,8 @@ import { importTextActionCreator as importTextAction } from '../../actions/impor
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
-import newSubthoughtTopShortcut from '../../commands/newSubthoughtTop'
-import toggleSortShortcut from '../../commands/toggleSort'
+import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
+import toggleSortCommand from '../../commands/toggleSort'
 import createTestStore from '../../test-helpers/createTestStore'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
@@ -82,7 +82,7 @@ describe('normal view', () => {
         setCursorAction(['a', 'n']),
       ])
     })
-    act(() => executeCommand(toggleSortShortcut, { store }))
+    act(() => executeCommand(toggleSortCommand, { store }))
     act(() => {
       store.dispatch([setCursorAction(['a'])])
     })
@@ -107,7 +107,7 @@ describe('normal view', () => {
         setCursorAction(['x']),
       ])
     })
-    act(() => executeCommand(newSubthoughtTopShortcut, { store }))
+    act(() => executeCommand(newSubthoughtTopCommand, { store }))
     const stateNew = cursorDown(store.getState())
     expectPathToEqual(stateNew, stateNew.cursor, ['x', 'b'])
   })

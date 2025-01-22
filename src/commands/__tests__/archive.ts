@@ -5,7 +5,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
-import archiveShortcut from '../archive'
+import archiveCommand from '../archive'
 
 describe('archive', () => {
   describe('multicursor', () => {
@@ -26,7 +26,7 @@ describe('archive', () => {
         addMulticursor(['c']),
       ])
 
-      executeCommandWithMulticursor(archiveShortcut, { store })
+      executeCommandWithMulticursor(archiveCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -59,7 +59,7 @@ describe('archive', () => {
         addMulticursor(['d', 'f']),
       ])
 
-      executeCommandWithMulticursor(archiveShortcut, { store })
+      executeCommandWithMulticursor(archiveCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -94,7 +94,7 @@ describe('archive', () => {
         addMulticursor(['c']),
       ])
 
-      executeCommandWithMulticursor(archiveShortcut, { store })
+      executeCommandWithMulticursor(archiveCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -126,7 +126,7 @@ describe('archive', () => {
         addMulticursor(['=archive', 'y']),
       ])
 
-      executeCommandWithMulticursor(archiveShortcut, { store })
+      executeCommandWithMulticursor(archiveCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -157,7 +157,7 @@ describe('archive', () => {
         addMulticursor(['c', '']),
       ])
 
-      executeCommandWithMulticursor(archiveShortcut, { store })
+      executeCommandWithMulticursor(archiveCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

@@ -8,7 +8,7 @@ import isPinned from '../selectors/isPinned'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 
-const pinShortcut: Command = {
+const pinCommand: Command = {
   id: 'pin',
   label: 'Pin',
   labelInverse: 'Unpin',
@@ -60,4 +60,4 @@ const pinShortcut: Command = {
   },
 }
 
-export default pinShortcut
+export default pinCommand

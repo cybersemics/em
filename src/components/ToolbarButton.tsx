@@ -60,8 +60,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const commandState = commandStateStore.useSelector(
     state => state[commandId as keyof typeof state] as boolean | undefined,
   )
-  const isShortcutActive = useSelector(state => !isActive || isActive(state))
-  const isButtonActive = customize ? selected : commandState !== undefined ? commandState : isShortcutActive
+  const isCommandActive = useSelector(state => !isActive || isActive(state))
+  const isButtonActive = customize ? selected : commandState !== undefined ? commandState : isCommandActive
 
   const dragCommandZone = useSelector(state => state.dragCommandZone)
   const isDraggingAny = useSelector(state => !!state.dragCommand)

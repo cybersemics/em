@@ -5,7 +5,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
-import moveThoughtUpShortcut from '../moveThoughtUp'
+import moveThoughtUpCommand from '../moveThoughtUp'
 
 describe('moveThoughtUp', () => {
   it('moves a single thought up', () => {
@@ -22,7 +22,7 @@ describe('moveThoughtUp', () => {
       setCursor(['c']),
     ])
 
-    executeCommandWithMulticursor(moveThoughtUpShortcut, { store })
+    executeCommandWithMulticursor(moveThoughtUpCommand, { store })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -51,7 +51,7 @@ describe('moveThoughtUp', () => {
         addMulticursor(['e']),
       ])
 
-      executeCommandWithMulticursor(moveThoughtUpShortcut, { store })
+      executeCommandWithMulticursor(moveThoughtUpCommand, { store })
 
       const state = store.getState()
       const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -85,7 +85,7 @@ describe('moveThoughtUp', () => {
         addMulticursor(['c', 'c2']),
       ])
 
-      executeCommandWithMulticursor(moveThoughtUpShortcut, { store })
+      executeCommandWithMulticursor(moveThoughtUpCommand, { store })
 
       const state = store.getState()
       const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -116,7 +116,7 @@ describe('moveThoughtUp', () => {
         addMulticursor(['b']),
       ])
 
-      executeCommandWithMulticursor(moveThoughtUpShortcut, { store })
+      executeCommandWithMulticursor(moveThoughtUpCommand, { store })
 
       const state = store.getState()
       const exported = exportContext(state, [HOME_TOKEN], 'text/plain')

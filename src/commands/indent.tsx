@@ -9,7 +9,7 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorForward from './moveCursorForward'
 
-const indentShortcut: Command = {
+const indentCommand: Command = {
   id: 'indent',
   label: 'Indent',
   description: 'Indent the current thought one level deeper.',
@@ -42,4 +42,4 @@ const indentShortcut: Command = {
   exec: dispatch => dispatch(indent()),
 }
 
-export default indentShortcut
+export default indentCommand

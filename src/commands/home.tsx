@@ -4,7 +4,7 @@ import Thunk from '../@types/Thunk'
 import { homeActionCreator as home } from '../actions/home'
 import HomeToolbarIcon from '../components/icons/HomeToolbarIcon'
 
-const homeShortcut: Command = {
+const homeCommand: Command = {
   id: 'home',
   label: 'Home',
   description: 'Navigate to Home.',
@@ -14,4 +14,4 @@ const homeShortcut: Command = {
   exec: (dispatch: Dispatch<Thunk>) => dispatch(home()),
 }
 
-export default homeShortcut
+export default homeCommand

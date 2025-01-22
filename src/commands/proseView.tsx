@@ -8,7 +8,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const proseViewShortcut: Command = {
+const proseViewCommand: Command = {
   id: 'proseView',
   label: 'Prose View',
   description: 'Display subthoughts of the current thought as indented paragraphs.',
@@ -40,4 +40,4 @@ const proseViewShortcut: Command = {
   },
 }
 
-export default proseViewShortcut
+export default proseViewCommand

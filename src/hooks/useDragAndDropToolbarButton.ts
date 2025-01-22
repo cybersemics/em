@@ -32,20 +32,20 @@ const drop = (commandId: CommandId, monitor: DropTargetMonitor) => {
     (dispatch, getState) => {
       const state = getState()
       const userToolbarThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
-      const userShortcutChildren = getChildrenRanked(state, userToolbarThoughtId)
-      const userShortcutIds = userShortcutChildren.map(subthought => subthought.value)
+      const userCommandChildren = getChildrenRanked(state, userToolbarThoughtId)
+      const userCommandIds = userCommandChildren.map(subthought => subthought.value)
 
       // user commands must exist since it was created above
-      const userShortcutsPath = contextToPath(state, [EM_TOKEN, 'Settings', 'Toolbar'])!
-      const fromIndex = userShortcutIds.indexOf(from.id)
-      const toIndex = userShortcutIds.indexOf(to.id)
+      const userCommandsPath = contextToPath(state, [EM_TOKEN, 'Settings', 'Toolbar'])!
+      const fromIndex = userCommandIds.indexOf(from.id)
+      const toIndex = userCommandIds.indexOf(to.id)
       if (toIndex === -1) {
         console.error('Missing toIndex for', to.id)
         return
       }
 
-      const toThoughtId = userShortcutChildren[toIndex].id
-      const toPath = appendToPath(userShortcutsPath, toThoughtId)
+      const toThoughtId = userCommandChildren[toIndex].id
+      const toPath = appendToPath(userCommandsPath, toThoughtId)
 
       if (fromIndex === -1) {
         store.dispatch(
@@ -57,8 +57,8 @@ const drop = (commandId: CommandId, monitor: DropTargetMonitor) => {
           }),
         )
       } else {
-        const fromThoughtId = userShortcutChildren[fromIndex].id
-        const fromPath = appendToPath(userShortcutsPath, fromThoughtId)
+        const fromThoughtId = userCommandChildren[fromIndex].id
+        const fromPath = appendToPath(userCommandsPath, fromThoughtId)
         store.dispatch(
           moveThought({
             oldPath: fromPath,

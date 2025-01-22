@@ -9,7 +9,7 @@ import appendToPath from '../util/appendToPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 
-const moveThoughtUpShortcut: Command = {
+const moveThoughtUpCommand: Command = {
   id: 'moveThoughtUp',
   label: 'Move Thought Up',
   description: 'Move the current thought up.',
@@ -36,4 +36,4 @@ const moveThoughtUpShortcut: Command = {
   exec: dispatch => dispatch(moveThoughtUp()),
 }
 
-export default moveThoughtUpShortcut
+export default moveThoughtUpCommand

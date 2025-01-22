@@ -9,7 +9,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
-import deleteShortcut from '../delete'
+import deleteCommand from '../delete'
 
 describe('delete', () => {
   describe('DOM', () => {
@@ -31,7 +31,7 @@ describe('delete', () => {
 
       await act(vi.runOnlyPendingTimersAsync)
 
-      act(() => executeCommand(deleteShortcut, { store }))
+      act(() => executeCommand(deleteCommand, { store }))
 
       await act(vi.runAllTimersAsync)
 
@@ -58,7 +58,7 @@ describe('delete', () => {
         addMulticursor(['c']),
       ])
 
-      executeCommandWithMulticursor(deleteShortcut, { store })
+      executeCommandWithMulticursor(deleteCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -88,7 +88,7 @@ describe('delete', () => {
         addMulticursor(['d', 'f']),
       ])
 
-      executeCommandWithMulticursor(deleteShortcut, { store })
+      executeCommandWithMulticursor(deleteCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -119,7 +119,7 @@ describe('delete', () => {
         addMulticursor(['c']),
       ])
 
-      executeCommandWithMulticursor(deleteShortcut, { store })
+      executeCommandWithMulticursor(deleteCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

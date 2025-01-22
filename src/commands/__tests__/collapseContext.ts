@@ -5,7 +5,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
-import collapseContextShortcut from '../collapseContext'
+import collapseContextCommand from '../collapseContext'
 
 describe('collapseContext', () => {
   describe('multicursor', () => {
@@ -29,7 +29,7 @@ describe('collapseContext', () => {
         addMulticursor(['b']),
       ])
 
-      executeCommandWithMulticursor(collapseContextShortcut, { store })
+      executeCommandWithMulticursor(collapseContextCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -67,7 +67,7 @@ describe('collapseContext', () => {
         addMulticursor(['d', 'e']),
       ])
 
-      executeCommandWithMulticursor(collapseContextShortcut, { store })
+      executeCommandWithMulticursor(collapseContextCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -104,7 +104,7 @@ describe('collapseContext', () => {
         addMulticursor(['c']),
       ])
 
-      executeCommandWithMulticursor(collapseContextShortcut, { store })
+      executeCommandWithMulticursor(collapseContextCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -136,7 +136,7 @@ describe('collapseContext', () => {
         addMulticursor(['e', 'f']),
       ])
 
-      executeCommandWithMulticursor(collapseContextShortcut, { store })
+      executeCommandWithMulticursor(collapseContextCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

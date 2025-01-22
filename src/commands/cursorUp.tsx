@@ -44,7 +44,7 @@ const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType)
   </svg>
 )
 
-const cursorUpShortcut: Command = {
+const cursorUpCommand: Command = {
   id: 'cursorUp',
   label: 'Cursor Up',
   keyboard: { key: Key.ArrowUp },
@@ -134,10 +134,10 @@ const cursorUpShortcut: Command = {
 }
 
 export const cursorUpAlias: Command = {
-  ...cursorUpShortcut,
+  ...cursorUpCommand,
   id: 'cursorUpAlias',
   gesture: undefined,
   keyboard: { key: Key.ArrowUp, shift: true },
 }
 
-export default cursorUpShortcut
+export default cursorUpCommand

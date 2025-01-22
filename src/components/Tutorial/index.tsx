@@ -30,8 +30,8 @@ const WithCSSTransition = ({ component, transitionKey }: { component: FC; transi
 }
 
 // assert command at load time
-const newThoughtShortcut = commandById('newThought')
-if (!newThoughtShortcut) {
+const newThoughtCommand = commandById('newThought')
+if (!newThoughtCommand) {
   throw new Error('newThought command not found.')
 }
 

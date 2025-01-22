@@ -5,7 +5,7 @@ import { searchActionCreator as search } from '../actions/search'
 import SearchIcon from '../components/SearchIcon'
 import * as selection from '../device/selection'
 
-const searchShortcut: Command = {
+const searchCommand: Command = {
   id: 'search',
   label: 'Search',
   description: 'Open the Search input. Use the same command to close.',
@@ -27,4 +27,4 @@ const searchShortcut: Command = {
   },
 }
 
-export default searchShortcut
+export default searchCommand

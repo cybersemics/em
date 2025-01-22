@@ -16,7 +16,7 @@ interface TraceGestureProps {
   eventNodeRef?: React.RefObject<HTMLElement>
 }
 
-/** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and CommandPaletteGesture which have different ways of showing a cancelled gesture. */
+/** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: CommandPaletteGesture which have different ways of showing a cancelled gesture. */
 const useGestureCancelled = () => {
   const showCommandPalette = useSelector(state => state.showCommandPalette)
 

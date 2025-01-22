@@ -5,7 +5,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
-import swapNoteShortcut from '../swapNote'
+import swapNoteCommand from '../swapNote'
 
 describe('swapNote', () => {
   it('converts a thought to a note', () => {
@@ -21,7 +21,7 @@ describe('swapNote', () => {
       setCursor(['a', 'b']),
     ])
 
-    executeCommand(swapNoteShortcut, { store })
+    executeCommand(swapNoteCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -45,7 +45,7 @@ describe('swapNote', () => {
       setCursor(['a']),
     ])
 
-    executeCommand(swapNoteShortcut, { store })
+    executeCommand(swapNoteCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -74,7 +74,7 @@ describe('swapNote', () => {
         addMulticursor(['e', 'f']),
       ])
 
-      executeCommandWithMulticursor(swapNoteShortcut, { store })
+      executeCommandWithMulticursor(swapNoteCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- __ROOT__

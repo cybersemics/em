@@ -9,7 +9,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const toggleSortShortcut: Command = {
+const toggleSortCommand: Command = {
   id: 'toggleSort',
   label: 'Sort',
   description:
@@ -71,4 +71,4 @@ const toggleSortShortcut: Command = {
   },
 }
 
-export default toggleSortShortcut
+export default toggleSortCommand

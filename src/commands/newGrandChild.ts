@@ -3,7 +3,7 @@ import { newGrandChildActionCreator as newGrandChild } from '../actions/newGrand
 import SettingsIcon from '../components/icons/SettingsIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const newGrandChildShortcut: Command = {
+const newGrandChildCommand: Command = {
   id: 'newGrandChild',
   label: 'New Grandchild',
   description: 'Create a thought within the first subthought.',
@@ -18,4 +18,4 @@ const newGrandChildShortcut: Command = {
   exec: dispatch => dispatch(newGrandChild()),
 }
 
-export default newGrandChildShortcut
+export default newGrandChildCommand

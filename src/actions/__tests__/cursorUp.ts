@@ -6,7 +6,7 @@ import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
 import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
-import newSubthoughtTopShortcut from '../../commands/newSubthoughtTop'
+import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import isContextViewActive from '../../selectors/isContextViewActive'
@@ -196,7 +196,7 @@ describe('normal view', () => {
         setCursorAction(['x']),
       ])
     })
-    act(() => executeCommand(newSubthoughtTopShortcut, { store }))
+    act(() => executeCommand(newSubthoughtTopCommand, { store }))
     const stateNew = cursorUp(store.getState())
     expectPathToEqual(stateNew, stateNew.cursor, ['x'])
   })

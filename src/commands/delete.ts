@@ -51,7 +51,7 @@ const exec: Command['exec'] = (dispatch, getState) => {
   }
 }
 
-const deleteShortcut: Command = {
+const deleteCommand: Command = {
   id: 'delete',
   label: 'Delete',
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
@@ -83,4 +83,4 @@ const deleteShortcut: Command = {
   svg: Icon,
 }
 
-export default deleteShortcut
+export default deleteCommand

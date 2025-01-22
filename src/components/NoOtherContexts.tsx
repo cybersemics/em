@@ -7,7 +7,7 @@ import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut } from '../commands'
 import GestureDiagram from '../components/GestureDiagram'
 
-const toggleContextViewShortcut = commandById('toggleContextView')
+const toggleContextViewCommand = commandById('toggleContextView')
 
 /** A message that explains that the thought is no other contexts and provides a hint for adding it to a context. */
 const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean; simplePath: SimplePath }) => {
@@ -29,10 +29,10 @@ const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean;
       {/* <div>
         {isTouch ? (
           <span>
-            Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
+            Swipe <GestureDiagram path={subthoughtCommand.gesture as GesturePath} size={30} color='darkgray' />
           </span>
         ) : (
-          <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
+          <span>Type {formatKeyboardShortcut(subthoughtCommand.keyboard!)}</span>
         )}{' '}
         to add "{value}" to a new context.
       </div> */}
@@ -45,13 +45,13 @@ const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean;
               Swipe{' '}
               <GestureDiagram
                 inGestureContainer
-                path={toggleContextViewShortcut.gesture as GesturePath}
+                path={toggleContextViewCommand.gesture as GesturePath}
                 size={30}
                 color={token('colors.gray66')}
               />
             </span>
           ) : (
-            <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
+            <span>Type {formatKeyboardShortcut(toggleContextViewCommand.keyboard!)}</span>
           )}{' '}
           to toggle context view off.
         </div>

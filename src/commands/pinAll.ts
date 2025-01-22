@@ -15,7 +15,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const pinAllShortcut: Command = {
+const pinAllCommand: Command = {
   id: 'pinAll',
   label: 'Pin All',
   labelInverse: 'Unpin All',
@@ -92,4 +92,4 @@ const pinAllShortcut: Command = {
   },
 }
 
-export default pinAllShortcut
+export default pinAllCommand

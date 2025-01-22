@@ -5,7 +5,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
-import joinShortcut from '../join'
+import joinCommand from '../join'
 
 describe('join', () => {
   describe('multicursor', () => {
@@ -29,7 +29,7 @@ describe('join', () => {
         addMulticursor(['x', 'd']),
       ])
 
-      executeCommandWithMulticursor(joinShortcut, { store })
+      executeCommandWithMulticursor(joinCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

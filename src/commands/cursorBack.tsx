@@ -8,7 +8,7 @@ import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorBackShortcut: Command = {
+const cursorBackCommand: Command = {
   id: 'cursorBack',
   label: 'Back',
   description: 'Move the cursor up a level.',
@@ -39,4 +39,4 @@ const cursorBackShortcut: Command = {
   }),
 }
 
-export default cursorBackShortcut
+export default cursorBackCommand

@@ -45,7 +45,7 @@ const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType)
   </svg>
 )
 
-const cursorDownShortcut: Command = {
+const cursorDownCommand: Command = {
   id: 'cursorDown',
   label: 'Cursor Down',
   keyboard: { key: Key.ArrowDown },
@@ -132,10 +132,10 @@ const cursorDownShortcut: Command = {
 }
 
 export const cursorDownAlias: Command = {
-  ...cursorDownShortcut,
+  ...cursorDownCommand,
   id: 'cursorDownAlias',
   gesture: undefined,
   keyboard: { key: Key.ArrowDown, shift: true },
 }
 
-export default cursorDownShortcut
+export default cursorDownCommand

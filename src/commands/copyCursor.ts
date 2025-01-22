@@ -17,7 +17,7 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 
-const copyCursorShortcut: Command = {
+const copyCursorCommand: Command = {
   id: 'copyCursor',
   label: 'Copy Cursor',
   description: 'Copies the cursor and all descendants.',
@@ -114,4 +114,4 @@ const copyCursorShortcut: Command = {
   },
 }
 
-export default copyCursorShortcut
+export default copyCursorCommand

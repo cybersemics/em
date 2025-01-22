@@ -5,7 +5,7 @@ import { isTouch } from '../browser'
 import NewThoughtAboveIcon from '../components/icons/NewThoughtAboveIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const newThoughtAboveShortcut: Command = {
+const newThoughtAboveCommand: Command = {
   id: 'newThoughtAbove',
   label: 'New Thought (above)',
   description: 'Create a new thought immediately above the current thought.',
@@ -20,4 +20,4 @@ const newThoughtAboveShortcut: Command = {
   exec: newThought({ insertBefore: true }),
 }
 
-export default newThoughtAboveShortcut
+export default newThoughtAboveCommand

@@ -44,7 +44,7 @@ interface Command {
   /** Hide the command in the CommandPalette. */
   hideFromCommandPalette?: boolean
 
-  /** Hide the command in the Help modal and CommandPalette. */
+  /** Hide the command in the Help modal and: CommandPalette. */
   hideFromHelp?: boolean
 
   /** A readable, internal unique id. */

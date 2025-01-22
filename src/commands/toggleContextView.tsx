@@ -3,7 +3,7 @@ import { toggleContextViewActionCreator as toggleContextView } from '../actions/
 import ContextViewIcon from '../components/icons/ContextViewIcon'
 import isContextViewActive from '../selectors/isContextViewActive'
 
-const toggleContextViewShortcut: Command = {
+const toggleContextViewCommand: Command = {
   id: 'toggleContextView',
   label: 'Context View',
   description:
@@ -21,4 +21,4 @@ const toggleContextViewShortcut: Command = {
   exec: dispatch => dispatch(toggleContextView()),
 }
 
-export default toggleContextViewShortcut
+export default toggleContextViewCommand

@@ -3,7 +3,7 @@ import { collapseContextActionCreator as collapseContext } from '../actions/coll
 import CollapseIcon from '../components/icons/CollapseIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 
-const collapseContextShortcut: Command = {
+const collapseContextCommand: Command = {
   id: 'collapseContext',
   label: 'Collapse',
   description: 'Deletes the current thought and moves all its subthoughts up a level.',
@@ -23,4 +23,4 @@ const collapseContextShortcut: Command = {
   },
 }
 
-export default collapseContextShortcut
+export default collapseContextCommand

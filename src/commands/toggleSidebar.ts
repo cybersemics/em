@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSidebar'
 import SettingsIcon from '../components/icons/SettingsIcon'
 
-const toggleSidebarShortcut: Command = {
+const toggleSidebarCommand: Command = {
   id: 'toggleSidebar',
   label: 'Toggle Recently Edited',
   keyboard: { key: 'r', alt: true },
@@ -13,4 +13,4 @@ const toggleSidebarShortcut: Command = {
   exec: (dispatch, getState) => dispatch(toggleSidebar({ value: !getState().showSidebar })),
 }
 
-export default toggleSidebarShortcut
+export default toggleSidebarCommand

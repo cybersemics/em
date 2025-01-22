@@ -30,7 +30,7 @@ const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType)
   </svg>
 )
 
-const bindContextShortcut: Command = {
+const bindContextCommand: Command = {
   id: 'bindContext',
   label: 'Bind Context',
   svg: Icon,
@@ -58,10 +58,10 @@ const bindContextShortcut: Command = {
     dispatch(
       toggleAttribute({
         path: path,
-        values: ['=bindContextShortcut', JSON.stringify(contextBound)],
+        values: ['=bindContextCommand', JSON.stringify(contextBound)],
       }),
     )
   },
 }
 
-export default bindContextShortcut
+export default bindContextCommand

@@ -5,7 +5,7 @@ import UndoIcon from '../components/UndoIcon'
 import isUndoEnabled from '../selectors/isUndoEnabled'
 import getLatestActionType from '../util/getLastActionType'
 
-const undoShortcut: Command = {
+const undoCommand: Command = {
   id: 'undo',
   label: 'Undo',
   multicursor: 'ignore',
@@ -27,4 +27,4 @@ const undoShortcut: Command = {
   canExecute: state => isUndoEnabled(state),
 }
 
-export default undoShortcut
+export default undoCommand

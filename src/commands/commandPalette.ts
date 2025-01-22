@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import CommandPaletteIcon from '../components/icons/CommandPaletteIcon'
 
-const commandPaletteShortcut: Command = {
+const commandPaletteCommand: Command = {
   id: 'commandPalette',
   label: 'Command Palette',
   description: 'Opens the command palette where commands can be executed by name.',
@@ -14,4 +14,4 @@ const commandPaletteShortcut: Command = {
   allowExecuteFromModal: true,
 }
 
-export default commandPaletteShortcut
+export default commandPaletteCommand

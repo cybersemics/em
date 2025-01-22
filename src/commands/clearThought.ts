@@ -5,7 +5,7 @@ import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const clearThoughtShortcut: Command = {
+const clearThoughtCommand: Command = {
   id: 'clearThought',
   label: 'Clear Thought',
   description: 'Clear the text of the current thought. A quick recovery after you have changed your mind.',
@@ -31,4 +31,4 @@ const clearThoughtShortcut: Command = {
   },
 }
 
-export default clearThoughtShortcut
+export default clearThoughtCommand

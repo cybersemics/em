@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../actions/toggleHiddenThoughts'
 import HiddenThoughtsIcon from '../components/icons/HiddenThoughtsIcon'
 
-const toggleHiddenThoughtsShortcut: Command = {
+const toggleHiddenThoughtsCommand: Command = {
   id: 'toggleHiddenThoughts',
   label: 'Show Hidden Thoughts',
   labelInverse: 'Hide Hidden Thoughts',
@@ -15,4 +15,4 @@ const toggleHiddenThoughtsShortcut: Command = {
   isActive: state => state.showHiddenThoughts,
 }
 
-export default toggleHiddenThoughtsShortcut
+export default toggleHiddenThoughtsCommand

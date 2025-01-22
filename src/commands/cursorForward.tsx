@@ -24,7 +24,7 @@ const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType)
   </svg>
 )
 
-const cursorForwardShortcut: Command = {
+const cursorForwardCommand: Command = {
   id: 'cursorForward',
   description: 'Move the cursor down a level.',
   label: 'Forward',
@@ -35,4 +35,4 @@ const cursorForwardShortcut: Command = {
   exec: dispatch => dispatch(cursorForward()),
 }
 
-export default cursorForwardShortcut
+export default cursorForwardCommand

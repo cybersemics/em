@@ -8,7 +8,7 @@ import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
-import newSubthoughtShortcut from '../../commands/newSubthought'
+import newSubthoughtCommand from '../../commands/newSubthought'
 import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
 import Tip from './Tip'
@@ -28,7 +28,7 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
       You can add a new subthought by swiping
       <GestureDiagram
         inGestureContainer
-        path={newSubthoughtShortcut.gesture as GesturePath}
+        path={newSubthoughtCommand.gesture as GesturePath}
         size={30}
         color={token('colors.gray66')}
       />

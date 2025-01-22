@@ -41,7 +41,7 @@ export const isNavigation = (actionType: string) => NAVIGATION_ACTIONS[actionTyp
 // assumes that reducer names match their action types
 const UNDOABLE_ACTIONS: ActionFlags = {
   addAllMulticursor: false,
-  addLatestShortcuts: false,
+  addLatestCommands: false,
   addMulticursor: false,
   alert: false,
   archiveThought: true,
@@ -50,7 +50,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   bumpThoughtDown: true,
   clear: false,
   clearExpandDown: false,
-  clearLatestShortcuts: false,
+  clearLatestCommands: false,
   clearMulticursors: false,
   closeModal: false,
   collapseContext: true,
@@ -130,7 +130,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   toggleHiddenThoughts: true,
   toggleMulticursor: false,
   toggleNote: true,
-  toggleShortcutsDiagram: false,
+  toggleCommandsDiagram: false,
   toggleSidebar: false,
   toggleSort: true,
   toggleSplitView: false,

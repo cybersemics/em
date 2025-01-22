@@ -7,7 +7,7 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import headValue from '../util/headValue'
 import splitSentence from '../util/splitSentence'
 
-const splitSentencesShortcut: Command = {
+const splitSentencesCommand: Command = {
   id: 'splitSentences',
   label: 'Split Sentences',
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
@@ -36,4 +36,4 @@ const splitSentencesShortcut: Command = {
   },
 }
 
-export default splitSentencesShortcut
+export default splitSentencesCommand

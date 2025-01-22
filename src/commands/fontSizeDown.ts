@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import fontSizeDown from '../actions/fontSizeDown'
 import SettingsIcon from '../components/icons/SettingsIcon'
 
-const fontSizeDownShortcut: Command = {
+const fontSizeDownCommand: Command = {
   id: 'fontSizeDown',
   label: 'Decrease Font Size',
   description: 'Decrease the font size. Get your reading glasses.',
@@ -14,4 +14,4 @@ const fontSizeDownShortcut: Command = {
   },
 }
 
-export default fontSizeDownShortcut
+export default fontSizeDownCommand

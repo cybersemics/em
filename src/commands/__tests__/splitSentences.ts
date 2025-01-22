@@ -5,7 +5,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
-import splitSentencesShortcut from '../splitSentences'
+import splitSentencesCommand from '../splitSentences'
 
 describe('splitSentences', () => {
   it('splits a thought with multiple sentences', () => {
@@ -20,7 +20,7 @@ describe('splitSentences', () => {
       setCursor(['This is sentence one. This is sentence two. This is sentence three.']),
     ])
 
-    executeCommand(splitSentencesShortcut, { store })
+    executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -41,7 +41,7 @@ describe('splitSentences', () => {
       setCursor(['This is a single sentence.']),
     ])
 
-    executeCommand(splitSentencesShortcut, { store })
+    executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -60,7 +60,7 @@ describe('splitSentences', () => {
       setCursor(["Hello, world! How are you? I'm fine, thanks."]),
     ])
 
-    executeCommand(splitSentencesShortcut, { store })
+    executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -81,7 +81,7 @@ describe('splitSentences', () => {
       setCursor(['Gödel, Escher, Bach']),
     ])
 
-    executeCommand(splitSentencesShortcut, { store })
+    executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -102,7 +102,7 @@ describe('splitSentences', () => {
       setCursor(['me, you, he and she, them, thus, and, me']),
     ])
 
-    executeCommand(splitSentencesShortcut, { store })
+    executeCommand(splitSentencesCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -132,7 +132,7 @@ describe('splitSentences', () => {
         addMulticursor(['C. This is C. More C.']),
       ])
 
-      executeCommandWithMulticursor(splitSentencesShortcut, { store })
+      executeCommandWithMulticursor(splitSentencesCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- __ROOT__
@@ -162,7 +162,7 @@ describe('splitSentences', () => {
         addMulticursor(['Three now. Middle sentence. Last one.']),
       ])
 
-      executeCommandWithMulticursor(splitSentencesShortcut, { store })
+      executeCommandWithMulticursor(splitSentencesCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
       expect(exported).toBe(`- __ROOT__
