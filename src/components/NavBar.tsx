@@ -109,7 +109,7 @@ const NavBar = ({ position }: { position: string }) => {
                       className={css({
                         position: 'relative',
                         zIndex: 'stack',
-                        bottom: '30px',
+                        bottom: '35px',
                         ...(position === 'top' && { cssFloat: 'left', marginRight: '2px' }),
                         ...(position === 'bottom' && { position: 'absolute', left: '-2px' }),
                       })}
