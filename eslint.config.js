@@ -10,29 +10,7 @@ import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
-const commonSettings = {
-  ecmaVersion: 'latest',
-  sourceType: 'module',
-  globals: {
-    Atomics: 'readonly',
-    SharedArrayBuffer: 'readonly',
-  },
-}
-
-const commonPlugins = {
-  '@stylistic/ts': stylisticTs,
-  'export-default-identifier': exportDefaultIdentifier,
-  jsdoc,
-  react,
-  'react-refresh': reactRefresh,
-  prettier,
-  '@typescript-eslint': typescriptEslint,
-  import: importPlugin,
-  'react-hooks': reactHooks,
-  '@pandacss': panda,
-}
-
-const commonRules = {
+const rules = {
   'no-irregular-whitespace': 2,
   'no-extra-semi': 2,
   'prefer-const': 2,
@@ -125,14 +103,26 @@ export default [
   },
   {
     languageOptions: {
-      ...commonSettings,
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        Atomics: 'readonly',
+        SharedArrayBuffer: 'readonly',
+      },
     },
     plugins: {
-      ...commonPlugins,
+      '@stylistic/ts': stylisticTs,
+      'export-default-identifier': exportDefaultIdentifier,
+      jsdoc,
+      react,
+      'react-refresh': reactRefresh,
+      prettier,
+      '@typescript-eslint': typescriptEslint,
+      import: importPlugin,
+      'react-hooks': reactHooks,
+      '@pandacss': panda,
     },
-    rules: {
-      ...commonRules,
-    },
+    rules,
     settings: {
       react: {
         version: 'detect',
