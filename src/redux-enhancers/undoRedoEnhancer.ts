@@ -8,6 +8,7 @@ import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import editableRender from '../actions/editableRender'
 import updateThoughts from '../actions/updateThoughts'
 import getThoughtById from '../selectors/getThoughtById'
 import headValue from '../util/headValue'
@@ -271,6 +272,7 @@ const undoReducer = (state: State, undoPatches: Patch[]) => {
     undoOneReducer,
     undoTwice ? undoOneReducer : null,
     newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
+    editableRender,
   ])(state)
 }
 
@@ -290,6 +292,7 @@ const redoReducer = (state: State, redoPatches: Patch[]) => {
     redoTwice ? redoOneReducer : null,
     redoOneReducer,
     newState => restorePushQueueFromPatches(newState, state, poppedPatches.flat()),
+    editableRender,
   ])(state)
 }
 
