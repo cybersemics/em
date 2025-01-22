@@ -55,11 +55,11 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
           <>
             <span className={css({ userSelect: 'none' })}>
               {isTouch ? (
-                <span>
+                <span style={{ display: 'inline-block', marginTop: '10px' }}>
                   Swipe{' '}
                   <GestureDiagram
                     cssRaw={css.raw({
-                      marginBottom: '-10px !important',
+                      marginBottom: '-10px',
                     })}
                     inGestureContainer
                     path={newThoughtShortcut.gesture as GesturePath}
