@@ -5,7 +5,7 @@ import NewSubthoughtNextIcon from '../components/icons/NewSubthoughtNextIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 
-// NOTE: The keyboard command for New Uncle handled in New Thought command until it is confirmed that commands are evaluated in the correct order
+// NOTE: The keyboard shotcut for New Uncle handled in New Thought command until it is confirmed that commands are evaluated in the correct order
 const newUncleCommand: Command = {
   id: 'newUncle',
   label: 'New Subthought (next)',

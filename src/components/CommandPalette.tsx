@@ -8,7 +8,6 @@ import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
-import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -278,7 +277,7 @@ const CommandRow: FC<{
               </div>
             )}
 
-            {/* keyboard command */}
+            {/* keyboard shortcut */}
             {selected && !isTouch && (
               <div
                 className={css({

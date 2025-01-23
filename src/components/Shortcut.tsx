@@ -3,7 +3,7 @@ import { isTouch } from '../browser'
 import { formatKeyboardShortcut } from '../commands'
 import GestureDiagram from './GestureDiagram'
 
-/** Renders the keyboard command or gesture for a given command. */
+/** Renders the keyboard shortcut or gesture for a given command. */
 const Command = ({ gesture, keyboard, overlay }: CommandInterface): JSX.Element | null => {
   const key = overlay && overlay.keyboard ? overlay.keyboard : keyboard
   return isTouch ? (

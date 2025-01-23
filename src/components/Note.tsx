@@ -44,7 +44,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
 
   if (note === null) return null
 
-  /** Handles note keyboard commands. */
+  /** Handles note keyboard shortcuts. */
   const onKeyDown = (e: React.KeyboardEvent) => {
     // delete empty note
     const note = noteValue(store.getState(), thoughtId)

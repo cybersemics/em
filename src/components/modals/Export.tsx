@@ -413,7 +413,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         e.key === 'c' &&
         (isMac ? e.metaKey : e.ctrlKey) &&
         exportContent &&
-        // do not override copy command if user has text selected
+        // do not override copy shortcut if user has text selected
         selection.isCollapsed() !== false &&
         // textarea selection is not reflected in window.getSelection()
         textareaRef.current?.selectionStart === textareaRef.current?.selectionEnd

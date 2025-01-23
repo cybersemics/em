@@ -12,7 +12,7 @@ const multicursor: Command['multicursor'] = {
   clearMulticursor: true,
 }
 
-// NOTE: The keyboard command for New Uncle handled in New Thought command until it is confirmed that commands are evaluated in the correct order
+// NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that commands are evaluated in the correct order
 const subCategorizeOneCommand: Command = {
   id: 'subcategorizeOne',
   label: 'Subcategorize',
