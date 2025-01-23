@@ -10,7 +10,6 @@ import { DIVIDER_MIN_WIDTH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
-import editingValueStoreUpdatedAt from '../stores/editingValueUpdatedAt'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -43,7 +42,6 @@ const useDividerData = (path: Path) => {
 
       return {
         dividerId,
-        parentId,
         isOnlyChild,
         isTableView,
         children,
@@ -53,7 +51,6 @@ const useDividerData = (path: Path) => {
     (prev, next) => {
       return (
         prev.dividerId === next.dividerId &&
-        prev.parentId === next.parentId &&
         prev.isOnlyChild === next.isOnlyChild &&
         prev.isTableView === next.isTableView &&
         prev.children.length === next.children.length &&
@@ -82,10 +79,8 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const dispatch = useDispatch()
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
-  const editingValueUpdatedAt = editingValueStoreUpdatedAt.useSelector(state => state)
-
   const { dividerId, isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
-  const fontSize = useSelector(state => state.fontSize)
+  const resizeObservers = useRef<ResizeObserver[]>([])
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -125,10 +120,44 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
       setDividerWidth(Math.round(Math.max(maxWidth, DIVIDER_MIN_WIDTH)))
     }
 
-    updateDividerWidth()
+    updateDividerWidth() // Initial call to set the width
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnlyChild, isTableView, dividerId, editingValueUpdatedAt, fontSize])
+    /** Attach resize observers to relevant thought elements. */
+    const observeResize = () => {
+      // Clear any existing observers
+      resizeObservers.current.forEach(observer => observer.disconnect())
+      resizeObservers.current = []
+
+      let thoughtsToObserve: { id: ThoughtId }[] = []
+
+      if (isTableView && isOnlyChild) {
+        thoughtsToObserve = thoughtsAtSameDepth
+      } else {
+        thoughtsToObserve = children.filter(child => child.id !== dividerId && !isDivider(child.value))
+      }
+
+      thoughtsToObserve.forEach(thought => {
+        const thoughtElement = document.querySelector(
+          `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
+        )
+        if (thoughtElement) {
+          const resizeObserver = new ResizeObserver(() => {
+            updateDividerWidth()
+          })
+          resizeObserver.observe(thoughtElement)
+          resizeObservers.current.push(resizeObserver)
+        }
+      })
+    }
+
+    observeResize()
+
+    // Clean up observers on unmount or when dependencies change
+    return () => {
+      resizeObservers.current.forEach(observer => observer.disconnect())
+      resizeObservers.current = []
+    }
+  }, [children, thoughtsAtSameDepth, isOnlyChild, isTableView, dividerId])
 
   return (
     <div
