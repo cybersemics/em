@@ -4,7 +4,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import editingValueStore from '../stores/editingValue'
 import head from '../util/head'
 
-/** The live editing value is stored in a separate ministores to avoid Redux store churn. Update the editingValue store on every action. */
+/** The live editing value is stored in a separate ministore to avoid Redux store churn. Update the editingValue store on every action. */
 const updateEditingValue: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
     next(action)

@@ -116,8 +116,9 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
         widths = getThoughtWidths(siblingThoughts)
       }
 
-      const maxWidth = widths.length > 0 ? Math.max(...widths) : DIVIDER_MIN_WIDTH
-      setDividerWidth(Math.round(Math.max(maxWidth, DIVIDER_MIN_WIDTH)))
+      //const maxWidth = widths.length > 0 ? Math.max(...widths) : DIVIDER_MIN_WIDTH
+      //setDividerWidth(Math.round(Math.max(maxWidth, DIVIDER_MIN_WIDTH)))
+      setDividerWidth(Math.round(Math.max(...widths, DIVIDER_MIN_WIDTH)))
     }
 
     updateDividerWidth() // Initial call to set the width
