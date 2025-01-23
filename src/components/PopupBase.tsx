@@ -16,7 +16,7 @@ import CloseButton from './CloseButton'
 
 export type PopupBaseProps = PropsWithChildren<
   {
-    // used to cancel imports
+    /** used to cancel imports */
     importFileId?: string
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
