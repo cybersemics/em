@@ -9,22 +9,21 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { DIVIDER_MIN_WIDTH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStoreUpdatedAt from '../stores/editingValueUpdatedAt'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
-import parentOf from '../util/parentOf'
 
-/** Custom hook to fetch divider-related data from the state. */
+/** Custom hook to fetch divider-related data from the state, using rootedParentOf instead of parentOf. */
 const useDividerData = (path: Path) => {
-  const dividerId = head(path)
-  const parentPath = parentOf(path)
-  const parentId = head(parentPath)
-  const grandParentPath = parentOf(parentPath)
-  const grandParentId = head(grandParentPath)
-
   return useSelector(
     (state: State) => {
+      const dividerId = head(path)
+      const parentPath = rootedParentOf(state, path)
+      const parentId = head(parentPath)
+      const grandParentPath = parentId ? rootedParentOf(state, parentPath) : []
+      const grandParentId = head(grandParentPath)
       const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
       const childrenWithoutDividers = children.filter(child => !isDivider(child.value))
       const isOnlyChild = childrenWithoutDividers.length === 0
@@ -56,7 +55,9 @@ const useDividerData = (path: Path) => {
         prev.dividerId === next.dividerId &&
         prev.parentId === next.parentId &&
         prev.isOnlyChild === next.isOnlyChild &&
-        prev.isTableView === next.isTableView
+        prev.isTableView === next.isTableView &&
+        prev.children.length === next.children.length &&
+        prev.thoughtsAtSameDepth.length === next.thoughtsAtSameDepth.length
       )
     },
   )
@@ -81,8 +82,6 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const dispatch = useDispatch()
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
-
-  // Local state to store the timestamp of the last editing value update
   const editingValueUpdatedAt = editingValueStoreUpdatedAt.useSelector(state => state)
 
   const { dividerId, isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
@@ -105,7 +104,6 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
       }
 
       let widths: number[] = []
-
       if (isTableView && isOnlyChild) {
         if (thoughtsAtSameDepth.length === 0) {
           setDividerWidth(DIVIDER_MIN_WIDTH)
