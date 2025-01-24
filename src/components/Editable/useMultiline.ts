@@ -1,5 +1,5 @@
 import { head } from 'lodash'
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -41,7 +41,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
 
   // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
   // cursor changes to or from the element.
-  useLayoutEffect(updateMultiline, [
+  useEffect(updateMultiline, [
     contentRef,
     fontSize,
     isEditing,
