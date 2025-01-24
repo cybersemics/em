@@ -13,7 +13,7 @@ const updateEditingValue: ThunkMiddleware<State> = ({ getState }) => {
     const thought = state.cursor ? getThoughtById(state, head(state.cursor)) : null
     const value = thought?.value ?? null
 
-    editingValueStore.update(value?.trim() ?? null)
+    editingValueStore.update(value)
   }
 }
 
