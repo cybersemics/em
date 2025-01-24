@@ -80,7 +80,6 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
   const { dividerId, isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
-  const resizeObservers = useRef<ResizeObserver[]>([])
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -121,41 +120,27 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
 
     updateDividerWidth() // Initial call to set the width
 
-    /** Attach resize observers to relevant thought elements. */
-    const observeResize = () => {
-      // Clear any existing observers
-      resizeObservers.current.forEach(observer => observer.disconnect())
-      resizeObservers.current = []
+    const resizeObservers: ResizeObserver[] = []
 
-      let thoughtsToObserve: { id: ThoughtId }[] = []
+    const thoughtsToObserve =
+      isTableView && isOnlyChild
+        ? thoughtsAtSameDepth
+        : children.filter(child => child.id !== dividerId && !isDivider(child.value))
 
-      if (isTableView && isOnlyChild) {
-        thoughtsToObserve = thoughtsAtSameDepth
-      } else {
-        thoughtsToObserve = children.filter(child => child.id !== dividerId && !isDivider(child.value))
+    thoughtsToObserve.forEach(thought => {
+      const thoughtElement = document.querySelector(
+        `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
+      )
+      if (thoughtElement) {
+        const resizeObserver = new ResizeObserver(() => {
+          updateDividerWidth()
+        })
+        resizeObserver.observe(thoughtElement)
+        resizeObservers.push(resizeObserver)
       }
+    })
 
-      thoughtsToObserve.forEach(thought => {
-        const thoughtElement = document.querySelector(
-          `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
-        )
-        if (thoughtElement) {
-          const resizeObserver = new ResizeObserver(() => {
-            updateDividerWidth()
-          })
-          resizeObserver.observe(thoughtElement)
-          resizeObservers.current.push(resizeObserver)
-        }
-      })
-    }
-
-    observeResize()
-
-    // Clean up observers on unmount or when dependencies change
-    return () => {
-      resizeObservers.current.forEach(observer => observer.disconnect())
-      resizeObservers.current = []
-    }
+    return () => resizeObservers.forEach(observer => observer.disconnect())
   }, [children, thoughtsAtSameDepth, isOnlyChild, isTableView, dividerId])
 
   return (
