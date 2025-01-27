@@ -6,15 +6,16 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { DIVIDER_MIN_WIDTH } from '../constants'
+import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
+import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 
-/** Custom hook to fetch divider-related data from the state, using rootedParentOf instead of parentOf. */
+/** Custom hook to fetch divider-related data from the state. */
 const useDividerData = (path: Path) => {
   return useSelector(
     (state: State) => {
@@ -60,26 +61,50 @@ const useDividerData = (path: Path) => {
   )
 }
 
-/**
- * Calculates the width of the thought text, including trailing spaces, to ensure the divider width matches the visual representation.
- */
-const getThoughtWidths = (thoughts: { id: ThoughtId }[]) => {
-  return thoughts.map(thought => {
-    const innerThoughtElement = document.querySelector(
-      `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
-    )
-
-    // Use DOM widths for thoughts
-    return innerThoughtElement?.getBoundingClientRect().width ?? 0
-  })
-}
-
 /** A custom horizontal rule. */
 const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) => {
   const dispatch = useDispatch()
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
+
   const { dividerId, isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
+
+  const editingThoughtId = useSelector((state: State) => state.cursor && head(state.cursor))
+
+  // Subscribe to untrimmed editing value
+  const editingValueUntrimmed = editingValueUntrimmedStore.useSelector(editingValue => editingValue)
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const contextRef = useRef<CanvasRenderingContext2D | null>(null)
+
+  // Initialize canvas and context once
+  if (!canvasRef.current) {
+    canvasRef.current = document.createElement('canvas')
+    contextRef.current = canvasRef.current.getContext('2d')
+  }
+
+  /** Helper function to calculate text width including trailing spaces. */
+  const calculateTextWidth = (text: string, font: string) => {
+    if (!contextRef.current) return 0
+    contextRef.current.font = font
+    return Math.ceil(contextRef.current.measureText(text).width)
+  }
+
+  /**
+   * Calculates the width of the thought text, including trailing spaces.
+   * Uses the untrimmed editing value for the currently edited thought.
+   */
+  const getThoughtWidths = (
+    thoughts: { id: ThoughtId; value: string }[],
+    font: string,
+    editingValueUntrimmed: string | null,
+    editingThoughtId: ThoughtId | null,
+  ) => {
+    return thoughts.map(thought => {
+      const text = editingValueUntrimmed && thought.id === editingThoughtId ? editingValueUntrimmed : thought.value
+      return calculateTextWidth(text, font) + DIVIDER_PLUS_PX
+    })
+  }
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -87,61 +112,54 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     dispatch(setCursor({ path }))
   }
 
-  useEffect(() => {
-    /** Calculates and updates the Divider's width based on sibling thought widths. */
-    const updateDividerWidth = () => {
-      if (!dividerRef.current) return
+  useEffect(
+    () => {
+      /** Calculates and updates the Divider's width based on sibling thought widths. */
+      const updateDividerWidth = () => {
+        if (!dividerRef.current) return
 
-      if (isOnlyChild && !isTableView) {
-        setDividerWidth(DIVIDER_MIN_WIDTH)
-        return
-      }
+        const computedStyle = window.getComputedStyle(dividerRef.current)
+        const font = computedStyle.font || '18px Arial, sans-serif'
 
-      let widths: number[] = []
-      if (isTableView && isOnlyChild) {
-        if (thoughtsAtSameDepth.length === 0) {
+        if (isOnlyChild && !isTableView) {
           setDividerWidth(DIVIDER_MIN_WIDTH)
           return
         }
-        widths = getThoughtWidths(thoughtsAtSameDepth)
-      } else {
-        // Non-Table View or Divider is not the only item
-        const siblingThoughts = children.filter(child => child.id !== dividerId && !isDivider(child.value))
 
-        if (siblingThoughts.length === 0) {
-          setDividerWidth(DIVIDER_MIN_WIDTH)
-          return
+        let widths: number[] = []
+        if (isTableView && isOnlyChild) {
+          if (thoughtsAtSameDepth.length === 0) {
+            setDividerWidth(DIVIDER_MIN_WIDTH)
+            return
+          }
+          widths = getThoughtWidths(thoughtsAtSameDepth, font, editingValueUntrimmed, editingThoughtId)
+        } else {
+          // Non-Table View or Divider is not the only item
+          const siblingThoughts = children.filter(child => !isDivider(child.value))
+
+          if (siblingThoughts.length === 0) {
+            setDividerWidth(DIVIDER_MIN_WIDTH)
+            return
+          }
+          widths = getThoughtWidths(siblingThoughts, font, editingValueUntrimmed, editingThoughtId)
         }
-        widths = getThoughtWidths(siblingThoughts)
+
+        setDividerWidth(Math.round(Math.max(...widths, DIVIDER_MIN_WIDTH)))
       }
 
-      setDividerWidth(Math.round(Math.max(...widths, DIVIDER_MIN_WIDTH)))
-    }
-
-    updateDividerWidth() // Initial call to set the width
-
-    const resizeObservers: ResizeObserver[] = []
-
-    const thoughtsToObserve =
-      isTableView && isOnlyChild
-        ? thoughtsAtSameDepth
-        : children.filter(child => child.id !== dividerId && !isDivider(child.value))
-
-    thoughtsToObserve.forEach(thought => {
-      const thoughtElement = document.querySelector(
-        `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
-      )
-      if (thoughtElement) {
-        const resizeObserver = new ResizeObserver(() => {
-          updateDividerWidth()
-        })
-        resizeObserver.observe(thoughtElement)
-        resizeObservers.push(resizeObserver)
-      }
-    })
-
-    return () => resizeObservers.forEach(observer => observer.disconnect())
-  }, [children, thoughtsAtSameDepth, isOnlyChild, isTableView, dividerId])
+      updateDividerWidth() // Initial call to set the width
+    }, // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      dividerRef,
+      children,
+      thoughtsAtSameDepth,
+      isOnlyChild,
+      isTableView,
+      dividerId,
+      editingValueUntrimmed,
+      editingThoughtId,
+    ],
+  )
 
   return (
     <div
