@@ -44,12 +44,13 @@ const usePositionFixed = ({
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
 
   useEffect(initEventHandler, [])
-
   let top, bottom
   if (position === 'absolute') {
-    top = fromBottom ? `${scrollTop + window.innerHeight - (height ?? 0) - offset}px` : `${scrollTop + offset}px`
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+    top = fromBottom ? `${scrollTop + viewportHeight - (height ?? 0) - offset}px` : `${scrollTop + offset}px`
   } else if (fromBottom) {
-    bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset}px)`
+    const keyboardHeight = window.visualViewport ? window.innerHeight - window.visualViewport.height : 0
+    bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset}px + ${keyboardHeight}px)`
   } else {
     top = `calc(${token('spacing.safeAreaTop')} + ${offset}px)`
   }
