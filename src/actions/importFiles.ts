@@ -272,11 +272,7 @@ export const importFilesActionCreator =
           const parentContext =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
 
-          // Special handling for empty parent nodes
-          const parentPath =
-            parentContext.length === 1 && parentContext[0] === ''
-              ? path // Use the current path for empty parent nodes
-              : contextToPath(stateAfterPull, parentContext)
+          const parentPath = contextToPath(stateAfterPull, parentContext)
 
           // validate parentPath
           if (!parentPath) {
