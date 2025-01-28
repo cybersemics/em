@@ -22,7 +22,6 @@ const copyCursorShortcut: Command = {
   label: 'Copy Cursor',
   description: 'Copies the cursor and all descendants.',
   keyboard: { key: 'c', meta: true },
-  hideFromHelp: true,
   multicursor: {
     enabled: true,
     execMulticursor: async (cursors, dispatch, getState) => {
