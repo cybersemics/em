@@ -243,7 +243,17 @@ const GestureDiagram = ({
         const { x, y } = positions[i]
         return (
           <path
-            d={`M ${x} ${y} l ${segment.dx} ${segment.dy}`}
+            d={
+              path === 'rdld'
+                ? i === 0
+                  ? 'M 29.7,13.5 Q 46.8,-4.5 63,13.5'
+                  : i === 1
+                    ? 'M 63,13.5 Q 72,27 54,40.5'
+                    : i === 2
+                      ? 'M 54,40.5 Q 45,49.5 45,58.5'
+                      : 'M 45,58.5 L 45,72'
+                : `M ${x} ${y} l ${segment.dx} ${segment.dy}`
+            }
             // segments do not change independently, so we can use index as the key
             key={i}
             stroke={
@@ -258,7 +268,7 @@ const GestureDiagram = ({
             strokeLinecap='round'
             strokeLinejoin='round'
             fill='none'
-            markerEnd={i === pathSegments.length - 1 ? `url(#${id})` : undefined}
+            markerEnd={path === 'rdld' ? undefined : i === pathSegments.length - 1 ? `url(#${id})` : undefined}
             style={{ filter: dropShadow }}
           />
         )
