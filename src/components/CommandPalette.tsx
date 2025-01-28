@@ -216,7 +216,7 @@ const CommandRow: FC<{
                       : gestureInProgress.length
                   : undefined
               }
-              path={gestureString(command)}
+              path={command.id === 'cancel' ? null : gestureString(command)}
               strokeWidth={4}
               cssRaw={css.raw(
                 command.id === 'cancel'
@@ -243,7 +243,13 @@ const CommandRow: FC<{
             className={css({
               minWidth: '4em',
               whiteSpace: 'nowrap',
-              color: disabled ? 'gray' : gestureInProgress === command.gesture ? 'vividHighlight' : 'fg',
+              color: disabled
+                ? 'gray'
+                : isTouch
+                  ? selected || gestureInProgress === command.gesture
+                    ? 'vividHighlight'
+                    : 'fg'
+                  : 'fg',
               fontWeight: selected ? 'bold' : undefined,
             })}
           >
@@ -448,28 +454,32 @@ const CommandPalette: FC = () => {
               ...(!isTouch ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
             })}
           >
-            {commands.map(command => {
-              // Check if the current gesture sequence ends with help gesture
-              const helpCommand = commandById('help')
-              const isHelpMatch =
-                command.id === 'help' && (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+            {commands.length > 0 ? (
+              commands.map(command => {
+                // Check if the current gesture sequence ends with help gesture
+                const helpCommand = commandById('help')
+                const isHelpMatch =
+                  command.id === 'help' &&
+                  (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
 
-              return (
-                <CommandRow
-                  search={search}
-                  gestureInProgress={gestureInProgress as string}
-                  key={command.id}
-                  last={command === commands[commands.length - 1]}
-                  onClick={onExecute}
-                  onHover={onHover}
-                  selected={
-                    !isTouch ? command === selectedCommand : isHelpMatch || gestureInProgress === command.gesture
-                  }
-                  command={command}
-                />
-              )
-            })}
-            {commands.length === 0 && <span className={css({ marginLeft: '1em' })}>No matching commands</span>}
+                return (
+                  <CommandRow
+                    search={search}
+                    gestureInProgress={gestureInProgress as string}
+                    key={command.id}
+                    last={command === commands[commands.length - 1]}
+                    onClick={onExecute}
+                    onHover={onHover}
+                    selected={
+                      !isTouch ? command === selectedCommand : isHelpMatch || gestureInProgress === command.gesture
+                    }
+                    command={command}
+                  />
+                )
+              })
+            ) : (
+              <span className={css({ marginLeft: '1em' })}>No matching commands</span>
+            )}
           </div>
         </div>
       ) : null}
