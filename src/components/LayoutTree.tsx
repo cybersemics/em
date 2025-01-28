@@ -948,7 +948,11 @@ const LayoutTree = () => {
         hoverArrowVisibility={hoverArrowVisibility}
       />
       <div
-        className={css({ position: 'relative', transition: `left {durations.layoutSlowShift} ease-out` })}
+        className={css({
+          position: 'relative',
+          transition: `left {durations.layoutSlowShift} ease-out`,
+          willChange: 'left, margin',
+        })}
         style={{
           // Set a container height that fits all thoughts.
           // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
