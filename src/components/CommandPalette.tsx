@@ -455,35 +455,40 @@ const CommandPalette: FC = () => {
             })}
           >
             {commands.length > 0 ? (
-              commands.map(command => {
-                // Check if the current gesture sequence ends with help gesture
-                const helpCommand = commandById('help')
-                const isHelpMatch =
-                  command.id === 'help' &&
-                  (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
-                const hasMatchingCommand = commands.some(cmd => gestureInProgress === cmd.gesture)
-                const isCancelMatch =
-                  command.id === 'cancel' &&
-                  !hasMatchingCommand &&
-                  !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+              <>
+                {(() => {
+                  const hasMatchingCommand = commands.some(cmd => gestureInProgress === cmd.gesture)
+                  const helpCommand = commandById('help')
 
-                return (
-                  <CommandRow
-                    search={search}
-                    gestureInProgress={gestureInProgress as string}
-                    key={command.id}
-                    last={command === commands[commands.length - 1]}
-                    onClick={onExecute}
-                    onHover={onHover}
-                    selected={
-                      !isTouch
-                        ? command === selectedCommand
-                        : isHelpMatch || gestureInProgress == command.gesture || isCancelMatch
-                    }
-                    command={command}
-                  />
-                )
-              })
+                  return commands.map(command => {
+                    // Check if the current gesture sequence ends with help gesture
+                    const isHelpMatch =
+                      command.id === 'help' &&
+                      (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+                    const isCancelMatch =
+                      command.id === 'cancel' &&
+                      !hasMatchingCommand &&
+                      !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+
+                    return (
+                      <CommandRow
+                        search={search}
+                        gestureInProgress={gestureInProgress as string}
+                        key={command.id}
+                        last={command === commands[commands.length - 1]}
+                        onClick={onExecute}
+                        onHover={onHover}
+                        selected={
+                          !isTouch
+                            ? command === selectedCommand
+                            : isHelpMatch || gestureInProgress == command.gesture || isCancelMatch
+                        }
+                        command={command}
+                      />
+                    )
+                  })
+                })()}
+              </>
             ) : (
               <span className={css({ marginLeft: '1em' })}>No matching commands</span>
             )}
