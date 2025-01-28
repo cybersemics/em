@@ -244,6 +244,7 @@ const GestureDiagram = ({
         return (
           <path
             d={
+              // use a custom '?' path for the Help gesture
               path === 'rdld'
                 ? i === 0
                   ? 'M 29.7,13.5 Q 46.8,-4.5 63,13.5'
@@ -268,7 +269,10 @@ const GestureDiagram = ({
             strokeLinecap='round'
             strokeLinejoin='round'
             fill='none'
-            markerEnd={path === 'rdld' ? undefined : i === pathSegments.length - 1 ? `url(#${id})` : undefined}
+            markerEnd={
+              // the help gesture does not have an arrowhead
+              i === pathSegments.length - 1 && path !== 'rdld' ? `url(#${id})` : undefined
+            }
             style={{ filter: dropShadow }}
           />
         )
