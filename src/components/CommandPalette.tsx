@@ -461,6 +461,11 @@ const CommandPalette: FC = () => {
                 const isHelpMatch =
                   command.id === 'help' &&
                   (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+                const hasMatchingCommand = commands.some(cmd => gestureInProgress === cmd.gesture)
+                const isCancelMatch =
+                  command.id === 'cancel' &&
+                  !hasMatchingCommand &&
+                  !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
 
                 return (
                   <CommandRow
@@ -471,7 +476,9 @@ const CommandPalette: FC = () => {
                     onClick={onExecute}
                     onHover={onHover}
                     selected={
-                      !isTouch ? command === selectedCommand : isHelpMatch || gestureInProgress === command.gesture
+                      !isTouch
+                        ? command === selectedCommand
+                        : isHelpMatch || gestureInProgress == command.gesture || isCancelMatch
                     }
                     command={command}
                   />
