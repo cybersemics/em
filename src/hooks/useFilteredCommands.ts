@@ -62,7 +62,7 @@ const useFilteredCommands = (
 
         return (
           // include commands with at least one included char and no more than three chars non-matching chars
-          // fuzzy matching will prioritize the best shortcuts
+          // fuzzy matching will prioritize the best commands
           chars.some(char => char !== ' ' && label.includes(char)) &&
           search.split('').filter(char => char !== ' ' && !label.includes(char)).length <= 3
         )
