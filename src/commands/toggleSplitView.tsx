@@ -15,7 +15,7 @@ const Icon = ({ fill, size = 20, style, cssRaw }: IconType) => (
   </svg>
 )
 
-const toggleSplitViewShortcut: Command = {
+const toggleSplitViewCommand: Command = {
   id: 'toggleSplitView',
   label: 'Split View',
   description: 'Render two independent views for side-by-side editing.',
@@ -29,4 +29,4 @@ const toggleSplitViewShortcut: Command = {
   isActive: state => state.showSplitView,
 }
 
-export default toggleSplitViewShortcut
+export default toggleSplitViewCommand

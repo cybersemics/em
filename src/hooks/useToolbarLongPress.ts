@@ -11,12 +11,12 @@ import useLongPress from './useLongPress'
 const useToolbarLongPress = ({
   disabled,
   isDragging,
-  shortcut,
+  command,
   sourceZone,
 }: {
   disabled: boolean
   isDragging: boolean
-  shortcut: Command
+  command: Command
   sourceZone: DragCommandZone
 }) => {
   // Set .pressed so that user-select: none can be applied to disable long press to select on iOS. If user-select: none is added after touchstart, it does not prevent magnifying glass text selection (unresolved). -webkit-touch-callout does not help. It seems the only way to disable it fully is to preventDefault on touchstart. However, this would break navigation in edit mode.
@@ -28,8 +28,8 @@ const useToolbarLongPress = ({
   const onLongPressStart = useCallback(() => {
     if (disabled) return
     setIsPressed(true)
-    dispatch(toolbarLongPress({ shortcut, sourceZone }))
-  }, [disabled, dispatch, shortcut, sourceZone])
+    dispatch(toolbarLongPress({ command, sourceZone }))
+  }, [disabled, dispatch, command, sourceZone])
 
   /** Turn off isPressed and dismiss an alert when long press ends. */
   const onLongPressEnd = useCallback(() => {
@@ -37,7 +37,7 @@ const useToolbarLongPress = ({
     setIsPressed(false)
     dispatch((dispatch, getState) => {
       if (getState().dragHold) {
-        dispatch([toolbarLongPress({ shortcut: null }), alert(null)])
+        dispatch([toolbarLongPress({ command: null }), alert(null)])
       }
     })
   }, [disabled, dispatch])
@@ -50,7 +50,7 @@ const useToolbarLongPress = ({
     dispatch((dispatch, getState) => {
       if (isDragging || getState().toolbarLongPress) {
         setIsPressed(false)
-        dispatch(toolbarLongPress({ shortcut: null }))
+        dispatch(toolbarLongPress({ command: null }))
       }
     })
   }, [dispatch, isDragging])

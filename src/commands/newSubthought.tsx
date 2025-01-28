@@ -11,7 +11,7 @@ const multicursor = {
   error: 'Cannot create a new subthought with multiple thoughts.',
 }
 
-const newSubthoughtShortcut: Command = {
+const newSubthoughtCommand: Command = {
   id: 'newSubthought',
   label: 'New Subthought',
   description: 'Create a new subthought in the current thought. Adds it to the bottom of any existing subthoughts.',
@@ -66,4 +66,4 @@ export const newSubthoughtAliases: Command = {
   exec,
 }
 
-export default newSubthoughtShortcut
+export default newSubthoughtCommand

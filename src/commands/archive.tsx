@@ -55,7 +55,7 @@ const exec: Command['exec'] = (dispatch, getState) => {
   }
 }
 
-const archiveShortcut: Command = {
+const archiveCommand: Command = {
   id: 'archive',
   label: 'Archive',
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
@@ -117,4 +117,4 @@ export const archiveAliases: Command = {
   exec,
 }
 
-export default archiveShortcut
+export default archiveCommand

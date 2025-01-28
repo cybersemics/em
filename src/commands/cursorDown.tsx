@@ -23,7 +23,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
-// import directly since util/index is not loaded yet when shortcut is initialized
+// import directly since util/index is not loaded yet when command is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
@@ -45,7 +45,7 @@ const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType)
   </svg>
 )
 
-const cursorDownShortcut: Command = {
+const cursorDownCommand: Command = {
   id: 'cursorDown',
   label: 'Cursor Down',
   keyboard: { key: Key.ArrowDown },
@@ -132,10 +132,10 @@ const cursorDownShortcut: Command = {
 }
 
 export const cursorDownAlias: Command = {
-  ...cursorDownShortcut,
+  ...cursorDownCommand,
   id: 'cursorDownAlias',
   gesture: undefined,
   keyboard: { key: Key.ArrowDown, shift: true },
 }
 
-export default cursorDownShortcut
+export default cursorDownCommand

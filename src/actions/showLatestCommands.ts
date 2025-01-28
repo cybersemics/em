@@ -2,9 +2,9 @@
 import Command from '../@types/Command'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
-import { addLatestShortcutsActionCreator } from '../actions/addLatestShortcuts'
-import { clearLatestShortcutsActionCreator as clearLatestShortcuts } from '../actions/clearLatestShortcuts'
-import { LATEST_SHORTCUT_DIAGRAM_DURATION, LATEST_SHORTCUT_LIMIT } from '../constants'
+import { LATEST_COMMAND_DIAGRAM_DURATION, LATEST_COMMAND_LIMIT } from '../constants'
+import { addLatestCommandsActionCreator } from './addLatestCommands'
+import { clearLatestCommandsActionCreator as clearLatestCommands } from './clearLatestCommands'
 
 interface Options {
   clear?: number
@@ -19,28 +19,28 @@ const clearTimer = () => {
 }
 
 /**
- * Adds latest shortcuts diagram to be shown in the screen. Also clears after certain interval.
+ * Adds latest commands diagram to be shown in the screen. Also clears after certain interval.
  */
 export const showLatestCommandsActionCreator =
-  (shortcut?: Command, { clear }: Options = {}): Thunk =>
+  (command?: Command, { clear }: Options = {}): Thunk =>
   (dispatch, getState) => {
     if (clear) {
       clearTimer()
-      dispatch(clearLatestShortcuts())
+      dispatch(clearLatestCommands())
       return
     }
 
-    if (shortcut) {
-      const exceedsLimit = getState().latestCommands.length + 1 > LATEST_SHORTCUT_LIMIT
+    if (command) {
+      const exceedsLimit = getState().latestCommands.length + 1 > LATEST_COMMAND_LIMIT
 
-      // Clear shortcuts if exceeds limit
-      if (exceedsLimit) dispatch(clearLatestShortcuts())
+      // Clear commands if exceeds limit
+      if (exceedsLimit) dispatch(clearLatestCommands())
 
       clearTimer()
-      dispatch(addLatestShortcutsActionCreator(shortcut))
+      dispatch(addLatestCommandsActionCreator(command))
       timeoutId = setTimeout(() => {
-        dispatch(clearLatestShortcuts())
+        dispatch(clearLatestCommands())
         clearTimer()
-      }, LATEST_SHORTCUT_DIAGRAM_DURATION)
+      }, LATEST_COMMAND_DIAGRAM_DURATION)
     }
   }

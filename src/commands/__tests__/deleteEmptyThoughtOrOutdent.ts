@@ -11,7 +11,7 @@ import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand from '../../util/executeCommand'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
-import clearThoughtShortcut from '../clearThought'
+import clearThoughtCommand from '../clearThought'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 
 /**
@@ -40,7 +40,7 @@ describe('DOM', () => {
     - b`)
 
     await act(async () => {
-      executeCommand(clearThoughtShortcut)
+      executeCommand(clearThoughtCommand)
       executeCommand(deleteEmptyThoughtOrOutdent)
     })
 

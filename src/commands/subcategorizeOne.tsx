@@ -12,8 +12,8 @@ const multicursor: Command['multicursor'] = {
   clearMulticursor: true,
 }
 
-// NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
-const subCategorizeOneShortcut: Command = {
+// NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that commands are evaluated in the correct order
+const subCategorizeOneCommand: Command = {
   id: 'subcategorizeOne',
   label: 'Subcategorize',
   description: 'Move the current thought into a new, empty thought at the same level.',
@@ -27,8 +27,8 @@ const subCategorizeOneShortcut: Command = {
   exec: dispatch => dispatch(subCategorizeOne()),
 }
 
-// a shortcut for Raine until we have custom user shortcuts
-export const subCategorizeOneShortcutAlias: Command = {
+// a command for Raine until we have custom user commands
+export const subCategorizeOneCommandAlias: Command = {
   id: 'subcategorizeOneAlias',
   label: 'Subcategorize',
   hideFromHelp: true,
@@ -41,4 +41,4 @@ export const subCategorizeOneShortcutAlias: Command = {
   exec: dispatch => dispatch(subCategorizeOne()),
 }
 
-export default subCategorizeOneShortcut
+export default subCategorizeOneCommand

@@ -4,7 +4,7 @@ import { redoActionCreator as redo } from '../actions/redo'
 import RedoIcon from '../components/RedoIcon'
 import getLatestActionType from '../util/getLastActionType'
 
-const redoShortcut: Command = {
+const redoCommand: Command = {
   id: 'redo',
   label: 'Redo',
   multicursor: 'ignore',
@@ -25,4 +25,4 @@ const redoShortcut: Command = {
   canExecute: state => state.redoPatches.length > 0,
 }
 
-export default redoShortcut
+export default redoCommand

@@ -8,7 +8,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const noteShortcut: Command = {
+const noteCommand: Command = {
   id: 'note',
   label: 'Note',
   description: 'Add a small note beneath a thought. Cute!',
@@ -37,4 +37,4 @@ const noteShortcut: Command = {
   },
 }
 
-export default noteShortcut
+export default noteCommand

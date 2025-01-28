@@ -8,7 +8,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const toggleTableViewShortcut: Command = {
+const toggleTableViewCommand: Command = {
   id: 'toggleTableView',
   label: 'Table View',
   description: 'Display the current list as a table, with subthoughts rendered in the second column.',
@@ -40,4 +40,4 @@ const toggleTableViewShortcut: Command = {
   },
 }
 
-export default toggleTableViewShortcut
+export default toggleTableViewCommand

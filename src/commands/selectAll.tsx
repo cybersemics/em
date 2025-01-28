@@ -4,7 +4,7 @@ import { isTouch } from '../browser'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const selectAllShortcut: Command = {
+const selectAllCommand: Command = {
   id: 'selectAll',
   label: 'Select All',
   svg: () => null,
@@ -24,4 +24,4 @@ const selectAllShortcut: Command = {
   exec: addAllMulticursor(),
 }
 
-export default selectAllShortcut
+export default selectAllCommand

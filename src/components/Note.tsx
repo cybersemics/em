@@ -56,7 +56,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
       dispatch(toggleNote())
     }
     // delete empty note
-    // (delete non-empty note is handled by delete shortcut, which allows mobile gesture to work)
+    // (delete non-empty note is handled by delete command, which allows mobile gesture to work)
     // note may be '' or null if the attribute child was deleted
     else if (e.key === 'Backspace' && !note) {
       e.stopPropagation() // prevent delete thought

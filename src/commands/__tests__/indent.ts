@@ -5,7 +5,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
-import indentShortcut from '../indent'
+import indentCommand from '../indent'
 
 describe('indent', () => {
   describe('multicursor', () => {
@@ -26,7 +26,7 @@ describe('indent', () => {
         addMulticursor(['c']),
       ])
 
-      executeCommandWithMulticursor(indentShortcut, { store })
+      executeCommandWithMulticursor(indentCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -58,7 +58,7 @@ describe('indent', () => {
         addMulticursor(['d', 'f']),
       ])
 
-      executeCommandWithMulticursor(indentShortcut, { store })
+      executeCommandWithMulticursor(indentCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -90,7 +90,7 @@ describe('indent', () => {
         addMulticursor(['c']),
       ])
 
-      executeCommandWithMulticursor(indentShortcut, { store })
+      executeCommandWithMulticursor(indentCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -123,7 +123,7 @@ describe('indent', () => {
         addMulticursor(['e']),
       ])
 
-      executeCommandWithMulticursor(indentShortcut, { store })
+      executeCommandWithMulticursor(indentCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

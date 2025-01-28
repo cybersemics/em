@@ -6,7 +6,7 @@ import { commandById } from '../../commands'
 import headValue from '../../util/headValue'
 import GestureDiagram from '../GestureDiagram'
 
-const newThoughtShortcut = commandById('newThought')!
+const newThoughtCommand = commandById('newThought')!
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSecondThoughtEnter = () => {
@@ -24,7 +24,7 @@ const TutorialStepSecondThoughtEnter = () => {
           <>
             Swiping{' '}
             <GestureDiagram
-              path={newThoughtShortcut.gesture as GesturePath}
+              path={newThoughtCommand.gesture as GesturePath}
               size={28}
               cssRaw={css.raw({ margin: '-10px -4px -6px' })}
             />

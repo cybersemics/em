@@ -2,7 +2,7 @@ import Command from '../@types/Command'
 import fontSizeUp from '../actions/fontSizeUp'
 import SettingsIcon from '../components/icons/SettingsIcon'
 
-const fontSizeUpShortcut: Command = {
+const fontSizeUpCommand: Command = {
   id: 'fontSizeUp',
   label: 'Increase Font Size',
   description: 'Increase the font size. Bigger is better!',
@@ -14,4 +14,4 @@ const fontSizeUpShortcut: Command = {
   },
 }
 
-export default fontSizeUpShortcut
+export default fontSizeUpCommand

@@ -89,7 +89,7 @@ const recomputePath = (state: State, thoughtId: ThoughtId) => {
   return path
 }
 
-/** Execute a single command. Defaults to global store and keyboard command. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
+/** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
 const executeCommand = (command: Command, { store, type, event }: Options = {}) => {
   store = store ?? globalStore
   type = type ?? 'keyboard'
@@ -103,7 +103,7 @@ const executeCommand = (command: Command, { store, type, event }: Options = {}) 
   command.exec(store.dispatch, store.getState, event, { type })
 }
 
-/** Execute command. Defaults to global store and keyboard command. */
+/** Execute command. Defaults to global store and keyboard shortcuts. */
 export const executeCommandWithMulticursor = (command: Command, { store, type, event }: Options = {}) => {
   store = store ?? globalStore
   type = type ?? 'keyboard'

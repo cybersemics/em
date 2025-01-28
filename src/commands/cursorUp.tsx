@@ -22,7 +22,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-// import directly since util/index is not loaded yet when shortcut is initialized
+// import directly since util/index is not loaded yet when command is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 // eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
@@ -44,7 +44,7 @@ const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType)
   </svg>
 )
 
-const cursorUpShortcut: Command = {
+const cursorUpCommand: Command = {
   id: 'cursorUp',
   label: 'Cursor Up',
   keyboard: { key: Key.ArrowUp },
@@ -134,10 +134,10 @@ const cursorUpShortcut: Command = {
 }
 
 export const cursorUpAlias: Command = {
-  ...cursorUpShortcut,
+  ...cursorUpCommand,
   id: 'cursorUpAlias',
   gesture: undefined,
   keyboard: { key: Key.ArrowUp, shift: true },
 }
 
-export default cursorUpShortcut
+export default cursorUpCommand

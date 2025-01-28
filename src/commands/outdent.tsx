@@ -5,7 +5,7 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorBackward from './moveCursorBackward'
 
-const outdentShortcut: Command = {
+const outdentCommand: Command = {
   id: 'outdent',
   label: 'Outdent',
   description: 'Outdent? De-indent? Whatever the opposite of indent is. Move the current thought up a level.',
@@ -32,4 +32,4 @@ const outdentShortcut: Command = {
   },
 }
 
-export default outdentShortcut
+export default outdentCommand

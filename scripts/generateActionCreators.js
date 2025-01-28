@@ -1,13 +1,13 @@
 const fs = require('fs')
 
 const actionCreators = [
-  'addLatestShortcuts',
+  'addLatestCommands',
   'archiveThought',
   '${name}',
   'bumpThoughtDown',
   'clear',
   'clearExpandDown',
-  'clearLatestShortcuts',
+  'clearLatestCommands',
   'clearPushQueue',
   'collapseContext',
   'cursorBeforeSearch',
@@ -63,7 +63,7 @@ const actionCreators = [
   'toggleContextView',
   'toggleHiddenThoughts',
   'toggleNote',
-  'toggleShortcutsDiagram',
+  'toggleCommandsDiagram',
   'toggleSidebar',
   'toggleSplitView',
   'tutorialChoice',

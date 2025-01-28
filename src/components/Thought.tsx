@@ -254,7 +254,7 @@ const ThoughtContainer = ({
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
     // only hide when typing, not when deleting
-    // strip HTML tags, otherwise Formatting shortcuts will trigger distractionFreeTyping
+    // strip HTML tags, otherwise Formatting commands will trigger distractionFreeTyping
     if (newValue.replace(REGEX_TAGS, '').length > oldValue.replace(REGEX_TAGS, '').length) {
       distractionFreeTypingStore.updateThrottled(true)
     }

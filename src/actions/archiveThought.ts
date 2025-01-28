@@ -175,7 +175,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           // alert
           alert({
             value: deleteThoughtAlertText(state, path, { archive: true }),
-            // provide an alertType so the delete shortcut can null the alert after a delay
+            // provide an alertType so the delete command can null the alert after a delay
             alertType: AlertType.ThoughtArchived,
             showCloseLink: true,
           }),

@@ -4,7 +4,7 @@ import { isTouch } from '../browser'
 import HelpIcon from '../components/icons/HelpIcon'
 import scrollTo from '../device/scrollTo'
 
-const openHelpShortcut: Command = {
+const openHelpCommand: Command = {
   id: 'help',
   label: 'Help',
   description: `Opens the Help screen, which contains the tutorials and a list of all ${
@@ -21,4 +21,4 @@ const openHelpShortcut: Command = {
   allowExecuteFromModal: true,
 }
 
-export default openHelpShortcut
+export default openHelpCommand

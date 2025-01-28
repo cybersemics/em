@@ -5,7 +5,7 @@ import { HOME_TOKEN } from '../constants'
 import { getAllChildren } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 
-const shortcut: Command = {
+const command: Command = {
   id: 'exportContext',
   label: 'Export',
   description: 'Download or copy the current context as plaintext or html.',
@@ -19,4 +19,4 @@ const shortcut: Command = {
   allowExecuteFromModal: true,
 }
 
-export default shortcut
+export default command

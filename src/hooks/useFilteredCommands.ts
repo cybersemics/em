@@ -47,10 +47,10 @@ const useFilteredCommands = (
       }
       // keyboard
       else {
-        // only commands with keyboard commands are visible
+        // only commands with keyboard shortcuts are visible
         if (platformCommandsOnly && !command.keyboard) return false
 
-        // if no query is entered, all commands with keyboard commands are visible
+        // if no query is entered, all commands with keyboard shortcuts are visible
         if (!search) return true
 
         const label = (

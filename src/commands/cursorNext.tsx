@@ -4,7 +4,7 @@ import { cursorNextActionCreator as cursorNext } from '../actions/cursorNext'
 import NextIcon from '../components/icons/NextIcon'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorNextShortcut: Command = {
+const cursorNextCommand: Command = {
   id: 'cursorNext',
   label: 'Next Thought',
   description: 'Move the cursor to the next thought, skipping expanded children.',
@@ -14,4 +14,4 @@ const cursorNextShortcut: Command = {
   exec: throttleByAnimationFrame(dispatch => dispatch(cursorNext())),
 }
 
-export default cursorNextShortcut
+export default cursorNextCommand

@@ -12,7 +12,7 @@ import offlineStatusStore from '../stores/offlineStatusStore'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
 
-const newThoughtShortcut = commandById('newThought')
+const newThoughtCommand = commandById('newThought')
 
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
 const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
@@ -59,7 +59,7 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
                   Swipe{' '}
                   <GestureDiagram
                     inGestureContainer
-                    path={newThoughtShortcut.gesture as GesturePath}
+                    path={newThoughtCommand.gesture as GesturePath}
                     size={30}
                     color={token('colors.gray66')}
                   />

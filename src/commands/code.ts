@@ -6,7 +6,7 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggles formatting of the current browser selection as code. If there is no selection, formats the entire thought. */
-const codeShortcut: Command = {
+const codeCommand: Command = {
   id: 'code',
   label: 'Code',
   description: 'Formats the current thought or selected text as code.',
@@ -20,7 +20,7 @@ const codeShortcut: Command = {
   exec: dispatch => {
     dispatch(formatWithTag(FormattingCommand.code))
   },
-  // The isActive logic for formatting commands is handled differently than other shortcuts because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
+  // The isActive logic for formatting commands is handled differently than other commands because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
 }
 
-export default codeShortcut
+export default codeCommand

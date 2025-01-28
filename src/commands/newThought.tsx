@@ -65,7 +65,7 @@ const multicursor = {
   error: 'Cannot create a new thought with multiple thoughts.',
 }
 
-const newThoughtShortcut: Command = {
+const newThoughtCommand: Command = {
   id: 'newThought',
   label: 'New Thought',
   description: 'Create a shiny new thought.',
@@ -92,4 +92,4 @@ export const newThoughtAliases: Command = {
   exec,
 }
 
-export default newThoughtShortcut
+export default newThoughtCommand

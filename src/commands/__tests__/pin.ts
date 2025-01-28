@@ -5,7 +5,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
-import pinShortcut from '../pin'
+import pinCommand from '../pin'
 
 it('toggle on when there is no =pin attribute', () => {
   const store = createTestStore()
@@ -26,7 +26,7 @@ it('toggle on when there is no =pin attribute', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeCommand(pinShortcut, { store })
+  executeCommand(pinCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -61,7 +61,7 @@ it('toggle on when =pin/false', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeCommand(pinShortcut, { store })
+  executeCommand(pinCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -96,7 +96,7 @@ it('remove =pin when toggling off', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeCommand(pinShortcut, { store })
+  executeCommand(pinCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -129,7 +129,7 @@ it('remove =pin/true when toggling off', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeCommand(pinShortcut, { store })
+  executeCommand(pinCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -166,7 +166,7 @@ describe('multicursor', () => {
       addMulticursor(['g']),
     ])
 
-    executeCommandWithMulticursor(pinShortcut, { store })
+    executeCommandWithMulticursor(pinCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -209,7 +209,7 @@ describe('multicursor', () => {
       addMulticursor(['g']),
     ])
 
-    executeCommandWithMulticursor(pinShortcut, { store })
+    executeCommandWithMulticursor(pinCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -245,7 +245,7 @@ describe('multicursor', () => {
       addMulticursor(['d', 'e']),
     ])
 
-    executeCommandWithMulticursor(pinShortcut, { store })
+    executeCommandWithMulticursor(pinCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -281,7 +281,7 @@ describe('multicursor', () => {
       addMulticursor(['d', 'e']),
     ])
 
-    executeCommandWithMulticursor(pinShortcut, { store })
+    executeCommandWithMulticursor(pinCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__
@@ -314,7 +314,7 @@ describe('multicursor', () => {
       addMulticursor(['e', 'f', 'g']),
     ])
 
-    executeCommandWithMulticursor(pinShortcut, { store })
+    executeCommandWithMulticursor(pinCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- __ROOT__

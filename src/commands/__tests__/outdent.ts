@@ -5,7 +5,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
-import outdentShortcut from '../outdent'
+import outdentCommand from '../outdent'
 
 describe('outdent', () => {
   describe('multicursor', () => {
@@ -26,7 +26,7 @@ describe('outdent', () => {
         addMulticursor(['a', 'c']),
       ])
 
-      executeCommandWithMulticursor(outdentShortcut, { store })
+      executeCommandWithMulticursor(outdentCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -58,7 +58,7 @@ describe('outdent', () => {
         addMulticursor(['d', 'e', 'f']),
       ])
 
-      executeCommandWithMulticursor(outdentShortcut, { store })
+      executeCommandWithMulticursor(outdentCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -90,7 +90,7 @@ describe('outdent', () => {
         addMulticursor(['a', 'c']),
       ])
 
-      executeCommandWithMulticursor(outdentShortcut, { store })
+      executeCommandWithMulticursor(outdentCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -123,7 +123,7 @@ describe('outdent', () => {
         addMulticursor(['a', 'e']),
       ])
 
-      executeCommandWithMulticursor(outdentShortcut, { store })
+      executeCommandWithMulticursor(outdentCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

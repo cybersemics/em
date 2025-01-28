@@ -22,7 +22,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const canExecuteDeleteEmptyThought = (state: State) => {
   const { cursor } = state
 
-  // isActive is not enough on its own, because there is a case where there is a selection object but no focusNode and we want to still execute the shortcut
+  // isActive is not enough on its own, because there is a case where there is a selection object but no focusNode and we want to still execute the command
   if (!selection.isActive() && selection.isText()) return false
 
   // can't delete if there is no cursor, there is a selection range, the document is not editable, or the caret is not at the beginning of the thought

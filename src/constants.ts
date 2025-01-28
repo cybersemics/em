@@ -31,10 +31,10 @@ export const MODAL_NEWCHILD_DELAY = 1200
 export const DIVIDER_PLUS_PX = 30
 export const DIVIDER_MIN_WIDTH = 85
 
-export const LATEST_SHORTCUT_DIAGRAM_DURATION = 800
+export const LATEST_COMMAND_DIAGRAM_DURATION = 800
 
-// number of latest shorrcuts to show at a time
-export const LATEST_SHORTCUT_LIMIT = 3
+// number of latest commands to show at a time
+export const LATEST_COMMAND_LIMIT = 3
 
 // each tutorial step is defined as a constant for compile-time validation
 // all integers must existing between TUTORIAL_STEP_START and TUTORIAL_STEP_END
@@ -165,7 +165,7 @@ export const URL_MAX_CHARS = 40
 export const EXPAND_THOUGHT_CHAR = ':'
 export const MAX_EXPAND_DEPTH = 10
 
-// shortcut ids of default buttons that appear in the toolbar
+// command ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
 export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'undo',
@@ -439,7 +439,7 @@ export enum AlertType {
   DragAndDropHint = 'DragAndDropHint',
   // shown when dragging a toolbar button
   DragAndDropToolbarHint = 'DragAndDropToolbarHint',
-  // shown when dragging a toolbar button from the shortcut table
+  // shown when dragging a toolbar button from the command table
   DragAndDropToolbarAdd = 'DragAndDropToolbarAdd',
   // shown when a dragged thought is hovering over the ExportDrop component
   ExportDropHint = 'ExportDropHint',

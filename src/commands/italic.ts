@@ -19,7 +19,7 @@ const italic: Command = {
   exec: dispatch => {
     dispatch(formatSelection('italic'))
   },
-  // The isActive logic for formatting commands is handled differently than other shortcuts because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
+  // The isActive logic for formatting commands is handled differently than other commands because it references the CommandStateStore. This can be found in ToolbarButton (isButtonActive)
 }
 
 export default italic

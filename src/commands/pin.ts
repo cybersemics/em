@@ -8,7 +8,7 @@ import isPinned from '../selectors/isPinned'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 
-const pinShortcut: Command = {
+const pinCommand: Command = {
   id: 'pin',
   label: 'Pin',
   labelInverse: 'Unpin',
@@ -39,7 +39,7 @@ const pinShortcut: Command = {
     const { cursor } = state
     if (!cursor) return
 
-    // if the user used the keyboard to activate the shortcut, show an alert describing the sort direction
+    // if the user used the keyboard to activate the command, show an alert describing the sort direction
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
     if (type === 'keyboard') {
       const pinned = isPinned(state, head(cursor))
@@ -60,4 +60,4 @@ const pinShortcut: Command = {
   },
 }
 
-export default pinShortcut
+export default pinCommand

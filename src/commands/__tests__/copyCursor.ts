@@ -4,7 +4,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestStore from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
-import copyCursorShortcut from '../copyCursor'
+import copyCursorCommand from '../copyCursor'
 
 vi.mock('../../device/copy')
 
@@ -30,7 +30,7 @@ describe('copyCursor', () => {
       setCursor(['a']),
     ])
 
-    executeCommandWithMulticursor(copyCursorShortcut, { store })
+    executeCommandWithMulticursor(copyCursorCommand, { store })
 
     expect(copyModule.default).toHaveBeenCalledWith(
       `- a
@@ -62,7 +62,7 @@ describe('copyCursor', () => {
         addMulticursor(['c']),
       ])
 
-      executeCommandWithMulticursor(copyCursorShortcut, { store })
+      executeCommandWithMulticursor(copyCursorCommand, { store })
 
       expect(copyModule.default).toHaveBeenCalledWith(
         `- a
@@ -94,7 +94,7 @@ describe('copyCursor', () => {
         addMulticursor(['a', 'a1']),
       ])
 
-      executeCommandWithMulticursor(copyCursorShortcut, { store })
+      executeCommandWithMulticursor(copyCursorCommand, { store })
 
       expect(copyModule.default).toHaveBeenCalledWith(
         `- a
@@ -129,7 +129,7 @@ describe('copyCursor', () => {
         addMulticursor(['c']),
       ])
 
-      executeCommandWithMulticursor(copyCursorShortcut, { store })
+      executeCommandWithMulticursor(copyCursorCommand, { store })
 
       expect(copyModule.default).toHaveBeenCalledWith(
         `- a
