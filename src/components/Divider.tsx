@@ -6,7 +6,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
+import { DIVIDER_MIN_WIDTH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -19,7 +19,6 @@ import isDivider from '../util/isDivider'
 const useDividerData = (path: Path) => {
   return useSelector(
     (state: State) => {
-      const dividerId = head(path)
       const parentPath = rootedParentOf(state, path)
       const parentId = head(parentPath)
       const grandParentPath = parentId ? rootedParentOf(state, parentPath) : []
@@ -34,7 +33,7 @@ const useDividerData = (path: Path) => {
       let thoughtsAtSameDepth: { id: ThoughtId; value: string }[] = []
 
       if (isTableView && isOnlyChild && grandParentId) {
-        const parentSiblings = getAllChildrenAsThoughts(state, grandParentId)
+        const parentSiblings = getAllChildrenAsThoughts(state, grandParentId).filter(child => !isDivider(child.value))
         thoughtsAtSameDepth = parentSiblings.flatMap(parent => {
           const childrenOfParent = parent.id ? getAllChildrenAsThoughts(state, parent.id) : []
           return childrenOfParent.filter(child => !isDivider(child.value))
@@ -42,23 +41,52 @@ const useDividerData = (path: Path) => {
       }
 
       return {
-        dividerId,
         isOnlyChild,
         isTableView,
         children,
         thoughtsAtSameDepth,
       }
     },
-    (prev, next) => {
-      return (
-        prev.dividerId === next.dividerId &&
-        prev.isOnlyChild === next.isOnlyChild &&
-        prev.isTableView === next.isTableView &&
-        prev.children.length === next.children.length &&
-        prev.thoughtsAtSameDepth.length === next.thoughtsAtSameDepth.length
-      )
-    },
+    // Ensure the selector runs only when values change, excluding ref changes to avoid redundant re-renders.
+    (prev, next) => JSON.stringify(prev) === JSON.stringify(next),
   )
+}
+
+let canvas: HTMLCanvasElement | null = null
+let context: CanvasRenderingContext2D | null = null
+
+/**
+ * Initializes the canvas and context for text width calculation.
+ */
+const initializeCanvas = () => {
+  if (!canvas) {
+    canvas = document.createElement('canvas')
+    context = canvas.getContext('2d')
+  }
+}
+
+/**
+ * Calculates the width of a single text string, considering trailing spaces.
+ */
+const calculateTextWidth = (text: string, font: string): number => {
+  initializeCanvas()
+  if (!context) return 0
+  context.font = font
+  return Math.ceil(context.measureText(text).width)
+}
+
+/** Calculates the width of multiple thoughts. */
+const getThoughtWidths = (
+  thoughts: { id: ThoughtId; value: string }[],
+  font: string,
+  editingValueUntrimmed: string | null,
+  editingThoughtId: ThoughtId | null,
+): number[] => {
+  return thoughts.map(thought => {
+    const text = editingValueUntrimmed && thought.id === editingThoughtId ? editingValueUntrimmed : thought.value
+    // Add 22px to include the full width of the thought
+    return calculateTextWidth(text, font) + 22
+  })
 }
 
 /** A custom horizontal rule. */
@@ -67,44 +95,12 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
 
-  const { dividerId, isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
+  const { isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
 
   const editingThoughtId = useSelector((state: State) => state.cursor && head(state.cursor))
 
   // Subscribe to untrimmed editing value
   const editingValueUntrimmed = editingValueUntrimmedStore.useSelector(editingValue => editingValue)
-
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const contextRef = useRef<CanvasRenderingContext2D | null>(null)
-
-  // Initialize canvas and context once
-  if (!canvasRef.current) {
-    canvasRef.current = document.createElement('canvas')
-    contextRef.current = canvasRef.current.getContext('2d')
-  }
-
-  /** Helper function to calculate text width including trailing spaces. */
-  const calculateTextWidth = (text: string, font: string) => {
-    if (!contextRef.current) return 0
-    contextRef.current.font = font
-    return Math.ceil(contextRef.current.measureText(text).width)
-  }
-
-  /**
-   * Calculates the width of the thought text, including trailing spaces.
-   * Uses the untrimmed editing value for the currently edited thought.
-   */
-  const getThoughtWidths = (
-    thoughts: { id: ThoughtId; value: string }[],
-    font: string,
-    editingValueUntrimmed: string | null,
-    editingThoughtId: ThoughtId | null,
-  ) => {
-    return thoughts.map(thought => {
-      const text = editingValueUntrimmed && thought.id === editingThoughtId ? editingValueUntrimmed : thought.value
-      return calculateTextWidth(text, font) + DIVIDER_PLUS_PX
-    })
-  }
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -112,54 +108,45 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     dispatch(setCursor({ path }))
   }
 
-  useEffect(
-    () => {
-      /** Calculates and updates the Divider's width based on sibling thought widths. */
-      const updateDividerWidth = () => {
-        if (!dividerRef.current) return
+  useEffect(() => {
+    /** Calculates and updates the Divider's width based on sibling thought widths. */
+    const updateDividerWidth = () => {
+      if (!dividerRef.current) return
 
-        const computedStyle = window.getComputedStyle(dividerRef.current)
-        const font = computedStyle.font || '18px Arial, sans-serif'
+      const computedStyle = window.getComputedStyle(dividerRef.current)
+      const font = computedStyle.font || '18px Arial, sans-serif'
 
-        if (isOnlyChild && !isTableView) {
+      if (isOnlyChild && !isTableView) {
+        setDividerWidth(DIVIDER_MIN_WIDTH)
+        return
+      }
+
+      let widths: number[] = []
+      if (isTableView && isOnlyChild) {
+        if (thoughtsAtSameDepth.length === 0) {
           setDividerWidth(DIVIDER_MIN_WIDTH)
           return
         }
+        widths = getThoughtWidths(thoughtsAtSameDepth, font, editingValueUntrimmed, editingThoughtId)
+      } else {
+        // Non-Table View or Divider is not the only item
+        const siblingThoughts = children.filter(child => !isDivider(child.value))
 
-        let widths: number[] = []
-        if (isTableView && isOnlyChild) {
-          if (thoughtsAtSameDepth.length === 0) {
-            setDividerWidth(DIVIDER_MIN_WIDTH)
-            return
-          }
-          widths = getThoughtWidths(thoughtsAtSameDepth, font, editingValueUntrimmed, editingThoughtId)
-        } else {
-          // Non-Table View or Divider is not the only item
-          const siblingThoughts = children.filter(child => !isDivider(child.value))
-
-          if (siblingThoughts.length === 0) {
-            setDividerWidth(DIVIDER_MIN_WIDTH)
-            return
-          }
-          widths = getThoughtWidths(siblingThoughts, font, editingValueUntrimmed, editingThoughtId)
+        if (siblingThoughts.length === 0) {
+          setDividerWidth(DIVIDER_MIN_WIDTH)
+          return
         }
-
-        setDividerWidth(Math.round(Math.max(...widths, DIVIDER_MIN_WIDTH)))
+        widths = getThoughtWidths(siblingThoughts, font, editingValueUntrimmed, editingThoughtId)
       }
 
-      updateDividerWidth() // Initial call to set the width
-    }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      dividerRef,
-      children,
-      thoughtsAtSameDepth,
-      isOnlyChild,
-      isTableView,
-      dividerId,
-      editingValueUntrimmed,
-      editingThoughtId,
-    ],
-  )
+      setDividerWidth(Math.round(Math.max(...widths, DIVIDER_MIN_WIDTH)))
+    }
+
+    updateDividerWidth() // Initial call to set the width
+
+    // `eslint-disable-next-line react-hooks/exhaustive-deps` is used to exclude `editingThoughtId` because it is not essential for this effect's dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dividerRef, children, thoughtsAtSameDepth, isOnlyChild, isTableView, editingValueUntrimmed])
 
   return (
     <div
