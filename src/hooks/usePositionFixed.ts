@@ -4,6 +4,7 @@ import { token } from '../../styled-system/tokens'
 import { isIOS, isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
 import reactMinistore from '../stores/react-ministore'
+import viewportStore from '../stores/viewport'
 import once from '../util/once'
 import useScrollTop from './useScrollTop'
 
@@ -42,15 +43,14 @@ const usePositionFixed = ({
 } => {
   const position = positionFixedStore.useState()
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
+  const { innerHeight, virtualKeyboardHeight } = viewportStore.useState()
 
   useEffect(initEventHandler, [])
   let top, bottom
   if (position === 'absolute') {
-    const viewportHeight = window.visualViewport?.height ?? window.innerHeight
-    top = fromBottom ? `${scrollTop + viewportHeight - (height ?? 0) - offset}px` : `${scrollTop + offset}px`
+    top = fromBottom ? `${scrollTop + innerHeight - (height ?? 0) - offset}px` : `${scrollTop + offset}px`
   } else if (fromBottom) {
-    const keyboardHeight = window.visualViewport ? window.innerHeight - window.visualViewport.height : 0
-    bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset}px + ${keyboardHeight}px)`
+    bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset}px + ${virtualKeyboardHeight}px)`
   } else {
     top = `calc(${token('spacing.safeAreaTop')} + ${offset}px)`
   }
