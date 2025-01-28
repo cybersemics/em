@@ -20,13 +20,12 @@ import isDescendant from '../util/isDescendant'
 import keyValueBy from '../util/keyValueBy'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
+import stripTags from '../util/stripTags'
 import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
 import { anyChild, getAllChildrenAsThoughts } from './getChildren'
 import getContexts from './getContexts'
 import pinned from './isPinned'
-
-const EXPAND_THOUGHTS_REGEX = new RegExp(`${EXPAND_THOUGHT_CHAR}(</[^>]>)*$`, 'g')
 
 /** Returns true if a thought is marked as done. */
 const isDone = (state: State, id: ThoughtId | null): boolean => {
@@ -93,7 +92,6 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
   const visibleChildren = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter(child => {
-        const value = child.value.replace(EXPAND_THOUGHTS_REGEX, EXPAND_THOUGHT_CHAR)
         const childPath = unroot([...path, child.id])
 
         /** Check of the path is the ancestor of the expansion path. */
@@ -102,7 +100,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
         /** Check if the path is equal to the expansion path. */
         const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
 
-        return !isAttribute(value) || isAncestor() || isExpansionBasePath()
+        return !isAttribute(child.value) || isAncestor() || isExpansionBasePath()
       })
 
   // expand if child is an only child
@@ -150,7 +148,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
             (!showContexts &&
               (pinned(state, child.id) ||
                 (childrenPinned(state, thoughtId) && pinned(state, child.id) === null && !isDone(state, child.id)))) ||
-            EXPAND_THOUGHTS_REGEX.test(child.value)
+            stripTags(child.value).endsWith(EXPAND_THOUGHT_CHAR)
           )
         })
 

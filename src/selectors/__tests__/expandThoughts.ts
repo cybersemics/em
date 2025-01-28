@@ -735,19 +735,23 @@ describe('expand with : char', () => {
   it('thougts that contain html and end with ":" are expanded', () => {
     const steps = [
       newThought('a'),
+      newSubthought('<b>bold:</b>'),
       newSubthought('x'),
       setCursor(['a']),
-      newThought('<b>b:</b>'),
-      newSubthought('<b><i>c:</i></b>'),
-      newSubthought('d'),
+      newSubthought('<b><i>bold and italic:</i></b>'),
+      newSubthought('x'),
+      setCursor(['a']),
+      newSubthought('<font color="#00c7e6">color:</font>'),
+      newSubthought('x'),
       setCursor(['a']),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['<b>b:</b>'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['<b>b:</b>', '<b><i>c:</i></b>'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', '<b>bold:</b>'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', '<b><i>bold and italic:</i></b>'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', '<font color="#00c7e6">color:</font>'])).toBeTruthy()
   })
 })
 
