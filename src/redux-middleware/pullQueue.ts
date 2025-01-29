@@ -110,9 +110,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   // use isLoaded to ignore throttling on first load
   let isLoaded = false
 
-  // track changed state to short circuit flushPullQueue when no visible thoughts have changed
-  let lastContextViews: State['contextViews'] = {}
-  let lastSearchContexts: State['searchContexts'] = {}
+  // track changed pullQueue to short circuit flushPullQueue when no visible thoughts have changed
   let lastExtendedPullQueue: Record<ThoughtId, true> = {}
 
   // enqueue thoughts be pulled from the data source
@@ -198,26 +196,14 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     const state = getState()
 
-    const isSearchUnchanged =
-      state.searchContexts === lastSearchContexts ||
-      equalArrays(Object.keys(state.searchContexts ?? {}), Object.keys(lastSearchContexts ?? {}))
-
     // expand pull queue to include visible ancestors, descendants, and search contexts
     const expandedPaths = expandedWithAncestors(state, state.expanded)
     const extendedPullQueue = { ...pullQueue, ...appendVisiblePaths(state, expandedPaths) }
 
-    if (
-      !forceFlush &&
-      !force &&
-      state.contextViews === lastContextViews &&
-      equalArrays(Object.keys(extendedPullQueue), Object.keys(lastExtendedPullQueue)) &&
-      isSearchUnchanged
-    )
-      return
+    // short circuit if no visible thoughts have changed
+    if (!forceFlush && !force && equalArrays(Object.keys(extendedPullQueue), Object.keys(lastExtendedPullQueue))) return
 
-    // update last states
-    lastSearchContexts = state.searchContexts
-    lastContextViews = state.contextViews
+    // update last state
     lastExtendedPullQueue = extendedPullQueue
 
     // do not throttle initial flush or flush on authenticate
@@ -237,10 +223,8 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     next(action)
     const state = getState()
 
-    // reset internal state variables when clear action is dispatched
+    // reset internal pullQueue when clear action is dispatched
     if (isAction(action) && action.type === 'clear') {
-      lastContextViews = {}
-      lastSearchContexts = {}
       pullQueue = initialPullQueue()
     }
     // Update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates.
