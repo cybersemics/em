@@ -48,7 +48,6 @@ const useDividerData = (path: Path) => {
       }
     },
     // Ensure the selector runs only when values change, excluding ref changes to avoid redundant re-renders.
-    //(prev, next) => JSON.stringify(prev) === JSON.stringify(next),
     (prev, next) =>
       prev.isOnlyChild === next.isOnlyChild &&
       prev.isTableView === next.isTableView &&
@@ -59,30 +58,17 @@ const useDividerData = (path: Path) => {
   )
 }
 
-/** Initialize a canvas context for text width calculation. */
-const canvas = document.createElement('canvas')
-const context = canvas.getContext('2d')
-
 /**
- * Calculates the width of a single text string, considering trailing spaces.
+ * Calculates the width of multiple thoughts by measuring their rendered widths in the DOM.
  */
-const calculateTextWidth = (text: string, font: string): number => {
-  if (!context) return 0
-  context.font = font
-  return Math.ceil(context.measureText(text).width)
-}
-
-/** Calculates the width of multiple thoughts. */
-const getThoughtWidths = (
-  thoughts: { id: ThoughtId; value: string }[],
-  font: string,
-  editingValueUntrimmed: string | null,
-  editingThoughtId: ThoughtId | null,
-): number[] => {
+const getThoughtWidths = (thoughts: { id: ThoughtId }[]): number[] => {
   return thoughts.map(thought => {
-    const text = editingValueUntrimmed && thought.id === editingThoughtId ? editingValueUntrimmed : thought.value
-    // Add 22px to include the full width of the thought
-    return calculateTextWidth(text, font) + 22
+    const innerThoughtElement = document.querySelector(
+      `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
+    )
+
+    // Use DOM widths for thoughts
+    return innerThoughtElement?.getBoundingClientRect().width ?? 0
   })
 }
 
@@ -110,9 +96,6 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     const updateDividerWidth = () => {
       if (!dividerRef.current) return
 
-      const computedStyle = window.getComputedStyle(dividerRef.current)
-      const font = computedStyle.font || '18px Arial, sans-serif'
-
       if (isOnlyChild && !isTableView) {
         setDividerWidth(DIVIDER_MIN_WIDTH)
         return
@@ -124,7 +107,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
           setDividerWidth(DIVIDER_MIN_WIDTH)
           return
         }
-        widths = getThoughtWidths(thoughtsAtSameDepth, font, editingValueUntrimmed, editingThoughtId)
+        widths = getThoughtWidths(thoughtsAtSameDepth)
       } else {
         // Non-Table View or Divider is not the only item
         const siblingThoughts = children.filter(child => !isDivider(child.value))
@@ -133,7 +116,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
           setDividerWidth(DIVIDER_MIN_WIDTH)
           return
         }
-        widths = getThoughtWidths(siblingThoughts, font, editingValueUntrimmed, editingThoughtId)
+        widths = getThoughtWidths(siblingThoughts)
       }
 
       setDividerWidth(Math.round(Math.max(...widths, DIVIDER_MIN_WIDTH)))
