@@ -503,6 +503,11 @@ const Editable = ({
       // do not allow blur to setEditingValue when it is followed immediately by a focus
       blurring = false
 
+      // Update editingValueUntrimmedStore with the current value
+      if (value && editingValueUntrimmedStore.getState() !== value) {
+        editingValueUntrimmedStore.update(value)
+      }
+
       const { dragHold, dragInProgress } = store.getState()
       if (!dragHold && !dragInProgress) {
         setCursorOnThought({ editing: true })

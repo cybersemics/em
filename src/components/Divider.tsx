@@ -48,7 +48,14 @@ const useDividerData = (path: Path) => {
       }
     },
     // Ensure the selector runs only when values change, excluding ref changes to avoid redundant re-renders.
-    (prev, next) => JSON.stringify(prev) === JSON.stringify(next),
+    //(prev, next) => JSON.stringify(prev) === JSON.stringify(next),
+    (prev, next) =>
+      prev.isOnlyChild === next.isOnlyChild &&
+      prev.isTableView === next.isTableView &&
+      prev.children.length === next.children.length &&
+      prev.children.every((child, index) => child.value === next.children[index].value) &&
+      prev.thoughtsAtSameDepth.length === next.thoughtsAtSameDepth.length &&
+      prev.thoughtsAtSameDepth.every((thought, index) => thought.value === next.thoughtsAtSameDepth[index].value),
   )
 }
 
@@ -143,10 +150,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     }
 
     updateDividerWidth() // Initial call to set the width
-
-    // `eslint-disable-next-line react-hooks/exhaustive-deps` is used to exclude `editingThoughtId` because it is not essential for this effect's dependencies.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dividerRef, children, thoughtsAtSameDepth, isOnlyChild, isTableView, editingValueUntrimmed])
+  }, [dividerRef, children, thoughtsAtSameDepth, isOnlyChild, isTableView, editingValueUntrimmed, editingThoughtId])
 
   return (
     <div
