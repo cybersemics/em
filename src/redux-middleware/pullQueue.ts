@@ -54,46 +54,38 @@ const expandedWithAncestors = (state: State, expanded: Index<Path>): Index<Path>
 }
 
 /** Appends all visible paths and their visible children to the pullQueue. */
-const appendVisiblePaths = (
-  state: State,
-  pullQueue: Record<ThoughtId, true>,
-  expandedPaths: Index<Path>,
-): Record<ThoughtId, true> => {
-  return keyValueBy(
-    expandedPaths,
-    (key, path) => {
-      const thoughtId = head(path)
-      const thought = getThoughtById(state, thoughtId)
-      if (!thought) return null
+const appendVisiblePaths = (state: State, expandedPaths: Index<Path>): Record<ThoughtId, true> => {
+  return keyValueBy(expandedPaths, (key, path) => {
+    const thoughtId = head(path)
+    const thought = getThoughtById(state, thoughtId)
+    if (!thought) return null
 
-      const showContexts = isContextViewActive(state, path)
+    const showContexts = isContextViewActive(state, path)
 
-      // get visible children
-      const children = getChildren(state, thoughtId)
+    // get visible children
+    const children = getChildren(state, thoughtId)
 
-      return {
-        // pending thought
-        ...(thought.pending ? { [thoughtId]: true } : null),
-        // children
-        ...keyValueBy(children, child =>
-          // pending child
-          child ? { [child.id]: true } : null,
-        ),
-        // context view contexts and their ancestors
-        ...(showContexts
-          ? keyValueBy(
-              // Warning: thoughtToPath will return partial Paths if ancestors are not loaded into memory.
-              // We need to get the available ancestor ids every updatePullQueue in order to continue triggering pull.
-              // Otherwise context ancestors may never be pulled.
-              // See: https://github.com/cybersemics/em/issues/2797
-              getContexts(state, thought.value).flatMap(cxid => [...thoughtToPath(state, cxid), cxid]),
-              cxid => ({ [cxid]: true }),
-            )
-          : null),
-      }
-    },
-    pullQueue,
-  )
+    return {
+      // pending thought
+      ...(thought.pending ? { [thoughtId]: true } : null),
+      // children
+      ...keyValueBy(children, child =>
+        // pending child
+        child ? { [child.id]: true } : null,
+      ),
+      // context view contexts and their ancestors
+      ...(showContexts
+        ? keyValueBy(
+            // Warning: thoughtToPath will return partial Paths if ancestors are not loaded into memory.
+            // We need to get the available ancestor ids every updatePullQueue in order to continue triggering pull.
+            // Otherwise context ancestors may never be pulled.
+            // See: https://github.com/cybersemics/em/issues/2797
+            getContexts(state, thought.value).flatMap(cxid => [...thoughtToPath(state, cxid), cxid]),
+            cxid => ({ [cxid]: true }),
+          )
+        : null),
+    }
+  })
 }
 
 /** An action-creator that pulls the =favorite Lexeme and all contexts. */
@@ -212,7 +204,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // expand pull queue to include visible ancestors, descendants, and search contexts
     const expandedPaths = expandedWithAncestors(state, state.expanded)
-    const extendedPullQueue = appendVisiblePaths(state, pullQueue, expandedPaths)
+    const extendedPullQueue = { ...pullQueue, ...appendVisiblePaths(state, expandedPaths) }
 
     if (
       !forceFlush &&
