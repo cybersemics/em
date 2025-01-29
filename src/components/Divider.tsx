@@ -66,8 +66,6 @@ const getThoughtWidths = (thoughts: { id: ThoughtId }[]): number[] => {
     const innerThoughtElement = document.querySelector(
       `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
     )
-
-    // Use DOM widths for thoughts
     return innerThoughtElement?.getBoundingClientRect().width ?? 0
   })
 }
@@ -77,12 +75,8 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const dispatch = useDispatch()
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
-
   const { isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
-
   const editingThoughtId = useSelector((state: State) => state.cursor && head(state.cursor))
-
-  // Subscribe to untrimmed editing value
   const editingValueUntrimmed = editingValueUntrimmedStore.useSelector(editingValue => editingValue)
 
   /** Sets the cursor to the divider. */
@@ -109,9 +103,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
         }
         widths = getThoughtWidths(thoughtsAtSameDepth)
       } else {
-        // Non-Table View or Divider is not the only item
         const siblingThoughts = children.filter(child => !isDivider(child.value))
-
         if (siblingThoughts.length === 0) {
           setDividerWidth(DIVIDER_MIN_WIDTH)
           return
@@ -122,7 +114,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
       setDividerWidth(Math.round(Math.max(...widths, DIVIDER_MIN_WIDTH)))
     }
 
-    updateDividerWidth() // Initial call to set the width
+    updateDividerWidth()
   }, [dividerRef, children, thoughtsAtSameDepth, isOnlyChild, isTableView, editingValueUntrimmed, editingThoughtId])
 
   return (
