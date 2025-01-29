@@ -1,17 +1,18 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import joinCommand from '../join'
 
+beforeEach(initStore)
+
 describe('join', () => {
   describe('multicursor', () => {
     it('join multiple selected thoughts', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `

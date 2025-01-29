@@ -1,17 +1,18 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import archiveCommand from '../archive'
 
+beforeEach(initStore)
+
 describe('archive', () => {
   describe('multicursor', () => {
     it('archives multiple thoughts', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -41,8 +42,6 @@ describe('archive', () => {
     })
 
     it('archives thoughts at different levels', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -77,8 +76,6 @@ describe('archive', () => {
     })
 
     it('does not archive read-only thoughts', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -109,8 +106,6 @@ describe('archive', () => {
     })
 
     it('permanently deletes thoughts that are already archived', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -139,8 +134,6 @@ describe('archive', () => {
     })
 
     it('archives empty thoughts with descendants', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `

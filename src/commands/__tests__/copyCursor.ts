@@ -1,12 +1,15 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import * as copyModule from '../../device/copy'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import copyCursorCommand from '../copyCursor'
 
 vi.mock('../../device/copy')
+
+beforeEach(initStore)
 
 describe('copyCursor', () => {
   beforeEach(() => {
@@ -14,8 +17,6 @@ describe('copyCursor', () => {
   })
 
   it('copies a single thought and its descendants', async () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -41,8 +42,6 @@ describe('copyCursor', () => {
 
   describe('multicursor', () => {
     it('copies multiple thoughts and their descendants', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -75,8 +74,6 @@ describe('copyCursor', () => {
     })
 
     it('only copies ancestors when both ancestor and descendant are selected', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -105,8 +102,6 @@ describe('copyCursor', () => {
     })
 
     it('handles mixed scenarios correctly', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `

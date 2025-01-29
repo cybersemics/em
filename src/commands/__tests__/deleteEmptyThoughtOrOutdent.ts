@@ -7,12 +7,14 @@ import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand from '../../util/executeCommand'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import clearThoughtCommand from '../clearThought'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
+
+beforeEach(initStore)
 
 /**
  * This has been moved to the top because the rest of the tests aren't getting cleaned up.
@@ -54,8 +56,6 @@ describe('DOM', () => {
 })
 
 it('do nothing when there is no cursor', () => {
-  const store = createTestStore()
-
   store.dispatch([{ type: 'newThought', value: 'a' }, setCursor(null)])
 
   executeCommand(deleteEmptyThoughtOrOutdent, { store })
@@ -69,8 +69,6 @@ it('do nothing when there is no cursor', () => {
 })
 
 it('outdent on pressing backspace at the beginning of the thought', () => {
-  const store = createTestStore()
-
   // import thoughts
   store.dispatch([
     importText({
@@ -96,8 +94,6 @@ it('outdent on pressing backspace at the beginning of the thought', () => {
 })
 
 it('do not outdent thought with siblings', () => {
-  const store = createTestStore()
-
   // import thoughts
   store.dispatch([
     importText({
@@ -124,8 +120,6 @@ it('do not outdent thought with siblings', () => {
 
 describe('multicursor', () => {
   it('deletes multiple empty thoughts', async () => {
-    const store = createTestStore()
-
     store.dispatch([
       newThought({ value: 'a' }),
       newSubthought(),
@@ -151,8 +145,6 @@ describe('multicursor', () => {
   })
 
   it('outdents multiple only children', async () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -182,8 +174,6 @@ describe('multicursor', () => {
   })
 
   it('handles mixed scenarios correctly', async () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `

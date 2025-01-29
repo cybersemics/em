@@ -1,16 +1,17 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import swapNoteCommand from '../swapNote'
 
+beforeEach(initStore)
+
 describe('swapNote', () => {
   it('converts a thought to a note', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -31,8 +32,6 @@ describe('swapNote', () => {
   })
 
   it('converts a note back to a thought', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -56,8 +55,6 @@ describe('swapNote', () => {
 
   describe('multicursor', () => {
     it('converts multiple thoughts to notes', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `

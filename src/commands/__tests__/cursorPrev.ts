@@ -4,14 +4,15 @@ import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/t
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import globals from '../../globals'
 import contextToPath from '../../selectors/contextToPath'
-import createTestStore from '../../test-helpers/createTestStore'
+import store from '../../stores/app'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+
+beforeEach(initStore)
 
 describe('normal view', () => {
   it('move cursor to previous sibling', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -28,8 +29,6 @@ describe('normal view', () => {
   })
 
   it('move to last root child when there is no cursor', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -45,8 +44,6 @@ describe('normal view', () => {
   })
 
   it('do nothing when the cursor on the first sibling', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -62,16 +59,12 @@ describe('normal view', () => {
   })
 
   it('do nothing when there are no thoughts', () => {
-    const store = createTestStore()
-
     store.dispatch(cursorPrev())
 
     expect(store.getState().cursor).toBe(null)
   })
 
   it('sorted thoughts', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -99,8 +92,6 @@ describe('normal view', () => {
 
 describe('context view', () => {
   it('move cursor to prev context', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -122,8 +113,6 @@ describe('context view', () => {
   })
 
   it('noop if on first context', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -159,8 +148,6 @@ describe('global suppress expansion', () => {
         - e
         - f`
 
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text,
@@ -182,8 +169,6 @@ describe('global suppress expansion', () => {
       - d
         - e
         - f`
-
-    const store = createTestStore()
 
     store.dispatch([
       importText({
@@ -207,8 +192,6 @@ describe('global suppress expansion', () => {
       - d
         - e
         - f`
-
-    const store = createTestStore()
 
     store.dispatch([
       importText({

@@ -1,16 +1,17 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import moveThoughtDownCommand from '../moveThoughtDown'
 
+beforeEach(initStore)
+
 describe('moveThoughtDown', () => {
   it('moves a single thought down', () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -34,8 +35,6 @@ describe('moveThoughtDown', () => {
 
   describe('multicursor', () => {
     it('moves multiple thoughts down', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -64,8 +63,6 @@ describe('moveThoughtDown', () => {
     })
 
     it('handles mixed scenarios correctly', async () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `
@@ -101,8 +98,6 @@ describe('moveThoughtDown', () => {
     })
 
     it('does nothing if there is no next thought', () => {
-      const store = createTestStore()
-
       store.dispatch([
         importText({
           text: `

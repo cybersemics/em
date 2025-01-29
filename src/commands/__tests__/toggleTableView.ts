@@ -1,16 +1,17 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import attributeByContext from '../../test-helpers/attributeByContext'
-import createTestStore from '../../test-helpers/createTestStore'
+import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand, { executeCommandWithMulticursor } from '../../util/executeCommand'
 import toggleTableViewCommand from '../toggleTableView'
 
-it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
-  const store = createTestStore()
+beforeEach(initStore)
 
+it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
   store.dispatch([
     importText({
       text: `
@@ -31,8 +32,6 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
 })
 
 it('toggle on table view of parent of cursor (initial state =view attribute set to Prose)', () => {
-  const store = createTestStore()
-
   store.dispatch([
     importText({
       text: `
@@ -55,8 +54,6 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
 })
 
 it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
-  const store = createTestStore()
-
   // import thoughts
   store.dispatch([
     importText({
@@ -81,8 +78,6 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
 
 describe('multicursor', () => {
   it('toggles table view on for multiple thoughts', async () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -125,8 +120,6 @@ describe('multicursor', () => {
   })
 
   it('handles mixed scenarios with table view on and off', async () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
@@ -171,8 +164,6 @@ describe('multicursor', () => {
   })
 
   it('toggles table view on nested thoughts', async () => {
-    const store = createTestStore()
-
     store.dispatch([
       importText({
         text: `
