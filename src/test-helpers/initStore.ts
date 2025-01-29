@@ -1,6 +1,5 @@
 import { clearActionCreator as clear } from '../actions/clear'
 import store from '../stores/app'
-import skipTutorialHelper from './skipTutorial'
 
 interface Params {
   persist?: boolean
@@ -13,7 +12,15 @@ interface Params {
 const initStore = ({ persist, allowTutorial }: Params = {}) => {
   if (!persist) store.dispatch(clear())
 
-  if (!allowTutorial) skipTutorialHelper()
+  if (!allowTutorial) {
+    store.dispatch([
+      // skip tutorial
+      { type: 'tutorial', value: false },
+  
+      // close welcome modal
+      { type: 'closeModal' },
+    ])
+  }
 }
 
 export default initStore
