@@ -12,9 +12,10 @@ import { pullAncestorsActionCreator as pullAncestors } from '../actions/pullAnce
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import db from '../data-providers/yjs/thoughtspace'
 import { getChildren } from '../selectors/getChildren'
-import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import thoughtToPath from '../selectors/thoughtToPath'
 import syncStatusStore from '../stores/syncStatus'
 import equalArrays from '../util/equalArrays'
 import hashThought from '../util/hashThought'
@@ -68,7 +69,7 @@ const appendVisiblePaths = (
       const showContexts = isContextViewActive(state, path)
 
       // get visible children
-      const children = showContexts ? getContextsSortedAndRanked(state, thought.value) : getChildren(state, thoughtId)
+      const children = getChildren(state, thoughtId)
 
       return {
         // pending thought
@@ -78,6 +79,17 @@ const appendVisiblePaths = (
           // pending child
           child ? { [child.id]: true } : null,
         ),
+        // context view contexts and their ancestors
+        ...(showContexts
+          ? keyValueBy(
+              // Warning: thoughtToPath will return partial Paths if ancestors are not loaded into memory.
+              // We need to get the available ancestor ids every updatePullQueue in order to continue triggering pull.
+              // Otherwise context ancestors may never be pulled.
+              // See: https://github.com/cybersemics/em/issues/2797
+              getContexts(state, thought.value).flatMap(cxid => [...thoughtToPath(state, cxid), cxid]),
+              cxid => ({ [cxid]: true }),
+            )
+          : null),
       }
     },
     pullQueue,
@@ -108,8 +120,8 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
   // track changed state to short circuit flushPullQueue when no visible thoughts have changed
   let lastContextViews: State['contextViews'] = {}
-  let lastExpandedPaths: Index<Path> = {}
   let lastSearchContexts: State['searchContexts'] = {}
+  let lastExtendedPullQueue: Record<ThoughtId, true> = {}
 
   // enqueue thoughts be pulled from the data source
   // initialize with em and root contexts
@@ -144,13 +156,10 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       cancelRef = { canceled: false }
     }
 
-    // expand pull queue to include visible descendants and search contexts
-    const extendedPullQueue = appendVisiblePaths(getState(), pullQueue, lastExpandedPaths)
-
     // filter out thoughts that are currently being pulled, except when forcing the initial remote pull
     const extendedPullQueueFiltered = force
-      ? extendedPullQueue
-      : keyValueBy(extendedPullQueue, id => {
+      ? lastExtendedPullQueue
+      : keyValueBy(lastExtendedPullQueue, id => {
           // use a for loop for short circuiting
           for (const pullQueueRecord of pulling.values()) {
             if (id in pullQueueRecord) return null
@@ -201,21 +210,23 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       state.searchContexts === lastSearchContexts ||
       equalArrays(Object.keys(state.searchContexts ?? {}), Object.keys(lastSearchContexts ?? {}))
 
+    // expand pull queue to include visible ancestors, descendants, and search contexts
     const expandedPaths = expandedWithAncestors(state, state.expanded)
+    const extendedPullQueue = appendVisiblePaths(state, pullQueue, expandedPaths)
 
     if (
       !forceFlush &&
       !force &&
       state.contextViews === lastContextViews &&
-      equalArrays(Object.keys(expandedPaths), Object.keys(lastExpandedPaths)) &&
+      equalArrays(Object.keys(extendedPullQueue), Object.keys(lastExtendedPullQueue)) &&
       isSearchUnchanged
     )
       return
 
     // update last states
-    lastExpandedPaths = expandedPaths
     lastSearchContexts = state.searchContexts
     lastContextViews = state.contextViews
+    lastExtendedPullQueue = extendedPullQueue
 
     // do not throttle initial flush or flush on authenticate
     if (isLoaded) {
@@ -237,7 +248,6 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // reset internal state variables when clear action is dispatched
     if (isAction(action) && action.type === 'clear') {
       lastContextViews = {}
-      lastExpandedPaths = {}
       lastSearchContexts = {}
       pullQueue = initialPullQueue()
     }
