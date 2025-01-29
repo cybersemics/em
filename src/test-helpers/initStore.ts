@@ -2,7 +2,14 @@ import { clearActionCreator as clear } from '../actions/clear'
 import store from '../stores/app'
 
 interface Params {
+  /**
+   * Persist: Set to true to keep the existing store state.
+   */
   persist?: boolean
+
+  /**
+   * AllowTutorial: Set to true to override the skipping of the tutorial.
+   */
   allowTutorial?: boolean
 }
 
@@ -16,7 +23,7 @@ const initStore = ({ persist, allowTutorial }: Params = {}) => {
     store.dispatch([
       // skip tutorial
       { type: 'tutorial', value: false },
-  
+
       // close welcome modal
       { type: 'closeModal' },
     ])
