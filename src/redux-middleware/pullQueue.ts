@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import { UnknownAction, isAction } from 'redux'
 import { ThunkMiddleware } from 'redux-thunk'
-import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
@@ -37,13 +36,14 @@ const initialPullQueue = (): Record<ThoughtId, true> => ({
   [HOME_TOKEN]: true,
 })
 
-/** Generates a map of all visible paths, including the cursor, all its ancestors, and the expanded paths. Keyed by ThoughtId. */
-const expandedWithAncestors = (state: State, expanded: Index<Path>): Index<Path> => {
+/** Appends all visible paths and their visible children to the pullQueue. */
+const appendVisiblePaths = (state: State): Record<ThoughtId, true> => {
   const { cursor } = state
   const path = cursor || [HOME_TOKEN]
 
-  return {
-    ...expanded,
+  // Generate a map of all visible paths, including the cursor, all its ancestors, and the expanded paths. Keyed by ThoughtId.
+  const expandedPaths = {
+    ...state.expanded,
     // generate the cursor and all its ancestors
     // i.e. ['a', b', 'c'], ['a', 'b'], ['a']
     ...keyValueBy(path, (value, i) => {
@@ -51,10 +51,7 @@ const expandedWithAncestors = (state: State, expanded: Index<Path>): Index<Path>
       return pathAncestor.length > 0 ? { [head(pathAncestor)]: pathAncestor } : null
     }),
   }
-}
 
-/** Appends all visible paths and their visible children to the pullQueue. */
-const appendVisiblePaths = (state: State, expandedPaths: Index<Path>): Record<ThoughtId, true> => {
   return keyValueBy(expandedPaths, (key, path) => {
     const thoughtId = head(path)
     const thought = getThoughtById(state, thoughtId)
@@ -197,8 +194,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     const state = getState()
 
     // expand pull queue to include visible ancestors, descendants, and search contexts
-    const expandedPaths = expandedWithAncestors(state, state.expanded)
-    const extendedPullQueue = { ...pullQueue, ...appendVisiblePaths(state, expandedPaths) }
+    const extendedPullQueue = { ...pullQueue, ...appendVisiblePaths(state) }
 
     // short circuit if no visible thoughts have changed
     if (!forceFlush && !force && equalArrays(Object.keys(extendedPullQueue), Object.keys(lastExtendedPullQueue))) return
