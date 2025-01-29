@@ -59,24 +59,14 @@ const useDividerData = (path: Path) => {
   )
 }
 
-let canvas: HTMLCanvasElement | null = null
-let context: CanvasRenderingContext2D | null = null
-
-/**
- * Initializes the canvas and context for text width calculation.
- */
-const initializeCanvas = () => {
-  if (!canvas) {
-    canvas = document.createElement('canvas')
-    context = canvas.getContext('2d')
-  }
-}
+/** Initialize a canvas context for text width calculation. */
+const canvas = document.createElement('canvas')
+const context = canvas.getContext('2d')
 
 /**
  * Calculates the width of a single text string, considering trailing spaces.
  */
 const calculateTextWidth = (text: string, font: string): number => {
-  initializeCanvas()
   if (!context) return 0
   context.font = font
   return Math.ceil(context.measureText(text).width)
