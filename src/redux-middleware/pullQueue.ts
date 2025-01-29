@@ -37,7 +37,7 @@ const initialPullQueue = (): Record<ThoughtId, true> => ({
 })
 
 /** Appends all visible paths and their visible children to the pullQueue. */
-const appendVisiblePaths = (state: State): Record<ThoughtId, true> => {
+const expandPullQueue = (state: State): Record<ThoughtId, true> => {
   const { cursor } = state
   const path = cursor || [HOME_TOKEN]
 
@@ -108,14 +108,14 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   let isLoaded = false
 
   // track changed pullQueue to short circuit flushPullQueue when no visible thoughts have changed
-  let lastExtendedPullQueue: Record<ThoughtId, true> = {}
+  let lastExpandedPullQueue: Record<ThoughtId, true> = {}
 
   // enqueue thoughts be pulled from the data source
   // initialize with em and root contexts
   let pullQueue = initialPullQueue()
 
   // A set of Indexes of ThoughtIds that are currently being pulled used to prevent redundant pulls.
-  // Each inner object is the extendedPullQueueFiltered of a single pull.
+  // Each inner object is the expandedPullQueueFiltered of a single pull.
   // The outer object allows the inner objects to be removed in O(1) when the pull is complete.
   const pulling = new Set<Record<ThoughtId, true>>()
 
@@ -144,9 +144,9 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     }
 
     // filter out thoughts that are currently being pulled, except when forcing the initial remote pull
-    const extendedPullQueueFiltered = force
-      ? lastExtendedPullQueue
-      : keyValueBy(lastExtendedPullQueue, id => {
+    const expandedPullQueueFiltered = force
+      ? lastExpandedPullQueue
+      : keyValueBy(lastExpandedPullQueue, id => {
           // use a for loop for short circuiting
           for (const pullQueueRecord of pulling.values()) {
             if (id in pullQueueRecord) return null
@@ -156,14 +156,11 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     pullQueue = {}
 
-    const extendedPullQueueIds = Object.keys(extendedPullQueueFiltered) as ThoughtId[]
-
-    pulling.add(extendedPullQueueFiltered)
-
     // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
-    await dispatch(pull(extendedPullQueueIds, { cancelRef, force }))
+    pulling.add(expandedPullQueueFiltered)
+    await dispatch(pull(Object.keys(expandedPullQueueFiltered) as ThoughtId[], { cancelRef, force }))
     syncStatusStore.update({ isPulling: false })
-    pulling.delete(extendedPullQueueFiltered)
+    pulling.delete(expandedPullQueueFiltered)
 
     // pull favorites in the background on the first pull
     // note that syncStatusStore.isPulling does not include favorites because we want them to load in the background and not block push
@@ -194,13 +191,13 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     const state = getState()
 
     // expand pull queue to include visible ancestors, descendants, and search contexts
-    const extendedPullQueue = { ...pullQueue, ...appendVisiblePaths(state) }
+    const expandedPullQueue = { ...pullQueue, ...expandPullQueue(state) }
 
     // short circuit if no visible thoughts have changed
-    if (!forceFlush && !force && equalArrays(Object.keys(extendedPullQueue), Object.keys(lastExtendedPullQueue))) return
+    if (!forceFlush && !force && equalArrays(Object.keys(expandedPullQueue), Object.keys(lastExpandedPullQueue))) return
 
     // update last state
-    lastExtendedPullQueue = extendedPullQueue
+    lastExpandedPullQueue = expandedPullQueue
 
     // do not throttle initial flush or flush on authenticate
     if (isLoaded) {
