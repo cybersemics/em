@@ -1014,7 +1014,10 @@ const LayoutTree = () => {
             />
           ))}
         </TransitionGroup>
-        <span className={css({ color: 'red', position: 'absolute', pointerEvents: 'none' })} ref={caretRef}>
+        <span
+          className={css({ color: 'red', left: '9999em', top: '9999em', position: 'absolute', pointerEvents: 'none' })}
+          ref={caretRef}
+        >
           |
         </span>
       </div>
