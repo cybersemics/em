@@ -65,7 +65,7 @@ const CircledCloseButton = ({ cssRaw, ...props }: CloseButtonProps) => {
           // eslint-disable-next-line @pandacss/no-hardcoded-color
           background: 'inherit',
           border: 'inherit',
-          padding: '0.4em',
+          padding: '0.5em',
         },
         cssRaw,
       )}
