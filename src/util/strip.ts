@@ -10,7 +10,6 @@ type StripOptions = {
   preventTrim?: boolean
   stripAttributes?: boolean
   stripColors?: boolean
-  convertToOutline?: boolean
 }
 
 const REGEX_NBSP = /&nbsp;/gim
@@ -123,11 +122,10 @@ export const handleWorkflowy = (nodes: HimalayaNode[], depth = 0): string => {
   return result
 }
 
-/** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim.
+/** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim. Uses DOMPurify to sanitize html so this method is slow. Use stripTags when possible for efficiency.
  * PrserveFormatting is used to preserve the html formatting.
  * StripColors is used to strip only colors of the html.
  * StripAttributes is used to remove style attributes.
- * ConvertToOutline is used to convert HTML to an outline format.
  */
 const strip = (
   html: string,
