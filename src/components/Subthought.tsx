@@ -31,6 +31,7 @@ const Subthought = ({
   env,
   isMultiColumnTable,
   leaf,
+  onThoughtFocus,
   updateSize,
   path,
   prevChildId,
@@ -48,6 +49,7 @@ const Subthought = ({
   indexDescendant: number
   isMultiColumnTable?: boolean
   leaf?: boolean
+  onThoughtFocus?: () => void
   updateSize?: () => void
   path: Path
   prevChildId?: ThoughtId
@@ -155,6 +157,7 @@ const Subthought = ({
           isHeader={false}
           isMultiColumnTable={isMultiColumnTable}
           isVisible={isVisible}
+          onThoughtFocus={onThoughtFocus}
           updateSize={updateSize}
           path={path}
           prevChildId={prevChildId}

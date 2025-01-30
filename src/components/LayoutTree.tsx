@@ -398,6 +398,7 @@ const TreeNode = ({
   prevChild,
   showContexts,
   isLastVisible,
+  onThoughtFocus,
   simplePath,
   singleLineHeightWithCliff,
   style,
@@ -419,6 +420,7 @@ const TreeNode = ({
 }: TreeThoughtPositioned & {
   thoughtKey: string
   index: number
+  onThoughtFocus: () => void
   viewportBottom: number
   treeThoughtsPositioned: TreeThoughtPositioned[]
   bulletWidth: number
@@ -522,6 +524,7 @@ const TreeNode = ({
             isMultiColumnTable={false}
             leaf={leaf}
             onResize={setSize}
+            onThoughtFocus={onThoughtFocus}
             path={path}
             prevChildId={prevChild?.id}
             showContexts={showContexts}
@@ -590,6 +593,7 @@ const TreeNode = ({
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
+  const caretRef = useRef<HTMLSpanElement | null>(null)
   const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
@@ -981,6 +985,22 @@ const LayoutTree = () => {
               key={thought.key}
               // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
               thoughtKey={thought.key}
+              onThoughtFocus={() => {
+                if (caretRef.current) {
+                  const offset = ref.current?.getBoundingClientRect()
+
+                  if (offset) {
+                    const selection = window.getSelection()
+
+                    if (selection?.focusNode) {
+                      console.log(selection.focusNode)
+                      const { x, y } = selection.getRangeAt(0).getBoundingClientRect() || { x: 0, y: 0 }
+                      caretRef.current.style.top = `${y - offset.y}px`
+                      caretRef.current.style.left = `${x - offset.x - 11}px`
+                    }
+                  }
+                }
+              }}
               {...{
                 viewportBottom,
                 treeThoughtsPositioned,
@@ -994,6 +1014,9 @@ const LayoutTree = () => {
             />
           ))}
         </TransitionGroup>
+        <span className={css({ color: 'red', position: 'absolute', pointerEvents: 'none' })} ref={caretRef}>
+          |
+        </span>
       </div>
     </div>
   )
