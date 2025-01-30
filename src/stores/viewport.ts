@@ -17,6 +17,7 @@ const viewportStore = reactMinistore({
   scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * SCROLL_ZONE_WIDTH,
   virtualKeyboardHeight:
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
+  currentKeyboardHeight: 0,
 })
 
 /** Throttled update of viewport height. Invoked on window resize. */
@@ -49,6 +50,7 @@ export const updateSize = _.throttle(
           : isPortrait
             ? virtualKeyboardHeightPortrait
             : virtualKeyboardHeightLandscape,
+      currentKeyboardHeight: window.visualViewport ? window.innerHeight - window.visualViewport.height : 0,
     })
   },
   // lock to 60 fps

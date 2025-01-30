@@ -43,14 +43,14 @@ const usePositionFixed = ({
 } => {
   const position = positionFixedStore.useState()
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
-  const { innerHeight, virtualKeyboardHeight } = viewportStore.useState()
+  const { innerHeight, currentKeyboardHeight } = viewportStore.useState()
 
   useEffect(initEventHandler, [])
   let top, bottom
   if (position === 'absolute') {
     top = fromBottom ? `${scrollTop + innerHeight - (height ?? 0) - offset}px` : `${scrollTop + offset}px`
   } else if (fromBottom) {
-    bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset}px + ${virtualKeyboardHeight}px)`
+    bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset + currentKeyboardHeight}px)`
   } else {
     top = `calc(${token('spacing.safeAreaTop')} + ${offset}px)`
   }
