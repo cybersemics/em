@@ -15,6 +15,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
+import { getBoundingClientRect } from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import useSortedContext from '../hooks/useSortedContext'
 import attributeEquals from '../selectors/attributeEquals'
@@ -990,11 +991,10 @@ const LayoutTree = () => {
                   const offset = ref.current?.getBoundingClientRect()
 
                   if (offset) {
-                    const selection = window.getSelection()
+                    const rect = getBoundingClientRect()
 
-                    if (selection?.focusNode) {
-                      console.log(selection.focusNode)
-                      const { x, y } = selection.getRangeAt(0).getBoundingClientRect() || { x: 0, y: 0 }
+                    if (rect) {
+                      const { x, y } = rect
                       caretRef.current.style.top = `${y - offset.y}px`
                       caretRef.current.style.left = `${x - offset.x - 11}px`
                     }
