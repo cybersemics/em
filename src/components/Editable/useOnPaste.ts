@@ -1,3 +1,4 @@
+import { parse } from 'himalaya'
 import { escape as escapeHtml } from 'html-escaper'
 import React, { useCallback } from 'react'
 import { useDispatch } from 'react-redux'
@@ -10,7 +11,7 @@ import rootedParentOf from '../../selectors/rootedParentOf'
 import store from '../../stores/app'
 import equalPath from '../../util/equalPath'
 import isMarkdown from '../../util/isMarkdown'
-import strip from '../../util/strip'
+import strip, { handleWorkflowy } from '../../util/strip'
 import timestamp from '../../util/timestamp'
 
 /** Returns an onPaste handler that parses and inserts the pasted text or thoughts at the cursor. Handles plaintext and HTML, inline and nested paste. */
@@ -65,11 +66,13 @@ const useOnPaste = ({
             }),
           )
         }
-
+        const nodes = parse(htmlText)
         const text = htmlText
-          ? strip(htmlText, { preserveFormatting: emText, stripColors: !emText }).replace(/\n\s*\n+/g, '\n') // Clean HTML from clipboard
+          ? strip(htmlText.includes(`class="note"`) ? handleWorkflowy(nodes).trim() : htmlText, {
+              preserveFormatting: emText,
+              stripColors: !emText,
+            }).replace(/\n\s*\n+/g, '\n') // Clean HTML from clipboard
           : escapeHtml(plainText.trim()) // Escape plain text from clipboard
-
         // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
         const multiline = plainText.trim().includes('\n')
 

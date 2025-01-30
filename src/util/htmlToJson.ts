@@ -226,7 +226,6 @@ const generateRegexToMatchTags = (tags: string[]): RegExp => new RegExp(`</?(?:$
 /** Parses input HTML and saves in JSON array using Himalaya. */
 const htmlToJson = (html: string) => {
   const nodes = parse(html) as Element[]
-
   const tags = findUniqueTags(nodes)
   const tagsToBeStripped = tags.filter((tag: string) => !tagsThatAreNotToBeStripped.includes(tag))
   const regex = generateRegexToMatchTags(tagsToBeStripped)
