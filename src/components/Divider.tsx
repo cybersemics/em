@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
@@ -61,11 +61,9 @@ const useDividerData = (path: Path) => {
 /**
  * Calculates the width of multiple thoughts by measuring their rendered widths in the DOM.
  */
-const getThoughtWidths = (thoughts: { id: ThoughtId }[]): number[] => {
-  return thoughts.map(thought => {
-    const innerThoughtElement = document.querySelector(
-      `[aria-label="tree-node"][data-id="${thought.id}"] [aria-label="thought"]`,
-    )
+const getThoughtWidths = (ids: ThoughtId[]): number[] => {
+  return ids.map(id => {
+    const innerThoughtElement = document.querySelector(`[aria-label="editable-${id}"]`)
     return innerThoughtElement?.getBoundingClientRect().width ?? 0
   })
 }
@@ -77,7 +75,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
   const { isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
   const editingThoughtId = useSelector((state: State) => state.cursor && head(state.cursor))
-  const editingValueUntrimmed = editingValueUntrimmedStore.useSelector(editingValue => editingValue)
+  const editingValueUntrimmed = editingValueUntrimmedStore.useState()
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -85,37 +83,28 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     dispatch(setCursor({ path }))
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     /** Calculates and updates the Divider's width based on sibling thought widths. */
     const updateDividerWidth = () => {
       if (!dividerRef.current) return
 
-      if (isOnlyChild && !isTableView) {
-        setDividerWidth(DIVIDER_MIN_WIDTH)
-        return
-      }
-
       let widths: number[] = []
-      if (isTableView && isOnlyChild) {
-        if (thoughtsAtSameDepth.length === 0) {
-          setDividerWidth(DIVIDER_MIN_WIDTH)
-          return
-        }
-        widths = getThoughtWidths(thoughtsAtSameDepth)
+
+      if (isOnlyChild && !isTableView) {
+        // No siblings and not in table view; widths remain empty
+      } else if (isTableView && isOnlyChild) {
+        widths = getThoughtWidths(thoughtsAtSameDepth.map(thought => thought.id))
       } else {
         const siblingThoughts = children.filter(child => !isDivider(child.value))
-        if (siblingThoughts.length === 0) {
-          setDividerWidth(DIVIDER_MIN_WIDTH)
-          return
-        }
-        widths = getThoughtWidths(siblingThoughts)
+        widths = getThoughtWidths(siblingThoughts.map(thought => thought.id))
       }
 
-      setDividerWidth(Math.round(Math.max(...widths, DIVIDER_MIN_WIDTH)))
+      setDividerWidth(Math.max(...widths, DIVIDER_MIN_WIDTH))
     }
 
     updateDividerWidth()
-  }, [dividerRef, children, thoughtsAtSameDepth, isOnlyChild, isTableView, editingValueUntrimmed, editingThoughtId])
+    // The dependencies include variables that could affect the divider width
+  }, [children, thoughtsAtSameDepth, isOnlyChild, isTableView, editingValueUntrimmed, editingThoughtId])
 
   return (
     <div
