@@ -37,7 +37,9 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
     // 1.5x can cause multiline to alternate in Safari for some reason. There may be a mistake in the height calculation or the inclusion of padding that is causing this. Padding was added to the calculation in commit 113c692. Further investigation is needed.
     // See: https://github.com/cybersemics/em/issues/2778#issuecomment-2605083798
     setMultiline(height - paddingTop - paddingBottom > singleLineHeight * 1.2)
-  }, [contentRef, fontSize])
+    // we also want to have a fresh function when editingValue changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentRef, fontSize, editingValue])
 
   // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
   // cursor changes to or from the element.
