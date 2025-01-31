@@ -31,22 +31,21 @@ const useRelevantThoughtIds = (path: Path): ThoughtId[] => {
         (parentId && attributeEquals(state, parentId, '=view', 'Table')) ||
         (grandParentId && attributeEquals(state, grandParentId, '=view', 'Table'))
 
-      if (isTableView && isOnlyChild && grandParentId) {
-        const parentSiblings = getAllChildrenAsThoughts(state, grandParentId).filter(child => !isDivider(child.value))
-        return parentSiblings.flatMap(parent => {
-          const childrenOfParent = parent.id ? getAllChildrenAsThoughts(state, parent.id) : []
-          return childrenOfParent.filter(child => !isDivider(child.value)).map(child => child.id)
-        })
-      } else if (isOnlyChild && !isTableView) {
-        return []
-      } else {
-        return childrenWithoutDividers.map(child => child.id)
-      }
+      const relevantThoughtIds = isOnlyChild
+        ? isTableView && grandParentId
+          ? getAllChildrenAsThoughts(state, grandParentId)
+              .filter(child => !isDivider(child.value))
+              .flatMap(parent =>
+                (parent.id ? getAllChildrenAsThoughts(state, parent.id) : [])
+                  .filter(child => !isDivider(child.value))
+                  .map(child => child.id),
+              )
+          : []
+        : childrenWithoutDividers.map(child => child.id)
+
+      return relevantThoughtIds
     },
-    // Only update when the relevant thought IDs change.
-    (prev, next) =>
-      prev.length === next.length &&
-      prev.every((id, index) => id === next[index]),
+    (prev, next) => prev.length === next.length && prev.every((id, index) => id === next[index]),
   )
 }
 
