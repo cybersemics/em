@@ -504,9 +504,7 @@ const Editable = ({
       blurring = false
 
       // Update editingValueUntrimmedStore with the current value
-      if (value && editingValueUntrimmedStore.getState() !== value) {
-        editingValueUntrimmedStore.update(value)
-      }
+      editingValueUntrimmedStore.update(value)
 
       const { dragHold, dragInProgress } = store.getState()
       if (!dragHold && !dragInProgress) {
