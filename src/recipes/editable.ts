@@ -37,14 +37,6 @@ const editableRecipe = defineRecipe({
       position: { _safari: 'relative' },
     },
   },
-  variants: {
-    preventAutoscroll: {
-      true: {
-        /* See: https://stackoverflow.com/a/60712537/480608 */
-        animation: '0.01s 1 preventAutoscroll',
-      },
-    },
-  },
 })
 
 export default editableRecipe

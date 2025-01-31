@@ -102,14 +102,6 @@ const keyframes = defineKeyframes({
       opacity: 0.5,
     },
   },
-  preventAutoscroll: {
-    '0%': {
-      opacity: 0,
-    },
-    '100%': {
-      opacity: 1,
-    },
-  },
   ripple_loader: {
     '0%': {
       top: '100%',
