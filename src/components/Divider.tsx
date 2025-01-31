@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
@@ -11,6 +11,7 @@ import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
+import viewportStore from '../stores/viewport'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -76,6 +77,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const { isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
   const editingThoughtId = useSelector((state: State) => state.cursor && head(state.cursor))
   const editingValueUntrimmed = editingValueUntrimmedStore.useState()
+  const fontSize = useSelector((state: State) => state.fontSize)
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -83,28 +85,29 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     dispatch(setCursor({ path }))
   }
 
-  useLayoutEffect(() => {
-    /** Calculates and updates the Divider's width based on sibling thought widths. */
-    const updateDividerWidth = () => {
-      if (!dividerRef.current) return
+  /** Calculates and updates the Divider's width based on sibling thought widths. */
+  const updateDividerWidth = useCallback(() => {
+    if (!dividerRef.current) return
 
-      let widths: number[] = []
+    let widths: number[] = []
 
-      if (isOnlyChild && !isTableView) {
-        // No siblings and not in table view; widths remain empty
-      } else if (isTableView && isOnlyChild) {
-        widths = getThoughtWidths(thoughtsAtSameDepth.map(thought => thought.id))
-      } else {
-        const siblingThoughts = children.filter(child => !isDivider(child.value))
-        widths = getThoughtWidths(siblingThoughts.map(thought => thought.id))
-      }
-
-      setDividerWidth(Math.max(...widths, DIVIDER_MIN_WIDTH))
+    if (isOnlyChild && !isTableView) {
+      // No siblings and not in table view; widths remain empty
+    } else if (isTableView && isOnlyChild) {
+      widths = getThoughtWidths(thoughtsAtSameDepth.map(thought => thought.id))
+    } else {
+      const siblingThoughts = children.filter(child => !isDivider(child.value))
+      widths = getThoughtWidths(siblingThoughts.map(thought => thought.id))
     }
 
+    setDividerWidth(Math.max(...widths, DIVIDER_MIN_WIDTH))
+  }, [children, thoughtsAtSameDepth, isOnlyChild, isTableView])
+
+  useLayoutEffect(() => {
     updateDividerWidth()
-    // The dependencies include variables that could affect the divider width
-  }, [children, thoughtsAtSameDepth, isOnlyChild, isTableView, editingValueUntrimmed, editingThoughtId])
+  }, [editingThoughtId, editingValueUntrimmed, fontSize, updateDividerWidth])
+
+  viewportStore.useSelectorEffect(updateDividerWidth, state => state.innerWidth)
 
   return (
     <div
