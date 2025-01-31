@@ -16,8 +16,8 @@ import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 
-/** Custom hook to fetch divider-related data from the state. */
-const useDividerData = (path: Path) => {
+/** Custom hook to fetch relevant thought IDs for calculating divider width. */
+const useRelevantThoughtIds = (path: Path): ThoughtId[] => {
   return useSelector(
     (state: State) => {
       const parentPath = rootedParentOf(state, path)
@@ -31,31 +31,22 @@ const useDividerData = (path: Path) => {
         (parentId && attributeEquals(state, parentId, '=view', 'Table')) ||
         (grandParentId && attributeEquals(state, grandParentId, '=view', 'Table'))
 
-      let thoughtsAtSameDepth: { id: ThoughtId; value: string }[] = []
-
       if (isTableView && isOnlyChild && grandParentId) {
         const parentSiblings = getAllChildrenAsThoughts(state, grandParentId).filter(child => !isDivider(child.value))
-        thoughtsAtSameDepth = parentSiblings.flatMap(parent => {
+        return parentSiblings.flatMap(parent => {
           const childrenOfParent = parent.id ? getAllChildrenAsThoughts(state, parent.id) : []
-          return childrenOfParent.filter(child => !isDivider(child.value))
+          return childrenOfParent.filter(child => !isDivider(child.value)).map(child => child.id)
         })
-      }
-
-      return {
-        isOnlyChild,
-        isTableView,
-        children,
-        thoughtsAtSameDepth,
+      } else if (isOnlyChild && !isTableView) {
+        return []
+      } else {
+        return childrenWithoutDividers.map(child => child.id)
       }
     },
-    // Ensure the selector runs only when values change, excluding ref changes to avoid redundant re-renders.
+    // Only update when the relevant thought IDs change.
     (prev, next) =>
-      prev.isOnlyChild === next.isOnlyChild &&
-      prev.isTableView === next.isTableView &&
-      prev.children.length === next.children.length &&
-      prev.children.every((child, index) => child.value === next.children[index].value) &&
-      prev.thoughtsAtSameDepth.length === next.thoughtsAtSameDepth.length &&
-      prev.thoughtsAtSameDepth.every((thought, index) => thought.value === next.thoughtsAtSameDepth[index].value),
+      prev.length === next.length &&
+      prev.every((id, index) => id === next[index]),
   )
 }
 
@@ -74,7 +65,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const dispatch = useDispatch()
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
-  const { isOnlyChild, isTableView, children, thoughtsAtSameDepth } = useDividerData(path)
+  const relevantThoughtIds = useRelevantThoughtIds(path)
   const editingThoughtId = useSelector((state: State) => state.cursor && head(state.cursor))
   const editingValueUntrimmed = editingValueUntrimmedStore.useState()
   const fontSize = useSelector((state: State) => state.fontSize)
@@ -89,19 +80,9 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const updateDividerWidth = useCallback(() => {
     if (!dividerRef.current) return
 
-    let widths: number[] = []
-
-    if (isOnlyChild && !isTableView) {
-      // No siblings and not in table view; widths remain empty
-    } else if (isTableView && isOnlyChild) {
-      widths = getThoughtWidths(thoughtsAtSameDepth.map(thought => thought.id))
-    } else {
-      const siblingThoughts = children.filter(child => !isDivider(child.value))
-      widths = getThoughtWidths(siblingThoughts.map(thought => thought.id))
-    }
-
+    const widths = getThoughtWidths(relevantThoughtIds)
     setDividerWidth(Math.max(...widths, DIVIDER_MIN_WIDTH))
-  }, [children, thoughtsAtSameDepth, isOnlyChild, isTableView])
+  }, [relevantThoughtIds])
 
   useLayoutEffect(() => {
     updateDividerWidth()
