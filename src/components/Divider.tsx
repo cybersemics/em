@@ -22,14 +22,14 @@ const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
     (state: State) => {
       const parentPath = rootedParentOf(state, path)
       const parentId = head(parentPath)
-      const grandParentPath = parentId ? rootedParentOf(state, parentPath) : []
-      const grandParentId = head(grandParentPath)
+      const grandParentPath = parentId ? rootedParentOf(state, parentPath) : null
+      const grandParentId = grandParentPath ? head(grandParentPath) : null
       const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
       const childrenWithoutDividers = children.filter(child => !isDivider(child.value))
       const isOnlyChild = childrenWithoutDividers.length === 0
       const isTableView =
-        (parentId && attributeEquals(state, parentId, '=view', 'Table')) ||
-        (grandParentId && attributeEquals(state, grandParentId, '=view', 'Table'))
+        attributeEquals(state, parentId, '=view', 'Table') ||
+        attributeEquals(state, grandParentId, '=view', 'Table')
 
       const dependentThoughtIds = isOnlyChild
         ? isTableView && grandParentId
