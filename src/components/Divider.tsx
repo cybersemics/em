@@ -16,8 +16,8 @@ import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 
-/** Custom hook to fetch relevant thought IDs for calculating divider width. */
-const useRelevantThoughtIds = (path: Path): ThoughtId[] => {
+/** Custom hook to fetch thought IDs that affect the divider width. */
+const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
   return useSelector(
     (state: State) => {
       const parentPath = rootedParentOf(state, path)
@@ -31,19 +31,22 @@ const useRelevantThoughtIds = (path: Path): ThoughtId[] => {
         (parentId && attributeEquals(state, parentId, '=view', 'Table')) ||
         (grandParentId && attributeEquals(state, grandParentId, '=view', 'Table'))
 
-      const relevantThoughtIds = isOnlyChild
+      const dependentThoughtIds = isOnlyChild
         ? isTableView && grandParentId
-          ? getAllChildrenAsThoughts(state, grandParentId)
+          ? // If the thought is the only child and in a table view, get the grandchildren's IDs
+            getAllChildrenAsThoughts(state, grandParentId)
               .filter(child => !isDivider(child.value))
               .flatMap(parent =>
                 (parent.id ? getAllChildrenAsThoughts(state, parent.id) : [])
                   .filter(child => !isDivider(child.value))
                   .map(child => child.id),
               )
-          : []
-        : childrenWithoutDividers.map(child => child.id)
+          : // If the thought is the only child but not in a table view, return an empty array
+            []
+        : // If the thought is not the only child, get the sibling thought IDs
+          childrenWithoutDividers.map(child => child.id)
 
-      return relevantThoughtIds
+      return dependentThoughtIds
     },
     (prev, next) => prev.length === next.length && prev.every((id, index) => id === next[index]),
   )
@@ -64,7 +67,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const dispatch = useDispatch()
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
-  const relevantThoughtIds = useRelevantThoughtIds(path)
+  const widthDependentThoughtIds = useWidthDependentThoughtIds(path)
   const editingThoughtId = useSelector((state: State) => state.cursor && head(state.cursor))
   const editingValueUntrimmed = editingValueUntrimmedStore.useState()
   const fontSize = useSelector((state: State) => state.fontSize)
@@ -79,9 +82,9 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const updateDividerWidth = useCallback(() => {
     if (!dividerRef.current) return
 
-    const widths = getThoughtWidths(relevantThoughtIds)
+    const widths = getThoughtWidths(widthDependentThoughtIds)
     setDividerWidth(Math.max(...widths, DIVIDER_MIN_WIDTH))
-  }, [relevantThoughtIds])
+  }, [widthDependentThoughtIds])
 
   useLayoutEffect(() => {
     updateDividerWidth()
