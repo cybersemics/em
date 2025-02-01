@@ -15,6 +15,11 @@ import simplifyPath from './simplifyPath'
 
 /** DEPRECATED: Converts a Context to a Path. This is a lossy function! If there is a duplicate thought in the same context, it takes the first. Works with cyclic Paths. Should be converted to a test-helper only. */
 const contextToPath = (state: State, context: string[]): SimplePath | null => {
+  // Handle empty context or single empty string context
+  if (context.length === 0 || (context.length === 1 && context[0] === '')) {
+    return getRootPath(state)
+  }
+
   if (isRoot(context)) return getRootPath(state)
 
   if (context.length > 1 && context[0] === HOME_TOKEN) {
