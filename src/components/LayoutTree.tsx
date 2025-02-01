@@ -295,7 +295,7 @@ const linearizeTree = (
     // e.g. a/m~/b should render the children of b/m, not a/m
     const child = contextViewActive ? getThoughtById(state, filteredChild.parentId) : filteredChild
     // Context thought may still be pending
-    if (!child) return []
+    if (!child) return accum
     const childPath = appendToPathMemo(path, child.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
