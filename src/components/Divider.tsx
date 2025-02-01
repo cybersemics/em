@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector, shallowEqual } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
@@ -48,7 +48,7 @@ const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
 
       return dependentThoughtIds
     },
-    (prev, next) => prev.length === next.length && prev.every((id, index) => id === next[index]),
+    shallowEqual,
   )
 }
 
