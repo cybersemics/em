@@ -21,8 +21,10 @@ const useOnPaste = ({
 
   return useCallback(
     (e: React.ClipboardEvent) => {
+      // mobile Safari copies URLs as 'text/uri-list' when the share button is used
       const plainText = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/uri-list')
       const htmlText = e.clipboardData.getData('text/html')
+      // Puppeteer does not allow setData with other MIME types. If the browser is controlled by automation, or the clipboard comes from em, set true.
       const isEmText = navigator.webdriver || !!e.clipboardData.getData('text/em')
 
       // Handle raw thought import confirmation
@@ -60,6 +62,7 @@ const useOnPaste = ({
         )
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [simplePath, transient, contentRef, dispatch],
   )
 }
