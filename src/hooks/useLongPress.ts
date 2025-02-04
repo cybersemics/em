@@ -80,6 +80,11 @@ const useLongPress = (
         clearTimeout(timerIdRef.current)
         timerIdRef.current = 0
         lock = false
+
+        // If not longpressing, it means that the long press was canceled by a move event.
+        // in this case, onLongPressEnd should not be called, since it was already called by the move event.
+        if (!globals.longpressing) return
+
         globals.longpressing = false
         onLongPressEnd?.()
         if (!unmounted.current) {
@@ -104,6 +109,7 @@ const useLongPress = (
         timerIdRef.current = 0
         clientCoords.current = { x: 0, y: 0 }
         if (pressed) {
+          globals.longpressing = false
           onLongPressEnd?.()
         }
       }
