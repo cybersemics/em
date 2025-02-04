@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { editingActionCreator as editing } from '../actions/editing'
+import { isTouch } from '../browser'
 import { noop } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
@@ -141,8 +142,9 @@ const useLongPress = (
       // disable Android context menu
       // does not work to prevent iOS long press to select behavior
       onContextMenu,
-      onMouseDown: start,
-      onMouseUp: stop,
+      // mousedown and mouseup can trigger on mobile when long tapping on the thought outside the editable, so make sure to only register touch handlers
+      onMouseDown: !isTouch ? start : undefined,
+      onMouseUp: !isTouch ? stop : undefined,
       onTouchStart: start,
       onTouchEnd: stop,
       onTouchMove: move,
