@@ -19,7 +19,7 @@ let lock = false
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
-  onLongPressEnd: (() => void) | null = noop,
+  onLongPressEnd: ((options: { canceled: boolean }) => void) | null = noop,
   onTouchStart: (() => void) | null = noop,
   ms = 250,
 ) => {
@@ -86,7 +86,7 @@ const useLongPress = (
         if (!globals.longpressing) return
 
         globals.longpressing = false
-        onLongPressEnd?.()
+        onLongPressEnd?.({ canceled: false })
         if (!unmounted.current) {
           setPressed(false)
         }
@@ -110,7 +110,7 @@ const useLongPress = (
         clientCoords.current = { x: 0, y: 0 }
         if (pressed) {
           globals.longpressing = false
-          onLongPressEnd?.()
+          onLongPressEnd?.({ canceled: true })
         }
       }
     },
