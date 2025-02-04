@@ -49,6 +49,7 @@ const VirtualThought = ({
   isMultiColumnTable,
   leaf,
   onResize,
+  onThoughtFocus,
   path,
   prevChildId,
   showContexts,
@@ -70,6 +71,7 @@ const VirtualThought = ({
   indexDescendant: number
   isMultiColumnTable?: boolean
   leaf: boolean
+  onThoughtFocus: () => void
   path: Path
   prevChildId?: ThoughtId
   onResize?: OnResize
@@ -231,6 +233,7 @@ const VirtualThought = ({
           isMultiColumnTable={isMultiColumnTable}
           leaf={leaf}
           updateSize={updateSize}
+          onThoughtFocus={onThoughtFocus}
           path={path}
           prevChildId={prevChildId}
           showContexts={showContexts}

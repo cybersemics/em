@@ -44,6 +44,7 @@ export interface ThoughtProps {
   isVisible?: boolean
   leaf?: boolean
   onEdit?: (args: { newValue: string; oldValue: string }) => void
+  onThoughtFocus?: () => void
   updateSize?: () => void
   path: Path
   rank: number
@@ -99,6 +100,7 @@ const StaticThought = ({
   ellipsizedUrl,
   isVisible,
   onEdit,
+  onThoughtFocus,
   path,
   rank,
   showContextBreadcrumbs,
@@ -205,6 +207,7 @@ const StaticThought = ({
             style={style}
             simplePath={simplePathLive}
             onEdit={onEdit}
+            onThoughtFocus={onThoughtFocus}
             className={css(
               {
                 ...(isTableCol1 && { maxWidth: '100%' }),
