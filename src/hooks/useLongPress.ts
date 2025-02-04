@@ -12,7 +12,10 @@ const SCROLL_THRESHOLD = 10
 // use a global lock since stopPropagation breaks MultiGesture
 let lock = false
 
-/** Custom hook to manage long press. */
+/** Custom hook to manage long press.
+ * The onLongPressStart handler is called after the delay if the user is still pressing. The delay defaults to 250ms, but useDragHold uses TIMEOUT_LONG_PRESS_THOUGHT which is 300ms.
+ * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove).
+ **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
   onLongPressEnd: (() => void) | null = noop,
@@ -64,7 +67,7 @@ const useLongPress = (
   )
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
-  // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.
+  // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.)
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
     //eslint disable rule because e use in canhover function

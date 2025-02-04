@@ -10,7 +10,7 @@ import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import useLongPress from './useLongPress'
 
-/** Set state.dragHold on longPress. */
+/** Adds event handlers to detect long press and set state.dragHold while the user is long pressing a thought in preparation for a drag. */
 const useDragHold = ({
   isDragging,
   disabled,
@@ -62,9 +62,8 @@ const useDragHold = ({
     [],
   )
 
-  // react-dnd stops propagation so onLongPressEnd sometimes does't get called
-  // so disable dragHold and isPressed as soon as we are dragging
-  // or if no longer dragging and dragHold never got cleared.
+  // react-dnd stops propagation so onLongPressEnd sometimes doesn't get called.
+  // Therefore, disable dragHold and isPressed as soon as we are dragging or if no longer dragging and dragHold never got cleared.
   useEffect(() => {
     dispatch((dispatch, getState) => {
       const state = getState()
