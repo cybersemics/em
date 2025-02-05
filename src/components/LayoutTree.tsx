@@ -45,8 +45,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
-import unroot from '../util/unroot'
-import DropEnd from './DropEnd'
+import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import HoverArrow from './HoverArrow'
 import VirtualThought, { OnResize } from './VirtualThought'
@@ -299,7 +298,7 @@ const linearizeTree = (
     // e.g. a/m~/b should render the children of b/m, not a/m
     const child = contextViewActive ? getThoughtById(state, filteredChild.parentId) : filteredChild
     // Context thought may still be pending
-    if (!child) return []
+    if (!child) return accum
     const childPath = appendToPathMemo(path, child.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
@@ -580,50 +579,19 @@ const TreeNode = ({
         </div>
       </FadeTransition>
 
-      {/* DropEnd (cliff) */}
       {dragInProgress &&
-        cliff < 0 &&
         // do not render hidden cliffs
         // rough autofocus estimate
-        autofocusDepth - depth < 2 &&
-        Array(-cliff)
-          .fill(0)
-          .map((x, i) => {
-            const pathEnd = -(cliff + i) < path.length ? (path.slice(0, cliff + i) as Path) : HOME_PATH
-            const cliffDepth = unroot(pathEnd).length
-
-            // After table col2, shift the DropEnd left by the width of col1.
-            // This correctly positions the drop target for dropping after the table view.
-            // Otherwise it would be too far to the right.
-            const dropEndMarginLeft =
-              isTableCol2 && cliffDepth - depth < 0 ? treeThoughtsPositioned[index - 1].width || 0 : 0
-
-            return (
-              <div
-                key={'DropEnd-' + head(pathEnd)}
-                className={css({
-                  position: 'relative',
-                  top: '-0.2em',
-                  transition: `left {durations.fast} ease-out`,
-                  zIndex: 'subthoughtsDropEnd',
-                })}
-                style={{
-                  left: `calc(${cliffDepth - depth}em - ${dropEndMarginLeft}px + ${isTouch ? -1 : 1}px)`,
-                }}
-              >
-                <DropEnd
-                  depth={pathEnd.length}
-                  path={pathEnd}
-                  cliff={cliff}
-                  isLastVisible={isLastVisible}
-                  // Extend the click area of the drop target when there is nothing below.
-                  // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
-                  // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
-                  // last={!nextChildId}
-                />
-              </div>
-            )
-          })}
+        autofocusDepth - depth < 2 && (
+          <DropCliff
+            cliff={cliff}
+            depth={depth}
+            path={path}
+            isTableCol2={isTableCol2}
+            isLastVisible={isLastVisible}
+            prevWidth={treeThoughtsPositioned[index - 1]?.width}
+          />
+        )}
       <span
         className={css({
           color: token('colors.brightBlue'),

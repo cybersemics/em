@@ -43,13 +43,13 @@ import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
+import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
-import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
@@ -60,15 +60,6 @@ import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
 import useOnCut from './Editable/useOnCut'
 import useOnPaste from './Editable/useOnPaste'
-
-/** Stops propagation of an event, if CMD/CTRL is not pressed. */
-const stopPropagation = (e: React.MouseEvent) => {
-  const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-
-  if (!isMultiselectClick) {
-    e.stopPropagation()
-  }
-}
 
 interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement>
@@ -330,6 +321,8 @@ const Editable = ({
       // Note: Joining every line does not work well for multiple paragraphs or bulleted lists with multiline items. It may be better to not split or join newlines at all, and make the user explicitly execute a join or split command. This gives them the ability to manually split on paragraphs and then use the join command on each. Indentation is not preserved in OCR, so it is not possible to completely automate multi paragraph restoration.
       const ocrDetected = oldValue === '' && /<div>(?!<br>)/.test(e.target.value)
 
+      editingValueUntrimmedStore.update(e.target.value)
+
       const newValue = stripEmptyFormattingTags(
         addEmojiSpace(
           ocrDetected
@@ -500,6 +493,9 @@ const Editable = ({
       // do not allow blur to setEditingValue when it is followed immediately by a focus
       blurring = false
 
+      // Update editingValueUntrimmedStore with the current value
+      editingValueUntrimmedStore.update(value)
+
       const { dragHold, dragInProgress } = store.getState()
       if (!dragHold && !dragInProgress) {
         setCursorOnThought({ editing: true })
@@ -590,13 +586,7 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
-      className={cx(
-        multiline ? multilineRecipe() : null,
-        editableRecipe({
-          preventAutoscroll: true,
-        }),
-        className,
-      )}
+      className={cx(multiline ? multilineRecipe() : null, editableRecipe(), className)}
       html={
         value === EM_TOKEN
           ? '<b>em</b>'
@@ -612,8 +602,7 @@ const Editable = ({
       }
       placeholder={placeholder}
       // stop propagation to prevent default content onClick (which removes the cursor)
-      onClick={stopPropagation}
-      {...fastClick(onTap)}
+      onClick={onTap}
       // must call onMouseDown on mobile since onTap cannot preventDefault
       // otherwise gestures and scrolling can trigger cursorBack (#1054)
       onMouseDown={onTap}
