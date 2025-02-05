@@ -17,6 +17,7 @@ import CommandType from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
+import { isIOS } from '../browser'
 import { commandById } from '../commands'
 import { TOOLBAR_DEFAULT_COMMANDS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
 import usePositionFixed from '../hooks/usePositionFixed'
@@ -221,9 +222,11 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           }),
         )}
         style={{
+          // height: fontSize + 300,
           ...(!customize ? positionFixedStyles : null),
           // make toolbar flush with left padding
           marginLeft: customize ? -5 : 0,
+
           // offset extended drop area of ToolbarButton
           marginBottom: isDraggingAny ? '-7em' : 0,
         }}
@@ -247,12 +250,20 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           style={{
             // must scale height with fontSize, since height does not scale linearly with em or px
             height: fontSize + 30,
+            ...(isIOS && {
+              height: 2 * (fontSize + 30),
+            }),
           }}
         />
         <div>
           <span
             id='left-arrow'
-            style={{ paddingTop: `${calculatePaddingTop(fontSize)}px` }}
+            style={{
+              paddingTop: `${calculatePaddingTop(fontSize)}px`,
+              ...(isIOS && {
+                marginTop: '48px',
+              }),
+            }}
             className={arrow({ direction: 'left', isHidden: !leftArrowIsShown, fixed: !customize })}
           >
             <TriangleLeft width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
@@ -274,6 +285,9 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
               ...(!customize && { maxWidth: 'calc(100% - 4em)', '& > *:last-child': { marginRight: '1em' } }),
               marginLeft: customize ? -3 : 0,
               paddingLeft: customize ? 3 : 0,
+              ...(isIOS && {
+                marginTop: '48px',
+              }),
             })}
             data-scroll-at-edge={customize}
             onScroll={onScroll}
@@ -298,7 +312,12 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
           <span
             id='right-arrow'
-            style={{ paddingTop: `${calculatePaddingTop(fontSize)}px` }}
+            style={{
+              paddingTop: `${calculatePaddingTop(fontSize)}px`,
+              ...(isIOS && {
+                marginTop: '48px',
+              }),
+            }}
             className={arrow({ direction: 'right', isHidden: !rightArrowIsShown, fixed: !customize })}
           >
             <TriangleRight width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
