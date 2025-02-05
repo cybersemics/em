@@ -32,8 +32,7 @@ const processHtmlContent = (html: string, isEmText: boolean): string => {
   }
 
   // Otherwise strip the HTML
-  return strip(html, { preserveFormatting: isEmText, stripColors: !isEmText })
-    .replace(/\n\s*\n+/g, '\n')
+  return strip(html, { preserveFormatting: isEmText, stripColors: !isEmText }).replace(/\n\s*\n+/g, '\n')
 }
 
 /** Action-creator for importData. This is an action that handles importing content
@@ -84,9 +83,7 @@ export const importDataActionCreator = ({
       )
     }
 
-    const processedText = html
-      ? processHtmlContent(html, isEmText)
-      : text.trim()
+    const processedText = html ? processHtmlContent(html, isEmText) : text.trim()
     // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
     const multiline = text.trim().includes('\n')
 
