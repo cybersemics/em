@@ -18,6 +18,24 @@ interface ImportDataPayload {
   isEmText?: boolean
 }
 
+/**
+ * Process HTML content to preserve nested structure before stripping.
+ */
+const processHtmlContent = (html: string, isEmText: boolean): string => {
+  // If the content has nested list structure, preserve it
+  if (html.includes('<ul>') && html.includes('</ul>')) {
+    return html
+      .replace(/<!-- notionvc:.*?-->/g, '') // Remove Notion comments
+      .replace(/<meta[^>]*>/g, '') // Remove meta tags
+      .replace(/>\s+</g, '><') // Clean up whitespace between tags
+      .trim()
+  }
+
+  // Otherwise strip the HTML
+  return strip(html, { preserveFormatting: isEmText, stripColors: !isEmText })
+    .replace(/\n\s*\n+/g, '\n')
+}
+
 /** Action-creator for importData. This is an action that handles importing content
  * into the application, choosing between importText and importFiles based on the content type.
  *
@@ -67,7 +85,7 @@ export const importDataActionCreator = ({
     }
 
     const processedText = html
-      ? strip(html, { preserveFormatting: isEmText, stripColors: !isEmText }).replace(/\n\s*\n+/g, '\n')
+      ? processHtmlContent(html, isEmText)
       : text.trim()
     // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
     const multiline = text.trim().includes('\n')
