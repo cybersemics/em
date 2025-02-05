@@ -13,7 +13,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import { getBoundingClientRect } from '../device/selection'
 import testFlags from '../e2e/testFlags'
@@ -31,6 +31,7 @@ import rootedGrandparentOf from '../selectors/rootedGrandparentOf'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
+import editingValueStore from '../stores/editingValue'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
@@ -399,7 +400,6 @@ const TreeNode = ({
   prevChild,
   showContexts,
   isLastVisible,
-  onThoughtFocus,
   simplePath,
   singleLineHeightWithCliff,
   style,
@@ -421,7 +421,6 @@ const TreeNode = ({
 }: TreeThoughtPositioned & {
   thoughtKey: string
   index: number
-  onThoughtFocus: () => void
   viewportBottom: number
   treeThoughtsPositioned: TreeThoughtPositioned[]
   bulletWidth: number
@@ -432,6 +431,10 @@ const TreeNode = ({
   autofocusDepth: number
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
+  // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
+  // rather than one universal caret in the parent.
+  const caretRef = useRef<HTMLSpanElement | null>(null)
+  const editing = useSelector(state => state.editing)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
@@ -449,6 +452,39 @@ const TreeNode = ({
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
+
+  // Hide the faux caret when typing occurs.
+  editingValueStore.subscribe(() => {
+    if (isTouch && isSafari() && caretRef.current) {
+      caretRef.current.style.display = 'none'
+    }
+  })
+
+  // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
+  // selection is created.
+  useEffect(() => {
+    // The selection ranges aren't updated until the end of the frame when the thought is fcoused.
+    requestAnimationFrame(() => {
+      if (isTouch && isSafari() && caretRef.current) {
+        if (editing && isCursor) {
+          const offset = fadeThoughtRef.current?.getBoundingClientRect()
+
+          if (offset) {
+            const rect = getBoundingClientRect()
+
+            if (rect) {
+              const { x, y } = rect
+              caretRef.current.style.display = 'inline'
+              caretRef.current.style.top = `${y - offset.y}px`
+              caretRef.current.style.left = `${x - offset.x}px`
+            }
+          }
+        } else {
+          caretRef.current.style.display = 'none'
+        }
+      }
+    })
+  }, [editing, isCursor])
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -525,7 +561,6 @@ const TreeNode = ({
             isMultiColumnTable={false}
             leaf={leaf}
             onResize={setSize}
-            onThoughtFocus={onThoughtFocus}
             path={path}
             prevChildId={prevChild?.id}
             showContexts={showContexts}
@@ -588,13 +623,24 @@ const TreeNode = ({
               </div>
             )
           })}
+      <span
+        className={css({
+          color: 'lightblue',
+          display: 'none',
+          opacity: 'var(--faux-caret-opacity)',
+          position: 'absolute',
+          pointerEvents: 'none',
+        })}
+        ref={caretRef}
+      >
+        |
+      </span>
     </div>
   )
 }
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
-  const caretRef = useRef<HTMLSpanElement | null>(null)
   const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
@@ -948,7 +994,7 @@ const LayoutTree = () => {
     <div
       // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
       className={cx(
-        css({ marginTop: '0.501em' }),
+        css({ '--faux-caret-opacity': '0', marginTop: '0.501em' }),
         hideCaret({
           animation: getHideCaretAnimationName(indentDepth + tableDepth),
         }),
@@ -986,21 +1032,6 @@ const LayoutTree = () => {
               key={thought.key}
               // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
               thoughtKey={thought.key}
-              onThoughtFocus={() => {
-                if (caretRef.current) {
-                  const offset = ref.current?.getBoundingClientRect()
-
-                  if (offset) {
-                    const rect = getBoundingClientRect()
-
-                    if (rect) {
-                      const { x, y } = rect
-                      caretRef.current.style.top = `${y - offset.y}px`
-                      caretRef.current.style.left = `${x - offset.x - 11}px`
-                    }
-                  }
-                }
-              }}
               {...{
                 viewportBottom,
                 treeThoughtsPositioned,
@@ -1014,12 +1045,6 @@ const LayoutTree = () => {
             />
           ))}
         </TransitionGroup>
-        <span
-          className={css({ color: 'red', left: '9999em', top: '9999em', position: 'absolute', pointerEvents: 'none' })}
-          ref={caretRef}
-        >
-          |
-        </span>
       </div>
     </div>
   )

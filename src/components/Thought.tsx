@@ -82,7 +82,6 @@ export interface ThoughtContainerProps {
   // See: ThoughtProps['isVisible']
   isVisible?: boolean
   leaf?: boolean
-  onThoughtFocus?: () => void
   path: Path
   prevChildId?: ThoughtId
   publish?: boolean
@@ -119,7 +118,6 @@ const ThoughtContainer = ({
   isContextPending,
   isVisible,
   leaf,
-  onThoughtFocus,
   path,
   prevChildId,
   rank,
@@ -455,7 +453,6 @@ const ThoughtContainer = ({
           isPublishChild={isPublishChild}
           isVisible={isVisible}
           onEdit={!isTouch ? onEdit : undefined}
-          onThoughtFocus={onThoughtFocus}
           path={path}
           rank={rank}
           showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}

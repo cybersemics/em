@@ -88,7 +88,6 @@ interface EditableProps {
   */
   transient?: boolean
   onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
-  onThoughtFocus?: () => void
 }
 
 // track if a thought is blurring so that we can avoid an extra dispatch of setEditingValue in onFocus
@@ -111,7 +110,6 @@ const Editable = ({
   multiline,
   placeholder,
   onEdit,
-  onThoughtFocus,
   path,
   simplePath,
   style,
@@ -422,8 +420,6 @@ const Editable = ({
         throttledChangeRef.current.flush()
         thoughtChangeHandler(newValue, { rank, simplePath })
       } else throttledChangeRef.current(newValue, { rank, simplePath })
-
-      requestAnimationFrame(() => onThoughtFocus?.())
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [readonly, uneditable /* TODO: options */],
@@ -583,8 +579,6 @@ const Editable = ({
         // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
         allowDefaultSelection()
       }
-
-      requestAnimationFrame(() => onThoughtFocus?.())
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [disabled, isVisible, path, setCursorOnThought],
