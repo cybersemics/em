@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import ActionType from '../@types/ActionType'
 import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
@@ -625,7 +626,7 @@ const TreeNode = ({
           })}
       <span
         className={css({
-          color: 'lightblue',
+          color: token('colors.brightBlue'),
           display: 'none',
           opacity: 'var(--faux-caret-opacity)',
           position: 'absolute',
