@@ -21,7 +21,7 @@ const cursorBack = (state: State) => {
     cursorOld
       ? [
           // move cursor back
-          setCursor({ path: cursorNew!.length > 0 ? cursorNew : null, editing }),
+          setCursor({ path: cursorNew!.length > 0 ? cursorNew : null, editing, preserveMulticursor: true }),
 
           // append to cursor history to allow 'forward' gesture
           cursorHistory({ cursor: cursorOld }),
