@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react'
 import fs from 'fs'
+import path from 'path'
 import { defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
@@ -10,6 +11,7 @@ export default defineConfig({
   resolve: {
     alias: {
       'react-native': 'react-native-web',
+      'webview-background': path.resolve(__dirname, 'packages/webview/dist/esm'),
     },
   },
   build: {
