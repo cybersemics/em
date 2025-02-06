@@ -93,7 +93,7 @@ const dragAndDropThought = async (
   }
 
   await page.locator('[data-testid="quick-drop-panel"]').wait()
-  await page.locator('[data-testid="popup-value"]').wait()
+  await page.locator('[data-testid="alert-content"]').wait()
 
   if (mouseUp) {
     await page.mouse.up()
