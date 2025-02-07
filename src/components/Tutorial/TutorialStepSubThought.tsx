@@ -1,11 +1,13 @@
 import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
+import { commandById } from '../../commands'
 import headValue from '../../util/headValue'
+import TutorialGestureDiagram from './TutorialGestureDiagram'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSubThought = () => {
   const headCursorValue = useSelector(state => state.cursor && headValue(state, state.cursor))
-  const deleteBlank = useSelector(state => state.cursor && headCursorValue === '')
+  const deleteBlank = useSelector(state => !!state.cursor && headCursorValue === '')
   const noCursor = useSelector(state => !state.cursor)
   return (
     <>
@@ -25,6 +27,7 @@ const TutorialStepSubThought = () => {
           .
         </p>
       )}
+      <TutorialGestureDiagram gesture={commandById('newSubthought').gesture} />
     </>
   )
 }

@@ -8,8 +8,8 @@ import getThoughtById from './getThoughtById'
 const documentSort = (state: State, paths: Path[]) => {
   return sort(paths, (a, b) => {
     for (let i = 0; i < Math.min(a.length, b.length); i++) {
-      const aRank = getThoughtById(state, a[i]).rank
-      const bRank = getThoughtById(state, b[i]).rank
+      const aRank = getThoughtById(state, a[i])?.rank ?? 0
+      const bRank = getThoughtById(state, b[i])?.rank ?? 0
       if (aRank !== bRank) return (aRank - bRank) as ComparatorValue
     }
     return (a.length - b.length) as ComparatorValue

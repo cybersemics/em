@@ -20,8 +20,9 @@ const swapParent = (state: State) => {
   // If the cursor is at the root, do nothing.
   if (!parent.length) return state
 
-  const childValue = getThoughtById(state, head(cursor)).value
-  const parentValue = getThoughtById(state, head(parent)).value
+  const childValue = getThoughtById(state, head(cursor))?.value
+  const parentValue = getThoughtById(state, head(parent))?.value
+  if (!childValue || !parentValue) return state
 
   const reducers = [
     editThought({

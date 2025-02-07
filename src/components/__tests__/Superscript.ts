@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/dom'
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleHiddenThoughtsActionCreator } from '../../actions/toggleHiddenThoughts'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -23,6 +24,8 @@ it('Superscript should count all the contexts in which it is defined.', async ()
     }),
   ])
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   const element = screen.getByText('3')
   expect(element.nodeName).toBe('SUP')
 })
@@ -37,6 +40,8 @@ it('Superscript should not render on thoughts in a single context', async () => 
       `,
     }),
   ])
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   expect(() => screen.getByText('1')).toThrow('Unable to find an element')
 })
@@ -53,6 +58,8 @@ it('Superscript should not render on empty thoughts', async () => {
     }),
   ])
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   expect(() => screen.getByText('2')).toThrow('Unable to find an element')
 })
 
@@ -64,6 +71,8 @@ it('Superscript should not render on thoughts that match EM descendants', async 
       `,
     }),
   ])
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   expect(() => screen.getByRole('superscript')).toThrow('Unable to find an accessible element')
 })
@@ -99,6 +108,8 @@ it('Superscript should not render on punctuation-only thoughts', async () => {
     }),
   ])
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   expect(() => screen.getByText('2')).toThrow('Unable to find an element')
   expect(() => screen.getByText('3')).toThrow('Unable to find an element')
   expect(() => screen.getByText('4')).toThrow('Unable to find an element')
@@ -117,6 +128,8 @@ it('Superscript should not render on punctuation-only thoughts with HTML', async
     }),
   ])
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   expect(() => screen.getByText('2')).toThrow('Unable to find an element')
 })
 
@@ -131,6 +144,8 @@ it('Superscript should not count for hashed version of metaprogramming attribute
     }),
     toggleHiddenThoughtsActionCreator(),
   ])
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   expect(() => screen.getByText('2')).toThrow('Unable to find an element')
 })

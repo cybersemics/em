@@ -17,7 +17,8 @@ const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]):
   const pathContextView = contextChain[contextChain.length - 2]
 
   // get the contexts in the context view via the Lexeme
-  const lexeme = getLexeme(state, headValue(state, pathContextView))
+  const contextViewValue = headValue(state, pathContextView)
+  const lexeme = contextViewValue !== undefined ? getLexeme(state, contextViewValue) : undefined
 
   if (!lexeme) {
     console.error('Lexeme not found', pathContextView)

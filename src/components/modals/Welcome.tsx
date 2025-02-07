@@ -1,6 +1,6 @@
-/* eslint-disable no-unmodified-loop-condition */
 import { useDispatch, useSelector } from 'react-redux'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
+import { modalActionLinkRecipe } from '../../../styled-system/recipes'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
@@ -31,7 +31,7 @@ const onRef = (el: HTMLDivElement) => {
   }
 
   /** Decreases the font size of the element. */
-  const shrinkFontSize = (el: HTMLElement) => (el.style.fontSize = --fontSize + '%') // eslint-disable-line no-return-assign
+  const shrinkFontSize = (el: HTMLElement) => (el.style.fontSize = --fontSize + '%')
 
   if (fontSize) {
     while (overflow() && fontSize >= MIN_FONT_SIZE) {
@@ -92,7 +92,10 @@ const ModalWelcome = () => {
             <div key='skip' className={css({ marginTop: 15, opacity: 0.5 })}>
               <a
                 id='skip-tutorial'
-                className={css({ fontSize: 'sm', marginBottom: '-1em', paddingBottom: '1em', textDecoration: 'none' })}
+                className={cx(
+                  modalActionLinkRecipe(),
+                  css({ fontSize: 'sm', marginBottom: '-1em', paddingBottom: '1em', textDecoration: 'none' }),
+                )}
                 {...fastClick(() => {
                   dispatch([clear({ local: true, remote: true })])
                   endTutorial()

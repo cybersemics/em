@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { isSafari, isTouch } from '../browser'
@@ -9,6 +8,7 @@ import editingValueStore from '../stores/editingValue'
 import scrollTopStore from '../stores/scrollTop'
 import syncStatusStore from '../stores/syncStatus'
 import viewportStore from '../stores/viewport'
+import durations from '../util/durations'
 
 // store the last cursor
 let cursorLast: Path | null = null
@@ -77,8 +77,17 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
+  const top = Math.max(1, scrollYNew)
+
+  const scrollDistance = Math.abs(scrollYNew - window.scrollY)
+  const viewportHeight = viewport.innerHeight
+  const behavior = scrollDistance < viewportHeight ? 'smooth' : 'auto'
+
   startForcedScrolling()
-  window.scrollTo(0, Math.max(1, scrollYNew))
+  window.scrollTo({
+    top,
+    behavior,
+  })
 }
 
 /** Scrolls the cursor into view if needed. */
@@ -97,10 +106,18 @@ const scrollCursorIntoView = () => {
 
   setTimeout(
     () => {
+      // soft fail if document is undefined which can happen in tests for some reason
+      if (typeof document === 'undefined') {
+        console.warn(
+          'document is not defined. This probably means that the timers from an async operation or middleware were not run to completion in a test.',
+        )
+        return
+      }
+
       scrollIntoViewIfNeeded(document.querySelector('[data-editing=true]'))
     },
     // If this is the result of a navigation, wait for the layout animation to complete to not get false bounding rect values
-    userInteractedAfterNavigation ? 0 : parseInt(token('durations.layoutNodeAnimationDuration')),
+    userInteractedAfterNavigation ? 0 : durations.get('layoutNodeAnimation'),
   )
 }
 
@@ -110,7 +127,7 @@ editingValueStore.subscribe(
   // Throttle aggressively since scrollCursorIntoView reads from the DOM and this is called on all edits.
   _.throttle(() => {
     // we need to wait for the cursor to animate into its final position before scrollCursorIntoView can accurately determine if it is in the viewport
-    setTimeout(scrollCursorIntoView, parseInt(token('durations.layoutNodeAnimationDuration')))
+    setTimeout(scrollCursorIntoView, durations.get('layoutNodeAnimation'))
   }, 400),
 )
 

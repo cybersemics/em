@@ -1,6 +1,6 @@
 import { css, cx } from '../../../styled-system/css'
-import { icon } from '../../../styled-system/recipes'
-import IconType from '../../@types/Icon'
+import { iconRecipe } from '../../../styled-system/recipes'
+import IconType from '../../@types/IconType'
 
 /** Download icon. */
 const DownloadIcon = ({ fill, size = 20, style, cssRaw }: IconType) => {
@@ -11,7 +11,7 @@ const DownloadIcon = ({ fill, size = 20, style, cssRaw }: IconType) => {
       height={size}
       viewBox='65 0 390.526 540'
       fill={fill}
-      className={cx(icon(), css(cssRaw))}
+      className={cx(iconRecipe(), css(cssRaw))}
       style={style}
     >
       <path

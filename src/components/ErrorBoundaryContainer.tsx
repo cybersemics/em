@@ -1,12 +1,12 @@
 import { FC, PropsWithChildren, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { css, cx } from '../../styled-system/css'
-import { anchorButton, invalidOption } from '../../styled-system/recipes'
+import { anchorButtonRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import fastClick from '../util/fastClick'
 
 /** A triangular toggle component. */
-const Toggle = ({ children, expand, title }: { children?: any; expand?: boolean; title?: string }) => {
+const Toggle = ({ children, title }: { children?: any; expand?: boolean; title?: string }) => {
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -26,7 +26,7 @@ const Toggle = ({ children, expand, title }: { children?: any; expand?: boolean;
               className={css({
                 transform: expanded ? 'rotate(90deg) translateX(10px)' : '',
                 transformOrigin: 'center center',
-                transition: `transform {durations.veryFastDuration} ease-out`,
+                transition: `transform {durations.veryFast} ease-out`,
               })}
             />
           </g>
@@ -43,16 +43,16 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
   <div className={css({ margin: 50 })}>
     <p>Oops, there was an error.</p>
     <div className={css({ fontSize: 14 })}>
-      {error && <pre className={invalidOption()}>{error.message || 'Error'}</pre>}
+      {error && <pre className={invalidOptionRecipe()}>{error.message || 'Error'}</pre>}
       {error && (
         <div>
           <Toggle title='Details:'>
-            <pre className={css({ color: 'gray' })}>{error.stack}</pre>
+            <pre className={css({ color: 'gray66' })}>{error.stack}</pre>
           </Toggle>
         </div>
       )}
       <pre className={css({ whiteSpace: 'normal' })}>{componentStack}</pre>
-      <a {...fastClick(() => window.location.reload())} className={cx(anchorButton(), css({ minWidth: 0 }))}>
+      <a {...fastClick(() => window.location.reload())} className={cx(anchorButtonRecipe(), css({ minWidth: 0 }))}>
         Refresh
       </a>
     </div>

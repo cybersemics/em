@@ -18,7 +18,7 @@ const REGEX_BR_TAG = /<br.*?>/gim
 const REGEX_SPAN_TAG_ONLY_CONTAINS_WHITESPACES = /<span[^>]*>([\s]+)<\/span>/gim
 const REGEX_EMPTY_FORMATTING_TAGS = /<[^/>][^>]*>\s*<\/[^>]+>/gim
 
-/** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim.
+/** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim. Uses DOMPurify to sanitize html so this method is slow. Use stripTags when possible for efficiency.
  * PrserveFormatting is used to preserve the html formatting.
  * StripColors is used to strip only colors of the html.
  * StripAttributes is used to remove style attributes.

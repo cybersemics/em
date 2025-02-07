@@ -45,8 +45,9 @@ const collapseContext = (state: State, { at }: Options) => {
 
   const simplePath = simplifyPath(state, path)
   const children = getChildrenRanked(state, head(simplePath))
+  const thought = getThoughtById(state, head(simplePath))
 
-  if (children.length === 0) return state
+  if (children.length === 0 || !thought) return state
 
   /** Returns first moved child path as new cursor after collapse. */
   const getNewCursor = (state: State): Path | null => {
@@ -62,8 +63,6 @@ const collapseContext = (state: State, { at }: Options) => {
 
     return newChild ? appendToPath(parentOf(path), newChild.id) : null
   }
-
-  const thought = getThoughtById(state, head(simplePath))
 
   // Find the sort preference, if any
   const parentId = head(rootedParentOf(state, simplePath))
@@ -120,7 +119,7 @@ const collapseContext = (state: State, { at }: Options) => {
       : null,
 
     // outdent each child
-    ...children.map((child, i) => (state: State) => {
+    ...children.map(child => (state: State) => {
       // Skip =sort since it has already been moved to the parent.
       if (contextHasSortPreference && child.value === '=sort') return state
 

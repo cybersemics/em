@@ -1,3 +1,4 @@
+import { act } from 'react'
 import Context from '../../@types/Context'
 import Thought from '../../@types/Thought'
 import { clearActionCreator as clear } from '../../actions/clear'
@@ -17,15 +18,11 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import testTimer from '../../test-helpers/testTimer'
-import sleep from '../../util/sleep'
 
 /*
   Note: sinon js fake timer is used to overcome some shortcomings we have with jest's fake timer.
   For details: https://github.com/cybersemics/em/issues/919#issuecomment-739135971
 */
-
-const fakeTimer = testTimer()
 
 /**
  * Match given children with for given context.
@@ -37,6 +34,16 @@ const matchContextsChildren = async (provider: DataProvider, context: Context, c
   expect(childrenThoughts).toMatchObject(children)
 }
 
+/**
+ * Calls getContext but automatically runs the timers forward.
+ */
+const getContextAsync = async (provider: DataProvider, context: Context) => {
+  const ctxPromise = getContext(provider, context)
+  await vi.runAllTimersAsync()
+
+  return ctxPromise
+}
+
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
@@ -44,10 +51,11 @@ it('disable isLoading after initialize', async () => {
   expect(store.getState().isLoading).toBe(false)
 })
 
-// y-indexeddb breaks tests
-it.skip('load thought', async () => {
+it('load thought', async () => {
   // create a thought, which will get persisted to local db
   await dispatch(newThought({ value: 'a' }))
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thoughtA = contextToThought(store.getState(), ['a'])!
 
@@ -86,17 +94,18 @@ it('do not repopulate deleted thought', async () => {
     setCursor(null),
   ])
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   const root = contextToThought(store.getState(), [HOME_TOKEN])
   expect(root).toMatchObject({
     childrenMap: {},
   })
 
   const parentEntryChild = contextToThought(store.getState(), [''])
-  expect(parentEntryChild).toBe(null)
+  expect(parentEntryChild).toBe(undefined)
 })
 
-// y-indexeddb breaks tests
-it.skip('load buffered thoughts', async () => {
+it('load buffered thoughts', async () => {
   await dispatch(
     importText({
       text: `
@@ -107,6 +116,8 @@ it.skip('load buffered thoughts', async () => {
               - e`,
     }),
   )
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thoughtA = contextToThought(store.getState(), ['a'])!
   const thoughtB = contextToThought(store.getState(), ['a', 'b'])!
@@ -135,8 +146,7 @@ it.skip('load buffered thoughts', async () => {
   expect(getAllChildrenByContext(state, ['a', 'b', 'c', 'd', 'e'])).toMatchObject([])
 })
 
-// y-indexeddb breaks tests
-it.skip('delete thought with buffered descendants', async () => {
+it('delete thought with buffered descendants', async () => {
   await dispatch([
     importText({
       text: `
@@ -151,6 +161,8 @@ it.skip('delete thought with buffered descendants', async () => {
     setCursor(['x']),
   ])
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
   await matchContextsChildren(db, ['a'], [{ value: 'b' }])
   await matchContextsChildren(db, ['a', 'b'], [{ value: 'c' }])
@@ -160,27 +172,19 @@ it.skip('delete thought with buffered descendants', async () => {
 
   await refreshTestApp()
 
-  fakeTimer.useFakeTimer()
-
   // delete thought with buffered descendants
-  dispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
-  await fakeTimer.runAllAsync()
-
-  fakeTimer.useRealTimer()
+  // this causes getContext to hang
+  await dispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }])
-  expect(await getContext(db, ['a'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
 })
 
-// y-indexeddb breaks tests
-it.skip('move thought with buffered descendants', async () => {
-  // There is a timing issue that causes an error "root.setTimeout is not defined" and sometimes causes the test runner to crash when running multiple tests. Only occurring with yjs schema v2. For some reason, delay(0) here seems to fix it.
-  await sleep(0)
-
+it('move thought with buffered descendants', async () => {
   await dispatch([
     importText({
       text: `
@@ -195,6 +199,8 @@ it.skip('move thought with buffered descendants', async () => {
     }),
     setCursor(['x']),
   ])
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thoughtX = contextToThought(store.getState(), ['x'])!
   const thoughtA = contextToThought(store.getState(), ['a'])!
@@ -227,6 +233,8 @@ it.skip('move thought with buffered descendants', async () => {
     }),
   )
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }])
   expect(await getContext(db, ['a'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b'])).toBeFalsy()
@@ -242,8 +250,7 @@ it.skip('move thought with buffered descendants', async () => {
   await matchContextsChildren(db, ['x', 'a', 'b', 'c', 'd', 'e'], [])
 })
 
-// y-indexeddb breaks tests
-it.skip('edit thought with buffered descendants', async () => {
+it('edit thought with buffered descendants', async () => {
   await dispatch([
     importText({
       text: `
@@ -259,6 +266,8 @@ it.skip('edit thought with buffered descendants', async () => {
     setCursor(['x']),
   ])
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
   await matchContextsChildren(db, ['a'], [{ value: 'm' }, { value: 'b' }])
   await matchContextsChildren(db, ['a', 'b'], [{ value: 'c' }])
@@ -272,12 +281,15 @@ it.skip('edit thought with buffered descendants', async () => {
   // edit thought with buffered descendants
   await dispatch(editThought(['a'], 'k'))
 
+  await act(vi.runOnlyPendingTimersAsync)
+
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'k' }])
-  expect(await getContext(db, ['a'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
+
+  expect(await getContextAsync(db, ['a'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
+  expect(await getContextAsync(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
 
   await matchContextsChildren(db, ['k'], [{ value: 'm' }, { value: 'b' }])
   await matchContextsChildren(db, ['k!', 'b'], [{ value: 'c' }])

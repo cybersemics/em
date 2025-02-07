@@ -7,9 +7,11 @@ import createThought from '../actions/createThought'
 import findDescendant from '../selectors/findDescendant'
 import { hasChildren } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
+import getPrevRank from '../selectors/getPrevRank'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 
 /** Toggles a thought. If any ancestors are missing, adds them. When toggling off, ancestors with no other children are deleted. Preserves siblings. */
 const toggleThought = (
@@ -37,7 +39,8 @@ const toggleThought = (
         id: idNew,
         path,
         value: _values[0],
-        rank: getNextRank(state, thoughtId),
+        // meta attributes go at the top of the context
+        rank: isAttribute(_values[0]) ? getPrevRank(state, thoughtId) : getNextRank(state, thoughtId),
       })
 
   // recursion

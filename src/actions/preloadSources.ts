@@ -15,18 +15,24 @@ export const preloadSourcesActionCreator = (): Thunk => (dispatch, getState) => 
   const paths = getContexts(state, '=preload')
     .filter(thoughtContext => {
       const thought = getThoughtById(state, thoughtContext)
+      if (!thought) return false
       const parentThought = getThoughtById(state, thought.parentId)
+      if (!parentThought) return false
       return parentThought.value === '=src'
     })
     .map(thoughtContext => {
       const thought = getThoughtById(state, thoughtContext)
+      if (!thought) return false
       const parentThought = getThoughtById(state, thought.parentId)
+      if (!parentThought) return false
       const context = thoughtToContext(state, parentThought.id)
       return contextToPath(state, unroot(context!))
     })
 
   // preload sources
   paths.forEach(path => {
-    path && dispatch(loadResource(path))
+    if (path) {
+      dispatch(loadResource(path))
+    }
   })
 }

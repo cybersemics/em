@@ -1,7 +1,7 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { button } from '../../../styled-system/recipes'
+import { buttonRecipe, modalActionLinkRecipe } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { loginActionCreator as login } from '../../actions/login'
@@ -45,10 +45,10 @@ const modes: Index<Mode> = {
 
 /** A modal dialog for signing up, logging in, and resetting password. */
 const ModalAuth = () => {
+  const [activeMode, updateActiveMode] = useState(modes.login)
+
   /** Checks if the given mode is active. */
   const isModeActive = (mode: Mode) => activeMode.name === mode.name
-
-  const [activeMode, updateActiveMode] = useState(modes.login)
   const [email, updateEmail] = useState('')
   const [password, updatePassword] = useState('')
   const [error, updateError] = useState<null | string>(null)
@@ -59,7 +59,7 @@ const ModalAuth = () => {
 
   /** Reset password using reset email. */
   const resetPassword: SubmitAction = useCallback(
-    async (closeModal, email) => {
+    async closeModal => {
       updateIsSubmitting(true)
 
       throw new Error('Not implemented')
@@ -77,7 +77,7 @@ const ModalAuth = () => {
   )
 
   /** Login with email and password. */
-  const loginWithEmailAndPassword: SubmitAction = useCallback(async (closeModal, email, password) => {
+  const loginWithEmailAndPassword: SubmitAction = useCallback(async closeModal => {
     updateIsSubmitting(true)
     throw new Error('Not implemented')
     try {
@@ -144,7 +144,7 @@ const ModalAuth = () => {
           {!isModeActive(modes.login) && (
             <button
               disabled={isSubmitting}
-              className={cx(button(), css({ textDecoration: 'underline', marginTop: 15 }))}
+              className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
               {...fastClick(showLogin)}
             >
               {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
@@ -154,7 +154,7 @@ const ModalAuth = () => {
           {!isModeActive(modes.resetPassword) && (
             <button
               disabled={isSubmitting}
-              className={cx(button(), css({ textDecoration: 'underline', marginTop: 15 }))}
+              className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
               {...fastClick(signInWithGoogle)}
             >
               Sign in with Google
@@ -163,11 +163,12 @@ const ModalAuth = () => {
 
           <button
             disabled={isSubmitting}
-            className={cx(button(), css({ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }))}
+            className={cx(buttonRecipe(), css({ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }))}
             key='cancel'
           >
             <a
               id='cancel-login'
+              className={modalActionLinkRecipe()}
               {...fastClick(() => {
                 // prevent the login modal on refresh once working offline
                 storage.setItem('modal-to-show', '')
@@ -193,7 +194,7 @@ const ModalAuth = () => {
           </button>
         )}
 
-        {error && <span className={css({ color: 'crimson' })}>{error}</span>}
+        {error && <span className={css({ color: 'error' })}>{error}</span>}
       </div>
     </ModalComponent>
   )

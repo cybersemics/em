@@ -1,29 +1,27 @@
+import { isEqual } from 'lodash'
 import { useSelector } from 'react-redux'
-import Path from '../../@types/Path'
-import Thought from '../../@types/Thought'
 import { isTouch } from '../../browser'
-import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT } from '../../constants'
+import { commandById } from '../../commands'
+import { HOME_TOKEN, TUTORIAL_CONTEXT1_PARENT } from '../../constants'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import ellipsize from '../../util/ellipsize'
 import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
+import TutorialGestureDiagram from './TutorialGestureDiagram'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext1Parent = ({
-  cursor,
-  tutorialChoice,
-  rootChildren,
-}: {
-  cursor: Path | null
-  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-  rootChildren: Thought[]
-}) => {
-  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor).startsWith('"'))
+const Tutorial2StepContext1Parent = () => {
+  const tutorialChoice = useSelector(selectTutorialChoice)
+  const cursor = useSelector(state => state.cursor)
+  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor)?.startsWith('"'))
+  const rootChildren = useSelector(state => getAllChildrenAsThoughts(state, HOME_TOKEN), isEqual)
 
   return (
     <>
       <p>
-        Let's begin! Create a new thought with the text “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”
+        Excellent choice. Now create a new thought with the text “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”
         {hasQuotes ? ' (without quotes)' : null}.
       </p>
       <p>
@@ -43,6 +41,7 @@ const Tutorial2StepContext1Parent = ({
           ) : null}
           {isTouch ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought. Then type "
           {TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}".
+          <TutorialGestureDiagram gesture={commandById('newThought').gesture} />
         </TutorialHint>
       </p>
     </>

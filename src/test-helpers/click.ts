@@ -1,4 +1,5 @@
-import { act, fireEvent } from '@testing-library/react'
+import { fireEvent } from '@testing-library/react'
+import { act } from 'react'
 
 /** Clicks an element within an act block, simulating mousedown and mouseup separately. */
 const click = async (selector: string) => {

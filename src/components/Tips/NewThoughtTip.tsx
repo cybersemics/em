@@ -1,14 +1,14 @@
 import { FC } from 'react'
 import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import { anchorButton } from '../../../styled-system/recipes'
+import { anchorButtonRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import GesturePath from '../../@types/GesturePath'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
-import newThoughtShortcut from '../../shortcuts/newThought'
+import newThoughtCommand from '../../commands/newThought'
 import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
 import Tip from './Tip'
@@ -28,7 +28,7 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
       You can add a new thought by swiping
       <GestureDiagram
         inGestureContainer
-        path={newThoughtShortcut.gesture as GesturePath}
+        path={newThoughtCommand.gesture as GesturePath}
         size={30}
         color={token('colors.gray66')}
       />
@@ -45,7 +45,7 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
       <div>
         <div className={buttonContainerClassName}>
           <a
-            className={anchorButton()}
+            className={anchorButtonRecipe()}
             {...fastClick(() => {
               dispatch(dismissTip())
             })}
@@ -60,7 +60,7 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
               dispatch(removeToolbarButton('newThought'))
               dispatch(dismissTip())
             })}
-            className={anchorButton()}
+            className={anchorButtonRecipe()}
           >
             Remove this icon from the toolbar
           </a>

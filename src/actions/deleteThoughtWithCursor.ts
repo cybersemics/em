@@ -25,10 +25,11 @@ import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 
 /** Given a path to a thought within the context view (a/m~/b), find the associated thought (b/m). This is nontrivial since the associated thought (b/m) is a different Lexeme instance than the context view thought (a/m). */
-const getContext = (state: State, path: Path) =>
-  getContexts(state, headValue(state, parentOf(path))).find(
-    cxid => getThoughtById(state, cxid)?.parentId === head(path),
-  )
+const getContext = (state: State, path: Path) => {
+  const contextValue = headValue(state, parentOf(path))
+  const contexts = contextValue !== undefined ? getContexts(state, contextValue) : []
+  return contexts.find(cxid => getThoughtById(state, cxid)?.parentId === head(path))
+}
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. Works in normal view and context view. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
@@ -44,11 +45,14 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
   const thought = getThoughtById(state, head(simplePath))
 
+  if (!thought) return state
+
   /** Returns true if the context view needs to be closed after deleting . Specifically, returns true if there is only one context left after the delete or if the deleted path is a cyclic context, e.g. a/m~/a. */
   const shouldCloseContextView = once(() => {
     const parentPath = rootedParentOf(state, path)
     const showContexts = isContextViewActive(state, parentPath)
-    const numContexts = showContexts ? getContexts(state, getThoughtById(state, head(parentPath)).value).length : 0
+    const parentThought = getThoughtById(state, head(parentPath))
+    const numContexts = showContexts && parentThought ? getContexts(state, parentThought.value).length : 0
     const isCyclic = head(path) === head(parentOf(parentOf(path)))
     return isCyclic || numContexts <= 2
   })
@@ -146,7 +150,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         ? setCursor(state, {
             path: cursorNew,
             editing: state.editing,
-            offset: next() ? 0 : headValue(state, cursorNew).length,
+            offset: next() ? 0 : headValue(state, cursorNew)?.length,
           })
         : cursorBack(state)
     },

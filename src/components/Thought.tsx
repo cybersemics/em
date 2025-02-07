@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { child, invalidOption as invalidOptionRecipe } from '../../styled-system/recipes'
+import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -115,8 +115,6 @@ const ThoughtContainer = ({
   depth = 0,
   env,
   hideBullet: hideBulletProp,
-  isHeader,
-  isMultiColumnTable,
   isContextPending,
   isVisible,
   leaf,
@@ -180,8 +178,9 @@ const ThoughtContainer = ({
   const isTableCol2 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
+  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
-  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
+  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, isInContextView, thoughtId })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
   const styleAnnotation = useSelector(
     state =>
@@ -214,7 +213,7 @@ const ThoughtContainer = ({
   // true if the thought has an invalid option
   const invalidOption = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
-    if (!thought) return false
+    if (!thought || value === undefined) return false
 
     const parentId = head(rootedParentOf(state, simplePath))
     const optionsId = findDescendant(state, parentId, '=options')
@@ -255,7 +254,7 @@ const ThoughtContainer = ({
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
     // only hide when typing, not when deleting
-    // strip HTML tags, otherwise Formatting shortcuts will trigger distractionFreeTyping
+    // strip HTML tags, otherwise Formatting commands will trigger distractionFreeTyping
     if (newValue.replace(REGEX_TAGS, '').length > oldValue.replace(REGEX_TAGS, '').length) {
       distractionFreeTypingStore.updateThrottled(true)
     }
@@ -278,7 +277,7 @@ const ThoughtContainer = ({
     ...(isChildHovering
       ? {
           WebkitTextStrokeWidth: '0.05em',
-          animation: `pulseLight {durations.slowPulseDuration} linear infinite alternate`,
+          animation: `pulseLight {durations.slowPulse} linear infinite alternate`,
           color: 'highlight',
         }
       : null),
@@ -368,7 +367,7 @@ const ThoughtContainer = ({
       data-editing={isEditing}
       onClick={isTouch ? undefined : handleMultiselect}
       style={{
-        transition: `transform ${token('durations.layoutSlowShiftDuration')} ease-out, opacity ${token('durations.layoutSlowShiftDuration')} ease-out`,
+        transition: `transform ${token('durations.layoutSlowShift')} ease-out, opacity ${token('durations.layoutSlowShift')} ease-out`,
         ...style,
         ...styleContainer,
         // extend the click area to the left (except if table column 2)
@@ -382,10 +381,9 @@ const ThoughtContainer = ({
           : null),
       }}
       className={cx(
-        child(),
+        childRecipe(),
         invalidOption && invalidOptionRecipe(),
         css({
-          marginLeft: isDivider(value) ? '-125px' : undefined,
           // so that .thought can be sized at 100% and BulletCursorOverlay bullet can be positioned correctly.
           position: 'relative',
         }),
@@ -422,7 +420,7 @@ const ThoughtContainer = ({
         className={css({
           /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
           /* must match value used in Editable useMultiline */
-          lineHeight: '1.72',
+          lineHeight: '2',
           // ensure that ThoughtAnnotation is positioned correctly
           position: 'relative',
           ...(hideBullet ? { marginLeft: -12 } : null),
@@ -438,6 +436,7 @@ const ThoughtContainer = ({
             publish={publish}
             simplePath={simplePath}
             thoughtId={thoughtId}
+            isInContextView={isInContextView}
             // debugIndex={debugIndex}
             // depth={depth}
           />
@@ -468,7 +467,7 @@ const ThoughtContainer = ({
           marginRight={marginRight}
           isPressed={dragHoldResult.isPressed}
         />
-        <Note path={simplePath} />
+        <Note path={path} />
       </div>
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}

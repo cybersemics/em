@@ -1,19 +1,35 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
+import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
+import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
-import type from '../helpers/type'
+import setTheme from '../helpers/setTheme'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+
+/** Returns a snapshot for render-thoughts/superscript. */
+const superscriptSnapshot = async () => {
+  await paste(`
+    - a
+      - m
+    - b
+      - m
+  `)
+
+  await press('ArrowUp')
+
+  return screenshot()
+}
 
 /* From jest-image-snapshot README:
 
@@ -35,7 +51,7 @@ const testSuite = () => {
 
     it('one thought', async () => {
       await press('Enter')
-      await type('a')
+      await keyboard.type('a')
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -117,16 +133,7 @@ const testSuite = () => {
     })
 
     it('superscript', async () => {
-      await paste(`
-        - a
-          - m
-        - b
-          - m
-      `)
-
-      await press('ArrowUp')
-
-      const image = await screenshot()
+      const image = await superscriptSnapshot()
       expect(image).toMatchImageSnapshot()
     })
 
@@ -165,9 +172,6 @@ describe('Font Size: 13', () => {
 
     // scroll to top
     await scroll(0, 0)
-
-    // wait for toolbar size transitions to complete
-    await sleep(400)
   })
 
   // run the snapshot tests at font size 14
@@ -186,11 +190,66 @@ describe('Font Size: 22', () => {
 
     // scroll to top
     await scroll(0, 0)
-
-    // wait for toolbar size transitions to complete
-    await sleep(400)
   })
 
   // run the snapshot tests at font size 22
   testSuite()
+})
+
+describe('Color Theme', () => {
+  it('initial load on light theme', async () => {
+    await setTheme('Light')
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('superscript on light theme', async () => {
+    await setTheme('Light')
+
+    await hideHUD()
+    const image = await superscriptSnapshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('colored and highlighted text', async () => {
+    const importText = `
+    - Labrador
+    - Golden Retriever`
+
+    await paste(importText)
+
+    await clickThought('Golden Retriever')
+    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+    await click('[aria-label="background color swatches"] [aria-label="green"]')
+
+    await clickThought('Labrador')
+    await click('[aria-label="text color swatches"] [aria-label="purple"]')
+
+    await hideHUD()
+
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
+})
+
+describe('Undo/Redo', () => {
+  it('Re-render cursor thought on undo', async () => {
+    // create a thought "hello"
+    await press('Enter')
+    await keyboard.type('hello')
+
+    // create a thought "a"
+    await press('Enter')
+    await keyboard.type('a')
+
+    // edit "hello" to "hello world"
+    await clickThought('hello')
+    await press('ArrowRight', { ctrl: true })
+    await keyboard.type(' world')
+
+    // undo
+    await press('z', { meta: true })
+
+    const thoughtValue = await getEditingText()
+    expect(thoughtValue).toBe('hello')
+  })
 })

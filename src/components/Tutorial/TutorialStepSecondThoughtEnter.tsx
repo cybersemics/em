@@ -2,18 +2,18 @@ import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import GesturePath from '../../@types/GesturePath'
 import { isTouch } from '../../browser'
-import { shortcutById } from '../../shortcuts'
+import { commandById } from '../../commands'
 import headValue from '../../util/headValue'
 import GestureDiagram from '../GestureDiagram'
 
-const newThoughtShortcut = shortcutById('newThought')!
+const newThoughtCommand = commandById('newThought')!
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSecondThoughtEnter = () => {
   const ready = useSelector(state => {
     if (!state.cursor) return true
     const headCursorValue = headValue(state, state.cursor)
-    return headCursorValue?.length > 0
+    return headCursorValue !== undefined && headCursorValue.length > 0
   })
 
   return (
@@ -24,7 +24,7 @@ const TutorialStepSecondThoughtEnter = () => {
           <>
             Swiping{' '}
             <GestureDiagram
-              path={newThoughtShortcut.gesture as GesturePath}
+              path={newThoughtCommand.gesture as GesturePath}
               size={28}
               cssRaw={css.raw({ margin: '-10px -4px -6px' })}
             />

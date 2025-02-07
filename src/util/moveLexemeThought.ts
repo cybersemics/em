@@ -13,9 +13,9 @@ const moveLexemeThought = (state: State, lexeme: Lexeme, oldRank: number, newRan
       const thought = getThoughtById(state, child)
       return (
         // remove old context
-        (thought.rank !== oldRank || child !== id) &&
+        (thought?.rank !== oldRank || child !== id) &&
         // remove new context with duplicate rank
-        (thought.rank !== newRank || child !== id)
+        (thought?.rank !== newRank || child !== id)
       )
     }),
     // add new context

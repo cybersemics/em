@@ -6,6 +6,20 @@ import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
+/**
+ * Function: splitThought.
+ *
+ * @param thought The thought that needs to be split.
+ * @returns The thought string after being split.
+ */
+function splitThought(value: string) {
+  const steps = [newThought(value), splitSentences()]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  return exported
+}
+
 describe('split by comma', () => {
   it('split single thought on comma when there are no periods', () => {
     const value = 'One, Two, Three'
@@ -283,8 +297,8 @@ describe('abbreviations', () => {
     const exported = splitThought(value)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - One.
-  - Two ( U.N.)`)
+  - One. Two
+    - U.N.`)
   })
 
   it('split thought as expected if the dot comes from an abbreviation followed by empty spaces and a quotation mark', () => {
@@ -634,16 +648,30 @@ describe('complicated cases', () => {
   })
 })
 
-/**
- * Function: splitThought.
- *
- * @param thought The thought that needs to be split.
- * @returns The thought string after being split.
- */
-function splitThought(value: string) {
-  const steps = [newThought(value), splitSentences()]
+describe('parenthetical content', () => {
+  it('splits thought with parenthetical content at the end into main thought and subthought', () => {
+    const value = 'This is a thought (and a subthought)'
+    const exported = splitThought(value)
 
-  const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-  return exported
-}
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - This is a thought
+    - and a subthought`)
+  })
+
+  it('splits thought with parenthetical content that ends with a period', () => {
+    const value = 'This is a thought (and a subthought).'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - This is a thought
+    - and a subthought`)
+  })
+
+  it('does not split when parentheses are not at the end', () => {
+    const value = 'This (has parentheses) in the middle'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - This (has parentheses) in the middle`)
+  })
+})

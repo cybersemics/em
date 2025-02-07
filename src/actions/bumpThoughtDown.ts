@@ -1,4 +1,3 @@
-/* eslint-disable */
 import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -29,6 +28,11 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   simplePath = simplePath || simplifyPath(state, state.cursor!)
 
   const headThought = getThoughtById(state, head(simplePath))
+  if (!headThought) {
+    console.warn(`Missing headThought${head(simplePath)}. Aborting bumpThoughtDown.`)
+    return state
+  }
+
   const { value } = headThought
 
   // const rank = headRank(simplePath)

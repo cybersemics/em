@@ -22,17 +22,13 @@ const thoughtRecipe = defineRecipe({
     /** Assign annotation height on single line truncated url. */
     ellipsizedUrl: {
       true: {
-        /**
-          .single-line element has display: inline-block property, it affects the height calculation of the .thought div so we need to set the height manually.
-         */
-        height: 'minThoughtHeight',
         maxWidth: 'calc(100% - 1em)',
       },
     },
     inverse: {
       true: {
         // invert placeholder color if the color is inverted (such as when a background color is applied)
-        '[placeholder]:empty::before': { color: { _base: 'rgba(255, 255, 255, 0.5)', _dark: 'rgba(7, 7, 7, 0.5)' } },
+        '[placeholder]:empty::before': { color: { _base: 'dimInverse' } },
       },
     },
     flex: {

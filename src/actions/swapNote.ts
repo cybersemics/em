@@ -6,6 +6,7 @@ import findDescendant from '../selectors/findDescendant'
 import { anyChild } from '../selectors/getChildren'
 import getRankAfter from '../selectors/getRankAfter'
 import isContextViewActive from '../selectors/isContextViewActive'
+import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -41,14 +42,14 @@ const swapNote = (state: State) => {
   // cancel if parent is readonly or unextendable
   else if (findDescendant(state, head(parentOf(cursor)), '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, parentOf(cursor)))}" is read-only so "${headValue(
+      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
         state,
         cursor,
       )}" cannot be converted to a note.`,
     })
   } else if (findDescendant(state, head(parentOf(cursor)), '=uneditable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, parentOf(cursor)))}" is unextendable so "${headValue(
+      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
         state,
         cursor,
       )}" cannot be converted to a note.`,
@@ -70,15 +71,19 @@ const swapNote = (state: State) => {
             const oldPath = appendToPath(cursor, noteId, noteChildId)
             const newPath = appendToPath(cursor, noteChildId)
             const newRank = getRankAfter(state, appendToPath(simplePath, noteId))
-            return reducerFlow([
-              moveThought({ oldPath, newPath, newRank }),
-              // delete =note
-              deleteThought({
-                pathParent: cursor,
-                thoughtId: noteId,
-              }),
-              setCursor({ path: newPath }),
-            ])(state)
+            const note = pathToThought(state, oldPath)
+
+            return note
+              ? reducerFlow([
+                  moveThought({ oldPath, newPath, newRank }),
+                  // delete =note
+                  deleteThought({
+                    pathParent: cursor,
+                    thoughtId: noteId,
+                  }),
+                  setCursor({ offset: note.value.length, path: newPath }),
+                ])(state)
+              : null
           },
         ]
       : // if the cursor thought does not have a note, swap it with its parent's note (or create a note if one does not exist)

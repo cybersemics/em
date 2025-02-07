@@ -13,7 +13,7 @@ const Tutorial2StepSuccess = () => {
         thoughts in <b>em</b>.
       </p>
       <p>
-        That's right; you're on your own now. But you can always replay this tutorial or explore all of the available{' '}
+        That's right, you're on your own now. But you can always replay this tutorial or explore all of the available{' '}
         {isTouch ? 'gestures' : 'keyboard shortcuts'} by clicking the{' '}
         <a {...fastClick(() => dispatch(showModal({ id: 'help' })))}>Help</a> link in the footer.
       </p>

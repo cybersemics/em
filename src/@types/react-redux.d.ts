@@ -12,3 +12,4 @@ export * from 'react-redux-default'
 
 export const useDispatch: () => Dispatch = useDefaultDispatch
 export const useSelector: TypedUseSelectorHook<State> = useDefaultSelector
+export const useStore: () => Store<State> = useDefaultStore

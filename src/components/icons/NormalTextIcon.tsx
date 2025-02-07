@@ -1,39 +1,41 @@
-import { css, cx } from '../../../styled-system/css'
-import { icon } from '../../../styled-system/recipes'
-import { token } from '../../../styled-system/tokens'
-import IconType from '../../@types/Icon'
-import { ICON_SCALING_FACTOR } from '../../constants'
+import IconType from '../../@types/IconType'
+import AnimatedIcon from './AnimatedIcon'
+import animationData from './animations/23-normal-text.json'
 
-/** Normal Text icon. */
-const NormalTextIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
-  const newSize = size * ICON_SCALING_FACTOR
-  const strokeColor = style.fill || fill || token('colors.fg')
-
+/** Normal Text Icon with Conditional Lottie Animation. */
+const NormalTextIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
   return (
-    <svg
-      className={cx(icon(), css(cssRaw))}
-      xmlns='http://www.w3.org/2000/svg'
-      viewBox='0 0 24 24'
-      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
-      fill='none'
-    >
-      <g id='Layer_2' data-name='Layer 2'>
-        <g id='Layer_3' data-name='Layer 3'>
-          <g id='_23-normal-text' data-name='23-normal-text'>
-            <rect width='24' height='24' fill='none' />
-            <path d='M12,21.39V4' fill='none' stroke={strokeColor} strokeLinecap='round' strokeLinejoin='round' />
-            <path d='M10.11,21.39h3.78' fill='none' stroke={strokeColor} strokeLinecap='round' strokeLinejoin='round' />
-            <path
-              d='M19.06,7.3V4.87a1,1,0,0,0-1-1H5.94a1,1,0,0,0-1,1V7.3'
-              fill='none'
-              stroke={strokeColor}
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            />
-          </g>
-        </g>
-      </g>
-    </svg>
+    <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
+      <svg
+        xmlns='http://www.w3.org/2000/svg'
+        viewBox='0 0 24 24'
+        fill='none'
+        style={{ ...style, width: '100%', height: '100%', transform: 'translate(0, -3%)' }}
+      >
+        <rect width='24' height='24' fill='none' />
+        <path
+          d='M12,21.39V4'
+          fill='none'
+          stroke={fill || 'currentColor'}
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        />
+        <path
+          d='M10.11,21.39h3.78'
+          fill='none'
+          stroke={fill || 'currentColor'}
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        />
+        <path
+          d='M19.06,7.3V4.87a1,1,0,0,0-1-1H5.94a1,1,0,0,0-1,1V7.3'
+          fill='none'
+          stroke={fill || 'currentColor'}
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        />
+      </svg>
+    </AnimatedIcon>
   )
 }
 

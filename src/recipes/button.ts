@@ -6,12 +6,12 @@ const buttonRecipe = defineRecipe({
   base: {
     cursor: 'pointer',
     background: 'transparent',
-    color: '#ccc',
+    color: 'codeBgInverse',
     display: 'block',
     border: '0 none',
     margin: '10px auto 0',
     '&:focus': {
-      color: '#fff',
+      color: 'fg',
       outline: '0 none',
       border: '0 none',
     },

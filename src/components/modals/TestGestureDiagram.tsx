@@ -1,3 +1,4 @@
+import { css } from '../../../styled-system/css'
 import GestureDiagram from '../GestureDiagram'
 import ModalComponent from './ModalComponent'
 
@@ -15,6 +16,20 @@ const ModalTestGestureDiagram = () => {
       <GestureDiagram path='dud' size={48} arrowSize={12} />
       <GestureDiagram path='rdlu' size={48} arrowSize={12} />
       <GestureDiagram path='rdrul' size={48} arrowSize={12} />
+      <GestureDiagram path='rl' size={48} arrowSize={12} />
+      <GestureDiagram path='rld' size={48} arrowSize={12} />
+
+      {/* Custom Help gesture */}
+      <GestureDiagram path='rdld' size={48} arrowSize={12} />
+
+      {/* Custom Cancel gesture */}
+      <GestureDiagram
+        path={null}
+        cssRaw={css.raw({
+          marginBottom: '12px !important',
+          marginLeft: '2px !important',
+        })}
+      />
     </ModalComponent>
   )
 }

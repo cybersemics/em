@@ -1,5 +1,5 @@
+import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
-import type from '../helpers/type'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
 
@@ -16,9 +16,7 @@ const pastePlainText = async (text: string) => {
     ])
   }, text)
 
-  await page.keyboard.down('Shift')
-  await page.keyboard.press('Insert')
-  await page.keyboard.up('Shift')
+  await press('Insert', { shift: true })
 }
 
 /** Custom helper for pasting HTML, avoiding the existing `paste` helper that uses `importText` internally. */
@@ -33,14 +31,12 @@ const pasteHTML = async (html: string) => {
     ])
   }, html)
 
-  await page.keyboard.down('Shift')
-  await page.keyboard.press('Insert')
-  await page.keyboard.up('Shift')
+  await press('Insert', { shift: true })
 }
 
 it('escapes typed HTML', async () => {
   await press('Enter', { delay: 10 })
-  await type('hello <b>world</b>')
+  await keyboard.type('hello <b>world</b>')
   await press('Enter', { delay: 10 })
 
   const editable = await waitForEditable('hello &lt;b&gt;world&lt;/b&gt;')

@@ -1,16 +1,15 @@
 import { useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import durations from '../util/durations'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
+import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import InvitesButton from './InvitesButton'
 import Scale from './Scale'
@@ -26,14 +25,14 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
     <ContextBreadcrumbs
       cssRaw={css.raw({
         width: '100%',
-        color: '#999',
+        color: 'breadcrumbs',
         paddingLeft: '15px',
         fontSize: '14px',
         verticalAlign: 'bottom',
         ...(position === 'bottom' && { width: 'calc(100% - 40px)', paddingLeft: '35px' }),
       })}
       linkCssRaw={css.raw({
-        color: '#999',
+        color: 'breadcrumbs',
         '&:hover': {
           color: 'fg',
         },
@@ -64,8 +63,9 @@ const NavBar = ({ position }: { position: string }) => {
         ...(!isTouch || !editing
           ? {
               position: 'sticky',
-              // cannot use safe-area-inset because of mobile Safari z-index issues
-              bottom: 0,
+              /* spacing.safeAreaBottom applies for rounded screens */
+              bottom: 'calc(max(11px, token(spacing.safeAreaBottom)))',
+              marginBottom: '10px',
             }
           : undefined),
       })}
@@ -97,8 +97,6 @@ const NavBar = ({ position }: { position: string }) => {
                   width: '100%',
                   display: 'flex',
                   alignItems: 'flex-end',
-                  /* rounded screens */
-                  paddingBottom: 'calc(max(10px, {spacing.safeAreaBottom}))',
                 }),
               })}
             >
@@ -116,17 +114,16 @@ const NavBar = ({ position }: { position: string }) => {
                       })}
                     />
                   ) : null}
-                  <CSSTransition
+                  <FadeTransition
+                    duration='fast'
                     nodeRef={cursorBreadcrumbsWrapperRef}
                     in={!distractionFreeTyping}
-                    timeout={durations.get('mediumDuration')}
-                    classNames='fade'
                     unmountOnExit
                   >
                     <div ref={cursorBreadcrumbsWrapperRef} className={css({ flexGrow: 1 })}>
                       <CursorBreadcrumbs position={position} />
                     </div>
-                  </CSSTransition>
+                  </FadeTransition>
 
                   <div
                     className={css({

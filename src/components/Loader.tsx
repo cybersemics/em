@@ -24,7 +24,7 @@ const rippleLoaderChild = {
 const Loader = ({ size = 32, style, cssRaw }: LoaderProps) => {
   return (
     <div
-      className={css({ display: 'inline-block', overflow: 'hidden', background: 'rgba(255, 255, 255, 0)' }, cssRaw)}
+      className={css({ display: 'inline-block', overflow: 'hidden', background: 'fgTransparent' }, cssRaw)}
       style={{ ...style, height: size, width: size }}
     >
       <div
@@ -37,8 +37,8 @@ const Loader = ({ size = 32, style, cssRaw }: LoaderProps) => {
           transformOrigin: '0 0',
         })}
       >
-        <div className={css(rippleLoaderChild, { borderColor: '#e90c59', animationDelay: '0s' })}></div>
-        <div className={css(rippleLoaderChild, { borderColor: '#46dff0', animationDelay: '-0.5s' })}></div>
+        <div className={css(rippleLoaderChild, { borderColor: 'pinkAgainstFg', animationDelay: '0s' })}></div>
+        <div className={css(rippleLoaderChild, { borderColor: 'brightBlue', animationDelay: '-0.5s' })}></div>
       </div>
     </div>
   )

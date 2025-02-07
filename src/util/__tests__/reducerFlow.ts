@@ -17,9 +17,8 @@ it('new state passed to next reducer', () => {
 })
 
 it('initialState', () => {
-  const initialState = { a: 0, b: 0, z: 0 }
   expect(
-    reducerFlow<typeof initialState>([
+    reducerFlow<{ a: number; b: number; z: number }>([
       state => ({ ...state, a: 1 + state.z }),
       state => ({ ...state, b: 2 + state.z }),
     ])({ a: 0, b: 0, z: 100 }),
@@ -34,7 +33,7 @@ it('no initialState', () => {
   }
   expect(
     reducerFlow<State>([
-      state => ({ a: 0, b: 0, z: 100 }),
+      () => ({ a: 0, b: 0, z: 100 }),
       state => ({ ...state, a: 1 + state.z }),
       state => ({ ...state, b: 2 + state.z }),
     ])(),

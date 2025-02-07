@@ -13,7 +13,7 @@ import React, {
 import { useDispatch, useSelector } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
 import { css, cx } from '../../../styled-system/css'
-import { extendTap } from '../../../styled-system/recipes'
+import { extendTapRecipe } from '../../../styled-system/recipes'
 import ExportOption from '../../@types/ExportOption'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -148,7 +148,7 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
         return replicateTree(id, {
           // TODO: Warn the user if offline or not fully replicated
           remote: false,
-          onThought: (thought, thoughtIndex) => {
+          onThought: thought => {
             if (!isMounted.current) return
             setExportingThoughtsThrottled(thought)
           },
@@ -273,7 +273,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const dispatch = useDispatch()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const id = head(simplePaths[0])
-  const title = useSelector(state => (isRoot(simplePaths[0]) ? 'home' : headValue(state, simplePaths[0])))
+  const title = useSelector(state => (isRoot(simplePaths[0]) ? 'home' : headValue(state, simplePaths[0]))) ?? ''
   const titleShort = ellipsize(title)
   // const titleMedium = ellipsize(title, 25)
 
@@ -298,7 +298,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       : (numDescendantsInState ?? 0)
     : null
 
-  const exportThoughtsPhraseFinal = useSelector(state =>
+  const exportThoughtsPhraseFinal = useSelector(() =>
     exportPhrase(
       simplePaths.map(simplePath => head(simplePath)),
       numDescendantsFinal,
@@ -556,7 +556,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         })}
       >
         <span>
-          <span>
+          <span data-testid='export-phrase-container'>
             {exportWord}{' '}
             {
               // application/json will ignore the cursor and downlaod the raw thought state as-is
@@ -591,10 +591,10 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
           ref={textareaRef}
           readOnly
           className={css({
-            backgroundColor: '#111',
+            backgroundColor: 'darkgray',
             border: 'none',
             borderRadius: '10px',
-            color: '#aaa',
+            color: 'exportTextareaColor',
             fontSize: '1em',
             height: '120px',
             marginBottom: 'calc(max(1.2em, 20px))',
@@ -640,7 +640,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       {/* Copy to clipboard */}
       <div className={css({ marginBottom: '15px', textAlign: 'center' })}>
         {exportContent !== null && (
-          <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTap()}>
+          <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTapRecipe()}>
             Copy to clipboard
           </a>
         )}
@@ -651,12 +651,12 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         <span>
           <a
             className={cx(
-              extendTap(),
+              extendTapRecipe(),
               css({
                 userSelect: 'none',
                 display: 'flex',
                 position: 'relative',
-                transition: `opacity {durations.veryFastDuration} ease-in-out`,
+                transition: `opacity {durations.veryFast} ease-in-out`,
                 color: 'fg',
                 opacity: advancedSettings ? 1 : 0.5,
               }),
@@ -699,10 +699,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       {/* isDocumentEditable() && (
         <>
           <div className={css({
-            borderTop: {
-              base:"solid 1px #ccc",
-              _dark:"solid 1px #444"
-            },
+            borderTop: "solid 1px {colors.modalExportUnused}",
             marginTop: "30px",
             marginBottom: "20px",
             paddingTop: "40px",

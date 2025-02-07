@@ -17,6 +17,7 @@ const splitSentences = (state: State) => {
   const { cursor } = state
   if (!cursor) return state
   const cursorThought = getThoughtById(state, head(cursor))
+  if (!cursorThought) return state
   const { value, rank } = cursorThought
 
   const sentences = splitSentence(value)
@@ -30,12 +31,14 @@ const splitSentences = (state: State) => {
   const reducers = [
     editThought({
       oldValue: value,
-      newValue: firstSentence,
+      newValue: firstSentence.value,
       path: simplifyPath(state, cursor),
       rankInContext: rank,
     }),
-    ...otherSentences.map(sentence => newThought({ value: sentence })),
-    setCursor({ path: cursor, offset: getTextContentFromHTML(firstSentence).length }),
+    ...otherSentences.map(sentence =>
+      newThought({ value: sentence.value, insertNewSubthought: sentence.insertNewSubThought }),
+    ),
+    setCursor({ path: cursor, offset: getTextContentFromHTML(firstSentence.value).length }),
     editableRender,
   ]
 

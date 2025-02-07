@@ -435,6 +435,8 @@ describe('taskQueue', { retry: 10 }, () => {
     const incDelayed = () => sleep(20).then(() => ++counter)
 
     /** Wrap taskQueue for typing. */
+    // Dummy function is needed to get the return type of a generic function. Value is not used.
+    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     const makeTaskQueue = () => taskQueue<number>()
     let queue: ReturnType<typeof makeTaskQueue> = {} as any
     const done = new Promise(resolve => {
@@ -498,6 +500,7 @@ describe('taskQueue', { retry: 10 }, () => {
     /** Increments the counter after a delay. */
     const incDelayed = async () => {
       await sleep(0)
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       completed.push(queue.completed())
     }
 
@@ -512,6 +515,7 @@ describe('taskQueue', { retry: 10 }, () => {
     /** Increments the counter after a delay. */
     const incDelayed = async () => {
       await sleep(0)
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       running.push(queue.running())
     }
 
@@ -526,6 +530,7 @@ describe('taskQueue', { retry: 10 }, () => {
     /** Increments the counter after a delay. */
     const incDelayed = async () => {
       await sleep(0)
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       total.push(queue.total())
     }
 

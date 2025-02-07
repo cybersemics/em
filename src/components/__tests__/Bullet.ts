@@ -1,7 +1,10 @@
 import userEvent from '@testing-library/user-event'
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import { exportContext } from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -9,6 +12,7 @@ import dispatch from '../../test-helpers/dispatch'
 import findCursor from '../../test-helpers/queries/findCursor'
 import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -25,6 +29,8 @@ describe('render', () => {
       }),
     ])
 
+    await act(vi.runOnlyPendingTimersAsync)
+
     const bullets = document.querySelectorAll('[aria-label="bullet"]')
     expect(bullets.length).toBe(3)
   })
@@ -39,6 +45,8 @@ describe('render', () => {
       `,
       }),
     ])
+
+    await act(vi.runOnlyPendingTimersAsync)
 
     // =bullet is hidden so only a is shown
     // a should not have a bullet
@@ -60,6 +68,8 @@ describe('render', () => {
       }),
     ])
 
+    await act(vi.runOnlyPendingTimersAsync)
+
     // =bullet is hidden so only a, b, c are shown
     // only a should have a bullet
     const bullets = document.querySelectorAll('[aria-label="bullet"]')
@@ -80,6 +90,8 @@ describe('render', () => {
       }),
       toggleHiddenThoughts(),
     ])
+
+    await act(vi.runOnlyPendingTimersAsync)
 
     // =children should not have a bullet since =bullet/None is applied
     const bullets = document.querySelectorAll('[aria-label="bullet"]')
@@ -103,6 +115,8 @@ describe('render', () => {
       }),
     ])
 
+    await act(vi.runOnlyPendingTimersAsync)
+
     // only a and b should have bullets
     const bullets = document.querySelectorAll('[aria-label="bullet"]')
     expect(bullets.length).toBe(2)
@@ -122,6 +136,8 @@ describe('render', () => {
       toggleHiddenThoughts(),
     ])
 
+    await act(vi.runOnlyPendingTimersAsync)
+
     const bullets = document.querySelectorAll('[aria-label="bullet"]')
     expect(bullets.length).toBe(4)
   })
@@ -137,8 +153,42 @@ describe('render', () => {
       toggleHiddenThoughts(),
     ])
 
+    await act(vi.runOnlyPendingTimersAsync)
+
     const bullets = document.querySelectorAll('[data-bullet="parent"]')
     expect(bullets.length).toBe(1)
+  })
+
+  it('render bullets in context view entries even when parent has =view/Table', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - a1
+            - m
+              - x
+        - b
+          - =view
+            - Table
+          - b1
+            - m
+              - y
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Set cursor to a/a1/m
+    await dispatch([setCursor(['a', 'a1', 'm'])])
+
+    // Activate context view
+    await dispatch([toggleContextView()])
+
+    await act(vi.runOnlyPendingTimersAsync)
+    const path = hashPath(contextToPath(store.getState(), ['a', 'a1', 'm', 'b1']))
+    const bullet = document.querySelector(`[data-testid="bullet-${path}"]`)
+    expect(bullet).toBeInTheDocument()
   })
 })
 
@@ -156,9 +206,14 @@ describe('expansion', () => {
       setCursor(['a', 'b']),
     ])
 
+    await act(vi.runOnlyPendingTimersAsync)
+
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
-    userEvent.click(bulletOfThoughtB)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtB)
+
+    await act(vi.runOnlyPendingTimersAsync)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('a')
@@ -178,9 +233,14 @@ describe('expansion', () => {
       setCursor(['x', 'a', 'b', 'c']),
     ])
 
+    await act(vi.runOnlyPendingTimersAsync)
+
     const bulletOfThoughtA = getBulletByContext(['x', 'a'])
 
-    userEvent.click(bulletOfThoughtA)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtA)
+
+    await act(vi.runOnlyPendingTimersAsync)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('x')
@@ -199,9 +259,14 @@ describe('expansion', () => {
       setCursor(['a', 'b', 'c']),
     ])
 
+    await act(vi.runOnlyPendingTimersAsync)
+
     const bulletOfThoughtA = getBulletByContext(['a'])
 
-    userEvent.click(bulletOfThoughtA)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtA)
+
+    await act(vi.runOnlyPendingTimersAsync)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toBeNull()
@@ -219,9 +284,14 @@ describe('expansion', () => {
       }),
     ])
 
+    await act(vi.runOnlyPendingTimersAsync)
+
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
-    userEvent.click(bulletOfThoughtB)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtB)
+
+    await act(vi.runOnlyPendingTimersAsync)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('b')
@@ -242,9 +312,14 @@ describe('expansion', () => {
       }),
     ])
 
+    await act(vi.runOnlyPendingTimersAsync)
+
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
-    userEvent.click(bulletOfThoughtB)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtB)
+
+    await act(vi.runOnlyPendingTimersAsync)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
@@ -268,7 +343,10 @@ describe('expansion', () => {
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
-    userEvent.click(bulletOfThoughtB)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtB)
+
+    await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
@@ -297,7 +375,10 @@ describe('expansion', () => {
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
-    userEvent.click(bulletOfThoughtB)
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtB)
+
+    await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__

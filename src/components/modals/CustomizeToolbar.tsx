@@ -2,26 +2,25 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
-import { anchorButton, extendTap, modal } from '../../../styled-system/recipes'
+import { anchorButtonRecipe, extendTapRecipe, modalRecipe } from '../../../styled-system/recipes'
+import Command from '../../@types/Command'
 import DragAndDropType from '../../@types/DragAndDropType'
-import DragShortcutZone from '../../@types/DragShortcutZone'
+import DragCommandZone from '../../@types/DragCommandZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
-import Shortcut from '../../@types/Shortcut'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
-import { dragShortcutZoneActionCreator as dragShortcutZone } from '../../actions/dragShortcutZone'
+import { dragCommandZoneActionCreator as dragCommandZone } from '../../actions/dragCommandZone'
 import { initUserToolbarActionCreator as initUserToolbar } from '../../actions/initUserToolbar'
 import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
+import { commandById } from '../../commands'
 import { AlertText, AlertType } from '../../constants'
-import { shortcutById } from '../../shortcuts'
-import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
-import ShortcutTableOnly from '../ShortcutTableOnly'
-import ShortcutTable from './../ShortcutTable'
+import CommandTableOnly from '../CommandTableOnly'
+import FadeTransition from '../FadeTransition'
+import CommandTable from './../CommandTable'
 import Toolbar from './../Toolbar'
 import ModalComponent from './ModalComponent'
 
@@ -40,15 +39,15 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
   const [{ isHovering, sourceZone }, dropTarget] = useDrop({
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],
     drop: (item: DragToolbarItem) => {
-      dispatch(removeToolbarButton(item.shortcut.id))
+      dispatch(removeToolbarButton(item.command.id))
     },
     collect: dropCollect,
   })
-  const dragShortcut = useSelector(state => state.dragShortcut)
+  const dragCommand = useSelector(state => state.dragCommand)
 
   useEffect(() => {
-    // clear toolbar drag-and-drop alert when dragShortcut disappears
-    if (!dragShortcut) {
+    // clear toolbar drag-and-drop alert when dragCommand disappears
+    if (!dragCommand) {
       dispatch((dispatch, getState) => {
         const state = getState()
         const alertType = state.alert?.alertType
@@ -63,7 +62,7 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
       return
     }
 
-    dispatch(dragShortcutZone(isHovering ? DragShortcutZone.Remove : DragShortcutZone.Toolbar))
+    dispatch(dragCommandZone(isHovering ? DragCommandZone.Remove : DragCommandZone.Toolbar))
 
     // get the screen-relative y coordinate of the toolbar
     // do not show the alert if the toolbar is within 50px of the top of screen, otherwise it blocks the toolbar
@@ -71,24 +70,24 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
 
     if (toolbarTop < 50) {
       dispatch(alert(null))
-    } else if (sourceZone === DragShortcutZone.Remove) {
+    } else if (sourceZone === DragCommandZone.Remove) {
       dispatch(
         alert(AlertText.DragAndDropToolbarAdd, {
           alertType: AlertType.ToolbarButtonRemoveHint,
           showCloseLink: false,
         }),
       )
-    } else if (sourceZone === DragShortcutZone.Toolbar) {
+    } else if (sourceZone === DragCommandZone.Toolbar) {
       if (isHovering) {
         dispatch([
-          alert(`Drop to remove ${shortcutById(dragShortcut).label} from toolbar`, {
+          alert(`Drop to remove ${commandById(dragCommand).label} from toolbar`, {
             alertType: AlertType.ToolbarButtonRemoveHint,
             showCloseLink: false,
           }),
         ])
       }
     }
-  }, [dispatch, dragShortcut, isHovering, sourceZone])
+  }, [dispatch, dragCommand, isHovering, sourceZone])
 
   return (
     <div data-drop-to-remove-from-toolbar-hovering={isHovering ? '' : undefined} ref={dropTarget}>
@@ -99,20 +98,20 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
 
 /** Customize Toolbar modal. */
 const ModalCustomizeToolbar: FC = () => {
-  const [selectedShortcut, setSelectedShortcut] = useState<Shortcut | null>(null)
-  /** Toggles a shortcut selected. */
-  const toggleSelectedShortcut = useCallback(
-    (shortcut: Shortcut) => setSelectedShortcut(oldShortcut => (oldShortcut === shortcut ? null : shortcut)),
+  const [selectedCommand, setSelectedCommand] = useState<Command | null>(null)
+  /** Toggles a command selected. */
+  const toggleSelectedCommand = useCallback(
+    (command: Command) => setSelectedCommand(oldCommand => (oldCommand === command ? null : command)),
     [],
   )
 
   const dispatch = useDispatch()
 
-  const shortcutsContainerRef = useRef<HTMLDivElement>(null)
-  const shortcuts = useMemo(() => [selectedShortcut], [selectedShortcut])
+  const commandsContainerRef = useRef<HTMLDivElement>(null)
+  const commands = useMemo(() => [selectedCommand], [selectedCommand])
 
   const id = 'customizeToolbar'
-  const modalClasses = modal({ id })
+  const modalClasses = modalRecipe({ id })
 
   return (
     <ModalComponent
@@ -123,38 +122,37 @@ const ModalCustomizeToolbar: FC = () => {
       <h1 className={modalClasses.title}>Customize Toolbar</h1>
       <p className={css({ marginTop: '-1em', marginBottom: '1em' })}>
         &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTap()}>
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
           Back to Settings
         </a>
       </p>
 
       <div
         className={css({
-          // mask the selected bar that is rendered outside thn left edge of the ShortcutRow
-          backgroundColor: selectedShortcut ? 'bg' : undefined,
+          // mask the selected bar that is rendered outside thn left edge of the CommandRow
+          backgroundColor: selectedCommand ? 'bg' : undefined,
           position: 'sticky',
           top: '0px',
           marginBottom: '1em',
-          // extend element to mask the selected bar that is rendered outside thn left edge of the ShortcutRow
+          // extend element to mask the selected bar that is rendered outside thn left edge of the CommandRow
           marginLeft: '-modalPadding',
           paddingLeft: 'modalPadding',
-          // above ShortcutRow, which has position: relative for the selected bar
+          // above CommandRow, which has position: relative for the selected bar
           zIndex: 1,
         })}
       >
-        <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedShortcut?.id} />
+        <Toolbar customize onSelect={toggleSelectedCommand} selected={selectedCommand?.id} />
 
         {/* selected toolbar button details */}
-        <CSSTransition
-          nodeRef={shortcutsContainerRef}
-          in={!!selectedShortcut}
-          classNames='fade'
-          timeout={durations.get('mediumDuration')}
+        <FadeTransition
+          duration='fast'
+          nodeRef={commandsContainerRef}
+          in={!!selectedCommand}
           exit={false}
           unmountOnExit
         >
           <div
-            ref={shortcutsContainerRef}
+            ref={commandsContainerRef}
             className={css({
               backgroundColor: 'bg',
               // add bottom drop-shadow
@@ -171,32 +169,26 @@ const ModalCustomizeToolbar: FC = () => {
                 position: 'relative',
               })}
             >
-              <ShortcutTableOnly shortcuts={shortcuts} />
+              <CommandTableOnly commands={commands} />
             </div>
           </div>
-        </CSSTransition>
+        </FadeTransition>
       </div>
 
-      <CSSTransition
-        in={!selectedShortcut}
-        classNames='fade'
-        timeout={durations.get('mediumDuration')}
-        exit={false}
-        unmountOnExit
-      >
+      <FadeTransition duration='fast' in={!selectedCommand} exit={false} unmountOnExit>
         <div className={css({ marginTop: '2em', marginBottom: '2.645em', color: 'dim' })}>
           <p>Drag-and-drop to rearrange toolbar.</p>
           <p>{isTouch ? 'Tap' : 'Click'} a command for details.</p>
         </div>
-      </CSSTransition>
+      </FadeTransition>
 
       <DropToRemoveFromToolbar>
-        <ShortcutTable customize selectedShortcut={selectedShortcut ?? undefined} onSelect={setSelectedShortcut} />
+        <CommandTable customize selectedCommand={selectedCommand ?? undefined} onSelect={setSelectedCommand} />
       </DropToRemoveFromToolbar>
 
       <p className={css({ marginTop: '2em', marginBottom: '2em' })}>
         &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTap()}>
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
           Back to Settings
         </a>
       </p>
@@ -205,7 +197,7 @@ const ModalCustomizeToolbar: FC = () => {
         <a
           {...fastClick(() => dispatch(closeModal()))}
           className={cx(
-            anchorButton({
+            anchorButtonRecipe({
               actionButton: true,
             }),
             css({ color: 'bg', marginBottom: '1em', marginTop: '2em' }),
@@ -215,7 +207,7 @@ const ModalCustomizeToolbar: FC = () => {
         </a>
 
         <div className={css({ fontSize: 'sm', marginTop: '4em' })}>
-          <p className={css({ color: 'gray', marginTop: '0.5em' })}>
+          <p className={css({ color: 'gray66', marginTop: '0.5em' })}>
             Reset the toolbar to its factory settings. Your current toolbar customization will be permanently deleted.
           </p>
           <a
@@ -224,7 +216,7 @@ const ModalCustomizeToolbar: FC = () => {
                 dispatch([initUserToolbar({ force: true }), alert('Toolbar reset', { clearDelay: 8000 })])
               }
             })}
-            className={cx(extendTap(), css({ color: 'red' }))}
+            className={cx(extendTapRecipe(), css({ color: 'red' }))}
           >
             Reset toolbar
           </a>

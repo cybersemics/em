@@ -7,7 +7,7 @@ import { token } from '../../styled-system/tokens'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
-import IconType from '../@types/Icon'
+import IconType from '../@types/IconType'
 import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
@@ -90,7 +90,7 @@ const QuickDropIcon = ({
           zIndex: 'stack',
           padding: '1em',
           borderRadius: '999px 0 0 999px',
-          backgroundColor: isHovering ? 'rgba(40,40,40,0.8)' : 'rgba(30,30,30,0.8)',
+          backgroundColor: isHovering ? 'quickDropBgHover' : 'quickDropBg',
         })}
       >
         <Icon

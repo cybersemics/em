@@ -4,6 +4,16 @@ import durationsHelper from '../durations'
 beforeEach(() => {
   durationsHelper.setInTest(false)
 })
+/** Return the first configurad duration. */
+const getTestVals = (): [keyof typeof durations, number] => {
+  const keys = Object.keys(durations)
+
+  if (keys.length === 0) throw new Error('No durations configured.')
+
+  const key = keys[0] as keyof typeof durations
+
+  return [key, durations[key]]
+}
 
 describe('getDuration', () => {
   it('should return the correct duration when not in test state', () => {
@@ -46,14 +56,3 @@ describe('getDurations', () => {
     })
   })
 })
-
-/** Return the first configurad duration. */
-const getTestVals = (): [keyof typeof durations, number] => {
-  const keys = Object.keys(durations)
-
-  if (keys.length === 0) throw new Error('No durations configured.')
-
-  const key = keys[0] as keyof typeof durations
-
-  return [key, durations[key]]
-}

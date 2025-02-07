@@ -1,7 +1,10 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { TransitionGroup } from 'react-transition-group'
+import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
+import { css, cx } from '../../styled-system/css'
+import ActionType from '../@types/ActionType'
 import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -23,6 +26,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import nextSibling from '../selectors/nextSibling'
+import rootedGrandparentOf from '../selectors/rootedGrandparentOf'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -31,16 +35,17 @@ import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
+import hideCaret, { getHideCaretAnimationName } from '../util/getHideCaretAnimationName'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
-import unroot from '../util/unroot'
-import DropEnd from './DropEnd'
+import DropCliff from './DropCliff'
+import FadeTransition from './FadeTransition'
 import HoverArrow from './HoverArrow'
-import VirtualThought from './VirtualThought'
+import VirtualThought, { OnResize } from './VirtualThought'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
 type TreeThought = {
@@ -53,6 +58,7 @@ type TreeThought = {
   // index among all visible thoughts in the tree
   indexDescendant: number
   isCursor: boolean
+  isEmpty: boolean
   isInSortedContext: boolean
   isTableCol1: boolean
   isTableCol2: boolean
@@ -94,9 +100,9 @@ const SIZE_REMOVAL_DEBOUNCE = 1000
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
 const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 
-/** A computed store that tracks the bottom of the viewport. */
+/** A computed store that tracks the bottom of the viewport. Used for list virtualization. Does not include overscroll, i.e. if the user scrolls past the top of the document viewportBottom will not change. */
 const viewportBottomStore = reactMinistore.compose(
-  (viewport, scrollTop) => scrollTop + viewport.innerHeight,
+  (viewport, scrollTop) => Math.max(scrollTop, 0) + viewport.innerHeight,
   [viewportStore, scrollTopStore],
 )
 
@@ -109,6 +115,7 @@ const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
 const useSizeTracking = () => {
   // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
   const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
+  const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
 
   // Track debounced height removals
@@ -136,7 +143,6 @@ const useSizeTracking = () => {
     ({
       height,
       width,
-      id,
       isVisible,
       key,
     }: {
@@ -147,17 +153,24 @@ const useSizeTracking = () => {
       key: string
     }) => {
       if (height !== null) {
+        // To create the correct selection behavior, thoughts must be clipped on the top and bottom. Otherwise the top and bottom 1px cause the caret to move to the beginning or end of the editable. But clipPath creates a gap between thoughts. To eliminate this gap, thoughts are rendered with a slight overlap by subtracting a small amount from each thought's measured height, thus affecting their y positions as they are rendered.
+        // See: clipPath in recipes/editable.ts
+        const lineHeightOverlap = fontSize / 8
+        const heightClipped = height - lineHeightOverlap
+
         // cancel thought removal timeout
         clearTimeout(sizeRemovalTimeouts.current.get(key))
         sizeRemovalTimeouts.current.delete(key)
 
         setSizes(sizesOld =>
-          height === sizesOld[key]?.height && width === sizesOld[key]?.width && isVisible === sizesOld[key]?.isVisible
+          heightClipped === sizesOld[key]?.height &&
+          width === sizesOld[key]?.width &&
+          isVisible === sizesOld[key]?.isVisible
             ? sizesOld
             : {
                 ...sizesOld,
                 [key]: {
-                  height,
+                  height: heightClipped,
                   width: width || undefined,
                   isVisible,
                 },
@@ -167,7 +180,7 @@ const useSizeTracking = () => {
         removeSize(key)
       }
     },
-    [removeSize],
+    [fontSize, removeSize],
   )
 
   useEffect(() => {
@@ -260,7 +273,9 @@ const linearizeTree = (
   const contextViewActive = isContextViewActive(state, path)
   const contextChainNew = contextViewActive ? [...(contextChain || []), simplePath] : contextChain
   const children = contextViewActive
-    ? getContextsSortedAndRanked(state, thought.value)
+    ? thought
+      ? getContextsSortedAndRanked(state, thought.value)
+      : []
     : // context children should render the children of a specific Lexeme instance to avoid repeating the Lexeme.
       // See: contextId (above)
       getChildrenRanked(state, contextId || thoughtId)
@@ -280,7 +295,7 @@ const linearizeTree = (
     // e.g. a/m~/b should render the children of b/m, not a/m
     const child = contextViewActive ? getThoughtById(state, filteredChild.parentId) : filteredChild
     // Context thought may still be pending
-    if (!child) return []
+    if (!child) return accum
     const childPath = appendToPathMemo(path, child.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
@@ -291,10 +306,11 @@ const linearizeTree = (
     // As soon as the cursor is found, set belowCursor to true. It will be propagated to every subsequent thought.
     // See: TreeThought.belowCursor
     const isCursor = !belowCursor && equalPath(childPath, state.cursor)
-    if (isCursor) {
+    if (isCursor || !state.cursor) {
       belowCursor = true
     }
 
+    const isEmpty = child.value === ''
     const isTable = attributeEquals(state, child.id, '=view', 'Table')
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
     const isInSortedContext = attributeEquals(state, head(simplePath), '=sort', 'Alphabetical')
@@ -309,6 +325,7 @@ const linearizeTree = (
       indexChild: i,
       indexDescendant: virtualIndexNew,
       isCursor,
+      isEmpty,
       isInSortedContext,
       isTableCol1,
       isTableCol2,
@@ -361,6 +378,184 @@ const linearizeTree = (
   return thoughts
 }
 
+/** Renders a thought component for mapped treeThoughtsPositioned. */
+const TreeNode = ({
+  belowCursor,
+  cliff,
+  depth,
+  env,
+  height,
+  indexChild,
+  indexDescendant,
+  isCursor,
+  isEmpty,
+  isTableCol1,
+  isTableCol2,
+  thoughtKey,
+  leaf,
+  path,
+  prevChild,
+  showContexts,
+  isLastVisible,
+  simplePath,
+  singleLineHeightWithCliff,
+  style,
+  thoughtId,
+  width,
+  autofocus,
+  x,
+  y: _y,
+  index,
+  viewportBottom,
+  treeThoughtsPositioned,
+  bulletWidth,
+  cursorUncleId,
+  setSize,
+  cliffPaddingStyle,
+  dragInProgress,
+  autofocusDepth,
+  ...transitionGroupsProps
+}: TreeThoughtPositioned & {
+  thoughtKey: string
+  index: number
+  viewportBottom: number
+  treeThoughtsPositioned: TreeThoughtPositioned[]
+  bulletWidth: number
+  cursorUncleId: string | null
+  setSize: OnResize
+  cliffPaddingStyle: { paddingBottom: number }
+  dragInProgress: boolean
+  autofocusDepth: number
+} & Pick<CSSTransitionProps, 'in'>) => {
+  const [y, setY] = useState(_y)
+  const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const isLastActionNewThought = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'newThought')
+  })
+
+  // true if the last action is any of archive/delete/collapse
+  const isLastActionDelete = useSelector(state => {
+    const deleteActions: ActionType[] = [
+      'archiveThought',
+      'collapseContext',
+      'deleteThought',
+      'deleteThoughtWithCursor',
+    ]
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
+  })
+
+  useLayoutEffect(() => {
+    if (y !== _y) {
+      // When y changes React re-renders the component with the new value of y. It will result in a visual change in the DOM.
+      // Because this is a state-driven change, React applies the updated value to the DOM, which causes the browser to recognize that
+      // a CSS property has changed, thereby triggering the CSS transition.
+      // Without this additional render, updates get batched and subsequent CSS transitions may not work properly. For example, when moving a thought down, it would not animate.
+      setY(_y)
+    }
+  }, [y, _y])
+
+  // List Virtualization
+  // Do not render thoughts that are below the viewport.
+  // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
+  // Render virtualized thoughts with their estimated height so that document height is relatively stable.
+  // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
+  if (belowCursor && !isCursor && y > viewportBottom + height) return null
+
+  const nextThought = isTableCol1 ? treeThoughtsPositioned[index + 1] : null
+  const previousThought = isTableCol1 ? treeThoughtsPositioned[index - 1] : null
+
+  // Adjust col1 width to remove dead zones between col1 and col2, increase the width by the difference between col1 and col2 minus bullet width
+  const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
+  // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
+  const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
+
+  // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
+  const transition = isLastActionNewThought
+    ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
+    : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
+
+  return (
+    <div
+      aria-label='tree-node'
+      // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
+      // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
+      className={css({
+        position: 'absolute',
+        transition,
+      })}
+      style={{
+        // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
+        // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
+        left: x,
+        top: y,
+        // Table col1 uses its exact width since cannot extend to the right edge of the screen.
+        // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
+        // 1em + 10px is an eyeball measurement at font sizes 14 and 18
+        // (Maybe the 10px is from .content padding-left?)
+        width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
+        ...style,
+        textAlign: isTableCol1 ? 'right' : undefined,
+      }}
+    >
+      <FadeTransition
+        id={thoughtKey}
+        // The FadeTransition is only responsible for fade out on unmount;
+        // or for fade in on mounting of a new thought.
+        // See autofocusChanged for normal opacity transition.
+        // Limit the fade/shrink/blur animation to the archive, delete, and collapseContext actions.
+        duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
+        nodeRef={fadeThoughtRef}
+        in={transitionGroupsProps.in}
+        unmountOnExit
+      >
+        <div ref={fadeThoughtRef}>
+          <VirtualThought
+            debugIndex={testFlags.simulateDrop ? indexChild : undefined}
+            depth={depth}
+            dropUncle={thoughtId === cursorUncleId}
+            env={env}
+            indexDescendant={indexDescendant}
+            // isMultiColumnTable={isMultiColumnTable}
+            isMultiColumnTable={false}
+            leaf={leaf}
+            onResize={setSize}
+            path={path}
+            prevChildId={prevChild?.id}
+            showContexts={showContexts}
+            simplePath={simplePath}
+            singleLineHeight={singleLineHeightWithCliff}
+            // Add a bit of space after a cliff to give nested lists some breathing room.
+            // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+            // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
+            style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
+            crossContextualKey={thoughtKey}
+            prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
+            isLastVisible={isLastVisible}
+            autofocus={autofocus}
+            marginRight={isTableCol1 ? marginRight : 0}
+          />
+        </div>
+      </FadeTransition>
+
+      {dragInProgress &&
+        // do not render hidden cliffs
+        // rough autofocus estimate
+        autofocusDepth - depth < 2 && (
+          <DropCliff
+            cliff={cliff}
+            depth={depth}
+            path={path}
+            isTableCol2={isTableCol2}
+            isLastVisible={isLastVisible}
+            prevWidth={treeThoughtsPositioned[index - 1]?.width}
+          />
+        )}
+    </div>
+  )
+}
+
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const { sizes, setSize } = useSizeTracking()
@@ -374,7 +569,9 @@ const LayoutTree = () => {
         state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
       : 0,
   )
-  const scrollTop = scrollTopStore.useState()
+
+  /** The value of scrollTop. Only enabled when there is a drag in progress for performance reasons. */
+  const scrollTopIfDragging = scrollTopStore.useSelector(scrollTop => (dragInProgress ? scrollTop : null))
 
   // Width of thought bullet
   const [bulletWidth, setBulletWidth] = useState(0)
@@ -627,7 +824,7 @@ const LayoutTree = () => {
         (node.autofocus === 'dim' || node.autofocus === 'show') &&
         !(next?.autofocus === 'dim' || next?.autofocus === 'show')
 
-      if (node.isInSortedContext) {
+      if (scrollTopIfDragging !== null && node.isInSortedContext) {
         // Get first and last thought ranks in sorted context
         if (!firstThoughtRank) {
           firstThoughtRank = node.rank
@@ -635,7 +832,7 @@ const LayoutTree = () => {
         lastThoughtRank = node.rank
 
         // Check if the current thought is visible
-        if (y < maxVisibleY && y > scrollTop - toolbarHeight) {
+        if (y < maxVisibleY && y > scrollTopIfDragging - toolbarHeight) {
           // Get first and last visible thought ranks in sorted context
           if (!firstVisibleThoughtRank) {
             firstVisibleThoughtRank = node.rank
@@ -673,7 +870,7 @@ const LayoutTree = () => {
     isHoveringSorted,
     maxVisibleY,
     newRank,
-    scrollTop,
+    scrollTopIfDragging,
     singleLineHeight,
     sizes,
     toolbarHeight,
@@ -681,7 +878,11 @@ const LayoutTree = () => {
   ])
 
   const spaceAboveLast = useRef(spaceAboveExtended)
-
+  // When the cursor is in a table, all thoughts beneath the table are hidden,
+  // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
+  const tableDepth = useSelector(state =>
+    state.cursor && attributeEquals(state, head(rootedGrandparentOf(state, state.cursor)), '=view', 'Table') ? 1 : 0,
+  )
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
@@ -706,23 +907,28 @@ const LayoutTree = () => {
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
-  // Calculate the position of the arrow relative to the bottom of the container.
-  const arrowBottom = totalHeight + spaceBelow - scrollTop - viewportHeight + navAndFooterHeight
-
   return (
     <div
-      className={css({
-        marginTop: '0.501em',
-      })}
+      // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
+      className={cx(
+        css({ marginTop: '0.501em' }),
+        hideCaret({
+          animation: getHideCaretAnimationName(indentDepth + tableDepth),
+        }),
+      )}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
         transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
       }}
       ref={ref}
     >
-      <HoverArrow bottom={arrowBottom} hoverArrowVisibility={hoverArrowVisibility} top={scrollTop} />
+      <HoverArrow
+        // Calculate the position of the arrow relative to the bottom of the container.
+        bottom={totalHeight + spaceBelow - viewportHeight + navAndFooterHeight}
+        hoverArrowVisibility={hoverArrowVisibility}
+      />
       <div
-        className={css({ transition: `transform {durations.layoutSlowShiftDuration} ease-out` })}
+        className={css({ transition: `transform {durations.layoutSlowShift} ease-out` })}
         style={{
           // Set a container height that fits all thoughts.
           // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
@@ -734,149 +940,28 @@ const LayoutTree = () => {
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
       >
-        {treeThoughtsPositioned.map(
-          (
-            {
-              belowCursor,
-              cliff,
-              depth,
-              env,
-              height,
-              indexChild,
-              indexDescendant,
-              isCursor,
-              isTableCol1,
-              isTableCol2,
-              key,
-              leaf,
-              path,
-              prevChild,
-              showContexts,
-              isLastVisible,
-              simplePath,
-              singleLineHeightWithCliff,
-              style,
-              thoughtId,
-              width,
-              autofocus,
-              x,
-              y,
-            },
-            index,
-          ) => {
-            // List Virtualization
-            // Do not render thoughts that are below the viewport.
-            // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
-            // Render virtualized thoughts with their estimated height so that document height is relatively stable.
-            // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
-            if (belowCursor && !isCursor && y > viewportBottom + height) return null
-
-            const nextThought = isTableCol1 ? treeThoughtsPositioned[index + 1] : null
-            const previousThought = isTableCol1 ? treeThoughtsPositioned[index - 1] : null
-
-            // Adjust col1 width to remove dead zones between col1 and col2, increase the width by the difference between col1 and col2 minus bullet width
-            const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
-            // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
-            const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
-
-            return (
-              <div
-                aria-label='tree-node'
-                // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
-                // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
-                key={key}
-                className={css({
-                  position: 'absolute',
-                  transition: `left {durations.layoutNodeAnimationDuration} ease-out,top {durations.layoutNodeAnimationDuration} ease-out`,
-                })}
-                style={{
-                  // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
-                  // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
-                  left: x,
-                  top: y,
-                  // Table col1 uses its exact width since cannot extend to the right edge of the screen.
-                  // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
-                  // 1em + 10px is an eyeball measurement at font sizes 14 and 18
-                  // (Maybe the 10px is from .content padding-left?)
-                  width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
-                  ...style,
-                  textAlign: isTableCol1 ? 'right' : undefined,
-                }}
-              >
-                <VirtualThought
-                  debugIndex={testFlags.simulateDrop ? indexChild : undefined}
-                  depth={depth}
-                  dropUncle={thoughtId === cursorUncleId}
-                  env={env}
-                  indexDescendant={indexDescendant}
-                  // isMultiColumnTable={isMultiColumnTable}
-                  isMultiColumnTable={false}
-                  leaf={leaf}
-                  onResize={setSize}
-                  path={path}
-                  prevChildId={prevChild?.id}
-                  showContexts={showContexts}
-                  simplePath={simplePath}
-                  singleLineHeight={singleLineHeightWithCliff}
-                  // Add a bit of space after a cliff to give nested lists some breathing room.
-                  // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-                  // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
-                  style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
-                  crossContextualKey={key}
-                  prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
-                  isLastVisible={isLastVisible}
-                  autofocus={autofocus}
-                  marginRight={isTableCol1 ? marginRight : 0}
-                />
-
-                {/* DropEnd (cliff) */}
-                {dragInProgress &&
-                  cliff < 0 &&
-                  // do not render hidden cliffs
-                  // rough autofocus estimate
-                  autofocusDepth - depth < 2 &&
-                  Array(-cliff)
-                    .fill(0)
-                    .map((x, i) => {
-                      const pathEnd = -(cliff + i) < path.length ? (path.slice(0, cliff + i) as Path) : HOME_PATH
-                      const cliffDepth = unroot(pathEnd).length
-
-                      // After table col2, shift the DropEnd left by the width of col1.
-                      // This correctly positions the drop target for dropping after the table view.
-                      // Otherwise it would be too far to the right.
-                      const dropEndMarginLeft =
-                        isTableCol2 && cliffDepth - depth < 0 ? treeThoughtsPositioned[index - 1].width || 0 : 0
-
-                      return (
-                        <div
-                          key={'DropEnd-' + head(pathEnd)}
-                          className={css({
-                            position: 'relative',
-                            top: '-0.2em',
-                            transition: `left {durations.fastDuration} ease-out`,
-                            zIndex: 'subthoughtsDropEnd',
-                          })}
-                          style={{
-                            left: `calc(${cliffDepth - depth}em - ${dropEndMarginLeft}px + ${isTouch ? -1 : 1}px)`,
-                          }}
-                        >
-                          <DropEnd
-                            depth={pathEnd.length}
-                            path={pathEnd}
-                            cliff={cliff}
-                            isLastVisible={isLastVisible}
-                            // Extend the click area of the drop target when there is nothing below.
-                            // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
-                            // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
-                            // last={!nextChildId}
-                          />
-                        </div>
-                      )
-                    })}
-              </div>
-            )
-          },
-        )}
+        <TransitionGroup>
+          {treeThoughtsPositioned.map((thought, index) => (
+            <TreeNode
+              {...thought}
+              index={index}
+              // Pass unique key for the component
+              key={thought.key}
+              // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
+              thoughtKey={thought.key}
+              {...{
+                viewportBottom,
+                treeThoughtsPositioned,
+                bulletWidth,
+                cursorUncleId,
+                setSize,
+                cliffPaddingStyle,
+                dragInProgress,
+                autofocusDepth,
+              }}
+            />
+          ))}
+        </TransitionGroup>
       </div>
     </div>
   )

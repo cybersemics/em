@@ -1,28 +1,27 @@
 import { useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
-import IconType from '../../@types/Icon'
-import durations from '../../util/durations'
+import { token } from '../../../styled-system/tokens'
+import IconType from '../../@types/IconType'
 import ColorPicker from '../ColorPicker'
+import FadeTransition from '../FadeTransition'
 import TextColorIcon from './TextColor'
 
-/** Text Color Icon Component with popup ColorPicker. */
-const Icon = ({ size = 20, style, cssRaw }: IconType) => {
+/** Text Color Icon with popup ColorPicker. */
+const TextColorWithColorPicker = ({ size = 18, style, cssRaw }: IconType) => {
   const showColorPicker = useSelector(state => state.showColorPicker)
   const toolbarPopupRef = useRef<HTMLDivElement>(null)
 
   return (
     <div>
-      <TextColorIcon size={size} style={style} cssRaw={cssRaw} />
-      <CSSTransition
-        nodeRef={toolbarPopupRef}
-        in={showColorPicker}
-        timeout={durations.get('mediumDuration')}
-        classNames='fade'
-        exit={false}
-        unmountOnExit
-      >
+      <TextColorIcon
+        size={size}
+        style={style}
+        cssRaw={cssRaw}
+        animated={showColorPicker}
+        fill={style?.fill || token('colors.fg')}
+      />
+      <FadeTransition duration='fast' nodeRef={toolbarPopupRef} in={showColorPicker} exit={false} unmountOnExit>
         <div
           ref={toolbarPopupRef}
           className={css({
@@ -42,9 +41,9 @@ const Icon = ({ size = 20, style, cssRaw }: IconType) => {
         >
           <ColorPicker fontSize={size} cssRaw={css.raw({ transform: `translate(-50%)` })} />
         </div>
-      </CSSTransition>
+      </FadeTransition>
     </div>
   )
 }
 
-export default Icon
+export default TextColorWithColorPicker

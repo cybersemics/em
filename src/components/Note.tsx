@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { textNote } from '../../styled-system/recipes'
+import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
@@ -11,30 +11,13 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
-import { isTouch } from '../browser'
-import asyncFocus from '../device/asyncFocus'
+import { isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
-import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import strip from '../util/strip'
-
-/** Sets the cursor on the note's thought as it is being edited. */
-const setCursorOnLiveThought = ({ path }: { path: Path }) => {
-  const state = store.getState()
-  const simplePath = simplifyPath(state, path) || path
-
-  store.dispatch(
-    setCursor({
-      path: simplePath,
-      cursorHistoryClear: true,
-      editing: true,
-      noteFocus: true,
-    }),
-  )
-}
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = React.memo(({ path }: { path: Path }) => {
@@ -50,6 +33,9 @@ const Note = React.memo(({ path }: { path: Path }) => {
     // cursor must be true if note is focused
     if (hasFocus) {
       selection.set(noteRef.current!, { end: true })
+      // deleting a note, then closing the keyboard, then creating a new note could result in lack of focus,
+      // perhaps related to iOS Safari's internal management of selection ranges and focus
+      if (isTouch && isSafari()) noteRef.current?.focus()
     }
   }, [hasFocus])
 
@@ -70,12 +56,11 @@ const Note = React.memo(({ path }: { path: Path }) => {
       dispatch(toggleNote())
     }
     // delete empty note
-    // (delete non-empty note is handled by delete shortcut, which allows mobile gesture to work)
+    // (delete non-empty note is handled by delete command, which allows mobile gesture to work)
     // note may be '' or null if the attribute child was deleted
     else if (e.key === 'Backspace' && !note) {
       e.stopPropagation() // prevent delete thought
       e.preventDefault()
-      asyncFocus()
       dispatch(deleteAttribute({ path, value: '=note' }))
       dispatch(setNoteFocus({ value: false }))
     } else if (e.key === 'ArrowDown') {
@@ -110,11 +95,23 @@ const Note = React.memo(({ path }: { path: Path }) => {
     }
   }
 
+  /** Enables noteFocus and sets the cursor on the thought. */
+  const onFocus = () => {
+    dispatch(
+      setCursor({
+        path,
+        cursorHistoryClear: true,
+        editing: true,
+        noteFocus: true,
+      }),
+    )
+  }
+
   return (
     <div
       aria-label='note'
       className={cx(
-        textNote(),
+        textNoteRecipe(),
         css({
           fontSize: 'sm',
           lineHeight: 1.25,
@@ -142,6 +139,10 @@ const Note = React.memo(({ path }: { path: Path }) => {
         innerRef={noteRef}
         aria-label='note-editable'
         placeholder='Enter a note'
+        className={css({
+          display: 'inline-block',
+          padding: '0 1em 0 0.333em',
+        })}
         onKeyDown={onKeyDown}
         onChange={onChange}
         onPaste={() => {
@@ -150,7 +151,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
           setJustPasted(true)
         }}
         onBlur={onBlur}
-        onFocus={() => setCursorOnLiveThought({ path })}
+        onFocus={onFocus}
       />
     </div>
   )

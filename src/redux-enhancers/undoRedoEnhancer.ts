@@ -2,12 +2,13 @@ import { Operation, applyPatch, compare } from 'fast-json-patch'
 import { produce } from 'immer'
 import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
+import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import * as reducers from '../actions'
+import editableRender from '../actions/editableRender'
 import updateThoughts from '../actions/updateThoughts'
 import getThoughtById from '../selectors/getThoughtById'
 import headValue from '../util/headValue'
@@ -15,7 +16,7 @@ import reducerFlow from '../util/reducerFlow'
 
 // a map of action types to boolean
 type ActionFlags = {
-  [key in keyof typeof reducers]: boolean
+  [key in ActionType]: boolean
 }
 
 // Actions representing any cursor movements.
@@ -40,7 +41,7 @@ export const isNavigation = (actionType: string) => NAVIGATION_ACTIONS[actionTyp
 // assumes that reducer names match their action types
 const UNDOABLE_ACTIONS: ActionFlags = {
   addAllMulticursor: false,
-  addLatestShortcuts: false,
+  addLatestCommands: false,
   addMulticursor: false,
   alert: false,
   archiveThought: true,
@@ -49,7 +50,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   bumpThoughtDown: true,
   clear: false,
   clearExpandDown: false,
-  clearLatestShortcuts: false,
+  clearLatestCommands: false,
   clearMulticursors: false,
   closeModal: false,
   collapseContext: true,
@@ -69,8 +70,8 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   dismissTip: false,
   dragHold: false,
   dragInProgress: false,
-  dragShortcut: false,
-  dragShortcutZone: false,
+  dragCommand: false,
+  dragCommandZone: false,
   editableRender: false,
   editing: false,
   editThought: true,
@@ -129,7 +130,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   toggleHiddenThoughts: true,
   toggleMulticursor: false,
   toggleNote: true,
-  toggleShortcutsDiagram: false,
+  toggleCommandsDiagram: false,
   toggleSidebar: false,
   toggleSort: true,
   toggleSplitView: false,
@@ -271,6 +272,7 @@ const undoReducer = (state: State, undoPatches: Patch[]) => {
     undoOneReducer,
     undoTwice ? undoOneReducer : null,
     newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
+    editableRender,
   ])(state)
 }
 
@@ -290,6 +292,7 @@ const redoReducer = (state: State, redoPatches: Patch[]) => {
     redoTwice ? redoOneReducer : null,
     redoOneReducer,
     newState => restorePushQueueFromPatches(newState, state, poppedPatches.flat()),
+    editableRender,
   ])(state)
 }
 

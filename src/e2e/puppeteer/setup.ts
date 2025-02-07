@@ -1,9 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
 import { Browser, ConsoleMessage, Device, Page } from 'puppeteer'
-import sleep from '../../util/sleep'
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
+// eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
 declare module global {
   const browser: Browser
 }
@@ -76,9 +75,6 @@ const setup = async ({
     // wait for welcome modal to disappear
     await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
   }
-
-  // add 500ms for hamburger-menu animation to complete
-  await sleep(500)
 }
 
 beforeEach(setup, 60000)

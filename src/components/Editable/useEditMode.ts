@@ -6,6 +6,8 @@ import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
 import preventAutoscroll from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
+import usePrevious from '../../hooks/usePrevious'
+import hasMulticursor from '../../selectors/hasMulticursor'
 import equalPath from '../../util/equalPath'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
@@ -27,6 +29,7 @@ const useEditMode = ({
   // must re-render when noteFocus changes in order to set the selection
   const hasNoteFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
   const editing = useSelector(state => state.editing)
+  const isMulticursor = useSelector(hasMulticursor)
   const dispatch = useDispatch()
   const noteFocus = useSelector(state => state.noteFocus)
   const editingCursorOffset = useSelector(state => isEditing && state.cursorOffset)
@@ -34,6 +37,8 @@ const useEditMode = ({
   const dragInProgress = useSelector(state => state.dragInProgress)
   const disabledRef = useRef(false)
   const editableNonce = useSelector(state => state.editableNonce)
+  const showSidebar = useSelector(state => state.showSidebar)
+  const hadSidebar = usePrevious(showSidebar)
 
   // focus on the ContentEditable element if editing os on desktop
   const editMode = !isTouch || editing
@@ -48,6 +53,7 @@ const useEditMode = ({
           selection.clear()
         } else {
           selection.set(contentRef.current, { offset: editingCursorOffset || 0 })
+          if (isTouch && isSafari()) contentRef.current?.focus()
         }
       }
 
@@ -62,6 +68,7 @@ const useEditMode = ({
           !noteFocus &&
           contentRef.current &&
           cursorWithoutSelection &&
+          !isMulticursor &&
           !dragHold &&
           !disabledRef.current)
 
@@ -135,6 +142,15 @@ const useEditMode = ({
       disabledRef.current = false
     })
   }, [])
+
+  // Resume focus if sidebar was just closed and isEditing is true.
+  // Disable focus restoration on mobile until the hamburger menu & sidebar backdrop can be made to
+  // produce consistent results when clicked to close the sidebar.
+  useEffect(() => {
+    if (!isTouch && isEditing && !showSidebar && hadSidebar) {
+      contentRef.current?.focus()
+    }
+  }, [contentRef, hadSidebar, isEditing, showSidebar])
 
   return allowDefaultSelection
 }

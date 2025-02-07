@@ -16,9 +16,10 @@ const getContextMap = (state: State, lexemes: (Lexeme | undefined)[]) =>
       ...acc,
       ...lexeme.contexts.reduce<Index<Context>>((accInner, thoughtId) => {
         const thought = getThoughtById(state, thoughtId)
+        if (!thought) return accInner
         return {
           ...accInner,
-          [thought.parentId]: unroot(thoughtToContext(state, thought.parentId)!),
+          [thought.parentId]: unroot(thoughtToContext(state, thought.parentId)),
         }
       }, {}),
     }),

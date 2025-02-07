@@ -23,6 +23,7 @@ const useHideBullet = ({
   hideBulletProp,
   isEditing,
   simplePath,
+  isInContextView,
   thoughtId,
 }: {
   children: Thought[]
@@ -30,21 +31,27 @@ const useHideBullet = ({
   hideBulletProp: boolean | undefined
   isEditing: boolean
   simplePath: SimplePath
+  isInContextView: boolean
   thoughtId: ThoughtId
 }) => {
   const hideBullet = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     // bullet may be set from =children or =grandchildren and passed as a prop
     if (hideBulletProp) return true
+    if (!thought) return false
 
     /** Returns true if the bullet should be hidden. */
     const hideBullet = () =>
       thought.value !== '=grandchildren' && attributeEquals(state, head(simplePath), '=bullet', 'None')
 
     /** Returns true if the bullet should be hidden because it is in table column 1 and is not the cursor. */
-    const hideBulletTable = () =>
-      !equalPath(simplePath, state.cursor) &&
-      attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
+    const hideBulletTable = () => {
+      return (
+        !isInContextView &&
+        !equalPath(simplePath, state.cursor) &&
+        attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
+      )
+    }
 
     /** Returns true if the bullet should be hidden if zoomed. */
     const hideBulletZoom = (): boolean => {

@@ -3,7 +3,7 @@ import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
-import { editable, invalidOption, multiline as multilineRecipe } from '../../styled-system/recipes'
+import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
@@ -18,7 +18,8 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isIOS, isMac, isSafari, isTouch } from '../browser'
+import { isMac, isTouch } from '../browser'
+import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -40,9 +41,9 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
-import { shortcutEmitter } from '../shortcuts'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
+import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
@@ -53,21 +54,12 @@ import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
+import trimHtml from '../util/trimHtml'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
-import * as positionFixed from './Editable/positionFixed'
 import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
 import useOnCut from './Editable/useOnCut'
 import useOnPaste from './Editable/useOnPaste'
-
-/** Stops propagation of an event, if CMD/CTRL is not pressed. */
-const stopPropagation = (e: React.MouseEvent) => {
-  const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-
-  if (!isMultiselectClick) {
-    e.stopPropagation()
-  }
-}
 
 interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement>
@@ -167,7 +159,7 @@ const Editable = ({
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
-    contentRef.current && contentRef.current.classList[value ? 'add' : 'remove'](invalidOption())
+    contentRef.current && contentRef.current.classList[value ? 'add' : 'remove'](invalidOptionRecipe())
 
   // side effect to set old value ref to head value from updated simplePath. Also update editing value, if it is different from current value.
   useEffect(
@@ -280,7 +272,8 @@ const Editable = ({
           newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
         ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
           Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()))
+          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
+      newValue.length > 0
     ) {
       dispatch(tutorialNext({}))
     }
@@ -296,13 +289,13 @@ const Editable = ({
   useEffect(() => {
     /** Flushes pending edits. */
     const flush = () => throttledChangeRef.current.flush()
-    shortcutEmitter.on('shortcut', flush)
+    commandEmitter.on('command', flush)
 
     // flush edits and remove handler on unmount
     return () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
       throttledChangeRef.current.flush()
-      shortcutEmitter.off('shortcut', flush)
+      commandEmitter.off('command', flush)
     }
   }, [])
 
@@ -328,6 +321,8 @@ const Editable = ({
       // Note: Joining every line does not work well for multiple paragraphs or bulleted lists with multiline items. It may be better to not split or join newlines at all, and make the user explicitly execute a join or split command. This gives them the ability to manually split on paragraphs and then use the join command on each. Indentation is not preserved in OCR, so it is not possible to completely automate multi paragraph restoration.
       const ocrDetected = oldValue === '' && /<div>(?!<br>)/.test(e.target.value)
 
+      editingValueUntrimmedStore.update(e.target.value)
+
       const newValue = stripEmptyFormattingTags(
         addEmojiSpace(
           ocrDetected
@@ -341,7 +336,7 @@ const Editable = ({
                 }),
               )
             : // Otherwise, we avoid unescaping the value to preserve escaped HTML characters.
-              e.target.value.trim(),
+              trimHtml(e.target.value),
         ),
       )
 
@@ -432,10 +427,6 @@ const Editable = ({
     e => {
       blurring = true
 
-      if (isTouch && isSafari() && !isIOS) {
-        positionFixed.stop()
-      }
-
       const { invalidState } = state
       throttledChangeRef.current.flush()
 
@@ -502,9 +493,8 @@ const Editable = ({
       // do not allow blur to setEditingValue when it is followed immediately by a focus
       blurring = false
 
-      if (isTouch && isSafari() && !isIOS) {
-        positionFixed.start()
-      }
+      // Update editingValueUntrimmedStore with the current value
+      editingValueUntrimmedStore.update(value)
 
       const { dragHold, dragInProgress } = store.getState()
       if (!dragHold && !dragInProgress) {
@@ -550,11 +540,13 @@ const Editable = ({
       const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
       if (
+        // disable editing when multicursor is enabled
+        hasMulticursorSelector(state) ||
         disabled ||
+        // do not set cursor on hidden thought
         // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
         (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
       ) {
-        // do not set cursor on hidden thought
         e.preventDefault()
 
         if (!isVisible) {
@@ -596,13 +588,7 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
-      className={cx(
-        multiline ? multilineRecipe() : null,
-        editable({
-          preventAutoscroll: true,
-        }),
-        className,
-      )}
+      className={cx(multiline ? multilineRecipe() : null, editableRecipe(), className)}
       html={
         value === EM_TOKEN
           ? '<b>em</b>'
@@ -618,8 +604,7 @@ const Editable = ({
       }
       placeholder={placeholder}
       // stop propagation to prevent default content onClick (which removes the cursor)
-      onClick={stopPropagation}
-      onTouchEnd={onTap}
+      onClick={onTap}
       // must call onMouseDown on mobile since onTap cannot preventDefault
       // otherwise gestures and scrolling can trigger cursorBack (#1054)
       onMouseDown={onTap}
@@ -639,6 +624,9 @@ const Editable = ({
 
         onPaste(e)
       }}
+      // iOS Safari delays event handling in case the DOM is modified during setTimeout inside an event handler,
+      // unless it is given a hint that the element is some sort of form control
+      role='button'
       style={style}
     />
   )

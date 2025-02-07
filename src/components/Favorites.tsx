@@ -1,9 +1,8 @@
 import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import CSSTransition from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
-import { dropHover } from '../../styled-system/recipes'
+import { dropHoverRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
@@ -15,11 +14,11 @@ import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import thoughtToPath from '../selectors/thoughtToPath'
-import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import nonNull from '../util/nonNull'
 import Checkbox from './Checkbox'
+import SlideTransition from './SlideTransition'
 import ThoughtLink from './ThoughtLink'
 import FavoritesIcon from './icons/FavoritesIcon'
 
@@ -49,7 +48,7 @@ const DragAndDropFavorite = ({
       {!disableDragAndDrop && isHovering && (
         <span
           className={cx(
-            dropHover(),
+            dropHoverRecipe(),
             css({
               backgroundColor: 'highlight',
               marginLeft: 0,
@@ -86,12 +85,12 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
     <div className={css({ height: '4em' })} ref={dropTarget}>
       <span
         className={cx(
-          dropHover(),
+          dropHoverRecipe(),
           css({
             marginLeft: 0,
             marginTop: 0,
             width: 'calc(100% - 4em)',
-            background: isHovering ? 'rgba(155, 170, 220, 1)' : undefined,
+            background: isHovering ? 'highlight2' : undefined,
           }),
         )}
       />
@@ -118,7 +117,7 @@ const FavoritesOptions = ({
         <span
           {...fastClick(() => setShowOptions(!showOptions))}
           className={css({
-            color: '#444',
+            color: 'modalExportUnused',
             cursor: 'pointer',
             fontSize: '0.7em',
             fontWeight: 'bold',
@@ -129,7 +128,7 @@ const FavoritesOptions = ({
             className={css({
               display: 'inline-block',
               transform: showOptions ? `rotate(90deg)` : `rotate(0deg)`,
-              transition: `transform {durations.veryFastDuration} ease-out`,
+              transition: `transform {durations.veryFast} ease-out`,
               // avoid position:absolute to trivially achieve correct vertical alignment with text
               marginLeft: '-1em',
             })}
@@ -141,16 +140,10 @@ const FavoritesOptions = ({
       </div>
 
       <div className={css({ overflow: 'hidden' })}>
-        <CSSTransition
-          in={showOptions}
-          nodeRef={formRef}
-          timeout={durations.get('veryFastDuration')}
-          classNames='slidedown'
-          unmountOnExit
-        >
+        <SlideTransition duration='veryFast' in={showOptions} nodeRef={formRef} from='down' unmountOnExit>
           <form
             ref={formRef}
-            className={css({ fontSize: 'sm', backgroundColor: '#3e3e3e', borderRadius: '0.5em', padding: '1em' })}
+            className={css({ fontSize: 'sm', backgroundColor: 'checkboxForm', borderRadius: '0.5em', padding: '1em' })}
           >
             <Checkbox
               checked={!hideContexts}
@@ -160,7 +153,7 @@ const FavoritesOptions = ({
               }}
             />
           </form>
-        </CSSTransition>
+        </SlideTransition>
       </div>
     </div>
   )
@@ -190,7 +183,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
           <div>
             <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
             <div className={css({ marginTop: '1em' })}>
-              {simplePaths.map((simplePath, i) => (
+              {simplePaths.map(simplePath => (
                 <DragAndDropFavorite
                   key={head(simplePath)}
                   simplePath={simplePath}

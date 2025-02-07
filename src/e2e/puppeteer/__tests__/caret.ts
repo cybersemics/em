@@ -2,7 +2,6 @@ import { KnownDevices } from 'puppeteer'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
-import down from '../helpers/down'
 import emulate from '../helpers/emulate'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
@@ -11,6 +10,7 @@ import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 
@@ -159,14 +159,45 @@ describe('all platforms', () => {
     // await press('Enter')
     await press('End')
     await press('Tab')
-    await down('Shift')
-    await press('Tab')
+    await press('Tab', { shift: true })
 
     const nodeType = await getSelection().focusNode?.nodeType
     expect(nodeType).toBe(Node.ELEMENT_NODE)
     const offset = await getSelection().focusOffset
     expect(offset).toBe(1)
   })
+
+  it('clicking backspace when the caret is at the beginning of a thought should merge it with the previous thought.', async () => {
+    const importText = `
+    - first
+    - last`
+
+    await paste(importText)
+
+    const editableNodeHandle = await waitForEditable('last')
+
+    await click(editableNodeHandle, { edge: 'left' })
+    await press('Backspace')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('firstlast')
+  })
+})
+
+it('clicking backspace when the caret is at the end of a thought should delete a character.', async () => {
+  const importText = `
+  - first
+  - last`
+
+  await paste(importText)
+
+  const editableNodeHandle = await waitForEditable('last')
+
+  await click(editableNodeHandle, { edge: 'right' })
+  await press('Backspace')
+
+  const textContext = await getSelection().focusNode?.textContent
+  expect(textContext).toBe('las')
 })
 
 describe('mobile only', () => {
@@ -187,6 +218,7 @@ describe('mobile only', () => {
     // close keyboard
     await clickBullet('b')
 
+    await waitForSelector('[aria-label="Subcategorize"]')
     await click('[aria-label="Subcategorize"]')
 
     const textContext = await getSelection().focusNode?.textContent

@@ -8,6 +8,7 @@ import rootedParentOf from './rootedParentOf'
 /** Gets a new rank before the given thought in a list but after the previous thought. */
 const getThoughtBefore = (state: State, simplePath: SimplePath) => {
   const cursorThought = getThoughtById(state, head(simplePath))
+  if (!cursorThought) return null
   const { value, rank } = cursorThought
   const parentPath = rootedParentOf(state, simplePath)
   const children = getChildrenSorted(state, head(parentPath))

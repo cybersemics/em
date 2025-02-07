@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 
 /** Defines app-wide constants. */
-import ShortcutId from './@types/ShortcutId'
+import CommandId from './@types/CommandId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
 import { ColorToken } from './colors.config'
@@ -31,10 +31,10 @@ export const MODAL_NEWCHILD_DELAY = 1200
 export const DIVIDER_PLUS_PX = 30
 export const DIVIDER_MIN_WIDTH = 85
 
-export const LATEST_SHORTCUT_DIAGRAM_DURATION = 800
+export const LATEST_COMMAND_DIAGRAM_DURATION = 800
 
-// number of latest shorrcuts to show at a time
-export const LATEST_SHORTCUT_LIMIT = 3
+// number of latest commands to show at a time
+export const LATEST_COMMAND_LIMIT = 3
 
 // each tutorial step is defined as a constant for compile-time validation
 // all integers must existing between TUTORIAL_STEP_START and TUTORIAL_STEP_END
@@ -130,7 +130,7 @@ export const ABSOLUTE_PATH = [ABSOLUTE_TOKEN] as SimplePath
 export const ALLOW_SINGLE_CONTEXT = false
 
 /** A void function that does nothing (noop means "no operation"). */
-export const noop = () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+export const noop = () => {}
 
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200
@@ -152,9 +152,6 @@ export const MIN_LINE_HEIGHT = 26
 // the maximum number of characters of a thought to display before ellipsizing in links and tutorial
 export const THOUGHT_ELLIPSIZED_CHARS = 16
 
-// The text that is alerted when a gesture is made that does not correspond to a valid shortcut.
-export const GESTURE_CANCEL_ALERT_TEXT = '✗ Cancel gesture'
-
 // delay after gesture hint is activated before command palette appears
 export const COMMAND_PALETTE_TIMEOUT = 400
 
@@ -168,12 +165,11 @@ export const URL_MAX_CHARS = 40
 export const EXPAND_THOUGHT_CHAR = ':'
 export const MAX_EXPAND_DEPTH = 10
 
-// shortcut ids of default buttons that appear in the toolbar
+// command ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
-export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
-  // TODO: https://github.com/cybersemics/em/issues/1631
-  // 'undo',
-  // 'redo',
+export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
+  'undo',
+  'redo',
   'newThought',
   'newSubthought',
   'favorite',
@@ -443,7 +439,7 @@ export enum AlertType {
   DragAndDropHint = 'DragAndDropHint',
   // shown when dragging a toolbar button
   DragAndDropToolbarHint = 'DragAndDropToolbarHint',
-  // shown when dragging a toolbar button from the shortcut table
+  // shown when dragging a toolbar button from the command table
   DragAndDropToolbarAdd = 'DragAndDropToolbarAdd',
   // shown when a dragged thought is hovering over the ExportDrop component
   ExportDropHint = 'ExportDropHint',
@@ -508,11 +504,8 @@ export const FREE_THOUGHTS_THRESHOLD = 500
 /** Throttle rate for the freeThoughts middleware to check memory pressure and deallocate thoughts from the thoughtIndex. */
 export const FREE_THOUGHTS_THROTTLE = 1000
 
-/** Controls the delay when enabling distraction free typing. */
-export const THROTTLE_DISTRACTION_FREE_TYPING = 100
-
 /** The animation duration for a toolbar button press. */
 export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 
 export const GESTURE_GLOW_BLUR = 10
-export const GESTURE_GLOW_COLOR: ColorToken = 'gray'
+export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'

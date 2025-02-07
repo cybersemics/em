@@ -1,7 +1,7 @@
 import { css, cx } from '../../../styled-system/css'
-import { icon } from '../../../styled-system/recipes'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import IconType from '../../@types/Icon'
+import IconType from '../../@types/IconType'
 import { ICON_SCALING_FACTOR } from '../../constants'
 
 /** Upper-Case icon. */
@@ -11,7 +11,7 @@ const UpperCaseIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
 
   return (
     <svg
-      className={cx(icon(), css(cssRaw))} // Combine class names
+      className={cx(iconRecipe(), css(cssRaw))} // Combine class names
       xmlns='http://www.w3.org/2000/svg'
       viewBox='0 0 24 24' // Keep the original viewBox
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }} // Inline styles

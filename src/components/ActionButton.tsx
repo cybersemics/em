@@ -1,6 +1,6 @@
 import React from 'react'
-import { css } from '../../styled-system/css'
-import { AnchorButtonVariantProps, anchorButton } from '../../styled-system/recipes'
+import { css, cx } from '../../styled-system/css'
+import { AnchorButtonRecipeVariantProps, anchorButtonRecipe } from '../../styled-system/recipes'
 import fastClick from '../util/fastClick'
 import Loader from './Loader'
 
@@ -25,17 +25,20 @@ const ActionButton = ({
   isDisabled,
   onClick,
   ...restProps
-}: ActionButtonProps & AnchorButtonVariantProps & React.HTMLAttributes<HTMLAnchorElement>) => {
+}: ActionButtonProps & AnchorButtonRecipeVariantProps & React.HTMLAttributes<HTMLAnchorElement>) => {
   return (
     <a
-      className={anchorButton({
-        inActive,
-        small,
-        actionButton: true,
-        thin,
-        isDisabled,
-        inverse,
-      })}
+      className={cx(
+        anchorButtonRecipe({
+          inActive,
+          small,
+          actionButton: true,
+          thin,
+          isDisabled,
+          inverse,
+        }),
+        css({ lineHeight: 2, marginInline: 5, whiteSpace: 'nowrap', fontWeight: 'normal' }),
+      )}
       {...(onClick && !isDisabled ? fastClick(onClick) : null)}
       {...restProps}
     >

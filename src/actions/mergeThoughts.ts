@@ -44,6 +44,11 @@ const mergeThoughts = (
     return state
   }
 
+  if (!targetThought) {
+    console.warn(`Missing targetThought${head(targetThoughtPath)}. Aborting merge.`)
+    return state
+  }
+
   // fallback to the parent in sourceThoughtPath if sourceThought.parentId does not have a corresponding thought
   // in multi-step move and merge, outdated thoughts may be reconciled into state before merge is complete
   // if no parent thought can be found, warn and safely exit
@@ -72,6 +77,10 @@ const mergeThoughts = (
       console.info('  targetThoughtPath', targetThoughtPath)
       const sourceParentId = head(parentOf(sourceThoughtPath))
       const sourceParent = getThoughtById(state, sourceParentId)
+      if (!sourceParent) {
+        console.warn(`Missing sourceParent${sourceParentId}. Aborting merge.`)
+        return state
+      }
       const lexeme = getLexeme(state, sourceThought.value)
       const key = hashThought(sourceThought.value)
       return reducerFlow([
@@ -136,6 +145,11 @@ const mergeThoughts = (
   }
 
   const sourceParentThoughtUpdated = getThoughtById(newStateAfterMove, sourceParentThought.id)
+
+  if (!sourceParentThoughtUpdated) {
+    console.warn(`Missing sourceParentThoughtUpdated${sourceParentThought.id}. Aborting merge.`)
+    return state
+  }
 
   if (sourceParentThoughtUpdated.id !== HOME_TOKEN && !getThoughtById(state, sourceParentThoughtUpdated.parentId)) {
     console.warn(

@@ -79,6 +79,8 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
   if (!thought) {
     console.error(`achiveThought: Thought not found for id ${head(simplePath)}`)
+
+    return state
   }
   const thoughts = pathToContext(state, simplePath)
 
@@ -91,7 +93,8 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(state, path)
-    const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(state, thoughtsContextView)) : []
+    const value = headValue(state, thoughtsContextView)
+    const contexts = showContexts && value !== undefined ? getContextsSortedAndRanked(state, value) : []
     const contextsFiltered = contexts.filter(({ id }) => {
       const parentThought = parentOfThought(state, id)
       return parentThought?.value !== '=archive'
@@ -108,7 +111,8 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   /** Gets the next sibling context in the context view. */
   const nextContext = (): ThoughtContext => {
     const thoughtsContextView = thoughtsEditingFromChain(state, path)
-    const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(state, thoughtsContextView)) : []
+    const value = headValue(state, thoughtsContextView)
+    const contexts = showContexts && value !== undefined ? getContextsSortedAndRanked(state, value) : []
     const contextsFiltered = contexts.filter(({ id }) => {
       const parentThought = parentOfThought(state, id)
       return parentThought?.value !== '=archive'
@@ -171,7 +175,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           // alert
           alert({
             value: deleteThoughtAlertText(state, path, { archive: true }),
-            // provide an alertType so the delete shortcut can null the alert after a delay
+            // provide an alertType so the delete command can null the alert after a delay
             alertType: AlertType.ThoughtArchived,
             showCloseLink: true,
           }),

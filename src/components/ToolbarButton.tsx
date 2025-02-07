@@ -1,19 +1,21 @@
-import React, { FC, MutableRefObject, useCallback, useMemo } from 'react'
+import React, { FC, MutableRefObject, useCallback, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { toolbarPointerEvents } from '../../styled-system/recipes'
+import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
-import DragShortcutZone from '../@types/DragShortcutZone'
-import Icon from '../@types/Icon'
-import ShortcutId from '../@types/ShortcutId'
+import CommandId from '../@types/CommandId'
+import DragCommandZone from '../@types/DragCommandZone'
+import Icon from '../@types/IconType'
+import State from '../@types/State'
 import { isTouch } from '../browser'
+import { commandById, formatKeyboardShortcut } from '../commands'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
-import { executeShortcutWithMulticursor } from '../util/executeShortcut'
+import { executeCommandWithMulticursor } from '../util/executeCommand'
 import fastClick from '../util/fastClick'
+import getCursorSortDirection from '../util/getCursorSortDirection'
 
 export interface ToolbarButtonProps {
   // see ToolbarProps.customize
@@ -22,11 +24,12 @@ export interface ToolbarButtonProps {
   fontSize: number
   isPressing: boolean
   lastScrollLeft: MutableRefObject<number>
-  onTapDown?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
-  onTapUp?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
+  onTapDown?: (id: CommandId, e: React.MouseEvent | React.TouchEvent) => void
+  onTapUp?: (id: CommandId, e: React.MouseEvent | React.TouchEvent) => void
   onMouseLeave?: () => void
   selected?: boolean
-  shortcutId: ShortcutId
+  commandId: CommandId
+  animated?: boolean
 }
 
 /** A single button in the Toolbar. */
@@ -40,35 +43,41 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   onTapUp,
   onMouseLeave,
   selected,
-  shortcutId,
+  commandId,
 }) => {
-  const shortcut = shortcutById(shortcutId)
-  if (!shortcut) {
-    console.error('Missing shortcut: ' + shortcutId)
+  const [isAnimated, setIsAnimated] = useState(false)
+
+  const command = commandById(commandId)
+  if (!command) {
+    console.error('Missing command: ' + commandId)
   }
-  const { svg, isActive, canExecute } = shortcut
+  const { svg, isActive, canExecute } = command
 
   // Determine if the button should be shown in an active state. Precedence is as follows:
   // 1. If customize toolbar, use selected state.
   // 2. If a formatting command, use the command state (i.e. bold, italic, underline, strikethrough).
-  // 3. Otherwise, use the shortcut's isActive method.
+  // 3. Otherwise, use the command's isActive method.
   const commandState = commandStateStore.useSelector(
-    state => state[shortcutId as keyof typeof state] as boolean | undefined,
+    state => state[commandId as keyof typeof state] as boolean | undefined,
   )
-  const isShortcutActive = useSelector(state => !isActive || isActive(state))
-  const isButtonActive = customize ? selected : commandState !== undefined ? commandState : isShortcutActive
+  const isCommandActive = useSelector(state => !isActive || isActive(state))
+  const isButtonActive = customize ? selected : commandState !== undefined ? commandState : isCommandActive
 
-  const dragShortcutZone = useSelector(state => state.dragShortcutZone)
-  const isDraggingAny = useSelector(state => !!state.dragShortcut)
-  const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(state) : null))
+  const dragCommandZone = useSelector(state => state.dragCommandZone)
+  const isDraggingAny = useSelector(state => !!state.dragCommand)
+  const buttonError = useSelector(state => (!customize && command.error ? command.error(state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(state))
-  const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({ shortcutId, customize })
-  const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
+
+  const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({
+    commandId,
+    customize,
+  })
+  const dropToRemove = isDragging && dragCommandZone === DragCommandZone.Remove
   const longPress = useToolbarLongPress({
     disabled: !customize,
     isDragging,
-    shortcut,
-    sourceZone: DragShortcutZone.Toolbar,
+    command,
+    sourceZone: DragCommandZone.Toolbar,
   })
   const longPressTapUp = longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']
   const longPressTapDown = longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown']
@@ -77,15 +86,32 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
 
+  // Get the direction if the command is 'toggleSort'
+  const direction = useSelector((state: State) => {
+    if (commandId !== 'toggleSort') return null
+    return getCursorSortDirection(state)
+  })
+
   /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
   const tapUp = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
+      longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']?.(e)
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
+
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
-        executeShortcutWithMulticursor(shortcut, { store, type: 'toolbar', event: e })
+        executeCommandWithMulticursor(command, { store, type: 'toolbar', event: e })
+
+        // only animate from inactive -> active
+        // only animate toggleSort from Manual -> Asc or Asc to Desc
+        setIsAnimated(
+          commandId === 'toggleSort'
+            ? direction === null || direction === 'Asc'
+            : isActive
+              ? !isButtonActive
+              : !commandState,
+        )
 
         // prevent Editable blur
         if (isTouch) {
@@ -96,11 +122,24 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       lastScrollLeft.current = toolbarEl.scrollLeft
 
       if (!disabled) {
-        onTapUp?.(shortcutId, e)
+        onTapUp?.(commandId, e)
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapUp, customize, isButtonExecutable, disabled, isPressing, onTapUp],
+    [
+      longPressTapUp,
+      customize,
+      isButtonExecutable,
+      disabled,
+      isPressing,
+      onTapUp,
+      lastScrollLeft,
+      isActive,
+      commandState,
+      isButtonActive,
+      setIsAnimated,
+      isAnimated,
+    ],
   )
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
@@ -108,12 +147,12 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     (e: React.MouseEvent | React.TouchEvent) => {
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
-      longPressTapDown(e)
+      longPressTapDown?.(e)
 
       lastScrollLeft.current = toolbarEl.scrollLeft
 
       if (!disabled) {
-        onTapDown?.(shortcutId, e)
+        onTapDown?.(commandId, e)
       }
 
       if (!customize && !isTouch) {
@@ -121,7 +160,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapDown, customize, disabled],
+    [longPressTapDown, customize, disabled, isButtonActive, setIsAnimated, isActive],
   )
 
   /** Handles the tapCancel. */
@@ -135,7 +174,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           ? undefined
           : isButtonExecutable && isButtonActive
             ? token('colors.fg')
-            : 'gray', // keep fill in style because some icons need the exact color
+            : token('colors.gray50'), // keep fill in style because some icons need the exact color
       width: fontSize + 4,
       height: fontSize + 4,
     }),
@@ -144,17 +183,17 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   return (
     <div
       {...longPress.props}
-      aria-label={shortcut.label}
+      aria-label={command.label}
       data-testid='toolbar-icon'
       ref={node => dragSource(dropTarget(node))}
-      key={shortcutId}
-      title={`${shortcut.label}${(shortcut.keyboard ?? shortcut.overlay?.keyboard) ? ` (${formatKeyboardShortcut((shortcut.keyboard ?? shortcut.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
+      key={commandId}
+      title={`${command.label}${(command.keyboard ?? command.overlay?.keyboard) ? ` (${formatKeyboardShortcut((command.keyboard ?? command.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
       className={cx(
         // Override the Toolbar's pointer-events: none to restore pointer behavior.
-        toolbarPointerEvents({ override: true }),
+        toolbarPointerEventsRecipe({ override: true }),
         css({
           display: 'inline-block',
-          padding: '15px 8px 5px 8px',
+          padding: '14px 8px 5px 8px',
           borderRadius: '3px',
           zIndex: 'stack',
           // animate maxWidth to avoid having to know the exact width of the toolbar icon
@@ -177,7 +216,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition:
-            'transform {durations.veryFastDuration} ease-out, max-width {durations.veryFastDuration} ease-out, margin-left {durations.veryFastDuration} ease-out',
+            'transform {durations.veryFast} ease-out, max-width {durations.veryFast} ease-out, margin-left {durations.veryFast} ease-out',
           // extend drop area down, otherwise the drop hover is blocked by the user's finger
           // must match toolbar marginBottom
           paddingBottom: isDraggingAny ? '7em' : 0,
@@ -214,7 +253,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         (isHovering || dropToRemove) && (
           <div
             className={css({
-              borderRight: dropToRemove ? `dashed 1px {colors.gray}` : undefined,
+              borderRight: dropToRemove ? `dashed 1px {colors.gray66}` : undefined,
               position: 'absolute',
               left: dropToRemove ? 15 : -2,
               // match the height of the inverted button
@@ -232,9 +271,11 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           position: 'relative' as const,
           cursor: isButtonExecutable ? 'pointer' : 'default',
           opacity: dropToRemove ? 0 : 1,
-          transition: 'opacity {durations.fastDuration} ease-out',
+          transition: 'opacity {durations.fast} ease-out',
         })}
         style={style}
+        animated={isAnimated}
+        animationComplete={() => setIsAnimated(false)}
       />
     </div>
   )

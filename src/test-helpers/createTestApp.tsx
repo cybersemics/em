@@ -1,8 +1,7 @@
 import { render } from '@testing-library/react'
-import { createRef } from 'react'
+import { act, createRef } from 'react'
 import { DndProvider } from 'react-dnd'
 import { TestBackend } from 'react-dnd-test-backend'
-import { act } from 'react-dom/test-utils'
 import Await from '../@types/Await'
 import { clearActionCreator as clear } from '../actions/clear'
 import App from '../components/App'
@@ -14,10 +13,9 @@ import storage from '../util/storage'
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
 /** Set up testing and mock document and window functions. */
-const createTestApp = async () => {
+const createTestApp = async ({ tutorial }: { tutorial?: boolean } = {}) => {
   await act(async () => {
-    vi.useFakeTimers()
-
+    vi.useFakeTimers({ loopLimit: 100000 })
     // calls initEvents, which must be manually cleaned up
     const init = await initialize()
     cleanup = init.cleanup
@@ -34,14 +32,14 @@ const createTestApp = async () => {
     )
 
     store.dispatch([
-      // skip tutorial
-      { type: 'tutorial', value: false },
+      // there are cases where we want to show tutorial on test runs, whilst mostly we don't
+      { type: 'tutorial', value: !!tutorial },
 
       // close welcome modal
       { type: 'closeModal' },
     ])
 
-    vi.runOnlyPendingTimers()
+    await vi.runOnlyPendingTimersAsync()
 
     // make DND ref available for drag and drop tests.
     document.DND = dndRef.current
@@ -61,13 +59,13 @@ export const cleanupTestApp = async () => {
 
     store.dispatch(clear({ full: true }))
 
-    await db.clear()
-    document.body.innerHTML = ''
+    db.clear()
+    await vi.runAllTimersAsync()
 
     // set url back to home
     window.history.pushState({}, '', '/')
 
-    vi.runOnlyPendingTimers()
+    await vi.runAllTimersAsync()
   })
 }
 
@@ -76,6 +74,17 @@ export const refreshTestApp = async () => {
   await act(async () => {
     await store.dispatch(clear())
     await initialize()
+  })
+
+  await act(vi.runOnlyPendingTimersAsync)
+}
+
+/** Clear existing event listeners(e.g. keyboard, gestures), but without clearing the app. */
+export const cleanupTestEventHandlers = async () => {
+  await act(async () => {
+    if (cleanup) {
+      cleanup()
+    }
   })
 }
 

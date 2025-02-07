@@ -13,19 +13,21 @@ import getSelection from './getSelection'
 import hideKeyboardByTappingDone from './hideKeyboardByTappingDone'
 import initSession from './initSession'
 import isKeyboardShown from './isKeyboardShown'
+import keyboard from './keyboard'
 import newThought from './newThought'
 import paste from './paste'
 import tap from './tap'
 import tapReturnKey from './tapReturnKey'
-import type from './type'
 import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
 import waitUntil from './waitUntil'
 
+// Only used as a type.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function pasteOverload(text: string): Promise<void>
 async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
 /** Parameter<...> doesn't handle function overload afaik, so we need to fix the types manually before exporting. */
-async function pasteOverload(pathUnranked: string | string[], text?: string): Promise<void> {
+async function pasteOverload(): Promise<void> {
   /** */
 }
 
@@ -45,7 +47,7 @@ const helpers = {
   paste,
   tap,
   tapReturnKey,
-  type,
+  type: keyboard.type,
   waitForEditable,
   waitForElement,
   waitUntil,

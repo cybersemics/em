@@ -16,6 +16,9 @@ import deleteThought from './deleteThought'
 import editThought from './editThought'
 import moveThought from './moveThought'
 
+/** Trailing hyphen that should be removed when joining block formatted text from print or pdf. */
+const REGEX_HYPHEN = /-$/
+
 /** Join two or more thoughts split by spaces. Defaults to all non-attribute thoughts at the level of the cursor. */
 const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
   const { cursor } = state
@@ -25,11 +28,16 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
   const path = cursor
   const simplePath = simplifyPath(state, path)
   const parentId = head(parentOf(simplePath))
+
   const children = paths
-    ? paths.map(path => getThoughtById(state, head(path)))
+    ? // getThoughtById -> Thought | undefined, so if we (unlikely) get undefined, we filter it out, see getThoughtById
+      paths.map(path => getThoughtById(state, head(path))).filter(Boolean)
     : getAllChildrenSorted(state, parentId).filter(child => !isAttribute(child.value))
+
   const thoughtId = head(simplePath)
-  const { value } = getThoughtById(state, thoughtId)
+  const thought = getThoughtById(state, thoughtId)
+  if (!thought) return state
+  const { value } = thought
 
   let minNextRank = getNextRank(state, parentId)
 
@@ -38,7 +46,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
       const pathToSibling = appendToPath(parentOf(simplePath), child.id)
       const grandchildren = getAllChildren(state, child.id)
 
-      return grandchildren.map((child, j) => {
+      return grandchildren.map(child => {
         const oldPath = getChildPath(state, child, pathToSibling)
         const newPath = appendToPath(path, child)
         return moveThought({ oldPath, newPath, newRank: (minNextRank += 1) })
@@ -48,7 +56,17 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
 
   const editThoughtReducer = editThought({
     oldValue: value,
-    newValue: children.reduce((acc, { value }) => `${acc} ${value}`, '').trim(),
+    newValue: children
+      .reduce(
+        (acc, { value }) =>
+          // if the last character of the accumulator is a hyphen, remove it before joining, and omit the space separator
+          // e.g.
+          // 'race' + 'car' -> 'race car'
+          // 'race-' + 'car' -> 'racecar'
+          REGEX_HYPHEN.test(acc) ? `${acc.replace(REGEX_HYPHEN, '')}${value}` : `${acc} ${value}`,
+        '',
+      )
+      .trim(),
     path: simplePath,
   })
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { dropEnd, dropHover } from '../../styled-system/recipes'
+import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
@@ -27,7 +27,6 @@ const DROPEND_FINGERSHIFT = isTouch ? 5 : 0
 /** The drop target at the end of the Subthoughts. The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts.  */
 const DropEnd = ({
   depth,
-  distance,
   // specifies if this is the last thought
   // renders the component with additional click area below and to the left since there are no thoughts below to obscure
   last,
@@ -47,7 +46,7 @@ const DropEnd = ({
   }
   const thoughtId = head(path)
   const isRootPath = isRoot(path)
-  const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
+  const value = useSelector(state => getThoughtById(state, thoughtId)?.value) ?? ''
   const dropHoverColor = useDropHoverColor(depth + 1)
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
@@ -96,19 +95,19 @@ const DropEnd = ({
   return (
     <li
       className={cx(
-        dropEnd(),
+        dropEndRecipe(),
         css({
           display: 'list-item',
           marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
           // offset marginLeft, minus 1em for bullet
           // otherwise drop-hover will be too far left
           paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
-          // use transform to avoid conflicting with margin, which is currently spread out across multiple components and App.css
         }),
       )}
       style={{
         backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
         height: isRootPath ? '8em' : `${1.9 + dropTargetHeight}em`,
+        // use transform to avoid conflicting with margin, which is currently spread out across multiple components
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
       }}
       ref={dropTarget}
@@ -120,7 +119,7 @@ const DropEnd = ({
             left: '0.3em',
             // make sure label does not interfere with drop target hovering
             pointerEvents: 'none',
-            color: '#ff7bc3' /* mid pink */,
+            color: 'midPink',
           })}
         >
           {isHovering ? '*' : ''}
@@ -130,7 +129,7 @@ const DropEnd = ({
       )}
       {(showDropHover || testFlags.simulateDrag) && (
         <span
-          className={dropHover({ insideDropEnd: true })}
+          className={dropHoverRecipe({ insideDropEnd: true })}
           style={{
             backgroundColor: dropHoverColor,
             // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch

@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
-import { bullet } from '../../styled-system/recipes'
+import { bulletRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -16,11 +16,11 @@ import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
-import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
+import fastClick, { type FastClickEvent } from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -41,13 +41,16 @@ interface BulletProps {
   // debugIndex?: number
   isCursorGrandparent?: boolean
   isCursorParent?: boolean
+  isInContextView?: boolean
 }
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
+const styleRegex = /style="[^"]*(background-)?color:\s*([^;"'>]+)[^"]*"/i
+const fontColorRegex = /<font[^>]*color="([^"]+)"[^>]*>/i
 
 const glyph = cva({
   base: {
-    fill: { base: 'rgba(39, 39, 39, 1)', _dark: 'rgba(217, 217, 217, 1)' },
+    fill: 'bullet',
     position: 'relative',
     '@media (max-width: 500px)': {
       _android: {
@@ -204,23 +207,20 @@ const glyph = cva({
 
 const glyphFg = cva({
   base: {
-    transition: `transform {durations.veryFastDuration} ease-out, fill-opacity {durations.mediumDuration} ease-out`,
+    transition: `transform {durations.veryFast} ease-out, fill-opacity {durations.medium} ease-out`,
   },
   variants: {
     gray: {
       true: {
-        color: '#666',
-        fill: '#666',
+        color: 'bulletGray',
+        fill: 'bulletGray',
       },
     },
     graypulse: {
       true: {
-        color: '#666',
-        fill: '#666',
-        '-webkit-animation': {
-          base: 'toblack 400ms infinite alternate ease-in-out',
-          _dark: 'towhite 400ms infinite alternate ease-in-out',
-        },
+        color: 'bulletGray',
+        fill: 'bulletGray',
+        '-webkit-animation': 'tofg 400ms infinite alternate ease-in-out',
       },
     },
     triangle: {
@@ -396,6 +396,7 @@ const Bullet = ({
   thoughtId,
   isCursorGrandparent,
   isCursorParent,
+  isInContextView,
   // depth,
   // debugIndex,
 }: BulletProps) => {
@@ -414,9 +415,7 @@ const Bullet = ({
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging || isMulticursor
   })
-  const bulletIsDivider = useSelector(state =>
-    isDivider(getThoughtById(state, thoughtId)?.value) ? 'none' : undefined,
-  )
+  const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
   /** Returns true if the thought is pending. */
   const pending = useSelector(state => {
@@ -442,11 +441,75 @@ const Bullet = ({
     return children.length < Object.keys(thought.childrenMap).length
   })
 
-  // fill =bullet/=style override
+  /** Check if the entire value is wrapped in a single font or span tag. */
+  const isWrappedInSingleTag = (str: string): boolean => {
+    // Check if there's any text before the first tag or after the last tag
+    const firstTagIndex = str.indexOf('<')
+    const lastTagIndex = str.lastIndexOf('>')
+
+    if (firstTagIndex > 0 || lastTagIndex < str.length - 1) {
+      return false
+    }
+
+    const tagStack: string[] = []
+    let currentPos = 0
+
+    while (currentPos < str.length) {
+      // Find next tag
+      const openIndex = str.indexOf('<', currentPos)
+      if (openIndex === -1) break
+
+      const closeIndex = str.indexOf('>', openIndex)
+      if (closeIndex === -1) return false
+
+      const tag = str.substring(openIndex, closeIndex + 1)
+      currentPos = closeIndex + 1
+
+      if (tag.startsWith('</')) {
+        // Closing tag
+        const tagName = tag.slice(2, -1).toLowerCase()
+        // If stack is empty or last opening tag doesn't match, return false
+        if (tagStack.length === 0 || tagStack[tagStack.length - 1] !== tagName) {
+          return false
+        }
+
+        // Remove matching opening tag
+        tagStack.pop()
+
+        // If stack is empty before end of string, only valid if this is the last tag
+        if (tagStack.length === 0 && currentPos <= str.length) {
+          const remainingTags = str.slice(currentPos).match(/<\/?[a-z]+/g)
+          return !remainingTags
+        }
+      } else if (!tag.endsWith('/>')) {
+        // Opening tag (excluding self-closing tags)
+        const tagName = tag.slice(1).split(/[\s>]/)[0].toLowerCase()
+        tagStack.push(tagName)
+      }
+    }
+
+    // Valid if exactly one tag remains in stack (the outer tag)
+    return tagStack.length === 1 && (tagStack[0] === 'font' || tagStack[0] === 'span')
+  }
+
   const fill = useSelector(state => {
-    const bulletId = findDescendant(state, head(simplePath), '=bullet')
-    const styles = getStyle(state, bulletId)
-    return styles?.color
+    const thought = getThoughtById(state, thoughtId)
+    if (!thought) return undefined
+
+    const value = thought.value
+    // Check if the entire value is wrapped in a single font or span tag
+    const isWrappedInTag = isWrappedInSingleTag(value)
+    if (isWrappedInTag) {
+      // Check for background-color and color in style attribute
+      const styleMatch = value.match(styleRegex)
+      if (styleMatch) return styleMatch[2]
+
+      // If no background-color, check for font color
+      const fontColorMatch = value.match(fontColorRegex)
+      if (fontColorMatch) return fontColorMatch[1]
+    }
+
+    return undefined
   })
 
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
@@ -463,15 +526,13 @@ const Bullet = ({
 
   // calculate position of bullet for different font sizes
   // Table column 1 needs more space between the bullet and thought for some reason
-  const width = 11 - (fontSize - 9) * 0.5 + (isTableCol1 ? fontSize / 4 : 0)
+  const width = 11 - (fontSize - 9) * 0.5 + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
   const marginLeft = -width
 
   // expand or collapse on click
   // has some additional logic to make it work intuitively with pin true/false
   const clickHandler = useCallback(
-    (e: React.MouseEvent) => {
-      // stop click event from bubbling up to Content.clickOnEmptySpace
-      e.stopPropagation()
+    (e: FastClickEvent) => {
       // short circuit if dragHold
       // useLongPress stop is activated in onMouseUp but is delayed to ensure that dragHold is still true here
       // stopping propagation from useLongPress was not working either due to bubbling order or mismatched event type
@@ -511,15 +572,16 @@ const Bullet = ({
     <span
       data-testid={'bullet-' + hashPath(path)}
       aria-label='bullet'
+      data-highlighted={isHighlighted}
       className={cx(
-        bullet({ invalid }),
+        bulletRecipe({ invalid }),
         css({
           _mobile: {
             marginRight: showContexts ? '-1.5px' : undefined,
           },
           '@media (min-width: 560px) and (max-width: 1024px)': {
             _android: {
-              transition: `transform {durations.veryFastDuration} ease-in-out`,
+              transition: `transform {durations.veryFast} ease-in-out`,
               marginLeft: '-3px',
             },
           },
@@ -528,7 +590,7 @@ const Bullet = ({
               marginLeft: '-3px',
             },
           },
-          display: bulletIsDivider,
+          display: bulletIsDivider ? 'none' : undefined,
           position: 'absolute',
           verticalAlign: 'top',
           cursor: 'pointer',
@@ -542,7 +604,9 @@ const Bullet = ({
         paddingBottom: extendClickHeight + 2,
         width,
       }}
-      onClick={clickHandler}
+      {...fastClick(clickHandler)}
+      // stop click event from bubbling up to Content.clickOnEmptySpace
+      onClick={e => e.stopPropagation()}
     >
       <svg
         className={cx(

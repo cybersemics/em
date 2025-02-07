@@ -5,6 +5,6 @@ import head from './head'
 
 // @MIGRATION_TODO: Fix all logic that uses headRank
 /** Returns the rank of the last thought in a path. */
-const headRank = (state: State, path: Path) => getThoughtById(state, head(path)).rank
+const headRank = (state: State, path: Path): number | undefined => getThoughtById(state, head(path))?.rank
 
 export default headRank

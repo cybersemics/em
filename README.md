@@ -111,8 +111,8 @@ To the user, a thought just consists of a bullet, text, and superscript indicati
 
 This project uses [PandaCSS](https://panda-css.com/) for styling. Styles are automatically generated from ts files at compile-time when the dev server is running.
 
-- Do not add any styles to App.css.
 - Prefer inline styles, e.g. `css({ margin: '10px', padding: '10px' })`
+- Define recipes for complex shared styles.
 - If the styles get out of sync, restart the dev server or run `panda codegen`.
 
 See: https://panda-css.com/docs/concepts/writing-styles

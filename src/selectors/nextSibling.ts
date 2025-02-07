@@ -25,7 +25,6 @@ const nextSibling = (state: State, idOrPath: ThoughtId | Path): Thought | null =
       typeof idOrPath === 'string' ? 'id' : 'Path'
     } ${idOrPath} missing from children of parent ${thought.parentId}`
     console.error(message, { thought, siblings, parent: getThoughtById(state, thought.parentId) })
-    throw new Error(message)
   }
 
   return siblings[index + 1] || null

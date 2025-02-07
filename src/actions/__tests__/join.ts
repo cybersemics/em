@@ -98,7 +98,7 @@ it('joins two thoughts and merges their children', () => {
   expect(removeHome(exported)).toEqual(expectedOutput)
 })
 
-it('generates unique & non-conflicting ranks', () => {
+it('generates unique and non-conflicting ranks', () => {
   const text = `
     - a
       - m
@@ -117,4 +117,22 @@ it('generates unique & non-conflicting ranks', () => {
   const children = getChildrenRankedByContext(newState, ['a', 'm n o'])
 
   expect(new Set(children.map(child => child.rank)).size).toBe(4)
+})
+
+it('removes trailing hyphens', () => {
+  const text = `
+    - Manufacture -> Deposition
+      - in an
+      - alternative perspective, the life histories of things do not end with depo-
+      - sition
+  `
+  const steps = [importText({ text }), setCursor(['Manufacture -> Deposition', 'in an']), join()]
+
+  const newState = reducerFlow(steps)(initialState())
+  const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
+  const expectedOutput = `
+- Manufacture -> Deposition
+  - in an alternative perspective, the life histories of things do not end with deposition
+`
+  expect(removeHome(exported)).toEqual(expectedOutput)
 })

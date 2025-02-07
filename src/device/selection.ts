@@ -57,8 +57,14 @@ export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
 /** Returns true if the Node is an editable. */
-const isEditable = (node?: Node | null) =>
-  !!node && node.nodeType === Node.ELEMENT_NODE && !!(node as HTMLElement).hasAttribute?.('data-editable')
+const isEditable = (node?: Node | null) => {
+  const element = node as HTMLElement
+  return (
+    !!element &&
+    element.nodeType === Node.ELEMENT_NODE &&
+    (element.hasAttribute('data-editable') || element.ariaLabel === 'note-editable')
+  )
+}
 
 /** Returns true if the selection is on a thought. */
 // We should see if it is possible to just use state.editing and selection.isActive()
@@ -73,8 +79,7 @@ export const isThought = (): boolean => {
 /** Returns true if the selection is on a thought. */
 export const isOnThought = (): boolean => {
   let focusNode = window.getSelection()?.focusNode
-  if (!focusNode) return false
-  while ((focusNode as HTMLElement)?.tagName !== 'DIV') {
+  while (focusNode && (focusNode as HTMLElement)?.tagName !== 'DIV') {
     if (isEditable(focusNode)) return true
     focusNode = focusNode?.parentNode
   }
@@ -93,7 +98,7 @@ export const isOnFirstLine = (): boolean => {
   const clientRects = selection.getRangeAt(0).getClientRects()
   if (!clientRects?.length) return true
 
-  const { y: rangeY } = clientRects[0]
+  const { y: rangeY } = clientRects[clientRects.length - 1]
   if (!rangeY) return true
 
   const baseNodeParentEl = baseNode?.parentElement as HTMLElement
@@ -200,11 +205,26 @@ export const restore = (savedSelection: SavedSelection | null): void => {
   }
 
   const sel = window.getSelection()
+  if (!sel) return
 
-  if (savedSelection.node) {
-    sel?.removeAllRanges()
-    sel?.collapse(savedSelection.node, savedSelection.offset)
+  sel.removeAllRanges()
+
+  // Validate the node and offset before attempting to collapse
+  const node = savedSelection.node
+  let offset = savedSelection.offset
+
+  // If it's an element node, ensure offset doesn't exceed number of children
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    offset = Math.min(offset, node.childNodes.length)
   }
+  // If it's a text node, ensure offset doesn't exceed text length
+  else if (node.nodeType === Node.TEXT_NODE && node.textContent) {
+    offset = Math.min(offset, node.textContent.length)
+  }
+  // Default to 0 if we can't determine a valid offset
+  else offset = 0
+
+  sel.collapse(node, offset)
 }
 
 /** Returns an object representing the current selection that can be passed to selection.restore to restore the selection. */
@@ -408,7 +428,7 @@ const removeEmptyElementsRecursively = (element: HTMLElement, remainText: string
 
 /** Returns the selection html, or null if there is no selection. */
 export const html = () => {
-  const selection = document.getSelection()
+  const selection = document?.getSelection()
   if (!selection || selection.rangeCount === 0) return null
   const range = selection?.getRangeAt(0)
 
@@ -439,4 +459,35 @@ export const html = () => {
   div.appendChild(range.cloneContents())
   const currentHtml = div.innerHTML
   return currentHtml
+}
+
+/** Returns the bounding rectangle for the current browser selection. */
+export const getBoundingClientRect = () => {
+  const selection = window.getSelection()
+
+  if (selection && selection.rangeCount) {
+    return selection.getRangeAt(0).getBoundingClientRect()
+  }
+
+  return null
+}
+
+/** Returns true if the point is within the given number of pixels from the browser selection. */
+export const isNear = (
+  x: number,
+  y: number,
+  /** Distance from the point (px). */
+  distance: number,
+): boolean => {
+  if (!isActive() || isCollapsed()) return false
+
+  const rect = getBoundingClientRect()
+  if (!rect) return false
+
+  const left = rect.left - distance
+  const right = rect.right + distance
+  const top = rect.top - distance
+  const bottom = rect.bottom + distance
+
+  return x >= left && y >= top && x <= right && y <= bottom
 }

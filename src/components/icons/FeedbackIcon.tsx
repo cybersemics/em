@@ -1,6 +1,6 @@
 import { FC } from 'react'
 import { css, cx } from '../../../styled-system/css'
-import { icon } from '../../../styled-system/recipes'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import { SystemStyleObject } from '../../../styled-system/types'
 import Index from '../../@types/IndexType'
@@ -14,10 +14,10 @@ interface IconProps {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const FeedbackIcon: FC<IconProps> = ({ fill, size = 20, style, className, cssRaw }) => {
+const FeedbackIcon: FC<IconProps> = ({ fill, size = 20, style, cssRaw }) => {
   return (
     <svg
-      className={cx(icon(), css(cssRaw))}
+      className={cx(iconRecipe(), css(cssRaw))}
       x='0px'
       y='0px'
       viewBox='0 0 46 50'

@@ -1,15 +1,21 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { compareReasonable } from '../util/compareThought'
+import { compareReasonable, compareReasonableDescending } from '../util/compareThought'
 import { getAllChildrenSorted } from './getChildren'
+import getSortPreference from './getSortPreference'
 
 /** Gets the new rank of a value to be inserted into a sorted context. */
 const getSortedRank = (state: State, id: ThoughtId, value: string) => {
   const children = id ? getAllChildrenSorted(state, id) : []
 
+  const sortPreference = getSortPreference(state, id)
+  const isDescending = sortPreference.direction === 'Desc'
   // find the first child with value greater than or equal to the new value
-  const index = children.findIndex(child => compareReasonable(child.value, value) !== -1)
-
+  const index = children.findIndex(child =>
+    isDescending
+      ? compareReasonableDescending(child.value, value) !== -1
+      : compareReasonable(child.value, value) !== -1,
+  )
   // if there is no such child, return the rank of the last child + 1
   return index === -1
     ? (children[children.length - 1]?.rank || 0) + 1

@@ -1,8 +1,8 @@
 import { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css, cx } from '../../../styled-system/css'
-import { anchorButton, extendTap, modal, modalText } from '../../../styled-system/recipes'
-import Icon from '../../@types/Icon'
+import { css } from '../../../styled-system/css'
+import { extendTapRecipe, modalTextRecipe } from '../../../styled-system/recipes'
+import Icon from '../../@types/IconType'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
@@ -10,7 +10,7 @@ import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
 import ActionButton from './../ActionButton'
-import ShortcutTable from './../ShortcutTable'
+import CommandTable from './../CommandTable'
 import CommandLibraryIcon from './../icons/CommandLibraryIcon'
 import MetaIcon from './../icons/MetaIcon'
 import TutorialsIcon from './../icons/TutorialsIcon'
@@ -74,16 +74,25 @@ const Tutorials = () => {
   const dispatch = useDispatch()
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
 
-  const { subtitle } = modalText()
-  const modalClasses = modal({ stack: true })
+  const { subtitle } = modalTextRecipe()
   return (
     <section className={css({ marginBottom: '50px' })} id='tutorials'>
       <h2 className={subtitle}>Tutorials</h2>
 
-      <div className={cx(modalClasses.actions, css({ alignItems: 'flex-start' }))}>
-        <div>
-          <a
-            className={cx(anchorButton({ thin: true }), css({ marginBottom: '1em' }))}
+      <div
+        className={css({
+          textAlign: 'center',
+          '@media screen and (min-width: 480px)': {
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+          alignItems: 'flex-start',
+        })}
+      >
+        <div className={css({ marginTop: '1em', marginBottom: '1em', marginRight: '1em' })}>
+          <ActionButton
+            title='Part I: Intro'
             {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
@@ -93,13 +102,11 @@ const Tutorials = () => {
                 closeModal(),
               ])
             })}
-          >
-            Part I: Intro
-          </a>
+          ></ActionButton>
         </div>
-        <div>
-          <a
-            className={cx(anchorButton({ thin: true }), css({ marginBottom: '1em' }))}
+        <div className={css({ marginTop: '1em', marginBottom: '1em' })}>
+          <ActionButton
+            title='Part II: Contexts'
             {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
@@ -108,17 +115,15 @@ const Tutorials = () => {
                 closeModal(),
               ])
             })}
-          >
-            Part II: Contexts
-          </a>
+          />
         </div>
       </div>
     </section>
   )
 }
 
-/** A help section to view all gestures, shortcuts, and toolbar buttons. */
-const CommandCenter = () => <ShortcutTable />
+/** A help section to view all gestures, commands, and toolbar buttons. */
+const CommandCenter = () => <CommandTable />
 
 /** List the valid values for a metaprogramming attribute. */
 const Options = ({ options }: { options: string[] }) => (
@@ -129,7 +134,7 @@ const Options = ({ options }: { options: string[] }) => (
 
 /** A help section that lists all metaprogramming attributes. */
 const Metaprogramming = () => {
-  const modalClasses = modalText({ compact: true })
+  const modalClasses = modalTextRecipe({ compact: true })
   return (
     <div>
       <h2 id='meta' className={modalClasses.subtitle}>
@@ -375,7 +380,7 @@ const About = () => {
   )
 }
 
-/** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
+/** A modal that offers links to the tutorial, a list of commands, and other helpful things. */
 const ModalHelp = () => {
   const [section, setSection] = useState(Section.Menu)
   const fontSize = useSelector(state => state.fontSize)
@@ -392,7 +397,7 @@ const ModalHelp = () => {
       ) : (
         <span className={css({ fontSize: 'sm' })}>
           &lt;{' '}
-          <a {...fastClick(back)} className={extendTap()}>
+          <a {...fastClick(back)} className={extendTapRecipe()}>
             Back
           </a>
         </span>
@@ -413,7 +418,7 @@ const ModalHelp = () => {
         section !== Section.Menu && section !== Section.Tutorials && (
           <div className={css({ fontSize: 'sm', marginTop: '2em' })}>
             &lt;{' '}
-            <a {...fastClick(back)} className={extendTap()}>
+            <a {...fastClick(back)} className={extendTapRecipe()}>
               Back
             </a>
           </div>

@@ -1,5 +1,5 @@
 /** Prints a readable stack trace that omits vendor scripts and Redux middleware. */
-const prettyTrace = (message?: string) => {
+const prettyTrace = () => {
   const err = new Error()
   console.warn(
     // opening "Error" line is needed for the browser to detect this as a stack trace and use source maps

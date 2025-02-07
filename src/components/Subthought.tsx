@@ -6,6 +6,7 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
+import useCachedThoughtHtml from '../hooks/useCachedThoughtHtml'
 import useChangeRef from '../hooks/useChangeRef'
 import attributeEquals from '../selectors/attributeEquals'
 import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
@@ -27,9 +28,7 @@ const Subthought = ({
   autofocus,
   debugIndex,
   depth,
-  dropUncle,
   env,
-  indexDescendant,
   isMultiColumnTable,
   leaf,
   updateSize,
@@ -61,22 +60,26 @@ const Subthought = ({
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
+  // Cache the thought HTML before it is deleted so that we can animate on unmount
+  const cachedThoughtHtmlRef = useCachedThoughtHtml({ thought, elementRef: ref })
   const noOtherContexts = useSelector(
-    state => isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
+    state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
   )
-  const parentId = thought.parentId
   const grandparentId = simplePath[simplePath.length - 3]
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
   const autofocusChanged = useChangeRef(autofocus)
 
   const childrenAttributeId = useSelector(
     state =>
-      (thought.value !== '=children' && findAnyChild(state, parentId, child => child.value === '=children')?.id) ||
+      (thought &&
+        thought.value !== '=children' &&
+        findAnyChild(state, thought.parentId, child => child.value === '=children')?.id) ||
       null,
   )
   const grandchildrenAttributeId = useSelector(
     state =>
-      (thought.value !== '=style' &&
+      (thought &&
+        thought.value !== '=style' &&
         findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) ||
       null,
   )
@@ -84,13 +87,13 @@ const Subthought = ({
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
     if (hideBulletsChildren) return true
     const hideBulletsGrandchildren =
-      thought.value !== '=bullet' && attributeEquals(state, grandchildrenAttributeId, '=bullet', 'None')
+      thought && thought.value !== '=bullet' && attributeEquals(state, grandchildrenAttributeId, '=bullet', 'None')
     if (hideBulletsGrandchildren) return true
     return false
   })
 
   /****************************/
-  const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: thought.id, env }))
+  const childEnvZoomId = once(() => (thought ? findFirstEnvContextWithZoom(state, { id: thought.id, env }) : null))
 
   /** Returns true if the cursor is contained within the thought path, i.e. the thought is a descendant of the cursor. */
   const isEditingChildPath = isDescendantPath(state.cursor, path)
@@ -114,9 +117,12 @@ const Subthought = ({
     ref.current.style.opacity = opacity
   })
 
-  // Short circuit if thought has already been removed.
-  // This can occur in a re-render even when thought is defined in the parent component.
-  if (!thought) return null
+  // If the thought has unmounted, return the cached static HTML from the ref so that it can animate out.
+  if (!thought) {
+    return cachedThoughtHtmlRef.current ? (
+      <div dangerouslySetInnerHTML={{ __html: cachedThoughtHtmlRef.current }} />
+    ) : null
+  }
 
   return (
     <>
@@ -128,8 +134,8 @@ const Subthought = ({
           // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropChild. Otherwise subsequent DropChild will be obscured.
           opacity: thought.value === '' ? opacity : '0',
           transition: autofocusChanged
-            ? `opacity {durations.layoutSlowShiftDuration} ease-out`
-            : `opacity {durations.layoutNodeAnimationDuration} ease-in`,
+            ? `opacity {durations.layoutSlowShift} ease-out`
+            : `opacity {durations.layoutNodeAnimation} ease-in`,
           pointerEvents: !isVisible ? 'none' : undefined,
           // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
           // This caused the thought to jerk slightly to the left at the end of the horizontal shift animation.

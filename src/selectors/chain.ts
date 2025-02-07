@@ -17,6 +17,7 @@ const chain = (state: State, contextChain: SimplePath[], simplePath: SimplePath)
 
   // get the head thought in the last segment of the contextChain
   const pivot = getThoughtById(state, head(contextChain[contextChain.length - 1]))
+  if (!pivot) return simplePath
 
   // @MIGRATION_TODO: Maybe warn if thoughts are not found.
   const simplePathThoughts = childIdsToThoughts(state, simplePath)

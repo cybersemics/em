@@ -3,15 +3,13 @@ import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } 
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import getContexts from '../../selectors/getContexts'
+import isContextViewActive from '../../selectors/isContextViewActive'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
+import thoughtToPath from '../../selectors/thoughtToPath'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContextViewOpen = ({
-  tutorialChoice,
-  contextViews,
-}: {
-  contextViews: any
-  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-}) => {
+const Tutorial2StepContextViewOpen = () => {
+  const tutorialChoice = useSelector(selectTutorialChoice)
   const caseSensitiveValue = useSelector(state =>
     getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
@@ -31,24 +29,24 @@ const Tutorial2StepContextViewOpen = ({
   })
   const contextViewClosed = useSelector(state => {
     const cursorThoughts = state.cursor ? childIdsToThoughts(state, state.cursor) : null
-    return !contextViews[
-      contextToThoughtId(state, [
-        (cursorThoughts &&
-        cursorThoughts[0].value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
-          ? TUTORIAL_CONTEXT1_PARENT
-          : TUTORIAL_CONTEXT2_PARENT)[tutorialChoice],
-        TUTORIAL_CONTEXT[tutorialChoice],
-      ])!
-    ]
+    const thoughtId = contextToThoughtId(state, [
+      (cursorThoughts &&
+      cursorThoughts[0].value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
+        ? TUTORIAL_CONTEXT1_PARENT
+        : TUTORIAL_CONTEXT2_PARENT)[tutorialChoice],
+      TUTORIAL_CONTEXT[tutorialChoice],
+    ])
+    if (!thoughtId) return false
+    const path = thoughtToPath(state, thoughtId)
+    return !isContextViewActive(state, path)
   })
-
   return cursorLost ? (
     <p>
       Oops, "{caseSensitiveValue}" is hidden because the selection changed. Select "
       {TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" or "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}" to show it again.
     </p>
   ) : contextViewClosed ? (
-    <p>Oops, somehow the context view was closed. Click the Prev button to go back.</p>
+    <p>Oops, somehow the context view was closed. Select "{TUTORIAL_CONTEXT[tutorialChoice]}".</p>
   ) : (
     <>
       <p>

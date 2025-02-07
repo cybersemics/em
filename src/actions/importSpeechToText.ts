@@ -11,17 +11,16 @@ import editing from './editing'
 import newThought from './newThought'
 
 /** Atomically insert multiple new thoughts. Excludes empty lines. */
-const insertMultipleThoughts = _.curryRight(
-  (state: State, { simplePath, lines }: { simplePath: SimplePath; lines: string[] }) =>
-    reducerFlow(
-      lines
-        // strip lines
-        .map(line => strip(line))
-        // filter out empty lines
-        .filter(x => x)
-        // insert new thought
-        .map(line => (state: State) => newThought(state, { value: line })),
-    )(state),
+const insertMultipleThoughts = _.curryRight((state: State, { lines }: { simplePath: SimplePath; lines: string[] }) =>
+  reducerFlow(
+    lines
+      // strip lines
+      .map(line => strip(line))
+      // filter out empty lines
+      .filter(x => x)
+      // insert new thought
+      .map(line => (state: State) => newThought(state, { value: line })),
+  )(state),
 )
 
 /** Imports iOS speech-to-text as sepaate thoughts. Supports spoken "newline" to create a new thought. NOOP if speech-to-text is not detected. */
@@ -34,9 +33,11 @@ const importSpeechToText = _.curryRight(
       .map(line => line.replace('</div>', ''))
       .slice(1)
 
-    if (lines.length === 0) return state
+    const thought = getThoughtById(state, head(simplePath))
 
-    const rank = getThoughtById(state, head(simplePath)).rank
+    if (lines.length === 0 || !thought) return state
+
+    const { rank } = thought
 
     reducerFlow([
       // edit original thought to first line

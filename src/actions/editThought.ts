@@ -29,6 +29,7 @@ import setCursor from './setCursor'
 import updateThoughts from './updateThoughts'
 
 export interface editThoughtPayload {
+  cursorOffset?: number
   /** Force the Editable to re-render. */
   // TODO: This is used to force the Editable to re-render on generateThought, which co-opts clearThought during its pending state. Is there a better way to do this?
   force?: boolean
@@ -39,7 +40,7 @@ export interface editThoughtPayload {
 }
 
 /** Changes the text of an existing thought. */
-const editThought = (state: State, { force, oldValue, newValue, path, rankInContext }: editThoughtPayload) => {
+const editThought = (state: State, { cursorOffset, force, oldValue, newValue, path }: editThoughtPayload) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   // thoughts may exist for both the old value and the new value
@@ -186,6 +187,7 @@ const editThought = (state: State, { force, oldValue, newValue, path, rankInCont
   }
 
   return updateThoughts(stateNew, {
+    cursorOffset,
     lexemeIndexUpdates,
     thoughtIndexUpdates,
     // recentlyEdited,

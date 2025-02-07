@@ -1,13 +1,16 @@
 import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
+import { commandById, formatKeyboardShortcut } from '../../commands'
 import { TUTORIAL_CONTEXT } from '../../constants'
 import getContexts from '../../selectors/getContexts'
 import getSetting from '../../selectors/getSetting'
-import { formatKeyboardShortcut, shortcutById } from '../../shortcuts'
+import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
+import TutorialGestureDiagram from './TutorialGestureDiagram'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContextViewToggle = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
+const Tutorial2StepContextViewToggle = () => {
+  const tutorialChoice = useSelector(selectTutorialChoice)
   const caseSensitiveValue = useSelector(state =>
     getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
@@ -34,9 +37,10 @@ const Tutorial2StepContextViewToggle = ({ tutorialChoice }: { tutorialChoice: ke
           <p>
             {isTouch
               ? 'Trace the line below'
-              : `Hit ${formatKeyboardShortcut(shortcutById('toggleContextView')!.keyboard!)}`}{' '}
+              : `Hit ${formatKeyboardShortcut(commandById('toggleContextView')!.keyboard!)}`}{' '}
             to view the current thought's contexts.
           </p>
+          <TutorialGestureDiagram gesture={commandById('toggleContextView').gesture} />
         </>
       )}
     </>

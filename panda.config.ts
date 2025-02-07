@@ -1,6 +1,7 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import durationsConfig from './src/durations.config'
+import hideCaretAnimationNames from './src/hideCaret.config'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
@@ -9,12 +10,15 @@ import dropEndRecipe from './src/recipes/dropEnd'
 import dropHoverRecipe from './src/recipes/dropHover'
 import editableRecipe from './src/recipes/editable'
 import extendTapRecipe from './src/recipes/extendTap'
+import fadeTransitionRecipe from './src/recipes/fadeTransition'
 import iconRecipe from './src/recipes/icon'
 import invalidOptionRecipe from './src/recipes/invalidOption'
 import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
+import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
+import slideTransitionRecipe from './src/recipes/slideTransition'
 import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
 import toolbarPointerEventsRecipe from './src/recipes/toolbarPointerEvents'
@@ -53,6 +57,18 @@ const zIndexDescending = (keys: string[]) => keyValueBy(keys.reverse(), (key, i)
 /** Add `ms` units to raw value. */
 const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
 
+const hideCaret = {
+  '0%': {
+    caretColor: 'transparent',
+  },
+  '99%': {
+    caretColor: 'transparent',
+  },
+  '100%': {
+    caretColor: 'auto',
+  },
+}
+
 const keyframes = defineKeyframes({
   fademostlyin: {
     from: {
@@ -86,14 +102,6 @@ const keyframes = defineKeyframes({
       opacity: 0.5,
     },
   },
-  preventAutoscroll: {
-    '0%': {
-      opacity: 0,
-    },
-    '100%': {
-      opacity: 1,
-    },
-  },
   ripple_loader: {
     '0%': {
       top: '100%',
@@ -115,16 +123,10 @@ const keyframes = defineKeyframes({
       width: '1.25em',
     },
   },
-  toblack: {
+  tofg: {
     to: {
-      color: 'black',
-      fill: 'black',
-    },
-  },
-  towhite: {
-    to: {
-      color: 'white',
-      fill: 'white',
+      color: 'fg',
+      fill: 'fg',
     },
   },
   bobble: {
@@ -138,6 +140,7 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
+  ...hideCaretAnimationNames.reduce((accum, name) => ({ ...accum, [name]: hideCaret }), {}),
 })
 
 const globalCss = defineGlobalStyles({
@@ -146,6 +149,11 @@ const globalCss = defineGlobalStyles({
       _dragInProgress: {
         userSelect: 'none',
       },
+    },
+    _test: {
+      // Caret should be invisible in puppeteer tests as the blink timing differs between runs and will fail the screenshot tests.
+      // Do this here rather than programmatically in order to avoid an extra page.evaluate.
+      caretColor: 'transparent',
     },
   },
   'html, body, #root, #app': { height: '100%', fontSize: '16px' },
@@ -161,7 +169,7 @@ const globalCss = defineGlobalStyles({
     cursor: 'pointer',
     textDecorationLine: 'underline',
     outline: 'none',
-    color: { base: '#1b6f9a', _dark: '#87ceeb' },
+    color: 'link',
     fontWeight: 400,
     userSelect: 'none',
   },
@@ -197,10 +205,7 @@ const globalCss = defineGlobalStyles({
     marginBottom: '2vh',
   },
   'input:focus': {
-    border: {
-      base: 'solid 1px #eee',
-      _dark: 'solid 1px #999',
-    },
+    border: 'solid 1px {colors.inputBorder}',
     outline: '0 none',
   },
   /** Aligns checkbox and label vertically. */
@@ -222,7 +227,7 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'bg',
   },
   code: {
-    backgroundColor: { base: '#ccc', _dark: '#333' },
+    backgroundColor: 'codeBg',
     fontFamily: 'monospace',
   },
   'button[disabled]': {
@@ -239,23 +244,9 @@ const globalCss = defineGlobalStyles({
   /* :empty does not work because thought may contain <br> */
   '[placeholder]:empty::before': {
     fontStyle: 'italic',
-    color: { base: 'rgba(7, 7, 7, 0.5)', _dark: 'rgba(255, 255, 255, 0.5)' },
+    color: 'dim',
     content: 'attr(placeholder)',
     cursor: 'text',
-  },
-  // Sets default link color in recipes/modal color
-  '.modal__root': {
-    '& p': { margin: '0 0 1em 0' },
-  },
-  '.modal__actions': {
-    '& a': {
-      fontWeight: 'normal',
-      margin: '0 5px',
-      textDecoration: 'underline',
-      whiteSpace: 'nowrap',
-      lineHeight: 2,
-      color: 'fg',
-    },
   },
 })
 
@@ -278,6 +269,13 @@ export default defineConfig({
       keyframes,
       tokens: {
         colors: colorTokens,
+        easings: {
+          // Ease in even slower at the beginning of the animation.
+          // For reference, ease-in is equivalent to cubic-bezier(.42, 0, 1, 1).
+          easeInSlow: {
+            value: 'cubic-bezier(.84, 0, 1, 1)',
+          },
+        },
         fontSizes: {
           sm: {
             value: '80%',
@@ -285,9 +283,6 @@ export default defineConfig({
           md: {
             value: '90%',
           },
-        },
-        sizes: {
-          minThoughtHeight: { value: '1.9em' },
         },
         spacing: {
           modalPadding: { value: '8%' },
@@ -310,7 +305,7 @@ export default defineConfig({
             'toolbarArrow',
             'toolbar',
             'navbar',
-            'latestShortcuts',
+            'latestCommands',
             'tutorialTraceGesture',
             'dropEmpty',
             'subthoughtsDropEnd',
@@ -326,43 +321,34 @@ export default defineConfig({
         },
       },
       recipes: {
-        icon: iconRecipe,
-        child: childRecipe,
-        anchorButton: anchorButtonRecipe,
-        button: buttonRecipe,
-        bullet: bulletRecipe,
-        link: linkRecipe,
-        extendTap: extendTapRecipe,
-        thought: thoughtRecipe,
-        editable: editableRecipe,
-        textNote: textNoteRecipe,
-        multiline: multilineRecipe,
-        toolbarPointerEvents: toolbarPointerEventsRecipe,
-        tutorialBullet: tutorialBulletRecipe,
-        upperRight: upperRightRecipe,
-        dropHover: dropHoverRecipe,
-        dropEnd: dropEndRecipe,
-        invalidOption: invalidOptionRecipe,
+        iconRecipe,
+        childRecipe,
+        anchorButtonRecipe,
+        buttonRecipe,
+        bulletRecipe,
+        linkRecipe,
+        extendTapRecipe,
+        thoughtRecipe,
+        editableRecipe,
+        textNoteRecipe,
+        multilineRecipe,
+        modalActionLinkRecipe,
+        toolbarPointerEventsRecipe,
+        tutorialBulletRecipe,
+        upperRightRecipe,
+        dropHoverRecipe,
+        dropEndRecipe,
+        invalidOptionRecipe,
       },
       slotRecipes: {
-        modal: modalRecipe,
-        modalText: modalTextRecipe,
+        modalRecipe,
+        modalTextRecipe,
+        fadeTransitionRecipe,
+        slideTransitionRecipe,
       },
       semanticTokens: {
         colors: {
           ...colorSemanticTokens,
-          bgMuted: {
-            value: {
-              base: '#ddd',
-              _dark: '#333',
-            },
-          },
-          dim: {
-            value: {
-              base: 'rgba(7, 7, 7, 0.5)',
-              _dark: 'rgba(255, 255, 255, 0.5)',
-            },
-          },
           invalidOption: {
             value: 'tomato !important',
           },

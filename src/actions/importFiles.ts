@@ -1,3 +1,7 @@
+// there are multiple function callling it self (recursive) so we just disable the lint error
+
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
 /* eslint-disable import/prefer-default-export */
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
@@ -158,11 +162,13 @@ resumeImportsManager.getFiles = async (): Promise<ResumableFile[]> => {
 const pullDuplicateDescendants =
   (id: ThoughtId, context: Context): Thunk =>
   async (dispatch, getState) => {
-    if (context.length === 0) return
+    const thought = getThoughtById(getState(), id)
+    if (!thought || context.length === 0) return
+
     const stateBeforePull = getState()
 
     // if thought is pending, pull it
-    if (isPending(stateBeforePull, getThoughtById(stateBeforePull, id))) {
+    if (isPending(stateBeforePull, thought)) {
       // Must be forced, otherwise thoughts can be missed.
       // (Not sure how, since pull calls getPendingDescentants, which should be the same.)
       await dispatch(pull([id], { force: true, maxDepth: 1 }))
@@ -178,7 +184,7 @@ const pullDuplicateDescendants =
 
 /** Action-creator for importFiles. */
 export const importFilesActionCreator =
-  ({ files, insertBefore, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
+  ({ files, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!files && !resume) {
       throw new Error('importFiles must specify files or resume.')
@@ -192,7 +198,7 @@ export const importFilesActionCreator =
     // these will be saved to the ResumableFile but ignored on the first thought
     const destThought = getThoughtById(stateStart, head(importPath))
     const destIsLeaf = !anyChild(stateStart, head(importPath))
-    const destEmpty = destThought.value === '' && destIsLeaf
+    const destEmpty = destThought?.value === '' && destIsLeaf
     const siblingAfter = destEmpty ? nextSibling(stateStart, importPath) : null
     const insertBeforeNew = destEmpty && !!siblingAfter
     const pathNew = destEmpty

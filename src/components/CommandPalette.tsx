@@ -1,21 +1,20 @@
 import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
-import Shortcut from '../@types/Shortcut'
+import Command from '../@types/Command'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
-import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
+import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
-import { formatKeyboardShortcut, gestureString, hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
-import durations from '../util/durations'
-import { executeShortcutWithMulticursor } from '../util/executeShortcut'
+import { executeCommandWithMulticursor } from '../util/executeCommand'
+import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import Popup from './Popup'
@@ -27,15 +26,15 @@ import Popup from './Popup'
 /** The maximum number of recent commands to store for the command palette. */
 const MAX_RECENT_COMMANDS = 5
 
-const commandPaletteShortcut = shortcutById('commandPalette')
+const commandPaletteCommand = commandById('commandPalette')
 
 /**********************************************************************
  * Helper Functions
  **********************************************************************/
 
-/** Returns true if the shortcut can be executed. */
-const isExecutable = (state: State, shortcut: Shortcut) =>
-  (!shortcut.canExecute || shortcut.canExecute(state)) && (shortcut.allowExecuteFromModal || !state.showModal)
+/** Returns true if the command can be executed. */
+const isExecutable = (state: State, command: Command) =>
+  (!command.canExecute || command.canExecute(state)) && (command.allowExecuteFromModal || !state.showModal)
 
 /**********************************************************************
  * Components
@@ -53,13 +52,13 @@ const CommandSearch: FC<{
   const dispatch = useDispatch()
   const inputRef = useRef<HTMLInputElement | null>(null)
 
-  /** Handle command palette shortuts. */
+  /** Handle command palette commands. */
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (
         e.key === 'Escape' ||
-        // manually check if the commandPalette shortcut is entered since global shortcuts are disabled while the command palette is open
-        hashKeyDown(e) === hashShortcut(commandPaletteShortcut)
+        // manually check if the commandPalette command is entered since global commands are disabled while the command palette is open
+        hashKeyDown(e) === hashCommand(commandPaletteCommand)
       ) {
         e.preventDefault()
         e.stopPropagation()
@@ -123,22 +122,22 @@ const CommandRow: FC<{
   gestureInProgress: string
   search: string
   last?: boolean
-  onClick: (e: React.MouseEvent, shortcut: Shortcut) => void
-  onHover: (e: MouseEvent, shortcut: Shortcut) => void
+  onClick: (e: React.MouseEvent, command: Command) => void
+  onHover: (e: MouseEvent, command: Command) => void
   selected?: boolean
-  shortcut: Shortcut
+  command: Command
   style?: React.CSSProperties
-}> = ({ gestureInProgress, search, last, onClick, onHover, selected, shortcut, style }) => {
+}> = ({ gestureInProgress, search, last, onClick, onHover, selected, command, style }) => {
   const store = useStore()
   const ref = React.useRef<HTMLDivElement>(null)
 
-  const isActive = shortcut.isActive?.(store.getState())
-  const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
-  const disabled = useSelector(state => !isExecutable(state, shortcut))
+  const isActive = command.isActive?.(store.getState())
+  const label = command.labelInverse && isActive ? command.labelInverse! : command.label
+  const disabled = useSelector(state => !isExecutable(state, command))
 
   // convert the description to a string
   const description = useSelector(state => {
-    const descriptionStringOrFunction = (isActive && shortcut.descriptionInverse) || shortcut.description
+    const descriptionStringOrFunction = (isActive && command.descriptionInverse) || command.description
     return descriptionStringOrFunction instanceof Function
       ? descriptionStringOrFunction(state)
       : descriptionStringOrFunction
@@ -152,16 +151,16 @@ const CommandRow: FC<{
 
   useEffect(() => {
     /** Hover handler. */
-    const onHoverShortcut = (e: MouseEvent) => onHover(e, shortcut)
+    const onHoverCommand = (e: MouseEvent) => onHover(e, command)
 
     // mouseover and mouseenter cause the command under the cursor to get selected on render, so we use mousemove to ensure that it only gets selected on an actual hover
-    ref.current?.addEventListener('mousemove', onHoverShortcut)
+    ref.current?.addEventListener('mousemove', onHoverCommand)
 
     return () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      ref.current?.removeEventListener('mousemove', onHoverShortcut)
+      ref.current?.removeEventListener('mousemove', onHoverCommand)
     }
-  }, [onHover, shortcut])
+  }, [onHover, command])
 
   return (
     <div
@@ -175,14 +174,14 @@ const CommandRow: FC<{
       ref={ref}
       onClick={e => {
         if (!disabled) {
-          onClick(e, shortcut)
+          onClick(e, command)
         }
       }}
       style={style}
     >
       <div
         className={css({
-          backgroundColor: selected ? '#212121' : undefined,
+          backgroundColor: selected ? 'commandSelected' : undefined,
           padding: selected ? '5px 0 5px 0.5em' : undefined,
           ...(!isTouch
             ? {
@@ -197,15 +196,43 @@ const CommandRow: FC<{
           {isTouch && (
             <GestureDiagram
               color={disabled ? token('colors.gray') : undefined}
-              highlight={!disabled ? gestureInProgress.length : undefined}
-              path={gestureString(shortcut)}
+              highlight={
+                !disabled
+                  ? command.id === 'help'
+                    ? // For help command, find the longest matching end portion
+                      (() => {
+                        const helpGesture = gestureString(command)
+                        return (
+                          [...helpGesture]
+                            .map((_, i) => helpGesture.length - i)
+                            .find(len => gestureInProgress.endsWith(helpGesture.slice(0, len))) ?? 0
+                        )
+                      })()
+                    : // For other commands, use normal highlighting
+                      command.id === 'cancel'
+                      ? selected
+                        ? 1
+                        : undefined
+                      : gestureInProgress.length
+                  : undefined
+              }
+              path={command.id === 'cancel' ? null : gestureString(command)}
               strokeWidth={4}
-              cssRaw={css.raw({
-                position: 'absolute',
-                marginLeft: selected ? 5 : 15,
-                left: selected ? '-1.75em' : '-2.2em',
-                top: selected ? '-0.2em' : '-0.75em',
-              })}
+              cssRaw={css.raw(
+                command.id === 'cancel'
+                  ? {
+                      position: 'absolute',
+                      marginLeft: selected ? 5 : 15,
+                      left: '-2.3em',
+                      top: selected ? '-0.2em' : '-0.75em',
+                    }
+                  : {
+                      position: 'absolute',
+                      marginLeft: selected ? 5 : 15,
+                      left: selected ? '-1.75em' : '-2.2em',
+                      top: selected ? '-0.2em' : '-0.75em',
+                    },
+              )}
               width={45}
               height={45}
             />
@@ -216,7 +243,13 @@ const CommandRow: FC<{
             className={css({
               minWidth: '4em',
               whiteSpace: 'nowrap',
-              color: disabled ? 'gray' : gestureInProgress === shortcut.gesture ? 'vividHighlight' : 'fg',
+              color: disabled
+                ? 'gray'
+                : isTouch
+                  ? selected || gestureInProgress === command.gesture
+                    ? 'vividHighlight'
+                    : 'fg'
+                  : 'fg',
               fontWeight: selected ? 'bold' : undefined,
             })}
           >
@@ -227,7 +260,7 @@ const CommandRow: FC<{
         <div className={css({ maxHeight: !isTouch ? '1em' : undefined, flexGrow: 1, zIndex: 1 })}>
           <div
             className={css({
-              backgroundColor: selected ? '#212121' : undefined,
+              backgroundColor: selected ? 'commandSelected' : undefined,
               display: 'flex',
               padding: !isTouch ? '3px 0.6em 0.3em 0.2em' : undefined,
               marginLeft: !isTouch ? '2em' : undefined,
@@ -264,7 +297,7 @@ const CommandRow: FC<{
                 })}
               >
                 <span className={css({ marginLeft: 20, whiteSpace: 'nowrap' })}>
-                  {shortcut.keyboard && formatKeyboardShortcut(shortcut.keyboard)}
+                  {command.keyboard && formatKeyboardShortcut(command.keyboard)}
                 </span>
               </div>
             )}
@@ -284,46 +317,46 @@ const CommandPalette: FC = () => {
   const unmounted = useRef(false)
   const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
   const [search, setSearch] = useState('')
-  const shortcuts = useFilteredCommands(search, {
+  const commands = useFilteredCommands(search, {
     recentCommands,
     sortActiveCommandsFirst: true,
   })
 
-  const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(shortcuts[0])
+  const [selectedCommand, setSelectedCommand] = useState<Command>(commands[0])
 
-  /** Execute a shortcut. */
+  /** Execute a command. */
   const onExecute = useCallback(
-    (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, shortcut: Shortcut) => {
+    (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, command: Command) => {
       e.stopPropagation()
       e.preventDefault()
       if (
         unmounted.current ||
-        (shortcut.canExecute && !shortcut.canExecute(store.getState())) ||
-        (store.getState().showModal && !shortcut.allowExecuteFromModal)
+        (command.canExecute && !command.canExecute(store.getState())) ||
+        (store.getState().showModal && !command.allowExecuteFromModal)
       )
         return
-      const commandsNew = [shortcut.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
+      const commandsNew = [command.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
       dispatch(commandPalette())
-      executeShortcutWithMulticursor(shortcut, { event: e, type: 'commandPalette', store })
+      executeCommandWithMulticursor(command, { event: e, type: 'commandPalette', store })
       storageModel.set('recentCommands', commandsNew)
       setRecentCommands(commandsNew)
     },
     [dispatch, recentCommands, setRecentCommands, store],
   )
 
-  /** Execute the selected shortcut. */
+  /** Execute the selected command. */
   const onExecuteSelected = useCallback(
-    (e: KeyboardEvent) => onExecute(e, selectedShortcut),
-    [onExecute, selectedShortcut],
+    (e: KeyboardEvent) => onExecute(e, selectedCommand),
+    [onExecute, selectedCommand],
   )
 
-  /** Select shortcuts on hover. */
-  const onHover = useCallback((e: MouseEvent, shortcut: Shortcut) => setSelectedShortcut(shortcut), [])
+  /** Select commands on hover. */
+  const onHover = useCallback((e: MouseEvent, command: Command) => setSelectedCommand(command), [])
 
-  // Select the first shortcut when the input changes.
+  // Select the first command when the input changes.
   useEffect(() => {
-    setSelectedShortcut(shortcuts[0])
-  }, [search, shortcuts, setSelectedShortcut])
+    setSelectedCommand(commands[0])
+  }, [search, commands, setSelectedCommand])
 
   useEffect(() => {
     allowScroll(false)
@@ -334,50 +367,50 @@ const CommandPalette: FC = () => {
     }
   }, [])
 
-  /** Select the previous shortcut in the list. */
+  /** Select the previous command in the list. */
   const onSelectUp = useCallback(
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      if (selectedShortcut !== shortcuts[0]) {
-        const i = shortcuts.indexOf(selectedShortcut)
-        setSelectedShortcut(shortcuts[i - 1])
+      if (selectedCommand !== commands[0]) {
+        const i = commands.indexOf(selectedCommand)
+        setSelectedCommand(commands[i - 1])
       }
     },
-    [shortcuts, selectedShortcut],
+    [commands, selectedCommand],
   )
 
-  /** Select the next shortcut in the list. */
+  /** Select the next command in the list. */
   const onSelectDown = useCallback(
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      if (selectedShortcut !== shortcuts[shortcuts.length - 1]) {
-        const i = shortcuts.indexOf(selectedShortcut)
-        setSelectedShortcut(shortcuts[i + 1])
+      if (selectedCommand !== commands[commands.length - 1]) {
+        const i = commands.indexOf(selectedCommand)
+        setSelectedCommand(commands[i + 1])
       }
     },
-    [shortcuts, selectedShortcut],
+    [commands, selectedCommand],
   )
 
-  /** Select the first shortcut in the list. */
+  /** Select the first command in the list. */
   const onSelectTop = useCallback(
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      setSelectedShortcut(shortcuts[0])
+      setSelectedCommand(commands[0])
     },
-    [shortcuts],
+    [commands],
   )
 
-  /* Select the last shortcut in the list. */
+  /* Select the last command in the list. */
   const onSelectBottom = useCallback(
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      setSelectedShortcut(shortcuts[shortcuts.length - 1])
+      setSelectedCommand(commands[commands.length - 1])
     },
-    [shortcuts],
+    [commands],
   )
 
   return (
@@ -388,10 +421,15 @@ const CommandPalette: FC = () => {
         textAlign: 'left',
       })}
     >
-      {!isTouch || (gestureInProgress && shortcuts.length > 0) ? (
+      {!isTouch || (gestureInProgress && commands.length > 0) ? (
         <div>
           <h2
-            className={css({ marginTop: 0, marginBottom: '1em', paddingLeft: 5, borderBottom: 'solid 1px gray' })}
+            className={css({
+              marginTop: 0,
+              marginBottom: '1em',
+              paddingLeft: 5,
+              borderBottom: 'solid 1px {colors.gray50}',
+            })}
             style={{ marginLeft: -fontSize * 1.8 }}
           >
             {!isTouch ? (
@@ -416,23 +454,46 @@ const CommandPalette: FC = () => {
               ...(!isTouch ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
             })}
           >
-            {shortcuts.map(shortcut => (
-              <CommandRow
-                search={search}
-                gestureInProgress={gestureInProgress as string}
-                key={shortcut.id}
-                last={shortcut === shortcuts[shortcuts.length - 1]}
-                onClick={onExecute}
-                onHover={onHover}
-                selected={!isTouch ? shortcut === selectedShortcut : gestureInProgress === shortcut.gesture}
-                shortcut={shortcut}
-              />
-            ))}
-            {shortcuts.length === 0 && <span className={css({ marginLeft: '1em' })}>No matching commands</span>}
+            {commands.length > 0 ? (
+              <>
+                {(() => {
+                  const hasMatchingCommand = commands.some(cmd => gestureInProgress === cmd.gesture)
+                  const helpCommand = commandById('help')
+
+                  return commands.map(command => {
+                    // Check if the current gesture sequence ends with help gesture
+                    const isHelpMatch =
+                      command.id === 'help' &&
+                      (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+                    const isCancelMatch =
+                      command.id === 'cancel' &&
+                      !hasMatchingCommand &&
+                      !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+
+                    return (
+                      <CommandRow
+                        search={search}
+                        gestureInProgress={gestureInProgress as string}
+                        key={command.id}
+                        last={command === commands[commands.length - 1]}
+                        onClick={onExecute}
+                        onHover={onHover}
+                        selected={
+                          !isTouch
+                            ? command === selectedCommand
+                            : isHelpMatch || gestureInProgress == command.gesture || isCancelMatch
+                        }
+                        command={command}
+                      />
+                    )
+                  })
+                })()}
+              </>
+            ) : (
+              <span className={css({ marginLeft: '1em' })}>No matching commands</span>
+            )}
           </div>
         </div>
-      ) : isTouch ? (
-        <div className={css({ textAlign: 'center' })}>{GESTURE_CANCEL_ALERT_TEXT}</div>
       ) : null}
     </div>
   )
@@ -460,13 +521,7 @@ const CommandPaletteWithTransition: FC = () => {
       childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {showCommandPalette ? (
-        <CSSTransition
-          key={0}
-          nodeRef={popupRef}
-          timeout={durations.get('mediumDuration')}
-          classNames='fade'
-          onEntering={() => setDismiss(false)}
-        >
+        <FadeTransition duration='fast' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
           <Popup
             ref={popupRef}
             // only show the close link on desktop
@@ -476,7 +531,7 @@ const CommandPaletteWithTransition: FC = () => {
           >
             <CommandPalette />
           </Popup>
-        </CSSTransition>
+        </FadeTransition>
       ) : null}
     </TransitionGroup>
   )

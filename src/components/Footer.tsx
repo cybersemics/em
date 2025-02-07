@@ -1,9 +1,8 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import React, { FC, PropsWithChildren, useEffect, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import pkg from '../../package.json'
 import { css, cx } from '../../styled-system/css'
-import { extendTap } from '../../styled-system/recipes'
+import { extendTapRecipe } from '../../styled-system/recipes'
 import Modal from '../@types/Modal'
 import { alertActionCreator as alert } from '../actions/alert'
 import fontSizeDown from '../actions/fontSizeDown'
@@ -81,7 +80,7 @@ const ModalLink: FC<PropsWithChildren<{ id: Modal }>> = ({ id, children }) => {
     <a
       tabIndex={-1}
       {...fastClick(() => dispatch(showModal({ id })))}
-      className={cx(extendTap(), css({ whiteSpace: 'nowrap' }))}
+      className={cx(extendTapRecipe(), css({ whiteSpace: 'nowrap' }))}
     >
       {children}
     </a>
@@ -158,7 +157,7 @@ const Footer = () => {
         textAlign: 'right',
         fontSize: '75%',
         listStyle: 'none',
-        backgroundColor: { base: '#e4e4e4', _dark: '#1a1a1a' },
+        backgroundColor: 'footerBg',
         boxSizing: 'border-box',
         width: '100%',
         zIndex: 'modal',

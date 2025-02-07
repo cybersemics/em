@@ -73,6 +73,13 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   const sourceParentThought = getThoughtById(state, sourceParentId)
   const destinationThought = getThoughtById(state, destinationThoughtId)
 
+  if (!sourceParentThought || !destinationThought) {
+    console.warn(
+      `Missing sourceParentThought${sourceParentId} or destinationThought${destinationThoughtId}. Aborting moveThought.`,
+    )
+    return state
+  }
+
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
 
@@ -200,6 +207,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
           const ranksTooClose = children.some((thought, i) => {
             if (i === 0) return false
             const secondThought = getThoughtById(state, children[i - 1].id)
+            if (!secondThought) return false
             return Math.abs(thought.rank - secondThought.rank) < rankPrecision
           })
           // TODO: Explicitly converting to simplePath becauase context view has not been implemented yet and later we would want to change oldPath and newPath to be sourceThoughtId and destinationThoughtId instead.

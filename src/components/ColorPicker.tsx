@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
-import { bulletColorActionCreator as bulletColor } from '../actions/bulletColor'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
@@ -21,6 +20,15 @@ import TextColorIcon from './icons/TextColor'
 /** A function that adds an alpha channel to a hex color. */
 const addAlphaToHex = (hex: string) => (hex.length === 7 ? hex + 'ff' : hex)
 
+/** Extracts and cleans a color value from a potential HTML-like string. */
+const getCleanColor = (color: string | null) => {
+  if (!color) return null
+  // Extract clean color value from potential HTML-like string.
+  const colorMatch = typeof color === 'string' ? color.match(/#[0-9a-fA-F]{6}/) : null
+  const cleanColor = colorMatch ? colorMatch[0] : color
+  return cleanColor && typeof cleanColor === 'string' ? addAlphaToHex(rgbToHex(cleanColor)) : null
+}
+
 /** A small, square color swatch that can be picked in the color picker. */
 const ColorSwatch: FC<{
   backgroundColor?: ColorToken
@@ -32,12 +40,12 @@ const ColorSwatch: FC<{
 }> = ({ backgroundColor, color, label, shape, size }) => {
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
-  const commandStateBackgroundColor = commandStateStore.useSelector(state =>
-    state.backColor ? addAlphaToHex(rgbToHex(state.backColor as string)) : null,
-  )
-  const commandStateColor = commandStateStore.useSelector(state =>
-    state.foreColor ? addAlphaToHex(rgbToHex(state.foreColor as string)) : null,
-  )
+  const commandStateBackgroundColor = commandStateStore.useSelector(state => {
+    return getCleanColor(typeof state.backColor === 'string' ? state.backColor : null)
+  })
+  const commandStateColor = commandStateStore.useSelector(state => {
+    return getCleanColor(typeof state.foreColor === 'string' ? state.foreColor : null)
+  })
 
   size = size || fontSize * 1.2
 
@@ -92,28 +100,14 @@ const ColorSwatch: FC<{
     e.stopPropagation()
     e.preventDefault()
 
-    dispatch(formatSelection('foreColor', color || 'bg'))
+    dispatch(formatSelection('foreColor', color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg')))
+
     // Apply background color to the selection
     if (backgroundColor && backgroundColor !== 'bg') {
       dispatch(formatSelection('backColor', backgroundColor))
     } else {
       dispatch(formatSelection('backColor', 'bg'))
     }
-
-    dispatch(
-      bulletColor({
-        ...(selected
-          ? {
-              color: 'default',
-            }
-          : color
-            ? { color: label }
-            : {
-                backgroundColor: label,
-              }),
-        shape,
-      }),
-    )
   }
   return (
     <span
@@ -157,7 +151,9 @@ const ColorSwatch: FC<{
           style={{
             color: backgroundColor ? token('colors.bg') : color && token(`colors.${color}` as const),
             backgroundColor: backgroundColor && token(`colors.${backgroundColor}` as const),
+            fontWeight: selected ? 'bold' : 'normal',
           }}
+          fill={selected ? token('colors.fg') : 'none'}
         />
       )}
     </span>

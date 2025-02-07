@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from 'react'
 import { css, cx } from '../../../styled-system/css'
-import { modal } from '../../../styled-system/recipes'
+import { modalRecipe } from '../../../styled-system/recipes'
 import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { FADEOUT_DURATION } from '../../constants'
@@ -78,7 +78,7 @@ class ModalComponent extends React.Component<ModalProps> {
   render() {
     const { actions, center, children, hideClose, hideModalActions, id, style, title, top } = this.props
 
-    const modalClasses = modal({ id, center })
+    const modalClasses = modalRecipe({ id, center })
 
     return (
       <div ref={this.ref} style={style} className={cx(modalClasses.root, css({ ...(top ? { top: 55 } : null) }))}>
@@ -89,10 +89,13 @@ class ModalComponent extends React.Component<ModalProps> {
               padding: '10px 20px',
               margin: '-10px -20px',
               position: 'fixed',
-              top: 'calc(9px - 0.2em)',
               right: '11px',
+              // inherit not yet supported by plugin
+              // eslint-disable-next-line @pandacss/no-hardcoded-color
               color: 'inherit',
               textDecoration: 'none',
+              /* spacing.safeAreaTop applies for rounded screens */
+              top: 'calc(token(spacing.safeAreaTop) + 9px - 0.2em)',
             })}
             {...fastClick(this.close)}
           >
@@ -132,14 +135,8 @@ class ModalComponent extends React.Component<ModalProps> {
                   display: 'inline-block',
                   width: '11px',
                   height: '11px',
-                  color: {
-                    base: 'rgba(0, 0, 0, 0.3)',
-                    _dark: 'rgba(255, 255, 255, 0.3)',
-                  },
-                  borderColor: {
-                    base: 'rgba(0, 0, 0, 0.3)',
-                    _dark: 'rgba(255, 255, 255, 0.3)',
-                  },
+                  color: 'bgOverlay30',
+                  borderColor: 'bgOverlay30',
                 },
               })}
               {...fastClick(() => this.close())}

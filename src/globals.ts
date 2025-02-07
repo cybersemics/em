@@ -23,7 +23,7 @@ let offlineTimer = 0
 let errorTimer = 0
 
 /** On cursorNext and cursorPrev, momentarily suppress expansion of children. This avoids performance issues when desktop users hold ArrowDown or ArrowUp to move across many siblings. */
-let suppressExpansion = false // eslint-disable-line prefer-const
+let suppressExpansion = false
 
 /** These aren's so bad. They're for debugging. */
 

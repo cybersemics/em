@@ -2,9 +2,9 @@ import _ from 'lodash'
 import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
-import { anchorButton, extendTap, modalText } from '../../../styled-system/recipes'
+import { anchorButtonRecipe, extendTapRecipe, modalTextRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
@@ -16,9 +16,10 @@ import permissionsModel from '../../data-providers/yjs/permissionsModel'
 import * as selection from '../../device/selection'
 import useSharedType from '../../hooks/useSharedType'
 import useStatus from '../../hooks/useStatus'
-import durations from '../../util/durations'
+import modalDescriptionClass from '../../recipes/modalDescriptionClass'
 import fastClick from '../../util/fastClick'
 import strip from '../../util/strip'
+import FadeTransition from '../FadeTransition'
 import ActionButton from './../ActionButton'
 import ContentEditable, { ContentEditableEvent } from './../ContentEditable'
 import CopyClipboard from './../icons/CopyClipboard'
@@ -35,212 +36,12 @@ const getNextDeviceName = (permissions: Index<Share>, start?: number): string =>
     ? getNextDeviceName(permissions, nextDeviceNumber + 1)
     : `Device ${nextDeviceNumber}`
 }
-
-/** Modal for Sharing and Device Management. */
-const ModalDevices = () => {
-  const permissions = usePermissions()
-  const shareDetailRef = useRef<HTMLDivElement>(null)
-  const shareListRef = useRef<HTMLDivElement>(null)
-
-  // selected accessToken
-  const [selected, setSelected] = useState<string | null>(null)
-
-  const onBack = useCallback(() => setSelected(null), [])
-
-  const modalClasses = modalText()
-  return (
-    <ModalComponent
-      id='devices'
-      title='Device Management'
-      center
-      // do not show the close button on the detail view, since it renders the "Remove device" link at the very bottom of the page
-      actions={({ close }) =>
-        !selected ? <ActionButton key='close' title='Close' {...fastClick(() => close())} /> : null
-      }
-    >
-      <div className={modalClasses.wrapper}>
-        <TransitionGroup>
-          {selected && permissions[selected] ? (
-            <CSSTransition
-              key='share-detail'
-              nodeRef={shareDetailRef}
-              classNames='fade-400'
-              exit={false}
-              timeout={durations.get('mediumDuration')}
-              unmountOnExit
-            >
-              <ShareDetail
-                ref={shareDetailRef}
-                accessToken={selected}
-                isLastDevice={Object.keys(permissions).length === 1}
-                onBack={onBack}
-                share={permissions[selected]}
-              />
-            </CSSTransition>
-          ) : (
-            <CSSTransition
-              key='share-list'
-              nodeRef={shareListRef}
-              classNames='fade-400'
-              exit={false}
-              timeout={durations.get('mediumDuration')}
-              unmountOnExit
-            >
-              <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
-            </CSSTransition>
-          )}
-        </TransitionGroup>
-      </div>
-    </ModalComponent>
-  )
-}
-
-/** The list of device shares for the thoughtspace. */
-const ShareList = React.forwardRef<
-  HTMLDivElement,
-  {
-    onAdd?: (accessToken: string) => void
-    onSelect?: (accessToken: string) => void
-    permissions: Index<Share>
-  }
->(({ onAdd, onSelect, permissions }, ref) => {
-  const status = useStatus()
-  const dispatch = useDispatch()
-  const store = useStore()
-
-  const [showDeviceForm, setShowDeviceForm] = useState(false)
-
-  // sort the owner to the top, then sort by name
-  const permissionsSorted = _.sortBy(
-    Object.entries(permissions),
-    ([accessToken, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
-  )
-
-  /** Keyboad shortcuts. */
-  const onKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      // TODO: Handle modal-specific keyboard shortcuts in a more general way so that they can be used in other modals and so this component does not need to know about showCommandPalette
-      if (e.key === 'Enter' && !showDeviceForm && !store.getState().showCommandPalette) {
-        e.stopPropagation()
-        setShowDeviceForm(true)
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
-
-  useEffect(
-    () => {
-      window.addEventListener('keydown', onKeyDown)
-      return () => {
-        window.removeEventListener('keydown', onKeyDown)
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
-
-  const modalClasses = modalText()
-
-  return (
-    <div ref={ref}>
-      <p className={modalClasses.description}>Add or remove devices that can access and edit this thoughtspace.</p>
-
-      {status === 'connected' ? (
-        <>
-          {/* Device list */}
-          <div className={css({ marginBottom: '2em' })}>
-            {permissionsSorted.map(([accessToken, share]) => {
-              const isCurrent = accessToken === accessTokenCurrent
-              return (
-                <div
-                  key={accessToken}
-                  {...fastClick(() => onSelect?.(accessToken))}
-                  className={css({ cursor: 'pointer' })}
-                >
-                  <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Add a device */}
-          <TransitionGroup>
-            {
-              // form
-              showDeviceForm ? (
-                <CSSTransition
-                  key='add-device-form'
-                  classNames='fade-400'
-                  exit={false}
-                  timeout={durations.get('mediumDuration')}
-                  unmountOnExit
-                >
-                  <div>
-                    <AddDeviceForm
-                      onCancel={() => setShowDeviceForm(false)}
-                      onSubmit={({ name, role }: Pick<Share, 'name' | 'role'>) => {
-                        const result: { accessToken?: string; error?: string } = permissionsModel.add({
-                          role,
-                          name: strip(name || ''),
-                        })
-                        // TODO: permissionsModel.add does not yet return { error }
-                        if (!result.error) {
-                          setShowDeviceForm(false)
-                          onAdd?.(result.accessToken!)
-                        } else {
-                          dispatch(alert('Not connected to server. Unable to add device.', { clearDelay: 2000 }))
-                        }
-                      }}
-                      defaultName={getNextDeviceName(permissions)}
-                    />
-                  </div>
-                </CSSTransition>
-              ) : (
-                // "+ Add a device" button
-                <CSSTransition
-                  key='add-a-device'
-                  classNames='fade-400'
-                  exit={false}
-                  timeout={durations.get('mediumDuration')}
-                  unmountOnExit
-                >
-                  <div className={css({ marginTop: '1em' })}>
-                    <a
-                      {...fastClick(() => setShowDeviceForm(true))}
-                      className={cx(
-                        anchorButton({
-                          outline: true,
-                        }),
-                        css({ display: 'inline-block' }),
-                      )}
-                    >
-                      + Add a device
-                    </a>
-                  </div>
-                </CSSTransition>
-              )
-            }
-          </TransitionGroup>
-        </>
-      ) : (
-        <div className={css({ color: 'gray', fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' })}>
-          <p>This device is currently offline</p>
-          <p>Please connect to the Internet to manage sharing.</p>
-        </div>
-      )}
-    </div>
-  )
-})
-
-ShareList.displayName = 'ShareList'
-
 /** Permissions role label. */
 const RoleLabel = ({ role }: { role: Role }) => <>{role === 'owner' ? 'Full Access' : role}</>
 
 /** Renders a single device share. */
 const ShareRow = React.memo(
-  ({ accessToken, isCurrent, role, share }: { accessToken: string; isCurrent?: boolean; share: Share; role: Role }) => {
+  ({ isCurrent, role, share }: { accessToken: string; isCurrent?: boolean; share: Share; role: Role }) => {
     return (
       <div
         className={css({
@@ -275,7 +76,6 @@ const ShareRow = React.memo(
   },
 )
 ShareRow.displayName = 'ShareRow'
-
 /** The form that allows the user to add a new device. */
 const AddDeviceForm = ({
   onCancel,
@@ -341,7 +141,7 @@ const AddDeviceForm = ({
         <a
           {...fastClick(() => onSubmit({ name, role: 'owner' }))}
           className={cx(
-            anchorButton({
+            anchorButtonRecipe({
               outline: true,
             }),
             css({ display: 'inline-block' }),
@@ -349,13 +149,139 @@ const AddDeviceForm = ({
         >
           Add
         </a>
-        <a {...fastClick(onCancel)} className={css({ color: 'gray', marginLeft: '1em' })}>
+        <a {...fastClick(onCancel)} className={css({ color: 'gray66', marginLeft: '1em' })}>
           Cancel
         </a>
       </div>
     </div>
   )
 }
+
+/** The list of device shares for the thoughtspace. */
+const ShareList = React.forwardRef<
+  HTMLDivElement,
+  {
+    onAdd?: (accessToken: string) => void
+    onSelect?: (accessToken: string) => void
+    permissions: Index<Share>
+  }
+>(({ onAdd, onSelect, permissions }, ref) => {
+  const status = useStatus()
+  const dispatch = useDispatch()
+  const store = useStore()
+
+  const [showDeviceForm, setShowDeviceForm] = useState(false)
+
+  // sort the owner to the top, then sort by name
+  const permissionsSorted = _.sortBy(
+    Object.entries(permissions),
+    ([, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
+  )
+
+  /** Keyboad shortcuts. */
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      // TODO: Handle modal-specific keyboard shortcuts in a more general way so that they can be used in other modals and so this component does not need to know about showCommandPalette
+      if (e.key === 'Enter' && !showDeviceForm && !store.getState().showCommandPalette) {
+        e.stopPropagation()
+        setShowDeviceForm(true)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
+
+  useEffect(
+    () => {
+      window.addEventListener('keydown', onKeyDown)
+      return () => {
+        window.removeEventListener('keydown', onKeyDown)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
+
+  return (
+    <div ref={ref}>
+      <p className={modalDescriptionClass}>Add or remove devices that can access and edit this thoughtspace.</p>
+
+      {status === 'connected' ? (
+        <>
+          {/* Device list */}
+          <div className={css({ marginBottom: '2em' })}>
+            {permissionsSorted.map(([accessToken, share]) => {
+              const isCurrent = accessToken === accessTokenCurrent
+              return (
+                <div
+                  key={accessToken}
+                  {...fastClick(() => onSelect?.(accessToken))}
+                  className={css({ cursor: 'pointer' })}
+                >
+                  <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Add a device */}
+          <TransitionGroup>
+            {
+              // form
+              showDeviceForm ? (
+                <FadeTransition id='add-device-form' duration='medium' exit={false} unmountOnExit>
+                  <div>
+                    <AddDeviceForm
+                      onCancel={() => setShowDeviceForm(false)}
+                      onSubmit={({ name, role }: Pick<Share, 'name' | 'role'>) => {
+                        const result: { accessToken?: string; error?: string } = permissionsModel.add({
+                          role,
+                          name: strip(name || ''),
+                        })
+                        // TODO: permissionsModel.add does not yet return { error }
+                        if (!result.error) {
+                          setShowDeviceForm(false)
+                          onAdd?.(result.accessToken!)
+                        } else {
+                          dispatch(alert('Not connected to server. Unable to add device.', { clearDelay: 2000 }))
+                        }
+                      }}
+                      defaultName={getNextDeviceName(permissions)}
+                    />
+                  </div>
+                </FadeTransition>
+              ) : (
+                // "+ Add a device" button
+                <FadeTransition id='add-a-device' exit={false} duration='medium' unmountOnExit>
+                  <div className={css({ marginTop: '1em' })}>
+                    <a
+                      {...fastClick(() => setShowDeviceForm(true))}
+                      className={cx(
+                        anchorButtonRecipe({
+                          outline: true,
+                        }),
+                        css({ display: 'inline-block' }),
+                      )}
+                    >
+                      + Add a device
+                    </a>
+                  </div>
+                </FadeTransition>
+              )
+            }
+          </TransitionGroup>
+        </>
+      ) : (
+        <div className={css({ color: 'gray66', fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' })}>
+          <p>This device is currently offline</p>
+          <p>Please connect to the Internet to manage sharing.</p>
+        </div>
+      )}
+    </div>
+  )
+})
+
+ShareList.displayName = 'ShareList'
 
 /** Renders an editable name with a pencil icon to focus. */
 const EditableName = React.memo(
@@ -384,7 +310,7 @@ const EditableName = React.memo(
             verticalAlign: 'bottom',
           })}
         >
-          <PencilIcon fill={token('colors.gray')} size={25} />
+          <PencilIcon fill={token('colors.gray66')} size={25} />
         </a>
       </div>
     )
@@ -534,7 +460,7 @@ const ShareDetail = React.memo(
             </div>
           )}
 
-          <p className={css({ color: 'gray' })}>
+          <p className={css({ color: 'gray66' })}>
             Created: {new Date(share.created).toLocaleString()}
             <br />
             Last Accessed: {share.accessed ? new Date(share.accessed).toLocaleString() : 'never'}
@@ -544,7 +470,7 @@ const ShareDetail = React.memo(
             <a
               {...fastClick(onBack)}
               className={cx(
-                anchorButton({
+                anchorButtonRecipe({
                   actionButton: true,
                   // extendTap overrides default button padding
                   extendTap: true,
@@ -558,7 +484,7 @@ const ShareDetail = React.memo(
           )}
 
           <div className={css({ marginTop: '4em' })}>
-            <p className={css({ color: 'gray', marginTop: '0.5em' })}>
+            <p className={css({ color: 'gray66', marginTop: '0.5em' })}>
               {isLastDevice
                 ? 'This is the last device with access to this thoughtspace. If you clear the thoughtspace, all thoughts will be permanently deleted.'
                 : isCurrent
@@ -571,7 +497,7 @@ const ShareDetail = React.memo(
                 permissionsModel.delete(accessToken, share)
                 onBack()
               }}
-              className={cx(extendTap(), css({ color: 'red' }))}
+              className={cx(extendTapRecipe(), css({ color: 'red' }))}
             >
               {isLastDevice ? 'Delete all thoughts' : 'Remove device'}
             </a>
@@ -582,7 +508,57 @@ const ShareDetail = React.memo(
   ),
 )
 ShareDetail.displayName = 'ShareDetail'
+/** Modal for Sharing and Device Management. */
+const ModalDevices = () => {
+  const permissions = usePermissions()
+  const shareDetailRef = useRef<HTMLDivElement>(null)
+  const shareListRef = useRef<HTMLDivElement>(null)
 
+  // selected accessToken
+  const [selected, setSelected] = useState<string | null>(null)
+
+  const onBack = useCallback(() => setSelected(null), [])
+
+  const modalClasses = modalTextRecipe()
+  return (
+    <ModalComponent
+      id='devices'
+      title='Device Management'
+      center
+      // do not show the close button on the detail view, since it renders the "Remove device" link at the very bottom of the page
+      actions={({ close }) =>
+        !selected ? <ActionButton key='close' title='Close' {...fastClick(() => close())} /> : null
+      }
+    >
+      <div className={modalClasses.wrapper}>
+        <TransitionGroup>
+          {selected && permissions[selected] ? (
+            <FadeTransition
+              key={'share-detail'}
+              id='share-detail'
+              nodeRef={shareDetailRef}
+              duration='medium'
+              exit={false}
+              unmountOnExit
+            >
+              <ShareDetail
+                ref={shareDetailRef}
+                accessToken={selected}
+                isLastDevice={Object.keys(permissions).length === 1}
+                onBack={onBack}
+                share={permissions[selected]}
+              />
+            </FadeTransition>
+          ) : (
+            <FadeTransition id='share-list' nodeRef={shareListRef} duration='medium' exit={false} unmountOnExit>
+              <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
+            </FadeTransition>
+          )}
+        </TransitionGroup>
+      </div>
+    </ModalComponent>
+  )
+}
 const ModalShareMemo = React.memo(ModalDevices)
 
 export default ModalShareMemo

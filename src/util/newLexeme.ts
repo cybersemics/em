@@ -10,7 +10,6 @@ const newLexeme = ({
   created,
   id,
   lastUpdated,
-  value,
 }: {
   archived?: Timestamp
   created?: Timestamp

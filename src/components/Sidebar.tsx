@@ -2,7 +2,6 @@ import SwipeableDrawer, { SwipeableDrawerProps } from '@mui/material/SwipeableDr
 import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
@@ -10,6 +9,7 @@ import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isTouch } from '../browser'
 import durations from '../util/durations'
 import fastClick from '../util/fastClick'
+import FadeTransition from './FadeTransition'
 import Favorites from './Favorites'
 import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
@@ -36,6 +36,7 @@ const SidebarLink = ({
   return (
     <a
       {...fastClick(() => setSection(section))}
+      data-testid={`sidebar-${section}`}
       className={css({
         color: active ? 'fg' : 'gray50',
         display: 'inline-block',
@@ -74,9 +75,10 @@ const Sidebar = () => {
      * we are providing different classname to drawer based on isTouch property.
      */
     <SwipeableDrawerWithClasses
+      data-testid='sidebar'
       classes={{
         /* Increase precedence over .css-1u2w381-MuiModal-root-MuiDrawer-root z-index. */
-        root: css({ zIndex: 'sidebar !important' }),
+        root: css({ userSelect: 'none', zIndex: 'sidebar !important' }),
         /* material drawer container css z-index override */
         paper: css({
           width: '400px',
@@ -86,6 +88,11 @@ const Sidebar = () => {
       }}
       disableSwipeToOpen={!isTouch}
       ref={containerRef}
+      transitionDuration={durations.get('fast')}
+      // On iOS Safari, restoring focus works when tapping the backdrop to close the sidebar, but not when tapping the hamburger
+      // menu to close the sidebar. Hopefully the hamburger menu can be fixed and focus can be restored properly in all cases.
+      // Until then, letting the backdrop (correctly) restore focus results in inconsistent behavior.
+      ModalProps={{ disableRestoreFocus: isTouch }}
       SwipeAreaProps={{
         style: {
           // Set width here since setting style with SwipeAreaProps will override the swipeAreaWidth prop.
@@ -132,7 +139,7 @@ const Sidebar = () => {
         <div
           aria-label='sidebar'
           className={css({
-            background: { base: '#f5f5f5', _dark: '#292a2b' },
+            background: 'sidebarBg',
             overflowY: 'scroll',
             overscrollBehavior: 'contain',
             boxSizing: 'border-box',
@@ -153,12 +160,7 @@ const Sidebar = () => {
           })}
           data-scroll-at-edge
         >
-          <CSSTransition
-            in={showSidebar}
-            nodeRef={sidebarMenuRef}
-            timeout={durations.get('mediumDuration')}
-            classNames='fade'
-          >
+          <FadeTransition duration='fast' in={showSidebar} nodeRef={sidebarMenuRef}>
             <div
               ref={sidebarMenuRef}
               style={{
@@ -185,7 +187,7 @@ const Sidebar = () => {
                 text='Recently Deleted'
               />
             </div>
-          </CSSTransition>
+          </FadeTransition>
 
           {section === 'favorites' ? (
             <Favorites disableDragAndDrop={isSwiping} />

@@ -19,20 +19,20 @@ const Tip: FC<
         // disable pointer revents when hidden, otherwise it will block clicks on the NavBar
         pointerEvents: display ? 'auto' : 'none',
         transform: display ? 'translateY(0)' : 'translateY(100%)',
-        transition: `transform {durations.fastDuration} ease-in-out, opacity {durations.fastDuration} ease-in-out`,
+        transition: `transform {durations.fast} ease-in-out, opacity {durations.fast} ease-in-out`,
         opacity: display ? '1' : '0',
         zIndex: 'popup',
       })}
     >
       <div
         className={css({
-          backgroundColor: '#333',
+          backgroundColor: 'codeBg',
           display: 'inline-block',
           padding: '1em',
           maxWidth: '20em',
           borderRadius: '5',
           textAlign: 'center',
-          color: '#ccc',
+          color: 'codeBgInverse',
         })}
       >
         {children}

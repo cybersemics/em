@@ -50,13 +50,17 @@ const subcategorizeMulticursor = (state: State) => {
       rank: newRank,
       id: newThoughtId,
     }),
-    ...multicursorPaths.reverse().map(path =>
-      moveThought({
-        oldPath: path,
-        newPath: appendToPath(commonParent, newThoughtId, head(path)),
-        newRank: getThoughtById(state, head(path)).rank,
-      }),
-    ),
+    ...multicursorPaths
+      .reverse()
+      // we ignore thoughts at cursor that are somehow missing, see getThoughtById
+      .filter(path => !!getThoughtById(state, head(path)))
+      .map(path =>
+        moveThought({
+          oldPath: path,
+          newPath: appendToPath(commonParent, newThoughtId, head(path)),
+          newRank: getThoughtById(state, head(path))!.rank,
+        }),
+      ),
     setCursor({
       path: appendToPath(commonParent, newThoughtId),
       offset: 0,

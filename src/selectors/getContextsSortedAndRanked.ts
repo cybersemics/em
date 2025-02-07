@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isRoot from '../util/isRoot'
@@ -28,12 +29,13 @@ const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
         ...(thought || {
           id: cxid,
           childrenMap: {},
-          parentId: '', // ???
+          parentId: '' as ThoughtId, // ???
           pending: true,
           rank: i, // overwritten by contextSorted
           value: PENDING_TOKEN,
           lastUpdated: never(),
           updatedBy: '',
+          created: never(),
         }),
       }
       return thoughtRanked

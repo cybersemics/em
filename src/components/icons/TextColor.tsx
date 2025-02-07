@@ -1,28 +1,43 @@
-import { css, cx } from '../../../styled-system/css'
-import { icon } from '../../../styled-system/recipes'
-import { token } from '../../../styled-system/tokens'
-import IconType from '../../@types/Icon'
-import { ICON_SCALING_FACTOR } from '../../constants'
+import IconType from '../../@types/IconType'
+import AnimatedIcon from './AnimatedIcon'
+import animationData from './animations/17-text-color_2.json'
 
-/** TextColor Icon. */
-const TextColorIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
-  const newSize = size * ICON_SCALING_FACTOR
-  const strokeColor = style.fill || fill || token('colors.fg')
-
+/** TextColor Icon with Conditional Lottie Animation. */
+const TextColorIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+  const strokeWidth = style.fontWeight === 'bold' ? 1.5 : 1
   return (
-    <svg
-      className={cx(icon(), css(cssRaw))}
-      xmlns='http://www.w3.org/2000/svg'
-      viewBox='0 0 24 24'
-      fill='none'
-      style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}
+    <AnimatedIcon
+      {...{
+        fill,
+        size,
+        style: { ...style, backgroundColor: 'transparent' },
+        cssRaw,
+        animated,
+        animationData,
+        animationComplete,
+      }}
     >
-      <rect width='24' height='24' fill='none' />
-      <rect x='2.73' y='2.73' width='18.53' height='18.53' rx='3' fill='none' stroke={strokeColor} />
-      <line x1='12' y1='7.2' x2='7.42' y2='16.6' fill='none' stroke={strokeColor} />
-      <line x1='12' y1='7.2' x2='16.58' y2='16.6' fill='none' stroke={strokeColor} />
-      <line x1='8.96' y1='13.44' x2='15.05' y2='13.44' fill='none' stroke={strokeColor} />
-    </svg>
+      <svg
+        xmlns='http://www.w3.org/2000/svg'
+        viewBox='0 0 24 24'
+        fill='none'
+        style={{ ...style, width: '100%', height: '100%', backgroundColor: 'transparent' }}
+      >
+        <rect width='24' height='24' fill='none' />
+        <rect
+          x='2.73'
+          y='2.73'
+          width='18.53'
+          height='18.53'
+          rx='3'
+          fill={style.backgroundColor || 'none'}
+          stroke={fill}
+        />
+        <line x1='12' y1='7.2' x2='7.42' y2='16.6' fill='none' stroke='currentColor' strokeWidth={strokeWidth} />
+        <line x1='12' y1='7.2' x2='16.58' y2='16.6' fill='none' stroke='currentColor' strokeWidth={strokeWidth} />
+        <line x1='8.96' y1='13.44' x2='15.05' y2='13.44' fill='none' stroke='currentColor' strokeWidth={strokeWidth} />
+      </svg>
+    </AnimatedIcon>
   )
 }
 

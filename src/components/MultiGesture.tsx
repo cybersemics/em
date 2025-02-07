@@ -4,7 +4,7 @@ import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import { noop } from '../constants'
 import gestureStore from '../stores/gesture'
-import viewportStore from '../stores/viewport'
+import isInGestureZone from '../util/isInGestureZone'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
 
@@ -48,10 +48,8 @@ type MultiGestureProps = PropsWithChildren<{
   // related: https://github.com/cybersemics/em/issues/1268
   minDistance?: number
   /** A hook that is called on touchstart if the user is in the gesture zone. If it returns true, the gesture is abandoned. Otherwise scrolling is disabled and a gesture may be entered. */
-  shouldCancelGesture?: () => boolean
+  shouldCancelGesture?: (x?: number, y?: number) => boolean
 }>
-
-const TOOLBAR_HEIGHT = 50
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
 const dirToRad = {
@@ -111,7 +109,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     document.body.addEventListener(
       'touchmove',
       e => {
-        if (this.disableScroll && e.cancelable) {
+        if (this.disableScroll) {
           e.preventDefault()
         }
       },
@@ -125,15 +123,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
         this.clientStart = { x, y }
+        const inGestureZone = isInGestureZone(x, y, this.leftHanded)
 
-        // disable gestures in the scroll zone on the right side of the screen
-        // disable scroll in the gesture zone on the left side of the screen
-        // (reverse in left-handed mode)
-        const viewport = viewportStore.getState()
-        const scrollZoneWidth = viewport.scrollZoneWidth
-        const isInGestureZone =
-          (this.leftHanded ? x > scrollZoneWidth : x < viewport.innerWidth - scrollZoneWidth) && y > TOOLBAR_HEIGHT
-        if (isInGestureZone && !props.shouldCancelGesture?.()) {
+        if (inGestureZone && !props.shouldCancelGesture?.(x, y)) {
           this.disableScroll = true
         } else {
           this.abandon = true
@@ -143,7 +135,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     // Since we set this.disableScroll or this.abandon on touchstart, we need to reset them on touchend.
     // This occurs, for eample, on tap.
-    window.addEventListener('touchend', e => {
+    window.addEventListener('touchend', () => {
       this.reset()
     })
 
@@ -157,7 +149,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
       // NOTE: though it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
-      onMoveShouldSetPanResponder: (e: GestureResponderEvent) => !this.props.shouldCancelGesture?.(),
+      onMoveShouldSetPanResponder: () => !this.props.shouldCancelGesture?.(),
 
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
         if (this.abandon) {

@@ -1,6 +1,5 @@
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
-import classNames from 'classnames'
 import _ from 'lodash'
 import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -8,6 +7,7 @@ import SplitPane from 'react-split-pane'
 import { css } from '../../styled-system/css'
 import { updateSplitPositionActionCreator as updateSplitPosition } from '../actions/updateSplitPosition'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
+import { inputHandlers } from '../commands'
 import { Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
@@ -16,7 +16,6 @@ import getUserSetting from '../selectors/getUserSetting'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
-import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
@@ -25,7 +24,7 @@ import Content from './Content'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
-import LatestShortcutsDiagram from './LatestShortcutsDiagram'
+import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import QuickDropPanel from './QuickDropPanel'
@@ -76,11 +75,16 @@ const useDisableLongPressToSelect = () => {
 }
 
 /** Cancel gesture if there is an active text selection, drag, modal, or sidebar. */
-const shouldCancelGesture = (): boolean =>
-  (selection.isActive() && !selection.isCollapsed()) ||
-  store.getState().dragInProgress ||
-  !!store.getState().showModal ||
-  store.getState().showSidebar
+const shouldCancelGesture = (
+  /** The x coordinate of the touch event. If x and y are provided, cancels the gesture if the touch point is too close to the selection. See selection.isNear. */
+  x?: number,
+  /** The y coordinate of the touch event. If x and y are provided, cancels the gesture if the touch point is too close to the selection. See selection.isNear. */
+  y?: number,
+): boolean => {
+  const state = store.getState()
+  const distance = state.fontSize * 2
+  return (x && y && selection.isNear(x, y, distance)) || state.dragInProgress || !!state.showModal || state.showSidebar
+}
 
 /**
  * Wrap an element in the MultiGesture component if the user has a touch screen.
@@ -113,7 +117,7 @@ const AppComponent: FC = () => {
   const colors = useSelector(themeColors)
   const dark = useSelector(state => theme(state) !== 'Light')
   const dragInProgress = useSelector(state => state.dragInProgress)
-  const enableLatestShortcutsDiagram = useSelector(state => state.enableLatestShortcutsDiagram)
+  const enableLatestCommandsDiagram = useSelector(state => state.enableLatestCommandsDiagram)
   const showTutorial = useSelector(state => isTutorial(state) && !state.isLoading)
   const fontSize = useSelector(state => state.fontSize)
   const showSplitView = useSelector(state => state.showSplitView)
@@ -173,12 +177,6 @@ const AppComponent: FC = () => {
     }
   }, [showSplitView])
 
-  const componentClassNames = classNames({
-    // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
-    mobile: isTouch,
-    'drag-in-progress': dragInProgress,
-  })
-
   if (showModal && !modals[showModal]) {
     throw new Error(`Missing component for Modal type: ${showModal}`)
   }
@@ -186,12 +184,17 @@ const AppComponent: FC = () => {
   const Modal = showModal ? modals[showModal] : null
 
   return (
-    <div className={componentClassNames}>
+    <div
+      className={css({
+        /* safeAreaTop applies for rounded screens */
+        paddingTop: 'safeAreaTop',
+      })}
+    >
       <Alert />
       <Tips />
       <CommandPalette />
       <ErrorMessage />
-      {enableLatestShortcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
+      {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       {isDocumentEditable() && !tutorial && !showModal && (
         <>
           <Sidebar />
@@ -216,37 +219,37 @@ const AppComponent: FC = () => {
               <SplitPane
                 paneClassName={css({ transition: isSplitting ? 'width 0.2s ease' : undefined, userSelect: 'none' })}
                 resizerClassName={css({
-                  background: '#fff',
+                  background: 'fg',
                   opacity: 0.2,
                   zIndex: 'resizer',
                   boxSizing: 'border-box',
                   backgroundClip: 'padding-box',
                   userSelect: 'none',
                   '&:hover': {
-                    transition: 'all 0.2s ease-out',
+                    transition: 'all {durations.fast} ease-out',
                   },
                   '&.horizontal': {
                     height: '11px',
                     margin: '-5px 0',
-                    borderTop: '5px solid rgba(255, 255, 255, 0)',
-                    borderBottom: '5px solid rgba(255, 255, 255, 0)',
+                    borderTop: '5px solid {colors.fgTransparent}',
+                    borderBottom: '5px solid {colors.fgTransparent}',
                     cursor: 'row-resize',
                     width: '100%',
                   },
                   '&.horizontal:hover': {
-                    borderTop: '5px solid rgba(0, 0, 0, 0.5)',
-                    borderBottom: '5px solid rgba(0, 0, 0, 0.5)',
+                    borderTop: '5px solid {colors.bgOverlay50}',
+                    borderBottom: '5px solid {colors.bgOverlay50}',
                   },
                   '&.vertical': {
                     width: '11px',
                     margin: '0 -5px',
-                    borderLeft: '5px solid rgba(255, 255, 255, 0)',
-                    borderRight: '5px solid rgba(255, 255, 255, 0)',
+                    borderLeft: '5px solid {colors.fgTransparent}',
+                    borderRight: '5px solid {colors.fgTransparent}',
                     cursor: 'col-resize',
                   },
                   '&.vertical:hover': {
-                    borderLeft: '5px solid rgba(255, 255, 255, 0.5)',
-                    borderRight: '5px solid rgba(255, 255, 255, 0.5)',
+                    borderLeft: '5px solid {colors.fgOverlay50}',
+                    borderRight: '5px solid {colors.fgOverlay50}',
                   },
                   '&.disabled': { cursor: 'not-allowed' },
                   '&.disabled:hover': { borderColor: 'transparent' },

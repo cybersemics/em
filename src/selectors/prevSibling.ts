@@ -27,11 +27,14 @@ export const prevSibling = (
   if (!thought || (!state.showHiddenThoughts && isAttribute(thought.value))) return null
 
   const parentPath = rootedParentOf(state, path)
+  const parent = getThoughtById(state, head(parentPath))
   const showContexts = showContextsForced ?? isContextViewActive(state, parentPath)
 
   // siblings, including the current thought
   const siblings = showContexts
-    ? getContextsSortedAndRanked(state, getThoughtById(state, head(parentPath)).value)
+    ? parent
+      ? getContextsSortedAndRanked(state, parent.value)
+      : []
     : getChildrenSorted(state, thought.parentId)
 
   // in context view, we need to match the context's parentId, since all context's ids refer to lexeme instances
@@ -41,13 +44,14 @@ export const prevSibling = (
     const message = `Thought ${thought.value} with Path ${path} missing from ${
       showContexts ? 'context view' : 'child'
     } of ${thought.parentId}`
-    throw new Error(message)
+    console.error(message, { thought, siblings, parent: getThoughtById(state, thought.parentId) })
   }
 
   const prev = siblings[index - 1]
+  if (!prev) return null
 
   // in context view, we select then parent since prev again refers to the lexeme instance
-  return prev ? (showContexts ? getThoughtById(state, prev.parentId) : prev) : null
+  return showContexts ? (getThoughtById(state, prev.parentId) ?? null) : prev
 }
 
 export default prevSibling

@@ -1,8 +1,8 @@
 import { FC } from 'react'
 import { css, cx } from '../../../styled-system/css'
-import { icon } from '../../../styled-system/recipes'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import Icon from '../../@types/Icon'
+import Icon from '../../@types/IconType'
 
 /** Meta icon that shows code under a magnifying glass. */
 // https://thenounproject.com/icon/inspect-element-4199164/
@@ -16,7 +16,7 @@ const MetaIcon: FC<Icon> = ({ cssRaw, fill, style, size = 20 }) => {
       x='0'
       y='0'
       viewBox='100 60 550 550'
-      className={cx(icon(), css(cssRaw))}
+      className={cx(iconRecipe(), css(cssRaw))}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

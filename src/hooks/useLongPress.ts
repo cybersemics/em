@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { editingActionCreator as editing } from '../actions/editing'
+import { isTouch } from '../browser'
 import { noop } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
@@ -12,10 +13,13 @@ const SCROLL_THRESHOLD = 10
 // use a global lock since stopPropagation breaks MultiGesture
 let lock = false
 
-/** Custom hook to manage long press. */
+/** Custom hook to manage long press.
+ * The onLongPressStart handler is called after the delay if the user is still pressing. The delay defaults to 250ms, but useDragHold uses TIMEOUT_LONG_PRESS_THOUGHT which is 300ms.
+ * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove).
+ **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
-  onLongPressEnd: (() => void) | null = noop,
+  onLongPressEnd: ((options: { canceled: boolean }) => void) | null = noop,
   onTouchStart: (() => void) | null = noop,
   ms = 250,
 ) => {
@@ -64,9 +68,10 @@ const useLongPress = (
   )
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
-  // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.
+  // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.)
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
+    //eslint disable rule because e use in canhover function
     (e: React.MouseEvent | React.TouchEvent) => {
       // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
       // This gives other components a chance to short circuit.
@@ -75,8 +80,13 @@ const useLongPress = (
         clearTimeout(timerIdRef.current)
         timerIdRef.current = 0
         lock = false
+
+        // If not longpressing, it means that the long press was canceled by a move event.
+        // in this case, onLongPressEnd should not be called, since it was already called by the move event.
+        if (!globals.longpressing) return
+
         globals.longpressing = false
-        onLongPressEnd?.()
+        onLongPressEnd?.({ canceled: false })
         if (!unmounted.current) {
           setPressed(false)
         }
@@ -99,7 +109,8 @@ const useLongPress = (
         timerIdRef.current = 0
         clientCoords.current = { x: 0, y: 0 }
         if (pressed) {
-          onLongPressEnd?.()
+          globals.longpressing = false
+          onLongPressEnd?.({ canceled: true })
         }
       }
     },
@@ -137,8 +148,9 @@ const useLongPress = (
       // disable Android context menu
       // does not work to prevent iOS long press to select behavior
       onContextMenu,
-      onMouseDown: start,
-      onMouseUp: stop,
+      // mousedown and mouseup can trigger on mobile when long tapping on the thought outside the editable, so make sure to only register touch handlers
+      onMouseDown: !isTouch ? start : undefined,
+      onMouseUp: !isTouch ? stop : undefined,
       onTouchStart: start,
       onTouchEnd: stop,
       onTouchMove: move,

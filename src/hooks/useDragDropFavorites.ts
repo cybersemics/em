@@ -50,6 +50,7 @@ const endDrag = () => {
 }
 
 /** Returns true if the Favorite can be dropped at the given DropTarget. */
+//eslint disable rule because monitor use in canDrop function
 const canDrop = (props: { disableDragAndDrop?: boolean; simplePath: SimplePath }, monitor: DropTargetMonitor) =>
   !props.disableDragAndDrop
 

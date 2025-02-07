@@ -32,14 +32,14 @@ const indent = (state: State) => {
   // cancel if parent is readonly or unextendable
   else if (findDescendant(state, head(parentOf(cursor)), '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, parentOf(cursor)))}" is read-only so "${headValue(
+      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
         state,
         cursor,
       )}" may not be indented.`,
     })
   } else if (findDescendant(state, head(parentOf(cursor)), '=uneditable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, parentOf(cursor)))}" is unextendable so "${headValue(
+      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
         state,
         cursor,
       )}" may not be indented.`,

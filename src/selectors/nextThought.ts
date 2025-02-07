@@ -18,28 +18,28 @@ import parentOf from '../util/parentOf'
 const nextContext = (state: State, path: Path) => {
   // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
   const parent = getThoughtById(state, head(rootedParentOf(state, path)))
-  const contexts = getContextsSortedAndRanked(state, parent.value)
+  const contexts = parent ? getContextsSortedAndRanked(state, parent.value) : []
   // find the thought in the context view
-  const index = contexts.findIndex(cx => getThoughtById(state, cx.id).parentId === head(path))
+  const index = contexts.findIndex(cx => getThoughtById(state, cx.id)?.parentId === head(path))
   // get the next context
   const nextContextId = contexts[index + 1]?.id
   const nextContext = nextContextId ? getThoughtById(state, nextContextId) : null
   // if next does not exist (i.e. path is the last context), call nextThought on the parent and ignore the context view to move to the next uncle in the normal view
   return nextContext
     ? appendToPath(parentOf(path), nextContext.parentId)
-    : nextThought(state, rootedParentOf(state, path), { ignoreChildren: true })
+    : nextThought(state, rootedParentOf(state, path), { ignoreChildren: true }) // eslint-disable-line @typescript-eslint/no-use-before-define
 }
 
 /** Gets the first context in a context view. */
 const firstContext = (state: State, path: Path): Path | null => {
   const thought = getThoughtById(state, head(path))
-  const contexts = getContextsSortedAndRanked(state, thought.value)
+  const contexts = thought ? getContextsSortedAndRanked(state, thought.value) : []
 
   // if context view is empty, move to the next thought
   const firstContext = getThoughtById(state, contexts[0]?.id)
-  return contexts.length > 1
+  return firstContext && contexts.length > 1
     ? appendToPath(path, firstContext.parentId)
-    : nextThought(state, path, { ignoreChildren: true })
+    : nextThought(state, path, { ignoreChildren: true }) // eslint-disable-line @typescript-eslint/no-use-before-define
 }
 
 /** Returns the next uncle. */
@@ -48,6 +48,7 @@ const nextUncle = (state: State, path: Path) => {
 
   // the thought is a root child, then there is no uncle
   // otherwise, recursively call nextThought on the parent and prevent traversing children
+  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   return isRoot(pathParent) ? null : nextThought(state, pathParent, { ignoreChildren: true })
 }
 

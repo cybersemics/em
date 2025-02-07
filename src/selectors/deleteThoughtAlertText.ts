@@ -24,9 +24,10 @@ const deleteThoughtAlertText = (
   const simplePath = simplifyPath(state, path)
   const thought = getThoughtById(state, head(simplePath))
   const child = anyChild(state, head(simplePath))
-  const value = ellipsize(thought.value === '=note' ? 'note ' + child?.value || '' : thought.value)
-  return `${archive ? 'Deleted' : 'Permanently deleted'} ${value ? ellipsize(value) : 'empty thought'}${
-    showContexts ? ' from ' + ellipsize(headValue(state, path)) : ''
+  const value = thought && ellipsize(thought.value === '=note' ? 'note ' + child?.value || '' : thought.value)
+
+  return `${archive ? 'Deleted' : 'Permanently deleted'} ${value || 'empty thought'}${
+    showContexts ? ' from ' + ellipsize(headValue(state, path) ?? 'MISSING_THOUGHT') : ''
   }`
 }
 

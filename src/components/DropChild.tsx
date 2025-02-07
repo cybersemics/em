@@ -1,7 +1,7 @@
 import React from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import { dropEnd, dropHover } from '../../styled-system/recipes'
+import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -27,36 +27,8 @@ interface DropChildProps {
   simplePath: SimplePath
   isLastVisible?: boolean
 }
-
-/** Renders the DropChildInnerContainer component if the user is dragging and the dropTarget exists. This component is an optimization to avoid calculating DropChildIfCollapsed and DropChild hooks when unnecessary. */
-const DropChildIfDragging = ({ depth, last, path, simplePath, isLastVisible }: DropChildProps) => {
-  return (
-    <DragOnly>
-      <DropChildIfCollapsed
-        depth={depth}
-        last={last}
-        path={path}
-        simplePath={simplePath}
-        isLastVisible={isLastVisible}
-      />
-    </DragOnly>
-  )
-}
-
-/** Render the DropChild component if the thought is collapsed, and does not match the dragging thought. This component is an optimization to avoid calculating DropChild hooks when unnecessary. */
-const DropChildIfCollapsed = ({ depth, last, path, simplePath, isLastVisible }: DropChildProps) => {
-  const isExpanded = useSelector(state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(path)])
-  const draggingThought = useSelector(state => state.draggingThought, shallowEqual)
-
-  // Do not render DropChild on expanded thoughts or on the dragging thought.
-  // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
-  if (isExpanded || equalPath(draggingThought, simplePath)) return null
-
-  return <DropChild depth={depth} last={last} path={path} simplePath={simplePath} isLastVisible={isLastVisible} />
-}
-
 /** A drop target that allows dropping as a child of a thought. It is only shown when a thought has no children or is collapsed. Only renders if there is a valid dropTarget and a drag is in progress. */
-const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildProps) => {
+const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) => {
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const dropHoverColor = useDropHoverColor(depth || 0)
 
@@ -70,10 +42,10 @@ const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildPr
     <li className={css({ position: 'relative' })}>
       <span
         className={cx(
-          dropEnd(),
+          dropEndRecipe(),
           css({
             zIndex: 'dropEmpty',
-            backgroundColor: testFlags.simulateDrop ? '#32305f' : undefined, // purple-eggplant
+            backgroundColor: testFlags.simulateDrop ? 'dropChildTarget' : undefined,
             // shift the drop target to the right
             marginLeft: isTouch ? '33%' : 'calc(2.9em - 2px)',
             opacity: 0.9,
@@ -92,7 +64,7 @@ const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildPr
               // make sure label does not interfere with drop target hovering
               pointerEvents: 'none',
               left: 0,
-              color: '#ff7bc3' /* mid pink */,
+              color: 'midPink',
             })}
           >
             {strip(value)}
@@ -102,7 +74,7 @@ const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildPr
         {(testFlags.simulateDrag || isHovering) && (
           <span
             className={cx(
-              dropHover({ insideDropEnd: true, insideDivider: isDivider(value) }),
+              dropHoverRecipe({ insideDropEnd: true, insideDivider: isDivider(value) }),
               css({
                 // offset drop-end (above) and add 0.25em to slightly  exaggerate the indentation for better drop perception.
                 marginLeft: isTouch ? 'calc(-33% - 8px)' : 'calc(-2em - 10px)',
@@ -115,6 +87,31 @@ const DropChild = ({ depth, last, path, simplePath, isLastVisible }: DropChildPr
         )}
       </span>
     </li>
+  )
+}
+/** Render the DropChild component if the thought is collapsed, and does not match the dragging thought. This component is an optimization to avoid calculating DropChild hooks when unnecessary. */
+const DropChildIfCollapsed = ({ depth, last, path, simplePath, isLastVisible }: DropChildProps) => {
+  const isExpanded = useSelector(state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(path)])
+  const draggingThought = useSelector(state => state.draggingThought, shallowEqual)
+
+  // Do not render DropChild on expanded thoughts or on the dragging thought.
+  // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
+  if (isExpanded || equalPath(draggingThought, simplePath)) return null
+
+  return <DropChild depth={depth} last={last} path={path} simplePath={simplePath} isLastVisible={isLastVisible} />
+}
+/** Renders the DropChildInnerContainer component if the user is dragging and the dropTarget exists. This component is an optimization to avoid calculating DropChildIfCollapsed and DropChild hooks when unnecessary. */
+const DropChildIfDragging = ({ depth, last, path, simplePath, isLastVisible }: DropChildProps) => {
+  return (
+    <DragOnly>
+      <DropChildIfCollapsed
+        depth={depth}
+        last={last}
+        path={path}
+        simplePath={simplePath}
+        isLastVisible={isLastVisible}
+      />
+    </DragOnly>
   )
 }
 
