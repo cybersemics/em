@@ -1,5 +1,5 @@
 import { head } from 'lodash'
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -17,13 +17,12 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   const fontSize = useSelector(state => state.fontSize)
   const showSplitView = useSelector(state => state.showSplitView)
   const splitPosition = useSelector(state => state.splitPosition)
-
   // While editing, watch the current Value and trigger the layout effect
   const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
 
-  const updateMultiline = useCallback(() => {
+  /** Measure the contentRef to determine if it needs to be multiline. */
+  const updateMultiline = () => {
     if (!contentRef.current) return
-
     const height = contentRef.current.getBoundingClientRect().height
     // must match line-height as defined in thought-container
     const singleLineHeight = fontSize * 2
@@ -37,7 +36,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
     // 1.5x can cause multiline to alternate in Safari for some reason. There may be a mistake in the height calculation or the inclusion of padding that is causing this. Padding was added to the calculation in commit 113c692. Further investigation is needed.
     // See: https://github.com/cybersemics/em/issues/2778#issuecomment-2605083798
     setMultiline(height - paddingTop - paddingBottom > singleLineHeight * 1.2)
-  }, [contentRef, fontSize])
+  }
 
   // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
   // cursor changes to or from the element.
