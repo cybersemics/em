@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
 import ActionType from '../@types/ActionType'
 import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
@@ -472,8 +471,9 @@ const TreeNode = ({
           if (offset) {
             const rect = getBoundingClientRect()
 
-            if (rect) {
+            if (rect?.x || rect?.y) {
               const { x, y } = rect
+
               caretRef.current.style.display = 'inline'
               caretRef.current.style.top = `${y - offset.y}px`
               caretRef.current.style.left = `${x - offset.x}px`
@@ -484,7 +484,7 @@ const TreeNode = ({
         }
       }
     })
-  }, [editing, isCursor])
+  }, [editing, isCursor, path])
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -594,11 +594,14 @@ const TreeNode = ({
         )}
       <span
         className={css({
-          color: token('colors.brightBlue'),
+          color: 'blue',
           display: 'none',
+          fontSize: '1.25em',
+          margin: '-6px 0 0 -1.75px',
           opacity: 'var(--faux-caret-opacity)',
           position: 'absolute',
           pointerEvents: 'none',
+          WebkitTextStroke: '0.625px var(--colors-blue)',
         })}
         ref={caretRef}
       >

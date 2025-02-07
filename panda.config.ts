@@ -59,11 +59,11 @@ const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
 
 const hideCaret = {
   '0%': {
-    '--faux-caret-opacity': 1,
+    '--faux-caret-opacity': 0.75,
     caretColor: 'transparent',
   },
   '99%': {
-    '--faux-caret-opacity': 1,
+    '--faux-caret-opacity': 0.75,
     caretColor: 'transparent',
   },
   '100%': {
