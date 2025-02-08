@@ -370,14 +370,15 @@ export const importFilesActionCreator =
       const manager = resumeImportsManager(file)
       const fileProgressString = file.name + (resumableFiles.length > 1 ? ` (${i + 1}/${resumableFiles.length})` : '')
 
-      // read file
       dispatch(
         alertWithMinistore(`${resume ? 'Resume import of' : 'Reading'} ${fileProgressString}`, {
           alertType: AlertType.ImportFile,
           importFileId: file.id,
         }),
       )
-      const text = await file.text()
+
+      // read file
+      let text = await file.text()
 
       // if importing a new file, initialize resumeImports in IDB as soon as possible
       if (!resume) {
@@ -386,17 +387,16 @@ export const importFilesActionCreator =
       }
 
       // convert ThoughtIndices to plain text
-      let exported = text
       if (text.startsWith('{')) {
         dispatch(alertWithMinistore(`Parsing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
         const { thoughtIndex, lexemeIndex } = JSON.parse(text) as ThoughtIndices
         const stateImported = initialState()
         stateImported.thoughts.thoughtIndex = thoughtIndex
         stateImported.thoughts.lexemeIndex = lexemeIndex
-        exported = exportContext(stateImported, HOME_TOKEN, 'text/plain')
+        text = exportContext(stateImported, HOME_TOKEN, 'text/plain')
       }
 
-      const json = htmlToJson(textToHtml(exported))
+      const json = htmlToJson(textToHtml(text))
       const numThoughts = numBlocks(json)
 
       syncStatusStore.update({ importProgress: 0 / numThoughts })
