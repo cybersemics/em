@@ -1,11 +1,8 @@
 import { FC } from 'react'
 import { useDispatch } from 'react-redux'
-import { css } from '../../../styled-system/css'
-import { anchorButtonRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import GesturePath from '../../@types/GesturePath'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
-import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
 import { gestureString } from '../../commands'
@@ -18,12 +15,11 @@ interface NewThoughtTipProps {
   display: boolean
 }
 
-const buttonContainerClassName = css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })
 /** A tip that explains how to add a new thought. */
 const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
   const dispatch = useDispatch()
 
-  const returnKey = isMac ? 'RETURN' : 'ENTER'
+  const returnKey = isMac ? 'Return' : 'Enter'
   const instructions = isTouch ? (
     <span>
       You can add a new thought by swiping
@@ -35,51 +31,20 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
       />
     </span>
   ) : (
-    `You can add a new thought by pressing ${returnKey} on the keyboard`
+    <span>
+      You can add a new thought by pressing {returnKey} on the keyboard. You can customize the toolbar in{' '}
+      <a
+        {...fastClick(() => {
+          dispatch([dismissTip(), showModal({ id: 'settings' })])
+        })}
+      >
+        Settings
+      </a>
+      .
+    </span>
   )
 
-  return (
-    <Tip display={display}>
-      <p>
-        <b>Tip</b>: {instructions}
-      </p>
-      <div>
-        <div className={buttonContainerClassName}>
-          <a
-            className={anchorButtonRecipe()}
-            {...fastClick(() => {
-              dispatch(dismissTip())
-            })}
-          >
-            Okay
-          </a>
-        </div>
-        <div className={buttonContainerClassName}>
-          <a
-            tabIndex={-1}
-            {...fastClick(() => {
-              dispatch(removeToolbarButton('newThought'))
-              dispatch(dismissTip())
-            })}
-            className={anchorButtonRecipe()}
-          >
-            Remove this icon from the toolbar
-          </a>
-        </div>
-        <div>
-          (you can customize the toolbar in{' '}
-          <a
-            {...fastClick(() => {
-              dispatch([dismissTip(), showModal({ id: 'settings' })])
-            })}
-          >
-            Settings
-          </a>
-          )
-        </div>
-      </div>
-    </Tip>
-  )
+  return <Tip display={display}>{instructions}</Tip>
 }
 
 NewThoughtTip.displayName = 'NewThoughtTip'
