@@ -1,71 +1,42 @@
-import React, { useLayoutEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
+import { CSSTransition } from 'react-transition-group'
 
 type AnimatedCol1Props = {
+  /** Determines if the Table View animation is active. */
   isTableView: boolean
+
+  /** Duration of the animation in milliseconds. Defaults to 5000ms. */
   duration?: number
-  children: React.ReactNode
+
+  /** The children components to render inside the animated column. */
+  children: React.ReactElement
 }
 
-/**
- * When table view is enabled, this component animates its children from a left-aligned
- * position to a right-aligned position by animating the transform. During the animation,
- * text-align is kept as left, and after the animation, transform is cleared and text-align is set to right.
- */
-const AnimatedCol1 = ({ isTableView, duration = 300, children }: AnimatedCol1Props) => {
+/** A React component that animates its children by transitioning them horizontally. */
+const AnimatedCol1: React.FC<AnimatedCol1Props> = ({ isTableView, duration = 5000, children }) => {
   const ref = useRef<HTMLDivElement>(null)
 
-  useLayoutEffect(() => {
-    const element = ref.current
-    if (!element) return
-
-    // If table view is disabled, immediately set right alignment.
-    if (!isTableView || !element.parentElement) {
-      element.style.transition = ''
-      element.style.transform = ''
-      element.style.textAlign = 'right'
-      return
-    }
-
-    const parent = element.parentElement
-
-    // Ensure the element is inline-block so its width is measured correctly.
-    element.style.display = 'inline-block'
-    // Set initial alignment and clear any previous transforms.
-    element.style.textAlign = 'left'
-    element.style.transition = `transform ${duration}ms ease-out`
-    element.style.transform = 'translateX(0)'
-
-    // Force reflow to ensure the styles are applied.
-    const initialWidth = element.offsetWidth
-    const parentWidth = parent.offsetWidth
-
-    // Calculate the offset needed for right alignment.
-    const offset = parentWidth - initialWidth
-
-    // Use setTimeout to trigger the animation on the next tick.
-    setTimeout(() => {
-      element.style.transform = `translateX(${offset}px)`
-    }, 0)
-
-    /**
-     * Handles the end of the transition by resetting styles and removing the event listener.
-     * Ensures that after the animation, `text-align` is set to right and `transform` is cleared.
-     */
-    const handleTransitionEnd = () => {
-      element.style.transition = ''
-      element.style.transform = ''
-      element.style.textAlign = 'right'
-      element.removeEventListener('transitionend', handleTransitionEnd)
-    }
-
-    element.addEventListener('transitionend', handleTransitionEnd)
-
-    return () => {
-      element.removeEventListener('transitionend', handleTransitionEnd)
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.style.transition = `transform ${duration}ms ease-out`
+      ref.current.style.transform = isTableView ? 'translateX(100%)' : 'translateX(0)'
     }
   }, [isTableView, duration])
 
-  return <div ref={ref}>{children}</div>
+  return (
+    <CSSTransition in={isTableView} timeout={duration} nodeRef={ref}>
+      <div
+        ref={ref}
+        style={{
+          display: 'inline-block',
+          transition: `transform ${duration}ms ease-out`,
+          transform: isTableView ? 'translateX(100%)' : 'translateX(0)',
+        }}
+      >
+        {children}
+      </div>
+    </CSSTransition>
+  )
 }
 
 export default AnimatedCol1
