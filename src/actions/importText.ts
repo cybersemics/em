@@ -19,7 +19,7 @@ import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
-import importJSON from '../util/importJSON'
+import importJson from '../util/importJsonBlocks'
 import initialState from '../util/initialState'
 import isMarkdown from '../util/isMarkdown'
 import isRoot from '../util/isRoot'
@@ -184,7 +184,7 @@ const importText = (
 
     const newDestinationPath = getDestinationPath()
 
-    const imported = importJSON(stateWithDummy, newDestinationPath, json, { lastUpdated, skipRoot, updatedBy })
+    const imported = importJson(stateWithDummy, newDestinationPath, json, { lastUpdated, skipRoot, updatedBy })
 
     /** Set cursor to the last thought on the first level of imports. */
     const setLastImportedCursor = (state: State) => {
