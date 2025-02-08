@@ -1,5 +1,27 @@
-import { FC, PropsWithChildren } from 'react'
+import { FC, PropsWithChildren, useCallback } from 'react'
+import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
+import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
+import ControlledAlert from '../ControlledAlert'
+import LightBulbIcon from '../icons/LightBulbIcon'
+
+const icon = (
+  <div
+    className={css({
+      width: '2.2em',
+      height: '2.2em',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      background: 'lightbulbIconBg',
+      borderRadius: '50%',
+      aspectRatio: '1 / 1',
+      position: 'relative',
+    })}
+  >
+    <LightBulbIcon cssRaw={css.raw({ width: '50%', height: '50%', fill: 'fg' })} />
+  </div>
+)
 
 /** A tip that gets displayed at the bottom of the window. */
 const Tip: FC<
@@ -7,38 +29,15 @@ const Tip: FC<
     display: boolean
   }>
 > = ({ display, children }) => {
-  return (
-    <div
-      className={css({
-        position: 'fixed',
-        bottom: '1em',
-        left: '0',
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        // disable pointer revents when hidden, otherwise it will block clicks on the NavBar
-        pointerEvents: display ? 'auto' : 'none',
-        transform: display ? 'translateY(0)' : 'translateY(100%)',
-        transition: `transform {durations.fast} ease-in-out, opacity {durations.fast} ease-in-out`,
-        opacity: display ? '1' : '0',
-        zIndex: 'popup',
-      })}
-    >
-      <div
-        className={css({
-          backgroundColor: 'codeBg',
-          display: 'inline-block',
-          padding: '1em',
-          maxWidth: '20em',
-          borderRadius: '5',
-          textAlign: 'center',
-          color: 'codeBgInverse',
-        })}
-      >
-        {children}
-      </div>
-    </div>
-  )
+  const dispatch = useDispatch()
+
+  const onClose = useCallback(() => {
+    dispatch(dismissTip())
+  }, [dispatch])
+
+  if (!display) return null
+
+  return <ControlledAlert renderedIcon={icon} transitionKey={`${display}`} value={children} onClose={onClose} />
 }
 
 Tip.displayName = 'Tip'
