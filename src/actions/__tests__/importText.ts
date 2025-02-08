@@ -22,22 +22,12 @@ import timestamp from '../../util/timestamp'
 /** Helper function that imports html and exports it as plaintext. */
 const importExport = (text: string, isHTML = true) => {
   const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], isHTML ? 'text/html' : 'text/plain')
-
-  return removeHome(exported)
-}
-
-/** Imports the given html and exports it as plaintext. */
-const importExport2 = (html: string, isHTML = true) => {
-  const state = initialState()
-  const stateNew = importText(state, { path: HOME_PATH, text: html })
   const exported = exportContext(stateNew, [HOME_TOKEN], isHTML ? 'text/html' : 'text/plain', {
     excludeMarkdownFormatting: true,
   })
-
-  // remove root, de-indent (trim), and append newline to make tests cleaner
   return removeHome(exported)
 }
+
 /**
  * Import text reducer that imports on given unranked path first matched.
  */
@@ -1460,32 +1450,32 @@ f
 })
 
 it('simple', () => {
-  expect(importExport2('test', false)).toBe(`
+  expect(importExport('test', false)).toBe(`
 - test
 `)
 })
 
 it('simple li', () => {
-  expect(importExport2('<li>test</li>', false)).toBe(`
+  expect(importExport('<li>test</li>', false)).toBe(`
 - test
 `)
 })
 
 it('simple ul', () => {
-  expect(importExport2('<ul><li>test</li></ul>', false)).toBe(`
+  expect(importExport('<ul><li>test</li></ul>', false)).toBe(`
 - test
 `)
 })
 
 it('whitespace', () => {
-  expect(importExport2('  test  ', false)).toBe(`
+  expect(importExport('  test  ', false)).toBe(`
 - test
 `)
 })
 
 it("multiple li's", () => {
   expect(
-    importExport2(
+    importExport(
       `
 <li>one</li>
 <li>two</li>
@@ -1499,7 +1489,7 @@ it("multiple li's", () => {
 })
 
 it('items separated by <br>', () => {
-  expect(importExport2('<p>a<br>b<br>c<br></p>', false)).toBe(`
+  expect(importExport('<p>a<br>b<br>c<br></p>', false)).toBe(`
 - a
 - b
 - c
@@ -1509,7 +1499,7 @@ it('items separated by <br>', () => {
 // TODO
 it.skip('nested lines separated by <br>', () => {
   expect(
-    importExport2(
+    importExport(
       `
 <li>x
   <ul>
@@ -1529,7 +1519,7 @@ it.skip('nested lines separated by <br>', () => {
 
 it("nested li's", () => {
   expect(
-    importExport2(
+    importExport(
       `
 <li>a<ul>
   <li>x</li>
@@ -1547,7 +1537,7 @@ it("nested li's", () => {
 
 it("<i> with nested li's", () => {
   expect(
-    importExport2(
+    importExport(
       `
 <li><i>a</i>
   <ul>
@@ -1567,7 +1557,7 @@ it("<i> with nested li's", () => {
 
 it("<span> with nested li's", () => {
   expect(
-    importExport2(
+    importExport(
       `
 <li><span>a</span>
   <ul>
@@ -1588,7 +1578,7 @@ it("<span> with nested li's", () => {
 // TODO
 it.skip("empty thought with nested li's", () => {
   expect(
-    importExport2(
+    importExport(
       `
 <li>
   <ul>
@@ -1607,7 +1597,7 @@ it.skip("empty thought with nested li's", () => {
 
 it("do not add empty parent thought when empty li node has no nested li's", () => {
   expect(
-    importExport2(
+    importExport(
       `
 <li>
   a
@@ -1630,7 +1620,7 @@ it("do not add empty parent thought when empty li node has no nested li's", () =
 
 it('multiple nested lists', () => {
   expect(
-    importExport2(
+    importExport(
       `
 <li>a
   <ul>
@@ -1654,20 +1644,20 @@ it('multiple nested lists', () => {
 })
 
 it('strip wrapping tag', () => {
-  expect(importExport2('<span>test</span>', false)).toBe(`
+  expect(importExport('<span>test</span>', false)).toBe(`
 - test
 `)
 })
 
 it('strip inline tag', () => {
-  expect(importExport2('a <span>b</span> c', false)).toBe(`
+  expect(importExport('a <span>b</span> c', false)).toBe(`
 - a b c
 `)
 })
 
 it('strip inline tag in nested list', () => {
   expect(
-    importExport2(
+    importExport(
       `
 <li>a<span>fter</span>word<ul>
   <li>one <span>and</span> two</li>
@@ -1691,13 +1681,13 @@ it('preserve formatting tags', () => {
     </ul>
   </li>
 </ul>`
-  expect(importExport2('<b>one</b> and <i>two</i>')).toBe(expectedText)
+  expect(importExport('<b>one</b> and <i>two</i>')).toBe(expectedText)
 })
 
 // TODO
 it.skip('WorkFlowy import with notes', () => {
   expect(
-    importExport2(
+    importExport(
       `
 z
 <ul>
@@ -1731,7 +1721,7 @@ z
 
 it('blank thoughts with subthoughts', () => {
   expect(
-    importExport2(
+    importExport(
       `<li>a
   <ul>
     <li>b
