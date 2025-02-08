@@ -827,6 +827,54 @@ describe('store', () => {
   - a
   - b`)
     })
+
+    it('preserve sort order after multiple sort', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - 1
+              - 2
+            `,
+          }),
+          setCursor(['1']),
+        ])
+      })
+
+      act(() => executeCommand(toggleSortCommand, { store }))
+      act(() =>
+        store.dispatch(
+          editThought({
+            oldValue: '1',
+            newValue: '3',
+            path: contextToPath(store.getState(), ['1']) as SimplePath,
+          }),
+        ),
+      )
+      const state = store.getState()
+      const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+      expect(exported).toEqual(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Asc
+  - 2
+  - 3`)
+
+      act(() => executeCommand(toggleSortCommand, { store }))
+      act(() => executeCommand(toggleSortCommand, { store }))
+      act(() => executeCommand(toggleSortCommand, { store }))
+
+      // await act(() => vi.runOnlyPendingTimersAsync())
+
+      const newState = store.getState()
+      const lastExported = exportContext(newState, [HOME_TOKEN], 'text/plain')
+      expect(lastExported).toEqual(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Asc
+  - 2
+  - 3`)
+    })
   })
 
   describe('global sort', () => {

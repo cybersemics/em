@@ -144,7 +144,7 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     value: newValue,
     // store the last non-empty value to preserve the sort order of thoughts edited to empty
     // reset to undefined when newValue is non-empty
-    ...(newValue ? undefined : { sortValue: oldValue || editedThought.sortValue }),
+    ...(newValue ? { sortValue: undefined } : { sortValue: oldValue || editedThought.sortValue }),
     lastUpdated: timestamp(),
     updatedBy: clientId,
   }
