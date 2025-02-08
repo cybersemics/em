@@ -13,7 +13,6 @@ import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
 import { alertWithMinistore } from '../actions/alert'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
@@ -23,7 +22,6 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import contextToPath from '../selectors/contextToPath'
-import { exportContext } from '../selectors/exportContext'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild } from '../selectors/getChildren'
 import { getLexeme } from '../selectors/getLexeme'
@@ -38,7 +36,6 @@ import flattenTree from '../util/flattenTree'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
-import initialState from '../util/initialState'
 import isAttribute from '../util/isAttribute'
 import newLexeme from '../util/newLexeme'
 import numBlocks from '../util/numBlocks'
@@ -378,22 +375,12 @@ export const importFilesActionCreator =
       )
 
       // read file
-      let text = await file.text()
+      const text = await file.text()
 
       // if importing a new file, initialize resumeImports in IDB as soon as possible
       if (!resume) {
         dispatch(alertWithMinistore(`Storing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
         manager.init(text)
-      }
-
-      // convert ThoughtIndices to plain text
-      if (text.startsWith('{')) {
-        dispatch(alertWithMinistore(`Parsing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
-        const { thoughtIndex, lexemeIndex } = JSON.parse(text) as ThoughtIndices
-        const stateImported = initialState()
-        stateImported.thoughts.thoughtIndex = thoughtIndex
-        stateImported.thoughts.lexemeIndex = lexemeIndex
-        text = exportContext(stateImported, HOME_TOKEN, 'text/plain')
       }
 
       const json = htmlToJson(textToHtml(text))

@@ -2,7 +2,6 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
 import Timestamp from '../@types/Timestamp'
 import editThought from '../actions/editThought'
@@ -20,7 +19,6 @@ import createId from '../util/createId'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import importJson from '../util/importJsonBlocks'
-import initialState from '../util/initialState'
 import isMarkdown from '../util/isMarkdown'
 import isRoot from '../util/isRoot'
 import markdownToText from '../util/markdownToText'
@@ -103,24 +101,6 @@ const importText = (
   }
 
   const destValue = rawDestValue || destThought.value
-
-  // import raw thoughts
-  // overwrite all state
-  if (
-    text.startsWith(`{
-  "thoughtIndex": {
-    "__ROOT__": {`)
-  ) {
-    const thoughts = JSON.parse(text) as ThoughtIndices
-    const stateNew = initialState()
-    return {
-      ...stateNew,
-      thoughts: {
-        ...stateNew.thoughts,
-        ...thoughts,
-      },
-    }
-  }
 
   // if we are only importing a single line of html, then simply modify the current thought
   if (!preventInline && numLines <= 1 && !isRoam && !isRoot(path)) {
