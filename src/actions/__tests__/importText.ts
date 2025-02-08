@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import MimeType from '../../@types/MimeType'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
 import importText, { ImportTextPayload } from '../../actions/importText'
@@ -19,10 +20,10 @@ import reducerFlow from '../../util/reducerFlow'
 import removeHome from '../../util/removeHome'
 import timestamp from '../../util/timestamp'
 
-/** Helper function that imports html and exports it as plaintext. */
-const importExport = (text: string, isHTML = true) => {
+/** Helper function that imports text into the root and exports it as plaintext to make easily readable assertions. */
+const importExport = (text: string, outputFormat: MimeType = 'text/plain') => {
   const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], isHTML ? 'text/html' : 'text/plain', {
+  const exported = exportContext(stateNew, [HOME_TOKEN], outputFormat, {
     excludeMarkdownFormatting: true,
   })
   return removeHome(exported)
@@ -130,7 +131,7 @@ it('simple duplicate', () => {
   const expectedExport = `
 - a
 - a`
-  const exported = importExport(text, false)
+  const exported = importExport(text)
 
   expect(exported.trim()).toBe(expectedExport.trim())
 })
@@ -160,7 +161,7 @@ it('multiple duplicates', () => {
   - b
     - d
     - e`
-  const exported = importExport(text, false)
+  const exported = importExport(text)
 
   expect(exported.trim()).toBe(expectedExport.trim())
 })
@@ -170,7 +171,7 @@ it('two root thoughts', () => {
   - b
 - c
   - d`
-  const exported = importExport(text, false)
+  const exported = importExport(text)
   expect(exported.trim()).toBe(text)
 })
 
@@ -287,7 +288,7 @@ it('imports Roam json', () => {
     },
   ])
 
-  const exported = importExport(roamString, false)
+  const exported = importExport(roamString)
   expect(exported).toBe(`
 - Fruits
   - Apple
@@ -502,7 +503,6 @@ it('do not parse as html when value has tags inside indented text', () => {
     - b
     - <li>c</li>
   `,
-      false,
     ),
   ).toBe(
     `
@@ -554,7 +554,7 @@ it('multi-line nested html tags', () => {
   <li><i><b>B</b></i></li>
   <li><i><b>C</b></i></li>
   `
-  const actual = importExport(paste)
+  const actual = importExport(paste, 'text/html')
 
   const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
@@ -591,7 +591,7 @@ it('text that contains em tag', () => {
       - b
       - <em>c</em>
   `
-  const exported = importExport(text)
+  const exported = importExport(text, 'text/html')
   expect(exported.trim()).toBe(
     `<ul>
   <li>__ROOT__${EMPTY_SPACE}
@@ -615,7 +615,7 @@ it('text that contains non closed span tag', () => {
     - <span>c
     - d
   `
-  const actual = importExport(paste, false)
+  const actual = importExport(paste)
   expect(actual).toBe(
     `
 - a
@@ -632,7 +632,7 @@ it('text that contains br tag that does not have children', () => {
     - b
     - c<br>
   `
-  const exported = importExport(text, false)
+  const exported = importExport(text)
   expect(exported.trim()).toBe(
     `- a
 - b
@@ -646,7 +646,7 @@ it('text that contains br tag that has note children', () => {
     - b
     - c<br><span aria-label="note">This is c!</span>
   `
-  const exported = importExport(text, false)
+  const exported = importExport(text)
   expect(exported.trim()).toBe(
     `- a
 - b
@@ -663,7 +663,7 @@ it('text that contains one or more than one not allowed formattting tags', () =>
     - c (<sub>d</sub>)
       - d <pre>123</pre>
   `
-  const exported = importExport(text, false)
+  const exported = importExport(text)
   const expected = `
 - a
 - b c
@@ -677,7 +677,7 @@ describe('HTML content', () => {
   it('should paste plain text that contains formatting', () => {
     const paste = `<b>a</b>
 <b>b</b>`
-    const actual = importExport(paste)
+    const actual = importExport(paste, 'text/html')
     expect(actual).toBe(
       `<ul>
   <li>__ROOT__${EMPTY_SPACE}
@@ -693,7 +693,7 @@ describe('HTML content', () => {
   it('should paste plain text that contains formatting and bullet indicator is inside of formatting tags', () => {
     const paste = `<b>a</b>
 <b> -b</b>`
-    const actual = importExport(paste)
+    const actual = importExport(paste, 'text/html')
     const expectedHTML = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
@@ -731,7 +731,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
 `
     /* eslint-enable no-irregular-whitespace */
 
-    const actual = importExport(paste)
+    const actual = importExport(paste, 'text/html')
     const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
@@ -757,7 +757,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
        </body>
     </html>`
 
-    const actual = importExport(paste)
+    const actual = importExport(paste, 'text/html')
     const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
@@ -777,7 +777,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
     const paste =
       '<meta charset="UTF-8"><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;">A</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- B</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- C</span></p>'
 
-    const actual = importExport(paste)
+    const actual = importExport(paste, 'text/html')
     const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
@@ -816,7 +816,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
 `
     /* eslint-enable no-irregular-whitespace */
 
-    const actual = importExport(paste)
+    const actual = importExport(paste, 'text/html')
     const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
@@ -856,7 +856,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
 `
     /* eslint-enable no-irregular-whitespace */
 
-    const actual = importExport(paste)
+    const actual = importExport(paste, 'text/html')
     const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
@@ -879,7 +879,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
                                                                                                     style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;">
     <span class="s1" style="font-weight: bold; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>B</span></p>`
 
-    const actual = importExport(paste)
+    const actual = importExport(paste, 'text/html')
     const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
@@ -928,7 +928,7 @@ it('should paste text with an improperly nested meta tag', () => {
 
 it('should strip tags whose font weight is less than or equal to 400', () => {
   const paste = `<span style="font-weight:400;">Hello world. </span> <span style="font-weight:100;">This is a test </span>`
-  const actual = importExport(paste)
+  const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
@@ -941,7 +941,7 @@ it('should strip tags whose font weight is less than or equal to 400', () => {
 
 it('should convert font weight to 700 if the font weight in a tag is greater than or equal to 500', () => {
   const paste = `<span style="font-weight: 500;">Hello world. </span><span style="font-weight: 800;">This is a test</span>`
-  const actual = importExport(paste)
+  const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
@@ -954,7 +954,7 @@ it('should convert font weight to 700 if the font weight in a tag is greater tha
 
 it('should not strip whole tag unless other style apart from font-weight should be preserved', () => {
   const paste = `<span style="font-weight: 400; font-style: italic;">a</span>`
-  const actual = importExport(paste)
+  const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
@@ -1450,25 +1450,25 @@ f
 })
 
 it('simple', () => {
-  expect(importExport('test', false)).toBe(`
+  expect(importExport('test')).toBe(`
 - test
 `)
 })
 
 it('simple li', () => {
-  expect(importExport('<li>test</li>', false)).toBe(`
+  expect(importExport('<li>test</li>')).toBe(`
 - test
 `)
 })
 
 it('simple ul', () => {
-  expect(importExport('<ul><li>test</li></ul>', false)).toBe(`
+  expect(importExport('<ul><li>test</li></ul>')).toBe(`
 - test
 `)
 })
 
 it('whitespace', () => {
-  expect(importExport('  test  ', false)).toBe(`
+  expect(importExport('  test  ')).toBe(`
 - test
 `)
 })
@@ -1480,7 +1480,6 @@ it("multiple li's", () => {
 <li>one</li>
 <li>two</li>
 `,
-      false,
     ),
   ).toBe(`
 - one
@@ -1489,7 +1488,7 @@ it("multiple li's", () => {
 })
 
 it('items separated by <br>', () => {
-  expect(importExport('<p>a<br>b<br>c<br></p>', false)).toBe(`
+  expect(importExport('<p>a<br>b<br>c<br></p>')).toBe(`
 - a
 - b
 - c
@@ -1507,7 +1506,6 @@ it.skip('nested lines separated by <br>', () => {
   </ul>
 </li>
 `,
-      false,
     ),
   ).toBe(`
 - x
@@ -1526,7 +1524,6 @@ it("nested li's", () => {
   <li>y</li>
 </ul></li>
 `,
-      false,
     ),
   ).toBe(`
 - a
@@ -1546,7 +1543,6 @@ it("<i> with nested li's", () => {
   </ul>
 </li>
 `,
-      false,
     ),
   ).toBe(`
 - a
@@ -1566,7 +1562,6 @@ it("<span> with nested li's", () => {
   </ul>
 </li>
 `,
-      false,
     ),
   ).toBe(`
 - a
@@ -1587,7 +1582,6 @@ it.skip("empty thought with nested li's", () => {
   </ul>
 </li>
 `,
-      false,
     ),
   ).toBe(`
   - x
@@ -1609,7 +1603,6 @@ it("do not add empty parent thought when empty li node has no nested li's", () =
   </ul>
 </li>
 `,
-      false,
     ),
   ).toBe(`
 - a
@@ -1633,7 +1626,6 @@ it('multiple nested lists', () => {
   </ul>
 </li>
 `,
-      false,
     ),
   ).toBe(`
 - a
@@ -1644,13 +1636,13 @@ it('multiple nested lists', () => {
 })
 
 it('strip wrapping tag', () => {
-  expect(importExport('<span>test</span>', false)).toBe(`
+  expect(importExport('<span>test</span>')).toBe(`
 - test
 `)
 })
 
 it('strip inline tag', () => {
-  expect(importExport('a <span>b</span> c', false)).toBe(`
+  expect(importExport('a <span>b</span> c')).toBe(`
 - a b c
 `)
 })
@@ -1664,7 +1656,6 @@ it('strip inline tag in nested list', () => {
   <li>y</li>
 </ul></li>
 `,
-      false,
     ),
   ).toBe(`
 - afterword
@@ -1681,7 +1672,7 @@ it('preserve formatting tags', () => {
     </ul>
   </li>
 </ul>`
-  expect(importExport('<b>one</b> and <i>two</i>')).toBe(expectedText)
+  expect(importExport('<b>one</b> and <i>two</i>', 'text/html')).toBe(expectedText)
 })
 
 // TODO
@@ -1704,7 +1695,6 @@ z
     </ul>
   </li>
 </ul>`,
-      false,
     ),
   ).toBe(`
 - z
@@ -1755,7 +1745,6 @@ it('blank thoughts with subthoughts', () => {
   </ul>
 </li>
 `,
-      false,
     ),
   ).toBe(`
 - a
