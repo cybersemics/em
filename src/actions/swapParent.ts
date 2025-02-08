@@ -1,47 +1,63 @@
-import _ from 'lodash'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
-import editThought from '../actions/editThought'
+import moveThought from '../actions/moveThought'
+import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
-import simplifyPath from '../selectors/simplifyPath'
+import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
-import reducerFlow from '../util/reducerFlow'
 
-/** Swaps the current cursor's thought with its parent. */
+/** Swaps the current cursor's thought with its parent by moving nodes. */
 const swapParent = (state: State) => {
   const { cursor } = state
-
-  // If there is no cursor, do nothing.
   if (!cursor) return state
 
   const parent = parentOf(cursor)
-
-  // If the cursor is at the root, do nothing.
   if (!parent.length) return state
 
-  const childValue = getThoughtById(state, head(cursor))?.value
-  const parentValue = getThoughtById(state, head(parent))?.value
-  if (!childValue || !parentValue) return state
+  const childId = head(cursor)
+  const parentId = head(parent)
 
-  const reducers = [
-    editThought({
-      oldValue: childValue,
-      newValue: parentValue,
-      path: simplifyPath(state, cursor),
-      force: true,
-    }),
-    editThought({
-      oldValue: parentValue,
-      newValue: childValue,
-      path: simplifyPath(state, parent),
-    }),
-  ]
+  const childThought = getThoughtById(state, childId)
+  const parentThought = getThoughtById(state, parentId)
+  if (!childThought || !parentThought) return state
 
-  return reducerFlow(reducers)(state)
+  // Get children of the child thought that will be moved
+  const childChildren = getChildrenRanked(state, childId)
+
+  // First move the child to replace its parent's position
+  let stateNew = moveThought(state, {
+    oldPath: cursor,
+    newPath: parent,
+    newRank: parentThought.rank,
+  })
+
+  // Then move the parent under the child
+  stateNew = moveThought(stateNew, {
+    oldPath: parent,
+    newPath: appendToPath([childId], parentId),
+    newRank: 0,
+  })
+
+  // Move all child's children under the parent's new position
+  stateNew = childChildren.reduce((accState, childChild) => {
+    return moveThought(accState, {
+      oldPath: appendToPath(cursor, childChild.id),
+      newPath: appendToPath([childId, parentId], childChild.id),
+      newRank: childChild.rank,
+    })
+  }, stateNew)
+
+  // Keep cursor on the child at its new position
+  return {
+    ...stateNew,
+    cursor: [childId] as [ThoughtId, ...ThoughtId[]],
+    offset: childThought.value.length,
+  }
 }
 
 /** Action-creator for swapParent. */
 export const swapParentActionCreator = (): Thunk => dispatch => dispatch({ type: 'swapParent' })
 
-export default _.curryRight(swapParent)
+export default swapParent
