@@ -48,7 +48,9 @@ const usePositionFixed = ({
   useEffect(initEventHandler, [])
   let top, bottom
   if (position === 'absolute') {
-    top = fromBottom ? `${scrollTop + innerHeight - (height ?? 0) - offset}px` : `${scrollTop + offset}px`
+    top = fromBottom
+      ? `${scrollTop + innerHeight - currentKeyboardHeight - (height ?? 0) - offset}px`
+      : `${scrollTop + offset}px`
   } else if (fromBottom) {
     bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset + currentKeyboardHeight}px)`
   } else {
