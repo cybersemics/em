@@ -207,8 +207,7 @@ it('should paste plain text that contains formatting and bullet indicator is ins
   expect(actual).toBe(expectedHTML)
 })
 
-// TODO
-it.skip('should paste text properly that is copied from OSX Notes.app', () => {
+it('should paste text properly that is copied from OSX Notes.app', () => {
   /* eslint-disable no-irregular-whitespace */
   const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
@@ -293,8 +292,7 @@ it('should paste text properly that is copied from iOS notes.app', () => {
   expect(actual).toBe(expectedOutput)
 })
 
-// TODO
-it.skip('should paste text that contains formatting properly that is copied from OSX Notes.app', () => {
+it('should paste text that contains formatting properly that is copied from OSX Notes.app', () => {
   /* eslint-disable no-irregular-whitespace */
   const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
@@ -333,8 +331,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
   expect(actual).toBe(expectedOutput)
 })
 
-// TODO
-it.skip('should paste text that contains multiple formatting properly that is copied from OSX Notes.app', () => {
+it('should paste text that contains multiple formatting properly that is copied from OSX Notes.app', () => {
   /* eslint-disable no-irregular-whitespace */
   const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
@@ -374,7 +371,7 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
   expect(actual).toBe(expectedOutput)
 })
 
-// TODO
+// TODO: Formatting should not be stripped out
 it.skip('should paste text that contains formatting that is copied from iOS notes.app', () => {
   const paste = `<meta charset="UTF-8"><p class="p1"
                          style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;">
@@ -397,8 +394,7 @@ it.skip('should paste text that contains formatting that is copied from iOS note
   expect(actual).toBe(expectedOutput)
 })
 
-// TODO
-it.skip('should paste text with an improperly nested meta tag', () => {
+it('should paste text with an improperly nested meta tag', () => {
   const html = `
   <li>a<ul>
     <li>b<ul>
@@ -412,21 +408,14 @@ it.skip('should paste text with an improperly nested meta tag', () => {
   </ul></li>
   `
 
-  expect(importExport(html, 'text/html')).toBe(`- a
-    - b
-      - c
-        - d
-        - x
-      - e`)
-
-  // TODO: Might be better as:
-  // expect(exported).toBe(`- ${HOME_TOKEN}
-  // - a
-  //   - b
-  //     - c
-  //       - d
-  //     - x
-  //       - e`)
+  expect(importExport(html)).toBe(`
+- a
+  - b
+    - c
+      - d
+    - x
+      - e
+`)
 })
 
 // TODO: Should be imported as siblings, not parent-child
