@@ -224,3 +224,20 @@ it('decode character entities when exporting as plain text', () => {
   expect(exported).toBe(`- a
   - one & two`)
 })
+
+it('export note as a normal thought if lossless not selected', () => {
+  const text = `- ${HOME_TOKEN}
+  - a
+    - =note
+      - b
+    - c
+  `
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { excludeMeta: true })
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c`)
+})

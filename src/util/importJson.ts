@@ -227,7 +227,7 @@ const getRankIncrement = (state: State, blocks: Block[], destThought: Thought, r
 }
 
 /** Convert JSON blocks to thoughts update. */
-const importJSON = (
+const importJson = (
   state: State,
   simplePath: SimplePath,
   blocks: Block[],
@@ -294,4 +294,4 @@ const importJSON = (
   }
 }
 
-export default importJSON
+export default importJson

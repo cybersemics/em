@@ -1,7 +1,7 @@
 import isHome from './isHome'
 
 /**
- * Remove home token, de-indent (trim), and append newline.
+ * Remove home token, de-indent (trim), and append newline to make tests more readable.
  */
 const removeHome = (exported: string) => {
   const firstLineBreakIndex = exported.indexOf('\n')
