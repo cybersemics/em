@@ -796,9 +796,9 @@ const LayoutTree = () => {
         // indentation
         fontSize * node.depth +
         // space between table columns
-        fontSize * (node.isTableCol1 ? (node.depth == 0 ? -2.5 : 2.5) : 0) +
+        fontSize * (node.isTableCol1 ? -1.5 : 0) +
         // table col2
-        ancestorTableWidths * 2
+        ancestorTableWidths
 
       // Set yaccum to the bottom of the previous row's col1 if it is higher than col2.
       // See: ycol1Ancestors
