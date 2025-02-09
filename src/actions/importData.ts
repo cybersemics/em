@@ -1,5 +1,6 @@
 import SimplePath from '../@types/SimplePath'
 import Thunk from '../@types/Thunk'
+import { HOME_PATH } from '../constants'
 import * as selection from '../device/selection'
 import rootedParentOf from '../selectors/rootedParentOf'
 import isMarkdown from '../util/isMarkdown'
@@ -10,10 +11,10 @@ import { importTextActionCreator as importText } from './importText'
 import { newThoughtActionCreator as newThought } from './newThought'
 
 interface ImportDataPayload {
-  path: SimplePath
-  text: string
-  html: string | null
-  rawDestValue: string
+  path?: SimplePath
+  text?: string
+  html?: string | null
+  rawDestValue?: string
   transient?: boolean
   isEmText?: boolean
 }
@@ -36,7 +37,7 @@ interface ImportDataPayload {
  * - importFiles: Used for multi-line, non-markdown content. Creates new thought structures for each line.
  *
  * @param payload - Configuration object for importing data.
- * @param payload.path - The path where the data should be imported.
+ * @param payload.path - The path where the data should be imported. Defaults to HOME_PATH.
  * @param payload.text - The plain text content to be imported.
  * @param payload.html - HTML content to be imported, or null if importing plain text.
  * @param payload.rawDestValue - The untrimmed destination value to preserve whitespace when combining with existing content.
@@ -60,7 +61,7 @@ export const importDataActionCreator = ({
     if (transient) {
       dispatch(
         newThought({
-          at: rootedParentOf(state, path),
+          at: path ? rootedParentOf(state, path) : HOME_PATH,
           value: '',
         }),
       )
@@ -68,9 +69,10 @@ export const importDataActionCreator = ({
 
     const processedText = html
       ? strip(html, { preserveFormatting: isEmText, stripColors: !isEmText }).replace(/\n\s*\n+/g, '\n')
-      : text.trim()
+      : (text?.trim() ?? '')
+
     // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
-    const multiline = text.trim().includes('\n')
+    const multiline = text?.trim().includes('\n')
 
     // Check if the text is markdown, if so, prefer importText over importFiles
     const markdown = isMarkdown(processedText)

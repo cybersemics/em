@@ -122,95 +122,7 @@ it('basic import with proper thought structure', () => {
   expect(lexemeIndex[hashThought('b')].lastUpdated >= now).toBeTruthy()
 })
 
-it('simple duplicate', () => {
-  const text = `
-    - a
-    - a
-  `
-
-  const expectedExport = `
-- a
-- a`
-  const exported = importExport(text)
-
-  expect(exported.trim()).toBe(expectedExport.trim())
-})
-
-it('multiple duplicates', () => {
-  const text = `
-    - a
-      - b
-        - c
-        - c
-        - d
-      - b
-    - a
-      - b
-        - d
-        - e
-    `
-
-  const expectedExport = `
-- a
-  - b
-    - c
-    - c
-    - d
-  - b
-- a
-  - b
-    - d
-    - e`
-  const exported = importExport(text)
-
-  expect(exported.trim()).toBe(expectedExport.trim())
-})
-
-it('two root thoughts', () => {
-  const text = `- a
-  - b
-- c
-  - d`
-  const exported = importExport(text)
-  expect(exported.trim()).toBe(text)
-})
-
-it('skip root token', () => {
-  const text = `- ${HOME_TOKEN}
-  - a
-    - b
-  - c
-    - d
-  `
-
-  const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-    - b
-  - c
-    - d`)
-})
-
-it('skip em token', () => {
-  const text = `- ${EM_TOKEN}
-  - a
-    - b
-  - c
-    - d
-  `
-
-  const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-    - b
-  - c
-    - d`)
-})
-
+// TODO: importText no longer handlers multiline imports
 it('duplicate thoughts', () => {
   const text = `
     - a
@@ -320,6 +232,7 @@ it('imports Roam json', () => {
 `)
 })
 
+// TODO: importText no longer handlers multiline imports
 it('replace empty cursor', () => {
   const text = `- ${HOME_TOKEN}
   - a
@@ -348,6 +261,7 @@ it('replace empty cursor', () => {
     - y`)
 })
 
+// TODO: importText no longer handlers multiline imports
 it('replace empty cursor without affecting siblings', () => {
   const text = `- ${HOME_TOKEN}
   - a
@@ -383,6 +297,7 @@ it('replace empty cursor without affecting siblings', () => {
   expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['a']), contextToThoughtId(stateNew, ['a', 'y'])])
 })
 
+// TODO: importText no longer handlers multiline imports
 it(`remove empty cursor from thoughtIndex and lexemeIndex`, () => {
   const text = `
     - a
@@ -407,6 +322,7 @@ it(`remove empty cursor from thoughtIndex and lexemeIndex`, () => {
   expect(lexemeIndex).not.toHaveProperty(hashThought(''))
 })
 
+// TODO: importText no longer handlers multiline imports
 it('import as subthoughts of non-empty cursor', () => {
   const paste = `
     - x
@@ -429,6 +345,7 @@ it('import as subthoughts of non-empty cursor', () => {
     - y`)
 })
 
+// TODO: importText no longer handlers multiline imports
 it('set cursor to last imported subthought at first level', () => {
   const paste = `
     - x
@@ -446,6 +363,7 @@ it('set cursor to last imported subthought at first level', () => {
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'y'])!)
 })
 
+// TODO: importText no longer handlers multiline imports
 it('set cursor to last imported subthought in the root', () => {
   const text = `
     - a
@@ -459,6 +377,7 @@ it('set cursor to last imported subthought in the root', () => {
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['c'])!)
 })
 
+// TODO: importText no longer handlers multiline imports
 it('do not move cursor when importing only meta attributes', () => {
   const paste = `
     - =style
@@ -480,6 +399,7 @@ it('do not move cursor when importing only meta attributes', () => {
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
 })
 
+// TODO: importText no longer handlers multiline imports
 it('decode HTML entities', () => {
   const paste = `
     - one &amp; two
@@ -492,25 +412,6 @@ it('decode HTML entities', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - one & two
   - three < four`)
-})
-
-// related: https://github.com/cybersemics/em/issues/1008
-it('do not parse as html when value has tags inside indented text', () => {
-  expect(
-    importExport(
-      `
-  - a
-    - b
-    - <li>c</li>
-  `,
-    ),
-  ).toBe(
-    `
-- a
-  - b
-  - c
-`,
-  )
 })
 
 it('single-line nested html tags', () => {
@@ -546,384 +447,6 @@ it('single-line nested html tags', () => {
     </ul>
   </li>
 </ul>`)
-})
-
-it('multi-line nested html tags', () => {
-  const paste = `
-  <li><i><b>A</b></i></li>
-  <li><i><b>B</b></i></li>
-  <li><i><b>C</b></i></li>
-  `
-  const actual = importExport(paste, 'text/html')
-
-  const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
-    <ul>
-      <li><i><b>A</b></i></li>
-      <li><i><b>B</b></i></li>
-      <li><i><b>C</b></i></li>
-    </ul>
-  </li>
-</ul>`
-  expect(actual).toBe(expectedOutput)
-})
-
-it('export note as a normal thought if lossless not selected', () => {
-  const text = `- ${HOME_TOKEN}
-  - a
-    - =note
-      - b
-    - c
-  `
-
-  const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { excludeMeta: true })
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-    - b
-    - c`)
-})
-
-it('text that contains em tag', () => {
-  const text = `
-    - a
-      - b
-      - <em>c</em>
-  `
-  const exported = importExport(text, 'text/html')
-  expect(exported.trim()).toBe(
-    `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
-    <ul>
-      <li>a${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li>b</li>
-          <li><em>c</em></li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`,
-  )
-})
-
-it('text that contains non closed span tag', () => {
-  const paste = `
-    - a
-    - b
-    - <span>c
-    - d
-  `
-  const actual = importExport(paste)
-  expect(actual).toBe(
-    `
-- a
-- b
-- c
-- d
-`,
-  )
-})
-
-it('text that contains br tag that does not have children', () => {
-  const text = `
-    - a
-    - b
-    - c<br>
-  `
-  const exported = importExport(text)
-  expect(exported.trim()).toBe(
-    `- a
-- b
-- c`,
-  )
-})
-
-it('text that contains br tag that has note children', () => {
-  const text = `
-    - a
-    - b
-    - c<br><span aria-label="note">This is c!</span>
-  `
-  const exported = importExport(text)
-  expect(exported.trim()).toBe(
-    `- a
-- b
-- c
-  - =note
-    - This is c!`,
-  )
-})
-
-it('text that contains one or more than one not allowed formattting tags', () => {
-  const text = `
-    - a
-    - b <sup>c</sup>
-    - c (<sub>d</sub>)
-      - d <pre>123</pre>
-  `
-  const exported = importExport(text)
-  const expected = `
-- a
-- b c
-- c (d)
-  - d 123
-  `
-  expect(exported.trim()).toBe(expected.trim())
-})
-
-describe('HTML content', () => {
-  it('should paste plain text that contains formatting', () => {
-    const paste = `<b>a</b>
-<b>b</b>`
-    const actual = importExport(paste, 'text/html')
-    expect(actual).toBe(
-      `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
-    <ul>
-      <li><b>a</b></li>
-      <li><b>b</b></li>
-    </ul>
-  </li>
-</ul>`,
-    )
-  })
-
-  it('should paste plain text that contains formatting and bullet indicator is inside of formatting tags', () => {
-    const paste = `<b>a</b>
-<b> -b</b>`
-    const actual = importExport(paste, 'text/html')
-    const expectedHTML = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
-    <ul>
-      <li><b>a</b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li><b>b</b></li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-    expect(actual).toBe(expectedHTML)
-  })
-
-  it('should paste text properly that is copied from OSX Notes.app', () => {
-    /* eslint-disable no-irregular-whitespace */
-    const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<title></title>
-<meta name="Generator" content="Cocoa HTML Writer">
-<meta name="CocoaVersion" content="1894.6">
-<style type="text/css">
-p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
-</style>
-</head>
-<body>
-<p class="p1">A</p>
-<p class="p1"><span class="Apple-converted-space"> </span>- B</p>
-<p class="p1"><span class="Apple-converted-space"> </span>- C</p>
-</body>
-</html>
-`
-    /* eslint-enable no-irregular-whitespace */
-
-    const actual = importExport(paste, 'text/html')
-    const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
-    <ul>
-      <li>A${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li>B</li>
-          <li>C</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-    expect(actual).toBe(expectedOutput)
-  })
-
-  it('should paste text properly that is copied from WebStorm', () => {
-    const paste = `<html>
-       <head>
-          <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-       </head>
-       <body>
-          <pre style="background-color:#2b2b2b;color:#a9b7c6;font-family:'JetBrains Mono',monospace;font-size:9.8pt;">A<br>&#32;-B<br>&#32;-C<br></pre>
-       </body>
-    </html>`
-
-    const actual = importExport(paste, 'text/html')
-    const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
-    <ul>
-      <li>A${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li>B</li>
-          <li>C</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-    expect(actual).toBe(expectedOutput)
-  })
-
-  it('should paste text properly that is copied from iOS notes.app', () => {
-    const paste =
-      '<meta charset="UTF-8"><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;">A</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- B</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- C</span></p>'
-
-    const actual = importExport(paste, 'text/html')
-    const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
-    <ul>
-      <li>A${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li>B</li>
-          <li>C</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-    expect(actual).toBe(expectedOutput)
-  })
-
-  it('should paste text that contains formatting properly that is copied from OSX Notes.app', () => {
-    /* eslint-disable no-irregular-whitespace */
-    const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<title></title>
-<meta name="Generator" content="Cocoa HTML Writer">
-<meta name="CocoaVersion" content="1894.6">
-<style type="text/css">
-p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
-</style>
-</head>
-<body>
-<p class="p1"><b><i>A</i></b></p>
-<p class="p1"><span class="Apple-converted-space">  </span>- <b>B</b></p>
-<p class="p1"><span class="Apple-converted-space">  </span>- <i>C</i></p>
-</body>
-</html>
-`
-    /* eslint-enable no-irregular-whitespace */
-
-    const actual = importExport(paste, 'text/html')
-    const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
-    <ul>
-      <li><b><i>A</i></b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li><b>B</b></li>
-          <li><i>C</i></li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-    expect(actual).toBe(expectedOutput)
-  })
-
-  it('should paste text that contains multiple formatting properly that is copied from OSX Notes.app', () => {
-    /* eslint-disable no-irregular-whitespace */
-    const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<title></title>
-<meta name="Generator" content="Cocoa HTML Writer">
-<meta name="CocoaVersion" content="1894.6">
-<style type="text/css">
-p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
-</style>
-</head>
-<body>
-<p class="p1"><b>A</b></p>
-<p class="p1"><span class="Apple-converted-space"> </span>- <b><i>B</i></b></p>
-<p class="p1"><span class="Apple-converted-space"> </span>- <b>C</b></p>
-</body>
-</html>
-
-`
-    /* eslint-enable no-irregular-whitespace */
-
-    const actual = importExport(paste, 'text/html')
-    const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
-    <ul>
-      <li><b>A</b>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li><b><i>B</i></b></li>
-          <li><b>C</b></li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-    expect(actual).toBe(expectedOutput)
-  })
-
-  it('should paste text that contains formatting that is copied from iOS notes.app', () => {
-    const paste = `<meta charset="UTF-8"><p class="p1"
-                         style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;">
-    <span class="s1" style="font-weight: bold; font-style: normal; font-size: 14px;">A</span></p><p class="p1"
-                                                                                                    style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;">
-    <span class="s1" style="font-weight: bold; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>B</span></p>`
-
-    const actual = importExport(paste, 'text/html')
-    const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
-    <ul>
-      <li><span style="font-weight: bold;">A</span>${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
-        <ul>
-          <li><span style="font-weight: bold;"> B</span></li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ul>`
-    expect(actual).toBe(expectedOutput)
-  })
-})
-
-it('should paste text with an improperly nested meta tag', () => {
-  const text = `
-  - a
-    - b
-      - c
-        - d
-      - <li><meta><span>x</li>
-        - e
-  `
-
-  const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-    - b
-      - c
-        - d
-        - x
-      - e`)
-
-  // TODO: Might be better as:
-  // expect(exported).toBe(`- ${HOME_TOKEN}
-  // - a
-  //   - b
-  //     - c
-  //       - d
-  //     - x
-  //       - e`)
 })
 
 it('should strip tags whose font weight is less than or equal to 400', () => {
@@ -1262,17 +785,6 @@ it(`import sibling empty thoughts`, () => {
   - b`)
 })
 
-it(`mixed html with whitespaces as a new line`, () => {
-  const text = `- a\n<li>b</li>`
-
-  const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-  - b`)
-})
-
 it('set cursor correctly after duplicate merge', () => {
   const text = '- a\n  - b'
 
@@ -1290,70 +802,6 @@ it('set cursor correctly after duplicate merge', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
-})
-
-it(`import bold thoughts with bold descendants`, () => {
-  const text = `
-    - a
-    - c
-      - d
-        - **d1**
-          - e
-            - f
-              - **g**
-        - d2
-        - d3
-      - h
-    - i
-  `
-
-  const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-  - c
-    - d
-      - **d1**
-        - e
-          - f
-            - **g**
-      - d2
-      - d3
-    - h
-  - i`)
-})
-
-it('import a parent and child with single asterisks', () => {
-  const text = `
-  - *a
-    - *b
-  `
-
-  const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - *a
-    - *b`)
-})
-
-it('encode single closing angled bracket', () => {
-  const text = `
-- a
-  - >b
-    - c
-  - d
-  `
-
-  const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-    - >b
-      - c
-    - d`)
 })
 
 // TODO
@@ -1375,78 +823,6 @@ it.skip('encode single open angled bracket', () => {
       - c
         - d
     - e`)
-})
-
-it('import plaintext with embedded <li>', () => {
-  const text = `
-  - a
-    - b
-      - <li>c</li>
-    - d
-  `
-
-  const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-    - b
-      - c
-    - d`)
-})
-
-it('import plaintext with embedded <li> mixed with text', () => {
-  const text = `
-  - a
-    - b
-      - x <li>c</li> y
-    - d
-  `
-
-  const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-    - b
-      - x
-      - c
-      - y
-    - d`)
-})
-
-it('import markdown', () => {
-  const text = `
-# H1 
-a
-## H2
-b
-### H3
-c
-#### H4
-d
-##### H5
-e
-###### H6
-f
-  `
-
-  const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - H1
-    - a
-    - H2
-      - b
-      - H3
-        - c
-        - H4
-          - d
-          - H5
-            - e
-            - H6
-              - f`)
 })
 
 it('simple', () => {
@@ -1473,165 +849,11 @@ it('whitespace', () => {
 `)
 })
 
-it("multiple li's", () => {
-  expect(
-    importExport(
-      `
-<li>one</li>
-<li>two</li>
-`,
-    ),
-  ).toBe(`
-- one
-- two
-`)
-})
-
 it('items separated by <br>', () => {
   expect(importExport('<p>a<br>b<br>c<br></p>')).toBe(`
 - a
 - b
 - c
-`)
-})
-
-// TODO
-it.skip('nested lines separated by <br>', () => {
-  expect(
-    importExport(
-      `
-<li>x
-  <ul>
-    <li>a<br>b<br>c<br></li>
-  </ul>
-</li>
-`,
-    ),
-  ).toBe(`
-- x
-  - a
-  - b
-  - c
-`)
-})
-
-it("nested li's", () => {
-  expect(
-    importExport(
-      `
-<li>a<ul>
-  <li>x</li>
-  <li>y</li>
-</ul></li>
-`,
-    ),
-  ).toBe(`
-- a
-  - x
-  - y
-`)
-})
-
-it("<i> with nested li's", () => {
-  expect(
-    importExport(
-      `
-<li><i>a</i>
-  <ul>
-    <li>x</li>
-    <li>y</li>
-  </ul>
-</li>
-`,
-    ),
-  ).toBe(`
-- a
-  - x
-  - y
-`)
-})
-
-it("<span> with nested li's", () => {
-  expect(
-    importExport(
-      `
-<li><span>a</span>
-  <ul>
-    <li>x</li>
-    <li>y</li>
-  </ul>
-</li>
-`,
-    ),
-  ).toBe(`
-- a
-  - x
-  - y
-`)
-})
-
-// TODO
-it.skip("empty thought with nested li's", () => {
-  expect(
-    importExport(
-      `
-<li>
-  <ul>
-    <li>x</li>
-    <li>y</li>
-  </ul>
-</li>
-`,
-    ),
-  ).toBe(`
-  - x
-  - y
-`)
-})
-
-it("do not add empty parent thought when empty li node has no nested li's", () => {
-  expect(
-    importExport(
-      `
-<li>
-  a
-  <ul>
-    <li>b</li>
-    <li>
-      <b>c</b>
-    </li>
-  </ul>
-</li>
-`,
-    ),
-  ).toBe(`
-- a
-  - b
-  - c
-`)
-})
-
-it('multiple nested lists', () => {
-  expect(
-    importExport(
-      `
-<li>a
-  <ul>
-    <li>b</li>
-  </ul>
-</li>
-<li>c
-  <ul>
-    <li>d</li>
-  </ul>
-</li>
-`,
-    ),
-  ).toBe(`
-- a
-  - b
-- c
-  - d
 `)
 })
 
@@ -1644,23 +866,6 @@ it('strip wrapping tag', () => {
 it('strip inline tag', () => {
   expect(importExport('a <span>b</span> c')).toBe(`
 - a b c
-`)
-})
-
-it('strip inline tag in nested list', () => {
-  expect(
-    importExport(
-      `
-<li>a<span>fter</span>word<ul>
-  <li>one <span>and</span> two</li>
-  <li>y</li>
-</ul></li>
-`,
-    ),
-  ).toBe(`
-- afterword
-  - one and two
-  - y
 `)
 })
 
@@ -1706,61 +911,6 @@ z
     - =note
       - Other Note
     - d
-`)
-})
-
-it('blank thoughts with subthoughts', () => {
-  expect(
-    importExport(
-      `<li>a
-  <ul>
-    <li>b
-      <ul>
-        <li>2019
-          <ul>
-            <li>7/27</li>
-            <li>7/21</li>
-            <li>7/17</li>
-          </ul>
-        </li>
-
-        <li>
-          <ul>
-            <li>Integral Living Room</li>
-            <li>Maitri 5</li>
-            <li>DevCon</li>
-          </ul>
-        </li>
-
-        <li>...
-          <ul>
-            <li>2018</li>
-            <li>2017</li>
-            <li>2016</code></pre>
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-  </ul>
-</li>
-`,
-    ),
-  ).toBe(`
-- a
-  - b
-    - 2019
-      - 7/27
-      - 7/21
-      - 7/17
-    - ${'' /* prevent trim_trailing_whitespace */}
-      - Integral Living Room
-      - Maitri 5
-      - DevCon
-    - ...
-      - 2018
-      - 2017
-      - 2016
 `)
 })
 
