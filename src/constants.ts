@@ -246,7 +246,11 @@ export const REGEX_HTML = /<\/?[a-z][\s\S]*>/i
 export const REGEX_TAGS = /(<([^>]+)>)/gi
 
 /** Matches HTML tags that indicate the snippet is a block of proper HTML, not just text formatted with HTML tags. Includes <html>, <body>, <meta>, <li> and <ul>. Does not match strings that just contain formattings tags like <b>, <i>, or <u>. */
-export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/gi
+export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/i
+
+// starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
+// '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
+export const REGEX_PLAINTEXT_BULLET = /^\s*(?:[-—▪◦•]|\*\s)/m
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
 

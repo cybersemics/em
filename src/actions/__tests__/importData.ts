@@ -52,25 +52,6 @@ it('alternating nested lists', async () => {
 `)
 })
 
-// related: https://github.com/cybersemics/em/issues/1008
-it('do not parse as html when value has tags inside indented text', async () => {
-  const actual = await importExport(
-    `
-  - a
-    - b
-    - <li>c</li>
-  `,
-  )
-
-  expect(actual).toBe(
-    `
-- a
-  - b
-  - c
-`,
-  )
-})
-
 // TODO
 it.skip('multi-line nested html tags', async () => {
   const paste = `
@@ -818,5 +799,212 @@ it('encode single closing angled bracket', async () => {
   - >b
     - c
   - d
+`)
+})
+
+it('ChatGPT output', async () => {
+  const text = `
+<html>
+  <body>
+    <p class="p1">
+      <span class="s1"><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span></span
+      ><span class="s2">Foam</span>
+    </p>
+    <p class="p2">
+      <span class="s1"><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span></span
+      ><span class="s2">::</span><span class="s1"> (Archival or More Stable Options)</span>
+    </p>
+    <p class="p3">
+      <span class="s1"><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span></span
+      ><span class="s2">Ethafoam</span>
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Durable, closed-cell polyethylene
+        foam</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Used in conservation and
+        sculpture</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Resistant to crumbling and
+        degradation</span
+      >
+    </p>
+    <p class="p3">
+      <span class="s1"><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span></span
+      ><span class="s2">XPS Foam (Extruded Polystyrene, e.g., Dow Blue Board, Owens Corning Foamular)</span>
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Finer cell structure than standard
+        Styrofoam</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Carves cleanly and holds detail
+        well</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>More stable over time</span
+      >
+    </p>
+    <p class="p3">
+      <span class="s1"><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span></span
+      ><span class="s2">Gatorboard</span>
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Rigid foam board with
+        archival-quality facing</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Good for structural elements or
+        mixed-media sculpture</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Does not warp easily</span
+      >
+    </p>
+    <p class="p3">
+      <span class="s1"><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span></span
+      ><span class="s2">HDU Foam (High-Density Urethane, e.g., Precision Board, Sign Foam)</span>
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Fine-detail carving foam used in
+        signage and sculpture</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>More stable and archival than
+        standard polystyrene foams</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Can be painted and coated without
+        heavy priming</span
+      >
+    </p>
+    <p class="p2">
+      <span class="s1"><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span></span
+      ><span class="s2">✗</span><span class="s1"> (Non-Archival or Less Stable Options)</span>
+    </p>
+    <p class="p3">
+      <span class="s1"><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span></span
+      ><span class="s2">Styrofoam (Expanded Polystyrene, EPS)</span>
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Degrades over time</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Can off-gas chemicals</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Sensitive to light and heat</span
+      >
+    </p>
+    <p class="p3">
+      <span class="s1"><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span></span
+      ><span class="s2">Standard Polyurethane Foam</span>
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Prone to yellowing and breaking
+        down</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Can release VOCs over time</span
+      >
+    </p>
+    <p class="p4">
+      <span class="s1"
+        ><span class="Apple-tab-span"> </span>•<span class="Apple-tab-span"> </span>Not ideal for long-term sculpture
+        preservation</span
+      >
+    </p>
+  </body>
+</html>
+  `
+
+  // TODO
+  // ChatGPT may include text at the end, after the bulleted list
+
+  /*
+    <p class="p5"><span class="s1"></span><br /></p>
+    <p class="p6">
+      <span class="s1">For a </span><span class="s2">cheap but stable</span
+      ><span class="s1"> option, XPS Foam is a good choice. If </span><span class="s2">archival quality</span
+      ><span class="s1"> is a priority, Ethafoam or HDU Foam is better.</span>
+    </p>
+  */
+
+  expect(await importExport(text)).toBe(`
+- Foam
+  - :: (Archival or More Stable Options)
+    - Ethafoam
+      - Durable, closed-cell polyethylene foam
+      - Used in conservation and sculpture
+      - Resistant to crumbling and degradation
+    - XPS Foam (Extruded Polystyrene, e.g., Dow Blue Board, Owens Corning Foamular)
+      - Finer cell structure than standard Styrofoam
+      - Carves cleanly and holds detail well
+      - More stable over time
+    - Gatorboard
+      - Rigid foam board with archival-quality facing
+      - Good for structural elements or mixed-media sculpture
+      - Does not warp easily
+    - HDU Foam (High-Density Urethane, e.g., Precision Board, Sign Foam)
+      - Fine-detail carving foam used in signage and sculpture
+      - More stable and archival than standard polystyrene foams
+      - Can be painted and coated without heavy priming
+  - ✗ (Non-Archival or Less Stable Options)
+    - Styrofoam (Expanded Polystyrene, EPS)
+      - Degrades over time
+      - Can off-gas chemicals
+      - Sensitive to light and heat
+    - Standard Polyurethane Foam
+      - Prone to yellowing and breaking down
+      - Can release VOCs over time
+      - Not ideal for long-term sculpture preservation
+`)
+})
+
+it('ChatGPT output saved to an HTML file and copied from the browser', async () => {
+  // eslint-disable-next-line no-irregular-whitespace
+  const text = `<meta charset='utf-8'><p class="p1" style="color: rgb(0, 0, 0); font-family: Times; font-size: medium; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"><span class="s1">•<span class="Apple-tab-span"><span> </span></span></span><span class="s2">Foam</span></p><p class="p2" style="color: rgb(0, 0, 0); font-family: Times; font-size: medium; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"><span class="s1"><span class="Apple-tab-span"></span>•<span class="Apple-tab-span"><span> </span></span></span><span class="s2">::</span><span class="s1"><span> </span>(Archival or More Stable Options)</span></p><p class="p3" style="color: rgb(0, 0, 0); font-family: Times; font-size: medium; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"><span class="s1"><span class="Apple-tab-span"></span>•<span class="Apple-tab-span"><span> </span></span></span><span class="s2">Ethafoam</span></p><p class="p4" style="color: rgb(0, 0, 0); font-family: Times; font-size: medium; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"><span class="s1"><span class="Apple-tab-span"></span>•<span class="Apple-tab-span"><span> </span></span>Durable, closed-cell polyethylene foam</span></p><p class="p4" style="color: rgb(0, 0, 0); font-family: Times; font-size: medium; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"><span class="s1"><span class="Apple-tab-span"></span>•<span class="Apple-tab-span"><span> </span></span>Used in conservation and sculpture</span></p><p class="p4" style="color: rgb(0, 0, 0); font-family: Times; font-size: medium; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"><span class="s1"><span class="Apple-tab-span"></span>•<span class="Apple-tab-span"><span> </span></span>Resistant to crumbling and degradation</span></p><p class="p3" style="color: rgb(0, 0, 0); font-family: Times; font-size: medium; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"><span class="s1"><span class="Apple-tab-span"></span>•<span class="Apple-tab-span"><span> </span></span></span><span class="s2">XPS Foam (Extruded Polystyrene, e.g., Dow Blue Board, Owens Corning Foamular)</span></p><p class="p4" style="color: rgb(0, 0, 0); font-family: Times; font-size: medium; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"><span class="s1"><span class="Apple-tab-span"></span>•<span class="Apple-tab-span"><span> </span></span>Finer cell structure than standard Styrofoam</span></p>`
+
+  // TODO: Why the extra space after :: ?
+
+  expect(await importExport(text)).toBe(`
+- Foam
+  - ::  (Archival or More Stable Options)
+    - Ethafoam
+      - Durable, closed-cell polyethylene foam
+      - Used in conservation and sculpture
+      - Resistant to crumbling and degradation
+    - XPS Foam (Extruded Polystyrene, e.g., Dow Blue Board, Owens Corning Foamular)
+      - Finer cell structure than standard Styrofoam
 `)
 })

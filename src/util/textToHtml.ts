@@ -2,15 +2,11 @@ import DOMPurify from 'dompurify'
 import _ from 'lodash'
 import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
-import { ALLOWED_ATTR, ALLOWED_TAGS, REGEX_NONFORMATTING_HTML } from '../constants'
+import { ALLOWED_ATTR, ALLOWED_TAGS, REGEX_NONFORMATTING_HTML, REGEX_PLAINTEXT_BULLET } from '../constants'
 
 // regex that checks if the value starts with closed html tag
 // Note: This regex cannot check properly for a tag nested within itself. However for general cases it works properly.
 const REGEX_STARTS_WITH_CLOSED_TAG = /^<([A-Z][A-Z0-9]*)\b[^>]*>(.*?)<\/\1>/ims
-
-// starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
-// '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
-const REGEX_PLAINTEXT_BULLET = /^\s*(?:[-—▪◦•]|\*\s)/m
 
 // Text content enclosed in double asterisks '**' representing markdown bold (non-greedy).
 // Example: **markdown bold**
@@ -69,17 +65,23 @@ const textToHtml = (input: string) => {
   // otherwise use text-block-parser to convert indented plaintext into nested HTML lists
   const html = isHtml ? input : blocksToHtml(parse(input, Infinity))
 
-  return html
-    .split('\n')
-    .map(
-      line =>
-        `${line
-          .replace(REGEX_PLAINTEXT_BULLET, '')
-          .replace(REGEX_MARKDOWN_BOLD, '<b>$1</b>')
-          .replace(REGEX_MARKDOWN_ITALICS, '<i>$1</i>')
-          .trim()}`,
-    )
-    .join('')
+  return (
+    html
+      .split('\n')
+      .map(
+        line =>
+          `${line
+            .replace(REGEX_PLAINTEXT_BULLET, '')
+            .replace(REGEX_MARKDOWN_BOLD, '<b>$1</b>')
+            .replace(REGEX_MARKDOWN_ITALICS, '<i>$1</i>')
+            .trim()}`,
+      )
+      /* Join lines with space, otherwise words can become crunched together.
+       * e.g. The following is rendered with a space between "hello" and "world" in the browser, even though there is no space character present. The newline and tabs are collapsed into a single space and the words are rendered inline since they are part of the same text node
+       * \t\t<p>hello\n\t\tworld</p>
+       */
+      .join(' ')
+  )
 }
 
 export default textToHtml
