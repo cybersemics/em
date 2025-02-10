@@ -69,21 +69,17 @@ const textToHtml = (input: string) => {
   // otherwise use text-block-parser to convert indented plaintext into nested HTML lists
   const html = isHtml ? input : blocksToHtml(parse(input, Infinity))
 
-  return _.flow(
-    // replace markdown bold and italics with <b> and <i> line-by-line
-    (html: string) =>
-      html
-        .split('\n')
-        .map(
-          line =>
-            `${line
-              .replace(REGEX_PLAINTEXT_BULLET, '')
-              .replace(REGEX_MARKDOWN_BOLD, '<b>$1</b>')
-              .replace(REGEX_MARKDOWN_ITALICS, '<i>$1</i>')
-              .trim()}`,
-        )
-        .join(''),
-  )(html)
+  return html
+    .split('\n')
+    .map(
+      line =>
+        `${line
+          .replace(REGEX_PLAINTEXT_BULLET, '')
+          .replace(REGEX_MARKDOWN_BOLD, '<b>$1</b>')
+          .replace(REGEX_MARKDOWN_ITALICS, '<i>$1</i>')
+          .trim()}`,
+    )
+    .join('')
 }
 
 export default textToHtml
