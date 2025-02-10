@@ -462,28 +462,30 @@ const TreeNode = ({
   // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
   // selection is created.
   useEffect(() => {
-    // The selection ranges aren't updated until the end of the frame when the thought is fcoused.
-    requestAnimationFrame(() => {
-      if (isTouch && isSafari() && caretRef.current) {
-        if (editing && isCursor) {
-          const offset = fadeThoughtRef.current?.getBoundingClientRect()
+    if (isTouch && isSafari() && caretRef.current) {
+      if (editing && isCursor) {
+        // The selection ranges aren't updated until the end of the frame when the thought is focused.
+        setTimeout(() => {
+          if (caretRef.current) {
+            const offset = fadeThoughtRef.current?.getBoundingClientRect()
 
-          if (offset) {
-            const rect = getBoundingClientRect()
+            if (offset) {
+              const rect = getBoundingClientRect()
 
-            if (rect?.x || rect?.y) {
-              const { x, y } = rect
+              if (rect) {
+                const { x, y } = rect
 
-              caretRef.current.style.display = 'inline'
-              caretRef.current.style.top = `${y - offset.y}px`
-              caretRef.current.style.left = `${x - offset.x}px`
+                caretRef.current.style.display = 'inline'
+                caretRef.current.style.top = `${y - offset.y}px`
+                caretRef.current.style.left = `${x - offset.x}px`
+              }
             }
           }
-        } else {
-          caretRef.current.style.display = 'none'
-        }
+        })
+      } else {
+        caretRef.current.style.display = 'none'
       }
-    })
+    }
   }, [editing, isCursor, path])
 
   useLayoutEffect(() => {
@@ -597,7 +599,7 @@ const TreeNode = ({
           color: 'blue',
           display: 'none',
           fontSize: '1.25em',
-          margin: '-6px 0 0 -1.75px',
+          margin: '-6px 0 0 -2.5px',
           opacity: 'var(--faux-caret-opacity)',
           position: 'absolute',
           pointerEvents: 'none',

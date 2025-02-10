@@ -466,7 +466,18 @@ export const getBoundingClientRect = () => {
   const selection = window.getSelection()
 
   if (selection && selection.rangeCount) {
-    return selection.getRangeAt(0).getBoundingClientRect()
+    if (isText()) return selection.getRangeAt(0).getBoundingClientRect()
+
+    // If the selection is on an element node, get the bounding rect of the element minus the padding
+    if (selection.focusNode instanceof HTMLElement) {
+      const { x, y } = selection.focusNode.getBoundingClientRect()
+      const styles = getComputedStyle(selection.focusNode)
+
+      return new DOMRect(
+        x + parseFloat(styles.getPropertyValue('padding-left')),
+        y + parseFloat(styles.getPropertyValue('padding-top')),
+      )
+    }
   }
 
   return null
