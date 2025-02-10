@@ -238,12 +238,15 @@ export const EDIT_THROTTLE = 500
 // matches a string with only punctuation
 export const REGEX_PUNCTUATIONS = /^\W+$/i
 
-// matches text with HTML
+/** Matches any HTML tags. */
 export const REGEX_HTML = /<\/?[a-z][\s\S]*>/i
 
 // matches HTML tags
 // can be used to replace all HTML in a string
 export const REGEX_TAGS = /(<([^>]+)>)/gi
+
+/** Matches HTML tags that indicate the snippet is a block of proper HTML, not just text formatted with HTML tags. Includes <html>, <body>, <meta>, <li> and <ul>. Does not match strings that just contain formattings tags like <b>, <i>, or <u>. */
+export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/gi
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
 
