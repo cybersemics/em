@@ -16,7 +16,7 @@ const AnimatedCol1: React.FC<AnimatedCol1Props> = ({ isTableView, duration = 100
 
   useLayoutEffect(() => {
     if (isTableView && ref.current && ref.current.parentElement) {
-      const parentWidth = ref.current.parentElement.getBoundingClientRect().width
+      const parentWidth = ref.current.getBoundingClientRect().width
       const editable = ref.current.querySelector('.editable') as HTMLElement | null
 
       // Use a Document Range to measure only the text content
@@ -36,7 +36,7 @@ const AnimatedCol1: React.FC<AnimatedCol1Props> = ({ isTableView, duration = 100
     <div
       ref={ref}
       style={{
-        display: 'flex',
+        display: 'inline-flex',
         transform: isTableView ? `translateX(${translateX}px)` : `translateX(0)`,
         transition: `transform ${duration}ms ease-out`,
       }}
