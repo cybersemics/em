@@ -61,9 +61,14 @@ const freeThoughts = (state: State) => {
         ...path,
         // preserve normal children even if context view is active, so that it is instantly available when the user switches back
         ...getAllChildren(state, head(path)),
-        // preserve context view (including context ancestors)
+        // preserve context childern
+        // preserve context ancestors
+        // See test "Do not deallocate tangential contexts children" for an example of why context children need to be preserved
         ...(showContexts && thought
-          ? (getContexts(state, thought.value).flatMap(cxid => thoughtToPath(state, cxid)) as ThoughtId[])
+          ? getContexts(state, thought.value).flatMap(cxid => [
+              ...getAllChildren(state, cxid),
+              ...thoughtToPath(state, cxid),
+            ])
           : []),
       ]
     }),
