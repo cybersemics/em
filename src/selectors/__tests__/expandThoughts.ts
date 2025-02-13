@@ -753,6 +753,22 @@ describe('expand with : char', () => {
     expect(isContextExpanded(stateNew, ['a', '<b><i>bold and italic:</i></b>'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', '<font color="#00c7e6">color:</font>'])).toBeTruthy()
   })
+
+  it('thoughts ending in ":" are not expanded in context view', () => {
+    const text = `
+        - a
+          - a1
+            - m:
+              - m1
+        - m
+      `
+
+    const steps = [importText({ text }), setCursor(['m']), toggleContextView]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['m', 'a1'])).toBeFalsy()
+  })
 })
 
 describe('=done', () => {
