@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
-import { css, cx } from '../../styled-system/css'
+import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
 import Autofocus from '../@types/Autofocus'
 import Index from '../@types/IndexType'
@@ -26,7 +26,6 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import nextSibling from '../selectors/nextSibling'
-import rootedGrandparentOf from '../selectors/rootedGrandparentOf'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -35,7 +34,6 @@ import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
-import hideCaret, { getHideCaretAnimationName } from '../util/getHideCaretAnimationName'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
@@ -891,11 +889,6 @@ const LayoutTree = () => {
   ])
 
   const spaceAboveLast = useRef(spaceAboveExtended)
-  // When the cursor is in a table, all thoughts beneath the table are hidden,
-  // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
-  const tableDepth = useSelector(state =>
-    state.cursor && attributeEquals(state, head(rootedGrandparentOf(state, state.cursor)), '=view', 'Table') ? 1 : 0,
-  )
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
@@ -923,12 +916,7 @@ const LayoutTree = () => {
   return (
     <div
       // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
-      className={cx(
-        css({ marginTop: '0.501em' }),
-        hideCaret({
-          animation: getHideCaretAnimationName(indentDepth + tableDepth),
-        }),
-      )}
+      className={css({ marginTop: '0.501em' })}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
         transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
@@ -941,14 +929,18 @@ const LayoutTree = () => {
         hoverArrowVisibility={hoverArrowVisibility}
       />
       <div
-        className={css({ transition: `transform {durations.layoutSlowShift} ease-out` })}
+        className={css({
+          position: 'relative',
+          transition: `left {durations.layoutSlowShift} ease-out`,
+          willChange: 'left, margin',
+        })}
         style={{
           // Set a container height that fits all thoughts.
           // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
           height: totalHeight + spaceBelow,
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
-          transform: `translateX(${1.5 - indent}em`,
+          left: `${1.5 - indent}em`,
           // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
