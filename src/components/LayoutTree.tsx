@@ -42,6 +42,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
+import AnimatedCol1 from './AnimatedCol1'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import HoverArrow from './HoverArrow'
@@ -496,7 +497,6 @@ const TreeNode = ({
         // (Maybe the 10px is from .content padding-left?)
         width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
         ...style,
-        textAlign: isTableCol1 ? 'right' : undefined,
       }}
     >
       <FadeTransition
@@ -511,31 +511,33 @@ const TreeNode = ({
         unmountOnExit
       >
         <div ref={fadeThoughtRef}>
-          <VirtualThought
-            debugIndex={testFlags.simulateDrop ? indexChild : undefined}
-            depth={depth}
-            dropUncle={thoughtId === cursorUncleId}
-            env={env}
-            indexDescendant={indexDescendant}
-            // isMultiColumnTable={isMultiColumnTable}
-            isMultiColumnTable={false}
-            leaf={leaf}
-            onResize={setSize}
-            path={path}
-            prevChildId={prevChild?.id}
-            showContexts={showContexts}
-            simplePath={simplePath}
-            singleLineHeight={singleLineHeightWithCliff}
-            // Add a bit of space after a cliff to give nested lists some breathing room.
-            // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-            // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
-            style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
-            crossContextualKey={thoughtKey}
-            prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
-            isLastVisible={isLastVisible}
-            autofocus={autofocus}
-            marginRight={isTableCol1 ? marginRight : 0}
-          />
+          <AnimatedCol1 isTableView={isTableCol1}>
+            <VirtualThought
+              debugIndex={testFlags.simulateDrop ? indexChild : undefined}
+              depth={depth}
+              dropUncle={thoughtId === cursorUncleId}
+              env={env}
+              indexDescendant={indexDescendant}
+              // isMultiColumnTable={isMultiColumnTable}
+              isMultiColumnTable={false}
+              leaf={leaf}
+              onResize={setSize}
+              path={path}
+              prevChildId={prevChild?.id}
+              showContexts={showContexts}
+              simplePath={simplePath}
+              singleLineHeight={singleLineHeightWithCliff}
+              // Add a bit of space after a cliff to give nested lists some breathing room.
+              // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+              // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
+              style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
+              crossContextualKey={thoughtKey}
+              prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
+              isLastVisible={isLastVisible}
+              autofocus={autofocus}
+              marginRight={isTableCol1 ? marginRight : 0}
+            />
+          </AnimatedCol1>
         </div>
       </FadeTransition>
 
@@ -789,8 +791,6 @@ const LayoutTree = () => {
       const x =
         // indentation
         fontSize * node.depth +
-        // space between table columns
-        fontSize * (node.isTableCol1 ? -1.5 : 0) +
         // table col2
         ancestorTableWidths
 
