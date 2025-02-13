@@ -1,7 +1,7 @@
 import { findAllByText, screen } from '@testing-library/dom'
 
 /**
- * Gets a thought that matches the given value.
+ * Waits for a thought with the given value. Times out if it does not exist.
  */
 const findThoughtByText = async (value: string, container?: HTMLElement | null) => {
   const thoughtNodes = await (container
