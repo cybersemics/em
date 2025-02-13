@@ -794,9 +794,6 @@ const LayoutTree = () => {
       const x =
         // indentation
         fontSize * node.depth +
-        // space between table columns
-        fontSize * (node.isTableCol1 ? -1.5 : 0) +
-        fontSize * (node.isTableCol1 && node.depth === 0 ? -1.5 : 0) +
         // table col2
         ancestorTableWidths
 

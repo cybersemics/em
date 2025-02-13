@@ -16,10 +16,6 @@ const AnimatedCol1: React.FC<AnimatedCol1Props> = ({ isTableView, duration = 500
   const [translateX, setTranslateX] = useState(0)
   const [textAlignState, setTextAlignState] = useState<'right' | undefined>(undefined)
 
-  const transitionStyle = isTableView
-    ? { transform: `translateX(${translateX}px)`, transition: `transform ${duration}ms ease-out` }
-    : {}
-
   useLayoutEffect(() => {
     if (isTableView && ref.current) {
       const parentWidth = ref.current.getBoundingClientRect().width
@@ -29,7 +25,9 @@ const AnimatedCol1: React.FC<AnimatedCol1Props> = ({ isTableView, duration = 500
         range.selectNodeContents(editable)
         const rect = range.getBoundingClientRect()
         const textWidth = rect.width
-        setTranslateX(parentWidth - textWidth)
+        // Clamp the translation to a minimum of 0
+        const computedTranslateX = Math.max(0, parentWidth - textWidth)
+        setTranslateX(computedTranslateX)
       }
     } else {
       setTranslateX(0)
@@ -41,7 +39,6 @@ const AnimatedCol1: React.FC<AnimatedCol1Props> = ({ isTableView, duration = 500
       in={isTableView}
       timeout={duration}
       nodeRef={ref}
-      exit={false}
       onEnter={() => {
         setTextAlignState('right')
       }}
@@ -52,8 +49,9 @@ const AnimatedCol1: React.FC<AnimatedCol1Props> = ({ isTableView, duration = 500
       <div
         ref={ref}
         style={{
-          display: 'inline-flex',
-          ...transitionStyle, // Apply transform conditionally
+          display: 'flex',
+          transform: `translateX(${translateX}px)`,
+          transition: `transform ${duration}ms ease-out`,
           textAlign: textAlignState,
           width: '100%',
         }}
