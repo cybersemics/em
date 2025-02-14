@@ -69,6 +69,7 @@ const toggleSortCommand: Command = {
       ? 'Ranks do not match sort condition'
       : null
   },
+  rounded: true,
 }
 
 export default toggleSortCommand

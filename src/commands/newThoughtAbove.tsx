@@ -18,6 +18,7 @@ const newThoughtAboveCommand: Command = {
   svg: NewThoughtAboveIcon,
   canExecute: () => isDocumentEditable(),
   exec: newThought({ insertBefore: true }),
+  rounded: true,
 }
 
 export default newThoughtAboveCommand

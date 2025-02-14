@@ -13,6 +13,7 @@ const cursorPrevCommand: Command = {
   svg: PrevIcon,
   keyboard: { key: Key.ArrowUp, meta: true },
   exec: throttleByAnimationFrame(dispatch => dispatch(cursorPrev())),
+  rounded: true,
 }
 
 export default cursorPrevCommand

@@ -235,6 +235,7 @@ const CommandRow: FC<{
               )}
               width={45}
               height={45}
+              rounded={command.rounded}
             />
           )}
 
