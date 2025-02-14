@@ -452,6 +452,8 @@ const TreeNode = ({
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
 
+  const [showLineEndFauxCaret, setShowLineEndFauxCaret] = useState(false)
+
   // Hide the faux caret when typing occurs.
   editingValueStore.subscribe(() => {
     if (isTouch && isSafari() && caretRef.current) {
@@ -459,8 +461,6 @@ const TreeNode = ({
       setShowLineEndFauxCaret(false)
     }
   })
-
-  const [showLineEndFauxCaret, setShowLineEndFauxCaret] = useState(false)
 
   // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
   // selection is created.
