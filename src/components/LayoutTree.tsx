@@ -13,8 +13,9 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
+import { getBoundingClientRect, isEndOfElementNode } from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import useSortedContext from '../hooks/useSortedContext'
 import attributeEquals from '../selectors/attributeEquals'
@@ -30,6 +31,7 @@ import rootedGrandparentOf from '../selectors/rootedGrandparentOf'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
+import editingValueStore from '../stores/editingValue'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
@@ -428,6 +430,10 @@ const TreeNode = ({
   autofocusDepth: number
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
+  // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
+  // rather than one universal caret in the parent.
+  const caretRef = useRef<HTMLSpanElement | null>(null)
+  const editing = useSelector(state => state.editing)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
@@ -445,6 +451,50 @@ const TreeNode = ({
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
+
+  const [showLineEndFauxCaret, setShowLineEndFauxCaret] = useState(false)
+
+  // Hide the faux caret when typing occurs.
+  editingValueStore.subscribe(() => {
+    if (isTouch && isSafari() && caretRef.current) {
+      caretRef.current.style.display = 'none'
+      setShowLineEndFauxCaret(false)
+    }
+  })
+
+  // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
+  // selection is created.
+  useEffect(() => {
+    if (isTouch && isSafari() && caretRef.current) {
+      if (editing && isCursor) {
+        // The selection ranges aren't updated until the end of the frame when the thought is focused.
+        setTimeout(() => {
+          if (caretRef.current) {
+            const offset = fadeThoughtRef.current?.getBoundingClientRect()
+
+            if (offset) {
+              const rect = getBoundingClientRect()
+
+              if (rect) {
+                const { x, y } = rect
+
+                caretRef.current.style.display = 'inline'
+                caretRef.current.style.top = `${y - offset.y}px`
+                caretRef.current.style.left = `${x - offset.x}px`
+                setShowLineEndFauxCaret(false)
+              } else {
+                caretRef.current.style.display = 'none'
+                setShowLineEndFauxCaret(isEndOfElementNode())
+              }
+            }
+          }
+        })
+      } else {
+        caretRef.current.style.display = 'none'
+        setShowLineEndFauxCaret(false)
+      }
+    }
+  }, [editing, isCursor, path])
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -495,6 +545,7 @@ const TreeNode = ({
         className={css({
           position: 'absolute',
           transition,
+          '--faux-caret-line-end-opacity': showLineEndFauxCaret ? undefined : 0,
         })}
         style={{
           // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
@@ -551,6 +602,21 @@ const TreeNode = ({
               prevWidth={treeThoughtsPositioned[index - 1]?.width}
             />
           )}
+        <span
+          className={css({
+            color: 'blue',
+            display: 'none',
+            fontSize: '1.25em',
+            margin: '-6px 0 0 -2.5px',
+            opacity: 'var(--faux-caret-opacity)',
+            position: 'absolute',
+            pointerEvents: 'none',
+            WebkitTextStroke: '0.625px var(--colors-blue)',
+          })}
+          ref={caretRef}
+        >
+          |
+        </span>
       </div>
     </FadeTransition>
   )
@@ -924,7 +990,7 @@ const LayoutTree = () => {
     <div
       // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
       className={cx(
-        css({ marginTop: '0.501em' }),
+        css({ '--faux-caret-opacity': '0', marginTop: '0.501em' }),
         hideCaret({
           animation: getHideCaretAnimationName(indentDepth + tableDepth),
         }),
