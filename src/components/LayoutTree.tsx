@@ -456,6 +456,7 @@ const TreeNode = ({
   editingValueStore.subscribe(() => {
     if (isTouch && isSafari() && caretRef.current) {
       caretRef.current.style.display = 'none'
+      setShowLineEndFauxCaret(false)
     }
   })
 
