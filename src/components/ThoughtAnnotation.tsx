@@ -9,6 +9,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -231,6 +232,20 @@ const ThoughtAnnotation = React.memo(
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
             showSuperscript ? <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} /> : null
           }
+          <span
+            className={css({
+              bottom: '6px',
+              color: 'blue',
+              fontSize: '1.25em',
+              opacity: 'var(--faux-caret-line-end-opacity)',
+              position: 'relative',
+              pointerEvents: 'none',
+              right: '2px',
+              WebkitTextStroke: '0.625px var(--colors-blue)',
+            })}
+          >
+            |
+          </span>
         </div>
       </div>
     )
@@ -338,7 +353,7 @@ const ThoughtAnnotationContainer = React.memo(
       setCalculateContexts(true)
     }, [])
 
-    return showSuperscript || url || email || styleAnnotation ? (
+    return showSuperscript || url || email || styleAnnotation || (isTouch && isSafari()) ? (
       <ThoughtAnnotation
         {...{
           simplePath,

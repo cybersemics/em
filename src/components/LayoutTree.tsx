@@ -15,7 +15,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { isSafari, isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
-import { getBoundingClientRect } from '../device/selection'
+import { getBoundingClientRect, isEndOfElementNode } from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import useSortedContext from '../hooks/useSortedContext'
 import attributeEquals from '../selectors/attributeEquals'
@@ -459,6 +459,8 @@ const TreeNode = ({
     }
   })
 
+  const [showLineEndFauxCaret, setShowLineEndFauxCaret] = useState(false)
+
   // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
   // selection is created.
   useEffect(() => {
@@ -478,12 +480,20 @@ const TreeNode = ({
                 caretRef.current.style.display = 'inline'
                 caretRef.current.style.top = `${y - offset.y}px`
                 caretRef.current.style.left = `${x - offset.x}px`
+                console.log(false)
+                setShowLineEndFauxCaret(false)
+              } else {
+                caretRef.current.style.display = 'none'
+                console.log(isEndOfElementNode())
+                setShowLineEndFauxCaret(isEndOfElementNode())
               }
             }
           }
         })
       } else {
         caretRef.current.style.display = 'none'
+        console.log(false)
+        setShowLineEndFauxCaret(false)
       }
     }
   }, [editing, isCursor, path])
@@ -526,6 +536,7 @@ const TreeNode = ({
       className={css({
         position: 'absolute',
         transition,
+        '--faux-caret-line-end-opacity': showLineEndFauxCaret ? undefined : 0,
       })}
       style={{
         // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
