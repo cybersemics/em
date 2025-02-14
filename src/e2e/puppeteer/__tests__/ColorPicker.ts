@@ -11,7 +11,11 @@ expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
-it('ColorPicker', async () => {
+// TODO: Fix flaky snapshot test
+// https://github.com/cybersemics/em/actions/runs/13156294896
+// https://github.com/cybersemics/em/actions/runs/13182568493
+// https://github.com/cybersemics/em/actions/runs/13224979298
+it.skip('ColorPicker', async () => {
   await paste('Hello world')
 
   await clickThought('Hello world')

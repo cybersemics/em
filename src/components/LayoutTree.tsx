@@ -526,39 +526,39 @@ const TreeNode = ({
     : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
 
   return (
-    <div
-      aria-label='tree-node'
-      // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
-      // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
-      className={css({
-        position: 'absolute',
-        transition,
-        '--faux-caret-line-end-opacity': showLineEndFauxCaret ? undefined : 0,
-      })}
-      style={{
-        // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
-        // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
-        left: x,
-        top: y,
-        // Table col1 uses its exact width since cannot extend to the right edge of the screen.
-        // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
-        // 1em + 10px is an eyeball measurement at font sizes 14 and 18
-        // (Maybe the 10px is from .content padding-left?)
-        width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
-        ...style,
-        textAlign: isTableCol1 ? 'right' : undefined,
-      }}
+    <FadeTransition
+      id={thoughtKey}
+      // The FadeTransition is only responsible for fade out on unmount;
+      // or for fade in on mounting of a new thought.
+      // See autofocusChanged for normal opacity transition.
+      // Limit the fade/shrink/blur animation to the archive, delete, and collapseContext actions.
+      duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
+      nodeRef={fadeThoughtRef}
+      in={transitionGroupsProps.in}
+      unmountOnExit
     >
-      <FadeTransition
-        id={thoughtKey}
-        // The FadeTransition is only responsible for fade out on unmount;
-        // or for fade in on mounting of a new thought.
-        // See autofocusChanged for normal opacity transition.
-        // Limit the fade/shrink/blur animation to the archive, delete, and collapseContext actions.
-        duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
-        nodeRef={fadeThoughtRef}
-        in={transitionGroupsProps.in}
-        unmountOnExit
+      <div
+        aria-label='tree-node'
+        // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
+        // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
+        className={css({
+          position: 'absolute',
+          transition,
+          '--faux-caret-line-end-opacity': showLineEndFauxCaret ? undefined : 0,
+        })}
+        style={{
+          // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
+          // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
+          left: x,
+          top: y,
+          // Table col1 uses its exact width since cannot extend to the right edge of the screen.
+          // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
+          // 1em + 10px is an eyeball measurement at font sizes 14 and 18
+          // (Maybe the 10px is from .content padding-left?)
+          width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
+          ...style,
+          textAlign: isTableCol1 ? 'right' : undefined,
+        }}
       >
         <div ref={fadeThoughtRef}>
           <VirtualThought
@@ -587,37 +587,37 @@ const TreeNode = ({
             marginRight={isTableCol1 ? marginRight : 0}
           />
         </div>
-      </FadeTransition>
 
-      {dragInProgress &&
-        // do not render hidden cliffs
-        // rough autofocus estimate
-        autofocusDepth - depth < 2 && (
-          <DropCliff
-            cliff={cliff}
-            depth={depth}
-            path={path}
-            isTableCol2={isTableCol2}
-            isLastVisible={isLastVisible}
-            prevWidth={treeThoughtsPositioned[index - 1]?.width}
-          />
-        )}
-      <span
-        className={css({
-          color: 'blue',
-          display: 'none',
-          fontSize: '1.25em',
-          margin: '-6px 0 0 -2.5px',
-          opacity: 'var(--faux-caret-opacity)',
-          position: 'absolute',
-          pointerEvents: 'none',
-          WebkitTextStroke: '0.625px var(--colors-blue)',
-        })}
-        ref={caretRef}
-      >
-        |
-      </span>
-    </div>
+        {dragInProgress &&
+          // do not render hidden cliffs
+          // rough autofocus estimate
+          autofocusDepth - depth < 2 && (
+            <DropCliff
+              cliff={cliff}
+              depth={depth}
+              path={path}
+              isTableCol2={isTableCol2}
+              isLastVisible={isLastVisible}
+              prevWidth={treeThoughtsPositioned[index - 1]?.width}
+            />
+          )}
+        <span
+          className={css({
+            color: 'blue',
+            display: 'none',
+            fontSize: '1.25em',
+            margin: '-6px 0 0 -2.5px',
+            opacity: 'var(--faux-caret-opacity)',
+            position: 'absolute',
+            pointerEvents: 'none',
+            WebkitTextStroke: '0.625px var(--colors-blue)',
+          })}
+          ref={caretRef}
+        >
+          |
+        </span>
+      </div>
+    </FadeTransition>
   )
 }
 
@@ -747,13 +747,9 @@ const LayoutTree = () => {
   // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
   const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
 
-  // memoized style for padding at a cliff
-  const cliffPaddingStyle = useMemo(
-    () => ({
-      paddingBottom: fontSize / 4,
-    }),
-    [fontSize],
-  )
+  // memoize the cliff padding style to avoid passing a fresh object reference as prop to TreeNode and forcing a re-render
+  const cliffPadding = fontSize / 4
+  const cliffPaddingStyle = useMemo(() => ({ paddingBottom: cliffPadding }), [cliffPadding])
 
   // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
@@ -805,7 +801,8 @@ const LayoutTree = () => {
     // key thoughtId of thought with =table attribute
     const tableCol1Widths = new Map<ThoughtId, number>()
     const treeThoughtsPositioned = treeThoughts.map((node, i) => {
-      const next: TreeThought | undefined = treeThoughts[i + 1]
+      const prev = treeThoughts[i - 1] as TreeThought | undefined
+      const next = treeThoughts[i + 1] as TreeThought | undefined
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
       // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
@@ -814,7 +811,7 @@ const LayoutTree = () => {
 
       // The single line height needs to be increased for thoughts that have a cliff below them.
       // For some reason this is not yielding an exact subpixel match, so the first updateHeight will not short circuit. Performance could be improved if th exact subpixel match could be determined. Still, this is better than not taking into account cliff padding.
-      const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? fontSize / 4 : 0)
+      const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? cliffPadding : 0)
       const height = sizes[node.key]?.height ?? singleLineHeightWithCliff
 
       // set the width of table col1 to the minimum width of all visible thoughts in the column
@@ -871,8 +868,23 @@ const LayoutTree = () => {
         }
       }
 
-      // capture the y position of the current thought before it is incremented by its own height
-      const y = yaccum
+      /* 
+        Anticipate cliff change on new thought
+
+        There is a special case for the y position when creating a new thought at the end of a context. The former last thought (what will become the new thought's previous sibling) loses its cliff, e.g. cliff changes from -1 to 0. This causes it to lots its cliffPaddingStyle, and thus its height will decrease slightly. However, when the new thought is rendered, its y position is determined by the previous thought's cached height. The height is only re-measured after the nxet render. This causes the new thought's y position to decrease by the cliff padding over a single frame. It will appear to slide up as it animates into the correct y position (based on the updated previous sibling's measurement).
+
+        Solution: Check if a new thought is being rendered at the cliff, and anticipate the updated y position by subtracting cliffPadding. This does not apply if the previous thought's depth is greater than the new thought's depth, as it will not be losing its cliff. It only applies if the prevous thought is a sibling or parent and is losing its cliff.
+
+        (It may have been better to directly check if the previous thought is losing its cliff, however that would require persisting the last cliff for each thought in a ref. The additional state is less than ideal, but it can be pursued if it is discovered that this simple condition has any false positives/negatives.)
+
+        e.g. `a` will lose its cliff but its height will not be re-measured until after [empty] has been rendered with the wrong y
+          - a
+          - [empty]
+      */
+      const isNewCliff = !sizes[node.key] && cliff < 0 && prev && node.depth >= prev.depth
+
+      // Capture the y position of the current thought before it is incremented by its own height for the next thought.
+      const y = yaccum - (isNewCliff ? cliffPadding : 0)
 
       // increase y by the height of the current thought
       if (!node.isTableCol1 || node.leaf) {
@@ -931,6 +943,7 @@ const LayoutTree = () => {
 
     return { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility }
   }, [
+    cliffPadding,
     fontSize,
     isHoveringSorted,
     maxVisibleY,

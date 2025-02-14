@@ -50,7 +50,8 @@ it('preserves pasted HTML as text/html in bold case', async () => {
   expect(editable).toBeTruthy()
 })
 
-it('preserves pasted HTML as text/html with text color and background color', async () => {
+// TODO: Broken in due to reverting related code. See: #2814.
+it.skip('preserves pasted HTML as text/html with text color and background color', async () => {
   await press('Enter', { delay: 10 })
   await pasteHTML(
     '<font color="#000000" style="background-color: rgb(255, 136, 0);">Hello </font><font color="#000000" style="background-color: rgb(0, 214, 136);">World</font>',

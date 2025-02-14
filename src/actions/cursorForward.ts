@@ -36,7 +36,9 @@ const cursorForward = (state: State) => {
     cursorNew = isValidChild ? cursorFromHistory : firstChild ? unroot([...cursor, firstChild.id]) : cursor
   }
 
-  return cursorNew ? setCursor(state, { path: cursorNew, cursorHistoryPop: isValidChild }) : state
+  return cursorNew
+    ? setCursor(state, { path: cursorNew, cursorHistoryPop: isValidChild, preserveMulticursor: true })
+    : state
 }
 
 /** Action-creator for cursorForward. */

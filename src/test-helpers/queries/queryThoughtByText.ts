@@ -1,7 +1,7 @@
 import { queryAllByText, screen } from '@testing-library/dom'
 
 /**
- * Gets a thought that matches the given value.
+ * Gets a thought with the given value, or null if it does not exist.
  */
 export default async function queryThoughtByText(value: string, container?: HTMLElement | null) {
   const thoughtNodes = await (container

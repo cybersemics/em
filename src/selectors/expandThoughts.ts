@@ -144,11 +144,11 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
             isAncestor() ||
             isExpansionBasePath() ||
             isHiddenAttribute() ||
-            // Only apply pin expansion if not in context view
+            // Only apply : or =pin if not in context view
             (!showContexts &&
-              (pinned(state, child.id) ||
-                (childrenPinned(state, thoughtId) && pinned(state, child.id) === null && !isDone(state, child.id)))) ||
-            stripTags(child.value).endsWith(EXPAND_THOUGHT_CHAR)
+              (stripTags(child.value).endsWith(EXPAND_THOUGHT_CHAR) ||
+                pinned(state, child.id) ||
+                (childrenPinned(state, thoughtId) && pinned(state, child.id) === null && !isDone(state, child.id))))
           )
         })
 

@@ -1,19 +1,19 @@
 import SimplePath from '../@types/SimplePath'
 import Thunk from '../@types/Thunk'
+import { HOME_PATH, REGEX_NONFORMATTING_HTML } from '../constants'
 import * as selection from '../device/selection'
 import rootedParentOf from '../selectors/rootedParentOf'
 import isMarkdown from '../util/isMarkdown'
-import strip from '../util/strip'
 import timestamp from '../util/timestamp'
 import { importFilesActionCreator as importFiles } from './importFiles'
 import { importTextActionCreator as importText } from './importText'
 import { newThoughtActionCreator as newThought } from './newThought'
 
 interface ImportDataPayload {
-  path: SimplePath
-  text: string
-  html: string | null
-  rawDestValue: string
+  path?: SimplePath
+  text?: string
+  html?: string | null
+  rawDestValue?: string
   transient?: boolean
   isEmText?: boolean
 }
@@ -36,7 +36,7 @@ interface ImportDataPayload {
  * - importFiles: Used for multi-line, non-markdown content. Creates new thought structures for each line.
  *
  * @param payload - Configuration object for importing data.
- * @param payload.path - The path where the data should be imported.
+ * @param payload.path - The path where the data should be imported. Defaults to HOME_PATH.
  * @param payload.text - The plain text content to be imported.
  * @param payload.html - HTML content to be imported, or null if importing plain text.
  * @param payload.rawDestValue - The untrimmed destination value to preserve whitespace when combining with existing content.
@@ -51,6 +51,7 @@ export const importDataActionCreator = ({
   html,
   rawDestValue,
   transient,
+  // TODO: May need to be rewritten to avoid converting from HTML -> JSON -> text -> HTML. See commit.
   isEmText = false,
 }: ImportDataPayload): Thunk => {
   return (dispatch, getState) => {
@@ -60,17 +61,15 @@ export const importDataActionCreator = ({
     if (transient) {
       dispatch(
         newThought({
-          at: rootedParentOf(state, path),
+          at: path ? rootedParentOf(state, path) : HOME_PATH,
           value: '',
         }),
       )
     }
 
-    const processedText = html
-      ? strip(html, { preserveFormatting: isEmText, stripColors: !isEmText }).replace(/\n\s*\n+/g, '\n')
-      : text.trim()
-    // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
-    const multiline = text.trim().includes('\n')
+    const processedText = html ? html.replace(/\n\s*\n+/g, '\n') : (text?.trim() ?? '')
+
+    const multiline = html ? REGEX_NONFORMATTING_HTML.test(html) : !!processedText?.trim().includes('\n')
 
     // Check if the text is markdown, if so, prefer importText over importFiles
     const markdown = isMarkdown(processedText)

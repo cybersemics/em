@@ -11,6 +11,7 @@ import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
+import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 
 describe('normal view', () => {
@@ -322,20 +323,21 @@ describe('normal view', () => {
 })
 
 describe('context view', () => {
-  it('disallow collapse context in context view', () => {
+  it('collapse context', () => {
     const text = `
       - a
         - m
           - x
       - b
-        - m
-          - y
+        - test
+          - m
+            - y
     `
     const steps = [
       importText({ text }),
       setCursor(['a', 'm']),
       toggleContextView,
-      setCursor(['a', 'm', 'b']),
+      setCursor(['a', 'm', 'test']),
       collapseContext({}),
     ]
 
@@ -349,6 +351,8 @@ describe('context view', () => {
   - b
     - m
       - y`)
+
+    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', 'b'])
   })
 
   it('collapse context subthought in context view', () => {

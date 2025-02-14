@@ -22,7 +22,7 @@ it.skip('load a child after a parent is expanded', async () => {
   await press('Escape')
 
   // no thoughts are pending after paste
-  expect(await $('[data-graypulse=true]')).toBeFalsy()
+  expect(await $('[data-pending=true]')).toBeFalsy()
 
   await waitForThoughtExistInDb('a')
   await waitForThoughtExistInDb('b')
@@ -41,11 +41,11 @@ it.skip('load a child after a parent is expanded', async () => {
   await waitForEditable('d')
 
   // d should now be pending
-  const isPendingBeforeExpand = !!(await $('[data-graypulse=true]'))
+  const isPendingBeforeExpand = !!(await $('[data-pending=true]'))
   expect(isPendingBeforeExpand).toEqual(true)
 
   await new Promise(resolve => setTimeout(resolve, 500))
-  const isPendingAfterExpand = !!(await $('[data-graypulse=true]'))
+  const isPendingAfterExpand = !!(await $('[data-pending=true]'))
 
   // all visible thoughts, including d, should be loaded now
   expect(isPendingAfterExpand).toEqual(false)

@@ -25,6 +25,12 @@ let errorTimer = 0
 /** On cursorNext and cursorPrev, momentarily suppress expansion of children. This avoids performance issues when desktop users hold ArrowDown or ArrowUp to move across many siblings. */
 let suppressExpansion = false
 
+/** The maximum size of the thoughtIndex before freeThoughts kicks in to free memory. */
+// e.g. Art • Buddhist Art • :: • Regions • China • Period • Era of North-South division • North • East • Northern Qi
+// = 455 thoughts loaded into memory
+// This is a constant. Override global for testing only.
+let freeThoughtsThreshold = 500
+
 /** These aren's so bad. They're for debugging. */
 
 // Ellipsize the thoughts in the context view. They can be expanded by clicking on the ellipsis.
@@ -34,6 +40,7 @@ const ellipsizeContextThoughts = false
 // check duplicate ranks within the same context for debugging
 const globals = {
   ellipsizeContextThoughts,
+  freeThoughtsThreshold,
   errorTimer,
   offlineTimer,
   longpressing,

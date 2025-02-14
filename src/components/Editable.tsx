@@ -540,11 +540,13 @@ const Editable = ({
       const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
       if (
+        // disable editing when multicursor is enabled
+        hasMulticursorSelector(state) ||
         disabled ||
+        // do not set cursor on hidden thought
         // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
         (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
       ) {
-        // do not set cursor on hidden thought
         e.preventDefault()
 
         if (!isVisible) {
