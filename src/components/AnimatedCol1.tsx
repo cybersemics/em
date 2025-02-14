@@ -42,7 +42,7 @@ const AnimatedCol1: React.FC<AnimatedCol1Props> = ({ isTableView, duration = 500
       onEnter={() => {
         setTextAlignState('right')
       }}
-      onExited={() => {
+      onExit={() => {
         setTextAlignState(undefined)
       }}
     >
