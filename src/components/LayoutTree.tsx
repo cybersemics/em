@@ -480,11 +480,9 @@ const TreeNode = ({
                 caretRef.current.style.display = 'inline'
                 caretRef.current.style.top = `${y - offset.y}px`
                 caretRef.current.style.left = `${x - offset.x}px`
-                console.log(false)
                 setShowLineEndFauxCaret(false)
               } else {
                 caretRef.current.style.display = 'none'
-                console.log(isEndOfElementNode())
                 setShowLineEndFauxCaret(isEndOfElementNode())
               }
             }
@@ -492,7 +490,6 @@ const TreeNode = ({
         })
       } else {
         caretRef.current.style.display = 'none'
-        console.log(false)
         setShowLineEndFauxCaret(false)
       }
     }
