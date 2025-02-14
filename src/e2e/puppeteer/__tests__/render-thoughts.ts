@@ -3,6 +3,7 @@ import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
+import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
@@ -168,7 +169,7 @@ describe('Font Size: 13', () => {
     await click('[data-testid=decrease-font]') // 13
 
     // close alert
-    await click('[data-testid=close-button]')
+    await hide('[data-testid=alert]')
 
     // scroll to top
     await scroll(0, 0)
@@ -186,7 +187,7 @@ describe('Font Size: 22', () => {
     await click('[data-testid=increase-font]') // 22
 
     // close alert
-    await click('[data-testid=close-button]')
+    await hide('[data-testid=alert]')
 
     // scroll to top
     await scroll(0, 0)
