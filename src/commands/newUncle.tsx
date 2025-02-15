@@ -26,7 +26,6 @@ const newUncleCommand: Command = {
     if (!cursor) return
     dispatch(newThought({ at: parentOf(cursor) }))
   },
-  rounded: true,
 }
 
 export default newUncleCommand

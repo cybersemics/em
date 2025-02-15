@@ -148,9 +148,9 @@ const GestureDiagram = ({
   // Special cases:
   // - Extend the last segment of →↓← so that the New Uncle gesture is more intuitive
   // - Extend the middle segment of ←↓→ so that the Select All gesture is more intuitive
-  // const extendedPath = path === 'rdl' ? 'rdll' : path === 'ldr' ? 'lddr' : path
-
-  const pathSegments = (Array.from(path) as Direction[]).map(pathSegmentDelta)
+  const extendedPath = path === 'rdl' ? 'rdll' : path === 'ldr' ? 'lddr' : path
+  const extendedIndex = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
+  const pathSegments = (Array.from(extendedPath) as Direction[]).map(pathSegmentDelta)
 
   // Compute the positions of all points
   const positions = pathSegments.reduce(
@@ -214,8 +214,8 @@ const GestureDiagram = ({
     }
   }
 
-  /** Generate arc path of given path and index.*/
-  const generateArcPath = (start: Point, end: Point, dir: Direction, i: number, fullPath: string): string => {
+  /** Generates an SVG path string for a curved segment of the gesture.*/
+  const generateArcPath = (start: Point, end: Point, dir: Direction, i: number, fullPath: Direction[]): string => {
     const radius = size * 0.4
     const center = { x: 50, y: 50 }
 
@@ -235,16 +235,9 @@ const GestureDiagram = ({
       return `M ${start.x} ${start.y} Q ${cpx} ${cpy} ${end.x} ${end.y}`
     }
 
-    const pathDirs = Array.from(fullPath) as Direction[]
+    const pathDirs = fullPath
     const firstDir = pathDirs[0]
     const secondDir = pathDirs[1]
-
-    /** Determine if the path is clockwise based on first two directions. */
-    const isClockwise = (from: Direction, to: Direction): boolean => {
-      const dirOrder = { l: 0, u: 1, r: 2, d: 3 }
-      const diff = (dirOrder[to] - dirOrder[from] + 4) % 4
-      return diff === 1
-    }
 
     /** Determine base angle based on first direction and second direction. */
     const getBaseAngle = (first: Direction, second: Direction): number => {
@@ -255,18 +248,16 @@ const GestureDiagram = ({
       }
     }
 
-    const clockwise = isClockwise(firstDir, secondDir)
+    const clockwise = rotateClockwise(pathDirs[0]) === pathDirs[1]
     const sweepFlag = clockwise ? 1 : 0
     const baseAngle = getBaseAngle(firstDir, secondDir)
 
     // Calculate total angle and segment angle based on path length
-    const totalAngle = (fullPath.length - 1) * 90
+    const totalAngle = (fullPath.length - 1) * (clockwise ? 90 : -90)
     const segmentAngle = totalAngle / fullPath.length
 
     // Calculate angles for this segment
-    const [startAngle, endAngle] = clockwise
-      ? [baseAngle + i * segmentAngle, baseAngle + (i + 1) * segmentAngle]
-      : [baseAngle - i * segmentAngle, baseAngle - (i + 1) * segmentAngle]
+    const [startAngle, endAngle] = [baseAngle + i * segmentAngle, baseAngle + (i + 1) * segmentAngle]
 
     // Convert angles to radians
     const startRad = (startAngle * Math.PI) / 180
@@ -294,7 +285,7 @@ const GestureDiagram = ({
         <marker
           id={id}
           viewBox='0 0 10 10'
-          refX='5'
+          refX={rounded ? '0' : '5'}
           refY='5'
           markerWidth={arrowSize!}
           markerHeight={arrowSize}
@@ -330,7 +321,13 @@ const GestureDiagram = ({
                       ? 'M 54,40.5 Q 45,49.5 45,58.5'
                       : 'M 45,58.5 L 45,72'
                 : rounded
-                  ? generateArcPath({ x, y }, nextPos, Array.from(path as string)[i] as Direction, i, path as string)
+                  ? generateArcPath(
+                      { x, y },
+                      nextPos,
+                      Array.from(path as string)[i] as Direction,
+                      i,
+                      Array.from(path as string) as Direction[],
+                    )
                   : `M ${x} ${y} l ${segment.dx} ${segment.dy}`
             }
             // segments do not change independently, so we can use index as the key
@@ -338,7 +335,8 @@ const GestureDiagram = ({
             stroke={
               // Highlight the segment if its index is less than the highlight index.
               // Special Case: Highlight the extended segment and all segments after it.
-              highlight != null && (i < highlight || highlight === path.length)
+              highlight != null &&
+              (i < highlight || highlight === path.length || (highlight === extendedIndex && i === extendedIndex))
                 ? token('colors.vividHighlight')
                 : color || token('colors.fg')
             }
