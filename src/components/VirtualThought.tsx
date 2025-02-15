@@ -207,9 +207,9 @@ const VirtualThought = ({
 
   useLayoutEffect(() => {
     if (isTableView && ref.current) {
-      const parentWidth = ref.current.getBoundingClientRect().width
       const editable = ref.current.querySelector('.editable') as HTMLElement | null
       if (editable?.firstChild) {
+        const parentWidth = editable.getBoundingClientRect().width
         const range = document.createRange()
         range.selectNodeContents(editable)
         const rect = range.getBoundingClientRect()
@@ -228,6 +228,7 @@ const VirtualThought = ({
       nodeRef={ref}
       onEnter={() => {
         setTextAlignState('right')
+        setTranslateX(0)
       }}
       onExit={() => {
         setTextAlignState(undefined)
