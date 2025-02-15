@@ -9,11 +9,12 @@ let virtualKeyboardHeightLandscape = isTouch ? window.innerWidth / 1.7 : 0
 /** A store that tracks the viewport dimensions, including the nontrivial virtual keyboard height. */
 const viewportStore = reactMinistore({
   innerWidth: window.innerWidth,
-  /** Height of the viewport, not including the virtual keyboard. */
+  /** Height of the viewport, including the virtual keyboard. */
   innerHeight: window.innerHeight,
   scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * 0.39,
   virtualKeyboardHeight:
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
+  currentKeyboardHeight: 0,
 })
 
 /** Throttled update of viewport height. Invoked on window resize. */
@@ -46,6 +47,7 @@ export const updateSize = _.throttle(
           : isPortrait
             ? virtualKeyboardHeightPortrait
             : virtualKeyboardHeightLandscape,
+      currentKeyboardHeight: window.visualViewport ? window.innerHeight - window.visualViewport.height : 0,
     })
   },
   // lock to 60 fps
