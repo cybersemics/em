@@ -1,29 +1,8 @@
 /** Position fixed breaks in mobile Safari when the keyboard is up. This module provides functionality to emulate position:fixed by changing all top navigation to position:absolute and updating on scroll. */
-import { useEffect } from 'react'
 import { token } from '../../styled-system/tokens'
-import { isIOS, isSafari, isTouch } from '../browser'
-import * as selection from '../device/selection'
-import reactMinistore from '../stores/react-ministore'
+import safariKeyboardStore from '../stores/safariKeyboardStore'
 import viewportStore from '../stores/viewport'
-import once from '../util/once'
 import useScrollTop from './useScrollTop'
-
-/** Default mode is fixed. Absolute mode emulates positioned fixed by switching to position absolute and updating the y position on scroll. */
-const positionFixedStore = reactMinistore<'fixed' | 'absolute' | null>(null)
-
-/** Initializes handler to switch position fixed elements to position absolute when the keyboard is up on mobile Safari. Initialized once, permanently since the platform cannot change. */
-const initEventHandler = once(() => {
-  /** Updates the positionFixedStore state based on if the keyboard is visible. */
-  const updatePositionFixed = () => {
-    const keyboardIsVisible = selection.isActive()
-    positionFixedStore.update(keyboardIsVisible ? 'absolute' : 'fixed')
-  }
-
-  if (isTouch && isSafari() && !isIOS) {
-    updatePositionFixed()
-    document.addEventListener('selectionchange', updatePositionFixed)
-  }
-})
 
 /** Emulates position fixed on mobile Safari with positon absolute. Returns { position, overflowX, top } in absolute mode. */
 const usePositionFixed = ({
@@ -40,12 +19,13 @@ const usePositionFixed = ({
   overflowX?: 'hidden' | 'visible'
   top?: string
   bottom?: string
+  display?: 'none'
 } => {
-  const position = positionFixedStore.useState()
+  const safariKeyboard = safariKeyboardStore.useState()
+  const position = safariKeyboard.open ? 'absolute' : 'fixed'
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
   const { innerHeight, currentKeyboardHeight } = viewportStore.useState()
 
-  useEffect(initEventHandler, [])
   let top, bottom
   if (position === 'absolute') {
     top = fromBottom
@@ -63,6 +43,8 @@ const usePositionFixed = ({
     /* spacing.safeAreaTop applies for rounded screens */
     top,
     bottom,
+    /* Hide bottom elements while the keyboard is closing */
+    display: fromBottom && safariKeyboard.closing ? 'none' : undefined,
   }
 }
 
