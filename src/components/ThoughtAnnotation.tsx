@@ -234,13 +234,12 @@ const ThoughtAnnotation = React.memo(
           }
           <span
             className={css({
-              bottom: '6px',
               color: 'blue',
               fontSize: '1.25em',
+              margin: '-8px 0 0 -2px',
               opacity: 'var(--faux-caret-line-end-opacity)',
-              position: 'relative',
+              position: 'absolute',
               pointerEvents: 'none',
-              right: '2px',
               WebkitTextStroke: '0.625px var(--colors-blue)',
             })}
           >

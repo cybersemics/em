@@ -70,7 +70,7 @@ const hideCaret = {
   },
   '100%': {
     '--faux-caret-opacity': 0,
-    '--faux-caret-line-end-opacity': 0.75,
+    '--faux-caret-line-end-opacity': 0,
     caretColor: 'auto',
   },
 }

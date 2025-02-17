@@ -990,7 +990,7 @@ const LayoutTree = () => {
     <div
       // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
       className={cx(
-        css({ '--faux-caret-opacity': '0', marginTop: '0.501em' }),
+        css({ '--faux-caret-opacity': '0', '--faux-caret-line-end-opacity': '0', marginTop: '0.501em' }),
         hideCaret({
           animation: getHideCaretAnimationName(indentDepth + tableDepth),
         }),
