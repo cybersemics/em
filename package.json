@@ -178,6 +178,7 @@
     "@types/redux-mock-store": "^1.5.0",
     "@types/sanitize-html": "^2.13.0",
     "@types/sinonjs__fake-timers": "^8.1.5",
+    "@types/tcp-port-used": "^1.0.4",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.15.0",
     "@vitejs/plugin-react": "^4.3.3",

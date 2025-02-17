@@ -4891,6 +4891,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/tcp-port-used@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "@types/tcp-port-used@npm:1.0.4"
+  checksum: 10c0/530406515460126ad9c28aa57560171f574a62b9000675bd2fdc4a6acb6e2be0992c4b4221572e1076b36f354026938a4ffe530215f6b042569772a28b6167cf
+  languageName: node
+  linkType: hard
+
 "@types/trusted-types@npm:^2.0.2, @types/trusted-types@npm:^2.0.7":
   version: 2.0.7
   resolution: "@types/trusted-types@npm:2.0.7"
@@ -8024,6 +8031,7 @@ __metadata:
     "@types/redux-mock-store": "npm:^1.5.0"
     "@types/sanitize-html": "npm:^2.13.0"
     "@types/sinonjs__fake-timers": "npm:^8.1.5"
+    "@types/tcp-port-used": "npm:^1.0.4"
     "@typescript-eslint/eslint-plugin": "npm:^8.0.0"
     "@typescript-eslint/parser": "npm:^8.15.0"
     "@vitejs/plugin-react": "npm:^4.3.3"
