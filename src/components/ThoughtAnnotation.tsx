@@ -197,19 +197,21 @@ const ThoughtAnnotation = React.memo(
           }
           style={styleAnnotation}
         >
-        {isTouch && isSafari() && <span
-           className={css({
-             color: 'blue',
-             fontSize: '1.25em',
-             margin: textMarkup.length ? '-8px 0 0 -2px' : '-5px 0 0 -2px',
-             opacity: 'var(--faux-caret-line-start-opacity)',
-             position: 'absolute',
-             pointerEvents: 'none',
-             WebkitTextStroke: '0.625px var(--colors-blue)',
-           })}
-         >
-           |
-         </span>}
+          {isTouch && isSafari() && (
+            <span
+              className={css({
+                color: 'blue',
+                fontSize: '1.25em',
+                margin: textMarkup.length ? '-8px 0 0 -2px' : '-5px 0 0 -2px',
+                opacity: 'var(--faux-caret-line-start-opacity)',
+                position: 'absolute',
+                pointerEvents: 'none',
+                WebkitTextStroke: '0.625px var(--colors-blue)',
+              })}
+            >
+              |
+            </span>
+          )}
           <span
             className={css(
               {
@@ -245,19 +247,21 @@ const ThoughtAnnotation = React.memo(
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
             showSuperscript ? <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} /> : null
           }
-         {isTouch && isSafari() && <span
-            className={css({
-              color: 'blue',
-              fontSize: '1.25em',
-              margin: '-8px 0 0 -2px',
-              opacity: 'var(--faux-caret-line-end-opacity)',
-              position: 'absolute',
-              pointerEvents: 'none',
-              WebkitTextStroke: '0.625px var(--colors-blue)',
-            })}
-          >
-            |
-          </span>}
+          {isTouch && isSafari() && (
+            <span
+              className={css({
+                color: 'blue',
+                fontSize: '1.25em',
+                margin: '-8px 0 0 -2px',
+                opacity: 'var(--faux-caret-line-end-opacity)',
+                position: 'absolute',
+                pointerEvents: 'none',
+                WebkitTextStroke: '0.625px var(--colors-blue)',
+              })}
+            >
+              |
+            </span>
+          )}
         </div>
       </div>
     )
