@@ -20,14 +20,14 @@ const initSession = (): (() => Promise<Browser<'async'>>) => {
       isFirstTest = false
     }
 
-    console.log("Running app")
+    console.log('Running app')
     await mobileBrowser.url('http://bs-local.com:3000')
-    console.log("Waiting for tutorial")
+    console.log('Waiting for tutorial')
     const skipElement = await waitForElement(mobileBrowser, '#skip-tutorial', { timeout: 90000 })
     await mobileBrowser.waitUntil(async () => await skipElement.isClickable())
-    console.log("Skipping tutorial")
+    console.log('Skipping tutorial')
     await tap(mobileBrowser, skipElement)
-    console.log("Waiting for empty thoughtspace")
+    console.log('Waiting for empty thoughtspace')
     await waitForElement(mobileBrowser, '[aria-label="empty-thoughtspace"]', { timeout: 90000 })
     return mobileBrowser
   }

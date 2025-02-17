@@ -1,8 +1,6 @@
 import helpers from '../helpers'
 
-const {
-  paste,
-} = helpers()
+const { paste } = helpers()
 
 it('split a thought when the caret is in the middle', async () => {
   const importText = `

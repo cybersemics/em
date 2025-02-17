@@ -1,5 +1,5 @@
 import { Browser, Element } from 'webdriverio'
-import getNativeElementRect from './getNativeElementRect'
+// import getNativeElementRect from './getNativeElementRect'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped
@@ -61,11 +61,14 @@ const tap = async (
 
   // const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
   console.log(coordinate)
-  await browser.touchAction([{
-    action: 'tap',
-    x: coordinate.x + x,
-    y: coordinate.y + y + 50,
-  }, 'release'])
+  await browser.touchAction([
+    {
+      action: 'tap',
+      x: coordinate.x + x,
+      y: coordinate.y + y + 50,
+    },
+    'release',
+  ])
 }
 
 export default tap

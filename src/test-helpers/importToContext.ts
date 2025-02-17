@@ -10,10 +10,9 @@ function importToContext(pathUnranked: string[], text: string): Thunk
 function importToContext(pathUnranked: string | string[], text?: string): Thunk {
   const _pathUnranked = typeof pathUnranked === 'string' ? [HOME_TOKEN] : (pathUnranked as string[])
   const _text = typeof pathUnranked === 'string' ? pathUnranked : text!
-  console.log("here")
+
   return (dispatch, getState) => {
     const path = contextToPath(getState(), _pathUnranked)
-    console.log("about to import text")
     return (
       path &&
       dispatch(

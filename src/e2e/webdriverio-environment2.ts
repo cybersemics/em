@@ -7,11 +7,13 @@ import { nanoid } from 'nanoid'
 import config from './config/webdriverio.config2'
 import browserstack from 'browserstack-local'
 
+/** Function to initialize a BrowserStackManager Object. */
 function BrowserStackManager() {
   const localIdentifier = 'local-' + nanoid()
   const wdioConfig = config(localIdentifier)
-  const bsLocal = new browserstack.Local();
+  const bsLocal = new browserstack.Local()
 
+  /** Starts the Browserstack Local instance. */
   const start = () => { 
     return new Promise<void>((resolve, reject) => {
       console.info(chalk.yellow('BrowserstackLocal: Starting'))
@@ -25,7 +27,6 @@ function BrowserStackManager() {
           logFile: 'browserstack.log'
         },
         e => {
-          console.log(bsLocal.isRunning());
           if (e) {
             reject(e)
           } else {
@@ -34,9 +35,10 @@ function BrowserStackManager() {
           }
         },
       )
-    });
+    })
   }
 
+  /** Stops the Browserstack Local instance. */
   const stop = () => {
     if (!bsLocal || !bsLocal.isRunning()) {
       return
@@ -50,6 +52,7 @@ function BrowserStackManager() {
     })
   }
 
+  /** Returns a browser instance. */
   const browser = async () => wdio.remote(wdioConfig)
 
   return {
@@ -59,7 +62,7 @@ function BrowserStackManager() {
   }
 }
 
-let globalBrowser: Browser<'async'> | null = null;
+let globalBrowser: Browser<'async'> | null = null
 
 export default <Environment>{
   name: 'ios',
