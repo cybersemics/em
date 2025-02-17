@@ -101,8 +101,12 @@ const VirtualThought = ({
   const fontSize = useSelector(state => state.fontSize)
   const note = useSelector(state => noteValue(state, id))
   const ref = useRef<HTMLDivElement>(null)
-  const [translateX, setTranslateX] = useState(0)
-  const [textAlignState, setTextAlignState] = useState<'right' | undefined>(undefined)
+
+  /**
+   * Instead of having separate textAlignState and a translateXRef,
+   * we can store a merged style object that includes transform, transition, textAlign, etc.
+   */
+  const [transientStyle, setTransientStyle] = useState<React.CSSProperties>({})
 
   /***************************
    * VirtualThought properties
@@ -205,21 +209,25 @@ const VirtualThought = ({
     [crossContextualKey, onResize, id],
   )
 
-  useLayoutEffect(() => {
-    if (isTableView && ref.current) {
-      const editable = ref.current.querySelector('.editable') as HTMLElement | null
-      if (editable?.firstChild) {
-        const parentWidth = editable.getBoundingClientRect().width
-        const range = document.createRange()
-        range.selectNodeContents(editable)
-        const rect = range.getBoundingClientRect()
-        const textWidth = rect.width
-        setTranslateX(Math.max(0, parentWidth - textWidth))
-      }
-    } else {
-      setTranslateX(0)
-    }
-  }, [isTableView])
+  /** Calculates the horizontal translation needed to align the text to the right within its parent. */
+  const calculateTranslateX = (element: HTMLElement | null): number => {
+    if (!element || !element.textContent?.trim()) return 0
+
+    const parentWidth = element.getBoundingClientRect().width
+    const range = document.createRange()
+    range.selectNodeContents(element)
+    const textWidth = range.getBoundingClientRect().width
+
+    return Math.max(0, parentWidth - textWidth)
+  }
+
+  /** Updates the transient style by merging the given styles with the existing ones. */
+  const updateTransitionStyle = (updates: React.CSSProperties) => {
+    setTransientStyle(prev => ({
+      ...prev,
+      ...updates,
+    }))
+  }
 
   return (
     <CSSTransition
@@ -227,11 +235,45 @@ const VirtualThought = ({
       timeout={duration}
       nodeRef={ref}
       onEnter={() => {
-        setTextAlignState('right')
-        setTranslateX(0)
+        const editable = ref.current?.querySelector('.editable') as HTMLElement | null
+        updateTransitionStyle({
+          transform: 'translateX(0px)',
+          transition: `transform ${duration}ms ease-out`,
+        })
+        setTimeout(() => {
+          updateTransitionStyle({
+            transform: `translateX(${calculateTranslateX(editable)}px)`,
+            transition: `transform ${duration}ms ease-out`,
+          })
+        }, 10)
       }}
       onExit={() => {
-        setTextAlignState(undefined)
+        const editable = ref.current?.querySelector('.editable') as HTMLElement | null
+        updateTransitionStyle({
+          transform: `translateX(${calculateTranslateX(editable)}px)`,
+          transition: `transform ${duration}ms ease-out`,
+          textAlign: undefined,
+        })
+        setTimeout(() => {
+          updateTransitionStyle({
+            transform: 'translateX(0px)',
+            transition: `transform ${duration}ms ease-out`,
+          })
+        }, 10)
+      }}
+      onEntered={() => {
+        updateTransitionStyle({
+          transform: undefined,
+          transition: undefined,
+          textAlign: 'right',
+        })
+      }}
+      onExited={() => {
+        updateTransitionStyle({
+          transform: undefined,
+          transition: undefined,
+          textAlign: undefined,
+        })
       }}
     >
       <div
@@ -240,9 +282,7 @@ const VirtualThought = ({
           // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
           // Must include DropChild, or it will shift when the cursor moves.
           height: shimHiddenThought && height != null ? height : undefined,
-          transform: `translateX(${translateX}px)`,
-          transition: `transform ${duration}ms ease-out`,
-          textAlign: textAlignState,
+          ...transientStyle,
         }}
       >
         {
