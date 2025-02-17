@@ -29,7 +29,7 @@ const PuppeteerEnvironment: Environment = {
       .catch((err: Error) => {
         // using `console.log` here to avoid errors or logs being swallowed by vitest
         // all of `console.error`, `console.warn` and `console.info` don't show up in the terminal
-        // eslint-disable-next-line no-console
+
         console.log('Could not connect to browserless.')
         throw err
       })
