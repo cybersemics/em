@@ -272,7 +272,9 @@ const findUniqueTags = (nodes: Element[]): string[] => {
   return _.uniq(tagLists)
 }
 
-const tagsThatAreNotToBeStripped = [...ALLOWED_FORMATTING_TAGS, 'li', 'ul']
+// Do not remove <style> tags without removing their content.
+// They will be removed later in removeEmptyNodesAndComments.
+const tagsThatAreNotToBeStripped = [...ALLOWED_FORMATTING_TAGS, 'li', 'ul', 'style']
 
 /** Generates dynamic regex expression. */
 const generateRegexToMatchTags = (tags: string[]): RegExp => new RegExp(`</?(?:${tags.join('|')})>`, 'gim')
