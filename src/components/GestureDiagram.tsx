@@ -28,6 +28,8 @@ interface GestureDiagramProps {
   width?: number
   inGestureContainer?: boolean
   cssRaw?: SystemStyleObject
+  /** Whether to render the gesture with rounded corners. */
+  rounded?: boolean
 }
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
@@ -70,6 +72,7 @@ const GestureDiagram = ({
   width,
   inGestureContainer,
   cssRaw,
+  rounded,
 }: GestureDiagramProps) => {
   const [id] = useState(createId())
 
@@ -206,6 +209,44 @@ const GestureDiagram = ({
     }
   }
 
+  /** Generates an SVG path string for a curved segment of the gesture.*/
+  const generateArcPath = (index: number, pathDirs: Direction[]): string => {
+    const radius = size * 0.4
+    const center = { x: 50, y: 50 }
+
+    /** Determine base angle based on first direction and second direction. */
+    const getBaseAngle = (first: Direction, second: Direction): number => {
+      if (first === 'l' || first === 'r') {
+        return second === 'u' ? 90 : -90
+      } else {
+        return second === 'r' ? 0 : 180
+      }
+    }
+
+    const clockwise = rotateClockwise(pathDirs[0]) === pathDirs[1]
+    const sweepFlag = clockwise ? 1 : 0
+    const baseAngle = getBaseAngle(pathDirs[0], pathDirs[1])
+
+    // Calculate total angle and segment angle based on path length
+    const totalAngle = (pathDirs.length - 1) * (clockwise ? 90 : -90)
+    const segmentAngle = totalAngle / pathDirs.length
+
+    // Calculate angles for this segment
+    const [startAngle, endAngle] = [baseAngle + index * segmentAngle, baseAngle + (index + 1) * segmentAngle]
+
+    // Convert angles to radians
+    const startRad = (startAngle * Math.PI) / 180
+    const endRad = (endAngle * Math.PI) / 180
+
+    // Calculate points
+    const startX = center.x + radius * Math.cos(startRad)
+    const startY = center.y + radius * Math.sin(startRad)
+    const endX = center.x + radius * Math.cos(endRad)
+    const endY = center.y + radius * Math.sin(endRad)
+
+    return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
+  }
+
   return (
     <svg
       width={width || '100'}
@@ -219,7 +260,7 @@ const GestureDiagram = ({
         <marker
           id={id}
           viewBox='0 0 10 10'
-          refX='5'
+          refX={rounded ? '0' : '5'}
           refY='5'
           markerWidth={arrowSize!}
           markerHeight={arrowSize}
@@ -253,7 +294,9 @@ const GestureDiagram = ({
                     : i === 2
                       ? 'M 54,40.5 Q 45,49.5 45,58.5'
                       : 'M 45,58.5 L 45,72'
-                : `M ${x} ${y} l ${segment.dx} ${segment.dy}`
+                : rounded
+                  ? generateArcPath(i, path as Direction[])
+                  : `M ${x} ${y} l ${segment.dx} ${segment.dy}`
             }
             // segments do not change independently, so we can use index as the key
             key={i}
