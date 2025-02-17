@@ -147,6 +147,14 @@ export const isOnLastLine = (): boolean => {
 /** Returns true if the browser selection is on a text node. */
 export const isText = (): boolean => window.getSelection()?.focusNode?.nodeType === Node.TEXT_NODE
 
+/** Returns true if the browser selection is on an element node and focus offset is 0.
+ * This represents a case where the browser will render the caret at the start of the text node's content.
+ */
+export const isStartOfElementNode = (): boolean => {
+  const selection = window.getSelection()
+  return !isText() && !!selection && selection.focusOffset === 0
+}
+
 /** Returns true if the browser selection is on an element node and focus offset is 1.
  * This represents a case where the browser will render the caret at the end of the text node's content.
  */
@@ -475,17 +483,6 @@ export const getBoundingClientRect = () => {
 
   if (selection && selection.rangeCount) {
     if (isText()) return selection.getRangeAt(0).getBoundingClientRect()
-
-    // If the selection is on an element node, get the bounding rect of the element minus the padding
-    if (selection.focusNode instanceof HTMLElement && selection.focusOffset === 0) {
-      const { x, y } = selection.focusNode.getBoundingClientRect()
-      const styles = getComputedStyle(selection.focusNode)
-
-      return new DOMRect(
-        x + parseFloat(styles.getPropertyValue('padding-left')),
-        y + parseFloat(styles.getPropertyValue('padding-top')),
-      )
-    }
   }
 
   return null

@@ -15,7 +15,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { isSafari, isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
-import { getBoundingClientRect, isEndOfElementNode } from '../device/selection'
+import { getBoundingClientRect, isEndOfElementNode, isStartOfElementNode } from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import useSortedContext from '../hooks/useSortedContext'
 import attributeEquals from '../selectors/attributeEquals'
@@ -453,11 +453,13 @@ const TreeNode = ({
   })
 
   const [showLineEndFauxCaret, setShowLineEndFauxCaret] = useState(false)
+  const [showLineStartFauxCaret, setShowLineStartFauxCaret] = useState(false)
 
   // Hide the faux caret when typing occurs.
   editingValueStore.subscribe(() => {
     if (isTouch && isSafari() && caretRef.current) {
       caretRef.current.style.display = 'none'
+      setShowLineStartFauxCaret(false)
       setShowLineEndFauxCaret(false)
     }
   })
@@ -481,9 +483,11 @@ const TreeNode = ({
                 caretRef.current.style.display = 'inline'
                 caretRef.current.style.top = `${y - offset.y}px`
                 caretRef.current.style.left = `${x - offset.x}px`
+                setShowLineStartFauxCaret(false)
                 setShowLineEndFauxCaret(false)
               } else {
                 caretRef.current.style.display = 'none'
+                setShowLineStartFauxCaret(isStartOfElementNode())
                 setShowLineEndFauxCaret(isEndOfElementNode())
               }
             }
@@ -491,6 +495,7 @@ const TreeNode = ({
         })
       } else {
         caretRef.current.style.display = 'none'
+        setShowLineStartFauxCaret(false)
         setShowLineEndFauxCaret(false)
       }
     }
@@ -545,6 +550,7 @@ const TreeNode = ({
         className={css({
           position: 'absolute',
           transition,
+          '--faux-caret-line-start-opacity': showLineStartFauxCaret ? undefined : 0,
           '--faux-caret-line-end-opacity': showLineEndFauxCaret ? undefined : 0,
         })}
         style={{
@@ -990,7 +996,12 @@ const LayoutTree = () => {
     <div
       // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
       className={cx(
-        css({ '--faux-caret-opacity': '0', '--faux-caret-line-end-opacity': '0', marginTop: '0.501em' }),
+        css({
+          '--faux-caret-opacity': '0',
+          '--faux-caret-line-end-opacity': '0',
+          '--faux-caret-line-start-opacity': '0',
+          marginTop: '0.501em',
+        }),
         hideCaret({
           animation: getHideCaretAnimationName(indentDepth + tableDepth),
         }),
