@@ -1,5 +1,5 @@
-import React from 'react';
-import { css } from '../../../styled-system/css';
+import React from 'react'
+import { css } from '../../../styled-system/css'
 
 interface DialogContentProps {
     children: React.ReactNode  

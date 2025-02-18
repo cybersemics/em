@@ -1,5 +1,5 @@
-import React from 'react';
-import { css } from '../../../styled-system/css';
+import React from 'react'
+import { css } from '../../../styled-system/css'
 
 interface DialogProps {
     isOpen: boolean;
@@ -8,7 +8,7 @@ interface DialogProps {
 }
 
 const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, children }) => {
-    if (!isOpen) return null;
+    if (!isOpen) return null
 
     return (
         <div className={css({
