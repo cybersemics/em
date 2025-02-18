@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
@@ -14,14 +13,6 @@ import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
-
-interface Options {
-  // if true, replaces the last history state; otherwise pushes history state
-  replace?: boolean
-
-  // Used during toggleContextViews when the state has not yet been updated. Defaults to state.contextViews.
-  contextViews?: Index<boolean>
-}
 
 /** Time delay (ms) to throttle the updateUrlHistory middleware so it is not executed on every action. */
 const THROTTLE_MIDDLEWARE = 100
@@ -69,7 +60,7 @@ const saveCursor = _.throttle(
  * Sets the url to the given Path. Encodes and persists the cursor to local storage.
  * SIDE EFFECTS: window.history.
  */
-const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: Options = {}) => {
+const updateUrlHistory = (state: State, path: Path) => {
   // wait until local state has loaded before updating the url
   if (state.isLoading) return
 
@@ -96,12 +87,11 @@ const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: O
   const decodedPath = decoded.path || [HOME_TOKEN]
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
-  if (equalArrays(path, decodedPath) && decoded.contextViews[encoded] === (contextViews || state.contextViews)[encoded])
-    return
+  if (equalArrays(path, decodedPath) && decoded.contextViews[encoded] === state.contextViews[encoded]) return
 
   const stateWithNewContextViews = {
     ...state,
-    contextViews: contextViews || state.contextViews || decoded.contextViews,
+    contextViews: state.contextViews || decoded.contextViews,
   }
 
   saveCursor(stateWithNewContextViews, path)
@@ -117,7 +107,7 @@ const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: O
 
   // update browser history
   try {
-    window.history[replace ? 'replaceState' : 'pushState'](
+    window.history.pushState(
       // an incrementing ID to track back or forward browser actions
       (window.history.state || 0) + 1,
       '',
