@@ -64,8 +64,18 @@ const updateUrlHistory = (state: State, path: Path) => {
   // wait until local state has loaded before updating the url
   if (state.isLoading) return
 
+  // If running as a PWA, do not update the browser URL.
+  // On iOS, it causes a special browser navigation bar to appear.
+  // On Android, it enables swipe navigation at the screen edges.
+  // The URL bar is not visible in PWA anyway and cursor is persisted locally.
+  // window.navigator.standalone only works on iOS.
+  // display-mode: standalone works on Android.
+  // See: https://github.com/cybersemics/em/issues/212
+  const isPWA = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches
+
   // if the welcome modal has not been completed and there are no root thoughts, then we can assume that IndexedDB was cleared and clear the obsolete path encoded in the url
   if (
+    !isPWA &&
     state.showModal !== 'welcome' &&
     typeof window !== 'undefined' &&
     /\/~\/./.test(window.location.pathname) &&
@@ -96,26 +106,19 @@ const updateUrlHistory = (state: State, path: Path) => {
 
   saveCursor(stateWithNewContextViews, path)
 
-  // If running as a PWA, do not update the browser URL.
-  // On iOS, it causes a special browser navigation bar to appear.
-  // On Android, it enables swipe navigation at the screen edges.
-  // The URL bar is not visible in PWA anyway and cursor is persisted locally.
-  // window.navigator.standalone only works on iOS.
-  // display-mode: standalone works on Android.
-  // See: https://github.com/cybersemics/em/issues/212
-  if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) return
-
-  // update browser history
-  try {
-    window.history.pushState(
-      // an incrementing ID to track back or forward browser actions
-      (window.history.state || 0) + 1,
-      '',
-      pathToUrl(stateWithNewContextViews, path || [HOME_TOKEN]),
-    )
-  } catch (e) {
-    // TODO: Fix SecurityError on mobile when ['', ''] gets encoded into '//'
-    console.error(e)
+  if (!isPWA) {
+    try {
+      // update browser history
+      window.history.pushState(
+        // an incrementing ID to track back or forward browser actions
+        (window.history.state || 0) + 1,
+        '',
+        pathToUrl(stateWithNewContextViews, path || [HOME_TOKEN]),
+      )
+    } catch (e) {
+      // TODO: Fix SecurityError on mobile when ['', ''] gets encoded into '//'
+      console.error(e)
+    }
   }
 }
 
