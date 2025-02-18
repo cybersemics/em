@@ -106,10 +106,14 @@ const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: O
 
   saveCursor(stateWithNewContextViews, path)
 
-  // if PWA, do not update browser URL as it causes a special browser navigation bar to appear
-  // does not interfere with functionality since URL bar is not visible anyway and cursor is persisted locally
-  // See Issue #212.
-  if (window.navigator.standalone) return
+  // If running as a PWA, do not update the browser URL.
+  // On iOS, it causes a special browser navigation bar to appear.
+  // On Android, it enables swipe navigation at the screen edges.
+  // The URL bar is not visible in PWA anyway and cursor is persisted locally.
+  // window.navigator.standalone only works on iOS.
+  // display-mode: standalone works on Android.
+  // See: https://github.com/cybersemics/em/issues/212
+  if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) return
 
   // update browser history
   try {
