@@ -7,7 +7,7 @@ import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import hashThought from '../../util/hashThought'
 import removeHome from '../../util/removeHome'
-import importJSON from '../importJSON'
+import importJson from '../importJson'
 import initialState from '../initialState'
 import keyValueBy from '../keyValueBy'
 import roamJsonToBlocks, { RoamPage } from '../roamJsonToBlocks'
@@ -71,7 +71,7 @@ const testData: RoamPage[] = [
 const importExport = (roamJson: RoamPage[]) => {
   const thoughtsJSON = roamJsonToBlocks(roamJson)
   const state = initialState()
-  const { thoughtIndexUpdates, lexemeIndexUpdates } = importJSON(state, HOME_PATH as SimplePath, thoughtsJSON, {
+  const { thoughtIndexUpdates, lexemeIndexUpdates } = importJson(state, HOME_PATH as SimplePath, thoughtsJSON, {
     skipRoot: false,
   })
 
@@ -213,7 +213,7 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
 
   const blocks = roamJsonToBlocks(testData)
 
-  const { thoughtIndexUpdates, lexemeIndexUpdates } = importJSON(initialState(), HOME_PATH as SimplePath, blocks, {
+  const { thoughtIndexUpdates, lexemeIndexUpdates } = importJson(initialState(), HOME_PATH as SimplePath, blocks, {
     skipRoot: false,
   })
 

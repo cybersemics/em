@@ -3,7 +3,6 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import Thunk from '../@types/Thunk'
-import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import findDescendant from '../selectors/findDescendant'
@@ -30,24 +29,32 @@ interface Options {
 }
 
 /** Deletes a thought and moves all its children to its parent. */
-const collapseContext = (state: State, { at }: Options) => {
+const collapseContext = (state: State, { at }: Options): State => {
   const { cursor } = state
 
   const path = at || cursor
 
   if (!path) return state
 
-  if (isContextViewActive(state, parentOf(path))) {
-    return alert(state, {
-      value: `Contexts may not be collapsed in the context view.`,
-    })
-  }
-
   const simplePath = simplifyPath(state, path)
   const children = getChildrenRanked(state, head(simplePath))
   const thought = getThoughtById(state, head(simplePath))
 
   if (children.length === 0 || !thought) return state
+
+  // Collapsing a context in the context view is equivalent to collapsing the parent of the cursor SimplePath.
+  // The cursor needs to be updated to stay in the context view.
+  const isInContextView = isContextViewActive(state, parentOf(path))
+  if (isInContextView) {
+    return reducerFlow([
+      state => collapseContext(state, { at: rootedParentOf(state, simplePath) }),
+      setCursor({
+        path: appendToPath(parentOf(path), head(parentOf(parentOf(simplePath)))),
+        editing: state.editing,
+        offset: 0,
+      }),
+    ])(state)
+  }
 
   /** Returns first moved child path as new cursor after collapse. */
   const getNewCursor = (state: State): Path | null => {

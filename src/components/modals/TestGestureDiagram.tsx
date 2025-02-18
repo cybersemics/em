@@ -18,6 +18,11 @@ const ModalTestGestureDiagram = () => {
       <GestureDiagram path='rdrul' size={48} arrowSize={12} />
       <GestureDiagram path='rl' size={48} arrowSize={12} />
       <GestureDiagram path='rld' size={48} arrowSize={12} />
+      <GestureDiagram path='lurd' size={48} arrowSize={12} rounded />
+      <GestureDiagram path='lur' size={48} arrowSize={12} rounded />
+      <GestureDiagram path='rul' size={48} arrowSize={12} rounded />
+      <GestureDiagram path='rdl' size={48} arrowSize={12} />
+      <GestureDiagram path='ldr' size={48} arrowSize={12} />
 
       {/* Custom Help gesture */}
       <GestureDiagram path='rdld' size={48} arrowSize={12} />
@@ -30,6 +35,8 @@ const ModalTestGestureDiagram = () => {
           marginLeft: '2px !important',
         })}
       />
+
+      {/* Add specific rounded gesture examples */}
     </ModalComponent>
   )
 }

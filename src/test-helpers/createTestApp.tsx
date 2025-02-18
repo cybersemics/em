@@ -12,7 +12,7 @@ import storage from '../util/storage'
 
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
-/** Set up testing and mock document and window functions. */
+/** Mounts the App component to the JSDOM environment for testing, initializes the store, initializes the db, and attaches global event handlers. If you do not need to test mounted components, you can import initialize directly and avoid createTestApp. */
 const createTestApp = async ({ tutorial }: { tutorial?: boolean } = {}) => {
   await act(async () => {
     vi.useFakeTimers({ loopLimit: 100000 })
@@ -58,6 +58,9 @@ export const cleanupTestApp = async () => {
     }
 
     store.dispatch(clear({ full: true }))
+
+    // run out timers before db.clear, otherwise pending calls to replicateThought may resolve after thoughts have been deleted, triggering the "Missing docKey for thought" error
+    await vi.runAllTimersAsync()
 
     db.clear()
     await vi.runAllTimersAsync()

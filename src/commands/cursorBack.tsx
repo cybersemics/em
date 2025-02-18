@@ -19,8 +19,8 @@ const cursorBackCommand: Command = {
   exec: throttleByAnimationFrame((dispatch, getState) => {
     const state = getState()
 
-    // if there is a multicursor and the device is not touch, clear it instead
-    if (hasMulticursor(state) && !isTouch) {
+    // clear multicursor on escape (desktop only)
+    if (!isTouch && hasMulticursor(state)) {
       dispatch(clearMulticursors())
       return
     }

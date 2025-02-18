@@ -1,9 +1,12 @@
 import { Element, HimalayaNode, Text, parse } from 'himalaya'
 import _ from 'lodash'
 import Block from '../@types/Block'
-import { ALLOWED_FORMATTING_TAGS } from '../constants'
+import { ALLOWED_TAGS, REGEX_PLAINTEXT_BULLET } from '../constants'
 import formattingNodeToHtml from './formattingNodeToHtml'
 import isFormattingTag from './isFormattingTag'
+
+/** Always ignore these tags and their content. */
+const IGNORED_TAGS = ['head', 'meta', 'style', 'script']
 
 /** Retrieve attribute from Element node by key. */
 const getAttribute = (key: string, node: Element) => {
@@ -17,7 +20,9 @@ const isEmpty = (node: Text) => /^\s*$/g.test(node.content)
 
 /** Removes empty nodes and comments from himalaya's JSON output. */
 const removeEmptyNodesAndComments = (nodes: HimalayaNode[]): HimalayaNode[] => {
-  const filteredNodes = nodes.filter(node => node.type !== 'comment' && !(node.type === 'text' && isEmpty(node)))
+  const filteredNodes = nodes.filter(
+    node => node.type !== 'comment' && (node.type === 'text' ? !isEmpty(node) : !IGNORED_TAGS.includes(node.tagName)),
+  )
   return filteredNodes.map(node =>
     node.type === 'element' && node.children.length > 0
       ? { ...node, children: removeEmptyNodesAndComments(node.children) }
@@ -157,6 +162,55 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
     return Array.isArray(himalayaToBlocks) && himalayaToBlocks.length === 1 ? himalayaToBlocks[0] : himalayaToBlocks
   }
 
+  // ChatGPT renders nested lists as sibling <p> elements with class p1, p2, p3, etc.
+  // Therefore, we need to build up the hierarchy based on the class rather than the indentation level.
+  if (nodes[0]?.type === 'element' && nodes[0].tagName === 'p' && getAttribute('class', nodes[0]) === 'p1') {
+    let currentIndent = 0
+
+    // the start block is a dummy block that will be removed at the end
+    const stack: Block[] = [
+      {
+        scope: 'DUMMY',
+        children: [],
+      },
+    ]
+
+    nodes.forEach((node, i) => {
+      const indent = parseInt(getAttribute('class', node as Element)?.replace('p', '') ?? '0', 10)
+      const parentNodes = (node as Element).children as Element[]
+      const text = parentNodes
+        .map(el => el.children.map(child => (child as Text).content?.trim() ?? '').join(' '))
+        .join(' ')
+        // TODO: There must be a better place to remove bullet chars
+        .replace(REGEX_PLAINTEXT_BULLET, '')
+        .trim()
+
+      const newBlock: Block = {
+        scope: text,
+        children: [],
+      }
+
+      if (indent === currentIndent) {
+        stack.pop()
+        stack[stack.length - 1].children.push(newBlock)
+      } else if (indent > currentIndent) {
+        stack[stack.length - 1].children.push(newBlock)
+      } else if (indent < currentIndent) {
+        stack.pop()
+        while (currentIndent > indent) {
+          stack.pop()
+          currentIndent--
+        }
+        stack[stack.length - 1].children.push(newBlock)
+      }
+
+      stack.push(newBlock)
+      currentIndent = indent
+    })
+
+    return stack[0].children
+  }
+
   const blocks = nodes.map((node, index) =>
     node.type === 'comment'
       ? []
@@ -218,8 +272,6 @@ const findUniqueTags = (nodes: Element[]): string[] => {
   return _.uniq(tagLists)
 }
 
-const tagsThatAreNotToBeStripped = [...ALLOWED_FORMATTING_TAGS, 'li', 'ul']
-
 /** Generates dynamic regex expression. */
 const generateRegexToMatchTags = (tags: string[]): RegExp => new RegExp(`</?(?:${tags.join('|')})>`, 'gim')
 
@@ -228,7 +280,13 @@ const htmlToJson = (html: string) => {
   const nodes = parse(html) as Element[]
 
   const tags = findUniqueTags(nodes)
-  const tagsToBeStripped = tags.filter((tag: string) => !tagsThatAreNotToBeStripped.includes(tag))
+  const tagsToBeStripped = tags.filter(
+    (tag: string) =>
+      !ALLOWED_TAGS.includes(tag) &&
+      // Do not remove <style> tags without removing their content.
+      // They will be removed later in removeEmptyNodesAndComments.
+      tag !== 'style',
+  )
   const regex = generateRegexToMatchTags(tagsToBeStripped)
   const strippedHtml = html.replace(regex, '')
   const blocks = himalayaToBlock(removeEmptyNodesAndComments(parse(strippedHtml)))

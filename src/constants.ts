@@ -238,12 +238,19 @@ export const EDIT_THROTTLE = 500
 // matches a string with only punctuation
 export const REGEX_PUNCTUATIONS = /^\W+$/i
 
-// matches text with HTML
+/** Matches any HTML tags. */
 export const REGEX_HTML = /<\/?[a-z][\s\S]*>/i
 
 // matches HTML tags
 // can be used to replace all HTML in a string
 export const REGEX_TAGS = /(<([^>]+)>)/gi
+
+/** Matches HTML tags that indicate the snippet is a block of proper HTML, not just text formatted with HTML tags. Includes <html>, <body>, <meta>, <li> and <ul>. Does not match strings that just contain formattings tags like <b>, <i>, or <u>. */
+export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/i
+
+// starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
+// '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
+export const REGEX_PLAINTEXT_BULLET = /^\s*(?:[-—▪◦•]|\*\s)/m
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
 
@@ -495,11 +502,6 @@ export const FREE_THOUGHT_JUMPS = 3
 
 /** The number of additional thoughts to free when the threshold is reached. This provides some slack so that freeThoughts is not triggered on every action. */
 export const FREE_THOUGHTS_MARGIN = 50
-
-/** The maximum size of the thoughtIndex before freeThoughts kicks in to free memory. */
-// e.g. Art • Buddhist Art • :: • Regions • China • Period • Era of North-South division • North • East • Northern Qi
-// = 455 thoughts loaded into memory
-export const FREE_THOUGHTS_THRESHOLD = 500
 
 /** Throttle rate for the freeThoughts middleware to check memory pressure and deallocate thoughts from the thoughtIndex. */
 export const FREE_THOUGHTS_THROTTLE = 1000

@@ -50,7 +50,6 @@ import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
-import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
@@ -61,15 +60,6 @@ import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
 import useOnCut from './Editable/useOnCut'
 import useOnPaste from './Editable/useOnPaste'
-
-/** Stops propagation of an event, if CMD/CTRL is not pressed. */
-const stopPropagation = (e: React.MouseEvent) => {
-  const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-
-  if (!isMultiselectClick) {
-    e.stopPropagation()
-  }
-}
 
 interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement>
@@ -550,11 +540,13 @@ const Editable = ({
       const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
       if (
+        // disable editing when multicursor is enabled
+        hasMulticursorSelector(state) ||
         disabled ||
+        // do not set cursor on hidden thought
         // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
         (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
       ) {
-        // do not set cursor on hidden thought
         e.preventDefault()
 
         if (!isVisible) {
@@ -612,8 +604,7 @@ const Editable = ({
       }
       placeholder={placeholder}
       // stop propagation to prevent default content onClick (which removes the cursor)
-      onClick={stopPropagation}
-      {...fastClick(onTap)}
+      onClick={onTap}
       // must call onMouseDown on mobile since onTap cannot preventDefault
       // otherwise gestures and scrolling can trigger cursorBack (#1054)
       onMouseDown={onTap}

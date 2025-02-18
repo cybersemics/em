@@ -48,15 +48,12 @@ const subCategorizeOne = (state: State) => {
         cursor,
       )}" cannot be subcategorized.`,
     })
-  } else if (isContextViewActive(state, parentOf(cursor))) {
-    return alert(state, {
-      value: `Contexts may not be subcategorized in the context view.`,
-    })
   }
 
   const simplePath = simplifyPath(state, cursor)
   const newRank = getRankBefore(state, simplePath)
   const newThoughtId = createId()
+  const isInContextView = isContextViewActive(state, parentOf(cursor))
 
   return reducerFlow([
     createThought({
@@ -72,7 +69,11 @@ const subCategorizeOne = (state: State) => {
     }),
     moveThought({
       oldPath: simplePath,
-      newPath: appendToPath(cursorParent, newThoughtId, head(simplePath)),
+      newPath: appendToPath(
+        isInContextView ? rootedParentOf(state, simplePath) : cursorParent,
+        newThoughtId,
+        head(simplePath),
+      ),
       newRank,
     }),
   ])(state)

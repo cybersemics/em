@@ -12,13 +12,16 @@ type StripOptions = {
   stripColors?: boolean
 }
 
+/** Match style tag with contents: <style>...</style>. */
+const REGEX_STYLE_TAG = /<style\b[^>]*>.*?<\/style>/gis
+const REGEX_CONTIGUOUS_PARAGRAPH = /<\/p><p/g
 const REGEX_NBSP = /&nbsp;/gim
 const REGEX_DECIMAL_SPACE = /&#32;/gim
 const REGEX_BR_TAG = /<br.*?>/gim
 const REGEX_SPAN_TAG_ONLY_CONTAINS_WHITESPACES = /<span[^>]*>([\s]+)<\/span>/gim
 const REGEX_EMPTY_FORMATTING_TAGS = /<[^/>][^>]*>\s*<\/[^>]+>/gim
 
-/** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim. Uses DOMPurify to sanitize html so this method is slow. Use stripTags when possible for efficiency.
+/** Strip all HTML tags (or optionally all tags except formatting tags, style attributes and colors), close incomplete html tags, convert nbsp to normal spaces, and trim. Uses DOMPurify to sanitize html so this method is slow. Use stripTags when possible for efficiency.
  * PrserveFormatting is used to preserve the html formatting.
  * StripColors is used to strip only colors of the html.
  * StripAttributes is used to remove style attributes.
@@ -28,7 +31,8 @@ const strip = (
   { preserveFormatting = false, preventTrim = false, stripAttributes = true, stripColors = false }: StripOptions = {},
 ) => {
   const replacedHtml = html
-    .replace(/<\/p><p/g, '</p>\n<p') // <p> is a block element, if there is no newline between <p> tags add newline.
+    .replace(REGEX_STYLE_TAG, '') // Remove style tag and its contents, otherwise just the opening and closing tags will be stripped
+    .replace(REGEX_CONTIGUOUS_PARAGRAPH, '</p>\n<p') // <p> is a block element, if there is no newline between <p> tags add newline.
     .replace(REGEX_BR_TAG, '\n') // Some text editors add <br> instead of \n
     .replace(REGEX_SPAN_TAG_ONLY_CONTAINS_WHITESPACES, '$1') // Replace span tags contain whitespaces
     .replace(REGEX_DECIMAL_SPACE, ' ') // Some text editors use decimal code for space character

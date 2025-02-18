@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
+import globals from '../../globals'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
@@ -65,6 +66,54 @@ it('Clicking a context moves the cursor to that context', async () => {
   // cursor should be on the context that was clicked
   const cursorContext = pathToContext(store.getState(), cursor)
   expect(cursorContext).toEqual(['b1', 'b2'])
+})
+
+describe('freeThoughts', () => {
+  // Mock freeThoughtsThreshold to 0 so freeThoughts deallocates any thought that is not explicitly preserved.
+  const freeThoughtsThreshold = globals.freeThoughtsThreshold
+  beforeEach(() => {
+    globals.freeThoughtsThreshold = 0
+  })
+  afterEach(() => {
+    globals.freeThoughtsThreshold = freeThoughtsThreshold
+  })
+
+  it('Do not deallocate tangential contexts children', async () => {
+    await dispatch([
+      importText({
+        text: `
+          - a
+            - m
+          - d
+            - e
+              - f
+                - m
+                  - y
+                    - y1
+                  - z
+                    - z1
+        `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Wait for freeThoughts to run before moving the cursor to a/m~/f.
+    // Do not dispatch setCursor in the same batch.
+    // Otherwise the new state.expanded will incidentally preserve y1 and z1, resulting in a false negative
+    await dispatch([setCursor(['a', 'm', 'f'])])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Wait for a/m~/f/y to be visible
+    const y1 = await findThoughtByText('y')
+    expect(y1).toBeTruthy()
+
+    // Assert that there are no pending thoughts
+    expect(document.querySelectorAll('[data-pending=true]').length).toBe(0)
+  })
 })
 
 // TODO: Broke after LayoutTree

@@ -114,6 +114,9 @@ interface Command {
          */
         filter?: MulticursorFilter
       }
+
+  /** When true, renders the gesture with rounded corners in the GestureDiagram. */
+  rounded?: boolean
 }
 
 export default Command

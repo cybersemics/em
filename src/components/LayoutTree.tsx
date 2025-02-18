@@ -761,13 +761,9 @@ const LayoutTree = () => {
   // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
   const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
 
-  // memoized style for padding at a cliff
-  const cliffPaddingStyle = useMemo(
-    () => ({
-      paddingBottom: fontSize / 4,
-    }),
-    [fontSize],
-  )
+  // memoize the cliff padding style to avoid passing a fresh object reference as prop to TreeNode and forcing a re-render
+  const cliffPadding = fontSize / 4
+  const cliffPaddingStyle = useMemo(() => ({ paddingBottom: cliffPadding }), [cliffPadding])
 
   // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
@@ -819,7 +815,8 @@ const LayoutTree = () => {
     // key thoughtId of thought with =table attribute
     const tableCol1Widths = new Map<ThoughtId, number>()
     const treeThoughtsPositioned = treeThoughts.map((node, i) => {
-      const next: TreeThought | undefined = treeThoughts[i + 1]
+      const prev = treeThoughts[i - 1] as TreeThought | undefined
+      const next = treeThoughts[i + 1] as TreeThought | undefined
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
       // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
@@ -828,7 +825,7 @@ const LayoutTree = () => {
 
       // The single line height needs to be increased for thoughts that have a cliff below them.
       // For some reason this is not yielding an exact subpixel match, so the first updateHeight will not short circuit. Performance could be improved if th exact subpixel match could be determined. Still, this is better than not taking into account cliff padding.
-      const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? fontSize / 4 : 0)
+      const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? cliffPadding : 0)
       const height = sizes[node.key]?.height ?? singleLineHeightWithCliff
 
       // set the width of table col1 to the minimum width of all visible thoughts in the column
@@ -885,8 +882,23 @@ const LayoutTree = () => {
         }
       }
 
-      // capture the y position of the current thought before it is incremented by its own height
-      const y = yaccum
+      /* 
+        Anticipate cliff change on new thought
+
+        There is a special case for the y position when creating a new thought at the end of a context. The former last thought (what will become the new thought's previous sibling) loses its cliff, e.g. cliff changes from -1 to 0. This causes it to lots its cliffPaddingStyle, and thus its height will decrease slightly. However, when the new thought is rendered, its y position is determined by the previous thought's cached height. The height is only re-measured after the nxet render. This causes the new thought's y position to decrease by the cliff padding over a single frame. It will appear to slide up as it animates into the correct y position (based on the updated previous sibling's measurement).
+
+        Solution: Check if a new thought is being rendered at the cliff, and anticipate the updated y position by subtracting cliffPadding. This does not apply if the previous thought's depth is greater than the new thought's depth, as it will not be losing its cliff. It only applies if the prevous thought is a sibling or parent and is losing its cliff.
+
+        (It may have been better to directly check if the previous thought is losing its cliff, however that would require persisting the last cliff for each thought in a ref. The additional state is less than ideal, but it can be pursued if it is discovered that this simple condition has any false positives/negatives.)
+
+        e.g. `a` will lose its cliff but its height will not be re-measured until after [empty] has been rendered with the wrong y
+          - a
+          - [empty]
+      */
+      const isNewCliff = !sizes[node.key] && cliff < 0 && prev && node.depth >= prev.depth
+
+      // Capture the y position of the current thought before it is incremented by its own height for the next thought.
+      const y = yaccum - (isNewCliff ? cliffPadding : 0)
 
       // increase y by the height of the current thought
       if (!node.isTableCol1 || node.leaf) {
@@ -945,6 +957,7 @@ const LayoutTree = () => {
 
     return { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility }
   }, [
+    cliffPadding,
     fontSize,
     isHoveringSorted,
     maxVisibleY,

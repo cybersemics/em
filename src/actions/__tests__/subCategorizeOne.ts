@@ -3,6 +3,7 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
+import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newSubthought from '../newSubthought'
@@ -90,7 +91,7 @@ describe('normal view', () => {
 })
 
 describe('context view', () => {
-  it('disallow subcategorize context', () => {
+  it('subcategorize context', () => {
     const text = `
       - a
         - m
@@ -115,8 +116,11 @@ describe('context view', () => {
     - m
       - x
   - b
-    - m
-      - y`)
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - m
+        - y`)
+
+    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', ''])
   })
 
   it('subcategorize context subthought', () => {
