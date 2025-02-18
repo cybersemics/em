@@ -1,5 +1,5 @@
-/** @jsxImportSource @emotion/react */
-import { css } from '@emotion/react';
+import React from 'react';
+import { css } from '../../../styled-system/css';
 
 interface DialogProps {
     isOpen: boolean;
@@ -11,24 +11,26 @@ const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, children }) => {
     if (!isOpen) return null;
 
     return (
-        <div css={css({
+        <div className={css({
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 'modal'
+            zIndex: 'modal',
+            padding: '16px',
         })}>
-            <div css={css({
-                backgroundColor: 'white',
-                padding: '2rem',
-                borderRadius: '0.5rem',
+            <div className={css({
+                backgroundColor: '#000000',
+                color: '#fff',
+                padding: '16px',
+                borderRadius: '8px',
                 maxWidth: '500px',
-                width: '90%'
+                width: '80%',
+                border: '2px solid rgba(189, 189, 189, 0.16)',
             })}>
                 {children}
             </div>
