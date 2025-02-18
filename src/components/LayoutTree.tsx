@@ -465,10 +465,6 @@ const TreeNode = ({
   // breaking the transition animation.
   useLayoutEffect(() => {
     if (y !== _y) {
-      // When y changes React re-renders the component with the new value of y. It will result in a visual change in the DOM.
-      // Because this is a state-driven change, React applies the updated value to the DOM, which causes the browser to recognize that
-      // a CSS property has changed, thereby triggering the CSS transition.
-      // Without this additional render, updates get batched and subsequent CSS transitions may not work properly. For example, when moving a thought down, it would not animate.
       setY(_y)
     }
   }, [y, _y])
@@ -520,11 +516,10 @@ const TreeNode = ({
             : `left {durations.layoutNodeAnimation} cubic-bezier(0.8, 0, 0.2, 0.2)`,
         })}
         style={{
-          // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
-          // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
           left: x,
-          // Table col1 uses its exact width since cannot extend to the right edge of the screen.
-          // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
+          top: y,
+          // to enable the transition, we need to apply a transform to the parent
+          transform: `translateY(-${y}px)`,
           width: nodeWidth,
           ...style,
           textAlign: isTableCol1 ? 'right' : undefined,
@@ -532,13 +527,14 @@ const TreeNode = ({
       >
         <div
           className={css({
-            position: 'absolute',
+            // Apply transition to the transform property
             transition: isLastActionNewThought
-              ? `top {durations.layoutNodeAnimationFast} cubic-bezier(0.8, 0.8, 0.2, 1)`
-              : `top {durations.layoutNodeAnimation} cubic-bezier(0.8, 0.8, 0.2, 1)`,
+              ? `transform {durations.layoutNodeAnimationFast} cubic-bezier(0.8, 0.8, 0.2, 1)`
+              : `transform {durations.layoutNodeAnimation} cubic-bezier(0.8, 0.8, 0.2, 1)`,
           })}
           style={{
-            top: y,
+            // apply the transform to the child to counteract the transform on the parent
+            transform: `translateY(${y}px)`,
             width: nodeWidth,
           }}
         >
