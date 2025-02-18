@@ -1,4 +1,5 @@
 import React from 'react';
+import CloseButton from '../CloseButton';
 import { css } from '../../../styled-system/css';
 
 interface DialogTitleProps {
@@ -10,16 +11,17 @@ const DialogTitle: React.FC<DialogTitleProps> = ({ children, onClose }) => {
     return (
         <div className={css({
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
         })}>
-            <h2>
+            <h2 className={css({
+                fontWeight: 'bold',
+                color: '#FFD6FC',
+                borderBottom: 'none',
+                fontSize: '1.25rem',
+            })}>
                 {children}
             </h2>
             {onClose && (
-                <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200">
-                    ✖
-                </button>
+                <CloseButton onClose={onClose} />
             )}
         </div>
     );

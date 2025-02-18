@@ -21,18 +21,17 @@ const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, children }) => {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 'modal',
-            padding: '16px',
         })}>
             <div className={css({
-                backgroundColor: '#000000',
-                color: '#fff',
-                padding: '16px',
-                borderRadius: '8px',
-                maxWidth: '500px',
-                width: '80%',
-                border: '2px solid rgba(189, 189, 189, 0.16)',
-            })}>
-                {children}
+            backgroundColor: '#000000',
+            color: '#fff',
+            padding: '16px 20px',
+            borderRadius: '8px',
+            maxWidth: '500px',
+            width: '80%',
+            border: '2px solid rgba(189, 189, 189, 0.16)',
+        })}>
+            {children}
             </div>
         </div>
     );

@@ -35,6 +35,7 @@ import Tutorial from './Tutorial'
 import * as modals from './modals'
 import Dialog from './dialog/Dialog'
 import DialogTitle from './dialog/DialogTitle'
+import DialogContent from './dialog/DialogContent'
 // This can be removed once Split Pane is working.
 const DISABLE_SPLIT_PANE = true
 
@@ -199,6 +200,7 @@ const AppComponent: FC = () => {
       
       <Dialog isOpen={true} onClose={() => {}}>
         <DialogTitle>Dialog Title</DialogTitle>
+        <DialogContent>Dialog box content!</DialogContent>
       </Dialog>
 
       {isDocumentEditable() && !tutorial && !showModal && (
