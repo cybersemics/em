@@ -488,6 +488,12 @@ const TreeNode = ({
   // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
+  // Table col1 uses its exact width since cannot extend to the right edge of the screen.
+  // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
+  // 1em + 10px is an eyeball measurement at font sizes 14 and 18
+  // (Maybe the 10px is from .content padding-left?)
+  const nodeWidth = isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`
+
   return (
     <FadeTransition
       id={thoughtKey}
@@ -519,9 +525,7 @@ const TreeNode = ({
           left: x,
           // Table col1 uses its exact width since cannot extend to the right edge of the screen.
           // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
-          // 1em + 10px is an eyeball measurement at font sizes 14 and 18
-          // (Maybe the 10px is from .content padding-left?)
-          width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
+          width: nodeWidth,
           ...style,
           textAlign: isTableCol1 ? 'right' : undefined,
         }}
@@ -532,10 +536,10 @@ const TreeNode = ({
             transition: isLastActionNewThought
               ? `top {durations.layoutNodeAnimationFast} cubic-bezier(0.8, 0.8, 0.2, 1)`
               : `top {durations.layoutNodeAnimation} cubic-bezier(0.8, 0.8, 0.2, 1)`,
-            width: '100%',
           })}
           style={{
             top: y,
+            width: nodeWidth,
           }}
         >
           <div ref={fadeThoughtRef}>
