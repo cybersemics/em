@@ -465,6 +465,10 @@ const TreeNode = ({
   // breaking the transition animation.
   useLayoutEffect(() => {
     if (y !== _y) {
+      // When y changes React re-renders the component with the new value of y. It will result in a visual change in the DOM.
+      // Because this is a state-driven change, React applies the updated value to the DOM, which causes the browser to recognize that
+      // a CSS property has changed, thereby triggering the CSS transition.
+      // Without this additional render, updates get batched and subsequent CSS transitions may not work properly. For example, when moving a thought down, it would not animate.
       setY(_y)
     }
   }, [y, _y])
@@ -984,6 +988,8 @@ const LayoutTree = () => {
               {...thought}
               index={index}
               // Pass unique key for the component
+              // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
+              // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
               key={thought.key}
               // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
               thoughtKey={thought.key}
