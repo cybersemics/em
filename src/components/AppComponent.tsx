@@ -33,7 +33,8 @@ import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import * as modals from './modals'
-
+import Dialog from './dialog/Dialog'
+import DialogTitle from './dialog/DialogTitle'
 // This can be removed once Split Pane is working.
 const DISABLE_SPLIT_PANE = true
 
@@ -195,6 +196,11 @@ const AppComponent: FC = () => {
       <CommandPalette />
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
+      
+      <Dialog isOpen={true} onClose={() => {}}>
+        <DialogTitle>Dialog Title</DialogTitle>
+      </Dialog>
+
       {isDocumentEditable() && !tutorial && !showModal && (
         <>
           <Sidebar />

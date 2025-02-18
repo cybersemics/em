@@ -1,9 +1,13 @@
-const CloseButton = () => {
+interface CloseButtonProps {
+    onClick: () => void
+}
+
+const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
     return (
-        <div>
-            <h1>CloseButton</h1>
-        </div>
+        <button onClick={onClick} className="p-2 rounded-full hover:bg-gray-200">
+            ✖
+        </button>
     );
 };
 
-export default CloseButton;
+export default CloseButton

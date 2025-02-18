@@ -6,4 +6,4 @@ const DialogContent = () => {
     );
 };
 
-export default DialogContent;
+export default DialogContent
