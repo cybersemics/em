@@ -15,6 +15,9 @@ const DialogContent: React.FC<DialogContentProps> = ({ children }) => {
         padding: '20px',
         fontSize: '1.25rem',
         marginBottom: '16px',
+        '@media (min-width: 1200px)': {
+            fontSize: '1.7rem',
+            },
       })}
     >
       {children}

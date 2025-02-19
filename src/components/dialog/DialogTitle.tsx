@@ -22,8 +22,10 @@ const DialogTitle: React.FC<DialogTitleProps> = ({ children, onClose }) => {
           color: '#FFD6FC',
           borderBottom: 'none',
           fontSize: '1.5rem',
-          marginBottom: '16px',
-          marginTop: '16px',
+          margin: '16px',
+          '@media (min-width: 1200px)': {
+            fontSize: '2rem',
+            },
         })}
       >
         {children}
