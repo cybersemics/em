@@ -477,7 +477,7 @@ const TreeNode = ({
     ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
     : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
 
-  const [transientStyle, setTransientStyle] = useState<React.CSSProperties>({})
+  const [transientStyle, setTransientStyle] = useState<React.CSSProperties>({ textAlign: undefined })
   const translateXRef = useRef<number>(0) // Add a ref to store the translateX value
   const duration = 200
 
