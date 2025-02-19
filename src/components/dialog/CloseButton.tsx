@@ -27,7 +27,7 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
         },
       })}
     >
-      ✖
+     ✖
     </button>
   )
 }

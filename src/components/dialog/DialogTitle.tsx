@@ -1,6 +1,6 @@
 import React from 'react'
 import { css } from '../../../styled-system/css'
-import CloseButton from '../CloseButton'
+import CloseButton from './CloseButton'
 
 interface DialogTitleProps {
   children: React.ReactNode
@@ -26,7 +26,7 @@ const DialogTitle: React.FC<DialogTitleProps> = ({ children, onClose }) => {
       >
         {children}
       </h2>
-      <CloseButton onClose={onClose} />
+      <CloseButton onClick={onClose} />
     </div>
   )
 }

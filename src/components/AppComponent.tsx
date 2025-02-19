@@ -116,6 +116,7 @@ const AppComponent: FC = () => {
   const dispatch = useDispatch()
   const lastSplitViewRef = useRef(false)
   const [isSplitting, setIsSplitting] = useState(false)
+  const [isDialogOpen, setDialogOpen] = useState(true) //Dialog open
 
   const colors = useSelector(themeColors)
   const dark = useSelector(state => theme(state) !== 'Light')
@@ -186,6 +187,11 @@ const AppComponent: FC = () => {
 
   const Modal = showModal ? modals[showModal] : null
 
+  //Dialog close
+  const handleClose = () => {
+    setDialogOpen(false)
+  }
+
   return (
     <div
       className={css({
@@ -199,8 +205,9 @@ const AppComponent: FC = () => {
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
 
-      <Dialog isOpen={true} onClose={() => {}}>
-        <DialogTitle onClose={() => {}}>Dialog Title</DialogTitle>
+      {/* Dialog */}
+      <Dialog isOpen={isDialogOpen} onClose={handleClose}>
+        <DialogTitle onClose={handleClose}>Dialog Title</DialogTitle>
         <DialogContent>Dialog box content!</DialogContent>
       </Dialog>
 
