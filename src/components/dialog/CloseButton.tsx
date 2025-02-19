@@ -10,24 +10,23 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
     <button
       onClick={onClick}
       className={css({
-        padding: '8px',
+        width: '40px',
+        height: '40px',
         borderRadius: '50%',
-        backgroundColor: 'transparent',
-        border: 'none',
+        backgroundColor: '#2E2A33',
+        border: '2px solid #C9A2D1',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        fontSize: '18px',
-        fontWeight: 'bold',
-        color: '#C9A2D1',
+        color: '#fff',
         transition: 'background-color 0.2s ease',
         _hover: {
           backgroundColor: 'rgba(201, 162, 209, 0.2)',
         },
       })}
     >
-     ✖
+      ✖
     </button>
   )
 }

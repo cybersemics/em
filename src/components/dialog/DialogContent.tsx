@@ -12,8 +12,8 @@ const DialogContent: React.FC<DialogContentProps> = ({ children }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
-        fontSize: '1.125rem',
+        padding: '20px',
+        fontSize: '1.25rem',
         marginBottom: '16px',
       })}
     >
