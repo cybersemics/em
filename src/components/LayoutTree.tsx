@@ -479,7 +479,7 @@ const TreeNode = ({
 
   const [transientStyle, setTransientStyle] = useState<React.CSSProperties>({})
   const translateXRef = useRef<number>(0) // Add a ref to store the translateX value
-  const duration = 400
+  const duration = 200
 
   /** Calculates the horizontal translation needed to align the text to the right within its parent. */
   const calculateTranslateX = (): number => {
