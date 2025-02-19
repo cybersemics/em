@@ -46,7 +46,16 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, cssRaw }) =
     })
   }, [contexts, showHiddenThoughts])
 
-  return <StaticSuperscript ref={ref} show={!!(show && numContexts)} n={numContexts} cssRaw={cssRaw} hideZero />
+  return (
+    <StaticSuperscript
+      ref={ref}
+      show={!!(show && numContexts)}
+      n={numContexts}
+      cssRaw={cssRaw}
+      hideZero
+      thoughtId={head(simplePath)}
+    />
+  )
 }
 
 const SuperscriptMemo = React.memo(Superscript)
