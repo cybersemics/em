@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
+import { CSSTransition } from 'react-transition-group'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -61,6 +62,7 @@ const VirtualThought = ({
   isLastVisible,
   autofocus,
   marginRight,
+  isTableCol1,
 }: {
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
@@ -84,6 +86,7 @@ const VirtualThought = ({
   isLastVisible?: boolean
   autofocus: Autofocus
   marginRight: number
+  isTableCol1?: boolean
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
@@ -198,61 +201,138 @@ const VirtualThought = ({
     [crossContextualKey, onResize, id],
   )
 
+  const [transientStyle, setTransientStyle] = useState<React.CSSProperties>({
+    textAlign: isTableCol1 ? 'right' : undefined,
+  })
+  const translateXRef = useRef<number>(0)
+  const duration = 200
+
+  /** Calculates the horizontal translation needed to align the text to the right within its parent. */
+  const calculateTranslateX = (): number => {
+    const element = ref.current
+    if (!element) return 0
+    const editable = element?.querySelector('.editable') as HTMLElement | null
+    if (!editable) return 0
+    const parentWidth = element.getBoundingClientRect().width
+    const computedStyle = getComputedStyle(editable)
+    const paddingLeft = parseFloat(computedStyle.paddingLeft)
+    const paddingRight = parseFloat(computedStyle.paddingRight)
+    const editableWidth = editable.getBoundingClientRect().width - paddingLeft - paddingRight
+
+    return Math.max(0, parentWidth - editableWidth)
+  }
+
+  /** Updates the transient style by merging the given styles with the existing ones. */
+  const updateTransitionStyle = (updates: React.CSSProperties) => {
+    setTransientStyle(prev => ({
+      ...prev,
+      ...updates,
+    }))
+  }
+
   return (
-    <div
-      ref={ref}
-      style={{
-        // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
-        // Must include DropChild, or it will shift when the cursor moves.
-        height: shimHiddenThought && height != null ? height : undefined,
+    <CSSTransition
+      in={isTableCol1}
+      timeout={duration}
+      nodeRef={ref}
+      onEnter={() => {
+        updateTransitionStyle({
+          transform: 'translateX(0px)',
+          textAlign: undefined,
+        })
+        setTimeout(() => {
+          const calculatedTranslateX = calculateTranslateX()
+          translateXRef.current = calculatedTranslateX // Save the calculated value
+          updateTransitionStyle({
+            transform: `translateX(${calculatedTranslateX}px)`,
+            transition: `transform ${duration}ms ease-out`,
+          })
+        }, 10)
+      }}
+      onExit={() => {
+        const calculatedTranslateX = translateXRef.current // Use the saved value
+        updateTransitionStyle({
+          transform: `translateX(${calculatedTranslateX}px)`,
+          textAlign: undefined,
+        })
+        setTimeout(() => {
+          updateTransitionStyle({
+            transform: 'translateX(0px)',
+            transition: `transform ${duration}ms ease-out`,
+          })
+        }, 10)
+      }}
+      onEntered={() => {
+        updateTransitionStyle({
+          transform: undefined,
+          transition: undefined,
+          textAlign: 'right',
+        })
+      }}
+      onExited={() => {
+        updateTransitionStyle({
+          transform: undefined,
+          transition: undefined,
+          textAlign: undefined,
+        })
       }}
     >
-      {
-        /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target after a hidden parent.
-           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we must insert DropUncle when e would not be rendered.
-             - a
-              - b
-                - c [cursor]
-                  - x
-                - d
-              - e
-         */
-        !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
-      }
+      <div
+        ref={ref}
+        style={{
+          // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
+          // Must include DropChild, or it will shift when the cursor moves.
+          height: shimHiddenThought && height != null ? height : undefined,
+          ...transientStyle,
+        }}
+      >
+        {
+          /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target after a hidden parent.
+             e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we must insert DropUncle when e would not be rendered.
+               - a
+                - b
+                  - c [cursor]
+                    - x
+                  - d
+                - e
+           */
+          !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
+        }
 
-      {!shimHiddenThought && (
-        <Subthought
-          autofocus={autofocus}
-          debugIndex={debugIndex}
-          depth={depth + 1}
-          dropUncle={dropUncle}
-          env={env}
-          indexDescendant={indexDescendant}
-          isMultiColumnTable={isMultiColumnTable}
-          leaf={leaf}
-          updateSize={updateSize}
-          path={path}
-          prevChildId={prevChildId}
-          showContexts={showContexts}
-          simplePath={simplePath}
-          style={style}
-          zoomCursor={zoomCursor}
-          marginRight={marginRight}
-        />
-      )}
+        {!shimHiddenThought && (
+          <Subthought
+            autofocus={autofocus}
+            debugIndex={debugIndex}
+            depth={depth + 1}
+            dropUncle={dropUncle}
+            env={env}
+            indexDescendant={indexDescendant}
+            isMultiColumnTable={isMultiColumnTable}
+            leaf={leaf}
+            updateSize={updateSize}
+            path={path}
+            prevChildId={prevChildId}
+            showContexts={showContexts}
+            simplePath={simplePath}
+            style={style}
+            zoomCursor={zoomCursor}
+            marginRight={marginRight}
+          />
+        )}
 
-      {isVisible && (
-        <DropChild
-          depth={depth}
-          // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
-          // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
-          // TODO: DragAndDropSubthoughts should be able to handle this.
-          path={path}
-          simplePath={simplePath}
-          isLastVisible={isLastVisible}
-        />
-      )}
-    </div>
+        {isVisible && (
+          <DropChild
+            depth={depth}
+            // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
+            // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
+            // TODO: DragAndDropSubthoughts should be able to handle this.
+            path={path}
+            simplePath={simplePath}
+            isLastVisible={isLastVisible}
+          />
+        )}
+      </div>
+    </CSSTransition>
   )
 }
 
