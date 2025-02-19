@@ -2,6 +2,9 @@ import _ from 'lodash'
 import { isTouch } from '../browser'
 import reactMinistore from './react-ministore'
 
+/** Scroll zone as a percentage of the smaller size of the screen. */
+const SCROLL_ZONE_WIDTH = 0.333
+
 // take a guess at the height of the virtual keyboard until we can measure it directly
 let virtualKeyboardHeightPortrait = isTouch ? window.innerHeight / 2.275 : 0
 let virtualKeyboardHeightLandscape = isTouch ? window.innerWidth / 1.7 : 0
@@ -11,7 +14,7 @@ const viewportStore = reactMinistore({
   innerWidth: window.innerWidth,
   /** Height of the viewport, not including the virtual keyboard. */
   innerHeight: window.innerHeight,
-  scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * 0.39,
+  scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * SCROLL_ZONE_WIDTH,
   virtualKeyboardHeight:
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
 })
