@@ -479,7 +479,7 @@ const TreeNode = ({
 
   const [transientStyle, setTransientStyle] = useState<React.CSSProperties>({})
   const translateXRef = useRef<number>(0) // Add a ref to store the translateX value
-  const duration = 200
+  const duration = 400
 
   /** Calculates the horizontal translation needed to align the text to the right within its parent. */
   const calculateTranslateX = (): number => {
@@ -488,15 +488,12 @@ const TreeNode = ({
     const editable = element?.querySelector('.editable') as HTMLElement | null
     if (!editable) return 0
     const parentWidth = element.getBoundingClientRect().width
-    const range = document.createRange()
-    if (editable.firstChild) {
-      range.selectNodeContents(editable.firstChild) // Ensure selecting only text
-    } else {
-      range.selectNodeContents(editable)
-    }
-    const textWidth = range.getBoundingClientRect().width
+    const computedStyle = getComputedStyle(editable)
+    const paddingLeft = parseFloat(computedStyle.paddingLeft)
+    const paddingRight = parseFloat(computedStyle.paddingRight)
+    const editableWidth = editable.getBoundingClientRect().width - paddingLeft - paddingRight
 
-    return Math.max(0, parentWidth - textWidth)
+    return Math.max(0, parentWidth - editableWidth)
   }
 
   /** Updates the transient style by merging the given styles with the existing ones. */
