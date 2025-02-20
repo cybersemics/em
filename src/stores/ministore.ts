@@ -9,7 +9,11 @@ export interface Ministore<T> {
   /** Subscribes to one update. */
   once: (predicate?: (state: T) => boolean) => CancellablePromise<T>
   /** Subscribes to changes to a slice of the state. Returns an unsubscribe function. */
-  subscribeSelector: <S>(selector: (state: T) => S, f: (slice: S) => void, equals?: (a: S, b: S) => boolean) => void
+  subscribeSelector: <S>(
+    selector: (state: T) => S,
+    f: (slice: S) => void,
+    equals?: (a: S, b: S) => boolean,
+  ) => () => void
   /** Updates the state. If the state is an object, accepts a partial update. Accepts an updater function that passes the old state. */
   update: (updatesOrUpdater: Partial<T> | ((oldState: T) => Partial<T>)) => void
 }
@@ -53,7 +57,7 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     equals: (a: S, b: S) => boolean = (a, b) => a === b,
   ) => {
     let value = selector(state)
-    subscribe(() => {
+    return subscribe(() => {
       const valueOld = value
       value = selector(state)
       if (!equals(value, valueOld)) {
