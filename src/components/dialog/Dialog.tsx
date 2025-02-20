@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { css } from '../../../styled-system/css'
 
 interface DialogProps {
@@ -11,6 +11,38 @@ interface DialogProps {
  * Dialog component.
  */
 const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, children }) => {
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    /**
+     * Handles the click outside the dialog.
+     */
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+        onClose()
+      }
+    }
+
+    /**
+     * Handles the button click outside the dialog.
+     */
+    const handleButtonClick = (event: MouseEvent) => {
+      if ((event.target as HTMLElement).tagName === 'BUTTON') {
+        onClose()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('click', handleButtonClick)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('click', handleButtonClick)
+    }
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   return (
@@ -28,6 +60,7 @@ const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, children }) => {
       })}
     >
       <div
+        ref={dialogRef}
         className={css({
           backgroundColor: '{colors.bg}',
           color: '{colors.fg}',
