@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { editingActionCreator as editing } from '../actions/editing'
 import { isTouch } from '../browser'
-import { noop } from '../constants'
+import { TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
 
@@ -14,14 +14,13 @@ const SCROLL_THRESHOLD = 10
 let lock = false
 
 /** Custom hook to manage long press.
- * The onLongPressStart handler is called after the delay if the user is still pressing. The delay defaults to 250ms, but useDragHold uses TIMEOUT_LONG_PRESS_THOUGHT which is 300ms.
+ * The onLongPressStart handler is called after the delay if the user is still pressing.
  * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove).
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
   onLongPressEnd: ((options: { canceled: boolean }) => void) | null = noop,
   onTouchStart: (() => void) | null = noop,
-  ms = 250,
 ) => {
   const [pressed, setPressed] = useState(false)
   // useState doesn't work for some reason (???)
@@ -55,13 +54,12 @@ const useLongPress = (
         if (!unmounted.current) {
           setPressed(true)
         }
-      }, ms) as unknown as number
+      }, TIMEOUT_LONG_PRESS_THOUGHT) as unknown as number
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       // TODO: Find a better way than adding an extraneous dependency
       lock,
-      ms,
       onLongPressStart,
       onTouchStart,
     ],

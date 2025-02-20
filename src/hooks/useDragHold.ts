@@ -6,7 +6,6 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import useLongPress from './useLongPress'
 
@@ -79,7 +78,7 @@ const useDragHold = ({
     })
   }, [dispatch, isDragging])
 
-  const props = useLongPress(onLongPressStart, onLongPressEnd, null, TIMEOUT_LONG_PRESS_THOUGHT)
+  const props = useLongPress(onLongPressStart, onLongPressEnd, null)
 
   return {
     isPressed,

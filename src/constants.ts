@@ -256,7 +256,7 @@ export const IPFS_GATEWAY = 'ipfs.infura.io'
 
 // delay before long press is activated
 // also used for react-dnd's delayTouchStart
-export const TIMEOUT_LONG_PRESS_THOUGHT = 300
+export const TIMEOUT_LONG_PRESS_THOUGHT = 400
 
 export const MODIFIER_KEYS = {
   Alt: 1,
