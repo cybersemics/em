@@ -54,7 +54,7 @@ const useToolbarLongPress = ({
     })
   }, [dispatch, isDragging])
 
-  const props = useLongPress(onLongPressStart, onLongPressEnd, null)
+  const props = useLongPress(onLongPressStart, onLongPressEnd)
 
   const result = useMemo(
     () => ({

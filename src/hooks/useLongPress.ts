@@ -20,7 +20,6 @@ let lock = false
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
   onLongPressEnd: ((options: { canceled: boolean }) => void) | null = noop,
-  onTouchStart: (() => void) | null = noop,
 ) => {
   const [pressed, setPressed] = useState(false)
   // useState doesn't work for some reason (???)
@@ -43,7 +42,6 @@ const useLongPress = (
       if ('touches' in e) {
         clientCoords.current = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
       }
-      onTouchStart?.()
 
       // cast Timeout to number for compatibility with clearTimeout
       clearTimeout(timerIdRef.current)
@@ -61,7 +59,6 @@ const useLongPress = (
       // TODO: Find a better way than adding an extraneous dependency
       lock,
       onLongPressStart,
-      onTouchStart,
     ],
   )
 
