@@ -1,7 +1,5 @@
 import React from 'react'
 import { css } from '../../../styled-system/css'
-// import { useSelector } from 'react-redux'
-// import themeColors from '../../selectors/themeColors'
 import CloseButton from './CloseButton'
 
 interface DialogTitleProps {
@@ -9,9 +7,10 @@ interface DialogTitleProps {
   onClose: () => void
 }
 
+/**
+ * Dialog title.
+ */
 const DialogTitle: React.FC<DialogTitleProps> = ({ children, onClose }) => {
-//   const colors = useSelector(themeColors)
-
   return (
     <div
       className={css({
@@ -23,7 +22,7 @@ const DialogTitle: React.FC<DialogTitleProps> = ({ children, onClose }) => {
       <h2
         className={css({
           fontWeight: '700',
-          color: '#FFD6FC', //'{colors.midPink}'
+          color: '{colors.fg}',
           borderBottom: 'none',
           fontSize: '1.5rem',
           margin: '16px',

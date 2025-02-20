@@ -187,7 +187,9 @@ const AppComponent: FC = () => {
 
   const Modal = showModal ? modals[showModal] : null
 
-  //Dialog close
+  /**
+   * Dialog close.
+   */
   const handleClose = () => {
     setDialogOpen(false)
   }
