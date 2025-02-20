@@ -1,5 +1,7 @@
 import React from 'react'
 import { css } from '../../../styled-system/css'
+import { useSelector } from 'react-redux'
+import themeColors from '../../selectors/themeColors'
 
 interface DialogProps {
   isOpen: boolean
@@ -8,6 +10,8 @@ interface DialogProps {
 }
 
 const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, children }) => {
+  const colors = useSelector(themeColors)
+
   if (!isOpen) return null
 
   return (
@@ -26,8 +30,8 @@ const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, children }) => {
     >
       <div
         className={css({
-          backgroundColor: '#000000',
-          color: '#fff',
+          backgroundColor: colors.bg,
+          color: colors.fg,
           padding: '16px 20px',
           borderRadius: '8px',
           maxWidth: '500px',
