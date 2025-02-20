@@ -202,6 +202,26 @@ describe('normal view', () => {
     const stateNew = cursorUp(store.getState())
     expectPathToEqual(stateNew, stateNew.cursor, ['x'])
   })
+
+  it('should move to the last visible thought of pinned thought', () => {
+    const text = `
+      - a
+        - b
+          - =pin
+          - b1
+        - c
+    `
+
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'b', 'b1']),
+      newThought({ value: '', insertBefore: true }),
+      setCursor(['a', 'c']),
+      cursorUp,
+    ]
+    const stateNew = reducerFlow(steps)(initialState())
+    expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'b', 'b1'])!)
+  })
 })
 
 describe('context view', () => {
