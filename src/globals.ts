@@ -37,8 +37,12 @@ let freeThoughtsThreshold = 500
 // TODO: Default to false but add a setting to enable.
 const ellipsizeContextThoughts = false
 
+/** Escape hatch to abandon imports when frozen. This is a workaround for a bug that has not been resolved. */
+let abandonImport = false
+
 // check duplicate ranks within the same context for debugging
 const globals = {
+  abandonImport,
   ellipsizeContextThoughts,
   freeThoughtsThreshold,
   errorTimer,

@@ -6,6 +6,7 @@ import { fontSizeActionCreator } from '../../actions/fontSize'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actions/toggleUserSetting'
 import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../../constants'
+import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
 import fastClick from '../../util/fastClick'
 import ThemeSwitch from '../ThemeSwitch'
@@ -160,6 +161,21 @@ const ModalSettings = () => {
         <Setting settingsKey={Settings.leftHanded} title='Left Handed'>
           Moves the scroll zone to the left side of the screen and the gesture zone to the right.
         </Setting>
+
+        <a
+          className={css({ color: 'error' })}
+          onClick={() => {
+            // Escape hatch to cancel imports when frozen.
+            // This is a workaround for a bug that has not been resolved.
+            globals.abandonImport = true
+            setTimeout(() => {
+              localStorage.removeItem('resume-imports')
+              window.location.reload()
+            })
+          }}
+        >
+          Cancel imports
+        </a>
       </form>
     </ModalComponent>
   )
