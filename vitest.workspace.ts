@@ -24,4 +24,14 @@ export default defineWorkspace([
       setupFiles: ['./src/e2e/puppeteer/setup.ts'],
     },
   },
+  {
+    extends: './vite.config.ts',
+    test: {
+      name: 'ios',
+      globals: true,
+      include: ['src/e2e/iOS2/__tests__/*.ts'],
+      exclude: ['node_modules/**'],
+      environment: './src/e2e/webdriverio-environment2.ts',
+    },
+  },
 ])
