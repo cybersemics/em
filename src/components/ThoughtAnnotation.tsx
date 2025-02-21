@@ -352,6 +352,10 @@ const ThoughtAnnotationContainer = React.memo(
       setCalculateContexts(true)
     }, [])
 
+    // In order to render a faux caret while hideCaret animations are playing, ThoughtAnnotation always needs
+    // to exist on mobile Safari. The line end faux caret must be placed inline-block at the end of the
+    // thought text in order to cover cases where the selection is an ELEMENT_NODE and its bounding box
+    // does not represent the screen position of the caret.
     return showSuperscript || url || email || styleAnnotation || isMobileSafari() ? (
       <ThoughtAnnotation
         {...{

@@ -467,7 +467,9 @@ const TreeNode = ({
     if (editing && isCursor) {
       // The selection ranges aren't updated until the end of the frame when the thought is focused.
       setTimeout(() => {
-        const offset = fadeThoughtRef.current?.getBoundingClientRect()
+        if (!fadeThoughtRef.current) return
+
+        const offset = fadeThoughtRef.current.getBoundingClientRect()
 
         if (offset) {
           const rect = getBoundingClientRect()
