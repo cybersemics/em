@@ -7,6 +7,7 @@ const colors = {
     bgOverlay30: 'rgba(0, 0, 0, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
+    caret: 'rgba(0, 199, 230, 0.75)', // #00c7e6
     darkgray: 'rgba(17, 17, 17, 1)', // #111111
     fg85: 'rgba(217, 217, 217, 1)', // #d9d9d9
     fg: 'rgba(255, 255, 255, 1)',
@@ -72,6 +73,7 @@ const colors = {
     bgOverlay30: 'rgba(255, 255, 255, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
+    caret: 'rgba(0, 199, 230, 0.75)', // #00c7e6
     darkgray: 'rgba(237, 237, 237, 1)', // #ededed
     fg85: 'rgba(39, 39, 39, 1)', // #272727
     fg: 'rgba(0, 0, 0, 1)',

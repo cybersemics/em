@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { type CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
@@ -13,10 +13,11 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { isSafari, isTouch } from '../browser'
+import { isMobileSafari, isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
-import { getBoundingClientRect, isEndOfElementNode, isStartOfElementNode } from '../device/selection'
+import { getBoundingClientRect } from '../device/selection'
 import testFlags from '../e2e/testFlags'
+import useFauxCaretCssVars from '../hooks/useFauxCaretCssVars'
 import useSortedContext from '../hooks/useSortedContext'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
@@ -45,6 +46,7 @@ import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
+import FauxCaret from './FauxCaret'
 import HoverArrow from './HoverArrow'
 import VirtualThought, { OnResize } from './VirtualThought'
 
@@ -428,12 +430,13 @@ const TreeNode = ({
   dragInProgress: boolean
   autofocusDepth: number
 } & Pick<CSSTransitionProps, 'in'>) => {
+  const editing = useSelector(state => state.editing)
   const [y, setY] = useState(_y)
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
-  const caretRef = useRef<HTMLSpanElement | null>(null)
-  const editing = useSelector(state => state.editing)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const [fauxCaretStyles, setFauxCaretStyles] = useState<CSSProperties>({ display: 'none' })
+  const fauxCaretCssVars = useFauxCaretCssVars(editing, isCursor, path)
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
@@ -451,52 +454,33 @@ const TreeNode = ({
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
 
-  const [showLineEndFauxCaret, setShowLineEndFauxCaret] = useState(false)
-  const [showLineStartFauxCaret, setShowLineStartFauxCaret] = useState(false)
-
   // Hide the faux caret when typing occurs.
-  editingValueStore.subscribe(() => {
-    if (isTouch && isSafari() && caretRef.current) {
-      caretRef.current.style.display = 'none'
-      setShowLineStartFauxCaret(false)
-      setShowLineEndFauxCaret(false)
-    }
+  editingValueStore.useEffect(() => {
+    if (!isMobileSafari()) return
+    setFauxCaretStyles({ display: 'none' })
   })
 
   // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
   // selection is created.
   useEffect(() => {
-    if (isTouch && isSafari() && caretRef.current) {
-      if (editing && isCursor) {
-        // The selection ranges aren't updated until the end of the frame when the thought is focused.
-        setTimeout(() => {
-          if (caretRef.current) {
-            const offset = fadeThoughtRef.current?.getBoundingClientRect()
+    if (!isMobileSafari()) return
+    if (editing && isCursor) {
+      // The selection ranges aren't updated until the end of the frame when the thought is focused.
+      setTimeout(() => {
+        const offset = fadeThoughtRef.current?.getBoundingClientRect()
 
-            if (offset) {
-              const rect = getBoundingClientRect()
+        if (offset) {
+          const rect = getBoundingClientRect()
 
-              if (rect) {
-                const { x, y } = rect
-
-                caretRef.current.style.display = 'inline'
-                caretRef.current.style.top = `${y - offset.y}px`
-                caretRef.current.style.left = `${x - offset.x}px`
-                setShowLineStartFauxCaret(false)
-                setShowLineEndFauxCaret(false)
-              } else {
-                caretRef.current.style.display = 'none'
-                setShowLineStartFauxCaret(isStartOfElementNode())
-                setShowLineEndFauxCaret(isEndOfElementNode())
-              }
-            }
+          if (rect) {
+            setFauxCaretStyles({ display: undefined, top: `${rect.y - offset.y}px`, left: `${rect.x - offset.x}px` })
+          } else {
+            setFauxCaretStyles({ display: 'none' })
           }
-        })
-      } else {
-        caretRef.current.style.display = 'none'
-        setShowLineStartFauxCaret(false)
-        setShowLineEndFauxCaret(false)
-      }
+        }
+      })
+    } else {
+      setFauxCaretStyles({ display: 'none' })
     }
   }, [editing, isCursor, path])
 
@@ -549,8 +533,6 @@ const TreeNode = ({
         className={css({
           position: 'absolute',
           transition,
-          '--faux-caret-line-start-opacity': showLineStartFauxCaret ? undefined : 0,
-          '--faux-caret-line-end-opacity': showLineEndFauxCaret ? undefined : 0,
         })}
         style={{
           // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
@@ -564,6 +546,7 @@ const TreeNode = ({
           width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
           ...style,
           textAlign: isTableCol1 ? 'right' : undefined,
+          ...fauxCaretCssVars,
         }}
       >
         <div ref={fadeThoughtRef}>
@@ -607,21 +590,7 @@ const TreeNode = ({
               prevWidth={treeThoughtsPositioned[index - 1]?.width}
             />
           )}
-        <span
-          className={css({
-            color: 'blue',
-            display: 'none',
-            fontSize: '1.25em',
-            margin: '-6px 0 0 -2.5px',
-            opacity: 'var(--faux-caret-opacity)',
-            position: 'absolute',
-            pointerEvents: 'none',
-            WebkitTextStroke: '0.625px var(--colors-blue)',
-          })}
-          ref={caretRef}
-        >
-          |
-        </span>
+        <FauxCaret styles={{ ...fauxCaretStyles, margin: '-5.5px 0 0 -2px', opacity: 'var(--faux-caret-opacity)' }} />
       </div>
     </FadeTransition>
   )

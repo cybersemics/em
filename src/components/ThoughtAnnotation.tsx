@@ -9,7 +9,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isSafari, isTouch } from '../browser'
+import { isMobileSafari } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -30,6 +30,7 @@ import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import resolveArray from '../util/resolveArray'
 import stripTags from '../util/stripTags'
+import FauxCaret from './FauxCaret'
 import StaticSuperscript from './StaticSuperscript'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
@@ -197,21 +198,12 @@ const ThoughtAnnotation = React.memo(
           }
           style={styleAnnotation}
         >
-          {isTouch && isSafari() && (
-            <span
-              className={css({
-                color: 'blue',
-                fontSize: '1.25em',
-                margin: textMarkup.length ? '-8px 0 0 -2px' : '-5px 0 0 -2px',
-                opacity: 'var(--faux-caret-line-start-opacity)',
-                position: 'absolute',
-                pointerEvents: 'none',
-                WebkitTextStroke: '0.625px var(--colors-blue)',
-              })}
-            >
-              |
-            </span>
-          )}
+          <FauxCaret
+            styles={{
+              margin: textMarkup.length ? '-8px 0 0 -2px' : '-5px 0 0 -2px',
+              opacity: 'var(--faux-caret-line-start-opacity)',
+            }}
+          />
           <span
             className={css(
               {
@@ -247,21 +239,12 @@ const ThoughtAnnotation = React.memo(
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
             showSuperscript ? <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} /> : null
           }
-          {isTouch && isSafari() && (
-            <span
-              className={css({
-                color: 'blue',
-                fontSize: '1.25em',
-                margin: '-8px 0 0 -2px',
-                opacity: 'var(--faux-caret-line-end-opacity)',
-                position: 'absolute',
-                pointerEvents: 'none',
-                WebkitTextStroke: '0.625px var(--colors-blue)',
-              })}
-            >
-              |
-            </span>
-          )}
+          <FauxCaret
+            styles={{
+              margin: '-8px 0 0 -2px',
+              opacity: 'var(--faux-caret-line-end-opacity)',
+            }}
+          />
         </div>
       </div>
     )
@@ -369,7 +352,7 @@ const ThoughtAnnotationContainer = React.memo(
       setCalculateContexts(true)
     }, [])
 
-    return showSuperscript || url || email || styleAnnotation || (isTouch && isSafari()) ? (
+    return showSuperscript || url || email || styleAnnotation || isMobileSafari() ? (
       <ThoughtAnnotation
         {...{
           simplePath,
