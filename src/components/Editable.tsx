@@ -11,6 +11,7 @@ import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCl
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { editingActionCreator as editingAction } from '../actions/editing'
 import { errorActionCreator as error } from '../actions/error'
+import importData from '../actions/importData'
 import { importSpeechToTextActionCreator as importSpeechToText } from '../actions/importSpeechToText'
 import { setInvalidStateActionCreator as setInvalidState } from '../actions/invalidState'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
@@ -314,6 +315,25 @@ const Editable = ({
 
       // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
       const oldValue = oldValueRef.current
+
+      // Using a clipboard app such as Paste for iOS or the built-in clipboard viewer on Android directly modifies the innerHTML and triggers an onChange event on the contenteditable.
+      const isClipboardInsert = /<div>(?!<br>)/.test(e.target.value)
+      if (isClipboardInsert) {
+        // When inserting plain text, the clipboard app replaces newlines with divs. This results in a mixed format that looks like HTML, but it actually plain text with meaningful whitespace.
+        // TODO: What happens when actual HTML is inserted from the clipboard app? It needs to be differentiated from plain text with divs.
+        // TODO: Consider handling this in importData or textToHtml, as onChangeHandler should not contain import logic. Just need to make sure it does not introduce regressions.
+        // TODO: This conflicts with OCR detection.
+        const text = e.target.value.slice(oldValue.length).replace(/<div>/g, '\n')
+        dispatch(
+          importData({
+            path: simplePath,
+            text,
+            rawDestValue: strip(contentRef.current!.innerHTML, { preventTrim: true }),
+            transient,
+          }),
+        )
+        return
+      }
 
       // If the target value (innerHTML) contains divs, then it is either Optical Character Recognition (OCR) or Speech-to-text (STT).
       // Only detect OCR into an empty thought, otherwise it will cause a false positive for STT with multiple newlines.
