@@ -4,7 +4,7 @@ import { isMobileSafari } from '../browser'
 import { isEndOfElementNode, isStartOfElementNode } from '../device/selection'
 import editingValueStore from '../stores/editingValue'
 
-/** Returns CSS variables that will suppress faux carets at the start or end of thoughts or notes
+/** Returns CSS variables that will suppress faux carets at the start or end of thoughts or notes.
  * */
 const useFauxCaretCssVars = (editing: boolean | null, isCursor: boolean, path: Path) => {
   const [showLineEndFauxCaret, setShowLineEndFauxCaret] = useState(false)
