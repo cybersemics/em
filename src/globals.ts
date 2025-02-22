@@ -10,9 +10,6 @@ let longpressing = false
 // not related to react-dnd
 let touching = false
 
-// track complete touch event in order to prevent react-dnd from initiating drag during scroll on first page load
-let touched = false
-
 // track whether the page has rendered yet to simulate onload event
 let rendered = false
 
@@ -50,7 +47,6 @@ const globals = {
   longpressing,
   rendered,
   suppressExpansion,
-  touched,
   touching,
 }
 
