@@ -29,15 +29,11 @@ const useDragHold = ({
   const dispatch = useDispatch()
 
   /** Highlight bullet and show alert on long press on Thought. */
-  const onLongPressStart = useCallback(
-    () => {
-      if (disabled) return
-      setIsPressed(true)
-      dispatch([dragHold({ value: true, simplePath, sourceZone })])
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
+  const onLongPressStart = useCallback(() => {
+    if (disabled) return
+    setIsPressed(true)
+    dispatch([dragHold({ value: true, simplePath, sourceZone })])
+  }, [disabled, dispatch, simplePath, sourceZone])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
   const onLongPressEnd = useCallback(
@@ -57,8 +53,7 @@ const useDragHold = ({
         }
       })
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [disabled, dispatch, simplePath, toggleMulticursorOnLongPress],
   )
 
   // react-dnd stops propagation so onLongPressEnd sometimes doesn't get called.
