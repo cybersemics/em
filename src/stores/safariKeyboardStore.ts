@@ -1,4 +1,3 @@
-import { isIOS, isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
 import reactMinistore from './react-ministore'
 
@@ -13,7 +12,7 @@ const safariKeyboardStore = reactMinistore<{
 })
 
 /** Updates the safariKeyboardStore state based on the selection. */
-const updateKeyboardState = () => {
+export const updateSafariKeyboardState = () => {
   const keyboardIsVisible = selection.isActive()
   if (safariKeyboardStore.getState().open && !keyboardIsVisible) {
     safariKeyboardStore.update({
@@ -28,11 +27,6 @@ const updateKeyboardState = () => {
   safariKeyboardStore.update({
     open: keyboardIsVisible,
   })
-}
-
-if (isTouch && isSafari() && !isIOS) {
-  updateKeyboardState()
-  document.addEventListener('selectionchange', updateKeyboardState)
 }
 
 export default safariKeyboardStore
