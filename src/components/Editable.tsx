@@ -1,4 +1,3 @@
-import { unescape as unescapeHtml } from 'html-escaper'
 import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -318,11 +317,11 @@ const Editable = ({
 
       // Using a clipboard app such as Paste for iOS or the built-in clipboard viewer on Android directly modifies the innerHTML and triggers an onChange event on the contenteditable.
       const isClipboardInsert = /<div>(?!<br>)/.test(e.target.value)
+
       if (isClipboardInsert) {
         // When inserting plain text, the clipboard app replaces newlines with divs. This results in a mixed format that looks like HTML, but it actually plain text with meaningful whitespace.
         // TODO: What happens when actual HTML is inserted from the clipboard app? It needs to be differentiated from plain text with divs.
         // TODO: Consider handling this in importData or textToHtml, as onChangeHandler should not contain import logic. Just need to make sure it does not introduce regressions.
-        // TODO: This conflicts with OCR detection.
         const text = e.target.value.slice(oldValue.length).replace(/<div>/g, '\n')
         dispatch(
           importData({
@@ -335,30 +334,9 @@ const Editable = ({
         return
       }
 
-      // If the target value (innerHTML) contains divs, then it is either Optical Character Recognition (OCR) or Speech-to-text (STT).
-      // Only detect OCR into an empty thought, otherwise it will cause a false positive for STT with multiple newlines.
-      // <div><br> only occurs in STT, so exclude it.
-      // Note: Joining every line does not work well for multiple paragraphs or bulleted lists with multiline items. It may be better to not split or join newlines at all, and make the user explicitly execute a join or split command. This gives them the ability to manually split on paragraphs and then use the join command on each. Indentation is not preserved in OCR, so it is not possible to completely automate multi paragraph restoration.
-      const ocrDetected = oldValue === '' && /<div>(?!<br>)/.test(e.target.value)
-
       editingValueUntrimmedStore.update(e.target.value)
 
-      const newValue = stripEmptyFormattingTags(
-        addEmojiSpace(
-          ocrDetected
-            ? // If we detect OCR, we need to clean and escape the value
-              unescapeHtml(
-                // When paragraphs from books are scanned with OCR, the value will consist of separate lines (wrapped in <div>...</div>).
-                // Therefore, when OCR is detected, join the lines together with spaes.
-                // Otherwise the multiline STT handler in onBlur will separate them into separate thoughts.
-                strip(ocrDetected ? e.target.value.replace(/<div>/g, ' ') : e.target.value, {
-                  preserveFormatting: true,
-                }),
-              )
-            : // Otherwise, we avoid unescaping the value to preserve escaped HTML characters.
-              trimHtml(e.target.value),
-        ),
-      )
+      const newValue = stripEmptyFormattingTags(addEmojiSpace(trimHtml(e.target.value)))
 
       /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
 
@@ -422,8 +400,7 @@ const Editable = ({
 
       // Safari adds <br> to empty contenteditables after editing, so strip them out.
       // Make sure empty thoughts are truly empty.
-      // Also update the ContentEditable with the joined OCR result, otherwise onBlur will split it into separate lines.
-      if (contentRef.current && (isEmpty || ocrDetected)) {
+      if (contentRef.current && isEmpty) {
         contentRef.current.innerHTML = newValue
       }
 
