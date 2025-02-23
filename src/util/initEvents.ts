@@ -9,7 +9,7 @@ import { commandPaletteActionCreator as commandPalette } from '../actions/comman
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isSafari, isTouch } from '../browser'
+import { isIOS, isSafari, isTouch } from '../browser'
 import { inputHandlers } from '../commands'
 import { AlertText, AlertType } from '../constants'
 import * as selection from '../device/selection'
@@ -18,6 +18,7 @@ import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import { updateSafariKeyboardState } from '../stores/safariKeyboardStore'
 import { updateScrollTop } from '../stores/scrollTop'
 import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
@@ -216,6 +217,10 @@ const initEvents = (store: Store<State, any>) => {
 
     // update command state store
     updateCommandState()
+
+    if (isTouch && isSafari() && !isIOS) {
+      updateSafariKeyboardState()
+    }
   }
 
   /** MouseMove event listener. */
