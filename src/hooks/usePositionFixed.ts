@@ -32,7 +32,7 @@ const usePositionFixed = ({
       ? `${scrollTop + innerHeight - currentKeyboardHeight - (height ?? 0) - offset}px`
       : `${scrollTop + offset}px`
   } else if (fromBottom) {
-    bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset + currentKeyboardHeight}px)`
+    bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset}px)`
   } else {
     top = `calc(${token('spacing.safeAreaTop')} + ${offset}px)`
   }
