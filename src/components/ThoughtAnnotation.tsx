@@ -9,6 +9,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import { isMobileSafari } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -29,6 +30,7 @@ import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import resolveArray from '../util/resolveArray'
 import stripTags from '../util/stripTags'
+import FauxCaret from './FauxCaret'
 import StaticSuperscript from './StaticSuperscript'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
@@ -196,6 +198,12 @@ const ThoughtAnnotation = React.memo(
           }
           style={styleAnnotation}
         >
+          <FauxCaret
+            styles={{
+              margin: textMarkup.length ? '-8px 0 0 -2px' : '-5px 0 0 -2px',
+              opacity: 'var(--faux-caret-line-start-opacity)',
+            }}
+          />
           <span
             className={css(
               {
@@ -231,6 +239,12 @@ const ThoughtAnnotation = React.memo(
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
             showSuperscript ? <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} /> : null
           }
+          <FauxCaret
+            styles={{
+              margin: '-8px 0 0 -2px',
+              opacity: 'var(--faux-caret-line-end-opacity)',
+            }}
+          />
         </div>
       </div>
     )
@@ -338,7 +352,11 @@ const ThoughtAnnotationContainer = React.memo(
       setCalculateContexts(true)
     }, [])
 
-    return showSuperscript || url || email || styleAnnotation ? (
+    // In order to render a faux caret while hideCaret animations are playing, ThoughtAnnotation always needs
+    // to exist on mobile Safari. The line end faux caret must be placed inline-block at the end of the
+    // thought text in order to cover cases where the selection is an ELEMENT_NODE and its bounding box
+    // does not represent the screen position of the caret.
+    return showSuperscript || url || email || styleAnnotation || isMobileSafari() ? (
       <ThoughtAnnotation
         {...{
           simplePath,
