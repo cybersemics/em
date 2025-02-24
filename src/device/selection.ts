@@ -66,6 +66,12 @@ const isEditable = (node?: Node | null) => {
   )
 }
 
+/** Returns true if the focusNode is a note. */
+export const isNote = () => {
+  const element = window.getSelection()?.focusNode as HTMLElement
+  return !!element && element.nodeType === Node.ELEMENT_NODE && element.ariaLabel === 'note-editable'
+}
+
 /** Returns true if the selection is on a thought. */
 // We should see if it is possible to just use state.editing and selection.isActive()
 export const isThought = (): boolean => {

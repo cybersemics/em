@@ -592,7 +592,7 @@ const TreeNode = ({
               prevWidth={treeThoughtsPositioned[index - 1]?.width}
             />
           )}
-        <FauxCaret styles={{ ...fauxCaretStyles, margin: '-5.5px 0 0 -2px', opacity: 'var(--faux-caret-opacity)' }} />
+        <FauxCaret styles={{ ...fauxCaretStyles, margin: '-5.5px 0 0 -1px', opacity: 'var(--faux-caret-opacity)' }} />
       </div>
     </FadeTransition>
   )
@@ -970,6 +970,7 @@ const LayoutTree = () => {
           '--faux-caret-opacity': '0',
           '--faux-caret-line-end-opacity': '0',
           '--faux-caret-line-start-opacity': '0',
+          '--faux-caret-note-line-end-opacity': '0',
           marginTop: '0.501em',
         }),
         hideCaret({
