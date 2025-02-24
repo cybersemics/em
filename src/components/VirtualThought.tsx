@@ -1,5 +1,6 @@
+import { isEqual } from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
@@ -10,6 +11,7 @@ import ThoughtId from '../@types/ThoughtId'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
+import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import editingValueStore from '../stores/editingValue'
@@ -37,7 +39,7 @@ export type OnResize = (args: {
 /** Selects whether the context view is active for this thought. */
 const selectShowContexts = (path: SimplePath) => (state: State) => isContextViewActive(state, path)
 
-/** Selects the cursor. */
+/** Selects the cursor from the state. */
 const selectCursor = (state: State) => state.cursor
 
 /** Renders a thought if it is not hidden by autofocus, otherwise renders a fixed height shim. */
@@ -174,11 +176,21 @@ const VirtualThought = ({
     updateSize,
   ])
 
-  // Read the element's height from the DOM on cursor change and re-render with new height
+  // Recalculate height on cursor change since indentation can change line wrapping
   // shimHiddenThought will re-render as needed.
-  useSelectorEffect(updateSize, selectCursor, shallowEqual)
+  useSelectorEffect(updateSize, selectCursor, isEqual)
 
-  // re-measure when the screen is resized
+  // Recalculate height on =style change, since styles such as font size can affect thought height.
+  // Must wait one render since getStyle updates as soon as =style has loaded in the Redux store but before it has been applied to the DOM.
+  useSelectorEffect(
+    () => {
+      requestAnimationFrame(updateSize)
+    },
+    state => getStyle(state, head(simplePath)),
+    isEqual,
+  )
+
+  // Recalculate height when the screen is resized
   viewportStore.useSelectorEffect(updateSize, state => state.innerWidth)
 
   // Recalculate height after thought value changes.

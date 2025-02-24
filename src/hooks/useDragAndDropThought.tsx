@@ -13,11 +13,9 @@ import { dragInProgressActionCreator as dragInProgress } from '../actions/dragIn
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
-import { isTouch } from '../browser'
 import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType } from '../constants'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankBefore from '../selectors/getRankBefore'
@@ -52,7 +50,6 @@ const canDrag = (props: ThoughtContainerProps) => {
   return (
     isDocumentEditable() &&
     !!isDraggable &&
-    (!isTouch || globals.touched) &&
     !isMulticursorActive &&
     !findDescendant(state, thoughtId, '=immovable') &&
     !findDescendant(state, thoughtId, '=readonly') &&
