@@ -205,21 +205,26 @@ const VirtualThought = ({
     textAlign: isTableCol1 ? 'right' : undefined,
   })
   const translateXRef = useRef<number>(0)
-  const duration = 200
+  const duration = 400
 
   /** Calculates the horizontal translation needed to align the text to the right within its parent. */
   const calculateTranslateX = (): number => {
     const element = ref.current
-    if (!element) return 0
-    const editable = element?.querySelector('.editable') as HTMLElement | null
-    if (!editable) return 0
-    const parentWidth = element.getBoundingClientRect().width
-    const computedStyle = getComputedStyle(editable)
-    const paddingLeft = parseFloat(computedStyle.paddingLeft)
-    const paddingRight = parseFloat(computedStyle.paddingRight)
-    const editableWidth = editable.getBoundingClientRect().width - paddingLeft - paddingRight
+    if (!element) {
+      return 0
+    }
 
-    return Math.max(0, parentWidth - editableWidth)
+    const editable = element?.querySelector('.editable')
+    if (!editable) {
+      return 0
+    }
+
+    const parentWidth = element.getBoundingClientRect().width
+    const editableWidth = editable.getBoundingClientRect().width
+
+    const result = Math.max(0, parentWidth - editableWidth)
+
+    return result
   }
 
   /** Updates the transient style by merging the given styles with the existing ones. */
@@ -236,40 +241,54 @@ const VirtualThought = ({
       timeout={duration}
       nodeRef={ref}
       onEnter={() => {
+        // 1. Calculate how far we need to shift left (a positive offset).
+        const offset = calculateTranslateX()
+        translateXRef.current = offset
+
+        // 2. Immediately place the text at -offset, but right‐aligned.
         updateTransitionStyle({
-          transform: 'translateX(0px)',
-          textAlign: undefined,
+          transform: `translateX(-${offset}px)`,
+          textAlign: 'right',
+          transition: 'none',
         })
-        setTimeout(() => {
-          const calculatedTranslateX = calculateTranslateX()
-          translateXRef.current = calculatedTranslateX // Save the calculated value
+
+        // 3. On the next frame, transition to 0 so it slides in from the left.
+        //    requestAnimationFrame ensures the browser has time to apply the first style.
+        requestAnimationFrame(() => {
           updateTransitionStyle({
-            transform: `translateX(${calculatedTranslateX}px)`,
+            transform: 'translateX(0)',
+            textAlign: 'right',
             transition: `transform ${duration}ms ease-out`,
           })
-        }, 10)
-      }}
-      onExit={() => {
-        const calculatedTranslateX = translateXRef.current // Use the saved value
-        updateTransitionStyle({
-          transform: `translateX(${calculatedTranslateX}px)`,
-          textAlign: undefined,
         })
-        setTimeout(() => {
-          updateTransitionStyle({
-            transform: 'translateX(0px)',
-            transition: `transform ${duration}ms ease-out`,
-          })
-        }, 10)
       }}
       onEntered={() => {
+        // Once the entry animation is complete, remove the transform.
         updateTransitionStyle({
           transform: undefined,
           transition: undefined,
           textAlign: 'right',
         })
       }}
+      onExit={() => {
+        // Reverse the animation: move from offset → 0.
+        const offset = translateXRef.current || 0
+        updateTransitionStyle({
+          transform: `translateX(${offset}px)`,
+          textAlign: undefined,
+          transition: 'none',
+        })
+
+        requestAnimationFrame(() => {
+          updateTransitionStyle({
+            transform: 'translateX(0)',
+            transition: `transform ${duration}ms ease-out`,
+            textAlign: undefined,
+          })
+        })
+      }}
       onExited={() => {
+        // Clear transform at the end, and remove right‐alignment.
         updateTransitionStyle({
           transform: undefined,
           transition: undefined,
