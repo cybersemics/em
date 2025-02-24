@@ -1,9 +1,11 @@
+import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
-import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
+import setCursor from '../setCursor'
 import swapParent from '../swapParent'
 
 it('no-op if cursor is not set', () => {
@@ -13,7 +15,7 @@ it('no-op if cursor is not set', () => {
     - b
      - c`
 
-  const steps = [importText({ text }), swapParent()]
+  const steps = [importText({ text }), swapParent]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -31,7 +33,11 @@ it('no-op if cursor is a root thought', () => {
     - b
      - c`
 
-  const steps = [importText({ text }), setCursor(['a']), swapParent()]
+  const steps = [
+    importText({ text }),
+    (state: State) => setCursor({ path: contextToPath(state, ['a'])! })(state),
+    swapParent,
+  ]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -49,7 +55,11 @@ it('swaps child thought with parent', () => {
     - b
      - c`
 
-  const steps = [importText({ text }), setCursor(['a', 'b']), swapParent()]
+  const steps = [
+    importText({ text }),
+    (state: State) => setCursor({ path: contextToPath(state, ['a', 'b'])! })(state),
+    swapParent,
+  ]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
