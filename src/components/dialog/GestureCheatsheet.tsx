@@ -16,8 +16,9 @@ const GestureCheatsheet: React.FC = () => {
   /**
    * Handles the open of the gesture cheatsheet.
    */
-  const handleOpen = () => {
-    dispatch(showDialogActionCreator({ id: 'gestureCheatsheet' }))
+  const handleOpen = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    dispatch(showDialogActionCreator())
   }
 
   /**

@@ -22,22 +22,10 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
       }
     }
 
-    /**
-     * Handles the click on the button outside the dialog.
-     */
-    const handleButtonClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (target.tagName === 'BUTTON') {
-        onClose()
-      }
-    }
-
     document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('click', handleButtonClick)
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('click', handleButtonClick)
     }
   }, [onClose])
 

@@ -16,6 +16,7 @@ import { token } from '../../styled-system/tokens'
 import CommandType from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import TipId from '../@types/TipId'
+import { showDialogActionCreator } from '../actions/showDialog'
 import { showTipActionCreator as showTip } from '../actions/showTip'
 import { commandById } from '../commands'
 import { TOOLBAR_DEFAULT_COMMANDS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
@@ -146,6 +147,11 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     },
     [updateArrows, deselectPressingToolbarId],
   )
+
+  /** Opens the gesture cheatsheet. */
+  const handleOpen = () => {
+    dispatch(showDialogActionCreator())
+  }
 
   /**********************************************************************
    * Effects
@@ -304,6 +310,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             <TriangleRight width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
           </span>
         </div>
+        <button onClick={handleOpen}>Open Gesture Cheatsheet</button>
       </div>
     </FadeTransition>
   )
