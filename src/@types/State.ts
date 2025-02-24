@@ -167,6 +167,8 @@ interface State {
   transientFocus?: boolean
   /** Undo history. Contains diffs that can be applied to State to revert actions. State.undoPatches[0] is the oldest. */
   undoPatches: Patch[]
+  /** Whether the gesture cheatsheet dialog is open. */
+  dialogOpen?: boolean
 }
 
 export default State

@@ -2,15 +2,14 @@ import React, { useEffect, useRef } from 'react'
 import { css } from '../../../styled-system/css'
 
 interface DialogProps {
-  isOpen: boolean
-  onClose: () => void
   children: React.ReactNode
+  onClose: () => void
 }
 
 /**
  * Dialog component.
  */
-const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, children }) => {
+const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -24,26 +23,23 @@ const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, children }) => {
     }
 
     /**
-     * Handles the button click outside the dialog.
+     * Handles the click on the button outside the dialog.
      */
     const handleButtonClick = (event: MouseEvent) => {
-      if ((event.target as HTMLElement).tagName === 'BUTTON') {
+      const target = event.target as HTMLElement
+      if (target.tagName === 'BUTTON') {
         onClose()
       }
     }
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-      document.addEventListener('click', handleButtonClick)
-    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('click', handleButtonClick)
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('click', handleButtonClick)
     }
-  }, [isOpen, onClose])
-
-  if (!isOpen) return null
+  }, [onClose])
 
   return (
     <div

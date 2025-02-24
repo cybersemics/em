@@ -32,9 +32,7 @@ import Sidebar from './Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
-import Dialog from './dialog/Dialog'
-import DialogContent from './dialog/DialogContent'
-import DialogTitle from './dialog/DialogTitle'
+import GestureCheatsheet from './dialog/GestureCheatsheet'
 import * as modals from './modals'
 
 // This can be removed once Split Pane is working.
@@ -116,7 +114,6 @@ const AppComponent: FC = () => {
   const dispatch = useDispatch()
   const lastSplitViewRef = useRef(false)
   const [isSplitting, setIsSplitting] = useState(false)
-  const [isDialogOpen, setDialogOpen] = useState(true) //Dialog open
 
   const colors = useSelector(themeColors)
   const dark = useSelector(state => theme(state) !== 'Light')
@@ -187,13 +184,6 @@ const AppComponent: FC = () => {
 
   const Modal = showModal ? modals[showModal] : null
 
-  /**
-   * Dialog close.
-   */
-  const handleClose = () => {
-    setDialogOpen(false)
-  }
-
   return (
     <div
       className={css({
@@ -207,11 +197,8 @@ const AppComponent: FC = () => {
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
 
-      {/* Dialog */}
-      <Dialog isOpen={isDialogOpen} onClose={handleClose}>
-        <DialogTitle onClose={handleClose}>Dialog Title</DialogTitle>
-        <DialogContent>Dialog box content!</DialogContent>
-      </Dialog>
+      {/* Gesture Cheatsheet */}
+      <GestureCheatsheet />
 
       {isDocumentEditable() && !tutorial && !showModal && (
         <>
