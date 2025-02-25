@@ -5,3 +5,5 @@ import { showDialogActionCreator } from './showDialog'
 export const openGestureCheatsheetActionCreator = (): Thunk => dispatch => {
   dispatch(showDialogActionCreator())
 }
+
+export default openGestureCheatsheetActionCreator
