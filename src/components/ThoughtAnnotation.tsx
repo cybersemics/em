@@ -229,7 +229,9 @@ const ThoughtAnnotation = React.memo(
           {email && <EmailIconLink email={email} />}
           {
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-            showSuperscript ? <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} /> : null
+            showSuperscript ? (
+              <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
+            ) : null
           }
         </div>
       </div>
