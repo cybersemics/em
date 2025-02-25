@@ -1,7 +1,6 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { closeDialogActionCreator } from '../../actions/closeDialog'
-import { showDialogActionCreator } from '../../actions/showDialog'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
@@ -14,14 +13,6 @@ const GestureCheatsheet: React.FC = () => {
   const isOpen = useSelector(state => state.dialogOpen)
 
   /**
-   * Handles the open of the gesture cheatsheet.
-   */
-  const handleOpen = (event: React.MouseEvent) => {
-    event.stopPropagation()
-    dispatch(showDialogActionCreator())
-  }
-
-  /**
    * Handles the closure of the gesture cheatsheet.
    */
   const handleClose = () => {
@@ -30,7 +21,6 @@ const GestureCheatsheet: React.FC = () => {
 
   return (
     <>
-      <button onClick={handleOpen}>Open Gesture Cheatsheet</button>
       {isOpen && (
         <Dialog onClose={handleClose}>
           <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>

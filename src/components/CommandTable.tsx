@@ -90,7 +90,7 @@ const groups: {
   },
   {
     title: 'Help',
-    commands: ['help'],
+    commands: ['help', 'openGestureCheatsheet'],
   },
   {
     title: 'Cancel',
