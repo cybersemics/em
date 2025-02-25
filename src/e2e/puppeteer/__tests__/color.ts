@@ -2,6 +2,7 @@ import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
+import getSuperScriptColor from '../helpers/getSuperScriptColor'
 import paste from '../helpers/paste'
 import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
@@ -162,4 +163,31 @@ it('Empty <span> element will be removed after setting color to default.', async
 
   const result = await getEditingText()
   expect(result).toBe('Golden Retriever')
+})
+
+it('Set the superScript color of the text', async () => {
+  const importText = `
+    - a
+    - a
+    - hello world
+    - hello world
+    `
+  await paste(importText)
+
+  await waitForEditable('hello world')
+  await clickThought('hello world')
+  await setSelection(6, 11)
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  const supColor2 = await getSuperScriptColor()
+  expect(supColor2).toBe(null)
+
+  await waitForEditable('a')
+  await clickThought('a')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  const supColor1 = await getSuperScriptColor()
+  expect(supColor1).toBe('rgb(0, 199, 230)')
 })
