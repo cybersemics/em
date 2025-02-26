@@ -7,7 +7,6 @@ import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import hasMulticursor from '../selectors/hasMulticursor'
-import haptics from '../util/haptics'
 import useLongPress from './useLongPress'
 
 /** Adds event handlers to detect long press and set state.dragHold while the user is long pressing a thought in preparation for a drag. */
@@ -34,7 +33,6 @@ const useDragHold = ({
     if (disabled) return
     setIsPressed(true)
     dispatch([dragHold({ value: true, simplePath, sourceZone })])
-    haptics.selectionStart()
   }, [disabled, dispatch, simplePath, sourceZone])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
@@ -49,8 +47,6 @@ const useDragHold = ({
         if (state.dragHold) {
           dispatch([dragHold({ value: false }), !hasMulticursor(state) ? alert(null) : null])
         }
-
-        haptics.selectionEnd()
 
         if (!canceled && toggleMulticursorOnLongPress) {
           dispatch(toggleMulticursor({ path: simplePath }))
