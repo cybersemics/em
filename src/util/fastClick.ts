@@ -1,8 +1,7 @@
-import { Capacitor } from '@capacitor/core'
-import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import _ from 'lodash'
 import React from 'react'
 import { isTouch } from '../browser'
+import haptics from './haptics'
 
 export type FastClickEvent = React.TouchEvent<Element> | React.MouseEvent<Element, MouseEvent>
 
@@ -48,8 +47,8 @@ const fastClick = isTouch
         }
       }, 16.666),
       onTouchEnd: (e: React.TouchEvent) => {
-        if (Capacitor.isNativePlatform() && isHaptics) {
-          Haptics.impact({ style: ImpactStyle.Light })
+        if (isHaptics) {
+          haptics.light()
         }
         let cancel = !touchStart
 

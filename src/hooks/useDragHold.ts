@@ -1,5 +1,3 @@
-import { Capacitor } from '@capacitor/core'
-import { Haptics } from '@capacitor/haptics'
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
@@ -9,6 +7,7 @@ import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import hasMulticursor from '../selectors/hasMulticursor'
+import haptics from '../util/haptics'
 import useLongPress from './useLongPress'
 
 /** Adds event handlers to detect long press and set state.dragHold while the user is long pressing a thought in preparation for a drag. */
@@ -35,9 +34,7 @@ const useDragHold = ({
     if (disabled) return
     setIsPressed(true)
     dispatch([dragHold({ value: true, simplePath, sourceZone })])
-    if (Capacitor.isNativePlatform()) {
-      Haptics.selectionStart()
-    }
+    haptics.selectionStart()
   }, [disabled, dispatch, simplePath, sourceZone])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
@@ -53,9 +50,7 @@ const useDragHold = ({
           dispatch([dragHold({ value: false }), !hasMulticursor(state) ? alert(null) : null])
         }
 
-        if (Capacitor.isNativePlatform()) {
-          Haptics.selectionEnd()
-        }
+        haptics.selectionEnd()
 
         if (!canceled && toggleMulticursorOnLongPress) {
           dispatch(toggleMulticursor({ path: simplePath }))
