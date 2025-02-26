@@ -79,7 +79,7 @@ const ModalLink: FC<PropsWithChildren<{ id: Modal }>> = ({ id, children }) => {
   return (
     <a
       tabIndex={-1}
-      {...fastClick(() => dispatch(showModal({ id })), { enableHaptics: true })}
+      {...fastClick(() => dispatch(showModal({ id })))}
       className={cx(extendTapRecipe(), css({ whiteSpace: 'nowrap' }))}
     >
       {children}

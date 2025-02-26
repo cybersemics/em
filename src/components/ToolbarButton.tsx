@@ -224,7 +224,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       )}
       onMouseLeave={onMouseLeave}
       {...(isActive
-        ? fastClick(tapUp, { enableHaptics: true, tapDown, touchMove })
+        ? fastClick(tapUp, { tapDown, touchMove })
         : fastClick(tapUp, { enableHaptics: false, tapDown, touchMove }))}
     >
       {

@@ -604,7 +604,7 @@ const Bullet = ({
         paddingBottom: extendClickHeight + 2,
         width,
       }}
-      {...fastClick(clickHandler)}
+      {...fastClick(clickHandler, { enableHaptics: false })}
       // stop click event from bubbling up to Content.clickOnEmptySpace
       onClick={e => e.stopPropagation()}
     >

@@ -98,7 +98,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
         zIndex: 'stack',
       })}
       style={{ width: `${dividerWidth}px` }}
-      {...fastClick(setCursorToDivider)}
+      {...fastClick(setCursorToDivider, { enableHaptics: false })}
     >
       <div
         aria-label={'editable-' + head(path)}

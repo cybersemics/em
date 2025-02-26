@@ -19,7 +19,7 @@ const fastClick = isTouch
       tapUp: (e: FastClickEvent) => void,
       {
         // whether to trigger haptics on tap
-        enableHaptics = false,
+        enableHaptics = true,
         // triggered on mousedown or touchstart
         tapDown,
         // triggered when tapUp is cancelled due to scrolling or dragging

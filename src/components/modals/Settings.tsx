@@ -126,10 +126,7 @@ const ModalSettings = () => {
     >
       <form>
         <p className={css({ marginBottom: '2em', marginTop: '-1em' })}>
-          <a
-            {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })), { enableHaptics: true })}
-            className={extendTapRecipe()}
-          >
+          <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))} className={extendTapRecipe()}>
             Customize Toolbar
           </a>{' '}
           &gt;
