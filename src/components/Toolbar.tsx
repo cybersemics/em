@@ -87,6 +87,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // track scrollLeft after each touchend
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
+  const lastHapticScrollPosition = useRef<number>(0)
   const toolbarContainerRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [leftArrowIsShown, setLeftArrowIsShown] = useState(false)
@@ -136,15 +137,16 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   /** Handles toolbar scroll event. */
   const onScroll = useCallback(
     (e: React.UIEvent<HTMLElement>) => {
-      let lastScrollY = 0
       const scrollDifference = e.target ? Math.abs(lastScrollLeft.current - (e.target as HTMLElement).scrollLeft) : 0
       if (scrollDifference >= 5) {
         deselectPressingToolbarId()
       }
-      const currentScrollY = (e.target as HTMLElement).scrollLeft
-      if (Math.abs(currentScrollY - lastScrollY) >= 50) {
+      const hapticScrollDifference = e.target
+        ? Math.abs(lastHapticScrollPosition.current - (e.target as HTMLElement).scrollLeft)
+        : 0
+      if (hapticScrollDifference >= 50) {
         haptics.selectionChanged()
-        lastScrollY = currentScrollY
+        lastHapticScrollPosition.current = (e.target as HTMLElement).scrollLeft
       }
 
       updateArrows()
