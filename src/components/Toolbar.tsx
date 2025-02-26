@@ -145,7 +145,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
         ? Math.abs(lastHapticScrollPosition.current - (e.target as HTMLElement).scrollLeft)
         : 0
       if (hapticScrollDifference >= 50) {
-        haptics.selectionChanged()
+        haptics.light()
         lastHapticScrollPosition.current = (e.target as HTMLElement).scrollLeft
       }
 
