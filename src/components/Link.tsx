@@ -46,16 +46,19 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
         ),
         className,
       )}
-      {...fastClick(e => {
-        e.preventDefault()
-        selection.clear()
-        dispatch([
-          search({ value: null }),
-          searchContexts({ value: null }),
-          setCursor({ path: simplePath }),
-          toggleSidebar({ value: false }),
-        ])
-      }, true)}
+      {...fastClick(
+        e => {
+          e.preventDefault()
+          selection.clear()
+          dispatch([
+            search({ value: null }),
+            searchContexts({ value: null }),
+            setCursor({ path: simplePath }),
+            toggleSidebar({ value: false }),
+          ])
+        },
+        { enableHaptics: true },
+      )}
       onMouseDown={e => {
         // prevent propagation to Content component which will trigger clickOnEmptySpace
         e.stopPropagation()
