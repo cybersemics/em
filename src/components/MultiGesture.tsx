@@ -4,7 +4,6 @@ import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import { noop } from '../constants'
 import gestureStore from '../stores/gesture'
-import haptics from '../util/haptics'
 import isInGestureZone from '../util/isInGestureZone'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
@@ -160,7 +159,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         if (this.props.shouldCancelGesture?.()) {
           this.props.onCancel?.({ clientStart: this.clientStart, e })
           gestureStore.update('')
-          haptics.warning()
           this.abandon = true
           return
         }
@@ -178,7 +176,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           this.scrollYStart = window.scrollY
           if (this.props.onStart) {
             this.props.onStart({ clientStart: this.clientStart!, e })
-            haptics.light()
           }
           return
         }
@@ -203,9 +200,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             // append the gesture to the sequence and call the onGesture handler
             this.sequence += g
             this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
-            if (this.sequence.length > 1 && this.sequence.length < 5) {
-              haptics.light()
-            }
             gestureStore.update(this.sequence)
           }
         }
