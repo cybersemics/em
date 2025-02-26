@@ -1,47 +1,81 @@
 import { Capacitor } from '@capacitor/core'
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
 
-/** Emit warning haptic feedback. */
-const warning = () => {
-  if (Capacitor.isNativePlatform()) {
-    Haptics.notification({ type: NotificationType.Warning })
-  }
-}
+/** True if the platform supports haptic feedback. */
+const hapticsSupported = Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('Haptics')
 
-/** Emit light haptic feedback. */
+/** Indicate light haptic feedback, typically by emitting one light tap. */
 const light = () => {
-  if (Capacitor.isNativePlatform()) {
+  if (hapticsSupported) {
     Haptics.impact({ style: ImpactStyle.Light })
   }
 }
 
-/** Emit selection start haptic feedback. */
-const selectionStart = () => {
-  if (Capacitor.isNativePlatform()) {
-    Haptics.selectionStart()
+/** Indicate medium haptic feedback, typically by emitting one medium tap. */
+const medium = () => {
+  if (hapticsSupported) {
+    Haptics.impact({ style: ImpactStyle.Medium })
   }
 }
 
-/** Emit selection changed haptic feedback. */
+/** Indicate heavy haptic feedback, typically by emitting one strong tap. */
+const heavy = () => {
+  if (hapticsSupported) {
+    Haptics.impact({ style: ImpactStyle.Heavy })
+  }
+}
+
+/** Indicate successful haptic feedback, typically by emitting two quick taps. */
+const success = () => {
+  if (hapticsSupported) {
+    Haptics.notification({ type: NotificationType.Success })
+  }
+}
+
+/** Indicate warning haptic feedback, typically by emitting two taps. */
+const warning = () => {
+  if (hapticsSupported) {
+    Haptics.notification({ type: NotificationType.Warning })
+  }
+}
+
+/** Indicate error haptic feedback, typically by emitting four quick taps. */
+const error = () => {
+  if (hapticsSupported) {
+    Haptics.notification({ type: NotificationType.Error })
+  }
+}
+
+/** Emit vibration haptic feedback. */
+const vibrate = (duration = 300) => {
+  if (hapticsSupported) {
+    Haptics.vibrate({
+      duration,
+    })
+  }
+}
+
+/**
+ * Indicate selection changed haptic feedback, typically by emitting one light tap.
+ * This starts and ends the selection haptic feedback to avoid callers needing to do so manually.
+ */
 const selectionChanged = () => {
-  if (Capacitor.isNativePlatform()) {
+  if (hapticsSupported) {
+    Haptics.selectionStart()
     Haptics.selectionChanged()
-  }
-}
-
-/** Emit selection end haptic feedback. */
-const selectionEnd = () => {
-  if (Capacitor.isNativePlatform()) {
     Haptics.selectionEnd()
   }
 }
 
 const haptics = {
-  warning,
   light,
-  selectionStart,
+  medium,
+  heavy,
+  success,
+  warning,
+  error,
+  vibrate,
   selectionChanged,
-  selectionEnd,
 }
 
 export default haptics
