@@ -55,18 +55,6 @@ const haptics = {
       })
     }
   },
-
-  /**
-   * Indicate selection changed haptic feedback, typically by emitting one light tap.
-   * This starts and ends the selection haptic feedback to avoid callers needing to do so manually.
-   */
-  selectionChanged: () => {
-    if (hapticsSupported) {
-      Haptics.selectionStart()
-      Haptics.selectionChanged()
-      Haptics.selectionEnd()
-    }
-  },
 }
 
 export default haptics

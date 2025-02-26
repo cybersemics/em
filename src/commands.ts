@@ -187,9 +187,9 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     const command = commandGestureIndex[sequence as string]
 
-    // emit selection changed haptics for valid gestures
+    // emit light haptics for valid gestures
     if (command?.id !== undefined) {
-      haptics.selectionChanged()
+      haptics.light()
     }
 
     // basic gesture hint (training mode only)
