@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
@@ -13,6 +13,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import setCursor from '../actions/setCursor'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
@@ -556,6 +557,25 @@ const TreeNode = ({
   )
 }
 
+/** Hook to detect if the keyboard is open. */
+const useKeyboardDetect = () => {
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
+
+  useEffect(() => {
+    /**
+     * Detects if the keyboard is open by comparing the window.innerHeight to the document.documentElement.clientHeight.
+     */
+    const handleResize = () => {
+      setIsKeyboardOpen(window.innerHeight < document.documentElement.clientHeight)
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  return isKeyboardOpen
+}
+
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const { sizes, setSize } = useSizeTracking()
@@ -563,6 +583,10 @@ const LayoutTree = () => {
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.dragInProgress)
   const ref = useRef<HTMLDivElement | null>(null)
+  const isLastActionNewThought = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'newThought')
+  })
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
@@ -919,6 +943,17 @@ const LayoutTree = () => {
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
+
+  const isKeyboardOpen = useKeyboardDetect()
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    if (!isKeyboardOpen) {
+      if (isLastActionNewThought) {
+        dispatch(setCursor({ path: HOME_PATH }))
+      }
+    }
+  }, [isKeyboardOpen, isLastActionNewThought, dispatch])
 
   return (
     <div
