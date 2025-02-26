@@ -17,15 +17,22 @@ const fastClick = isTouch
       // triggered on mouseup or touchend
       // cancelled if the user scroll or drags
       tapUp: (e: FastClickEvent) => void,
-      // whether to use haptics on tap
-      isHaptics: boolean = false,
-      // triggered on mousedown or touchstart
-      tapDown?: (e: FastClickEvent) => void,
-      // triggered when tapUp is cancelled due to scrolling or dragging
-      // does not work with drag-and-drop on desktop (onMouseUp does not trigger)
-      tapCancel?: (e: FastClickEvent) => void,
-      // triggered with touchMove, which can never be a MouseEvent
-      touchMove?: (e: React.TouchEvent) => void,
+      {
+        // whether to trigger haptics on tap
+        enableHaptics = false,
+        // triggered on mousedown or touchstart
+        tapDown,
+        // triggered when tapUp is cancelled due to scrolling or dragging
+        // does not work with drag-and-drop on desktop (onMouseUp does not trigger)
+        tapCancel,
+        // triggered with touchMove, which can never be a MouseEvent
+        touchMove,
+      }: {
+        enableHaptics?: boolean
+        tapDown?: (e: FastClickEvent) => void
+        tapCancel?: (e: FastClickEvent) => void
+        touchMove?: (e: React.TouchEvent) => void
+      } = {},
     ) => ({
       onTouchStart: (e: React.TouchEvent) => {
         if (e.touches.length > 0) {
@@ -47,7 +54,7 @@ const fastClick = isTouch
         }
       }, 16.666),
       onTouchEnd: (e: React.TouchEvent) => {
-        if (isHaptics) {
+        if (enableHaptics) {
           haptics.light()
         }
         let cancel = !touchStart
@@ -69,7 +76,14 @@ const fastClick = isTouch
         touchStart = null
       },
     })
-  : (tapUp: (e: React.MouseEvent) => void, isHaptics: boolean = false, tapDown?: (e: React.MouseEvent) => void) => ({
+  : (
+      tapUp: (e: React.MouseEvent) => void,
+      {
+        tapDown,
+      }: {
+        tapDown?: (e: React.MouseEvent) => void
+      } = {},
+    ) => ({
       onMouseUp: tapUp,
       ...(tapDown ? { onMouseDown: tapDown } : null),
     })
