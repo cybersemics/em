@@ -1,11 +1,10 @@
-import { Capacitor } from '@capacitor/core'
-import { Haptics } from '@capacitor/haptics'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import Command from '../@types/Command'
 import DragCommandZone from '../@types/DragCommandZone'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toolbarLongPressActionCreator as toolbarLongPress } from '../actions/toolbarLongPress'
+import haptics from '../util/haptics'
 import useLongPress from './useLongPress'
 
 /** Set state.toolbarLongPress when long pressing a toolbar button in the customize modal. */
@@ -30,9 +29,7 @@ const useToolbarLongPress = ({
     if (disabled) return
     setIsPressed(true)
     dispatch(toolbarLongPress({ command, sourceZone }))
-    if (Capacitor.isNativePlatform()) {
-      Haptics.selectionStart()
-    }
+    haptics.selectionStart()
   }, [disabled, dispatch, command, sourceZone])
 
   /** Turn off isPressed and dismiss an alert when long press ends. */

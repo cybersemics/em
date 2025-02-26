@@ -8,7 +8,6 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
-import { Haptics } from '@capacitor/haptics'
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
@@ -23,6 +22,7 @@ import { TOOLBAR_DEFAULT_COMMANDS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../c
 import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import haptics from '../util/haptics'
 import FadeTransition from './FadeTransition'
 import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
@@ -143,7 +143,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       }
       const currentScrollY = (e.target as HTMLElement).scrollLeft
       if (Math.abs(currentScrollY - lastScrollY) >= 50) {
-        Haptics.selectionChanged()
+        haptics.selectionChanged()
         lastScrollY = currentScrollY
       }
 

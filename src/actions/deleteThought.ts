@@ -1,5 +1,3 @@
-import { Capacitor } from '@capacitor/core'
-import { Haptics, NotificationType } from '@capacitor/haptics'
 import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
@@ -20,6 +18,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
+import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -57,9 +56,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
 
   // See: Payload.local
   const persist = local || remote
-  if (Capacitor.isNativePlatform()) {
-    Haptics.notification({ type: NotificationType.Warning })
-  }
+  haptics.warning()
 
   // guard against missing lexeme
   // while this ideally shouldn't happen, there are some concurrency issues that can cause it to happen, as well as freeThoughts, so we should print an error and just delete the Parent
