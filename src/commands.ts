@@ -1,4 +1,6 @@
 /* eslint-disable import/prefer-default-export */
+
+/** Defines global keyboard shortcuts and gestures. */
 import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
@@ -19,6 +21,7 @@ import { AlertType, COMMAND_PALETTE_TIMEOUT, Settings } from './constants'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
 import { executeCommandWithMulticursor } from './util/executeCommand'
+import haptics from './util/haptics'
 import keyValueBy from './util/keyValueBy'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
@@ -196,6 +199,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       // only show
       (command || state.alert?.alertType === AlertType.GestureHint)
     ) {
+      haptics.warning()
       store.dispatch(
         // alert the command label if it is a valid gesture
         alert(command && command?.label, {

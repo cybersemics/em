@@ -5,6 +5,7 @@ import { isTouch } from '../browser'
 import { TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import haptics from '../util/haptics'
 
 // number of pixels of scrolling to allow before abandoning the long tap
 const SCROLL_THRESHOLD = 10
@@ -47,6 +48,7 @@ const useLongPress = (
       clearTimeout(timerIdRef.current)
       timerIdRef.current = setTimeout(() => {
         globals.longpressing = true
+        haptics.light()
         onLongPressStart?.()
         lock = true
         if (!unmounted.current) {
