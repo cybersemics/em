@@ -39,7 +39,7 @@ const ActionButton = ({
         }),
         css({ lineHeight: 2, marginInline: 5, whiteSpace: 'nowrap', fontWeight: 'normal' }),
       )}
-      {...(onClick && !isDisabled ? fastClick(onClick) : null)}
+      {...(onClick && !isDisabled ? fastClick(onClick, true) : null)}
       {...restProps}
     >
       {/* TODO: Animate on loader toggle. */}
