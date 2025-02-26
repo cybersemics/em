@@ -122,10 +122,7 @@ const ModalCustomizeToolbar: FC = () => {
       <h1 className={modalClasses.title}>Customize Toolbar</h1>
       <p className={css({ marginTop: '-1em', marginBottom: '1em' })}>
         &lt;{' '}
-        <a
-          {...fastClick(() => dispatch(showModal({ id: 'settings' })), { enableHaptics: true })}
-          className={extendTapRecipe()}
-        >
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
           Back to Settings
         </a>
       </p>
@@ -191,10 +188,7 @@ const ModalCustomizeToolbar: FC = () => {
 
       <p className={css({ marginTop: '2em', marginBottom: '2em' })}>
         &lt;{' '}
-        <a
-          {...fastClick(() => dispatch(showModal({ id: 'settings' })), { enableHaptics: true })}
-          className={extendTapRecipe()}
-        >
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
           Back to Settings
         </a>
       </p>

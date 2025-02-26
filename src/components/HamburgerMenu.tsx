@@ -91,21 +91,18 @@ const HamburgerMenu = () => {
           // Therefore, position the HamburgerMenu at top: 1px so that the sidebar is not accidentally opened on tab change.
           top: `calc(${positionFixedStyles.top} + 1px)`,
         }}
-        {...fastClick(
-          e => {
-            // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?
-            // onClick does not have the same problem
-            setTimeout(() => {
-              dispatch(toggleSidebar({}))
-            }, 10)
-            // There is no click event fired when the sidebar is opened on iOS Safari, but there is one fired when it is closed via hamburger menu. This extraneous click event doesn't
-            // interfere as long as we want the keyboard to stay closed when users close the sidebar, but if we want to restore focus to an Editable then it will need to be suppressed.
-            if (isTouch && isSafari()) {
-              e.preventDefault()
-            }
-          },
-          { enableHaptics: true },
-        )}
+        {...fastClick(e => {
+          // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?
+          // onClick does not have the same problem
+          setTimeout(() => {
+            dispatch(toggleSidebar({}))
+          }, 10)
+          // There is no click event fired when the sidebar is opened on iOS Safari, but there is one fired when it is closed via hamburger menu. This extraneous click event doesn't
+          // interfere as long as we want the keyboard to stay closed when users close the sidebar, but if we want to restore focus to an Editable then it will need to be suppressed.
+          if (isTouch && isSafari()) {
+            e.preventDefault()
+          }
+        })}
       >
         <Menu width={width} height={width * 0.7} strokeWidth={fontSize / 20} />
       </div>
