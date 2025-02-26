@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import _ from 'lodash'
 import React from 'react'
 import { isTouch } from '../browser'
@@ -16,6 +18,8 @@ const fastClick = isTouch
       // triggered on mouseup or touchend
       // cancelled if the user scroll or drags
       tapUp: (e: FastClickEvent) => void,
+      // whether to use haptics on tap
+      isHaptics: boolean = false,
       // triggered on mousedown or touchstart
       tapDown?: (e: FastClickEvent) => void,
       // triggered when tapUp is cancelled due to scrolling or dragging
@@ -30,7 +34,6 @@ const fastClick = isTouch
           const y = e.touches[0].clientY
           touchStart = { x, y }
         }
-
         tapDown?.(e)
       },
       // cancel tap if touchmove exceeds threshold (e.g. with scrolling or dragging)
@@ -45,6 +48,9 @@ const fastClick = isTouch
         }
       }, 16.666),
       onTouchEnd: (e: React.TouchEvent) => {
+        if (Capacitor.isNativePlatform() && isHaptics) {
+          Haptics.impact({ style: ImpactStyle.Light })
+        }
         let cancel = !touchStart
 
         if (touchStart && e.changedTouches.length > 0) {
@@ -64,7 +70,7 @@ const fastClick = isTouch
         touchStart = null
       },
     })
-  : (tapUp: (e: React.MouseEvent) => void, tapDown?: (e: React.MouseEvent) => void) => ({
+  : (tapUp: (e: React.MouseEvent) => void, isHaptics: boolean = false, tapDown?: (e: React.MouseEvent) => void) => ({
       onMouseUp: tapUp,
       ...(tapDown ? { onMouseDown: tapDown } : null),
     })

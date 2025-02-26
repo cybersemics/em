@@ -8,6 +8,7 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
+import { Haptics } from '@capacitor/haptics'
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
@@ -132,14 +133,18 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       setRightArrowIsShown(el.offsetWidth + el.scrollLeft < el.scrollWidth - 20)
     }
   }, [])
-
   /** Handles toolbar scroll event. */
   const onScroll = useCallback(
     (e: React.UIEvent<HTMLElement>) => {
+      let lastScrollY = 0
       const scrollDifference = e.target ? Math.abs(lastScrollLeft.current - (e.target as HTMLElement).scrollLeft) : 0
-
       if (scrollDifference >= 5) {
         deselectPressingToolbarId()
+      }
+      const currentScrollY = (e.target as HTMLElement).scrollLeft
+      if (Math.abs(currentScrollY - lastScrollY) >= 50) {
+        Haptics.selectionChanged()
+        lastScrollY = currentScrollY
       }
 
       updateArrows()

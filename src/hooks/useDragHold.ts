@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+import { Haptics } from '@capacitor/haptics'
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
@@ -33,6 +35,9 @@ const useDragHold = ({
     if (disabled) return
     setIsPressed(true)
     dispatch([dragHold({ value: true, simplePath, sourceZone })])
+    if (Capacitor.isNativePlatform()) {
+      Haptics.selectionStart()
+    }
   }, [disabled, dispatch, simplePath, sourceZone])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
@@ -46,6 +51,10 @@ const useDragHold = ({
 
         if (state.dragHold) {
           dispatch([dragHold({ value: false }), !hasMulticursor(state) ? alert(null) : null])
+        }
+
+        if (Capacitor.isNativePlatform()) {
+          Haptics.selectionEnd()
         }
 
         if (!canceled && toggleMulticursorOnLongPress) {

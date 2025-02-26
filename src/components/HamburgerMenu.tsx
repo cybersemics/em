@@ -102,7 +102,7 @@ const HamburgerMenu = () => {
           if (isTouch && isSafari()) {
             e.preventDefault()
           }
-        })}
+        }, true)}
       >
         <Menu width={width} height={width * 0.7} strokeWidth={fontSize / 20} />
       </div>
