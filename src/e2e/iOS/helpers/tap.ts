@@ -65,7 +65,7 @@ const tap = async (
   // const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
   // console.log('topbarrect', topBarRect)
 
-  console.log(
+  console.info(
     `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
   )
 
@@ -74,7 +74,7 @@ const tap = async (
     y: coordinate.y + y,
   }
 
-  console.log(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)
+  console.info(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)
 
   await browser.action('pointer').move(finalCoords).down().pause(releaseDelayMs).up().perform()
 }
