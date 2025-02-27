@@ -3,10 +3,7 @@ import reactMinistore from './react-ministore'
 
 const VIRTUAL_KEYBOARD_CLOSE_DURATION = 800
 
-const safariKeyboardStore = reactMinistore<{
-  open: boolean
-  closing: boolean
-}>({
+const safariKeyboardStore = reactMinistore({
   open: false,
   closing: false,
 })
