@@ -4,6 +4,8 @@ import { closeDialogActionCreator } from '../../actions/closeDialog'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
+import CommandTable from '../CommandTable'
+import { css } from '../../../styled-system/css'
 
 /**
  * Gesture cheatsheet component.
@@ -24,7 +26,17 @@ const GestureCheatsheet: React.FC = () => {
       {isOpen && (
         <Dialog onClose={handleClose}>
           <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
-          <DialogContent>Gesture Cheatsheet content</DialogContent>
+          <DialogContent>
+            <div
+              className={css({
+                maxHeight: '50vh',
+                overflowY: 'auto',
+                padding: '1rem',
+              })}
+            >
+              <CommandTable />
+            </div>
+          </DialogContent>
         </Dialog>
       )}
     </>

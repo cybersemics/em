@@ -15,9 +15,9 @@ const exec: Command['exec'] = dispatch => {
 const openGestureCheatsheetCommand: Command = {
   id: 'openGestureCheatsheet',
   label: 'Open Gesture Cheatsheet',
-  description: 'Opens the gesture cheatsheet.',
+  description: 'Opens a list of all the gestures.',
   keyboard: { key: 'h', shift: true },
-  gesture: 'rdldr',
+  gesture: 'rdld',
   multicursor: true,
   svg: GestureCheatsheetIcon,
   canExecute: () => isDocumentEditable(),
