@@ -1,11 +1,11 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../../styled-system/css'
 import { closeDialogActionCreator } from '../../actions/closeDialog'
+import CommandTable from '../CommandTable'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
-import CommandTable from '../CommandTable'
-import { css } from '../../../styled-system/css'
 
 /**
  * Gesture cheatsheet component.
