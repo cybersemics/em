@@ -217,7 +217,7 @@ const VirtualThought = ({
     textAlign: isTableCol1 ? 'right' : undefined,
   })
   const translateXRef = useRef<number>(0)
-  const duration = 400
+  const duration = 600
 
   /** Calculates the horizontal translation needed to align the text to the right within its parent. */
   const calculateTranslateX = (): number => {
@@ -264,15 +264,15 @@ const VirtualThought = ({
           transition: 'none',
         })
 
-        // 3. On the next frame, transition to 0 so it slides in from the left.
-        //    requestAnimationFrame ensures the browser has time to apply the first style.
-        requestAnimationFrame(() => {
+        // 3. Transition to 0 so it slides in from the left.
+        //    setTimeout ensures the browser has time to apply the first style.
+        setTimeout(() => {
           updateTransitionStyle({
             transform: 'translateX(0)',
             textAlign: 'right',
             transition: `transform ${duration}ms ease-out`,
           })
-        })
+        }, 400)
       }}
       onEntered={() => {
         // Once the entry animation is complete, remove the transform.
