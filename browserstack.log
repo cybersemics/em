@@ -1,15 +1,12 @@
 
 
-Mon Feb 17 2025 00:49:01:922 GMT-0600 (CST) -- Setting output as verbose
-Mon Feb 17 2025 00:49:02:386 GMT-0600 (CST) -- [WARNING] Skipping initialisation of configuration console because: port already in use by another Binary
-Mon Feb 17 2025 00:49:03:440 GMT-0600 (CST) -- [SUCCESS] You can now access your local server(s) in our remote browser
+Wed Feb 26 2025 18:40:33:707 GMT-0600 (CST) -- Setting output as verbose
+Wed Feb 26 2025 18:40:34:424 GMT-0600 (CST) -- [WARNING] Skipping initialisation of configuration console because: port already in use by another Binary
+Wed Feb 26 2025 18:40:35:359 GMT-0600 (CST) -- [SUCCESS] You can now access your local server(s) in our remote browser
 
-Mon Feb 17 2025 00:49:03:711 GMT-0600 (CST) -- Connecting to BrowserStack using WebSocket protocol...
-Mon Feb 17 2025 00:49:03:711 GMT-0600 (CST) -- Platform supports WebSocket connections.
+Wed Feb 26 2025 18:40:35:542 GMT-0600 (CST) -- Connecting to BrowserStack using WebSocket protocol...
+Wed Feb 26 2025 18:40:35:542 GMT-0600 (CST) -- Platform supports WebSocket connections.
 
-Mon Feb 17 2025 00:49:03:814 GMT-0600 (CST) -- Press Ctrl-C to exit
+Wed Feb 26 2025 18:40:35:647 GMT-0600 (CST) -- Press Ctrl-C to exit
 
 
-Mon Feb 17 2025 00:49:15:210 GMT-0600 (CST) -- local.browserstack.com:443 socket connected.
-Mon Feb 17 2025 00:49:31:208 GMT-0600 (CST) -- bag.itunes.apple.com:443 socket connected.
-Mon Feb 17 2025 00:49:33:987 GMT-0600 (CST) -- token.safebrowsing.apple:443 socket connected.

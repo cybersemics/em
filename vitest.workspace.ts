@@ -1,3 +1,4 @@
+import Terminal from 'vite-plugin-terminal'
 import { defineWorkspace } from 'vitest/config'
 
 export default defineWorkspace([
@@ -27,11 +28,45 @@ export default defineWorkspace([
   {
     extends: './vite.config.ts',
     test: {
-      name: 'ios',
+      name: 'ios-appium',
       globals: true,
-      include: ['src/e2e/iOS2/__tests__/*.ts'],
+      include: ['src/e2e/iOS/__tests__/split.ts'],
       exclude: ['node_modules/**'],
-      environment: './src/e2e/webdriverio-environment2.ts',
+      environment: './src/e2e/webdriverio-environment.ts',
+      retry: 0,
+      testTimeout: 90000,
+      hookTimeout: 90000,
+      environmentOptions: {
+        target: 'appium',
+      },
     },
+    plugins: [
+      Terminal({
+        console: 'terminal',
+        output: ['terminal', 'console'],
+      }),
+    ],
+  },
+  {
+    extends: './vite.config.ts',
+    test: {
+      name: 'ios-browserstack',
+      globals: true,
+      include: ['src/e2e/iOS/__tests__/split.ts'],
+      exclude: ['node_modules/**'],
+      environment: './src/e2e/webdriverio-environment.ts',
+      retry: 0,
+      testTimeout: 90000,
+      hookTimeout: 90000,
+      environmentOptions: {
+        target: 'browserstack',
+      },
+    },
+    plugins: [
+      Terminal({
+        console: 'terminal',
+        output: ['terminal', 'console'],
+      }),
+    ],
   },
 ])

@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
+import Terminal from 'vite-plugin-terminal'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,6 +17,10 @@ export default defineConfig({
     outDir: 'build',
   },
   plugins: [
+    Terminal({
+      console: 'terminal',
+      output: ['terminal', 'console'],
+    }),
     react(),
     // Do not run vite-plugin-checker during tests, as it will clear the test output.
     // The dev server is usually running anyway, and tsc is run in lint:tsc which is triggered prepush.

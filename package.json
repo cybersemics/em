@@ -38,7 +38,6 @@
     "deploy:staging2": "yarn lint && yarn build && firebase hosting:channel:deploy staging2 --expires 30d",
     "lint:lockfile": "npx lockfile-lint",
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
-    "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:tsc": "tsc",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output \"lint:*\"",
     "postinstall": "git config core.hooksPath .hooks && yarn build:styles",
@@ -220,9 +219,10 @@
     "vite": "^5.4.10",
     "vite-plugin-checker": "^0.8.0",
     "vite-plugin-pwa": "^0.21.0",
+    "vite-plugin-terminal": "^1.2.0",
     "vitest": "^2.1.4",
     "vitest-canvas-mock": "^0.3.3",
-    "webdriverio": "^7.36.0"
+    "webdriverio": "^9.10.1"
   },
   "packageManager": "yarn@4.5.1"
 }

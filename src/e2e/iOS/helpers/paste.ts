@@ -4,11 +4,11 @@ import { WindowEm } from '../../../initialize'
 
 const em = window.em as WindowEm
 
-async function paste(browser: Browser<'async'>, text: string): Promise<void>
-async function paste(browser: Browser<'async'>, pathUnranked: string[], text: string): Promise<void>
+async function paste(browser: Browser, text: string): Promise<void>
+async function paste(browser: Browser, pathUnranked: string[], text: string): Promise<void>
 
 /** Import text on given unranked path using exposed testHelpers. */
-async function paste(browser: Browser<'async'>, pathUnranked: string | string[], text?: string): Promise<void> {
+async function paste(browser: Browser, pathUnranked: string | string[], text?: string): Promise<void> {
   const _pathUnranked = typeof pathUnranked === 'string' ? [HOME_TOKEN] : (pathUnranked as string[])
   const _text = typeof pathUnranked === 'string' ? pathUnranked : text!
 
@@ -21,6 +21,8 @@ async function paste(browser: Browser<'async'>, pathUnranked: string | string[],
     _pathUnranked,
     _text,
   )
+
+  browser.pause(10000)
 }
 
 export default paste

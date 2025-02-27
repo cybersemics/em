@@ -11,7 +11,8 @@ const user = process.env.BROWSERSTACK_USERNAME
  */
 const config = (localIdentifier: string) => ({
   user,
-  key: process.env.BROWSERSTACK_ACCESS_KEY,
+  key: process.env.BROWSERSTACK_ACCESS_KEY as string,
+  localIdentifier,
   capabilities: {
     platformName: 'iOS',
     browserName: 'Safari',
@@ -35,5 +36,7 @@ const config = (localIdentifier: string) => ({
   connectionRetryCount: 10,
   hostname: 'hub.browserstack.com',
 })
+
+export type BrowserStackConfig = ReturnType<typeof config>
 
 export default config

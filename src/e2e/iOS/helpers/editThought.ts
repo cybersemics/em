@@ -6,7 +6,7 @@ import waitForEditable from './waitForEditable'
  * We need to be sure that the current action affects our app before running the next action.
  * In this case, we want to be sure that there is a thought with the given value after sending keys.
  * */
-const editThought = async (browser: Browser<'async'>, value: string) => {
+const editThought = async (browser: Browser, value: string) => {
   await browser.sendKeys([value])
   return await waitForEditable(browser, value)
 }
