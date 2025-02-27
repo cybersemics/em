@@ -160,8 +160,8 @@ const Note = React.memo(({ path }: { path: Path }) => {
       />
       <FauxCaret
         styles={{
-          fontSize: '1.1em',
-          margin: '-1px 0 0 -4px',
+          fontSize: '1.2em',
+          margin: '-4px 0 0 -5px',
           opacity: 'var(--faux-caret-note-line-end-opacity)',
         }}
       />

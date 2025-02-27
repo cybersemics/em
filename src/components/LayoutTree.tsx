@@ -464,6 +464,7 @@ const TreeNode = ({
   // selection is created.
   useEffect(() => {
     if (!isMobileSafari()) return
+
     if (editing && isCursor) {
       // The selection ranges aren't updated until the end of the frame when the thought is focused.
       setTimeout(() => {
@@ -471,14 +472,19 @@ const TreeNode = ({
 
         const offset = fadeThoughtRef.current.getBoundingClientRect()
 
-        if (offset) {
-          const rect = getBoundingClientRect()
+        if (!offset) return
 
-          if (rect) {
-            setFauxCaretStyles({ display: undefined, top: `${rect.y - offset.y}px`, left: `${rect.x - offset.x}px` })
-          } else {
-            setFauxCaretStyles({ display: 'none' })
-          }
+        const rect = getBoundingClientRect()
+
+        if (rect) {
+          setFauxCaretStyles({
+            display: undefined,
+            fontSize: `${rect.height}px`,
+            top: `${rect.y - offset.y}px`,
+            left: `${rect.x - offset.x}px`,
+          })
+        } else {
+          setFauxCaretStyles({ display: 'none' })
         }
       })
     } else {
@@ -592,7 +598,7 @@ const TreeNode = ({
               prevWidth={treeThoughtsPositioned[index - 1]?.width}
             />
           )}
-        <FauxCaret styles={{ ...fauxCaretStyles, margin: '-5.5px 0 0 -1px', opacity: 'var(--faux-caret-opacity)' }} />
+        <FauxCaret styles={{ ...fauxCaretStyles, margin: '-4px 0 0 -1px', opacity: 'var(--faux-caret-opacity)' }} />
       </div>
     </FadeTransition>
   )

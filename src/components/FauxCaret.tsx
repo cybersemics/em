@@ -14,7 +14,7 @@ const FauxCaret = ({ styles }: { styles: CSSProperties }) => {
         fontSize: '1.25em',
         position: 'absolute',
         pointerEvents: 'none',
-        WebkitTextStroke: '1px var(--colors-blue)',
+        WebkitTextStroke: '1px var(--colors-caret)',
       })}
       // Using a CSS variable to control opacity does not appear to work inside Panda's CSS generator
       style={styles}
