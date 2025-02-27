@@ -38,6 +38,7 @@
     "deploy:staging2": "yarn lint && yarn build && firebase hosting:channel:deploy staging2 --expires 30d",
     "lint:lockfile": "npx lockfile-lint",
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
+    "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:tsc": "tsc",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output \"lint:*\"",
     "postinstall": "git config core.hooksPath .hooks && yarn build:styles",
