@@ -9,7 +9,7 @@ interface Options {
 }
 
 /** Creates a new thought by gesture and typing text. */
-const newThought = async (browser: Browser<'async'>, value?: string, { insertNewSubthought }: Options = {}) => {
+const newThought = async (browser: Browser, value?: string, { insertNewSubthought }: Options = {}) => {
   await gesture(browser, insertNewSubthought ? gestures.newSubThought : gestures.newThought)
   await waitForEditable(browser, '')
   if (value) {

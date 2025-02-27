@@ -3,8 +3,6 @@
  */
 import helpers from '../helpers'
 
-jest.setTimeout(90000)
-
 const { $, clickThought, paste, waitForEditable } = helpers()
 
 // test succeeds individually, but fails when there are too many tests running in parallel

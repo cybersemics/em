@@ -6,12 +6,12 @@ interface WaitForElementOptions {
 
 /** Wait for element. */
 const waitForElement = async (
-  browser: Browser<'async'>,
+  browser: Browser,
   selector: string,
   { timeout = 5000 }: WaitForElementOptions = {},
-): Promise<Element<'async'>> => {
+): Promise<Element> => {
   await browser.waitUntil(async () => !!(await browser.$(selector)).elementId, { timeout: timeout })
-  return browser.$(selector)
+  return browser.$(selector).getElement()
 }
 
 export default waitForElement
