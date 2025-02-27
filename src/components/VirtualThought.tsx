@@ -291,13 +291,13 @@ const VirtualThought = ({
           transition: 'none',
         })
 
-        requestAnimationFrame(() => {
+        setTimeout(() => {
           updateTransitionStyle({
             transform: 'translateX(0)',
             transition: `transform ${duration}ms ease-out`,
             textAlign: undefined,
           })
-        })
+        }, 400)
       }}
       onExited={() => {
         // Clear transform at the end, and remove right‐alignment.
