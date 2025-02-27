@@ -1,6 +1,7 @@
 import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
+import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -81,7 +82,7 @@ describe('multiline', () => {
     await click('[data-testid=decrease-font]') // 13
 
     // close alert
-    await click('[data-testid=close-button]')
+    await hide('[data-testid=alert]')
 
     // scroll to top
     await scroll(0, 0)
