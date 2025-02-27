@@ -31,14 +31,15 @@ const usePositionFixed = ({
       ? `${scrollTop + innerHeight - currentKeyboardHeight - (height ?? 0) - offset}px`
       : `${scrollTop + offset}px`
   } else if (fromBottom) {
+    // spacing.safeAreaBottom applies to rounded screens
     bottom = `calc(${token('spacing.safeAreaBottom')} + ${offset}px)`
   } else {
+    // spacing.safeAreaTop applies to rounded screens
     top = `calc(${token('spacing.safeAreaTop')} + ${offset}px)`
   }
 
   return {
     position: position ?? 'fixed',
-    /* spacing.safeAreaTop applies for rounded screens */
     top,
     bottom,
     /* Hide bottom elements while the keyboard is closing */

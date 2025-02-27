@@ -13,11 +13,6 @@ import PopupBase from './PopupBase'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
 
-const alertToIcon: { [key in AlertType]?: typeof UndoIcon } = {
-  [AlertType.Undo]: UndoIcon,
-  [AlertType.Redo]: RedoIcon,
-}
-
 /** An alert component that fades in and out. */
 const Alert: FC = () => {
   const popupRef = useRef<HTMLDivElement>(null)
@@ -35,11 +30,7 @@ const Alert: FC = () => {
     dispatch(alertActionCreator(null))
   }, [alert, dispatch])
 
-  const alertType = alert?.alertType
-  const Icon = alertType ? alertToIcon[alertType] : null
-  const renderedIcon = Icon ? (
-    <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} />
-  ) : null
+  const Icon = alert?.alertType === AlertType.Undo ? UndoIcon : alert?.alertType === AlertType.Redo ? RedoIcon : null
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
@@ -49,7 +40,6 @@ const Alert: FC = () => {
     >
       {alert ? (
         <FadeTransition duration='slow' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
-          {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
           <PopupBase
             anchorFromBottom
             anchorOffset={36}
@@ -65,6 +55,7 @@ const Alert: FC = () => {
               width: 'max-content',
             })}
             ref={popupRef}
+            // Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state.
             key={value}
             circledCloseButton
             showXOnHover
@@ -83,7 +74,7 @@ const Alert: FC = () => {
                 padding: '0.85em 1.1em',
               })}
             >
-              {renderedIcon}
+              {Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
               {value}
             </div>
           </PopupBase>
