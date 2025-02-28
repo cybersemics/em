@@ -16,6 +16,7 @@ import commandStateStore from '../stores/commandStateStore'
 import { executeCommandWithMulticursor } from '../util/executeCommand'
 import fastClick from '../util/fastClick'
 import getCursorSortDirection from '../util/getCursorSortDirection'
+import haptics from '../util/haptics'
 
 export interface ToolbarButtonProps {
   // see ToolbarProps.customize
@@ -101,6 +102,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
 
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
+        haptics.light()
+
         executeCommandWithMulticursor(command, { store, type: 'toolbar', event: e })
 
         // only animate from inactive -> active
@@ -152,6 +155,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       lastScrollLeft.current = toolbarEl.scrollLeft
 
       if (!disabled) {
+        haptics.medium()
         onTapDown?.(commandId, e)
       }
 
@@ -223,9 +227,12 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         }),
       )}
       onMouseLeave={onMouseLeave}
-      {...(isActive
-        ? fastClick(tapUp, { tapDown, touchMove })
-        : fastClick(tapUp, { enableHaptics: false, tapDown, touchMove }))}
+      {...fastClick(tapUp, {
+        // disable default haptics in favor of custom haptics on touchstart and touchend
+        enableHaptics: false,
+        tapDown,
+        touchMove,
+      })}
     >
       {
         // selected top dash

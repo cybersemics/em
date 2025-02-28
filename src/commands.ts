@@ -187,11 +187,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     const command = commandGestureIndex[sequence as string]
 
-    // emit light haptics for valid gestures
-    if (command?.id !== undefined) {
-      haptics.light()
-    }
-
     // basic gesture hint (training mode only)
     if (
       !experienceMode &&
@@ -248,16 +243,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
       : !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
         : null
-
-    // emit warning haptics for cancel/delete
-    if (command?.id === undefined || command?.id === 'delete') {
-      haptics.warning()
-    }
-
-    // emit light haptics for back/forward
-    if (command?.id === 'cursorBack' || command?.id === 'cursorForward') {
-      haptics.light()
-    }
 
     // execute command
     // do not execute when modal is displayed or a drag is in progress

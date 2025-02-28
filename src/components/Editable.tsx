@@ -506,7 +506,10 @@ const Editable = ({
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      haptics.light()
+      // Avoid triggering haptics twice since this handler is used for both onClick and onMouseDown.
+      if (e.type !== 'mousedown') {
+        haptics.light()
+      }
 
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey

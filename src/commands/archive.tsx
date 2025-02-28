@@ -4,13 +4,14 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { errorActionCreator as error } from '../actions/error'
 import ArchiveIcon from '../components/icons/ArchiveIcon'
-import { AlertType, HOME_PATH } from '../constants'
+import { AlertType, DELETE_VIBRATE_DURATION, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
@@ -38,6 +39,11 @@ const exec: Command['exec'] = (dispatch, getState) => {
       const pathNote = appendToPath(path, childNote!.id)
       dispatch(archiveThought({ path: pathNote }))
     } else {
+      const value = getThoughtById(state, head(cursor))?.value
+      if (value !== '') {
+        haptics.vibrate(DELETE_VIBRATE_DURATION)
+      }
+
       // clear the undo alert timer to prevent previously cleared undo alert from closing this one
       clearTimeout(undoArchiveTimer)
 
@@ -49,6 +55,7 @@ const exec: Command['exec'] = (dispatch, getState) => {
           dispatch(alert(null))
         }
       }, 5000)
+
       // archive the thought
       dispatch(archiveThought({ path: state.cursor ?? undefined }))
     }

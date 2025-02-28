@@ -16,6 +16,7 @@ import { getChildrenRanked } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
+import haptics from '../util/haptics'
 
 /** Handles dropping a toolbar button on a DropTarget. */
 const drop = (commandId: CommandId, monitor: DropTargetMonitor) => {
@@ -25,6 +26,8 @@ const drop = (commandId: CommandId, monitor: DropTargetMonitor) => {
   const { command } = monitor.getItem() as { command: Command; zone: DragCommandZone }
   const from = command
   const to = commandById(commandId)!
+
+  haptics.medium()
 
   // initialize EM/Settings/Toolbar/Visible with default commands
   store.dispatch([
