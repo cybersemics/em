@@ -21,10 +21,10 @@ const useGestureCancelled = () => {
   const showCommandPalette = useSelector(state => state.showCommandPalette)
 
   const invalidGesture = gestureStore.useSelector(
-    gesturePath =>
-      gesturePath &&
+    state =>
+      state.gesture &&
       showCommandPalette &&
-      !globalCommands.some(command => !command.hideFromHelp && gestureString(command) === gesturePath),
+      !globalCommands.some(command => !command.hideFromHelp && gestureString(command) === state.gesture),
   )
 
   return invalidGesture
@@ -34,7 +34,7 @@ const useGestureCancelled = () => {
 const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
   const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
-  const show = gestureStore.useSelector(gesturePath => gesturePath.length > 0)
+  const show = gestureStore.useSelector(state => state.gesture.length > 0)
   const cancelled = useGestureCancelled()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const signaturePadRef = useRef<SignaturePad | null>(null)
@@ -79,7 +79,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     })
 
     eventNode?.addEventListener('touchmove', e => {
-      const isGestureInProgress = gestureStore.getState().length > 0
+      const isGestureInProgress = gestureStore.getState().gesture.length > 0
       const touch = e.touches[0]
 
       if (isGestureInProgress && isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {

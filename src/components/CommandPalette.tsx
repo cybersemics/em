@@ -313,7 +313,7 @@ const CommandRow: FC<{
 const CommandPalette: FC = () => {
   const store = useStore()
   const dispatch = useDispatch()
-  const gestureInProgress = gestureStore.useState()
+  const gestureInProgress = gestureStore.useSelector(state => state.gesture)
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
   const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
