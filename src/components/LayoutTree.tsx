@@ -507,7 +507,6 @@ const TreeNode = ({
           // (Maybe the 10px is from .content padding-left?)
           width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
           ...style,
-          textAlign: isTableCol1 ? 'right' : undefined,
         }}
       >
         <div ref={fadeThoughtRef}>
@@ -535,6 +534,7 @@ const TreeNode = ({
             isLastVisible={isLastVisible}
             autofocus={autofocus}
             marginRight={isTableCol1 ? marginRight : 0}
+            isTableCol1={isTableCol1}
           />
         </div>
 
