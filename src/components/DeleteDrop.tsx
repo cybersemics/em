@@ -12,7 +12,7 @@ import head from '../util/head'
 import QuickDropIcon from './QuickDropIcon'
 import DeleteIcon from './icons/DeleteIcon'
 
-/** Copy the thought on drop. */
+/** Delete the thought on drop. */
 const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
   const value = getThoughtById(state, head(simplePath))?.value
   if (value === undefined) {
@@ -44,9 +44,9 @@ const hoverMessage = (state: State, zone: DragThoughtZone) => {
     : `Drop to remove ${ellipsize(value!)} from favorites`
 }
 
-/** An icon that a thought can be dropped on to copy. */
-const CopyOneDrop = () => (
+/** An icon that a thought can be dropped on to delete. */
+const DeleteDrop = () => (
   <QuickDropIcon alertType={AlertType.DeleteDropHint} Icon={DeleteIcon} onDrop={drop} onHoverMessage={hoverMessage} />
 )
 
-export default CopyOneDrop
+export default DeleteDrop
