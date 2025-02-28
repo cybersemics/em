@@ -178,16 +178,18 @@ const CommandTable = ({
   customize,
   onSelect,
   selectedCommand: selectedCommand,
+  className,
 }: {
   customize?: boolean
   onSelect?: (command: Command | null) => void
   selectedCommand?: Command
+  className?: string
 }) => {
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
 
   return (
-    <div>
+    <div className={className}>
       <SearchCommands onInput={setSearch} />
       <div className={css({ textAlign: 'left' })}>
         {search ? (

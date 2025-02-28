@@ -34,7 +34,12 @@ const GestureCheatsheet: React.FC = () => {
                 padding: '1rem',
               })}
             >
-              <CommandTable />
+              <CommandTable
+                className={css({
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                })}
+              />
             </div>
           </DialogContent>
         </Dialog>
