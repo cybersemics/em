@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import React from 'react'
 import { isTouch } from '../browser'
+import haptics from './haptics'
 
 export type FastClickEvent = React.TouchEvent<Element> | React.MouseEvent<Element, MouseEvent>
 
@@ -16,13 +17,22 @@ const fastClick = isTouch
       // triggered on mouseup or touchend
       // cancelled if the user scroll or drags
       tapUp: (e: FastClickEvent) => void,
-      // triggered on mousedown or touchstart
-      tapDown?: (e: FastClickEvent) => void,
-      // triggered when tapUp is cancelled due to scrolling or dragging
-      // does not work with drag-and-drop on desktop (onMouseUp does not trigger)
-      tapCancel?: (e: FastClickEvent) => void,
-      // triggered with touchMove, which can never be a MouseEvent
-      touchMove?: (e: React.TouchEvent) => void,
+      {
+        // whether to trigger haptics on tap
+        enableHaptics = true,
+        // triggered on mousedown or touchstart
+        tapDown,
+        // triggered when tapUp is cancelled due to scrolling or dragging
+        // does not work with drag-and-drop on desktop (onMouseUp does not trigger)
+        tapCancel,
+        // triggered with touchMove, which can never be a MouseEvent
+        touchMove,
+      }: {
+        enableHaptics?: boolean
+        tapDown?: (e: FastClickEvent) => void
+        tapCancel?: (e: FastClickEvent) => void
+        touchMove?: (e: React.TouchEvent) => void
+      } = {},
     ) => ({
       onTouchStart: (e: React.TouchEvent) => {
         if (e.touches.length > 0) {
@@ -30,7 +40,6 @@ const fastClick = isTouch
           const y = e.touches[0].clientY
           touchStart = { x, y }
         }
-
         tapDown?.(e)
       },
       // cancel tap if touchmove exceeds threshold (e.g. with scrolling or dragging)
@@ -45,6 +54,9 @@ const fastClick = isTouch
         }
       }, 16.666),
       onTouchEnd: (e: React.TouchEvent) => {
+        if (enableHaptics) {
+          haptics.light()
+        }
         let cancel = !touchStart
 
         if (touchStart && e.changedTouches.length > 0) {
@@ -64,7 +76,14 @@ const fastClick = isTouch
         touchStart = null
       },
     })
-  : (tapUp: (e: React.MouseEvent) => void, tapDown?: (e: React.MouseEvent) => void) => ({
+  : (
+      tapUp: (e: React.MouseEvent) => void,
+      {
+        tapDown,
+      }: {
+        tapDown?: (e: React.MouseEvent) => void
+      } = {},
+    ) => ({
       onMouseUp: tapUp,
       ...(tapDown ? { onMouseDown: tapDown } : null),
     })

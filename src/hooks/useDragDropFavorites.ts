@@ -14,6 +14,7 @@ import * as selection from '../device/selection'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
+import haptics from '../util/haptics'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import splice from '../util/splice'
@@ -115,6 +116,8 @@ const drop = (
     ...lexemeFavorites,
     contexts: contextsNew,
   }
+
+  haptics.medium()
 
   store.dispatch(
     updateThoughts({

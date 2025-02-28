@@ -405,9 +405,12 @@ const ThoughtContainer = ({
         <span className={css({ fontSize: '75%' })}>
           <a
             tabIndex={-1}
-            {...fastClick(() => {
-              dispatch(expandContextThought(path))
-            })}
+            {...fastClick(
+              () => {
+                dispatch(expandContextThought(path))
+              },
+              { enableHaptics: false },
+            )}
           >
             ...{' '}
           </a>

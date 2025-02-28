@@ -66,7 +66,11 @@ const Content: FC = () => {
   }
 
   return (
-    <div id='content-wrapper' {...fastClick(() => dispatch(clickOnEmptySpace))} onMouseDown={() => setIsPressed(true)}>
+    <div
+      id='content-wrapper'
+      {...fastClick(() => dispatch(clickOnEmptySpace), { enableHaptics: false })}
+      onMouseDown={() => setIsPressed(true)}
+    >
       <div
         id='content'
         ref={contentRef}

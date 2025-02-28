@@ -23,6 +23,7 @@ import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -124,6 +125,8 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     )
     return
   }
+
+  haptics.medium()
 
   store.dispatch(
     moveThought({
