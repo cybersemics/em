@@ -66,7 +66,6 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     const handleTouchStart = signaturePad._handleTouchStart.bind(signaturePad)
     const handleTouchMove = signaturePad._handleTouchMove.bind(signaturePad)
     const handleTouchEnd = signaturePad._handleTouchEnd.bind(signaturePad)
-    const handleTouchCancel = signaturePad._handleTouchCancel.bind(signaturePad)
 
     eventNode?.addEventListener('touchstart', e => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
@@ -96,6 +95,17 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       handleTouchEnd(e)
     })
 
+    eventNode?.addEventListener('touchcancel', () => {
+      document
+        .querySelector('[aria-label="home"] svg')
+        ?.setAttribute(
+          'fill',
+          `rgb(${50 + Math.floor(Math.random() * 200)}, ${50 + Math.floor(Math.random() * 200)}, ${50 + Math.floor(Math.random() * 200)})`,
+        )
+
+      signaturePad.clear()
+    })
+
     signaturePad.addEventListener('beginStroke', onBeginStroke)
 
     // update canvas dimensions, otherwise the initial height on load is too large for some reason
@@ -107,7 +117,6 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       eventNode?.removeEventListener('touchstart', handleTouchStart)
       eventNode?.removeEventListener('touchmove', handleTouchMove)
       eventNode?.removeEventListener('touchend', handleTouchEnd)
-      eventNode?.removeEventListener('touchcancel', handleTouchCancel)
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
   }, [eventNodeRef, onBeginStroke, leftHanded])
