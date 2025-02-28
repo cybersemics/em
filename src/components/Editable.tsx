@@ -50,6 +50,7 @@ import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
@@ -505,6 +506,8 @@ const Editable = ({
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      haptics.light()
+
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
       if (isMultiselectClick) {
