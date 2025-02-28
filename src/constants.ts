@@ -511,3 +511,6 @@ export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 
 export const GESTURE_GLOW_BLUR = 10
 export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'
+
+/** The duration of the haptics vibrate on delete or archive non-empty thought. */
+export const DELETE_VIBRATE_DURATION = 80
