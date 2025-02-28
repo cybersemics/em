@@ -55,7 +55,7 @@ const useFilteredCommands = (
 
         const label = (
           sortActiveCommandsFirst && command.labelInverse && command.isActive?.(store.getState())
-            ? command.labelInverse!
+            ? command.labelInverse
             : command.label
         ).toLowerCase()
         const chars = search.toLowerCase().split('')
