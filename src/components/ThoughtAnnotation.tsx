@@ -150,7 +150,6 @@ const ThoughtAnnotation = React.memo(
           pointerEvents: 'none',
           userSelect: 'none',
           boxSizing: 'border-box',
-          width: '100%',
           // maxWidth: '100%',
           marginTop: '0',
           display: 'inline-block',
