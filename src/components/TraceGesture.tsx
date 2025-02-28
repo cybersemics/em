@@ -66,6 +66,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     const handleTouchStart = signaturePad._handleTouchStart.bind(signaturePad)
     const handleTouchMove = signaturePad._handleTouchMove.bind(signaturePad)
     const handleTouchEnd = signaturePad._handleTouchEnd.bind(signaturePad)
+    const handleTouchCancel = signaturePad._handleTouchCancel.bind(signaturePad)
 
     eventNode?.addEventListener('touchstart', e => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
@@ -106,6 +107,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       eventNode?.removeEventListener('touchstart', handleTouchStart)
       eventNode?.removeEventListener('touchmove', handleTouchMove)
       eventNode?.removeEventListener('touchend', handleTouchEnd)
+      eventNode?.removeEventListener('touchcancel', handleTouchCancel)
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
   }, [eventNodeRef, onBeginStroke, leftHanded])
