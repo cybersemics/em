@@ -11,7 +11,7 @@ const openHelpCommand: Command = {
     isTouch ? 'gestures' : 'keyboard shortcuts'
   }.`,
   gesture: 'rdldr',
-  keyboard: { key: '/', meta: true },
+  keyboard: { key: '.', meta: true },
   multicursor: 'ignore',
   svg: HelpIcon,
   exec: dispatch => {

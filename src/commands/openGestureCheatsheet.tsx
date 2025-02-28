@@ -16,7 +16,7 @@ const openGestureCheatsheetCommand: Command = {
   id: 'openGestureCheatsheet',
   label: 'Open Gesture Cheatsheet',
   description: 'Opens a list of all the gestures.',
-  keyboard: { key: '=', meta: true },
+  keyboard: { key: '/', meta: true },
   gesture: 'rdld',
   multicursor: true,
   svg: GestureCheatsheetIcon,

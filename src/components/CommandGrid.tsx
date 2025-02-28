@@ -8,7 +8,7 @@ import { commandById, globalCommands } from '../commands'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
-import CommandTableOnly from './CommandTableOnly'
+import CommandGridOnly from './CommandGridOnly'
 
 // define the grouping and ordering of commands
 const groups: {
@@ -161,7 +161,7 @@ const CommandsGroup: ({
   return (
     <div>
       <h2 className={modalClasses.subtitle}>{title}</h2>
-      <CommandTableOnly
+      <CommandGridOnly
         commands={commands}
         selectedCommand={selectedCommand}
         customize={customize}
@@ -173,8 +173,8 @@ const CommandsGroup: ({
   )
 }
 
-/** Renders a table of commands. */
-const CommandTable = ({
+/** Renders a grid of commands. */
+const CommandGrid = ({
   customize,
   onSelect,
   selectedCommand: selectedCommand,
@@ -223,4 +223,4 @@ const CommandTable = ({
   )
 }
 
-export default CommandTable
+export default CommandGrid

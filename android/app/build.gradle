@@ -5,7 +5,7 @@ android {
     defaultConfig {
         applicationId "com.emtheapp.em"
         minSdkVersion 33
-        targetSdkVersion 33v
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

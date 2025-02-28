@@ -2,7 +2,7 @@ import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { closeDialogActionCreator } from '../../actions/closeDialog'
-import CommandTable from '../CommandTable'
+import CommandGrid from '../CommandGrid'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
@@ -34,12 +34,7 @@ const GestureCheatsheet: React.FC = () => {
                 padding: '1rem',
               })}
             >
-              <CommandTable
-                className={css({
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                })}
-              />
+              <CommandGrid />
             </div>
           </DialogContent>
         </Dialog>
