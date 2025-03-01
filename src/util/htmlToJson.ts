@@ -1,7 +1,7 @@
 import { Element, HimalayaNode, Text, parse } from 'himalaya'
 import _ from 'lodash'
 import Block from '../@types/Block'
-import { ALLOWED_FORMATTING_TAGS, REGEX_PLAINTEXT_BULLET } from '../constants'
+import { ALLOWED_TAGS, REGEX_PLAINTEXT_BULLET } from '../constants'
 import formattingNodeToHtml from './formattingNodeToHtml'
 import isFormattingTag from './isFormattingTag'
 
@@ -272,8 +272,6 @@ const findUniqueTags = (nodes: Element[]): string[] => {
   return _.uniq(tagLists)
 }
 
-const tagsThatAreNotToBeStripped = [...ALLOWED_FORMATTING_TAGS, 'li', 'ul']
-
 /** Generates dynamic regex expression. */
 const generateRegexToMatchTags = (tags: string[]): RegExp => new RegExp(`</?(?:${tags.join('|')})>`, 'gim')
 
@@ -282,7 +280,13 @@ const htmlToJson = (html: string) => {
   const nodes = parse(html) as Element[]
 
   const tags = findUniqueTags(nodes)
-  const tagsToBeStripped = tags.filter((tag: string) => !tagsThatAreNotToBeStripped.includes(tag))
+  const tagsToBeStripped = tags.filter(
+    (tag: string) =>
+      !ALLOWED_TAGS.includes(tag) &&
+      // Do not remove <style> tags without removing their content.
+      // They will be removed later in removeEmptyNodesAndComments.
+      tag !== 'style',
+  )
   const regex = generateRegexToMatchTags(tagsToBeStripped)
   const strippedHtml = html.replace(regex, '')
   const blocks = himalayaToBlock(removeEmptyNodesAndComments(parse(strippedHtml)))

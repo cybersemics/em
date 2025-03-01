@@ -18,7 +18,7 @@ import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { accessToken, clientIdReady, tsid, tsidShared } from './data-providers/yjs'
-import db, { init as initThoughtspace } from './data-providers/yjs/thoughtspace'
+import db, { init as initThoughtspace, replicateLexeme, replicateThought } from './data-providers/yjs/thoughtspace'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -248,6 +248,8 @@ const windowEm = {
     return store.subscribe(onState)
   },
   prettyPath,
+  replicateThought,
+  replicateLexeme: (value: string) => replicateLexeme(hashThought(value)),
   store,
   offlineStatusStore,
   syncStatusStore,

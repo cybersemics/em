@@ -82,9 +82,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     setDividerWidth(Math.max(...widths, DIVIDER_MIN_WIDTH))
   }, [widthDependentThoughtIds])
 
-  useLayoutEffect(() => {
-    updateDividerWidth()
-  }, [editingThoughtId, editingValueUntrimmed, fontSize, updateDividerWidth])
+  useLayoutEffect(updateDividerWidth, [editingThoughtId, editingValueUntrimmed, fontSize, updateDividerWidth])
 
   viewportStore.useSelectorEffect(updateDividerWidth, state => state.innerWidth)
 

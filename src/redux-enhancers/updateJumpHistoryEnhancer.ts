@@ -62,7 +62,8 @@ const updateJumpHistoryEnhancer: StoreEnhancer<any> =
     createStore((state: State | undefined, action: A): State => {
       const stateNew: State = reducer(state, action)
 
-      if (stateNew.thoughts.thoughtIndex !== state?.thoughts.thoughtIndex) {
+      // Do not update the jumpHistory on freeThoughts, otherwise jumpIndex will get reset to 0 on jumpBack, preventing more than a single jump.
+      if (action.type !== 'freeThoughts' && stateNew.thoughts.thoughtIndex !== state?.thoughts.thoughtIndex) {
         const stateWithJumpHistory = updateJumpHistory(stateNew)
         saveJumpHistory(stateWithJumpHistory.jumpHistory)
         return stateWithJumpHistory

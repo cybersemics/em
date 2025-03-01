@@ -245,7 +245,7 @@ export const REGEX_HTML = /<\/?[a-z][\s\S]*>/i
 // can be used to replace all HTML in a string
 export const REGEX_TAGS = /(<([^>]+)>)/gi
 
-/** Matches HTML tags that indicate the snippet is a block of proper HTML, not just text formatted with HTML tags. Includes <html>, <body>, <meta>, <li> and <ul>. Does not match strings that just contain formattings tags like <b>, <i>, or <u>. */
+/** Matches HTML tags that indicate the snippet is a block of proper HTML, not just text formatted with HTML tags. Includes <html>, <body>, <li>, <meta>, <ol>, <ul>. Does not match strings that just contain formattings tags like <b>, <i>, or <u>. */
 export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/i
 
 // starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
@@ -256,7 +256,7 @@ export const IPFS_GATEWAY = 'ipfs.infura.io'
 
 // delay before long press is activated
 // also used for react-dnd's delayTouchStart
-export const TIMEOUT_LONG_PRESS_THOUGHT = 300
+export const TIMEOUT_LONG_PRESS_THOUGHT = 400
 
 export const MODIFIER_KEYS = {
   Alt: 1,

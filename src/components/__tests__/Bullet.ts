@@ -297,7 +297,7 @@ describe('expansion', () => {
     expect(thoughtCursor).toHaveTextContent('b')
   })
 
-  it('tapping on a pinned thought should unpin it', async () => {
+  it('tapping on the bullet of a pinned thought should unpin it', async () => {
     await dispatch([
       importText({
         text: `
@@ -330,7 +330,7 @@ describe('expansion', () => {
       - e`)
   })
 
-  it('tapping on an expanded only child should unpin it', async () => {
+  it('tapping on the bullet of an expanded only child should unpin it', async () => {
     await dispatch([
       importText({
         text: `
@@ -357,7 +357,7 @@ describe('expansion', () => {
       - c`)
   })
 
-  it('tapping on a thought expanded by =children should unpin it', async () => {
+  it('tapping on the bullet of a thought expanded by =children should unpin it', async () => {
     await dispatch([
       importText({
         text: `

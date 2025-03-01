@@ -113,6 +113,54 @@ const scrollAtEdge = (() => {
   return { start, stop }
 })()
 
+/** Warns on close if saving is in progress. */
+const onBeforeUnload = (e: BeforeUnloadEvent) => {
+  const syncStatus = syncStatusStore.getState()
+  if (
+    syncStatus.savingProgress < 1 &&
+    // do not warn user if importing, since it is resumable
+    store.getState().alert?.alertType !== AlertType.ImportFile
+  ) {
+    // Note: Showing confirmation dialog can vary between browsers.
+    // See: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
+    e.preventDefault()
+    e.returnValue = ''
+    return ''
+  }
+}
+
+/** Time to wait for save to complete. */
+const SAVE_ERROR_TIME = 3000
+
+/** Time to show error message before reload. */
+const SAVE_ERROR_RELOAD_TIME = 3000
+
+/** Save error timer id. */
+let saveTimer: NodeJS.Timeout
+
+/**
+ * There is a known issue where saving gets stuck after and/redo and further edits are not saved.
+ * If it takes longer than 3 seconds to save [to IndexedDB], then there is a major problem!
+ * Show an error for three seconds then force a reload to prevent data loss.
+ */
+const saveErrorReload = (savingProgress: number) => {
+  if (savingProgress === 1) {
+    clearTimeout(saveTimer)
+  }
+  // Only set timer if one is not already running.
+  // i.e. start timing from the first savingProgress < 1
+  else if (!saveTimer) {
+    saveTimer = setTimeout(() => {
+      store.dispatch(error({ value: 'Save error detected. Reloading to prevent data loss...' }))
+      setTimeout(() => {
+        // remove onBeforeUnload listener to prevent the confirmation dialog and force a reload
+        window.removeEventListener('beforeunload', onBeforeUnload)
+        window.location.reload()
+      }, SAVE_ERROR_RELOAD_TIME)
+    }, SAVE_ERROR_TIME)
+  }
+}
+
 /** Add window event handlers. */
 const initEvents = (store: Store<State, any>) => {
   let lastState: number
@@ -236,22 +284,6 @@ const initEvents = (store: Store<State, any>) => {
     scrollAtEdge.stop()
   }
 
-  /** Warns on close if saving is in progress. */
-  const onBeforeUnload = (e: BeforeUnloadEvent) => {
-    const syncStatus = syncStatusStore.getState()
-    if (
-      syncStatus.savingProgress < 1 &&
-      // do not warn user if importing, since it is resumable
-      store.getState().alert?.alertType !== AlertType.ImportFile
-    ) {
-      // Note: Showing confirmation dialog can vary between browsers.
-      // See: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
-      e.preventDefault()
-      e.returnValue = ''
-      return ''
-    }
-  }
-
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
@@ -345,8 +377,11 @@ const initEvents = (store: Store<State, any>) => {
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
 
+  const unsubscribeSaveErrorReload = syncStatusStore.subscribeSelector(state => state.savingProgress, saveErrorReload)
+
   /** Remove window event handlers. */
   const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
+    unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)

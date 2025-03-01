@@ -1008,3 +1008,39 @@ it('ChatGPT output saved to an HTML file and copied from the browser', async () 
       - Finer cell structure than standard Styrofoam
 `)
 })
+
+it('strip <style>...</style>', async () => {
+  const actual =
+    await importExport(`<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+  <style>
+  p {color: #000000}
+  </style>
+  </head>
+<body>
+  test
+</body>
+</html>`)
+  expect(actual).toBe(`
+- test
+`)
+})
+
+it('strip <style type="text/css">...</style>', async () => {
+  const actual =
+    await importExport(`<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+  <style type="text/css">
+  p {color: #000000}
+  </style>
+  </head>
+<body>
+  test
+</body>
+</html>`)
+  expect(actual).toBe(`
+- test
+`)
+})

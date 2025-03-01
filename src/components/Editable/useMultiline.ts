@@ -1,9 +1,10 @@
-import { head } from 'lodash'
+import { head, isEqual } from 'lodash'
 import { useEffect, useLayoutEffect, useState } from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
 import useSelectorEffect from '../../hooks/useSelectorEffect'
+import getStyle from '../../selectors/getStyle'
 import getThoughtById from '../../selectors/getThoughtById'
 import editingValueStore from '../../stores/editingValue'
 import viewportStore from '../../stores/viewport'
@@ -54,7 +55,17 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   // Recalculate multiline when the cursor changes.
   // This is necessary because the width of thoughts change as the autofocus indent changes.
   // (do not re-render component unless multiline changes)
-  useSelectorEffect(updateMultiline, selectCursor, shallowEqual)
+  useSelectorEffect(updateMultiline, selectCursor, isEqual)
+
+  // Recalculate multiline on =style change, since styles such as font size can affect thought width.
+  // Must wait one render since getStyle updates as soon as =style has loaded in the Redux store but before it has been applied to the DOM.
+  useSelectorEffect(
+    () => {
+      requestAnimationFrame(updateMultiline)
+    },
+    state => getStyle(state, head(simplePath)),
+    isEqual,
+  )
 
   // Recalculate height after thought value changes.
   // Otherwise, the hight is not recalculated after splitThought.

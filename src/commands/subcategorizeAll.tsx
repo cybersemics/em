@@ -9,7 +9,6 @@ const subCategorizeAllCommand: Command = {
   id: 'subcategorizeAll',
   label: 'Subcategorize All',
   description: 'Move all thoughts at the current level into a new, empty thought.',
-  gesture: 'ldrlu',
   keyboard: { key: 'a', meta: true, alt: true },
   multicursor: {
     enabled: true,
