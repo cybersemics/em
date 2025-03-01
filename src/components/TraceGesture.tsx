@@ -16,6 +16,20 @@ interface TraceGestureProps {
   eventNodeRef?: React.RefObject<HTMLElement>
 }
 
+type SignaturePadEventType = 'beginStroke' | 'endStroke' | 'beforeUpdateStroke' | 'afterUpdateStroke'
+
+/** Overriden SignaturePad ref to provide access to private members. Dangerous! Will break if SignaturePad internals change. Necessary to clear the canvas and apply drop shadow glow effect to signature. */
+interface SignaturePadOverride {
+  _handleTouchStart: (e: TouchEvent) => void
+  _handleTouchMove: (e: TouchEvent) => void
+  _handleTouchEnd: (e: TouchEvent) => void
+  _ctx: CanvasRenderingContext2D
+  addEventListener: (event: SignaturePadEventType, listener: (e: Event) => void) => void
+  canvas: HTMLCanvasElement
+  clear: () => void
+  removeEventListener: (event: SignaturePadEventType, listener: (e: Event) => void) => void
+}
+
 /** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: CommandPaletteGesture which have different ways of showing a cancelled gesture. */
 const useGestureCancelled = () => {
   const showCommandPalette = useSelector(state => state.showCommandPalette)
@@ -43,8 +57,9 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
   const onBeginStroke = useCallback(() => {
     if (!signaturePadRef.current) return
-    // use bracket notation to access private member variable
-    const signaturePad = signaturePadRef.current['signaturePad']
+
+    const signaturePad = signaturePadRef.current['signaturePad'] as SignaturePadOverride
+
     signaturePad.clear()
 
     // add glow
@@ -57,43 +72,45 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
   useEffect(() => {
     if (!signaturePadRef.current) return
-    // use bracket notation to access private member variable
-    const signaturePad = signaturePadRef.current['signaturePad']
+
     const eventNode = eventNodeRef?.current
+    const signaturePad = signaturePadRef.current['signaturePad'] as SignaturePadOverride
 
-    // Attach touch handlers to a provided node rather than the signature pad canvas.
-    // See: eventNodeRef
-    const handleTouchStart = signaturePad._handleTouchStart.bind(signaturePad)
-    const handleTouchMove = signaturePad._handleTouchMove.bind(signaturePad)
-    const handleTouchEnd = signaturePad._handleTouchEnd.bind(signaturePad)
+    // update canvas dimensions, otherwise the initial height on load is too large for some reason
+    // https://github.com/szimek/signature_pad/issues/118#issuecomment-146207233
+    signaturePad.canvas.width = signaturePad.canvas.offsetWidth
+    signaturePad.canvas.height = signaturePad.canvas.offsetHeight
 
-    eventNode?.addEventListener('touchstart', e => {
+    /** Forwards the touchstart event to the signaturePad if in the gesture zone. */
+    const onTouchStart = (e: TouchEvent) => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
       e.preventDefault = noop
 
       const touch = e.touches[0]
       if (isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
-        handleTouchStart(e)
+        signaturePad._handleTouchStart(e)
       }
-    })
+    }
 
-    eventNode?.addEventListener('touchmove', e => {
+    /** Forwards the touchmove event to the signaturePad if in the gesture zone. */
+    const onTouchMove = (e: TouchEvent) => {
       const isGestureInProgress = gestureStore.getState().length > 0
       const touch = e.touches[0]
 
       if (isGestureInProgress && isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
-        handleTouchMove(e)
+        signaturePad._handleTouchMove(e)
       }
-    })
+    }
 
-    eventNode?.addEventListener('touchend', e => {
+    /** Forwards the touchend event to the signaturePad. */
+    const onTouchEnd = (e: TouchEvent) => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
       e.preventDefault = noop
 
-      handleTouchEnd(e)
-    })
+      signaturePad._handleTouchEnd(e)
+    }
 
     /**
      * Clear the signature pad when the gesture is cancelled.
@@ -102,20 +119,18 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     const onTouchCancel = () => {
       signaturePad.clear()
     }
-    eventNode?.addEventListener('touchcancel', onTouchCancel)
 
+    eventNode?.addEventListener('touchstart', onTouchStart)
+    eventNode?.addEventListener('touchmove', onTouchMove)
+    eventNode?.addEventListener('touchend', onTouchEnd)
+    eventNode?.addEventListener('touchcancel', onTouchCancel)
     signaturePad.addEventListener('beginStroke', onBeginStroke)
 
-    // update canvas dimensions, otherwise the initial height on load is too large for some reason
-    // https://github.com/szimek/signature_pad/issues/118#issuecomment-146207233
-    signaturePad.canvas.width = signaturePad.canvas.offsetWidth
-    signaturePad.canvas.height = signaturePad.canvas.offsetHeight
-
     return () => {
-      eventNode?.removeEventListener('touchstart', handleTouchStart)
-      eventNode?.removeEventListener('touchmove', handleTouchMove)
-      eventNode?.removeEventListener('touchend', handleTouchEnd)
-      eventNode?.removeEventListener('touchend', onTouchCancel)
+      eventNode?.removeEventListener('touchstart', onTouchStart)
+      eventNode?.removeEventListener('touchmove', onTouchMove)
+      eventNode?.removeEventListener('touchend', onTouchEnd)
+      eventNode?.removeEventListener('touchcancel', onTouchCancel)
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
   }, [eventNodeRef, onBeginStroke, leftHanded])
