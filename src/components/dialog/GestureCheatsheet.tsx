@@ -21,19 +21,29 @@ const GestureCheatsheet: React.FC = () => {
     dispatch(closeDialogActionCreator())
   }
 
+  const dialogStyles = css({
+    opacity: isOpen ? 1 : 0,
+    transition: 'opacity 0.5s ease-in-out',
+    maxHeight: '50vh',
+    overflow: 'auto',
+    padding: '1rem',
+    scrollbarColor: '{colors.fg} {colors.bg}',
+    scrollbarWidth: 'thin',
+    '&::-webkit-scrollbar': {
+      width: '8px',
+    },
+    '&::-webkit-scrollbar-track': {
+      background: '{colors.bg}',
+    },
+  })
+
   return (
     <>
       {isOpen && (
         <Dialog onClose={handleClose}>
           <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
           <DialogContent>
-            <div
-              className={css({
-                maxHeight: '50vh',
-                overflowY: 'auto',
-                padding: '1rem',
-              })}
-            >
+            <div className={dialogStyles}>
               <CommandGrid />
             </div>
           </DialogContent>

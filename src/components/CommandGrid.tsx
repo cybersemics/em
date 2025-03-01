@@ -1,4 +1,5 @@
 import { FC, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
@@ -6,6 +7,7 @@ import CommandId from '../@types/CommandId'
 import { isTouch } from '../browser'
 import { commandById, globalCommands } from '../commands'
 import useFilteredCommands from '../hooks/useFilteredCommands'
+import theme from '../selectors/theme'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import CommandGridOnly from './CommandGridOnly'
@@ -119,21 +121,27 @@ if (commandsUngrouped.length > 0) {
 const SearchCommands: FC<{
   onInput?: (value: string) => void
 }> = ({ onInput }) => {
+  const isLightTheme = useSelector(state => theme(state) === 'Light')
+
   return (
-    <div id='search' className={css({ borderBottom: 'solid 1px {colors.gray50}' })}>
+    <div id='search' className={css({ border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
       <input
         type='text'
-        placeholder='Search commands by name...'
+        placeholder='Search gestures...'
         onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
           onInput?.(e.target.value)
         }}
         className={css({
           marginLeft: 0,
           marginBottom: 0,
-          marginTop: '1em',
-          border: 'none',
           boxSizing: 'border-box',
           width: '100%',
+          paddingLeft: '2rem',
+          backgroundImage: isLightTheme ? 'url("/assets/search_light.svg")' : 'url("/assets/search.svg")',
+          backgroundSize: '16px',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: '10px center',
+          borderRadius: '8px',
         })}
       />
     </div>
