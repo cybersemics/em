@@ -95,6 +95,15 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       handleTouchEnd(e)
     })
 
+    /**
+     * Clear the signature pad when the gesture is cancelled.
+     * Otherwise a stroke can be rendered from the bottom of the screen when switching apps on iPhone.
+     */
+    const onTouchCancel = () => {
+      signaturePad.clear()
+    }
+    eventNode?.addEventListener('touchcancel', onTouchCancel)
+
     signaturePad.addEventListener('beginStroke', onBeginStroke)
 
     // update canvas dimensions, otherwise the initial height on load is too large for some reason
@@ -106,6 +115,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       eventNode?.removeEventListener('touchstart', handleTouchStart)
       eventNode?.removeEventListener('touchmove', handleTouchMove)
       eventNode?.removeEventListener('touchend', handleTouchEnd)
+      eventNode?.removeEventListener('touchend', onTouchCancel)
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
   }, [eventNodeRef, onBeginStroke, leftHanded])
