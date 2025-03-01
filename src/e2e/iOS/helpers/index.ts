@@ -16,6 +16,8 @@ import isKeyboardShown from './isKeyboardShown'
 import keyboard from './keyboard'
 import newThought from './newThought'
 import paste from './paste'
+import pause from './pause'
+import swipe from './swipe'
 import tap from './tap'
 import tapReturnKey from './tapReturnKey'
 import waitForEditable from './waitForEditable'
@@ -45,6 +47,8 @@ const helpers = {
   isKeyboardShown,
   newThought,
   paste,
+  pause,
+  swipe,
   tap,
   tapReturnKey,
   type: keyboard.type,
@@ -56,12 +60,12 @@ const helpers = {
 /** Setup up the Browser instance for all helpers and returns an index of test helpers with the Browser instance partially applied. */
 const index = () => {
   const init = initSession()
-  const browserRef = {} as { current?: Browser<'async'> }
+  const browserRef = {} as { current?: Browser }
   const index = partialWithRef(browserRef, helpers)
 
   beforeEach(async () => {
     browserRef.current = await init()
-  })
+  }, 30000)
 
   return index as typeof index & {
     paste: typeof pasteOverload
