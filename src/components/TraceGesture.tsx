@@ -41,19 +41,23 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
   // Clear the signature pad when the stroke starts.
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
-  const onBeginStroke = useCallback(() => {
-    if (!signaturePadRef.current) return
-    // use bracket notation to access private member variable
-    const signaturePad = signaturePadRef.current['signaturePad']
-    signaturePad.clear()
+  const onBeginStroke = useCallback(
+    (e: any) => {
+      if (!signaturePadRef.current) return
+      console.info('beginStroke')
+      // use bracket notation to access private member variable
+      const signaturePad = signaturePadRef.current['signaturePad']
+      signaturePad.clear()
 
-    // add glow
-    // TODO: WHy does GESTURE_GLOW_COLOR not work?
-    signaturePad._ctx.shadowColor = colors.highlight
-    signaturePad._ctx.shadowOffsetX = 0
-    signaturePad._ctx.shadowOffsetY = 0
-    signaturePad._ctx.shadowBlur = GESTURE_GLOW_BLUR
-  }, [colors])
+      // add glow
+      // TODO: WHy does GESTURE_GLOW_COLOR not work?
+      signaturePad._ctx.shadowColor = colors.highlight
+      signaturePad._ctx.shadowOffsetX = 0
+      signaturePad._ctx.shadowOffsetY = 0
+      signaturePad._ctx.shadowBlur = GESTURE_GLOW_BLUR
+    },
+    [colors],
+  )
 
   useEffect(() => {
     if (!signaturePadRef.current) return
@@ -68,6 +72,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     const handleTouchEnd = signaturePad._handleTouchEnd.bind(signaturePad)
 
     eventNode?.addEventListener('touchstart', e => {
+      console.info('touchstart')
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
       e.preventDefault = noop
@@ -88,6 +93,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     })
 
     eventNode?.addEventListener('touchend', e => {
+      console.info('touchend')
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
       e.preventDefault = noop
@@ -96,6 +102,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     })
 
     eventNode?.addEventListener('touchcancel', () => {
+      console.info('touchcancel')
       document
         .querySelector('[aria-label="home"] svg')
         ?.setAttribute(
