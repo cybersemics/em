@@ -2,7 +2,6 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
@@ -14,27 +13,24 @@ import { AlertType, HOME_PATH } from '../constants'
 import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, getAllChildren } from '../selectors/getChildren'
-import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
 import nextSibling from '../selectors/nextSibling'
-import parentOfThought from '../selectors/parentOfThought'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import splitChain from '../selectors/splitChain'
-import thoughtsEditingFromChain from '../selectors/thoughtsEditingFromChain'
 import appendToPath from '../util/appendToPath'
 import equalThoughtValue from '../util/equalThoughtValue'
 import head from '../util/head'
-import headValue from '../util/headValue'
 import isDivider from '../util/isDivider'
 import isThoughtArchived from '../util/isThoughtArchived'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
+import updateCursorAfterDelete from './updateCursorAfterDelete'
 
 /** Returns path to the archive of the given context. */
 export const pathAndRankToArchive = (
@@ -70,74 +66,9 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
   // rewrite context view operaton in terms of normal view and update cursor
   if (showContexts) {
-    const pathParent = contextChain.length > 1 ? contextChain[contextChain.length - 1] : HOME_PATH
-    const thoughts = pathToContext(state, simplePath)
-    const context = pathToContext(state, pathParent)
-
-    /** Gets the previous sibling context in the context view. */
-    const prevContext = (): Thought | null => {
-      const thoughtsContextView = thoughtsEditingFromChain(state, path)
-      const value = headValue(state, thoughtsContextView)
-      const contexts = value !== undefined ? getContextsSortedAndRanked(state, value) : []
-      const contextsFiltered = contexts.filter(({ id }) => {
-        const parentThought = parentOfThought(state, id)
-        return parentThought?.value !== '=archive'
-      })
-      const removedThoughtIndex = contextsFiltered.findIndex(({ id }) => {
-        const parentThought = parentOfThought(state, id)
-        return parentThought?.value === headValue(state, path)
-      })
-
-      const prevContext = contextsFiltered[removedThoughtIndex - 1]
-      return prevContext ? getThoughtById(state, prevContext.parentId) || null : null
-    }
-
-    /** Gets the next sibling context in the context view. */
-    const nextContext = (): ThoughtId | null => {
-      const thoughtsContextView = thoughtsEditingFromChain(state, path)
-      const value = headValue(state, thoughtsContextView)
-      const contexts = value !== undefined ? getContextsSortedAndRanked(state, value) : []
-      const contextsFiltered = contexts.filter(({ id }) => {
-        const parentThought = parentOfThought(state, id)
-        return parentThought?.value !== '=archive'
-      })
-      const removedThoughtIndex = contextsFiltered.findIndex(({ id }) => {
-        const parentThought = parentOfThought(state, id)
-        return parentThought?.value === headValue(state, path)
-      })
-      const nextContext = contextsFiltered[removedThoughtIndex + 1]
-      return nextContext ? nextContext.parentId : null
-    }
-
-    // prev must be calculated before dispatching deleteThought
-    const prev = prevContext()
-
-    const next = !prev
-      ? nextContext()
-      : // get first visible thought
-        nextSibling(state, simplePath)?.id
-
-    const [cursorNew, offset]: [Path | null, number | undefined] =
-      // Case I: set cursor on prev thought
-      prev
-        ? // TODO: Fix offset here
-          [appendToPath(parentOf(path), prev.id), 0]
-        : // Case II: set cursor on next thought
-          next
-          ? [unroot(appendToPath(parentOf(path), next)), 0]
-          : // Case III: delete last thought in context; set cursor on context
-            thoughts.length > 1
-            ? [rootedParentOf(state, path), head(context).length]
-            : // Case IV: delete very last thought; remove cursor
-              [null, undefined]
-
     return reducerFlow([
       state => archiveThought(state, { path: simplePath }),
-      setCursor({
-        path: cursorNew,
-        editing: state.editing,
-        offset,
-      }),
+      stateNew => updateCursorAfterDelete(stateNew, state),
     ])(state)
   }
 

@@ -216,7 +216,61 @@ describe('context view', () => {
     expect(exported).toBe(expected)
   })
 
-  it('cursor should move to prevous sibling by default', () => {
+  it('cursor should move to next sibling by default', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - m
+              - x
+          - b
+            - m
+              - y
+            - n
+          - c
+            - m
+              - z
+        `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'b']),
+      archiveThought({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'c'])
+  })
+
+  it('cursor should move to previous sibling if there is no next sibling', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - m
+              - x
+          - b
+            - m
+              - y
+            - n
+          - c
+            - m
+              - z
+        `,
+      }),
+      setCursor(['b', 'm']),
+      toggleContextView,
+      setCursor(['b', 'm', 'a']),
+      archiveThought({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'b'])
+  })
+
+  it('cursor should move to parent when there is only one context left', () => {
     const steps = [
       importText({
         text: `
@@ -237,30 +291,6 @@ describe('context view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
-  })
-
-  it('cursor should move to next sibling if there is no prev sibling', () => {
-    const steps = [
-      importText({
-        text: `
-          - a
-            - m
-              - x
-          - b
-            - m
-              - y
-            - n
-        `,
-      }),
-      setCursor(['b', 'm']),
-      toggleContextView,
-      setCursor(['b', 'm', 'a']),
-      archiveThought({}),
-    ]
-
-    const stateNew = reducerFlow(steps)(initialState())
-
-    expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'b'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
   })
 })
