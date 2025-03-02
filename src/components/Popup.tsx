@@ -25,7 +25,7 @@ const Popup = React.forwardRef<
     >
       <PopupBase
         ref={ref}
-        fullWidth
+        fullScreen
         // scale with font size to stay vertically centered over toolbar
         padding={`${padding}px 0 ${padding}px`}
         textAlign={textAlign}

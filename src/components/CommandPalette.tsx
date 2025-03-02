@@ -149,12 +149,12 @@ const CommandSearch: FC<{
     <div>
       <input
         type='text'
-        placeholder='Search commands by name...'
+        placeholder='Search for a command'
         ref={inputRef}
         onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
           onInput?.(e.target.value)
         }}
-        className={css({ marginLeft: 0, marginBottom: 0, border: 'none', background: 'transparent' })}
+        className={css({ margin: '12px 24px', padding: 0, border: 'none', background: 'transparent' })}
       />
     </div>
   )
@@ -210,8 +210,8 @@ const CommandRow: FC<{
     <div
       className={css({
         cursor: !disabled ? 'pointer' : undefined,
-        paddingBottom: last ? (isTouch ? 0 : '4em') : '0.6em',
-        paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
+        // paddingBottom: last ? (isTouch ? 0 : '4em') : 0,
+        // paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
         position: 'relative',
         textAlign: 'left',
       })}
@@ -226,12 +226,13 @@ const CommandRow: FC<{
       <div
         className={css({
           backgroundColor: selected ? 'commandSelected' : undefined,
-          padding: selected ? '5px 0 5px 0.5em' : undefined,
+          // padding: selected ? '10px 0.3em 10px 0.5em' : undefined,
           borderRadius: '8px', // constant curve
+          padding: '10px',
           ...(!isTouch
             ? {
                 display: 'flex',
-                margin: selected ? '-5px 0' : undefined,
+                // margin: selected ? '-5px 0' : undefined,
                 flexDirection: 'row',
                 justifyContent: 'flex-start',
                 alignItems: 'center',
@@ -290,6 +291,8 @@ const CommandRow: FC<{
             flexDirection: 'column',
             alignItems: 'flex-start',
             gap: '0.2em',
+            marginRight: '3em',
+            flexWrap: 'wrap',
           })}
         >
           {/* label */}
@@ -346,6 +349,7 @@ const CommandRow: FC<{
                     display: 'inline',
                   }
                 : null),
+              marginLeft: 'auto',
             })}
           >
             <span className={css({ marginLeft: 20, whiteSpace: 'nowrap' })}>
@@ -464,88 +468,116 @@ const CommandPalette: FC<{
   )
 
   return (
-    <div
-      className={css({
-        ...(gestureInProgress || !isTouch ? { paddingLeft: '4em', paddingRight: '1.8em' } : null),
-        marginBottom: isTouch ? 0 : fontSize,
-        textAlign: 'left',
-      })}
-    >
-      {!isTouch || (gestureInProgress && commands.length > 0) ? (
-        <div>
-          <h2
-            className={css({
-              marginTop: 0,
-              marginBottom: '1em',
-              paddingLeft: 5,
-              borderBottom: 'solid 1px {colors.gray50}',
-            })}
-            style={{ marginLeft: -fontSize * 1.8 }}
-          >
-            {!isTouch ? (
-              <CommandSearch
-                onExecute={onExecuteSelected}
-                onInput={setSearch}
-                onSelectUp={onSelectUp}
-                onSelectDown={onSelectDown}
-                onSelectTop={onSelectTop}
-                onSelectBottom={onSelectBottom}
-              />
-            ) : (
-              'Gestures'
-            )}
-          </h2>
+    <>
+      <div
+        className={css({
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          top: '0',
+          left: '0',
+          right: '0',
+          bottom: '0',
+          backgroundColor: 'bgOverlay50',
+          cursor: 'pointer',
+        })}
+      />
+      <div
+        className={css({
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          position: 'absolute',
+          height: '100%',
+          width: '100%',
+        })}
+      >
+        <div
+          className={css({
+            marginBottom: isTouch ? 0 : fontSize,
+            textAlign: 'left',
+            border: '1px solid {colors.cpBorder}',
+            borderRadius: '12px',
+            backgroundColor: 'cpBackground',
+            maxHeight: '100%',
+            maxWidth: '826px',
+          })}
+        >
+          {!isTouch || (gestureInProgress && commands.length > 0) ? (
+            <div>
+              <h2
+                className={css({
+                  margin: 0,
+                  borderBottom: 'solid 1px {colors.cpBorder}',
+                })}
+                // style={{ marginLeft: -fontSize * 1.8 }}
+              >
+                {!isTouch ? (
+                  <CommandSearch
+                    onExecute={onExecuteSelected}
+                    onInput={setSearch}
+                    onSelectUp={onSelectUp}
+                    onSelectDown={onSelectDown}
+                    onSelectTop={onSelectTop}
+                    onSelectBottom={onSelectBottom}
+                  />
+                ) : (
+                  'Gestures'
+                )}
+              </h2>
 
-          <div
-            className={css({
-              marginLeft: !isTouch ? '-2.4em' : '-1.2em',
-              // offset the negative marginTop on CommandRow
-              paddingTop: 5,
-              ...(!isTouch ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
-            })}
-          >
-            {commands.length > 0 ? (
-              <>
-                {(() => {
-                  const hasMatchingCommand = commands.some(cmd => gestureInProgress === cmd.gesture)
-                  const helpCommand = commandById('help')
+              <div
+                className={css({
+                  ...(!isTouch ? { maxHeight: 'calc(100vh - 19em)' } : null),
+                  overflow: 'auto',
+                  // TODO: move padding here
+                  padding: '12px',
+                })}
+              >
+                {commands.length > 0 ? (
+                  <>
+                    {(() => {
+                      const hasMatchingCommand = commands.some(cmd => gestureInProgress === cmd.gesture)
+                      const helpCommand = commandById('help')
 
-                  return commands.map(command => {
-                    // Check if the current gesture sequence ends with help gesture
-                    const isHelpMatch =
-                      command.id === 'help' &&
-                      (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
-                    const isCancelMatch =
-                      command.id === 'cancel' &&
-                      !hasMatchingCommand &&
-                      !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+                      return commands.map(command => {
+                        // Check if the current gesture sequence ends with help gesture
+                        const isHelpMatch =
+                          command.id === 'help' &&
+                          (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+                        const isCancelMatch =
+                          command.id === 'cancel' &&
+                          !hasMatchingCommand &&
+                          !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
 
-                    return (
-                      <CommandRow
-                        search={search}
-                        gestureInProgress={gestureInProgress as string}
-                        key={command.id}
-                        last={command === commands[commands.length - 1]}
-                        onClick={onExecute}
-                        onHover={onHover}
-                        selected={
-                          !isTouch
-                            ? command === selectedCommand
-                            : isHelpMatch || gestureInProgress == command.gesture || isCancelMatch
-                        }
-                        command={command}
-                      />
-                    )
-                  })
-                })()}
-              </>
-            ) : (
-              <span className={css({ marginLeft: '1em' })}>No matching commands</span>
-            )}
-          </div>
+                        return (
+                          <CommandRow
+                            search={search}
+                            gestureInProgress={gestureInProgress as string}
+                            key={command.id}
+                            last={command === commands[commands.length - 1]}
+                            onClick={onExecute}
+                            onHover={onHover}
+                            selected={
+                              !isTouch
+                                ? command === selectedCommand
+                                : isHelpMatch || gestureInProgress == command.gesture || isCancelMatch
+                            }
+                            command={command}
+                          />
+                        )
+                      })
+                    })()}
+                  </>
+                ) : (
+                  <span className={css({ marginLeft: '1em' })}>No matching commands</span>
+                )}
+              </div>
+            </div>
+          ) : null}
         </div>
-      ) : null}
-    </div>
+      </div>
+    </>
   )
 }
 
@@ -575,6 +607,7 @@ const CommandPaletteWithTransition: FC = () => {
   return (
     <TransitionGroup
       childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
+      // className={css({ display: 'flex', justifyContent: 'center', alignItems: 'center' })}
     >
       {showCommandPalette ? (
         <FadeTransition duration='fast' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
