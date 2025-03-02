@@ -10,7 +10,9 @@ import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 // TODO: Why does util have to be imported before selectors and reducers?
 import initialState from '../../util/initialState'
+import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
+import importText from '../importText'
 
 it('archive a thought', () => {
   const steps = [newThought('a'), newThought('b'), archiveThought({})]
@@ -172,17 +174,20 @@ it('empty thought should be archived if it has descendants', () => {
   - a`)
 })
 
-// @MIGRATION: Context view doesn't work due to migration.
-describe.skip('context view', () => {
+describe('context view', () => {
   it('archive thought from context view', () => {
     const steps = [
-      newThought({ value: 'a' }),
-      newThought({ value: 'm', insertNewSubthought: true }),
-      newThought({ value: 'x', insertNewSubthought: true }),
-      cursorUp,
-      cursorUp,
-      newThought({ value: 'b' }),
-      newThought({ value: 'm', insertNewSubthought: true }),
+      importText({
+        text: `
+          - a
+            - m
+              - x
+          - b
+            - m
+              - y
+            - n
+        `,
+      }),
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'b']),
@@ -197,45 +202,25 @@ describe.skip('context view', () => {
       - x
   - b
     - =archive
-      - m`
-    expect(exported).toBe(expected)
-  })
-
-  it('archive thought with descendants from context view', () => {
-    const steps = [
-      newThought({ value: 'a' }),
-      newThought({ value: 'm', insertNewSubthought: true }),
-      newThought({ value: 'x', insertNewSubthought: true }),
-      setCursor(['a']),
-      newThought({ value: 'b' }),
-      newThought({ value: 'm', insertNewSubthought: true }),
-      toggleContextView,
-      setCursor(['b', 'm', 'a']),
-      archiveThought({}),
-    ]
-
-    const stateNew = reducerFlow(steps)(initialState())
-    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-    const expected = `- ${HOME_TOKEN}
-  - a
-    - =archive
       - m
-        - x
-  - b
-    - m`
+        - y
+    - n`
     expect(exported).toBe(expected)
   })
 
-  it('cursor should move to prev sibling', () => {
-    // same steps as "archive thought from context view"
+  it('cursor should move to prevous sibling by default', () => {
     const steps = [
-      newThought({ value: 'a' }),
-      newThought({ value: 'm', insertNewSubthought: true }),
-      newThought({ value: 'x', insertNewSubthought: true }),
-      cursorUp,
-      cursorUp,
-      newThought({ value: 'b' }),
-      newThought({ value: 'm', insertNewSubthought: true }),
+      importText({
+        text: `
+          - a
+            - m
+              - x
+          - b
+            - m
+              - y
+            - n
+        `,
+      }),
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'b']),
@@ -244,22 +229,23 @@ describe.skip('context view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(stateNew.cursor).toMatchObject([
-      { value: 'a', rank: 0 },
-      { value: 'm', rank: 0 },
-      { value: 'a', rank: 0 },
-    ])
+    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', 'a'])
   })
 
   it('cursor should move to next sibling if there is no prev sibling', () => {
-    // same steps as "archive thought with descendants from context view"
     const steps = [
-      newThought({ value: 'a' }),
-      newThought({ value: 'm', insertNewSubthought: true }),
-      newThought({ value: 'x', insertNewSubthought: true }),
-      setCursor(['a']),
-      newThought({ value: 'b' }),
-      newThought({ value: 'm', insertNewSubthought: true }),
+      importText({
+        text: `
+          - a
+            - m
+              - x
+          - b
+            - m
+              - y
+            - n
+        `,
+      }),
+      setCursor(['b', 'm']),
       toggleContextView,
       setCursor(['b', 'm', 'a']),
       archiveThought({}),
@@ -267,10 +253,6 @@ describe.skip('context view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(stateNew.cursor).toMatchObject([
-      { value: 'b', rank: 1 },
-      { value: 'm', rank: 0 },
-      { value: 'b', rank: 1 },
-    ])
+    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['b', 'm', 'b'])
   })
 })
