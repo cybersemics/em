@@ -18,7 +18,6 @@ import setCursor from '../../test-helpers/setCursorFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
 import executeCommand from '../../util/executeCommand'
 import initialState from '../../util/initialState'
-import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 
 describe('normal view', () => {
@@ -94,8 +93,7 @@ describe('normal view', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'a1', 'a1.2'])]
     const state = reducerFlow(steps)(initialState())
-    const cursor = state.cursor
-    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a', 'a1', 'a1.1'])
+    expectPathToEqual(state, prevThought(state, state.cursor!), ['a', 'a1', 'a1.1'])
   })
 
   it('should return parent when no previous sibling exists', () => {
@@ -106,8 +104,7 @@ describe('normal view', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'a1', 'first'])]
     const state = reducerFlow(steps)(initialState())
-    const cursor = state.cursor
-    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a', 'a1'])
+    expectPathToEqual(state, prevThought(state, state.cursor!), ['a', 'a1'])
   })
 
   it('should handle thoughts ending with colon', () => {
@@ -119,8 +116,7 @@ describe('normal view', () => {
     `
     const steps = [importText({ text }), setCursor(['b'])]
     const state = reducerFlow(steps)(initialState())
-    const cursor = state.cursor
-    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['planning:', 'task2'])
+    expectPathToEqual(state, prevThought(state, state.cursor!), ['planning:', 'task2'])
   })
 
   it('should handle thoughts with =pin attribute', () => {
@@ -134,8 +130,7 @@ describe('normal view', () => {
     `
     const steps = [importText({ text }), setCursor(['b'])]
     const state = reducerFlow(steps)(initialState())
-    const cursor = state.cursor
-    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a', 'a2'])
+    expectPathToEqual(state, prevThought(state, state.cursor!), ['a', 'a2'])
   })
 
   it('should handle thoughts with =children/=pin', () => {
@@ -151,8 +146,7 @@ describe('normal view', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'd'])]
     const state = reducerFlow(steps)(initialState())
-    const cursor = state.cursor
-    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a', 'b', 'c'])
+    expectPathToEqual(state, prevThought(state, state.cursor!), ['a', 'b', 'c'])
   })
 
   it('should skip hidden thoughts', () => {
@@ -163,7 +157,7 @@ describe('normal view', () => {
     `
     const steps = [importText({ text }), toggleHiddenThoughts, setCursor(['b']), toggleHiddenThoughts, cursorUp]
     const state = reducerFlow(steps)(initialState())
-    expect(pathToContext(state, state.cursor!)).toEqual(['a'])
+    expectPathToEqual(state, state.cursor, ['a'])
   })
 
   it('should handle thoughts with =view', () => {
@@ -176,8 +170,7 @@ describe('normal view', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
     const state = reducerFlow(steps)(initialState())
-    const cursor = state.cursor
-    expect(pathToContext(state, prevThought(state, cursor!)!)).toEqual(['a'])
+    expectPathToEqual(state, prevThought(state, state.cursor!), ['a'])
   })
 
   it('move cursor from empty thought to previous thought in context sorted in descending order', () => {
@@ -238,7 +231,7 @@ describe('context view', () => {
     const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView, setCursor(['a', 'm', 'a']), cursorUp]
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
   })
 
   it('move cursor to previous context', () => {
@@ -254,7 +247,7 @@ describe('context view', () => {
     const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView, setCursor(['a', 'm', 'b']), cursorUp]
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', 'a'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
   })
 
   it('move cursor from context child to context', () => {
@@ -276,7 +269,7 @@ describe('context view', () => {
     ]
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', 'a'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
   })
 
   it('move cursor from context view to normal sibling', () => {
@@ -294,6 +287,6 @@ describe('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeTruthy()
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'z'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'z'])
   })
 })

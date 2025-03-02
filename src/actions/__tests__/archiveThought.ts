@@ -10,7 +10,6 @@ import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 // TODO: Why does util have to be imported before selectors and reducers?
 import initialState from '../../util/initialState'
-import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 
@@ -238,7 +237,7 @@ describe('context view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', 'a'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
   })
 
   it('cursor should move to next sibling if there is no prev sibling', () => {
@@ -262,6 +261,6 @@ describe('context view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['b', 'm', 'b'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'b'])
   })
 })

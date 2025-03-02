@@ -1,9 +1,9 @@
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
-import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newSubthought from '../newSubthought'
@@ -120,7 +120,7 @@ describe('context view', () => {
       - m
         - y`)
 
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', ''])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', ''])
   })
 
   it('subcategorize context subthought', () => {
