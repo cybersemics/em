@@ -312,7 +312,10 @@ export const importFilesActionCreator =
               setImportThoughtPath(importThoughtPath),
 
               // delete empty destination thought
-              i === 0 && destEmpty ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) }) : null,
+              // ...unless it is a duplicate (i.e. if the pasted parent is empty), otherwise both the destination thought will be deleted and the duplicate will be skipped, leaving no parent to insert the descendants.
+              i === 0 && destEmpty && !duplicate
+                ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) })
+                : null,
               // If the thought is a duplicate, immediately update the import progress and resolve the task.
               duplicate
                 ? // It is possible for the Lexeme to be missing if the import was interrupted after the thought was saved but before the Lexeme was saved.

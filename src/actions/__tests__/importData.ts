@@ -1,11 +1,13 @@
 import MimeType from '../../@types/MimeType'
 import { EMPTY_SPACE, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import removeHome from '../../util/removeHome'
 import importDataActionCreator from '../importData'
+import { newThoughtActionCreator as newThought } from '../newThought'
 
 /** Helper function that initializes the store, imports html into the root, and exports it as plaintext to make easily readable assertions. This is async because importFiles is async. */
 const importExport = async (html: string, outputFormat: MimeType = 'text/plain') => {
@@ -1043,4 +1045,27 @@ it('strip <style type="text/css">...</style>', async () => {
   expect(actual).toBe(`
 - test
 `)
+})
+
+it('empty parent', async () => {
+  const text = `- ${''}
+  - x`
+
+  vi.useFakeTimers()
+  const { cleanup } = await initialize()
+
+  store.dispatch([
+    newThought({}),
+    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), [''])!, text })),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - ${''}
+    - x`)
 })
