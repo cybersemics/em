@@ -33,7 +33,7 @@ it('recalculate absolute ranks while preserving relative order to avoid rank pre
 it('rerank on moveThought if ranks are too close', () => {
   /** Creates a new thought above and deletes the thought below in a way that decreases the new thought's rank. */
   const halveRank = (value: string) =>
-    reducerFlow([newThought({ value, insertBefore: true }), cursorDown, deleteThoughtWithCursor({})])
+    reducerFlow([newThought({ value, insertBefore: true }), cursorDown, deleteThoughtWithCursor])
 
   const steps = [
     newThought({ value: 'a' }),

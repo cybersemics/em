@@ -1,5 +1,4 @@
 import { applyPatch } from 'fast-json-patch'
-import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -39,11 +38,13 @@ const getContext = (state: State, path: Path) => {
  * -   If the last action was a new subthought, i.e. newThought with insertNewSubthought: true, restore the cursor to the parent.
  * -   Restoring the cursor and making the delete action an exact inverse to newThought is more intuitive than moving the cursor elsewhere, and helps the user with error correction.
  **/
-const updateCursorAfterDelete = (state: State, statePrev: State, { path }: { path: Path }) => {
+const updateCursorAfterDelete = (state: State, statePrev: State) => {
   const cursor = statePrev.cursor
-  const parentPath = rootedParentOf(statePrev, path)
+  if (!cursor) return state
+
+  const parentPath = rootedParentOf(statePrev, cursor)
   const showContexts = isContextViewActive(statePrev, parentPath)
-  const simplePath = thoughtToPath(statePrev, head(path))
+  const simplePath = thoughtToPath(statePrev, head(cursor))
 
   const thought = getThoughtById(statePrev, head(simplePath))
 
@@ -51,11 +52,11 @@ const updateCursorAfterDelete = (state: State, statePrev: State, { path }: { pat
 
   /** Returns true if the context view needs to be closed after deleting. Specifically, returns true if there is only one context left after the delete or if the deleted path is a cyclic context, e.g. a/m~/a. */
   const shouldCloseContextView = once(() => {
-    const parentPath = rootedParentOf(statePrev, path)
+    const parentPath = rootedParentOf(statePrev, cursor)
     const showContexts = isContextViewActive(statePrev, parentPath)
     const parentThought = getThoughtById(statePrev, head(parentPath))
     const numContexts = showContexts && parentThought ? getContexts(statePrev, parentThought.value).length : 0
-    const isCyclic = head(path) === head(parentOf(parentOf(path)))
+    const isCyclic = head(cursor) === head(parentOf(parentOf(cursor)))
     return isCyclic || numContexts <= 2
   })
 
@@ -65,7 +66,7 @@ const updateCursorAfterDelete = (state: State, statePrev: State, { path }: { pat
       ? // In context view, do not set cursor on next/prev context if cyclic context was deleted, i.e. If a/m~/b was deleted, do not try to set the cursor on a/m~/a, since a/m no longer exists.
         // If there is only one context left in the context view after deletion, do not set the cursor on the next/prev context, but instead allow it to fall back to the parent since the context view will be collapsed.
         !shouldCloseContextView()
-        ? prevContext(statePrev, path)
+        ? prevContext(statePrev, cursor)
         : null
       : // If context view is not enabled, get the prev thought in normal view. We need to explicitly override showContexts, otherwise prevSibling will infer that the context view is enabled and will incorrectly return the previous context.
         prevSibling(statePrev, simplePath, { showContexts: false }),
@@ -74,14 +75,14 @@ const updateCursorAfterDelete = (state: State, statePrev: State, { path }: { pat
   const next = once(() =>
     showContexts
       ? !shouldCloseContextView()
-        ? nextContext(statePrev, path)
+        ? nextContext(statePrev, cursor)
         : null
       : nextSibling(statePrev, simplePath),
   )
 
   // instead of using the thought parent, use the closest valid ancestor
   // otherwise deleting a thought from a cyclic context will return an invalid cursor
-  const pathParent = rootedParentOf(state, path)
+  const pathParent = rootedParentOf(state, cursor)
   const missingIndex = pathParent.findIndex(id => !getThoughtById(state, id))
   const closestAncestor = missingIndex !== -1 ? (pathParent.slice(0, missingIndex) as Path) : pathParent
 
@@ -116,7 +117,7 @@ const updateCursorAfterDelete = (state: State, statePrev: State, { path }: { pat
       // Do not move the cursor to the next thought after deleting an empty thought, as it is more intuitive to move the cursor to the previous thought like a word processor.
       // this does not apply to context view or when there is a reverted cursor
       thought.value !== '' && next()
-      ? appendToPath(parentOf(path), next()!.id)
+      ? appendToPath(parentOf(cursor), next()!.id)
       : // Case II: Set cursor on prev thought.
         // For empty thoughts, we need to fall back to next().
         // Allow revertNewSubthought to fall through to Case III (parent).
@@ -139,35 +140,34 @@ const updateCursorAfterDelete = (state: State, statePrev: State, { path }: { pat
 }
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. Works in normal view and context view. */
-const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
-  if (!state.cursor && !payload.path) return state
+const deleteThoughtWithCursor = (state: State) => {
+  if (!state.cursor) return state
 
   const cursor = state.cursor
-  const path = (payload.path || cursor)!
-  const parentPath = rootedParentOf(state, path)
+  const parentPath = rootedParentOf(state, cursor)
 
   // same as in newThought
   const showContexts = isContextViewActive(state, parentPath)
-  const simplePath = thoughtToPath(state, head(path))
+  const simplePath = thoughtToPath(state, head(cursor))
 
   const thought = getThoughtById(state, head(simplePath))
 
   if (!thought) return state
 
-  /** Returns true if the context view needs to be closed after deleting . Specifically, returns true if there is only one context left after the delete or if the deleted path is a cyclic context, e.g. a/m~/a. */
+  /** Returns true if the context view needs to be closed after deleting . Specifically, returns true if there is only one context left after the delete or if the deleted cursor is a cyclic context, e.g. a/m~/a. */
   const shouldCloseContextView = once(() => {
-    const parentPath = rootedParentOf(state, path)
+    const parentPath = rootedParentOf(state, cursor)
     const showContexts = isContextViewActive(state, parentPath)
     const parentThought = getThoughtById(state, head(parentPath))
     const numContexts = showContexts && parentThought ? getContexts(state, parentThought.value).length : 0
-    const isCyclic = head(path) === head(parentOf(parentOf(path)))
+    const isCyclic = head(cursor) === head(parentOf(parentOf(cursor)))
     return isCyclic || numContexts <= 2
   })
 
   // When deleting a context from the context view, we need to delete the correct instance of the Lexeme, e.g. in a/m~/b we want to delete b/m
   // This is a problem specifically for tangential contexts, which have a different parent from the cursor.
   // i.e. The id of b/m is not contained within the cursor a/m~/b because they are different m instances.
-  const contextId = (showContexts && getContext(state, path)) || null
+  const contextId = (showContexts && getContext(state, cursor)) || null
 
   return reducerFlow([
     // delete thought
@@ -176,7 +176,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       // TODO: Wouldn't this remove other children in ABS/one?
       showContexts && thought.parentId !== ABSOLUTE_TOKEN
         ? {
-            pathParent: path,
+            pathParent: cursor,
             thoughtId: contextId!,
           }
         : {
@@ -186,7 +186,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     ),
 
     // move cursor
-    stateNew => updateCursorAfterDelete(stateNew, state, { path }),
+    stateNew => updateCursorAfterDelete(stateNew, state),
 
     /* If the second-to-last context is deleted, and it is a tangential context, we need to manually close the context view.
        Other cases are handled by deleteThought.
@@ -211,9 +211,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 }
 
 /** Action-creator for deleteThoughtWithCursor. */
-export const deleteThoughtWithCursorActionCreator =
-  (payload: Parameters<typeof deleteThoughtWithCursor>[1]): Thunk =>
-  dispatch =>
-    dispatch({ type: 'deleteThoughtWithCursor', ...payload })
+export const deleteThoughtWithCursorActionCreator = (): Thunk => dispatch =>
+  dispatch({ type: 'deleteThoughtWithCursor' })
 
-export default _.curryRight(deleteThoughtWithCursor) /** Action-creator for deleteThoughtWithCursor. */
+export default deleteThoughtWithCursor

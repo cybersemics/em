@@ -34,7 +34,7 @@ const exec: Command['exec'] = (dispatch, getState) => {
   } else if (findDescendant(state, head(cursor), '=readonly')) {
     dispatch(error({ value: `"${ellipsize(value)}" is read-only and cannot be deleted.` }))
   } else {
-    dispatch(deleteThoughtWithCursor({ path: cursor }))
+    dispatch(deleteThoughtWithCursor())
 
     // Alert which thought was deleted.
     // Only show alert for empty thought in training mode.
