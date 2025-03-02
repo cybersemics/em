@@ -14,7 +14,7 @@ import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import toggleContextView from '../toggleContextView'
 
-describe('delete', () => {
+describe('nomal view', () => {
   it('delete thought within root', () => {
     const steps = [newThought('a'), newThought('b'), deleteThoughtWithCursor({})]
 
