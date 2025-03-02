@@ -6,7 +6,14 @@ import editingValueStore from '../stores/editingValue'
 
 /** Returns CSS variables that will suppress faux carets at the start or end of thoughts or notes.
  * */
-const useFauxCaretCssVars = (editing: boolean | null, isCursor: boolean, path: Path) => {
+const useFauxCaretCssVars = (
+  editing: boolean | null,
+  // Undo followed by redo causes the component to re-mount with the same prop values,
+  // but fadeThoughRef is re-created and will trigger an update.
+  fadeThoughtElement: HTMLDivElement | null,
+  isCursor: boolean,
+  path: Path,
+) => {
   const [showLineEndFauxCaret, setShowLineEndFauxCaret] = useState(false)
   const [showLineStartFauxCaret, setShowLineStartFauxCaret] = useState(false)
   const [showNoteLineEndFauxCaret, setShowNoteLineEndFauxCaret] = useState(false)
@@ -43,7 +50,7 @@ const useFauxCaretCssVars = (editing: boolean | null, isCursor: boolean, path: P
       setShowLineEndFauxCaret(false)
       setShowNoteLineEndFauxCaret(false)
     }
-  }, [editing, isCursor, path])
+  }, [editing, fadeThoughtElement, isCursor, path])
 
   return {
     '--faux-caret-line-start-opacity': showLineStartFauxCaret ? undefined : 0,

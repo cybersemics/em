@@ -436,7 +436,7 @@ const TreeNode = ({
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
   const [fauxCaretStyles, setFauxCaretStyles] = useState<CSSProperties>({ display: 'none' })
-  const fauxCaretCssVars = useFauxCaretCssVars(editing, isCursor, path)
+  const fauxCaretCssVars = useFauxCaretCssVars(editing, fadeThoughtRef.current, isCursor, path)
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
