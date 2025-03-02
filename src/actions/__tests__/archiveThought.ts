@@ -134,10 +134,7 @@ describe('normal view', () => {
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
-    expectPathToEqual(stateNew, stateNew.cursor, [
-      { value: 'a', rank: 0 },
-      { value: 'a1', rank: 0 },
-    ])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'a1'])
   })
 
   it('cursor should move to next sibling if there is no prev sibling', () => {
@@ -153,10 +150,7 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expectPathToEqual(stateNew, stateNew.cursor, [
-      { value: 'a', rank: 0 },
-      { value: 'a2', rank: 1 },
-    ])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'a2'])
   })
 
   it('cursor should move to parent if the deleted thought has no siblings', () => {
@@ -164,7 +158,7 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a', rank: 0 }])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
 
   it('cursor should be removed if the last thought is deleted', () => {
