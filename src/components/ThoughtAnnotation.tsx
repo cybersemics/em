@@ -154,6 +154,7 @@ const ThoughtAnnotation = React.memo(
           // maxWidth: '100%',
           marginTop: '0',
           display: 'inline-block',
+          textAlign: 'left',
           verticalAlign: 'top',
           whiteSpace: 'pre-wrap',
           /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
