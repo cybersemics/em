@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { closeDialogActionCreator } from '../../actions/closeDialog'
+import { FADEOUT_DURATION } from '../../constants'
 import CommandGrid from '../CommandGrid'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
@@ -13,14 +14,27 @@ import DialogTitle from './DialogTitle'
 const GestureCheatsheet: React.FC = () => {
   const dispatch = useDispatch()
   const isOpen = useSelector(state => state.dialogOpen)
+  const dialogRef = useRef<HTMLDivElement | null>(null)
 
   /**
    * Handles the closure of the gesture cheatsheet.
    */
   const handleClose = () => {
-    dispatch(closeDialogActionCreator())
+    if (dialogRef.current) {
+      dialogRef.current.style.opacity = '0'
+      setTimeout(() => {
+        dispatch(closeDialogActionCreator())
+      }, FADEOUT_DURATION)
+    }
   }
 
+  useEffect(() => {
+    if (dialogRef.current) {
+      dialogRef.current.style.opacity = '1'
+    }
+  }, [isOpen])
+
+  /** Styles for the dialog content. */
   const dialogStyles = css({
     maxHeight: '70vh',
     overflow: 'auto',
@@ -35,16 +49,24 @@ const GestureCheatsheet: React.FC = () => {
     },
   })
 
+  /** Styles for the dialog fade in and out animation. */
+  const dialogAnimationStyles = css({
+    opacity: 0,
+    transition: 'opacity 1s ease',
+  })
+
   return (
     <>
       {isOpen && (
         <Dialog onClose={handleClose}>
-          <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
-          <DialogContent>
-            <div className={dialogStyles}>
-              <CommandGrid />
-            </div>
-          </DialogContent>
+          <div ref={dialogRef} className={dialogAnimationStyles}>
+            <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
+            <DialogContent>
+              <div className={dialogStyles}>
+                <CommandGrid />
+              </div>
+            </DialogContent>
+          </div>
         </Dialog>
       )}
     </>

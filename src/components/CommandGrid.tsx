@@ -128,7 +128,8 @@ const SearchCommands: FC<{
       className={css({
         display: 'flex',
         flexDirection: 'row',
-        gap: '6px',
+        justifyContent: 'space-between',
+        gap: '5px',
       })}
     >
       <div id='search' className={css({ border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
@@ -248,6 +249,7 @@ const CommandGrid = ({
                 title={group.title}
                 commands={commands}
                 customize={customize}
+                key={group.title}
                 onSelect={onSelect}
                 selectedCommand={selectedCommand}
               />
