@@ -90,8 +90,6 @@ class ModalComponent extends React.Component<ModalProps> {
               margin: '-10px -20px',
               position: 'fixed',
               right: '11px',
-              // inherit not yet supported by plugin
-              // eslint-disable-next-line @pandacss/no-hardcoded-color
               color: 'inherit',
               textDecoration: 'none',
               /* spacing.safeAreaTop applies for rounded screens */
