@@ -1,8 +1,9 @@
+// import setCursor from '../../../test-helpers/setCursorFirstMatch'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
-import getSuperScriptColor from '../helpers/getSuperScriptColor'
+import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
@@ -188,29 +189,60 @@ it('remove all formatting from the thought', async () => {
   expect(thoughtValue).toBe('Labrador')
 })
 
-it('Set the superScript color of the text', async () => {
-  const importText = `
-    - a
-    - a
+it('Verify superscript colors in different views', async () => {
+  const importText1 = `
+    - k
+    - k
     - hello world
     - hello world
+    - a
+      - m
+        - x
+    - v
+      - b
+        - m
+          - y
+    - c
+      - b
     `
-  await paste(importText)
+  await paste(importText1)
 
+  // Test 1: Verify that partial text coloring doesn't affect superscript
   await waitForEditable('hello world')
   await clickThought('hello world')
-  await setSelection(6, 11)
+  await setSelection(6, 11) // Select only "world" in "hello world"
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="red"]')
 
-  const supColor2 = await getSuperScriptColor()
-  expect(supColor2).toBe(null)
+  const supColor1 = await getSuperscriptColor()
+  expect(supColor1).toBe(null) // Superscript should remain uncolored for partial text coloring
 
-  await waitForEditable('a')
-  await clickThought('a')
+  // Test 2: Verify superscript color when entire thought is colored
+  await waitForEditable('k')
+  await clickThought('k')
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
-  const supColor1 = await getSuperScriptColor()
-  expect(supColor1).toBe('rgb(0, 199, 230)')
+  const supColor2 = await getSuperscriptColor()
+  expect(supColor2).toBe('rgb(0, 199, 230)') // Superscript should match thought color
+
+  // Test 3: Set up nested thought colors for context view testing
+  // Color parent thought 'v' red
+  await clickThought('v')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  // Color child thought 'b' green
+  await clickThought('b')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="green"]')
+
+  // Switch to context view and verify superscript color
+  await clickThought('a')
+  await clickThought('m')
+  await click('[data-testid="toolbar-icon"][aria-label="Context View"]')
+
+  await press('ArrowDown')
+  const supColor3 = await getSuperscriptColor()
+  expect(supColor3).toBe('rgb(0, 214, 136)') // Superscript should match the green color in context view
 })
