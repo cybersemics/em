@@ -28,8 +28,7 @@ const Tab = <Tab extends string>({ currentTab, onTabChange, children, className 
           padding: '0',
           width: '100%',
           // height: '51px',
-          borderBottom: '2px solid',
-          borderColor: 'fgOverlay20',
+          borderBottom: '2px solid {colors.fgOverlay20}',
         })}
       >
         {Children.map(children, child => {
