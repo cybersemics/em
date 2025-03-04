@@ -37,8 +37,7 @@ const TabItem: React.FC<TabItemProps> = ({ value, children, label, showDot = fal
         <span
           className={css({
             fontSize: '1.14em',
-            // fontSize: '16px',
-            // lineHeight: '19px',
+            _mobile: { fontSize: '1em' },
             textAlign: 'center',
             color: active ? 'fg' : 'fgOverlay70',
             fontWeight: active ? 700 : 400,
