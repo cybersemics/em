@@ -8,10 +8,9 @@ import DragToolbarItem from '../@types/DragToolbarItem'
 import GesturePath from '../@types/GesturePath'
 import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
-import { formatKeyboardShortcut } from '../commands'
 import { noop } from '../constants'
 import store from '../stores/app'
-import GestureDiagram from './GestureDiagram'
+import GestureDiagramCheatsheet from './GestureDiagramCheatsheet'
 import HighlightedText from './HighlightedText'
 
 /** Converts the integer into an ordinal, e.g. 1st, 2nd, 3rd, 4th, etc. */
@@ -74,6 +73,7 @@ const CommandColumn = ({
         className={css({
           display: 'flex',
           flexDirection: 'column',
+          gap: '0.5rem',
           position: 'relative',
           cursor: customize ? 'pointer' : undefined,
           ...(isDragging || selected
@@ -118,7 +118,7 @@ const CommandColumn = ({
           <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
             {isTouch && command.gesture ? (
               // GesturePath[]
-              <GestureDiagram path={command.gesture as GesturePath} size={110} arrowSize={12} />
+              <GestureDiagramCheatsheet path={command.gesture as GesturePath} size={110} arrowSize={12} />
             ) : null}
           </td>
         ) : null}
@@ -144,12 +144,21 @@ const CommandColumn = ({
               <HighlightedText value={command.label} match={search} />
             </b>
           ) : (
-            <b>{command.label}</b>
+            <b
+              className={css({
+                fontSize: '0.9rem',
+              })}
+            >
+              {command.label}
+            </b>
           )}
-          {command.keyboard && !isTouch ? (
-            <p className={css({ color: 'gray', marginBottom: 0 })}>{formatKeyboardShortcut(command.keyboard)}</p>
-          ) : null}
-          <p>{description}</p>
+          <p
+            className={css({
+              fontSize: '0.7rem',
+            })}
+          >
+            {description}
+          </p>
         </td>
       </tr>
     )

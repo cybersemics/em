@@ -124,25 +124,45 @@ const SearchCommands: FC<{
   const isLightTheme = useSelector(state => theme(state) === 'Light')
 
   return (
-    <div id='search' className={css({ border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
-      <input
-        type='text'
-        placeholder='Search gestures...'
-        onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-          onInput?.(e.target.value)
-        }}
+    <div
+      className={css({
+        display: 'flex',
+        flexDirection: 'row',
+        gap: '6px',
+      })}
+    >
+      <div id='search' className={css({ border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
+        <input
+          type='text'
+          placeholder='Search gestures...'
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+            onInput?.(e.target.value)
+          }}
+          className={css({
+            marginLeft: 0,
+            marginBottom: 0,
+            boxSizing: 'border-box',
+            width: '100%',
+            minWidth: '100%',
+            paddingLeft: '2rem',
+            backgroundImage: isLightTheme ? 'url("/assets/search_light.svg")' : 'url("/assets/search.svg")',
+            backgroundSize: '16px',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: '10px center',
+            borderRadius: '8px',
+          })}
+        />
+      </div>
+      <button
         className={css({
-          marginLeft: 0,
-          marginBottom: 0,
-          boxSizing: 'border-box',
-          width: '100%',
-          minWidth: '100%',
-          paddingLeft: '2rem',
-          backgroundImage: isLightTheme ? 'url("/assets/search_light.svg")' : 'url("/assets/search.svg")',
-          backgroundSize: '16px',
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: '10px center',
+          width: '45px',
+          border: 'solid 1px {colors.gray50}',
+          backgroundColor: '{colors.darkgray}',
           borderRadius: '8px',
+          backgroundImage: isLightTheme ? 'url("/assets/sort_light.svg")' : 'url("/assets/sort.svg")',
+          backgroundSize: '20px',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
         })}
       />
     </div>

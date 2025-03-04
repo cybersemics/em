@@ -22,8 +22,6 @@ const GestureCheatsheet: React.FC = () => {
   }
 
   const dialogStyles = css({
-    opacity: isOpen ? 1 : 0,
-    transition: 'opacity 0.5s ease-in-out',
     maxHeight: '70vh',
     overflow: 'auto',
     padding: '1rem',
