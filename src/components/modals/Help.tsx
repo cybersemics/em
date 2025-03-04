@@ -342,7 +342,7 @@ const ModalHelp = () => {
         <TabItem value={Section.Tutorials} label='Tutorials' showDot={showDot}>
           <Tutorials />
         </TabItem>
-        <TabItem value={Section.Metaprogramming} label='Metaprogramming'>
+        <TabItem value={Section.Metaprogramming} label='Meta'>
           <Metaprogramming />
         </TabItem>
         <TabItem value={Section.About} label='About'>
