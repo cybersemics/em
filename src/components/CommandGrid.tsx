@@ -169,11 +169,15 @@ const CommandsGroup: ({
 
   return (
     <div>
-      <h2 className={css({
-        ...modalClasses,
-        fontSize: '1.3rem',
-        borderBottom: 'none'
-      })}>{title}</h2>
+      <h2
+        className={css({
+          ...modalClasses,
+          fontSize: '1.3rem',
+          borderBottom: 'none',
+        })}
+      >
+        {title}
+      </h2>
       <CommandGridOnly
         commands={commands}
         selectedCommand={selectedCommand}
