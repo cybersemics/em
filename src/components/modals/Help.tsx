@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import { modalTextRecipe } from '../../../styled-system/recipes'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
@@ -26,11 +25,8 @@ const Tutorials = () => {
   const dispatch = useDispatch()
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
 
-  const { subtitle } = modalTextRecipe()
   return (
-    <section className={css({ marginBottom: '50px' })} id='tutorials'>
-      <h2 className={subtitle}>Tutorials</h2>
-
+    <section className={css({ marginBottom: '50px', paddingTop: '1em' })} id='tutorials'>
       <div
         className={css({
           textAlign: 'center',
@@ -86,13 +82,8 @@ const Options = ({ options }: { options: string[] }) => (
 
 /** A help section that lists all metaprogramming attributes. */
 const Metaprogramming = () => {
-  const modalClasses = modalTextRecipe({ compact: true })
   return (
-    <div>
-      <h2 id='meta' className={modalClasses.subtitle}>
-        Metaprogramming
-      </h2>
-
+    <div className={css({ paddingTop: '1em' })}>
       <p className={css({ color: 'dim', marginBottom: '2em' })}>
         <i>Metaprogramming attributes</i> are hidden thoughts with superpowers. Customize the appearance and behavior of
         thoughts, define style templates, and more.
