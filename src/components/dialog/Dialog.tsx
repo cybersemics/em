@@ -48,7 +48,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
         className={css({
           backgroundColor: '{colors.bg}',
           color: '{colors.fg}',
-          padding: '16px 20px',
+          padding: '0.8rem 0.8rem 0',
           borderRadius: '8px',
           maxWidth: '500px',
           width: '80%',

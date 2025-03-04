@@ -136,6 +136,7 @@ const SearchCommands: FC<{
           marginBottom: 0,
           boxSizing: 'border-box',
           width: '100%',
+          minWidth: '100%',
           paddingLeft: '2rem',
           backgroundImage: isLightTheme ? 'url("/assets/search_light.svg")' : 'url("/assets/search.svg")',
           backgroundSize: '16px',

@@ -17,9 +17,10 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
     <button
       onClick={onClick}
       className={css({
-        width: '40px',
-        height: '40px',
+        width: '35px',
+        height: '35px',
         borderRadius: '50%',
+        marginRight: '0.5rem',
         backgroundColor: '{colors.darkgray}',
         border: `2px solid {colors.gray50}`,
         display: 'flex',

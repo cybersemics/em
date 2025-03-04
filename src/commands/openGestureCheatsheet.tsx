@@ -27,7 +27,7 @@ const openGestureCheatsheetCommand: Command = {
 // Add aliases for the gesture command
 export const openGestureCheatsheetAliases: Command = {
   id: 'openGestureCheatsheetAliases',
-  label: 'Open Gesture Cheatsheet',
+  label: 'Gesture Cheatsheet',
   hideFromHelp: true,
   gesture: ['rdldl', 'rdldld', 'rldld', 'rldldl'], // Add alternative gestures
   multicursor: true,
