@@ -42,7 +42,6 @@ const CommandGridOnly = ({
           return (
             <CommandRow
               customize={customize}
-              key={command?.id}
               indexInToolbar={indexInToolbar !== -1 && applyIndexInToolbar ? indexInToolbar + 1 : null}
               onSelect={onSelect}
               selected={selectedCommand && command?.id === selectedCommand.id}

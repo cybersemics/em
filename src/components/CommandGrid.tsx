@@ -218,7 +218,6 @@ const CommandGrid = ({
               <CommandsGroup
                 title={group.title}
                 commands={commands}
-                key={group.title}
                 customize={customize}
                 onSelect={onSelect}
                 selectedCommand={selectedCommand}
