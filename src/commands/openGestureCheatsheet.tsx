@@ -14,7 +14,7 @@ const exec: Command['exec'] = dispatch => {
 
 const openGestureCheatsheetCommand: Command = {
   id: 'openGestureCheatsheet',
-  label: 'Open Gesture Cheatsheet',
+  label: 'Gesture Cheatsheet',
   description: 'Opens a list of all the gestures.',
   keyboard: { key: '.', meta: true }, //remove this later when styling on mobile web is done
   gesture: 'rdld',
@@ -27,7 +27,7 @@ const openGestureCheatsheetCommand: Command = {
 // Add aliases for the gesture command
 export const openGestureCheatsheetAliases: Command = {
   id: 'openGestureCheatsheetAliases',
-  label: 'Gesture Cheatsheet',
+  label: 'Open Gesture Cheatsheet',
   hideFromHelp: true,
   gesture: ['rdldl', 'rdldld', 'rldld', 'rldldl'], // Add alternative gestures
   multicursor: true,

@@ -118,7 +118,7 @@ const CommandColumn = ({
           <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
             {isTouch && command.gesture ? (
               // GesturePath[]
-              <GestureDiagram path={command.gesture as GesturePath} size={48} arrowSize={12} />
+              <GestureDiagram path={command.gesture as GesturePath} size={110} arrowSize={12} />
             ) : null}
           </td>
         ) : null}
@@ -126,7 +126,6 @@ const CommandColumn = ({
           className={css({
             // create a container for the selected bar equal to the height of the row
             position: 'relative',
-            paddingRight: '1em',
             textAlign: 'left',
             fontWeight: 'normal',
           })}
