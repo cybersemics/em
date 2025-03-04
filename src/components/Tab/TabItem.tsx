@@ -19,27 +19,26 @@ const TabItem: React.FC<TabItemProps> = ({ value, children, label, showDot = fal
     <>
       <div
         className={css({
-          boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'row',
           justifyContent: 'center',
           alignItems: 'center',
           padding: '16px 20px',
           gap: '8px',
-          height: '51px',
+          height: '100%',
           cursor: 'pointer',
           ...(active && {
             backgroundColor: 'fgOverlay10',
-            borderBottom: '2px solid',
-            borderColor: 'link',
+            borderBottom: '2px solid {colors.link}',
           }),
         })}
         onClick={onClick}
       >
         <span
           className={css({
-            fontSize: '16px',
-            lineHeight: '19px',
+            fontSize: '1.14em',
+            // fontSize: '16px',
+            // lineHeight: '19px',
             textAlign: 'center',
             color: active ? 'fg' : 'fgOverlay70',
             fontWeight: active ? 700 : 400,
@@ -52,7 +51,7 @@ const TabItem: React.FC<TabItemProps> = ({ value, children, label, showDot = fal
             className={css({
               width: '5px',
               height: '5px',
-              borderRadius: 'full',
+              borderRadius: 999,
               backgroundColor: 'link',
             })}
           />

@@ -193,148 +193,148 @@ const Metaprogramming = () => {
 }
 
 /** List the credits for em and copyrighted assets. */
-// const About = () => {
-//   return (
-//     <div>
-//       {' '}
-//       <div className={css({ fontSize: 'sm', marginTop: '2em', fontStyle: 'italic', opacity: 0.7 })}>
-//         <div>
-//           Context View icon by{' '}
-//           <a href='https://thenounproject.com/travisavery/collection/connection-power/?i=2184164'>Travis Avery</a> from
-//           the <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Export icon by{' '}
-//           <a href='https://www.flaticon.com/authors/those-icons' title='Those Icons'>
-//             Those Icons
-//           </a>{' '}
-//           from{' '}
-//           <a href='https://www.flaticon.com/' title='Flaticon'>
-//             www.flaticon.com
-//           </a>
-//         </div>
-//         <div>
-//           Export icon by <a href='https://thenounproject.com/tgtdesign18'>Mahesh Keshvala</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Feedback icon by <a href='https://thenounproject.com/deanmtam'>Dean Mocha</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Hidden Thoughts icon by <a href='https://thenounproject.com/search/?q=show%20hidden&i=1791510'>Joyce Lau</a>{' '}
-//           from the <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Indent icons by{' '}
-//           <a href='https://www.flaticon.com/authors/bqlqn' title='bqlqn'>
-//             bqlqn
-//           </a>{' '}
-//           from{' '}
-//           <a href='https://www.flaticon.com/' title='Flaticon'>
-//             flaticon.com
-//           </a>
-//         </div>
-//         <div>
-//           Note icon by <a href='https://thenounproject.com/iconsphere/collection/populars/?i=2321491'>iconsphere</a>{' '}
-//           from the <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Pin icon by <a href='https://thenounproject.com/search/?q=%22pin%20many%22&i=496735'>Hea Poh Lin</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Prose View icon by <a href='https://thenounproject.com/coquet_adrien'>Adrien Coquet</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Search icon by <a href='https://icons8.com/icon/7695/search'>Icons8</a>
-//         </div>
-//         <div>
-//           Subcategorize icons by <a href='https://thenounproject.com/term/circuit/1685927/'>Hare Krishna</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Table icon by{' '}
-//           <a href='https://thenounproject.com/icon54app/collection/table-light-icon-set/?i=2762107'>icon 54</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Undo and Redo Icons by{' '}
-//           <a href='https://www.flaticon.com/authors/pixel-perfect' title='Pixel perfect'>
-//             Pixel perfect
-//           </a>{' '}
-//           from{' '}
-//           <a href='https://www.flaticon.com/' title='Flaticon'>
-//             {' '}
-//             www.flaticon.com
-//           </a>
-//         </div>
-//         <div>
-//           Share icon by <a href='https://thenounproject.com/term/share/1058861/'>Тимур Минвалеев</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Settings icon by <a href='https://thenounproject.com/icon/settings-5241749/'>Parisa Qolbi</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Gift icon by <a href='https://thenounproject.com/search/?q=gift&i=2221484'> Sarote Impheng</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Copy to clipboard icon by{' '}
-//           <a href='https://thenounproject.com/search/?q=copy+to+clipboard&i=1669410'>Hare Krishna</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Checkmark icon by <a href='https://thenounproject.com/search/?q=checkmark&i=870288'>arif fajar yulianto</a>{' '}
-//           from the <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Delete icon by <a href='https://thenounproject.com/icon/trash-1371974/'>Clea Doltz</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Gesture icon by <a href='https://thenounproject.com/icon/gesture-2211316/'>Adrien Coquet</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Download icon by <a href='https://thenounproject.com/icon/download-1000840/'>DinosoftLab</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Command Center icon by <a href='https://thenounproject.com/icon/one-finger-touch-68664/'>iconsmind.com</a>{' '}
-//           from the <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Teach icon by <a href='https://thenounproject.com/icon/teach-4200138/'>Alzam</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Metaprogramming icon by <a href='https://thenounproject.com/icon/inspect-element-4199164/'>Ary Prasetyo</a>{' '}
-//           from the <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Strikethrough icon by <a href='https://thenounproject.com/icon/strikethrough-1107500/'>Ary Prasetyo</a> from
-//           the <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Check icon by <a href='https://thenounproject.com/icon/check-3669824/'>Media Creative</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//         <div>
-//           Email icon by <a href='https://thenounproject.com/icon/email-1560074/'>il Capitano</a> from the{' '}
-//           <a href='https://thenounproject.com'>Noun Project</a>
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
+const About = () => {
+  return (
+    <div>
+      {' '}
+      <div className={css({ fontSize: 'sm', marginTop: '2em', fontStyle: 'italic', opacity: 0.7 })}>
+        <div>
+          Context View icon by{' '}
+          <a href='https://thenounproject.com/travisavery/collection/connection-power/?i=2184164'>Travis Avery</a> from
+          the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Export icon by{' '}
+          <a href='https://www.flaticon.com/authors/those-icons' title='Those Icons'>
+            Those Icons
+          </a>{' '}
+          from{' '}
+          <a href='https://www.flaticon.com/' title='Flaticon'>
+            www.flaticon.com
+          </a>
+        </div>
+        <div>
+          Export icon by <a href='https://thenounproject.com/tgtdesign18'>Mahesh Keshvala</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Feedback icon by <a href='https://thenounproject.com/deanmtam'>Dean Mocha</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Hidden Thoughts icon by <a href='https://thenounproject.com/search/?q=show%20hidden&i=1791510'>Joyce Lau</a>{' '}
+          from the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Indent icons by{' '}
+          <a href='https://www.flaticon.com/authors/bqlqn' title='bqlqn'>
+            bqlqn
+          </a>{' '}
+          from{' '}
+          <a href='https://www.flaticon.com/' title='Flaticon'>
+            flaticon.com
+          </a>
+        </div>
+        <div>
+          Note icon by <a href='https://thenounproject.com/iconsphere/collection/populars/?i=2321491'>iconsphere</a>{' '}
+          from the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Pin icon by <a href='https://thenounproject.com/search/?q=%22pin%20many%22&i=496735'>Hea Poh Lin</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Prose View icon by <a href='https://thenounproject.com/coquet_adrien'>Adrien Coquet</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Search icon by <a href='https://icons8.com/icon/7695/search'>Icons8</a>
+        </div>
+        <div>
+          Subcategorize icons by <a href='https://thenounproject.com/term/circuit/1685927/'>Hare Krishna</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Table icon by{' '}
+          <a href='https://thenounproject.com/icon54app/collection/table-light-icon-set/?i=2762107'>icon 54</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Undo and Redo Icons by{' '}
+          <a href='https://www.flaticon.com/authors/pixel-perfect' title='Pixel perfect'>
+            Pixel perfect
+          </a>{' '}
+          from{' '}
+          <a href='https://www.flaticon.com/' title='Flaticon'>
+            {' '}
+            www.flaticon.com
+          </a>
+        </div>
+        <div>
+          Share icon by <a href='https://thenounproject.com/term/share/1058861/'>Тимур Минвалеев</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Settings icon by <a href='https://thenounproject.com/icon/settings-5241749/'>Parisa Qolbi</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Gift icon by <a href='https://thenounproject.com/search/?q=gift&i=2221484'> Sarote Impheng</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Copy to clipboard icon by{' '}
+          <a href='https://thenounproject.com/search/?q=copy+to+clipboard&i=1669410'>Hare Krishna</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Checkmark icon by <a href='https://thenounproject.com/search/?q=checkmark&i=870288'>arif fajar yulianto</a>{' '}
+          from the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Delete icon by <a href='https://thenounproject.com/icon/trash-1371974/'>Clea Doltz</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Gesture icon by <a href='https://thenounproject.com/icon/gesture-2211316/'>Adrien Coquet</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Download icon by <a href='https://thenounproject.com/icon/download-1000840/'>DinosoftLab</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Command Center icon by <a href='https://thenounproject.com/icon/one-finger-touch-68664/'>iconsmind.com</a>{' '}
+          from the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Teach icon by <a href='https://thenounproject.com/icon/teach-4200138/'>Alzam</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Metaprogramming icon by <a href='https://thenounproject.com/icon/inspect-element-4199164/'>Ary Prasetyo</a>{' '}
+          from the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Strikethrough icon by <a href='https://thenounproject.com/icon/strikethrough-1107500/'>Ary Prasetyo</a> from
+          the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Check icon by <a href='https://thenounproject.com/icon/check-3669824/'>Media Creative</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Email icon by <a href='https://thenounproject.com/icon/email-1560074/'>il Capitano</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 /** A modal that offers links to the tutorial, a list of commands, and other helpful things. */
 const ModalHelp = () => {
-  const [section, setSection] = useState(Section.Tutorials)
+  const [section, setSection] = useState(Section.CommandLibrary)
   const fontSize = useSelector(state => state.fontSize)
   const showDot = useSelector(state => !state.storageCache?.tutorialComplete)
   return (
@@ -345,14 +345,17 @@ const ModalHelp = () => {
       style={{ fontSize }}
     >
       <Tab currentTab={section} onTabChange={setSection}>
-        <TabItem value={Section.Tutorials} label='Tutorials' showDot={showDot}>
-          <Tutorials />
-        </TabItem>
         <TabItem value={Section.CommandLibrary} label='Command Library'>
           <CommandCenter />
         </TabItem>
+        <TabItem value={Section.Tutorials} label='Tutorials' showDot={showDot}>
+          <Tutorials />
+        </TabItem>
         <TabItem value={Section.Metaprogramming} label='Metaprogramming'>
           <Metaprogramming />
+        </TabItem>
+        <TabItem value={Section.About} label='About'>
+          <About />
         </TabItem>
       </Tab>
     </ModalComponent>
