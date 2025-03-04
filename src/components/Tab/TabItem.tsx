@@ -27,6 +27,8 @@ const TabItem: React.FC<TabItemProps> = ({ value, children, label, showDot = fal
           gap: '8px',
           height: '100%',
           cursor: 'pointer',
+          flex: 'none',
+          whiteSpace: 'nowrap',
           ...(active && {
             backgroundColor: 'fgOverlay10',
             borderBottom: '2px solid {colors.link}',

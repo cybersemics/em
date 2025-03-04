@@ -22,28 +22,36 @@ const Tab = <Tab extends string>({ currentTab, onTabChange, children, className 
       <div
         className={css({
           boxSizing: 'border-box',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: '0',
+          position: 'relative',
           width: '100%',
-          // height: '51px',
           borderBottom: '2px solid {colors.fgOverlay20}',
         })}
       >
-        {Children.map(children, child => {
-          if (isValidElement<TabItemProps>(child) && child.type === TabItem) {
-            const { children: _, ...props } = child.props
-            return React.cloneElement(
-              { ...child, props },
-              {
-                active: child.props.value === currentTab,
-                onClick: () => onTabChange(child.props.value as Tab),
-              },
-            )
-          }
-          return child
-        })}
+        <div
+          className={css({
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
+            marginBottom: '-2px',
+          })}
+        >
+          {Children.map(children, child => {
+            if (isValidElement<TabItemProps>(child) && child.type === TabItem) {
+              const { children: _, ...props } = child.props
+              return React.cloneElement(
+                { ...child, props },
+                {
+                  active: child.props.value === currentTab,
+                  onClick: () => onTabChange(child.props.value as Tab),
+                },
+              )
+            }
+            return child
+          })}
+        </div>
       </div>
       <div>
         {Children.map(children, child => {
