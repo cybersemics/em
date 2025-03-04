@@ -63,6 +63,7 @@ const hideCaret = {
     '--faux-caret-line-start-opacity': 1,
     '--faux-caret-line-end-opacity': 1,
     '--faux-caret-note-line-end-opacity': 1,
+    '--faux-caret-note-line-start-opacity': 1,
     caretColor: 'transparent',
   },
   '99%': {
@@ -70,6 +71,7 @@ const hideCaret = {
     '--faux-caret-line-start-opacity': 1,
     '--faux-caret-line-end-opacity': 1,
     '--faux-caret-note-line-end-opacity': 1,
+    '--faux-caret-note-line-start-opacity': 1,
     caretColor: 'transparent',
   },
   '100%': {
@@ -77,6 +79,7 @@ const hideCaret = {
     '--faux-caret-line-start-opacity': 0,
     '--faux-caret-line-end-opacity': 0,
     '--faux-caret-note-line-end-opacity': 0,
+    '--faux-caret-note-line-start-opacity': 0,
     caretColor: 'auto',
   },
 }

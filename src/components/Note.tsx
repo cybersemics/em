@@ -135,19 +135,22 @@ const Note = React.memo(({ path }: { path: Path }) => {
         marginLeft: fontSize - 14,
       }}
     >
+      <FauxCaret
+        styles={{
+          fontSize: '1.2em',
+          margin: '-4px 0 0 -4px',
+          opacity: 'var(--faux-caret-note-line-start-opacity)',
+        }}
+      />
       <ContentEditable
         html={note || ''}
         innerRef={noteRef}
         aria-label='note-editable'
         placeholder='Enter a note'
-        className={
-          isMobileSafari()
-            ? css({ display: 'inline' })
-            : css({
-                display: 'inline-block',
-                padding: '0 1em 0 0.333em',
-              })
-        }
+        className={css({
+          display: 'inline-block',
+          padding: isMobileSafari() ? undefined : '0 1em 0 0.333em',
+        })}
         onKeyDown={onKeyDown}
         onChange={onChange}
         onPaste={() => {
@@ -160,8 +163,8 @@ const Note = React.memo(({ path }: { path: Path }) => {
       />
       <FauxCaret
         styles={{
-          fontSize: '1.2em',
-          margin: '-4px 0 0 -5px',
+          fontSize: '1.1em',
+          margin: '-2.5px 0 0 -5.5px',
           opacity: 'var(--faux-caret-note-line-end-opacity)',
         }}
       />

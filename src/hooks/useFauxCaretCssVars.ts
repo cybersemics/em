@@ -16,6 +16,7 @@ const useFauxCaretCssVars = (
 ) => {
   const [showLineEndFauxCaret, setShowLineEndFauxCaret] = useState(false)
   const [showLineStartFauxCaret, setShowLineStartFauxCaret] = useState(false)
+  const [showNoteLineStartFauxCaret, setShowNoteLineStartFauxCaret] = useState(false)
   const [showNoteLineEndFauxCaret, setShowNoteLineEndFauxCaret] = useState(false)
 
   // Hide the faux caret when typing occurs.
@@ -37,10 +38,12 @@ const useFauxCaretCssVars = (
           if (isNote()) {
             setShowLineStartFauxCaret(false)
             setShowLineEndFauxCaret(false)
+            setShowNoteLineStartFauxCaret(isStartOfElementNode())
             setShowNoteLineEndFauxCaret(isEndOfElementNode())
           } else {
             setShowLineStartFauxCaret(isStartOfElementNode())
             setShowLineEndFauxCaret(isEndOfElementNode())
+            setShowNoteLineStartFauxCaret(false)
             setShowNoteLineEndFauxCaret(false)
           }
         }
@@ -48,6 +51,7 @@ const useFauxCaretCssVars = (
     } else {
       setShowLineStartFauxCaret(false)
       setShowLineEndFauxCaret(false)
+      setShowNoteLineStartFauxCaret(false)
       setShowNoteLineEndFauxCaret(false)
     }
   }, [editing, fadeThoughtElement, isCursor, path])
@@ -56,6 +60,7 @@ const useFauxCaretCssVars = (
     '--faux-caret-line-start-opacity': showLineStartFauxCaret ? undefined : 0,
     '--faux-caret-line-end-opacity': showLineEndFauxCaret ? undefined : 0,
     '--faux-caret-note-line-end-opacity': showNoteLineEndFauxCaret ? undefined : 0,
+    '--faux-caret-note-line-start-opacity': showNoteLineStartFauxCaret ? undefined : 0,
   }
 }
 

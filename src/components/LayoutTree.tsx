@@ -977,6 +977,7 @@ const LayoutTree = () => {
           '--faux-caret-line-end-opacity': '0',
           '--faux-caret-line-start-opacity': '0',
           '--faux-caret-note-line-end-opacity': '0',
+          '--faux-caret-note-line-start-opacity': '0',
           marginTop: '0.501em',
         }),
         hideCaret({
