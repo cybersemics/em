@@ -490,7 +490,7 @@ const TreeNode = ({
     } else {
       setFauxCaretStyles({ display: 'none' })
     }
-  }, [editing, isCursor, path])
+  }, [editing, isCursor, isTableCol1, path])
 
   useLayoutEffect(() => {
     if (y !== _y) {

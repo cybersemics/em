@@ -201,7 +201,7 @@ const ThoughtAnnotation = React.memo(
         >
           <FauxCaret
             styles={{
-              margin: textMarkup.length ? '-0.375em 0 0 -0.125em' : '-0.25em 0 0 -0.3625em',
+              margin: textMarkup.length ? '-0.375em 0 0 -0.125em' : '-0.25em 0 0 -0.0875em',
               opacity: 'var(--faux-caret-line-start-opacity)',
             }}
           />
