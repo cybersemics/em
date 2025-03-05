@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { Settings } from '../constants'
+import globals from '../globals'
 import useScrollTop from '../hooks/useScrollTop'
 import getUserSetting from '../selectors/getUserSetting'
 import viewportStore from '../stores/viewport'
@@ -19,7 +20,9 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   useEffect(() => {
     const hapticScrollDifference = Math.abs(lastHapticScrollPosition.current - scrollTop)
     if (hapticScrollDifference >= 50) {
-      haptics.light()
+      if (globals.touching) {
+        haptics.light()
+      }
       lastHapticScrollPosition.current = scrollTop
     }
   }, [scrollTop])
