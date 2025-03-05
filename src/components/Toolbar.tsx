@@ -142,17 +142,18 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   /** Handles toolbar scroll event. */
   const onScroll = useCallback(
     (e: React.UIEvent<HTMLElement>) => {
-      const scrollDifference = e.target ? Math.abs(lastScrollLeft.current - (e.target as HTMLElement).scrollLeft) : 0
+      const el = e.target as HTMLElement
+      const width = el.scrollWidth
+      const scrollDifference = Math.abs(lastScrollLeft.current - el.scrollLeft)
       if (scrollDifference >= 5) {
         deselectPressingToolbarId()
       }
-      const hapticScrollDifference = e.target
-        ? Math.abs(lastHapticScrollPosition.current - (e.target as HTMLElement).scrollLeft)
-        : 0
+      const hapticScrollDifference = Math.abs(lastHapticScrollPosition.current - el.scrollLeft)
       const buttonWidth = fontSize * ICON_SCALING_FACTOR + TOOLBAR_BUTTON_PADDING * 2
-      if (hapticScrollDifference >= buttonWidth) {
+      // do not fire haptics on overscroll
+      if (el.scrollLeft >= 0 && el.scrollLeft <= width - window.innerWidth && hapticScrollDifference >= buttonWidth) {
         haptics.light()
-        lastHapticScrollPosition.current = (e.target as HTMLElement).scrollLeft
+        lastHapticScrollPosition.current = el.scrollLeft
       }
 
       updateArrows()
