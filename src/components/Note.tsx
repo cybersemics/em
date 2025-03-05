@@ -11,13 +11,14 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
-import { isSafari, isTouch } from '../browser'
+import { isMobileSafari, isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import strip from '../util/strip'
+import FauxCaret from './FauxCaret'
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = React.memo(({ path }: { path: Path }) => {
@@ -119,7 +120,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
           marginTop: -3,
           position: 'relative',
           marginBottom: '2px',
-          paddingBottom: '4px',
+          padding: isMobileSafari() ? '0 1em 4px 0.333em' : '0 0 4px 0',
           '@media (max-width: 1024px)': {
             _android: {
               position: 'relative',
@@ -134,6 +135,13 @@ const Note = React.memo(({ path }: { path: Path }) => {
         marginLeft: fontSize - 14,
       }}
     >
+      <FauxCaret
+        styles={{
+          fontSize: '1.2em',
+          margin: '-4px 0 0 -4px',
+          opacity: 'var(--faux-caret-note-line-start-opacity)',
+        }}
+      />
       <ContentEditable
         html={note || ''}
         innerRef={noteRef}
@@ -141,7 +149,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
         placeholder='Enter a note'
         className={css({
           display: 'inline-block',
-          padding: '0 1em 0 0.333em',
+          padding: isMobileSafari() ? undefined : '0 1em 0 0.333em',
         })}
         onKeyDown={onKeyDown}
         onChange={onChange}
@@ -152,6 +160,13 @@ const Note = React.memo(({ path }: { path: Path }) => {
         }}
         onBlur={onBlur}
         onFocus={onFocus}
+      />
+      <FauxCaret
+        styles={{
+          fontSize: '1.1em',
+          margin: '-0.125em 0 0 -0.25em',
+          opacity: 'var(--faux-caret-note-line-end-opacity)',
+        }}
       />
     </div>
   )
