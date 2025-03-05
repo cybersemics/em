@@ -18,7 +18,12 @@ import CommandId from '../@types/CommandId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
 import { commandById } from '../commands'
-import { TOOLBAR_DEFAULT_COMMANDS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
+import {
+  ICON_SCALING_FACTOR,
+  TOOLBAR_BUTTON_PADDING,
+  TOOLBAR_DEFAULT_COMMANDS,
+  TOOLBAR_PRESS_ANIMATION_DURATION,
+} from '../constants'
 import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -144,14 +149,15 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       const hapticScrollDifference = e.target
         ? Math.abs(lastHapticScrollPosition.current - (e.target as HTMLElement).scrollLeft)
         : 0
-      if (hapticScrollDifference >= 50) {
+      const buttonWidth = fontSize * ICON_SCALING_FACTOR + TOOLBAR_BUTTON_PADDING * 2
+      if (hapticScrollDifference >= buttonWidth) {
         haptics.light()
         lastHapticScrollPosition.current = (e.target as HTMLElement).scrollLeft
       }
 
       updateArrows()
     },
-    [updateArrows, deselectPressingToolbarId],
+    [fontSize, updateArrows, deselectPressingToolbarId],
   )
 
   /**********************************************************************

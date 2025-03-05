@@ -9,6 +9,7 @@ import Icon from '../@types/IconType'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut } from '../commands'
+import { TOOLBAR_BUTTON_PADDING } from '../constants'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import store from '../stores/app'
@@ -197,7 +198,6 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         toolbarPointerEventsRecipe({ override: true }),
         css({
           display: 'inline-block',
-          padding: '14px 8px 5px 8px',
           borderRadius: '3px',
           zIndex: 'stack',
           // animate maxWidth to avoid having to know the exact width of the toolbar icon
@@ -221,11 +221,13 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition:
             'transform {durations.veryFast} ease-out, max-width {durations.veryFast} ease-out, margin-left {durations.veryFast} ease-out',
-          // extend drop area down, otherwise the drop hover is blocked by the user's finger
-          // must match toolbar marginBottom
-          paddingBottom: isDraggingAny ? '7em' : 0,
         }),
       )}
+      style={{
+        // extend drop area down, otherwise the drop hover is blocked by the user's finger
+        // must match toolbar marginBottom
+        padding: `14px ${TOOLBAR_BUTTON_PADDING}px ${isDraggingAny ? '7em' : 0}px ${TOOLBAR_BUTTON_PADDING}px`,
+      }}
       onMouseLeave={onMouseLeave}
       {...fastClick(tapUp, {
         // disable default haptics in favor of custom haptics on touchstart and touchend
