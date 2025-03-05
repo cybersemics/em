@@ -234,20 +234,16 @@ const GestureDiagramCheatsheet = ({
             viewBox='0 0 10 10'
             refX='5'
             refY='5'
-            markerWidth={arrowSize!}
-            markerHeight={arrowSize}
+            markerWidth={arrowSize! * 2}
+            markerHeight={arrowSize! * 3}
             markerUnits='userSpaceOnUse'
             orient='auto-start-reverse'
           >
             <path
-              d='M 0 0 L 10 5 L 0 10 z'
-              fill={
-                highlight != null && highlight >= path.length
-                  ? token('colors.vividHighlight')
-                  : color || token('colors.fg')
-              }
-              stroke='none'
-              style={{ filter: dropShadow }}
+              d='M 0 0 L 5 5 L 0 10' // V shaped arrowhead with no fill
+              fill='none'
+              stroke={color || token('colors.fg')}
+              strokeWidth={strokeWidth * 1}
             />
           </marker>
         </defs>
@@ -278,7 +274,7 @@ const GestureDiagramCheatsheet = ({
                   ? token('colors.vividHighlight')
                   : color || token('colors.fg')
               }
-              strokeWidth={strokeWidth * 1.5}
+              strokeWidth={strokeWidth * 5}
               strokeLinecap='round'
               strokeLinejoin='round'
               fill='none'

@@ -34,6 +34,12 @@ const GestureCheatsheet: React.FC = () => {
     }
   }, [isOpen])
 
+  /** Styles for the dialog fade in and out animation. */
+  const dialogAnimationStyles = css({
+    opacity: 0,
+    transition: 'opacity 1s ease',
+  })
+
   /** Styles for the dialog content. */
   const dialogStyles = css({
     maxHeight: '70vh',
@@ -47,12 +53,6 @@ const GestureCheatsheet: React.FC = () => {
     '&::-webkit-scrollbar-track': {
       background: '{colors.bg}',
     },
-  })
-
-  /** Styles for the dialog fade in and out animation. */
-  const dialogAnimationStyles = css({
-    opacity: 0,
-    transition: 'opacity 1s ease',
   })
 
   return (

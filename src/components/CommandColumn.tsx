@@ -118,7 +118,7 @@ const CommandColumn = ({
           <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
             {isTouch && command.gesture ? (
               // GesturePath[]
-              <GestureDiagramCheatsheet path={command.gesture as GesturePath} size={105} arrowSize={12} />
+              <GestureDiagramCheatsheet path={command.gesture as GesturePath} size={105} arrowSize={20} />
             ) : null}
           </td>
         ) : null}

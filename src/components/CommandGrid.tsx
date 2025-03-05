@@ -11,6 +11,7 @@ import theme from '../selectors/theme'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import CommandGridOnly from './CommandGridOnly'
+import SortButton from './SortButton'
 
 // define the grouping and ordering of commands
 const groups: {
@@ -154,18 +155,7 @@ const SearchCommands: FC<{
           })}
         />
       </div>
-      <button
-        className={css({
-          width: '45px',
-          border: 'solid 1px {colors.gray50}',
-          backgroundColor: '{colors.darkgray}',
-          borderRadius: '8px',
-          backgroundImage: isLightTheme ? 'url("/assets/sort_light.svg")' : 'url("/assets/sort.svg")',
-          backgroundSize: '20px',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        })}
-      />
+      <SortButton />
     </div>
   )
 }
