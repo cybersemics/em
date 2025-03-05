@@ -201,7 +201,7 @@ const ThoughtAnnotation = React.memo(
         >
           <FauxCaret
             styles={{
-              margin: textMarkup.length ? '-8px 0 0 -2px' : '-5px 0 0 -2px',
+              margin: textMarkup.length ? '-0.375em 0 0 -0.125em' : '-0.25em 0 0 -0.3625em',
               opacity: 'var(--faux-caret-line-start-opacity)',
             }}
           />
@@ -242,7 +242,7 @@ const ThoughtAnnotation = React.memo(
           }
           <FauxCaret
             styles={{
-              margin: '-8px 0 0 -2px',
+              margin: '-0.3625em 0 0 -0.0875em',
               opacity: 'var(--faux-caret-line-end-opacity)',
             }}
           />
