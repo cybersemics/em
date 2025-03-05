@@ -30,6 +30,7 @@ import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -157,10 +158,11 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // drop on itself or after itself is a noop
   if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
+  haptics.medium()
+
   const parent = unroot(rootedParentOf(state, thoughtsTo))
   const newPath = appendToPath(parent, head(thoughtsFrom))
 
-  const newRank = getRankBefore(state, thoughtsTo)
   store.dispatch(
     props.showContexts
       ? createThought({
@@ -171,7 +173,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       : moveThought({
           oldPath: thoughtsFrom,
           newPath,
-          newRank,
+          newRank: getRankBefore(state, thoughtsTo),
         }),
   )
 

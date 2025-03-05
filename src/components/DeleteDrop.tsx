@@ -4,10 +4,11 @@ import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
-import { AlertType } from '../constants'
+import { AlertType, DELETE_VIBRATE_DURATION } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
 import ellipsize from '../util/ellipsize'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import QuickDropIcon from './QuickDropIcon'
 import DeleteIcon from './icons/DeleteIcon'
@@ -21,6 +22,7 @@ const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
   }
 
   if (zone === DragThoughtZone.Favorites) {
+    haptics.light()
     store.dispatch([
       toggleAttribute({ path: simplePath, values: ['=favorite', 'true'] }),
       alert(`Removed ${ellipsize(value)} from favorites`, {
@@ -30,6 +32,7 @@ const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
       }),
     ])
   } else if (zone === DragThoughtZone.Thoughts) {
+    haptics.vibrate(DELETE_VIBRATE_DURATION)
     store.dispatch(archiveThought({ path }))
   } else {
     console.error(`Unsupported DragThoughtZone: ${zone}`)
