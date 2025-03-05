@@ -1,8 +1,11 @@
 import React from 'react'
-import { css } from '../../styled-system/css'
 import { useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import theme from '../selectors/theme'
 
+/**
+ * SortButton component for the Command Library and Gesture Cheatsheet.
+ */
 const SortButton: React.FC = () => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
 
