@@ -19,7 +19,7 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   /** Haptic feedback on scroll. */
   useEffect(() => {
     const hapticScrollDifference = Math.abs(lastHapticScrollPosition.current - scrollTop)
-    if (hapticScrollDifference >= 50) {
+    if (hapticScrollDifference >= 5) {
       if (globals.touching) {
         haptics.light()
       }
