@@ -12,6 +12,7 @@ const useFauxCaretCssVars = (
   // but fadeThoughRef is re-created and will trigger an update.
   fadeThoughtElement: HTMLDivElement | null,
   isCursor: boolean,
+  isTableCol1: boolean,
   path: Path,
 ) => {
   const [showLineEndFauxCaret, setShowLineEndFauxCaret] = useState(false)
@@ -54,7 +55,7 @@ const useFauxCaretCssVars = (
       setShowNoteLineStartFauxCaret(false)
       setShowNoteLineEndFauxCaret(false)
     }
-  }, [editing, fadeThoughtElement, isCursor, path])
+  }, [editing, fadeThoughtElement, isCursor, isTableCol1, path])
 
   return {
     '--faux-caret-line-start-opacity': showLineStartFauxCaret ? undefined : 0,
