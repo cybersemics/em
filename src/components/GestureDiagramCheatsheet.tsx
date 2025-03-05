@@ -200,7 +200,7 @@ const GestureDiagramCheatsheet = ({
       el.setAttribute(
         'viewBox',
         `${bbox.x - arrowSize! - strokeWidth * 4} ${bbox.y - arrowSize! - strokeWidth * 2} ${
-          +bbox.width + +arrowSize! * 5 + +strokeWidth * 8
+          +bbox.width + +arrowSize! * 2 + +strokeWidth * 8
         } ${+bbox.height + +arrowSize! * 2 + +strokeWidth * 4}`,
       )
     }
