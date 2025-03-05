@@ -15,9 +15,9 @@ import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
-import getElementFill from '../selectors/getElementFill'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
+import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -440,7 +440,7 @@ const Bullet = ({
     return children.length < Object.keys(thought.childrenMap).length
   })
 
-  const fill = useSelector(state => getElementFill(state, thoughtId!))
+  const fill = useSelector(state => getThoughtFill(state, thoughtId!))
 
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
   const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded

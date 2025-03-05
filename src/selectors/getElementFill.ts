@@ -1,7 +1,3 @@
-import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
-import getThoughtById from './getThoughtById'
-
 const styleRegex = /style="[^"]*(background-)?color:\s*([^;"'>]+)[^"]*"/i
 const fontColorRegex = /color="([^"]*)"/
 
@@ -61,27 +57,32 @@ const isWrappedInSingleTag = (str: string): boolean => {
 }
 
 /**
- * Gets the fill color from a thought's value by checking style and font color attributes.
- * @param state - The Redux state.
- * @param thoughtId - The ID of the thought to check.
+ * Extracts color from style and font color attributes in an HTML string.
+ * @param value - The HTML string to check for color attributes.
+ * @returns The color value or undefined if not found.
+ */
+const extractColor = (value: string): string | undefined => {
+  // Check for background-color and color in style attribute
+  const styleMatch = value.match(styleRegex)
+  if (styleMatch) return styleMatch[2]
+
+  // If no background-color, check for font color
+  const fontColorMatch = value.match(fontColorRegex)
+  if (fontColorMatch) return fontColorMatch[1]
+
+  return undefined
+}
+
+/**
+ * Gets the fill color from an HTML string by checking style and font color attributes.
+ * @param value - The HTML string to check.
  * @returns The fill color or undefined if not found.
  */
-const getElementFill = (state: State, thoughtId: ThoughtId | null): string | undefined => {
-  if (!thoughtId) return undefined
-  const thought = getThoughtById(state, thoughtId)
-  if (!thought) return undefined
-
-  const value = thought.value
+const getElementFill = (value: string): string | undefined => {
   // Check if the entire value is wrapped in a single font or span tag
   const isWrappedInTag = isWrappedInSingleTag(value)
   if (isWrappedInTag) {
-    // Check for background-color and color in style attribute
-    const styleMatch = value.match(styleRegex)
-    if (styleMatch) return styleMatch[2]
-
-    // If no background-color, check for font color
-    const fontColorMatch = value.match(fontColorRegex)
-    if (fontColorMatch) return fontColorMatch[1]
+    return extractColor(value)
   }
 
   return undefined

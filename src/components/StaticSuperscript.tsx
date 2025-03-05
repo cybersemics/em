@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import ThoughtId from '../@types/ThoughtId'
-import getElementFill from '../selectors/getElementFill'
+import getThoughtFill from '../selectors/getThoughtFill'
 
 /** Renders a given number as a superscript. */
 const StaticSuperscript = React.forwardRef<
@@ -18,7 +18,7 @@ const StaticSuperscript = React.forwardRef<
     thoughtId?: ThoughtId
   }
 >(({ n, style, show = true, hideZero, absolute, cssRaw, thoughtId }, forwardRef) => {
-  const fill = useSelector(state => (thoughtId ? getElementFill(state, thoughtId) : undefined))
+  const fill = useSelector(state => (thoughtId ? getThoughtFill(state, thoughtId) : undefined))
 
   return (
     <span
