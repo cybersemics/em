@@ -28,20 +28,20 @@
     "native"
   ],
   "scripts": {
-    "verify": "npm run verify:ios && npm run verify:web",
+    "verify": "yarn verify:ios && yarn verify:web",
     "verify:ios": "xcodebuild -scheme WebviewBackground -destination generic/platform=iOS",
-    "verify:web": "npm run build",
-    "lint": "npm run eslint && npm run prettier -- --check && npm run swiftlint -- lint",
-    "fmt": "npm run eslint -- --fix && npm run prettier -- --write && npm run swiftlint -- --fix --format",
+    "verify:web": "yarn build",
+    "lint": "yarn eslint && yarn prettier --check && yarn swiftlint lint",
+    "fmt": "yarn eslint --fix && yarn prettier --write && yarn swiftlint --fix --format",
     "eslint": "eslint . --ext ts",
     "prettier": "prettier \"**/*.{css,html,ts,js,java}\" --plugin=prettier-plugin-java",
     "swiftlint": "node-swiftlint",
     "docgen": "docgen --api WebviewBackgroundPlugin --output-readme README.md --output-json dist/docs.json",
-    "build": "npm run clean && npm run docgen && tsc && rollup -c rollup.config.mjs",
+    "build": "yarn clean && yarn docgen && tsc && rollup -c rollup.config.mjs",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
     "whattsc": "tsc --version",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "yarn build"
   },
   "devDependencies": {
     "@capacitor/android": "^6.0.0",
@@ -71,5 +71,6 @@
     "ios": {
       "src": "ios"
     }
-  }
+  },
+  "packageManager": "yarn@4.5.1"
 }
