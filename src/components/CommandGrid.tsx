@@ -133,7 +133,7 @@ const SearchCommands: FC<{
         gap: '5px',
       })}
     >
-      <div id='search' className={css({ border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
+      <div id='search' className={css({ flexGrow: 1, border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
         <input
           type='text'
           placeholder='Search gestures...'

@@ -1,4 +1,5 @@
 import { FC, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
@@ -9,7 +10,8 @@ import useFilteredCommands from '../hooks/useFilteredCommands'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import CommandTableOnly from './CommandTableOnly'
-
+import SortButton from './SortButton'
+import theme from '../selectors/theme'
 // define the grouping and ordering of commands
 const groups: {
   title: string
@@ -119,23 +121,40 @@ if (commandsUngrouped.length > 0) {
 const SearchCommands: FC<{
   onInput?: (value: string) => void
 }> = ({ onInput }) => {
+  const isLightTheme = useSelector(state => theme(state) === 'Light')
+
   return (
-    <div id='search' className={css({ borderBottom: 'solid 1px {colors.gray50}' })}>
-      <input
-        type='text'
-        placeholder='Search commands by name...'
-        onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-          onInput?.(e.target.value)
-        }}
-        className={css({
-          marginLeft: 0,
-          marginBottom: 0,
-          marginTop: '1em',
-          border: 'none',
-          boxSizing: 'border-box',
-          width: '100%',
-        })}
-      />
+    <div
+    className={css({
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: '5px',
+    })}
+    >
+      <div id='search' className={css({ flexGrow: 1, border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
+        <input
+          type='text'
+          placeholder='Search commands by name...'
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+            onInput?.(e.target.value)
+          }}
+          className={css({
+              marginLeft: 0,
+              marginBottom: 0,
+              boxSizing: 'border-box',
+              width: '100%',
+              minWidth: '100%',
+              paddingLeft: '2rem',
+              backgroundImage: isLightTheme ? 'url("/assets/search_light.svg")' : 'url("/assets/search.svg")',
+              backgroundSize: '16px',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: '10px center',
+              borderRadius: '8px',
+          })}
+        />
+      </div>
+      <SortButton />
     </div>
   )
 }
