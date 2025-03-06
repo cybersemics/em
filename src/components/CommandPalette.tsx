@@ -7,7 +7,7 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
-import { isIOS, isTouch } from '../browser'
+import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
@@ -509,9 +509,6 @@ const CommandPaletteWithTransition: FC = () => {
 
   const popUpStyles = css.raw({
     zIndex: 'commandPalette',
-    ...(isIOS && {
-      marginTop: '48px',
-    }),
   })
 
   /** Dismiss the alert on close. */
