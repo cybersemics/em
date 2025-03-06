@@ -21,8 +21,8 @@
   "type": "module",
   "scripts": {
     "browserless": "docker run -p 7566:3000 -e \"CONNECTION_TIMEOUT=-1\" browserless/chrome",
-    "build:packages": "yarn --cwd packages/webview build",
     "build": "yarn build:packages && yarn build:styles && vite build",
+    "build:packages": "yarn --cwd packages/webview build",
     "build:styles": "echo \"Building styles...\" && panda codegen",
     "cap:android": "yarn cap:sync && cap open android",
     "cap:copy:prod": "NODE_ENV=production && cap copy",
@@ -37,14 +37,14 @@
     "deploy:patch": "yarn lint && npm version patch && yarn build && firebase deploy --only hosting",
     "deploy:staging": "yarn lint && yarn build && firebase hosting:channel:deploy staging --expires 30d",
     "deploy:staging2": "yarn lint && yarn build && firebase hosting:channel:deploy staging2 --expires 30d",
+    "install:packages": "yarn --cwd packages/webview install",
     "lint:lockfile": "npx lockfile-lint",
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
     "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:tsc": "tsc",
     "lint:packages": "yarn --cwd packages/webview lint",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output \"lint:*\"",
-    "install:packages": "yarn --cwd packages/webview install",
-    "postinstall": "yarn install:packages && git config core.hooksPath .hooks && yarn build:styles",
+    "postinstall": "yarn install:packages && yarn build:packages && git config core.hooksPath .hooks && yarn build:styles",
     "servebuild": "npx serve -s build -l 3000",
     "start": "vite --host --port 3000",
     "test:ios": "jest ./src/e2e/iOS --verbose",
@@ -77,6 +77,9 @@
     "@typescript-eslint/parser": "^8.14.0",
     "@pandacss/node@npm:0.47.0": "patch:@pandacss/node@npm%3A0.47.0#~/.yarn/patches/@pandacss-node-npm-0.47.0.patch"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "dependencies": {
     "@capacitor/android": "^6.1.2",
     "@capacitor/clipboard": "^6.0.2",
@@ -138,7 +141,7 @@
     "ts-key-enum": "^2.0.12",
     "use-onclickoutside": "^0.4.1",
     "vite-plugin-html": "^3.2.2",
-    "webview-background": "./packages/webview",
+    "webview-background": "workspace:*",
     "workbox-build": "^7.1.1",
     "workbox-core": "^7.1.0",
     "workbox-expiration": "^7.1.0",
