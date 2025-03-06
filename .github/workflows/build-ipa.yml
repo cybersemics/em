@@ -1,0 +1,43 @@
+name: Build IPA
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Set up Xcode
+        run: sudo xcode-select -s /Applications/Xcode_12.4.app
+
+      - name: Build IPA
+        run: |
+          xcodebuild -workspace App.xcworkspace \
+                     -scheme AppScheme \
+                     -sdk iphoneos \
+                     -configuration Release \
+                     archive -archivePath $PWD/build/App.xcarchive
+          xcodebuild -exportArchive \
+                     -archivePath $PWD/build/App.xcarchive \
+                     -exportOptionsPlist ExportOptions.plist \
+                     -exportPath $PWD/build
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v2
+        with:
+          name: App.ipa
+          path: build/App.ipa
