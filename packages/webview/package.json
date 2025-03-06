@@ -29,10 +29,8 @@
     "verify": "yarn verify:ios && yarn verify:web",
     "verify:ios": "xcodebuild -scheme WebviewBackground -destination generic/platform=iOS",
     "verify:web": "yarn build",
-    "lint": "yarn eslint && yarn prettier --check && yarn swiftlint lint",
-    "fmt": "yarn eslint --fix && yarn prettier --write && yarn swiftlint --fix --format",
-    "eslint": "eslint . --ext ts",
-    "prettier": "prettier \"**/*.{css,html,ts,js,java}\" --plugin=prettier-plugin-java",
+    "fmt": "yarn swiftlint --fix --format",
+    "lint": "yarn swiftlint lint",
     "swiftlint": "node-swiftlint",
     "docgen": "docgen --api WebviewBackgroundPlugin --output-readme README.md --output-json dist/docs.json",
     "build": "yarn clean && yarn docgen && tsc && rollup -c rollup.config.mjs",
@@ -46,12 +44,7 @@
     "@capacitor/core": "^6.0.0",
     "@capacitor/docgen": "^0.2.2",
     "@capacitor/ios": "^6.0.0",
-    "@ionic/eslint-config": "0.4.0",
-    "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
-    "eslint": "^8.57.0",
-    "prettier": "^3.3.3",
-    "prettier-plugin-java": "^2.6.4",
     "rimraf": "^5.0.1",
     "rollup": "^4.24.0",
     "swiftlint": "^2.0.0",
@@ -59,11 +52,6 @@
   },
   "peerDependencies": {
     "@capacitor/core": "^6.0.0"
-  },
-  "prettier": "@ionic/prettier-config",
-  "swiftlint": "@ionic/swiftlint-config",
-  "eslintConfig": {
-    "extends": "@ionic/eslint-config/recommended"
   },
   "capacitor": {
     "ios": {

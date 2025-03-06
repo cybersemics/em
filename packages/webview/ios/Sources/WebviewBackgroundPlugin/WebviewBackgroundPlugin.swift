@@ -12,7 +12,7 @@ public class WebviewBackgroundPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "changeBackgroundColor", returnType: CAPPluginReturnPromise)
     ]
-    
+
     @objc func changeBackgroundColor(_ call: CAPPluginCall) {
         let color = call.getString("color") ?? ""
 
