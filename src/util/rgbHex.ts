@@ -2,7 +2,7 @@
  * Converts RGBA color values to a hexadecimal color string.
  * @returns Hexadecimal color string in the format #RRGGBBAA.
  */
-export function rgbaToHex(rgba: string): string {
+export const rgbaToHex = (rgba: string): string => {
   // Extract the RGBA components from the string using a regular expression
   const rgbaRegex = /^rgba?\((\d+),\s*(\d+),\s*(\d+),\s*([01]?\.?\d*)\)$/
   const match = rgba.match(rgbaRegex)
@@ -17,7 +17,7 @@ export function rgbaToHex(rgba: string): string {
   const b = parseInt(match[3])
   const a = parseFloat(match[4])
 
-  // Convert RGB to hex
+  /** Convert RGB to hex. */
   const toHex = (value: number) => Math.min(Math.max(value, 0), 255).toString(16).padStart(2, '0')
 
   if (a >= 1) {
@@ -34,7 +34,7 @@ export function rgbaToHex(rgba: string): string {
  * Converts RGB color values to a hexadecimal color string.
  * @returns Hexadecimal color string in the format #RRGGBB.
  */
-export function rgbToHex(rgb: string): string {
+export const rgbToHex = (rgb: string): string => {
   // Extract the RGB components from the string using a regular expression
   const rgbRegex = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/
   const match = rgb.match(rgbRegex)
@@ -48,9 +48,15 @@ export function rgbToHex(rgb: string): string {
   const g = parseInt(match[2])
   const b = parseInt(match[3])
 
-  // Convert each component to a hex string with 2 digits (padded with zeros if necessary)
+  /** Convert each component to a hex string with 2 digits (padded with zeros if necessary). */
   const toHex = (value: number) => Math.min(Math.max(value, 0), 255).toString(16).padStart(2, '0')
 
   // Concatenate all components to a single hex string
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+// Default export combining both functions
+export default {
+  rgbaToHex,
+  rgbToHex,
 }

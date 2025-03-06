@@ -62,7 +62,7 @@ it('Set the background color of the text', async () => {
   const bulletColor = await getBulletColor()
   const result = extractStyleProperty(cursorText!)
   expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.green))
-  expect(rgbToHex(result?.backgroundColor!)).toBe(rgbaToHex(colors.light.green))
+  expect(result?.backgroundColor && rgbToHex(result.backgroundColor)).toBe(rgbaToHex(colors.light.green))
 })
 
 it('Clear the background color when selecting text color', async () => {
@@ -80,13 +80,15 @@ it('Clear the background color when selecting text color', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
   cursorText = await getEditingText()
-  expect(rgbToHex(extractStyleProperty(cursorText!)?.backgroundColor!)).toBe(rgbaToHex(colors.light.green))
-  expect(extractStyleProperty(cursorText!)?.color).toBe(rgbaToHex(colors.light.black))
+  let style = extractStyleProperty(cursorText!)
+  expect(style?.backgroundColor && rgbToHex(style.backgroundColor)).toBe(rgbaToHex(colors.light.green))
+  expect(style?.color).toBe(rgbaToHex(colors.light.black))
 
   await click('[aria-label="text color swatches"] [aria-label="purple"]')
   cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.color).toBe(rgbaToHex(colors.light.purple))
-  expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe(null)
+  style = extractStyleProperty(cursorText!)
+  expect(style?.color).toBe(rgbaToHex(colors.light.purple))
+  expect(style?.backgroundColor).toBe(null)
 })
 
 it('Clear the text color when setting background color', async () => {
@@ -108,8 +110,9 @@ it('Clear the text color when setting background color', async () => {
 
   await click('[aria-label="background color swatches"] [aria-label="purple"]')
   cursorText = await getEditingText()
-  expect(rgbToHex(extractStyleProperty(cursorText!)?.backgroundColor!)).toBe(rgbaToHex(colors.light.purple))
-  expect(extractStyleProperty(cursorText!)?.color).toBe(rgbaToHex(colors.light.black))
+  const style = extractStyleProperty(cursorText!)
+  expect(style?.backgroundColor && rgbToHex(style?.backgroundColor)).toBe(rgbaToHex(colors.light.purple))
+  expect(style?.color).toBe(rgbaToHex(colors.light.black))
 })
 
 it('Bullet remains the default color when a substring color is set', async () => {
