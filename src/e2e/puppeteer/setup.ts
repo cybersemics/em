@@ -50,8 +50,6 @@ const setup = async ({
         break
       case 'info':
       case 'log':
-        // eslint-disable-next-line no-console
-        console[messageType](text)
         break
       // ConsoleMessage 'warning needs to be converted to native console 'warn'
       case 'warn':

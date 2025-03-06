@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSidebar'
-import { isSafari, isTouch } from '../browser'
+import { isIOS, isSafari, isTouch } from '../browser'
 import usePositionFixed from '../hooks/usePositionFixed'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import fastClick from '../util/fastClick'
@@ -90,6 +90,9 @@ const HamburgerMenu = () => {
           // On macOS, if the user cancels a drag and then switches tabs, upon returning mouseup will fire at coordinates (0,0), triggering fastClick on any element located at (0,0).
           // Therefore, position the HamburgerMenu at top: 1px so that the sidebar is not accidentally opened on tab change.
           top: `calc(${positionFixedStyles.top} + 1px)`,
+          ...(isIOS && {
+            marginTop: '48px',
+          }),
         }}
         {...fastClick(e => {
           // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?

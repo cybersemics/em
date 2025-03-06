@@ -1,0 +1,75 @@
+{
+  "name": "webview-background",
+  "version": "0.0.2",
+  "description": "A small plugin to change the background of a webview.",
+  "main": "dist/plugin.cjs.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "unpkg": "dist/plugin.js",
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "dist/",
+    "ios/Sources",
+    "Package.swift",
+    "WebviewBackground.podspec"
+  ],
+  "author": "Matheu DeWitt",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cybersemics/em"
+  },
+  "bugs": {
+    "url": "https://github.com/cybersemics/em/issues"
+  },
+  "keywords": [
+    "capacitor",
+    "plugin",
+    "native"
+  ],
+  "scripts": {
+    "verify": "npm run verify:ios && npm run verify:web",
+    "verify:ios": "xcodebuild -scheme WebviewBackground -destination generic/platform=iOS",
+    "verify:web": "npm run build",
+    "lint": "npm run eslint && npm run prettier -- --check && npm run swiftlint -- lint",
+    "fmt": "npm run eslint -- --fix && npm run prettier -- --write && npm run swiftlint -- --fix --format",
+    "eslint": "eslint . --ext ts",
+    "prettier": "prettier \"**/*.{css,html,ts,js,java}\" --plugin=prettier-plugin-java",
+    "swiftlint": "node-swiftlint",
+    "docgen": "docgen --api WebviewBackgroundPlugin --output-readme README.md --output-json dist/docs.json",
+    "build": "npm run clean && npm run docgen && tsc && rollup -c rollup.config.mjs",
+    "clean": "rimraf ./dist",
+    "watch": "tsc --watch",
+    "whattsc": "tsc --version",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/docgen": "^0.2.2",
+    "@capacitor/ios": "^6.0.0",
+    "@ionic/eslint-config": "0.4.0",
+    "@ionic/prettier-config": "^4.0.0",
+    "@ionic/swiftlint-config": "^2.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.3",
+    "prettier-plugin-java": "^2.6.4",
+    "rimraf": "^5.0.1",
+    "rollup": "^4.24.0",
+    "swiftlint": "^2.0.0",
+    "typescript": "4.6.4"
+  },
+  "peerDependencies": {
+    "@capacitor/core": "^6.0.0"
+  },
+  "prettier": "@ionic/prettier-config",
+  "swiftlint": "@ionic/swiftlint-config",
+  "eslintConfig": {
+    "extends": "@ionic/eslint-config/recommended"
+  },
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    }
+  }
+}
