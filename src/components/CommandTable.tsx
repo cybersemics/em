@@ -7,11 +7,12 @@ import CommandId from '../@types/CommandId'
 import { isTouch } from '../browser'
 import { commandById, globalCommands } from '../commands'
 import useFilteredCommands from '../hooks/useFilteredCommands'
+import theme from '../selectors/theme'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import CommandTableOnly from './CommandTableOnly'
 import SortButton from './SortButton'
-import theme from '../selectors/theme'
+
 // define the grouping and ordering of commands
 const groups: {
   title: string
@@ -125,12 +126,12 @@ const SearchCommands: FC<{
 
   return (
     <div
-    className={css({
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      gap: '5px',
-    })}
+      className={css({
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: '5px',
+      })}
     >
       <div id='search' className={css({ flexGrow: 1, border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
         <input
@@ -140,17 +141,17 @@ const SearchCommands: FC<{
             onInput?.(e.target.value)
           }}
           className={css({
-              marginLeft: 0,
-              marginBottom: 0,
-              boxSizing: 'border-box',
-              width: '100%',
-              minWidth: '100%',
-              paddingLeft: '2rem',
-              backgroundImage: isLightTheme ? 'url("/assets/search_light.svg")' : 'url("/assets/search.svg")',
-              backgroundSize: '16px',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: '10px center',
-              borderRadius: '8px',
+            marginLeft: 0,
+            marginBottom: 0,
+            boxSizing: 'border-box',
+            width: '100%',
+            minWidth: '100%',
+            paddingLeft: '2rem',
+            backgroundImage: isLightTheme ? 'url("/assets/search_light.svg")' : 'url("/assets/search.svg")',
+            backgroundSize: '16px',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: '10px center',
+            borderRadius: '8px',
           })}
         />
       </div>
