@@ -11,10 +11,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4  # Updated to latest version
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4  # Updated to latest version
         with:
           node-version: '14'
 
@@ -37,7 +37,7 @@ jobs:
                      -exportPath $PWD/build
 
       - name: Upload IPA
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4  # Updated to v4 to avoid deprecation issues
         with:
           name: App.ipa
           path: build/App.ipa
