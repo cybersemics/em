@@ -8,7 +8,7 @@ import { closeModalActionCreator as closeModal } from '../actions/closeModal'
 import { expandContextThoughtActionCreator as expandContextThought } from '../actions/expandContextThought'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
-import { isIOS, isTouch } from '../browser'
+import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
@@ -90,9 +90,6 @@ const Content: FC = () => {
           '@media (max-width: 560px)': {
             maxWidth: '50em',
             paddingLeft: '40px',
-            ...(isIOS && {
-              marginTop: '24px',
-            }),
           },
           ...(isTouch &&
             tutorial &&
