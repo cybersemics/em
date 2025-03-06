@@ -18858,10 +18858,10 @@ __metadata:
 
 "webview-background@file:./packages/webview::locator=em%40workspace%3A.":
   version: 0.0.2
-  resolution: "webview-background@file:./packages/webview#./packages/webview::hash=659222&locator=em%40workspace%3A."
+  resolution: "webview-background@file:./packages/webview#./packages/webview::hash=30dd3f&locator=em%40workspace%3A."
   peerDependencies:
     "@capacitor/core": ^6.0.0
-  checksum: 10c0/cba709f4c7c8004c3ea6ebdc93206247c02e26aa54588d309c0ff5ad48b33c5cb17d965e17ec24372bff6819eea66d0f8f7bd17c9160787491f579cdb2b75f59
+  checksum: 10c0/a8c6e2c4e5b83958c804abb67375091378636da5682f0456412c002531d0bec1fef3597270940aab8b37ddfb0817748bb0296c62c0548135eb425fac408cadb3
   languageName: node
   linkType: hard
 
