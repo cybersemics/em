@@ -1,4 +1,6 @@
 // import setCursor from '../../../test-helpers/setCursorFirstMatch'
+import colors from '../../../colors.config'
+import { rgbToHex, rgbaToHex } from '../../../util/rgbHex'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import getBulletColor from '../helpers/getBulletColor'
@@ -39,8 +41,8 @@ it('Set the text color of the text and bullet', async () => {
   const cursorText = await getEditingText()
   const bulletColor = await getBulletColor()
   const result = extractStyleProperty(cursorText!)
-  expect(bulletColor).toBe('rgb(0, 199, 230)')
-  expect(result?.color).toBe('#00c7e6')
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
+  expect(result?.color).toBe(rgbaToHex(colors.light.blue))
   expect(result?.backgroundColor).toBe(null)
 })
 
@@ -59,8 +61,8 @@ it('Set the background color of the text', async () => {
   const cursorText = await getEditingText()
   const bulletColor = await getBulletColor()
   const result = extractStyleProperty(cursorText!)
-  expect(bulletColor).toBe('rgb(0, 214, 136)')
-  expect(result?.backgroundColor).toBe('rgb(0, 214, 136)')
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.green))
+  expect(rgbToHex(result?.backgroundColor!)).toBe(rgbaToHex(colors.light.green))
 })
 
 it('Clear the background color when selecting text color', async () => {
@@ -78,12 +80,12 @@ it('Clear the background color when selecting text color', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
   cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe('rgb(0, 214, 136)')
-  expect(extractStyleProperty(cursorText!)?.color).toBe('#000000')
+  expect(rgbToHex(extractStyleProperty(cursorText!)?.backgroundColor!)).toBe(rgbaToHex(colors.light.green))
+  expect(extractStyleProperty(cursorText!)?.color).toBe(rgbaToHex(colors.light.black))
 
   await click('[aria-label="text color swatches"] [aria-label="purple"]')
   cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.color).toBe('#aa80ff')
+  expect(extractStyleProperty(cursorText!)?.color).toBe(rgbaToHex(colors.light.purple))
   expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe(null)
 })
 
@@ -102,12 +104,12 @@ it('Clear the text color when setting background color', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="green"]')
   cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.color).toBe('#00d688')
+  expect(extractStyleProperty(cursorText!)?.color).toBe(rgbaToHex(colors.light.green))
 
   await click('[aria-label="background color swatches"] [aria-label="purple"]')
   cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe('rgb(170, 128, 255)')
-  expect(extractStyleProperty(cursorText!)?.color).toBe('#000000')
+  expect(rgbToHex(extractStyleProperty(cursorText!)?.backgroundColor!)).toBe(rgbaToHex(colors.light.purple))
+  expect(extractStyleProperty(cursorText!)?.color).toBe(rgbaToHex(colors.light.black))
 })
 
 it('Bullet remains the default color when a substring color is set', async () => {
@@ -224,7 +226,7 @@ it('Verify superscript colors in different views', async () => {
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const supColor2 = await getSuperscriptColor()
-  expect(supColor2).toBe('rgb(0, 199, 230)') // Superscript should match thought color
+  expect(rgbToHex(supColor2!)).toBe(rgbaToHex(colors.light.blue)) // Superscript should match thought color
 
   // Test 3: Set up nested thought colors for context view testing
   // Color parent thought 'v' red
@@ -244,5 +246,5 @@ it('Verify superscript colors in different views', async () => {
 
   await press('ArrowDown')
   const supColor3 = await getSuperscriptColor()
-  expect(supColor3).toBe('rgb(0, 214, 136)') // Superscript should match the green color in context view
+  expect(rgbToHex(supColor3!)).toBe(rgbaToHex(colors.light.green)) // Superscript should match the green color in context view
 })
