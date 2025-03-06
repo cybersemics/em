@@ -236,7 +236,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           }),
         )}
         style={{
-          // height: fontSize + 300,
           ...(!customize ? positionFixedStyles : null),
           // make toolbar flush with left padding
           marginLeft: customize ? -5 : 0,
