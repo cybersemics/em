@@ -13,9 +13,10 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import setCursor from '../actions/setCursor'
+import { setCursorActionCreator } from '../actions/setCursor'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
+import asyncFocus from '../device/asyncFocus'
 import testFlags from '../e2e/testFlags'
 import useSortedContext from '../hooks/useSortedContext'
 import attributeEquals from '../selectors/attributeEquals'
@@ -238,7 +239,6 @@ const linearizeTree = (
     // The id of a specific context within the context view.
     // This allows the contexts to render the children of their Lexeme instance rather than their own children.
     // i.e. a/~m/b should render b/m's children rather than rendering b's children. Notice that the Path a/~m/b contains a different m than b/m, so we need to pass the id of b/m to the next level to render the correct children.
-    // If we rendered the children as usual, the Lexeme would be repeated in each context, i.e. a/~m/a/m/x and a/~m/b/m/y. There is no need to render m a second time since we know the context view is activated on m.
     contextId,
     // accumulate the context chain in order to provide a unique key for rendering the same thought in normal view and context view
     contextChain,
@@ -948,10 +948,13 @@ const LayoutTree = () => {
   const dispatch = useDispatch()
 
   useEffect(() => {
-    if (!isKeyboardOpen) {
-      if (isLastActionNewThought) {
-        dispatch(setCursor({ path: HOME_PATH }))
-      }
+    //console.log({ isKeyboardOpen, isLastActionNewThought })
+    //if (!preventSetCursor && isTouch && isSafari()) {
+    asyncFocus()
+    //}
+    //if (!isKeyboardOpen && isLastActionNewThought) {
+    if (isLastActionNewThought) {
+      dispatch(setCursorActionCreator({ path: HOME_PATH }))
     }
   }, [isKeyboardOpen, isLastActionNewThought, dispatch])
 
