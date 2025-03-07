@@ -54,7 +54,6 @@
     "allowed-schemes": [
       "https:",
       "git+https:",
-      "file:",
       "npm:",
       "patch:",
       "workspace:"
