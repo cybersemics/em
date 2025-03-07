@@ -11,18 +11,40 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4  # Updated to latest version
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4  # Updated to latest version
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - name: Enable Corepack and Install Dependencies (Yarn 4.5.1)
+        run: |
+          corepack enable
+          yarn install
 
       - name: Set up Xcode
-        run: sudo xcode-select -s /Applications/Xcode_12.4.app
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer # Uses latest Xcode.
+          xcodebuild -version # Verifies the xcode version
+
+      - name: Create ExportOptions.plist (Example)
+        run: |
+          echo '<?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>ad-hoc</string> # Or "app-store", "development", etc.
+            <key>teamID</key>
+            <string>YOUR_TEAM_ID</string> # Replace with your Team ID
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>YOUR_BUNDLE_ID</key>
+              <string>YOUR_PROVISIONING_PROFILE_NAME</string> # Replace with your profile name
+            </dict>
+          </dict>
+          </plist>' > ExportOptions.plist
 
       - name: Build IPA
         run: |
@@ -37,7 +59,7 @@ jobs:
                      -exportPath $PWD/build
 
       - name: Upload IPA
-        uses: actions/upload-artifact@v4  # Updated to v4 to avoid deprecation issues
+        uses: actions/upload-artifact@v4
         with:
           name: App.ipa
           path: build/App.ipa
