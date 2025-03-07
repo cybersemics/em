@@ -13,7 +13,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { isMobileSafari, isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import { getBoundingClientRect } from '../device/selection'
 import testFlags from '../e2e/testFlags'
@@ -456,14 +456,14 @@ const TreeNode = ({
 
   // Hide the faux caret when typing occurs.
   editingValueStore.useEffect(() => {
-    if (!isMobileSafari()) return
+    if (!isTouch || !isSafari()) return
     setFauxCaretStyles({ display: 'none' })
   })
 
   // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
   // selection is created.
   useEffect(() => {
-    if (!isMobileSafari()) return
+    if (!isTouch || !isSafari()) return
 
     if (editing && isCursor) {
       // The selection ranges aren't updated until the end of the frame when the thought is focused.

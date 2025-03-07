@@ -1,12 +1,12 @@
 import { CSSProperties } from 'react'
 import { css } from '../../styled-system/css'
-import { isMobileSafari } from '../browser'
+import { isSafari, isTouch } from '../browser'
 
 /**
  * Faux caret to display during hideCaret animations on mobile Safari.
  */
 const FauxCaret = ({ styles }: { styles: CSSProperties }) => {
-  if (!isMobileSafari()) return null
+  if (!isTouch || !isSafari()) return null
   return (
     <span
       className={css({

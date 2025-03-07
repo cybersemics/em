@@ -11,7 +11,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
-import { isMobileSafari, isSafari, isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
@@ -120,7 +120,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
           marginTop: -3,
           position: 'relative',
           marginBottom: '2px',
-          padding: isMobileSafari() ? '0 1em 4px 0.333em' : '0 0 4px 0',
+          padding: isTouch && isSafari() ? '0 1em 4px 0.333em' : '0 0 4px 0',
           '@media (max-width: 1024px)': {
             _android: {
               position: 'relative',
@@ -149,7 +149,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
         placeholder='Enter a note'
         className={css({
           display: 'inline-block',
-          padding: isMobileSafari() ? undefined : '0 1em 0 0.333em',
+          padding: isTouch && isSafari() ? undefined : '0 1em 0 0.333em',
         })}
         onKeyDown={onKeyDown}
         onChange={onChange}

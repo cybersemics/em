@@ -21,8 +21,3 @@ export const isiPhone = typeof navigator !== 'undefined' && navigator.platform =
 
 /** Returns true if the navigator vendor contains 'Apple'. */
 export const isSafari = () => typeof navigator !== 'undefined' && navigator.vendor.includes('Apple')
-
-/** Returns true if isTouch && isSafari.
- * This is nice to have in one place for debugging using Chrome dev tools rather than Safari. */
-// export const isMobileSafari = () => true
-export const isMobileSafari = () => isTouch && isSafari()

@@ -1,6 +1,6 @@
 import { cva } from '../../styled-system/css'
 import { type RecipeVariantRecord } from '../../styled-system/types/recipe'
-import { isMobileSafari } from '../browser'
+import { isSafari, isTouch } from '../browser'
 
 export const hideCaretAnimationNames = [
   'hideCaret0',
@@ -42,6 +42,6 @@ type HideCaretAnimationName = (typeof hideCaretAnimationNames)[number]
 
 /** Pick from a set of identical hideCaret animations based on a thought's indent depth. This ensures that the animation plays again each time the indent depth changes. */
 export const getHideCaretAnimationName = (indentDepth: number): HideCaretAnimationName | 'none' =>
-  isMobileSafari() ? hideCaretAnimationNames[indentDepth % hideCaretAnimationNames.length] : 'none'
+  isTouch && isSafari() ? hideCaretAnimationNames[indentDepth % hideCaretAnimationNames.length] : 'none'
 
 export default hideCaret

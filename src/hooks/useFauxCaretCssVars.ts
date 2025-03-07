@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
-import { isMobileSafari } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { isEndOfElementNode, isStartOfElementNode } from '../device/selection'
 import editingValueStore from '../stores/editingValue'
 
@@ -23,13 +23,13 @@ const useFauxCaretCssVars = (
 
   // Hide the faux caret when typing occurs.
   editingValueStore.useEffect(() => {
-    if (isMobileSafari()) setFauxCaretType('none')
+    if (isTouch && isSafari()) setFauxCaretType('none')
   })
 
   // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
   // selection is created.
   useEffect(() => {
-    if (!isMobileSafari()) return
+    if (!isTouch || !isSafari()) return
     if (editing && isCursor) {
       // The selection ranges aren't updated until the end of the frame when the thought is focused.
       setTimeout(() => {

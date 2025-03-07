@@ -9,7 +9,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isMobileSafari } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -357,7 +357,7 @@ const ThoughtAnnotationContainer = React.memo(
     // to exist on mobile Safari. The line end faux caret must be placed inline-block at the end of the
     // thought text in order to cover cases where the selection is an ELEMENT_NODE and its bounding box
     // does not represent the screen position of the caret.
-    return showSuperscript || url || email || styleAnnotation || isMobileSafari() ? (
+    return showSuperscript || url || email || styleAnnotation || (isTouch && isSafari()) ? (
       <ThoughtAnnotation
         {...{
           simplePath,
