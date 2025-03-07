@@ -37,6 +37,15 @@ jobs:
         run: |
           xcodebuild -workspace ios/App/App.xcworkspace -list
 
+      - name: Install jq (if not available)
+        run: brew install jq || echo "jq is already installed"
+
+      - name: Detect Xcode Scheme
+        id: detect_scheme
+        run: |
+          SCHEME=$(xcodebuild -workspace ios/App/App.xcworkspace -list -json | jq -r '.workspace.schemes[0]')
+          echo "Detected scheme: $SCHEME"
+          echo "::set-output name=scheme::$SCHEME"
 
       - name: Create ExportOptions.plist
         run: |
