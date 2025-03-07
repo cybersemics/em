@@ -121,7 +121,7 @@ const ModalSettings = () => {
       title='Settings'
       actions={({ close }) => (
         <div className={css({ textAlign: 'center' })}>
-          <ActionButton key='close' title='Close' {...fastClick(() => close(), { tapDown: haptics.medium })} />
+          <ActionButton key='close' title='Close' {...fastClick(() => close(true), { tapDown: haptics.medium })} />
         </div>
       )}
     >
