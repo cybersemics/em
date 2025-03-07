@@ -33,6 +33,27 @@ jobs:
       - name: Set up Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
 
+      - name: List App Schemes
+        run: xcodebuild -workspace ios/App/App.xcworkspace -list
+
+      - name: Create ExportOptions.plist
+        run: |
+          echo '<?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>ad-hoc</string> # Or "app-store", "development", etc.
+            <key>teamID</key>
+            <string>YOUR_TEAM_ID</string> # Replace with your Team ID
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>YOUR_BUNDLE_ID</key>
+              <string>YOUR_PROVISIONING_PROFILE_NAME</string> # Replace with your profile name
+            </dict>
+          </dict>
+          </plist>' > ExportOptions.plist
+
       - name: Build IPA
         run: |
           xcodebuild -workspace ios/App/App.xcworkspace \
