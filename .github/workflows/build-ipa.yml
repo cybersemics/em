@@ -19,7 +19,7 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Set up Xcode
         run: sudo xcode-select -s /Applications/Xcode_12.4.app
