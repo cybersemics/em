@@ -14,11 +14,13 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
   const [isBottom, setIsBottom] = useState(false)
 
   useEffect(() => {
+    const currentDialogRef = dialogRef.current // Capture the current ref value
+
     /**
      * Handles the click outside the dialog.
      */
     const handleClickOutside = (event: MouseEvent) => {
-      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+      if (currentDialogRef && !currentDialogRef.contains(event.target as Node)) {
         onClose()
       }
     }
@@ -27,20 +29,19 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
      * When the user scrolls to the bottom, the gradient disappears.
      */
     const handleScroll = () => {
-      if (dialogRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = dialogRef.current
+      if (currentDialogRef) {
+        const { scrollTop, scrollHeight, clientHeight } = currentDialogRef
         const atBottom = scrollTop + clientHeight >= scrollHeight
         setIsBottom(atBottom)
-        console.log('Scroll event:', { scrollTop, clientHeight, scrollHeight, atBottom })
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
-    dialogRef.current?.addEventListener('scroll', handleScroll)
+    currentDialogRef?.addEventListener('scroll', handleScroll)
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
-      dialogRef.current?.removeEventListener('scroll', handleScroll)
+      currentDialogRef?.removeEventListener('scroll', handleScroll)
     }
   }, [onClose])
 

@@ -61,12 +61,12 @@ const GestureCheatsheet: React.FC = () => {
         <>
           <div ref={dialogRef} className={dialogAnimationStyles}>
             <Dialog onClose={handleClose}>
-                <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
-                <DialogContent>
-                  <div className={dialogStyles}>
-                    <CommandGrid />
-                  </div>
-                </DialogContent>
+              <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
+              <DialogContent>
+                <div className={dialogStyles}>
+                  <CommandGrid />
+                </div>
+              </DialogContent>
             </Dialog>
           </div>
         </>
