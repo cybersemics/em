@@ -581,6 +581,7 @@ const Editable = ({
 
   return (
     <ContentEditable
+      data-rank={rank}
       disabled={disabled}
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
