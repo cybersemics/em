@@ -14,7 +14,6 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const lastHapticScrollPosition = useRef<number>(0)
   const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
-  if (hideScrollZone) return null
 
   /** Haptic feedback on scroll. */
   useEffect(() => {
@@ -26,6 +25,8 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
       lastHapticScrollPosition.current = scrollTop
     }
   }, [scrollTop])
+
+  if (hideScrollZone) return null
 
   return (
     <div
