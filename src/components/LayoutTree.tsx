@@ -417,6 +417,7 @@ const TreeNode = ({
   cliffPaddingStyle,
   dragInProgress,
   autofocusDepth,
+  editing,
   ...transitionGroupsProps
 }: TreeThoughtPositioned & {
   thoughtKey: string
@@ -429,8 +430,8 @@ const TreeNode = ({
   cliffPaddingStyle: { paddingBottom: number }
   dragInProgress: boolean
   autofocusDepth: number
+  editing: boolean
 } & Pick<CSSTransitionProps, 'in'>) => {
-  const editing = useSelector(state => state.editing)
   const [y, setY] = useState(_y)
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
@@ -608,6 +609,7 @@ const TreeNode = ({
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
+  const editing = useSelector(state => state.editing)
   const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
@@ -1019,6 +1021,7 @@ const LayoutTree = () => {
               key={thought.key}
               // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
               thoughtKey={thought.key}
+              editing={editing || false}
               {...{
                 viewportBottom,
                 treeThoughtsPositioned,
