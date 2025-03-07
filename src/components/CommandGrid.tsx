@@ -155,7 +155,7 @@ const SearchCommands: FC<{
           })}
         />
       </div>
-      <SortButton />
+      <SortButton onSortChange={() => {}} />
     </div>
   )
 }
