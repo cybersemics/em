@@ -42,7 +42,6 @@
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
     "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:tsc": "tsc",
-    "lint:packages": "yarn --cwd packages/webview lint",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output \"lint:*\"",
     "postinstall": "yarn install:packages && yarn build:packages && git config core.hooksPath .hooks && yarn build:styles",
     "servebuild": "npx serve -s build -l 3000",
