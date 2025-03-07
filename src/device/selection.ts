@@ -487,9 +487,7 @@ export const html = () => {
 export const getBoundingClientRect = () => {
   const selection = window.getSelection()
 
-  if (selection && selection.rangeCount) {
-    if (isText()) return selection.getRangeAt(0).getBoundingClientRect()
-  }
+  if (selection && selection.rangeCount && isText()) return selection.getRangeAt(0).getBoundingClientRect()
 
   return null
 }
