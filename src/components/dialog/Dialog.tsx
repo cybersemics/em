@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { css } from '../../../styled-system/css'
 
 interface DialogProps {
@@ -11,6 +11,7 @@ interface DialogProps {
  */
 const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
+  const [isBottom, setIsBottom] = useState(false)
 
   useEffect(() => {
     /**
@@ -22,10 +23,24 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
       }
     }
 
+    /**
+     * When the user scrolls to the bottom, the gradient disappears.
+     */
+    const handleScroll = () => {
+      if (dialogRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = dialogRef.current
+        const atBottom = scrollTop + clientHeight >= scrollHeight
+        setIsBottom(atBottom)
+        console.log('Scroll event:', { scrollTop, clientHeight, scrollHeight, atBottom })
+      }
+    }
+
     document.addEventListener('mousedown', handleClickOutside)
+    dialogRef.current?.addEventListener('scroll', handleScroll)
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
+      dialogRef.current?.removeEventListener('scroll', handleScroll)
     }
   }, [onClose])
 
@@ -53,9 +68,25 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
           maxWidth: '500px',
           width: '80%',
           border: '2px solid {colors.fgOverlay50}',
+          overflowY: 'auto',
+          position: 'relative',
         })}
       >
         {children}
+        {!isBottom && (
+          <div
+            className={css({
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '100px',
+              background: 'linear-gradient(to top, {colors.bg} 0%, transparent 100%)',
+              pointerEvents: 'none',
+              transition: 'opacity 0.3s',
+            })}
+          />
+        )}
       </div>
     </div>
   )
