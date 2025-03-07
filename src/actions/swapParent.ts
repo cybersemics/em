@@ -39,27 +39,30 @@ const swapParent = (state: State) => {
 
   return reducerFlow([
     // First move the child to replace its parent's position
-    state => moveThought(state, {
-      oldPath: cursor,
-      newPath: parent,
-      newRank: parentThought.rank,
-    }),
+    state =>
+      moveThought(state, {
+        oldPath: cursor,
+        newPath: parent,
+        newRank: parentThought.rank,
+      }),
 
     // Then move the parent under the child
-    state => moveThought(state, {
-      oldPath: parent,
-      newPath: appendToPath([childId], parentId),
-      newRank: 0,
-    }),
+    state =>
+      moveThought(state, {
+        oldPath: parent,
+        newPath: appendToPath([childId], parentId),
+        newRank: 0,
+      }),
 
     // Move all child's children under the parent's new position
-    state => childChildren.reduce((accState, childChild) => {
-      return moveThought(accState, {
-        oldPath: appendToPath(cursor, childChild.id),
-        newPath: appendToPath([...grandparent, childId, parentId], childChild.id),
-        newRank: childChild.rank,
-      })
-    }, state),
+    state =>
+      childChildren.reduce((accState, childChild) => {
+        return moveThought(accState, {
+          oldPath: appendToPath(cursor, childChild.id),
+          newPath: appendToPath([...grandparent, childId, parentId], childChild.id),
+          newRank: childChild.rank,
+        })
+      }, state),
 
     // Keep cursor on the child at its new position, preserving the full path
     state => ({
