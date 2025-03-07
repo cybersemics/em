@@ -18,20 +18,20 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
   }
 
   return (
-      <button
-        onClick={() => setDropdownOpen(!isDropdownOpen)}
-        className={css({
-          width: '45px',
-          border: 'solid 1px {colors.gray50}',
-          backgroundColor: '{colors.darkgray}',
-          borderRadius: '8px',
-          backgroundImage: isLightTheme ? 'url("/assets/sort_light.svg")' : 'url("/assets/sort.svg")',
-          backgroundSize: '20px',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          position: 'relative',
-        })}
-      >
+    <button
+      onClick={() => setDropdownOpen(!isDropdownOpen)}
+      className={css({
+        width: '45px',
+        border: 'solid 1px {colors.gray50}',
+        backgroundColor: '{colors.darkgray}',
+        borderRadius: '8px',
+        backgroundImage: isLightTheme ? 'url("/assets/sort_light.svg")' : 'url("/assets/sort.svg")',
+        backgroundSize: '20px',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        position: 'relative',
+      })}
+    >
       {isDropdownOpen && (
         <div
           className={css({
@@ -50,15 +50,15 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
         >
           <h2
             className={css({
-                color: '{colors.gray50}',
-                borderBottom: 'none',
-                textAlign: 'left',
-                fontSize: '0.9rem',
-                margin: '0',
+              color: '{colors.gray50}',
+              borderBottom: 'none',
+              textAlign: 'left',
+              fontSize: '0.9rem',
+              margin: '0',
             })}
           >
             Sort by:
-            </h2>
+          </h2>
           <label
             className={css({
               display: 'flex',
@@ -67,13 +67,13 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
             })}
           >
             <input
-              type="radio"
+              type='radio'
               checked={selectedSort === 'alphabetical'}
               onChange={() => handleSortChange('alphabetical')}
             />
             <h3
               className={css({
-                color: '{colors.gray50}',             
+                color: '{colors.gray50}',
                 margin: '0 0 0 0.2rem',
                 fontWeight: 'normal',
                 fontSize: '0.9rem',
@@ -88,20 +88,16 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
               flexDirection: 'row',
             })}
           >
-            <input
-              type="radio"
-              checked={selectedSort === 'type'}
-              onChange={() => handleSortChange('type')}
-            />
+            <input type='radio' checked={selectedSort === 'type'} onChange={() => handleSortChange('type')} />
             <h3
-                className={css({
-                color: '{colors.gray50}',             
+              className={css({
+                color: '{colors.gray50}',
                 margin: '0 0 0 0.2rem',
                 fontWeight: 'normal',
                 fontSize: '0.9rem',
-                })}
+              })}
             >
-                Type
+              Type
             </h3>
           </label>
         </div>
