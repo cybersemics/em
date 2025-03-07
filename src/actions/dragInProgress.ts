@@ -10,6 +10,7 @@ import { isSafari } from '../browser'
 import { AlertText, AlertType } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import alert, { alertActionCreator } from './alert'
 import { expandHoverDownActionCreator as expandHoverDown } from './expandHoverDown'
@@ -111,8 +112,11 @@ export const dragInProgressActionCreator =
   dispatch => {
     const { hoveringPath, value } = payload
 
+    if (value) {
+      haptics.light()
+    }
     // react-dnd stops propagation of the TouchMonitor's touchend event, so we need to turn off globals.touching here
-    if (!value) {
+    else {
       globals.touching = false
 
       // clear selection after drag ends just in case browser made a selection

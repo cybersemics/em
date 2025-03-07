@@ -4,6 +4,7 @@ import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
+import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
@@ -310,18 +311,18 @@ const CommandRow: FC<{
 }
 
 /** Render a command palette with keyboard or gesture autocomplete. */
-const CommandPalette: FC = () => {
+const CommandPalette: FC<{
+  commands: Command[]
+  recentCommands: CommandId[]
+  setRecentCommands: (commandIds: CommandId[]) => void
+  search: string
+  setSearch: (search: string) => void
+}> = ({ commands, recentCommands, setRecentCommands, search, setSearch }) => {
   const store = useStore()
   const dispatch = useDispatch()
-  const gestureInProgress = gestureStore.useState()
+  const gestureInProgress = gestureStore.useSelector(state => state.gesture)
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
-  const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
-  const [search, setSearch] = useState('')
-  const commands = useFilteredCommands(search, {
-    recentCommands,
-    sortActiveCommandsFirst: true,
-  })
 
   const [selectedCommand, setSelectedCommand] = useState<Command>(commands[0])
 
@@ -500,7 +501,7 @@ const CommandPalette: FC = () => {
   )
 }
 
-/** An alert component that fades in and out. */
+/** A CommandPalette component that fades in and out based on state.showCommandPalette. */
 const CommandPaletteWithTransition: FC = () => {
   const [isDismissed, setDismiss] = useState(false)
   const dispatch = useDispatch()
@@ -516,6 +517,14 @@ const CommandPaletteWithTransition: FC = () => {
 
   const showCommandPalette = useSelector(state => state.showCommandPalette)
 
+  // Commands need to be calculated even if the command palette is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
+  const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
+  const [search, setSearch] = useState('')
+  const commands = useFilteredCommands(search, {
+    recentCommands,
+    sortActiveCommandsFirst: true,
+  })
+
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
     <TransitionGroup
@@ -530,7 +539,13 @@ const CommandPaletteWithTransition: FC = () => {
             {...(!isTouch ? { onClose } : null)}
             cssRaw={popUpStyles}
           >
-            <CommandPalette />
+            <CommandPalette
+              commands={commands}
+              recentCommands={recentCommands}
+              setRecentCommands={setRecentCommands}
+              search={search}
+              setSearch={setSearch}
+            />
           </Popup>
         </FadeTransition>
       ) : null}

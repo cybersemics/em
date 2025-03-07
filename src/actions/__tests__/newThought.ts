@@ -3,10 +3,10 @@ import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
-import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 import newThought from '../newThought'
 
@@ -327,7 +327,7 @@ describe('context view', () => {
     - m`)
 
     // cursor should be on the new context
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', ''])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', ''])
   })
 
   it('new thought on a context adds a a new sibling context in the absolute context', () => {
@@ -370,7 +370,7 @@ describe('context view', () => {
     - m`)
 
     // cursor should be on the new context
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', ''])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', ''])
   })
 
   it('new subthought of context', () => {
@@ -403,6 +403,6 @@ describe('context view', () => {
       - y`)
 
     // cursor should be on the new context
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', 'a', ''])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', ''])
   })
 })

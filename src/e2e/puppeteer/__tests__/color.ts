@@ -3,6 +3,7 @@ import clickThought from '../helpers/clickThought'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
+import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
 
@@ -162,4 +163,26 @@ it('Empty <span> element will be removed after setting color to default.', async
 
   const result = await getEditingText()
   expect(result).toBe('Golden Retriever')
+})
+
+it('remove all formatting from the thought', async () => {
+  const importText = `
+  - Labrador`
+
+  await paste(importText)
+
+  await waitForEditable('Labrador')
+  await clickThought('Labrador')
+  // Apply formats like Bold, Italic, Underline, Text color etc.
+  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Italic"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Underline"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Strikethrough"]')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  await press('0', { meta: true }) // Remove Format.
+
+  const thoughtValue = await getEditingText()
+  expect(thoughtValue).toBe('Labrador')
 })

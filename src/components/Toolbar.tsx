@@ -18,10 +18,16 @@ import CommandId from '../@types/CommandId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
 import { commandById } from '../commands'
-import { TOOLBAR_DEFAULT_COMMANDS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
+import {
+  ICON_SCALING_FACTOR,
+  TOOLBAR_BUTTON_PADDING,
+  TOOLBAR_DEFAULT_COMMANDS,
+  TOOLBAR_PRESS_ANIMATION_DURATION,
+} from '../constants'
 import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import haptics from '../util/haptics'
 import FadeTransition from './FadeTransition'
 import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
@@ -86,6 +92,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // track scrollLeft after each touchend
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
+  const lastHapticScrollPosition = useRef<number>(0)
   const toolbarContainerRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [leftArrowIsShown, setLeftArrowIsShown] = useState(false)
@@ -132,19 +139,26 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       setRightArrowIsShown(el.offsetWidth + el.scrollLeft < el.scrollWidth - 20)
     }
   }, [])
-
   /** Handles toolbar scroll event. */
   const onScroll = useCallback(
     (e: React.UIEvent<HTMLElement>) => {
-      const scrollDifference = e.target ? Math.abs(lastScrollLeft.current - (e.target as HTMLElement).scrollLeft) : 0
-
+      const el = e.target as HTMLElement
+      const width = el.scrollWidth
+      const scrollDifference = Math.abs(lastScrollLeft.current - el.scrollLeft)
       if (scrollDifference >= 5) {
         deselectPressingToolbarId()
+      }
+      const hapticScrollDifference = Math.abs(lastHapticScrollPosition.current - el.scrollLeft)
+      const buttonWidth = fontSize * ICON_SCALING_FACTOR + TOOLBAR_BUTTON_PADDING * 2
+      // do not fire haptics on overscroll
+      if (el.scrollLeft >= 0 && el.scrollLeft <= width - window.innerWidth && hapticScrollDifference >= buttonWidth) {
+        haptics.light()
+        lastHapticScrollPosition.current = el.scrollLeft
       }
 
       updateArrows()
     },
-    [updateArrows, deselectPressingToolbarId],
+    [fontSize, updateArrows, deselectPressingToolbarId],
   )
 
   /**********************************************************************

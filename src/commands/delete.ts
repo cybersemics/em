@@ -4,7 +4,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../actions/deleteThoughtWithCursor'
 import { errorActionCreator as error } from '../actions/error'
 import Icon from '../components/icons/DeleteIcon'
-import { AlertType, Settings } from '../constants'
+import { AlertType, DELETE_VIBRATE_DURATION, Settings } from '../constants'
 import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
@@ -12,13 +12,14 @@ import getUserSetting from '../selectors/getUserSetting'
 import hasMulticursor from '../selectors/hasMulticursor'
 import simplifyPath from '../selectors/simplifyPath'
 import ellipsize from '../util/ellipsize'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec: Command['exec'] = (dispatch, getState) => {
+const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
   const state = getState()
   const { cursor } = state
 
@@ -34,7 +35,12 @@ const exec: Command['exec'] = (dispatch, getState) => {
   } else if (findDescendant(state, head(cursor), '=readonly')) {
     dispatch(error({ value: `"${ellipsize(value)}" is read-only and cannot be deleted.` }))
   } else {
-    dispatch(deleteThoughtWithCursor({ path: cursor }))
+    // only activate haptics on gesture, since mobile also executes the delete command when hitting backspace on the keyboard
+    if (type === 'gesture' && value !== '') {
+      haptics.vibrate(DELETE_VIBRATE_DURATION)
+    }
+
+    dispatch(deleteThoughtWithCursor())
 
     // Alert which thought was deleted.
     // Only show alert for empty thought in training mode.

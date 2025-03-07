@@ -187,7 +187,12 @@ export default [
       '@pandacss/no-config-function-in-source': 0,
       '@pandacss/prefer-longhand-properties': 2,
       '@pandacss/no-dynamic-styling': 0,
-      '@pandacss/no-hardcoded-color': 2,
+      '@pandacss/no-hardcoded-color': [
+        2,
+        {
+          whitelist: ['inherit', 'currentColor'],
+        },
+      ],
       '@pandacss/no-property-renaming': 2,
     },
   },

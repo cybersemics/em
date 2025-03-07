@@ -135,6 +135,9 @@ export const noop = () => {}
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200
 
+/** The left and right padding of each toolbar button (px). */
+export const TOOLBAR_BUTTON_PADDING = 8
+
 // Used for scaling the size of icons according to the font size
 export const ICON_SCALING_FACTOR = 1.37
 
@@ -511,3 +514,6 @@ export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 
 export const GESTURE_GLOW_BLUR = 10
 export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'
+
+/** The duration of the haptics vibrate on delete or archive non-empty thought. */
+export const DELETE_VIBRATE_DURATION = 80

@@ -1,4 +1,6 @@
 /* eslint-disable import/prefer-default-export */
+
+/** Defines global keyboard shortcuts and gestures. */
 import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
@@ -18,7 +20,9 @@ import * as commandsObject from './commands/index'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, Settings } from './constants'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
+import gestureStore from './stores/gesture'
 import { executeCommandWithMulticursor } from './util/executeCommand'
+import haptics from './util/haptics'
 import keyValueBy from './util/keyValueBy'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
@@ -181,6 +185,13 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const experienceMode = getUserSetting(state, Settings.experienceMode)
 
     if (state.showModal || state.dragInProgress) return
+
+    // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
+    // useFilteredCommands updates the possibleCommands in a back channel for efficiency.
+    // Always allow haptics for the first swipe, as possibleCommands may not be populated yet.
+    if (sequence.length === 1 || gestureStore.getState().possibleCommands.length > 2) {
+      haptics.light()
+    }
 
     const command = commandGestureIndex[sequence as string]
 

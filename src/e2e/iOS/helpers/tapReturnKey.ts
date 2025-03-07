@@ -1,7 +1,7 @@
 import { Browser } from 'webdriverio'
 
 /** Tap 'return' on the keyboard. */
-const tapReturnKey = async (browser: Browser<'async'>) => {
+const tapReturnKey = async (browser: Browser) => {
   const oldContext = ((await browser.getContext()) as string) || 'NATIVE_APP'
   await browser.switchContext('NATIVE_APP')
   const element = await browser.$('//XCUIElementTypeButton[@name="Return"]')

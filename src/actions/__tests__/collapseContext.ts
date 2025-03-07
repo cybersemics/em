@@ -11,7 +11,6 @@ import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
-import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 
 describe('normal view', () => {
@@ -37,7 +36,7 @@ describe('normal view', () => {
   - a
     - c`)
 
-    expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: 'c' }])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
   it('collapse context with multiple children', () => {
@@ -60,7 +59,7 @@ describe('normal view', () => {
     - c
     - d`)
 
-    expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: 'c' }])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
   it('merge children', () => {
@@ -84,7 +83,7 @@ describe('normal view', () => {
     - d
     - x`)
 
-    expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: 'c' }])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
   it('merge duplicate children', () => {
@@ -107,7 +106,7 @@ describe('normal view', () => {
     - c
     - d`)
 
-    expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: 'c' }])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
   it('after collapse context set cursor to the first visible children.', () => {
@@ -122,7 +121,7 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: 'c' }])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
   it('after collapse context set cursor to the parent if there are no visible children.', () => {
@@ -130,7 +129,7 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
 
   it('collapse empty thought with empty child', () => {
@@ -155,7 +154,7 @@ describe('normal view', () => {
     - ${''}
       - b`)
 
-    expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: '' }])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', ''])
   })
 
   it('preserve order of children', () => {
@@ -352,7 +351,7 @@ describe('context view', () => {
     - m
       - y`)
 
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', 'b'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 
   it('collapse context subthought in context view', () => {
