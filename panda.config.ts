@@ -57,6 +57,7 @@ const zIndexDescending = (keys: string[]) => keyValueBy(keys.reverse(), (key, i)
 /** Add `ms` units to raw value. */
 const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
 
+/** FauxCaret.tsx uses these variables to decide which faux caret to show. */
 const hideCaret = {
   '0%': {
     '--faux-caret-opacity': 1,
