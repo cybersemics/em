@@ -11,6 +11,9 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<'alphabetical' | 'type' | null>(null)
 
+  /**
+   * Handles the sort change event.
+   */
   const handleSortChange = (sortOrder: 'alphabetical' | 'type') => {
     setSelectedSort(sortOrder)
     onSortChange(sortOrder)
