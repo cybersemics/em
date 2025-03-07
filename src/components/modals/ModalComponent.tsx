@@ -4,7 +4,6 @@ import { css, cx } from '../../../styled-system/css'
 import { modalRecipe } from '../../../styled-system/recipes'
 import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
-import { isIOS } from '../../browser'
 import { FADEOUT_DURATION } from '../../constants'
 import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
@@ -99,9 +98,6 @@ class ModalComponent extends React.Component<ModalProps> {
               textDecoration: 'none',
               /* spacing.safeAreaTop applies for rounded screens */
               top: 'calc(token(spacing.safeAreaTop) + 9px - 0.2em)',
-              ...(isIOS && {
-                marginTop: '48px',
-              }),
             })}
             {...fastClick(this.close)}
           >
