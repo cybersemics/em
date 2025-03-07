@@ -44,7 +44,7 @@ const useFauxCaretCssVars = (
     } else {
       setFauxCaretType('none')
     }
-  }, [editing, fadeThoughtElement, isCursor, isTableCol1, path])
+  }, [editing, fadeThoughtElement, isCursor, isTableCol1, noteFocus, path])
 
   return {
     '--faux-caret-line-start-opacity': fauxCaretType === 'thoughtStart' ? undefined : 0,
