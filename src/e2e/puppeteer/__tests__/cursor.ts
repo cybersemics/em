@@ -149,6 +149,7 @@ it('move cursor from formatted thought to first unformatted thought in descendin
 
   // Toggle sort twice (ascending then descending)
   await click('[data-testid="toolbar-icon"][aria-label="Sort"]')
+
   await click('[data-testid="toolbar-icon"][aria-label="Sort"]')
 
   // Make text bold using the toolbar
@@ -156,6 +157,11 @@ it('move cursor from formatted thought to first unformatted thought in descendin
 
   // Press arrow down to move cursor
   await press('ArrowDown')
+
+  // TODO: Wait for specific state
+  // Succeeds 10/10 with sleep.
+  // Fails 8/10 without sleep.
+  await sleep(200)
 
   // Verify cursor moved to 'pear' (when cursorDown)
   const downThoughtValue = await getEditingText()
