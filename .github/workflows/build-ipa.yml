@@ -68,7 +68,7 @@ jobs:
       - name: Build IPA
         run: |
           xcodebuild -workspace ios/App/App.xcworkspace \
-                     -scheme AppScheme \
+                     -scheme App \
                      -sdk iphoneos \
                      -configuration Release \
                      archive -archivePath $PWD/build/App.xcarchive
