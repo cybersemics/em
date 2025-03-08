@@ -9,7 +9,7 @@ import theme from '../selectors/theme'
 const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') => void }> = ({ onSortChange }) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
-  const [selectedSort, setSelectedSort] = useState<'alphabetical' | 'type' | null>(null)
+  const [selectedSort, setSelectedSort] = useState<'alphabetical' | 'type'>('type')
 
   /**
    * Handles the sort change event.

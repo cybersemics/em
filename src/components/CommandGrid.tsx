@@ -6,6 +6,7 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import { isTouch } from '../browser'
 import { commandById, globalCommands } from '../commands'
+import useAlphabeticalCommands from '../hooks/useAlphabeticalCommands'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import theme from '../selectors/theme'
 import conjunction from '../util/conjunction'
@@ -125,37 +126,27 @@ const SearchCommands: FC<{
   const isLightTheme = useSelector(state => theme(state) === 'Light')
 
   return (
-    <div
-      className={css({
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: '5px',
-      })}
-    >
-      <div id='search' className={css({ flexGrow: 1, border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
-        <input
-          type='text'
-          placeholder='Search gestures...'
-          onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-            onInput?.(e.target.value)
-          }}
-          className={css({
-            marginLeft: 0,
-            marginBottom: 0,
-            boxSizing: 'border-box',
-            width: '100%',
-            minWidth: '100%',
-            paddingLeft: '2rem',
-            backgroundImage: isLightTheme ? 'url("/assets/search_light.svg")' : 'url("/assets/search.svg")',
-            backgroundSize: '16px',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: '10px center',
-            borderRadius: '8px',
-          })}
-        />
-      </div>
-      <SortButton onSortChange={() => {}} />
+    <div id='search' className={css({ flexGrow: 1, border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
+      <input
+        type='text'
+        placeholder='Search gestures...'
+        onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+          onInput?.(e.target.value)
+        }}
+        className={css({
+          marginLeft: 0,
+          marginBottom: 0,
+          boxSizing: 'border-box',
+          width: '100%',
+          minWidth: '100%',
+          paddingLeft: '2rem',
+          backgroundImage: isLightTheme ? 'url("/assets/search_light.svg")' : 'url("/assets/search.svg")',
+          backgroundSize: '16px',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: '10px center',
+          borderRadius: '8px',
+        })}
+      />
     </div>
   )
 }
@@ -185,6 +176,11 @@ const CommandsGroup: ({
           ...modalClasses,
           fontSize: '1.3rem',
           borderBottom: 'none',
+          position: 'sticky',
+          top: '-16px',
+          background: 'linear-gradient(to bottom, {colors.bg} 85%, transparent)',
+          padding: '5px 0',
+          zIndex: 1,
         })}
       >
         {title}
@@ -212,28 +208,45 @@ const CommandGrid = ({
   selectedCommand?: Command
 }) => {
   const [search, setSearch] = useState('')
-  const commands = useFilteredCommands(search, { platformCommandsOnly: true })
+  const [sortOrder, setSortOrder] = useState<'alphabetical' | 'type'>('type')
+
+  // Use the appropriate hook based on sortOrder
+  const commands =
+    sortOrder === 'alphabetical'
+      ? useAlphabeticalCommands(search, { platformCommandsOnly: true })
+      : useFilteredCommands(search, { platformCommandsOnly: true })
 
   return (
     <div>
-      <SearchCommands onInput={setSearch} />
+      <div
+        className={css({
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          gap: '5px',
+        })}
+      >
+        <SearchCommands onInput={setSearch} />
+        <SortButton onSortChange={setSortOrder} />
+      </div>
       <div className={css({ textAlign: 'left' })}>
-        {search ? (
-          <CommandsGroup
-            title={'Results'}
+        {sortOrder === 'alphabetical' ? (
+          // Render all commands sorted alphabetically without titles
+          <CommandGridOnly
             commands={commands}
             selectedCommand={selectedCommand}
             customize={customize}
             onSelect={onSelect}
             search={search}
+            applyIndexInToolbar
           />
         ) : (
+          // Render commands by category
           groups.map(group => {
             const commands = group.commands
               .map(commandById)
               .filter((command): command is Command => (isTouch ? !!command.gesture : !!command.keyboard))
 
-            // do not render groups with no commands on this platform
             return commands.length > 0 ? (
               <CommandsGroup
                 title={group.title}
