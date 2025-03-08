@@ -1,5 +1,6 @@
 import Emitter from 'emitter20'
 
+// only undefined if task errors out and rejectOnError is false
 type TaskFunction<T> = () => T | Promise<T>
 type Task<T> = TaskFunction<T> | { function: TaskFunction<T>; description: string }
 
@@ -8,7 +9,9 @@ interface EventListeners<T> {
   step: (args: { completed: number; expected: number | null; total: number; index: number; value: T }) => void
   lowStep: (args: { completed: number; expected: number | null; total: number; index: number; value: T }) => void
   end: (total: number) => void
+  error: (err: any) => void
 }
+
 /** Returns a new task that retries the given task up to n times if it out. */
 const retriable = <T>(
   f: TaskFunction<T>,
@@ -46,7 +49,9 @@ const taskQueue = <
   onLowStep,
   onStep,
   onEnd,
+  onError,
   paused: _paused,
+  rejectOnError,
   retries,
   tasks,
   timeout = 30000,
@@ -61,9 +66,13 @@ const taskQueue = <
   onStep?: EventListeners<T>['step']
   /** An event that is called when all tasks have completed. */
   onEnd?: EventListeners<T>['end']
+  /** An event that is called when there is an error. Other tasks will continue. End promise will only be rejected if rejectOnError is true. */
+  onError?: EventListeners<T>['error']
   /** Starts the queue paused and only begins running tasks when .start() is called. */
   paused?: boolean
-  /** Number of times to retry a task after it times out (not including the initial call). This is recommended when using onLowStep, which can halt the whole queue if one task hangs. NOTE: Only use retries if the task is idempotent, as it is possible for a hung task to complete after the retry is initiated. */
+  /** If true, any task error will reject the end promise. You can also set rejectOnError on add(). */
+  rejectOnError?: boolean
+  /** Number of times to retry a task after it times out (not including the initial call). This is recommended when using onLowStep, which can halt the whole queue if one task hangs. Set rejectOnError to true if you want the end promise to reject when all retries time out. NOTE: Only use retries if the task is idempotent, as it is possible for a hung task to complete after the retry is initiated. */
   retries?: number
   /** Initial tasks to populate the queue with. */
   tasks?: (Task<T> | null | undefined)[]
@@ -116,8 +125,73 @@ const taskQueue = <
   // A function is needed instead of simply referencing `started`, since we need closure over the index even after `started`` has been incremented by other tasks. */
   const nextIndex = () => indexStarted++
 
-  // wrap tick in a promise that resolves onEnd
+  /** Processes the next tasks in the queue, up to the concurrency limit. When the task completes, repeats. If the queue is empty or the concurrency limit has been reached, do nothing. */
   let tick: () => void = null as any
+
+  /** Adds a one or more tasks to the queue and immediately begins if under the concurrency limit. Resolves when the given tasks have completed. */
+  const add = (
+    tasks: Task<T> | (Task<T> | null | undefined)[],
+    {
+      onStep: onStepBatch,
+      rejectOnError: rejectOnErrorInner,
+    }: {
+      onStep?: ({
+        completed,
+        expected,
+        total,
+      }: {
+        completed: number
+        expected: number | null
+        total: number
+        value: T
+      }) => void
+      /** If true, any task error will reject the returned promise. */
+      rejectOnError?: boolean
+    } = {},
+  ) => {
+    const tasksArray = Array.isArray(tasks) ? tasks : [tasks]
+    const promises = tasksArray.map(task => {
+      if (!task) return null
+      const taskFunction = typeof task === 'function' ? task : task?.function
+      return (
+        // Wrap task in a promise that calls onStepBatch and resolves when the task is complete.
+        // This is necessary because we don't have access to the inner promise before the task is run.
+        new Promise((resolve, reject) => {
+          /** Makes the task function asynchronous and triggers onStep when it resolves. */
+          const taskResolver = (): T | Promise<T> => {
+            let result: T | Promise<T>
+            try {
+              result = taskFunction()
+            } catch (err: any) {
+              emitter.trigger('error', err)
+              if (rejectOnError || rejectOnErrorInner) {
+                reject(err)
+              }
+            }
+
+            return Promise.resolve(result!).then(value => {
+              onStepBatch?.({ completed: completed + 1, expected, total, value })
+              resolve(value)
+              return value
+            })
+          }
+          queue.push(
+            typeof task !== 'function' && task.description
+              ? { description: task.description, function: taskResolver }
+              : taskResolver,
+          )
+          total++
+        })
+      )
+    })
+
+    if (!paused) {
+      tick()
+    }
+
+    return Promise.all(promises)
+  }
+
   const endPromise = new Promise((resolve, reject) => {
     emitter.on('lowStep', ({ completed, expected, total, index, value }) => {
       onLowStep?.({ completed, expected, total, index, value })
@@ -135,7 +209,13 @@ const taskQueue = <
       total = 0
     })
 
-    /** Processes the next tasks in the queue, up to the concurrency limit. When the task completes, repeats. If the queue is empty or the concurrency limit has been reached, do nothing. */
+    emitter.on('error', err => {
+      onError?.(err)
+      if (rejectOnError) {
+        reject(err)
+      }
+    })
+
     tick = () => {
       if (paused || running >= concurrency) return
       const task = queue.shift()
@@ -190,72 +270,25 @@ const taskQueue = <
             ?.split('\n')
             .slice(1)
             .join('\n')}`
-          reject(err)
+
+          if (rejectOnError) {
+            reject(err)
+          }
         })
 
       tick()
+    }
+
+    // start running initial tasks if provided
+    if (tasks && tasks.length > 0) {
+      add(tasks, { rejectOnError }).catch(reject)
     }
   })
-
-  /** Adds a one or more tasks to the queue and immediately begins if under the concurrency limit. Resolves when the given tasks have completed. */
-  const add = (
-    tasks: Task<T> | (Task<T> | null | undefined)[],
-    {
-      onStep: onStepBatch,
-    }: {
-      onStep?: ({
-        completed,
-        expected,
-        total,
-      }: {
-        completed: number
-        expected: number | null
-        total: number
-        value: T
-      }) => void
-    } = {},
-  ) => {
-    const tasksArray = Array.isArray(tasks) ? tasks : [tasks]
-    const promises = tasksArray.map(task => {
-      if (!task) return null
-      const taskFunction = typeof task === 'function' ? task : task?.function
-      return (
-        // Wrap task in a promise that calls onStepBatch and resolves when the task is complete.
-        // This is necessary because we don't have access to the inner promise before the task is run.
-        new Promise(resolve => {
-          /** Makes the task function asynchronous and triggers onStep when it resolves. */
-          const taskResolver = () =>
-            Promise.resolve(taskFunction()).then(value => {
-              onStepBatch?.({ completed: completed + 1, expected, total, value })
-              resolve(value)
-              return value
-            })
-          queue.push(
-            typeof task !== 'function' && task.description
-              ? { description: task.description, function: taskResolver }
-              : taskResolver,
-          )
-          total++
-        })
-      )
-    })
-
-    if (!paused) {
-      tick()
-    }
-
-    return Promise.all(promises)
-  }
 
   /** Clears the queue. */
   const clear = () => {
     // https://stackoverflow.com/questions/1232040/how-do-i-empty-an-array-in-javascript
     queue.length = 0
-  }
-
-  // start running initial tasks if provided
-  if (tasks && tasks.length > 0) {
-    add(tasks)
   }
 
   return {

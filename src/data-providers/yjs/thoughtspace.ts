@@ -262,6 +262,12 @@ export const init = async (options: ThoughtspaceOptions) => {
     onEnd: () => {
       onProgress({ savingProgress: 1 })
     },
+    onError: (err: Error) => {
+      onError(
+        `Oops! That's embarrassing. I was not able to save the last change. You should restart the app to avoid additional data loss. Error: ${err.message}`,
+        err,
+      )
+    },
   })
 
   configCache = {
