@@ -32,7 +32,6 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
       if (currentDialogRef) {
         const { scrollTop, scrollHeight, clientHeight } = currentDialogRef
         const atBottom = scrollTop + clientHeight >= scrollHeight - 1
-        console.log('Scroll Position:', { scrollTop, clientHeight, scrollHeight, atBottom })
         setIsBottom(atBottom)
       }
     }
