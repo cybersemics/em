@@ -17,7 +17,6 @@ const useAlphabeticalCommands = (
     sortActiveCommandsFirst?: boolean
   } = {},
 ) => {
-
   const sortedCommands = useMemo(() => {
     if (!globalCommands) {
       return []
