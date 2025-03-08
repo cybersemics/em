@@ -14,7 +14,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
   const [isBottom, setIsBottom] = useState(false)
 
   useEffect(() => {
-    const currentDialogRef = dialogRef.current // Capture the current ref value
+    const currentDialogRef = dialogRef.current
 
     /**
      * Handles the click outside the dialog.
@@ -31,7 +31,8 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
     const handleScroll = () => {
       if (currentDialogRef) {
         const { scrollTop, scrollHeight, clientHeight } = currentDialogRef
-        const atBottom = scrollTop + clientHeight >= scrollHeight
+        const atBottom = scrollTop + clientHeight >= scrollHeight - 1
+        console.log('Scroll Position:', { scrollTop, clientHeight, scrollHeight, atBottom })
         setIsBottom(atBottom)
       }
     }
@@ -86,6 +87,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
               background: 'linear-gradient(to top, {colors.bg} 0%, transparent 100%)',
               pointerEvents: 'none',
               transition: 'opacity 0.3s',
+              opacity: isBottom ? 0 : 1,
             })}
           />
         )}
