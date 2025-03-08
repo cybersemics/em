@@ -56,7 +56,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backgroundColor: '{colors.bgOverlay50}',
         zIndex: 'modal',
       })}
     >
