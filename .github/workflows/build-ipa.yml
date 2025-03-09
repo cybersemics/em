@@ -11,74 +11,81 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4  # Updated to latest version
+        uses: actions/checkout@v4
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4  # Updated to latest version
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: Install Node.js dependencies
         run: yarn
 
-      - name: Build
+      - name: Build JS
         run: yarn build
+
+      - name: Install Homebrew dependencies (jq, cocoapods)
+        run: |
+          brew install jq || echo "jq already installed"
+          sudo gem install cocoapods
+
+      - name: Install CocoaPods
+        run: |
+          cd ios/App
+          pod install
 
       - name: List available Xcode versions
         run: ls /Applications/
 
-      - name: Set up Xcode
+      - name: Set Xcode version
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
-
-      - name: List App Schemes
-        run: |
-          xcodebuild -workspace ios/App/App.xcworkspace -list
-
-      - name: Install jq (if not available)
-        run: brew install jq || echo "jq is already installed"
 
       - name: Detect Xcode Scheme
         id: detect_scheme
         run: |
           SCHEME=$(xcodebuild -workspace ios/App/App.xcworkspace -list -json | jq -r '.workspace.schemes[0]')
           echo "Detected scheme: $SCHEME"
-          echo "::set-output name=scheme::$SCHEME"
+          echo "scheme=$SCHEME" >> $GITHUB_OUTPUT
 
       - name: Create ExportOptions.plist
         run: |
-          echo '<?xml version="1.0" encoding="UTF-8"?>
+          cat <<EOF > ExportOptions.plist
+          <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>ad-hoc</string> 
+            <string>ad-hoc</string>
             <key>teamID</key>
-            <string>YOUR_TEAM_ID</string> # Replace with your Team ID
+            <string>YOUR_TEAM_ID</string>
             <key>provisioningProfiles</key>
             <dict>
               <key>YOUR_BUNDLE_ID</key>
-              <string>YOUR_PROVISIONING_PROFILE_NAME</string> 
+              <string>YOUR_PROVISIONING_PROFILE_NAME</string>
             </dict>
           </dict>
-          </plist>' > ExportOptions.plist
+          </plist>
+          EOF
 
       - name: Build IPA
         run: |
           xcodebuild -workspace ios/App/App.xcworkspace \
-                     -scheme App \
+                     -scheme ${{ steps.detect_scheme.outputs.scheme }} \
                      -sdk iphoneos \
                      -configuration Release \
+                     -allowProvisioningUpdates \
                      archive -archivePath $PWD/build/App.xcarchive
+
           xcodebuild -exportArchive \
                      -archivePath $PWD/build/App.xcarchive \
                      -exportOptionsPlist ExportOptions.plist \
                      -exportPath $PWD/build
 
       - name: Upload IPA
-        uses: actions/upload-artifact@v4  # Updated to v4 to avoid deprecation issues
+        uses: actions/upload-artifact@v4
         with:
           name: App.ipa
           path: build/App.ipa
