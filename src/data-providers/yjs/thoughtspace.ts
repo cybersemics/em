@@ -474,9 +474,7 @@ export const updateLexeme = async (
           if (!contextsOld.has(cxid)) {
             const docKey = docKeys.get(cxid)
             if (!docKey) {
-              const message = `updateLexeme: Missing docKey for context ${cxid} in Lexeme.`
-              console.error(message, lexemeNew)
-              throw new Error(message)
+              throw new Error(`updateLexeme: Missing docKey for context ${cxid} in Lexeme.`)
             }
             lexemeMap.set(`cx-${cxid}`, docKey)
           }

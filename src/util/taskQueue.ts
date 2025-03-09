@@ -160,6 +160,8 @@ const taskQueue = <
           /** Makes the task function asynchronous and triggers onStep when it resolves. */
           const taskResolver = (): T | Promise<T> => {
             let result: T | Promise<T>
+
+            // catch errors from executing the task function
             try {
               result = taskFunction()
             } catch (err: any) {
@@ -169,11 +171,26 @@ const taskQueue = <
               }
             }
 
-            return Promise.resolve(result!).then(value => {
-              onStepBatch?.({ completed: completed + 1, expected, total, value })
-              resolve(value)
-              return value
-            })
+            return (
+              Promise.resolve(result!)
+                // if the task function returns a function, catch rejected promise
+                // TODO: catch() is normally placed after then(), but that causes two of the tests to break for some reason.
+                // Furthermore, catch() does not even seem to be called, since adding a console.log does not log anything. How can catch() affect the resolution of a promise that is not rejected?
+                // - restart step completed and total each end
+                // - reset expected and total after end
+                .catch((err: Error) => {
+                  emitter.trigger('error', err)
+                  if (rejectOnError || rejectOnErrorInner) {
+                    reject(err)
+                  }
+                  return undefined as any
+                })
+                .then(value => {
+                  onStepBatch?.({ completed: completed + 1, expected, total, value: value! })
+                  resolve(value)
+                  return value
+                })
+            )
           }
           queue.push(
             typeof task !== 'function' && task.description

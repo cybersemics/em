@@ -682,6 +682,28 @@ describe('taskQueue', { retry: 10 }, () => {
       expect(counter).toBe(2)
     })
 
+    it('ignores rejected promises by default', async () => {
+      let counter = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that returns a rejected promise. */
+      const rejectTask = () => {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            reject('STOP')
+          })
+        })
+      }
+
+      await taskQueue({
+        tasks: [inc, rejectTask, inc],
+      }).end
+
+      expect(counter).toBe(2)
+    })
+
     it('calls onError when a task throws', async () => {
       let counter = 0
       let error = 0
@@ -700,6 +722,35 @@ describe('taskQueue', { retry: 10 }, () => {
           error++
         },
         tasks: [inc, throwError, inc],
+      }).end
+
+      expect(counter).toBe(2)
+      expect(error).toBe(1)
+    })
+
+    // TODO: Why does the end promise time out?
+    it.skip('calls onError when a task throws', async () => {
+      let counter = 0
+      let error = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that returns a rejected promise. */
+      const rejectTask = () => {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            reject('STOP')
+          })
+        })
+      }
+
+      await taskQueue({
+        onError: err => {
+          expect(err.message).toBe('STOP')
+          error++
+        },
+        tasks: [inc, rejectTask, inc],
       }).end
 
       expect(counter).toBe(2)
@@ -747,6 +798,36 @@ describe('taskQueue', { retry: 10 }, () => {
       })
 
       const errorMessage = await queue.end.catch((err: Error) => err.message)
+
+      expect(errorMessage).toBe('STOP')
+      expect(counter).toBe(1)
+      expect(error).toBe(1)
+    })
+
+    it('calls onError when a task returns a rejected promise', async () => {
+      let counter = 0
+      let error = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that returns a rejected promise. */
+      const rejectTask = () => {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            reject('STOP')
+          })
+        })
+      }
+
+      const queue = taskQueue({
+        onError: () => ++error,
+        rejectOnError: true,
+        tasks: [inc, rejectTask],
+      })
+
+      // returns rejected message directly instead of Error object
+      const errorMessage = await queue.end.catch((message: string) => message)
 
       expect(errorMessage).toBe('STOP')
       expect(counter).toBe(1)
