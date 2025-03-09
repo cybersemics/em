@@ -10,49 +10,42 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # Checkout code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Enable Corepack (used for managing yarn versions)
       - name: Enable Corepack
         run: corepack enable
 
-      # Setup Node.js environment
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # Install Node.js dependencies
       - name: Install Node.js dependencies
         run: yarn
 
-      # Build JavaScript (optional step if needed for hybrid app setup)
-      - name: Build JavaScript
+      - name: Build JS
         run: yarn build
 
-      # Install Homebrew dependencies
-      - name: Install Homebrew dependencies (jq, cocoapods)
+      - name: Install Homebrew dependencies
         run: |
           brew install jq || echo "jq already installed"
-          sudo gem install cocoapods
+          sudo gem install cocoapods fastlane
 
-      # Install iOS dependencies via CocoaPods
       - name: Install CocoaPods
         run: |
           cd ios/App
           pod install
 
-      # List available Xcode versions (for logging/debugging)
-      - name: List available Xcode versions
-        run: ls /Applications/
-
-      # Set the desired Xcode version
-      - name: Select Xcode version
+      - name: Set Xcode version
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
 
-      # Detect available scheme from the workspace
+      - name: Install signing certificates and provisioning profiles via Match
+        run: fastlane certs
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+
       - name: Detect Xcode scheme
         id: detect_scheme
         run: |
@@ -60,29 +53,7 @@ jobs:
           echo "Detected scheme: $SCHEME"
           echo "scheme=$SCHEME" >> $GITHUB_OUTPUT
 
-      # Create ExportOptions.plist used for IPA export
-      - name: Create ExportOptions.plist
-        run: |
-          cat <<EOF > ExportOptions.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>ad-hoc</string>
-            <key>teamID</key>
-            <string>YOUR_TEAM_ID</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>YOUR_BUNDLE_ID</key>
-              <string>YOUR_PROVISIONING_PROFILE_NAME</string>
-            </dict>
-          </dict>
-          </plist>
-          EOF
-
-      # Build and export IPA
-      - name: Build IPA
+      - name: Build and archive IPA
         run: |
           xcodebuild -workspace ios/App/App.xcworkspace \
                      -scheme ${{ steps.detect_scheme.outputs.scheme }} \
@@ -93,11 +64,12 @@ jobs:
 
           xcodebuild -exportArchive \
                      -archivePath $PWD/build/App.xcarchive \
-                     -exportOptionsPlist ExportOptions.plist \
-                     -exportPath $PWD/build
+                     -exportPath $PWD/build \
+                     -exportOptionsPlist ExportOptions.plist
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
 
-      # Upload the resulting IPA file
-      - name: Upload IPA artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: App.ipa
