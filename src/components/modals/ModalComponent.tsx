@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import React, { PropsWithChildren } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { modalRecipe } from '../../../styled-system/recipes'
@@ -8,7 +9,7 @@ import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
 
 interface ModalActionHelpers {
-  close: (duration?: number) => void
+  close: (fullReload?: any, duration?: number) => void
 }
 
 export type ModalProps = PropsWithChildren<{
@@ -66,9 +67,12 @@ class ModalComponent extends React.Component<ModalProps> {
     window.addEventListener('keydown', this.onKeyDown, true)
   }
 
-  close = () => {
+  close = (fullReload: any = false) => {
     this.animateAndClose!()
     this.props.onClose?.()
+    if (Capacitor.isNativePlatform() && fullReload) {
+      window.location.reload()
+    }
   }
 
   componentWillUnmount() {
