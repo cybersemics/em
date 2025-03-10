@@ -1,7 +1,7 @@
 import { Browser } from 'webdriverio'
 
 /**
- * Tap a node with an optional text offset or x,y offset.
+ * Wait for the specified amount of time.
  */
 const pause = async (browser: Browser, milliseconds: number) => {
   await browser.pause(milliseconds)

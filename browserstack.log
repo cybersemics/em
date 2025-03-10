@@ -1,0 +1,12 @@
+
+
+Sun Mar 09 2025 22:44:35:944 GMT-0500 (CDT) -- Setting output as verbose
+Sun Mar 09 2025 22:44:36:393 GMT-0500 (CDT) -- [WARNING] Skipping initialisation of configuration console because: port already in use by another Binary
+Sun Mar 09 2025 22:44:37:303 GMT-0500 (CDT) -- [SUCCESS] You can now access your local server(s) in our remote browser
+
+Sun Mar 09 2025 22:44:37:577 GMT-0500 (CDT) -- Connecting to BrowserStack using WebSocket protocol...
+Sun Mar 09 2025 22:44:37:577 GMT-0500 (CDT) -- Platform supports WebSocket connections.
+
+Sun Mar 09 2025 22:44:37:682 GMT-0500 (CDT) -- Press Ctrl-C to exit
+
+
