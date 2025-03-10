@@ -27,30 +27,33 @@ const {
 // https://github.com/cybersemics/em/issues/1475
 // https://github.com/cybersemics/em/issues/1523
 
+// works
 it.skip('Enter edit mode ', async () => {
   await newThought('foo')
   await hideKeyboardByTappingDone()
 
   const editableNodeHandle = await waitForEditable('foo')
-  await tap(editableNodeHandle, { y: 60, x: 20 })
+  await tap(editableNodeHandle, { x: 20 })
 
   await waitUntil(isKeyboardShown)
   const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('foo')
 })
 
+// works
 it.skip('Preserve Editing: true', async () => {
   await newThought('foo')
   await newThought('bar', { insertNewSubthought: true })
 
   const editableNodeHandle = await getEditable('foo')
-  await tap(editableNodeHandle, { y: 60, x: 20 })
+  await tap(editableNodeHandle, { x: 20 })
 
   await waitUntil(async () => (await getEditingText()) === 'foo')
   const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('foo')
 })
 
+// broken
 it.skip('Preserve Editing: false', async () => {
   await newThought('foo')
   await newThought('bar', { insertNewSubthought: true })
@@ -63,6 +66,7 @@ it.skip('Preserve Editing: false', async () => {
   expect(selectionTextContent).toBe(null)
 })
 
+// works
 it.skip('No uncle loop', async () => {
   const importText = `
     - a
@@ -75,13 +79,14 @@ it.skip('No uncle loop', async () => {
   await newThought('d', { insertNewSubthought: true })
 
   const editableNodeHandle = await waitForEditable('c')
-  await tap(editableNodeHandle, { y: 60, x: 20 })
+  await tap(editableNodeHandle, { x: 20 })
   await waitUntil(async () => (await getEditingText()) === 'c')
 
   const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('c')
 })
 
+// broken - tapping on d fails
 it.skip('Tap hidden root thought', async () => {
   const importText = `
   - a
@@ -95,13 +100,14 @@ it.skip('Tap hidden root thought', async () => {
   await clickThought('c')
 
   const editableNodeHandle = await waitForEditable('d')
-  await tap(editableNodeHandle, { y: 60, x: 20 })
+  await tap(editableNodeHandle)
   await waitUntil(async () => (await getEditingText()) !== 'c')
 
   const editingText = await getEditingText()
   expect(editingText).toBe('b')
 })
 
+// broken
 it.skip('Tap hidden uncle', async () => {
   const importText = `
     - a
@@ -115,13 +121,14 @@ it.skip('Tap hidden uncle', async () => {
   await clickThought('c')
 
   const editableNodeHandle = await waitForEditable('d')
-  await tap(editableNodeHandle, { y: 60, x: 20 })
+  await tap(editableNodeHandle)
 
   await waitUntil(async () => (await getEditingText()) === 'd')
   const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('d')
 })
 
+// broken
 it.skip('Tap empty content while keyboard up', async () => {
   const importText = `
     - a

@@ -2,6 +2,8 @@ import { Browser, Element } from 'webdriverio'
 
 // import getNativeElementRect from './getNativeElementRect'
 
+const statusBarHeightPx = 50
+
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped
   horizontalTapLine?: 'left' | 'right'
@@ -71,7 +73,7 @@ const tap = async (
 
   const finalCoords = {
     x: coordinate.x + x,
-    y: coordinate.y + y,
+    y: coordinate.y + y + statusBarHeightPx,
   }
 
   console.info(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)
