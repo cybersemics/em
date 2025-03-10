@@ -217,7 +217,10 @@ const AppComponent: FC = () => {
               </div>
             ) : (
               <SplitPane
-                paneClassName={css({ transition: isSplitting ? 'width 0.2s ease' : undefined, userSelect: 'none' })}
+                paneClassName={css({
+                  transition: isSplitting ? 'width {durations.fast} ease' : undefined,
+                  userSelect: 'none',
+                })}
                 resizerClassName={css({
                   background: 'fg',
                   opacity: 0.2,
