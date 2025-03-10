@@ -177,9 +177,9 @@ const CommandsGroup: ({
           fontSize: '1.3rem',
           borderBottom: 'none',
           position: 'sticky',
-          top: '-16px',
+          top: '-1.5rem',
           background: 'linear-gradient(to bottom, {colors.bg} 85%, transparent)',
-          padding: '5px 0',
+          padding: '0.5rem 0',
           zIndex: 1,
         })}
       >
