@@ -23,7 +23,7 @@ const initSession = (): (() => Promise<Browser>) => {
     await mobileBrowser.url('http://bs-local.com:3000')
     const skipElement = await waitForElement(mobileBrowser, '#skip-tutorial', { timeout: 90000 })
     await mobileBrowser.waitUntil(async () => await skipElement.isClickable())
-    await tap(mobileBrowser, skipElement, { y: 50 })
+    await tap(mobileBrowser, skipElement)
     await waitForElement(mobileBrowser, '[aria-label="empty-thoughtspace"]', { timeout: 90000 })
     return mobileBrowser
   }
