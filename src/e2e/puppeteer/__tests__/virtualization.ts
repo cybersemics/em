@@ -1,3 +1,4 @@
+import sleep from '../../../util/sleep'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -77,15 +78,19 @@ it('virtualize thoughts that are not in the viewport', async () => {
 
   // 1. Thoughts below the bottom of the screen should be virtualizated when the cursor is null.
   await press('Escape')
-  let nodes = await countNodes()
-  expect(nodes).toBeGreaterThan(0)
-  expect(nodes).toBeLessThan(50)
+  const numNodesBefore = await countNodes()
+  expect(numNodesBefore).toBeGreaterThan(0)
+  expect(numNodesBefore).toBeLessThan(50)
 
   // 2. Thoughts below the bottom of the screen should be virtualized when the cursor is on a root thought.
   await clickThought('a1')
-  nodes = await countNodes()
-  expect(nodes).toBeGreaterThan(0)
-  expect(nodes).toBeLessThan(50)
+
+  // TODO: Test intermittently fails. Identify and wait for specific condition instead of fixed time.
+  sleep(100)
+
+  const numNodesAfter = await countNodes()
+  expect(numNodesAfter).toBeGreaterThan(0)
+  expect(numNodesAfter).toBeLessThan(50)
 
   // NOT IMPLEMENTED
 
