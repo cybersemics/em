@@ -47,7 +47,6 @@ const helpers = {
   newThought,
   paste,
   pause,
-  swipe,
   tap,
   tapReturnKey,
   type: keyboard.type,
