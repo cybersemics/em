@@ -199,12 +199,14 @@ const ThoughtAnnotation = React.memo(
           }
           style={styleAnnotation}
         >
-          <FauxCaret
-            styles={{
+          <span
+            className={css({
               margin: textMarkup.length ? '-0.375em 0 0 -0.125em' : '-0.25em 0 0 -0.0875em',
-              opacity: 'var(--faux-caret-line-start-opacity)',
-            }}
-          />
+              position: 'absolute',
+            })}
+          >
+            <FauxCaret fontSize='1.25em' opacity='var(--faux-caret-line-start-opacity)' />
+          </span>
           <span
             className={css(
               {
@@ -240,12 +242,9 @@ const ThoughtAnnotation = React.memo(
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
             showSuperscript ? <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} /> : null
           }
-          <FauxCaret
-            styles={{
-              margin: '-0.3625em 0 0 -0.0875em',
-              opacity: 'var(--faux-caret-line-end-opacity)',
-            }}
-          />
+          <span className={css({ margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
+            <FauxCaret fontSize='1.25em' opacity='var(--faux-caret-line-end-opacity)' />
+          </span>
         </div>
       </div>
     )

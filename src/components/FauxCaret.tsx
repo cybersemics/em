@@ -1,5 +1,5 @@
-import { CSSProperties } from 'react'
 import { css } from '../../styled-system/css'
+import { Property } from '../../styled-system/types/csstype'
 import { isSafari, isTouch } from '../browser'
 
 /**
@@ -17,19 +17,18 @@ import { isSafari, isTouch } from '../browser'
  * Note.tsx to cover cases where the client rect is not available because the selection is
  * not a text node (see `isStartOfElementNode` in selection.ts for implementation details).
  */
-const FauxCaret = ({ styles }: { styles: CSSProperties }) => {
+const FauxCaret = ({ fontSize, opacity = '0' }: { fontSize?: Property.FontSize; opacity: Property.Opacity }) => {
   if (!isTouch || !isSafari()) return null
   return (
     <span
       className={css({
         color: 'caret',
-        fontSize: '1.25em',
-        position: 'absolute',
+        fontSize,
         pointerEvents: 'none',
         WebkitTextStroke: '1px var(--colors-caret)',
       })}
       // Using a CSS variable to control opacity does not appear to work inside Panda's CSS generator
-      style={styles}
+      style={{ opacity }}
     >
       |
     </span>

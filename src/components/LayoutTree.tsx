@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { type CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
@@ -13,9 +13,8 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { isSafari, isTouch } from '../browser'
+import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
-import { getBoundingClientRect } from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretCssVars from '../hooks/useFauxCaretCssVars'
 import useSortedContext from '../hooks/useSortedContext'
@@ -31,7 +30,6 @@ import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
-import editingValueStore from '../stores/editingValue'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
@@ -48,6 +46,7 @@ import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
 import HoverArrow from './HoverArrow'
+import PositionedFauxCaretWrapper from './PositionedFauxCaretWrapper'
 import VirtualThought, { OnResize } from './VirtualThought'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
@@ -436,7 +435,6 @@ const TreeNode = ({
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
-  const [fauxCaretStyles, setFauxCaretStyles] = useState<CSSProperties>({ display: 'none' })
   const fauxCaretCssVars = useFauxCaretCssVars(editing, fadeThoughtRef.current, isCursor, isTableCol1, path)
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
@@ -454,44 +452,6 @@ const TreeNode = ({
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
-
-  // Hide the faux caret when typing occurs.
-  editingValueStore.useEffect(() => {
-    if (!isTouch || !isSafari()) return
-    setFauxCaretStyles({ display: 'none' })
-  })
-
-  // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
-  // selection is created.
-  useEffect(() => {
-    if (!isTouch || !isSafari()) return
-
-    if (editing && isCursor) {
-      // The selection ranges aren't updated until the end of the frame when the thought is focused.
-      setTimeout(() => {
-        if (!fadeThoughtRef.current) return
-
-        const offset = fadeThoughtRef.current.getBoundingClientRect()
-
-        if (!offset) return
-
-        const rect = getBoundingClientRect()
-
-        if (rect) {
-          setFauxCaretStyles({
-            display: undefined,
-            fontSize: `${rect.height}px`,
-            top: `${rect.y - offset.y}px`,
-            left: `${rect.x - offset.x}px`,
-          })
-        } else {
-          setFauxCaretStyles({ display: 'none' })
-        }
-      })
-    } else {
-      setFauxCaretStyles({ display: 'none' })
-    }
-  }, [editing, isCursor, isTableCol1, path])
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -599,9 +559,15 @@ const TreeNode = ({
               prevWidth={treeThoughtsPositioned[index - 1]?.width}
             />
           )}
-        <FauxCaret
-          styles={{ ...fauxCaretStyles, margin: '-0.1875em 0 0 -0.05em', opacity: 'var(--faux-caret-opacity)' }}
-        />
+        <PositionedFauxCaretWrapper
+          editing={editing}
+          isCursor={isCursor}
+          isTableCol1={isTableCol1}
+          path={path}
+          wrapperElement={fadeThoughtRef.current}
+        >
+          <FauxCaret opacity='var(--faux-caret-opacity)' />
+        </PositionedFauxCaretWrapper>
       </div>
     </FadeTransition>
   )

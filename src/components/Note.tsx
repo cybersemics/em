@@ -135,13 +135,9 @@ const Note = React.memo(({ path }: { path: Path }) => {
         marginLeft: fontSize - 14,
       }}
     >
-      <FauxCaret
-        styles={{
-          fontSize: '1.2em',
-          margin: '-4px 0 0 -4px',
-          opacity: 'var(--faux-caret-note-line-start-opacity)',
-        }}
-      />
+      <span className={css({ position: 'absolute', margin: '-4px 0 0 -4px' })}>
+        <FauxCaret fontSize='1.2em' opacity='var(--faux-caret-note-line-start-opacity)' />
+      </span>
       <ContentEditable
         html={note || ''}
         innerRef={noteRef}
@@ -161,13 +157,9 @@ const Note = React.memo(({ path }: { path: Path }) => {
         onBlur={onBlur}
         onFocus={onFocus}
       />
-      <FauxCaret
-        styles={{
-          fontSize: '1.1em',
-          margin: '-0.125em 0 0 -0.25em',
-          opacity: 'var(--faux-caret-note-line-end-opacity)',
-        }}
-      />
+      <span className={css({ position: 'absolute', margin: '-0.125em 0 0 -0.25em' })}>
+        <FauxCaret fontSize='1.1em' opacity='var(--faux-caret-note-line-end-opacity)' />
+      </span>
     </div>
   )
 })
