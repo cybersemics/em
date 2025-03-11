@@ -1,6 +1,6 @@
+import mergeRefs from 'merge-refs'
 import React, { useEffect, useRef, useState } from 'react'
 import { useBottomScrollListener } from 'react-bottom-scroll-listener'
-import mergeRefs from 'merge-refs'
 import { css } from '../../../styled-system/css'
 
 interface DialogProps {
