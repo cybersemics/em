@@ -8070,6 +8070,7 @@ __metadata:
     lodash: "npm:^4.17.21"
     lottie-react: "npm:^2.4.0"
     marked: "npm:^15.0.0"
+    merge-refs: "npm:^1.3.0"
     moize: "npm:^6.1.6"
     murmurhash3js: "npm:^3.0.1"
     nanoid: "npm:^5.0.7"
@@ -13162,6 +13163,18 @@ __metadata:
   dependencies:
     is-plain-obj: "npm:^2.0.0"
   checksum: 10c0/b214ba56d2051f578996b284065fbc65209643f6695cedd34fdddf11eb876a696931efadc3a461cc299d371d5191fe1cc9cf5f4162a57a5d56684b4009f37252
+  languageName: node
+  linkType: hard
+
+"merge-refs@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "merge-refs@npm:1.3.0"
+  peerDependencies:
+    "@types/react": ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/403d20d283a595565a6bef813415df509dad12a5ad157f0ae04861b3aee4a3691971ccae7079e20497d9f367a478ad60e5b63a2ca9ffb2cc3d511284b49b4bd6
   languageName: node
   linkType: hard
 

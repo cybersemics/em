@@ -9,7 +9,7 @@ import useFilteredCommands from '../hooks/useFilteredCommands'
 import theme from '../selectors/theme'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
-import CommandsGroup from './CommandGroup'
+import CommandsGroup from './CommandsGroup'
 import SortButton from './SortButton'
 
 // define the grouping and ordering of commands

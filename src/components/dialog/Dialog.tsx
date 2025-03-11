@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useBottomScrollListener } from 'react-bottom-scroll-listener'
+import mergeRefs from 'merge-refs'
 import { css } from '../../../styled-system/css'
 
 interface DialogProps {
@@ -14,7 +15,8 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const [isBottom, setIsBottom] = useState(false)
 
-  const setBottomRef = useBottomScrollListener<HTMLDivElement>(() => {
+  // Use the hook to get a ref for bottom scroll detection
+  const scrollRef = useBottomScrollListener<HTMLDivElement>(() => {
     setIsBottom(true)
   })
 
@@ -53,7 +55,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
       })}
     >
       <div
-        ref={dialogRef}
+        ref={mergeRefs(dialogRef, scrollRef)}
         className={css({
           backgroundColor: '{colors.bg}',
           color: '{colors.fg}',
@@ -67,8 +69,6 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
           maxHeight: '80vh',
         })}
       >
-        <div ref={setBottomRef} />{' '}
-        {/* this kind of works when wrap it around the div with ref dialogRef but messes up the placement */}
         {children}
         {!isBottom && (
           <div
