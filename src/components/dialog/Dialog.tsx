@@ -49,7 +49,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '{colors.bgOverlay50}',
-        zIndex: 'modal',
+        zIndex: '1000',
       })}
     >
       <div

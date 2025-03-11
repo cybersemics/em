@@ -49,6 +49,7 @@ const GestureCheatsheet: React.FC = () => {
   const dialogAnimationStyles = css({
     opacity: 0,
     transition: 'opacity 0.5s ease',
+    zIndex: '1000',
   })
 
   /** Styles for the dialog content. */
