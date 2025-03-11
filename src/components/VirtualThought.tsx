@@ -236,7 +236,7 @@ const VirtualThought = ({
 
     const result = Math.max(0, parentWidth - editableWidth)
 
-    return result - marginRight
+    return result
   }
 
   /** Updates the transient style by merging the given styles with the existing ones. */
