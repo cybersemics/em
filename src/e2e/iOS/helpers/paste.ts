@@ -21,8 +21,6 @@ async function paste(browser: Browser, pathUnranked: string | string[], text?: s
     _pathUnranked,
     _text,
   )
-
-  browser.pause(10000)
 }
 
 export default paste
