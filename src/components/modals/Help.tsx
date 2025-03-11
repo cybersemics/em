@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
@@ -7,7 +7,7 @@ import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tuto
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
-import { Tab, TabItem } from '../Tab'
+import Tabs, { TabDefinition } from '../Tabs'
 import ActionButton from './../ActionButton'
 import CommandTable from './../CommandTable'
 import ModalComponent from './ModalComponent'
@@ -328,6 +328,33 @@ const ModalHelp = () => {
   const [section, setSection] = useState(Section.CommandLibrary)
   const fontSize = useSelector(state => state.fontSize)
   const showDot = useSelector(state => !state.storageCache?.tutorialComplete)
+  const tabs: TabDefinition<Section>[] = useMemo(
+    () => [
+      {
+        value: Section.CommandLibrary,
+        label: 'Command Library',
+        children: <CommandCenter />,
+      },
+      {
+        value: Section.Tutorials,
+        label: 'Tutorials',
+        showDot,
+        children: <Tutorials />,
+      },
+      {
+        value: Section.Metaprogramming,
+        label: 'Meta',
+        children: <Metaprogramming />,
+      },
+      {
+        value: Section.About,
+        label: 'About',
+        children: <About />,
+      },
+    ],
+    [showDot],
+  )
+
   return (
     <ModalComponent
       id='help'
@@ -335,20 +362,7 @@ const ModalHelp = () => {
       actions={({ close }) => <ActionButton key='close' title='Close' {...fastClick(() => close())} />}
       style={{ fontSize }}
     >
-      <Tab currentTab={section} onTabChange={setSection}>
-        <TabItem value={Section.CommandLibrary} label='Command Library'>
-          <CommandCenter />
-        </TabItem>
-        <TabItem value={Section.Tutorials} label='Tutorials' showDot={showDot}>
-          <Tutorials />
-        </TabItem>
-        <TabItem value={Section.Metaprogramming} label='Meta'>
-          <Metaprogramming />
-        </TabItem>
-        <TabItem value={Section.About} label='About'>
-          <About />
-        </TabItem>
-      </Tab>
+      <Tabs currentTab={section} onTabChange={setSection} tabs={tabs} />
     </ModalComponent>
   )
 }
