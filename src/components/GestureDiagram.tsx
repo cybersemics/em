@@ -89,7 +89,7 @@ const GestureDiagram = ({
       <svg
         width={20}
         height={24}
-        className={css(inGestureContainer && { position: 'relative', top: '10px', border: '1px solid white' }, cssRaw)}
+        className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
         style={{ ...style, marginTop: '12px', marginBottom: '20px', marginLeft: '20px' }}
         viewBox='0 0 24 24'
       >
