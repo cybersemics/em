@@ -10,7 +10,6 @@ const openHelpCommand: Command = {
   description: `Opens the Help screen, which contains the tutorials and a list of all ${
     isTouch ? 'gestures' : 'keyboard shortcuts'
   }.`,
-  gesture: 'rdldr',
   keyboard: { key: '/', meta: true },
   multicursor: 'ignore',
   svg: HelpIcon,
