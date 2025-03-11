@@ -76,7 +76,6 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
 
 /** Handles drag end. */
 const endDrag = () => {
-
   try {
     // Reset the longpressing flag to ensure we can start a new long press
     globals.longpressing = false
