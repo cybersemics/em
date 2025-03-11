@@ -61,7 +61,7 @@ const PositionedFauxCaretWrapper = ({ children, editing, isCursor, isTableCol1, 
     } else {
       setStyles({ display: 'none' })
     }
-  }, [editing, isCursor, isTableCol1, path])
+  }, [editing, isCursor, isTableCol1, path, wrapperElement])
 
   if (!isTouch || !isSafari()) return null
   return (
