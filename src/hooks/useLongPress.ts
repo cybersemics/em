@@ -14,6 +14,22 @@ const SCROLL_THRESHOLD = 10
 // use a global lock since stopPropagation breaks MultiGesture
 let lock = false
 
+// Expose lock control through window for external access
+if (typeof window !== 'undefined') {
+  ;(window as any).__em_longpress_lock = {
+    get: () => lock,
+    set: (value: boolean) => {
+      lock = value
+    },
+  }
+}
+
+/** Helper function to update lock state consistently */
+const setLock = (value: boolean) => {
+  lock = value
+  ;(window as any).__em_longpress_lock?.set(value)
+}
+
 /** Custom hook to manage long press.
  * The onLongPressStart handler is called after the delay if the user is still pressing.
  * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove).
@@ -50,7 +66,7 @@ const useLongPress = (
         globals.longpressing = true
         haptics.light()
         onLongPressStart?.()
-        lock = true
+        setLock(true)
         if (!unmounted.current) {
           setPressed(true)
         }
@@ -76,7 +92,7 @@ const useLongPress = (
       setTimeout(() => {
         clearTimeout(timerIdRef.current)
         timerIdRef.current = 0
-        lock = false
+        setLock(false)
 
         // If not longpressing, it means that the long press was canceled by a move event.
         // in this case, onLongPressEnd should not be called, since it was already called by the move event.
@@ -136,7 +152,7 @@ const useLongPress = (
   useEffect(() => {
     return () => {
       unmounted.current = true
-      lock = false
+      setLock(false)
     }
   }, [])
 

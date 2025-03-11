@@ -16,6 +16,7 @@ import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType } from '../constants'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankBefore from '../selectors/getRankBefore'
@@ -75,6 +76,17 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
 
 /** Handles drag end. */
 const endDrag = () => {
+  // Reset the lock variable to allow immediate long press after drag
+  try {
+    // Reset the longpressing flag to ensure we can start a new long press
+    globals.longpressing = false
+    
+    // Reset the lock using the global accessor
+    ;(window as any).__em_longpress_lock?.set(false)
+  } catch (e) {
+    console.error('Failed to reset long press lock:', e)
+  }
+
   // Wait till the next tick before ending dragInProgress.
   // This allows onTap to be aborted in Editable to prevent the cursor from moving at the end of a drag.
   // If this delay causes a regression, then we will need to find a different way to prevent the cursor from moving at the end of a drag.

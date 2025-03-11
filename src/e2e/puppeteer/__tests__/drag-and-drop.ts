@@ -3,9 +3,11 @@ import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import hideHUD from '../helpers/hideHUD'
+import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
+import { page } from '../setup'
 
 // TODO: Why do the uncle tests fail with the default threshold of 0.18?
 // 'd' fails with slight rendering differences for some reason.
@@ -230,6 +232,31 @@ describe('drag', () => {
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
+  })
+
+  it('should show alert and quick drop panels when long pressing after drag operation', async () => {
+    // Create two thoughts for testing
+    await newThought('a')
+    await newThought('b')
+
+    // First, drag thought 'a' after thought 'b' (resulting in b followed by a)
+    await dragAndDropThought('a', 'b', {
+      position: 'after',
+      mouseUp: true,
+    })
+
+    await dragAndDropThought('a', null, {
+      position: 'none',
+      mouseUp: false,
+      showAlert: true,
+      showQuickDropPanel: true,
+    })
+
+    // Take screenshot immediately after - don't wait for panels
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+
+    await page.mouse.up()
   })
 })
 

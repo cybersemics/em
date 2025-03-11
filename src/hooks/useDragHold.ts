@@ -69,6 +69,12 @@ const useDragHold = ({
         if (hasMulticursor(state)) {
           dispatch(clearMulticursors())
         }
+        
+        // If we were dragging but now we're not, make sure to reset the lock
+        if (!isDragging && state.dragHold) {
+          // Reset the lock to allow immediate long press after drag ends
+          ;(window as any).__em_longpress_lock?.set(false)
+        }
       }
     })
   }, [dispatch, isDragging])
