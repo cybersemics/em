@@ -1,7 +1,6 @@
 import { FC, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import { isTouch } from '../browser'
@@ -10,8 +9,8 @@ import useFilteredCommands from '../hooks/useFilteredCommands'
 import theme from '../selectors/theme'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
-import CommandGridOnly from './CommandGridOnly'
 import SortButton from './SortButton'
+import CommandsGroup from './CommandGroup'
 
 // define the grouping and ordering of commands
 const groups: {
@@ -160,52 +159,6 @@ const SearchCommands: FC<{
   )
 }
 
-/** Renders a group of commands with a heading. */
-const CommandsGroup: ({
-  customize,
-  onSelect,
-  selectedCommand,
-  title,
-  commands,
-  search,
-}: {
-  customize?: boolean
-  onSelect?: (command: Command | null) => void
-  selectedCommand?: Command
-  title: string
-  search?: string
-  commands: (Command | null)[]
-}) => JSX.Element = ({ customize, onSelect, selectedCommand, commands, title, search }) => {
-  const modalClasses = modalTextRecipe()
-
-  return (
-    <div>
-      <h2
-        className={css({
-          ...modalClasses,
-          fontSize: '1.3rem',
-          borderBottom: 'none',
-          position: 'sticky',
-          top: '-1.5rem',
-          background: 'linear-gradient(to bottom, {colors.bg} 85%, transparent)',
-          padding: '0.5rem 0',
-          zIndex: 1,
-        })}
-      >
-        {title}
-      </h2>
-      <CommandGridOnly
-        commands={commands}
-        selectedCommand={selectedCommand}
-        customize={customize}
-        onSelect={onSelect}
-        search={search}
-        applyIndexInToolbar
-      />
-    </div>
-  )
-}
-
 /** Renders a grid of commands. */
 const CommandGrid = ({
   customize,
@@ -231,6 +184,7 @@ const CommandGrid = ({
             customize={customize}
             onSelect={onSelect}
             search={search}
+            isGrid={true}
           />
         ) : (
           groups.map(group => {
@@ -247,6 +201,7 @@ const CommandGrid = ({
                 key={group.title}
                 onSelect={onSelect}
                 selectedCommand={selectedCommand}
+                isGrid={true}
               />
             ) : null
           })

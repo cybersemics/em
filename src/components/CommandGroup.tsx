@@ -16,7 +16,7 @@ interface CommandsGroupProps {
 }
 
 /**
- * A component that displays a group of commands in a table or grid layout.
+ * A component that displays a group of commands for CommandTable or CommandGrid.
  */
 const CommandsGroup: FC<CommandsGroupProps> = ({
   customize,
