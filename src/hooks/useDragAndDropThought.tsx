@@ -76,13 +76,14 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
 
 /** Handles drag end. */
 const endDrag = () => {
-  // Reset the lock variable to allow immediate long press after drag
+
   try {
     // Reset the longpressing flag to ensure we can start a new long press
     globals.longpressing = false
-    
-    // Reset the lock using the global accessor
-    ;(window as any).__em_longpress_lock?.set(false)
+
+    // The lock variable is in useLongPress.ts and not directly accessible
+    // We need to use this approach to reset it
+    document.dispatchEvent(new CustomEvent('reset-longpress-lock'))
   } catch (e) {
     console.error('Failed to reset long press lock:', e)
   }
