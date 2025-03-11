@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { css } from '../../../styled-system/css'
+import { useBottomScrollListener } from 'react-bottom-scroll-listener'
 
 interface DialogProps {
   children: React.ReactNode
@@ -13,6 +14,10 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const [isBottom, setIsBottom] = useState(false)
 
+  const setBottomRef = useBottomScrollListener<HTMLDivElement>(() => {
+    setIsBottom(true)
+  })
+
   useEffect(() => {
     const currentDialogRef = dialogRef.current
 
@@ -25,23 +30,10 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
       }
     }
 
-    /**
-     * When the user scrolls to the bottom, the gradient disappears.
-     */
-    const handleScroll = () => {
-      if (currentDialogRef) {
-        const { scrollTop, scrollHeight, clientHeight } = currentDialogRef
-        const atBottom = scrollTop + clientHeight >= scrollHeight - 1
-        setIsBottom(atBottom)
-      }
-    }
-
     document.addEventListener('mousedown', handleClickOutside)
-    currentDialogRef?.addEventListener('scroll', handleScroll)
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
-      currentDialogRef?.removeEventListener('scroll', handleScroll)
     }
   }, [onClose])
 
@@ -72,8 +64,10 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
           border: '2px solid {colors.fgOverlay50}',
           overflowY: 'auto',
           position: 'relative',
+          maxHeight: '80vh',
         })}
       >
+        <div ref={setBottomRef} /> {/* this kind of works when wrap it around the div with ref dialogRef but messes up the placement */}
         {children}
         {!isBottom && (
           <div
@@ -85,8 +79,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
               height: '100px',
               background: 'linear-gradient(to top, {colors.bg} 0%, transparent 100%)',
               pointerEvents: 'none',
-              transition: 'opacity 0.3s',
-              opacity: isBottom ? 0 : 1,
+              display: 'block',
             })}
           />
         )}

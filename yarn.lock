@@ -8082,6 +8082,7 @@ __metadata:
     puppeteer: "npm:^23.9.0"
     qrcode.react: "npm:^4.1.0"
     react: "npm:18.3.1"
+    react-bottom-scroll-listener: "npm:^5.1.0"
     react-contenteditable: "npm:^3.3.7"
     react-dnd: "npm:^16.0.1"
     react-dnd-html5-backend: "npm:^16.0.1"
@@ -15418,6 +15419,18 @@ __metadata:
   version: 1.2.1
   resolution: "range-parser@npm:1.2.1"
   checksum: 10c0/96c032ac2475c8027b7a4e9fe22dc0dfe0f6d90b85e496e0f016fbdb99d6d066de0112e680805075bd989905e2123b3b3d002765149294dce0c1f7f01fcc2ea0
+  languageName: node
+  linkType: hard
+
+"react-bottom-scroll-listener@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "react-bottom-scroll-listener@npm:5.1.0"
+  dependencies:
+    lodash.debounce: "npm:^4.0.8"
+  peerDependencies:
+    react: ^16.0.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
+  checksum: 10c0/34e8fafbf5adaf0d88bc0a20e424efffb997abded42341bfc3185edd9512a1c15509e775f6df2ba9cc1ff7a3e30aaed4cfffdbdaf8b4a5f6488f87b436451ecf
   languageName: node
   linkType: hard
 

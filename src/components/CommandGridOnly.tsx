@@ -5,7 +5,7 @@ import { TOOLBAR_DEFAULT_COMMANDS } from '../constants'
 import getUserToolbar from '../selectors/getUserToolbar'
 import CommandColumn from './CommandColumn'
 
-/** Renders a table of commands, with nothing else added. */
+/** Renders a grid of commands, with nothing else added. */
 const CommandGridOnly = ({
   commands,
   selectedCommand,
@@ -43,6 +43,7 @@ const CommandGridOnly = ({
           return (
             <CommandColumn
               customize={customize}
+              key={command?.id}
               indexInToolbar={indexInToolbar !== -1 && applyIndexInToolbar ? indexInToolbar + 1 : null}
               onSelect={onSelect}
               selected={selectedCommand && command?.id === selectedCommand.id}
