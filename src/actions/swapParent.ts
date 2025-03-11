@@ -29,13 +29,15 @@ const swapParent = (state: State) => {
   const parentThought = getThoughtById(state, parentId)
   if (!childThought || !parentThought) return state
 
-  // Get children of the child thought that will be moved
-  const childChildren = getChildrenRanked(state, childId).filter(child => {
-    return child.rank < parentThought.rank
-  })
+  // Get only direct children of the child thought (grandchildren)
+  const childChildren = getChildrenRanked(state, childId)
 
   // Get the grandparent path (parent of parent)
   const grandparent = parentOf(parent)
+
+  // Get siblings (other children of parent excluding the child being swapped)
+  const parentChildren = getChildrenRanked(state, parentId)
+  const siblings = parentChildren.filter(sibling => sibling.id !== childId)
 
   return reducerFlow([
     // First move the child to replace its parent's position
@@ -54,13 +56,23 @@ const swapParent = (state: State) => {
         newRank: 0,
       }),
 
-    // Move all child's children under the parent's new position
+    // Move only the grandchildren under the parent's new position
     state =>
-      childChildren.reduce((accState, childChild) => {
+      childChildren.reduce((accState, grandchild) => {
         return moveThought(accState, {
-          oldPath: appendToPath(cursor, childChild.id),
-          newPath: appendToPath([...grandparent, childId, parentId], childChild.id),
-          newRank: childChild.rank,
+          oldPath: appendToPath(cursor, grandchild.id),
+          newPath: appendToPath([...grandparent, childId, parentId], grandchild.id),
+          newRank: grandchild.rank,
+        })
+      }, state),
+
+    // Keep siblings under their original parent
+    state =>
+      siblings.reduce((accState, sibling) => {
+        return moveThought(accState, {
+          oldPath: appendToPath(parent, sibling.id),
+          newPath: appendToPath([...grandparent, childId], sibling.id),
+          newRank: sibling.rank,
         })
       }, state),
 
