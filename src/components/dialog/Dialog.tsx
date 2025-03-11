@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { css } from '../../../styled-system/css'
 import { useBottomScrollListener } from 'react-bottom-scroll-listener'
+import { css } from '../../../styled-system/css'
 
 interface DialogProps {
   children: React.ReactNode
@@ -67,7 +67,8 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
           maxHeight: '80vh',
         })}
       >
-        <div ref={setBottomRef} /> {/* this kind of works when wrap it around the div with ref dialogRef but messes up the placement */}
+        <div ref={setBottomRef} />{' '}
+        {/* this kind of works when wrap it around the div with ref dialogRef but messes up the placement */}
         {children}
         {!isBottom && (
           <div
