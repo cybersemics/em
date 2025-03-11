@@ -2,8 +2,8 @@ import { FC } from 'react'
 import { css } from '../../styled-system/css'
 import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
-import CommandTableOnly from './CommandTableOnly'
 import CommandGridOnly from './CommandGridOnly'
+import CommandTableOnly from './CommandTableOnly'
 
 interface CommandsGroupProps {
   customize?: boolean
@@ -15,6 +15,9 @@ interface CommandsGroupProps {
   isGrid?: boolean
 }
 
+/**
+ * A component that displays a group of commands in a table or grid layout.
+ */
 const CommandsGroup: FC<CommandsGroupProps> = ({
   customize,
   onSelect,
