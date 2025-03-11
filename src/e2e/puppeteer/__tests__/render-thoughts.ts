@@ -96,59 +96,8 @@ const testSuite = () => {
       expect(image).toMatchImageSnapshot()
     })
 
-    // TODO: Why are b and c not rendered?
-    it.skip('multiline thought', async () => {
-      await paste(`
-        - a
-        - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
-        - b
-        - c
-      `)
-
-      await press('ArrowUp')
-
-      const image = await screenshot()
-      expect(image).toMatchImageSnapshot()
-    })
-
-    // TODO: Why are e, f, g not rendered?
-    it.skip('multiline thought with children', async () => {
-      await paste(`
-        - a
-        - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
-          - b
-          - c
-          - d
-        - e
-        - f
-        - g
-      `)
-
-      // move cursor to the multiline thought
-      await press('ArrowUp')
-      await press('ArrowUp')
-
-      const image = await screenshot()
-      expect(image).toMatchImageSnapshot()
-    })
-
     it('superscript', async () => {
       const image = await superscriptSnapshot()
-      expect(image).toMatchImageSnapshot()
-    })
-
-    // TODO: Superscript position is off
-    it.skip('superscript on multiline thought', async () => {
-      await paste(`
-        - a
-          - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
-        - b
-          - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
-      `)
-
-      await press('ArrowUp')
-
-      const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
   })
@@ -194,6 +143,55 @@ describe('Font Size: 22', () => {
 
   // run the snapshot tests at font size 22
   testSuite()
+})
+
+describe('multiline', () => {
+  beforeEach(hideHUD)
+
+  it('multiline thought', async () => {
+    await paste(`
+        - a
+        - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
+        - b
+        - c
+      `)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('multiline thought expanded', async () => {
+    await paste(`
+        - a
+        - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
+          - b
+          - c
+          - d
+        - e
+        - f
+      `)
+
+    // move cursor to the multiline thought
+    await press('ArrowUp')
+    await press('ArrowUp')
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('superscript on multiline thought', async () => {
+    await paste(`
+        - a
+          - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
+        - b
+          - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
+      `)
+
+    await press('ArrowUp')
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 })
 
 describe('Color Theme', () => {
