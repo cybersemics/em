@@ -1,4 +1,5 @@
 import path from 'path'
+import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
@@ -245,14 +246,15 @@ describe('drag', () => {
       mouseUp: true,
     })
 
-    await dragAndDropThought('a', null, {
+    await sleep(1000)
+
+    await dragAndDropThought('b', null, {
       position: 'none',
       mouseUp: false,
       showAlert: true,
       showQuickDropPanel: true,
     })
 
-    // Take screenshot immediately after - don't wait for panels
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
 
