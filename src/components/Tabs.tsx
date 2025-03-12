@@ -68,7 +68,6 @@ const Tab = <T extends string>({
           />
         )}
       </div>
-      {active && children}
     </>
   )
 }
