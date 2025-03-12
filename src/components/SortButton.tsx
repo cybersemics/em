@@ -3,17 +3,34 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import theme from '../selectors/theme'
 
-/**
- * SortButton component for the Command Library and Gesture Cheatsheet.
- */
 const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') => void }> = ({ onSortChange }) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<'alphabetical' | 'type'>('type')
 
-  /**
-   * Handles the sort change event.
-   */
+  const dropdownStyles = css({
+    opacity: 0,
+    visibility: 'hidden',
+    transition: 'opacity 0.3s ease-in-out, visibility 0.3s ease-in-out',
+    willChange: 'opacity, visibility',
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    backgroundColor: '{colors.bg}',
+    border: 'solid 1px {colors.gray50}',
+    borderRadius: '8px',
+    zIndex: 'modal',
+    padding: '1rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+  })
+
+  const dropdownVisibleStyles = css({
+    opacity: 1,
+    visibility: 'visible',
+  })
+
   const handleSortChange = (sortOrder: 'alphabetical' | 'type') => {
     setSelectedSort(sortOrder)
     onSortChange(sortOrder)
@@ -35,76 +52,60 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
         position: 'relative',
       })}
     >
-      {isDropdownOpen && (
-        <div
+      <div className={`${dropdownStyles} ${isDropdownOpen ? dropdownVisibleStyles : ''}`}>
+        <h2
           className={css({
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            backgroundColor: '{colors.bg}',
-            border: 'solid 1px {colors.gray50}',
-            borderRadius: '8px',
-            zIndex: 1000,
-            padding: '1rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.5rem',
+            color: '{colors.gray50}',
+            borderBottom: 'none',
+            textAlign: 'left',
+            fontSize: '0.9rem',
+            margin: '0',
           })}
         >
-          <h2
+          Sort by:
+        </h2>
+        <label
+          className={css({
+            display: 'flex',
+            flexDirection: 'row',
+            color: '{colors.gray50}',
+          })}
+        >
+          <input
+            type='radio'
+            checked={selectedSort === 'alphabetical'}
+            onChange={() => handleSortChange('alphabetical')}
+          />
+          <h3
             className={css({
               color: '{colors.gray50}',
-              borderBottom: 'none',
-              textAlign: 'left',
+              margin: '0 0 0 0.2rem',
+              fontWeight: 'normal',
               fontSize: '0.9rem',
-              margin: '0',
             })}
           >
-            Sort by:
-          </h2>
-          <label
+            Alphabetical
+          </h3>
+        </label>
+        <label
+          className={css({
+            display: 'flex',
+            flexDirection: 'row',
+          })}
+        >
+          <input type='radio' checked={selectedSort === 'type'} onChange={() => handleSortChange('type')} />
+          <h3
             className={css({
-              display: 'flex',
-              flexDirection: 'row',
               color: '{colors.gray50}',
+              margin: '0 0 0 0.2rem',
+              fontWeight: 'normal',
+              fontSize: '0.9rem',
             })}
           >
-            <input
-              type='radio'
-              checked={selectedSort === 'alphabetical'}
-              onChange={() => handleSortChange('alphabetical')}
-            />
-            <h3
-              className={css({
-                color: '{colors.gray50}',
-                margin: '0 0 0 0.2rem',
-                fontWeight: 'normal',
-                fontSize: '0.9rem',
-              })}
-            >
-              Alphabetical
-            </h3>
-          </label>
-          <label
-            className={css({
-              display: 'flex',
-              flexDirection: 'row',
-            })}
-          >
-            <input type='radio' checked={selectedSort === 'type'} onChange={() => handleSortChange('type')} />
-            <h3
-              className={css({
-                color: '{colors.gray50}',
-                margin: '0 0 0 0.2rem',
-                fontWeight: 'normal',
-                fontSize: '0.9rem',
-              })}
-            >
-              Type
-            </h3>
-          </label>
-        </div>
-      )}
+            Type
+          </h3>
+        </label>
+      </div>
     </button>
   )
 }
