@@ -166,18 +166,18 @@ const CommandGrid = ({
   return (
     <div>
       <div
-        className={css({
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          gap: '5px',
-        })}
+      className={css({
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: '5px',
+      })}
       >
         <SearchCommands onInput={setSearch} />
         <SortButton onSortChange={setSortOrder} />
       </div>
       <div className={css({ textAlign: 'left' })}>
-        {(() => {
+      {(() => {
           if (search) {
             return (
               <CommandsGroup
@@ -194,7 +194,7 @@ const CommandGrid = ({
             return groups.map(group => {
               const commands = group.commands
                 .map(commandById)
-                .filter((command): command is Command => (isTouch ? !!command.gesture : !!command.keyboard))
+                .filter((command): command is Command => !!command.gesture)
 
               // do not render groups with no commands on this platform
               return commands.length > 0 ? (
@@ -211,14 +211,14 @@ const CommandGrid = ({
             })
           } else if (sortOrder === 'alphabetical') {
             return (
-              <CommandsGroup
+                <CommandsGroup
                 title={'All Commands'}
-                commands={commands}
-                selectedCommand={selectedCommand}
-                customize={customize}
-                onSelect={onSelect}
-                isGrid={true}
-              />
+                  commands={commands}
+                  selectedCommand={selectedCommand}
+                  customize={customize}
+                  onSelect={onSelect}
+                  isGrid={true}
+                />
             )
           }
         })()}
