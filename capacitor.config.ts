@@ -17,13 +17,15 @@ const serverConfig =
           url: process.env.CAPACITOR_SERVER_URL,
           cleartext: true,
         },
+        webDir: 'public',
       }
-    : {}
+    : {
+        webDir: 'build',
+      }
 
 const config: CapacitorConfig = {
   appId: 'com.thinkwithem.em',
   appName: 'em',
-  webDir: 'build',
   ...serverConfig,
   ios: {
     backgroundColor: '000000',
