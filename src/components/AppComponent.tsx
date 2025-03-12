@@ -128,6 +128,8 @@ const AppComponent: FC = () => {
 
   useEffect(() => {
     WebviewBackground.changeBackgroundColor({ color: colors.bg })
+    document.documentElement.style.backgroundColor = colors.bg
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', colors.bg)
   }, [colors.bg])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
