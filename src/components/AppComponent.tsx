@@ -126,7 +126,10 @@ const AppComponent: FC = () => {
   const tutorial = useSelector(isTutorial)
   const splitPosition = useSelector(state => state.splitPosition)
 
-  WebviewBackground.changeBackgroundColor({ color: colors.bg })
+  useEffect(() => {
+    WebviewBackground.changeBackgroundColor({ color: colors.bg })
+  }, [colors.bg])
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onSplitResize = useCallback(
     _.throttle((n: number) => dispatch(updateSplitPosition(n)), SPLIT_RESIZE_THROTTLE),

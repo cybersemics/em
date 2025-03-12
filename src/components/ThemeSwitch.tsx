@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
 import { settingsActionCreator as setting } from '../actions/settings'
@@ -11,7 +11,10 @@ const ThemeSwitch: FC = () => {
   const dispatch = useDispatch()
   const light = useSelector(state => theme(state) === 'Light')
   const colors = useSelector(themeColors)
-  WebviewBackground.changeBackgroundColor({ color: colors.bg })
+
+  useEffect(() => {
+    WebviewBackground.changeBackgroundColor({ color: colors.bg })
+  }, [colors.bg])
 
   return (
     <Checkbox
