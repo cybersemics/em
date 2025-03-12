@@ -266,9 +266,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
         <div>
           <span
             id='left-arrow'
-            style={{
-              paddingTop: `${calculatePaddingTop(fontSize)}px`,
-            }}
+            style={{ paddingTop: `${calculatePaddingTop(fontSize)}px` }}
             className={arrow({ direction: 'left', isHidden: !leftArrowIsShown, fixed: !customize })}
           >
             <TriangleLeft width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />

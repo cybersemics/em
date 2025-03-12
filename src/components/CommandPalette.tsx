@@ -507,9 +507,7 @@ const CommandPaletteWithTransition: FC = () => {
   const dispatch = useDispatch()
   const popupRef = useRef<HTMLDivElement>(null)
 
-  const popUpStyles = css.raw({
-    zIndex: 'commandPalette',
-  })
+  const popUpStyles = css.raw({ zIndex: 'commandPalette' })
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
