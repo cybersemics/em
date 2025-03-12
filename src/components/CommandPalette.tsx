@@ -34,7 +34,7 @@ const commandPaletteCommand = commandById('commandPalette')
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
-  (!command.canExecute || command.canExecute(state)) && (command.allowExecuteFromModal || !state.showModal)
+  (!command.canExecute || command.canExecute(state)) && (command.allowExecuteFromModal || !state.showModal || !state.dialogOpen)
 
 /**********************************************************************
  * Components

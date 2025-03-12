@@ -12,7 +12,7 @@ const visibleCommands = globalCommands.filter(command => !command.hideFromComman
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
-  (!command.canExecute || command.canExecute(state)) && (command.allowExecuteFromModal || !state.showModal)
+  (!command.canExecute || command.canExecute(state)) && (command.allowExecuteFromModal || !state.showModal || !state.dialogOpen)
 
 /** A hook that filters and sorts commands based on a search or the current gesture or keyboard input. */
 const useFilteredCommands = (
