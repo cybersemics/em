@@ -119,7 +119,10 @@ const Tabs = <T extends string>({
               label={label}
               showDot={showDot}
               active={value === currentTab}
-              onClick={() => onTabChange(value)}
+              onClick={() => {
+                onTabChange(value)
+                window.navigator.vibrate(100)
+              }}
             >
               {children}
             </Tab>
