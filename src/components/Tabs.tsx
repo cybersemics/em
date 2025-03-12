@@ -52,7 +52,7 @@ const Tab = <T extends string>({
             _mobile: { fontSize: '1em' },
             textAlign: 'center',
             color: active ? 'fg' : 'fgOverlay70',
-            fontWeight: active ? 700 : 400,
+            WebkitTextStrokeWidth: active ? '0.05em' : 0,
           })}
         >
           {label || value}
