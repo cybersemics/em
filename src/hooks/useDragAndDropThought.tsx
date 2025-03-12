@@ -40,6 +40,7 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import unroot from '../util/unroot'
+import longPressStore from '../stores/longPressStore'
 
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ThoughtContainerProps) => {
@@ -63,6 +64,11 @@ const canDrag = (props: ThoughtContainerProps) => {
 /** Handles drag start. */
 const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem => {
   const offset = selection.offset()
+  
+  // Notify the long press store that a drag has started
+  // This will reset the lock and trigger onLongPressEnd for any active long presses
+  longPressStore.actions.notifyDragStarted()
+  
   store.dispatch(
     dragInProgress({
       value: true,
@@ -76,13 +82,13 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
 
 /** Handles drag end. */
 const endDrag = () => {
+  // Reset the lock variable to allow immediate long press after drag
   try {
     // Reset the longpressing flag to ensure we can start a new long press
     globals.longpressing = false
-
-    // The lock variable is in useLongPress.ts and not directly accessible
-    // We need to use this approach to reset it
-    document.dispatchEvent(new CustomEvent('reset-longpress-lock'))
+    
+    // Reset the lock using the store
+    longPressStore.actions.reset()
   } catch (e) {
     console.error('Failed to reset long press lock:', e)
   }

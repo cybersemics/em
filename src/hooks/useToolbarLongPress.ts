@@ -4,6 +4,7 @@ import Command from '../@types/Command'
 import DragCommandZone from '../@types/DragCommandZone'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toolbarLongPressActionCreator as toolbarLongPress } from '../actions/toolbarLongPress'
+import longPressStore from '../stores/longPressStore'
 import useLongPress from './useLongPress'
 
 /** Set state.toolbarLongPress when long pressing a toolbar button in the customize modal. */
@@ -53,6 +54,25 @@ const useToolbarLongPress = ({
       }
     })
   }, [dispatch, isDragging])
+
+  // Subscribe to the longPressStore to handle external lock changes
+  // Only subscribe when isPressed is true to avoid unnecessary re-renders
+  useEffect(() => {
+    // Only add the subscription when we're actually pressed
+    // This prevents all components from re-rendering on global lock state changes
+    if (!isPressed) return undefined;
+
+    return longPressStore.subscribeSelector(
+      state => state.isLocked,
+      isLocked => {
+        if (!isLocked && isPressed) {
+          // Lock was released externally (likely by drag start)
+          setIsPressed(false)
+          dispatch(toolbarLongPress({ command: null }))
+        }
+      }
+    )
+  }, [dispatch, isPressed])
 
   const props = useLongPress(onLongPressStart, onLongPressEnd)
 

@@ -15,6 +15,7 @@ import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
 import store from '../stores/app'
+import longPressStore from '../stores/longPressStore'
 import appendToPath from '../util/appendToPath'
 import haptics from '../util/haptics'
 
@@ -79,12 +80,20 @@ const useDragAndDropToolbarButton = ({ commandId, customize }: { commandId: Comm
   const [{ isDragging }, dragSource, dragPreview] = useDrag({
     type: DragAndDropType.ToolbarButton,
     item: () => {
+      // Notify the long press store that a drag has started
+      // This will reset the lock and trigger onLongPressEnd for any active long presses
+      longPressStore.actions.notifyDragStarted()
+      
       store.dispatch(dragCommand(commandId))
       const command = commandById(commandId)
       return { command, zone: DragCommandZone.Toolbar }
     },
     canDrag: () => !!customize,
-    end: () => store.dispatch(dragCommand(null)),
+    end: () => {
+      // Reset the lock to allow immediate long press after drag ends
+      longPressStore.actions.reset()
+      store.dispatch(dragCommand(null))
+    },
     collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),

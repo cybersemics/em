@@ -11,9 +11,11 @@ import { dragInProgressActionCreator as dragInProgress } from '../actions/dragIn
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { AlertType } from '../constants'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
+import longPressStore from '../stores/longPressStore'
 import haptics from '../util/haptics'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -26,6 +28,11 @@ type DragAndDropFavoriteReturnType = DragThoughtItem & {
 /** Handles drag start. */
 const beginDrag = ({ path, simplePath }: DragThoughtItem): DragThoughtItem => {
   const offset = selection.offset()
+  
+  // Notify the long press store that a drag has started
+  // This will reset the lock and trigger onLongPressEnd for any active long presses
+  longPressStore.actions.notifyDragStarted()
+  
   store.dispatch(
     dragInProgress({
       value: true,
@@ -39,6 +46,17 @@ const beginDrag = ({ path, simplePath }: DragThoughtItem): DragThoughtItem => {
 
 /** Handles drag end. */
 const endDrag = () => {
+  // Reset the lock variable to allow immediate long press after drag
+  try {
+    // Reset the longpressing flag to ensure we can start a new long press
+    globals.longpressing = false
+    
+    // Reset the lock using the store
+    longPressStore.actions.reset()
+  } catch (e) {
+    console.error('Failed to reset long press lock:', e)
+  }
+  
   store.dispatch([
     dragInProgress({ value: false }),
     dragHold({ value: false }),
