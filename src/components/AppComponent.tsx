@@ -84,7 +84,13 @@ const shouldCancelGesture = (
 ): boolean => {
   const state = store.getState()
   const distance = state.fontSize * 2
-  return (x && y && selection.isNear(x, y, distance)) || state.dragInProgress || !!state.showModal || state.showSidebar || !!state.dialogOpen
+  return (
+    (x && y && selection.isNear(x, y, distance)) ||
+    state.dragInProgress ||
+    !!state.showModal ||
+    state.showSidebar ||
+    !!state.dialogOpen
+  )
 }
 
 /**
