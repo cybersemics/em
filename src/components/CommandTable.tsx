@@ -166,18 +166,18 @@ const CommandTable = ({
   return (
     <div>
       <div
-      className={css({
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: '5px',
-      })}
+        className={css({
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          gap: '5px',
+        })}
       >
         <SearchCommands onInput={setSearch} />
         <SortButton onSortChange={setSortOrder} />
       </div>
       <div className={css({ textAlign: 'left' })}>
-      {(() => {
+        {(() => {
           if (search) {
             return (
               <CommandsGroup
@@ -209,13 +209,13 @@ const CommandTable = ({
             })
           } else if (sortOrder === 'alphabetical') {
             return (
-                <CommandsGroup
+              <CommandsGroup
                 title={'All Commands'}
-                  commands={commands}
-                  selectedCommand={selectedCommand}
-                  customize={customize}
-                  onSelect={onSelect}
-                />
+                commands={commands}
+                selectedCommand={selectedCommand}
+                customize={customize}
+                onSelect={onSelect}
+              />
             )
           }
         })()}
