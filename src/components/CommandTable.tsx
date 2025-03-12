@@ -187,7 +187,6 @@ const CommandTable = ({
                 customize={customize}
                 onSelect={onSelect}
                 search={search}
-                isGrid={true}
               />
             )
           } else if (sortOrder === 'type') {
@@ -205,7 +204,6 @@ const CommandTable = ({
                   key={group.title}
                   onSelect={onSelect}
                   selectedCommand={selectedCommand}
-                  isGrid={true}
                 />
               ) : null
             })
@@ -217,7 +215,6 @@ const CommandTable = ({
                   selectedCommand={selectedCommand}
                   customize={customize}
                   onSelect={onSelect}
-                  isGrid={true}
                 />
             )
           }
