@@ -124,37 +124,27 @@ const SearchCommands: FC<{
   const isLightTheme = useSelector(state => theme(state) === 'Light')
 
   return (
-    <div
-      className={css({
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: '5px',
-      })}
-    >
-      <div id='search' className={css({ flexGrow: 1, border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
-        <input
-          type='text'
-          placeholder='Search gestures...'
-          onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-            onInput?.(e.target.value)
-          }}
-          className={css({
-            marginLeft: 0,
-            marginBottom: 0,
-            boxSizing: 'border-box',
-            width: '100%',
-            minWidth: '100%',
-            paddingLeft: '2rem',
-            backgroundImage: isLightTheme ? 'url("/assets/search_light.svg")' : 'url("/assets/search.svg")',
-            backgroundSize: '16px',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: '10px center',
-            borderRadius: '8px',
-          })}
-        />
-      </div>
-      <SortButton onSortChange={() => {}} />
+    <div id='search' className={css({ flexGrow: 1, border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
+      <input
+        type='text'
+        placeholder='Search gestures...'
+        onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+          onInput?.(e.target.value)
+        }}
+        className={css({
+          marginLeft: 0,
+          marginBottom: 0,
+          boxSizing: 'border-box',
+          width: '100%',
+          minWidth: '100%',
+          paddingLeft: '2rem',
+          backgroundImage: isLightTheme ? 'url("/assets/search_light.svg")' : 'url("/assets/search.svg")',
+          backgroundSize: '16px',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: '10px center',
+          borderRadius: '8px',
+        })}
+      />
     </div>
   )
 }
@@ -170,42 +160,68 @@ const CommandGrid = ({
   selectedCommand?: Command
 }) => {
   const [search, setSearch] = useState('')
+  const [sortOrder, setSortOrder] = useState<'alphabetical' | 'type'>('type')
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
 
   return (
     <div>
-      <SearchCommands onInput={setSearch} />
+      <div
+      className={css({
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: '5px',
+      })}
+      >
+        <SearchCommands onInput={setSearch} />
+        <SortButton onSortChange={setSortOrder} />
+      </div>
       <div className={css({ textAlign: 'left' })}>
-        {search ? (
-          <CommandsGroup
-            title={'Results'}
-            commands={commands}
-            selectedCommand={selectedCommand}
-            customize={customize}
-            onSelect={onSelect}
-            search={search}
-            isGrid={true}
-          />
-        ) : (
-          groups.map(group => {
-            const commands = group.commands
-              .map(commandById)
-              .filter((command): command is Command => (isTouch ? !!command.gesture : !!command.keyboard))
-
-            // do not render groups with no commands on this platform
-            return commands.length > 0 ? (
+      {(() => {
+          if (search) {
+            return (
               <CommandsGroup
-                title={group.title}
+                title={'Results'}
                 commands={commands}
-                customize={customize}
-                key={group.title}
-                onSelect={onSelect}
                 selectedCommand={selectedCommand}
+                customize={customize}
+                onSelect={onSelect}
+                search={search}
                 isGrid={true}
               />
-            ) : null
-          })
-        )}
+            )
+          } else if (sortOrder === 'type') {
+            return groups.map(group => {
+              const commands = group.commands
+                .map(commandById)
+                .filter((command): command is Command => (isTouch ? !!command.gesture : !!command.keyboard))
+
+              // do not render groups with no commands on this platform
+              return commands.length > 0 ? (
+                <CommandsGroup
+                  title={group.title}
+                  commands={commands}
+                  customize={customize}
+                  key={group.title}
+                  onSelect={onSelect}
+                  selectedCommand={selectedCommand}
+                  isGrid={true}
+                />
+              ) : null
+            })
+          } else if (sortOrder === 'alphabetical') {
+            return (
+                <CommandsGroup
+                  title={'All Commands'}
+                  commands={commands}
+                  selectedCommand={selectedCommand}
+                  customize={customize}
+                  onSelect={onSelect}
+                  isGrid={true}
+                />
+            )
+          }
+        })()}
       </div>
     </div>
   )
