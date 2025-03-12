@@ -6,6 +6,7 @@ import getChildPath from '../selectors/getChildPath'
 import { getAllChildren, getAllChildrenSorted } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
+import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
@@ -27,7 +28,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
 
   const path = cursor
   const simplePath = simplifyPath(state, path)
-  const parentId = head(parentOf(simplePath))
+  const parentId = head(rootedParentOf(state, simplePath))
 
   const children = paths
     ? // getThoughtById -> Thought | undefined, so if we (unlikely) get undefined, we filter it out, see getThoughtById
