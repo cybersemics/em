@@ -559,13 +559,7 @@ const TreeNode = ({
               prevWidth={treeThoughtsPositioned[index - 1]?.width}
             />
           )}
-        <PositionedFauxCaretWrapper
-          editing={editing}
-          isCursor={isCursor}
-          isTableCol1={isTableCol1}
-          path={path}
-          wrapperElement={fadeThoughtRef.current}
-        >
+        <PositionedFauxCaretWrapper path={path} wrapperElement={fadeThoughtRef.current}>
           <FauxCaret opacity='var(--faux-caret-opacity)' />
         </PositionedFauxCaretWrapper>
       </div>

@@ -1,14 +1,15 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import { isSafari, isTouch } from '../browser'
 import { getBoundingClientRect } from '../device/selection'
+import attributeEquals from '../selectors/attributeEquals'
 import editingValueStore from '../stores/editingValue'
+import equalPath from '../util/equalPath'
+import head from '../util/head'
 
 type Props = PropsWithChildren<{
-  editing: boolean
-  isCursor: boolean
-  isTableCol1: boolean
   path: Path
   wrapperElement: HTMLDivElement | null
 }>
@@ -22,7 +23,10 @@ type Props = PropsWithChildren<{
  *
  * See FauxCaret.tsx for more information.
  */
-const PositionedFauxCaretWrapper = ({ children, editing, isCursor, isTableCol1, path, wrapperElement }: Props) => {
+const PositionedFauxCaretWrapper = ({ children, path, wrapperElement }: Props) => {
+  const editing = useSelector(state => state.editing)
+  const isCursor = useSelector(state => equalPath(path, state.cursor))
+  const isTableCol1 = useSelector(state => attributeEquals(state, head(path), '=view', 'Table'))
   const [styles, setStyles] = useState({})
 
   // Hide the faux caret when typing occurs.
