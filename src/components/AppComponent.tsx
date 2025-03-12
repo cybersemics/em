@@ -4,6 +4,7 @@ import _ from 'lodash'
 import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
+import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
 import { updateSplitPositionActionCreator as updateSplitPosition } from '../actions/updateSplitPosition'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
@@ -124,6 +125,12 @@ const AppComponent: FC = () => {
   const showModal = useSelector(state => state.showModal)
   const tutorial = useSelector(isTutorial)
   const splitPosition = useSelector(state => state.splitPosition)
+
+  useEffect(() => {
+    WebviewBackground.changeBackgroundColor({ color: colors.bg })
+    document.documentElement.style.backgroundColor = colors.bg
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', colors.bg)
+  }, [colors.bg])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onSplitResize = useCallback(

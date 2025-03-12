@@ -21,7 +21,8 @@
   "type": "module",
   "scripts": {
     "browserless": "docker run -p 7566:3000 -e \"CONNECTION_TIMEOUT=-1\" browserless/chrome",
-    "build": "yarn build:styles && vite build",
+    "build": "yarn build:packages && yarn build:styles && vite build",
+    "build:packages": "yarn --cwd packages/webview build",
     "build:styles": "echo \"Building styles...\" && panda codegen",
     "cap:android": "yarn cap:sync && cap open android",
     "cap:copy:prod": "NODE_ENV=production && cap copy",
@@ -41,7 +42,7 @@
     "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:tsc": "tsc",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output \"lint:*\"",
-    "postinstall": "git config core.hooksPath .hooks && yarn build:styles",
+    "postinstall": "yarn build:packages && git config core.hooksPath .hooks && yarn build:styles",
     "servebuild": "npx serve -s build -l 3000",
     "start": "vite --host --port 3000",
     "test:ios": "jest ./src/e2e/iOS --verbose",
@@ -73,6 +74,9 @@
     "@typescript-eslint/parser": "^8.14.0",
     "@pandacss/node@npm:0.47.0": "patch:@pandacss/node@npm%3A0.47.0#~/.yarn/patches/@pandacss-node-npm-0.47.0.patch"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "dependencies": {
     "@capacitor/android": "^6.1.2",
     "@capacitor/clipboard": "^6.0.2",
@@ -134,6 +138,7 @@
     "ts-key-enum": "^2.0.12",
     "use-onclickoutside": "^0.4.1",
     "vite-plugin-html": "^3.2.2",
+    "webview-background": "workspace:*",
     "workbox-build": "^7.1.1",
     "workbox-core": "^7.1.0",
     "workbox-expiration": "^7.1.0",
