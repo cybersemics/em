@@ -226,10 +226,16 @@ const CommandGrid = ({
               ) : null
             })
           } else if (previousSortOrder === 'alphabetical') {
+            // Filter commands to include only those with gestures
+            const commandsWithGestures = commands.filter((command): command is Command => !!command.gesture)
+
+            // Sort commands alphabetically by their ID or name
+            const sortedCommands = commandsWithGestures.sort((a, b) => a.id.localeCompare(b.id))
+
             return (
               <CommandsGroup
                 title={'All Commands'}
-                commands={commands}
+                commands={sortedCommands}
                 selectedCommand={selectedCommand}
                 customize={customize}
                 onSelect={onSelect}
