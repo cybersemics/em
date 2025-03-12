@@ -4,7 +4,7 @@ import { css } from '../../styled-system/css'
 import theme from '../selectors/theme'
 
 /**
- *  SortButton component 
+ *  SortButton component
  * */
 const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') => void }> = ({ onSortChange }) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')

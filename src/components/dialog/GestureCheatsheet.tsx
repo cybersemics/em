@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useVisibility } from 'reactjs-visibility'
 import { css } from '../../../styled-system/css'
 import { closeDialogActionCreator } from '../../actions/closeDialog'
 import { FADEOUT_DURATION } from '../../constants'
@@ -7,7 +8,6 @@ import CommandGrid from '../CommandGrid'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
-import { useVisibility } from 'reactjs-visibility'
 
 /**
  * Gesture cheatsheet component.

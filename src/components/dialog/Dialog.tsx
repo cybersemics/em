@@ -1,36 +1,36 @@
-import React, { useEffect, useRef } from 'react';
-import { css } from '../../../styled-system/css';
+import React, { useEffect, useRef } from 'react'
+import { css } from '../../../styled-system/css'
 
 interface DialogProps {
-  children: React.ReactNode;
-  onClose: () => void;
-  showGradient: boolean;
+  children: React.ReactNode
+  onClose: () => void
+  showGradient: boolean
 }
 
 /**
  * Dialog component.
  */
 const Dialog: React.FC<DialogProps> = ({ children, onClose, showGradient }) => {
-  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    const currentDialogRef = dialogRef.current;
+    const currentDialogRef = dialogRef.current
 
     /**
      * Handles the click outside the dialog.
      */
     const handleClickOutside = (event: MouseEvent) => {
       if (currentDialogRef && !currentDialogRef.contains(event.target as Node)) {
-        onClose();
+        onClose()
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside)
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [onClose]);
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [onClose])
 
   return (
     <div
@@ -79,7 +79,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose, showGradient }) => {
         />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Dialog;
+export default Dialog
