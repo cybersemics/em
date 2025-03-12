@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { FC, useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
@@ -100,7 +100,6 @@ const groups: {
   },
 ]
 
-// assert that groups include all necessary commands
 const commandsGroupedMap = keyValueBy(
   groups.flatMap(group => group.commands),
   true,
@@ -118,9 +117,7 @@ if (commandsUngrouped.length > 0) {
 }
 
 /** Search bar for filtering commands. */
-const SearchCommands: FC<{
-  onInput?: (value: string) => void
-}> = ({ onInput }) => {
+const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
 
   return (
@@ -153,7 +150,7 @@ const SearchCommands: FC<{
 const CommandGrid = ({
   customize,
   onSelect,
-  selectedCommand: selectedCommand,
+  selectedCommand,
 }: {
   customize?: boolean
   onSelect?: (command: Command | null) => void
@@ -161,7 +158,19 @@ const CommandGrid = ({
 }) => {
   const [search, setSearch] = useState('')
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'type'>('type')
+  const [previousSortOrder, setPreviousSortOrder] = useState(sortOrder)
+  const [isFading, setIsFading] = useState(false)
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
+
+  useEffect(() => {
+    if (sortOrder !== previousSortOrder) {
+      setIsFading(true)
+      setTimeout(() => {
+        setPreviousSortOrder(sortOrder)
+        setIsFading(false) 
+      }, 300)
+    }
+  }, [sortOrder, previousSortOrder])
 
   return (
     <div>
@@ -176,7 +185,15 @@ const CommandGrid = ({
         <SearchCommands onInput={setSearch} />
         <SortButton onSortChange={setSortOrder} />
       </div>
-      <div className={css({ textAlign: 'left' })}>
+
+      {/* Fade-in transition for command views */}
+      <div
+        className={css({
+          textAlign: 'left',
+          opacity: isFading ? 0 : 1,
+          transition: 'opacity 0.5s ease',
+        })}
+      >
         {(() => {
           if (search) {
             return (
@@ -190,13 +207,12 @@ const CommandGrid = ({
                 isGrid={true}
               />
             )
-          } else if (sortOrder === 'type') {
+          } else if (previousSortOrder === 'type') {
             return groups.map(group => {
               const commands = group.commands
                 .map(commandById)
                 .filter((command): command is Command => !!command.gesture)
 
-              // do not render groups with no commands on this platform
               return commands.length > 0 ? (
                 <CommandsGroup
                   title={group.title}
@@ -209,7 +225,7 @@ const CommandGrid = ({
                 />
               ) : null
             })
-          } else if (sortOrder === 'alphabetical') {
+          } else if (previousSortOrder === 'alphabetical') {
             return (
               <CommandsGroup
                 title={'All Commands'}
