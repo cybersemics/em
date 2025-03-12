@@ -39,6 +39,9 @@ const Tab = <T extends string>({
           cursor: 'pointer',
           flex: 'none',
           whiteSpace: 'nowrap',
+          '&:hover span': {
+            filter: 'brightness(80%)',
+          },
           ...(active && {
             backgroundColor: 'fgOverlay10',
             borderBottom: '2px solid {colors.link}',
