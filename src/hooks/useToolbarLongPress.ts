@@ -60,7 +60,7 @@ const useToolbarLongPress = ({
   useEffect(() => {
     // Only add the subscription when we're actually pressed
     // This prevents all components from re-rendering on global lock state changes
-    if (!isPressed) return undefined;
+    if (!isPressed) return undefined
 
     return longPressStore.subscribeSelector(
       state => state.isLocked,
@@ -70,7 +70,7 @@ const useToolbarLongPress = ({
           setIsPressed(false)
           dispatch(toolbarLongPress({ command: null }))
         }
-      }
+      },
     )
   }, [dispatch, isPressed])
 

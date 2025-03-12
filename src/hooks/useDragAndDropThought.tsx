@@ -28,6 +28,7 @@ import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
+import longPressStore from '../stores/longPressStore'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -40,7 +41,6 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import unroot from '../util/unroot'
-import longPressStore from '../stores/longPressStore'
 
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ThoughtContainerProps) => {
@@ -64,11 +64,11 @@ const canDrag = (props: ThoughtContainerProps) => {
 /** Handles drag start. */
 const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem => {
   const offset = selection.offset()
-  
+
   // Notify the long press store that a drag has started
   // This will reset the lock and trigger onLongPressEnd for any active long presses
   longPressStore.actions.notifyDragStarted()
-  
+
   store.dispatch(
     dragInProgress({
       value: true,
@@ -86,7 +86,7 @@ const endDrag = () => {
   try {
     // Reset the longpressing flag to ensure we can start a new long press
     globals.longpressing = false
-    
+
     // Reset the lock using the store
     longPressStore.actions.reset()
   } catch (e) {

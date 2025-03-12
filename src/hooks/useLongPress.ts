@@ -40,7 +40,7 @@ const useLongPress = (
   useEffect(() => {
     // Only add the subscription when we're actually pressed
     // This prevents all components from re-rendering on global lock state changes
-    if (!pressed) return undefined;
+    if (!pressed) return undefined
 
     // If we were pressed but the lock was released externally (by a drag start)
     // then we need to properly clean up and notify listeners
@@ -51,19 +51,19 @@ const useLongPress = (
           // Lock was released while we were still pressed - likely due to drag
           clearTimeout(timerIdRef.current)
           timerIdRef.current = 0
-          
+
           // Only mark as canceled if we were actually in a long press
           // If the long press was completed (started and now ending), pass canceled=false
           // so that multicursor toggle can occur
-          const wasCanceled = !wasLongPressingRef.current;
-          globals.longpressing = false;
-          
+          const wasCanceled = !wasLongPressingRef.current
+          globals.longpressing = false
+
           // Important: Call onLongPressEnd with the right canceled state
           onLongPressEndRef.current?.({ canceled: wasCanceled })
           setPressed(false)
-          wasLongPressingRef.current = false;
+          wasLongPressingRef.current = false
         }
-      }
+      },
     )
   }, [pressed])
 
@@ -86,7 +86,7 @@ const useLongPress = (
       clearTimeout(timerIdRef.current)
       timerIdRef.current = setTimeout(() => {
         globals.longpressing = true
-        wasLongPressingRef.current = true; // Mark that a long press was started
+        wasLongPressingRef.current = true // Mark that a long press was started
         longPressStore.actions.setLongPressing(true)
         haptics.light()
         onLongPressStart?.()
@@ -96,7 +96,6 @@ const useLongPress = (
         }
       }, TIMEOUT_LONG_PRESS_THOUGHT) as unknown as number
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [onLongPressStart],
   )
 
@@ -119,14 +118,14 @@ const useLongPress = (
 
         globals.longpressing = false
         longPressStore.actions.setLongPressing(false)
-        
+
         // If a long press occurred, mark it as not canceled
         onLongPressEnd?.({ canceled: false })
-        
+
         if (!unmounted.current) {
           setPressed(false)
         }
-        wasLongPressingRef.current = false; // Reset the long press state
+        wasLongPressingRef.current = false // Reset the long press state
       }, 10)
     },
     [onLongPressEnd],
@@ -149,7 +148,7 @@ const useLongPress = (
           globals.longpressing = false
           longPressStore.actions.setLongPressing(false)
           onLongPressEnd?.({ canceled: true })
-          wasLongPressingRef.current = false; // Reset the long press state
+          wasLongPressingRef.current = false // Reset the long press state
         }
       }
     },
@@ -181,7 +180,7 @@ const useLongPress = (
       if (pressed) {
         longPressStore.actions.unlock()
       }
-      wasLongPressingRef.current = false; // Reset the long press state
+      wasLongPressingRef.current = false // Reset the long press state
     }
   }, [pressed])
 

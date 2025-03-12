@@ -83,7 +83,7 @@ const useDragAndDropToolbarButton = ({ commandId, customize }: { commandId: Comm
       // Notify the long press store that a drag has started
       // This will reset the lock and trigger onLongPressEnd for any active long presses
       longPressStore.actions.notifyDragStarted()
-      
+
       store.dispatch(dragCommand(commandId))
       const command = commandById(commandId)
       return { command, zone: DragCommandZone.Toolbar }
