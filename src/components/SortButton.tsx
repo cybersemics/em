@@ -3,6 +3,9 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import theme from '../selectors/theme'
 
+/**
+ *  SortButton component 
+ * */
 const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') => void }> = ({ onSortChange }) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
@@ -26,6 +29,9 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
     gap: '0.5rem',
   })
 
+  /**
+   *  Fade in animation styles for the dropdown when it is visible
+   * */
   const dropdownVisibleStyles = css({
     opacity: 1,
     visibility: 'visible',

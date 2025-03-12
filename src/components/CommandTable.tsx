@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { FC, useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
@@ -100,7 +100,6 @@ const groups: {
   },
 ]
 
-// assert that groups include all necessary commands
 const commandsGroupedMap = keyValueBy(
   groups.flatMap(group => group.commands),
   true,
@@ -118,9 +117,7 @@ if (commandsUngrouped.length > 0) {
 }
 
 /** Search bar for filtering commands. */
-const SearchCommands: FC<{
-  onInput?: (value: string) => void
-}> = ({ onInput }) => {
+const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
 
   return (
@@ -149,11 +146,11 @@ const SearchCommands: FC<{
   )
 }
 
-/** Renders a table of commands. */
+/** Renders a table of commands with a fade-in animation when sorting changes. */
 const CommandTable = ({
   customize,
   onSelect,
-  selectedCommand: selectedCommand,
+  selectedCommand,
 }: {
   customize?: boolean
   onSelect?: (command: Command | null) => void
@@ -162,6 +159,18 @@ const CommandTable = ({
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'type'>('type')
+  const [previousSortOrder, setPreviousSortOrder] = useState(sortOrder)
+  const [isFading, setIsFading] = useState(false)
+
+  useEffect(() => {
+    if (sortOrder !== previousSortOrder) {
+      setIsFading(true) // Start fading out
+      setTimeout(() => {
+        setPreviousSortOrder(sortOrder) // Update to new view after fade out
+        setIsFading(false) // Start fading in
+      }, 250) // Matches transition duration
+    }
+  }, [sortOrder, previousSortOrder])
 
   return (
     <div>
@@ -176,7 +185,15 @@ const CommandTable = ({
         <SearchCommands onInput={setSearch} />
         <SortButton onSortChange={setSortOrder} />
       </div>
-      <div className={css({ textAlign: 'left' })}>
+
+      {/* Smooth Fade-in Transition */}
+      <div
+        className={css({
+          textAlign: 'left',
+          opacity: isFading ? 0 : 1,
+          transition: 'opacity 0.3s ease-in-out',
+        })}
+      >
         {(() => {
           if (search) {
             return (
@@ -189,13 +206,12 @@ const CommandTable = ({
                 search={search}
               />
             )
-          } else if (sortOrder === 'type') {
+          } else if (previousSortOrder === 'type') {
             return groups.map(group => {
               const commands = group.commands
                 .map(commandById)
                 .filter((command): command is Command => (isTouch ? !!command.gesture : !!command.keyboard))
 
-              // do not render groups with no commands on this platform
               return commands.length > 0 ? (
                 <CommandsGroup
                   title={group.title}
@@ -207,7 +223,7 @@ const CommandTable = ({
                 />
               ) : null
             })
-          } else if (sortOrder === 'alphabetical') {
+          } else if (previousSortOrder === 'alphabetical') {
             return (
               <CommandsGroup
                 title={'All Commands'}
