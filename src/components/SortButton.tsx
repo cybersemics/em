@@ -75,10 +75,22 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
             type='radio'
             checked={selectedSort === 'alphabetical'}
             onChange={() => handleSortChange('alphabetical')}
+            className={css({
+              appearance: 'none',
+              width: '12px',
+              height: '12px',
+              border: '2px solid {colors.gray50}',
+              borderRadius: '50%',
+              display: 'inline-block',
+              position: 'relative',
+              '&:checked': {
+                borderColor: '{colors.fg}',
+              },
+            })}
           />
           <h3
             className={css({
-              color: '{colors.gray50}',
+              color: selectedSort === 'alphabetical' ? '{colors.fg}' : '{colors.gray50}',
               margin: '0 0 0 0.2rem',
               fontWeight: 'normal',
               fontSize: '0.9rem',
@@ -93,10 +105,26 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
             flexDirection: 'row',
           })}
         >
-          <input type='radio' checked={selectedSort === 'type'} onChange={() => handleSortChange('type')} />
+          <input
+            type='radio'
+            checked={selectedSort === 'type'}
+            onChange={() => handleSortChange('type')}
+            className={css({
+              appearance: 'none',
+              width: '12px',
+              height: '12px',
+              border: '2px solid {colors.gray50}',
+              borderRadius: '50%',
+              display: 'inline-block',
+              position: 'relative',
+              '&:checked': {
+                borderColor: '{colors.fg}',
+              },
+            })}
+          />
           <h3
             className={css({
-              color: '{colors.gray50}',
+              color: selectedSort === 'type' ? '{colors.fg}' : '{colors.gray50}',
               margin: '0 0 0 0.2rem',
               fontWeight: 'normal',
               fontSize: '0.9rem',

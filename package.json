@@ -129,6 +129,7 @@
     "react-signature-pad-wrapper": "^4.1.0",
     "react-split-pane": "^0.1.92",
     "react-transition-group": "^4.4.5",
+    "reactjs-visibility": "^0.1.4",
     "redux": "^5.0.1",
     "redux-devtools-extension": "^2.13.9",
     "redux-thunk": "^3.1.0",

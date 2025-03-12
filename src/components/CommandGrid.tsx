@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from 'react'
+import { FC, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
@@ -167,7 +167,7 @@ const CommandGrid = ({
       setIsFading(true)
       setTimeout(() => {
         setPreviousSortOrder(sortOrder)
-        setIsFading(false) 
+        setIsFading(false)
       }, 300)
     }
   }, [sortOrder, previousSortOrder])

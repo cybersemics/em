@@ -8100,6 +8100,7 @@ __metadata:
     react-signature-pad-wrapper: "npm:^4.1.0"
     react-split-pane: "npm:^0.1.92"
     react-transition-group: "npm:^4.4.5"
+    reactjs-visibility: "npm:^0.1.4"
     redux: "npm:^5.0.1"
     redux-devtools-extension: "npm:^2.13.9"
     redux-mock-store: "npm:^1.5.5"
@@ -15817,6 +15818,16 @@ __metadata:
   dependencies:
     loose-envify: "npm:^1.1.0"
   checksum: 10c0/283e8c5efcf37802c9d1ce767f302dd569dd97a70d9bb8c7be79a789b9902451e0d16334b05d73299b20f048cbc3c7d288bbbde10b701fa194e2089c237dbea3
+  languageName: node
+  linkType: hard
+
+"reactjs-visibility@npm:^0.1.4":
+  version: 0.1.4
+  resolution: "reactjs-visibility@npm:0.1.4"
+  peerDependencies:
+    react: ">=16"
+    react-dom: ">=16"
+  checksum: 10c0/c8c381fa4091a2af35d421d08a782e3dcfd2d2f59b2a7d4d5427b3e51a2f4ba0ff8b891ff8e8079f586802a382f01a7f36a37062dd96988b197b78bee6fc4b95
   languageName: node
   linkType: hard
 
