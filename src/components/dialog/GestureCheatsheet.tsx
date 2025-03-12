@@ -7,6 +7,7 @@ import CommandGrid from '../CommandGrid'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
+import { useVisibility } from 'reactjs-visibility'
 
 /**
  * Gesture cheatsheet component.
@@ -15,6 +16,7 @@ const GestureCheatsheet: React.FC = () => {
   const dispatch = useDispatch()
   const isOpen = useSelector(state => state.dialogOpen)
   const dialogRef = useRef<HTMLDivElement | null>(null)
+  const { ref: bottomRef, visible: isBottomVisible } = useVisibility({})
 
   /**
    * Handles the closure of the gesture cheatsheet.
@@ -67,6 +69,7 @@ const GestureCheatsheet: React.FC = () => {
     '&::-webkit-scrollbar-track': {
       background: '{colors.bg}',
     },
+    position: 'relative',
   })
 
   return (
@@ -74,11 +77,12 @@ const GestureCheatsheet: React.FC = () => {
       {isOpen && (
         <>
           <div ref={dialogRef} className={dialogAnimationStyles}>
-            <Dialog onClose={handleClose}>
+            <Dialog onClose={handleClose} showGradient={!isBottomVisible}>
               <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
               <DialogContent>
                 <div className={dialogStyles}>
                   <CommandGrid />
+                  <div ref={bottomRef} style={{ height: '1px' }} />
                 </div>
               </DialogContent>
             </Dialog>
