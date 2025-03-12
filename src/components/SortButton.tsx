@@ -4,7 +4,7 @@ import { css } from '../../styled-system/css'
 import theme from '../selectors/theme'
 
 /**
- *  SortButton component
+ * SortButton component.
  * */
 const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') => void }> = ({ onSortChange }) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
@@ -30,13 +30,16 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
   })
 
   /**
-   *  Fade in animation styles for the dropdown when it is visible
+   * Fade in animation styles for the dropdown when it is visible.
    * */
   const dropdownVisibleStyles = css({
     opacity: 1,
     visibility: 'visible',
   })
 
+  /**
+   * Handles the sort change.
+   */
   const handleSortChange = (sortOrder: 'alphabetical' | 'type') => {
     setSelectedSort(sortOrder)
     onSortChange(sortOrder)
