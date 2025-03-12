@@ -25,8 +25,8 @@ const ordinal = (n: number) => {
         : s + 'th'
 }
 
-/** Renders all of a command's details as a grid column. */
-const CommandColumn = ({
+/** Renders all of a command's details as a grid item. */
+const CommandGridItem = ({
   customize,
   onSelect,
   selected,
@@ -165,4 +165,4 @@ const CommandColumn = ({
   )
 }
 
-export default CommandColumn
+export default CommandGridItem

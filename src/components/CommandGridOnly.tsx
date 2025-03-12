@@ -3,7 +3,7 @@ import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import { TOOLBAR_DEFAULT_COMMANDS } from '../constants'
 import getUserToolbar from '../selectors/getUserToolbar'
-import CommandColumn from './CommandColumn'
+import CommandGridItem from './CommandGridItem'
 
 /** Renders a grid of commands, with nothing else added. */
 const CommandGridOnly = ({
@@ -41,7 +41,7 @@ const CommandGridOnly = ({
         {commands.map(command => {
           const indexInToolbar = commandIds.findIndex(id => id === command?.id)
           return (
-            <CommandColumn
+            <CommandGridItem
               customize={customize}
               key={command?.id}
               indexInToolbar={indexInToolbar !== -1 && applyIndexInToolbar ? indexInToolbar + 1 : null}
