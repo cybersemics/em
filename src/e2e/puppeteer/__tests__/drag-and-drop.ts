@@ -3,6 +3,7 @@ import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import hideHUD from '../helpers/hideHUD'
+import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
@@ -227,6 +228,30 @@ describe('drag', () => {
     await simulateDragAndDrop({ drop: true })
 
     await dragAndDropThought('b', 'c', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('should show alert and quick drop panels when long pressing after drag operation', async () => {
+    // Create two thoughts for testing
+    await newThought('a')
+    await newThought('b')
+
+    // First, drag thought 'a' after thought 'b' (resulting in b followed by a)
+    await dragAndDropThought('a', 'b', {
+      position: 'after',
+      mouseUp: true,
+      showAlert: true,
+      showQuickDropPanel: true,
+    })
+
+    await dragAndDropThought('a', null, {
+      position: 'none',
+      mouseUp: false,
+      showAlert: true,
+      showQuickDropPanel: true,
+    })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
