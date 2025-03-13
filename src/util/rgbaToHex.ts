@@ -18,10 +18,10 @@ const rgbaToHex = (rgba: string): string => {
 
   const alphaHex =
     a >= 1
-      ? Math.round(a * 255)
+      ? ''
+      : Math.round(a * 255)
           .toString(16)
           .padStart(2, '0')
-      : ''
   return `#${toHex(r)}${toHex(g)}${toHex(b)}${alphaHex}`
 }
 
