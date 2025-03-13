@@ -5,6 +5,7 @@ import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator } from '../actions/alert'
+import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
 import strip from '../util/strip'
@@ -59,7 +60,7 @@ const Alert: FC = () => {
             key={value}
             circledCloseButton
             showXOnHover
-            onClose={alert.showCloseLink ? onClose : undefined}
+            onClose={alert.showCloseLink && !isTouch ? onClose : undefined}
             calculatedHeight={popupRef.current?.getBoundingClientRect().height || 50}
             swipeDownToDismiss
           >
