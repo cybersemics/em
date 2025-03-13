@@ -80,12 +80,7 @@ const extractColor = (value: string): string | undefined => {
  */
 const getElementFill = (value: string): string | undefined => {
   // Check if the entire value is wrapped in a single font or span tag
-  const isWrappedInTag = isWrappedInSingleTag(value)
-  if (isWrappedInTag) {
-    return extractColor(value)
-  }
-
-  return undefined
+  return isWrappedInSingleTag(value) ? extractColor(value) : undefined
 }
 
 export default getElementFill

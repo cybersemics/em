@@ -1,6 +1,6 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import getElementFill from './getElementFill'
+import getElementFill from '../util/getElementFill'
 import getThoughtById from './getThoughtById'
 
 /**

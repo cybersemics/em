@@ -1,6 +1,6 @@
-// import setCursor from '../../../test-helpers/setCursorFirstMatch'
 import colors from '../../../colors.config'
-import { rgbToHex, rgbaToHex } from '../../../util/rgbHex'
+import rgbToHex from '../../../util/rgbToHex'
+import rgbaToHex from '../../../util/rgbaToHex'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import getBulletColor from '../helpers/getBulletColor'
