@@ -56,13 +56,11 @@ const CircledCloseButton = ({ cssRaw, ...props }: CloseButtonProps) => {
           justifyContent: 'center',
           alignItems: 'center',
           // inherit not yet supported by plugin
-          // eslint-disable-next-line @pandacss/no-hardcoded-color
           color: 'inherit',
           textDecoration: 'none',
           borderRadius: '50%',
           transform: 'translate(50%, -50%)',
           // inherit not yet supported by plugin
-          // eslint-disable-next-line @pandacss/no-hardcoded-color
           background: 'inherit',
           border: 'inherit',
           padding: '0.5em',
