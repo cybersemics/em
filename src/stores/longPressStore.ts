@@ -1,7 +1,8 @@
 import reactMinistore from './react-ministore'
 
-// Create a ministore with just the lock state
-const ministore = reactMinistore<{ isLocked: boolean }>({
+// this store is used in useLongPress hook, which is used in dragAndDropThought component
+// it is used to prevent multiple components from responding to long press simultaneously.
+const ministore = reactMinistore({
   isLocked: false,
 })
 

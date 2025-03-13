@@ -21,18 +21,13 @@ const useLongPress = (
 ) => {
   const [pressed, setPressed] = useState(false)
   // Track isLocked state from longPressStore in local state
-  const [isLocked, setIsLocked] = useState(longPressStore.getState().isLocked)
+  const isLocked = longPressStore.useSelector(state => state.isLocked)
   // useState doesn't work for some reason (???)
   // scrollY variable is always 0 in onPressed
   const clientCoords = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
   const unmounted = useRef(false)
-
-  // Subscribe to lock state changes
-  useEffect(() => {
-    return longPressStore.subscribeSelector(state => state.isLocked, setIsLocked)
-  }, [])
 
   /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
   // track that long press has started on mouseDown or touchStart
