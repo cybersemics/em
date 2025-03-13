@@ -24,12 +24,12 @@ const usePositionFixed = ({
   const safariKeyboard = safariKeyboardStore.useState()
   const position = safariKeyboard.open ? 'absolute' : 'fixed'
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
-  const { innerHeight, currentKeyboardHeight } = viewportStore.useState()
+  const { innerHeight } = viewportStore.useState()
 
   let top, bottom
   if (position === 'absolute') {
     top = fromBottom
-      ? `${scrollTop + innerHeight - currentKeyboardHeight - (height ?? 0) - offset}px`
+      ? `${scrollTop + innerHeight - safariKeyboard.height - (height ?? 0) - offset}px`
       : `${scrollTop + offset}px`
   } else if (fromBottom) {
     // spacing.safeAreaBottom applies to rounded screens
@@ -44,8 +44,6 @@ const usePositionFixed = ({
     overflowX: position === 'absolute' ? 'hidden' : 'visible',
     top,
     bottom,
-    /* Hide bottom elements while the keyboard is closing */
-    display: fromBottom && safariKeyboard.closing ? 'none' : undefined,
   }
 }
 
