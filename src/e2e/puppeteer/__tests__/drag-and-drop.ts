@@ -1,5 +1,4 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
@@ -8,7 +7,6 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
-import { page } from '../setup'
 
 // TODO: Why do the uncle tests fail with the default threshold of 0.18?
 // 'd' fails with slight rendering differences for some reason.
@@ -244,11 +242,11 @@ describe('drag', () => {
     await dragAndDropThought('a', 'b', {
       position: 'after',
       mouseUp: true,
+      showAlert: true,
+      showQuickDropPanel: true,
     })
 
-    await sleep(1000)
-
-    await dragAndDropThought('b', null, {
+    await dragAndDropThought('a', null, {
       position: 'none',
       mouseUp: false,
       showAlert: true,
@@ -257,8 +255,6 @@ describe('drag', () => {
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
-
-    await page.mouse.up()
   })
 })
 

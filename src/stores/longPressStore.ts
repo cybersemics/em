@@ -1,44 +1,21 @@
 import reactMinistore from './react-ministore'
 
-type LongPressState = {
-  isLocked: boolean
-  isLongPressing: boolean
-}
-
-// Create a ministore with initial state
-const longPressStore = reactMinistore<LongPressState>({
+// Create a ministore with just the lock state
+const ministore = reactMinistore<{ isLocked: boolean }>({
   isLocked: false,
-  isLongPressing: false,
 })
 
-// Action helpers for the store
-const actions = {
-  lock: () => {
-    longPressStore.update({ isLocked: true })
-  },
-
-  unlock: () => {
-    longPressStore.update({ isLocked: false })
-  },
-
-  setLongPressing: (value: boolean) => {
-    longPressStore.update({ isLongPressing: value })
-  },
-
-  notifyDragStarted: () => {
-    // When a drag starts, we need to reset the lock and mark that we're no longer long pressing
-    longPressStore.update({ isLocked: false, isLongPressing: false })
-  },
-
-  reset: () => {
-    longPressStore.update({ isLocked: false, isLongPressing: false })
-  },
+// Define the extended store type
+type LongPressStore = typeof ministore & {
+  lock: () => void
+  unlock: () => void
 }
 
-// Attach actions to the store for easy access
-const enhancedStore = {
-  ...longPressStore,
-  actions,
-}
+// Create and export the enhanced store with its methods
+const longPressStore = ministore as LongPressStore
 
-export default enhancedStore
+// Add the methods
+longPressStore.lock = () => ministore.update({ isLocked: true })
+longPressStore.unlock = () => ministore.update({ isLocked: false })
+
+export default longPressStore

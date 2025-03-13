@@ -10,6 +10,7 @@ import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { commandById } from '../commands'
 import { EM_TOKEN } from '../constants'
+import globals from '../globals'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
@@ -80,10 +81,6 @@ const useDragAndDropToolbarButton = ({ commandId, customize }: { commandId: Comm
   const [{ isDragging }, dragSource, dragPreview] = useDrag({
     type: DragAndDropType.ToolbarButton,
     item: () => {
-      // Notify the long press store that a drag has started
-      // This will reset the lock and trigger onLongPressEnd for any active long presses
-      longPressStore.actions.notifyDragStarted()
-
       store.dispatch(dragCommand(commandId))
       const command = commandById(commandId)
       return { command, zone: DragCommandZone.Toolbar }
@@ -91,7 +88,8 @@ const useDragAndDropToolbarButton = ({ commandId, customize }: { commandId: Comm
     canDrag: () => !!customize,
     end: () => {
       // Reset the lock to allow immediate long press after drag ends
-      longPressStore.actions.reset()
+      longPressStore.unlock()
+      globals.longpressing = false
       store.dispatch(dragCommand(null))
     },
     collect: monitor => ({
