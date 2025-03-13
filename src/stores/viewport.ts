@@ -18,8 +18,6 @@ const viewportStore = reactMinistore({
   /** Height of the virtual keyboard regardless of whether it is open or closed. Defaults to estimated height of portrait or landscape mode when window.visualViewport.width is not valid (see below; questionable). */
   virtualKeyboardHeight:
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
-  /** Height of the virtual keyboard, or 0 when it is closed/closing. */
-  currentKeyboardHeight: 0,
 })
 
 /** Throttled update of viewport height. Invoked on window resize. */
@@ -52,7 +50,6 @@ export const updateSize = _.throttle(
           : isPortrait
             ? virtualKeyboardHeightPortrait
             : virtualKeyboardHeightLandscape,
-      currentKeyboardHeight,
     })
   },
   // lock to 60 fps

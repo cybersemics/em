@@ -1,11 +1,18 @@
 import store from './app'
 import reactMinistore from './react-ministore'
+import viewportStore from './viewport'
 
-const VIRTUAL_KEYBOARD_CLOSE_DURATION = 800
+// An approximation of how long it takes the keyboard to open
+const VIRTUAL_KEYBOARD_OPEN_DURATION = 200
+// An approximation of how long it takes the keyboard to close
+const VIRTUAL_KEYBOARD_CLOSE_DURATION = 150
 
+/** A store that tracks the state of the Safari virtual keyboard. */
 const safariKeyboardStore = reactMinistore({
   open: false,
+  opening: false,
   closing: false,
+  height: 0,
 })
 
 /** Updates the safariKeyboardStore state based on the selection. */
@@ -13,21 +20,44 @@ export const updateSafariKeyboardState = () => {
   // A timeout is necessary to ensure the editing state is updated after the selection change.
   // This places the function call in the next event loop, after the state has been updated.
   setTimeout(() => {
+    const { virtualKeyboardHeight } = viewportStore.getState()
     const editing = store.getState().editing
     const keyboardIsVisible = editing === true
-    if (safariKeyboardStore.getState().open && !keyboardIsVisible) {
-      safariKeyboardStore.update({
-        closing: true,
-      })
-      setTimeout(() => {
+    if (keyboardIsVisible && !safariKeyboardStore.getState().open) {
+      // Animate the keyboard opening
+      const start = Date.now()
+      const interval = setInterval(() => {
+        const duration = Date.now() - start
+        const progress = Math.min(1, duration / VIRTUAL_KEYBOARD_OPEN_DURATION)
+        const height = virtualKeyboardHeight * progress
         safariKeyboardStore.update({
+          open: true,
+          opening: progress < 1,
           closing: false,
+          height,
         })
-      }, VIRTUAL_KEYBOARD_CLOSE_DURATION)
+        if (progress === 1) {
+          clearInterval(interval)
+        }
+      }, 16.666)
+    } else if (!keyboardIsVisible && safariKeyboardStore.getState().open) {
+      // Animate the keyboard closing
+      const start = Date.now()
+      const interval = setInterval(() => {
+        const duration = Date.now() - start
+        const progress = Math.min(1, duration / VIRTUAL_KEYBOARD_CLOSE_DURATION)
+        const height = virtualKeyboardHeight * (1 - progress)
+        safariKeyboardStore.update({
+          open: progress < 1,
+          opening: false,
+          closing: progress < 1,
+          height,
+        })
+        if (progress === 1) {
+          clearInterval(interval)
+        }
+      }, 16.666)
     }
-    safariKeyboardStore.update({
-      open: keyboardIsVisible,
-    })
   }, 0)
 }
 
