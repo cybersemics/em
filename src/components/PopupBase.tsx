@@ -126,6 +126,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
   },
 )
 
-PopupBase.displayName = 'Popup'
+PopupBase.displayName = 'PopupBase'
 
 export default PopupBase
