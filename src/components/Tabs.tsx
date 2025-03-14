@@ -1,5 +1,6 @@
 import React from 'react'
 import { css } from '../../styled-system/css'
+import haptics from '../util/haptics'
 
 /**
  * Represents a single tab's configuration.
@@ -124,7 +125,7 @@ const Tabs = <T extends string>({
               active={value === currentTab}
               onClick={() => {
                 onTabChange(value)
-                window.navigator.vibrate(100)
+                haptics.light()
               }}
             >
               {children}
