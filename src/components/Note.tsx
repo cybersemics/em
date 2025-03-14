@@ -18,6 +18,7 @@ import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import strip from '../util/strip'
+import FauxCaret from './FauxCaret'
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = React.memo(({ path }: { path: Path }) => {
@@ -119,7 +120,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
           marginTop: -3,
           position: 'relative',
           marginBottom: '2px',
-          paddingBottom: '4px',
+          padding: isTouch && isSafari() ? '0 1em 4px 0.333em' : '0 0 4px 0',
           '@media (max-width: 1024px)': {
             _android: {
               position: 'relative',
@@ -134,6 +135,9 @@ const Note = React.memo(({ path }: { path: Path }) => {
         marginLeft: fontSize - 14,
       }}
     >
+      <span className={css({ position: 'absolute', margin: '-4px 0 0 -4px' })}>
+        <FauxCaret fontSize='1.2em' opacity='var(--faux-caret-note-line-start-opacity)' />
+      </span>
       <ContentEditable
         html={note || ''}
         innerRef={noteRef}
@@ -141,7 +145,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
         placeholder='Enter a note'
         className={css({
           display: 'inline-block',
-          padding: '0 1em 0 0.333em',
+          padding: isTouch && isSafari() ? undefined : '0 1em 0 0.333em',
         })}
         onKeyDown={onKeyDown}
         onChange={onChange}
@@ -153,6 +157,9 @@ const Note = React.memo(({ path }: { path: Path }) => {
         onBlur={onBlur}
         onFocus={onFocus}
       />
+      <span className={css({ position: 'absolute', margin: '-0.125em 0 0 -0.25em' })}>
+        <FauxCaret fontSize='1.1em' opacity='var(--faux-caret-note-line-end-opacity)' />
+      </span>
     </div>
   )
 })
