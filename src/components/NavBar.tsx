@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
@@ -57,11 +57,23 @@ const NavBar = ({ position }: { position: string }) => {
   const isCursor = useSelector(state => !!state.cursor && state.cursor.length > 0)
 
   const cursorBreadcrumbsWrapperRef = useRef<HTMLDivElement>(null)
+  const navBarRef = useRef<HTMLDivElement>(null)
+  const isOpen = useSelector(state => state.commandMenuOpen)
+
+  useEffect(() => {
+    if (navBarRef.current) {
+      const commandMenuHeight = document.querySelector('[aria-label="command-menu-panel"]')?.clientHeight || 0
+      navBarRef.current.style.bottom = isOpen ? `${commandMenuHeight}px` : '0'
+    }
+  }, [isOpen])
 
   return (
     <div
+      ref={navBarRef}
       className={css({
         zIndex: 'navbar',
+        position: 'sticky',
+        transition: 'bottom 0.5s ease',
         ...(!isTouch || !editing
           ? {
               position: 'sticky',

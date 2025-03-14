@@ -15,24 +15,21 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
   const isOpen = useSelector(state => state.commandMenuOpen)
 
   return (
-    <>
-      {isOpen && (
-        <div
-          aria-label='command-menu-panel'
-          className={css({
-            backgroundColor: '{colors.fg}',
-            display: 'flex',
-            height: '100%',
-            width: '100%',
-            position: 'sticky',
-            bottom: '0',
-            zIndex: 'navbar - 1',
-          })}
-        >
-          <button onClick={() => dispatch(closeCommandMenuActionCreator())}>x</button>
-        </div>
-      )}
-    </>
+    <div
+      aria-label='command-menu-panel'
+      className={css({
+        backgroundColor: '{colors.darkgray}',
+        display: 'flex',
+        width: '100%',
+        position: 'sticky',
+        bottom: '0',
+        zIndex: 'navbar - 1',
+        transition: 'transform 0.5s ease',
+        transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
+      })}
+    >
+      <button onClick={() => dispatch(closeCommandMenuActionCreator())}>x</button>
+    </div>
   )
 }
 
