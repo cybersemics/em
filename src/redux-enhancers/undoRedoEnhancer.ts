@@ -147,6 +147,8 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   updateSplitPosition: false,
   updateThoughts: false,
   updateHoveringPath: false,
+  closeCommandMenu: false,
+  showCommandMenu: false,
 }
 
 /** Returns if an action is undoable. */
