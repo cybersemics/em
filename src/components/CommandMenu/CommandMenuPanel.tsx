@@ -29,7 +29,6 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
             bottom: '0',
             zIndex: 'navbar',
             overflow: 'hidden',
-            height: isOpen ? 'auto' : '0px', // Animates height to prevent gap
             transition: 'transform 0.5s ease',
             transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
           })}
