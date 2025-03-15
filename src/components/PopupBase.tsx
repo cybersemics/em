@@ -20,7 +20,9 @@ export type PopupBaseProps = PropsWithChildren<
     importFileId?: string
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
+    /** If true, the popup will be positioned at the bottom of the screen. */
     anchorFromBottom?: boolean
+    /** The offset (in pixels) from the top or bottom of the screen. */
     anchorOffset?: number
     cssRaw?: SystemStyleObject
     circledCloseButton?: boolean
