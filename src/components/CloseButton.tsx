@@ -56,8 +56,6 @@ const CircledCloseButton = (props: CloseButtonProps) => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        color: 'inherit',
-        textDecoration: 'none',
         borderRadius: '50%',
         transform: 'translate(50%, -50%)',
         background: 'inherit',
