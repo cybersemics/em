@@ -10,8 +10,6 @@ const VIRTUAL_KEYBOARD_CLOSE_DURATION = 150
 /** A store that tracks the state of the Safari virtual keyboard. */
 const safariKeyboardStore = reactMinistore({
   open: false,
-  opening: false,
-  closing: false,
   height: 0,
 })
 
@@ -32,8 +30,6 @@ export const updateSafariKeyboardState = () => {
         const height = virtualKeyboardHeight * progress
         safariKeyboardStore.update({
           open: true,
-          opening: progress < 1,
-          closing: false,
           height,
         })
         if (progress === 1) {
@@ -49,8 +45,6 @@ export const updateSafariKeyboardState = () => {
         const height = virtualKeyboardHeight * (1 - progress)
         safariKeyboardStore.update({
           open: progress < 1,
-          opening: false,
-          closing: progress < 1,
           height,
         })
         if (progress === 1) {
