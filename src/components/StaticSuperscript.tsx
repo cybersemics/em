@@ -18,7 +18,10 @@ const StaticSuperscript = React.forwardRef<
     thoughtId?: ThoughtId
   }
 >(({ n, style, show = true, hideZero, absolute, cssRaw, thoughtId }, forwardRef) => {
-  const fill = useSelector(state => (thoughtId ? getThoughtFill(state, thoughtId) : undefined))
+  const fill = useSelector(state =>
+    // make sure fill is only calculated if the superscript is shown, since getThoughtFill is expensive
+    show && (n || !hideZero) && thoughtId ? getThoughtFill(state, thoughtId) : undefined,
+  )
 
   return (
     <span
