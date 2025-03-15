@@ -2,6 +2,7 @@ import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { closeCommandMenuActionCreator } from '../../actions/closeCommandMenu'
+import isTutorial from '../../selectors/isTutorial'
 
 interface CommandMenuPanelProps {
   onClose: () => void
@@ -13,23 +14,30 @@ interface CommandMenuPanelProps {
 const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
   const dispatch = useDispatch()
   const isOpen = useSelector(state => state.commandMenuOpen)
+  const isTutorialOn = useSelector(isTutorial)
 
   return (
-    <div
-      aria-label='command-menu-panel'
-      className={css({
-        backgroundColor: '{colors.darkgray}',
-        display: 'flex',
-        width: '100%',
-        position: 'sticky',
-        bottom: '0',
-        zIndex: 'navbar - 1',
-        transition: 'transform 0.5s ease',
-        transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
-      })}
-    >
-      <button onClick={() => dispatch(closeCommandMenuActionCreator())}>x</button>
-    </div>
+    <>
+      {!isTutorialOn && (
+        <div
+          aria-label='command-menu-panel'
+          className={css({
+            backgroundColor: '{colors.darkgray}',
+            display: 'flex',
+            width: '100%',
+            position: 'sticky',
+            bottom: '0',
+            zIndex: 'navbar',
+            overflow: 'hidden',
+            height: isOpen ? 'auto' : '0px', // Animates height to prevent gap
+            transition: 'transform 0.5s ease',
+            transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
+          })}
+        >
+          <button onClick={() => dispatch(closeCommandMenuActionCreator())}>x</button>
+        </div>
+      )}
+    </>
   )
 }
 
