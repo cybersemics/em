@@ -1,5 +1,14 @@
-const styleRegex = /style="[^"]*(background-)?color:\s*([^;"'>]+)[^"]*"/i
-const fontColorRegex = /color="([^"]*)"/
+/** Matches a color or background defined in a style attribute. */
+const REGEX_STYLE_COLOR = /style="[^"]*(background-)?color:\s*([^;"'>]+)[^"]*"/i
+
+/** Matches a color defined in a font tag. */
+const REGEX_FONT_COLOR = /color="([^"]*)"/
+
+/** Matches opening and closing tags in an HTML string. */
+const REGEX_TAG_START = /<\/?[a-z]+/g
+
+/** Matches whitespace and closing brackets in an HTML string. */
+const REGEX_TAG_END = /[\s>]/
 
 /**
  * Checks if a string is wrapped in a single HTML tag (specifically font or span).
@@ -42,12 +51,12 @@ const isWrappedInSingleTag = (str: string): boolean => {
 
       // If stack is empty before end of string, only valid if this is the last tag
       if (tagStack.length === 0 && currentPos <= str.length) {
-        const remainingTags = str.slice(currentPos).match(/<\/?[a-z]+/g)
+        const remainingTags = str.slice(currentPos).match(REGEX_TAG_START)
         return !remainingTags
       }
     } else if (!tag.endsWith('/>')) {
       // Opening tag (excluding self-closing tags)
-      const tagName = tag.slice(1).split(/[\s>]/)[0].toLowerCase()
+      const tagName = tag.slice(1).split(REGEX_TAG_END)[0].toLowerCase()
       tagStack.push(tagName)
     }
   }
@@ -63,11 +72,11 @@ const isWrappedInSingleTag = (str: string): boolean => {
  */
 const extractColor = (value: string): string | undefined => {
   // Check for background-color and color in style attribute
-  const styleMatch = value.match(styleRegex)
+  const styleMatch = value.match(REGEX_STYLE_COLOR)
   if (styleMatch) return styleMatch[2]
 
   // If no background-color, check for font color
-  const fontColorMatch = value.match(fontColorRegex)
+  const fontColorMatch = value.match(REGEX_FONT_COLOR)
   if (fontColorMatch) return fontColorMatch[1]
 
   return undefined
