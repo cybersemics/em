@@ -217,7 +217,7 @@ const VirtualThought = ({
     textAlign: isTableCol1 ? 'right' : undefined,
   })
   const translateXRef = useRef<number>(0)
-  const duration = 150
+  const duration = 400
 
   /** Calculates the horizontal translation needed to align the text to the right within its parent. */
   const calculateTranslateX = (): number => {
