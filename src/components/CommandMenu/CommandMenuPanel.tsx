@@ -25,6 +25,7 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
           className={css({
             backgroundColor: '{colors.darkgray}',
             display: 'flex',
+            flexDirection: 'column',
             width: '100%',
             position: 'sticky',
             bottom: '0',
@@ -34,7 +35,9 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
             transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
           })}
         >
-          <button onClick={() => dispatch(closeCommandMenuActionCreator())}>x</button>
+          <div className={css({ display: 'flex', justifyContent: 'flex-end' })}>
+            <button onClick={() => dispatch(closeCommandMenuActionCreator())}>x</button>
+          </div>
           <PanelCommandGrid />
         </div>
       )}
