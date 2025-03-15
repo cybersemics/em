@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { closeCommandMenuActionCreator } from '../../actions/closeCommandMenu'
 import isTutorial from '../../selectors/isTutorial'
+import PanelCommandGrid from './PanelCommandGrid'
 
 interface CommandMenuPanelProps {
   onClose: () => void
@@ -34,6 +35,7 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
           })}
         >
           <button onClick={() => dispatch(closeCommandMenuActionCreator())}>x</button>
+          <PanelCommandGrid />
         </div>
       )}
     </>
