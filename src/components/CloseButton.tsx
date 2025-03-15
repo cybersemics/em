@@ -28,7 +28,6 @@ const BaseCloseButton = ({
         upperRightRecipe(),
         css(
           {
-            // inherit not yet supported by plugin
             color: 'inherit',
             textDecoration: 'none',
           },
@@ -55,12 +54,10 @@ const CircledCloseButton = ({ cssRaw, ...props }: CloseButtonProps) => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          // inherit not yet supported by plugin
           color: 'inherit',
           textDecoration: 'none',
           borderRadius: '50%',
           transform: 'translate(50%, -50%)',
-          // inherit not yet supported by plugin
           background: 'inherit',
           border: 'inherit',
           padding: '0.5em',
