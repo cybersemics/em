@@ -22,8 +22,6 @@ export type PopupBaseProps = PropsWithChildren<
     onClose?: () => void
     anchorFromBottom?: boolean
     anchorOffset?: number
-    /** Only for if `anchorFromBottom = true`. For calculating position on mobile safari. */
-    calculatedHeight?: number
     cssRaw?: SystemStyleObject
     circledCloseButton?: boolean
     showXOnHover?: boolean
@@ -42,7 +40,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       style,
       anchorFromBottom,
       anchorOffset,
-      calculatedHeight,
       circledCloseButton,
       showXOnHover,
       swipeDownToDismiss,
@@ -53,10 +50,12 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     const dispatch = useDispatch()
     const fontSize = useSelector(state => state.fontSize)
     const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
+    /** Only for if `anchorFromBottom = true`. For calculating position on mobile safari. */
+    const height = (typeof ref === 'object' && ref?.current?.getBoundingClientRect().height) || 50
     const positionFixedStyles = usePositionFixed({
       fromBottom: anchorFromBottom,
       offset: anchorOffset,
-      height: calculatedHeight,
+      height,
     })
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar

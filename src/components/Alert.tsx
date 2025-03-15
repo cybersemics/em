@@ -61,7 +61,6 @@ const Alert: FC = () => {
             circledCloseButton
             showXOnHover
             onClose={alert.showCloseLink && !isTouch ? onClose : undefined}
-            calculatedHeight={popupRef.current?.getBoundingClientRect().height || 50}
             swipeDownToDismiss
           >
             <div
