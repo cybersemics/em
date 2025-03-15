@@ -440,7 +440,7 @@ const Bullet = ({
     return children.length < Object.keys(thought.childrenMap).length
   })
 
-  const fill = useSelector(state => getThoughtFill(state, thoughtId!))
+  const fill = useSelector(state => getThoughtFill(state, thoughtId))
 
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
   const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded

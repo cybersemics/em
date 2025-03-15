@@ -9,8 +9,7 @@ import getThoughtById from './getThoughtById'
  * @param thoughtId - The ID of the thought to check.
  * @returns The fill color or undefined if not found.
  */
-const getThoughtFill = (state: State, thoughtId: ThoughtId | null): string | undefined => {
-  if (!thoughtId) return undefined
+const getThoughtFill = (state: State, thoughtId: ThoughtId): string | undefined => {
   const thought = getThoughtById(state, thoughtId)
   if (!thought) return undefined
 
