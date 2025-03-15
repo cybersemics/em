@@ -65,7 +65,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ commandId, size = 'medium' }) => 
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition: 'background-color 0.2s ease-in-out',
           '&:hover': {
-            backgroundColor: '{colors.gray100}',
+            backgroundColor: '{colors.gray50}',
           },
         }),
       )}
