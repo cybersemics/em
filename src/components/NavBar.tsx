@@ -63,16 +63,15 @@ const NavBar = ({ position }: { position: string }) => {
   // Ensures the nav bar is always on top of the command menu and reverts back to original position once the command menu is closed.
   useEffect(() => {
     if (navBarRef.current) {
-      const commandMenu = document.querySelector('[aria-label="command-menu-panel"]');
-      const commandMenuHeight = commandMenu?.clientHeight || 0;
-  
+      const commandMenu = document.querySelector('[aria-label="command-menu-panel"]')
+      const commandMenuHeight = commandMenu?.clientHeight || 0
       if (isOpen) {
-        navBarRef.current.style.bottom = `${commandMenuHeight}px`;
+        navBarRef.current.style.bottom = `${commandMenuHeight}px`
       } else {
-        navBarRef.current.style.removeProperty('bottom');
+        navBarRef.current.style.removeProperty('bottom')
       }
     }
-  }, [isOpen]);
+  }, [isOpen])
 
   return (
     <div
