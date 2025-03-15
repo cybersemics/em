@@ -11,8 +11,7 @@ const PanelCommandGrid = () => {
         gridTemplateColumns: 'repeat(4, 1fr)',
         gap: '1rem',
       })}
-    >
-    </div>
+    ></div>
   )
 }
 
