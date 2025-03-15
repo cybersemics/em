@@ -73,9 +73,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ commandId, size = 'medium' }) => 
       {...fastClick(handleTap)}
     >
       <SVG style={style} animated={isAnimated} animationComplete={() => setIsAnimated(false)} />
-      <div className={css({ fontSize: 'sm', marginTop: '0.5rem', color: '{colors.fg}' })}>
-        {command.label}
-      </div>
+      <div className={css({ fontSize: 'sm', marginTop: '0.5rem', color: '{colors.fg}' })}>{command.label}</div>
     </div>
   )
 }

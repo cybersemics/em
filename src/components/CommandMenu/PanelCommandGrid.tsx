@@ -1,8 +1,8 @@
 import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import PanelCommand from './PanelCommand'
-import getUserToolbar from '../../selectors/getUserToolbar'
 import { TOOLBAR_DEFAULT_COMMANDS } from '../../constants'
+import getUserToolbar from '../../selectors/getUserToolbar'
+import PanelCommand from './PanelCommand'
 
 /**
  * Component that displays the grid for the command menu.
@@ -23,7 +23,7 @@ const PanelCommandGrid = () => {
       })}
     >
       {commandIds.map(commandId => (
-        <PanelCommand key={commandId} commandId={commandId} size="medium" />
+        <PanelCommand key={commandId} commandId={commandId} size='medium' />
       ))}
     </div>
   )
