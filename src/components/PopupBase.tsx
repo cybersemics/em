@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react'
+import React, { PropsWithChildren, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
@@ -52,8 +52,13 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     const dispatch = useDispatch()
     const fontSize = useSelector(state => state.fontSize)
     const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
-    /** Only for if `anchorFromBottom = true`. For calculating position on mobile safari. */
-    const height = (typeof ref === 'object' && ref?.current?.getBoundingClientRect().height) || 50
+    /** Used when `anchorFromBottom = true` for calculating position on mobile safari. */
+    const [height, setHeight] = React.useState(50)
+    useEffect(() => {
+      if (typeof ref === 'object' && ref?.current && anchorFromBottom) {
+        setHeight(ref.current.getBoundingClientRect().height)
+      }
+    }, [ref, anchorFromBottom])
     const positionFixedStyles = usePositionFixed({
       fromBottom: anchorFromBottom,
       offset: anchorOffset,
