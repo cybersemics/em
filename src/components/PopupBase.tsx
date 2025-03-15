@@ -122,7 +122,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         {onClose ? (
           <CloseButton
             circled={circledCloseButton}
-            cssRaw={showXOnHover ? { opacity: 0 } : undefined}
+            transparent={showXOnHover}
             onClose={onClose}
             disableSwipeToDismiss
           />
