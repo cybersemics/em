@@ -31,7 +31,7 @@ export type PopupBaseProps = PropsWithChildren<
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
 >
 
-/** A popup component that can be dismissed. */
+/** A low-level popup component implementing core dismissal and positioning logic. */
 const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
   (
     {

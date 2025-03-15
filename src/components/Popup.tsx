@@ -4,7 +4,7 @@ import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import PopupBase, { PopupBaseProps } from './PopupBase'
 
-/** A popup component that can be dismissed. */
+/** A dismissable popup at the top of the screen, built upon PopupBase. */
 const Popup = React.forwardRef<
   HTMLDivElement,
   {
