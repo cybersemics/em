@@ -9,7 +9,6 @@ import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
-import waitForEditable from '../helpers/waitForEditable'
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
@@ -32,7 +31,6 @@ it('Set the text color of the text and bullet', async () => {
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
@@ -53,7 +51,6 @@ it('Set the background color of the text', async () => {
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
@@ -72,7 +69,6 @@ it('Clear the background color when selecting text color', async () => {
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
   let cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe(null)
@@ -98,7 +94,6 @@ it('Clear the text color when setting background color', async () => {
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
   let cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.color).toBe(null)
@@ -122,7 +117,6 @@ it('Bullet remains the default color when a substring color is set', async () =>
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
 
   await setSelection(0, 6)
@@ -142,7 +136,6 @@ it('Empty <font> element will be removed after setting color to default.', async
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
@@ -160,7 +153,6 @@ it('Empty <span> element will be removed after setting color to default.', async
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
@@ -178,7 +170,6 @@ it('remove all formatting from the thought', async () => {
 
   await paste(importText)
 
-  await waitForEditable('Labrador')
   await clickThought('Labrador')
   // Apply formats like Bold, Italic, Underline, Text color etc.
   await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
@@ -213,7 +204,6 @@ it('Verify superscript colors in different views', async () => {
   await paste(importText1)
 
   // Test 1: Verify that partial text coloring doesn't affect superscript
-  await waitForEditable('hello world')
   await clickThought('hello world')
   await setSelection(6, 11) // Select only "world" in "hello world"
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
@@ -223,7 +213,6 @@ it('Verify superscript colors in different views', async () => {
   expect(supColor1).toBe(null) // Superscript should remain uncolored for partial text coloring
 
   // Test 2: Verify superscript color when entire thought is colored
-  await waitForEditable('k')
   await clickThought('k')
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
