@@ -119,3 +119,28 @@ it('preserve siblings', () => {
       - c
     - d`)
 })
+
+it('swapped parent should take the rank of the child', () => {
+  const text = `
+    - a
+      - b
+        - c
+      - d
+  `
+
+  const steps = [
+    importText({ text }),
+    (state: State) => setCursor({ path: contextToPath(state, ['a', 'd'])! })(state),
+    swapParent,
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - d
+    - b
+      - c
+    - a`)
+
+  expectPathToEqual(stateNew, stateNew.cursor, ['d', 'a'])
+})
