@@ -237,7 +237,6 @@ const ThoughtContainer = ({
     }
 
     // Make sure we're not hovering over a thought that cannot be dropped on
-    // This is what fixes the bug when dragging a thought over its ancestor
     if (isDescendantPath(state.hoveringPath, state.draggingThought)) {
       return false
     }
@@ -261,7 +260,7 @@ const ThoughtContainer = ({
     const isSubthoughtsDropTarget =
       state.hoverZone === DropThoughtZone.SubthoughtsDrop && equalPath(simplePath, state.hoveringPath)
 
-    // ThoughtDrop: Can drop on ThoughtDrop if this thought is a parent of the hovered thought
+    // ThoughtDrop: Can drop on ThoughtDrop if this thought is a parent of the hovered thought and not a descendant of the dragging thought.
     const isThoughtDropTarget =
       state.hoverZone === DropThoughtZone.ThoughtDrop &&
       equalPath(rootedParentOf(state, state.hoveringPath), simplePath) &&
