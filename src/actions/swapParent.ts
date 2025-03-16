@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
 import { getChildrenRanked } from '../selectors/getChildren'
@@ -9,6 +8,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
+import setCursor from './setCursor'
 
 /** Swaps the current cursor's thought with its parent by moving nodes. */
 const swapParent = (state: State) => {
@@ -77,9 +77,8 @@ const swapParent = (state: State) => {
       }, state),
 
     // Keep cursor on the child at its new position, preserving the full path
-    state => ({
-      ...state,
-      cursor: [...grandparent, childId, parentId] as [ThoughtId, ...ThoughtId[]],
+    setCursor({
+      path: appendToPath(grandparent, childId, parentId),
       offset: childThought.value.length,
     }),
   ])(state)
