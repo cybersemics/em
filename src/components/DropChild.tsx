@@ -8,6 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
+import useDragLeave from '../hooks/useDragLeave'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
 import { hasChildren } from '../selectors/getChildren'
@@ -32,8 +33,9 @@ const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) =
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const dropHoverColor = useDropHoverColor(depth || 0)
 
-  const { isHovering, dropTarget } = useDragAndDropSubThought({ path, simplePath })
+  const { isHovering, isDeepHovering, canDropThought, dropTarget } = useDragAndDropSubThought({ path, simplePath })
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
+  useDragLeave({ isDeepHovering, canDropThought })
 
   // Calculate the height for the child thought over cliff
   const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ depth }) : 0

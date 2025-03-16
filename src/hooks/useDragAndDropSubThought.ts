@@ -162,20 +162,21 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
   // is being hovered over current thought irrespective of whether the given item is droppable
   isBeingHoveredOver: monitor.isOver({ shallow: true }),
   isDeepHovering: monitor.isOver(),
+  canDropThought: monitor.canDrop(),
 })
 
 /** A draggable and droppable SubThought hook. */
 const useDragAndDropSubThought = (props: Partial<DroppableSubthoughts>) => {
   const propsTypes = props as DroppableSubthoughts
 
-  const [{ isHovering, isBeingHoveredOver, isDeepHovering }, dropTarget] = useDrop({
+  const [{ isHovering, isBeingHoveredOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
   })
 
-  return { isHovering, isBeingHoveredOver, isDeepHovering, dropTarget }
+  return { isHovering, isBeingHoveredOver, isDeepHovering, canDropThought, dropTarget }
 }
 
 export default useDragAndDropSubThought

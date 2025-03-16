@@ -23,6 +23,7 @@ const useDragLeave = ({ isDeepHovering, canDropThought }: { isDeepHovering: bool
   const hoverZone = useSelector(state => state.hoverZone)
   const prevIsDeepHoveringRef = useRef(isDeepHovering)
   const prevHoverZone = useRef(hoverZone)
+  const prevCanDropRef = useRef(canDropThought)
 
   // Initialize the debounced function if it hasn't been already
   if (!debouncedSetHoveringPath) {
@@ -39,6 +40,16 @@ const useDragLeave = ({ isDeepHovering, canDropThought }: { isDeepHovering: bool
       debouncedSetHoveringPath?.cancel()
       return
     }
+
+    // If canDrop changed from true to false, immediately clear the hovering path
+    if (!canDropThought && prevCanDropRef.current) {
+      dispatch(clearHoveringPath)
+      prevCanDropRef.current = canDropThought
+      return
+    }
+
+    // Update prevCanDropRef
+    prevCanDropRef.current = canDropThought
 
     // If canDrop is false return
     if (!canDropThought) {

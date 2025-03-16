@@ -230,26 +230,45 @@ const ThoughtContainer = ({
 
   /** True if a dragged thought is hovering over a visible child of the current thought (ThoughtDrop or SubthoughtsDrop). This determines if the parent should be highlighted. */
   // TODO: It would be nice if we could reuse canDrop.
-  const isChildHovering = useSelector(
-    state =>
-      !!isVisible &&
-      !!state.hoveringPath &&
-      // Do not highlight parent of dragging thought (i.e. when simply reordering but not moving to a new parent).
-      // Reordering is a less destructive action that does not need to bring attention to the parent.
-      state.draggingThought &&
-      !equalPath(rootedParentOf(state, state.draggingThought), simplePath) &&
-      !isContextViewActive(state, path) &&
-      // SubthoughtsDrop
-      // Can drop on SubthoughtsDrop if this thought is being hovered over.
-      ((state.hoverZone === DropThoughtZone.SubthoughtsDrop && equalPath(simplePath, state.hoveringPath)) ||
-        // ThoughtDrop
-        // Can drop on ThoughtDrop if this thought is a parent of the hovered thought, and not a descendant of the dragging thought.
-        (state.hoverZone === DropThoughtZone.ThoughtDrop &&
-          equalPath(rootedParentOf(state, state.hoveringPath), simplePath) &&
-          !isDescendantPath(simplePath, state.draggingThought))) &&
-      state.alert?.alertType !== AlertType.DeleteDropHint &&
-      state.alert?.alertType !== AlertType.CopyOneDropHint,
-  )
+  const isChildHovering = useSelector(state => {
+    // Early return if essential conditions are not met
+    if (!isVisible || !state.hoveringPath || !state.draggingThought) {
+      return false
+    }
+
+    // Make sure we're not hovering over a thought that cannot be dropped on
+    // This is what fixes the bug when dragging a thought over its ancestor
+    if (isDescendantPath(state.hoveringPath, state.draggingThought)) {
+      return false
+    }
+
+    // Do not highlight parent of dragging thought (i.e. when simply reordering but not moving to a new parent)
+    if (equalPath(rootedParentOf(state, state.draggingThought), simplePath)) {
+      return false
+    }
+
+    // Do not highlight in context view
+    if (isContextViewActive(state, path)) {
+      return false
+    }
+
+    // Do not highlight during delete or copy alerts
+    if (state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint) {
+      return false
+    }
+
+    // SubthoughtsDrop: Can drop on SubthoughtsDrop if this thought is being hovered over
+    const isSubthoughtsDropTarget =
+      state.hoverZone === DropThoughtZone.SubthoughtsDrop && equalPath(simplePath, state.hoveringPath)
+
+    // ThoughtDrop: Can drop on ThoughtDrop if this thought is a parent of the hovered thought
+    const isThoughtDropTarget =
+      state.hoverZone === DropThoughtZone.ThoughtDrop &&
+      equalPath(rootedParentOf(state, state.hoveringPath), simplePath) &&
+      !isDescendantPath(simplePath, state.draggingThought)
+
+    return isSubthoughtsDropTarget || isThoughtDropTarget
+  })
 
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
