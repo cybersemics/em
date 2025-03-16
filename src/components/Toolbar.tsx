@@ -209,6 +209,9 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           css({
             right: 0,
             textAlign: 'right',
+            // Prevent horizontal scroll bar when keyboard is up.
+            // overFlowX: 'hidden' does not work, as it breaks box-shadow on the child when the keyboard is up.
+            // https://github.com/cybersemics/em/pull/2760#issuecomment-2701329862
             maxWidth: '100%',
             userSelect: 'none',
             WebkitTapHighlightColor: 'bgTransparent',

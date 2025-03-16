@@ -24,7 +24,7 @@ const initEventHandler = once(() => {
   }
 })
 
-/** Emulates position fixed on mobile Safari with positon absolute. Returns { position, overflowX, top } in absolute mode. */
+/** Emulates position fixed on mobile Safari with position absolute. Returns { position, top } in absolute mode. */
 const usePositionFixed = (): {
   position: 'fixed' | 'absolute'
   top: string
