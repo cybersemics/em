@@ -1,4 +1,3 @@
-import React from 'react'
 import { css } from '../../styled-system/css'
 import haptics from '../util/haptics'
 
@@ -9,7 +8,7 @@ export interface TabDefinition<T extends string> {
   value: T
   label?: string
   showDot?: boolean
-  children: React.ReactNode
+  content: React.ReactNode
 }
 
 /**
@@ -18,61 +17,58 @@ export interface TabDefinition<T extends string> {
 const Tab = <T extends string>({
   value,
   label,
-  children,
   showDot = false,
   active = false,
   onClick,
 }: {
   onClick?: () => void
   active?: boolean
-} & TabDefinition<T>) => {
+} & Omit<TabDefinition<T>, 'content'>) => {
   return (
-    <>
-      <div
+    <div
+      className={css({
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '16px 20px',
+        gap: '8px',
+        height: '100%',
+        cursor: 'pointer',
+        flex: 'none',
+        whiteSpace: 'nowrap',
+        '&:hover span': {
+          filter: 'brightness(80%)',
+        },
+        ...(active && {
+          backgroundColor: 'fgOverlay10',
+          borderBottom: '2px solid {colors.link}',
+        }),
+      })}
+      onClick={onClick}
+    >
+      <span
         className={css({
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '16px 20px',
-          gap: '8px',
-          height: '100%',
-          cursor: 'pointer',
-          flex: 'none',
-          whiteSpace: 'nowrap',
-          '&:hover span': {
-            filter: 'brightness(80%)',
-          },
-          ...(active && {
-            backgroundColor: 'fgOverlay10',
-            borderBottom: '2px solid {colors.link}',
-          }),
+          fontSize: '1.14em',
+          _mobile: { fontSize: '1em' },
+          textAlign: 'center',
+          color: active ? 'fg' : 'fgOverlay70',
+          WebkitTextStrokeWidth: active ? '0.05em' : 0,
         })}
-        onClick={onClick}
       >
-        <span
+        {label || value}
+      </span>
+      {showDot && (
+        <div
           className={css({
-            fontSize: '1.14em',
-            _mobile: { fontSize: '1em' },
-            textAlign: 'center',
-            color: active ? 'fg' : 'fgOverlay70',
-            WebkitTextStrokeWidth: active ? '0.05em' : 0,
+            width: '5px',
+            height: '5px',
+            borderRadius: 999,
+            backgroundColor: 'link',
           })}
-        >
-          {label || value}
-        </span>
-        {showDot && (
-          <div
-            className={css({
-              width: '5px',
-              height: '5px',
-              borderRadius: 999,
-              backgroundColor: 'link',
-            })}
-          />
-        )}
-      </div>
-    </>
+        />
+      )}
+    </div>
   )
 }
 
@@ -116,7 +112,7 @@ const Tabs = <T extends string>({
             marginBottom: '-2px',
           })}
         >
-          {tabs.map(({ value, label, showDot, children }) => (
+          {tabs.map(({ value, label, showDot }) => (
             <Tab
               key={value}
               value={value}
@@ -127,13 +123,11 @@ const Tabs = <T extends string>({
                 onTabChange(value)
                 haptics.light()
               }}
-            >
-              {children}
-            </Tab>
+            />
           ))}
         </div>
       </div>
-      <div>{tabs.find(tab => tab.value === currentTab)?.children}</div>
+      <div>{tabs.find(tab => tab.value === currentTab)?.content}</div>
     </div>
   )
 }

@@ -333,23 +333,23 @@ const ModalHelp = () => {
       {
         value: Section.CommandLibrary,
         label: 'Command Library',
-        children: <CommandCenter />,
+        content: <CommandCenter />,
       },
       {
         value: Section.Tutorials,
         label: 'Tutorials',
         showDot,
-        children: <Tutorials />,
+        content: <Tutorials />,
       },
       {
         value: Section.Metaprogramming,
         label: 'Meta',
-        children: <Metaprogramming />,
+        content: <Metaprogramming />,
       },
       {
         value: Section.About,
         label: 'About',
-        children: <About />,
+        content: <About />,
       },
     ],
     [showDot],
