@@ -1,26 +1,24 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
-import { token } from '../../../styled-system/tokens'
-import CommandId from '../../@types/CommandId'
 import Icon from '../../@types/IconType'
-import { commandById, formatKeyboardShortcut } from '../../commands'
+import { formatKeyboardShortcut } from '../../commands'
 import store from '../../stores/app'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import fastClick from '../../util/fastClick'
+import Command from '../../@types/Command'
 
 interface PanelCommandProps {
-  commandId: CommandId
+  command: Command
   size?: 'small' | 'medium' | 'large' | 'xlarge'
 }
 
 /** A single button in the Panel Command Grid. */
-const PanelCommand: FC<PanelCommandProps> = ({ commandId, size = 'medium' }) => {
+const PanelCommand: FC<PanelCommandProps> = ({ command, size = 'medium' }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
-  const command = commandById(commandId)
   if (!command) {
-    console.error('Missing command: ' + commandId)
+    console.error('Missing command')
     return null
   }
 
@@ -44,7 +42,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ commandId, size = 'medium' }) => 
 
   const style = useMemo(
     () => ({
-      fill: isButtonExecutable && isButtonActive ? token('colors.fg') : token('colors.gray50'),
+      fill: isButtonExecutable && isButtonActive ? 'colors.fg' : 'colors.gray50',
       width: size === 'small' ? 24 : size === 'medium' ? 32 : 40,
       height: size === 'small' ? 24 : size === 'medium' ? 32 : 40,
     }),
@@ -65,7 +63,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ commandId, size = 'medium' }) => 
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition: 'background-color 0.2s ease-in-out',
           '&:hover': {
-            backgroundColor: '{colors.gray50}',
+            backgroundColor: '{colors.darkgray}',
           },
         }),
       )}
