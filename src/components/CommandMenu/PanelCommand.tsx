@@ -1,12 +1,12 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
+import Command from '../../@types/Command'
 import Icon from '../../@types/IconType'
 import { formatKeyboardShortcut } from '../../commands'
 import store from '../../stores/app'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import fastClick from '../../util/fastClick'
-import Command from '../../@types/Command'
 
 interface PanelCommandProps {
   command: Command

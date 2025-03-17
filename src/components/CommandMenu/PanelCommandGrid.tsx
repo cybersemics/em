@@ -1,12 +1,11 @@
 import { css } from '../../../styled-system/css'
-import PanelCommand from './PanelCommand'
 import selectAllCommand from '../../commands/selectAll'
+import PanelCommand from './PanelCommand'
 
 /**
  * Component that displays the grid for the command menu.
  */
 const PanelCommandGrid = () => {
-
   return (
     <div
       className={css({
