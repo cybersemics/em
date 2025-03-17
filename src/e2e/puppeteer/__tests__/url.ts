@@ -6,12 +6,17 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
+import { page } from '../setup'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+
+/** Waits one animation frame for the next render. */
+// Note: requestAnimationFrame may be irrelevant due to page.evaluate latency.
+const waitForRender = () => page.evaluate(() => new Promise(window.requestAnimationFrame))
 
 /* From jest-image-snapshot README:
     
@@ -60,6 +65,10 @@ describe('multiline', () => {
   `)
 
     await press('ArrowUp')
+
+    // prevent intermittent test failures by waiting for next render
+    // e.g. https://github.com/cybersemics/em/actions/runs/13817648331/job/38654935147?pr=2800
+    await waitForRender()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot({
