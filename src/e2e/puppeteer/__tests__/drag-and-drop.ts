@@ -3,7 +3,6 @@ import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import hideHUD from '../helpers/hideHUD'
-import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
@@ -33,11 +32,11 @@ describe('drag', () => {
 
   it('Alert and QuickDropPanel', async () => {
     await paste(`
-        - a
-        - b
-        - c
-        - d
-      `)
+      - a
+      - b
+      - c
+      - d
+    `)
 
     await dragAndDropThought('a', null, { position: 'none', showAlert: true, showQuickDropPanel: true })
 
@@ -47,11 +46,11 @@ describe('drag', () => {
 
   it('DragAndDropThought', async () => {
     await paste(`
-        - a
-        - b
-        - c
-        - d
-      `)
+      - a
+      - b
+      - c
+      - d
+    `)
 
     await dragAndDropThought('a', 'd', { position: 'after' })
 
@@ -61,11 +60,11 @@ describe('drag', () => {
 
   it('DropChild', async () => {
     await paste(`
-        - a
-        - b
-        - c
-        - d
-      `)
+      - a
+      - b
+      - c
+      - d
+    `)
 
     await dragAndDropThought('a', 'b', { position: 'child' })
 
@@ -75,11 +74,11 @@ describe('drag', () => {
 
   it('DropEnd', async () => {
     await paste(`
-        - x
-        - a
-          - b
-          - c
-      `)
+      - x
+      - a
+        - b
+        - c
+    `)
 
     await clickThought('a')
 
@@ -91,13 +90,13 @@ describe('drag', () => {
 
   it('DropUncle', async () => {
     await paste(`
-        - a
-          - b
-            - c
-              - x
-            - d
-          - e
-      `)
+      - a
+        - b
+          - c
+            - x
+          - d
+        - e
+    `)
 
     await clickThought('b')
     await clickThought('c')
@@ -113,17 +112,17 @@ describe('drag', () => {
 
   it('drop hover after table', async () => {
     await paste(`
-        - x
-        - a
-          - =view
-            - Table
-          - =pin
-            - true
-          - b
-            - c
-          - d
-            - e
-      `)
+      - x
+      - a
+        - =view
+          - Table
+        - =pin
+          - true
+        - b
+          - c
+        - d
+          - e
+    `)
 
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'after', dropUncle: true })
@@ -134,17 +133,17 @@ describe('drag', () => {
 
   it('drop hover after column two thought', async () => {
     await paste(`
-        - x
-        - a
-          - =view
-            - Table
-          - =pin
-            - true
-          - b
-            - c
-          - d
-            - e
-      `)
+      - x
+      - a
+        - =view
+          - Table
+        - =pin
+          - true
+        - b
+          - c
+        - d
+          - e
+    `)
 
     await clickThought('x')
     await dragAndDropThought('x', 'c', { position: 'after' })
@@ -155,17 +154,17 @@ describe('drag', () => {
 
   it('drop hover after table column one', async () => {
     await paste(`
-        - x
-        - a
-          - =view
-            - Table
-          - =pin
-            - true
-          - b
-            - c
-          - d
-            - e
-      `)
+      - x
+      - a
+        - =view
+          - Table
+        - =pin
+          - true
+        - b
+          - c
+        - d
+          - e
+    `)
 
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'after' })
@@ -176,17 +175,17 @@ describe('drag', () => {
 
   it('drop hover after first thought of column one', async () => {
     await paste(`
-        - x
-        - a
-          - =view
-            - Table
-          - =pin
-            - true
-          - b
-            - c
-          - d
-            - e
-      `)
+      - x
+      - a
+        - =view
+          - Table
+        - =pin
+          - true
+        - b
+          - c
+        - d
+          - e
+    `)
 
     await simulateDragAndDrop({ drop: true })
 
@@ -199,14 +198,14 @@ describe('drag', () => {
 
   it('drop target last child in cliff', async () => {
     await paste(`
-        - a
-          - b
-            - c
-              - d
-                - e
-                - f
-        - x
-      `)
+      - a
+        - b
+          - c
+            - d
+              - e
+              - f
+      - x
+    `)
 
     await simulateDragAndDrop({ drop: true })
 
@@ -220,10 +219,10 @@ describe('drag', () => {
 
   it('drop target last visible child', async () => {
     await paste(`
-        - a
-        - b
-        - c
-      `)
+      - a
+      - b
+      - c
+    `)
 
     await simulateDragAndDrop({ drop: true })
 
@@ -234,9 +233,10 @@ describe('drag', () => {
   })
 
   it('should show alert and quick drop panels when long pressing after drag operation', async () => {
-    // Create two thoughts for testing
-    await newThought('a')
-    await newThought('b')
+    await paste(`
+      - a
+      - b
+    `)
 
     // First, drag thought 'a' after thought 'b' (resulting in b followed by a)
     await dragAndDropThought('a', 'b', {
@@ -267,11 +267,11 @@ describe('drop', () => {
     await simulateDragAndDrop({ drag: true, drop: true })
 
     await paste(`
-        - a
-        - b
-        - c
-        - d
-      `)
+      - a
+      - b
+      - c
+      - d
+    `)
 
     await dragAndDropThought('a', 'd', { position: 'after', mouseUp: true })
 
