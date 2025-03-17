@@ -1,3 +1,4 @@
+import { describe } from 'vitest'
 import sleep from '../../../util/sleep'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
@@ -12,8 +13,9 @@ const countNodes = () =>
     return document.querySelectorAll('[aria-label="tree-node"]').length
   })
 
-it('virtualize thoughts that are not in the viewport', async () => {
-  const text = `
+describe('virtualizaton', { retry: 3 }, () => {
+  it('virtualize thoughts that are not in the viewport', async () => {
+    const text = `
 - a1
 - a2
 - a3
@@ -65,41 +67,47 @@ it('virtualize thoughts that are not in the viewport', async () => {
 - a49
 - a50`
 
-  // TODO: Why doesn't setViewport work?
-  // Possibly need to pass to browserless?
-  // See: https://github.com/browserless/browserless/discussions/3910
-  // Note: If you console.log from a component, thn puppeteer viewport will render at the full size of the document and thus cause a false positive.
-  // await page.setViewport({
-  //   width: 400,
-  //   height: 600,
-  // })
+    // TODO: Why doesn't setViewport work?
+    // Possibly need to pass to browserless?
+    // See: https://github.com/browserless/browserless/discussions/3910
+    // Note: If you console.log from a component, thn puppeteer viewport will render at the full size of the document and thus cause a false positive.
+    // await page.setViewport({
+    //   width: 400,
+    //   height: 600,
+    // })
 
-  await paste(text)
+    await paste(text)
 
-  // 1. Thoughts below the bottom of the screen should be virtualizated when the cursor is null.
-  await press('Escape')
-  const numNodesBefore = await countNodes()
-  expect(numNodesBefore).toBeGreaterThan(0)
-  expect(numNodesBefore).toBeLessThan(50)
+    // 1. Thoughts below the bottom of the screen should be virtualizated when the cursor is null.
+    await press('Escape')
 
-  // 2. Thoughts below the bottom of the screen should be virtualized when the cursor is on a root thought.
-  await clickThought('a1')
+    // TODO: Identify and wait for specific condition instead of fixed time.
+    // Fails intermittently up to at least 100ms.
+    await sleep(200)
 
-  // TODO: Identify and wait for specific condition instead of fixed time.
-  // Test intermittently fails at least up to 100ms.
-  sleep(200)
+    const numNodesBefore = await countNodes()
+    expect(numNodesBefore).toBeGreaterThan(0)
+    expect(numNodesBefore).toBeLessThan(50)
 
-  const numNodesAfter = await countNodes()
-  expect(numNodesAfter).toBeGreaterThan(0)
-  expect(numNodesAfter).toBeLessThan(50)
+    // 2. Thoughts below the bottom of the screen should be virtualized when the cursor is on a root thought.
+    await clickThought('a1')
 
-  // NOT IMPLEMENTED
+    // TODO: Identify and wait for specific condition instead of fixed time.
+    // Fails intermittently up to at least 100ms.
+    await sleep(200)
 
-  // 3. Thoughts above the top of the screen should be virtualized when the cursor is on the last thought in a long list.
-  // scroll to the bottom of the document and click the last thought
-  // await page.evaluate(() => window.scrollTo(0, 999999))
-  // await clickThought('a50')
-  // nodes = await countNodes()
-  // expect(nodes).toBeGreaterThan(0)
-  // expect(nodes).toBeLessThan(50)
+    const numNodesAfter = await countNodes()
+    expect(numNodesAfter).toBeGreaterThan(0)
+    expect(numNodesAfter).toBeLessThan(50)
+
+    // NOT IMPLEMENTED
+
+    // 3. Thoughts above the top of the screen should be virtualized when the cursor is on the last thought in a long list.
+    // scroll to the bottom of the document and click the last thought
+    // await page.evaluate(() => window.scrollTo(0, 999999))
+    // await clickThought('a50')
+    // nodes = await countNodes()
+    // expect(nodes).toBeGreaterThan(0)
+    // expect(nodes).toBeLessThan(50)
+  })
 })
