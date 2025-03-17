@@ -3,6 +3,7 @@ import { NativeTypes } from 'react-dnd-html5-backend'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
+import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -32,6 +33,8 @@ import isDivider from '../util/isDivider'
 import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
+import useDragLeave from './useDragLeave'
+import useHoveringPath from './useHoveringPath'
 
 interface DroppableSubthoughts {
   path: Path
@@ -176,7 +179,13 @@ const useDragAndDropSubThought = (props: Partial<DroppableSubthoughts>) => {
     collect: dropCollect,
   })
 
-  return { isHovering, isBeingHoveredOver, isDeepHovering, canDropThought, dropTarget }
+  // Encapsulate the useHoveringPath and useDragLeave hooks
+  if (props.path) {
+    useHoveringPath(props.path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
+    useDragLeave({ isDeepHovering, canDropThought })
+  }
+
+  return { isHovering, isBeingHoveredOver, isDeepHovering, dropTarget }
 }
 
 export default useDragAndDropSubThought

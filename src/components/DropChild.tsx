@@ -2,15 +2,12 @@ import React from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
-import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
-import useDragLeave from '../hooks/useDragLeave'
 import useDropHoverColor from '../hooks/useDropHoverColor'
-import useHoveringPath from '../hooks/useHoveringPath'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
@@ -33,9 +30,7 @@ const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) =
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const dropHoverColor = useDropHoverColor(depth || 0)
 
-  const { isHovering, isDeepHovering, canDropThought, dropTarget } = useDragAndDropSubThought({ path, simplePath })
-  useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
-  useDragLeave({ isDeepHovering, canDropThought })
+  const { isHovering, dropTarget } = useDragAndDropSubThought({ path, simplePath })
 
   // Calculate the height for the child thought over cliff
   const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ depth }) : 0
