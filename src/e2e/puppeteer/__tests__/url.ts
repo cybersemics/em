@@ -6,17 +6,13 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
-import { page } from '../setup'
+import waitForRender from '../helpers/waitForRender'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
-
-/** Waits one animation frame for the next render. */
-// Note: requestAnimationFrame may be irrelevant due to page.evaluate latency.
-const waitForRender = () => page.evaluate(() => new Promise(window.requestAnimationFrame))
 
 /* From jest-image-snapshot README:
     
