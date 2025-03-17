@@ -64,7 +64,7 @@ const NavBar = ({ position }: { position: string }) => {
   useEffect(() => {
     if (navBarRef.current) {
       const commandMenu = document.querySelector('[aria-label="command-menu-panel"]')
-      const commandMenuHeight = commandMenu?.clientHeight || 0
+      const commandMenuHeight = (commandMenu?.clientHeight || 0) + 10
       if (isOpen) {
         navBarRef.current.style.bottom = `${commandMenuHeight}px`
       } else {

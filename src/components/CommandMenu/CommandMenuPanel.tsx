@@ -31,16 +31,24 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
             bottom: '0',
             left: '0',
             right: '0',
-            zIndex: 'stack',
+            zIndex: 'navbar',
             overflow: 'hidden',
             transition: 'transform 0.5s ease',
             transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
           })}
         >
-          <div className={css({ display: 'flex', justifyContent: 'flex-end' })}>
-            <button onClick={() => dispatch(closeCommandMenuActionCreator())}>x</button>
-          </div>
           <PanelCommandGrid />
+          <div className={css({ 
+            display: 'flex', 
+            justifyContent: 'flex-end',
+            marginBottom: '10px',
+           })}
+           >
+            <button        
+              onClick={() => dispatch(closeCommandMenuActionCreator())}>
+              x
+            </button>
+          </div>
         </div>
       )}
     </>
