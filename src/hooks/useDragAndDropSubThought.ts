@@ -38,7 +38,7 @@ import useHoveringPath from './useHoveringPath'
 
 interface DroppableSubthoughts {
   path: Path
-  simplePath: SimplePath
+  simplePath?: SimplePath
   showContexts?: boolean
 }
 
@@ -83,7 +83,7 @@ const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor): boole
   return (!isHidden || isClosestHiddenParent) && !isDescendant && !divider && !showContexts
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+/** Moves a thought on drop, or imports a file on drop. */
 const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
@@ -146,7 +146,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
       const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
       const alertTo = parentIdTo === HOME_TOKEN ? 'home' : '"' + ellipsize(thoughtTo.value) + '"'
       const inContext = props.showContexts
-        ? ` in the context of ${ellipsize(headValue(state, props.simplePath) ?? 'MISSING_CONTEXT')}`
+        ? ` in the context of ${ellipsize(headValue(state, props.simplePath ?? props.path) ?? 'MISSING_CONTEXT')}`
         : ''
 
       store.dispatch(
@@ -169,21 +169,16 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
 })
 
 /** A draggable and droppable SubThought hook. */
-const useDragAndDropSubThought = (props: Partial<DroppableSubthoughts>) => {
-  const propsTypes = props as DroppableSubthoughts
-
+const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
   const [{ isHovering, isBeingHoveredOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
-    canDrop: (item, monitor) => canDrop(propsTypes, monitor),
-    drop: (item, monitor) => drop(propsTypes, monitor),
+    canDrop: (item, monitor) => canDrop(props, monitor),
+    drop: (item, monitor) => drop(props, monitor),
     collect: dropCollect,
   })
 
-  // Encapsulate the useHoveringPath and useDragLeave hooks
-  if (props.path) {
-    useHoveringPath(props.path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
-    useDragLeave({ isDeepHovering, canDropThought })
-  }
+  useHoveringPath(props.path, isHovering, DropThoughtZone.SubthoughtsDrop)
+  useDragLeave({ isDeepHovering, canDropThought })
 
   return { isHovering, isBeingHoveredOver, isDeepHovering, dropTarget }
 }
