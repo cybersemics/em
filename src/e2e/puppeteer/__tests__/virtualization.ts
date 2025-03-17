@@ -85,8 +85,9 @@ it('virtualize thoughts that are not in the viewport', async () => {
   // 2. Thoughts below the bottom of the screen should be virtualized when the cursor is on a root thought.
   await clickThought('a1')
 
-  // TODO: Test intermittently fails. Identify and wait for specific condition instead of fixed time.
-  sleep(100)
+  // TODO: Identify and wait for specific condition instead of fixed time.
+  // Test intermittently fails at least up to 100ms.
+  sleep(200)
 
   const numNodesAfter = await countNodes()
   expect(numNodesAfter).toBeGreaterThan(0)
