@@ -51,6 +51,11 @@ There are two ways to run bash on Windows:
 
 **em** is a highly optimized PWA that runs on native platforms using [Capacitor](https://capacitorjs.com/).
 
+### Prerequisites
+
+- For iOS development, ensure Xcode and CocoaPods are installed.
+- For Android development, ensure Android Studio is installed.
+
 ### Development Builds
 
 There are two types of development builds available.
@@ -99,6 +104,10 @@ You can copy or sync in production mode with these commands:
 - `cap:copy:prod`
 - `cap:sync:prod`
 ```
+
+#### Other Scripts
+- `cap:copy` – Copies the web app build and Capacitor configuration file into the native platform project. Run this each time you make changes that are not picked up by the live-reload server, and when you change a configuration value in capacitor.config.ts.
+- `cap:sync` – Runs `cap:copy` and updates native Capacitor plugins.
 
 ## Deployment
 
