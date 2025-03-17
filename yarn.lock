@@ -8309,7 +8309,6 @@ __metadata:
     react-native-web: "npm:^0.19.13"
     react-redux: "npm:^9.1.2"
     react-signature-pad-wrapper: "npm:^4.1.0"
-    react-split-pane: "npm:^0.1.92"
     react-transition-group: "npm:^4.4.5"
     redux: "npm:^5.0.1"
     redux-devtools-extension: "npm:^2.13.9"
@@ -15441,7 +15440,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.5.4, prop-types@npm:^15.6.2, prop-types@npm:^15.7.1, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:^15.6.2, prop-types@npm:^15.7.1, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -15816,13 +15815,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-lifecycles-compat@npm:^3.0.4":
-  version: 3.0.4
-  resolution: "react-lifecycles-compat@npm:3.0.4"
-  checksum: 10c0/1d0df3c85af79df720524780f00c064d53a9dd1899d785eddb7264b378026979acbddb58a4b7e06e7d0d12aa1494fd5754562ee55d32907b15601068dae82c27
-  languageName: node
-  linkType: hard
-
 "react-native-gesture-handler@npm:^2.21.1":
   version: 2.22.1
   resolution: "react-native-gesture-handler@npm:2.22.1"
@@ -15947,29 +15939,6 @@ __metadata:
     react: 17 - 19
     react-dom: 17 - 19
   checksum: 10c0/0f8beb9dd14b31a8c915e78ff2983c13adbff5f5949916a9c33f76bcfa8e8ccd5a0cd598ca733513e239637dc17d0243070cb426f082fc6e8d4b5624c35eb475
-  languageName: node
-  linkType: hard
-
-"react-split-pane@npm:^0.1.92":
-  version: 0.1.92
-  resolution: "react-split-pane@npm:0.1.92"
-  dependencies:
-    prop-types: "npm:^15.7.2"
-    react-lifecycles-compat: "npm:^3.0.4"
-    react-style-proptype: "npm:^3.2.2"
-  peerDependencies:
-    react: ^16.0.0-0
-    react-dom: ^16.0.0-0
-  checksum: 10c0/14fdf1e247905abf1e3619042a29ee03ac62f80436bb0c672b04be5d4f0b7c1aeb6d992d5631bcc5b43d3fb766ee4387dc10a83251240a5de6809072a07dfef6
-  languageName: node
-  linkType: hard
-
-"react-style-proptype@npm:^3.2.2":
-  version: 3.2.2
-  resolution: "react-style-proptype@npm:3.2.2"
-  dependencies:
-    prop-types: "npm:^15.5.4"
-  checksum: 10c0/5996267c2b65b3873593e6bc6bb0ac0fddc93c15bddf7a23370ecdabf3e6655367895b8a6b8f0871bef7821b68b21042d150aabd7c16519c3d47e27819d9351f
   languageName: node
   linkType: hard
 

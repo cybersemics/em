@@ -126,7 +126,6 @@
     "react-native-web": "^0.19.13",
     "react-redux": "^9.1.2",
     "react-signature-pad-wrapper": "^4.1.0",
-    "react-split-pane": "^0.1.92",
     "react-transition-group": "^4.4.5",
     "redux": "^5.0.1",
     "redux-devtools-extension": "^2.13.9",
