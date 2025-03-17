@@ -42,45 +42,50 @@ interface DroppableSubthoughts {
   showContexts?: boolean
 }
 
-/**
- * Returns true if the path is expanded.
- */
+/** Returns true if the path is expanded. */
 const isPathExpanded = (state: State, path: Path) => !!state.expanded[hashPath(path)]
 
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 // Fires much less frequently than DragAndDropThought:canDrop
-const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor): boolean => {
+const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTargetMonitor): boolean => {
   const state = store.getState()
-
-  // dragInProgress can be set to false to abort the drag (e.g. by shaking)
-  if (!state.dragInProgress) return false
 
   const item = monitor.getItem() as DragThoughtOrFiles
   const thoughtsFrom = (item as DragThoughtItem).path
-  const thoughtsTo = props.path
 
   /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
   const isExpandedTop = () =>
-    props.path &&
     state.expandHoverUpPath &&
-    props.path.length >= state.expandHoverUpPath.length &&
-    isDescendantPath(props.path, state.expandHoverUpPath)
+    thoughtsTo.length >= state.expandHoverUpPath.length &&
+    isDescendantPath(thoughtsTo, state.expandHoverUpPath)
 
-  // first visible thought not hidden by autofocus
-  const firstVisible =
-    state.expandHoverUpPath || (state.cursor && (state.cursor.slice(0, -visibleDistanceAboveCursor(state)) as Path))
+  /** Returns true if the thought is the closest hidden parent of the thought. */
+  const isClosestHiddenParent = () => {
+    // first visible thought not hidden by autofocus
+    const firstVisible =
+      state.expandHoverUpPath || (state.cursor && (state.cursor.slice(0, -visibleDistanceAboveCursor(state)) as Path))
+    return !!firstVisible && equalPath(rootedParentOf(state, firstVisible), thoughtsTo)
+  }
 
-  const isClosestHiddenParent = !!firstVisible && equalPath(rootedParentOf(state, firstVisible), thoughtsTo)
-  // Note: The distance calculation for SubthoughtsDrop is 1 less than the ThoughtDrop (in DragAndDropThought.canDrop)
-  const distance = state.cursor ? state.cursor.length - thoughtsTo.length - 1 : 0
-  const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
-  const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom)
-  const divider = isDivider(getThoughtById(state, head(thoughtsTo))?.value)
+  /** Returns true if the thought is hidden by autofocus. */
+  const isHidden = () => {
+    // Note: The distance calculation for SubthoughtsDrop is 1 less than the ThoughtDrop (in DragAndDropThought.canDrop)
+    const distance = state.cursor ? state.cursor.length - thoughtsTo.length - 1 : 0
+    return distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
+  }
 
-  const showContexts = thoughtsTo && isContextViewActive(state, thoughtsTo)
-
-  // do not drop on descendants or thoughts hidden by autofocus
-  return (!isHidden || isClosestHiddenParent) && !isDescendant && !divider && !showContexts
+  return (
+    // dragInProgress can be set to false to abort the drag (e.g. by shaking)
+    state.dragInProgress &&
+    // do not drop on thoughts hidden by autofocus
+    (!isHidden() || isClosestHiddenParent()) &&
+    // do not drop on descendants
+    !isDescendantPath(thoughtsTo, thoughtsFrom) &&
+    // do not drop on dividers
+    !isDivider(getThoughtById(state, head(thoughtsTo))?.value) &&
+    // do not drop on context view
+    !isContextViewActive(state, thoughtsTo)
+  )
 }
 
 /** Moves a thought on drop, or imports a file on drop. */
