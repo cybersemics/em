@@ -3,6 +3,7 @@ import { NativeTypes } from 'react-dnd-html5-backend'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
+import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -32,10 +33,12 @@ import isDivider from '../util/isDivider'
 import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
+import useDragLeave from './useDragLeave'
+import useHoveringPath from './useHoveringPath'
 
 interface DroppableSubthoughts {
   path: Path
-  simplePath: SimplePath
+  simplePath?: SimplePath
   showContexts?: boolean
 }
 
@@ -80,7 +83,7 @@ const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor): boole
   return (!isHidden || isClosestHiddenParent) && !isDescendant && !divider && !showContexts
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+/** Moves a thought on drop, or imports a file on drop. */
 const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
@@ -143,7 +146,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
       const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
       const alertTo = parentIdTo === HOME_TOKEN ? 'home' : '"' + ellipsize(thoughtTo.value) + '"'
       const inContext = props.showContexts
-        ? ` in the context of ${ellipsize(headValue(state, props.simplePath) ?? 'MISSING_CONTEXT')}`
+        ? ` in the context of ${ellipsize(headValue(state, props.simplePath ?? props.path) ?? 'MISSING_CONTEXT')}`
         : ''
 
       store.dispatch(
@@ -162,18 +165,20 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
   // is being hovered over current thought irrespective of whether the given item is droppable
   isBeingHoveredOver: monitor.isOver({ shallow: true }),
   isDeepHovering: monitor.isOver(),
+  canDropThought: monitor.canDrop(),
 })
 
 /** A draggable and droppable SubThought hook. */
-const useDragAndDropSubThought = (props: Partial<DroppableSubthoughts>) => {
-  const propsTypes = props as DroppableSubthoughts
-
-  const [{ isHovering, isBeingHoveredOver, isDeepHovering }, dropTarget] = useDrop({
+const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
+  const [{ isHovering, isBeingHoveredOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
-    canDrop: (item, monitor) => canDrop(propsTypes, monitor),
-    drop: (item, monitor) => drop(propsTypes, monitor),
+    canDrop: (item, monitor) => canDrop(props, monitor),
+    drop: (item, monitor) => drop(props, monitor),
     collect: dropCollect,
   })
+
+  useHoveringPath(props.path, isHovering, DropThoughtZone.SubthoughtsDrop)
+  useDragLeave({ isDeepHovering, canDropThought })
 
   return { isHovering, isBeingHoveredOver, isDeepHovering, dropTarget }
 }
