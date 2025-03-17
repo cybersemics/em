@@ -31,7 +31,7 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
             bottom: '0',
             left: '0',
             right: '0',
-            zIndex: 'navbar',
+            zIndex: 'stack',
             overflow: 'hidden',
             transition: 'transform 0.5s ease',
             transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
