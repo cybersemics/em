@@ -49,19 +49,56 @@ There are two ways to run bash on Windows:
 
 ## Native App Development
 
-**em** is a highly optimized PWA that runs on native platforms using [Capacitor](https://capacitorjs.com/). To get started, run `yarn cap:ios` or `yarn cap:android`.
+**em** is a highly optimized PWA that runs on native platforms using [Capacitor](https://capacitorjs.com/).
 
-Scripts:
+### Development Builds
 
-- `cap:ios` - Generates iOS project files with capacitor and opens the project in XCode. Requires XCode and CocoaPods to be installed. Choose your device target and hit Play in XCode to build and run the app.
-- `cap:android` - Generates Android project files with capacitor and opens the project in Android Studio.
-- `cap:copy` - Copies the web app build and capacitor configuration file into the native platform project. Run this each time you make changes that are not picked up by the live-reload server, and when you change a configuration value in capacitor.config.ts.
-- `cap:sync` - Runs cap:copy and updates native capacitor plugins.
+There are two types of development builds available.
 
-The above scripts run in development mode by default. You can copy or sync in production mode with these:
+#### Live Server Development Build (default)
 
+This build runs off the local Vite development server, ideal for rapid prototyping, debugging, and hot-reloading your changes.
+
+1. **Set the development server URL**  
+   Update your local development environment file (`.env.development.local`) by setting the following variable to the URL of your Vite dev server.
+
+   ```sh
+   CAPACITOR_SERVER_URL=http://192.168.x.x:3000
+   ```
+
+   **Note**: Use your machine's local network IP (e.g., http://192.168.x.x:3000) rather than localhost (http://localhost:3000).
+
+2. **Start the Vite development server**
+   ```sh
+   yarn start
+   ```
+
+3. **Synchronise the native project and open it in the IDE**
+   ```sh
+   yarn cap:ios       # runs cap:sync and opens iOS project in Xcode
+   yarn cap:android   # runs cap:sync and opens Android project in Android Studio
+   ```
+
+   **Note**: Make sure to run these commands again any time you change `CAPACITOR_SERVER_URL`.
+
+#### Static Development Builds
+
+Static development builds use built web code, and do not require a running Vite dev server. These are useful when you want a stable, server-independent build for testing.
+
+```sh
+yarn build              # build web code
+yarn cap:ios:static     # dev build for iOS using built web code
+yarn cap:android:static # dev build for Android using built web code
+```
+
+#### Production Builds
+
+You can copy or sync in production mode with these commands:
+
+```sh
 - `cap:copy:prod`
 - `cap:sync:prod`
+```
 
 ## Deployment
 
