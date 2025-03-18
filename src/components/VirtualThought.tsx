@@ -17,6 +17,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import editingValueStore from '../stores/editingValue'
 import viewportStore from '../stores/viewport'
 import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import DropChild from './DropChild'
@@ -219,6 +220,8 @@ const VirtualThought = ({
   const translateXRef = useRef<number>(0)
   const duration = 400
 
+  const bulletTestId = `bullet-${hashPath(simplePath)}`
+
   /** Calculates the horizontal translation needed to align the text to the right within its parent. */
   const calculateTranslateX = (): number => {
     const element = ref.current
@@ -253,20 +256,27 @@ const VirtualThought = ({
       timeout={duration}
       nodeRef={ref}
       onEnter={() => {
-        // 1. Calculate how far we need to shift left (a positive offset).
+        const bulletElement = document.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement
         const offset = calculateTranslateX()
         translateXRef.current = offset
 
-        // 2. Immediately place the text at -offset, but right‐aligned.
+        if (bulletElement) {
+          bulletElement.style.transform = `translateX(${offset - 7}px)`
+          bulletElement.style.transition = 'none'
+        }
+
         updateTransitionStyle({
           transform: `translateX(-${offset}px)`,
           textAlign: 'right',
           transition: 'none',
         })
 
-        // 3. Transition to 0 so it slides in from the left.
-        //    setTimeout ensures the browser has time to apply the first style.
         setTimeout(() => {
+          if (bulletElement) {
+            bulletElement.style.transform = 'translateX(0)'
+            bulletElement.style.transition = `transform ${duration}ms ease-out`
+          }
+
           updateTransitionStyle({
             transform: 'translateX(0)',
             textAlign: 'right',
@@ -275,16 +285,27 @@ const VirtualThought = ({
         }, 10)
       }}
       onEntered={() => {
-        // Once the entry animation is complete, remove the transform.
         updateTransitionStyle({
           transform: undefined,
           transition: undefined,
           textAlign: 'right',
         })
+
+        const bulletElement = document.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement
+        if (bulletElement) {
+          bulletElement.style.transform = 'none'
+          bulletElement.style.transition = 'none'
+        }
       }}
       onExit={() => {
-        // Reverse the animation: move from offset → 0.
         const offset = translateXRef.current || 0
+
+        const bulletElement = document.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement
+        if (bulletElement) {
+          bulletElement.style.transform = `translateX(-${offset - 7}px)`
+          bulletElement.style.transition = 'none'
+        }
+
         updateTransitionStyle({
           transform: `translateX(${offset}px)`,
           textAlign: undefined,
@@ -292,6 +313,11 @@ const VirtualThought = ({
         })
 
         setTimeout(() => {
+          if (bulletElement) {
+            bulletElement.style.transform = 'translateX(0)'
+            bulletElement.style.transition = `transform ${duration}ms ease-out`
+          }
+
           updateTransitionStyle({
             transform: 'translateX(0)',
             transition: `transform ${duration}ms ease-out`,
@@ -300,12 +326,17 @@ const VirtualThought = ({
         }, 10)
       }}
       onExited={() => {
-        // Clear transform at the end, and remove right‐alignment.
         updateTransitionStyle({
           transform: undefined,
           transition: undefined,
           textAlign: undefined,
         })
+
+        const bulletElement = document.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement
+        if (bulletElement) {
+          bulletElement.style.transform = 'none'
+          bulletElement.style.transition = 'none'
+        }
       }}
     >
       <div
