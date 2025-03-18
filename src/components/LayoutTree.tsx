@@ -44,9 +44,8 @@ import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
-import FauxCaret from './FauxCaret'
 import HoverArrow from './HoverArrow'
-import PositionedFauxCaretWrapper from './PositionedFauxCaretWrapper'
+import PositionedFauxCaret from './PositionedFauxCaret'
 import VirtualThought, { OnResize } from './VirtualThought'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
@@ -559,9 +558,7 @@ const TreeNode = ({
               prevWidth={treeThoughtsPositioned[index - 1]?.width}
             />
           )}
-        <PositionedFauxCaretWrapper path={path} wrapperElement={fadeThoughtRef.current}>
-          <FauxCaret opacity='var(--faux-caret-opacity)' />
-        </PositionedFauxCaretWrapper>
+        <PositionedFauxCaret path={path} wrapperElement={fadeThoughtRef.current} />
       </div>
     </FadeTransition>
   )
@@ -937,11 +934,6 @@ const LayoutTree = () => {
       // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
       className={cx(
         css({
-          '--faux-caret-opacity': '0',
-          '--faux-caret-line-end-opacity': '0',
-          '--faux-caret-line-start-opacity': '0',
-          '--faux-caret-note-line-end-opacity': '0',
-          '--faux-caret-note-line-start-opacity': '0',
           marginTop: '0.501em',
         }),
         hideCaret({

@@ -1,6 +1,7 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { Property } from '../../styled-system/types/csstype'
 import Path from '../@types/Path'
 import { isSafari, isTouch } from '../browser'
 import { getBoundingClientRect } from '../device/selection'
@@ -8,11 +9,23 @@ import attributeEquals from '../selectors/attributeEquals'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import FauxCaret from './FauxCaret'
 
 type Props = PropsWithChildren<{
+  /** If the thought is moved, it may trigger a transition that requires the faux caret. */
   path: Path
+  /** If a thought is deleted and re-created by undo or redo, its other properties will remain
+   * the same, and the element node itself will provide the only evidence of the change.
+   */
   wrapperElement: HTMLDivElement | null
 }>
+
+type StyleProps = {
+  display?: Property.Display
+  fontSize?: Property.FontSize
+  top?: Property.Top
+  left?: Property.Left
+}
 
 /**
  * Wrapper for positioned faux caret.
@@ -23,11 +36,11 @@ type Props = PropsWithChildren<{
  *
  * See FauxCaret.tsx for more information.
  */
-const PositionedFauxCaretWrapper = ({ children, path, wrapperElement }: Props) => {
+const PositionedFauxCaret = ({ children, path, wrapperElement }: Props) => {
   const editing = useSelector(state => state.editing)
   const isCursor = useSelector(state => equalPath(path, state.cursor))
   const isTableCol1 = useSelector(state => attributeEquals(state, head(path), '=view', 'Table'))
-  const [styles, setStyles] = useState({})
+  const [styles, setStyles] = useState<StyleProps>({})
 
   // Hide the faux caret when typing occurs.
   editingValueStore.useEffect(() => {
@@ -70,9 +83,9 @@ const PositionedFauxCaretWrapper = ({ children, path, wrapperElement }: Props) =
   if (!isTouch || !isSafari()) return null
   return (
     <span className={css({ position: 'absolute', margin: '-0.1875em 0 0 -0.05em' })} style={styles}>
-      {children}
+      <FauxCaret opacity='var(--faux-caret-opacity)' />
     </span>
   )
 }
 
-export default PositionedFauxCaretWrapper
+export default PositionedFauxCaret

@@ -29,21 +29,24 @@ const useFauxCaretCssVars = (
   // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
   // selection is created.
   useEffect(() => {
+    let timeout = undefined
     if (!isTouch || !isSafari()) return
     if (editing && isCursor) {
       // The selection ranges aren't updated until the end of the frame when the thought is focused.
-      setTimeout(() => {
-        if (editing && isCursor) {
-          if (noteFocus) {
-            setFauxCaretType(isStartOfElementNode() ? 'noteStart' : isEndOfElementNode() ? 'noteEnd' : 'none')
-          } else {
-            setFauxCaretType(isStartOfElementNode() ? 'thoughtStart' : isEndOfElementNode() ? 'thoughtEnd' : 'none')
-          }
+      timeout = setTimeout(() => {
+        if (noteFocus) {
+          setFauxCaretType(isStartOfElementNode() ? 'noteStart' : isEndOfElementNode() ? 'noteEnd' : 'none')
+        } else {
+          setFauxCaretType(isStartOfElementNode() ? 'thoughtStart' : isEndOfElementNode() ? 'thoughtEnd' : 'none')
         }
       })
     } else {
       setFauxCaretType('none')
     }
+
+    return () => clearTimeout(timeout)
+    /* Changes to fadeThoughtElement & isTableCol1 can trigger the hideCaret animation to update, even though
+     * they are not directly used in calculating the caret type. */
   }, [editing, fadeThoughtElement, isCursor, isTableCol1, noteFocus, path])
 
   return {

@@ -17,13 +17,12 @@ import { isSafari, isTouch } from '../browser'
  * Note.tsx to cover cases where the client rect is not available because the selection is
  * not a text node (see `isStartOfElementNode` in selection.ts for implementation details).
  */
-const FauxCaret = ({ fontSize, opacity = '0' }: { fontSize?: Property.FontSize; opacity: Property.Opacity }) => {
+const FauxCaret = ({ opacity = '0' }: { opacity: Property.Opacity }) => {
   if (!isTouch || !isSafari()) return null
   return (
     <span
       className={css({
         color: 'caret',
-        fontSize,
         pointerEvents: 'none',
         WebkitTextStroke: '1px {colors.caret}',
       })}
