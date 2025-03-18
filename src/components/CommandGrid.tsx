@@ -242,7 +242,7 @@ const CommandGrid = ({
             const commandsWithGestures = commands.filter((command): command is Command => !!command.gesture)
 
             // Sort commands alphabetically by their ID or name
-            const sortedCommands = commandsWithGestures.sort((a, b) => a.id.localeCompare(b.id))
+            const sortedCommands = commandsWithGestures.sort((a, b) => a.label.localeCompare(b.label))
 
             return (
               <CommandsGroup
