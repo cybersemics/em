@@ -24,12 +24,12 @@ const PanelCommandGrid = () => {
         maxWidth: '100%',
       })}
     >
-      <PanelCommand command={toggleDone} size='medium' />
-      <PanelCommand command={note} size='medium' />
-      <PanelCommand command={favorite} size='medium' />
-      <PanelCommand command={deleteCommand} size='medium' />
-      <PanelCommand command={outdent} size='medium' />
-      <PanelCommand command={indent} size='medium' />
+      <PanelCommand command={toggleDone} size='small' />
+      <PanelCommand command={note} size='small' />
+      <PanelCommand command={favorite} size='small' />
+      <PanelCommand command={deleteCommand} size='small' />
+      <PanelCommand command={outdent} size='small' />
+      <PanelCommand command={indent} size='small' />
       <PanelCommand command={swapParent} size='medium' />
       <PanelCommand command={subcategorizeOne} size='medium' />
       <PanelCommand command={subcategorizeAll} size='medium' />

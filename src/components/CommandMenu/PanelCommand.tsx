@@ -14,7 +14,7 @@ interface PanelCommandProps {
 }
 
 /** A single button in the Panel Command Grid. */
-const PanelCommand: FC<PanelCommandProps> = ({ command, size = 'medium' }) => {
+const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
   if (!command) {
@@ -40,6 +40,21 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size = 'medium' }) => {
     [command, isButtonExecutable],
   )
 
+  const gridColumn = useMemo(() => {
+    switch (size) {
+      case 'small':
+        return 'span 1';
+      case 'medium':
+        return 'span 2';
+      case 'large':
+        return 'span 2';
+      case 'xlarge':
+        return 'span 4';
+      default:
+        return 'span 1';
+    }
+  }, [size]);
+
   const style = useMemo(
     () => ({
       fill: isButtonExecutable && isButtonActive ? 'colors.fg' : 'colors.gray50',
@@ -54,10 +69,10 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size = 'medium' }) => {
       className={cx(
         css({
           display: 'flex',
-          flexDirection: 'column',
+          flexDirection: size === 'small' ? 'column' : 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '0.75rem',
+          padding: '0.5rem',
           borderRadius: '8px',
           backgroundColor: '{colors.gray15}',
           cursor: isButtonExecutable ? 'pointer' : 'default',
@@ -65,6 +80,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size = 'medium' }) => {
           '&:hover': {
             backgroundColor: '{colors.darkgray}',
           },
+          gridColumn: gridColumn,
         }),
       )}
       title={`${command.label}${command.keyboard ? ` (${formatKeyboardShortcut(command.keyboard)})` : ''}`}
