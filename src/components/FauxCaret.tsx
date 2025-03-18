@@ -13,7 +13,7 @@ import { isSafari, isTouch } from '../browser'
  * according to the bounding rect fetched from `window.getSelection()` (see
  * `getBoundingClientRect` in selection.ts for implementation details).
  *
- * Additionally, there are line start & end faux carets defined in ThoughtAnnotation.tsx &
+ * Additionally, there are line start and end faux carets defined in ThoughtAnnotation.tsx and
  * Note.tsx to cover cases where the client rect is not available because the selection is
  * not a text node (see `isStartOfElementNode` in selection.ts for implementation details).
  */
@@ -27,7 +27,7 @@ const FauxCaret = ({ fontSize, opacity = '0' }: { fontSize?: Property.FontSize; 
         pointerEvents: 'none',
         WebkitTextStroke: '1px var(--colors-caret)',
       })}
-      // Using a CSS variable to control opacity does not appear to work inside Panda's CSS generator
+      // opacity cannot be determined statically for PandaCSS, so it must be applied as an inline style
       style={{ opacity }}
     >
       |
