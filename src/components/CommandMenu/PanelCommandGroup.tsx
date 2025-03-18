@@ -7,24 +7,28 @@ interface PanelCommandGroupProps {
 }
 
 /** A component that groups two PanelCommand components together. */
-const PanelCommandGroup: React.FC<PanelCommandGroupProps> = ({ children, size }) => {
+const PanelCommandGroup: React.FC<PanelCommandGroupProps> = ({ children }) => {
   const childCount = React.Children.count(children)
+
+  // Determine the size from the first child
+  const firstChild = React.Children.toArray(children)[0] as React.ReactElement
+  const size = firstChild.props.size
 
   return (
     <div
       className={css({
         display: 'flex',
         alignItems: 'center',
-        gridColumn: `span ${Math.min(childCount, 4)}`,
+        gridColumn: childCount === 2 && size === 'medium' ? 'span 4' : childCount === 3 ? 'span 4' : `span ${Math.min(childCount, 4)}`, //else span number of children
       })}
     >
       {React.Children.map(children, (child, index) => (
         <div
           className={css({
-            borderRadius: index === 0 ? '16px 0 0 16px' : index === childCount - 1 ? '0 16px 16px 0' : '0',
+            borderRadius: index === 0 ? '16px 0 0 16px' : index === childCount - 1 ? '0 16px 16px 0' : '0', //rounded corners on first and last child
             flex: 1,
-            marginLeft: index > 0 ? '10px' : '0',
-            padding: size === 'small' ? '0.3rem' : '0.5rem',
+            marginLeft: index > 0 ? '5px' : '0',
+            padding: '0.5rem',
             backgroundColor: '{colors.gray15}',
           })}
         >

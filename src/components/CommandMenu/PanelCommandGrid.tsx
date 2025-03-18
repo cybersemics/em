@@ -10,7 +10,6 @@ import swapParent from '../../commands/swapParent'
 import toggleDone from '../../commands/toggleDone'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
-
 /**
  * Component that displays the grid for the command menu.
  */
