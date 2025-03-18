@@ -23,9 +23,8 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   }
 
   const { svg, isActive, canExecute } = command
-  const isButtonExecutable = useSelector(state => !canExecute || canExecute(state))
-  const commandState = useSelector(state => isActive?.(state))
-  const isButtonActive = commandState
+  const isButtonExecutable = useSelector(state => canExecute ? canExecute(state) : true)
+  const isButtonActive = useSelector(state => isActive ? isActive(state) : false)
 
   const SVG = svg as React.FC<Icon>
 
@@ -57,8 +56,10 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
 
   const style = useMemo(
     () => ({
-      fill: isButtonExecutable && isButtonActive ? 'colors.fg' : 'colors.gray50',
       gridColumn,
+      backgroundColor: isButtonActive ? '{colors.purple}' : '{colors.gray15}',
+      opacity: isButtonExecutable ? 1 : 0.5,
+      transition: 'opacity 0.5s ease, background-color 0.5s ease',
     }),
     [isButtonExecutable, isButtonActive, gridColumn],
   )
@@ -71,14 +72,12 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           flexDirection: size === 'small' ? 'column' : 'row',
           alignItems: 'center',
           justifyContent: 'center',
+          fontWeight: 'bold',
           padding: '0.5rem',
           borderRadius: '16px',
-          backgroundColor: '{colors.gray15}',
+          backgroundColor: isButtonActive ? '{colors.purple}' : '{colors.gray15}',
           cursor: isButtonExecutable ? 'pointer' : 'default',
-          transition: 'background-color 0.2s ease-in-out',
-          '&:hover': {
-            backgroundColor: '{colors.darkgray}',
-          },
+          transition: 'background-color 0.5s ease',
         }),
       )}
       style={style}
@@ -86,20 +85,25 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       {...fastClick(handleTap)}
     >
       <SVG
-        style={{ fill: style.fill, flex: size === 'medium' ? '1' : 'none' }}
+        style={{ 
+          flex: '1',
+          alignSelf: 'center'
+        }}
         animated={isAnimated}
         animationComplete={() => setIsAnimated(false)}
       />
-      <div
-        className={css({
-          fontSize: 'sm',
-          marginTop: size === 'small' ? '0.5rem' : '0',
-          color: '{colors.fg}',
-          flex: size === 'medium' ? '2' : '1',
-        })}
-      >
-        {command.label}
-      </div>
+      {command.id !== 'indent' && command.id !== 'outdent' && (
+        <div
+          className={css({
+            fontSize: 'sm',
+            marginTop: size === 'small' ? '0.5rem' : '0',
+            color: '{colors.fg}',
+            flex: size === 'medium' ? '2' : 'none',
+          })}
+        >
+          {command.label}
+        </div>
+      )}
     </div>
   )
 }

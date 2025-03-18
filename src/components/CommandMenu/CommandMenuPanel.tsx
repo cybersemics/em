@@ -42,10 +42,21 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
             className={css({
               display: 'flex',
               justifyContent: 'flex-end',
-              marginBottom: '10px',
+              marginBottom: '1rem',
             })}
           >
-            <button onClick={() => dispatch(closeCommandMenuActionCreator())}>x</button>
+            <button 
+            className={css({
+              backgroundColor: '{colors.darkgray}',
+              border: 'none',
+              fontSize: '1.3rem',
+              marginRight: '8px',
+              color: '{colors.fg}',
+              cursor: 'pointer',
+            })}
+            onClick={() => dispatch(closeCommandMenuActionCreator())}>
+              x
+            </button>
           </div>
         </div>
       )}

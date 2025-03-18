@@ -20,7 +20,7 @@ const PanelCommandGrid = () => {
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',
         gap: '0.6rem',
-        padding: '1.5rem 1.5rem 1rem',
+        padding: '1.5rem 1.8rem 1rem',
         maxWidth: '100%',
         gridAutoRows: '1fr',
       })}
@@ -32,7 +32,7 @@ const PanelCommandGrid = () => {
       <PanelCommand command={{ ...outdent, label: '' }} size='small' />
       <PanelCommand command={{ ...indent, label: '' }} size='small' />
       <PanelCommand command={swapParent} size='medium' />
-      <PanelCommand command={subcategorizeOne} size='medium' />
+      <PanelCommand command={{...subcategorizeOne, label: 'Subcategorize One'}} size='medium' />
       <PanelCommand command={subcategorizeAll} size='medium' />
     </div>
   )
