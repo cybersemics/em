@@ -38,16 +38,14 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
           })}
         >
           <PanelCommandGrid />
-          <div className={css({ 
-            display: 'flex', 
-            justifyContent: 'flex-end',
-            marginBottom: '10px',
-           })}
-           >
-            <button        
-              onClick={() => dispatch(closeCommandMenuActionCreator())}>
-              x
-            </button>
+          <div
+            className={css({
+              display: 'flex',
+              justifyContent: 'flex-end',
+              marginBottom: '10px',
+            })}
+          >
+            <button onClick={() => dispatch(closeCommandMenuActionCreator())}>x</button>
           </div>
         </div>
       )}

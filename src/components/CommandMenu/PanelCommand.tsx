@@ -43,17 +43,17 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const gridColumn = useMemo(() => {
     switch (size) {
       case 'small':
-        return 'span 1';
+        return 'span 1'
       case 'medium':
-        return 'span 2';
+        return 'span 2'
       case 'large':
-        return 'span 2';
+        return 'span 2'
       case 'xlarge':
-        return 'span 4';
+        return 'span 4'
       default:
-        return 'span 1';
+        return 'span 1'
     }
-  }, [size]);
+  }, [size])
 
   const style = useMemo(
     () => ({

@@ -1,14 +1,14 @@
 import { css } from '../../../styled-system/css'
-import favorite from '../../commands/favorite'
-import note from '../../commands/note'
-import PanelCommand from './PanelCommand'
 import deleteCommand from '../../commands/delete'
+import favorite from '../../commands/favorite'
 import indent from '../../commands/indent'
+import note from '../../commands/note'
 import outdent from '../../commands/outdent'
-import swapParent from '../../commands/swapParent'
-import subcategorizeOne from '../../commands/subcategorizeOne'
 import subcategorizeAll from '../../commands/subcategorizeAll'
+import subcategorizeOne from '../../commands/subcategorizeOne'
+import swapParent from '../../commands/swapParent'
 import toggleDone from '../../commands/toggleDone'
+import PanelCommand from './PanelCommand'
 
 /**
  * Component that displays the grid for the command menu.
