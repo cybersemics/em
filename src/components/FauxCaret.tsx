@@ -25,7 +25,7 @@ const FauxCaret = ({ fontSize, opacity = '0' }: { fontSize?: Property.FontSize; 
         color: 'caret',
         fontSize,
         pointerEvents: 'none',
-        WebkitTextStroke: '1px var(--colors-caret)',
+        WebkitTextStroke: '1px {colors.caret}',
       })}
       // opacity cannot be determined statically for PandaCSS, so it must be applied as an inline style
       style={{ opacity }}
