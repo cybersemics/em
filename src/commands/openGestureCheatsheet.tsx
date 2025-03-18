@@ -16,7 +16,6 @@ const openGestureCheatsheetCommand: Command = {
   id: 'openGestureCheatsheet',
   label: 'Gesture Cheatsheet',
   description: 'Opens a list of all the gestures.',
-  keyboard: { key: '.', meta: true }, //remove this later when styling on mobile web is done
   gesture: 'rdld',
   multicursor: true,
   svg: GestureCheatsheetIcon,
