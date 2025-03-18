@@ -232,9 +232,10 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     // execute command
     // do not execute when modal is displayed or a drag is in progress
-    const command = !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
-      ? commandGestureIndex[sequence as string]
-      : null
+    const command =
+      !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
+        ? commandGestureIndex[sequence as string]
+        : null
 
     if (command && !state.showModal && !state.dialogOpen && !state.dragInProgress) {
       commandEmitter.trigger('command', command)
