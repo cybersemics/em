@@ -9,7 +9,7 @@ import subcategorizeOne from '../../commands/subcategorizeOne'
 import swapParent from '../../commands/swapParent'
 import toggleDone from '../../commands/toggleDone'
 import PanelCommand from './PanelCommand'
-
+import PanelCommandGroup from './PanelCommandGroup'
 /**
  * Component that displays the grid for the command menu.
  */
@@ -29,8 +29,10 @@ const PanelCommandGrid = () => {
       <PanelCommand command={note} size='small' />
       <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
       <PanelCommand command={deleteCommand} size='small' />
-      <PanelCommand command={{ ...outdent, label: '' }} size='small' />
-      <PanelCommand command={{ ...indent, label: '' }} size='small' />
+      <PanelCommandGroup>
+        <PanelCommand command={{ ...outdent, label: '' }} size='small' />
+        <PanelCommand command={{ ...indent, label: '' }} size='small' />
+      </PanelCommandGroup>
       <PanelCommand command={swapParent} size='medium' />
       <PanelCommand command={{...subcategorizeOne, label: 'Subcategorize One'}} size='medium' />
       <PanelCommand command={subcategorizeAll} size='medium' />
