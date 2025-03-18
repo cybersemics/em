@@ -17,7 +17,7 @@ const GestureCheatsheet: React.FC = () => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const [isBottomVisible, setIsBottomVisible] = useState(false)
-  
+
   /**
    * Handles the closure of the gesture cheatsheet.
    */
@@ -57,8 +57,8 @@ const GestureCheatsheet: React.FC = () => {
       {
         root: null, // use viewport
         threshold: 0, // trigger as soon as even 1px is visible
-        rootMargin: '0px'
-      }
+        rootMargin: '0px',
+      },
     )
 
     observer.observe(bottomRef.current)

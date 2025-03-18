@@ -61,10 +61,7 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
         position: 'relative',
       })}
     >
-      <SortIcon 
-        size={20}
-        fill={isLightTheme ? '{colors.light}' : '{colors.fg}'}
-      />
+      <SortIcon size={20} fill={isLightTheme ? '{colors.light}' : '{colors.fg}'} />
       <div className={`${dropdownStyles} ${isDropdownOpen ? dropdownVisibleStyles : ''}`}>
         <h2
           className={css({

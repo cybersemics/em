@@ -12,6 +12,7 @@ import keyValueBy from '../util/keyValueBy'
 import CommandsGroup from './CommandsGroup'
 import SortButton from './SortButton'
 import SearchIcon from './icons/SearchIcon'
+
 // define the grouping and ordering of commands
 const groups: {
   title: string
@@ -131,7 +132,7 @@ const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) 
             transform: 'translateY(-50%)',
             display: 'flex',
             alignItems: 'center',
-            pointerEvents: 'none'
+            pointerEvents: 'none',
           })}
         >
           <SearchIcon size={16} fill={isLightTheme ? '#666' : '#999'} />
