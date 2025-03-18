@@ -1,7 +1,6 @@
 import { css } from '../../../styled-system/css'
 import favorite from '../../commands/favorite'
 import note from '../../commands/note'
-import selectAll from '../../commands/selectAll'
 import PanelCommand from './PanelCommand'
 import deleteCommand from '../../commands/delete'
 import indent from '../../commands/indent'
@@ -9,6 +8,7 @@ import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
 import subcategorizeOne from '../../commands/subcategorizeOne'
 import subcategorizeAll from '../../commands/subcategorizeAll'
+import toggleDone from '../../commands/toggleDone'
 
 /**
  * Component that displays the grid for the command menu.
@@ -19,11 +19,12 @@ const PanelCommandGrid = () => {
       className={css({
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '1rem',
-        padding: '1rem',
+        gap: '0.5rem',
+        padding: '0.5rem',
+        maxWidth: '100%',
       })}
     >
-      <PanelCommand command={selectAll} size='medium' />
+      <PanelCommand command={toggleDone} size='medium' />
       <PanelCommand command={note} size='medium' />
       <PanelCommand command={favorite} size='medium' />
       <PanelCommand command={deleteCommand} size='medium' />
