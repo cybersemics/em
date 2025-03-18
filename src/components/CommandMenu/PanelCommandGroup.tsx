@@ -3,7 +3,6 @@ import { css } from '../../../styled-system/css'
 
 interface PanelCommandGroupProps {
   children: React.ReactNode
-  size?: 'small' | 'medium' | 'large' 
 }
 
 /** A component that groups two PanelCommand components together. */
