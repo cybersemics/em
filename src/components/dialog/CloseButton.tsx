@@ -1,7 +1,6 @@
 import React from 'react'
-import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import theme from '../../selectors/theme'
+import CloseIcon from '../icons/CloseIcon'
 
 interface CloseButtonProps {
   onClick: () => void
@@ -11,8 +10,6 @@ interface CloseButtonProps {
  * Dialog close button.
  */
 const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
-  const isLightTheme = useSelector(state => theme(state) === 'Light')
-
   return (
     <button
       onClick={onClick}
@@ -27,17 +24,14 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        color: '{colors.fg}',
         transition: 'background-color 0.2s ease-in-out',
-        backgroundImage: isLightTheme ? 'url("/assets/close_light.svg")' : 'url("/assets/close.svg")',
-        backgroundSize: '35%',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
         _hover: {
           backgroundColor: '{colors.gray15}',
         },
       })}
-    ></button>
+    >
+      <CloseIcon size={16} />
+    </button>
   )
 }
 

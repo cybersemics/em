@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import theme from '../selectors/theme'
+import SortIcon from './icons/SortIcon'
 
 /**
  * SortButton component.
@@ -54,13 +55,16 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
         border: 'solid 1px {colors.gray50}',
         backgroundColor: '{colors.darkgray}',
         borderRadius: '8px',
-        backgroundImage: isLightTheme ? 'url("/assets/sort_light.svg")' : 'url("/assets/sort.svg")',
-        backgroundSize: '20px',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         position: 'relative',
       })}
     >
+      <SortIcon 
+        size={20}
+        fill={isLightTheme ? '{colors.light}' : '{colors.fg}'}
+      />
       <div className={`${dropdownStyles} ${isDropdownOpen ? dropdownVisibleStyles : ''}`}>
         <h2
           className={css({
