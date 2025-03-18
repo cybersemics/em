@@ -16,6 +16,8 @@ const PanelCommandGroup: React.FC<PanelCommandGroupProps> = ({ children }) => {
         padding: '0.5rem',
         borderRadius: '16px',
         backgroundColor: '{colors.gray15}',
+        gridColumn: 'span 2',
+        gap: '0.3rem',
       })}
     >
       {children}
