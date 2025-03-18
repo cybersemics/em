@@ -13,6 +13,7 @@ import globals from '../globals'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import alert, { alertActionCreator } from './alert'
+import { collapseHoverDownActionCreator as collapseHoverDown } from './collapseHoverDown'
 import { expandHoverDownActionCreator as expandHoverDown } from './expandHoverDown'
 import { expandOnHoverTopActionCreator as expandHoverUp } from './expandHoverUp'
 
@@ -139,6 +140,7 @@ export const dragInProgressActionCreator =
 
     dispatch(expandHoverUp())
     dispatch(expandHoverDown())
+    dispatch(collapseHoverDown())
   }
 
 export default _.curryRight(dragInProgress)
