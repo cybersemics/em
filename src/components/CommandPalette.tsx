@@ -199,14 +199,14 @@ const CommandRow: FC<{
               color={disabled ? token('colors.gray') : undefined}
               highlight={
                 !disabled
-                  ? command.id === 'help'
-                    ? // For help command, find the longest matching end portion
+                  ? command.id === 'openGestureCheatsheet'
+                    ? // For gesture cheatsheet command, find the longest matching end portion
                       (() => {
-                        const helpGesture = gestureString(command)
+                        const gestureCheatsheetGesture = gestureString(command)
                         return (
-                          [...helpGesture]
-                            .map((_, i) => helpGesture.length - i)
-                            .find(len => gestureInProgress.endsWith(helpGesture.slice(0, len))) ?? 0
+                          [...gestureCheatsheetGesture]
+                            .map((_, i) => gestureCheatsheetGesture.length - i)
+                            .find(len => gestureInProgress.endsWith(gestureCheatsheetGesture.slice(0, len))) ?? 0
                         )
                       })()
                     : // For other commands, use normal highlighting
