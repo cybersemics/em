@@ -58,10 +58,9 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const style = useMemo(
     () => ({
       fill: isButtonExecutable && isButtonActive ? 'colors.fg' : 'colors.gray50',
-      width: size === 'small' ? 24 : size === 'medium' ? 32 : 40,
-      height: size === 'small' ? 24 : size === 'medium' ? 32 : 40,
+      gridColumn,
     }),
-    [isButtonExecutable, isButtonActive, size],
+    [isButtonExecutable, isButtonActive, size, gridColumn],
   )
 
   return (
@@ -80,13 +79,13 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           '&:hover': {
             backgroundColor: '{colors.darkgray}',
           },
-          gridColumn: gridColumn,
         }),
       )}
+      style={style}
       title={`${command.label}${command.keyboard ? ` (${formatKeyboardShortcut(command.keyboard)})` : ''}`}
       {...fastClick(handleTap)}
     >
-      <SVG style={style} animated={isAnimated} animationComplete={() => setIsAnimated(false)} />
+      <SVG style={{ fill: style.fill }} animated={isAnimated} animationComplete={() => setIsAnimated(false)} />
       <div className={css({ fontSize: 'sm', marginTop: '0.5rem', color: '{colors.fg}' })}>{command.label}</div>
     </div>
   )
