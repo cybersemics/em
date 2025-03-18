@@ -72,7 +72,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '0.5rem',
-          borderRadius: '8px',
+          borderRadius: '16px',
           backgroundColor: '{colors.gray15}',
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition: 'background-color 0.2s ease-in-out',
@@ -85,8 +85,21 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       title={`${command.label}${command.keyboard ? ` (${formatKeyboardShortcut(command.keyboard)})` : ''}`}
       {...fastClick(handleTap)}
     >
-      <SVG style={{ fill: style.fill }} animated={isAnimated} animationComplete={() => setIsAnimated(false)} />
-      <div className={css({ fontSize: 'sm', marginTop: '0.5rem', color: '{colors.fg}' })}>{command.label}</div>
+      <SVG
+        style={{ fill: style.fill, flex: size === 'medium' ? '1' : 'none' }}
+        animated={isAnimated}
+        animationComplete={() => setIsAnimated(false)}
+      />
+      <div
+        className={css({
+          fontSize: 'sm',
+          marginTop: size === 'small' ? '0.5rem' : '0',
+          color: '{colors.fg}',
+          flex: size === 'medium' ? '2' : '1',
+        })}
+      >
+        {command.label}
+      </div>
     </div>
   )
 }

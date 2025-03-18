@@ -19,17 +19,18 @@ const PanelCommandGrid = () => {
       className={css({
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '0.5rem',
-        padding: '0.5rem',
+        gap: '0.6rem',
+        padding: '1.5rem 1.5rem 1rem',
         maxWidth: '100%',
+        gridAutoRows: '1fr',
       })}
     >
-      <PanelCommand command={toggleDone} size='small' />
+      <PanelCommand command={{ ...toggleDone, label: 'Done' }} size='small' />
       <PanelCommand command={note} size='small' />
-      <PanelCommand command={favorite} size='small' />
+      <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
       <PanelCommand command={deleteCommand} size='small' />
-      <PanelCommand command={outdent} size='small' />
-      <PanelCommand command={indent} size='small' />
+      <PanelCommand command={{ ...outdent, label: '' }} size='small' />
+      <PanelCommand command={{ ...indent, label: '' }} size='small' />
       <PanelCommand command={swapParent} size='medium' />
       <PanelCommand command={subcategorizeOne} size='medium' />
       <PanelCommand command={subcategorizeAll} size='medium' />
