@@ -4,6 +4,7 @@ import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 
+/** Close icon. */
 const CloseIcon: FC<IconType> = ({ size = 48, fill, cssRaw }) => {
   const fillColor = fill || token('colors.fg')
 
