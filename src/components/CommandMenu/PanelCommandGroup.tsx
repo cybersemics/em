@@ -25,11 +25,13 @@ const PanelCommandGroup: React.FC<PanelCommandGroupProps> = ({ children }) => {
       {React.Children.map(children, (child, index) => (
         <div
           className={css({
+            display: 'flex',
             borderRadius: index === 0 ? '16px 0 0 16px' : index === childCount - 1 ? '0 16px 16px 0' : '0', //rounded corners on first and last child
             flex: 1,
             marginLeft: index > 0 ? '5px' : '0',
             padding: '0.5rem',
             backgroundColor: '{colors.gray15}',
+            justifyContent: 'center',
           })}
         >
           {child}
