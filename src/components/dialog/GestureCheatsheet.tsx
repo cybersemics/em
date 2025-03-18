@@ -56,22 +56,6 @@ const GestureCheatsheet: React.FC = () => {
     position: 'fixed',
   })
 
-  /** Styles for the dialog content. */
-  const dialogStyles = css({
-    maxHeight: '70vh',
-    overflow: 'auto',
-    padding: '1rem',
-    scrollbarColor: '{colors.fg} {colors.bg}',
-    scrollbarWidth: 'thin',
-    '&::-webkit-scrollbar': {
-      width: '8px',
-    },
-    '&::-webkit-scrollbar-track': {
-      background: '{colors.bg}',
-    },
-    position: 'relative',
-  })
-
   return (
     <>
       {isOpen && (
@@ -80,10 +64,8 @@ const GestureCheatsheet: React.FC = () => {
             <Dialog onClose={handleClose} showGradient={!isBottomVisible}>
               <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
               <DialogContent>
-                <div className={dialogStyles}>
-                  <CommandGrid />
-                  <div ref={bottomRef} style={{ height: '1px' }} />
-                </div>
+                <CommandGrid />
+                <div ref={bottomRef} style={{ height: '1px' }} />
               </DialogContent>
             </Dialog>
           </div>
