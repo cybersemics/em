@@ -60,7 +60,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       fill: isButtonExecutable && isButtonActive ? 'colors.fg' : 'colors.gray50',
       gridColumn,
     }),
-    [isButtonExecutable, isButtonActive, size, gridColumn],
+    [isButtonExecutable, isButtonActive, gridColumn],
   )
 
   return (
