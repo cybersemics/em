@@ -23,8 +23,9 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   }
 
   const { svg, isActive, canExecute } = command
-  const isButtonExecutable = useSelector(state => canExecute ? canExecute(state) : true)
-  const isButtonActive = useSelector(state => isActive ? isActive(state) : false)
+  const isButtonExecutable = useSelector(state => !canExecute || canExecute(state))
+  const commandState = useSelector(state => isActive?.(state))
+  const isButtonActive = commandState
 
   const SVG = svg as React.FC<Icon>
 
@@ -56,8 +57,8 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
 
   const style = useMemo(
     () => ({
+      fill: isButtonExecutable && isButtonActive ? '{colors.purple}' : '{colors.gray15}',
       gridColumn,
-      backgroundColor: isButtonActive ? '{colors.purple}' : '{colors.gray15}',
       opacity: isButtonExecutable ? 1 : 0.5,
       transition: 'opacity 0.5s ease, background-color 0.5s ease',
     }),
@@ -85,10 +86,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       {...fastClick(handleTap)}
     >
       <SVG
-        style={{ 
-          flex: '1',
-          alignSelf: 'center'
-        }}
+        style={{ fill: style.fill, flex: size === 'medium' ? '1' : 'none' }}
         animated={isAnimated}
         animationComplete={() => setIsAnimated(false)}
       />
