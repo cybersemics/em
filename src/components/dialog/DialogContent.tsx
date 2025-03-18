@@ -12,8 +12,6 @@ const DialogContent: React.FC<DialogContentProps> = ({ children }) => {
   return (
     <div
       className={css({
-        display: 'flex',
-        justifyContent: 'center',
         fontSize: '1.25rem',
         color: '{colors.fg}',
         maxHeight: '70vh',

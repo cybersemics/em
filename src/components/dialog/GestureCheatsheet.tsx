@@ -1,6 +1,5 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useVisibility } from 'reactjs-visibility'
 import { css } from '../../../styled-system/css'
 import { closeDialogActionCreator } from '../../actions/closeDialog'
 import { FADEOUT_DURATION } from '../../constants'
@@ -16,8 +15,9 @@ const GestureCheatsheet: React.FC = () => {
   const dispatch = useDispatch()
   const isOpen = useSelector(state => state.dialogOpen)
   const dialogRef = useRef<HTMLDivElement | null>(null)
-  const { ref: bottomRef, visible: isBottomVisible } = useVisibility({})
-
+  const bottomRef = useRef<HTMLDivElement | null>(null)
+  const [isBottomVisible, setIsBottomVisible] = useState(false)
+  
   /**
    * Handles the closure of the gesture cheatsheet.
    */
@@ -46,6 +46,27 @@ const GestureCheatsheet: React.FC = () => {
       document.body.style.overflow = 'auto'
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (!bottomRef.current || !isOpen) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsBottomVisible(entry.isIntersecting)
+      },
+      {
+        root: null, // use viewport
+        threshold: 0, // trigger as soon as even 1px is visible
+        rootMargin: '0px'
+      }
+    )
+
+    observer.observe(bottomRef.current)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [isOpen]) // Reinitialize when dialog opens
 
   /** Styles for the dialog fade in and out animation. */
   const dialogAnimationStyles = css({

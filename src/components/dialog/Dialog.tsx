@@ -74,7 +74,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose, showGradient }) => {
             pointerEvents: 'none',
             display: 'block',
             opacity: showGradient ? 1 : 0,
-            transition: 'opacity 0.5s ease',
+            transition: 'opacity 0.2s ease',
           })}
         />
       </div>
