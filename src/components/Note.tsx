@@ -120,7 +120,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
           marginTop: -3,
           position: 'relative',
           marginBottom: '2px',
-          padding: isTouch && isSafari() ? '0 1em 4px 0.333em' : '0 0 4px 0',
+          padding: '0 0 4px 0',
           '@media (max-width: 1024px)': {
             _android: {
               position: 'relative',
@@ -145,7 +145,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
         placeholder='Enter a note'
         className={css({
           display: 'inline-block',
-          padding: isTouch && isSafari() ? undefined : '0 1em 0 0.333em',
+          padding: '0 1em 0 0.333em',
         })}
         onKeyDown={onKeyDown}
         onChange={onChange}
@@ -157,7 +157,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
         onBlur={onBlur}
         onFocus={onFocus}
       />
-      <span className={css({ fontSize: '1.1em', position: 'absolute', margin: '-0.125em 0 0 -0.25em' })}>
+      <span className={css({ fontSize: '1.1em', position: 'absolute', margin: '-0.125em 0 0 -1.25em' })}>
         <FauxCaret opacity='var(--faux-caret-note-line-end-opacity)' />
       </span>
     </div>
