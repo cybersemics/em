@@ -51,24 +51,24 @@ const swapParent = (state: State) => {
     moveThought({
       oldPath: parent,
       newPath: appendToPath([childId], parentId),
-      newRank: 0,
+      newRank: childThought.rank,
     }),
 
-    // Move only the grandchildren under the parent's new position
-    ...childChildren.map(grandchild =>
-      moveThought({
-        oldPath: appendToPath(cursor, grandchild.id),
-        newPath: appendToPath([...grandparent, childId, parentId], grandchild.id),
-        newRank: grandchild.rank,
-      }),
-    ),
-
-    // Keep siblings under their original parent
+    // Move siblings under the child
     ...siblings.map(sibling =>
       moveThought({
         oldPath: appendToPath(parent, sibling.id),
         newPath: appendToPath([...grandparent, childId], sibling.id),
         newRank: sibling.rank,
+      }),
+    ),
+
+    // Move grandchildren under the parent's new position
+    ...childChildren.map(grandchild =>
+      moveThought({
+        oldPath: appendToPath(cursor, grandchild.id),
+        newPath: appendToPath([...grandparent, childId, parentId], grandchild.id),
+        newRank: grandchild.rank,
       }),
     ),
 
