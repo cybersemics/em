@@ -26,14 +26,14 @@ const PanelCommandGrid = () => {
         gridAutoRows: '1fr',
       })}
     >
-      <PanelCommandGroup>
-        <PanelCommand command={{ ...toggleDone, label: 'Done' }} size='small' />
-        <PanelCommand command={note} size='small' />
-        <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
-      </PanelCommandGroup>
+      <PanelCommand command={{ ...toggleDone, label: 'Done' }} size='small' />
+      <PanelCommand command={note} size='small' />
+      <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
       <PanelCommand command={deleteCommand} size='small' />
-      <PanelCommand command={{ ...outdent, label: '' }} size='small' />
-      <PanelCommand command={{ ...indent, label: '' }} size='small' />
+      <PanelCommandGroup>
+        <PanelCommand command={{ ...outdent, label: '' }} size='small' />
+        <PanelCommand command={{ ...indent, label: '' }} size='small' />
+      </PanelCommandGroup>
       <PanelCommand command={swapParent} size='medium' />
       <PanelCommand command={{ ...subcategorizeOne, label: 'Subcategorize One' }} size='medium' />
       <PanelCommand command={subcategorizeAll} size='medium' />
