@@ -19,11 +19,9 @@ const PanelCommandGroup: React.FC<PanelCommandGroupProps> = ({ children }) => {
         display: 'flex',
         alignItems: 'stretch',
         gridColumn:
-          childCount === 2 && size === 'medium'
+          childCount === 2 || childCount === 3 && size === 'medium'
             ? 'span 4'
-            : childCount === 3 && size === 'medium'
-              ? 'span 4'
-              : `span ${childCount}`,
+            : `span ${childCount}`,
       })}
     >
       {React.Children.map(children, (child, index) => (
