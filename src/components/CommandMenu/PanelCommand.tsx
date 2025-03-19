@@ -65,12 +65,16 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
     [isButtonExecutable, isButtonActive, gridColumn],
   )
 
-  // Define specific styles for indent and outdent
+  // Define specific styles for indent, outdent, and medium size
   const svgStyle = useMemo(() => {
-    if (command.id === 'indent' || command.id === 'outdent') {
-      return { fill: style.fill, flex: size === 'medium' ? '1' : 'none', transform: 'scale(1.3)' }
+    const isSpecialCommand = command.id === 'indent' || command.id === 'outdent'
+    const scaleValue = isSpecialCommand ? 'scale(1.3)' : size === 'medium' ? 'scale(1.2)' : 'scale(1)'
+
+    return {
+      fill: style.fill,
+      flex: size === 'medium' ? '1' : 'none',
+      transform: scaleValue,
     }
-    return { fill: style.fill, flex: size === 'medium' ? '1' : 'none' }
   }, [command.id, style.fill, size])
 
   return (
