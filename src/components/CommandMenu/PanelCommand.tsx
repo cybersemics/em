@@ -65,6 +65,14 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
     [isButtonExecutable, isButtonActive, gridColumn],
   )
 
+  // Define specific styles for indent and outdent
+  const svgStyle = useMemo(() => {
+    if (command.id === 'indent' || command.id === 'outdent') {
+      return { fill: style.fill, flex: size === 'medium' ? '1' : 'none', transform: 'scale(1.3)' }
+    }
+    return { fill: style.fill, flex: size === 'medium' ? '1' : 'none' }
+  }, [command.id, style.fill, size])
+
   return (
     <div
       className={cx(
@@ -86,7 +94,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       {...fastClick(handleTap)}
     >
       <SVG
-        style={{ fill: style.fill, flex: size === 'medium' ? '1' : 'none' }}
+        style={svgStyle}
         animated={isAnimated}
         animationComplete={() => setIsAnimated(false)}
       />
