@@ -27,6 +27,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import nextSibling from '../selectors/nextSibling'
+import rootedGrandparentOf from '../selectors/rootedGrandparentOf'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -699,13 +700,11 @@ const LayoutTree = () => {
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
   const {
     indentCursorAncestorTables,
-    tableDepth,
     treeThoughtsPositioned,
     hoverArrowVisibility,
   }: {
     // the global indent based on the depth of the cursor and how many ancestors are tables
     indentCursorAncestorTables: number
-    tableDepth: number
     treeThoughtsPositioned: TreeThoughtPositioned[]
     hoverArrowVisibility: 'above' | 'below' | null
   } = useMemo(() => {
@@ -714,7 +713,6 @@ const LayoutTree = () => {
     // (it is especially hard to determine how much x is decreased on cliffs when there are any number of tables in between)
     let yaccum = 0
     let indentCursorAncestorTables = 0
-    let tableDepth = 0
 
     // Arrow visibility based on the rank of drop target in sorted context.
     let hoverArrowVisibility: 'above' | 'below' | null = null
@@ -782,7 +780,6 @@ const LayoutTree = () => {
       // Calculate the cursor ancestor table width when we are on the cursor node.
       // This is used to animate the entire tree to the left as the cursor moves right.
       if (node.isCursor) {
-        tableDepth = node.isTableCol1 ? 1 : node.isTableCol2 ? 3 : 0
         indentCursorAncestorTables =
           ancestorTableWidths +
           // table col1: shift left by an additional 1 em so that the shift at the next depth does not feel so extreme
@@ -889,7 +886,7 @@ const LayoutTree = () => {
       }
     }
 
-    return { indentCursorAncestorTables, tableDepth, treeThoughtsPositioned, hoverArrowVisibility }
+    return { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility }
   }, [
     cliffPadding,
     fontSize,
@@ -904,6 +901,19 @@ const LayoutTree = () => {
   ])
 
   const spaceAboveLast = useRef(spaceAboveExtended)
+
+  // When the cursor is in a table, all thoughts beneath the table are hidden,
+  // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
+  const tableDepth = useSelector(state => {
+    if (state.cursor) {
+      // If the current thought is column 2 of a table, offset the indentDepth by 3
+      if (attributeEquals(state, head(rootedGrandparentOf(state, state.cursor)), '=view', 'Table')) return 3
+      // If the current thought is column 1 of a table, offset the indentDepth by 1
+      if (attributeEquals(state, head(rootedParentOf<Path>(state, state.cursor)), '=view', 'Table')) return 1
+    }
+
+    return 0
+  })
 
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
