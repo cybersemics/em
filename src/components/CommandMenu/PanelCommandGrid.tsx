@@ -27,20 +27,16 @@ const PanelCommandGrid = () => {
       })}
     >
       <PanelCommandGroup>
-        <PanelCommand command={{ ...toggleDone, label: 'Done' }} size='small' />
-        <PanelCommand command={note} size='small' />
-        <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
-        <PanelCommand command={deleteCommand} size='small' />
+      <PanelCommand command={{ ...toggleDone, label: 'Done' }} size='small' />
+      <PanelCommand command={note} size='small' />
+      <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
       </PanelCommandGroup>
-      <PanelCommandGroup>
-        <PanelCommand command={{ ...outdent, label: '' }} size='small' />
-        <PanelCommand command={{ ...indent, label: '' }} size='small' />
-      </PanelCommandGroup>
+      <PanelCommand command={deleteCommand} size='small' />
+      <PanelCommand command={{ ...outdent, label: '' }} size='small' />
+      <PanelCommand command={{ ...indent, label: '' }} size='small' />
       <PanelCommand command={swapParent} size='medium' />
-      <PanelCommandGroup>
-        <PanelCommand command={{ ...subcategorizeOne, label: 'Subcategorize One' }} size='medium' />
-        <PanelCommand command={subcategorizeAll} size='medium' />
-      </PanelCommandGroup>
+      <PanelCommand command={{ ...subcategorizeOne, label: 'Subcategorize One' }} size='medium' />
+      <PanelCommand command={subcategorizeAll} size='medium' />
     </div>
   )
 }
