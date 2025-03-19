@@ -97,11 +97,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       title={`${command.label}${command.keyboard ? ` (${formatKeyboardShortcut(command.keyboard)})` : ''}`}
       {...fastClick(handleTap)}
     >
-      <SVG
-        style={svgStyle}
-        animated={isAnimated}
-        animationComplete={() => setIsAnimated(false)}
-      />
+      <SVG style={svgStyle} animated={isAnimated} animationComplete={() => setIsAnimated(false)} />
       {command.id !== 'indent' && command.id !== 'outdent' && (
         <div
           className={css({
