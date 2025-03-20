@@ -7,10 +7,11 @@ interface PanelCommandRadioGroupProps {
   onChange?: (value: string) => void
 }
 
-/** A component that groups PanelCommand components with radio button behavior */
+/** A component that groups PanelCommand components with radio button behavior. */
 const PanelCommandRadioGroup: React.FC<PanelCommandRadioGroupProps> = ({ children, defaultValue, onChange }) => {
   const [activeRadioButton, setActiveRadioButton] = useState(defaultValue ?? '')
 
+  /** Handles the selection of a radio button. */
   const handleRadioButtonSelect = (value: string) => {
     setActiveRadioButton(value)
     if (onChange) onChange(value)
