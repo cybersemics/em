@@ -16,6 +16,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import editingValueStore from '../stores/editingValue'
 import viewportStore from '../stores/viewport'
+import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -218,7 +219,7 @@ const VirtualThought = ({
     textAlign: isTableCol1 ? 'right' : undefined,
   })
   const translateXRef = useRef<number>(0)
-  const duration = 400
+  const duration = durations.get('layoutNodeAnimation')
 
   const bulletTestId = `bullet-${hashPath(simplePath)}`
 
