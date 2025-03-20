@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
@@ -13,10 +13,8 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { setCursorActionCreator } from '../actions/setCursor'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
-import asyncFocus from '../device/asyncFocus'
 import testFlags from '../e2e/testFlags'
 import useSortedContext from '../hooks/useSortedContext'
 import attributeEquals from '../selectors/attributeEquals'
@@ -239,6 +237,7 @@ const linearizeTree = (
     // The id of a specific context within the context view.
     // This allows the contexts to render the children of their Lexeme instance rather than their own children.
     // i.e. a/~m/b should render b/m's children rather than rendering b's children. Notice that the Path a/~m/b contains a different m than b/m, so we need to pass the id of b/m to the next level to render the correct children.
+    // If we rendered the children as usual, the Lexeme would be repeated in each context, i.e. a/~m/a/m/x and a/~m/b/m/y. There is no need to render m a second time since we know the context view is activated on m.
     contextId,
     // accumulate the context chain in order to provide a unique key for rendering the same thought in normal view and context view
     contextChain,
@@ -557,25 +556,6 @@ const TreeNode = ({
   )
 }
 
-/** Hook to detect if the keyboard is open. */
-const useKeyboardDetect = () => {
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
-
-  useEffect(() => {
-    /**
-     * Detects if the keyboard is open by comparing the window.innerHeight to the document.documentElement.clientHeight.
-     */
-    const handleResize = () => {
-      setIsKeyboardOpen(window.innerHeight < document.documentElement.clientHeight)
-    }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  return isKeyboardOpen
-}
-
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const { sizes, setSize } = useSizeTracking()
@@ -583,10 +563,6 @@ const LayoutTree = () => {
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.dragInProgress)
   const ref = useRef<HTMLDivElement | null>(null)
-  const isLastActionNewThought = useSelector(state => {
-    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => patch.actions[0] === 'newThought')
-  })
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
@@ -943,20 +919,6 @@ const LayoutTree = () => {
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
-
-  const isKeyboardOpen = useKeyboardDetect()
-  const dispatch = useDispatch()
-
-  useEffect(() => {
-    //console.log({ isKeyboardOpen, isLastActionNewThought })
-    //if (!preventSetCursor && isTouch && isSafari()) {
-    asyncFocus()
-    //}
-    //if (!isKeyboardOpen && isLastActionNewThought) {
-    if (isLastActionNewThought) {
-      dispatch(setCursorActionCreator({ path: HOME_PATH }))
-    }
-  }, [isKeyboardOpen, isLastActionNewThought, dispatch])
 
   return (
     <div
