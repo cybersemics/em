@@ -153,6 +153,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     thoughts: initialThoughts(created),
     undoPatches: [],
     commandMenuOpen: false,
+    activeRadioButton: '',
   }
 
   /**

@@ -169,6 +169,8 @@ interface State {
   undoPatches: Patch[]
   /** Whether the command menu is open. */
   commandMenuOpen: boolean
+  /** The active radio button. */
+  activeRadioButton: string
 }
 
 export default State
