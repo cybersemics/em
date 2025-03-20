@@ -13,8 +13,10 @@ const setActiveRadioButton = (state: State, action: { value: string }) => {
 }
 
 /** Action-creator for setActiveRadioButton. */
-export const setActiveRadioButtonActionCreator = (value: string): Thunk => dispatch => {
-  dispatch({ type: 'setActiveRadioButton', value })
-}
+export const setActiveRadioButtonActionCreator =
+  (value: string): Thunk =>
+  dispatch => {
+    dispatch({ type: 'setActiveRadioButton', value })
+  }
 
 export default _.curryRight(setActiveRadioButton)

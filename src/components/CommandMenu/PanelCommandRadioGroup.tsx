@@ -18,7 +18,7 @@ const PanelCommandRadioGroup: React.FC<PanelCommandRadioGroupProps> = ({ childre
 
   return (
     <PanelCommandGroup>
-      {React.Children.map(children, (child) =>
+      {React.Children.map(children, child =>
         React.cloneElement(child as React.ReactElement, {
           isSelected: activeRadioButton === (child as React.ReactElement).props.value,
           onSelect: () => handleRadioButtonSelect((child as React.ReactElement).props.value),

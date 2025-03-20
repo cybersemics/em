@@ -14,7 +14,6 @@ const PanelCommandGroup: React.FC<PanelCommandGroupProps> = ({ children }) => {
   const size = firstChild.props.size ?? 'small'
 
   return (
-
     <div
       className={css({
         display: 'flex',
