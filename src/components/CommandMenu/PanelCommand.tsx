@@ -65,20 +65,6 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
     [isButtonExecutable, isButtonActive, gridColumn],
   )
 
-  // Define specific styles for indent, outdent, medium size, and subcategorizeOne
-  const svgStyle = useMemo(() => {
-    const isSpecialCommand = command.id === 'indent' || command.id === 'outdent'
-    const isSubcategorizeOne = command.id === 'subcategorizeOne'
-    const scaleValue = isSpecialCommand ? 'scale(1.3)' : size === 'medium' ? 'scale(1.2)' : 'scale(1)'
-
-    return {
-      fill: style.fill,
-      flex: isSubcategorizeOne ? 'none' : size === 'medium' ? '1' : 'none',
-      transform: scaleValue,
-      marginRight: isSubcategorizeOne ? '0.5rem' : '0',
-    }
-  }, [command.id, style.fill, size])
-
   return (
     <div
       className={cx(
@@ -99,7 +85,12 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       title={`${command.label}${command.keyboard ? ` (${formatKeyboardShortcut(command.keyboard)})` : ''}`}
       {...fastClick(handleTap)}
     >
-      <SVG style={svgStyle} animated={isAnimated} animationComplete={() => setIsAnimated(false)} />
+      <SVG
+        style={{ fill: style.fill, flex: size === 'medium' ? '1' : 'none' }}
+        size={size === 'small' ? 18 : size === 'medium' ? 22 : 18}
+        animated={isAnimated}
+        animationComplete={() => setIsAnimated(false)}
+      />
       {command.id !== 'indent' && command.id !== 'outdent' && (
         <div
           className={css({
