@@ -83,7 +83,7 @@ const PositionedFauxCaret = ({ children, path, wrapperElement }: Props) => {
   if (!isTouch || !isSafari()) return null
   return (
     <span className={css({ position: 'absolute', margin: '-0.1875em 0 0 -0.05em' })} style={styles}>
-      <FauxCaret opacity='var(--faux-caret-opacity)' />
+      <FauxCaret caretType='positioned' />
     </span>
   )
 }

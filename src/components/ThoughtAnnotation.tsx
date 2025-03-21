@@ -206,7 +206,7 @@ const ThoughtAnnotation = React.memo(
               position: 'absolute',
             })}
           >
-            <FauxCaret opacity='var(--faux-caret-line-start-opacity)' />
+            <FauxCaret caretType='thoughtStart' />
           </span>
           <span
             className={css(
@@ -244,7 +244,7 @@ const ThoughtAnnotation = React.memo(
             showSuperscript ? <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} /> : null
           }
           <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
-            <FauxCaret opacity='var(--faux-caret-line-end-opacity)' />
+            <FauxCaret caretType='thoughtEnd' />
           </span>
         </div>
       </div>
