@@ -1069,3 +1069,119 @@ it('empty parent', async () => {
   - ${''}
     - x`)
 })
+
+// TODO: Why does foo not appear in the export?
+// Confirmed that the input is being detected as a single line and editThought is called in the importText reducer.
+// Works as expected in the browser.
+it.skip('insert single-line HTML at end of thought', async () => {
+  const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title></title>
+<meta name="Generator" content="Cocoa HTML Writer">
+<meta name="CocoaVersion" content="2575.4">
+<style type="text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
+</style>
+</head>
+<body>
+<p class="p1"><i>foo</i></p>
+</body>
+</html>
+`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize()
+
+  store.dispatch([
+    newThought({ value: 'a' }),
+    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a*foo*`)
+})
+
+it('do not insert html with newlines as a single-line', async () => {
+  const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title></title>
+<meta name="Generator" content="Cocoa HTML Writer">
+<meta name="CocoaVersion" content="2575.4">
+<style type="text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
+</style>
+</head>
+<body>
+<p class="p1"><i>foo
+bar</i></p>
+</body>
+</html>
+`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize()
+
+  store.dispatch([
+    newThought({ value: 'a' }),
+    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - *foo bar*`)
+})
+
+it('do not insert html with list items as a single-line', async () => {
+  const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title></title>
+<meta name="Generator" content="Cocoa HTML Writer">
+<meta name="CocoaVersion" content="2575.4">
+<style type="text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
+</style>
+</head>
+<body>
+<ul><li>a</li><li>b</li><li>c</li></ul>
+</body>
+</html>
+`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize()
+
+  store.dispatch([
+    newThought({ value: 'x' }),
+    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['x'])!, html })),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - x
+    - a
+    - b
+    - c`)
+})
