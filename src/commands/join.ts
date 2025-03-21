@@ -6,7 +6,7 @@ const joinThoughts: Command = {
   id: 'join',
   label: 'Join Thoughts',
   description: 'join all siblings and merge their children',
-  keyboard: { key: 'i', alt: true, shift: true },
+  keyboard: { key: 'j', alt: true },
   multicursor: {
     enabled: true,
     clearMulticursor: true,
