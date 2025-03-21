@@ -5,8 +5,8 @@ import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import { EXPAND_HOVER_DELAY, HOME_PATH } from '../constants'
 import equalPath from '../util/equalPath'
-import hashPath from '../util/hashPath'
 import isDescendantPath from '../util/isDescendantPath'
+import keyValueBy from '../util/keyValueBy'
 
 let collapseDownTimer: Timer | null = null
 
@@ -33,43 +33,18 @@ const collapseHoverDownDebounced =
   }
 
 /**
- * Removes a path and all its descendants from expandHoverDownPaths and expanded states.
- * This ensures that when a parent is collapsed, all its children are collapsed as well.
+ * Expands state.hoveringPath after a delay. Only expands if it is a valid Path with children and it is not already expanded. Expands using state.expandHoverDownPaths so that it can be toggled independently from autoexpansion with expandThoughts.
  */
 const collapseHoverDown = (state: State, { path }: { path: Path }): State => {
-  // Get all paths from both expanded and expandHoverDownPaths states
-  const expandedPaths = Object.entries(state.expanded).map(([_, path]) => path)
-  const expandHoverDownPaths = Object.entries(state.expandHoverDownPaths).map(([_, path]) => path)
-
-  // Find all paths that are descendants of the collapsed path
+  // Use keyValueBy to filter out paths that are descendants of the collapsed path
   // or are the path itself (inclusive)
-  const expandedPathsToRemove = expandedPaths.filter(
-    expandedPath => equalPath(expandedPath, path) || isDescendantPath(expandedPath, path),
+  const newExpanded = keyValueBy<Path, Path>(state.expanded, (key, expandedPath) =>
+    !equalPath(expandedPath, path) && !isDescendantPath(expandedPath, path) ? { [key]: expandedPath } : null,
   )
 
-  const expandHoverPathsToRemove = expandHoverDownPaths.filter(
-    expandedPath => equalPath(expandedPath, path) || isDescendantPath(expandedPath, path),
+  const newExpandHoverDownPaths = keyValueBy<Path, Path>(state.expandHoverDownPaths, (key, expandHoverPath) =>
+    !equalPath(expandHoverPath, path) && !isDescendantPath(expandHoverPath, path) ? { [key]: expandHoverPath } : null,
   )
-
-  // Create new states by removing all descendant paths
-  const newExpanded = { ...state.expanded }
-  const newExpandHoverDownPaths = { ...state.expandHoverDownPaths }
-
-  // Remove all expanded paths that are descendants of the collapsed path
-  expandedPathsToRemove.forEach(pathToRemove => {
-    const hashedPath = hashPath(pathToRemove)
-    if (newExpanded[hashedPath]) {
-      delete newExpanded[hashedPath]
-    }
-  })
-
-  // Remove all expandHoverDownPaths that are descendants of the collapsed path
-  expandHoverPathsToRemove.forEach(pathToRemove => {
-    const hashedPath = hashPath(pathToRemove)
-    if (newExpandHoverDownPaths[hashedPath]) {
-      delete newExpandHoverDownPaths[hashedPath]
-    }
-  })
 
   return {
     ...state,

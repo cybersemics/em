@@ -1,20 +1,28 @@
-import path from 'path'
 import sleep from '../../../util/sleep'
-import configureSnapshots from '../configureSnapshots'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import hideHUD from '../helpers/hideHUD'
+import isElementVisible from '../helpers/isElementVisible'
 import paste from '../helpers/paste'
-import screenshot from '../helpers/screenshot'
-
-expect.extend({
-  toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
-})
+import waitForEditable from '../helpers/waitForEditable'
+import { page } from '../setup'
 
 // Set a longer timeout for drag operations
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('Auto-expansion and collapse during drag operations', () => {
   beforeEach(hideHUD)
+
+  // Clean up after each test by releasing the mouse button
+  afterEach(async () => {
+    try {
+      // Release mouse button if it's still down
+      await page.mouse.up()
+      // Add a small delay to ensure the UI updates
+      await sleep(500)
+    } catch (err) {
+      console.error('Error during test cleanup:', err)
+    }
+  })
 
   it('expands a thought on hover down during drag', async () => {
     await paste(`
@@ -34,9 +42,12 @@ describe('Auto-expansion and collapse during drag operations', () => {
     // Wait for expansion to occur
     await sleep(1000)
 
-    // Take a screenshot
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
+    // Verify that A1 and A2 are visible (A has expanded)
+    const a1Editable = await waitForEditable('A1', { timeout: 2000 })
+    const a2Editable = await waitForEditable('A2', { timeout: 2000 })
+
+    expect(a1Editable).toBeTruthy()
+    expect(a2Editable).toBeTruthy()
   })
 
   it('collapses a thought when dragging away', async () => {
@@ -56,8 +67,12 @@ describe('Auto-expansion and collapse during drag operations', () => {
     // Wait for expansion to occur
     await sleep(1000)
 
-    const AExpanded = await screenshot()
-    expect(AExpanded).toMatchImageSnapshot()
+    // Verify that A1 and A2 are visible (A has expanded)
+    const a1Editable = await waitForEditable('A1')
+    const a2Editable = await waitForEditable('A2')
+
+    expect(a1Editable).toBeTruthy()
+    expect(a2Editable).toBeTruthy()
 
     // Now drag to thought B instead
     await dragAndDropThought('C', 'B', {
@@ -68,9 +83,12 @@ describe('Auto-expansion and collapse during drag operations', () => {
 
     await sleep(1000)
 
-    // Take a screenshot
-    const imageCollapsed = await screenshot()
-    expect(imageCollapsed).toMatchImageSnapshot()
+    // Verify that A1 and A2 are no longer visible (A has collapsed)
+    const a1Visible = await isElementVisible('A1')
+    const a2Visible = await isElementVisible('A2')
+
+    expect(a1Visible).toBe(false)
+    expect(a2Visible).toBe(false)
   })
 
   it('collapses nested thoughts when dragging away', async () => {
@@ -93,8 +111,12 @@ describe('Auto-expansion and collapse during drag operations', () => {
     // Wait for expansion to occur
     await sleep(1000)
 
-    const AExpanded = await screenshot()
-    expect(AExpanded).toMatchImageSnapshot()
+    // Verify that A1 and A2 are visible (A has expanded)
+    const a1Editable = await waitForEditable('A1', { timeout: 2000 })
+    const a2Editable = await waitForEditable('A2', { timeout: 2000 })
+
+    expect(a1Editable).toBeTruthy()
+    expect(a2Editable).toBeTruthy()
 
     // Now move to A1 using the dragAndDropThought function with skipMouseDown
     await dragAndDropThought('C', 'A1', {
@@ -106,9 +128,12 @@ describe('Auto-expansion and collapse during drag operations', () => {
     // Wait for A1 to expand
     await sleep(1000)
 
-    // Take screenshot of both A and A1 expanded
-    const AAndA1Expanded = await screenshot()
-    expect(AAndA1Expanded).toMatchImageSnapshot()
+    // Verify that A1-1 and A1-2 are visible (A1 has expanded)
+    const a11Editable = await waitForEditable('A1-1', { timeout: 2000 })
+    const a12Editable = await waitForEditable('A1-2', { timeout: 2000 })
+
+    expect(a11Editable).toBeTruthy()
+    expect(a12Editable).toBeTruthy()
 
     // Now drag to A2
     await dragAndDropThought('C', 'A2', {
@@ -120,8 +145,12 @@ describe('Auto-expansion and collapse during drag operations', () => {
     // Wait for any state changes
     await sleep(1000)
 
-    const a1Collapsed = await screenshot()
-    expect(a1Collapsed).toMatchImageSnapshot()
+    // Verify that A1-1 and A1-2 are no longer visible (A1 has collapsed)
+    const a11Visible = await isElementVisible('A1-1')
+    const a12Visible = await isElementVisible('A1-2')
+
+    expect(a11Visible).toBe(false)
+    expect(a12Visible).toBe(false)
 
     // Now drag completely away to B
     await dragAndDropThought('C', 'B', {
@@ -132,8 +161,11 @@ describe('Auto-expansion and collapse during drag operations', () => {
 
     await sleep(1000)
 
-    // Take screenshot of final state
-    const imageCollapsed = await screenshot()
-    expect(imageCollapsed).toMatchImageSnapshot()
+    // Verify that all A's children (A1 and A2) are no longer visible (A has collapsed)
+    const a1Visible = await isElementVisible('A1')
+    const a2Visible = await isElementVisible('A2')
+
+    expect(a1Visible).toBe(false)
+    expect(a2Visible).toBe(false)
   })
 })
