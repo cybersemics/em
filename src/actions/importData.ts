@@ -18,6 +18,9 @@ interface ImportDataPayload {
   isEmText?: boolean
 }
 
+/** Matches a single line of content within a body tag. This is a special for copying small bits of text from PDF's. See more below at usage. */
+const REGEX_HTML_SINGLE_LINE = /<body[^>]*>\s(?:<p[^>]*>)?([^\n]*?)(?:<\/p>)?\s*<\/body>/is
+
 /** Action-creator for importData. This is an action that handles importing content
  * into the application, choosing between importText and importFiles based on the content type.
  *
@@ -67,9 +70,15 @@ export const importDataActionCreator = ({
       )
     }
 
-    const processedText = html ? html.replace(/\n\s*\n+/g, '\n') : (text?.trim() ?? '')
+    // Copying a single word from a PDF on macOS results in text/html, which by default get processed as multiline.
+    // In order to insert it directly at the caret offset of the cursor thought, we need a special case regex to match single-line content between the body tags. See importData tests for examples.
+    // Otherwise it will be passed to importFiles and import as a child of the current thought.
+    // Eventually importFiles should be modified to insert single-line content at the cursor offset.
+    const singleLineHtml = html?.match(REGEX_HTML_SINGLE_LINE)?.[1]
 
-    const multiline = html ? REGEX_NONFORMATTING_HTML.test(html) : !!processedText?.trim().includes('\n')
+    const processedText = singleLineHtml ?? (html ? html.replace(/\n\s*\n+/g, '\n') : (text?.trim() ?? ''))
+    const multiline =
+      !singleLineHtml && (html ? REGEX_NONFORMATTING_HTML.test(html) : !!processedText?.trim().includes('\n'))
 
     // Check if the text is markdown, if so, prefer importText over importFiles
     const markdown = isMarkdown(processedText)
