@@ -435,7 +435,7 @@ const Editable = ({
         if (invalidState) {
           invalidStateError(null)
         }
-        contentRef.current!.innerHTML = oldValueRef.current
+        //contentRef.current!.innerHTML = oldValueRef.current
       }
 
       // if we know that the focus is changing to another editable or note then do not set editing to false

@@ -6,7 +6,7 @@ import store from './app'
 import reactMinistore from './react-ministore'
 
 /** A store that tracks the document's command state (e.g. bold, italic, underline, strikethrough). */
-const commandStateStore = reactMinistore<CommandState>({
+export const commandStateStore = reactMinistore<CommandState>({
   bold: false,
   italic: false,
   underline: false,
