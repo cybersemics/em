@@ -97,7 +97,6 @@ export const initialize = async () => {
       return !!((lexeme && getLexeme(state, key)) || lexeme?.contexts.some(cxid => getThoughtById(state, cxid)))
     },
     onError: (message, object) => {
-      console.error(message, object)
       store.dispatch(error({ value: message }))
     },
     onProgress: syncStatusStore.update,

@@ -1,11 +1,14 @@
+import colors from '../../../colors.config'
+import rgbToHex from '../../../util/rgbToHex'
+import rgbaToHex from '../../../util/rgbaToHex'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
+import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
-import waitForEditable from '../helpers/waitForEditable'
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
@@ -28,7 +31,6 @@ it('Set the text color of the text and bullet', async () => {
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
@@ -37,8 +39,8 @@ it('Set the text color of the text and bullet', async () => {
   const cursorText = await getEditingText()
   const bulletColor = await getBulletColor()
   const result = extractStyleProperty(cursorText!)
-  expect(bulletColor).toBe('rgb(0, 199, 230)')
-  expect(result?.color).toBe('#00c7e6')
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
+  expect(result?.color).toBe(rgbaToHex(colors.light.blue))
   expect(result?.backgroundColor).toBe(null)
 })
 
@@ -49,7 +51,6 @@ it('Set the background color of the text', async () => {
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
@@ -57,8 +58,8 @@ it('Set the background color of the text', async () => {
   const cursorText = await getEditingText()
   const bulletColor = await getBulletColor()
   const result = extractStyleProperty(cursorText!)
-  expect(bulletColor).toBe('rgb(0, 214, 136)')
-  expect(result?.backgroundColor).toBe('rgb(0, 214, 136)')
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.green))
+  expect(result?.backgroundColor && rgbToHex(result.backgroundColor)).toBe(rgbaToHex(colors.light.green))
 })
 
 it('Clear the background color when selecting text color', async () => {
@@ -68,7 +69,6 @@ it('Clear the background color when selecting text color', async () => {
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
   let cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe(null)
@@ -76,13 +76,15 @@ it('Clear the background color when selecting text color', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="background color swatches"] [aria-label="green"]')
   cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe('rgb(0, 214, 136)')
-  expect(extractStyleProperty(cursorText!)?.color).toBe('#000000')
+  let style = extractStyleProperty(cursorText!)
+  expect(style?.backgroundColor && rgbToHex(style.backgroundColor)).toBe(rgbaToHex(colors.light.green))
+  expect(style?.color).toBe(rgbaToHex(colors.light.black))
 
   await click('[aria-label="text color swatches"] [aria-label="purple"]')
   cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.color).toBe('#aa80ff')
-  expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe(null)
+  style = extractStyleProperty(cursorText!)
+  expect(style?.color).toBe(rgbaToHex(colors.light.purple))
+  expect(style?.backgroundColor).toBe(null)
 })
 
 it('Clear the text color when setting background color', async () => {
@@ -92,7 +94,6 @@ it('Clear the text color when setting background color', async () => {
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
   let cursorText = await getEditingText()
   expect(extractStyleProperty(cursorText!)?.color).toBe(null)
@@ -100,12 +101,13 @@ it('Clear the text color when setting background color', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="green"]')
   cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.color).toBe('#00d688')
+  expect(extractStyleProperty(cursorText!)?.color).toBe(rgbaToHex(colors.light.green))
 
   await click('[aria-label="background color swatches"] [aria-label="purple"]')
   cursorText = await getEditingText()
-  expect(extractStyleProperty(cursorText!)?.backgroundColor).toBe('rgb(170, 128, 255)')
-  expect(extractStyleProperty(cursorText!)?.color).toBe('#000000')
+  const style = extractStyleProperty(cursorText!)
+  expect(style?.backgroundColor && rgbToHex(style?.backgroundColor)).toBe(rgbaToHex(colors.light.purple))
+  expect(style?.color).toBe(rgbaToHex(colors.light.black))
 })
 
 it('Bullet remains the default color when a substring color is set', async () => {
@@ -115,7 +117,6 @@ it('Bullet remains the default color when a substring color is set', async () =>
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
 
   await setSelection(0, 6)
@@ -135,7 +136,6 @@ it('Empty <font> element will be removed after setting color to default.', async
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
@@ -153,7 +153,6 @@ it('Empty <span> element will be removed after setting color to default.', async
 
   await paste(importText)
 
-  await waitForEditable('Golden Retriever')
   await clickThought('Golden Retriever')
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
@@ -171,7 +170,6 @@ it('remove all formatting from the thought', async () => {
 
   await paste(importText)
 
-  await waitForEditable('Labrador')
   await clickThought('Labrador')
   // Apply formats like Bold, Italic, Underline, Text color etc.
   await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
@@ -185,4 +183,60 @@ it('remove all formatting from the thought', async () => {
 
   const thoughtValue = await getEditingText()
   expect(thoughtValue).toBe('Labrador')
+})
+
+it('Verify superscript colors in different views', async () => {
+  const importText1 = `
+    - k
+    - k
+    - hello world
+    - hello world
+    - a
+      - m
+        - x
+    - v
+      - b
+        - m
+          - y
+    - c
+      - b
+    `
+  await paste(importText1)
+
+  // Test 1: Verify that partial text coloring doesn't affect superscript
+  await clickThought('hello world')
+  await setSelection(6, 11) // Select only "world" in "hello world"
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  const supColor1 = await getSuperscriptColor()
+  expect(supColor1).toBe(null) // Superscript should remain uncolored for partial text coloring
+
+  // Test 2: Verify superscript color when entire thought is colored
+  await clickThought('k')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  const supColor2 = await getSuperscriptColor()
+  expect(rgbToHex(supColor2!)).toBe(rgbaToHex(colors.light.blue)) // Superscript should match thought color
+
+  // Test 3: Set up nested thought colors for context view testing
+  // Color parent thought 'v' red
+  await clickThought('v')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
+
+  // Color child thought 'b' green
+  await clickThought('b')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="green"]')
+
+  // Switch to context view and verify superscript color
+  await clickThought('a')
+  await clickThought('m')
+  await click('[data-testid="toolbar-icon"][aria-label="Context View"]')
+
+  await press('ArrowDown')
+  const supColor3 = await getSuperscriptColor()
+  expect(rgbToHex(supColor3!)).toBe(rgbaToHex(colors.light.green)) // Superscript should match the green color in context view
 })

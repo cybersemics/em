@@ -27,24 +27,35 @@ export const formatSelectionActionCreator =
     if (!thought) return
     const colors = themeColors(state)
     suppressFocusStore.update(true)
-    // if there is no selection, format the entire thought by selecting the whole thought
+
+    // format whole thought (if there is no selection)
     const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
     if (!thoughtContentEditable) return
+
     if (
       (selection.text()?.length === 0 && strip(thought.value).length !== 0) ||
       selection.text()?.length === strip(thought.value).length
     ) {
       const hasCustomBackgroundColor = /background-color\s*:\s*[^;]+;?/.test(thought.value)
       const savedSelection = selection.save()
-      // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile
+      // Note that we must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile.
       selection.select(thoughtContentEditable)
-      if (!(command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor))
+      if (!(command === 'backColor' && color === 'bg' && !hasCustomBackgroundColor)) {
         document.execCommand(command, false, color ? colors[color] : '')
-      selection.restore(savedSelection)
-    } else {
+      }
+
+      if (savedSelection) {
+        selection.restore(savedSelection)
+      } else {
+        selection.clear()
+      }
+    }
+    // format selected text only
+    else {
       document.execCommand(command, false, color ? colors[color] : '')
       updateCommandState()
     }
+
     suppressFocusStore.update(false)
 
     if (command === 'backColor') {

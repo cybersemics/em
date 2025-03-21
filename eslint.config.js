@@ -92,6 +92,7 @@ export default [
   {
     ignores: [
       'node_modules/**',
+      'packages/**/dist/**/*',
       '**/styled-system/*',
       '**/ios/*',
       '**/android/**',

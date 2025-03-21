@@ -223,6 +223,9 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           css({
             right: 0,
             textAlign: 'right',
+            // Prevent horizontal scroll bar when keyboard is up.
+            // overFlowX: 'hidden' does not work, as it breaks box-shadow on the child when the keyboard is up.
+            // https://github.com/cybersemics/em/pull/2760#issuecomment-2701329862
             maxWidth: '100%',
             userSelect: 'none',
             WebkitTapHighlightColor: 'bgTransparent',
@@ -251,6 +254,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             /* Hide the popup-close-x in the customize modal by extending the toolbar-mask to the right. Otherwise it would be too cluttered. Use just enough to cover popup-close-x without  */
             right: '-1.75em',
             backgroundColor: 'bg',
+            maxWidth: '100%',
             pointerEvents: 'none',
             boxShadow: '-10px 10px 20px 0 {colors.bg}',
             ...(!customize && {

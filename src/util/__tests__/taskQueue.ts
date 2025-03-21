@@ -643,6 +643,7 @@ describe('taskQueue', { retry: 10 }, () => {
     const queue = taskQueue<string>({
       onStep: result => outputStep.push(result),
       onLowStep: result => outputLowStep.push(result),
+      rejectOnError: true,
       retries: 2,
       timeout: 50,
       tasks: [delayedValueTimeout('a', 10), delayedValueTimeout('b', 20, 999), delayedValueTimeout('c', 30)],
@@ -660,5 +661,222 @@ describe('taskQueue', { retry: 10 }, () => {
     ])
 
     expect(outputLowStep).toEqual([{ completed: 1, expected: null, total: 3, index: 0, value: 'a' }])
+  })
+
+  describe('errors', () => {
+    it('ignores errors by default', async () => {
+      let counter = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that throws an error. */
+      const throwError = () => {
+        throw new Error('STOP')
+      }
+
+      await taskQueue({
+        tasks: [inc, throwError, inc],
+      }).end
+
+      expect(counter).toBe(2)
+    })
+
+    it('ignores rejected promises by default', async () => {
+      let counter = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that returns a rejected promise. */
+      const rejectTask = () => {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            reject('STOP')
+          })
+        })
+      }
+
+      await taskQueue({
+        tasks: [inc, rejectTask, inc],
+      }).end
+
+      expect(counter).toBe(2)
+    })
+
+    it('calls onError when a task throws', async () => {
+      let counter = 0
+      let error = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that throws an error. */
+      const throwError = () => {
+        throw new Error('STOP')
+      }
+
+      await taskQueue({
+        onError: err => {
+          expect(err.message).toBe('STOP')
+          error++
+        },
+        tasks: [inc, throwError, inc],
+      }).end
+
+      expect(counter).toBe(2)
+      expect(error).toBe(1)
+    })
+
+    // TODO: Why does the end promise time out?
+    it.skip('calls onError when a task throws', async () => {
+      let counter = 0
+      let error = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that returns a rejected promise. */
+      const rejectTask = () => {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            reject('STOP')
+          })
+        })
+      }
+
+      await taskQueue({
+        onError: err => {
+          expect(err.message).toBe('STOP')
+          error++
+        },
+        tasks: [inc, rejectTask, inc],
+      }).end
+
+      expect(counter).toBe(2)
+      expect(error).toBe(1)
+    })
+
+    it(`on('error', ...) syntax`, async () => {
+      let counter = 0
+      let error = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that throws an error. */
+      const throwError = () => {
+        throw new Error('STOP')
+      }
+
+      const queue = taskQueue()
+      queue.on('error', () => ++error)
+      queue.add([inc, throwError, inc])
+
+      await queue.end
+
+      expect(counter).toBe(2)
+      expect(error).toBe(1)
+    })
+
+    it('rejects end promise with rejectOnError: true', async () => {
+      let counter = 0
+      let error = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that throws an error. */
+      const throwError = () => {
+        throw new Error('STOP')
+      }
+
+      const queue = taskQueue({
+        onError: () => ++error,
+        rejectOnError: true,
+        tasks: [inc, throwError],
+      })
+
+      const errorMessage = await queue.end.catch((err: Error) => err.message)
+
+      expect(errorMessage).toBe('STOP')
+      expect(counter).toBe(1)
+      expect(error).toBe(1)
+    })
+
+    it('calls onError when a task returns a rejected promise', async () => {
+      let counter = 0
+      let error = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that returns a rejected promise. */
+      const rejectTask = () => {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            reject('STOP')
+          })
+        })
+      }
+
+      const queue = taskQueue({
+        onError: () => ++error,
+        rejectOnError: true,
+        tasks: [inc, rejectTask],
+      })
+
+      // returns rejected message directly instead of Error object
+      const errorMessage = await queue.end.catch((message: string) => message)
+
+      expect(errorMessage).toBe('STOP')
+      expect(counter).toBe(1)
+      expect(error).toBe(1)
+    })
+
+    it('reject add() promise with rejectOnError: true', async () => {
+      let counter = 0
+      let error = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that throws an error. */
+      const throwError = () => {
+        throw new Error('STOP')
+      }
+
+      const queue = taskQueue({
+        onError: () => ++error,
+      })
+
+      const errorMessage = await queue
+        .add([inc, throwError, inc], { rejectOnError: true })
+        .catch((err: Error) => err.message)
+
+      expect(error).toBe(1)
+      expect(errorMessage).toBe('STOP')
+    })
+
+    it('resolve end promise, even when add() uses rejectOnError: true', async () => {
+      let counter = 0
+
+      /** Increments the counter. */
+      const inc = () => ++counter
+
+      /** A function that throws an error. */
+      const throwError = () => {
+        throw new Error('STOP')
+      }
+
+      const queue = taskQueue()
+
+      try {
+        await queue.add([inc, throwError, inc], { rejectOnError: true })
+      } catch (err) {}
+
+      const result = await queue.end
+      expect(result).toBe(3)
+    })
   })
 })

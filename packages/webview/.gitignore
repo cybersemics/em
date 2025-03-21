@@ -1,0 +1,14 @@
+# See https://help.github.com/ignore-files/ for more about ignoring files.
+
+node_modules
+.DS_Store
+.env*.local
+dist
+
+.yarn/*
+
+xcuserdata
+DerivedData
+swiftpm/configuration/registries.json
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.netrc

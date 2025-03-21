@@ -6,6 +6,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
+import waitForRender from '../helpers/waitForRender'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -60,6 +61,10 @@ describe('multiline', () => {
   `)
 
     await press('ArrowUp')
+
+    // prevent intermittent test failures by waiting for next render
+    // e.g. https://github.com/cybersemics/em/actions/runs/13817648331/job/38654935147?pr=2800
+    await waitForRender()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot({

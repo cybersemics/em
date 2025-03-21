@@ -15,6 +15,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import editingValueStore from '../stores/editingValue'
 import viewportStore from '../stores/viewport'
+import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
@@ -108,7 +109,7 @@ const VirtualThought = ({
   // Only shim 'hide', not 'hide-parent', thoughts, otherwise hidden parents snap in instead of fading in when moving up the tree.
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
-    delay: 750,
+    delay: durations.get('layoutSlowShift'),
     selector: autofocusNew => autofocus === 'hide' && autofocusNew === 'hide' && !!height,
   })
 

@@ -10,7 +10,6 @@ import { addMulticursorActionCreator as addMulticursor } from '../actions/addMul
 import { alertActionCreator as alert } from '../actions/alert'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { AlertType, HOME_PATH, noop } from '../constants'
-import * as selection from '../device/selection'
 import documentSort from '../selectors/documentSort'
 import hasMulticursor from '../selectors/hasMulticursor'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -180,9 +179,6 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
   // Restore the cursor to its original position if not prevented.
   if (!multicursorConfig.preventSetCursor && cursorBeforeExecution) {
     store.dispatch(setCursor({ path: recomputePath(store.getState(), head(cursorBeforeExecution)) }))
-    requestAnimationFrame(() => {
-      selection.clear()
-    })
   }
 
   if (!multicursorConfig.clearMulticursor) {
