@@ -37,8 +37,10 @@ const PanelCommandGrid = () => {
         <PanelCommand command={{ ...indent, label: '' }} size='small' />
       </PanelCommandGroup>
       <PanelCommand command={swapParent} size='medium' />
-      <PanelCommand command={{ ...subcategorizeOne, label: 'Subcategorize One' }} size='medium' />
-      <PanelCommand command={subcategorizeAll} size='medium' />
+      <PanelCommandGroup>
+        <PanelCommand command={{ ...subcategorizeOne, label: 'Subcategorize One' }} size='medium' />
+        <PanelCommand command={subcategorizeAll} size='medium' />
+      </PanelCommandGroup>
     </div>
   )
 }

@@ -16,25 +16,28 @@ const PanelCommandGroup: React.FC<PanelCommandGroupProps> = ({ children }) => {
   return (
     <div
       className={css({
-        display: 'flex',
+        display: 'grid',
         alignItems: 'stretch',
-        gridColumn: childCount === 2 && size === 'medium' ? 'span 4' : `span ${childCount}`,
       })}
+      style={{
+        gridColumn: childCount === 2 && size === 'medium' ? 'span 4' : `span ${childCount}`,
+        gridTemplateColumns: childCount === 2 && size === 'medium' ? '1fr 1fr' : `repeat(${childCount}, 1fr)`,
+      }}
     >
-      {React.Children.map(children, (child, index) => (
-        <div
-          className={css({
-            display: 'flex',
-            borderRadius: index === 0 ? '16px 0 0 16px' : index === childCount - 1 ? '0 16px 16px 0' : '0', //rounded corners on first and last child
-            flex: 1,
-            marginLeft: index > 0 ? '5px' : '0',
-            backgroundColor: '{colors.gray15}',
-            justifyContent: 'center',
-          })}
-        >
-          {child}
-        </div>
-      ))}
+      {React.Children.map(children, (child, index) => {
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child, {
+            className: css({
+              borderRadius: index === 0 ? '16px 0 0 16px' : index === childCount - 1 ? '0 16px 16px 0' : '0',
+              flex: 1,
+              marginLeft: index > 0 ? '5px' : '0',
+              justifyContent: 'center',
+              gridColumn: 'span 1 !important'
+            }),
+          } as any)
+        }
+        return null
+      })}
     </div>
   )
 }

@@ -10,11 +10,12 @@ import fastClick from '../../util/fastClick'
 
 interface PanelCommandProps {
   command: Command
-  size?: 'small' | 'medium' | 'large' | 'xlarge'
+  size?: 'small' | 'medium' | 'large' | 'xlarge',
+  className?: string
 }
 
 /** A single button in the Panel Command Grid. */
-const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
+const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
   if (!command) {
@@ -80,6 +81,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition: 'background-color 0.5s ease',
         }),
+        className ? className : css({})
       )}
       style={style}
       title={`${command.label}${command.keyboard ? ` (${formatKeyboardShortcut(command.keyboard)})` : ''}`}
