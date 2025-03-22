@@ -21,8 +21,8 @@ const PanelCommandHeader: React.FC<PanelCommandHeaderProps> = ({ title }) => {
           className={css({
             fontWeight: 'bold',
             color: '{colors.fg}',
-            margin: '1rem 0 0.2rem',
-            fontSize: '1.1rem',
+            margin: '1.3rem 0 0.2rem',
+            fontSize: '1rem',
             borderBottom: 'none',
           })}
         >

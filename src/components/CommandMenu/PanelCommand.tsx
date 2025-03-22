@@ -88,7 +88,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
       {...fastClick(handleTap)}
     >
       <SVG
-        style={{ fill: style.fill, justifySelf: size === 'small' ? 'center' : 'start' }}
+        style={{ fill: style.fill, justifySelf: size === 'small' ? 'center' : 'center' }}
         size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
         animated={isAnimated}
         animationComplete={() => setIsAnimated(false)}
