@@ -1,7 +1,6 @@
 import { PropsWithChildren } from 'react'
 import { useSelector } from 'react-redux'
-import { css, cx } from '../../styled-system/css'
-import { upperRightRecipe } from '../../styled-system/recipes'
+import { css } from '../../styled-system/css'
 import fastClick from '../util/fastClick'
 import haptics from '../util/haptics'
 
@@ -45,17 +44,15 @@ const BaseCloseButton = ({
   return (
     <a
       {...fastClick(onClose, { tapDown: haptics.medium })}
-      className={cx(
-        upperRightRecipe(),
-        css(
-          {
-            color: 'inherit',
-            textDecoration: 'none',
-            opacity: transparent ? 0 : 1,
-          },
-          circleStyles,
-        ),
-      )}
+      className={css({
+        color: 'inherit',
+        textDecoration: 'none',
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        opacity: transparent ? 0 : 1,
+        ...circleStyles,
+      })}
       style={letterStyles}
       aria-label={disableSwipeToDismiss ? 'no-swipe-to-dismiss' : undefined}
       data-testid='close-button'
