@@ -46,10 +46,9 @@ const canExecuteDeleteEmptyThought = (state: State) => {
 const canExecuteOutdent = (state: State) => {
   const { cursor } = state
 
-  if (!cursor || (!selection.isActive() && selection.isText())) return false
-
   return (
     cursor &&
+    (selection.isActive() || !selection.isText()) &&
     selection.offset() === 0 &&
     isDocumentEditable() &&
     headValue(state, cursor)?.length !== 0 &&
