@@ -80,7 +80,6 @@ const Tabs = <T extends string>({
   currentTab,
   onTabChange,
   tabs,
-  className = '',
 }: {
   /** Current active tab value. */
   currentTab: T
@@ -88,11 +87,9 @@ const Tabs = <T extends string>({
   onTabChange: (value: T) => void
   /** Array of tab definitions. */
   tabs: TabDefinition<T>[]
-  /** Optional className for the container. */
-  className?: string
 }) => {
   return (
-    <div className={className}>
+    <div>
       <div
         className={css({
           boxSizing: 'border-box',
