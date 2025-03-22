@@ -268,6 +268,10 @@ const hoverPathActionCreator = (): Thunk => (dispatch, getState) => {
 
   // If no hovering path or drag not in progress, clear everything
   if (!hoveringPath || !dragInProgress) {
+    // Only dispatch clearExpandDown if we actually have expanded paths
+    if (Object.keys(state.expandHoverDownPaths).length > 0) {
+      dispatch(clearExpandDown())
+    }
     resetHoverState()
     return
   }
