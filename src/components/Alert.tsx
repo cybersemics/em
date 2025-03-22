@@ -44,21 +44,13 @@ const Alert: FC = () => {
           <PopupBase
             anchorFromBottom
             anchorOffset={36}
-            cssRaw={css.raw({
-              boxSizing: 'border-box',
-              background: 'panelBg',
-              border: '1px solid {colors.panelBorder}',
-              borderRadius: '8px',
-              zIndex: 'popup',
-              marginInline: 'auto',
-              left: 0,
-              right: 0,
-              width: 'max-content',
-            })}
             ref={popupRef}
             // Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state.
             key={value}
             circledCloseButton
+            border
+            center
+            background={token('colors.panelBg')}
             showXOnHover
             onClose={alert.showCloseLink && !isTouch ? onClose : undefined}
             swipeDownToDismiss

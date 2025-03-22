@@ -1,7 +1,7 @@
 import React, { PropsWithChildren, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { SystemStyleObject } from '../../styled-system/types'
+import { token } from '../../styled-system/tokens'
 import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { deleteResumableFile } from '../actions/importFiles'
@@ -24,8 +24,17 @@ export type PopupBaseProps = PropsWithChildren<
     anchorFromBottom?: boolean
     /** The offset (in pixels) from the top or bottom of the screen. */
     anchorOffset?: number
-    cssRaw?: SystemStyleObject
     circledCloseButton?: boolean
+    /** If true, a border will be added to the popup. */
+    border?: boolean
+    /** If true, the popup will be centered horizontally. */
+    center?: boolean
+    /** If true, the popup will take up the full width of the screen. */
+    fullWidth?: boolean
+    background?: string
+    padding?: string
+    textAlign?: 'center' | 'left' | 'right'
+    zIndex?: string
     showXOnHover?: boolean
     swipeDownToDismiss?: boolean
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
@@ -38,11 +47,16 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       children,
       importFileId,
       onClose,
-      cssRaw,
-      style,
       anchorFromBottom,
       anchorOffset,
       circledCloseButton,
+      border = false,
+      center = false,
+      fullWidth = false,
+      background = token('colors.bg'),
+      padding,
+      textAlign,
+      zIndex,
       showXOnHover,
       swipeDownToDismiss,
       ...props
@@ -74,26 +88,59 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
 
     const combinedRefs = useCombinedRefs(isTouch ? [useSwipeToDismissProps.ref, ref] : [ref])
 
+    const borderStyles = border
+      ? {
+          border: '1px solid {colors.panelBorder}',
+          borderRadius: '8px',
+        }
+      : {}
+
+    const centerStyles = center
+      ? {
+          marginInline: 'auto',
+          left: 0,
+          right: 0,
+          width: 'max-content',
+        }
+      : {}
+
+    const fullWidthStyles = fullWidth
+      ? {
+          boxShadow: 'none',
+          border: 'none',
+          display: 'block',
+          width: '100%',
+          overflowY: 'auto',
+          maxHeight: '100%',
+          maxWidth: '100%',
+        }
+      : {}
+
     return (
       <div
-        className={css(
-          showXOnHover && {
-            '&:hover': {
-              '& [data-close-button]': {
-                opacity: 1,
-              },
+        className={css({
+          boxSizing: 'border-box',
+          textAlign,
+          zIndex: 'popup',
+          ...borderStyles,
+          ...centerStyles,
+          ...fullWidthStyles,
+          '&:hover': {
+            '& [data-close-button]': {
+              opacity: showXOnHover ? 1 : undefined,
             },
           },
-          cssRaw,
-        )}
+        })}
         {...(isTouch ? useSwipeToDismissProps : null)}
         ref={combinedRefs}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
           ...positionFixedStyles,
+          background,
           fontSize,
+          padding,
+          zIndex,
           ...(isTouch ? useSwipeToDismissProps.style : null),
-          ...style,
         }}
         {...props}
       >
