@@ -10,7 +10,7 @@ import fastClick from '../../util/fastClick'
 
 interface PanelCommandProps {
   command: Command
-  size?: 'small' | 'medium' | 'large' | 'xlarge',
+  size?: 'small' | 'medium' | 'large' | 'xlarge'
   className?: string
 }
 
@@ -81,7 +81,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition: 'background-color 0.5s ease',
         }),
-        className ? className : css({})
+        className ? className : css({}),
       )}
       style={style}
       title={`${command.label}${command.keyboard ? ` (${formatKeyboardShortcut(command.keyboard)})` : ''}`}

@@ -32,7 +32,7 @@ const PanelCommandGroup: React.FC<PanelCommandGroupProps> = ({ children }) => {
               flex: 1,
               marginLeft: index > 0 ? '5px' : '0',
               justifyContent: 'center',
-              gridColumn: 'span 1 !important'
+              gridColumn: 'span 1 !important',
             }),
           } as any)
         }
