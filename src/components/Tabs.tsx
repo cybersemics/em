@@ -1,15 +1,6 @@
 import { css } from '../../styled-system/css'
+import { Tab as TabDefinition } from '../@types/Tab'
 import haptics from '../util/haptics'
-
-/**
- * Represents a single tab's configuration.
- */
-export interface TabDefinition<T extends string> {
-  value: T
-  label?: string
-  showDot?: boolean
-  content: React.ReactNode
-}
 
 /**
  * A tab component that shows its content when active.

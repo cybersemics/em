@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
+import { Tab } from '../../@types/Tab'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
-import Tabs, { TabDefinition } from '../Tabs'
+import Tabs from '../Tabs'
 import ActionButton from './../ActionButton'
 import CommandTable from './../CommandTable'
 import ModalComponent from './ModalComponent'
@@ -328,7 +329,7 @@ const ModalHelp = () => {
   const [section, setSection] = useState(Section.CommandLibrary)
   const fontSize = useSelector(state => state.fontSize)
   const showDot = useSelector(state => !state.storageCache?.tutorialComplete)
-  const tabs: TabDefinition<Section>[] = useMemo(
+  const tabs: Tab<Section>[] = useMemo(
     () => [
       {
         value: Section.CommandLibrary,
