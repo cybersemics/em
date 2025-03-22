@@ -69,8 +69,8 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
     <div
       className={cx(
         css({
-          display: 'flex',
-          flexDirection: size === 'small' ? 'column' : 'row',
+          display: 'grid',
+          gridTemplateColumns: size === 'medium' ? '1fr 2fr' : 'auto',
           alignItems: 'center',
           justifyContent: 'center',
           fontWeight: 'bold',
@@ -86,7 +86,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       {...fastClick(handleTap)}
     >
       <SVG
-        style={{ fill: style.fill, flex: size === 'medium' ? '1' : 'none' }}
+        style={{ fill: style.fill, justifySelf: size === 'small' ? 'center' : 'start' }}
         size={size === 'small' ? 18 : size === 'medium' ? 22 : 18}
         animated={isAnimated}
         animationComplete={() => setIsAnimated(false)}
@@ -97,7 +97,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
             fontSize: 'sm',
             marginTop: size === 'small' ? '0.5rem' : '0',
             color: '{colors.fg}',
-            flex: size === 'medium' ? '2' : 'none',
+            textAlign: size === 'medium' ? 'left' : 'center',
           })}
         >
           {command.label}
