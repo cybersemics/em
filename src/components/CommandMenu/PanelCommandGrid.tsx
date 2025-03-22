@@ -9,10 +9,10 @@ import subcategorizeOne from '../../commands/subcategorizeOne'
 import swapParent from '../../commands/swapParent'
 import toggleDone from '../../commands/toggleDone'
 import PanelCommand from './PanelCommand'
-import PanelCommandGroup from './PanelCommandGroup'
-import PanelCommandRadioGroup from './PanelCommandRadioGroup'
-import PanelCommandHeader from './PanelCommandHeader'
 import { PanelCommandGridHeight } from './PanelCommandGridHeight'
+import PanelCommandGroup from './PanelCommandGroup'
+import PanelCommandHeader from './PanelCommandHeader'
+import PanelCommandRadioGroup from './PanelCommandRadioGroup'
 
 /**
  * Component that displays the grid for the command menu.
@@ -30,7 +30,7 @@ const PanelCommandGrid = () => {
         maxWidth: '100%',
       })}
     >
-      <PanelCommandHeader title="View as:" />
+      <PanelCommandHeader title='View as:' />
       <PanelCommandGridHeight>
         <PanelCommandRadioGroup>
           <PanelCommand command={{ ...toggleDone, label: 'Done' }} size='small' />
@@ -39,7 +39,7 @@ const PanelCommandGrid = () => {
           <PanelCommand command={deleteCommand} size='small' />
         </PanelCommandRadioGroup>
       </PanelCommandGridHeight>
-        <PanelCommandHeader title="Another section:" />
+      <PanelCommandHeader title='Another section:' />
       <PanelCommandGridHeight>
         <PanelCommandGroup>
           <PanelCommand command={{ ...outdent, label: '' }} size='small' />
