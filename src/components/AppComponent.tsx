@@ -202,8 +202,6 @@ const AppComponent: FC = () => {
       <CommandPalette />
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
-
-      {/* Gesture Cheatsheet */}
       <GestureCheatsheet />
 
       {isDocumentEditable() && !tutorial && !showModal && (
