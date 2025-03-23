@@ -144,6 +144,8 @@ interface State {
   showModal?: Modal | null
   showSidebar: boolean
   showSplitView: boolean
+  /** Whether the gesture cheatsheet dialog is open. */
+  showGestureCheatsheet?: boolean
   /** The width of the react-split-pane (% or px). */
   splitPosition: number
   /* Status:
@@ -167,8 +169,6 @@ interface State {
   transientFocus?: boolean
   /** Undo history. Contains diffs that can be applied to State to revert actions. State.undoPatches[0] is the oldest. */
   undoPatches: Patch[]
-  /** Whether the gesture cheatsheet dialog is open. */
-  dialogOpen?: boolean
 }
 
 export default State

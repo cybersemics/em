@@ -89,7 +89,7 @@ const shouldCancelGesture = (
     state.dragInProgress ||
     !!state.showModal ||
     state.showSidebar ||
-    !!state.dialogOpen
+    !!state.showGestureCheatsheet
   )
 }
 

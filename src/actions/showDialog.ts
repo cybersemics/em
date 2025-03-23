@@ -8,7 +8,7 @@ import Thunk from '../@types/Thunk'
 const showDialog = (state: State) => {
   return {
     ...state,
-    dialogOpen: true,
+    showGestureCheatsheet: true,
   }
 }
 

@@ -10,7 +10,7 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const scrollTop = useScrollTop()
   const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
   const hideScrollZone = useSelector(
-    state => state.showModal || state.dialogOpen || getUserSetting(state, Settings.hideScrollZone),
+    state => state.showModal || state.showGestureCheatsheet || getUserSetting(state, Settings.hideScrollZone),
   )
   if (hideScrollZone) return null
 

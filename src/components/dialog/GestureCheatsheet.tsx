@@ -13,7 +13,7 @@ import DialogTitle from './DialogTitle'
  */
 const GestureCheatsheet: React.FC = () => {
   const dispatch = useDispatch()
-  const isOpen = useSelector(state => state.dialogOpen)
+  const isOpen = useSelector(state => state.showGestureCheatsheet)
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const [isBottomVisible, setIsBottomVisible] = useState(false)

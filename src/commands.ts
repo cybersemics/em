@@ -180,7 +180,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const state = store.getState()
     const experienceMode = getUserSetting(state, Settings.experienceMode)
 
-    if (state.showModal || state.dragInProgress || state.dialogOpen) return
+    if (state.showModal || state.dragInProgress || state.showGestureCheatsheet) return
 
     const command = commandGestureIndex[sequence as string]
 
@@ -237,7 +237,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
         ? commandGestureIndex[sequence as string]
         : null
 
-    if (command && !state.showModal && !state.dialogOpen && !state.dragInProgress) {
+    if (command && !state.showModal && !state.showGestureCheatsheet && !state.dragInProgress) {
       commandEmitter.trigger('command', command)
       executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
       if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
@@ -311,7 +311,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const command = commandKeyIndex[hashKeyDown(e)]
 
     // disable if modal is shown, except for navigation commands
-    if (!command || state.dialogOpen || (state.showModal && !command.allowExecuteFromModal)) return
+    if (!command || state.showGestureCheatsheet || (state.showModal && !command.allowExecuteFromModal)) return
 
     // execute the command
     commandEmitter.trigger('command', command)

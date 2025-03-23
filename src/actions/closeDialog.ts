@@ -8,7 +8,7 @@ import Thunk from '../@types/Thunk'
 const closeDialog = (state: State) => {
   return {
     ...state,
-    dialogOpen: false,
+    showGestureCheatsheet: false,
   }
 }
 
