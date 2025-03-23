@@ -230,13 +230,19 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // Get the command from the command gesture index.
     // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
 
-    // execute command
-    // do not execute when modal is displayed or a drag is in progress
-    const command =
-      !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
+    const openGestureCheatsheetCommand = commandById('openGestureCheatsheet')
+    const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
+
+    // If sequence ends with help gesture, use help command
+    // Otherwise use the normal command lookup
+    const command = sequence?.toString().endsWith(openGestureCheatsheetGesture)
+      ? openGestureCheatsheetCommand
+      : !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
         : null
 
+    // execute command
+    // do not execute when modal is displayed or a drag is in progress
     if (command && !state.showModal && !state.showGestureCheatsheet && !state.dragInProgress) {
       commandEmitter.trigger('command', command)
       executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
