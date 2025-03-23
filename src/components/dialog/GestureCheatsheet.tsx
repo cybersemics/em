@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import { closeDialogActionCreator } from '../../actions/closeDialog'
+import { toggleGestureCheatsheetActionCreator } from '../../actions/toggleGestureCheatsheet'
 import { FADEOUT_DURATION } from '../../constants'
 import CommandGrid from '../CommandGrid'
 import Dialog from './Dialog'
@@ -25,7 +25,7 @@ const GestureCheatsheet: React.FC = () => {
     if (dialogRef.current) {
       dialogRef.current.style.opacity = '0'
       setTimeout(() => {
-        dispatch(closeDialogActionCreator())
+        dispatch(toggleGestureCheatsheetActionCreator({ value: false }))
       }, FADEOUT_DURATION)
     }
   }

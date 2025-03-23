@@ -1,5 +1,5 @@
 import Command from '../@types/Command'
-import { openGestureCheatsheetActionCreator as openGestureCheatsheet } from '../actions/openGestureCheatsheet'
+import { toggleGestureCheatsheetActionCreator } from '../actions/toggleGestureCheatsheet'
 import GestureCheatsheetIcon from '../components/icons/GestureCheatsheetIcon'
 import scrollTo from '../device/scrollTo'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -8,7 +8,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
  * Executes the openGestureCheatsheet command.
  */
 const exec: Command['exec'] = dispatch => {
-  dispatch(openGestureCheatsheet())
+  dispatch(toggleGestureCheatsheetActionCreator({ value: true }))
   scrollTo('top')
 }
 
