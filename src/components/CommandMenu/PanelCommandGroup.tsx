@@ -1,5 +1,6 @@
 import React from 'react'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
+import { panelCommandGroupRecipe } from '../../../styled-system/recipes'
 
 interface PanelCommandGroupProps {
   children: React.ReactNode
@@ -15,14 +16,18 @@ const PanelCommandGroup: React.FC<PanelCommandGroupProps> = ({ children }) => {
 
   return (
     <div
-      className={css({
-        display: 'grid',
-        alignItems: 'stretch',
-      })}
-      style={{
-        gridColumn: childCount === 2 && size === 'medium' ? 'span 4' : `span ${childCount}`,
-        gridTemplateColumns: childCount === 2 && size === 'medium' ? '1fr 1fr' : `repeat(${childCount}, 1fr)`,
-      }}
+      className={cx(
+        css({
+          display: 'grid',
+          alignItems: 'stretch',
+        }),
+        panelCommandGroupRecipe({
+          layout:
+            childCount === 2 && size === 'medium'
+              ? 'medium-2'
+              : (`small-${childCount}` as 'small-2' | 'small-3' | 'small-4'),
+        }),
+      )}
     >
       {React.Children.map(children, (child, index) => {
         if (React.isValidElement(child)) {

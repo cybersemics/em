@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo, useState } from 'react'
+import React, { FC, useCallback, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import Command from '../../@types/Command'
@@ -41,37 +41,13 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
     [command, isButtonExecutable],
   )
 
-  const gridColumn = useMemo(() => {
-    switch (size) {
-      case 'small':
-        return 'span 1'
-      case 'medium':
-        return 'span 2'
-      case 'large':
-        return 'span 2'
-      case 'xlarge':
-        return 'span 4'
-      default:
-        return 'span 1'
-    }
-  }, [size])
-
-  const style = useMemo(
-    () => ({
-      fill: isButtonExecutable && isButtonActive ? '{colors.purple}' : '{colors.gray15}',
-      gridColumn,
-      opacity: isButtonExecutable ? 1 : 0.5,
-      transition: 'opacity 0.5s ease, background-color 0.5s ease',
-    }),
-    [isButtonExecutable, isButtonActive, gridColumn],
-  )
-
   return (
     <div
       className={cx(
         css({
           display: 'grid',
           gridTemplateColumns: size === 'medium' ? '1fr 2fr' : 'auto',
+          minHeight: '3rem',
           alignItems: 'center',
           justifyContent: 'center',
           fontWeight: 'bold',
@@ -79,16 +55,26 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
           borderRadius: '16px',
           backgroundColor: isButtonActive ? '{colors.purple}' : '{colors.gray15}',
           cursor: isButtonExecutable ? 'pointer' : 'default',
-          transition: 'background-color 0.5s ease',
+          transition: 'opacity 0.5s ease, background-color 0.5s ease',
+          gridColumn:
+            size === 'small'
+              ? 'span 1'
+              : size === 'medium'
+                ? 'span 2'
+                : size === 'large'
+                  ? 'span 2'
+                  : size === 'xlarge'
+                    ? 'span 4'
+                    : 'span 1',
+          opacity: isButtonExecutable ? 1 : 0.5,
         }),
         className ? className : css({}),
       )}
-      style={style}
       title={`${command.label}${command.keyboard ? ` (${formatKeyboardShortcut(command.keyboard)})` : ''}`}
       {...fastClick(handleTap)}
     >
       <SVG
-        style={{ fill: style.fill, justifySelf: size === 'small' ? 'center' : 'center' }}
+        style={{ justifySelf: size === 'small' ? 'center' : 'center' }}
         size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
         animated={isAnimated}
         animationComplete={() => setIsAnimated(false)}

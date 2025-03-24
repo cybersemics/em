@@ -15,13 +15,17 @@ const PanelCommandHeader: React.FC<PanelCommandHeaderProps> = ({ title }) => {
         gridColumn: 'span 4',
         alignSelf: 'end',
         height: 'auto',
+        margin: '1.3rem 0 0.2rem',
+        '&:first-child': {
+          marginTop: 0,
+        },
       })}
     >
       <h2
         className={css({
           fontWeight: 'bold',
           color: '{colors.fg}',
-          margin: '1.3rem 0 0.2rem',
+          margin: '0',
           fontSize: '1rem',
           borderBottom: 'none',
         })}

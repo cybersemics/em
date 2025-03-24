@@ -511,6 +511,7 @@ const TreeNode = ({
         }}
       >
         <div ref={fadeThoughtRef}>
+          {isCursor && <div style={{ position: 'absolute', left: -45 }}>...</div>}
           <VirtualThought
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
             depth={depth}
