@@ -47,6 +47,7 @@ import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import HoverArrow from './HoverArrow'
 import VirtualThought, { OnResize } from './VirtualThought'
+import EllipsisIcon from './icons/EllipsisIcon'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
 type TreeThought = {
@@ -514,8 +515,11 @@ const TreeNode = ({
       >
         <div ref={fadeThoughtRef}>
           {isCursor && (
-            <div onClick={() => dispatch(showCommandMenuActionCreator())} style={{ position: 'absolute', left: -45 }}>
-              ...
+            <div
+              onClick={() => dispatch(showCommandMenuActionCreator())}
+              style={{ position: 'absolute', left: -50, top: 2 }}
+            >
+              <EllipsisIcon />
             </div>
           )}
           <VirtualThought
