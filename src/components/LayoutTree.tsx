@@ -164,17 +164,17 @@ const useSizeTracking = () => {
 
         setSizes(sizesOld =>
           heightClipped === sizesOld[key]?.height &&
-            width === sizesOld[key]?.width &&
-            isVisible === sizesOld[key]?.isVisible
+          width === sizesOld[key]?.width &&
+          isVisible === sizesOld[key]?.isVisible
             ? sizesOld
             : {
-              ...sizesOld,
-              [key]: {
-                height: heightClipped,
-                width: width || undefined,
-                isVisible,
+                ...sizesOld,
+                [key]: {
+                  height: heightClipped,
+                  width: width || undefined,
+                  isVisible,
+                },
               },
-            },
         )
       } else {
         removeSize(key)
@@ -259,9 +259,9 @@ const linearizeTree = (
     styleAccum?: React.CSSProperties | null
     styleFromGrandparent?: React.CSSProperties | null
   } = {
-      depth: 0,
-      indexDescendant: 0,
-    },
+    depth: 0,
+    indexDescendant: 0,
+  },
 ): TreeThought[] => {
   const path = basePath || HOME_PATH
   const hashedPath = hashPath(path)
@@ -277,8 +277,8 @@ const linearizeTree = (
       ? getContextsSortedAndRanked(state, thought.value)
       : []
     : // context children should render the children of a specific Lexeme instance to avoid repeating the Lexeme.
-    // See: contextId (above)
-    getChildrenRanked(state, contextId || thoughtId)
+      // See: contextId (above)
+      getChildrenRanked(state, contextId || thoughtId)
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
 
   // short circuit if the context view only has one context and the NoOtherContexts component will be displayed
@@ -378,7 +378,7 @@ const linearizeTree = (
   return thoughts
 }
 
-/** Renders a thought node with proper positioning and transitions */
+/** Renders a thought node with proper positioning and transitions. */
 const ThoughtNode = ({
   isLastActionSwapParent,
   isLastActionNewThought,
@@ -427,13 +427,15 @@ const ThoughtNode = ({
     top: isLastActionSwapParent ? 0 : y,
     width: isTableCol1 && width !== undefined ? width : `calc(100% - ${x}px + 1em + 10px)`,
     ...(style || {}),
-    textAlign: isTableCol1 ? 'right' as const : undefined,
+    textAlign: isTableCol1 ? ('right' as const) : undefined,
   }
 
-  const innerDivStyle = isLastActionSwapParent ? {
-    top: y,
-    left: 0,
-  } : undefined
+  const innerDivStyle = isLastActionSwapParent
+    ? {
+        top: y,
+        left: 0,
+      }
+    : undefined
 
   return (
     <div
@@ -460,20 +462,17 @@ const ThoughtNode = ({
         })}
         style={innerDivStyle}
       >
-        <div ref={fadeThoughtRef}>
-          {children}
-        </div>
-        {dragInProgress &&
-          autofocusDepth - depth < 2 && (
-            <DropCliff
-              cliff={cliff}
-              depth={depth}
-              path={path}
-              isTableCol2={isTableCol2}
-              isLastVisible={isLastVisible}
-              prevWidth={treeThoughtsPositioned[index - 1]?.width}
-            />
-          )}
+        <div ref={fadeThoughtRef}>{children}</div>
+        {dragInProgress && autofocusDepth - depth < 2 && (
+          <DropCliff
+            cliff={cliff}
+            depth={depth}
+            path={path}
+            isTableCol2={isTableCol2}
+            isLastVisible={isLastVisible}
+            prevWidth={treeThoughtsPositioned[index - 1]?.width}
+          />
+        )}
       </div>
     </div>
   )
@@ -654,7 +653,7 @@ const LayoutTree = () => {
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
-      state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
+        state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
       : 0,
   )
 
@@ -864,12 +863,12 @@ const LayoutTree = () => {
           (node.isTableCol1
             ? fontSize
             : // table col2: shift right by the width of table col1 to offset ancestorTableWidths, since col1 is still visible
-            // then shift left by 3 em, which is about the most we can do without col1 getting cropped by the left edge of the screen
-            node.isTableCol2
+              // then shift left by 3 em, which is about the most we can do without col1 getting cropped by the left edge of the screen
+              node.isTableCol2
               ? -(tableCol1Widths.get(node.path[node.path.length - 3]) || 0) + fontSize * 3
               : // table col2 child: if the child is a leaf, shift right by the width of table col1 again since col1 is still visible
-              // otherwise, shift by 3 em since col1 is now hidden, but we don't want too much of a jump
-              node.isTableCol2Child && node.leaf
+                // otherwise, shift by 3 em since col1 is now hidden, but we don't want too much of a jump
+                node.isTableCol2Child && node.leaf
                 ? -(tableCol1Widths.get(node.path[node.path.length - 4]) || 0) + fontSize * 4
                 : 0)
       }
