@@ -132,3 +132,31 @@ it('move children to the correct sibling in a sorted context', () => {
       - B
       - C`)
 })
+
+it('split thought with whitespace in HTML formatting', () => {
+  const steps = [
+    newThought('<meta charset="utf-8">one<i> two</i>'),
+    splitThought({
+      splitResult: {
+        left: '<meta charset="utf-8">one',
+        right: '<i> two</i>',
+      },
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
+
+  // The whitespace inside the <i> tag should be trimmed in the output
+  expect(exported).toBe(`<ul>
+  <li>${HOME_TOKEN}${'  '}
+    <ul>
+      <li>one</li>
+      <li><i>two</i></li>
+    </ul>
+  </li>
+</ul>`)
+
+  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+  expect(cursorThoughts).toMatchObject([{ value: '<i>two</i>', rank: 1 }])
+})

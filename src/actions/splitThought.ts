@@ -12,9 +12,11 @@ import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import hasEdgeWhitespace from '../util/htmlWhitespace'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import strip from '../util/strip'
+import trimHtml from '../util/trimHtml'
 
 /** Splits a thought into two thoughts.
  *
@@ -31,8 +33,13 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
   // split the value into left and right parts
   const { value } = headThought
 
-  const valueLeft = strip(splitResult.left, { preserveFormatting: true })
-  const valueRight = strip(splitResult.right, { preserveFormatting: true })
+  const leftWhitespace = hasEdgeWhitespace(splitResult.left)
+  const rightWhitespace = hasEdgeWhitespace(splitResult.right)
+
+  const valueLeft = leftWhitespace ? trimHtml(splitResult.left) : strip(splitResult.left, { preserveFormatting: true })
+  const valueRight = rightWhitespace
+    ? trimHtml(splitResult.right)
+    : strip(splitResult.right, { preserveFormatting: true })
 
   const pathLeft = path
 
@@ -53,7 +60,7 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
       // must allow the cursor to be set since it is used as the destination for the children
       preventSetCursor: false,
       // pass splitSource as prop if the left splitted value has whitespace at the end or right splitted value has whitespace at the front
-      ...(/\s+$/g.test(splitResult.left) || /^\s+/g.test(splitResult.right) ? { splitSource: headThought.id } : {}),
+      ...(leftWhitespace || rightWhitespace ? { splitSource: headThought.id } : {}),
     }),
 
     // move children
