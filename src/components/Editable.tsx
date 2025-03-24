@@ -585,16 +585,6 @@ const Editable = ({
     [disabled, isVisible, path, setCursorOnThought],
   )
 
-  /** Handle keydown events before they are passed to ContentEditable. */
-  const onKeyDown = useCallback((e: React.KeyboardEvent) => {
-    // If Alt+ArrowLeft and selection is at the beginning of the thought, prevent default behavior
-    if (e.altKey && e.key === 'ArrowLeft' && selection.offset() === 0) {
-      e.preventDefault()
-      // No need to do anything else, just prevent the default behavior
-      // which would cause the caret to jump to the end
-    }
-  }, [])
-
   return (
     <ContentEditable
       disabled={disabled}
@@ -624,7 +614,6 @@ const Editable = ({
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
-      onKeyDown={onKeyDown}
       onCopy={onCopy}
       onCut={e => {
         // flush the last edit, otherwise if cut occurs in quick succession the new value can be overwritten by the throttled change
