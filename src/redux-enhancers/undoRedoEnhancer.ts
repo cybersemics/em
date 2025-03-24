@@ -149,7 +149,6 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   updateHoveringPath: false,
   closeCommandMenu: false,
   showCommandMenu: false,
-  setActiveRadioButton: false,
 }
 
 /** Returns if an action is undoable. */
