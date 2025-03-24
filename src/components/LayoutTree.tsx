@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
@@ -13,6 +13,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import { showCommandMenuActionCreator } from '../actions/showCommandMenu'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
@@ -429,6 +430,7 @@ const TreeNode = ({
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const dispatch = useDispatch()
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
@@ -511,7 +513,11 @@ const TreeNode = ({
         }}
       >
         <div ref={fadeThoughtRef}>
-          {isCursor && <div style={{ position: 'absolute', left: -45 }}>...</div>}
+          {isCursor && (
+            <div onClick={() => dispatch(showCommandMenuActionCreator())} style={{ position: 'absolute', left: -45 }}>
+              ...
+            </div>
+          )}
           <VirtualThought
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
             depth={depth}

@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { shallowEqual, useDispatch, useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
-import { showCommandMenuActionCreator } from '../actions/showCommandMenu'
 import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
 import isTutorial from '../selectors/isTutorial'
@@ -45,7 +44,6 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
 const NavBar = ({ position }: { position: string }) => {
-  const dispatch = useDispatch()
   const isTutorialOn = useSelector(isTutorial)
   const authenticated = useSelector(state => state.authenticated)
   const editing = useSelector(state => state.editing)
@@ -134,21 +132,6 @@ const NavBar = ({ position }: { position: string }) => {
                       })}
                     />
                   ) : null}
-                  <button
-                    onClick={() => dispatch(showCommandMenuActionCreator())}
-                    className={css({
-                      border: '1px solid {colors.fg}',
-                      cursor: 'pointer',
-                      color: '{colors.fg}',
-                      backgroundColor: '{colors.bg}',
-                      padding: '5px',
-                      borderRadius: '5px',
-                      marginLeft: '30px',
-                      fontSize: '0.6rem',
-                    })}
-                  >
-                    Open Command Menu
-                  </button>
                   <FadeTransition
                     duration='fast'
                     nodeRef={cursorBreadcrumbsWrapperRef}
