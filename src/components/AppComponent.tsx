@@ -284,7 +284,7 @@ const AppComponent: FC = () => {
           <NavBar position='bottom' />
 
           {/* CommandMenuPanel */}
-          <CommandMenuPanel onClose={() => {}} />
+          <CommandMenuPanel />
           {/* <div style={{ fontSize }}>
             <Footer />
           </div> */}

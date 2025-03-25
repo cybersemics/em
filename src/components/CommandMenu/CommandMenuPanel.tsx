@@ -11,9 +11,7 @@ import isTutorial from '../../selectors/isTutorial'
 import CloseIcon from '../icons/CloseIcon'
 import PanelCommandGrid from './PanelCommandGrid'
 
-interface CommandMenuPanelProps {
-  onClose: () => void
-}
+interface CommandMenuPanelProps {}
 
 // Extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<
@@ -73,22 +71,15 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
             pointerEvents: 'none',
           }),
         }}
-        disableSwipeToOpen={!isTouch}
+        // Disable swipe to open - this removes the swipe-up-to-open functionality
+        disableSwipeToOpen={true}
         ref={containerRef}
         transitionDuration={500}
-        SwipeAreaProps={{
-          style: {
-            // Create a swipe area at the bottom of the screen
-            height: 16,
-            width: '100%',
-            bottom: 0,
-            position: 'absolute',
-            // Lower z-index to avoid conflicts
-            zIndex: 10,
-          },
-        }}
+        // Remove the SwipeAreaProps since we don't want to enable swipe to open
         anchor='bottom'
+        // Keep onOpen for programmatic opening
         onOpen={() => toggleCommandMenu(true)}
+        // Keep onClose for swipe to dismiss
         onClose={() => toggleCommandMenu(false)}
         open={commandMenuOpen}
         hideBackdrop={true}
@@ -107,7 +98,6 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
           },
         }}
         ModalProps={{
-          keepMounted: true,
           disableAutoFocus: true,
           disableEnforceFocus: true,
           disableRestoreFocus: true,
