@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
@@ -50,33 +50,16 @@ const NavBar = ({ position }: { position: string }) => {
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const scale = fontSize / BASE_FONT_SIZE
+
   const showHomeLink = useSelector(state => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2))
   const isCursor = useSelector(state => !!state.cursor && state.cursor.length > 0)
 
   const cursorBreadcrumbsWrapperRef = useRef<HTMLDivElement>(null)
-  const navBarRef = useRef<HTMLDivElement>(null)
-  const commandMenuOpen = useSelector(state => state.commandMenuOpen)
-
-  // Ensures the nav bar is always on top of the command menu and reverts back to original position once the command menu is closed.
-  useEffect(() => {
-    if (navBarRef.current) {
-      const commandMenu = document.querySelector('[aria-label="command-menu-panel"]')
-      const commandMenuHeight = (commandMenu?.clientHeight || 0) + 10
-      if (commandMenuOpen) {
-        navBarRef.current.style.bottom = `${commandMenuHeight}px`
-      } else {
-        navBarRef.current.style.removeProperty('bottom')
-      }
-    }
-  }, [commandMenuOpen])
 
   return (
     <div
-      ref={navBarRef}
       className={css({
         zIndex: 'navbar',
-        position: 'sticky',
-        transition: 'bottom 0.5s ease',
         ...(!isTouch || !editing
           ? {
               position: 'sticky',
@@ -121,22 +104,20 @@ const NavBar = ({ position }: { position: string }) => {
                 <>
                   {/* The entire bottom nav is scaled by font size using the Scale component, so we can use a fixed size here. */}
                   {showHomeLink ? (
-                    <FadeTransition duration='fast' in={!distractionFreeTyping && !commandMenuOpen} unmountOnExit>
-                      <HomeLink
-                        size={24}
-                        className={css({
-                          position: 'relative',
-                          zIndex: 'stack',
-                          ...(position === 'top' && { cssFloat: 'left', marginRight: '2px' }),
-                          ...(position === 'bottom' && { position: 'absolute', left: '-2px' }),
-                        })}
-                      />
-                    </FadeTransition>
+                    <HomeLink
+                      size={24}
+                      className={css({
+                        position: 'relative',
+                        zIndex: 'stack',
+                        ...(position === 'top' && { cssFloat: 'left', marginRight: '2px' }),
+                        ...(position === 'bottom' && { position: 'absolute', left: '-2px' }),
+                      })}
+                    />
                   ) : null}
                   <FadeTransition
                     duration='fast'
                     nodeRef={cursorBreadcrumbsWrapperRef}
-                    in={!distractionFreeTyping && !commandMenuOpen}
+                    in={!distractionFreeTyping}
                     unmountOnExit
                   >
                     <div ref={cursorBreadcrumbsWrapperRef} className={css({ flexGrow: 1 })}>
