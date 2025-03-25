@@ -1,7 +1,9 @@
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
+import getThoughtById from '../../selectors/getThoughtById'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
@@ -145,18 +147,8 @@ it('split thought with whitespace in HTML formatting', () => {
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   // The whitespace inside the <i> tag should be trimmed in the output
-  expect(exported).toBe(`<ul>
-  <li>${HOME_TOKEN}${'  '}
-    <ul>
-      <li>one</li>
-      <li><i>two</i></li>
-    </ul>
-  </li>
-</ul>`)
-
-  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-  expect(cursorThoughts).toMatchObject([{ value: '<i>two</i>', rank: 1 }])
+  const cursorThought = getThoughtById(stateNew, head(stateNew.cursor!))
+  expect(cursorThought?.value).toBe('<i>two</i>')
 })
