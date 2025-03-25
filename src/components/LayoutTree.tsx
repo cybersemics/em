@@ -26,6 +26,7 @@ import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isTutorial from '../selectors/isTutorial'
 import nextSibling from '../selectors/nextSibling'
 import rootedGrandparentOf from '../selectors/rootedGrandparentOf'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -436,6 +437,7 @@ const TreeNode = ({
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
   })
+  const isTutorialOn = useSelector(isTutorial)
 
   // true if the last action is any of archive/delete/collapse
   const isLastActionDelete = useSelector(state => {
@@ -514,7 +516,7 @@ const TreeNode = ({
         }}
       >
         <div ref={fadeThoughtRef}>
-          {isCursor && (
+          {isCursor && !isTutorialOn && (
             <div
               onClick={() => dispatch(showCommandMenuActionCreator())}
               style={{ position: 'absolute', left: -50, top: 2 }}
