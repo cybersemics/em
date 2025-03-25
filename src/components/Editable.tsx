@@ -7,6 +7,7 @@ import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styl
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
+import { closeCommandMenuActionCreator } from '../actions/closeCommandMenu'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { editingActionCreator as editingAction } from '../actions/editing'
@@ -496,9 +497,14 @@ const Editable = ({
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
-      const { dragHold, dragInProgress } = store.getState()
+      const { dragHold, dragInProgress, commandMenuOpen } = store.getState()
       if (!dragHold && !dragInProgress) {
         setCursorOnThought({ editing: true })
+
+        // Close command menu when entering edit mode on a touch device
+        if (commandMenuOpen && isTouch) {
+          dispatch(closeCommandMenuActionCreator())
+        }
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
