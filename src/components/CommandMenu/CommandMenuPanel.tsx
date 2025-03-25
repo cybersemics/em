@@ -11,8 +11,6 @@ import isTutorial from '../../selectors/isTutorial'
 import CloseIcon from '../icons/CloseIcon'
 import PanelCommandGrid from './PanelCommandGrid'
 
-interface CommandMenuPanelProps {}
-
 // Extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<
   SwipeableDrawerProps & { classes: any; ref: any }
@@ -21,7 +19,7 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
 /**
  * A panel that displays the command menu.
  */
-const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
+const CommandMenuPanel = () => {
   const dispatch = useDispatch()
   const commandMenuOpen = useSelector(state => state.commandMenuOpen)
   const isTutorialOn = useSelector(isTutorial)
