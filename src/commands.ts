@@ -18,6 +18,7 @@ import { suppressExpansionActionCreator as suppressExpansion } from './actions/s
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, Settings } from './constants'
+import * as selection from './device/selection'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
 import gestureStore from './stores/gesture'
@@ -320,6 +321,13 @@ export const inputHandlers = (store: Store<State, any>) => ({
     if (!(isMac ? e.metaKey : e.ctrlKey)) {
       // disable suppress expansion without triggering re-render
       globals.suppressExpansion = false
+    }
+
+    // For some reason, when the caret is at the beginning of the thought, alt + ArrowLeft sets the caret to the end.
+    // Prevent this default behavior, as the caret should have nowhere to go when it is already at the beginning.
+    if (e.altKey && e.key === 'ArrowLeft' && selection.offset() === 0 && selection.isThought()) {
+      e.preventDefault()
+      return
     }
 
     // disable if command palette is displayed
