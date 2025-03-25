@@ -120,7 +120,6 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
               if (isSwiping) return
               const drawer = containerRef.current?.querySelector('.MuiDrawer-paper') as HTMLElement | null
               if (!drawer) return
-              // For bottom drawer we need to check translateY transform
               const transformValue = drawer.style.transform
               const translateYMatch = transformValue.match(/translateY\(([^)]+)\)/)
               if (translateYMatch && translateYMatch[1]) {
@@ -161,50 +160,6 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
       </SwipeableDrawerWithClasses>
     )
   }
-
-  // Fallback to the original implementation for non-touch devices
-  return (
-    <>
-      {!isTutorialOn && (
-        <div
-          aria-label='command-menu-panel'
-          className={css({
-            backgroundColor: '{colors.darkgray}',
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            position: 'fixed',
-            bottom: '0',
-            left: '0',
-            right: '0',
-            zIndex: 'navbar',
-            overflow: 'hidden',
-          })}
-        >
-          <PanelCommandGrid />
-          <div
-            className={css({
-              display: 'flex',
-              justifyContent: 'flex-end',
-              marginBottom: '1rem',
-              marginRight: '1rem',
-            })}
-          >
-            <button
-              onClick={() => dispatch(closeCommandMenuActionCreator())}
-              className={css({
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-              })}
-            >
-              <CloseIcon size={20} fill={token('colors.fg')} />
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  )
 }
 
 export default CommandMenuPanel
