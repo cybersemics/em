@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
+import { closeCommandMenuActionCreator } from '../actions/closeCommandMenu'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { editingActionCreator as editing } from '../actions/editing'
@@ -97,6 +98,13 @@ const Note = React.memo(({ path }: { path: Path }) => {
 
   /** Enables noteFocus and sets the cursor on the thought. */
   const onFocus = () => {
+    const state = store.getState()
+
+    // Close command menu if it's open when focusing on a note.
+    if (state.commandMenuOpen && isTouch) {
+      dispatch(closeCommandMenuActionCreator())
+    }
+
     dispatch(
       setCursor({
         path,
