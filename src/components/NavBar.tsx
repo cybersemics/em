@@ -50,26 +50,25 @@ const NavBar = ({ position }: { position: string }) => {
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const scale = fontSize / BASE_FONT_SIZE
-
   const showHomeLink = useSelector(state => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2))
   const isCursor = useSelector(state => !!state.cursor && state.cursor.length > 0)
 
   const cursorBreadcrumbsWrapperRef = useRef<HTMLDivElement>(null)
   const navBarRef = useRef<HTMLDivElement>(null)
-  const isOpen = useSelector(state => state.commandMenuOpen)
+  const commandMenuOpen = useSelector(state => state.commandMenuOpen)
 
   // Ensures the nav bar is always on top of the command menu and reverts back to original position once the command menu is closed.
   useEffect(() => {
     if (navBarRef.current) {
       const commandMenu = document.querySelector('[aria-label="command-menu-panel"]')
       const commandMenuHeight = (commandMenu?.clientHeight || 0) + 10
-      if (isOpen) {
+      if (commandMenuOpen) {
         navBarRef.current.style.bottom = `${commandMenuHeight}px`
       } else {
         navBarRef.current.style.removeProperty('bottom')
       }
     }
-  }, [isOpen])
+  }, [commandMenuOpen])
 
   return (
     <div
@@ -122,20 +121,22 @@ const NavBar = ({ position }: { position: string }) => {
                 <>
                   {/* The entire bottom nav is scaled by font size using the Scale component, so we can use a fixed size here. */}
                   {showHomeLink ? (
-                    <HomeLink
-                      size={24}
-                      className={css({
-                        position: 'relative',
-                        zIndex: 'stack',
-                        ...(position === 'top' && { cssFloat: 'left', marginRight: '2px' }),
-                        ...(position === 'bottom' && { position: 'absolute', left: '-2px' }),
-                      })}
-                    />
+                    <FadeTransition duration='fast' in={!distractionFreeTyping && !commandMenuOpen} unmountOnExit>
+                      <HomeLink
+                        size={24}
+                        className={css({
+                          position: 'relative',
+                          zIndex: 'stack',
+                          ...(position === 'top' && { cssFloat: 'left', marginRight: '2px' }),
+                          ...(position === 'bottom' && { position: 'absolute', left: '-2px' }),
+                        })}
+                      />
+                    </FadeTransition>
                   ) : null}
                   <FadeTransition
                     duration='fast'
                     nodeRef={cursorBreadcrumbsWrapperRef}
-                    in={!distractionFreeTyping && !isOpen}
+                    in={!distractionFreeTyping && !commandMenuOpen}
                     unmountOnExit
                   >
                     <div ref={cursorBreadcrumbsWrapperRef} className={css({ flexGrow: 1 })}>
