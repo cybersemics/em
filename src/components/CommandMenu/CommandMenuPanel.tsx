@@ -1,8 +1,10 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
 import { closeCommandMenuActionCreator } from '../../actions/closeCommandMenu'
 import isTutorial from '../../selectors/isTutorial'
+import CloseIcon from '../icons/CloseIcon'
 import PanelCommandGrid from './PanelCommandGrid'
 
 interface CommandMenuPanelProps {
@@ -43,20 +45,18 @@ const CommandMenuPanel: React.FC<CommandMenuPanelProps> = () => {
               display: 'flex',
               justifyContent: 'flex-end',
               marginBottom: '1rem',
+              marginRight: '1rem',
             })}
           >
             <button
+              onClick={() => dispatch(closeCommandMenuActionCreator())}
               className={css({
-                backgroundColor: '{colors.darkgray}',
+                backgroundColor: 'transparent',
                 border: 'none',
-                fontSize: '1.3rem',
-                marginRight: '8px',
-                color: '{colors.fg}',
                 cursor: 'pointer',
               })}
-              onClick={() => dispatch(closeCommandMenuActionCreator())}
             >
-              x
+              <CloseIcon size={20} fill={token('colors.fg')} />
             </button>
           </div>
         </div>
