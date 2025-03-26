@@ -1,6 +1,6 @@
 import SwipeableDrawer, { SwipeableDrawerProps } from '@mui/material/SwipeableDrawer'
 import _ from 'lodash'
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -22,9 +22,29 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
 const CommandMenuPanel = () => {
   const dispatch = useDispatch()
   const commandMenuOpen = useSelector(state => state.commandMenuOpen)
+  const cursor = useSelector(state => state.cursor)
   const isTutorialOn = useSelector(isTutorial)
   const containerRef = useRef<HTMLInputElement>(null)
   const [isSwiping, setIsSwiping] = useState(false)
+  // Add a reference to store the previous cursor state
+  const prevCursorRef = useRef(cursor)
+
+  useEffect(() => {
+    // Only close the command menu if cursor becomes null but make sure it doesn't close if the cursor is just switching 
+    if (commandMenuOpen && !cursor) {
+
+      const timeoutId = setTimeout(() => {
+        // Check if cursor is still null after the delay
+        if (!cursor) {
+          dispatch(closeCommandMenuActionCreator())
+        }
+      }, 200) // Small delay to allow for cursor switching
+
+      return () => clearTimeout(timeoutId)
+    }
+
+    prevCursorRef.current = cursor
+  }, [commandMenuOpen, cursor, dispatch])
 
   /** Toggle the command menu. */
   const toggleCommandMenu = (value: boolean) => {

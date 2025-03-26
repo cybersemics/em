@@ -516,7 +516,7 @@ const TreeNode = ({
         }}
       >
         <div ref={fadeThoughtRef}>
-          {isCursor && !isTutorialOn && (
+          {isCursor && !isTutorialOn && isTouch && (
             <div
               onClick={() => dispatch(showCommandMenuActionCreator())}
               style={{ position: 'absolute', left: -50, top: 2 }}
