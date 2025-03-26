@@ -4,7 +4,7 @@ import safariKeyboardStore from '../stores/safariKeyboardStore'
 import viewportStore from '../stores/viewport'
 import useScrollTop from './useScrollTop'
 
-/** Emulates position fixed on mobile Safari with positon absolute. Returns { position, overflowX, top } in absolute mode. */
+/** Emulates position fixed on mobile Safari with positon absolute. Returns { position, top, bottom } in absolute mode. */
 const usePositionFixed = ({
   fromBottom,
   offset = 0,
@@ -12,7 +12,7 @@ const usePositionFixed = ({
 }: {
   fromBottom?: boolean
   offset?: number
-  /** Only for if `fromBottom = true`. For calculating position on mobile safari. */
+  /** The height of the container, used to calculate the bottom offset on mobile safari. Only use with `fromBottom`. */
   height?: number
 } = {}): {
   position: 'fixed' | 'absolute'

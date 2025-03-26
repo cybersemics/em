@@ -83,7 +83,7 @@ const LetterCloseButton = (props: CloseButtonProps) => {
   )
 }
 
-/** A close button with an ✕. */
+/** A close button with an ✕ within a circle. */
 const CloseButton = ({ circled, ...props }: CloseButtonProps & { circled?: boolean }) => {
   return circled ? <CircledCloseButton {...props} /> : <LetterCloseButton {...props} />
 }
