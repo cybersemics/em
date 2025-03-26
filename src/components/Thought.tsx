@@ -488,8 +488,7 @@ const ThoughtContainer = ({
           marginRight={marginRight}
           isPressed={dragHoldResult.isPressed}
         />
-        {/* Using a different key forces React to create a new Note instance when the path changes, avoiding stale props issues */}
-        <Note key={hashPath(path)} path={path} />
+        <Note path={path} />
       </div>
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
