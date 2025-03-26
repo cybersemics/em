@@ -6,6 +6,7 @@ import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styl
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
+import { toggleSortPicker } from '../actions'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { editingActionCreator as editingAction } from '../actions/editing'
@@ -555,9 +556,10 @@ const Editable = ({
         if (!isVisible) {
           selection.clear()
 
+          // close all popups when clicking on a thought
           if (state.showColorPicker) dispatch(toggleColorPicker({ value: false }))
-
           if (state.showLetterCase) dispatch(toggleLetterCase({ value: false }))
+          if (state.showSortPicker) dispatch(toggleSortPicker({ value: false }))
         } else {
           setCursorOnThought()
 

@@ -125,6 +125,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   toggleAbsoluteContext: false,
   toggleAttribute: true,
   toggleLetterCase: false,
+  toggleSortPicker: false,
   toggleColorPicker: false,
   toggleContextView: true,
   toggleHiddenThoughts: true,
