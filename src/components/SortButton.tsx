@@ -20,7 +20,7 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
     position: 'absolute',
     top: '100%',
     right: 0,
-    backgroundColor: '{colors.bg}',
+    backgroundColor: 'bg',
     border: 'solid 1px {colors.gray50}',
     borderRadius: '8px',
     zIndex: 'modal',
@@ -65,7 +65,7 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
       <div className={`${dropdownStyles} ${isDropdownOpen ? dropdownVisibleStyles : ''}`}>
         <h2
           className={css({
-            color: '{colors.gray50}',
+            color: 'gray50',
             borderBottom: 'none',
             textAlign: 'left',
             fontSize: '0.9rem',
@@ -78,7 +78,7 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
           className={css({
             display: 'flex',
             flexDirection: 'row',
-            color: '{colors.gray50}',
+            color: 'gray50',
           })}
         >
           <input
@@ -94,7 +94,7 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
               display: 'inline-block',
               position: 'relative',
               '&:checked': {
-                borderColor: '{colors.fg}',
+                borderColor: 'fg',
               },
             })}
           />
@@ -128,13 +128,13 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
               display: 'inline-block',
               position: 'relative',
               '&:checked': {
-                borderColor: '{colors.fg}',
+                borderColor: 'fg',
               },
             })}
           />
           <h3
             className={css({
-              color: selectedSort === 'type' ? '{colors.fg}' : '{colors.gray50}',
+              color: selectedSort === 'type' ? 'fg' : 'gray50',
               margin: '0 0 0 0.2rem',
               fontWeight: 'normal',
               fontSize: '0.9rem',
