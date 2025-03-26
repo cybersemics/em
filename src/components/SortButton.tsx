@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import theme from '../selectors/theme'
 import SortIcon from './icons/SortIcon'
 
@@ -11,32 +11,6 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
   const isLightTheme = useSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<'alphabetical' | 'type'>('type')
-
-  const dropdownStyles = css({
-    opacity: 0,
-    visibility: 'hidden',
-    transition: 'opacity 0.3s ease-in-out, visibility 0.3s ease-in-out',
-    willChange: 'opacity, visibility',
-    position: 'absolute',
-    top: '100%',
-    right: 0,
-    backgroundColor: 'bg',
-    border: 'solid 1px {colors.gray50}',
-    borderRadius: '8px',
-    zIndex: 'modal',
-    padding: '1rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem',
-  })
-
-  /**
-   * Fade in animation styles for the dropdown when it is visible.
-   * */
-  const dropdownVisibleStyles = css({
-    opacity: 1,
-    visibility: 'visible',
-  })
 
   /**
    * Handles the sort change.
@@ -62,7 +36,32 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
       })}
     >
       <SortIcon size={20} fill={isLightTheme ? '{colors.light}' : '{colors.fg}'} />
-      <div className={`${dropdownStyles} ${isDropdownOpen ? dropdownVisibleStyles : ''}`}>
+      <div
+        className={cx(
+          css({
+            opacity: 0,
+            visibility: 'hidden',
+            transition: 'opacity 0.3s ease-in-out, visibility 0.3s ease-in-out',
+            willChange: 'opacity, visibility',
+            position: 'absolute',
+            top: '100%',
+            right: 0,
+            backgroundColor: 'bg',
+            border: 'solid 1px {colors.gray50}',
+            borderRadius: '8px',
+            zIndex: 'modal',
+            padding: '1rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem',
+          }),
+          isDropdownOpen &&
+            css({
+              opacity: 1,
+              visibility: 'visible',
+            }),
+        )}
+      >
         <h2
           className={css({
             color: 'gray50',
