@@ -18,7 +18,6 @@ const usePositionFixed = ({
   position: 'fixed' | 'absolute'
   top?: string
   bottom?: string
-  display?: 'none'
 } => {
   const safariKeyboard = safariKeyboardStore.useState()
   const position = safariKeyboard.open ? 'absolute' : 'fixed'
