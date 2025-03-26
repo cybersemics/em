@@ -42,7 +42,6 @@ const groups: {
       'newUncle',
       'newGrandChild',
       'subcategorizeOne',
-      'subcategorizeAll',
       'extractThought',
       'generateThought',
     ],
