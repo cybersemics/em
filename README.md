@@ -74,17 +74,22 @@ This build runs off the local Vite development server, ideal for rapid prototypi
    **Note**: Use your machine's local network IP (e.g., http://192.168.x.x:3000) rather than localhost (http://localhost:3000).
 
 2. **Start the Vite development server**
+
    ```sh
    yarn start
    ```
 
 3. **Synchronise the native project and open it in the IDE**
+
    ```sh
    yarn cap:ios       # runs cap:sync and opens iOS project in Xcode
    yarn cap:android   # runs cap:sync and opens Android project in Android Studio
    ```
 
-   **Note**: Make sure to run these commands again any time you change `CAPACITOR_SERVER_URL`.
+   **Notes**:
+
+   - Make sure to run these commands again any time you change `CAPACITOR_SERVER_URL`.
+   - If you see a blank screen when the app starts, then either `CAPACITOR_SERVER_URL` is wrong or you need to disable your VPN/firewall.
 
 #### Static Development Builds
 
@@ -106,6 +111,7 @@ You can copy or sync in production mode with these commands:
 ```
 
 #### Other Scripts
+
 - `cap:copy` – Copies the web app build and Capacitor configuration file into the native platform project. Run this each time you make changes that are not picked up by the live-reload server, and when you change a configuration value in capacitor.config.ts.
 - `cap:sync` – Runs `cap:copy` and updates native Capacitor plugins.
 
