@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { toggleGestureCheatsheetActionCreator } from '../../actions/toggleGestureCheatsheet'
@@ -15,8 +15,6 @@ const GestureCheatsheet: React.FC = () => {
   const dispatch = useDispatch()
   const isOpen = useSelector(state => state.showGestureCheatsheet)
   const dialogRef = useRef<HTMLDivElement | null>(null)
-  const bottomRef = useRef<HTMLDivElement | null>(null)
-  const [isBottomVisible, setIsBottomVisible] = useState(false)
 
   /**
    * Handles the closure of the gesture cheatsheet.
@@ -47,27 +45,6 @@ const GestureCheatsheet: React.FC = () => {
     }
   }, [isOpen])
 
-  useEffect(() => {
-    if (!bottomRef.current || !isOpen) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsBottomVisible(entry.isIntersecting)
-      },
-      {
-        root: null, // use viewport
-        threshold: 0, // trigger as soon as even 1px is visible
-        rootMargin: '0px',
-      },
-    )
-
-    observer.observe(bottomRef.current)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [isOpen]) // Reinitialize when dialog opens
-
   /** Styles for the dialog fade in and out animation. */
   const dialogAnimationStyles = css({
     opacity: 0,
@@ -82,11 +59,11 @@ const GestureCheatsheet: React.FC = () => {
       {isOpen && (
         <>
           <div ref={dialogRef} className={dialogAnimationStyles}>
-            <Dialog onClose={handleClose} showGradient={!isBottomVisible}>
+            <Dialog onClose={handleClose}>
               <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
               <DialogContent>
                 <CommandTable viewType='grid' />
-                <div ref={bottomRef} style={{ height: '1px' }} />
+                <div style={{ height: '64px' }} />
               </DialogContent>
             </Dialog>
           </div>

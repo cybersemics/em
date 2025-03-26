@@ -4,13 +4,12 @@ import { css } from '../../../styled-system/css'
 interface DialogProps {
   children: React.ReactNode
   onClose: () => void
-  showGradient: boolean
 }
 
 /**
  * Dialog component.
  */
-const Dialog: React.FC<DialogProps> = ({ children, onClose, showGradient }) => {
+const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -73,7 +72,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose, showGradient }) => {
             background: 'linear-gradient(to top, {colors.bg} 0%, transparent 100%)',
             pointerEvents: 'none',
             display: 'block',
-            opacity: showGradient ? 1 : 0,
+            opacity: 1,
             transition: 'opacity 0.2s ease',
           })}
         />
