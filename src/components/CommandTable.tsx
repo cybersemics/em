@@ -28,15 +28,13 @@ if (commandsUngrouped.length > 0) {
 }
 
 /** Renders a table of commands with a fade-in animation when sorting changes. */
-const CommandTable = ({
-  customize,
-  onSelect,
-  selectedCommand,
-}: {
+interface CommandTableProps {
   customize?: boolean
   onSelect?: (command: Command | null) => void
   selectedCommand?: Command
-}) => {
+  viewType?: 'table' | 'grid'
+}
+const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table' }: CommandTableProps) => {
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'type'>('type')
@@ -85,6 +83,7 @@ const CommandTable = ({
                 customize={customize}
                 onSelect={onSelect}
                 search={search}
+                viewType={viewType}
               />
             )
           } else if (previousSortOrder === 'type') {
@@ -101,6 +100,7 @@ const CommandTable = ({
                   key={group.title}
                   onSelect={onSelect}
                   selectedCommand={selectedCommand}
+                  viewType={viewType}
                 />
               ) : null
             })
@@ -118,6 +118,7 @@ const CommandTable = ({
                 selectedCommand={selectedCommand}
                 customize={customize}
                 onSelect={onSelect}
+                viewType={viewType}
               />
             )
           }

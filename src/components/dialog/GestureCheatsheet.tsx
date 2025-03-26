@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { toggleGestureCheatsheetActionCreator } from '../../actions/toggleGestureCheatsheet'
 import { FADEOUT_DURATION } from '../../constants'
-import CommandGrid from '../CommandGrid'
+import CommandTable from '../CommandTable'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
 import DialogTitle from './DialogTitle'
@@ -85,7 +85,7 @@ const GestureCheatsheet: React.FC = () => {
             <Dialog onClose={handleClose} showGradient={!isBottomVisible}>
               <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
               <DialogContent>
-                <CommandGrid />
+                <CommandTable viewType='grid' />
                 <div ref={bottomRef} style={{ height: '1px' }} />
               </DialogContent>
             </Dialog>

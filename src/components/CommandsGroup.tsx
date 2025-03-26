@@ -2,7 +2,6 @@ import { FC } from 'react'
 import { css } from '../../styled-system/css'
 import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
-import CommandGridOnly from './CommandGridOnly'
 import CommandTableOnly from './CommandTableOnly'
 
 interface CommandsGroupProps {
@@ -12,9 +11,8 @@ interface CommandsGroupProps {
   title: string
   search?: string
   commands: (Command | null)[]
-  isGrid?: boolean
+  viewType: 'table' | 'grid'
 }
-
 /**
  * A component that displays a group of commands for CommandTable or CommandGrid.
  */
@@ -25,7 +23,7 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
   commands,
   title,
   search,
-  isGrid = false,
+  viewType = 'table',
 }) => {
   const modalClasses = modalTextRecipe()
 
@@ -34,7 +32,7 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
       <h2
         className={css({
           ...modalClasses,
-          ...(isGrid
+          ...(viewType === 'grid'
             ? {
                 fontSize: '1.3rem',
                 borderBottom: 'none',
@@ -52,25 +50,15 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
       >
         {title}
       </h2>
-      {isGrid ? (
-        <CommandGridOnly
-          commands={commands}
-          selectedCommand={selectedCommand}
-          customize={customize}
-          onSelect={onSelect}
-          search={search}
-          applyIndexInToolbar
-        />
-      ) : (
-        <CommandTableOnly
-          commands={commands}
-          selectedCommand={selectedCommand}
-          customize={customize}
-          onSelect={onSelect}
-          search={search}
-          applyIndexInToolbar
-        />
-      )}
+      <CommandTableOnly
+        commands={commands}
+        selectedCommand={selectedCommand}
+        customize={customize}
+        onSelect={onSelect}
+        search={search}
+        applyIndexInToolbar
+        viewType={viewType}
+      />
     </div>
   )
 }
