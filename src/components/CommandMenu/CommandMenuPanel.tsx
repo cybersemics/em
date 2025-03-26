@@ -30,9 +30,8 @@ const CommandMenuPanel = () => {
   const prevCursorRef = useRef(cursor)
 
   useEffect(() => {
-    // Only close the command menu if cursor becomes null but make sure it doesn't close if the cursor is just switching 
+    // Only close the command menu if cursor becomes null but make sure it doesn't close if the cursor is just switching
     if (commandMenuOpen && !cursor) {
-
       const timeoutId = setTimeout(() => {
         // Check if cursor is still null after the delay
         if (!cursor) {

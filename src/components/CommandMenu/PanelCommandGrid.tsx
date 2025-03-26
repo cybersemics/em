@@ -10,7 +10,6 @@ import swapParent from '../../commands/swapParent'
 import toggleDone from '../../commands/toggleDone'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
-import PanelCommandHeader from './PanelCommandHeader'
 
 /**
  * Component that displays the grid for the command menu.
@@ -28,14 +27,12 @@ const PanelCommandGrid = () => {
         maxWidth: '100%',
       })}
     >
-      <PanelCommandHeader title='View as:' />
       <PanelCommandGroup>
         <PanelCommand command={{ ...toggleDone, label: 'Done' }} size='small' />
         <PanelCommand command={note} size='small' />
         <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
         <PanelCommand command={deleteCommand} size='small' />
       </PanelCommandGroup>
-      <PanelCommandHeader title='Another section:' />
       <PanelCommandGroup>
         <PanelCommand command={{ ...outdent, label: '' }} size='small' />
         <PanelCommand command={{ ...indent, label: '' }} size='small' />
