@@ -22,9 +22,9 @@ const SortIcon: FC<IconType> = ({ size = 48, fill, cssRaw }) => {
         id='Path'
         fill='none'
         stroke={token('colors.fg')}
-        stroke-width='50'
-        stroke-linecap='round'
-        stroke-linejoin='round'
+        strokeWidth='50'
+        strokeLinecap='round'
+        strokeLinejoin='round'
         d='M 733.333313 233.333313 L 66.666664 233.333313'
       />
       <path
@@ -32,9 +32,9 @@ const SortIcon: FC<IconType> = ({ size = 48, fill, cssRaw }) => {
         id='path1'
         fill='none'
         stroke={token('colors.fg')}
-        stroke-width='50'
-        stroke-linecap='round'
-        stroke-linejoin='round'
+        strokeWidth='50'
+        strokeLinecap='round'
+        strokeLinejoin='round'
         d='M 633.333313 400 L 166.666672 400'
       />
       <path
@@ -42,9 +42,9 @@ const SortIcon: FC<IconType> = ({ size = 48, fill, cssRaw }) => {
         id='path2'
         fill='none'
         stroke={token('colors.fg')}
-        stroke-width='50'
-        stroke-linecap='round'
-        stroke-linejoin='round'
+        strokeWidth='50'
+        strokeLinecap='round'
+        strokeLinejoin='round'
         d='M 533.333313 566.666687 L 266.666656 566.666687'
       />
     </svg>
