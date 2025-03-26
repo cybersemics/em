@@ -1,13 +1,10 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import theme from '../selectors/theme'
+import { token } from '../../styled-system/tokens'
 import SearchIcon from './icons/SearchIcon'
 
 /** Search bar for filtering commands. */
 const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
-  const isLightTheme = useSelector(state => theme(state) === 'Light')
-
   return (
     <div id='search' className={css({ flexGrow: 1, border: 'solid 1px {colors.gray50}', borderRadius: '8px' })}>
       <div className={css({ position: 'relative' })}>
@@ -22,7 +19,7 @@ const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) 
             pointerEvents: 'none',
           })}
         >
-          <SearchIcon size={16} fill={isLightTheme ? '#666' : '#999'} />
+          <SearchIcon size={16} fill={token('colors.lightgray')} />
         </div>
         <input
           type='text'
