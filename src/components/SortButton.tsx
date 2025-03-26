@@ -53,7 +53,7 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
       className={css({
         width: '45px',
         border: 'solid 1px {colors.gray50}',
-        backgroundColor: '{colors.darkgray}',
+        backgroundColor: 'darkgray',
         borderRadius: '8px',
         display: 'flex',
         alignItems: 'center',
