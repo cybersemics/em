@@ -57,7 +57,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       showXOnHover,
       swipeDownToDismiss,
       textAlign,
-      ...props
     },
     ref,
   ) => {
@@ -139,7 +138,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           padding,
           ...(isTouch ? useSwipeToDismissProps.style : null),
         }}
-        {...props}
       >
         {children}
         {importFileId && (
