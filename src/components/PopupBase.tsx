@@ -34,7 +34,6 @@ export type PopupBaseProps = PropsWithChildren<
     background?: string
     padding?: string
     textAlign?: 'center' | 'left' | 'right'
-    zIndex?: string
     showXOnHover?: boolean
     swipeDownToDismiss?: boolean
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
@@ -56,7 +55,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       background = token('colors.bg'),
       padding,
       textAlign,
-      zIndex,
       showXOnHover,
       swipeDownToDismiss,
       ...props
@@ -139,7 +137,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           background,
           fontSize,
           padding,
-          zIndex,
           ...(isTouch ? useSwipeToDismissProps.style : null),
         }}
         {...props}

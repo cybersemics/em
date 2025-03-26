@@ -9,9 +9,8 @@ const Popup = React.forwardRef<
   {
     textAlign?: 'center' | 'left' | 'right'
     value?: string | null
-    zIndex?: string
   } & Omit<PopupBaseProps, 'className'>
->(({ children, textAlign = 'center', zIndex, ...props }, ref) => {
+>(({ children, textAlign = 'center', ...props }, ref) => {
   const padding = useSelector(state => state.fontSize / 2 + 2)
 
   return (
@@ -22,7 +21,6 @@ const Popup = React.forwardRef<
         // scale with font size to stay vertically centered over toolbar
         padding={`${padding}px 0 ${padding}px`}
         textAlign={textAlign}
-        zIndex={zIndex}
         {...props}
       >
         <div data-testid='popup-value' className={css({ padding: '0.25em', backgroundColor: 'bgOverlay80' })}>

@@ -291,7 +291,6 @@ export default defineConfig({
             'popup',
             'hoverArrow',
             'gestureTrace',
-            'commandPalette',
             'modal',
             'hamburgerMenu',
             'sidebar',

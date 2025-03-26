@@ -535,7 +535,6 @@ const CommandPaletteWithTransition: FC = () => {
             // only show the close link on desktop
             // do not show the close link on touch devices since the CommandPalette is automatically dismissed when the gesture ends.
             {...(!isTouch ? { onClose } : null)}
-            zIndex='commandPalette'
           >
             <CommandPalette
               commands={commands}
