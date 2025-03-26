@@ -16,26 +16,26 @@ import CloseButton from './CloseButton'
 
 export type PopupBaseProps = PropsWithChildren<
   {
-    /** Used to cancel imports. */
-    importFileId?: string
-    /** If defined, will show a small x in the upper right corner. */
-    onClose?: () => void
     /** If true, the popup will be positioned at the bottom of the screen. */
     anchorFromBottom?: boolean
     /** The offset (in pixels) from the top or bottom of the screen. */
     anchorOffset?: number
-    circledCloseButton?: boolean
+    background?: string
     /** If true, a border will be added to the popup. */
     border?: boolean
     /** If true, the popup will be centered horizontally. */
     center?: boolean
+    circledCloseButton?: boolean
     /** If true, the popup will take up the full width of the screen. */
     fullWidth?: boolean
-    background?: string
+    /** Used to cancel imports. */
+    importFileId?: string
+    /** If defined, will show a small x in the upper right corner. */
+    onClose?: () => void
     padding?: string
-    textAlign?: 'center' | 'left' | 'right'
     showXOnHover?: boolean
     swipeDownToDismiss?: boolean
+    textAlign?: 'center' | 'left' | 'right'
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
 >
 
@@ -43,20 +43,20 @@ export type PopupBaseProps = PropsWithChildren<
 const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
   (
     {
-      children,
-      importFileId,
-      onClose,
       anchorFromBottom,
       anchorOffset,
-      circledCloseButton,
+      background = token('colors.bg'),
       border = false,
       center = false,
+      children,
+      circledCloseButton,
       fullWidth = false,
-      background = token('colors.bg'),
+      importFileId,
+      onClose,
       padding,
-      textAlign,
       showXOnHover,
       swipeDownToDismiss,
+      textAlign,
       ...props
     },
     ref,
