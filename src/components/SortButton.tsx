@@ -35,7 +35,15 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
         position: 'relative',
       })}
     >
-      <SortIcon size={20} fill={isLightTheme ? '{colors.light}' : '{colors.fg}'} />
+      <div
+        className={css({
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        })}
+      >
+        <SortIcon size={20} fill={isLightTheme ? '{colors.lightgray}' : '{colors.fg}'} />
+      </div>
       <div
         className={cx(
           css({

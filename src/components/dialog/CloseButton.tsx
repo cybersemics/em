@@ -30,7 +30,15 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
         },
       })}
     >
-      <CloseIcon size={16} />
+      <div
+        className={css({
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        })}
+      >
+        <CloseIcon size={16} />
+      </div>
     </button>
   )
 }
