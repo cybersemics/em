@@ -2,9 +2,9 @@ import { FC, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
-import CommandId from '../@types/CommandId'
 import { isTouch } from '../browser'
 import { commandById, globalCommands } from '../commands'
+import { COMMAND_GROUPS } from '../constants'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import theme from '../selectors/theme'
 import conjunction from '../util/conjunction'
@@ -13,96 +13,8 @@ import CommandsGroup from './CommandsGroup'
 import SortButton from './SortButton'
 import SearchIcon from './icons/SearchIcon'
 
-// define the grouping and ordering of commands
-const groups: {
-  title: string
-  commands: CommandId[]
-}[] = [
-  {
-    title: 'Navigation',
-    commands: [
-      'cursorBack',
-      'cursorForward',
-      'cursorNext',
-      'cursorPrev',
-      'jumpBack',
-      'jumpForward',
-      'moveCursorBackward',
-      'moveCursorForward',
-      'commandPalette',
-      'home',
-      'search',
-      'selectAll',
-    ],
-  },
-  {
-    title: 'Creating thoughts',
-    commands: [
-      'newThought',
-      'newThoughtAbove',
-      'newSubthought',
-      'newSubthoughtTop',
-      'newUncle',
-      'newGrandChild',
-      'subcategorizeOne',
-      'subcategorizeAll',
-      'extractThought',
-      'generateThought',
-    ],
-  },
-  {
-    title: 'Deleting thoughts',
-    commands: ['delete', 'archive', 'collapseContext', 'clearThought'],
-  },
-  {
-    title: 'Moving thoughts',
-    commands: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp'],
-  },
-  {
-    title: 'Editing thoughts',
-    commands: ['join', 'splitSentences', 'bold', 'italic', 'strikethrough', 'underline', 'code', 'copyCursor'],
-  },
-  {
-    title: 'Oops',
-    commands: ['undo', 'redo'],
-  },
-  {
-    title: 'Special Views',
-    commands: [
-      'note',
-      'swapNote',
-      'toggleContextView',
-      'proseView',
-      'toggleTableView',
-      'toggleSort',
-      'heading0',
-      'heading1',
-      'heading2',
-      'heading3',
-      'heading4',
-      'heading5',
-    ],
-  },
-  {
-    title: 'Visibility',
-    commands: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
-  },
-  {
-    title: 'Settings',
-    commands: ['customizeToolbar'],
-  },
-  {
-    title: 'Help',
-    commands: ['help', 'openGestureCheatsheet'],
-  },
-  {
-    title: 'Cancel',
-    commands: ['cancel'],
-  },
-]
-
 const commandsGroupedMap = keyValueBy(
-  groups.flatMap(group => group.commands),
+  COMMAND_GROUPS.flatMap(group => group.commands),
   true,
 )
 const commandsUngrouped = globalCommands.filter(
@@ -220,7 +132,7 @@ const CommandGrid = ({
               />
             )
           } else if (previousSortOrder === 'type') {
-            return groups.map(group => {
+            return COMMAND_GROUPS.map(group => {
               const commands = group.commands
                 .map(commandById)
                 .filter((command): command is Command => !!command.gesture)
