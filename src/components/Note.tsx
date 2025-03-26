@@ -13,27 +13,11 @@ import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFoc
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
-import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import strip from '../util/strip'
-
-/**
- * Gets the most current correct path, using the cursor path if available.
- */
-const getCurrentPath: (path: Path) => Path = path => {
-  const state = store.getState()
-
-  // If the cursor is at the same thought as our path, use the cursor path as it's likely more up-to-date
-  if (state.cursor && equalPathHead(state.cursor, path)) {
-    return state.cursor
-  }
-
-  // Otherwise, make sure our current path is correct
-  return simplifyPath(state, path)
-}
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = React.memo(({ path }: { path: Path }) => {
@@ -62,9 +46,6 @@ const Note = React.memo(({ path }: { path: Path }) => {
 
   /** Handles note keyboard shortcuts. */
   const onKeyDown = (e: React.KeyboardEvent) => {
-    // Get the current path
-    const currentPath = getCurrentPath(path)
-
     // delete empty note
     const note = noteValue(store.getState(), thoughtId)
 
@@ -80,7 +61,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
     else if (e.key === 'Backspace' && !note) {
       e.stopPropagation() // prevent delete thought
       e.preventDefault()
-      dispatch(deleteAttribute({ path: currentPath, value: '=note' }))
+      dispatch(deleteAttribute({ path, value: '=note' }))
       dispatch(setNoteFocus({ value: false }))
     } else if (e.key === 'ArrowDown') {
       e.stopPropagation()
@@ -91,9 +72,6 @@ const Note = React.memo(({ path }: { path: Path }) => {
 
   /** Updates the =note attribute when the note text is edited. */
   const onChange = (e: ContentEditableEvent) => {
-    // Get the current path
-    const currentPath = getCurrentPath(path)
-
     // calculate pathToContext onChange not in render for performance
     const value = justPasted
       ? // if just pasted, strip all HTML from value
@@ -104,7 +82,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
 
     dispatch(
       setDescendant({
-        path: currentPath,
+        path,
         values: ['=note', value],
       }),
     )
@@ -119,12 +97,9 @@ const Note = React.memo(({ path }: { path: Path }) => {
 
   /** Enables noteFocus and sets the cursor on the thought. */
   const onFocus = () => {
-    // Get the current path
-    const currentPath = getCurrentPath(path)
-
     dispatch(
       setCursor({
-        path: currentPath,
+        path,
         cursorHistoryClear: true,
         editing: true,
         noteFocus: true,
