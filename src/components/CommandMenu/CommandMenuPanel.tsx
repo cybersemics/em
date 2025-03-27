@@ -73,7 +73,7 @@ const CommandMenuPanel = () => {
           paper: css({
             // Increase specificity by nesting the selector
             '&.MuiDrawer-paper': {
-              backgroundColor: '{colors.darkgray}',
+              backgroundColor: 'darkgray',
               display: 'flex',
               flexDirection: 'column',
               width: '100%',

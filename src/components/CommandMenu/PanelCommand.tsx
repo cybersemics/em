@@ -53,7 +53,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
           fontWeight: 'bold',
           padding: '0.5rem',
           borderRadius: '16px',
-          backgroundColor: isButtonActive ? '{colors.purple}' : '{colors.gray15}',
+          backgroundColor: isButtonActive ? 'purple' : 'gray15',
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition: 'opacity 0.5s ease, background-color 0.5s ease',
           gridColumn:

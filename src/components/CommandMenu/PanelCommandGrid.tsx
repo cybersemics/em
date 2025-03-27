@@ -23,7 +23,7 @@ const PanelCommandGrid = () => {
         gridTemplateRows: 'auto',
         gridAutoFlow: 'row',
         gap: '0.7rem',
-        padding: '1.5rem 1.8rem 1rem',
+        padding: '1.8rem 1.8rem 1rem',
         maxWidth: '100%',
       })}
     >
