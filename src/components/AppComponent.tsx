@@ -283,7 +283,6 @@ const AppComponent: FC = () => {
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
 
-          {/* CommandMenuPanel */}
           <CommandMenuPanel />
           {/* <div style={{ fontSize }}>
             <Footer />
