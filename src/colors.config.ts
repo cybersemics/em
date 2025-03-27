@@ -10,9 +10,12 @@ const colors = {
     darkgray: 'rgba(17, 17, 17, 1)', // #111111
     fg85: 'rgba(217, 217, 217, 1)', // #d9d9d9
     fg: 'rgba(255, 255, 255, 1)',
+    fgOverlay10: 'rgba(255, 255, 255, 0.1)',
+    fgOverlay20: 'rgba(255, 255, 255, 0.2)',
+    fgOverlay50: 'rgba(255, 255, 255, 0.5)',
+    fgOverlay70: 'rgba(255, 255, 255, 0.7)',
     fgOverlay80: 'rgba(20, 20, 20, 0.8)',
     fgOverlay90: 'rgba(20, 20, 20, 0.9)',
-    fgOverlay50: 'rgba(255, 255, 255, 0.5)',
     gray15: 'rgba(38, 38, 38, 1)', // #262626
     gray33: 'rgba(85, 85, 85, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
@@ -75,9 +78,12 @@ const colors = {
     darkgray: 'rgba(237, 237, 237, 1)', // #ededed
     fg85: 'rgba(39, 39, 39, 1)', // #272727
     fg: 'rgba(0, 0, 0, 1)',
+    fgOverlay10: 'rgba(0, 0, 0, 0.1)',
+    fgOverlay20: 'rgba(0, 0, 0, 0.2)',
+    fgOverlay50: 'rgba(0, 0, 0, 0.5)',
+    fgOverlay70: 'rgba(0, 0, 0, 0.7)',
     fgOverlay80: 'rgba(235, 235, 235, 0.8)',
     fgOverlay90: 'rgba(235, 235, 235, 0.9)',
-    fgOverlay50: 'rgba(0, 0, 0, 0.5)',
     gray15: 'rgba(217, 217, 217, 1)', // #262626
     gray33: 'rgba(170, 170, 170, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
