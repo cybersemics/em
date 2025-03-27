@@ -4,8 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
-import { closeCommandMenuActionCreator } from '../../actions/closeCommandMenu'
-import { showCommandMenuActionCreator } from '../../actions/showCommandMenu'
+import { toggleCommandMenuActionCreator } from '../../actions/toggleCommandMenu'
 import { isTouch } from '../../browser'
 import isTutorial from '../../selectors/isTutorial'
 import CloseIcon from '../icons/CloseIcon'
@@ -34,7 +33,7 @@ const CommandMenuPanel = () => {
       const timeoutId = setTimeout(() => {
         // Check if cursor is still inactive after the delay
         if (!cursor) {
-          dispatch(closeCommandMenuActionCreator())
+          dispatch(toggleCommandMenuActionCreator({ value: false }))
         }
       }, 200) // Small delay to allow for cursor switching
 
@@ -46,11 +45,7 @@ const CommandMenuPanel = () => {
 
   /** Toggle the command menu. */
   const toggleCommandMenu = (value: boolean) => {
-    if (value) {
-      dispatch(showCommandMenuActionCreator())
-    } else {
-      dispatch(closeCommandMenuActionCreator())
-    }
+    dispatch(toggleCommandMenuActionCreator({ value }))
   }
 
   if (isTouch && !isTutorialOn) {
@@ -152,7 +147,7 @@ const CommandMenuPanel = () => {
             })}
           >
             <button
-              onClick={() => dispatch(closeCommandMenuActionCreator())}
+              onClick={() => dispatch(toggleCommandMenuActionCreator({ value: false }))}
               className={css({
                 backgroundColor: 'transparent',
                 border: 'none',

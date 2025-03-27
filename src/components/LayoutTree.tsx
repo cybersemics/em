@@ -13,7 +13,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { showCommandMenuActionCreator } from '../actions/showCommandMenu'
+import { toggleCommandMenuActionCreator } from '../actions/toggleCommandMenu'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
@@ -518,7 +518,7 @@ const TreeNode = ({
         <div ref={fadeThoughtRef}>
           {isCursor && !isTutorialOn && isTouch && (
             <div
-              onClick={() => dispatch(showCommandMenuActionCreator())}
+              onClick={() => dispatch(toggleCommandMenuActionCreator({ value: true }))}
               style={{ position: 'absolute', left: -50, top: 2 }}
             >
               <EllipsisIcon />

@@ -7,7 +7,6 @@ import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styl
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
-import { closeCommandMenuActionCreator } from '../actions/closeCommandMenu'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { editingActionCreator as editingAction } from '../actions/editing'
@@ -17,6 +16,7 @@ import { setInvalidStateActionCreator as setInvalidState } from '../actions/inva
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
+import { toggleCommandMenuActionCreator } from '../actions/toggleCommandMenu'
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isTouch } from '../browser'
@@ -503,7 +503,7 @@ const Editable = ({
 
         // Close command menu when entering edit mode on a touch device
         if (commandMenuOpen && isTouch) {
-          dispatch(closeCommandMenuActionCreator())
+          dispatch(toggleCommandMenuActionCreator({ value: false }))
         }
       }
     },

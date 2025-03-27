@@ -4,13 +4,13 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
-import { closeCommandMenuActionCreator } from '../actions/closeCommandMenu'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { editingActionCreator as editing } from '../actions/editing'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
+import { toggleCommandMenuActionCreator } from '../actions/toggleCommandMenu'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
@@ -102,7 +102,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
 
     // Close command menu if it's open when focusing on a note.
     if (state.commandMenuOpen && isTouch) {
-      dispatch(closeCommandMenuActionCreator())
+      dispatch(toggleCommandMenuActionCreator({ value: false }))
     }
 
     dispatch(
