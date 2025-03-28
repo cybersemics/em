@@ -23,6 +23,11 @@ export const hideCaretAnimationNames = [
 
 const hideCaret = cva({
   base: {
+    '--faux-caret-opacity': '0',
+    '--faux-caret-line-end-opacity': '0',
+    '--faux-caret-line-start-opacity': '0',
+    '--faux-caret-note-line-end-opacity': '0',
+    '--faux-caret-note-line-start-opacity': '0',
     // apply the animation to the LayoutTree in all circumstances so that it will not "change" when a new thought is added,
     // but only "play" the animation if there are multiple thoughts
     // the depth level will change as it always has, but the animation will not play at depth 0 when a new thought is added
