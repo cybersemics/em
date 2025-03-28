@@ -23,7 +23,7 @@ import CommandMenuPanel from './CommandMenu/CommandMenuPanel'
 import CommandPalette from './CommandPalette'
 import Content from './Content'
 import ErrorMessage from './ErrorMessage'
-// import Footer from './Footer'
+import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
@@ -284,9 +284,9 @@ const AppComponent: FC = () => {
           <NavBar position='bottom' />
 
           <CommandMenuPanel />
-          {/* <div style={{ fontSize }}>
+          <div style={{ fontSize }}>
             <Footer />
-          </div> */}
+          </div>
         </>
       )}
     </div>
