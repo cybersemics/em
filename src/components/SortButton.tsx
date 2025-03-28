@@ -171,5 +171,6 @@ const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange
     </button>
   )
 })
+SortButton.displayName = 'SortButton'
 
 export default SortButton

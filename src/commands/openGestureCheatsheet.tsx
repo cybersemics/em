@@ -4,9 +4,6 @@ import GestureCheatsheetIcon from '../components/icons/GestureCheatsheetIcon'
 import scrollTo from '../device/scrollTo'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-/**
- * Executes the openGestureCheatsheet command.
- */
 const exec: Command['exec'] = dispatch => {
   dispatch(toggleGestureCheatsheetActionCreator({ value: true }))
   scrollTo('top')

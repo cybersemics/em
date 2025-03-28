@@ -28,13 +28,14 @@ if (commandsUngrouped.length > 0) {
   )
 }
 
-/** Renders a table of commands with a fade-in animation when sorting changes. */
 interface CommandTableProps {
   customize?: boolean
   onSelect?: (command: Command | null) => void
   selectedCommand?: Command
   viewType?: 'table' | 'grid'
 }
+
+/** Renders a table of commands with a fade-in animation when sorting changes. */
 const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table' }: CommandTableProps) => {
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
@@ -43,6 +44,7 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
   const [isFading, setIsFading] = useState(false)
   const sortButtonRef = useRef<SortButtonHandle>(null)
 
+  /** Closes the sort dropdown when the user scrolls. */
   const handleScroll = () => {
     sortButtonRef.current?.closeDropdown()
   }
