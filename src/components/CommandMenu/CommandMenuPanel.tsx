@@ -55,7 +55,7 @@ const CommandMenuPanel = () => {
         classes={{
           root: css({
             userSelect: 'none',
-            zIndex: 'navbar !important',
+            zIndex: 'modal !important',
           }),
           modal: css({
             '& .MuiDrawer-root': {
