@@ -30,6 +30,8 @@ interface GestureDiagramProps {
   cssRaw?: SystemStyleObject
   /** Whether to render the gesture with rounded corners. */
   rounded?: boolean
+  /** Which kind of arrowhead to draw gesture diagrams with. */
+  arrowhead?: 'filled' | 'outlined'
 }
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
@@ -73,6 +75,7 @@ const GestureDiagram = ({
   inGestureContainer,
   cssRaw,
   rounded,
+  arrowhead = 'filled',
 }: GestureDiagramProps) => {
   const [id] = useState(createId())
 
@@ -268,13 +271,22 @@ const GestureDiagram = ({
           orient='auto-start-reverse'
         >
           <path
-            d='M 0 0 L 10 5 L 0 10 z'
-            fill={
-              highlight != null && highlight >= path.length
-                ? token('colors.vividHighlight')
-                : color || token('colors.fg')
+            d={
+              arrowhead === 'filled'
+                ? 'M 0 0 L 10 5 L 0 10 z'
+                : arrowhead === 'outlined'
+                  ? 'M 0 0 L 5 5 L 0 10'
+                  : undefined
             }
-            stroke='none'
+            fill={
+              arrowhead === 'outlined'
+                ? 'none'
+                : highlight != null && highlight >= path.length
+                  ? token('colors.vividHighlight')
+                  : color || token('colors.fg')
+            }
+            stroke={arrowhead === 'outlined' ? color || token('colors.fg') : 'none'}
+            strokeWidth={arrowhead === 'outlined' ? strokeWidth : 0}
             style={{ filter: dropShadow }}
           />
         </marker>
