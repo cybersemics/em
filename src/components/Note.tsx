@@ -101,7 +101,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
     const state = store.getState()
 
     // Close command menu if it's open when focusing on a note.
-    if (state.commandMenuOpen && isTouch) {
+    if (state.showCommandMenu && isTouch) {
       dispatch(toggleCommandMenuActionCreator({ value: false }))
     }
 

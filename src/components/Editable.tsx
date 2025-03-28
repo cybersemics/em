@@ -497,12 +497,12 @@ const Editable = ({
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
-      const { dragHold, dragInProgress, commandMenuOpen } = store.getState()
+      const { dragHold, dragInProgress, showCommandMenu } = store.getState()
       if (!dragHold && !dragInProgress) {
         setCursorOnThought({ editing: true })
 
         // Close command menu when entering edit mode on a touch device
-        if (commandMenuOpen && isTouch) {
+        if (showCommandMenu && isTouch) {
           dispatch(toggleCommandMenuActionCreator({ value: false }))
         }
       }

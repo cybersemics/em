@@ -136,6 +136,7 @@ interface State {
   showColorPicker?: boolean
   showCommandPalette: boolean
   showHiddenThoughts: boolean
+  showCommandMenu: boolean
   /**
    * The currently shown modal dialog box.
    * Initialized to the welcome modal, unless already completed.
@@ -167,8 +168,6 @@ interface State {
   transientFocus?: boolean
   /** Undo history. Contains diffs that can be applied to State to revert actions. State.undoPatches[0] is the oldest. */
   undoPatches: Patch[]
-  /** Whether the command menu is open. */
-  commandMenuOpen: boolean
   /** The active radio button. */
   activeRadioButton: string
 }

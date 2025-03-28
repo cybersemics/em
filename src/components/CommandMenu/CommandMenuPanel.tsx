@@ -20,7 +20,7 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
  */
 const CommandMenuPanel = () => {
   const dispatch = useDispatch()
-  const commandMenuOpen = useSelector(state => state.commandMenuOpen)
+  const showCommandMenu = useSelector(state => state.showCommandMenu)
   const cursor = useSelector(state => state.cursor)
   const isTutorialOn = useSelector(isTutorial)
   const containerRef = useRef<HTMLInputElement>(null)
@@ -29,7 +29,7 @@ const CommandMenuPanel = () => {
 
   useEffect(() => {
     // Only close the command menu if cursor becomes inactive but make sure it doesn't close if the cursor is just switching
-    if (commandMenuOpen && !cursor) {
+    if (showCommandMenu && !cursor) {
       const timeoutId = setTimeout(() => {
         // Check if cursor is still inactive after the delay
         if (!cursor) {
@@ -41,7 +41,7 @@ const CommandMenuPanel = () => {
     }
 
     prevCursorRef.current = cursor
-  }, [commandMenuOpen, cursor, dispatch])
+  }, [showCommandMenu, cursor, dispatch])
 
   /** Toggle the command menu. */
   const toggleCommandMenu = (value: boolean) => {
@@ -92,7 +92,7 @@ const CommandMenuPanel = () => {
         onOpen={() => toggleCommandMenu(true)}
         // Keep onClose for swipe to dismiss
         onClose={() => toggleCommandMenu(false)}
-        open={commandMenuOpen}
+        open={showCommandMenu}
         hideBackdrop={true}
         disableScrollLock={true}
         // Use PaperProps to directly target the Paper component
