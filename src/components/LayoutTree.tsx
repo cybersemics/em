@@ -447,8 +447,12 @@ const ThoughtNode = ({
         position: 'absolute',
         transition: isLastActionSwapParent
           ? isLastActionNewThought
-            ? `left {durations.layoutNodeAnimationFast} cubic-bezier(0.8, 0, 0.2, 0.2)`
-            : `left {durations.layoutNodeAnimation} cubic-bezier(0.8, 0, 0.2, 0.2)`
+            ? isGreaterThought
+              ? 'left {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0,0.2,0.2)'
+              : 'left {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0.8,0.8,0.8)'
+            : isGreaterThought
+              ? 'left {durations.layoutNodeAnimation} cubic-bezier(0.8,0,0.2,0.2)'
+              : 'left {durations.layoutNodeAnimation} cubic-bezier(0.8,0.8,0.8,0.8)'
           : transition,
       })}
       style={outerDivStyle}
@@ -458,8 +462,12 @@ const ThoughtNode = ({
           position: 'absolute',
           transition: isLastActionSwapParent
             ? isLastActionNewThought
-              ? `top {durations.layoutNodeAnimationFast} cubic-bezier(${isGreaterThought ? '0.8, 0.8, 0.8, 0.8' : '0.8, 0.8, 0.2, 1'})`
-              : `top {durations.layoutNodeAnimation} cubic-bezier(${isGreaterThought ? '0.8, 0.8, 0.8, 0.8' : '0.8, 0.8, 0.2, 1'})`
+              ? isGreaterThought
+                ? 'top {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0.8,0.8,0.8)'
+                : 'top {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0.8,0.2,1)'
+              : isGreaterThought
+                ? 'top {durations.layoutNodeAnimation} cubic-bezier(0.8,0.8,0.8,0.8)'
+                : 'top {durations.layoutNodeAnimation} cubic-bezier(0.8,0.8,0.2,1)'
             : undefined,
           width: '100%',
         })}
