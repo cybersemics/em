@@ -193,7 +193,6 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'toggleContextView',
   'note',
   'subcategorizeOne',
-  'subcategorizeAll',
   'delete',
   'splitSentences',
   'toggleHiddenThoughts',
