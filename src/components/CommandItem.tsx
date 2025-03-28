@@ -12,7 +12,6 @@ import { formatKeyboardShortcut } from '../commands'
 import { noop } from '../constants'
 import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
-import GestureDiagramCheatsheet from './GestureDiagramCheatsheet'
 import HighlightedText from './HighlightedText'
 
 /** Converts the integer into an ordinal, e.g. 1st, 2nd, 3rd, 4th, etc. */
@@ -117,7 +116,20 @@ const CommandItem = ({
       {isTouch && command.gesture ? (
         <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
           {viewType === 'grid' ? (
-            <GestureDiagramCheatsheet path={command.gesture as GesturePath} size={110} arrowSize={25} />
+            <div
+              className={css({
+                border: '1px solid {colors.fgOverlay50}',
+                borderRadius: '8px',
+              })}
+            >
+              <GestureDiagram
+                path={command.gesture as GesturePath}
+                size={150}
+                arrowSize={25}
+                strokeWidth={7.5}
+                arrowhead={'outlined'}
+              />
+            </div>
           ) : (
             <GestureDiagram path={command.gesture as GesturePath} size={48} arrowSize={12} />
           )}
