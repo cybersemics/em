@@ -99,7 +99,6 @@ const deleteEmptyThoughtOrOutdent: Command = {
   keyboard: { key: Key.Backspace },
   hideFromHelp: true,
   multicursor: {
-    enabled: true,
     preventSetCursor: true,
     reverse: true,
   },
@@ -115,7 +114,6 @@ export const deleteEmptyThoughtOrOutdentAlias: Command = {
   keyboard: { key: Key.Backspace, shift: true },
   hideFromHelp: true,
   multicursor: {
-    enabled: true,
     preventSetCursor: true,
     reverse: true,
   },

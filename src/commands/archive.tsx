@@ -68,7 +68,6 @@ const archiveCommand: Command = {
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
   gesture: 'ldl',
   multicursor: {
-    enabled: true,
     preventSetCursor: true,
     clearMulticursor: true,
     execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
@@ -99,7 +98,6 @@ export const archiveAliases: Command = {
   label: 'Archive',
   hideFromHelp: true,
   multicursor: {
-    enabled: true,
     preventSetCursor: true,
   },
   gesture: [

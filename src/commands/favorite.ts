@@ -15,7 +15,6 @@ const favorite: Command = {
   description: 'Add the current thought to your Favorites list.',
   descriptionInverse: 'Remove the current thought from your Favorites list.',
   multicursor: {
-    enabled: true,
     execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
       const state = getState()
       const numThougths = cursors.length

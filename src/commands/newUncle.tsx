@@ -13,7 +13,7 @@ const newUncleCommand: Command = {
   gesture: 'rdl',
   keyboard: { key: Key.Enter, meta: true, alt: true },
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot create a new subthought with multiple thoughts.',
   },
   svg: NewSubthoughtNextIcon,

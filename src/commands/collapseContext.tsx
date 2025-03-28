@@ -9,7 +9,6 @@ const collapseContextCommand: Command = {
   description: 'Deletes the current thought and moves all its subthoughts up a level.',
   gesture: 'dr',
   multicursor: {
-    enabled: true,
     preventSetCursor: true,
     reverse: true,
   },

@@ -17,7 +17,6 @@ const toggleSortCommand: Command = {
   gesture: 'lurd',
   keyboard: { key: 's', meta: true, alt: true },
   multicursor: {
-    enabled: true,
     filter: 'first-sibling',
   },
   svg: Icon,

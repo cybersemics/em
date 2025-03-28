@@ -15,7 +15,7 @@ const noteCommand: Command = {
   keyboard: { key: 'n', alt: true, meta: true },
   gesture: 'rdlr',
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot create a note with multiple thoughts.',
   },
   svg: PencilIcon,

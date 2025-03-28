@@ -33,13 +33,13 @@ interface Command {
   /**
    * Determines how the command behaves when multiple thoughts are selected. This is a required property because multicursor support is nontrivial, and it must be thought through for each new command that is added.
    * - If true, the command will be executed for each cursor. Optional object for more control.
-   * - If false, the command will be executed as if there were no multicursors. The command will be executed on state.cursor as usual and any thoughts that are selected will stay selected. This is ideal for commands that do not interact with the thoughtspace, such as opening the Command Palette or navigating to a modal. If instead you want to disallow the command when multiple thoughts are selected, set { enabled: false }.
+   * - If false, the command will be executed as if there were no multicursors. The command will be executed on state.cursor as usual and any thoughts that are selected will stay selected. This is ideal for commands that do not interact with the thoughtspace, such as opening the Command Palette or navigating to a modal. If instead you want to disallow the command when multiple thoughts are selected, set { disallow: true }.
    **/
   multicursor:
     | boolean
     | {
-        /** Whether multicursor mode is enabled for this command. */
-        enabled: boolean
+        /** If true, execution of the command will be prevented and the user will be shown an alert. This should only be used if the command makes absolutely no sense when multiple thoughts are selected. In most cases, even if there is no multiselect behavior, you can just execute the command on state.cursor (by setting multicursor: false) or execute the command on the first or last sibling (by setting { filter: 'first-sibling' } or { filter: 'last-sibling' ). */
+        disallow?: boolean
         /** An error message to display when multicursor mode is not enabled. */
         error?: ((state: State) => string) | string
         /** Optional override for executing the command for multiple cursors. */

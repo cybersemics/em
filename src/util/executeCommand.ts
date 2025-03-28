@@ -113,15 +113,15 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
   if (!command.multicursor || !hasMulticursor(state)) return executeCommand(command, { store, type, event })
 
-  const multicursorConfig =
+  const multicursorConfig: Command['multicursor'] =
     typeof command.multicursor === 'object'
       ? command.multicursor
       : command.multicursor
-        ? { enabled: true }
-        : { enabled: false }
+        ? { disallow: false }
+        : { disallow: true }
 
-  // multicursor is not enabled for this command, alert and exit early
-  if (!multicursorConfig.enabled) {
+  // multicursor is disallowed for this command, alert and exit early
+  if (multicursorConfig.disallow) {
     const errorMessage = !multicursorConfig.error
       ? 'Cannot execute this command with multiple thoughts.'
       : typeof multicursorConfig.error === 'function'

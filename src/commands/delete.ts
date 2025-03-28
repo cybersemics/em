@@ -63,7 +63,6 @@ const deleteCommand: Command = {
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
   gesture: 'ldldl',
   multicursor: {
-    enabled: true,
     preventSetCursor: true,
     reverse: true,
     clearMulticursor: true,

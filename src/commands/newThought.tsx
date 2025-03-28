@@ -60,8 +60,8 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }: { type: string }
   }
 }
 
-const multicursor = {
-  enabled: false,
+const multicursor: Command['multicursor'] = {
+  disallow: true,
   error: 'Cannot create a new thought with multiple thoughts.',
 }
 

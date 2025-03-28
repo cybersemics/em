@@ -8,7 +8,6 @@ const joinThoughts: Command = {
   description: 'join all siblings and merge their children',
   keyboard: { key: 'j', alt: true },
   multicursor: {
-    enabled: true,
     clearMulticursor: true,
     execMulticursor: (cursors, dispatch) => {
       dispatch(join({ paths: cursors }))

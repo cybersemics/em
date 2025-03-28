@@ -10,7 +10,7 @@ const textColor: Command = {
   svg: TextColorWithColorPicker,
   canExecute: state => isDocumentEditable() && !!state.cursor,
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot change text color with multiple thoughts.',
   },
   exec: (dispatch, getState) => {

@@ -6,7 +6,6 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const multicursor: Command['multicursor'] = {
-  enabled: true,
   execMulticursor: (_cursors, dispatch) => dispatch(subcategorizeMulticursor()),
   preventSetCursor: true,
   clearMulticursor: true,
