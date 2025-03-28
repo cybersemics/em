@@ -82,10 +82,7 @@ const filterCursors = (_state: State, cursors: Path[], filter: MulticursorFilter
 /** Recomputes the path to a thought. Returns null if the thought does not exist. */
 const recomputePath = (state: State, thoughtId: ThoughtId) => {
   const path = thoughtToPath(state, thoughtId)
-
-  if (path && equalPath(path, HOME_PATH)) return null
-
-  return path
+  return path && equalPath(path, HOME_PATH) ? null : path
 }
 
 /** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
@@ -111,14 +108,12 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
   const state = store.getState()
 
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
-  if (!command.multicursor || !hasMulticursor(state)) return executeCommand(command, { store, type, event })
+  if (!command.multicursor || !hasMulticursor(state)) {
+    return executeCommand(command, { store, type, event })
+  }
 
-  const multicursorConfig: Command['multicursor'] =
-    typeof command.multicursor === 'object'
-      ? command.multicursor
-      : command.multicursor
-        ? { disallow: false }
-        : { disallow: true }
+  /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
+  const multicursorConfig = typeof command.multicursor === 'boolean' ? {} : command.multicursor
 
   // multicursor is disallowed for this command, alert and exit early
   if (multicursorConfig.disallow) {
