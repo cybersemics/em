@@ -74,6 +74,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
             display: 'block',
             opacity: 1,
             transition: 'opacity 0.2s ease',
+            zIndex: 2,
           })}
         />
       </div>

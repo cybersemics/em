@@ -63,7 +63,11 @@ const GestureCheatsheet: React.FC = () => {
               <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
               <DialogContent>
                 <CommandTable viewType='grid' />
-                <div style={{ height: '64px' }} />
+                <div
+                  style={{
+                    height: '64px',
+                  }}
+                />
               </DialogContent>
             </Dialog>
           </div>
