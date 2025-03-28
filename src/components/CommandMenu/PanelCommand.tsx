@@ -84,7 +84,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
           className={css({
             fontSize: 'sm',
             marginTop: size === 'small' ? '0.5rem' : '0',
-            color: '{colors.fg}',
+            color: 'fg',
             textAlign: size === 'medium' ? 'left' : 'center',
           })}
         >
