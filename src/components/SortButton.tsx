@@ -1,16 +1,32 @@
-import React, { useState } from 'react'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import theme from '../selectors/theme'
 import SortIcon from './icons/SortIcon'
 
+export interface SortButtonHandle {
+  closeDropdown: () => void
+}
+
+interface SortButtonProps {
+  onSortChange: (sortOrder: 'alphabetical' | 'type') => void
+}
+
 /**
  * SortButton component.
  * */
-const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') => void }> = ({ onSortChange }) => {
+const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange }, ref) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<'alphabetical' | 'type'>('type')
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      closeDropdown: () => setDropdownOpen(false),
+    }),
+    [],
+  )
 
   /**
    * Handles the sort change.
@@ -53,6 +69,7 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
             willChange: 'opacity, visibility',
             position: 'absolute',
             top: '100%',
+            marginTop: '0.5rem',
             right: 0,
             backgroundColor: 'bg',
             border: 'solid 1px {colors.gray50}',
@@ -153,6 +170,6 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
       </div>
     </button>
   )
-}
+})
 
 export default SortButton

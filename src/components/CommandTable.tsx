@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import { isTouch } from '../browser'
@@ -10,6 +10,7 @@ import keyValueBy from '../util/keyValueBy'
 import CommandsGroup from './CommandsGroup'
 import SearchCommands from './SearchCommands'
 import SortButton from './SortButton'
+import { SortButtonHandle } from './SortButton'
 
 const commandsGroupedMap = keyValueBy(
   COMMAND_GROUPS.flatMap(group => group.commands),
@@ -40,6 +41,18 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'type'>('type')
   const [previousSortOrder, setPreviousSortOrder] = useState(sortOrder)
   const [isFading, setIsFading] = useState(false)
+  const sortButtonRef = useRef<SortButtonHandle>(null)
+
+  const handleScroll = () => {
+    sortButtonRef.current?.closeDropdown()
+  }
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, true)
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true)
+    }
+  }, [])
 
   useEffect(() => {
     if (sortOrder !== previousSortOrder) {
@@ -69,7 +82,7 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
         })}
       >
         <SearchCommands onInput={setSearch} />
-        <SortButton onSortChange={setSortOrder} />
+        <SortButton ref={sortButtonRef} onSortChange={setSortOrder} />
       </div>
 
       {/* Smooth Fade-in Transition */}
