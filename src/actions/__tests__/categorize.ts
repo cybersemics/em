@@ -5,15 +5,15 @@ import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
+import categorize from '../categorize'
 import importText from '../importText'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import subCategorizeOne from '../subCategorizeOne'
 import toggleContextView from '../toggleContextView'
 
 describe('normal view', () => {
-  it('subcategorize a thought', () => {
-    const steps = [newThought('a'), newSubthought('b'), subCategorizeOne]
+  it('categorize a thought', () => {
+    const steps = [newThought('a'), newSubthought('b'), categorize]
 
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -24,8 +24,8 @@ describe('normal view', () => {
       - b`)
   })
 
-  it('subcategorize a thought in the root', () => {
-    const steps = [newThought('a'), subCategorizeOne]
+  it('categorize a thought in the root', () => {
+    const steps = [newThought('a'), categorize]
 
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -35,8 +35,8 @@ describe('normal view', () => {
     - a`)
   })
 
-  it('subcategorize with no cursor should do nothing', () => {
-    const steps = [newThought('a'), newSubthought('b'), setCursor(null), subCategorizeOne]
+  it('categorize with no cursor should do nothing', () => {
+    const steps = [newThought('a'), newSubthought('b'), setCursor(null), categorize]
 
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -47,7 +47,7 @@ describe('normal view', () => {
   })
 
   it('set cursor on new empty thought', () => {
-    const steps = [newThought('a'), newSubthought('b'), subCategorizeOne]
+    const steps = [newThought('a'), newSubthought('b'), categorize]
 
     const stateNew = reducerFlow(steps)(initialState())
 
@@ -59,7 +59,7 @@ describe('normal view', () => {
     ])
   })
 
-  it('subcategorize within alphabteically sorted context', () => {
+  it('categorize within alphabteically sorted context', () => {
     const steps = [
       importText({
         text: `
@@ -72,7 +72,7 @@ describe('normal view', () => {
         - E`,
       }),
       setCursor(['A', 'E']),
-      subCategorizeOne,
+      categorize,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -91,7 +91,7 @@ describe('normal view', () => {
 })
 
 describe('context view', () => {
-  it('subcategorize context', () => {
+  it('categorize context', () => {
     const text = `
       - a
         - m
@@ -105,7 +105,7 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'b']),
-      subCategorizeOne,
+      categorize,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -123,7 +123,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', ''])
   })
 
-  it('subcategorize context subthought', () => {
+  it('categorize context subthought', () => {
     const text = `
       - a
         - m
@@ -137,7 +137,7 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'b', 'y']),
-      subCategorizeOne,
+      categorize,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())

@@ -1,9 +1,5 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import alert from '../actions/alert'
-import createThought from '../actions/createThought'
-import moveThought from '../actions/moveThought'
-import setCursor from '../actions/setCursor'
 import findDescendant from '../selectors/findDescendant'
 import getRankBefore from '../selectors/getRankBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -18,9 +14,13 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
+import alert from './alert'
+import createThought from './createThought'
+import moveThought from './moveThought'
+import setCursor from './setCursor'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
-const subCategorizeOne = (state: State) => {
+const categorize = (state: State) => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -39,14 +39,14 @@ const subCategorizeOne = (state: State) => {
       value: `"${ellipsize(headValue(state, cursorParent) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
         state,
         cursor,
-      )}" cannot be subcategorized.`,
+      )}" cannot be categorized.`,
     })
   } else if (findDescendant(state, head(cursorParent), '=unextendable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursorParent) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
         state,
         cursor,
-      )}" cannot be subcategorized.`,
+      )}" cannot be categorized.`,
     })
   }
 
@@ -79,7 +79,7 @@ const subCategorizeOne = (state: State) => {
   ])(state)
 }
 
-/** A Thunk that dispatches a 'subCategorizeOne` action. */
-export const subCategorizeOneActionCreator = (): Thunk => dispatch => dispatch({ type: 'subCategorizeOne' })
+/** A Thunk that dispatches a 'categorize` action. */
+export const categorizeActionCreator = (): Thunk => dispatch => dispatch({ type: 'categorize' })
 
-export default subCategorizeOne
+export default categorize

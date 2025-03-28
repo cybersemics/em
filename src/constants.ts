@@ -192,7 +192,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'letterCase',
   'toggleContextView',
   'note',
-  'subcategorizeOne',
+  'categorize',
   'delete',
   'splitSentences',
   'toggleHiddenThoughts',

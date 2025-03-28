@@ -205,7 +205,7 @@ describe('mobile only', () => {
     await emulate(KnownDevices['iPhone 11'])
   }, 5000)
 
-  it('After subcategorizeOne, the caret should be on the new thought', async () => {
+  it('After categorize, the caret should be on the new thought', async () => {
     const importText = `
     - a
       - b`
@@ -218,8 +218,8 @@ describe('mobile only', () => {
     // close keyboard
     await clickBullet('b')
 
-    await waitForSelector('[aria-label="Subcategorize"]')
-    await click('[aria-label="Subcategorize"]')
+    await waitForSelector('[aria-label="Categorize"]')
+    await click('[aria-label="Categorize"]')
 
     const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('')
