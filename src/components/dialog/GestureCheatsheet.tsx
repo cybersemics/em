@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { toggleGestureCheatsheetActionCreator } from '../../actions/toggleGestureCheatsheet'
 import { FADEOUT_DURATION } from '../../constants'
+import allowScroll from '../../device/disableScroll'
 import CommandTable from '../CommandTable'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
@@ -36,12 +37,12 @@ const GestureCheatsheet: React.FC = () => {
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden'
+      allowScroll(false)
     } else {
-      document.body.style.overflow = 'auto'
+      allowScroll(true)
     }
     return () => {
-      document.body.style.overflow = 'auto'
+      allowScroll(true)
     }
   }, [isOpen])
 
