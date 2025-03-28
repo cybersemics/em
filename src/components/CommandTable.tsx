@@ -59,6 +59,11 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
           flexDirection: 'row',
           justifyContent: 'space-between',
           gap: '5px',
+
+          /* On iOS, the sticky headers won't properly stick to the top of the scrollable container (causing a sliver
+             of content to peek through) unless we force the container into a new stacking context. */
+          willChange: 'transform',
+          transform: 'translateZ(0)',
         })}
       >
         <SearchCommands onInput={setSearch} />
