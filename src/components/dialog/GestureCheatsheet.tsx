@@ -50,7 +50,7 @@ const GestureCheatsheet: React.FC = () => {
     opacity: 0,
     transition: 'opacity 0.5s ease',
     willChange: 'opacity',
-    zIndex: 'modal',
+    zIndex: 'popup',
     position: 'fixed',
   })
 
