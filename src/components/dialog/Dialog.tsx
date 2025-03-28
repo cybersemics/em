@@ -44,6 +44,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
         justifyContent: 'center',
         backgroundColor: '{colors.bgOverlay50}',
         zIndex: 'modal',
+        overflow: 'hidden',
       })}
     >
       <div
@@ -56,7 +57,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
           maxWidth: '500px',
           width: '80%',
           border: '2px solid {colors.fgOverlay50}',
-          overflowY: 'auto',
+          overflow: 'hidden',
           position: 'relative',
           maxHeight: '80vh',
         })}
