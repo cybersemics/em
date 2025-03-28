@@ -8,7 +8,6 @@ import editThought from '../actions/editThought'
 import editableRender from '../actions/editableRender'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
-import subCategorizeOne from '../actions/subCategorizeOne'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
@@ -20,6 +19,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
+import categorize from './categorize'
 
 /** Clears a thought's text, moving it to its first child. */
 const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath }): State => {
@@ -39,7 +39,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   const children = getAllChildren(state, head(simplePath))
 
   // if there are no children
-  if (children.length === 0) return subCategorizeOne(state)
+  if (children.length === 0) return categorize(state)
 
   // TODO: Resolve simplePath to make it work within the context view
   // Cannot do this without the contextChain
