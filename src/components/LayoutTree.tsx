@@ -34,6 +34,7 @@ import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
+import { compareThought } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import hideCaret, { getHideCaretAnimationName } from '../util/getHideCaretAnimationName'
 import hashPath from '../util/hashPath'
@@ -382,6 +383,7 @@ const linearizeTree = (
 const ThoughtNode = ({
   isLastActionSwapParent,
   isLastActionNewThought,
+  isGreaterThought,
   x,
   y,
   width,
@@ -401,6 +403,7 @@ const ThoughtNode = ({
 }: {
   isLastActionSwapParent: boolean
   isLastActionNewThought: boolean
+  isGreaterThought: boolean
   x: number
   y: number
   width?: number
@@ -455,8 +458,8 @@ const ThoughtNode = ({
           position: 'absolute',
           transition: isLastActionSwapParent
             ? isLastActionNewThought
-              ? `top {durations.layoutNodeAnimationFast} cubic-bezier(0.8, 0.8, 0.2, 1)`
-              : `top {durations.layoutNodeAnimation} cubic-bezier(0.8, 0.8, 0.2, 1)`
+              ? `top {durations.layoutNodeAnimationFast} cubic-bezier(${isGreaterThought ? '0.8, 0.8, 0.8, 0.8' : '0.8, 0.8, 0.2, 1'})`
+              : `top {durations.layoutNodeAnimation} cubic-bezier(${isGreaterThought ? '0.8, 0.8, 0.8, 0.8' : '0.8, 0.8, 0.2, 1'})`
             : undefined,
           width: '100%',
         })}
@@ -552,6 +555,16 @@ const TreeNode = ({
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
 
+  // Get the current thought and previous thought to compare
+  const currentThought = useSelector(state => getThoughtById(state, head(path)))
+  const prevThought = useSelector(state =>
+    index > 0 ? getThoughtById(state, head(treeThoughtsPositioned[index - 1].path)) : null,
+  )
+
+  // Compare the current thought with the previous thought to determine the animation curve
+  const thoughtComparison = prevThought && currentThought ? compareThought(currentThought, prevThought) : 0
+  const isGreaterThought = thoughtComparison > 0
+
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
   // 2. Create L-shaped animation paths by controlling when each movement starts/ends
@@ -614,6 +627,7 @@ const TreeNode = ({
         path={path}
         isTableCol2={isTableCol2}
         isLastVisible={isLastVisible}
+        isGreaterThought={isGreaterThought}
         treeThoughtsPositioned={treeThoughtsPositioned}
         index={index}
       >
