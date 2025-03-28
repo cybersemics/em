@@ -78,10 +78,6 @@ interface Command {
   /** A selector that returns true if the command can be executed with the current state. */
   canExecute?: (state: State) => boolean
 
-  /** An ad hoc property to track conflicting commands. */
-  // TODO: Refactor so this is not in the main Command type.
-  conflicts?: string[]
-
   /** A description of what the command does that is shown in the Help modal. */
   description?: string | ((state: State) => string)
 

@@ -97,33 +97,27 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | string): string =
     arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
   )
 }
-/** Initializes command indices and stores conflicts. */
+/** Initializes command indices and logs keyboard shortcut conflicts. */
 const index = (): {
   commandKeyIndex: Index<Command>
   commandIdIndex: Index<Command>
   commandGestureIndex: Index<Command>
 } => {
   // index commands for O(1) lookup by keyboard
-  const commandKeyIndex: Index<Command> = keyValueBy(globalCommands, (command, i, accum) => {
+  const commandKeyIndex: Index<Command & { conflicts?: any[] }> = keyValueBy(globalCommands, (command, i, accum) => {
     if (!command.keyboard) return null
 
     const hash = hashCommand(command)
-    const conflict = !!accum[hash]
 
-    if (conflict) {
+    // check if the shortcut is used by another command
+    if (accum[hash]) {
       console.error(
         `"${command.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(command.keyboard)}"`,
       )
     }
 
     return {
-      // if there is a conflict, append the command id to the conflicts property so that the conflicts can be displayed to the user
-      [hash]: conflict
-        ? {
-            ...command,
-            conflicts: [...(command.conflicts || [accum[hash].id]), command.id],
-          }
-        : command,
+      [hash]: command,
     }
   })
 
