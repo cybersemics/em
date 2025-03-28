@@ -28,6 +28,7 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
         _hover: {
           backgroundColor: '{colors.gray15}',
         },
+        padding: 0,
       })}
     >
       <div
