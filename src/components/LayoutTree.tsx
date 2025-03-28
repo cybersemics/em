@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
@@ -13,6 +13,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import { toggleCommandMenuActionCreator } from '../actions/toggleCommandMenu'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
@@ -25,6 +26,7 @@ import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isTutorial from '../selectors/isTutorial'
 import nextSibling from '../selectors/nextSibling'
 import rootedGrandparentOf from '../selectors/rootedGrandparentOf'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -46,6 +48,7 @@ import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import HoverArrow from './HoverArrow'
 import VirtualThought, { OnResize } from './VirtualThought'
+import EllipsisIcon from './icons/EllipsisIcon'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
 type TreeThought = {
@@ -429,10 +432,12 @@ const TreeNode = ({
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const dispatch = useDispatch()
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
   })
+  const isTutorialOn = useSelector(isTutorial)
 
   // true if the last action is any of archive/delete/collapse
   const isLastActionDelete = useSelector(state => {
@@ -511,6 +516,14 @@ const TreeNode = ({
         }}
       >
         <div ref={fadeThoughtRef}>
+          {isCursor && !isTutorialOn && isTouch && (
+            <div
+              onClick={() => dispatch(toggleCommandMenuActionCreator({ value: true }))}
+              style={{ position: 'absolute', left: -50, top: 2 }}
+            >
+              <EllipsisIcon />
+            </div>
+          )}
           <VirtualThought
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
             depth={depth}

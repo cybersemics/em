@@ -138,6 +138,7 @@ interface State {
   showColorPicker?: boolean
   showCommandPalette: boolean
   showHiddenThoughts: boolean
+  showCommandMenu: boolean
   /**
    * The currently shown modal dialog box.
    * Initialized to the welcome modal, unless already completed.
