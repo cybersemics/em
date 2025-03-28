@@ -34,14 +34,13 @@ const CommandTableOnly = ({
   }, shallowEqual)
 
   return (
-    <table className={css({ fontSize: '14px', ...(viewType === 'grid' && { width: '100%' }) })}>
+    <table className={css({ fontSize: '14px' })}>
       <tbody
         className={css({
           display: viewType === 'grid' ? 'grid' : 'table-row-group',
           ...(viewType === 'grid' && {
             gridTemplateColumns: '1fr 1fr',
             gap: '1rem',
-            width: '100%',
           }),
         })}
       >

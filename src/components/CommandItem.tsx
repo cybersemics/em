@@ -124,7 +124,7 @@ const CommandItem = ({
             >
               <GestureDiagram
                 path={command.gesture as GesturePath}
-                size={150}
+                size={130}
                 arrowSize={25}
                 strokeWidth={7.5}
                 arrowhead={'outlined'}
