@@ -6,7 +6,6 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const selectAllCommand: Command = {
   id: 'selectAll',
   label: 'Select All',
-  svg: () => null,
   description: 'Selects all thoughts at the current level. May reduce wrist strain.',
   gesture: 'ldr',
   // meta + alt + a is the default keyboard shortcut and always works.
@@ -20,7 +19,6 @@ const selectAllCommand: Command = {
 /** An alias to allow meta + a when multiselect is active (when it cannot interfere with selecting all text within a thought). */
 export const selectAllAlias: Command = {
   id: 'selectAllAlias',
-  svg: () => null,
   label: 'Select All',
   keyboard: { key: 'a', meta: true },
   hideFromHelp: true,

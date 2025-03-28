@@ -96,7 +96,6 @@ const archiveCommand: Command = {
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const archiveAliases: Command = {
   id: 'archiveAliases',
-  svg: ArchiveIcon,
   label: 'Archive',
   hideFromHelp: true,
   multicursor: {

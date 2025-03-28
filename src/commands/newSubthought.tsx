@@ -61,7 +61,6 @@ export const newSubthoughtAliases: Command = {
     'rldldlru',
   ],
   multicursor,
-  svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,
 }

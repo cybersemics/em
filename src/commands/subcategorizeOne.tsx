@@ -34,7 +34,6 @@ export const subCategorizeOneCommandAlias: Command = {
   hideFromHelp: true,
   keyboard: { key: ']', meta: true },
   multicursor,
-  svg: SubCategorizeOneIcon,
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },

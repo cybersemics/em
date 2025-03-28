@@ -119,7 +119,6 @@ export const deleteEmptyThoughtOrOutdentAlias: Command = {
     preventSetCursor: true,
     reverse: true,
   },
-  svg: Icon,
   canExecute,
   exec,
 }

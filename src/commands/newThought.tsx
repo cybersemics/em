@@ -87,7 +87,6 @@ export const newThoughtAliases: Command = {
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   // smuggle it in with the aliases
   ...(isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null),
-  svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,
 }
