@@ -265,8 +265,8 @@ const GestureDiagram = ({
           viewBox='0 0 10 10'
           refX={rounded ? '0' : '5'}
           refY='5'
-          markerWidth={arrowSize!}
-          markerHeight={arrowSize}
+          markerWidth={arrowSize! * (arrowhead === 'outlined' ? 2 : 1)}
+          markerHeight={arrowSize! * (arrowhead === 'outlined' ? 3 : 1)}
           markerUnits='userSpaceOnUse'
           orient='auto-start-reverse'
         >
@@ -286,7 +286,7 @@ const GestureDiagram = ({
                   : color || token('colors.fg')
             }
             stroke={arrowhead === 'outlined' ? color || token('colors.fg') : 'none'}
-            strokeWidth={arrowhead === 'outlined' ? strokeWidth : 0}
+            strokeWidth={arrowhead === 'outlined' ? strokeWidth / 3 : 0}
             style={{ filter: dropShadow }}
           />
         </marker>
