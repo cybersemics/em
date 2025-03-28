@@ -64,6 +64,8 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
              of content to peek through) unless we force the container into a new stacking context. */
           willChange: 'transform',
           transform: 'translateZ(0)',
+          position: 'relative',
+          zIndex: 1,
         })}
       >
         <SearchCommands onInput={setSearch} />

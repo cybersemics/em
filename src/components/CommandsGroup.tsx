@@ -28,7 +28,7 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
   const modalClasses = modalTextRecipe()
 
   return (
-    <div>
+    <div className={css({ position: 'relative', willChange: 'transform' })}>
       <h2
         className={css({
           ...modalClasses,

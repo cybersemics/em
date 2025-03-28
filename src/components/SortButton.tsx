@@ -57,7 +57,7 @@ const SortButton: React.FC<{ onSortChange: (sortOrder: 'alphabetical' | 'type') 
             backgroundColor: 'bg',
             border: 'solid 1px {colors.gray50}',
             borderRadius: '8px',
-            zIndex: 'modal',
+            zIndex: 'dialog',
             padding: '1rem',
             display: 'flex',
             flexDirection: 'column',

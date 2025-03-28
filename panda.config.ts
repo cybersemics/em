@@ -293,6 +293,8 @@ export default defineConfig({
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
         zIndex: {
           ...zIndexDescending([
+            'dialog',
+            'dialogContainer',
             'popup',
             'hoverArrow',
             'gestureTrace',
