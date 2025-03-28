@@ -473,8 +473,14 @@ const TreeNode = ({
 
   // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
   const transition = isLastActionNewThought
-    ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
-    : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
+    ? `left {durations.layoutNodeAnimationFast} ease-out,
+       top {durations.layoutNodeAnimationFast} ease-out,
+       margin-right {durations.layoutNodeAnimationFast} ease-out
+       `
+    : `left {durations.layoutNodeAnimation} ease-out,
+       top {durations.layoutNodeAnimation} ease-out,
+       margin-right {durations.layoutNodeAnimation} ease-out
+       `
 
   return (
     <FadeTransition
@@ -507,7 +513,6 @@ const TreeNode = ({
           // (Maybe the 10px is from .content padding-left?)
           width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
           ...style,
-          textAlign: isTableCol1 ? 'right' : undefined,
         }}
       >
         <div ref={fadeThoughtRef}>
@@ -535,6 +540,7 @@ const TreeNode = ({
             isLastVisible={isLastVisible}
             autofocus={autofocus}
             marginRight={isTableCol1 ? marginRight : 0}
+            isTableCol1={isTableCol1}
           />
         </div>
 
