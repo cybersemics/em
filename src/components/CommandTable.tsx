@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import { isTouch } from '../browser'
@@ -8,6 +9,7 @@ import useFilteredCommands from '../hooks/useFilteredCommands'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import CommandsGroup from './CommandsGroup'
+import FadeTransition from './FadeTransition'
 import SearchCommands from './SearchCommands'
 import SortButton from './SortButton'
 import { SortButtonHandle } from './SortButton'
@@ -40,8 +42,6 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'type'>('type')
-  const [previousSortOrder, setPreviousSortOrder] = useState(sortOrder)
-  const [isFading, setIsFading] = useState(false)
   const sortButtonRef = useRef<SortButtonHandle>(null)
 
   /** Closes the sort dropdown when the user scrolls. */
@@ -56,15 +56,53 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
     }
   }, [])
 
-  useEffect(() => {
-    if (sortOrder !== previousSortOrder) {
-      setIsFading(true) // Start fading out
-      setTimeout(() => {
-        setPreviousSortOrder(sortOrder) // Update to new view after fade out
-        setIsFading(false) // Start fading in
-      }, 250) // Matches transition duration
+  const renderContent = () => {
+    if (search) {
+      return (
+        <CommandsGroup
+          title={'Results'}
+          commands={commands}
+          selectedCommand={selectedCommand}
+          customize={customize}
+          onSelect={onSelect}
+          search={search}
+          viewType={viewType}
+        />
+      )
+    } else if (sortOrder === 'type') {
+      return COMMAND_GROUPS.map(group => {
+        const commands = group.commands
+          .map(commandById)
+          .filter((command): command is Command => (isTouch ? !!command.gesture : !!command.keyboard))
+
+        return commands.length > 0 ? (
+          <CommandsGroup
+            title={group.title}
+            commands={commands}
+            customize={customize}
+            key={group.title}
+            onSelect={onSelect}
+            selectedCommand={selectedCommand}
+            viewType={viewType}
+          />
+        ) : null
+      })
+    } else {
+      const commandsWithGestures = commands.filter((command): command is Command => !!command.gesture)
+      const sortedCommands = commandsWithGestures.sort((a, b) => a.label.localeCompare(b.label))
+
+      return (
+        <CommandsGroup
+          title={'All Commands'}
+          commands={sortedCommands}
+          selectedCommand={selectedCommand}
+          customize={customize}
+          onSelect={onSelect}
+          viewType={viewType}
+        />
+      )
     }
-  }, [sortOrder, previousSortOrder])
+  }
 
   return (
     <div>
@@ -74,9 +112,6 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
           flexDirection: 'row',
           justifyContent: 'space-between',
           gap: '5px',
-
-          /* On iOS, the sticky headers won't properly stick to the top of the scrollable container (causing a sliver
-             of content to peek through) unless we force the container into a new stacking context. */
           willChange: 'transform',
           transform: 'translateZ(0)',
           position: 'relative',
@@ -87,65 +122,11 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
         <SortButton ref={sortButtonRef} onSortChange={setSortOrder} />
       </div>
 
-      {/* Smooth Fade-in Transition */}
-      <div
-        className={css({
-          textAlign: 'left',
-          opacity: isFading ? 0 : 1,
-          transition: 'opacity 0.3s ease-in-out',
-        })}
-      >
-        {(() => {
-          if (search) {
-            return (
-              <CommandsGroup
-                title={'Results'}
-                commands={commands}
-                selectedCommand={selectedCommand}
-                customize={customize}
-                onSelect={onSelect}
-                search={search}
-                viewType={viewType}
-              />
-            )
-          } else if (previousSortOrder === 'type') {
-            return COMMAND_GROUPS.map(group => {
-              const commands = group.commands
-                .map(commandById)
-                .filter((command): command is Command => (isTouch ? !!command.gesture : !!command.keyboard))
-
-              return commands.length > 0 ? (
-                <CommandsGroup
-                  title={group.title}
-                  commands={commands}
-                  customize={customize}
-                  key={group.title}
-                  onSelect={onSelect}
-                  selectedCommand={selectedCommand}
-                  viewType={viewType}
-                />
-              ) : null
-            })
-          } else if (previousSortOrder === 'alphabetical') {
-            // Filter commands to include only those with gestures
-            const commandsWithGestures = commands.filter((command): command is Command => !!command.gesture)
-
-            // Sort commands alphabetically by their ID or name
-            const sortedCommands = commandsWithGestures.sort((a, b) => a.label.localeCompare(b.label))
-
-            return (
-              <CommandsGroup
-                title={'All Commands'}
-                commands={sortedCommands}
-                selectedCommand={selectedCommand}
-                customize={customize}
-                onSelect={onSelect}
-                viewType={viewType}
-              />
-            )
-          }
-        })()}
-      </div>
+      <SwitchTransition>
+        <FadeTransition key={`${sortOrder}-${search}`} in={true} duration='medium' unmountOnExit>
+          <div className={css({ textAlign: 'left' })}>{renderContent()}</div>
+        </FadeTransition>
+      </SwitchTransition>
     </div>
   )
 }
