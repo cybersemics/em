@@ -20,7 +20,7 @@ const toggleSplitViewCommand: Command = {
   label: 'Split View',
   description: 'Render two independent views for side-by-side editing.',
   descriptionInverse: 'Revert to a single editing view.',
-  multicursor: 'ignore',
+  multicursor: false,
   svg: Icon,
   exec: (dispatch, getState) => {
     const state = getState()

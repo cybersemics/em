@@ -110,10 +110,8 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
 
   const state = store.getState()
 
-  const shouldExecuteMulticursor = hasMulticursor(state) && command.multicursor !== 'ignore'
-
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
-  if (!shouldExecuteMulticursor) return executeCommand(command, { store, type, event })
+  if (!command.multicursor || !hasMulticursor(state)) return executeCommand(command, { store, type, event })
 
   const multicursorConfig =
     typeof command.multicursor === 'object'

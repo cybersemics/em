@@ -9,7 +9,7 @@ const letterCase: Command = {
   description: 'Change the Letter case.',
   svg: Icon,
   canExecute: state => isDocumentEditable() && !!state.cursor,
-  multicursor: 'ignore',
+  multicursor: false,
   exec: (dispatch, getState) => {
     const state = getState()
     if (state.showColorPicker) dispatch({ type: 'toggleColorPicker' })

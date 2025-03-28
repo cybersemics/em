@@ -5,7 +5,7 @@ const toggleSidebarCommand: Command = {
   id: 'toggleSidebar',
   label: 'Toggle Recently Edited',
   keyboard: { key: 'r', alt: true },
-  multicursor: 'ignore',
+  multicursor: false,
   hideFromHelp: true,
   exec: (dispatch, getState) => dispatch(toggleSidebar({ value: !getState().showSidebar })),
 }

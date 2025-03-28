@@ -50,7 +50,7 @@ const cursorDownCommand: Command = {
   label: 'Cursor Down',
   keyboard: { key: Key.ArrowDown },
   hideFromHelp: true,
-  multicursor: 'ignore',
+  multicursor: false,
   svg: Icon,
   canExecute: state => {
     const { cursor } = state

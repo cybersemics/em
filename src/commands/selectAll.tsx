@@ -11,7 +11,7 @@ const selectAllCommand: Command = {
   // meta + alt + a is the default keyboard shortcut and always works.
   // See alias below for meta + a when multiselect is active.
   keyboard: { key: 'a', meta: true, alt: true },
-  multicursor: 'ignore',
+  multicursor: false,
   canExecute: isDocumentEditable,
   exec: addAllMulticursor(),
 }
@@ -22,7 +22,7 @@ export const selectAllAlias: Command = {
   label: 'Select All',
   keyboard: { key: 'a', meta: true },
   hideFromHelp: true,
-  multicursor: 'ignore',
+  multicursor: false,
   // This meta + a alias is active only when there is no multicursor.
   // This allows the default browser behavior of selecting all text in the thought.
   canExecute: state => isDocumentEditable() && hasMulticursor(state),

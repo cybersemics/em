@@ -22,7 +22,7 @@ const pinAllCommand: Command = {
   description: 'Pins open all thoughts at the current level.',
   descriptionInverse: 'Unpins all thoughts at the current level.',
   keyboard: { key: 'p', meta: true, shift: true },
-  multicursor: 'ignore',
+  multicursor: false,
   svg: PinAllIcon,
   canExecute: state => {
     return !!state.cursor || hasMulticursor(state)

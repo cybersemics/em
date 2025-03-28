@@ -7,7 +7,7 @@ import getLatestActionType from '../util/getLastActionType'
 const redoCommand: Command = {
   id: 'redo',
   label: 'Redo',
-  multicursor: 'ignore',
+  multicursor: false,
   description: state => {
     const lastActionType = getLatestActionType(state.redoPatches)
 

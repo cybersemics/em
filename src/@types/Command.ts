@@ -30,9 +30,12 @@ interface Command {
   /** Short label. */
   label: string
 
-  /** Determines how the command behaves when multiple thoughts are selected. This is a required property because multicursor support is nontrivial, and it must be thought through for each new command that is added. If 'ignore', the command will be executed as if there were no multicursors. When true, the command will be executed for each cursor. Optional object for more control. */
+  /**
+   * Determines how the command behaves when multiple thoughts are selected. This is a required property because multicursor support is nontrivial, and it must be thought through for each new command that is added.
+   * - If true, the command will be executed for each cursor. Optional object for more control.
+   * - If false, the command will be executed as if there were no multicursors. The command will be executed on state.cursor as usual and any thoughts that are selected will stay selected. This is ideal for commands that do not interact with the thoughtspace, such as opening the Command Palette or navigating to a modal. If instead you want to disallow the command when multiple thoughts are selected, set { enabled: false }.
+   **/
   multicursor:
-    | 'ignore'
     | boolean
     | {
         /** Whether multicursor mode is enabled for this command. */
