@@ -67,10 +67,7 @@ const rules = {
       },
     },
   ],
-  // jsx-a11y
   'jsx-a11y/anchor-is-valid': 0,
-  // react
-
   'react/jsx-curly-spacing': 2,
   'react/jsx-equals-spacing': 2,
   'react/react-in-jsx-scope': 0,
@@ -78,11 +75,7 @@ const rules = {
   'react/no-children-prop': 0,
   'react/no-unescaped-entities': 0,
   'react/prop-types': 0,
-  // react-hooks
-
   'react-hooks/exhaustive-deps': 2,
-  // prettier
-
   'prettier/prettier': 2,
   'arrow-body-style': 0,
   'prefer-arrow-callback': 0,
@@ -176,14 +169,8 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 0,
       '@typescript-eslint/explicit-module-boundary-types': 0,
       '@typescript-eslint/array-type': 2,
-      // jsx
-
       'jsx-quotes': [2, 'prefer-single'],
-      // react-refresh
-
       'react-refresh/only-export-components': 2,
-      // pandacss
-
       ...panda.configs.recommended.rules,
       '@pandacss/no-config-function-in-source': 0,
       '@pandacss/prefer-longhand-properties': 2,
