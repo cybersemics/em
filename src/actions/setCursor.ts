@@ -154,7 +154,7 @@ const setCursor = (
           multicursors: {},
         }
       : null),
-    ...(!thoughtsResolved ? { showColorPicker: false, showLetterCase: false } : null),
+    ...(!thoughtsResolved ? { showColorPicker: false, showLetterCase: false, showSortPicker: false } : null),
   }
 
   return stateNew

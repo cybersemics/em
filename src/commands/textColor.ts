@@ -16,6 +16,7 @@ const textColor: Command = {
   exec: (dispatch, getState) => {
     const state = getState()
     if (state.showLetterCase) dispatch({ type: 'toggleLetterCase' })
+    if (state.showSortPicker) dispatch({ type: 'toggleSortPicker' })
     dispatch({
       type: 'toggleColorPicker',
       path: state.cursor,
