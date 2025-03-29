@@ -11,13 +11,9 @@ const toggleSortCommand: Command = {
   id: 'toggleSortPicker',
   label: 'SortPicker',
   description: 'Open a sort picker to pick the sort option and sort by option.',
-  gesture: 'lurd',
-  keyboard: { key: 's', meta: true, alt: true, shift: true },
-  multicursor: {
-    enabled: true,
-    filter: 'first-sibling',
-  },
+  multicursor: false,
   hideFromHelp: true,
+  hideFromCommandPalette: true,
   svg: Icon,
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()
@@ -25,7 +21,7 @@ const toggleSortCommand: Command = {
 
     // Toggle the sort picker dropdown
     if (state.showColorPicker) dispatch({ type: 'toggleColorPicker' })
-    if (state.showSortPicker) dispatch({ type: 'toggleSortPicker' })
+    if (state.showLetterCase) dispatch({ type: 'toggleLetterCase' })
     dispatch({ type: 'toggleSortPicker' })
   },
   isActive: state => {
@@ -54,7 +50,6 @@ const toggleSortCommand: Command = {
       ? 'Ranks do not match sort condition'
       : null
   },
-  rounded: true,
 }
 
 export default toggleSortCommand

@@ -111,6 +111,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   setNoteFocus: true,
   setRemoteSearch: false,
   setResourceCache: false,
+  setSortPreference: false,
   settings: true,
   showTip: false,
   showModal: false,

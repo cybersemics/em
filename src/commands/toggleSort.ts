@@ -2,7 +2,6 @@ import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toggleSortActionCreator as toggleSort } from '../actions/toggleSort'
 import Icon from '../components/icons/Sort'
-import { getAllChildrenSorted, getChildrenRanked } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -52,23 +51,6 @@ const toggleSortCommand: Command = {
   },
   // Show an error if the ranks do not match the sort condition.
   // This is only needed for migrating to permasort, and can be removed after the migration is complete.
-  error: state => {
-    if (!state.cursor || isRoot(state.cursor)) return null
-
-    const simplePath = simplifyPath(state, rootedParentOf(state, state.cursor))
-    const id = head(simplePath)
-    const sortPreference = getSortPreference(state, id)
-    if (sortPreference.type === 'None') return null
-
-    // ignore empty thoughts since they are not sorted
-    const childrenSorted = getAllChildrenSorted(state, id).filter(child => child.value)
-    const childrenRanked = getChildrenRanked(state, id).filter(child => child.value)
-
-    return childrenSorted.length === childrenRanked.length &&
-      !childrenRanked.every((_, i) => childrenRanked[i].id === childrenSorted[i].id)
-      ? 'Ranks do not match sort condition'
-      : null
-  },
   rounded: true,
 }
 
