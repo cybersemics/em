@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
+import SortPreference from '../@types/SortPreference'
 import { setSortPreferenceActionCreator as setSortPreference } from '../actions/setSortPreference'
 import { toggleSortPickerActionCreator as toggleSortPicker } from '../actions/toggleSortPicker'
 import { isTouch } from '../browser'
@@ -32,7 +33,7 @@ const DEFAULT_SORT_PREFERENCE = { type: 'None', direction: null }
 /** Sort Option component for individual sort options. */
 interface SortOptionProps {
   option: SortOptionConfig
-  sortPreference: any // Using `any` to avoid typing conflicts with existing SortPreference type
+  sortPreference: SortPreference
   onClick: (type: SortType, e: React.MouseEvent | React.TouchEvent) => void
 }
 
@@ -86,7 +87,6 @@ const SortPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = memo(({
   )
 
   const sortPreference = useSelector(state => {
-    // Inline the selector logic directly here
     if (!state.cursor || isRoot(state.cursor)) return DEFAULT_SORT_PREFERENCE
 
     const path = rootedParentOf(state, state.cursor)
@@ -96,30 +96,22 @@ const SortPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = memo(({
     return getSortPreference(state, id)
   }, isEqual)
 
-  /** Toggles the sort option. */
+  /** This function sets the sort type and only toggles the direction, which is an important distinction. */
   const toggleSortOption = (type: SortType, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     e.preventDefault()
 
     if (!cursor || isRoot(cursor) || !simplePath) return
 
-    // Close the dropdown after selection
     dispatch(toggleSortPicker({ value: false }))
 
-    // Determine the new sort preference using ternary expressions
+    // Determine the new sort preference
     const newSortPreference = {
       type,
       direction:
-        type === 'None'
-          ? null
-          : sortPreference.type === type
-            ? sortPreference.direction === 'Asc'
-              ? ('Desc' as const)
-              : ('Asc' as const)
-            : ('Asc' as const),
-    }
+        type === 'None' ? null : sortPreference.type === type && sortPreference.direction === 'Asc' ? 'Desc' : 'Asc',
+    } as SortPreference
 
-    // Single call to setSortPreference
     dispatch(
       setSortPreference({
         simplePath,
