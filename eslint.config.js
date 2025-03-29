@@ -161,7 +161,7 @@ export default [
       ],
       '@typescript-eslint/no-var-requires': 2,
       '@typescript-eslint/no-require-imports': 0,
-      '@typescript-eslint/no-explicit-any': 0,
+      '@typescript-eslint/no-explicit-any': 2,
       '@typescript-eslint/prefer-namespace-keyword': 2,
       '@typescript-eslint/no-non-null-assertion': 0,
       '@typescript-eslint/no-use-before-define': 2,

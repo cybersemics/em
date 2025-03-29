@@ -16,6 +16,7 @@ import RecentlyEdited from './RecentlyEdited'
 
 // extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   SwipeableDrawerProps & { classes: any; ref: any }
 >
 

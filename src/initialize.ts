@@ -185,7 +185,13 @@ const withState =
 
 /** Partially dispatches an action to the store. */
 const withDispatch =
-  <T extends any[], R extends Thunk>(f: (...args: T) => R) =>
+  <
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    T extends any[],
+    R extends Thunk,
+  >(
+    f: (...args: T) => R,
+  ) =>
   (...args: T) =>
     store.dispatch(f(...args))
 

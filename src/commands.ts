@@ -104,6 +104,7 @@ const index = (): {
   commandGestureIndex: Index<Command>
 } => {
   // index commands for O(1) lookup by keyboard
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const commandKeyIndex: Index<Command & { conflicts?: any[] }> = keyValueBy(globalCommands, (command, i, accum) => {
     if (!command.keyboard) return null
 
@@ -173,6 +174,7 @@ export const commandById = (id: CommandId): Command => commandIdIndex[id]
  * - command palette  from invalid gesture (e.g. ←↓, hold, ←↓←).
  * - Change command palette  to basic gesture hint on gesture end.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const inputHandlers = (store: Store<State, any>) => ({
   /** Handles gesture hints when a valid segment is entered. */
   handleGestureSegment: ({ sequence }: { gesture: Direction | null; sequence: GesturePath }) => {

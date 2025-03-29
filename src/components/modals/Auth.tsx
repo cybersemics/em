@@ -66,7 +66,8 @@ const ModalAuth = () => {
       try {
         // await window.firebase.auth().sendPasswordResetEmail(email, { url: FIREBASE_REDIRECT_URL! })
         updateIsSubmitting(false)
-      } catch (e: any) {
+      } catch (error) {
+        const e = error as Error
         updateIsSubmitting(false)
         return updateError(e.message || errorsIndex.default)
       }
@@ -85,7 +86,7 @@ const ModalAuth = () => {
       storage.setItem('modal-to-show', 'welcome')
       updateIsSubmitting(false)
       closeModal()
-    } catch (e: any) {
+    } catch (e: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
       updateIsSubmitting(false)
       return updateError(errorsIndex[e?.code as errorCode] || errorsIndex.default)
     }

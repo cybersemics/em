@@ -4,6 +4,7 @@ import makeSelectorEffect from '../hooks/makeSelectorEffect'
 import ministore, { Ministore } from './ministore'
 
 /** Enhances a generic store with React hooks. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const makeReactStore = <U extends Store<any>>(store: U) => {
   type T = U extends Store<infer V> ? V : never
 
@@ -42,6 +43,7 @@ const makeReactStore = <U extends Store<any>>(store: U) => {
 const reactMinistore = <T>(initialState: T) => makeReactStore(ministore(initialState))
 
 /** Create a read-only computed reactMinistore that derives its state from one or more ministores. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function compose<T, S extends any[]>(compute: (...states: S) => T, stores: { [K in keyof S]: Ministore<S[K]> }) {
   const store = ministore.compose(compute, stores)
   return makeReactStore(store)

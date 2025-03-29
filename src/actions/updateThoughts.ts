@@ -140,7 +140,9 @@ const dataIntegrityCheck =
         console.error('thought', thought)
         console.error('lexeme', lexeme)
         throw new Error(`Thought "${thought.value}" (${thought.id}) is missing from its Lexeme's contexts.`)
-      } else if (Array.from(lexeme as any).length === 21) {
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      else if (Array.from(lexeme as any).length === 21) {
         throw new Error(`Lexeme has been converted to an array? That can't be right.`)
       }
     })

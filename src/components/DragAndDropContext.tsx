@@ -24,6 +24,7 @@ const options = {
 
 /** Drag and Drop Provider HOC. */
 const DragAndDropContext: FC<PropsWithChildren> = ({ children }) => (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <DndProvider backend={MultiBackend as any} options={options}>
     {children}
   </DndProvider>

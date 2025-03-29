@@ -163,6 +163,7 @@ const saveErrorReload = (savingProgress: number) => {
 }
 
 /** Add window event handlers. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const initEvents = (store: Store<State, any>) => {
   let lastState: number
   let lastPath: Path | null
@@ -409,6 +410,7 @@ const initEvents = (store: Store<State, any>) => {
 
 /** Error event listener. This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
 // const onError = (e: { message: string; error?: Error }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onError = (e: any) => {
   console.error({ message: e.message, code: e.code, errors: e.errors })
   if (e.error && 'stack' in e.error) {

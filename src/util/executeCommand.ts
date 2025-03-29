@@ -21,6 +21,7 @@ import parentOf from './parentOf'
 import UnreachableError from './unreachable'
 
 interface Options {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   store?: Store<State, any>
   type?: CommandType
   event?: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent

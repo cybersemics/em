@@ -298,8 +298,10 @@ const redoReducer = (state: State, redoPatches: Patch[]) => {
 /**
  * Store enhancer to append the ability to undo/redo for all undoable actions.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const undoRedoReducerEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
     let lastActionType: ActionType
 
@@ -363,7 +365,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
           // If a patch is invalid, all prior undo states will be inaccessible, so we should try to identify and fix this whenever it occurs.
           try {
             lastState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-          } catch (e: any) {
+          } catch (e) {
+            if (!(e instanceof Error)) throw e
             console.error(e.message, { state, lastUndoPatch })
             throw new Error('Error applying patch')
           }

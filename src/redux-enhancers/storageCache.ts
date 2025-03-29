@@ -73,8 +73,10 @@ const throttledSetters = keyValueBy(cacheControllers, key => ({
 }))
 
 /** Caches selectors in local storage and state.storageCache. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const storageCacheStoreEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> =>
     createStore((state: State | undefined = initialState, action: A): State => {
       const stateNew: State = reducer(state, action)
