@@ -425,15 +425,16 @@ const ThoughtNode = ({
     ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
     : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
 
+  const shouldAnimateCurve = isLastActionSwapParent || isGreaterThought
   const outerDivStyle = {
     left: x,
-    top: isLastActionSwapParent ? 0 : y,
+    top: shouldAnimateCurve ? 0 : y,
     width: isTableCol1 && width !== undefined ? width : `calc(100% - ${x}px + 1em + 10px)`,
     ...(style || {}),
     textAlign: isTableCol1 ? ('right' as const) : undefined,
   }
 
-  const innerDivStyle = isLastActionSwapParent
+  const innerDivStyle = shouldAnimateCurve
     ? {
         top: y,
         left: 0,
@@ -445,14 +446,10 @@ const ThoughtNode = ({
       aria-label='tree-node'
       className={css({
         position: 'absolute',
-        transition: isLastActionSwapParent
+        transition: shouldAnimateCurve
           ? isLastActionNewThought
-            ? isGreaterThought
-              ? 'left {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0,0.2,0.2)'
-              : 'left {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0.8,0.8,0.8)'
-            : isGreaterThought
-              ? 'left {durations.layoutNodeAnimation} cubic-bezier(0.8,0,0.2,0.2)'
-              : 'left {durations.layoutNodeAnimation} cubic-bezier(0.8,0.8,0.8,0.8)'
+            ? 'left {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0,0.2,0.2)'
+            : 'left {durations.layoutNodeAnimation} cubic-bezier(0.8,0,0.2,0.2)'
           : transition,
       })}
       style={outerDivStyle}
@@ -460,14 +457,10 @@ const ThoughtNode = ({
       <div
         className={css({
           position: 'absolute',
-          transition: isLastActionSwapParent
+          transition: shouldAnimateCurve
             ? isLastActionNewThought
-              ? isGreaterThought
-                ? 'top {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0.8,0.8,0.8)'
-                : 'top {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0.8,0.2,1)'
-              : isGreaterThought
-                ? 'top {durations.layoutNodeAnimation} cubic-bezier(0.8,0.8,0.8,0.8)'
-                : 'top {durations.layoutNodeAnimation} cubic-bezier(0.8,0.8,0.2,1)'
+              ? 'top {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0.8,0.2,1)'
+              : 'top {durations.layoutNodeAnimation} cubic-bezier(0.8,0.8,0.2,1)'
             : undefined,
           width: '100%',
         })}
@@ -541,14 +534,20 @@ const TreeNode = ({
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+
+  // true if the last action is newThought
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
   })
 
+  // true if the last action is swapParent or if the last action is not moveThought
   const isLastActionSwapParent = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => patch.actions[0] === 'swapParent')
+    return (
+      lastPatches?.some(patch => patch.actions[0] === 'swapParent') ||
+      lastPatches?.every(patch => patch.actions[0] !== 'moveThought')
+    )
   })
 
   // true if the last action is any of archive/delete/collapse
