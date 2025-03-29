@@ -34,6 +34,7 @@ import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
+import { compareThought } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import hideCaret, { getHideCaretAnimationName } from '../util/getHideCaretAnimationName'
 import hashPath from '../util/hashPath'
@@ -378,6 +379,109 @@ const linearizeTree = (
   return thoughts
 }
 
+/** Renders a thought node with proper positioning and transitions. */
+const ThoughtNode = ({
+  isLastActionSwapParent,
+  isLastActionNewThought,
+  isGreaterThought,
+  x,
+  y,
+  width,
+  isTableCol1,
+  style,
+  fadeThoughtRef,
+  children,
+  dragInProgress,
+  autofocusDepth,
+  depth,
+  cliff,
+  path,
+  isTableCol2,
+  isLastVisible,
+  treeThoughtsPositioned,
+  index,
+}: {
+  isLastActionSwapParent: boolean
+  isLastActionNewThought: boolean
+  isGreaterThought: boolean
+  x: number
+  y: number
+  width?: number
+  isTableCol1: boolean
+  style?: React.CSSProperties | null
+  fadeThoughtRef: React.RefObject<HTMLDivElement>
+  children: React.ReactNode
+  dragInProgress: boolean
+  autofocusDepth: number
+  depth: number
+  cliff: number
+  path: Path
+  isTableCol2: boolean
+  isLastVisible?: boolean
+  treeThoughtsPositioned: TreeThoughtPositioned[]
+  index: number
+}) => {
+  const transition = isLastActionNewThought
+    ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
+    : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
+
+  const shouldAnimateCurve = isLastActionSwapParent || isGreaterThought
+  const outerDivStyle = {
+    left: x,
+    top: shouldAnimateCurve ? 0 : y,
+    width: isTableCol1 && width !== undefined ? width : `calc(100% - ${x}px + 1em + 10px)`,
+    ...(style || {}),
+    textAlign: isTableCol1 ? ('right' as const) : undefined,
+  }
+
+  const innerDivStyle = shouldAnimateCurve
+    ? {
+        top: y,
+        left: 0,
+      }
+    : undefined
+
+  return (
+    <div
+      aria-label='tree-node'
+      className={css({
+        position: 'absolute',
+        transition: shouldAnimateCurve
+          ? isLastActionNewThought
+            ? 'left {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0,0.2,0.2)'
+            : 'left {durations.layoutNodeAnimation} cubic-bezier(0.8,0,0.2,0.2)'
+          : transition,
+      })}
+      style={outerDivStyle}
+    >
+      <div
+        className={css({
+          position: 'absolute',
+          transition: shouldAnimateCurve
+            ? isLastActionNewThought
+              ? 'top {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0.8,0.2,1)'
+              : 'top {durations.layoutNodeAnimation} cubic-bezier(0.8,0.8,0.2,1)'
+            : undefined,
+          width: '100%',
+        })}
+        style={innerDivStyle}
+      >
+        <div ref={fadeThoughtRef}>{children}</div>
+        {dragInProgress && autofocusDepth - depth < 2 && (
+          <DropCliff
+            cliff={cliff}
+            depth={depth}
+            path={path}
+            isTableCol2={isTableCol2}
+            isLastVisible={isLastVisible}
+            prevWidth={treeThoughtsPositioned[index - 1]?.width}
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
 /** Renders a thought component for mapped treeThoughtsPositioned. */
 const TreeNode = ({
   belowCursor,
@@ -403,7 +507,7 @@ const TreeNode = ({
   thoughtId,
   width,
   autofocus,
-  x,
+  x: _x,
   y: _y,
   index,
   viewportBottom,
@@ -428,10 +532,22 @@ const TreeNode = ({
   autofocusDepth: number
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
+  const [x, setX] = useState(_x)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+
+  // true if the last action is newThought
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
+  })
+
+  // true if the last action is swapParent or if the last action is not moveThought
+  const isLastActionSwapParent = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return (
+      lastPatches?.some(patch => patch.actions[0] === 'swapParent') ||
+      lastPatches?.every(patch => patch.actions[0] !== 'moveThought')
+    )
   })
 
   // true if the last action is any of archive/delete/collapse
@@ -445,6 +561,29 @@ const TreeNode = ({
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
+
+  // Get the current thought and previous thought to compare
+  const currentThought = useSelector(state => getThoughtById(state, head(path)))
+  const prevThought = useSelector(state =>
+    index > 0 ? getThoughtById(state, head(treeThoughtsPositioned[index - 1].path)) : null,
+  )
+
+  // Compare the current thought with the previous thought to determine the animation curve
+  const thoughtComparison = prevThought && currentThought ? compareThought(currentThought, prevThought) : 0
+  const isGreaterThought = thoughtComparison > 0
+
+  // We split x and y transitions into separate nodes to:
+  // 1. Allow independent timing curves for horizontal and vertical movement
+  // 2. Create L-shaped animation paths by controlling when each movement starts/ends
+  // 3. Prevent interference between transitions that could occur in a single node
+
+  // Track x position changes. When x prop changes, update state to trigger CSS transition.
+  // State updates ensure smooth transitions by forcing a re-render that applies the new position.
+  useLayoutEffect(() => {
+    if (x !== _x) {
+      setX(_x)
+    }
+  }, [x, _x])
 
   useLayoutEffect(() => {
     if (y !== _y) {
@@ -471,87 +610,56 @@ const TreeNode = ({
   // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
-  // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
-  const transition = isLastActionNewThought
-    ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
-    : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
-
   return (
     <FadeTransition
       id={thoughtKey}
-      // The FadeTransition is only responsible for fade out on unmount;
-      // or for fade in on mounting of a new thought.
-      // See autofocusChanged for normal opacity transition.
-      // Limit the fade/shrink/blur animation to the archive, delete, and collapseContext actions.
       duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
       unmountOnExit
     >
-      <div
-        aria-label='tree-node'
-        // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
-        // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
-        className={css({
-          position: 'absolute',
-          transition,
-        })}
-        style={{
-          // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
-          // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
-          left: x,
-          top: y,
-          // Table col1 uses its exact width since cannot extend to the right edge of the screen.
-          // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
-          // 1em + 10px is an eyeball measurement at font sizes 14 and 18
-          // (Maybe the 10px is from .content padding-left?)
-          width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
-          ...style,
-          textAlign: isTableCol1 ? 'right' : undefined,
-        }}
+      <ThoughtNode
+        isLastActionSwapParent={isLastActionSwapParent}
+        isLastActionNewThought={isLastActionNewThought}
+        x={x}
+        y={y}
+        width={width}
+        isTableCol1={isTableCol1}
+        style={style}
+        fadeThoughtRef={fadeThoughtRef}
+        dragInProgress={dragInProgress}
+        autofocusDepth={autofocusDepth}
+        depth={depth}
+        cliff={cliff}
+        path={path}
+        isTableCol2={isTableCol2}
+        isLastVisible={isLastVisible}
+        isGreaterThought={isGreaterThought}
+        treeThoughtsPositioned={treeThoughtsPositioned}
+        index={index}
       >
-        <div ref={fadeThoughtRef}>
-          <VirtualThought
-            debugIndex={testFlags.simulateDrop ? indexChild : undefined}
-            depth={depth}
-            dropUncle={thoughtId === cursorUncleId}
-            env={env}
-            indexDescendant={indexDescendant}
-            // isMultiColumnTable={isMultiColumnTable}
-            isMultiColumnTable={false}
-            leaf={leaf}
-            onResize={setSize}
-            path={path}
-            prevChildId={prevChild?.id}
-            showContexts={showContexts}
-            simplePath={simplePath}
-            singleLineHeight={singleLineHeightWithCliff}
-            // Add a bit of space after a cliff to give nested lists some breathing room.
-            // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-            // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
-            style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
-            crossContextualKey={thoughtKey}
-            prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
-            isLastVisible={isLastVisible}
-            autofocus={autofocus}
-            marginRight={isTableCol1 ? marginRight : 0}
-          />
-        </div>
-
-        {dragInProgress &&
-          // do not render hidden cliffs
-          // rough autofocus estimate
-          autofocusDepth - depth < 2 && (
-            <DropCliff
-              cliff={cliff}
-              depth={depth}
-              path={path}
-              isTableCol2={isTableCol2}
-              isLastVisible={isLastVisible}
-              prevWidth={treeThoughtsPositioned[index - 1]?.width}
-            />
-          )}
-      </div>
+        <VirtualThought
+          debugIndex={testFlags.simulateDrop ? indexChild : undefined}
+          depth={depth}
+          dropUncle={thoughtId === cursorUncleId}
+          env={env}
+          indexDescendant={indexDescendant}
+          isMultiColumnTable={false}
+          leaf={leaf}
+          onResize={setSize}
+          path={path}
+          prevChildId={prevChild?.id}
+          showContexts={showContexts}
+          simplePath={simplePath}
+          singleLineHeight={singleLineHeightWithCliff}
+          style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
+          crossContextualKey={thoughtKey}
+          prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
+          isLastVisible={isLastVisible}
+          autofocus={autofocus}
+          marginRight={isTableCol1 ? marginRight : 0}
+        />
+      </ThoughtNode>
     </FadeTransition>
   )
 }
@@ -803,7 +911,7 @@ const LayoutTree = () => {
         }
       }
 
-      /* 
+      /*
         Anticipate cliff change on new thought
 
         There is a special case for the y position when creating a new thought at the end of a context. The former last thought (what will become the new thought's previous sibling) loses its cliff, e.g. cliff changes from -1 to 0. This causes it to lots its cliffPaddingStyle, and thus its height will decrease slightly. However, when the new thought is rendered, its y position is determined by the previous thought's cached height. The height is only re-measured after the nxet render. This causes the new thought's y position to decrease by the cliff padding over a single frame. It will appear to slide up as it animates into the correct y position (based on the updated previous sibling's measurement).
