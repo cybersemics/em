@@ -56,6 +56,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   clearMulticursors: false,
   closeModal: false,
   collapseContext: true,
+  collapseHoverDown: false,
   commandPalette: false,
   createThought: true,
   cursorBack: true,
