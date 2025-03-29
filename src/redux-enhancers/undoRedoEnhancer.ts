@@ -134,7 +134,6 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   toggleCommandsDiagram: false,
   toggleSidebar: false,
   toggleSort: true,
-  toggleSplitView: false,
   toggleThought: true,
   toggleUserSetting: false,
   toolbarLongPress: false,

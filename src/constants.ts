@@ -230,7 +230,6 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'textColor',
   // 'toggleDone',
   // 'toggleSidebar',
-  // 'toggleSplitView',
 ]
 
 // Throttle editThought when user is typing.

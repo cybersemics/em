@@ -16,8 +16,6 @@ const selectCursor = (state: State) => state.cursor
 const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing?: boolean) => {
   const [multiline, setMultiline] = useState(false)
   const fontSize = useSelector(state => state.fontSize)
-  const showSplitView = useSelector(state => state.showSplitView)
-  const splitPosition = useSelector(state => state.splitPosition)
   // While editing, watch the current Value and trigger the layout effect
   const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
 
@@ -41,16 +39,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
 
   // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
   // cursor changes to or from the element.
-  useLayoutEffect(updateMultiline, [
-    contentRef,
-    fontSize,
-    isEditing,
-    showSplitView,
-    simplePath,
-    splitPosition,
-    editingValue,
-    updateMultiline,
-  ])
+  useLayoutEffect(updateMultiline, [contentRef, fontSize, isEditing, simplePath, editingValue, updateMultiline])
 
   // Recalculate multiline when the cursor changes.
   // This is necessary because the width of thoughts change as the autofocus indent changes.
