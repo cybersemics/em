@@ -507,8 +507,6 @@ const CommandPaletteWithTransition: FC = () => {
   const dispatch = useDispatch()
   const popupRef = useRef<HTMLDivElement>(null)
 
-  const popUpStyles = css.raw({ zIndex: 'commandPalette' })
-
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
     setDismiss(true)
@@ -537,7 +535,6 @@ const CommandPaletteWithTransition: FC = () => {
             // only show the close link on desktop
             // do not show the close link on touch devices since the CommandPalette is automatically dismissed when the gesture ends.
             {...(!isTouch ? { onClose } : null)}
-            cssRaw={popUpStyles}
           >
             <CommandPalette
               commands={commands}

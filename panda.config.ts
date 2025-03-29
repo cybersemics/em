@@ -23,7 +23,6 @@ import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
 import toolbarPointerEventsRecipe from './src/recipes/toolbarPointerEvents'
 import tutorialBulletRecipe from './src/recipes/tutorialBullet'
-import upperRightRecipe from './src/recipes/upperRight'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 import keyValueBy from './src/util/keyValueBy'
 
@@ -277,12 +276,8 @@ export default defineConfig({
           },
         },
         fontSizes: {
-          sm: {
-            value: '80%',
-          },
-          md: {
-            value: '90%',
-          },
+          sm: { value: '80%' },
+          md: { value: '90%' },
         },
         spacing: {
           modalPadding: { value: '8%' },
@@ -296,7 +291,6 @@ export default defineConfig({
             'popup',
             'hoverArrow',
             'gestureTrace',
-            'commandPalette',
             'modal',
             'hamburgerMenu',
             'sidebar',
@@ -335,7 +329,6 @@ export default defineConfig({
         modalActionLinkRecipe,
         toolbarPointerEventsRecipe,
         tutorialBulletRecipe,
-        upperRightRecipe,
         dropHoverRecipe,
         dropEndRecipe,
         invalidOptionRecipe,
