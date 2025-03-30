@@ -12,8 +12,10 @@ const ControlledAlert: FC<
     value: ReactNode | null
     /* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */
     transitionKey: string | number
-  } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'showXOnHover'>
-> = ({ renderedIcon, onClose, value, transitionKey, ...props }) => {
+    testId?: string
+    children?: ReactNode
+  } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'showXOnHover' | 'textAlign'>
+> = ({ renderedIcon, onClose, value, transitionKey, testId, children, ...props }) => {
   const popupRef = useRef<HTMLDivElement>(null)
   const [isDismissed, setDismiss] = useState(false)
 
@@ -27,7 +29,7 @@ const ControlledAlert: FC<
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
     <TransitionGroup
-      data-testid='alert'
+      data-testid={testId}
       childFactory={(child: React.ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {value ? (
@@ -44,7 +46,6 @@ const ControlledAlert: FC<
             center
             background={token('colors.panelBg')}
             onClose={handleClose}
-            swipeDownToDismiss
             {...props}
           >
             <div
@@ -61,6 +62,7 @@ const ControlledAlert: FC<
               {renderedIcon}
               {value}
             </div>
+            {children}
           </PopupBase>
         </FadeTransition>
       ) : null}
