@@ -34,12 +34,10 @@ const ControlledAlert: FC<
     >
       {value ? (
         <FadeTransition duration='slow' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
-          {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
           <PopupBase
             anchorFromBottom
             anchorOffset={36}
             ref={popupRef}
-            // Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state.
             key={transitionKey}
             circledCloseButton
             border
