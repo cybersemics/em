@@ -1,6 +1,7 @@
 import React, { ComponentProps, FC, ReactNode, useCallback, useRef, useState } from 'react'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import FadeTransition from './FadeTransition'
 import PopupBase from './PopupBase'
 
@@ -35,24 +36,14 @@ const ControlledAlert: FC<
           <PopupBase
             anchorFromBottom
             anchorOffset={36}
-            cssRaw={css.raw({
-              boxSizing: 'border-box',
-              background: 'panelBg',
-              border: '1px solid {colors.panelBorder}',
-              borderRadius: '8px',
-              zIndex: 'popup',
-              marginInline: 'auto',
-              left: 0,
-              right: 0,
-              width: 'max-content',
-              maxWidth: '530px',
-            })}
             ref={popupRef}
+            // Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state.
             key={transitionKey}
             circledCloseButton
-            // showXOnHover
+            border
+            center
+            background={token('colors.panelBg')}
             onClose={handleClose}
-            calculatedHeight={popupRef.current?.getBoundingClientRect().height || 50}
             swipeDownToDismiss
             {...props}
           >
@@ -63,7 +54,7 @@ const ControlledAlert: FC<
                 display: 'flex',
                 flexDirection: 'row',
                 justifyContent: 'center',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 padding: '0.85em 1.1em',
               })}
             >
