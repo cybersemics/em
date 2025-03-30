@@ -1,20 +1,18 @@
 import { rgbToHex } from '@mui/material'
-import React, { FC, useRef } from 'react'
+import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
-import { SystemStyleObject } from '../../styled-system/types'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
-import useWindowOverflow from '../hooks/useWindowOverflow'
 import getThoughtById from '../selectors/getThoughtById'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
-import TriangleDown from './TriangleDown'
+import Popover from './Popover'
 import TextColorIcon from './icons/TextColor'
 
 /** A function that adds an alpha channel to a hex color. */
@@ -161,62 +159,39 @@ const ColorSwatch: FC<{
 }
 
 /** Text Color Picker component. */
-const ColorPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = ({ fontSize, cssRaw }) => {
-  const ref = useRef<HTMLDivElement>(null)
-
-  const overflow = useWindowOverflow(ref)
+const ColorPicker: FC<{
+  size?: number
+}> = ({ size }) => {
+  const showColorPicker = useSelector(state => state.showColorPicker)
 
   return (
-    <div className={css({ userSelect: 'none' })}>
-      <div
-        className={css(
-          {
-            backgroundColor: 'fgOverlay90',
-            borderRadius: 3,
-            display: 'inline-block',
-            padding: '0.2em 0.25em 0.25em',
-            position: 'relative',
-          },
-          cssRaw,
-        )}
-        ref={ref}
-        style={{ ...(overflow.left ? { left: overflow.left } : { right: overflow.right }) }}
-      >
-        {/* Triangle */}
-        <TriangleDown
-          fill={token('colors.fgOverlay90')}
-          cssRaw={css.raw({ position: 'absolute', width: '100%' })}
-          size={fontSize}
-          style={{ ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }), top: -fontSize / 2 }}
-        />
-
-        {/* Text Color */}
-        <div aria-label='text color swatches' className={css({ whiteSpace: 'nowrap' })}>
-          <ColorSwatch color={'fg'} label='default' />
-          <ColorSwatch color={'gray'} label='gray' />
-          <ColorSwatch color={'orange'} label='orange' />
-          <ColorSwatch color={'yellow'} label='yellow' />
-          <ColorSwatch color={'green'} label='green' />
-          <ColorSwatch color={'blue'} label='blue' />
-          <ColorSwatch color={'purple'} label='purple' />
-          <ColorSwatch color={'pink'} label='pink' />
-          <ColorSwatch color={'red'} label='red' />
-        </div>
-
-        {/* Background Color */}
-        <div aria-label='background color swatches' className={css({ whiteSpace: 'nowrap' })}>
-          <ColorSwatch backgroundColor={'fg'} label='inverse' />
-          <ColorSwatch backgroundColor={'gray'} label='gray' />
-          <ColorSwatch backgroundColor={'orange'} label='orange' />
-          <ColorSwatch backgroundColor={'yellow'} label='yellow' />
-          <ColorSwatch backgroundColor={'green'} label='green' />
-          <ColorSwatch backgroundColor={'blue'} label='blue' />
-          <ColorSwatch backgroundColor={'purple'} label='purple' />
-          <ColorSwatch backgroundColor={'pink'} label='pink' />
-          <ColorSwatch backgroundColor={'red'} label='red' />
-        </div>
+    <Popover show={showColorPicker} size={size}>
+      {/* Text Color */}
+      <div aria-label='text color swatches' className={css({ whiteSpace: 'nowrap' })}>
+        <ColorSwatch color={'fg'} label='default' />
+        <ColorSwatch color={'gray'} label='gray' />
+        <ColorSwatch color={'orange'} label='orange' />
+        <ColorSwatch color={'yellow'} label='yellow' />
+        <ColorSwatch color={'green'} label='green' />
+        <ColorSwatch color={'blue'} label='blue' />
+        <ColorSwatch color={'purple'} label='purple' />
+        <ColorSwatch color={'pink'} label='pink' />
+        <ColorSwatch color={'red'} label='red' />
       </div>
-    </div>
+
+      {/* Background Color */}
+      <div aria-label='background color swatches' className={css({ whiteSpace: 'nowrap' })}>
+        <ColorSwatch backgroundColor={'fg'} label='inverse' />
+        <ColorSwatch backgroundColor={'gray'} label='gray' />
+        <ColorSwatch backgroundColor={'orange'} label='orange' />
+        <ColorSwatch backgroundColor={'yellow'} label='yellow' />
+        <ColorSwatch backgroundColor={'green'} label='green' />
+        <ColorSwatch backgroundColor={'blue'} label='blue' />
+        <ColorSwatch backgroundColor={'purple'} label='purple' />
+        <ColorSwatch backgroundColor={'pink'} label='pink' />
+        <ColorSwatch backgroundColor={'red'} label='red' />
+      </div>
+    </Popover>
   )
 }
 
