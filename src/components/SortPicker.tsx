@@ -27,9 +27,6 @@ interface SortOptionConfig {
   label: string
 }
 
-// Default sort preference object
-const DEFAULT_SORT_PREFERENCE = { type: 'None', direction: null }
-
 /** Sort Option component for individual sort options. */
 interface SortOptionProps {
   option: SortOptionConfig
@@ -81,13 +78,12 @@ const SortPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = memo(({
   const dispatch = useDispatch()
   const overflow = useWindowOverflow(ref)
 
-  const cursor = useSelector(state => state.cursor)
   const simplePath = useSelector(state =>
-    cursor && !isRoot(cursor) ? simplifyPath(state, rootedParentOf(state, cursor)) : null,
+    state.cursor && !isRoot(state.cursor) ? simplifyPath(state, rootedParentOf(state, state.cursor)) : null,
   )
 
   const sortPreference = useSelector(state => {
-    if (!state.cursor || isRoot(state.cursor)) return DEFAULT_SORT_PREFERENCE
+    if (!state.cursor || isRoot(state.cursor)) return { type: 'None', direction: null }
 
     const path = rootedParentOf(state, state.cursor)
     const simplePath = simplifyPath(state, path)
@@ -96,28 +92,26 @@ const SortPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = memo(({
     return getSortPreference(state, id)
   }, isEqual)
 
-  /** This function sets the sort type and only toggles the direction, which is an important distinction. */
+  /** Sets the sort type. If the sort type is already selected, toggles the direction. */
   const toggleSortOption = (type: SortType, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     e.preventDefault()
 
-    if (!cursor || isRoot(cursor) || !simplePath) return
+    if (!simplePath) return
 
-    dispatch(toggleSortPicker({ value: false }))
-
-    // Determine the new sort preference
-    const newSortPreference = {
+    const newSortPreference: SortPreference = {
       type,
       direction:
         type === 'None' ? null : sortPreference.type === type && sortPreference.direction === 'Asc' ? 'Desc' : 'Asc',
-    } as SortPreference
+    }
 
-    dispatch(
+    dispatch([
       setSortPreference({
         simplePath,
         sortPreference: newSortPreference,
       }),
-    )
+      toggleSortPicker({ value: false }),
+    ])
   }
 
   // Define the sort options as purely declarative data
