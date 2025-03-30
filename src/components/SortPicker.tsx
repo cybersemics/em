@@ -20,23 +20,19 @@ import TriangleDown from './TriangleDown'
 // Define the type for sort options
 type SortType = 'None' | 'Alphabetical'
 
-// Define the interface for sort option configuration
-interface SortOptionConfig {
-  type: SortType
-  supportsDirection: boolean
-  label: string
-}
-
 /** Sort Option component for individual sort options. */
 interface SortOptionProps {
-  option: SortOptionConfig
+  type: SortType
+  /** If true, the option can be toggled to switch between Asc and Desc sort direction, and will display an arrow indicating the current sort direction. */
+  supportsDirection: boolean
+  label: string
+  /** Current sort preference. */
   sortPreference: SortPreference
   onClick: (type: SortType, e: React.MouseEvent | React.TouchEvent) => void
 }
 
 /** Render each sort option. */
-const SortOption: FC<SortOptionProps> = ({ option, sortPreference, onClick }) => {
-  const { type, supportsDirection, label } = option
+const SortOption: FC<SortOptionProps> = ({ type, supportsDirection, label, sortPreference, onClick }) => {
   const isSelected = sortPreference.type === type
 
   return (
@@ -114,20 +110,6 @@ const SortPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = memo(({
     ])
   }
 
-  // Define the sort options as purely declarative data
-  const sortOptions: SortOptionConfig[] = [
-    {
-      type: 'None',
-      supportsDirection: false,
-      label: 'None',
-    },
-    {
-      type: 'Alphabetical',
-      supportsDirection: true,
-      label: 'Alphabetical',
-    },
-  ]
-
   return (
     <div className={css({ userSelect: 'none' })}>
       <div
@@ -152,9 +134,20 @@ const SortPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = memo(({
         />
 
         <div aria-label='sort options' className={css({ whiteSpace: 'wrap' })}>
-          {sortOptions.map(option => (
-            <SortOption key={option.type} option={option} sortPreference={sortPreference} onClick={toggleSortOption} />
-          ))}
+          <SortOption
+            type='None'
+            supportsDirection={false}
+            label='None'
+            sortPreference={sortPreference}
+            onClick={toggleSortOption}
+          />
+          <SortOption
+            type='Alphabetical'
+            supportsDirection={true}
+            label='Alphabetical'
+            sortPreference={sortPreference}
+            onClick={toggleSortOption}
+          />
         </div>
       </div>
     </div>
