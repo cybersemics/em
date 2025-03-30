@@ -109,7 +109,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           width: '100%',
           overflowY: 'auto',
           maxHeight: '100%',
-          maxWidth: '100%',
         }
       : {}
 
@@ -119,6 +118,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           boxSizing: 'border-box',
           textAlign,
           zIndex: 'popup',
+          maxWidth: '100%',
           ...borderStyles,
           ...centerStyles,
           ...fullWidthStyles,
