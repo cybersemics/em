@@ -9,7 +9,7 @@ import { commandPaletteActionCreator as commandPalette } from '../actions/comman
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isSafari, isTouch } from '../browser'
+import { isIOS, isSafari, isTouch } from '../browser'
 import { inputHandlers } from '../commands'
 import { AlertText, AlertType } from '../constants'
 import * as selection from '../device/selection'
@@ -18,6 +18,7 @@ import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import { updateSafariKeyboardState } from '../stores/safariKeyboardStore'
 import { updateScrollTop } from '../stores/scrollTop'
 import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
@@ -162,6 +163,7 @@ const saveErrorReload = (savingProgress: number) => {
 }
 
 /** Add window event handlers. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const initEvents = (store: Store<State, any>) => {
   let lastState: number
   let lastPath: Path | null
@@ -216,6 +218,10 @@ const initEvents = (store: Store<State, any>) => {
 
     // update command state store
     updateCommandState()
+
+    if (isTouch && isSafari() && !isIOS) {
+      updateSafariKeyboardState()
+    }
   }
 
   /** MouseMove event listener. */
@@ -404,6 +410,7 @@ const initEvents = (store: Store<State, any>) => {
 
 /** Error event listener. This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
 // const onError = (e: { message: string; error?: Error }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onError = (e: any) => {
   console.error({ message: e.message, code: e.code, errors: e.errors })
   if (e.error && 'stack' in e.error) {

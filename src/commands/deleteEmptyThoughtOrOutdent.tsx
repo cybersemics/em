@@ -46,11 +46,11 @@ const canExecuteDeleteEmptyThought = (state: State) => {
 const canExecuteOutdent = (state: State) => {
   const { cursor } = state
 
-  if (!cursor || (!selection.isActive() && selection.isText())) return false
-
   return (
     cursor &&
+    (selection.isActive() || !selection.isText()) &&
     selection.offset() === 0 &&
+    selection.isCollapsed() &&
     isDocumentEditable() &&
     headValue(state, cursor)?.length !== 0 &&
     getChildren(state, head(rootedParentOf(state, cursor))).length === 1
@@ -99,7 +99,6 @@ const deleteEmptyThoughtOrOutdent: Command = {
   keyboard: { key: Key.Backspace },
   hideFromHelp: true,
   multicursor: {
-    enabled: true,
     preventSetCursor: true,
     reverse: true,
   },
@@ -115,11 +114,9 @@ export const deleteEmptyThoughtOrOutdentAlias: Command = {
   keyboard: { key: Key.Backspace, shift: true },
   hideFromHelp: true,
   multicursor: {
-    enabled: true,
     preventSetCursor: true,
     reverse: true,
   },
-  svg: Icon,
   canExecute,
   exec,
 }

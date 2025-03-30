@@ -9,7 +9,7 @@ const newGrandChildCommand: Command = {
   description: 'Create a thought within the first subthought.',
   gesture: 'rdrd',
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot create a new grandchild with multiple thoughts.',
   },
   // TODO: Create unique icon

@@ -6,7 +6,7 @@ const command: Command = {
   id: 'settings',
   label: 'Settings',
   description: 'Customize your experience of em.',
-  multicursor: 'ignore',
+  multicursor: false,
   svg: SettingsIcon,
   exec: dispatch => dispatch(showModal({ id: 'settings' })),
   allowExecuteFromModal: true,

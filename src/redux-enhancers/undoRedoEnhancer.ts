@@ -14,13 +14,15 @@ import getThoughtById from '../selectors/getThoughtById'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
 
-// a map of action types to boolean
+/** A map of action types to boolean. */
 type ActionFlags = {
   [key in ActionType]: boolean
 }
 
-// Actions representing any cursor movements.
-// These need to be differentiated from the other actions because contiguous navigational actions are merged together.
+/**
+ * Actions representing any cursor movements.
+ * These need to be differentiated from the other actions because contiguous navigational actions are merged together to undo/redo all at once.
+ */
 const NAVIGATION_ACTIONS: Partial<ActionFlags> = {
   cursorBack: true,
   cursorBeforeSearch: true,
@@ -35,10 +37,10 @@ const NAVIGATION_ACTIONS: Partial<ActionFlags> = {
 }
 
 /** Returns if an action is navigational, i.e. cursor movements. Contiguous navigation actions will be merged and adjoined with the last non-navigational action. */
-export const isNavigation = (actionType: string) => NAVIGATION_ACTIONS[actionType as keyof typeof NAVIGATION_ACTIONS]
+export const isNavigation = (actionType: ActionType) =>
+  NAVIGATION_ACTIONS[actionType as keyof typeof NAVIGATION_ACTIONS]
 
-// a list of all undoable actions
-// assumes that reducer names match their action types
+/** A list of all undoable actions. */
 const UNDOABLE_ACTIONS: ActionFlags = {
   addAllMulticursor: false,
   addLatestCommands: false,
@@ -118,7 +120,6 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   splitSentences: true,
   splitThought: true,
   status: false,
-  subCategorizeAll: true,
   subCategorizeOne: true,
   subcategorizeMulticursor: true,
   swapNote: true,
@@ -135,7 +136,6 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   toggleCommandsDiagram: false,
   toggleSidebar: false,
   toggleSort: true,
-  toggleSplitView: false,
   toggleThought: true,
   toggleUserSetting: false,
   toolbarLongPress: false,
@@ -151,7 +151,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
 }
 
 /** Returns if an action is undoable. */
-const isUndoable = (actionType: string) => UNDOABLE_ACTIONS[actionType as keyof typeof UNDOABLE_ACTIONS]
+const isUndoable = (actionType: ActionType) => UNDOABLE_ACTIONS[actionType as keyof typeof UNDOABLE_ACTIONS]
 
 /** Properties that are ignored when generating state patches. */
 const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'pushQueue']
@@ -206,14 +206,14 @@ const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] =>
 /**
  * Append action names to all operations of a Patch.
  */
-const addActionsToPatch = (patch: Operation[], actions: string[]): Patch =>
+const addActionsToPatch = (patch: Operation[], actions: ActionType[]): Patch =>
   // TODO: Fix Patch type to support any Operation, not just GetOperation. See Patch.ts.
   patch.map(operation => ({ ...operation, actions })) as Patch
 
 /**
  * Gets the first action from a patch.
  */
-const getPatchAction = (patch: Patch) => patch[0]?.actions[0]
+const getPatchAction = (patch: Patch): ActionType => patch[0]?.actions[0]
 
 /**
  * Gets the nth item from the end of an array.
@@ -300,10 +300,12 @@ const redoReducer = (state: State, redoPatches: Patch[]) => {
 /**
  * Store enhancer to append the ability to undo/redo for all undoable actions.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const undoRedoReducerEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
-    let lastActionType: string
+    let lastActionType: ActionType
 
     /**
      * Reducer to handle undo/redo actions and add/merge inverse-redoPatches for other actions.
@@ -365,7 +367,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
           // If a patch is invalid, all prior undo states will be inaccessible, so we should try to identify and fix this whenever it occurs.
           try {
             lastState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-          } catch (e: any) {
+          } catch (e) {
+            if (!(e instanceof Error)) throw e
             console.error(e.message, { state, lastUndoPatch })
             throw new Error('Error applying patch')
           }

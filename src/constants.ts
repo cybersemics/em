@@ -193,7 +193,6 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'toggleContextView',
   'note',
   'subcategorizeOne',
-  'subcategorizeAll',
   'delete',
   'splitSentences',
   'toggleHiddenThoughts',
@@ -232,7 +231,6 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'toggleDone',
   // 'toggleSort',
   // 'toggleSidebar',
-  // 'toggleSplitView',
 ]
 
 // Throttle editThought when user is typing.

@@ -167,6 +167,7 @@ describe('compose', () => {
     const storeB = ministore(2)
     const composite = ministore.compose((state1: number, state2: number) => 10 * state1 + state2, [storeA, storeB])
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((composite as any).update).toBeUndefined()
   })
 

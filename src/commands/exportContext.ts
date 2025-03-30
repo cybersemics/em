@@ -10,7 +10,7 @@ const command: Command = {
   label: 'Export',
   description: 'Download or copy the current context as plaintext or html.',
   svg: ShareIcon,
-  multicursor: 'ignore',
+  multicursor: false,
   canExecute: state => {
     if (state.cursor || hasMulticursor(state)) return true
     return getAllChildren(state, HOME_TOKEN).length > 0

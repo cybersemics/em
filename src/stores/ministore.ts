@@ -30,7 +30,8 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     // short circuit if value(s) are unchanged
     if (
       updates && typeof updates === 'object'
-        ? Object.entries(updates).every(([key, value]) => value === (state as any)[key])
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          Object.entries(updates).every(([key, value]) => value === (state as any)[key])
         : updates === state
     )
       return
@@ -97,6 +98,7 @@ const ministore = <T>(initialState: T): Ministore<T> => {
 }
 
 /** Create a read-only computed ministore that derives its state from one or more ministores. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function compose<T, S extends any[]>(
   compute: (...states: S) => T,
   // accept the same number of Ministores as states, with corresponding generic types, by using a mapped type generated from the states array

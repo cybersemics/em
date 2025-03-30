@@ -49,7 +49,7 @@ const cursorUpCommand: Command = {
   label: 'Cursor Up',
   keyboard: { key: Key.ArrowUp },
   hideFromHelp: true,
-  multicursor: 'ignore',
+  multicursor: false,
   svg: Icon,
   canExecute: state => {
     const { cursor } = state

@@ -21,6 +21,7 @@ import parentOf from './parentOf'
 import UnreachableError from './unreachable'
 
 interface Options {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   store?: Store<State, any>
   type?: CommandType
   event?: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent
@@ -82,10 +83,7 @@ const filterCursors = (_state: State, cursors: Path[], filter: MulticursorFilter
 /** Recomputes the path to a thought. Returns null if the thought does not exist. */
 const recomputePath = (state: State, thoughtId: ThoughtId) => {
   const path = thoughtToPath(state, thoughtId)
-
-  if (path && equalPath(path, HOME_PATH)) return null
-
-  return path
+  return path && equalPath(path, HOME_PATH) ? null : path
 }
 
 /** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
@@ -110,25 +108,21 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
 
   const state = store.getState()
 
-  const shouldExecuteMulticursor = hasMulticursor(state) && command.multicursor !== 'ignore'
-
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
-  if (!shouldExecuteMulticursor) return executeCommand(command, { store, type, event })
+  if (!command.multicursor || !hasMulticursor(state)) {
+    return executeCommand(command, { store, type, event })
+  }
 
-  const multicursorConfig =
-    typeof command.multicursor === 'object'
-      ? command.multicursor
-      : command.multicursor
-        ? { enabled: true }
-        : { enabled: false }
+  /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
+  const multicursor = typeof command.multicursor === 'boolean' ? {} : command.multicursor
 
-  // multicursor is not enabled for this command, alert and exit early
-  if (!multicursorConfig.enabled) {
-    const errorMessage = !multicursorConfig.error
+  // multicursor is disallowed for this command, alert and exit early
+  if (multicursor.disallow) {
+    const errorMessage = !multicursor.error
       ? 'Cannot execute this command with multiple thoughts.'
-      : typeof multicursorConfig.error === 'function'
-        ? multicursorConfig.error(store.getState())
-        : multicursorConfig.error
+      : typeof multicursor.error === 'function'
+        ? multicursor.error(store.getState())
+        : multicursor.error
     store.dispatch(
       alert(errorMessage, {
         alertType: AlertType.MulticursorError,
@@ -144,7 +138,7 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
   // For each multicursor, place the cursor on the path and execute the command by calling executeCommand.
   const paths = documentSort(state, Object.values(state.multicursors))
 
-  const filteredPaths = filterCursors(state, paths, multicursorConfig.filter)
+  const filteredPaths = filterCursors(state, paths, multicursor.filter)
 
   const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
 
@@ -152,7 +146,7 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
   if (!canExecute) return
 
   // Reverse the order of the cursors if the command has reverse multicursor mode enabled.
-  if (multicursorConfig.reverse) {
+  if (multicursor.reverse) {
     filteredPaths.reverse()
   }
 
@@ -169,19 +163,19 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
     }
   }
 
-  if (multicursorConfig.execMulticursor) {
+  if (multicursor.execMulticursor) {
     // The command has their own multicursor logic, so delegate to it and pass in the default execMulticursor function.
-    multicursorConfig.execMulticursor(filteredPaths, store.dispatch, store.getState, event, { type }, execMulticursor)
+    multicursor.execMulticursor(filteredPaths, store.dispatch, store.getState, event, { type }, execMulticursor)
   } else {
     execMulticursor()
   }
 
   // Restore the cursor to its original position if not prevented.
-  if (!multicursorConfig.preventSetCursor && cursorBeforeExecution) {
+  if (!multicursor.preventSetCursor && cursorBeforeExecution) {
     store.dispatch(setCursor({ path: recomputePath(store.getState(), head(cursorBeforeExecution)) }))
   }
 
-  if (!multicursorConfig.clearMulticursor) {
+  if (!multicursor.clearMulticursor) {
     // Restore multicursors
     store.dispatch(
       paths.map(path => (dispatch, getState) => {

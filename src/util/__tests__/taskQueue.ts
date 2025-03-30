@@ -438,7 +438,7 @@ describe('taskQueue', { retry: 10 }, () => {
     // Dummy function is needed to get the return type of a generic function. Value is not used.
     //eslint-disable-next-line @typescript-eslint/no-unused-vars
     const makeTaskQueue = () => taskQueue<number>()
-    let queue: ReturnType<typeof makeTaskQueue> = {} as any
+    let queue = {} as ReturnType<typeof makeTaskQueue>
     const done = new Promise(resolve => {
       queue = taskQueue<number>({ onEnd: resolve })
     })

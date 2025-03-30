@@ -3,7 +3,7 @@ import { HOME_PATH } from '../../constants'
 import isDescendantPath from '../../util/isDescendantPath'
 
 /** Coerce an array of strings to a Path. */
-const asPath = (ids: string[]) => ids as any as Path
+const asPath = (ids: string[]) => ids as unknown as Path
 
 it('equal paths return true by default', () => {
   expect(isDescendantPath(asPath([]), asPath([]))).toBe(true)

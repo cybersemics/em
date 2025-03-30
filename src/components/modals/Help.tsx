@@ -1,19 +1,16 @@
-import { FC, useCallback, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import { extendTapRecipe, modalTextRecipe } from '../../../styled-system/recipes'
-import Icon from '../../@types/IconType'
+import { Tab } from '../../@types/Tab'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
+import Tabs from '../Tabs'
 import ActionButton from './../ActionButton'
 import CommandTable from './../CommandTable'
-import CommandLibraryIcon from './../icons/CommandLibraryIcon'
-import MetaIcon from './../icons/MetaIcon'
-import TutorialsIcon from './../icons/TutorialsIcon'
 import ModalComponent from './ModalComponent'
 
 enum Section {
@@ -24,61 +21,13 @@ enum Section {
   Tutorials = 'Tutorials',
 }
 
-/** An item within the help menu. */
-const HelpMenuItem: FC<{ Icon: FC<Icon>; onTap: () => void; title: string; description: string }> = ({
-  Icon,
-  onTap,
-  title,
-  description,
-}) => {
-  const fontSize = useSelector(state => state.fontSize)
-  return (
-    <div {...fastClick(onTap)} className={css({ display: 'flex', marginBottom: '1em' })}>
-      <div className={css({ marginRight: '0.5em', paddingTop: '0.5em' })}>
-        <Icon size={fontSize * 3} />
-      </div>
-      <div>
-        <a className={css({ display: 'inline-block', paddingBottom: '0.25em' })}>{title}</a>
-        <p className={css({ color: 'dim', fontSize: 'md', marginBottom: '1.5em' })}>{description}</p>
-      </div>
-    </div>
-  )
-}
-
-/** Menu of help sections. */
-const HelpMenu = ({ onSelect }: { onSelect: (section: Section) => void }) => (
-  <div>
-    <HelpMenuItem
-      Icon={TutorialsIcon}
-      onTap={() => onSelect(Section.Tutorials)}
-      title='Tutorials'
-      description='Play the interactive tutorials to learn the basics.'
-    />
-    <HelpMenuItem
-      Icon={CommandLibraryIcon}
-      onTap={() => onSelect(Section.CommandLibrary)}
-      title='Command Library'
-      description='View a list of all commands that are available via the toolbar, command palette, keyboard, and mobile gestures.'
-    />
-    <HelpMenuItem
-      Icon={MetaIcon}
-      onTap={() => onSelect(Section.Metaprogramming)}
-      title='Metaprogramming'
-      description={`Peek under the hood at em's unique metaprogramming feature for customizing the appearance and behavior of individual thoughts.`}
-    />
-  </div>
-)
-
 /** Tutorials section. */
 const Tutorials = () => {
   const dispatch = useDispatch()
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
 
-  const { subtitle } = modalTextRecipe()
   return (
-    <section className={css({ marginBottom: '50px' })} id='tutorials'>
-      <h2 className={subtitle}>Tutorials</h2>
-
+    <section className={css({ marginBottom: '50px', paddingTop: '1em' })} id='tutorials'>
       <div
         className={css({
           textAlign: 'center',
@@ -134,13 +83,8 @@ const Options = ({ options }: { options: string[] }) => (
 
 /** A help section that lists all metaprogramming attributes. */
 const Metaprogramming = () => {
-  const modalClasses = modalTextRecipe({ compact: true })
   return (
-    <div>
-      <h2 id='meta' className={modalClasses.subtitle}>
-        Metaprogramming
-      </h2>
-
+    <div className={css({ paddingTop: '1em' })}>
       <p className={css({ color: 'dim', marginBottom: '2em' })}>
         <i>Metaprogramming attributes</i> are hidden thoughts with superpowers. Customize the appearance and behavior of
         thoughts, define style templates, and more.
@@ -382,9 +326,36 @@ const About = () => {
 
 /** A modal that offers links to the tutorial, a list of commands, and other helpful things. */
 const ModalHelp = () => {
-  const [section, setSection] = useState(Section.Menu)
+  const [section, setSection] = useState(Section.CommandLibrary)
   const fontSize = useSelector(state => state.fontSize)
-  const back = useCallback(() => setSection(Section.Menu), [])
+  const showDot = useSelector(state => !state.storageCache?.tutorialComplete)
+  const tabs: Tab<Section>[] = useMemo(
+    () => [
+      {
+        value: Section.CommandLibrary,
+        label: 'Command Library',
+        content: <CommandCenter />,
+      },
+      {
+        value: Section.Tutorials,
+        label: 'Tutorials',
+        showDot,
+        content: <Tutorials />,
+      },
+      {
+        value: Section.Metaprogramming,
+        label: 'Meta',
+        content: <Metaprogramming />,
+      },
+      {
+        value: Section.About,
+        label: 'About',
+        content: <About />,
+      },
+    ],
+    [showDot],
+  )
+
   return (
     <ModalComponent
       id='help'
@@ -392,38 +363,7 @@ const ModalHelp = () => {
       actions={({ close }) => <ActionButton key='close' title='Close' {...fastClick(() => close())} />}
       style={{ fontSize }}
     >
-      {section === Section.Menu ? (
-        <HelpMenu onSelect={setSection} />
-      ) : (
-        <span className={css({ fontSize: 'sm' })}>
-          &lt;{' '}
-          <a {...fastClick(back)} className={extendTapRecipe()}>
-            Back
-          </a>
-        </span>
-      )}
-
-      {section === Section.Tutorials ? (
-        <Tutorials />
-      ) : section === Section.CommandLibrary ? (
-        <CommandCenter />
-      ) : section === Section.Metaprogramming ? (
-        <Metaprogramming />
-      ) : section === Section.About ? (
-        <About />
-      ) : null}
-
-      {
-        // TODO: Remove Section.Tutorials condition once it has more content.
-        section !== Section.Menu && section !== Section.Tutorials && (
-          <div className={css({ fontSize: 'sm', marginTop: '2em' })}>
-            &lt;{' '}
-            <a {...fastClick(back)} className={extendTapRecipe()}>
-              Back
-            </a>
-          </div>
-        )
-      }
+      <Tabs currentTab={section} onTabChange={setSection} tabs={tabs} />
     </ModalComponent>
   )
 }

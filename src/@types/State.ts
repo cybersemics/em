@@ -146,9 +146,6 @@ interface State {
    */
   showModal?: Modal | null
   showSidebar: boolean
-  showSplitView: boolean
-  /** The width of the react-split-pane (% or px). */
-  splitPosition: number
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
       'connecting'     Connecting.

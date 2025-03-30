@@ -5,7 +5,6 @@ import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import CommandId from '../@types/CommandId'
 import DragCommandZone from '../@types/DragCommandZone'
-import Icon from '../@types/IconType'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut } from '../commands'
@@ -53,7 +52,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   if (!command) {
     console.error('Missing command: ' + commandId)
   }
-  const { svg, isActive, canExecute } = command
+  const { svg: SVG, isActive, canExecute } = command
 
   // Determine if the button should be shown in an active state. Precedence is as follows:
   // 1. If customize toolbar, use selected state.
@@ -85,8 +84,10 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const longPressTapDown = longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown']
   const longPressTouchMove = longPress.props.onTouchMove
 
-  // TODO: type svg correctly
-  const SVG = svg as React.FC<Icon>
+  if (!SVG) {
+    console.error('Cannot render toolbar button without an SVG icon:', commandId)
+    return null
+  }
 
   // Get the direction if the command is 'toggleSort'
   const direction = useSelector((state: State) => {

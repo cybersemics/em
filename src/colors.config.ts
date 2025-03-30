@@ -10,9 +10,12 @@ const colors = {
     darkgray: 'rgba(17, 17, 17, 1)', // #111111
     fg85: 'rgba(217, 217, 217, 1)', // #d9d9d9
     fg: 'rgba(255, 255, 255, 1)',
+    fgOverlay10: 'rgba(255, 255, 255, 0.1)',
+    fgOverlay20: 'rgba(255, 255, 255, 0.2)',
+    fgOverlay50: 'rgba(255, 255, 255, 0.5)',
+    fgOverlay70: 'rgba(255, 255, 255, 0.7)',
     fgOverlay80: 'rgba(20, 20, 20, 0.8)',
     fgOverlay90: 'rgba(20, 20, 20, 0.9)',
-    fgOverlay50: 'rgba(255, 255, 255, 0.5)',
     gray15: 'rgba(38, 38, 38, 1)', // #262626
     gray33: 'rgba(85, 85, 85, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
@@ -63,6 +66,8 @@ const colors = {
     pinkAgainstFg: 'rgba(233, 12, 89, 1)',
     brightBlue: 'rgba(70, 223, 240, 1)', // #46dff0
     exportTextareaColor: 'rgba(170, 170, 170, 1)', // #aaa, also used in anchorButton
+    panelBorder: 'rgba(36, 36, 36, 1)',
+    panelBg: 'rgba(23, 23, 23, 1)', // #171717
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -75,9 +80,12 @@ const colors = {
     darkgray: 'rgba(237, 237, 237, 1)', // #ededed
     fg85: 'rgba(39, 39, 39, 1)', // #272727
     fg: 'rgba(0, 0, 0, 1)',
+    fgOverlay10: 'rgba(0, 0, 0, 0.1)',
+    fgOverlay20: 'rgba(0, 0, 0, 0.2)',
+    fgOverlay50: 'rgba(0, 0, 0, 0.5)',
+    fgOverlay70: 'rgba(0, 0, 0, 0.7)',
     fgOverlay80: 'rgba(235, 235, 235, 0.8)',
     fgOverlay90: 'rgba(235, 235, 235, 0.9)',
-    fgOverlay50: 'rgba(0, 0, 0, 0.5)',
     gray15: 'rgba(217, 217, 217, 1)', // #262626
     gray33: 'rgba(170, 170, 170, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
@@ -128,6 +136,8 @@ const colors = {
     pinkAgainstFg: 'rgba(227, 179, 196, 1)',
     brightBlue: 'rgba(70, 223, 240, 1)', // #46dff0
     exportTextareaColor: 'rgba(85, 85, 85, 1)',
+    panelBorder: 'rgba(219, 219, 219, 1)',
+    panelBg: 'rgba(232, 232, 232, 1)', // #171717
   },
 } as const
 

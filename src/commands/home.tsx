@@ -9,7 +9,7 @@ const homeCommand: Command = {
   label: 'Home',
   description: 'Navigate to Home.',
   keyboard: { key: 'h', meta: true, alt: true },
-  multicursor: 'ignore',
+  multicursor: false,
   svg: HomeToolbarIcon,
   exec: (dispatch: Dispatch<Thunk>) => dispatch(home()),
 }

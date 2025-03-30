@@ -3,6 +3,7 @@ import State from '../@types/State'
 import isTutorial from '../selectors/isTutorial'
 
 /** Redux Middleware for debugging. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const debuggingMiddleware: Middleware<any, State, Dispatch> =
   ({ getState }) =>
   next =>

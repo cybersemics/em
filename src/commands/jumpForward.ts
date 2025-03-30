@@ -8,7 +8,7 @@ const jumpForwardCommand: Command = {
   description: 'Move the cursor to the next edit point. Reverses jump back.',
   keyboard: { key: 'j', shift: true, meta: true },
   gesture: 'rur',
-  multicursor: 'ignore',
+  multicursor: false,
   svg: JumpForwardIcon,
   exec: dispatch => {
     dispatch(jump(1))

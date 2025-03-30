@@ -11,7 +11,7 @@ const newThoughtAboveCommand: Command = {
   description: 'Create a new thought immediately above the current thought.',
   gesture: 'rul',
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot create a new thought with multiple thoughts.',
   },
   ...(!isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null),

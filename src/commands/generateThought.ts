@@ -10,7 +10,6 @@ import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
-// import Icon from '../components/icons/BoldTextIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
@@ -25,7 +24,7 @@ const generateThought: Command = {
   gesture: 'ur',
   svg: GenerateThoughtIcon,
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot generate multiple thoughts.',
   },
   canExecute: state => isDocumentEditable() && !!state.cursor,

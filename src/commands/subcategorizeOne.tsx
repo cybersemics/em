@@ -6,7 +6,6 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const multicursor: Command['multicursor'] = {
-  enabled: true,
   execMulticursor: (_cursors, dispatch) => dispatch(subcategorizeMulticursor()),
   preventSetCursor: true,
   clearMulticursor: true,
@@ -34,7 +33,6 @@ export const subCategorizeOneCommandAlias: Command = {
   hideFromHelp: true,
   keyboard: { key: ']', meta: true },
   multicursor,
-  svg: SubCategorizeOneIcon,
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },

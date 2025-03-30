@@ -14,7 +14,6 @@ const outdentCommand: Command = {
   },
   gesture: 'lrl',
   multicursor: {
-    enabled: true,
     filter: 'prefer-ancestor',
     reverse: true,
   },

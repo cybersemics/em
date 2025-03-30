@@ -4,6 +4,7 @@ function parseJsonSafe<T>(value: string | null, defaultValue: T): T
 function parseJsonSafe(value: string | null): unknown
 
 /** Safely JSON parse an unknown value, and default to a given fallback value. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseJsonSafe<T>(value: string | null, defaultValue?: T): any {
   try {
     return value && JSON.parse(value)

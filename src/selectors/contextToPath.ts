@@ -50,7 +50,7 @@ const contextToPath = (state: State, context: string[]): SimplePath | null => {
 
         return appendToPath(acc, isEm ? EM_TOKEN : showContexts ? firstChild.parentId : firstChildId)
       },
-      [] as any as Path,
+      [] as unknown as Path,
     )
     // TODO: return Path
     return path as SimplePath
