@@ -1,21 +1,18 @@
 import { isEqual } from 'lodash'
-import React, { FC, memo, useRef } from 'react'
+import React, { FC, memo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
-import { SystemStyleObject } from '../../styled-system/types'
 import SortPreference from '../@types/SortPreference'
 import { setSortPreferenceActionCreator as setSortPreference } from '../actions/setSortPreference'
 import { toggleSortPickerActionCreator as toggleSortPicker } from '../actions/toggleSortPicker'
 import { isTouch } from '../browser'
-import useWindowOverflow from '../hooks/useWindowOverflow'
 import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
-import TriangleDown from './TriangleDown'
+import Popover from './Popover'
 
 // Define the type for sort options
 type SortType = 'None' | 'Alphabetical'
@@ -69,10 +66,11 @@ const SortOption: FC<SortOptionProps> = ({ type, supportsDirection, label, sortP
 }
 
 /** Sort Picker component. */
-const SortPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = memo(({ fontSize, cssRaw }) => {
-  const ref = useRef<HTMLDivElement>(null)
+const SortPicker: FC<{
+  size?: number
+}> = memo(({ size }) => {
   const dispatch = useDispatch()
-  const overflow = useWindowOverflow(ref)
+  const showSortPicker = useSelector(state => state.showSortPicker)
 
   const simplePath = useSelector(state =>
     state.cursor && !isRoot(state.cursor) ? simplifyPath(state, rootedParentOf(state, state.cursor)) : null,
@@ -111,46 +109,24 @@ const SortPicker: FC<{ fontSize: number; cssRaw?: SystemStyleObject }> = memo(({
   }
 
   return (
-    <div className={css({ userSelect: 'none' })}>
-      <div
-        ref={ref}
-        style={{ ...(overflow.left ? { left: `${overflow.left}` } : { right: `${overflow.right}` }) }}
-        className={css(
-          {
-            background: 'pickerBg',
-            borderRadius: '3',
-            display: 'inline-block',
-            padding: '0.2em 0.25em 0.25em',
-            position: 'relative',
-          },
-          cssRaw,
-        )}
-      >
-        <TriangleDown
-          fill={token('colors.fgOverlay90')}
-          size={fontSize}
-          cssRaw={{ position: 'absolute', width: '100%' }}
-          style={{ ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }), top: -fontSize / 2 }}
+    <Popover show={showSortPicker} size={size}>
+      <div aria-label='sort options' className={css({ whiteSpace: 'wrap' })}>
+        <SortOption
+          type='None'
+          supportsDirection={false}
+          label='None'
+          sortPreference={sortPreference}
+          onClick={toggleSortOption}
         />
-
-        <div aria-label='sort options' className={css({ whiteSpace: 'wrap' })}>
-          <SortOption
-            type='None'
-            supportsDirection={false}
-            label='None'
-            sortPreference={sortPreference}
-            onClick={toggleSortOption}
-          />
-          <SortOption
-            type='Alphabetical'
-            supportsDirection={true}
-            label='Alphabetical'
-            sortPreference={sortPreference}
-            onClick={toggleSortOption}
-          />
-        </div>
+        <SortOption
+          type='Alphabetical'
+          supportsDirection={true}
+          label='Alphabetical'
+          sortPreference={sortPreference}
+          onClick={toggleSortOption}
+        />
       </div>
-    </div>
+    </Popover>
   )
 })
 
