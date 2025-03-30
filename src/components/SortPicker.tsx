@@ -66,9 +66,7 @@ const SortOption: FC<SortOptionProps> = ({ type, supportsDirection, label, sortP
 }
 
 /** Sort Picker component. */
-const SortPicker: FC<{
-  size?: number
-}> = memo(({ size }) => {
+const SortPicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
   const showSortPicker = useSelector(state => state.showSortPicker)
 

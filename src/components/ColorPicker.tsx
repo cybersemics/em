@@ -159,9 +159,7 @@ const ColorSwatch: FC<{
 }
 
 /** Text Color Picker component. */
-const ColorPicker: FC<{
-  size?: number
-}> = ({ size }) => {
+const ColorPicker: FC<{ size?: number }> = ({ size }) => {
   const showColorPicker = useSelector(state => state.showColorPicker)
 
   return (

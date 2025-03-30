@@ -15,9 +15,7 @@ import TitleCaseIcon from './icons/TitleCaseIcon'
 import UpperCaseIcon from './icons/UpperCaseIcon'
 
 /** Letter Case Picker component. */
-const LetterCasePicker: FC<{
-  size?: number
-}> = memo(({ size }) => {
+const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
   const showLetterCase = useSelector(state => state.showLetterCase)
 
