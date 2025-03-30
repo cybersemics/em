@@ -425,6 +425,7 @@ const ThoughtNode = ({
     ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
     : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
 
+  // If the last action is a swapParent or if the current thought is greater than the previous thought, animate the curve.
   const shouldAnimateCurve = isLastActionSwapParent || isGreaterThought
   const outerDivStyle = {
     left: x,
