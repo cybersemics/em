@@ -60,12 +60,19 @@ const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
 /** FauxCaret.tsx uses these variables to decide which faux caret to show. */
 const hideCaret = {
   '0%': {
-    '--faux-caret-opacity': 1,
+    '--faux-caret-opacity': 0,
     '--faux-caret-line-start-opacity': 1,
     '--faux-caret-line-end-opacity': 1,
     '--faux-caret-note-line-end-opacity': 1,
     '--faux-caret-note-line-start-opacity': 1,
     caretColor: 'transparent',
+  },
+  /** The distributed asynchronous nature of the faux caret leads to situations where the animation
+   * begins before the caret is correctly repositioned. Delaying its appearance for at least 1 frame
+   * will eliminate these glitches.
+   */
+  '2.5%': {
+    '--faux-caret-opacity': 1,
   },
   '99%': {
     '--faux-caret-opacity': 1,
