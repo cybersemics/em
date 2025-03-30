@@ -25,10 +25,10 @@ const Popover: FC<PopoverProps> = ({ children, show, size = 18 }) => {
         className={css({
           position: 'relative',
           zIndex: 'stack',
-          // position fixed or absolute causes the ColorPicker to get clipped by the toolbar's overflow-x: scroll
+          // position fixed or absolute causes the Popover to get clipped by the toolbar's overflow-x: scroll
           // ideally we want overflow-x:scroll and overflow-y:visible, but Safari does not differing allow overflow-x and overflow-y
           // instead, keep position:static but set the width to 0
-          // this will increase the height of the toolbar so the ColorPicker does not get clipped without taking up horizontal space
+          // this will increase the height of the toolbar so the Popover does not get clipped without taking up horizontal space
           width: 0,
         })}
         style={{
