@@ -55,7 +55,7 @@ const ControlledAlert: FC<
                 display: 'flex',
                 flexDirection: 'row',
                 justifyContent: 'center',
-                alignItems: 'flex-start',
+                alignItems: 'center',
                 padding: '0.85em 1.1em',
               })}
             >
