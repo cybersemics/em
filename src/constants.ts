@@ -182,7 +182,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'pin',
   'pinAll',
   'toggleTableView',
-  'toggleSort',
+  'toggleSortPicker',
   'toggleDone',
   'bold',
   'italic',
@@ -229,6 +229,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'search',
   // 'textColor',
   // 'toggleDone',
+  // 'toggleSort',
   // 'toggleSidebar',
 ]
 
