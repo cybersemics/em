@@ -55,6 +55,7 @@ const ControlledAlert: FC<
                 justifyContent: 'center',
                 alignItems: 'center',
                 padding: '0.85em 1.1em',
+                maxWidth: '30em',
               })}
             >
               {renderedIcon}
