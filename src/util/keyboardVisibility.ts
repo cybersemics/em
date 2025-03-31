@@ -23,7 +23,7 @@ interface KeyboardVisibilityTracker {
 /**
  * Creates a keyboard tracker with encapsulated keyboardVisibilityState.
  *
- * @returns A keyboard tracker instance
+ * @returns A keyboard tracker instance.
  */
 const createKeyboardVisibilityTracker = (): KeyboardVisibilityTracker => {
   // Private keyboardVisibilityState
