@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+import { Keyboard } from '@capacitor/keyboard'
 import _ from 'lodash'
 import lifecycle from 'page-lifecycle'
 import { Store } from 'redux'
@@ -7,6 +9,7 @@ import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
+import { editingActionCreator as editingAction } from '../actions/editing'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isIOS, isSafari, isTouch } from '../browser'
@@ -385,6 +388,17 @@ const initEvents = (store: Store<State, any>) => {
 
   const unsubscribeSaveErrorReload = syncStatusStore.subscribeSelector(state => state.savingProgress, saveErrorReload)
 
+  // adding capacitor keyboard event listener to detect when the keyboard is dismissed
+  if (Capacitor.isPluginAvailable('Keyboard') && isTouch) {
+    Keyboard.addListener('keyboardDidHide', () => {
+      const state = store.getState()
+      if (state.editing && state.cursor) {
+        selection.clear()
+        store.dispatch(editingAction({ value: false }))
+      }
+    })
+  }
+
   /** Remove window event handlers. */
   const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
     unsubscribeSaveErrorReload()
@@ -402,6 +416,11 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
+
+    // Clean up Capacitor Keyboard listeners if applicable
+    if (Capacitor.isPluginAvailable('Keyboard')) {
+      Keyboard.removeAllListeners()
+    }
   }
 
   // return input handlers as another way to remove them on cleanup
