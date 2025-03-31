@@ -45,9 +45,9 @@ const fauxCaretRecipe = cva({
 })
 
 /** The root fauxCaret recipe that sets the faux caret animation vars in LayoutTree. Picks from a set of identical hideCaret animations based on a thought's indent depth. This ensures that the animation plays again each time the indent depth changes. */
-const fauxCaretProvider = (depth: number) =>
+const fauxCaretTreeProvider = (depth: number) =>
   fauxCaretRecipe({
     animation: isTouch && isSafari() ? hideCaretAnimationNames[depth % hideCaretAnimationNames.length] : 'none',
   })
 
-export default fauxCaretProvider
+export default fauxCaretTreeProvider
