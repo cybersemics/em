@@ -18,7 +18,7 @@ import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretCssVars from '../hooks/useFauxCaretCssVars'
 import useSortedContext from '../hooks/useSortedContext'
-import hideCaret from '../recipes/hideCaret'
+import fauxCaretProvider from '../recipes/fauxCaretProvider'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
@@ -953,7 +953,7 @@ const LayoutTree = () => {
         css({
           marginTop: '0.501em',
         }),
-        hideCaret(indentDepth + tableDepth),
+        fauxCaretProvider(indentDepth + tableDepth),
       )}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
