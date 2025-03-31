@@ -32,11 +32,9 @@ const FauxCaret = ({
   wrapperElement,
 }: {
   caretType: FauxCaretType
-  /** If the thought is moved, it may trigger a transition that requires the faux caret. */
+  /** The Path of the TreeNode used to detect table view and edit mode. Only used if caretType is 'positioned'. */
   path?: Path
-  /** If a thought is deleted and re-created by undo or redo, its other properties will remain
-   * the same, and the element node itself will provide the only evidence of the change.
-   */
+  /** If a thought is deleted and re-created by undo or redo, its other properties will remain the same, and the element node itself will provide the only evidence of the change. Only used if caretType is 'positioned'. */
   wrapperElement?: HTMLDivElement | null
 }) => {
   const [styles, setStyles] = useState<{
@@ -47,8 +45,7 @@ const FauxCaret = ({
     left?: Property.Left
   }>({})
 
-  const editing = useSelector(state => state.editing)
-  const isCursor = useSelector(state => equalPath(path, state.cursor))
+  const isEditingCursor = useSelector(state => state.editing && equalPath(path, state.cursor))
   const isTableCol1 = useSelector(state => path && attributeEquals(state, head(path), '=view', 'Table'))
 
   // Hide the positioned faux caret when typing occurs.
@@ -57,12 +54,11 @@ const FauxCaret = ({
     setStyles({ display: 'none' })
   })
 
-  // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
-  // selection is created.
+  // If the thought isCursor and edit mode is on, position the faux cursor at the point where the selection is created.
   useEffect(() => {
     if (!isTouch || !isSafari() || caretType !== 'positioned') return
 
-    if (editing && isCursor) {
+    if (isEditingCursor) {
       // The selection ranges aren't updated until the end of the frame when the thought is focused.
       setTimeout(() => {
         if (!wrapperElement) return
@@ -88,7 +84,7 @@ const FauxCaret = ({
     } else {
       setStyles({ display: 'none' })
     }
-  }, [caretType, editing, isCursor, isTableCol1, path, wrapperElement])
+  }, [caretType, isEditingCursor, isTableCol1, path, wrapperElement])
 
   if (!isTouch || !isSafari()) return null
   return (
