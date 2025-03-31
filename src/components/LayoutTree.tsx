@@ -45,8 +45,8 @@ import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
+import FauxCaret from './FauxCaret'
 import HoverArrow from './HoverArrow'
-import PositionedFauxCaret from './PositionedFauxCaret'
 import VirtualThought, { OnResize } from './VirtualThought'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
@@ -560,7 +560,7 @@ const TreeNode = ({
             />
           )}
         <span className={css({ position: 'absolute', margin: '-0.1875em 0 0 -0.05em', top: 0, left: 0 })}>
-          <PositionedFauxCaret path={path} wrapperElement={fadeThoughtRef.current} />
+          <FauxCaret caretType='positioned' path={path} wrapperElement={fadeThoughtRef.current} />
         </span>
       </div>
     </FadeTransition>

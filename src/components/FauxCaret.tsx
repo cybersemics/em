@@ -1,6 +1,15 @@
+import { head } from 'lodash'
+import { useEffect, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { Property } from '../../styled-system/types/csstype'
 import FauxCaretType from '../@types/FauxCaretType'
+import Path from '../@types/Path'
 import { isSafari, isTouch } from '../browser'
+import { getBoundingClientRect } from '../device/selection'
+import attributeEquals from '../selectors/attributeEquals'
+import editingValueStore from '../stores/editingValue'
+import equalPath from '../util/equalPath'
 
 /** Take a FauxCaretType and return a CSS var that controls that type. */
 const getFauxCaretCssVar = (caretType: FauxCaretType) => {
@@ -33,7 +42,70 @@ const getFauxCaretCssVar = (caretType: FauxCaretType) => {
  * Note.tsx to cover cases where the client rect is not available because the selection is
  * not a text node (see `isStartOfElementNode` in selection.ts for implementation details).
  */
-const FauxCaret = ({ caretType }: { caretType: FauxCaretType }) => {
+const FauxCaret = ({
+  caretType,
+  path,
+  wrapperElement,
+}: {
+  caretType: FauxCaretType
+  /** If the thought is moved, it may trigger a transition that requires the faux caret. */
+  path?: Path
+  /** If a thought is deleted and re-created by undo or redo, its other properties will remain
+   * the same, and the element node itself will provide the only evidence of the change.
+   */
+  wrapperElement?: HTMLDivElement | null
+}) => {
+  const [styles, setStyles] = useState<{
+    position?: 'absolute'
+    display?: Property.Display
+    fontSize?: Property.FontSize
+    top?: Property.Top
+    left?: Property.Left
+  }>({})
+
+  const editing = useSelector(state => state.editing)
+  const isCursor = useSelector(state => equalPath(path, state.cursor))
+  const isTableCol1 = useSelector(state => path && attributeEquals(state, head(path), '=view', 'Table'))
+
+  // Hide the positioned faux caret when typing occurs.
+  editingValueStore.useEffect(() => {
+    if (!isTouch || !isSafari() || caretType !== 'positioned') return
+    setStyles({ display: 'none' })
+  })
+
+  // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
+  // selection is created.
+  useEffect(() => {
+    if (!isTouch || !isSafari() || caretType !== 'positioned') return
+
+    if (editing && isCursor) {
+      // The selection ranges aren't updated until the end of the frame when the thought is focused.
+      setTimeout(() => {
+        if (!wrapperElement) return
+
+        const offset = wrapperElement.getBoundingClientRect()
+
+        if (!offset) return
+
+        const rect = getBoundingClientRect()
+
+        if (rect) {
+          setStyles({
+            position: 'absolute',
+            display: undefined,
+            fontSize: `${rect.height}px`,
+            top: `${rect.y - offset.y}px`,
+            left: `${rect.x - offset.x}px`,
+          })
+        } else {
+          setStyles({ display: 'none' })
+        }
+      })
+    } else {
+      setStyles({ display: 'none' })
+    }
+  }, [caretType, editing, isCursor, isTableCol1, path, wrapperElement])
+
   if (!isTouch || !isSafari()) return null
   return (
     <span
@@ -43,7 +115,7 @@ const FauxCaret = ({ caretType }: { caretType: FauxCaretType }) => {
         WebkitTextStroke: '1px {colors.caret}',
       })}
       // opacity cannot be determined statically for PandaCSS, so it must be applied as an inline style
-      style={{ opacity: getFauxCaretCssVar(caretType) }}
+      style={{ opacity: getFauxCaretCssVar(caretType), ...styles }}
     >
       |
     </span>
