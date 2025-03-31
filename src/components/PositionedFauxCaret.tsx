@@ -1,6 +1,5 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
 import { Property } from '../../styled-system/types/csstype'
 import Path from '../@types/Path'
 import { isSafari, isTouch } from '../browser'
@@ -21,6 +20,7 @@ type Props = PropsWithChildren<{
 }>
 
 type StyleProps = {
+  position?: 'absolute'
   display?: Property.Display
   fontSize?: Property.FontSize
   top?: Property.Top
@@ -66,6 +66,7 @@ const PositionedFauxCaret = ({ children, path, wrapperElement }: Props) => {
 
         if (rect) {
           setStyles({
+            position: 'absolute',
             display: undefined,
             fontSize: `${rect.height}px`,
             top: `${rect.y - offset.y}px`,
@@ -82,7 +83,7 @@ const PositionedFauxCaret = ({ children, path, wrapperElement }: Props) => {
 
   if (!isTouch || !isSafari()) return null
   return (
-    <span className={css({ position: 'absolute', margin: '-0.1875em 0 0 -0.05em' })} style={styles}>
+    <span style={styles}>
       <FauxCaret caretType='positioned' />
     </span>
   )

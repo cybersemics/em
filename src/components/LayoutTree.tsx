@@ -559,7 +559,9 @@ const TreeNode = ({
               prevWidth={treeThoughtsPositioned[index - 1]?.width}
             />
           )}
-        <PositionedFauxCaret path={path} wrapperElement={fadeThoughtRef.current} />
+        <span className={css({ position: 'absolute', margin: '-0.1875em 0 0 -0.05em', top: 0, left: 0 })}>
+          <PositionedFauxCaret path={path} wrapperElement={fadeThoughtRef.current} />
+        </span>
       </div>
     </FadeTransition>
   )
