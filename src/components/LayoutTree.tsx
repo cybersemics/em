@@ -435,7 +435,13 @@ const TreeNode = ({
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
-  const fauxCaretCssVars = useFauxCaretCssVars(editing, fadeThoughtRef.current, isCursor, isTableCol1, path)
+  const fauxCaretCssVars = useFauxCaretCssVars({
+    editing,
+    fadeThoughtElement: fadeThoughtRef.current,
+    isCursor,
+    isTableCol1,
+    path,
+  })
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
