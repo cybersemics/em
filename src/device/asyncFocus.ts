@@ -1,4 +1,4 @@
-import { isSafari, isTouch } from '../browser'
+import { isTouch } from '../browser'
 import { noop } from '../constants'
 import * as selection from './selection'
 
@@ -10,7 +10,7 @@ import * as selection from './selection'
  * See: https://stackoverflow.com/a/45703019/480608.
  */
 export const AsyncFocus: () => () => void = () => {
-  if (!isTouch || !isSafari()) return noop
+  if (!isTouch) return noop
 
   // create invisible dummy input to receive the focus
   const hiddenInput = document.createElement('input')
