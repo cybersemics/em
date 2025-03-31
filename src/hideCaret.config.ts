@@ -1,3 +1,4 @@
+// TODO: FauxCaret will break if hideCaretAnimationNames is imported from hideCaret.config.ts into hideCaret.ts, and vice versa into panda.config.ts, so we are stuck with duplicate definitions in two files.
 const hideCaretAnimationNames = [
   'hideCaret0',
   'hideCaret1',

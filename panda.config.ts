@@ -163,6 +163,8 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
+  // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
+  // See: recipes/hideCaret.ts
   ...hideCaretConfig.reduce((accum, name) => ({ ...accum, [name]: hideCaret }), {}),
 })
 
