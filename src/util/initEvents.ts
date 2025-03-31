@@ -1,5 +1,3 @@
-import { Capacitor } from '@capacitor/core'
-import { Keyboard } from '@capacitor/keyboard'
 import _ from 'lodash'
 import lifecycle from 'page-lifecycle'
 import { Store } from 'redux'
@@ -9,7 +7,6 @@ import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
-import { editingActionCreator as editingAction } from '../actions/editing'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isIOS, isSafari, isTouch } from '../browser'
@@ -30,6 +27,7 @@ import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
+import { createKeyboardTracker } from './keyboardVisibility'
 
 declare global {
   interface Window {
@@ -170,6 +168,15 @@ const saveErrorReload = (savingProgress: number) => {
 const initEvents = (store: Store<State, any>) => {
   let lastState: number
   let lastPath: Path | null
+
+  // Create keyboard tracker
+  const keyboardTracker = createKeyboardTracker()
+
+  // Initialize keyboard state if visualViewport is available
+  keyboardTracker.initialize()
+
+  // Create the keyboard tracker handler
+  const handleKeyboardTracker = keyboardTracker.createTracker(store)
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
@@ -382,22 +389,19 @@ const initEvents = (store: Store<State, any>) => {
   const resizeHost = window.visualViewport || window
   resizeHost.addEventListener('resize', updateSize)
 
+  // Add Visual Viewport resize listener for keyboard detection
+  if (isTouch && window.visualViewport) {
+    window.visualViewport.addEventListener('resize', handleKeyboardTracker)
+
+    // Force an immediate check in case keyboard is already visible
+    handleKeyboardTracker()
+  }
+
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
 
   const unsubscribeSaveErrorReload = syncStatusStore.subscribeSelector(state => state.savingProgress, saveErrorReload)
-
-  // adding capacitor keyboard event listener to detect when the keyboard is dismissed
-  if (Capacitor.isPluginAvailable('Keyboard') && isTouch) {
-    Keyboard.addListener('keyboardDidHide', () => {
-      const state = store.getState()
-      if (state.editing && state.cursor) {
-        selection.clear()
-        store.dispatch(editingAction({ value: false }))
-      }
-    })
-  }
 
   /** Remove window event handlers. */
   const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
@@ -417,9 +421,12 @@ const initEvents = (store: Store<State, any>) => {
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
 
-    // Clean up Capacitor Keyboard listeners if applicable
-    if (Capacitor.isPluginAvailable('Keyboard')) {
-      Keyboard.removeAllListeners()
+    // Remove Visual Viewport event listener
+    if (isTouch && window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', handleKeyboardTracker)
+
+      // Reset keyboard visibility state
+      keyboardTracker.reset()
     }
   }
 
