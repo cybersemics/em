@@ -36,7 +36,7 @@ import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
-import hideCaret, { getHideCaretAnimationName } from '../util/getHideCaretAnimationName'
+import hideCaret from '../util/getHideCaretAnimationName'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
@@ -946,9 +946,7 @@ const LayoutTree = () => {
         css({
           marginTop: '0.501em',
         }),
-        hideCaret({
-          animation: getHideCaretAnimationName(indentDepth + tableDepth),
-        }),
+        hideCaret(indentDepth + tableDepth),
       )}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
