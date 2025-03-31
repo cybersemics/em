@@ -11,22 +11,6 @@ import attributeEquals from '../selectors/attributeEquals'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
 
-/** Take a FauxCaretType and return a CSS var that controls that type. */
-const getFauxCaretCssVar = (caretType: FauxCaretType) => {
-  switch (caretType) {
-    case 'thoughtStart':
-      return 'var(--faux-caret-line-start-opacity)'
-    case 'thoughtEnd':
-      return 'var(--faux-caret-line-end-opacity)'
-    case 'noteStart':
-      return 'var(--faux-caret-note-line-start-opacity)'
-    case 'noteEnd':
-      return 'var(--faux-caret-note-line-end-opacity)'
-    case 'positioned':
-      return 'var(--faux-caret-opacity)'
-  }
-}
-
 /**
  * Faux caret to display during hideCaret animations on mobile Safari.
  *
@@ -115,7 +99,17 @@ const FauxCaret = ({
         WebkitTextStroke: '1px {colors.caret}',
       })}
       // opacity cannot be determined statically for PandaCSS, so it must be applied as an inline style
-      style={{ opacity: getFauxCaretCssVar(caretType), ...styles }}
+      style={{
+        opacity: {
+          none: '',
+          noteEnd: 'var(--faux-caret-note-line-end-opacity)',
+          noteStart: 'var(--faux-caret-note-line-start-opacity)',
+          positioned: 'var(--faux-caret-opacity)',
+          thoughtEnd: 'var(--faux-caret-line-end-opacity)',
+          thoughtStart: 'var(--faux-caret-line-start-opacity)',
+        }[caretType],
+        ...styles,
+      }}
     >
       |
     </span>
