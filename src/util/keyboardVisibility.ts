@@ -12,7 +12,7 @@ interface KeyboardVisibilityState {
   isKeyboardVisible: boolean
 }
 
-interface KeyboardTracker {
+interface KeyboardVisibilityTracker {
   initialize: () => void
 
   reset: () => void
@@ -25,7 +25,7 @@ interface KeyboardTracker {
  *
  * @returns A keyboard tracker instance
  */
-export const createKeyboardTracker = (): KeyboardTracker => {
+const createKeyboardVisibilityTracker = (): KeyboardVisibilityTracker => {
   // Private keyboardVisibilityState
   let keyboardVisibilityState: KeyboardVisibilityState = {
     initialViewportHeight: null,
@@ -116,3 +116,5 @@ export const createKeyboardTracker = (): KeyboardTracker => {
     },
   }
 }
+
+export default createKeyboardVisibilityTracker

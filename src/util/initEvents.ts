@@ -27,7 +27,7 @@ import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
-import { createKeyboardTracker } from './keyboardVisibility'
+import createKeyboardVisibilityTracker from './keyboardVisibility'
 
 declare global {
   interface Window {
@@ -170,13 +170,13 @@ const initEvents = (store: Store<State, any>) => {
   let lastPath: Path | null
 
   // Create keyboard tracker
-  const keyboardTracker = createKeyboardTracker()
+  const keyboardVisibilityTracker = createKeyboardVisibilityTracker()
 
   // Initialize keyboard state if visualViewport is available
-  keyboardTracker.initialize()
+  keyboardVisibilityTracker.initialize()
 
   // Create the keyboard tracker handler
-  const handleKeyboardTracker = keyboardTracker.createTracker(store)
+  const handleKeyboardVisibilityTracker = keyboardVisibilityTracker.createTracker(store)
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
@@ -391,10 +391,10 @@ const initEvents = (store: Store<State, any>) => {
 
   // Add Visual Viewport resize listener for keyboard detection
   if (isTouch && window.visualViewport) {
-    window.visualViewport.addEventListener('resize', handleKeyboardTracker)
+    window.visualViewport.addEventListener('resize', handleKeyboardVisibilityTracker)
 
     // Force an immediate check in case keyboard is already visible
-    handleKeyboardTracker()
+    handleKeyboardVisibilityTracker()
   }
 
   // clean up on app switch in PWA
@@ -423,10 +423,10 @@ const initEvents = (store: Store<State, any>) => {
 
     // Remove Visual Viewport event listener
     if (isTouch && window.visualViewport) {
-      window.visualViewport.removeEventListener('resize', handleKeyboardTracker)
+      window.visualViewport.removeEventListener('resize', handleKeyboardVisibilityTracker)
 
       // Reset keyboard visibility state
-      keyboardTracker.reset()
+      keyboardVisibilityTracker.reset()
     }
   }
 
