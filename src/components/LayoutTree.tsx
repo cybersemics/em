@@ -16,7 +16,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
-import useFauxCaretCssVars from '../hooks/useFauxCaretCssVars'
+import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import useSortedContext from '../hooks/useSortedContext'
 import fauxCaretProvider from '../recipes/fauxCaretProvider'
 import attributeEquals from '../selectors/attributeEquals'
@@ -435,7 +435,7 @@ const TreeNode = ({
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
-  const fauxCaretCssVars = useFauxCaretCssVars({
+  const fauxCaretNodeProvider = useFauxCaretNodeProvider({
     editing,
     fadeThoughtElement: fadeThoughtRef.current,
     isCursor,
@@ -521,7 +521,7 @@ const TreeNode = ({
           width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
           ...style,
           textAlign: isTableCol1 ? 'right' : undefined,
-          ...fauxCaretCssVars,
+          ...fauxCaretNodeProvider,
         }}
       >
         <div ref={fadeThoughtRef}>
