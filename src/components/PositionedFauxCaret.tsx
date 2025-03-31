@@ -1,4 +1,4 @@
-import { PropsWithChildren, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { Property } from '../../styled-system/types/csstype'
 import Path from '../@types/Path'
@@ -10,14 +10,14 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import FauxCaret from './FauxCaret'
 
-type Props = PropsWithChildren<{
+type Props = {
   /** If the thought is moved, it may trigger a transition that requires the faux caret. */
   path: Path
   /** If a thought is deleted and re-created by undo or redo, its other properties will remain
    * the same, and the element node itself will provide the only evidence of the change.
    */
   wrapperElement: HTMLDivElement | null
-}>
+}
 
 type StyleProps = {
   position?: 'absolute'
@@ -36,7 +36,7 @@ type StyleProps = {
  *
  * See FauxCaret.tsx for more information.
  */
-const PositionedFauxCaret = ({ children, path, wrapperElement }: Props) => {
+const PositionedFauxCaret = ({ path, wrapperElement }: Props) => {
   const editing = useSelector(state => state.editing)
   const isCursor = useSelector(state => equalPath(path, state.cursor))
   const isTableCol1 = useSelector(state => attributeEquals(state, head(path), '=view', 'Table'))
