@@ -1,6 +1,7 @@
-import { HOME_TOKEN } from '../../constants'
+import { AlertType, HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
+import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
@@ -151,5 +152,106 @@ describe('context view', () => {
     - m
       - ${''}
         - y`)
+  })
+})
+
+describe('multicursor', () => {
+  it('categorize multiple thoughts', () => {
+    const steps = [
+      newThought('a'),
+      newThought('b'),
+      newThought('c'),
+      newThought('d'),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - ${'' /* prevent trim_trailing_whitespace */}
+    - b
+    - c
+  - d`)
+  })
+
+  it('set cursor on new empty thought', () => {
+    const steps = [
+      newThought('a'),
+      newThought('b'),
+      newThought('c'),
+      setCursor(['b']),
+      addMulticursor(['c']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+
+    expect(cursorThoughts).toMatchObject([{ value: '', rank: expect.any(Number) }])
+  })
+
+  it('disallow subcategorizing thoughts from different parents', () => {
+    const steps = [
+      importText({
+        text: `
+        - a
+          - b
+        - c`,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['c']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+  - c`)
+
+    expect(stateNew.alert).toMatchObject({
+      alertType: AlertType.MulticursorError,
+      value: 'Cannot categorize thoughts from different parents.',
+    })
+  })
+
+  it('categorize within alphabetically sorted context', () => {
+    const steps = [
+      importText({
+        text: `
+        - A
+          - =sort
+            - Alphabetical
+          - B
+          - C
+          - D
+          - E`,
+      }),
+      setCursor(['A', 'C']),
+      addMulticursor(['A', 'C']),
+      addMulticursor(['A', 'D']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - =sort
+      - Alphabetical
+    - B
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - C
+      - D
+    - E`)
   })
 })

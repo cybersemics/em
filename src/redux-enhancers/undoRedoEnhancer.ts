@@ -121,7 +121,6 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   splitSentences: true,
   splitThought: true,
   status: false,
-  subcategorizeMulticursor: true,
   swapNote: true,
   swapParent: true,
   toggleAbsoluteContext: false,

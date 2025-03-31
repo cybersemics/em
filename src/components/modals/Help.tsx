@@ -243,7 +243,7 @@ const About = () => {
           Search icon by <a href='https://icons8.com/icon/7695/search'>Icons8</a>
         </div>
         <div>
-          Subcategorize icons by <a href='https://thenounproject.com/term/circuit/1685927/'>Hare Krishna</a> from the{' '}
+          Categorize icons by <a href='https://thenounproject.com/term/circuit/1685927/'>Hare Krishna</a> from the{' '}
           <a href='https://thenounproject.com'>Noun Project</a>
         </div>
         <div>
