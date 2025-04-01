@@ -1,6 +1,6 @@
 import SwipeableDrawer, { SwipeableDrawerProps } from '@mui/material/SwipeableDrawer'
 import _ from 'lodash'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -25,7 +25,6 @@ const CommandMenuPanel = () => {
   const cursor = useSelector(state => state.cursor)
   const isTutorialOn = useSelector(isTutorial)
   const containerRef = useRef<HTMLInputElement>(null)
-  const [isSwiping, setIsSwiping] = useState(false)
   const prevCursorRef = useRef(cursor)
 
   useEffect(() => {
@@ -111,28 +110,7 @@ const CommandMenuPanel = () => {
           style: { pointerEvents: 'none' },
         }}
       >
-        <div
-          onTouchMove={_.throttle(
-            () => {
-              if (isSwiping) return
-              const drawer = containerRef.current?.querySelector('.MuiDrawer-paper') as HTMLElement | null
-              if (!drawer) return
-              const transformValue = drawer.style.transform
-              const translateYMatch = transformValue.match(/translateY\(([^)]+)\)/)
-              if (translateYMatch && translateYMatch[1]) {
-                const translateY = parseInt(translateYMatch[1])
-                if (!isNaN(translateY) && translateY !== 0) {
-                  setIsSwiping(true)
-                }
-              }
-            },
-            10,
-            { leading: false },
-          )}
-          onTouchEnd={() => {
-            setIsSwiping(false)
-          }}
-        >
+        <div>
           <PanelCommandGrid />
           <div
             className={css({
