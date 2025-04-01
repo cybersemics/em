@@ -77,7 +77,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
         animated={isAnimated}
         animationComplete={() => setIsAnimated(false)}
       />
-      {command.id !== 'indent' && command.id !== 'outdent' && (
+      {!command.hideTitleInPanels && (
         <div
           className={css({
             fontSize: 'sm',

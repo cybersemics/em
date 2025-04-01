@@ -117,6 +117,9 @@ interface Command {
 
   /** When true, renders the gesture with rounded corners in the GestureDiagram. */
   rounded?: boolean
+
+  /** When true, hides the title for this command when shown in panels. */
+  hideTitleInPanels?: boolean
 }
 
 export default Command

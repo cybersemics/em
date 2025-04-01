@@ -40,6 +40,7 @@ const indentCommand: Command = {
     return isDocumentEditable() && !!state.cursor
   },
   exec: dispatch => dispatch(indent()),
+  hideTitleInPanels: true,
 }
 
 export default indentCommand
