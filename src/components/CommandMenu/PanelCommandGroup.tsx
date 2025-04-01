@@ -1,13 +1,9 @@
-import React from 'react'
+import React, { PropsWithChildren } from 'react'
 import { css, cx } from '../../../styled-system/css'
 import { panelCommandGroupRecipe } from '../../../styled-system/recipes'
 
-interface PanelCommandGroupProps {
-  children: React.ReactNode
-}
-
 /** A component that groups two PanelCommand components together. */
-const PanelCommandGroup: React.FC<PanelCommandGroupProps> = ({ children }) => {
+const PanelCommandGroup: React.FC<PropsWithChildren> = ({ children }) => {
   const childCount = React.Children.count(children)
 
   // Determine the size from the first child
