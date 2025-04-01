@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
-import { toggleCommandMenuActionCreator } from '../../actions/toggleCommandMenu'
+import { toggleCommandMenuActionCreator as toggleCommandMenu } from '../../actions/toggleCommandMenu'
 import { isTouch } from '../../browser'
 import isTutorial from '../../selectors/isTutorial'
 import durations from '../../util/durations'
@@ -34,7 +34,7 @@ const CommandMenuPanel = () => {
       const timeoutId = setTimeout(() => {
         // Check if cursor is still inactive after the delay
         if (!cursor) {
-          dispatch(toggleCommandMenuActionCreator({ value: false }))
+          dispatch(toggleCommandMenu({ value: false }))
         }
       }, 200) // Small delay to allow for cursor switching
 
@@ -43,11 +43,6 @@ const CommandMenuPanel = () => {
 
     prevCursorRef.current = cursor
   }, [showCommandMenu, cursor, dispatch])
-
-  /** Toggle the command menu. */
-  const toggleCommandMenu = (value: boolean) => {
-    dispatch(toggleCommandMenuActionCreator({ value }))
-  }
 
   if (isTouch && !isTutorialOn) {
     return (
@@ -90,9 +85,9 @@ const CommandMenuPanel = () => {
         // Remove the SwipeAreaProps since we don't want to enable swipe to open
         anchor='bottom'
         // Keep onOpen for programmatic opening
-        onOpen={() => toggleCommandMenu(true)}
+        onOpen={() => dispatch(toggleCommandMenu({ value: true }))}
         // Keep onClose for swipe to dismiss
-        onClose={() => toggleCommandMenu(false)}
+        onClose={() => dispatch(toggleCommandMenu({ value: false }))}
         open={showCommandMenu}
         hideBackdrop={true}
         disableScrollLock={true}
@@ -148,7 +143,7 @@ const CommandMenuPanel = () => {
             })}
           >
             <button
-              onClick={() => dispatch(toggleCommandMenuActionCreator({ value: false }))}
+              onClick={() => dispatch(toggleCommandMenu({ value: false }))}
               className={css({
                 backgroundColor: 'transparent',
                 border: 'none',
