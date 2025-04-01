@@ -219,7 +219,7 @@ const VirtualThought = ({
     textAlign: isTableCol1 ? 'right' : undefined,
   })
   const translateXRef = useRef<number>(0)
-  const duration = durations.get('layoutNodeAnimation')
+  const duration = durations.get('layoutNodeAnimationFast')
 
   const bulletTestId = `bullet-${hashPath(simplePath)}`
 
@@ -275,13 +275,13 @@ const VirtualThought = ({
         setTimeout(() => {
           if (bulletElement) {
             bulletElement.style.transform = 'translateX(0)'
-            bulletElement.style.transition = `transform ${duration}ms ease-out`
+            bulletElement.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`
           }
 
           updateTransitionStyle({
             transform: 'translateX(0)',
             textAlign: 'right',
-            transition: `transform ${duration}ms ease-out`,
+            transition: `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`,
           })
         }, 10)
       }}
@@ -316,12 +316,12 @@ const VirtualThought = ({
         setTimeout(() => {
           if (bulletElement) {
             bulletElement.style.transform = 'translateX(0)'
-            bulletElement.style.transition = `transform ${duration}ms ease-out`
+            bulletElement.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`
           }
 
           updateTransitionStyle({
             transform: 'translateX(0)',
-            transition: `transform ${duration}ms ease-out`,
+            transition: `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`,
             textAlign: undefined,
           })
         }, 10)
