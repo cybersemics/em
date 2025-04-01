@@ -16,7 +16,6 @@ import { setInvalidStateActionCreator as setInvalidState } from '../actions/inva
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
-import { toggleCommandMenuActionCreator } from '../actions/toggleCommandMenu'
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isTouch } from '../browser'
@@ -497,14 +496,9 @@ const Editable = ({
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
-      const { dragHold, dragInProgress, showCommandMenu } = store.getState()
+      const { dragHold, dragInProgress } = store.getState()
       if (!dragHold && !dragInProgress) {
         setCursorOnThought({ editing: true })
-
-        // Close command menu when entering edit mode on a touch device
-        if (showCommandMenu && isTouch) {
-          dispatch(toggleCommandMenuActionCreator({ value: false }))
-        }
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
