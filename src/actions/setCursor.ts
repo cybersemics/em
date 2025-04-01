@@ -23,6 +23,7 @@ import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import pathToContext from '../util/pathToContext'
+import { toggleCommandMenuActionCreator } from './toggleCommandMenu'
 
 /**
  * Sets the cursor on a thought.
@@ -163,7 +164,12 @@ const setCursor = (
 /** Action-creator for setCursor. */
 export const setCursorActionCreator =
   (payload: Parameters<typeof setCursor>[1]): Thunk =>
-  dispatch =>
+  dispatch => {
+    // If editing is being set to true, close the command menu first
+    if (payload.editing === true) {
+      dispatch(toggleCommandMenuActionCreator({ value: false }))
+    }
     dispatch({ type: 'setCursor', ...payload })
+  }
 
 export default _.curryRight(setCursor)

@@ -10,7 +10,6 @@ import { editingActionCreator as editing } from '../actions/editing'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
-import { toggleCommandMenuActionCreator } from '../actions/toggleCommandMenu'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
@@ -98,13 +97,6 @@ const Note = React.memo(({ path }: { path: Path }) => {
 
   /** Enables noteFocus and sets the cursor on the thought. */
   const onFocus = () => {
-    const state = store.getState()
-
-    // Close command menu if it's open when focusing on a note.
-    if (state.showCommandMenu && isTouch) {
-      dispatch(toggleCommandMenuActionCreator({ value: false }))
-    }
-
     dispatch(
       setCursor({
         path,
