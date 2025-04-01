@@ -1,6 +1,6 @@
-import SwipeableDrawer, { SwipeableDrawerProps } from '@mui/material/SwipeableDrawer'
+import SwipeableDrawer from '@mui/material/SwipeableDrawer'
 import _ from 'lodash'
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -10,11 +10,6 @@ import isTutorial from '../../selectors/isTutorial'
 import durations from '../../util/durations'
 import CloseIcon from '../icons/CloseIcon'
 import PanelCommandGrid from './PanelCommandGrid'
-
-// Extend SwipeableDrawer with classes prop
-const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<
-  SwipeableDrawerProps & { classes: any; ref: any }
->
 
 /**
  * A panel that displays the command menu.
@@ -45,38 +40,8 @@ const CommandMenuPanel = () => {
 
   if (isTouch && !isTutorialOn) {
     return (
-      <SwipeableDrawerWithClasses
+      <SwipeableDrawer
         data-testid='command-menu-panel'
-        classes={{
-          root: css({
-            userSelect: 'none',
-            zIndex: 'modal !important',
-          }),
-          modal: css({
-            '& .MuiDrawer-root': {
-              pointerEvents: 'none',
-            },
-            '& div[role="presentation"]': {
-              pointerEvents: 'none',
-            },
-          }),
-          paper: css({
-            // Increase specificity by nesting the selector
-            '&.MuiDrawer-paper': {
-              backgroundColor: 'darkgray',
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              overflow: 'hidden',
-              maxHeight: '70%',
-              pointerEvents: 'auto',
-            },
-          }),
-          backdrop: css({
-            display: 'none',
-            pointerEvents: 'none',
-          }),
-        }}
         // Disable swipe to open - this removes the swipe-up-to-open functionality
         disableSwipeToOpen={true}
         ref={containerRef}
@@ -132,7 +97,7 @@ const CommandMenuPanel = () => {
             </button>
           </div>
         </div>
-      </SwipeableDrawerWithClasses>
+      </SwipeableDrawer>
     )
   }
 }
