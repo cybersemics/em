@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
-import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -14,6 +13,7 @@ import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
+import useSizeTracking from '../hooks/useSizeTracking'
 import useSortedContext from '../hooks/useSortedContext'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
 import attributeEquals from '../selectors/attributeEquals'
@@ -46,9 +46,6 @@ import TreeNode from './TreeNode'
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
 const CONTENT_PADDING_BOTTOM = 153
 
-// ms to debounce removal of size entries as VirtualThoughts are unmounted
-const SIZE_REMOVAL_DEBOUNCE = 1000
-
 // style properties that accumulate down the hierarchy.
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
 const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
@@ -63,93 +60,6 @@ const viewportBottomStore = reactMinistore.compose(
 // include the head of each context view in the path in the key, otherwise there will be duplicate keys when the same thought is visible in normal view and context view
 const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
   `${(contextChain || []).map(head).join('')}|${id}`
-
-/** Dynamically update and remove sizes for different keys. */
-const useSizeTracking = () => {
-  // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
-  const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
-  const fontSize = useSelector(state => state.fontSize)
-  const unmounted = useRef(false)
-
-  // Track debounced height removals
-  // See: removeSize
-  const sizeRemovalTimeouts = useRef(new Map<string, number>())
-
-  // Removing a size immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
-  // Debouncing size removal mitigates the issue.
-  // Use throttleConcat to accumulate all keys to be removed during the interval.
-  // TODO: Is a root cause of the mount-unmount loop.
-  const removeSize = useCallback((key: string) => {
-    clearTimeout(sizeRemovalTimeouts.current.get(key))
-    const timeout = setTimeout(() => {
-      if (unmounted.current) return
-      setSizes(sizesOld => {
-        delete sizesOld[key]
-        return sizesOld
-      })
-    }, SIZE_REMOVAL_DEBOUNCE) as unknown as number
-    sizeRemovalTimeouts.current.set(key, timeout)
-  }, [])
-
-  /** Update the size record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
-  const setSize = useCallback(
-    ({
-      height,
-      width,
-      isVisible,
-      key,
-    }: {
-      height: number | null
-      width?: number | null
-      id: ThoughtId
-      isVisible: boolean
-      key: string
-    }) => {
-      if (height !== null) {
-        // To create the correct selection behavior, thoughts must be clipped on the top and bottom. Otherwise the top and bottom 1px cause the caret to move to the beginning or end of the editable. But clipPath creates a gap between thoughts. To eliminate this gap, thoughts are rendered with a slight overlap by subtracting a small amount from each thought's measured height, thus affecting their y positions as they are rendered.
-        // See: clipPath in recipes/editable.ts
-        const lineHeightOverlap = fontSize / 8
-        const heightClipped = height - lineHeightOverlap
-
-        // cancel thought removal timeout
-        clearTimeout(sizeRemovalTimeouts.current.get(key))
-        sizeRemovalTimeouts.current.delete(key)
-
-        setSizes(sizesOld =>
-          heightClipped === sizesOld[key]?.height &&
-          width === sizesOld[key]?.width &&
-          isVisible === sizesOld[key]?.isVisible
-            ? sizesOld
-            : {
-                ...sizesOld,
-                [key]: {
-                  height: heightClipped,
-                  width: width || undefined,
-                  isVisible,
-                },
-              },
-        )
-      } else {
-        removeSize(key)
-      }
-    },
-    [fontSize, removeSize],
-  )
-
-  useEffect(() => {
-    return () => {
-      unmounted.current = true
-    }
-  }, [])
-
-  return useMemo(
-    () => ({
-      sizes,
-      setSize,
-    }),
-    [sizes, setSize],
-  )
-}
 
 /** Measure the total height of the .nav and .footer elements on render. Always triggers a second render (which is nonconsequential since useSizeTracking already entails additional renders as heights are rendered). */
 const useNavAndFooterHeight = () => {
