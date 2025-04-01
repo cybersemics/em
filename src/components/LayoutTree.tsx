@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
+import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
@@ -30,6 +31,32 @@ const viewportBottomStore = reactMinistore.compose(
   (viewport, scrollTop) => Math.max(scrollTop, 0) + viewport.innerHeight,
   [viewportStore, scrollTopStore],
 )
+
+/** Calculates the height of a single-line thought. Initially uses an estimated height, then uses the height measured from thn DOM. */
+const useSingleLineHeight = (sizes: Index<{ height: number; width?: number; isVisible: boolean }>) => {
+  const fontSize = useSelector(state => state.fontSize)
+  // singleLineHeight is the measured height of a single line thought.
+  // If no sizes have been measured yet, use the estimated height.
+  // Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
+  // Then do not update it again.
+  const singleLineHeightPrev = useRef<number | null>(null)
+  const singleLineHeight = useMemo(() => {
+    // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
+    // If estimatedHeight is off, then totalHeight will fluctuate as actual sizes are saved (due to estimatedHeight differing from the actual single-line height).
+    const estimatedHeight = fontSize * 2 - 2
+
+    const singleLineHeightMeasured = Object.values(sizes).find(
+      // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different sizes.
+      ({ height }) => Math.abs(height - estimatedHeight) < height / 2,
+    )?.height
+    if (singleLineHeightMeasured) {
+      singleLineHeightPrev.current = singleLineHeightMeasured
+    }
+    return singleLineHeightPrev.current || estimatedHeight
+  }, [fontSize, sizes])
+
+  return singleLineHeight
+}
 
 /** Measure the total height of the .nav and .footer elements on render. Always triggers a second render (which is nonconsequential since useSizeTracking already entails additional renders as heights are rendered). */
 const useNavAndFooterHeight = () => {
@@ -89,25 +116,7 @@ const LayoutTree = () => {
     }
   }, [dragInProgress])
 
-  // singleLineHeight is the measured height of a single line thought.
-  // If no sizes have been measured yet, use the estimated height.
-  // Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
-  // Then do not update it again.
-  const singleLineHeightPrev = useRef<number | null>(null)
-  const singleLineHeight = useMemo(() => {
-    // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
-    // If estimatedHeight is off, then totalHeight will fluctuate as actual sizes are saved (due to estimatedHeight differing from the actual single-line height).
-    const estimatedHeight = fontSize * 2 - 2
-
-    const singleLineHeightMeasured = Object.values(sizes).find(
-      // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different sizes.
-      ({ height }) => Math.abs(height - estimatedHeight) < height / 2,
-    )?.height
-    if (singleLineHeightMeasured) {
-      singleLineHeightPrev.current = singleLineHeightMeasured
-    }
-    return singleLineHeightPrev.current || estimatedHeight
-  }, [fontSize, sizes])
+  const singleLineHeight = useSingleLineHeight(sizes)
 
   // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
   const autofocusDepth = useSelector(state => {
