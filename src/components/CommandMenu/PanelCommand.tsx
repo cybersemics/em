@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import Command from '../../@types/Command'
 import Icon from '../../@types/IconType'
-import { formatKeyboardShortcut } from '../../commands'
 import store from '../../stores/app'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import fastClick from '../../util/fastClick'
@@ -70,7 +69,6 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
         }),
         className ? className : css({}),
       )}
-      title={`${command.label}${command.keyboard ? ` (${formatKeyboardShortcut(command.keyboard)})` : ''}`}
       {...fastClick(handleTap)}
     >
       <SVG
