@@ -386,7 +386,7 @@ const ThoughtNode = ({
   isParentSwapped,
   isLastActionEditThought,
   isLastActionSetCursor,
-  isGreaterThought,
+  cursorIsGreaterThanPrevSibling,
   x,
   y,
   width,
@@ -409,7 +409,7 @@ const ThoughtNode = ({
   isParentSwapped: boolean
   isLastActionEditThought: boolean
   isLastActionSetCursor: boolean
-  isGreaterThought: boolean
+  cursorIsGreaterThanPrevSibling: boolean
   x: number
   y: number
   width?: number
@@ -456,9 +456,13 @@ const ThoughtNode = ({
         position: 'absolute',
         transition:
           isLastActionSwapParent || shouldAnimateCurve
-            ? isLastActionNewThought
-              ? 'left {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0,0.2,0.2)'
-              : 'left {durations.layoutNodeAnimation} cubic-bezier(0.8,0,0.2,0.2)'
+            ? cursorIsGreaterThanPrevSibling
+              ? isLastActionNewThought
+                ? 'left {durations.layoutNodeAnimationFast} {easings.nodeCurveXLayerClockwise}'
+                : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
+              : isLastActionNewThought
+                ? 'left {durations.layoutNodeAnimationFast} {easings.nodeCurveXLayer}'
+                : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
             : transition,
       })}
       style={outerDivStyle}
@@ -467,9 +471,13 @@ const ThoughtNode = ({
         className={css({
           position: 'absolute',
           transition: isLastActionSwapParent
-            ? isLastActionNewThought
-              ? 'top {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0.8,0.2,1)'
-              : 'top {durations.layoutNodeAnimation} cubic-bezier(0.8,0.8,0.2,1)'
+            ? cursorIsGreaterThanPrevSibling
+              ? isLastActionNewThought
+                ? 'top {durations.layoutNodeAnimationFast} {easings.nodeCurveYLayerClockwise}'
+                : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
+              : isLastActionNewThought
+                ? 'top {durations.layoutNodeAnimationFast} {easings.nodeCurveYLayer}'
+                : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
             : undefined,
           width: '100%',
         })}
@@ -527,6 +535,7 @@ const TreeNode = ({
   cliffPaddingStyle,
   dragInProgress,
   autofocusDepth,
+  cursorIsGreaterThanPrevSibling,
   ...transitionGroupsProps
 }: TreeThoughtPositioned & {
   thoughtKey: string
@@ -539,6 +548,7 @@ const TreeNode = ({
   cliffPaddingStyle: { paddingBottom: number }
   dragInProgress: boolean
   autofocusDepth: number
+  cursorIsGreaterThanPrevSibling: boolean
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
@@ -582,16 +592,6 @@ const TreeNode = ({
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
-
-  // Get the current thought and previous thought to compare
-  const currentThought = useSelector(state => getThoughtById(state, head(path)))
-  const prevThought = useSelector(state =>
-    index > 0 ? getThoughtById(state, head(treeThoughtsPositioned[index - 1].path)) : null,
-  )
-
-  // Compare the current thought with the previous thought to determine the animation curve
-  const thoughtComparison = prevThought && currentThought ? compareThought(currentThought, prevThought) : 0
-  const isGreaterThought = thoughtComparison > 0
 
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
@@ -658,7 +658,7 @@ const TreeNode = ({
         path={path}
         isTableCol2={isTableCol2}
         isLastVisible={isLastVisible}
-        isGreaterThought={isGreaterThought}
+        cursorIsGreaterThanPrevSibling={cursorIsGreaterThanPrevSibling}
         treeThoughtsPositioned={treeThoughtsPositioned}
         index={index}
       >
@@ -1022,6 +1022,26 @@ const LayoutTree = () => {
     treeThoughts,
   ])
 
+  // Calculate isGreaterThought at LayoutTree level
+  const cursorIsGreaterThanPrevSibling = useSelector(state => {
+    try {
+      if (!state.cursor) return false
+
+      const cursorThought = getThoughtById(state, head(state.cursor))
+      if (!cursorThought) return false
+
+      // Get the current thought and previous thought to compare
+      const index = treeThoughtsPositioned.findIndex(thought => thought.isCursor)
+      const prevThought = index > 0 ? getThoughtById(state, head(treeThoughtsPositioned[index - 1].path)) : null
+
+      // Compare the current thought with the previous thought to determine the animation curve
+      const thoughtComparison: number = prevThought && cursorThought ? compareThought(cursorThought, prevThought) : 0
+      return thoughtComparison > 0
+    } catch (error) {
+      return false
+    }
+  })
+
   const spaceAboveLast = useRef(spaceAboveExtended)
   // When the cursor is in a table, all thoughts beneath the table are hidden,
   // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
@@ -1103,6 +1123,7 @@ const LayoutTree = () => {
                 cliffPaddingStyle,
                 dragInProgress,
                 autofocusDepth,
+                cursorIsGreaterThanPrevSibling,
               }}
             />
           ))}
