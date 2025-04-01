@@ -86,6 +86,26 @@ const useNavAndFooterHeight = () => {
   }
 }
 
+/** When navigating deep within the hierarchy, many ancestors and siblings of ancestors are hidden, resulting in a large blank space above the cursor. If the user scrolls up, the entire screen will be blank. To avoid this, crop the space above and simultaneously scroll up by the same amount so that the thoughts do not appear to move (relative to the viewport), but the empty space above is eliminated. */
+const useHideSpaceAbove = (spaceAboveExtended: number) => {
+  // get the scroll position before the render so it can be preserved
+  const scrollY = window.scrollY
+
+  const spaceAboveLast = useRef(spaceAboveExtended)
+
+  // when spaceAbove changes, scroll by the same amount so that the thoughts appear to stay in the same place
+  useEffect(
+    () => {
+      const spaceAboveDelta = spaceAboveExtended - spaceAboveLast.current
+      window.scrollTo({ top: scrollY - spaceAboveDelta })
+      spaceAboveLast.current = spaceAboveExtended
+    },
+    // do not trigger effect on scrollY change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [spaceAboveExtended],
+  )
+}
+
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const editing = useSelector(state => state.editing)
@@ -187,8 +207,6 @@ const LayoutTree = () => {
   const cliffPadding = fontSize / 4
   const cliffPaddingStyle = useMemo(() => ({ paddingBottom: cliffPadding }), [cliffPadding])
 
-  const spaceAboveLast = useRef(spaceAboveExtended)
-
   // When the cursor is in a table, all thoughts beneath the table are hidden,
   // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
   const tableDepth = useSelector(state => {
@@ -216,20 +234,7 @@ const LayoutTree = () => {
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
   const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
 
-  // get the scroll position before the render so it can be preserved
-  const scrollY = window.scrollY
-
-  // when spaceAbove changes, scroll by the same amount so that the thoughts appear to stay in the same place
-  useEffect(
-    () => {
-      const spaceAboveDelta = spaceAboveExtended - spaceAboveLast.current
-      window.scrollTo({ top: scrollY - spaceAboveDelta })
-      spaceAboveLast.current = spaceAboveExtended
-    },
-    // do not trigger effect on scrollY change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [spaceAboveExtended],
-  )
+  useHideSpaceAbove(spaceAboveExtended)
 
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
