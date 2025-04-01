@@ -294,13 +294,13 @@ export default defineConfig({
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
         zIndex: {
           ...zIndexDescending([
-            'popup',
-            'hoverArrow',
             'gestureTrace',
             'commandPalette',
-            'modal',
             'hamburgerMenu',
             'sidebar',
+            'popup',
+            'hoverArrow',
+            'modal',
             'toolbarContainer',
             'toolbarOverlay',
             'toolbarArrow',

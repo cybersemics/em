@@ -72,7 +72,7 @@ const CommandMenuPanel = () => {
           disableAutoFocus: true,
           disableEnforceFocus: true,
           disableRestoreFocus: true,
-          style: { pointerEvents: 'none' },
+          style: { pointerEvents: 'none', zIndex: token('zIndex.popup') },
         }}
       >
         <div>
