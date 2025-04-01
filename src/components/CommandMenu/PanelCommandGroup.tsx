@@ -27,7 +27,7 @@ const PanelCommandGroup: React.FC<PropsWithChildren> = ({ children }) => {
     >
       {React.Children.map(children, (child, index) => {
         if (React.isValidElement(child)) {
-          return React.cloneElement(child, {
+          return React.cloneElement(child as React.ReactElement, {
             className: css({
               borderRadius: index === 0 ? '16px 0 0 16px' : index === childCount - 1 ? '0 16px 16px 0' : '0',
               flex: 1,
@@ -38,7 +38,7 @@ const PanelCommandGroup: React.FC<PropsWithChildren> = ({ children }) => {
                   gridColumn: 'span 1 !important',
                 }),
             }),
-          } as any)
+          })
         }
         return null
       })}
