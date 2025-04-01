@@ -383,6 +383,9 @@ const linearizeTree = (
 const ThoughtNode = ({
   isLastActionSwapParent,
   isLastActionNewThought,
+  isParentSwapped,
+  isLastActionEditThought,
+  isLastActionSetCursor,
   isGreaterThought,
   x,
   y,
@@ -403,6 +406,9 @@ const ThoughtNode = ({
 }: {
   isLastActionSwapParent: boolean
   isLastActionNewThought: boolean
+  isParentSwapped: boolean
+  isLastActionEditThought: boolean
+  isLastActionSetCursor: boolean
   isGreaterThought: boolean
   x: number
   y: number
@@ -425,17 +431,18 @@ const ThoughtNode = ({
     ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
     : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
 
-  // If the last action is a swapParent or if the current thought is greater than the previous thought, animate the curve.
-  const shouldAnimateCurve = isLastActionSwapParent || isGreaterThought
+  // when a parent is swapped, we want to animate the curve if the last action is editThought or setCursor
+  const shouldAnimateCurve = isParentSwapped && (isLastActionEditThought || isLastActionSetCursor)
+
   const outerDivStyle = {
     left: x,
-    top: shouldAnimateCurve ? 0 : y,
+    top: isLastActionSwapParent ? 0 : y,
     width: isTableCol1 && width !== undefined ? width : `calc(100% - ${x}px + 1em + 10px)`,
     ...(style || {}),
     textAlign: isTableCol1 ? ('right' as const) : undefined,
   }
 
-  const innerDivStyle = shouldAnimateCurve
+  const innerDivStyle = isLastActionSwapParent
     ? {
         top: y,
         left: 0,
@@ -447,18 +454,19 @@ const ThoughtNode = ({
       aria-label='tree-node'
       className={css({
         position: 'absolute',
-        transition: shouldAnimateCurve
-          ? isLastActionNewThought
-            ? 'left {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0,0.2,0.2)'
-            : 'left {durations.layoutNodeAnimation} cubic-bezier(0.8,0,0.2,0.2)'
-          : transition,
+        transition:
+          isLastActionSwapParent || shouldAnimateCurve
+            ? isLastActionNewThought
+              ? 'left {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0,0.2,0.2)'
+              : 'left {durations.layoutNodeAnimation} cubic-bezier(0.8,0,0.2,0.2)'
+            : transition,
       })}
       style={outerDivStyle}
     >
       <div
         className={css({
           position: 'absolute',
-          transition: shouldAnimateCurve
+          transition: isLastActionSwapParent
             ? isLastActionNewThought
               ? 'top {durations.layoutNodeAnimationFast} cubic-bezier(0.8,0.8,0.2,1)'
               : 'top {durations.layoutNodeAnimation} cubic-bezier(0.8,0.8,0.2,1)'
@@ -536,19 +544,31 @@ const TreeNode = ({
   const [x, setX] = useState(_x)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
 
+  const isParentSwapped = useSelector(state => {
+    const allPatches = state.undoPatches
+    return allPatches?.flat().some(patch => patch.actions[0] === 'swapParent')
+  })
+
   // true if the last action is newThought
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
   })
 
-  // true if the last action is swapParent or if the last action is not moveThought
+  // true if the last action is swapParent
   const isLastActionSwapParent = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return (
-      lastPatches?.some(patch => patch.actions[0] === 'swapParent') ||
-      lastPatches?.every(patch => patch.actions[0] !== 'moveThought')
-    )
+    return lastPatches?.some(patch => patch.actions[0] === 'swapParent')
+  })
+
+  const isLastActionEditThought = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'editThought')
+  })
+
+  const isLastActionSetCursor = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'setCursor')
   })
 
   // true if the last action is any of archive/delete/collapse
@@ -622,6 +642,9 @@ const TreeNode = ({
       <ThoughtNode
         isLastActionSwapParent={isLastActionSwapParent}
         isLastActionNewThought={isLastActionNewThought}
+        isParentSwapped={isParentSwapped}
+        isLastActionEditThought={isLastActionEditThought}
+        isLastActionSetCursor={isLastActionSetCursor}
         x={x}
         y={y}
         width={width}
