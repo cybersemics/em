@@ -7,6 +7,7 @@ import { token } from '../../../styled-system/tokens'
 import { toggleCommandMenuActionCreator } from '../../actions/toggleCommandMenu'
 import { isTouch } from '../../browser'
 import isTutorial from '../../selectors/isTutorial'
+import durations from '../../util/durations'
 import CloseIcon from '../icons/CloseIcon'
 import PanelCommandGrid from './PanelCommandGrid'
 
@@ -85,7 +86,7 @@ const CommandMenuPanel = () => {
         // Disable swipe to open - this removes the swipe-up-to-open functionality
         disableSwipeToOpen={true}
         ref={containerRef}
-        transitionDuration={500}
+        transitionDuration={durations.get('medium')}
         // Remove the SwipeAreaProps since we don't want to enable swipe to open
         anchor='bottom'
         // Keep onOpen for programmatic opening

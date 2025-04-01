@@ -54,7 +54,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
           borderRadius: '16px',
           backgroundColor: isButtonActive ? 'purple' : 'gray15',
           cursor: isButtonExecutable ? 'pointer' : 'default',
-          transition: 'opacity 0.5s ease, background-color 0.5s ease',
+          transition: `opacity {durations.medium} ease, background-color {durations.medium} ease`,
           gridColumn:
             size === 'small'
               ? 'span 1'
