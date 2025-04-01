@@ -7,6 +7,7 @@ import { Thunk } from '../@types/Thunk'
 import { closeModalActionCreator as closeModal } from '../actions/closeModal'
 import { expandContextThoughtActionCreator as expandContextThought } from '../actions/expandContextThought'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
+import { toggleCommandMenuActionCreator as toggleCommandMenu } from '../actions/toggleCommandMenu'
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
 import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
@@ -61,6 +62,7 @@ const Content: FC = () => {
       state.showModal ? closeModal() : null,
       state.expandedContextThought && !state.noteFocus ? expandContextThought(null) : null,
       state.showColorPicker ? toggleColorPicker({ value: false }) : null,
+      state.showCommandMenu ? toggleCommandMenu({ value: false }) : null,
       state.showLetterCase ? toggleLetterCase({ value: false }) : null,
     ])
   }
