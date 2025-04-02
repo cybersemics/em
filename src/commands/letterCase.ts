@@ -13,6 +13,7 @@ const letterCase: Command = {
   exec: (dispatch, getState) => {
     const state = getState()
     if (state.showColorPicker) dispatch({ type: 'toggleColorPicker' })
+    if (state.showSortPicker) dispatch({ type: 'toggleSortPicker' })
     dispatch({ type: 'toggleLetterCase' })
   },
   isActive: state => !!state.cursor,

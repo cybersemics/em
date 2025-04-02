@@ -185,7 +185,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'pin',
   'pinAll',
   'toggleTableView',
-  'toggleSort',
+  'toggleSortPicker',
   'toggleDone',
   'bold',
   'italic',
@@ -195,7 +195,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'letterCase',
   'toggleContextView',
   'note',
-  'subcategorizeOne',
+  'categorize',
   'delete',
   'splitSentences',
   'toggleHiddenThoughts',
@@ -232,6 +232,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'search',
   // 'textColor',
   // 'toggleDone',
+  // 'toggleSort',
   // 'toggleSidebar',
 ]
 
