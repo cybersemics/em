@@ -427,6 +427,7 @@ const ThoughtNode = ({
   treeThoughtsPositioned: TreeThoughtPositioned[]
   index: number
 }) => {
+  // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
   const transition = isLastActionNewThought
     ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
     : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
@@ -435,8 +436,14 @@ const ThoughtNode = ({
   const shouldAnimateCurve = isParentSwapped && (isLastActionEditThought || isLastActionSetCursor)
 
   const outerDivStyle = {
+    // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
+    // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
     left: x,
     top: isLastActionSwapParent ? 0 : y,
+    // Table col1 uses its exact width since cannot extend to the right edge of the screen.
+    // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
+    // 1em + 10px is an eyeball measurement at font sizes 14 and 18
+    // (Maybe the 10px is from .content padding-left?)
     width: isTableCol1 && width !== undefined ? width : `calc(100% - ${x}px + 1em + 10px)`,
     ...(style || {}),
     textAlign: isTableCol1 ? ('right' as const) : undefined,
@@ -451,6 +458,8 @@ const ThoughtNode = ({
 
   return (
     <div
+      // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
+      // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
       aria-label='tree-node'
       className={css({
         position: 'absolute',
@@ -484,16 +493,19 @@ const ThoughtNode = ({
         style={innerDivStyle}
       >
         <div ref={fadeThoughtRef}>{children}</div>
-        {dragInProgress && autofocusDepth - depth < 2 && (
-          <DropCliff
-            cliff={cliff}
-            depth={depth}
-            path={path}
-            isTableCol2={isTableCol2}
-            isLastVisible={isLastVisible}
-            prevWidth={treeThoughtsPositioned[index - 1]?.width}
-          />
-        )}
+        {dragInProgress &&
+          // do not render hidden cliffs
+          // rough autofocus estimate
+          autofocusDepth - depth < 2 && (
+            <DropCliff
+              cliff={cliff}
+              depth={depth}
+              path={path}
+              isTableCol2={isTableCol2}
+              isLastVisible={isLastVisible}
+              prevWidth={treeThoughtsPositioned[index - 1]?.width}
+            />
+          )}
       </div>
     </div>
   )
@@ -634,6 +646,10 @@ const TreeNode = ({
   return (
     <FadeTransition
       id={thoughtKey}
+      // The FadeTransition is only responsible for fade out on unmount;
+      // or for fade in on mounting of a new thought.
+      // See autofocusChanged for normal opacity transition.
+      // Limit the fade/shrink/blur animation to the archive, delete, and collapseContext actions.
       duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
@@ -676,6 +692,9 @@ const TreeNode = ({
           showContexts={showContexts}
           simplePath={simplePath}
           singleLineHeight={singleLineHeightWithCliff}
+          // Add a bit of space after a cliff to give nested lists some breathing room.
+          // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+          // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
           style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
           crossContextualKey={thoughtKey}
           prevCliff={treeThoughtsPositioned[index - 1]?.cliff}

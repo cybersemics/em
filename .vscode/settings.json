@@ -6,6 +6,6 @@
   // otherwise it will override prettier.requireConfig in projects that do not use Prettier
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[typescriptreact]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 }
