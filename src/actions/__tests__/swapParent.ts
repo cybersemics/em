@@ -6,6 +6,7 @@ import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import swapParent from '../swapParent'
+import toggleContextView from '../toggleContextView'
 
 it('no-op if cursor is not set', () => {
   const text = `
@@ -121,4 +122,39 @@ it('swapped parent should take the rank of the child', () => {
     - a`)
 
   expectPathToEqual(stateNew, stateNew.cursor, ['d', 'a'])
+})
+
+describe('context view', () => {
+  it('swapped parent should take the rank of the child', () => {
+    const text = `
+    - a
+      - m
+        - x
+    - b
+      - m
+        - y
+          - y1
+  `
+
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'b', 'y', 'y1']),
+      swapParent,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - b
+    - m
+      - y1
+        - y`)
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b', 'y1', 'y'])
+  })
 })
