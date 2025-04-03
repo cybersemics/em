@@ -1,12 +1,10 @@
-import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
-import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
-import setCursor from '../setCursor'
 import swapParent from '../swapParent'
 
 it('no-op if cursor is not set', () => {
@@ -34,11 +32,7 @@ it('no-op if cursor is a root thought', () => {
     - b
      - c`
 
-  const steps = [
-    importText({ text }),
-    (state: State) => setCursor({ path: contextToPath(state, ['a'])! })(state),
-    swapParent,
-  ]
+  const steps = [importText({ text }), setCursor(['a']), swapParent]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -56,11 +50,7 @@ it('swaps child thought with parent', () => {
     - b
      - c`
 
-  const steps = [
-    importText({ text }),
-    (state: State) => setCursor({ path: contextToPath(state, ['a', 'b'])! })(state),
-    swapParent,
-  ]
+  const steps = [importText({ text }), setCursor(['a', 'b']), swapParent]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -80,11 +70,7 @@ it('swaps a leaf thought with parent', () => {
     - b
      - c`
 
-  const steps = [
-    importText({ text }),
-    (state: State) => setCursor({ path: contextToPath(state, ['a', 'b', 'c'])! })(state),
-    swapParent,
-  ]
+  const steps = [importText({ text }), setCursor(['a', 'b', 'c']), swapParent]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -105,11 +91,7 @@ it('preserve siblings', () => {
       - d
   `
 
-  const steps = [
-    importText({ text }),
-    (state: State) => setCursor({ path: contextToPath(state, ['a', 'b'])! })(state),
-    swapParent,
-  ]
+  const steps = [importText({ text }), setCursor(['a', 'b']), swapParent]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -128,11 +110,7 @@ it('swapped parent should take the rank of the child', () => {
       - d
   `
 
-  const steps = [
-    importText({ text }),
-    (state: State) => setCursor({ path: contextToPath(state, ['a', 'd'])! })(state),
-    swapParent,
-  ]
+  const steps = [importText({ text }), setCursor(['a', 'd']), swapParent]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
