@@ -5,26 +5,16 @@ import { isSafari, isTouch, isiPhone } from '../browser'
 
 const isIOSSafari: boolean = isTouch && isiPhone && isSafari()
 /** A larger circle that surrounds the bullet of the cursor thought. */
-const BulletCursorOverlay = ({
-  isHighlighted,
-  x,
-  y,
-  //   bulletXPosition,
-}: {
-  isHighlighted?: boolean
-  x?: number
-  y?: number
-  //   bulletXPosition: number | null
-}) => {
+const BulletCursorOverlay = ({ isCursorActive, x, y }: { isCursorActive?: boolean; x?: number; y?: number }) => {
   const svgElement = useRef<SVGSVGElement>(null)
 
   const fontSize = useSelector(state => state.fontSize)
   const lineHeight = fontSize * 1.25
 
-  // Bottom margin for bullet to align with thought text
-  //   const glyphBottomMargin = isIOSSafari ? '-0.2em' : '-0.3em'
-
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
+
+  const translateX = (x || 0) + lineHeight * 0.317 - lineHeight - (11 - (fontSize - 9) * 0.5)
+  const translateY = (y || 0) + fontSize * (isIOSSafari ? 0.2 : 0.3)
 
   return (
     <svg
@@ -36,7 +26,7 @@ const BulletCursorOverlay = ({
           // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
           // allowing the browser to optimize the animation.
           willChange: 'transform',
-          ...(isHighlighted
+          ...(isCursorActive
             ? {
                 fillOpacity: 1,
                 transition: `all {durations.veryFast} ease-in-out`,
@@ -49,7 +39,7 @@ const BulletCursorOverlay = ({
         height: lineHeight,
         width: lineHeight,
         position: 'absolute',
-        transform: `translateY(${x}px) translateX(${y}px)`,
+        transform: `translateY(${translateY}px) translateX(${translateX}px)`,
       }}
       ref={svgElement}
     >
