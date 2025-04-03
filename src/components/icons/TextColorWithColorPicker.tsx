@@ -4,7 +4,7 @@ import IconType from '../../@types/IconType'
 import ColorPicker from '../ColorPicker'
 import TextColorIcon from './TextColor'
 
-/** Text Color Icon with popup ColorPicker. */
+/** Text Color Icon with popup Picker. */
 const TextColorWithColorPicker = ({ size = 18, style, cssRaw }: IconType) => {
   const showColorPicker = useSelector(state => state.showColorPicker)
 
