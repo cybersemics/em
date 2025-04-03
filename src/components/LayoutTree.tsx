@@ -282,7 +282,7 @@ const LayoutTree = () => {
         }}
       >
         <TransitionGroup>
-          <BulletCursorOverlay isHighlighted={activeThought?.isCursor} x={activeThought?.x} y={activeThought?.y} />
+          <BulletCursorOverlay isCursorActive={activeThought?.isCursor} x={activeThought?.x} y={activeThought?.y} />
           {treeThoughtsPositioned.map((thought, index) => (
             <TreeNode
               {...thought}
