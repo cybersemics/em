@@ -357,16 +357,8 @@ const BulletParent = ({
   )
 }
 
-/** A larger circle that surrounds the bullet of the cursor thought. */
-const BulletCursorOverlay = ({
-  isHighlighted,
-}: {
-  isEditing?: boolean
-  isHighlighted?: boolean
-  leaf?: boolean
-  publish?: boolean
-  simplePath: SimplePath
-}) => {
+/** A larger circle that surrounds the bullet of the highlighted thought. */
+const BulletHighlightOverlay = () => {
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
   return (
     <ellipse
@@ -375,9 +367,10 @@ const BulletCursorOverlay = ({
       cy='300'
       cx='300'
       className={css({
-        fillOpacity: isHighlighted ? 1 : 0.25,
-        fill: isHighlighted ? 'highlight' : 'fg',
-        stroke: isHighlighted ? 'highlight' : undefined,
+        fillOpacity: 1,
+        fill: 'highlight',
+        stroke: 'highlight',
+        transition: `transform {durations.veryFast} ease-in-out`,
       })}
     />
   )
@@ -568,15 +561,7 @@ const Bullet = ({
         ref={svgElement}
       >
         <g>
-          {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && (
-            <BulletCursorOverlay
-              isEditing={isEditing}
-              isHighlighted={isHighlighted}
-              leaf={leaf}
-              publish={publish}
-              simplePath={simplePath}
-            />
-          )}
+          {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && <BulletHighlightOverlay />}
           {leaf && !showContexts ? (
             <BulletLeaf
               fill={fill}

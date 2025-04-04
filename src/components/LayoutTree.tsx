@@ -42,6 +42,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
+import BulletCursorOverlay from './BulletCursorOverlay'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import HoverArrow from './HoverArrow'
@@ -896,6 +897,12 @@ const LayoutTree = () => {
   const tableDepth = useSelector(state =>
     state.cursor && attributeEquals(state, head(rootedGrandparentOf(state, state.cursor)), '=view', 'Table') ? 1 : 0,
   )
+
+  // compare between state.cursor and the position of the thought
+  const activeThought = useSelector(state =>
+    treeThoughtsPositioned.find(thought => equalPath(state.cursor, thought.path)),
+  )
+
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
@@ -954,6 +961,13 @@ const LayoutTree = () => {
         }}
       >
         <TransitionGroup>
+          <BulletCursorOverlay
+            isCursorActive={activeThought?.isCursor}
+            x={activeThought?.x}
+            y={activeThought?.y}
+            simplePath={activeThought?.simplePath}
+            path={activeThought?.path}
+          />
           {treeThoughtsPositioned.map((thought, index) => (
             <TreeNode
               {...thought}
