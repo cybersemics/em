@@ -27,6 +27,8 @@ const Note = React.memo(({ path }: { path: Path }) => {
   const fontSize = useSelector(state => state.fontSize)
   const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
   const [justPasted, setJustPasted] = useState(false)
+  // Add a ref to store the latest path
+  const pathRef = useRef(path)
 
   // set the caret on the note if editing this thought and noteFocus is true
   useEffect(() => {
@@ -38,6 +40,11 @@ const Note = React.memo(({ path }: { path: Path }) => {
       if (isTouch && isSafari()) noteRef.current?.focus()
     }
   }, [hasFocus])
+
+  // Update the pathRef whenever path changes
+  useEffect(() => {
+    pathRef.current = path
+  }, [path])
 
   /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
   const note = useSelector(state => noteValue(state, thoughtId))
@@ -61,7 +68,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
     else if (e.key === 'Backspace' && !note) {
       e.stopPropagation() // prevent delete thought
       e.preventDefault()
-      dispatch(deleteAttribute({ path, value: '=note' }))
+      dispatch(deleteAttribute({ path: pathRef.current, value: '=note' }))
       dispatch(setNoteFocus({ value: false }))
     } else if (e.key === 'ArrowDown') {
       e.stopPropagation()
@@ -82,7 +89,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
 
     dispatch(
       setDescendant({
-        path,
+        path: pathRef.current,
         values: ['=note', value],
       }),
     )
@@ -99,7 +106,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
   const onFocus = () => {
     dispatch(
       setCursor({
-        path,
+        path: pathRef.current,
         cursorHistoryClear: true,
         editing: true,
         noteFocus: true,
