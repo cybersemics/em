@@ -610,22 +610,18 @@ const TreeNode = ({
   // 2. Create L-shaped animation paths by controlling when each movement starts/ends
   // 3. Prevent interference between transitions that could occur in a single node
 
-  // Track x position changes. When x prop changes, update state to trigger CSS transition.
-  // State updates ensure smooth transitions by forcing a re-render that applies the new position.
   useLayoutEffect(() => {
-    if (x !== _x) {
-      setX(_x)
-    }
+    // Track x position changes. When x prop changes, update state to trigger CSS transition.
+    // State updates ensure smooth transitions by forcing a re-render that applies the new position.
+    setX(_x)
   }, [x, _x])
 
   useLayoutEffect(() => {
-    if (y !== _y) {
-      // When y changes React re-renders the component with the new value of y. It will result in a visual change in the DOM.
-      // Because this is a state-driven change, React applies the updated value to the DOM, which causes the browser to recognize that
-      // a CSS property has changed, thereby triggering the CSS transition.
-      // Without this additional render, updates get batched and subsequent CSS transitions may not work properly. For example, when moving a thought down, it would not animate.
-      setY(_y)
-    }
+    // When y changes React re-renders the component with the new value of y. It will result in a visual change in the DOM.
+    // Because this is a state-driven change, React applies the updated value to the DOM, which causes the browser to recognize that
+    // a CSS property has changed, thereby triggering the CSS transition.
+    // Without this additional render, updates get batched and subsequent CSS transitions may not work properly. For example, when moving a thought down, it would not animate.
+    setY(_y)
   }, [y, _y])
 
   // List Virtualization
