@@ -8,15 +8,18 @@ import store from '../stores/app'
 let lastViewportHeight: number | null = window.visualViewport?.height || null
 
 /**
- * Reset keyboard visibility tracker state.
- */
-const reset = (): void => {
-  lastViewportHeight = null
-}
-
-/**
- * Handle viewport resize to detect keyboard visibility changes.
- * Returns a throttled function to be used as an event handler.
+ * Monitors viewport resize events to detect virtual keyboard visibility changes.
+ *
+ * This is primarily needed for Android devices when a user navigates away using
+ * the back button (dismissing the keyboard) or other UI elements, it won't trigger
+ * the blur event. In contrast, iOS typically handles this automatically.
+ *
+ * When a significant viewport height increase is detected (indicating keyboard closing),
+ * this utility dispatches an action to exit editing mode, preventing the UI from
+ * remaining in an inconsistent state where editing UI controls are visible but the
+ * keyboard is closed.
+ 
+ * @returns A throttled function that should be attached to viewport resize events.
  */
 const handleKeyboardVisibility = _.throttle(() => {
   // Only apply this for touch devices  where the issue occurs
@@ -57,7 +60,4 @@ const handleKeyboardVisibility = _.throttle(() => {
   lastViewportHeight = currentHeight
 }, 100)
 
-export default {
-  reset,
-  handleKeyboardVisibility,
-}
+export default handleKeyboardVisibility

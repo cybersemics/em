@@ -27,7 +27,7 @@ import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
-import keyboardVisibility from './keyboardVisibility'
+import handleKeyboardVisibility from './keyboardVisibility'
 
 declare global {
   interface Window {
@@ -382,10 +382,10 @@ const initEvents = (store: Store<State, any>) => {
 
   // Add Visual Viewport resize listener for keyboard detection
   if (isTouch && isAndroidWebView() && window.visualViewport) {
-    window.visualViewport.addEventListener('resize', keyboardVisibility.handleKeyboardVisibility)
+    window.visualViewport.addEventListener('resize', handleKeyboardVisibility)
 
     // Force an immediate check in case keyboard is already visible
-    keyboardVisibility.handleKeyboardVisibility()
+    handleKeyboardVisibility()
   }
 
   // clean up on app switch in PWA
@@ -414,10 +414,7 @@ const initEvents = (store: Store<State, any>) => {
 
     // Remove Visual Viewport event listener
     if (isTouch && isAndroidWebView() && window.visualViewport) {
-      window.visualViewport.removeEventListener('resize', keyboardVisibility.handleKeyboardVisibility)
-
-      // Reset keyboard visibility state
-      keyboardVisibility.reset()
+      window.visualViewport.removeEventListener('resize', handleKeyboardVisibility)
     }
   }
 
