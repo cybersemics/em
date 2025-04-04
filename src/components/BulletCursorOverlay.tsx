@@ -1,11 +1,14 @@
 import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { isSafari, isTouch, isiPhone } from '../browser'
 import attributeEquals from '../selectors/attributeEquals'
+import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import head from '../util/head'
+import parentOf from '../util/parentOf'
 
 const isIOSSafari: boolean = isTouch && isiPhone && isSafari()
 /** A larger circle that surrounds the bullet of the cursor thought. */
@@ -14,14 +17,17 @@ const BulletCursorOverlay = ({
   x,
   y,
   simplePath,
+  path,
 }: {
   isCursorActive?: boolean
   x?: number
   y?: number
   simplePath?: SimplePath
+  path?: Path
 }) => {
   const svgElement = useRef<SVGSVGElement>(null)
 
+  const isInContextView = useSelector(state => path && isContextViewActive(state, parentOf(path)))
   const fontSize = useSelector(state => state.fontSize)
   const lineHeight = fontSize * 1.25
 
@@ -33,10 +39,30 @@ const BulletCursorOverlay = ({
 
   // calculate position of bullet for different font sizes
   // Table column 1 needs more space between the bullet and thought for some reason
-  const width = 11 - (fontSize - 9) * 0.5 + (isTableCol1 ? fontSize / 4 : 0)
-  const translateX = (x || 0) + lineHeight * 0.317 - lineHeight - (isTableCol1 ? 0 : width)
+
+  const isContextBreadcrumbExists = isInContextView && isTableCol1
+
+  // if the thought has context breadcrumb, we need to adjust the position of the bullet
+
+  const mTopCtxBreadcrumb = 0.533 * fontSize
+  const pTopCtxBreadcrumb = 0.5 * fontSize
+  const ctxBreadcrumbFontSize = 0.867 * fontSize
+  const topPositionCtxBreadcrumb = -3
+  const contextBreadcrumbYPadding = isContextBreadcrumbExists
+    ? mTopCtxBreadcrumb + Math.max(fontSize, ctxBreadcrumbFontSize + pTopCtxBreadcrumb) + topPositionCtxBreadcrumb
+    : 0
+
+  const mLeftCtxBreadcrumb = 1.3 * fontSize - 14.5
+  const leftPositionCtxBreadcrumb = 2
+  const contextBreadcrumbXPadding = isContextBreadcrumbExists
+    ? Math.floor(-mLeftCtxBreadcrumb) + leftPositionCtxBreadcrumb
+    : 0
+
+  const width = 11 - (fontSize - 9) * 0.5 + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
+  const translateX = (x || 0) + lineHeight * 0.317 - lineHeight - (isTableCol1 ? 0 : width) + contextBreadcrumbXPadding
   // const translateX = (x || 0) + lineHeight * 0.317 - lineHeight  + (-extendClickWidth + -width + extendClickWidth) + width
-  const translateY = (y || 0) + fontSize * (isIOSSafari ? 0.2 : 0.3)
+
+  const translateY = (y || 0) + fontSize * (isIOSSafari ? 0.2 : 0.3) + contextBreadcrumbYPadding
 
   return (
     <svg
