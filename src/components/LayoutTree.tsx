@@ -286,6 +286,7 @@ const LayoutTree = () => {
             x={activeThought?.x}
             y={activeThought?.y}
             simplePath={activeThought?.simplePath}
+            path={activeThought?.path}
           />
           {treeThoughtsPositioned.map((thought, index) => (
             <TreeNode
