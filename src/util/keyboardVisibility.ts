@@ -5,17 +5,13 @@ import { KEYBOARD_VISIBILITY_THRESHOLD } from '../constants'
 import * as selection from '../device/selection'
 import store from '../stores/app'
 
-let initialViewportHeight: number | null = window.visualViewport?.height || null
 let lastViewportHeight: number | null = window.visualViewport?.height || null
-let isKeyboardVisible: boolean = false
 
 /**
  * Reset keyboard visibility tracker state.
  */
 const reset = (): void => {
-  initialViewportHeight = null
   lastViewportHeight = null
-  isKeyboardVisible = false
 }
 
 /**
@@ -30,42 +26,35 @@ const handleKeyboardVisibility = _.throttle(() => {
 
   const visualViewport = window.visualViewport
 
-  // If we don't have initial height, set it now
-  if (initialViewportHeight === null) {
-    initialViewportHeight = visualViewport.height
+  // If we don't have previous height, set it now
+  if (lastViewportHeight === null) {
     lastViewportHeight = visualViewport.height
     return
   }
 
   const currentHeight = visualViewport.height
-  const previousHeight = lastViewportHeight || initialViewportHeight
 
   // Calculate height change ratio
-  const heightChangeRatio = Math.abs(currentHeight - previousHeight) / previousHeight
-
-  // Update last height
-  lastViewportHeight = currentHeight
+  const heightChangeRatio = Math.abs(currentHeight - lastViewportHeight) / lastViewportHeight
 
   // check if the change is significant to be considered a keyboard change
   if (heightChangeRatio > KEYBOARD_VISIBILITY_THRESHOLD) {
     // check if height increased significantly (keyboard closed)
-    if (currentHeight > previousHeight) {
-      if (isKeyboardVisible) {
-        isKeyboardVisible = false
-
-        // Exit editing mode when keyboard is closed
-        const state = store.getState()
+    if (currentHeight > lastViewportHeight) {
+      // Exit editing mode when keyboard is closed
+      store.dispatch((dispatch, getState) => {
+        const state = getState()
         if (state.editing && state.cursor) {
           selection.clear()
-          store.dispatch(editingAction({ value: false }))
+          dispatch(editingAction({ value: false }))
         }
-      }
+      })
     }
-    // check if height is decreased significantly (keyboard opened)
-    else if (currentHeight < previousHeight) {
-      isKeyboardVisible = true
-    }
+    // Height decreased significantly (keyboard opened) - no action needed
   }
+
+  // Update last height after all calculations
+  lastViewportHeight = currentHeight
 }, 100)
 
 export default {
