@@ -27,34 +27,29 @@ const handleKeyboardVisibility = _.throttle(() => {
     return
   }
 
-  const visualViewport = window.visualViewport
-
   // If we don't have previous height, set it now
   if (lastViewportHeight === null) {
-    lastViewportHeight = visualViewport.height
+    lastViewportHeight = window.visualViewport.height
     return
   }
 
-  const currentHeight = visualViewport.height
+  const currentHeight = window.visualViewport.height
 
-  // Calculate height change ratio
-  const heightChangeRatio = Math.abs(currentHeight - lastViewportHeight) / lastViewportHeight
+  // Calculate height change ratio (positive when height increases, negative when it decreases)
+  const heightChangeRatio = (currentHeight - lastViewportHeight) / lastViewportHeight
 
-  // check if the change is significant to be considered a keyboard change
+  // Check if height increased significantly (keyboard closed)
   if (heightChangeRatio > KEYBOARD_VISIBILITY_THRESHOLD) {
-    // check if height increased significantly (keyboard closed)
-    if (currentHeight > lastViewportHeight) {
-      // Exit editing mode when keyboard is closed
-      store.dispatch((dispatch, getState) => {
-        const state = getState()
-        if (state.editing && state.cursor) {
-          selection.clear()
-          dispatch(editingAction({ value: false }))
-        }
-      })
-    }
-    // Height decreased significantly (keyboard opened) - no action needed
+    // Exit editing mode when keyboard is closed
+    store.dispatch((dispatch, getState) => {
+      const state = getState()
+      if (state.editing && state.cursor) {
+        selection.clear()
+        dispatch(editingAction({ value: false }))
+      }
+    })
   }
+  // Height decrease (keyboard opened) or insignificant change - no action needed
 
   // Update last height after all calculations
   lastViewportHeight = currentHeight

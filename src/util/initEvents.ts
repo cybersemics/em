@@ -27,7 +27,7 @@ import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
-import handleKeyboardVisibility from './keyboardVisibility'
+import handleKeyboardVisibility from './handleKeyboardVisibility'
 
 declare global {
   interface Window {
