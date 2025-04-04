@@ -15,6 +15,9 @@ export const FADEOUT_DURATION = 400
 // number of ms to wait after thought hover to expand it's children
 export const EXPAND_HOVER_DELAY = 1000
 
+// threshold for keyboard visibility detection (percentage of height change)
+export const KEYBOARD_VISIBILITY_THRESHOLD = 0.15
+
 // ms on startup before offline mode is enabled
 // sufficient to avoid flash on login
 export const OFFLINE_TIMEOUT = 8 * 1000
