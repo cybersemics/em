@@ -13,7 +13,7 @@ import globals from '../globals'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import alert, { alertActionCreator } from './alert'
-import { expandHoverDownActionCreator as expandHoverDown } from './expandHoverDown'
+import expandHoverDown from './expandHoverDown'
 import { expandOnHoverTopActionCreator as expandHoverUp } from './expandHoverUp'
 
 interface DragInProgressPayload {
