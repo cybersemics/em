@@ -21,3 +21,6 @@ export const isiPhone = typeof navigator !== 'undefined' && navigator.platform =
 
 /** Returns true if the navigator vendor contains 'Apple'. */
 export const isSafari = () => typeof navigator !== 'undefined' && navigator.vendor.includes('Apple')
+
+/** Returns true if the navigator user agent contains 'Android'. */
+export const isAndroidWebView = () => typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)

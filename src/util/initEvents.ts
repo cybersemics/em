@@ -9,7 +9,7 @@ import { commandPaletteActionCreator as commandPalette } from '../actions/comman
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isIOS, isSafari, isTouch } from '../browser'
+import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
 import { inputHandlers } from '../commands'
 import { AlertText, AlertType } from '../constants'
 import * as selection from '../device/selection'
@@ -27,7 +27,7 @@ import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
-import createKeyboardVisibilityTracker from './keyboardVisibility'
+import keyboardVisibility from './keyboardVisibility'
 
 declare global {
   interface Window {
@@ -168,15 +168,6 @@ const saveErrorReload = (savingProgress: number) => {
 const initEvents = (store: Store<State, any>) => {
   let lastState: number
   let lastPath: Path | null
-
-  // Create keyboard tracker
-  const keyboardVisibilityTracker = createKeyboardVisibilityTracker()
-
-  // Initialize keyboard state if visualViewport is available
-  keyboardVisibilityTracker.initialize()
-
-  // Create the keyboard tracker handler
-  const handleKeyboardVisibilityTracker = keyboardVisibilityTracker.createTracker(store)
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
@@ -390,11 +381,11 @@ const initEvents = (store: Store<State, any>) => {
   resizeHost.addEventListener('resize', updateSize)
 
   // Add Visual Viewport resize listener for keyboard detection
-  if (isTouch && window.visualViewport) {
-    window.visualViewport.addEventListener('resize', handleKeyboardVisibilityTracker)
+  if (isTouch && isAndroidWebView() && window.visualViewport) {
+    window.visualViewport.addEventListener('resize', keyboardVisibility.handleKeyboardVisibility)
 
     // Force an immediate check in case keyboard is already visible
-    handleKeyboardVisibilityTracker()
+    keyboardVisibility.handleKeyboardVisibility()
   }
 
   // clean up on app switch in PWA
@@ -422,11 +413,11 @@ const initEvents = (store: Store<State, any>) => {
     resizeHost.removeEventListener('resize', updateSize)
 
     // Remove Visual Viewport event listener
-    if (isTouch && window.visualViewport) {
-      window.visualViewport.removeEventListener('resize', handleKeyboardVisibilityTracker)
+    if (isTouch && isAndroidWebView() && window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', keyboardVisibility.handleKeyboardVisibility)
 
       // Reset keyboard visibility state
-      keyboardVisibilityTracker.reset()
+      keyboardVisibility.reset()
     }
   }
 
