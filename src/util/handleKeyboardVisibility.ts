@@ -28,15 +28,15 @@ const handleKeyboardVisibility = _.throttle(() => {
     return
   }
 
-  // If we don't have previous dimensions, set them now
-  if (lastViewportHeight === null || lastViewportWidth === null) {
-    lastViewportHeight = window.visualViewport.height
-    lastViewportWidth = window.visualViewport.width
-    return
-  }
-
   const currentHeight = window.visualViewport.height
   const currentWidth = window.visualViewport.width
+
+  // If we don't have previous dimensions, set them now
+  if (lastViewportHeight === null || lastViewportWidth === null) {
+    lastViewportHeight = currentHeight
+    lastViewportWidth = currentWidth
+    return
+  }
 
   // Calculate height and width change ratios
   const heightChangeRatio = (currentHeight - lastViewportHeight) / lastViewportHeight
