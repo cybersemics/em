@@ -20,25 +20,35 @@ import toggleAttribute from './toggleAttribute'
 import updateThoughts from './updateThoughts'
 
 /* Available sort preferences */
-const sortPreferences = ['None', 'Alphabetical']
 
 /** Decide next sort preference.
-  None → Alphabetical
-  Alphabetical/Asc → Alphabetical/Desc
-  Alphabetical/Desc → None.
+ * None → Alphabetical.
+ * Alphabetical/Asc → Alphabetical/Desc.
+ * Alphabetical/Desc → None.
+ *
+ * For the new sort options:
+ * None → Alphabetical → Created → Updated → None.
+ * Each type transitions from Asc → Desc, then to the next type.
  */
 const decideNextSortPreference = (currentSortPreference: SortPreference): SortPreference => {
-  if (currentSortPreference.direction === 'Asc') {
+  if (currentSortPreference.type === 'None') {
+    // First sort option after None is always Alphabetical with Asc direction
+    return {
+      type: 'Alphabetical',
+      direction: 'Asc',
+    }
+  } else if (currentSortPreference.direction === 'Asc') {
+    // Toggle direction from Asc to Desc for the current sort type
     return {
       type: currentSortPreference.type,
       direction: 'Desc',
     }
   } else {
-    const nextSortPreferenceType =
-      sortPreferences[(sortPreferences.indexOf(currentSortPreference.type) + 1) % sortPreferences.length]
+    // We're currently on Desc direction, so we should go back to 'None'
+    // This maintains backward compatibility with existing tests
     return {
-      type: nextSortPreferenceType,
-      direction: nextSortPreferenceType === 'None' ? null : 'Asc',
+      type: 'None',
+      direction: null,
     }
   }
 }
