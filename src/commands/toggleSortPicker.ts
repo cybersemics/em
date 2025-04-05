@@ -28,7 +28,8 @@ const toggleSortCommand: Command = {
     if (!state.cursor || isRoot(state.cursor)) return false
 
     const path = simplifyPath(state, rootedParentOf(state, state.cursor))
-    return getSortPreference(state, head(path)).type === 'Alphabetical'
+    const sortPreference = getSortPreference(state, head(path))
+    return ['Alphabetical', 'Created', 'Updated'].includes(sortPreference.type)
   },
   isDropdownOpen: state => !!state.showSortPicker,
   // Show an error if the ranks do not match the sort condition.

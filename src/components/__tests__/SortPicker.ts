@@ -124,3 +124,31 @@ it('subthoughts: Desc', async () => {
 
   expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '2', '1'])
 })
+
+// it('move cursor to previous sibling', () => {
+//   const steps = [
+//     newThought('a'),
+//     newThought('b'),
+//     newThought('c'),
+//     setSortPreference({
+//       simplePath: HOME_PATH,
+//       sortPreference: {
+//         type: 'Created',
+//         direction: 'Desc',
+//       },
+//     }),
+//   ]
+
+//   const stateNew = reducerFlow(steps)(initialState())
+
+//   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+//   expect(exported).toBe(`- ${HOME_TOKEN}
+//   - a
+//   - b
+//   - c
+//   - =sort
+//     - Created
+//       - Desc
+//   `)
+// })
