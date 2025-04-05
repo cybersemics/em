@@ -16,7 +16,9 @@ import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
+import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import useSortedContext from '../hooks/useSortedContext'
+import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
@@ -35,7 +37,6 @@ import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
-import hideCaret, { getHideCaretAnimationName } from '../util/getHideCaretAnimationName'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
@@ -44,6 +45,7 @@ import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
+import FauxCaret from './FauxCaret'
 import HoverArrow from './HoverArrow'
 import VirtualThought, { OnResize } from './VirtualThought'
 
@@ -414,6 +416,7 @@ const TreeNode = ({
   cliffPaddingStyle,
   dragInProgress,
   autofocusDepth,
+  editing,
   ...transitionGroupsProps
 }: TreeThoughtPositioned & {
   thoughtKey: string
@@ -426,9 +429,19 @@ const TreeNode = ({
   cliffPaddingStyle: { paddingBottom: number }
   dragInProgress: boolean
   autofocusDepth: number
+  editing: boolean
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
+  // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
+  // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const fauxCaretNodeProvider = useFauxCaretNodeProvider({
+    editing,
+    fadeThoughtElement: fadeThoughtRef.current,
+    isCursor,
+    isTableCol1,
+    path,
+  })
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
@@ -508,6 +521,7 @@ const TreeNode = ({
           width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
           ...style,
           textAlign: isTableCol1 ? 'right' : undefined,
+          ...fauxCaretNodeProvider,
         }}
       >
         <div ref={fadeThoughtRef}>
@@ -551,6 +565,9 @@ const TreeNode = ({
               prevWidth={treeThoughtsPositioned[index - 1]?.width}
             />
           )}
+        <span className={css({ position: 'absolute', margin: '-0.1875em 0 0 -0.05em', top: 0, left: 0 })}>
+          <FauxCaret caretType='positioned' path={path} wrapperElement={fadeThoughtRef.current} />
+        </span>
       </div>
     </FadeTransition>
   )
@@ -558,6 +575,7 @@ const TreeNode = ({
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
+  const editing = useSelector(state => state.editing)
   const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
@@ -891,11 +909,20 @@ const LayoutTree = () => {
   ])
 
   const spaceAboveLast = useRef(spaceAboveExtended)
+
   // When the cursor is in a table, all thoughts beneath the table are hidden,
   // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
-  const tableDepth = useSelector(state =>
-    state.cursor && attributeEquals(state, head(rootedGrandparentOf(state, state.cursor)), '=view', 'Table') ? 1 : 0,
-  )
+  const tableDepth = useSelector(state => {
+    if (state.cursor) {
+      // If the current thought is column 2 of a table, offset the indentDepth by 3
+      if (attributeEquals(state, head(rootedGrandparentOf(state, state.cursor)), '=view', 'Table')) return 3
+      // If the current thought is column 1 of a table, offset the indentDepth by 1
+      if (attributeEquals(state, head(rootedParentOf<Path>(state, state.cursor)), '=view', 'Table')) return 1
+    }
+
+    return 0
+  })
+
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
@@ -922,12 +949,11 @@ const LayoutTree = () => {
 
   return (
     <div
-      // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
       className={cx(
-        css({ marginTop: '0.501em' }),
-        hideCaret({
-          animation: getHideCaretAnimationName(indentDepth + tableDepth),
+        css({
+          marginTop: '0.501em',
         }),
+        fauxCaretTreeProvider(indentDepth + tableDepth),
       )}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
@@ -962,6 +988,7 @@ const LayoutTree = () => {
               key={thought.key}
               // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
               thoughtKey={thought.key}
+              editing={editing || false}
               {...{
                 viewportBottom,
                 treeThoughtsPositioned,
