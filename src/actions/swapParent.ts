@@ -1,9 +1,14 @@
 import _ from 'lodash'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
+import splitChain from '../selectors/splitChain'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
@@ -17,12 +22,14 @@ const swapParent = (state: State) => {
   // If there is no cursor, do nothing.
   if (!cursor) return state
 
-  const parent = parentOf(cursor)
+  // Get the actual path without context view
+  const simpleCursor = simplifyPath(state, cursor)
+  const parent = parentOf(simpleCursor)
 
   // If the cursor is at the root, do nothing.
   if (!parent.length) return state
 
-  const childId = head(cursor)
+  const childId = head(simpleCursor)
   const parentId = head(parent)
 
   const childThought = getThoughtById(state, childId)
@@ -39,6 +46,11 @@ const swapParent = (state: State) => {
   const parentChildren = getChildrenRanked(state, parentId)
   const siblings = parentChildren.filter(sibling => sibling.id !== childId)
 
+  // Check if we're in context view and get the context chain
+  const isInContextView = isContextViewActive(state, rootedParentOf(state, cursor))
+  const contextChain = isInContextView ? splitChain(state, cursor) : []
+  const contextPrefix = isInContextView ? contextChain[0] : []
+
   return reducerFlow([
     // First move the child to replace its parent's position
     moveThought({
@@ -50,7 +62,7 @@ const swapParent = (state: State) => {
     // Then move the parent under the child
     moveThought({
       oldPath: parent,
-      newPath: appendToPath([childId], parentId),
+      newPath: appendToPath([...contextPrefix, ...grandparent] as Path, childId, parentId),
       newRank: childThought.rank,
     }),
 
@@ -58,7 +70,7 @@ const swapParent = (state: State) => {
     ...siblings.map(sibling =>
       moveThought({
         oldPath: appendToPath(parent, sibling.id),
-        newPath: appendToPath([...grandparent, childId], sibling.id),
+        newPath: appendToPath([...contextPrefix, ...grandparent] as Path, childId, sibling.id),
         newRank: sibling.rank,
       }),
     ),
@@ -67,14 +79,14 @@ const swapParent = (state: State) => {
     ...childChildren.map(grandchild =>
       moveThought({
         oldPath: appendToPath(cursor, grandchild.id),
-        newPath: appendToPath([...grandparent, childId, parentId], grandchild.id),
+        newPath: appendToPath([...contextPrefix, ...grandparent] as Path, childId, parentId, grandchild.id),
         newRank: grandchild.rank,
       }),
     ),
 
     // Keep cursor on the child at its new position, preserving the full path
     setCursor({
-      path: appendToPath(grandparent, childId, parentId),
+      path: appendToPath([...contextPrefix, ...grandparent] as Path, childId, parentId),
       offset: childThought.value.length,
     }),
   ])(state)
