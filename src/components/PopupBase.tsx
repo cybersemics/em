@@ -106,7 +106,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           boxSizing: 'border-box',
           textAlign,
           zIndex: 'popup',
-          maxWidth: '100%',
+          // leave space so the circledCloseButton doesn't get cut off from the screen
+          maxWidth: onClose && circledCloseButton ? 'calc(100% - 2em)' : '100%',
           ...borderStyles,
           ...centerStyles,
           ...fullWidthStyles,
