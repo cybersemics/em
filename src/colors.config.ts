@@ -7,6 +7,7 @@ const colors = {
     bgOverlay30: 'rgba(0, 0, 0, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
+    caret: 'rgba(0, 199, 230, 0.75)', // #00c7e6
     darkgray: 'rgba(17, 17, 17, 1)', // #111111
     fg85: 'rgba(217, 217, 217, 1)', // #d9d9d9
     fg: 'rgba(255, 255, 255, 1)',
@@ -46,7 +47,7 @@ const colors = {
     bgMuted: 'rgba(51, 51, 51, 1)', // #333
     footerBg: 'rgba(26, 26, 26, 1)', // #1a1a1a
     gestureDiagramWrapper: 'rgba(94, 94, 94, 1)',
-    letterCasePickerBg: 'rgba(20, 20, 20, 1)', // #141414
+    pickerBg: 'rgba(20, 20, 20, 1)', // #141414
     sidebarBg: 'rgba(41, 42, 43, 1)', // #292a2b
     tutorialBg: 'rgba(33, 33, 33, 0.8)', // #212121
     thoughtAnnotation: 'rgba(34, 34, 34, 1)', // #222
@@ -77,6 +78,7 @@ const colors = {
     bgOverlay30: 'rgba(255, 255, 255, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
+    caret: 'rgba(0, 199, 230, 0.75)', // #00c7e6
     darkgray: 'rgba(237, 237, 237, 1)', // #ededed
     fg85: 'rgba(39, 39, 39, 1)', // #272727
     fg: 'rgba(0, 0, 0, 1)',
@@ -116,7 +118,7 @@ const colors = {
     bgMuted: 'rgba(221, 221, 221, 1)', // #ddd
     footerBg: 'rgba(228, 228, 228, 1)', // #e4e4e4
     gestureDiagramWrapper: 'rgba(180, 180, 180, 1)',
-    letterCasePickerBg: 'rgba(235, 235, 235, 1)', // #ebebeb
+    pickerBg: 'rgba(235, 235, 235, 1)', // #ebebeb
     sidebarBg: 'rgba(245, 245, 245, 1)', // #f5f5f5
     tutorialBg: 'rgba(221, 221, 221, 1)', // #ddd
     thoughtAnnotation: 'rgba(221, 221, 221, 1)', // #ddd

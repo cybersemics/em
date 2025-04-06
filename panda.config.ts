@@ -1,7 +1,6 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import durationsConfig from './src/durations.config'
-import hideCaretAnimationNames from './src/hideCaret.config'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
@@ -56,14 +55,37 @@ const zIndexDescending = (keys: string[]) => keyValueBy(keys.reverse(), (key, i)
 /** Add `ms` units to raw value. */
 const durations = Object.entries(durationsConfig).reduce(durationsReducer, {})
 
+/** FauxCaret.tsx uses these variables to decide which faux caret to show. */
 const hideCaret = {
   '0%': {
+    '--faux-caret-opacity': 0,
+    '--faux-caret-line-start-opacity': 1,
+    '--faux-caret-line-end-opacity': 1,
+    '--faux-caret-note-line-end-opacity': 1,
+    '--faux-caret-note-line-start-opacity': 1,
     caretColor: 'transparent',
   },
+  /** The distributed asynchronous nature of the faux caret leads to situations where the animation
+   * begins before the caret is correctly repositioned. Delaying its appearance for at least 1 frame
+   * will eliminate these glitches.
+   */
+  '2.5%': {
+    '--faux-caret-opacity': 1,
+  },
   '99%': {
+    '--faux-caret-opacity': 1,
+    '--faux-caret-line-start-opacity': 1,
+    '--faux-caret-line-end-opacity': 1,
+    '--faux-caret-note-line-end-opacity': 1,
+    '--faux-caret-note-line-start-opacity': 1,
     caretColor: 'transparent',
   },
   '100%': {
+    '--faux-caret-opacity': 0,
+    '--faux-caret-line-start-opacity': 0,
+    '--faux-caret-line-end-opacity': 0,
+    '--faux-caret-note-line-end-opacity': 0,
+    '--faux-caret-note-line-start-opacity': 0,
     caretColor: 'auto',
   },
 }
@@ -139,7 +161,27 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
-  ...hideCaretAnimationNames.reduce((accum, name) => ({ ...accum, [name]: hideCaret }), {}),
+  // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
+  // See: recipes/hideCaret.ts
+  // TODO: FauxCaret will break if hideCaretAnimationNames is imported from hideCaret.config.ts into hideCaret.ts, and vice versa into panda.config.ts, so we are stuck with duplicate definitions in two files.
+  ...[
+    'hideCaret0',
+    'hideCaret1',
+    'hideCaret2',
+    'hideCaret3',
+    'hideCaret4',
+    'hideCaret5',
+    'hideCaret6',
+    'hideCaret7',
+    'hideCaret8',
+    'hideCaret9',
+    'hideCaretA',
+    'hideCaretB',
+    'hideCaretC',
+    'hideCaretD',
+    'hideCaretE',
+    'hideCaretF',
+  ].reduce((accum, name) => ({ ...accum, [name]: hideCaret }), {}),
 })
 
 const globalCss = defineGlobalStyles({

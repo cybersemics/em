@@ -66,6 +66,12 @@ const isEditable = (node?: Node | null) => {
   )
 }
 
+/** Returns true if the focusNode is a note. */
+export const isNote = () => {
+  const element = window.getSelection()?.focusNode as HTMLElement
+  return !!element && element.nodeType === Node.ELEMENT_NODE && element.ariaLabel === 'note-editable'
+}
+
 /** Returns true if the selection is on a thought. */
 // We should see if it is possible to just use state.editing and selection.isActive()
 export const isThought = (): boolean => {
@@ -146,6 +152,22 @@ export const isOnLastLine = (): boolean => {
 
 /** Returns true if the browser selection is on a text node. */
 export const isText = (): boolean => window.getSelection()?.focusNode?.nodeType === Node.TEXT_NODE
+
+/** Returns true if the browser selection is on an element node and focus offset is 0.
+ * This represents a case where the browser will render the caret at the start of the text node's content.
+ */
+export const isStartOfElementNode = (): boolean => {
+  const selection = window.getSelection()
+  return !isText() && !!selection && selection.focusOffset === 0
+}
+
+/** Returns true if the browser selection is on an element node and focus offset is 1.
+ * This represents a case where the browser will render the caret at the end of the text node's content.
+ */
+export const isEndOfElementNode = (): boolean => {
+  const selection = window.getSelection()
+  return !isText() && !!selection && selection.focusOffset === 1
+}
 
 /** Returns the character offset of the active selection. */
 // TODO: The browser selection offset has different semantics when the selection is on a text node vs an element node. Unfortunately this function has been used indiscriminately for both cases. We should clean this up and only use the function on text nodes.
@@ -462,9 +484,7 @@ export const html = () => {
 export const getBoundingClientRect = () => {
   const selection = window.getSelection()
 
-  if (selection && selection.rangeCount) {
-    return selection.getRangeAt(0).getBoundingClientRect()
-  }
+  if (selection && selection.rangeCount && isText()) return selection.getRangeAt(0).getBoundingClientRect()
 
   return null
 }

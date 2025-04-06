@@ -8,7 +8,7 @@ import createThought from '../actions/createThought'
 import setCursor from '../actions/setCursor'
 import tutorialNext from '../actions/tutorialNext'
 import tutorialStepReducer from '../actions/tutorialStep'
-import { isSafari, isTouch } from '../browser'
+import { isTouch } from '../browser'
 import {
   ABSOLUTE_PATH,
   ABSOLUTE_TOKEN,
@@ -240,7 +240,7 @@ export const newThoughtActionCreator =
     // cancel if tutorial has just started
     if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
-    if (!preventSetCursor && isTouch && isSafari()) {
+    if (!preventSetCursor && isTouch) {
       asyncFocus()
     }
 

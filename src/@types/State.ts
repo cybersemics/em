@@ -134,10 +134,11 @@ interface State {
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number
-  showLetterCase?: boolean
   showColorPicker?: boolean
+  showLetterCase?: boolean
   showCommandPalette: boolean
   showHiddenThoughts: boolean
+  showSortPicker?: boolean
   /**
    * The currently shown modal dialog box.
    * Initialized to the welcome modal, unless already completed.
