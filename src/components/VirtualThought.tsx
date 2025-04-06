@@ -219,7 +219,7 @@ const VirtualThought = ({
     textAlign: isTableCol1 ? 'right' : undefined,
   })
   const translateXRef = useRef<number>(0)
-  const duration = durations.get('layoutNodeAnimationFast')
+  const duration = durations.get('layoutNodeAnimation')
 
   const bulletTestId = `bullet-${hashPath(simplePath)}`
 
@@ -272,31 +272,18 @@ const VirtualThought = ({
           transition: 'none',
         })
 
-        setTimeout(() => {
+        requestAnimationFrame(() => {
           if (bulletElement) {
             bulletElement.style.transform = 'translateX(0)'
-            bulletElement.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`
+            bulletElement.style.transition = `transform ${duration}ms ease-out`
           }
 
           updateTransitionStyle({
             transform: 'translateX(0)',
             textAlign: 'right',
-            transition: `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+            transition: `transform ${duration}ms ease-out`,
           })
-        }, 10)
-      }}
-      onEntered={() => {
-        updateTransitionStyle({
-          transform: undefined,
-          transition: undefined,
-          textAlign: 'right',
         })
-
-        const bulletElement = document.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement
-        if (bulletElement) {
-          bulletElement.style.transform = 'none'
-          bulletElement.style.transition = 'none'
-        }
       }}
       onExit={() => {
         const offset = translateXRef.current || 0
@@ -313,31 +300,18 @@ const VirtualThought = ({
           transition: 'none',
         })
 
-        setTimeout(() => {
+        requestAnimationFrame(() => {
           if (bulletElement) {
             bulletElement.style.transform = 'translateX(0)'
-            bulletElement.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`
+            bulletElement.style.transition = `transform ${duration}ms ease-out`
           }
 
           updateTransitionStyle({
             transform: 'translateX(0)',
-            transition: `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+            transition: `transform ${duration}ms ease-out`,
             textAlign: undefined,
           })
-        }, 10)
-      }}
-      onExited={() => {
-        updateTransitionStyle({
-          transform: undefined,
-          transition: undefined,
-          textAlign: undefined,
         })
-
-        const bulletElement = document.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement
-        if (bulletElement) {
-          bulletElement.style.transform = 'none'
-          bulletElement.style.transition = 'none'
-        }
       }}
     >
       <div
