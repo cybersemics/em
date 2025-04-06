@@ -8,7 +8,7 @@ import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
 import strip from '../util/strip'
-import ControlledAlert from './ControlledAlert'
+import Notification from './Notification'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
 
@@ -29,7 +29,7 @@ const Alert: FC = () => {
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
-    <ControlledAlert
+    <Notification
       transitionKey={value}
       showXOnHover
       onClose={alert?.showCloseLink && !isTouch ? onClose : undefined}
