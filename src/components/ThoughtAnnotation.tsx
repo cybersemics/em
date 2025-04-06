@@ -11,6 +11,7 @@ import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
+import useBulletPosition from '../hooks/useBulletPosition'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, filterAllChildren } from '../selectors/getChildren'
@@ -107,8 +108,10 @@ const ThoughtAnnotation = React.memo(
     styleAnnotation,
     url,
     placeholder,
+    path,
     value,
   }: {
+    path: Path
     email?: string
     isEditing?: boolean
     multiline?: boolean
@@ -126,6 +129,16 @@ const ThoughtAnnotation = React.memo(
     const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
       isEditing ? (editingValue ?? value) : null,
     )
+
+    const {
+      thoughtAnnotation: {
+        horizontalPadding: thoughtAnnotationHorizontalPadding,
+        marginLeft: thoughtAnnotationMarginLeft,
+      },
+    } = useBulletPosition({
+      path,
+      simplePath,
+    })
 
     /**
      * Adding dependency on lexemeIndex as the fetch for thought is async await.
@@ -180,14 +193,12 @@ const ThoughtAnnotation = React.memo(
                 }),
                 display: 'inline-block',
                 maxWidth: '100%',
-                padding: '0 0.333em',
                 boxSizing: 'border-box',
                 whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
                 /*
                   Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
                   To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
                 */
-                margin: '-0.5px 0 0 calc(1em - 18px)',
                 paddingRight: multiline ? '1em' : '0.333em',
               }),
             )
@@ -197,7 +208,11 @@ const ThoughtAnnotation = React.memo(
             //   border-bottom: solid 1px;
             // }
           }
-          style={styleAnnotation}
+          style={{
+            padding: `0 ${thoughtAnnotationHorizontalPadding}px`,
+            margin: `-0.5px 0 0 ${thoughtAnnotationMarginLeft}px`,
+            ...styleAnnotation,
+          }}
         >
           <span
             className={css({
@@ -363,6 +378,7 @@ const ThoughtAnnotationContainer = React.memo(
       <ThoughtAnnotation
         {...{
           simplePath,
+          path,
           isEditing,
           multiline,
           ellipsizedUrl: ellipsizedUrl,
