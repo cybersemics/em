@@ -552,4 +552,3 @@ const CommandPaletteWithTransition: FC = () => {
 }
 
 export default CommandPaletteWithTransition
-
