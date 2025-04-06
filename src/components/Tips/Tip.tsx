@@ -19,7 +19,7 @@ const icon = (
       position: 'relative',
     })}
   >
-    <LightBulbIcon cssRaw={css.raw({ width: '50%', height: '50%', fill: 'fg' })} />
+    <LightBulbIcon cssRaw={css.raw({ width: '50%', height: '50%', fill: 'fg', cursor: 'default' })} />
   </div>
 )
 
