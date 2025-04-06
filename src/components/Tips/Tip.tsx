@@ -2,7 +2,7 @@ import { FC, PropsWithChildren, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
-import ControlledAlert from '../ControlledAlert'
+import Notification from '../Notification'
 import LightBulbIcon from '../icons/LightBulbIcon'
 
 const icon = (
@@ -37,7 +37,7 @@ const Tip: FC<
 
   if (!display) return null
 
-  return <ControlledAlert renderedIcon={icon} transitionKey={`${display}`} value={children} onClose={onClose} />
+  return <Notification renderedIcon={icon} transitionKey={`${display}`} value={children} onClose={onClose} />
 }
 
 Tip.displayName = 'Tip'

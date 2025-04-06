@@ -6,7 +6,7 @@ import FadeTransition from './FadeTransition'
 import PopupBase from './PopupBase'
 
 /** An alert component in which you can customize what is rendered. Used for Alerts + Tips. */
-const ControlledAlert: FC<
+const Notification: FC<
   {
     renderedIcon?: ReactNode
     value: ReactNode | null
@@ -69,4 +69,4 @@ const ControlledAlert: FC<
   )
 }
 
-export default ControlledAlert
+export default Notification
