@@ -1,4 +1,3 @@
-import { arrowTextToArrowCharacter } from '../commands'
 import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
@@ -6,10 +5,13 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
+import Key from '../@types/Key'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
-import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
+import { isMac } from '../browser'
+import { arrowTextToArrowCharacter } from '../commands'
+import { commandById, gestureString, hashCommand, hashKeyDown } from '../commands'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -19,17 +21,14 @@ import { executeCommandWithMulticursor } from '../util/executeCommand'
 import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
-import { isMac } from "../browser"
-import Key from '../@types/Key'
 import Popup from './Popup'
-
+import AltOrOptionIcon from './icons/AltOrOptionIcon'
+import BackspaceIcon from './icons/BackspaceIcon'
 // Icons
 import CmdIcon from './icons/CmdIcon'
 import CtrlIcon from './icons/CtrlIcon'
 import PlusIcon from './icons/PlusIcon'
-import AltOrOptionIcon from './icons/AltOrOptionIcon'
 import ShiftIcon from './icons/ShiftIcon'
-import BackspaceIcon from './icons/BackspaceIcon'
 
 /**********************************************************************
  * Constants
@@ -48,17 +47,19 @@ const commandPaletteCommand = commandById('commandPalette')
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) && (command.allowExecuteFromModal || !state.showModal)
 
-const formatKeyboardShortcutIcons = (inputKeyboardOrString: Key | string) : JSX.Element => {
-  const keyboard = typeof inputKeyboardOrString === 'string' ? { key: inputKeyboardOrString as string } : inputKeyboardOrString
+const formatKeyboardShortcutIcons = (inputKeyboardOrString: Key | string): JSX.Element => {
+  const keyboard =
+    typeof inputKeyboardOrString === 'string' ? { key: inputKeyboardOrString as string } : inputKeyboardOrString
 
   return (
-    <div className={css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: '0.3em'
-      
-    })}>
+    <div
+      className={css({
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: '0.3em',
+      })}
+    >
       {keyboard.meta && (isMac ? <CmdIcon /> : <CtrlIcon />)}
       {keyboard.meta && <PlusIcon />}
       {keyboard.alt && <AltOrOptionIcon />}
@@ -67,7 +68,13 @@ const formatKeyboardShortcutIcons = (inputKeyboardOrString: Key | string) : JSX.
       {keyboard.control && <PlusIcon />}
       {keyboard.shift && <ShiftIcon />}
       {keyboard.shift && <PlusIcon />}
-      {keyboard.key == 'Backspace' ? <BackspaceIcon /> : arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)}
+      {keyboard.key == 'Backspace' ? (
+        <BackspaceIcon />
+      ) : (
+        arrowTextToArrowCharacter(
+          keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key,
+        )
+      )}
     </div>
   )
 }
@@ -305,50 +312,47 @@ const CommandRow: FC<{
             <HighlightedText value={label} match={search} disabled={disabled} />
           </div>
 
-        <div className={css({ maxHeight: !isTouch ? '1em' : undefined, flexGrow: 1, zIndex: 1 })}>
-          <div
-            className={css({
-              display: 'flex',
-            })}
-          >
-            {/* description */}
+          <div className={css({ maxHeight: !isTouch ? '1em' : undefined, flexGrow: 1, zIndex: 1 })}>
             <div
               className={css({
-                fontSize: '80%',
-                ...(!isTouch
-                  ? {
-                      flexGrow: 1,
-                    }
-                  : null),
+                display: 'flex',
               })}
             >
-              {description}
-            </div>
-            </div>
-          </div>
-        </div>
-
-            {/* keyboard shortcut */}
-            {!isTouch && (
+              {/* description */}
               <div
                 className={css({
                   fontSize: '80%',
-                  position: 'relative',
                   ...(!isTouch
                     ? {
-                        display: 'inline',
+                        flexGrow: 1,
                       }
                     : null),
                 })}
               >
-                <span className={css({ marginLeft: 20, whiteSpace: 'nowrap' })}>
-                  {command.keyboard && formatKeyboardShortcut(command.keyboard)}
-                </span>
+                {description}
               </div>
-            )}
             </div>
           </div>
         </div>
+
+        {/* keyboard shortcut */}
+        {!isTouch && (
+          <div
+            className={css({
+              fontSize: '80%',
+              position: 'relative',
+              ...(!isTouch
+                ? {
+                    display: 'inline',
+                  }
+                : null),
+            })}
+          >
+            <span className={css({ marginLeft: 20, whiteSpace: 'nowrap' })}>
+              {command.keyboard && formatKeyboardShortcutIcons(command.keyboard)}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -550,8 +554,6 @@ const CommandPaletteWithTransition: FC = () => {
   const [isDismissed, setDismiss] = useState(false)
   const dispatch = useDispatch()
   const popupRef = useRef<HTMLDivElement>(null)
-
-  const popUpStyles = css.raw({ zIndex: 'commandPalette', width: '100%', height: '100%', backgroundColor: 'gray'})
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
