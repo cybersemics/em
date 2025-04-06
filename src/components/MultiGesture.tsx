@@ -168,7 +168,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         if (!this.currentStart) {
           // Check if we're in the gesture zone before deciding whether to disable scrolling
           // This ensures we only prevent scrolling in the gesture zone, but allow it elsewhere
-          const touchLocation = e.nativeEvent.touches?.[0] || e.nativeEvent
+          const touchLocation = e.nativeEvent.touches[0] || e.nativeEvent
           const inGestureZone = isInGestureZone(touchLocation.pageX, touchLocation.pageY, this.leftHanded)
 
           // Only keep disableScroll=true if we're actually in the gesture zone
