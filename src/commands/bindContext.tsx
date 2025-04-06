@@ -37,7 +37,7 @@ const bindContextCommand: Command = {
   description: 'Bind two different contexts of a thought so that they always have the same children.',
   gesture: 'rud',
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot bind multiple thoughts.',
   },
   keyboard: { key: 'b', shift: true, alt: true },

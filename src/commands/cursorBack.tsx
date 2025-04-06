@@ -15,7 +15,7 @@ const cursorBackCommand: Command = {
   gesture: 'r',
   svg: BackIcon,
   keyboard: 'Escape',
-  multicursor: 'ignore',
+  multicursor: false,
   exec: throttleByAnimationFrame((dispatch, getState) => {
     const state = getState()
 

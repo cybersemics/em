@@ -15,6 +15,7 @@ import head from '../util/head'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import strip from '../util/strip'
+import trimHtml from '../util/trimHtml'
 
 /** Splits a thought into two thoughts.
  *
@@ -31,8 +32,8 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
   // split the value into left and right parts
   const { value } = headThought
 
-  const valueLeft = strip(splitResult.left, { preserveFormatting: true })
-  const valueRight = strip(splitResult.right, { preserveFormatting: true })
+  const valueLeft = strip(trimHtml(splitResult.left), { preserveFormatting: true })
+  const valueRight = strip(trimHtml(splitResult.right), { preserveFormatting: true })
 
   const pathLeft = path
 

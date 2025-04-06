@@ -10,7 +10,7 @@ const searchCommand: Command = {
   label: 'Search',
   description: 'Open the Search input. Use the same command to close.',
   svg: SearchIcon,
-  multicursor: 'ignore',
+  multicursor: false,
   keyboard: { key: 'f', meta: true, alt: true },
   exec: (dispatch, getState) => {
     const state = getState()

@@ -8,7 +8,7 @@ const cursorNextCommand: Command = {
   id: 'cursorNext',
   label: 'Next Thought',
   description: 'Move the cursor to the next thought, skipping expanded children.',
-  multicursor: 'ignore',
+  multicursor: false,
   keyboard: { key: Key.ArrowDown, meta: true },
   svg: NextIcon,
   exec: throttleByAnimationFrame(dispatch => dispatch(cursorNext())),

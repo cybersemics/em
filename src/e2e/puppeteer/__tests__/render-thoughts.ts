@@ -3,6 +3,7 @@ import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
+import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
@@ -10,6 +11,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
+import waitForRender from '../helpers/waitForRender'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -27,6 +29,11 @@ const superscriptSnapshot = async () => {
   `)
 
   await press('ArrowUp')
+
+  // TODO: Test intermittently fails with small differences in 'b'.
+  // Tested manually with navigator.webdriver = true and 'b' renders at the correct opacity in the next frame, without any animation, so I do not know why this fails.
+  // Example failed test run: https://github.com/cybersemics/em/actions/runs/14236307211
+  await waitForRender()
 
   return screenshot()
 }
@@ -117,7 +124,7 @@ describe('Font Size: 13', () => {
     await click('[data-testid=decrease-font]') // 13
 
     // close alert
-    await click('[data-testid=close-button]')
+    await hide('[data-testid=alert]')
 
     // scroll to top
     await scroll(0, 0)
@@ -135,7 +142,7 @@ describe('Font Size: 22', () => {
     await click('[data-testid=increase-font]') // 22
 
     // close alert
-    await click('[data-testid=close-button]')
+    await hide('[data-testid=alert]')
 
     // scroll to top
     await scroll(0, 0)
@@ -188,6 +195,11 @@ describe('multiline', () => {
       `)
 
     await press('ArrowUp')
+
+    // TODO: Test intermittently fails with small differences in 'b'.
+    // Tested manually with navigator.webdriver = true and 'b' renders at the correct opacity in the next frame, without any animation, so I do not know why this fails.
+    // Example failed test run: https://github.com/cybersemics/em/actions/runs/14236307211
+    await waitForRender()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()

@@ -13,6 +13,7 @@ import State from '../@types/State'
 */
 
 /** Redux Middleware that prevents accidentally passing a reducer to the dispatch function. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const doNotDispatchReducer: Middleware<any, State, Dispatch> = () => next => action => {
   if (typeof action === 'function' && action.toString().startsWith('(state,')) {
     throw new Error('Dispatching a reducer is not allowed. Did you mean to use an action-creator?')

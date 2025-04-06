@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Emitter from 'emitter20'
 
 // only undefined if task errors out and rejectOnError is false

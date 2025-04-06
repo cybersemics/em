@@ -35,14 +35,13 @@ const groups: {
   {
     title: 'Creating thoughts',
     commands: [
+      'categorize',
       'newThought',
       'newThoughtAbove',
       'newSubthought',
       'newSubthoughtTop',
       'newUncle',
       'newGrandChild',
-      'subcategorizeOne',
-      'subcategorizeAll',
       'extractThought',
       'generateThought',
     ],

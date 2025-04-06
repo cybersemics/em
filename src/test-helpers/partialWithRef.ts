@@ -1,15 +1,18 @@
 type Ref<T> = { current?: T }
 
 /** An object with methods whose first arguments are the same. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ObjectWithInstanceMethods<T = any, U = any> = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [Key in keyof T]: (first: U, ...args: any) => any
 }
 
 /** Removes the first item in an array type. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
 type Tail<T extends any[]> = T extends [infer A, ...infer R] ? R : never
 
 /** Removes the first parameter from each method on an object. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type MethodMapTail<T extends { [Key in keyof T]: (first: any, ...args: any) => any }> = {
   [Key in keyof T]: (...args: Tail<Parameters<T[Key]>>) => ReturnType<T[Key]>
 }

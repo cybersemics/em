@@ -134,10 +134,11 @@ interface State {
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number
-  showLetterCase?: boolean
   showColorPicker?: boolean
+  showLetterCase?: boolean
   showCommandPalette: boolean
   showHiddenThoughts: boolean
+  showSortPicker?: boolean
   /**
    * The currently shown modal dialog box.
    * Initialized to the welcome modal, unless already completed.
@@ -145,9 +146,6 @@ interface State {
    */
   showModal?: Modal | null
   showSidebar: boolean
-  showSplitView: boolean
-  /** The width of the react-split-pane (% or px). */
-  splitPosition: number
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
       'connecting'     Connecting.

@@ -488,7 +488,7 @@ const ThoughtContainer = ({
           marginRight={marginRight}
           isPressed={dragHoldResult.isPressed}
         />
-        <Note path={path} />
+        <Note path={path} disabled={!isVisible} />
       </div>
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}

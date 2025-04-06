@@ -27,9 +27,7 @@
       // DefaultRootState was removed in v8 and thus cannot be augmented anymore.
       // https://stackoverflow.com/a/78550104/480608
       "react-redux-default": ["./node_modules/react-redux"],
-      "react-redux": ["./src/@types/react-redux.d.ts"],
-      // react-split-pane types are missing the children prop, so we need to augment the shipped types
-      "react-split-pane": ["./src/@types/react-split-pane.d.ts"]
+      "react-redux": ["./src/@types/react-redux.d.ts"]
     },
     "types": ["vitest/globals"]
   }

@@ -1,4 +1,3 @@
-import { ReactNode } from 'react'
 import { CSSTransition } from 'react-transition-group'
 import { TransitionProps } from 'react-transition-group/Transition'
 import { SlideTransitionRecipeVariant, slideTransitionRecipe } from '../../styled-system/recipes'
@@ -22,7 +21,6 @@ const SlideTransition = ({
   duration: keyof typeof durationsConfig
   id?: string | number
   from: SlideTransitionRecipeVariant['from']
-  children: ReactNode
 } & RemoveFields<TransitionProps<HTMLElement>>) => {
   const slideClasses = slideTransitionRecipe({ from })
   return (
