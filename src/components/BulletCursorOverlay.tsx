@@ -3,19 +3,18 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import { isSafari, isTouch, isiPhone } from '../browser'
+import useBulletPosition from '../hooks/useBulletPosition'
 import attributeEquals from '../selectors/attributeEquals'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 
-const isIOSSafari: boolean = isTouch && isiPhone && isSafari()
 /** A larger circle that surrounds the bullet of the cursor thought. */
 const BulletCursorOverlay = ({
   isCursorActive,
-  x,
-  y,
+  x = 0,
+  y = 0,
   simplePath,
   path,
 }: {
@@ -28,44 +27,67 @@ const BulletCursorOverlay = ({
   const svgElement = useRef<SVGSVGElement>(null)
 
   const isInContextView = useSelector(state => path && isContextViewActive(state, parentOf(path)))
-  const fontSize = useSelector(state => state.fontSize)
-  const lineHeight = fontSize * 1.25
 
-  const bulletOverlayRadius = isIOSSafari ? 300 : 245
+  const {
+    bullet: {
+      svgLeft: bulletSvgLeftPosition,
+      glyphMarginBottom,
+      svgMarginLeft: bulletSvgMarginLeft,
+      spanLeft: bulletSpanLeftPosition,
+    },
+    ctxViewWithBreadcrumb: {
+      marginTop: breadcrumbMarginTop,
+      fontSize: breadcrumbFontSize,
+      paddingTop: breadcrumbPaddingTop,
+    },
+    thoughtAnnotation: {
+      horizontalPadding: thoughtAnnotationHorizontalPadding,
+      marginLeft: thoughtAnnotationMarginLeft,
+    },
+    lineHeight,
+    bulletOverlayRadius,
+  } = useBulletPosition({ simplePath, path })
+  const fontSize = useSelector(state => state.fontSize)
 
   const isTableCol1 = useSelector(state =>
     simplePath ? attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table') : false,
   )
+
+  // if the cursor is not active, do not render the bullet overlay
+  if (!isCursorActive) {
+    return null
+  }
 
   // calculate position of bullet for different font sizes
   // Table column 1 needs more space between the bullet and thought for some reason
 
   const isContextBreadcrumbExists = isInContextView && isTableCol1
 
-  // if the thought has context breadcrumb, we need to adjust the position of the bullet
-
-  const mTopCtxBreadcrumb = 0.533 * fontSize
-  const pTopCtxBreadcrumb = 0.5 * fontSize
-  const ctxBreadcrumbFontSize = 0.867 * fontSize
-
+  // calculate extra y position added because of context breadcrumb
+  // calculation based on ctx breadcrumb size (font-size and padding-top) + margin-top
+  // and then subtract 2px to make it more centered
   const contextBreadcrumbYPadding = isContextBreadcrumbExists
-    ? mTopCtxBreadcrumb + Math.max(fontSize, ctxBreadcrumbFontSize + pTopCtxBreadcrumb)
+    ? breadcrumbMarginTop + Math.max(fontSize, breadcrumbFontSize + breadcrumbPaddingTop) - 2
     : 0
 
-  const breadCrumbPadding = 0.33 * fontSize
-
-  const breadCrumbMarginLeft = fontSize - 18
-  const width = 11 - (fontSize - 9) * 0.5 + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
-
+  // calculate extra x position added because of context breadcrumb
+  // calculation based on breadcrumb (thought annotation) margin-left - padding-left
   const contextBreadcrumbXPadding = isContextBreadcrumbExists
-    ? // ? -(18 - 18 + 0.333 * 18 - (18 - 18) - (1.3 * 18 - 14.5 + 3 + 2) - lineHeight * 0.317)
-      -Math.floor(breadCrumbPadding - breadCrumbMarginLeft) - 1
+    ? Math.floor(thoughtAnnotationMarginLeft - thoughtAnnotationHorizontalPadding)
     : 0
 
-  const translateX = (x || 0) + lineHeight * 0.317 - lineHeight - (isTableCol1 ? 0 : width) + contextBreadcrumbXPadding
-  // const translateX = (x || 0) + lineHeight * 0.317 - lineHeight  + (-extendClickWidth + -width + extendClickWidth) + width
+  // calculate X position of overlay by adding x position + left position of bullet + extra x position when context breadcrumb is exists su
+  // when thought isnt table view col 1, we need add the bullet span left position to the overlay x position
 
-  const translateY = (y || 0) + fontSize * (isIOSSafari ? 0.2 : 0.3) + contextBreadcrumbYPadding
+  const translateX =
+    x +
+    bulletSvgLeftPosition +
+    bulletSvgMarginLeft +
+    (isTableCol1 ? 0 : bulletSpanLeftPosition) +
+    contextBreadcrumbXPadding
+
+  // calculate X position of overlay by adding y position + top position of bullet + extra y position when context breadcrumb is exists
+  const translateY = y - glyphMarginBottom + contextBreadcrumbYPadding
 
   return (
     <svg
