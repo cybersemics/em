@@ -34,6 +34,7 @@ const BulletCursorOverlay = ({
       glyphMarginBottom,
       svgMarginLeft: bulletSvgMarginLeft,
       spanLeft: bulletSpanLeftPosition,
+      spanWidth: bulletSpanWidth,
     },
     ctxViewWithBreadcrumb: {
       marginTop: breadcrumbMarginTop,
@@ -61,19 +62,21 @@ const BulletCursorOverlay = ({
   // calculate position of bullet for different font sizes
   // Table column 1 needs more space between the bullet and thought for some reason
 
-  const isContextBreadcrumbExists = isInContextView && isTableCol1
+  const isContextBreadcrumbExists = isInContextView && simplePath && simplePath.length > 1
 
   // calculate extra y position added because of context breadcrumb
   // calculation based on ctx breadcrumb size (font-size and padding-top) + margin-top
-  // and then subtract 2px to make it more centered
   const contextBreadcrumbYPadding = isContextBreadcrumbExists
-    ? breadcrumbMarginTop + Math.max(fontSize, breadcrumbFontSize + breadcrumbPaddingTop) - 2
+    ? breadcrumbMarginTop + Math.max(fontSize, breadcrumbFontSize + breadcrumbPaddingTop)
     : 0
 
   // calculate extra x position added because of context breadcrumb
   // calculation based on breadcrumb (thought annotation) margin-left - padding-left
+  // adds bullet width into overlay position when thought is not table view col 1
   const contextBreadcrumbXPadding = isContextBreadcrumbExists
-    ? Math.floor(thoughtAnnotationMarginLeft - thoughtAnnotationHorizontalPadding)
+    ? Math.floor(
+        thoughtAnnotationMarginLeft - thoughtAnnotationHorizontalPadding + (!isTableCol1 ? bulletSpanWidth : 0),
+      )
     : 0
 
   // calculate X position of overlay by adding x position + left position of bullet + extra x position when context breadcrumb is exists su
@@ -100,7 +103,7 @@ const BulletCursorOverlay = ({
         ...(isCursorActive
           ? {
               fillOpacity: 1,
-              transition: `all {durations.veryFast} ease-in-out`,
+              transition: `transform {durations.veryFast} ease-in-out`,
             }
           : null),
       })}
