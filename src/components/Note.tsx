@@ -15,7 +15,7 @@ import { isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
 import store from '../stores/app'
-import equalPath from '../util/equalPath'
+import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import strip from '../util/strip'
@@ -35,7 +35,7 @@ const Note = React.memo(
     const dispatch = useDispatch()
     const noteRef: { current: HTMLElement | null } = useRef(null)
     const fontSize = useSelector(state => state.fontSize)
-    const hasFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
+    const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
