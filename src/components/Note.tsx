@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
@@ -13,8 +13,9 @@ import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFoc
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
+import useFreshCallback from '../hooks/useFreshCallback'
 import store from '../stores/app'
-import equalPathHead from '../util/equalPathHead'
+import equalPath from '../util/equalPath'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import strip from '../util/strip'
@@ -30,13 +31,27 @@ const Note = React.memo(
     disabled?: boolean
     path: Path
   }) => {
-    console.log('path :', path)
     const thoughtId = head(path)
     const dispatch = useDispatch()
     const noteRef: { current: HTMLElement | null } = useRef(null)
     const fontSize = useSelector(state => state.fontSize)
-    const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
+    const hasFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
+
+    /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
+    const note = useSelector(state => noteValue(state, thoughtId))
+
+    /** Focus Handling with useFreshCallback. */
+    const onFocus = useFreshCallback(() => {
+      dispatch(
+        setCursor({
+          path,
+          cursorHistoryClear: true,
+          editing: true,
+          noteFocus: true,
+        }),
+      )
+    }, [dispatch, path])
 
     // set the caret on the note if editing this thought and noteFocus is true
     useEffect(() => {
@@ -49,74 +64,63 @@ const Note = React.memo(
       }
     }, [hasFocus])
 
-    /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
-    const note = useSelector(state => noteValue(state, thoughtId))
-
-    if (note === null) return null
-
     /** Handles note keyboard shortcuts. */
-    const onKeyDown = (e: React.KeyboardEvent) => {
-      // delete empty note
-      const note = noteValue(store.getState(), thoughtId)
+    const onKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        // delete empty note
+        const note = noteValue(store.getState(), thoughtId)
 
-      // select thought
-      if (e.key === 'Escape' || e.key === 'ArrowUp') {
-        e.stopPropagation()
-        e.preventDefault()
-        dispatch(toggleNote())
-      }
-      // delete empty note
-      // (delete non-empty note is handled by delete command, which allows mobile gesture to work)
-      // note may be '' or null if the attribute child was deleted
-      else if (e.key === 'Backspace' && !note) {
-        e.stopPropagation() // prevent delete thought
-        e.preventDefault()
-        dispatch(deleteAttribute({ path, value: '=note' }))
-        dispatch(setNoteFocus({ value: false }))
-      } else if (e.key === 'ArrowDown') {
-        e.stopPropagation()
-        e.preventDefault()
-        dispatch(cursorDown())
-      }
-    }
+        // select thought
+        if (e.key === 'Escape' || e.key === 'ArrowUp') {
+          e.stopPropagation()
+          e.preventDefault()
+          dispatch(toggleNote())
+        }
+        // delete empty note
+        // (delete non-empty note is handled by delete command, which allows mobile gesture to work)
+        // note may be '' or null if the attribute child was deleted
+        else if (e.key === 'Backspace' && !note) {
+          e.stopPropagation()
+          e.preventDefault()
+          dispatch(deleteAttribute({ path, value: '=note' }))
+          dispatch(setNoteFocus({ value: false }))
+        } else if (e.key === 'ArrowDown') {
+          e.stopPropagation()
+          e.preventDefault()
+          dispatch(cursorDown())
+        }
+      },
+      [dispatch, path, thoughtId],
+    )
 
     /** Updates the =note attribute when the note text is edited. */
-    const onChange = (e: ContentEditableEvent) => {
-      // calculate pathToContext onChange not in render for performance
-      const value = justPasted
-        ? // if just pasted, strip all HTML from value
-          (setJustPasted(false), strip(e.target.value))
-        : // Mobile Safari inserts <br> when all text is deleted
-          // Strip <br> from beginning and end of text
-          e.target.value.replace(/^<br>|<br>$/gi, '')
-
-      dispatch(
-        setDescendant({
-          path,
-          values: ['=note', value],
-        }),
-      )
-    }
+    const onChange = useCallback(
+      (e: ContentEditableEvent) => {
+        // calculate pathToContext onChange not in render for performance
+        const value = justPasted
+          ? // if just pasted, strip all HTML from value
+            (setJustPasted(false), strip(e.target.value))
+          : // Mobile Safari inserts <br> when all text is deleted
+            // Strip <br> from beginning and end of text
+            e.target.value.replace(/^<br>|<br>$/gi, '')
+        dispatch(
+          setDescendant({
+            path,
+            values: ['=note', value],
+          }),
+        )
+      },
+      [dispatch, path, justPasted],
+    )
 
     /** Set editing to false onBlur, if keyboard is closed. */
-    const onBlur = () => {
+    const onBlur = useCallback(() => {
       if (isTouch && !selection.isActive()) {
         setTimeout(() => dispatch(editing({ value: false })))
       }
-    }
+    }, [dispatch])
 
-    /** Enables noteFocus and sets the cursor on the thought. */
-    const onFocus = () => {
-      console.log('onFocus :', path)
-      dispatch(
-        setCursor({
-          path,
-          cursorHistoryClear: true,
-          editing: true,
-          noteFocus: true,
-        }),
-      )
-    }
+    if (note === null) return null
 
     return (
       <div
