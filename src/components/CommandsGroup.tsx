@@ -32,20 +32,16 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
       <h2
         className={css({
           ...modalClasses,
-          ...(viewType === 'grid'
-            ? {
-                fontSize: '1.3rem',
-                borderBottom: 'none',
-                position: 'sticky',
-                top: '-1.5rem',
-                background: 'linear-gradient(to bottom, {colors.bg} 85%, transparent)',
-                padding: '0.7rem 0',
-                margin: '0.5rem 0',
-                zIndex: 1,
-              }
-            : {
-                subtitle: modalClasses.subtitle,
-              }),
+          ...(viewType === 'grid' && {
+            fontSize: '1.3rem',
+            borderBottom: 'none',
+            position: 'sticky',
+            top: '-1.5rem',
+            background: 'linear-gradient(to bottom, {colors.bg} 85%, transparent)',
+            padding: '0.7rem 0',
+            margin: '0.5rem 0',
+            zIndex: 1,
+          }),
         })}
       >
         {title}
