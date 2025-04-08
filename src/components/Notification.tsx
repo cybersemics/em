@@ -5,7 +5,7 @@ import { token } from '../../styled-system/tokens'
 import FadeTransition from './FadeTransition'
 import PopupBase from './PopupBase'
 
-/** An alert component in which you can customize what is rendered. Used for Alerts + Tips. */
+/** A popup component in which you can customize what is rendered. Used for Alerts + Tips. */
 const Notification: FC<
   {
     renderedIcon?: ReactNode
