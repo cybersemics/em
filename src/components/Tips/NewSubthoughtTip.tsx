@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import GesturePath from '../../@types/GesturePath'
+import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
@@ -12,12 +13,8 @@ import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
 import Tip from './Tip'
 
-interface NewSubthoughtTipProps {
-  display: boolean
-}
-
 /** A tip that explains how to add a new subthought. */
-const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
+const NewSubthoughtTip: FC = () => {
   const dispatch = useDispatch()
 
   const commandKey = isMac ? 'CMD' : 'Control'
@@ -47,7 +44,7 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
     </span>
   )
 
-  return <Tip display={display}>{instructions}</Tip>
+  return <Tip tipId={TipId.NewSubthought}>{instructions}</Tip>
 }
 
 NewSubthoughtTip.displayName = 'NewSubthoughtTip'

@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import GesturePath from '../../@types/GesturePath'
+import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
@@ -12,14 +13,9 @@ import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
 import Tip from './Tip'
 
-interface NewThoughtTipProps {
-  display: boolean
-}
-
 /** A tip that explains how to add a new thought. */
-const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
+const NewThoughtTip: FC = () => {
   const dispatch = useDispatch()
-
   const returnKey = isMac ? 'Return' : 'Enter'
   const instructions = isTouch ? (
     <span>
@@ -45,7 +41,7 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
     </span>
   )
 
-  return <Tip display={display}>{instructions}</Tip>
+  return <Tip tipId={TipId.NewThought}>{instructions}</Tip>
 }
 
 NewThoughtTip.displayName = 'NewThoughtTip'
