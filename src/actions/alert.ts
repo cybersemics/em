@@ -6,6 +6,7 @@ import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import dismissTip from './dismissTip'
 
 interface Options {
   alertType?: keyof typeof AlertType
@@ -24,7 +25,7 @@ let clearAlertTimeoutId: ReturnType<typeof setTimeout> | null = null
 const alertReducer = (state: State, { alertType, showCloseLink, value, importFileId }: Options) => {
   if (value === state.alert?.value) return state
   return {
-    ...state,
+    ...(value ? dismissTip(state) : state),
     alert: value
       ? {
           alertType,
