@@ -30,7 +30,7 @@ interface GestureDiagramProps {
   cssRaw?: SystemStyleObject
   /** Whether to render the gesture with rounded corners. */
   rounded?: boolean
-  /** Which kind of arrowhead to draw gesture diagrams with. */
+  /** Which kind of arrowhead to draw gesture diagrams with. By default, the arrowhead is filled. */
   arrowhead?: 'filled' | 'outlined'
 }
 
