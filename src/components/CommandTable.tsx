@@ -79,7 +79,7 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
       return COMMAND_GROUPS.map(group => {
         const commands = group.commands
           .map(commandById)
-          .filter((command): command is Command => (isTouch ? !!command.gesture : !!command.keyboard))
+          .filter(command => (isTouch ? !!command.gesture : !!command.keyboard))
 
         return commands.length > 0 ? (
           <CommandsGroup
@@ -94,7 +94,7 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
         ) : null
       })
     } else {
-      const commandsWithGestures = commands.filter((command): command is Command => !!command.gesture)
+      const commandsWithGestures = commands.filter(command => !!command.gesture)
       const sortedCommands = commandsWithGestures.sort((a, b) => a.label.localeCompare(b.label))
 
       return (
