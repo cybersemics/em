@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { groupBy } from 'lodash'
 import { register } from 'prom-client'
 import Index from '../../src/@types/IndexType'
@@ -12,7 +13,7 @@ const fetch = require('node-fetch')
 
 // MetricType enum does not seem to be properly exported from prom-client.
 // https://github.com/siimon/prom-client/issues/336
-const MetricType: Index<any> = {
+const MetricType: Index = {
   Counter: 'counter',
   Gauge: 'gauge',
   Histogram: 'histogram',
@@ -75,7 +76,8 @@ const observe = async (
       headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(observationsNormalized),
     })
-  } catch (err: any) {
+  } catch (e) {
+    const err = e as Error
     console.error(`Error pushing metrics to ${apiUrl}`, err.message)
   }
 }

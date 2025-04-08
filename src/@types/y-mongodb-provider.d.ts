@@ -14,10 +14,12 @@ declare module 'y-mongodb-provider' {
     flushDocument: (docName: string) => Promise<void>
     getDiff: (docName: string, stateVector: Uint8Array) => Promise<Uint8Array>
     getYDoc: (docName: string) => Promise<Y.Doc>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getMeta: <T = any>(docName: string, key: string) => Promise<T | undefined>
     getStateVector: (docName: string) => Promise<Uint8Array>
     getAllDocNames: (docName: string) => Promise<string[]>
     getAllDocStateVectors: (docName: string) => Promise<{ name: string; clock: number; sv: Uint8Array }[]>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setMeta: (docName: string, key: string, value: any) => Promise<void>
     storeUpdate: (docName: string, update: Uint8Array) => Promise<unknown>
     delMeta: (docName: string, key: string) => Promise<void>

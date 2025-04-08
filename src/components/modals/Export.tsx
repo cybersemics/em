@@ -451,7 +451,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     else {
       try {
         download(exportContent!, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
-      } catch (e: any) {
+      } catch (err) {
+        const e = err as Error
         dispatch(error({ value: e.message }))
         console.error('Download Error', e.message)
       }

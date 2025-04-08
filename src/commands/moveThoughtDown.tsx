@@ -14,7 +14,6 @@ const moveThoughtDownCommand: Command = {
   gesture: 'dud',
   keyboard: { key: Key.ArrowDown, meta: true, shift: true },
   multicursor: {
-    enabled: true,
     reverse: true,
   },
   preventDefault: true,

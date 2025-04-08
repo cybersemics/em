@@ -113,7 +113,7 @@ const VirtualThought = ({
   // Only shim 'hide', not 'hide-parent', thoughts, otherwise hidden parents snap in instead of fading in when moving up the tree.
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
-    delay: 750,
+    delay: durations.get('layoutSlowShift'),
     selector: autofocusNew => autofocus === 'hide' && autofocusNew === 'hide' && !!height,
   })
 

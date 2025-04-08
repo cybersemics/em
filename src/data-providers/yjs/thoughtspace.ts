@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // there are multiple function callling it self (recursive) so we just disable the lint error
 
 /* eslint-disable @typescript-eslint/no-use-before-define */
@@ -262,6 +263,12 @@ export const init = async (options: ThoughtspaceOptions) => {
     onEnd: () => {
       onProgress({ savingProgress: 1 })
     },
+    onError: (err: Error) => {
+      onError(
+        `Oops! That's embarrassing. I was not able to save the last change. You should restart the app to avoid additional data loss. Error: ${err.message}`,
+        err,
+      )
+    },
   })
 
   configCache = {
@@ -468,9 +475,7 @@ export const updateLexeme = async (
           if (!contextsOld.has(cxid)) {
             const docKey = docKeys.get(cxid)
             if (!docKey) {
-              const message = `updateLexeme: Missing docKey for context ${cxid} in Lexeme.`
-              console.error(message, lexemeNew)
-              throw new Error(message)
+              throw new Error(`updateLexeme: Missing docKey for context ${cxid} in Lexeme.`)
             }
             lexemeMap.set(`cx-${cxid}`, docKey)
           }

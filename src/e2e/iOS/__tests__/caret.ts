@@ -5,8 +5,6 @@ import { Element } from 'webdriverio'
 import gestures from '../../../test-helpers/gestures'
 import helpers from '../helpers'
 
-jest.setTimeout(100000)
-
 const {
   clickThought,
   editThought,
@@ -34,7 +32,7 @@ it.skip('Enter edit mode ', async () => {
   await hideKeyboardByTappingDone()
 
   const editableNodeHandle = await waitForEditable('foo')
-  await tap(editableNodeHandle)
+  await tap(editableNodeHandle, { y: 60, x: 20 })
 
   await waitUntil(isKeyboardShown)
   const selectionTextContent = await getSelection().focusNode?.textContent
@@ -46,7 +44,7 @@ it.skip('Preserve Editing: true', async () => {
   await newThought('bar', { insertNewSubthought: true })
 
   const editableNodeHandle = await getEditable('foo')
-  await tap(editableNodeHandle)
+  await tap(editableNodeHandle, { y: 60, x: 20 })
 
   await waitUntil(async () => (await getEditingText()) === 'foo')
   const selectionTextContent = await getSelection().focusNode?.textContent
@@ -77,7 +75,7 @@ it.skip('No uncle loop', async () => {
   await newThought('d', { insertNewSubthought: true })
 
   const editableNodeHandle = await waitForEditable('c')
-  await tap(editableNodeHandle)
+  await tap(editableNodeHandle, { y: 60, x: 20 })
   await waitUntil(async () => (await getEditingText()) === 'c')
 
   const selectionTextContent = await getSelection().focusNode?.textContent
@@ -97,7 +95,7 @@ it.skip('Tap hidden root thought', async () => {
   await clickThought('c')
 
   const editableNodeHandle = await waitForEditable('d')
-  await tap(editableNodeHandle)
+  await tap(editableNodeHandle, { y: 60, x: 20 })
   await waitUntil(async () => (await getEditingText()) !== 'c')
 
   const editingText = await getEditingText()
@@ -117,7 +115,7 @@ it.skip('Tap hidden uncle', async () => {
   await clickThought('c')
 
   const editableNodeHandle = await waitForEditable('d')
-  await tap(editableNodeHandle)
+  await tap(editableNodeHandle, { y: 60, x: 20 })
 
   await waitUntil(async () => (await getEditingText()) === 'd')
   const selectionTextContent = await getSelection().focusNode?.textContent
@@ -224,7 +222,7 @@ it.skip('Swipe over hidden thought', async () => {
   const newThoughtEditable = await waitForEditable('this-is-new-thought')
 
   // get first child of parent thought
-  const previousSibling = await ref().execute((newThoughtEditable: Element<'async'>) => {
+  const previousSibling = await ref().execute((newThoughtEditable: Element) => {
     const editable = (newThoughtEditable as unknown as HTMLElement)
       .closest('ul.children')
       ?.firstElementChild?.querySelector('[data-editable]') as HTMLElement
@@ -246,7 +244,7 @@ it.skip('Bump Thought Down on a thought that has children', async () => {
   const newThoughtEditable = await editThought('new')
   const selectionTextContent = await getSelection().focusNode?.textContent
 
-  const childrenTexts = await ref().execute((newThoughtEditable: Element<'async'>) => {
+  const childrenTexts = await ref().execute((newThoughtEditable: Element) => {
     const children = (newThoughtEditable as unknown as HTMLElement)
       .closest('ul.children')
       ?.firstElementChild?.getElementsByTagName('ul')[0]

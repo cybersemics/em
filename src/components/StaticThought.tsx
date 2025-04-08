@@ -115,7 +115,7 @@ const StaticThought = ({
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
   const dark = useSelector(state => theme(state) !== 'Light')
-  const homeContext = showContexts && isRoot(simplePath) && !isContextPending
+  const homeContext = isRoot(simplePath) && !isContextPending
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value) ?? ''
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
@@ -166,7 +166,7 @@ const StaticThought = ({
         placeholder={placeholder}
         path={path}
         showContextBreadcrumbs={showContextBreadcrumbs}
-        simplePath={showContexts ? parentOf(simplePath) : simplePath}
+        simplePath={simplePath}
         cssRaw={cssRawThought}
         style={styleThought}
         styleAnnotation={styleAnnotation || undefined}

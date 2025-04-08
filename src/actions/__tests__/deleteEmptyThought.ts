@@ -3,9 +3,9 @@ import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import { getAllChildren } from '../../selectors/getChildren'
 import { getLexeme } from '../../selectors/getLexeme'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
-import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 import archiveThought from '../archiveThought'
 import cursorBack from '../cursorBack'
@@ -248,7 +248,7 @@ describe('context view', () => {
     expect(children).toHaveLength(0)
 
     // cursor should be on the next context
-    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', 'a'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
   })
 })
 

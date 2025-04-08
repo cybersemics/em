@@ -140,7 +140,7 @@ it.skip('delete pending descendants', async () => {
 
   timer.useFakeTimer()
 
-  store.dispatch([deleteThoughtWithCursor({})])
+  store.dispatch([deleteThoughtWithCursor])
 
   await timer.runAllAsync()
 
@@ -278,7 +278,7 @@ it.skip('delete many pending descendants', async () => {
 
   timer.useFakeTimer()
 
-  store.dispatch([deleteThoughtWithCursor({})])
+  store.dispatch([deleteThoughtWithCursor])
 
   await timer.runAllAsync()
 

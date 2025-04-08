@@ -1,4 +1,6 @@
 /* eslint-disable import/prefer-default-export */
+
+/** Defines global keyboard shortcuts and gestures. */
 import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
@@ -16,9 +18,12 @@ import { suppressExpansionActionCreator as suppressExpansion } from './actions/s
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, Settings } from './constants'
+import * as selection from './device/selection'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
+import gestureStore from './stores/gesture'
 import { executeCommandWithMulticursor } from './util/executeCommand'
+import haptics from './util/haptics'
 import keyValueBy from './util/keyValueBy'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
@@ -92,33 +97,28 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | string): string =
     arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
   )
 }
-/** Initializes command indices and stores conflicts. */
+/** Initializes command indices and logs keyboard shortcut conflicts. */
 const index = (): {
   commandKeyIndex: Index<Command>
   commandIdIndex: Index<Command>
   commandGestureIndex: Index<Command>
 } => {
   // index commands for O(1) lookup by keyboard
-  const commandKeyIndex: Index<Command> = keyValueBy(globalCommands, (command, i, accum) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const commandKeyIndex: Index<Command & { conflicts?: any[] }> = keyValueBy(globalCommands, (command, i, accum) => {
     if (!command.keyboard) return null
 
     const hash = hashCommand(command)
-    const conflict = !!accum[hash]
 
-    if (conflict) {
+    // check if the shortcut is used by another command
+    if (accum[hash]) {
       console.error(
         `"${command.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(command.keyboard)}"`,
       )
     }
 
     return {
-      // if there is a conflict, append the command id to the conflicts property so that the conflicts can be displayed to the user
-      [hash]: conflict
-        ? {
-            ...command,
-            conflicts: [...(command.conflicts || [accum[hash].id]), command.id],
-          }
-        : command,
+      [hash]: command,
     }
   })
 
@@ -174,6 +174,7 @@ export const commandById = (id: CommandId): Command => commandIdIndex[id]
  * - command palette  from invalid gesture (e.g. ←↓, hold, ←↓←).
  * - Change command palette  to basic gesture hint on gesture end.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const inputHandlers = (store: Store<State, any>) => ({
   /** Handles gesture hints when a valid segment is entered. */
   handleGestureSegment: ({ sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
@@ -181,6 +182,13 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const experienceMode = getUserSetting(state, Settings.experienceMode)
 
     if (state.showModal || state.dragInProgress) return
+
+    // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
+    // useFilteredCommands updates the possibleCommands in a back channel for efficiency.
+    // Always allow haptics for the first swipe, as possibleCommands may not be populated yet.
+    if (sequence.length === 1 || gestureStore.getState().possibleCommands.length > 2) {
+      haptics.light()
+    }
 
     const command = commandGestureIndex[sequence as string]
 
@@ -309,6 +317,13 @@ export const inputHandlers = (store: Store<State, any>) => ({
     if (!(isMac ? e.metaKey : e.ctrlKey)) {
       // disable suppress expansion without triggering re-render
       globals.suppressExpansion = false
+    }
+
+    // For some reason, when the caret is at the beginning of the thought, alt + ArrowLeft sets the caret to the end.
+    // Prevent this default behavior, as the caret should have nowhere to go when it is already at the beginning.
+    if (e.altKey && e.key === 'ArrowLeft' && selection.offset() === 0 && selection.isThought()) {
+      e.preventDefault()
+      return
     }
 
     // disable if command palette is displayed

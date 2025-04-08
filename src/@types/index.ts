@@ -3,6 +3,7 @@ import Thunk from './Thunk'
 
 declare global {
   interface Document {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     DND: any
   }
 

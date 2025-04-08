@@ -16,6 +16,7 @@ import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType } from '../constants'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankBefore from '../selectors/getRankBefore'
@@ -27,9 +28,11 @@ import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
+import longPressStore from '../stores/longPressStore'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -61,6 +64,7 @@ const canDrag = (props: ThoughtContainerProps) => {
 /** Handles drag start. */
 const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem => {
   const offset = selection.offset()
+
   store.dispatch(
     dragInProgress({
       value: true,
@@ -74,6 +78,10 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
 
 /** Handles drag end. */
 const endDrag = () => {
+  // Reset the lock variable to allow immediate long press after drag
+  longPressStore.unlock()
+  globals.longpressing = false
+
   // Wait till the next tick before ending dragInProgress.
   // This allows onTap to be aborted in Editable to prevent the cursor from moving at the end of a drag.
   // If this delay causes a regression, then we will need to find a different way to prevent the cursor from moving at the end of a drag.
@@ -157,10 +165,11 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // drop on itself or after itself is a noop
   if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
+  haptics.medium()
+
   const parent = unroot(rootedParentOf(state, thoughtsTo))
   const newPath = appendToPath(parent, head(thoughtsFrom))
 
-  const newRank = getRankBefore(state, thoughtsTo)
   store.dispatch(
     props.showContexts
       ? createThought({
@@ -171,7 +180,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       : moveThought({
           oldPath: thoughtsFrom,
           newPath,
-          newRank,
+          newRank: getRankBefore(state, thoughtsTo),
         }),
   )
 

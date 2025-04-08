@@ -8,7 +8,7 @@ const jumpBackCommand: Command = {
   description: 'Move the cursor to the last thought that was edited.',
   keyboard: { key: 'j', meta: true },
   gesture: 'lul',
-  multicursor: 'ignore',
+  multicursor: false,
   svg: JumpBackIcon,
   exec: dispatch => {
     dispatch(jump(-1))

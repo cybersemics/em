@@ -113,7 +113,17 @@ const useEditMode = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isEditing, editingCursorOffset, hasNoteFocus, dragInProgress, editing, editableNonce, transient],
+    [
+      isEditing,
+      // update selection when multicursor changes, otherwise the selection will not be set when multicursor is cleared
+      isMulticursor,
+      editingCursorOffset,
+      hasNoteFocus,
+      dragInProgress,
+      editing,
+      editableNonce,
+      transient,
+    ],
   )
 
   useEffect(

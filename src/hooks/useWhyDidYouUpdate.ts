@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef } from 'react'
 
 /** Log changed props. Useful for debugging unnecessary renders. Does not show when hooks change. */

@@ -11,7 +11,7 @@ const newSubthoughtTopCommand: Command = {
   gesture: 'rdu',
   keyboard: { key: Key.Enter, shift: true, meta: true },
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot create a new subthought with multiple thoughts.',
   },
   svg: NewSubthoughtAboveIcon,

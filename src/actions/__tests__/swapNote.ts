@@ -2,9 +2,9 @@ import importText from '../../actions/importText'
 import swapNote from '../../actions/swapNote'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
-import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 
 it('thought to note', () => {
@@ -22,7 +22,7 @@ it('thought to note', () => {
     - =note
       - b`)
 
-  expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a'])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a'])
 })
 
 it('note to thought', () => {
@@ -40,7 +40,7 @@ it('note to thought', () => {
   - a
     - b`)
 
-  expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'b'])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
 })
 
 it('swap thought and note', () => {
@@ -61,5 +61,5 @@ it('swap thought and note', () => {
       - c
     - b`)
 
-  expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'b'])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
 })

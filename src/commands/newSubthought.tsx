@@ -6,8 +6,8 @@ import isDocumentEditable from '../util/isDocumentEditable'
 
 const exec = newThought({ insertNewSubthought: true })
 
-const multicursor = {
-  enabled: false,
+const multicursor: Command['multicursor'] = {
+  disallow: true,
   error: 'Cannot create a new subthought with multiple thoughts.',
 }
 
@@ -61,7 +61,6 @@ export const newSubthoughtAliases: Command = {
     'rldldlru',
   ],
   multicursor,
-  svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,
 }

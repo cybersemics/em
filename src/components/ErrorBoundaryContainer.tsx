@@ -6,7 +6,7 @@ import { token } from '../../styled-system/tokens'
 import fastClick from '../util/fastClick'
 
 /** A triangular toggle component. */
-const Toggle = ({ children, title }: { children?: any; expand?: boolean; title?: string }) => {
+const Toggle: FC<{ expand?: boolean; title?: string } & PropsWithChildren> = ({ children, title }) => {
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -39,6 +39,7 @@ const Toggle = ({ children, title }: { children?: any; expand?: boolean; title?:
 }
 
 /** A fallback component for a global error boundary that the main App component is wrapped in. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStack?: any }) => (
   <div className={css({ margin: 50 })}>
     <p>Oops, there was an error.</p>

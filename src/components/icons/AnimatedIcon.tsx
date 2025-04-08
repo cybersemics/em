@@ -1,5 +1,5 @@
 import { rgbToHex } from '@mui/material'
-import { ReactNode } from 'react'
+import { PropsWithChildren } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
@@ -10,11 +10,9 @@ import { ICON_SCALING_FACTOR } from '../../constants'
 import themeColors from '../../selectors/themeColors'
 import LottieAnimation from './LottieAnimation'
 
-interface AnimatedIconType extends IconType {
+interface AnimatedIconType extends IconType, PropsWithChildren {
   /** Animation data for Lottie. */
   animationData?: LottieData | null
-  /** Child elements to render when not animated. */
-  children?: ReactNode
 }
 
 /** Animated Icon with Conditional Lottie Animation. */

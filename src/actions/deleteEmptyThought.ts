@@ -51,7 +51,7 @@ const deleteEmptyThought = (state: State): State => {
     (isEmpty || isDivider(value)) &&
     (showContexts ? allChildren.length === 1 && !hasChildren(state, allChildren[0].id) : allChildren.length === 0)
   ) {
-    return deleteThoughtWithCursor(state, {})
+    return deleteThoughtWithCursor(state)
   }
   // archive an empty thought with only hidden children
   else if (isEmpty && visibleChildren.length === 0) {

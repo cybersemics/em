@@ -28,6 +28,21 @@ it('joins two simple thoughts', () => {
   expect(removeHome(exported)).toEqual(expectedOutput)
 })
 
+it('joins thoughts in the root', () => {
+  const text = `
+    - a
+    - b
+  `
+  const steps = [importText({ text }), setCursor(['a']), join()]
+
+  const newState = reducerFlow(steps)(initialState())
+  const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
+  const expectedOutput = `
+- a b
+`
+  expect(removeHome(exported)).toEqual(expectedOutput)
+})
+
 it('joins thoughts in rank order', () => {
   const text = `
     - a

@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
@@ -34,7 +34,7 @@ const dropCollect = (monitor: DropTargetMonitor) => {
 }
 
 /** A drag-and-drop wrapper component that will remove the toolbar-button from the toolbar when dropped on. */
-const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) => {
+const DropToRemoveFromToolbar: FC<PropsWithChildren> = ({ children }) => {
   const dispatch = useDispatch()
   const [{ isHovering, sourceZone }, dropTarget] = useDrop({
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],

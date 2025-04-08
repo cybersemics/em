@@ -18,7 +18,7 @@ import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { accessToken, clientIdReady, tsid, tsidShared } from './data-providers/yjs'
-import db, { init as initThoughtspace } from './data-providers/yjs/thoughtspace'
+import db, { init as initThoughtspace, replicateLexeme, replicateThought } from './data-providers/yjs/thoughtspace'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -97,7 +97,6 @@ export const initialize = async () => {
       return !!((lexeme && getLexeme(state, key)) || lexeme?.contexts.some(cxid => getThoughtById(state, cxid)))
     },
     onError: (message, object) => {
-      console.error(message, object)
       store.dispatch(error({ value: message }))
     },
     onProgress: syncStatusStore.update,
@@ -186,7 +185,13 @@ const withState =
 
 /** Partially dispatches an action to the store. */
 const withDispatch =
-  <T extends any[], R extends Thunk>(f: (...args: T) => R) =>
+  <
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    T extends any[],
+    R extends Thunk,
+  >(
+    f: (...args: T) => R,
+  ) =>
   (...args: T) =>
     store.dispatch(f(...args))
 
@@ -248,6 +253,8 @@ const windowEm = {
     return store.subscribe(onState)
   },
   prettyPath,
+  replicateThought,
+  replicateLexeme: (value: string) => replicateLexeme(hashThought(value)),
   store,
   offlineStatusStore,
   syncStatusStore,

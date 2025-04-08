@@ -14,7 +14,6 @@ import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import executeCommand from '../../util/executeCommand'
 import initialState from '../../util/initialState'
-import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 
 describe('normal view', () => {
@@ -264,7 +263,7 @@ describe('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBeDefined()
-    expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['a', 'm', 'b', 'z'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b', 'z'])
   })
 
   it("move cursor from context's last child to uncle context", () => {
@@ -311,7 +310,7 @@ describe('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBeDefined()
-    expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['b'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
 
   it('move cursor to circular path', () => {
@@ -337,7 +336,7 @@ describe('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBeDefined()
-    expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['a', 'm', 'a', 'y'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', 'y'])
   })
 
   it('should not move cursor if the cursor on last thought', () => {
@@ -350,6 +349,6 @@ describe('context view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['b'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
 })

@@ -15,7 +15,7 @@ import once from '../util/once'
 import parentOf from '../util/parentOf'
 
 /** Gets the next context in a context view. */
-const nextContext = (state: State, path: Path) => {
+const nextContext = (state: State, path: Path): Path | null => {
   // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
   const parent = getThoughtById(state, head(rootedParentOf(state, path)))
   const contexts = parent ? getContextsSortedAndRanked(state, parent.value) : []
@@ -43,7 +43,7 @@ const firstContext = (state: State, path: Path): Path | null => {
 }
 
 /** Returns the next uncle. */
-const nextUncle = (state: State, path: Path) => {
+const nextUncle = (state: State, path: Path): Path | null => {
   const pathParent = rootedParentOf(state, path)
 
   // the thought is a root child, then there is no uncle
