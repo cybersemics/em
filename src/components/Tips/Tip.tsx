@@ -38,9 +38,9 @@ const Tip: FC<
     dispatch(dismissTip())
   }, [dispatch])
 
-  if (tip !== tipId) return null
-
-  return <Notification renderedIcon={icon} transitionKey={`${tipId}`} value={children} onClose={onClose} />
+  return (
+    <Notification renderedIcon={icon} transitionKey={tipId} value={tip === tipId ? children : null} onClose={onClose} />
+  )
 }
 
 Tip.displayName = 'Tip'
