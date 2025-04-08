@@ -48,7 +48,7 @@ const groups: {
   },
   {
     title: 'Deleting thoughts',
-    commands: ['delete', 'archive', 'collapseContext', 'clearThought'],
+    commands: ['delete', 'archive', 'uncategorize', 'clearThought'],
   },
   {
     title: 'Moving thoughts',

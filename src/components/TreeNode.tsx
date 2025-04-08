@@ -80,12 +80,7 @@ const TreeNode = ({
 
   // true if the last action is any of archive/delete/collapse
   const isLastActionDelete = useSelector(state => {
-    const deleteActions: ActionType[] = [
-      'archiveThought',
-      'collapseContext',
-      'deleteThought',
-      'deleteThoughtWithCursor',
-    ]
+    const deleteActions: ActionType[] = ['archiveThought', 'uncategorize', 'deleteThought', 'deleteThoughtWithCursor']
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
@@ -126,7 +121,7 @@ const TreeNode = ({
       // The FadeTransition is only responsible for fade out on unmount;
       // or for fade in on mounting of a new thought.
       // See autofocusChanged for normal opacity transition.
-      // Limit the fade/shrink/blur animation to the archive, delete, and collapseContext actions.
+      // Limit the fade/shrink/blur animation to the archive, delete, and uncategorize actions.
       duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
