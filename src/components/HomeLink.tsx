@@ -3,7 +3,6 @@ import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
 import { homeActionCreator as home } from '../actions/home'
-import fastClick from '../util/fastClick'
 import HomeIcon from './icons/HomeIcon'
 
 interface HomeLinkProps {
@@ -22,10 +21,11 @@ const HomeLink = ({ color, size, iconStyle, className, breadcrumb }: HomeLinkPro
       <a
         tabIndex={-1}
         href='/'
-        onClick={e => e.preventDefault()}
-        {...fastClick(() => {
+        onClick={e => {
+          e.preventDefault()
           dispatch(home())
-        })}
+        }}
+        role='button'
       >
         <HomeIcon
           className={extendTapRecipe()}

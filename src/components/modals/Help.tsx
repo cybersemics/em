@@ -7,7 +7,6 @@ import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import getSetting from '../../selectors/getSetting'
-import fastClick from '../../util/fastClick'
 import Tabs from '../Tabs'
 import ActionButton from './../ActionButton'
 import CommandTable from './../CommandTable'
@@ -42,7 +41,7 @@ const Tutorials = () => {
         <div className={css({ marginTop: '1em', marginBottom: '1em', marginRight: '1em' })}>
           <ActionButton
             title='Part I: Intro'
-            {...fastClick(() => {
+            onClick={() =>
               dispatch([
                 tutorial({ value: true }),
                 // allow resume
@@ -50,20 +49,20 @@ const Tutorials = () => {
                 setTutorialStep({ value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep }),
                 closeModal(),
               ])
-            })}
+            }
           ></ActionButton>
         </div>
         <div className={css({ marginTop: '1em', marginBottom: '1em' })}>
           <ActionButton
             title='Part II: Contexts'
-            {...fastClick(() => {
+            onClick={() =>
               dispatch([
                 tutorial({ value: true }),
                 // allow resume
                 setTutorialStep({ value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep }),
                 closeModal(),
               ])
-            })}
+            }
           />
         </div>
       </div>
