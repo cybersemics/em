@@ -62,7 +62,8 @@ const TutorialNavigation = ({
                   opacity: step === Math.floor(tutorialStep) ? 1 : 0.25,
                 })}
                 key={step}
-                {...fastClick(() => dispatch(setTutorialStep({ value: step })))}
+                onClick={() => dispatch(setTutorialStep({ value: step }))}
+                role='button'
               >
                 •
               </a>
