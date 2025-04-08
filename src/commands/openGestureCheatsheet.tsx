@@ -21,7 +21,7 @@ const openGestureCheatsheetCommand: Command = {
   label: 'Gesture Cheatsheet',
   description: 'Opens a list of all the gestures.',
   gesture: 'rdld',
-  multicursor: true,
+  multicursor: false,
   svg: GestureCheatsheetIcon,
   canExecute: () => isDocumentEditable(),
   exec,
