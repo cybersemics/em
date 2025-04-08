@@ -14,7 +14,6 @@ import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
 import { executeCommandWithMulticursor } from '../util/executeCommand'
-import fastClick from '../util/fastClick'
 import getCursorSortDirection from '../util/getCursorSortDirection'
 import haptics from '../util/haptics'
 
@@ -230,12 +229,10 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         padding: `14px ${TOOLBAR_BUTTON_PADDING}px ${isDraggingAny ? '7em' : 0}px ${TOOLBAR_BUTTON_PADDING}px`,
       }}
       onMouseLeave={onMouseLeave}
-      {...fastClick(tapUp, {
-        // disable default haptics in favor of custom haptics on touchstart and touchend
-        enableHaptics: false,
-        tapDown,
-        touchMove,
-      })}
+      onClick={tapUp}
+      onTouchStart={tapDown}
+      onTouchMove={touchMove}
+      role='button'
     >
       {
         // selected top dash
