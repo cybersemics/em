@@ -1,6 +1,8 @@
 import { FC, PropsWithChildren, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
+import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import Notification from '../Notification'
 import LightBulbIcon from '../icons/LightBulbIcon'
@@ -26,18 +28,19 @@ const icon = (
 /** A tip that gets displayed at the bottom of the window. */
 const Tip: FC<
   PropsWithChildren<{
-    display: boolean
+    tipId: TipId
   }>
-> = ({ display, children }) => {
+> = ({ tipId, children }) => {
   const dispatch = useDispatch()
+  const tip = useSelector(state => state.tips[0])
 
   const onClose = useCallback(() => {
     dispatch(dismissTip())
   }, [dispatch])
 
-  if (!display) return null
+  if (tip !== tipId) return null
 
-  return <Notification renderedIcon={icon} transitionKey={`${display}`} value={children} onClose={onClose} />
+  return <Notification renderedIcon={icon} transitionKey={`${tipId}`} value={children} onClose={onClose} />
 }
 
 Tip.displayName = 'Tip'
