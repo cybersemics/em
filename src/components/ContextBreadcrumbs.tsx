@@ -14,7 +14,6 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
 import ellipsize from '../util/ellipsize'
-import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
@@ -138,7 +137,7 @@ const BreadCrumb = React.memo(
     ) : (
       <span ref={ref}>
         <span style={delimiterStyle}> • </span>
-        <span {...fastClick(onClickEllipsis)} className={css({ cursor: 'pointer' })}>
+        <span onClick={onClickEllipsis} role='button' className={css({ cursor: 'pointer' })}>
           {' '}
           ...{' '}
         </span>

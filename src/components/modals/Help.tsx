@@ -360,7 +360,7 @@ const ModalHelp = () => {
     <ModalComponent
       id='help'
       title='Help'
-      actions={({ close }) => <ActionButton key='close' title='Close' {...fastClick(() => close())} />}
+      actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
       style={{ fontSize }}
     >
       <Tabs currentTab={section} onTabChange={setSection} tabs={tabs} />
