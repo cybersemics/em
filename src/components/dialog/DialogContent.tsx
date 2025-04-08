@@ -23,7 +23,7 @@ const DialogContent: React.FC<DialogContentProps> = ({ children }) => {
           width: '8px',
         },
         '&::-webkit-scrollbar-track': {
-          background: '{colors.bg}',
+          background: 'bg',
         },
         position: 'relative',
         '@media (min-width: 1200px)': {
