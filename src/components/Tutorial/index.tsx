@@ -8,7 +8,6 @@ import { commandById } from '../../commands'
 import { TUTORIAL2_STEP_SUCCESS, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import useIsVisible from '../../hooks/useIsVisible'
 import getSetting from '../../selectors/getSetting'
-import fastClick from '../../util/fastClick'
 import SlideTransition from '../SlideTransition'
 import { TutorialGesturePortal } from './TutorialGestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
@@ -77,11 +76,12 @@ const Tutorial: FC = () => {
                   : 'hidden',
             }),
           )}
-          {...fastClick(() => {
+          onClick={() => {
             if (window.confirm('Do you really want to close the tutorial?')) {
               dispatch(tutorial({ value: false }))
             }
-          })}
+          }}
+          role='button'
         >
           ✕ close tutorial
         </a>
