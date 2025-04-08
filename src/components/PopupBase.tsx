@@ -4,6 +4,7 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
+import { dismissTipActionCreator as dismissTip } from '../actions/dismissTip'
 import { deleteResumableFile } from '../actions/importFiles'
 import { isTouch } from '../browser'
 import { AlertType } from '../constants'
@@ -78,7 +79,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar
       onDismissEnd: () => {
-        dispatch(alert(null))
+        dispatch([alert(null), dismissTip()])
       },
       swipeDown: swipeDownToDismiss,
     })
