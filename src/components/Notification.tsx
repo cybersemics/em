@@ -2,6 +2,7 @@ import React, { ComponentProps, FC, ReactNode, useCallback, useRef, useState } f
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
+import { isTouch } from '../browser'
 import FadeTransition from './FadeTransition'
 import PopupBase from './PopupBase'
 
@@ -43,7 +44,8 @@ const Notification: FC<
             border
             center
             background={token('colors.panelBg')}
-            onClose={handleClose}
+            // uses swipe to dismess from PopupBase on mobile
+            onClose={isTouch ? undefined : handleClose}
             {...props}
           >
             <div

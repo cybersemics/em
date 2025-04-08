@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator as alert } from '../actions/alert'
+import { dismissTipActionCreator as dismissTip } from '../actions/dismissTip'
 import { AlertType } from '../constants'
 import useCombinedRefs from '../hooks/useCombinedRefs'
 import usePositionFixed from '../hooks/usePositionFixed'
@@ -68,7 +69,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar
       onDismissEnd: () => {
-        dispatch(alert(null))
+        dispatch([alert(null), dismissTip()])
       },
       swipeDown: true,
     })
