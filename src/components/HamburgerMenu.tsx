@@ -91,7 +91,7 @@ const HamburgerMenu = () => {
           top: `calc(${positionFixedStyles.top} + 1px)`,
         }}
         onClick={e => {
-          // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?
+          // TODO: Why does the sidebar not open with onClick or onTouchEnd without a setTimeout?
           // onClick does not have the same problem
           setTimeout(() => {
             dispatch(toggleSidebar({}))
