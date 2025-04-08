@@ -57,10 +57,10 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
   }, [])
 
   /** This render function is used to render the content of the command table.
-   *  It renders groups of commands if the search is empty.
-   *  It renders a single command if the search is not empty.
+   * It renders groups of commands if the search is empty.
+   * It renders a single command if the search is not empty.
    *
-   *  Depending on the viewType prop, it renders the commands in a table or a grid.
+   * Depending on the viewType prop, it renders the commands in a table or a grid.
    */
   const renderContent = () => {
     if (search) {

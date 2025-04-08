@@ -18,6 +18,8 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
    */
   useEffect(() => {
     const currentDialogRef = dialogRef.current
+
+    /** When the user clicks outside the dialog, close the dialog. */
     const handleClickOutside = (event: MouseEvent) => {
       if (currentDialogRef && !currentDialogRef.contains(event.target as Node)) {
         onClose()
@@ -42,6 +44,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
 
     if (!overlayElement || !dialogElement) return
 
+    /** This event handler prevents touch events from propagating to the page. */
     const preventTouchMove = (e: TouchEvent) => {
       if (!dialogElement.contains(e.target as Node)) {
         // Only prevent scrolling if NOT inside dialog content
