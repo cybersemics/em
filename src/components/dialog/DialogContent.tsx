@@ -13,7 +13,7 @@ const DialogContent: React.FC<DialogContentProps> = ({ children }) => {
     <div
       className={css({
         fontSize: '1.25rem',
-        color: '{colors.fg}',
+        color: 'fg',
         maxHeight: '70vh',
         overflow: 'auto',
         padding: '1rem',

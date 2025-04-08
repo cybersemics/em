@@ -68,7 +68,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '{colors.bgOverlay50}',
+        backgroundColor: 'bgOverlay50',
         zIndex: 'modal',
         overflow: 'hidden',
       })}
@@ -76,8 +76,8 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
       <div
         ref={dialogRef}
         className={css({
-          backgroundColor: '{colors.bg}',
-          color: '{colors.fg}',
+          backgroundColor: 'bg',
+          color: 'fg',
           padding: '0.8rem 0.8rem 0',
           borderRadius: '8px',
           maxWidth: '500px',

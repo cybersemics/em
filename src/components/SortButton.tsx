@@ -124,7 +124,7 @@ const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange
           />
           <h3
             className={css({
-              color: selectedSort === 'alphabetical' ? '{colors.fg}' : '{colors.gray50}',
+              color: selectedSort === 'alphabetical' ? 'fg' : 'gray50',
               margin: '0 0 0 0.2rem',
               fontWeight: 'normal',
               fontSize: '0.9rem',

@@ -22,7 +22,7 @@ const DialogTitle: React.FC<DialogTitleProps> = ({ children, onClose }) => {
       <h2
         className={css({
           fontWeight: '700',
-          color: '{colors.fg}',
+          color: 'fg',
           borderBottom: 'none',
           fontSize: '1.4rem',
           margin: '0.7rem',

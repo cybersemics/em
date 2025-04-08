@@ -18,7 +18,7 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
         height: '40px',
         borderRadius: '50%',
         marginRight: '0.5rem',
-        backgroundColor: '{colors.darkgray}',
+        backgroundColor: 'darkgray',
         border: `2px solid {colors.gray50}`,
         display: 'flex',
         alignItems: 'center',
@@ -26,7 +26,7 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
         cursor: 'pointer',
         transition: 'background-color 0.2s ease-in-out',
         _hover: {
-          backgroundColor: '{colors.gray15}',
+          backgroundColor: 'gray15',
         },
         padding: 0,
       })}
