@@ -7,7 +7,6 @@ import { token } from '../../styled-system/tokens'
 import { alertActionCreator } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { deleteResumableFile } from '../actions/importFiles'
-import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
 import syncStatusStore from '../stores/syncStatus'
@@ -38,7 +37,7 @@ const Alert: FC = () => {
     <Notification
       transitionKey={value}
       showXOnHover
-      onClose={alert?.showCloseLink && !isTouch ? onClose : undefined}
+      onClose={alert?.showCloseLink ? onClose : undefined}
       value={alert ? value : null}
       testId='alert'
       renderedIcon={
@@ -68,7 +67,7 @@ const Alert: FC = () => {
           Cancel
         </a>
       )}
-    </ControlledAlert>
+    </Notification>
   )
 }
 
