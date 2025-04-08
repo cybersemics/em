@@ -4,7 +4,6 @@ import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator } from '../actions/alert'
-import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
 import strip from '../util/strip'
@@ -32,7 +31,7 @@ const Alert: FC = () => {
     <Notification
       transitionKey={value}
       showXOnHover
-      onClose={alert?.showCloseLink && !isTouch ? onClose : undefined}
+      onClose={alert?.showCloseLink ? onClose : undefined}
       value={alert ? value : null}
       testId='alert'
       renderedIcon={
