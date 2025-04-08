@@ -9,7 +9,6 @@ import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../a
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
 import newSubthoughtCommand from '../../commands/newSubthought'
-import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
 import Tip from './Tip'
 
@@ -44,21 +43,15 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
       </p>
       <div>
         <div className={css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })}>
-          <a
-            className={anchorButtonRecipe()}
-            {...fastClick(() => {
-              dispatch(dismissTip())
-            })}
-          >
+          <a className={anchorButtonRecipe()} onClick={() => dispatch(dismissTip())} role='button'>
             Okay
           </a>
         </div>
         <div className={css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })}>
           <a
             tabIndex={-1}
-            {...fastClick(() => {
-              dispatch([removeToolbarButton('newSubthought'), dismissTip()])
-            })}
+            onClick={() => dispatch([removeToolbarButton('newSubthought'), dismissTip()])}
+            role='button'
             className={anchorButtonRecipe()}
           >
             Remove this icon from the toolbar
@@ -66,11 +59,7 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
         </div>
         <div>
           (you can customize the toolbar in{' '}
-          <a
-            {...fastClick(() => {
-              dispatch([dismissTip(), showModal({ id: 'settings' })])
-            })}
-          >
+          <a onClick={() => dispatch([dismissTip(), showModal({ id: 'settings' })])} role='button'>
             Settings
           </a>
           )
