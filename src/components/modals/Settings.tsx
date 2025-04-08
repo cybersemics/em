@@ -127,7 +127,11 @@ const ModalSettings = () => {
     >
       <form>
         <p className={css({ marginBottom: '2em', marginTop: '-1em' })}>
-          <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))} className={extendTapRecipe()}>
+          <a
+            onClick={() => dispatch(showModal({ id: 'customizeToolbar' }))}
+            role='button'
+            className={extendTapRecipe()}
+          >
             Customize Toolbar
           </a>{' '}
           &gt;
