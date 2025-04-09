@@ -11,8 +11,8 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
+import useBulletPosition from '../hooks/useBulletPosition'
 // import testFlags from '../e2e/testFlags'
-import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
@@ -20,7 +20,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
-import rootedParentOf from '../selectors/rootedParentOf'
 import fastClick, { type FastClickEvent } from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -357,17 +356,8 @@ const BulletParent = ({
   )
 }
 
-/** A larger circle that surrounds the bullet of the cursor thought. */
-const BulletCursorOverlay = ({
-  isHighlighted,
-}: {
-  isEditing?: boolean
-  isHighlighted?: boolean
-  leaf?: boolean
-  publish?: boolean
-  simplePath: SimplePath
-}) => {
-  const bulletOverlayRadius = isIOSSafari ? 300 : 245
+/** A larger circle that surrounds the bullet of the highlighted thought. */
+const BulletHighlightOverlay = ({ bulletOverlayRadius }: { bulletOverlayRadius: number }) => {
   return (
     <ellipse
       ry={bulletOverlayRadius}
@@ -375,9 +365,10 @@ const BulletCursorOverlay = ({
       cy='300'
       cx='300'
       className={css({
-        fillOpacity: isHighlighted ? 1 : 0.25,
-        fill: isHighlighted ? 'highlight' : 'fg',
-        stroke: isHighlighted ? 'highlight' : undefined,
+        fillOpacity: 1,
+        fill: 'highlight',
+        stroke: 'highlight',
+        transition: `transform {durations.veryFast} ease-in-out`,
       })}
     />
   )
@@ -395,7 +386,6 @@ const Bullet = ({
   thoughtId,
   isCursorGrandparent,
   isCursorParent,
-  isInContextView,
   // depth,
   // debugIndex,
 }: BulletProps) => {
@@ -406,9 +396,7 @@ const Bullet = ({
   // if being edited and meta validation error has occured
   const invalid = useSelector(state => !!isEditing && state.invalidState)
   const fontSize = useSelector(state => state.fontSize)
-  const isTableCol1 = useSelector(state =>
-    attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
-  )
+
   const isMulticursor = useSelector(state => isMulticursorPath(state, path))
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
@@ -416,7 +404,19 @@ const Bullet = ({
   })
   const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
-  /** Returns true if the thought is pending. */
+  const {
+    bullet: {
+      svgLeft: bulletSvgLeftPosition,
+      glyphMarginBottom,
+      svgMarginLeft: bulletSvgMarginLeft,
+      spanLeft: bulletSpanLeftPosition,
+      spanWidth: bulletSpanWidth,
+    },
+    lineHeight,
+    bulletOverlayRadius,
+  } = useBulletPosition({ simplePath, path })
+
+  /** Returns true if th e thought is pending. */
   const pending = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     // Do not show context as pending since it will remain pending until expanded, and the context value is already loaded so there is nothing missing from the context view UI.
@@ -448,16 +448,8 @@ const Bullet = ({
   // offset margin with padding by equal amounts proportional to the font size to extend the click area
   const extendClickWidth = fontSize * 1.2
   const extendClickHeight = fontSize / 3
-  const lineHeight = fontSize * 1.25
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
-  // Bottom margin for bullet to align with thought text
-  const glyphBottomMargin = isIOSSafari ? '-0.2em' : '-0.3em'
-
-  // calculate position of bullet for different font sizes
-  // Table column 1 needs more space between the bullet and thought for some reason
-  const width = 11 - (fontSize - 9) * 0.5 + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
-  const marginLeft = -width
 
   // expand or collapse on click
   // has some additional logic to make it work intuitively with pin true/false
@@ -528,11 +520,11 @@ const Bullet = ({
       )}
       style={{
         top: -extendClickHeight,
-        left: -extendClickWidth + marginLeft,
+        left: -extendClickWidth + bulletSpanLeftPosition,
         paddingTop: extendClickHeight,
         paddingLeft: extendClickWidth,
         paddingBottom: extendClickHeight + 2,
-        width,
+        width: bulletSpanWidth,
       }}
       {...fastClick(clickHandler, { enableHaptics: false })}
       // stop click event from bubbling up to Content.clickOnEmptySpace
@@ -560,22 +552,16 @@ const Bullet = ({
         style={{
           height: lineHeight,
           width: lineHeight,
-          marginLeft: -lineHeight,
+          marginLeft: bulletSvgMarginLeft,
           // required to make the distance between bullet and thought scale properly at all font sizes.
-          left: lineHeight * 0.317,
-          marginBottom: glyphBottomMargin,
+          left: bulletSvgLeftPosition,
+          marginBottom: glyphMarginBottom,
         }}
         ref={svgElement}
       >
         <g>
-          {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && (
-            <BulletCursorOverlay
-              isEditing={isEditing}
-              isHighlighted={isHighlighted}
-              leaf={leaf}
-              publish={publish}
-              simplePath={simplePath}
-            />
+          {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && (
+            <BulletHighlightOverlay bulletOverlayRadius={bulletOverlayRadius} />
           )}
           {leaf && !showContexts ? (
             <BulletLeaf
