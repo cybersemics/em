@@ -5,7 +5,6 @@ import { buttonRecipe } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
-import fastClick from '../../util/fastClick'
 import getQueryParam from '../../util/getQueryParam'
 import storage from '../../util/storage'
 import ActionButton from './../ActionButton'
@@ -153,13 +152,15 @@ const ModalSignup = () => {
                   title={modes.signup.modalTitle}
                   isDisabled={isSubmitting}
                   isLoading={isSubmitting}
-                  {...fastClick(() => submitAction(closeModal))}
+                  onClick={() => submitAction(closeModal)}
+                  role='button'
                 />
               )}
               <button
                 disabled={isSubmitting}
                 className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
-                {...fastClick(() => dispatch(showModal({ id: 'auth' })))}
+                onClick={() => dispatch(showModal({ id: 'auth' }))}
+                role='button'
               >
                 Log in
               </button>
