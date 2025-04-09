@@ -3,7 +3,6 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { css, cx } from '../../styled-system/css'
 import { anchorButtonRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
-import fastClick from '../util/fastClick'
 
 /** A triangular toggle component. */
 const Toggle: FC<{ expand?: boolean; title?: string } & PropsWithChildren> = ({ children, title }) => {
@@ -12,7 +11,7 @@ const Toggle: FC<{ expand?: boolean; title?: string } & PropsWithChildren> = ({ 
   return (
     <div>
       <div
-        {...fastClick(() => setExpanded(!expanded))}
+        onClick={() => setExpanded(!expanded)}
         className={css({ cursor: 'pointer', marginBottom: 20, userSelect: 'none' })}
       >
         <svg
@@ -53,7 +52,7 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
         </div>
       )}
       <pre className={css({ whiteSpace: 'normal' })}>{componentStack}</pre>
-      <a {...fastClick(() => window.location.reload())} className={cx(anchorButtonRecipe(), css({ minWidth: 0 }))}>
+      <a onClick={() => window.location.reload()} className={cx(anchorButtonRecipe(), css({ minWidth: 0 }))}>
         Refresh
       </a>
     </div>

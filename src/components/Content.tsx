@@ -14,7 +14,6 @@ import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
-import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import Editable from './Editable'
@@ -68,11 +67,7 @@ const Content: FC = () => {
   }
 
   return (
-    <div
-      id='content-wrapper'
-      {...fastClick(() => dispatch(clickOnEmptySpace), { enableHaptics: false })}
-      onMouseDown={() => setIsPressed(true)}
-    >
+    <div id='content-wrapper' onClick={() => dispatch(clickOnEmptySpace)} onMouseDown={() => setIsPressed(true)}>
       <div
         id='content'
         ref={contentRef}

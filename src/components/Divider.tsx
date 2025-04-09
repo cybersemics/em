@@ -12,7 +12,6 @@ import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import viewportStore from '../stores/viewport'
-import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 
@@ -98,7 +97,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
         zIndex: 'stack',
       })}
       style={{ width: `${dividerWidth}px` }}
-      {...fastClick(setCursorToDivider, { enableHaptics: false })}
+      onClick={setCursorToDivider}
     >
       <div
         aria-label={'editable-' + head(path)}
