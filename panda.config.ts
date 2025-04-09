@@ -267,6 +267,14 @@ export default defineConfig({
   theme: {
     extend: {
       keyframes,
+      breakpoints: {
+        sm: '320px', // approx size of iPhone SE
+        md: '400px', // approx size of iPhone 12 Pro
+        lg: '600px', // approx size of iPad
+        xl: '800px', // approx size of a laptop
+        '2xl': '1000px', // approx size of a desktop
+        '3xl': '1200px', // approx size of a large desktop
+      },
       tokens: {
         colors: colorTokens,
         easings: {

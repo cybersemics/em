@@ -123,6 +123,10 @@ const CommandItem = ({
               })}
             >
               <GestureDiagram
+                cssRaw={css.raw({
+                  width: { sm: '80px', md: '130px' },
+                  height: { sm: '80px', md: '130px' },
+                })}
                 path={command.gesture as GesturePath}
                 size={130}
                 arrowSize={25}
