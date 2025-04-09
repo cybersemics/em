@@ -1,8 +1,9 @@
 import { forwardRef, useImperativeHandle, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
-import CommandOrderType from '../@types/CommandOrderType'
+import CommandSortType from '../@types/CommandSortType'
 import theme from '../selectors/theme'
+import SortOption from './SortOption'
 import SortIcon from './icons/SortIcon'
 
 export interface SortButtonHandle {
@@ -10,7 +11,7 @@ export interface SortButtonHandle {
 }
 
 interface SortButtonProps {
-  onSortChange: (sortOrder: CommandOrderType) => void
+  onSortChange: (sortOrder: CommandSortType) => void
 }
 
 /**
@@ -19,7 +20,7 @@ interface SortButtonProps {
 const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange }, ref) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
-  const [selectedSort, setSelectedSort] = useState<CommandOrderType>('type')
+  const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
 
   useImperativeHandle(
     ref,
@@ -32,7 +33,7 @@ const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange
   /**
    * Handles the sort change.
    */
-  const handleSortChange = (sortOrder: CommandOrderType) => {
+  const handleSortChange = (sortOrder: CommandSortType) => {
     setSelectedSort(sortOrder)
     onSortChange(sortOrder)
     setDropdownOpen(false)
@@ -97,75 +98,13 @@ const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange
         >
           Sort by:
         </h2>
-        <label
-          className={css({
-            display: 'flex',
-            flexDirection: 'row',
-            color: 'gray50',
-          })}
-        >
-          <input
-            type='radio'
-            checked={selectedSort === 'alphabetical'}
-            onChange={() => handleSortChange('alphabetical')}
-            className={css({
-              appearance: 'none',
-              width: '12px',
-              height: '12px',
-              border: '2px solid {colors.gray50}',
-              borderRadius: '50%',
-              display: 'inline-block',
-              position: 'relative',
-              '&:checked': {
-                borderColor: 'fg',
-              },
-            })}
-          />
-          <h3
-            className={css({
-              color: selectedSort === 'alphabetical' ? 'fg' : 'gray50',
-              margin: '0 0 0 0.2rem',
-              fontWeight: 'normal',
-              fontSize: '0.9rem',
-            })}
-          >
-            Alphabetical
-          </h3>
-        </label>
-        <label
-          className={css({
-            display: 'flex',
-            flexDirection: 'row',
-          })}
-        >
-          <input
-            type='radio'
-            checked={selectedSort === 'type'}
-            onChange={() => handleSortChange('type')}
-            className={css({
-              appearance: 'none',
-              width: '12px',
-              height: '12px',
-              border: '2px solid {colors.gray50}',
-              borderRadius: '50%',
-              display: 'inline-block',
-              position: 'relative',
-              '&:checked': {
-                borderColor: 'fg',
-              },
-            })}
-          />
-          <h3
-            className={css({
-              color: selectedSort === 'type' ? 'fg' : 'gray50',
-              margin: '0 0 0 0.2rem',
-              fontWeight: 'normal',
-              fontSize: '0.9rem',
-            })}
-          >
-            Type
-          </h3>
-        </label>
+        <SortOption
+          sort={'alphabetical'}
+          label='Alphabetical'
+          selectedSort={selectedSort}
+          handleSortChange={handleSortChange}
+        />
+        <SortOption sort={'type'} label='Type' selectedSort={selectedSort} handleSortChange={handleSortChange} />
       </div>
     </button>
   )
