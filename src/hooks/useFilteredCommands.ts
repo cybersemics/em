@@ -12,7 +12,8 @@ const visibleCommands = globalCommands.filter(command => !command.hideFromComman
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
-  (!command.canExecute || command.canExecute(state)) && (command.allowExecuteFromModal || !state.showModal)
+  (!command.canExecute || command.canExecute(state)) &&
+  (command.allowExecuteFromModal || !state.showModal || !state.showGestureCheatsheet)
 
 /** A hook that filters and sorts commands based on a search or the current gesture or keyboard input. */
 const useFilteredCommands = (
@@ -35,7 +36,7 @@ const useFilteredCommands = (
   const possibleCommandsSorted = useMemo(() => {
     const possibleCommands = visibleCommands.filter(command => {
       // Always include help command in gesture mode
-      if (isTouch && (command.id === 'help' || command.id === 'cancel')) return true
+      if (isTouch && (command.id === 'openGestureCheatsheet' || command.id === 'cancel')) return true
       if (!isTouch && command.id === 'cancel') return false
 
       // gesture
@@ -76,7 +77,7 @@ const useFilteredCommands = (
       ).toLowerCase()
 
       // In gesture mode, help command should always be at the end
-      if (isTouch && (command.id === 'help' || command.id === 'cancel')) return '\x99'
+      if (isTouch && (command.id === 'openGestureCheatsheet' || command.id === 'cancel')) return '\x99'
       // always sort exact match to top
       if (gestureInProgress === command.gesture || search.trim().toLowerCase() === label) return '\x00'
       // sort inactive commands to the bottom alphabetically

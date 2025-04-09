@@ -181,7 +181,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const state = store.getState()
     const experienceMode = getUserSetting(state, Settings.experienceMode)
 
-    if (state.showModal || state.dragInProgress) return
+    if (state.showModal || state.dragInProgress || state.showGestureCheatsheet) return
 
     // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
     // useFilteredCommands updates the possibleCommands in a back channel for efficiency.
@@ -238,20 +238,20 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // Get the command from the command gesture index.
     // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
 
-    const helpCommand = commandById('help')
-    const helpGesture = gestureString(helpCommand)
+    const openGestureCheatsheetCommand = commandById('openGestureCheatsheet')
+    const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
 
     // If sequence ends with help gesture, use help command
     // Otherwise use the normal command lookup
-    const command = sequence?.toString().endsWith(helpGesture)
-      ? helpCommand
+    const command = sequence?.toString().endsWith(openGestureCheatsheetGesture)
+      ? openGestureCheatsheetCommand
       : !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
         : null
 
     // execute command
     // do not execute when modal is displayed or a drag is in progress
-    if (command && !state.showModal && !state.dragInProgress) {
+    if (command && !state.showModal && !state.showGestureCheatsheet && !state.dragInProgress) {
       commandEmitter.trigger('command', command)
       executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
       if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
@@ -332,7 +332,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const command = commandKeyIndex[hashKeyDown(e)]
 
     // disable if modal is shown, except for navigation commands
-    if (!command || (state.showModal && !command.allowExecuteFromModal)) return
+    if (!command || state.showGestureCheatsheet || (state.showModal && !command.allowExecuteFromModal)) return
 
     // execute the command
     commandEmitter.trigger('command', command)

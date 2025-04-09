@@ -118,6 +118,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   settings: true,
   showTip: false,
   showModal: false,
+  toggleGestureCheatsheet: false,
   splitSentences: true,
   splitThought: true,
   status: false,

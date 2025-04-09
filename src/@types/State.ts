@@ -146,6 +146,7 @@ interface State {
    */
   showModal?: Modal | null
   showSidebar: boolean
+  showGestureCheatsheet?: boolean
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
       'connecting'     Connecting.
