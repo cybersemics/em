@@ -102,8 +102,6 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
             background: 'linear-gradient(to top, {colors.bg} 0%, transparent 100%)',
             pointerEvents: 'none',
             display: 'block',
-            opacity: 1,
-            transition: 'opacity {durations.fast} ease',
             zIndex: 2,
           })}
         />
