@@ -229,7 +229,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         padding: `14px ${TOOLBAR_BUTTON_PADDING}px ${isDraggingAny ? '7em' : 0}px ${TOOLBAR_BUTTON_PADDING}px`,
       }}
       onMouseLeave={onMouseLeave}
-      onClick={tapUp}
+      onMouseUp={tapUp}
       onMouseDown={tapDown}
       onTouchStart={tapDown}
       onTouchMove={touchMove}
