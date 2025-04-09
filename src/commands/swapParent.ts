@@ -9,7 +9,7 @@ const swapParent: Command = {
   label: 'Swap Parent',
   description: 'Swap the current thought with its parent.',
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot swap parent with multiple thoughts.',
   },
   svg: SwapParentIcon,

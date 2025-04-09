@@ -10,40 +10,39 @@ import indentCommand from '../indent'
 
 beforeEach(initStore)
 
-describe('indent', () => {
-  describe('multicursor', () => {
-    it('indents multiple thoughts', async () => {
-      store.dispatch([
-        importText({
-          text: `
+describe('multicursor', () => {
+  it('indents multiple thoughts', async () => {
+    store.dispatch([
+      importText({
+        text: `
             - a
             - b
             - c
             - d
           `,
-        }),
-        setCursor(['b']),
-        addMulticursor(['b']),
-        addMulticursor(['c']),
-      ])
+      }),
+      setCursor(['b']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
 
-      executeCommandWithMulticursor(indentCommand, { store })
+    executeCommandWithMulticursor(indentCommand, { store })
 
-      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-      const expectedOutput = `- ${HOME_TOKEN}
+    const expectedOutput = `- ${HOME_TOKEN}
   - a
     - b
     - c
   - d`
 
-      expect(exported).toEqual(expectedOutput)
-    })
+    expect(exported).toEqual(expectedOutput)
+  })
 
-    it('indents thoughts at different levels', async () => {
-      store.dispatch([
-        importText({
-          text: `
+  it('indents thoughts at different levels', async () => {
+    store.dispatch([
+      importText({
+        text: `
             - a
               - b
               - c
@@ -51,17 +50,17 @@ describe('indent', () => {
               - e
               - f
           `,
-        }),
-        setCursor(['a', 'c']),
-        addMulticursor(['a', 'c']),
-        addMulticursor(['d', 'f']),
-      ])
+      }),
+      setCursor(['a', 'c']),
+      addMulticursor(['a', 'c']),
+      addMulticursor(['d', 'f']),
+    ])
 
-      executeCommandWithMulticursor(indentCommand, { store })
+    executeCommandWithMulticursor(indentCommand, { store })
 
-      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-      const expectedOutput = `- ${HOME_TOKEN}
+    const expectedOutput = `- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -69,41 +68,41 @@ describe('indent', () => {
     - e
       - f`
 
-      expect(exported).toEqual(expectedOutput)
-    })
+    expect(exported).toEqual(expectedOutput)
+  })
 
-    it('does not indent all thoughts on the same level', () => {
-      store.dispatch([
-        importText({
-          text: `
+  it('does not indent all thoughts on the same level', () => {
+    store.dispatch([
+      importText({
+        text: `
             - a
               - b
               - c
             - d
           `,
-        }),
-        setCursor(['b']),
-        addMulticursor(['b']),
-        addMulticursor(['c']),
-      ])
+      }),
+      setCursor(['b']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
 
-      executeCommandWithMulticursor(indentCommand, { store })
+    executeCommandWithMulticursor(indentCommand, { store })
 
-      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-      const expectedOutput = `- ${HOME_TOKEN}
+    const expectedOutput = `- ${HOME_TOKEN}
   - a
     - b
     - c
   - d`
 
-      expect(exported).toEqual(expectedOutput)
-    })
+    expect(exported).toEqual(expectedOutput)
+  })
 
-    it('indents parent/child thoughts', () => {
-      store.dispatch([
-        importText({
-          text: `
+  it('indents parent/child thoughts', () => {
+    store.dispatch([
+      importText({
+        text: `
           - a
             - b
           - c
@@ -111,18 +110,18 @@ describe('indent', () => {
           - e
             - f
           `,
-        }),
-        setCursor(['c']),
-        addMulticursor(['c']),
-        addMulticursor(['c', 'd']),
-        addMulticursor(['e']),
-      ])
+      }),
+      setCursor(['c']),
+      addMulticursor(['c']),
+      addMulticursor(['c', 'd']),
+      addMulticursor(['e']),
+    ])
 
-      executeCommandWithMulticursor(indentCommand, { store })
+    executeCommandWithMulticursor(indentCommand, { store })
 
-      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-      const expectedOutput = `- ${HOME_TOKEN}
+    const expectedOutput = `- ${HOME_TOKEN}
   - a
     - b
     - c
@@ -130,7 +129,6 @@ describe('indent', () => {
     - e
       - f`
 
-      expect(exported).toEqual(expectedOutput)
-    })
+    expect(exported).toEqual(expectedOutput)
   })
 })

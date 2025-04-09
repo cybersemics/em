@@ -23,7 +23,6 @@ const copyCursorCommand: Command = {
   description: 'Copies the cursor and all descendants.',
   keyboard: { key: 'c', meta: true },
   multicursor: {
-    enabled: true,
     execMulticursor: async (cursors, dispatch, getState) => {
       const state = getState()
 

@@ -66,22 +66,11 @@ it('update cursor after thought deletion', () => {
   const state = initialState()
   const stateNew = reducerFlow(steps)(state)
 
-  expectPathToEqual(stateNew, stateNew.cursor, [
-    {
-      value: 'a',
-    },
-    {
-      value: 'b',
-    },
-  ])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
 
   const stateAfterDeletion = reducerFlow([deleteThoughtAtFirstMatch(['a', 'b'])])(stateNew)
 
-  expectPathToEqual(stateAfterDeletion, stateAfterDeletion.cursor!, [
-    {
-      value: 'a',
-    },
-  ])
+  expectPathToEqual(stateAfterDeletion, stateAfterDeletion.cursor, ['a'])
 })
 
 it('delete the intended empty thought when there are multiple', () => {

@@ -8,7 +8,7 @@ import getLatestActionType from '../util/getLastActionType'
 const undoCommand: Command = {
   id: 'undo',
   label: 'Undo',
-  multicursor: 'ignore',
+  multicursor: false,
   description: state => {
     const lastActionType = getLatestActionType(state.undoPatches)
 

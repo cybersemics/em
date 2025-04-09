@@ -64,6 +64,7 @@ const metricsAuthMiddleware = basicAuth({
   users: {
     ...(hasMetricsCredentials ? { [process.env.METRICS_USERNAME!]: process.env.METRICS_PASSWORD! } : null),
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   unauthorizedResponse: (req: any): string =>
     !hasMetricsCredentials ? METRICS_DISABLED_MESSAGE : !req.auth ? 'Basic auth required' : 'Unauthorized',
 })
@@ -83,6 +84,7 @@ app.post(
     // TODO
     // origin: /http:\/\/localhost:\d+/,
   }),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async (req: Request<any, any, string, any>, res) => {
     if (!req.body) {
       return res.status(400).send('Missing req.body')

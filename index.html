@@ -42,6 +42,7 @@
       const theme = localStorage.getItem('storageCache/theme')?.toLowerCase() || 'dark'
       document.documentElement.style.backgroundColor = theme === 'dark' ? '#000' : '#fff'
       document.body.setAttribute('data-color-mode', theme)
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#000' : '#fff')
       document.body.setAttribute('data-env', navigator.webdriver ? 'test' : '%MODE%')
     </script>
     <script type="module" src="/src/index.tsx"></script>

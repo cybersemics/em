@@ -20,6 +20,7 @@ function getItem(key: string, defaultValue?: string | (() => string)) {
 }
 
 /** An interaface that defines how to encode/decode a strongly typed value from storage. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface ModelSpec<T = any> {
   default?: T
   /** Decodes a string stored in local storage back into a properly typed value. Default: identify function. */

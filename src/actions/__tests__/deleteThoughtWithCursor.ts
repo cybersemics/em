@@ -14,9 +14,9 @@ import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import toggleContextView from '../toggleContextView'
 
-describe('delete', () => {
+describe('nomal view', () => {
   it('delete thought within root', () => {
-    const steps = [newThought('a'), newThought('b'), deleteThoughtWithCursor({})]
+    const steps = [newThought('a'), newThought('b'), deleteThoughtWithCursor]
 
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -26,7 +26,7 @@ describe('delete', () => {
   })
 
   it('delete thought with no cursor should do nothing ', () => {
-    const steps = [newThought('a'), newThought('b'), setCursor(null), deleteThoughtWithCursor({})]
+    const steps = [newThought('a'), newThought('b'), setCursor(null), deleteThoughtWithCursor]
 
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -37,7 +37,7 @@ describe('delete', () => {
   })
 
   it('delete thought within context', () => {
-    const steps = [newThought('a'), newSubthought('a1'), deleteThoughtWithCursor({})]
+    const steps = [newThought('a'), newSubthought('a1'), deleteThoughtWithCursor]
 
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -47,7 +47,7 @@ describe('delete', () => {
   })
 
   it('delete descendants', () => {
-    const steps = [newThought('a'), newSubthought('a1'), newSubthought('a1.1'), cursorBack, deleteThoughtWithCursor({})]
+    const steps = [newThought('a'), newSubthought('a1'), newSubthought('a1.1'), cursorBack, deleteThoughtWithCursor]
 
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -63,7 +63,7 @@ describe('delete', () => {
       newThought('a2'),
       newThought('a3'),
       cursorUp,
-      deleteThoughtWithCursor({}),
+      deleteThoughtWithCursor,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -72,13 +72,7 @@ describe('delete', () => {
   })
 
   it('cursor should move to prev sibling when deleting the last thought in the context', () => {
-    const steps = [
-      newThought('a'),
-      newSubthought('a1'),
-      newThought('a2'),
-      newThought('a3'),
-      deleteThoughtWithCursor({}),
-    ]
+    const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), newThought('a3'), deleteThoughtWithCursor]
 
     const stateNew = reducerFlow(steps)(initialState())
 
@@ -86,7 +80,7 @@ describe('delete', () => {
   })
 
   it('cursor should move to parent if the deleted thought has no siblings', () => {
-    const steps = [newThought('a'), newSubthought('a1'), deleteThoughtWithCursor({})]
+    const steps = [newThought('a'), newSubthought('a1'), deleteThoughtWithCursor]
 
     const stateNew = reducerFlow(steps)(initialState())
 
@@ -94,7 +88,7 @@ describe('delete', () => {
   })
 
   it('cursor should be removed if the last thought in the thoughtspace is deleted', () => {
-    const steps = [newThought('a'), deleteThoughtWithCursor({})]
+    const steps = [newThought('a'), deleteThoughtWithCursor]
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBe(null)
@@ -120,7 +114,7 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'b']),
-      deleteThoughtWithCursor({}),
+      deleteThoughtWithCursor,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -157,7 +151,7 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'a']),
-      deleteThoughtWithCursor({}),
+      deleteThoughtWithCursor,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -194,7 +188,7 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'b', 'y']),
-      deleteThoughtWithCursor({}),
+      deleteThoughtWithCursor,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -232,7 +226,7 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'a', 'x']),
-      deleteThoughtWithCursor({}),
+      deleteThoughtWithCursor,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -267,7 +261,7 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'b']),
-      deleteThoughtWithCursor({}),
+      deleteThoughtWithCursor,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -297,7 +291,7 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'a']),
-      deleteThoughtWithCursor({}),
+      deleteThoughtWithCursor,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -325,7 +319,7 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'b']),
-      deleteThoughtWithCursor({}),
+      deleteThoughtWithCursor,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())

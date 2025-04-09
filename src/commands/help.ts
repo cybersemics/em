@@ -11,7 +11,7 @@ const openHelpCommand: Command = {
     isTouch ? 'gestures' : 'keyboard shortcuts'
   }.`,
   keyboard: { key: '/', meta: true },
-  multicursor: 'ignore',
+  multicursor: false,
   svg: HelpIcon,
   exec: dispatch => {
     dispatch(showModal({ id: 'help' }))

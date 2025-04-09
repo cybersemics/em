@@ -61,6 +61,21 @@ describe('subscribeSelector', () => {
     expect(counter).toBe(2)
   })
 
+  it('unsubscribe', () => {
+    let counter = 0
+    const store = ministore({ a: 1, b: 4 })
+    const unsubscribe = store.subscribeSelector(
+      state => state.a,
+      a => (counter += a),
+    )
+    store.update({ a: 2 })
+    expect(counter).toBe(2)
+
+    unsubscribe()
+    store.update({ a: 3 })
+    expect(counter).toBe(2)
+  })
+
   it('only trigger if slice has changed', () => {
     let counter = 0
     const store = ministore({ a: 1, b: 4 })
@@ -152,6 +167,7 @@ describe('compose', () => {
     const storeB = ministore(2)
     const composite = ministore.compose((state1: number, state2: number) => 10 * state1 + state2, [storeA, storeB])
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((composite as any).update).toBeUndefined()
   })
 

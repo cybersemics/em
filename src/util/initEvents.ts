@@ -9,7 +9,7 @@ import { commandPaletteActionCreator as commandPalette } from '../actions/comman
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isSafari, isTouch } from '../browser'
+import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
 import { inputHandlers } from '../commands'
 import { AlertText, AlertType } from '../constants'
 import * as selection from '../device/selection'
@@ -18,6 +18,7 @@ import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import { updateSafariKeyboardState } from '../stores/safariKeyboardStore'
 import { updateScrollTop } from '../stores/scrollTop'
 import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
@@ -26,6 +27,7 @@ import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
+import handleKeyboardVisibility from './handleKeyboardVisibility'
 
 declare global {
   interface Window {
@@ -113,7 +115,56 @@ const scrollAtEdge = (() => {
   return { start, stop }
 })()
 
+/** Warns on close if saving is in progress. */
+const onBeforeUnload = (e: BeforeUnloadEvent) => {
+  const syncStatus = syncStatusStore.getState()
+  if (
+    syncStatus.savingProgress < 1 &&
+    // do not warn user if importing, since it is resumable
+    store.getState().alert?.alertType !== AlertType.ImportFile
+  ) {
+    // Note: Showing confirmation dialog can vary between browsers.
+    // See: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
+    e.preventDefault()
+    e.returnValue = ''
+    return ''
+  }
+}
+
+/** Time to wait for save to complete. */
+const SAVE_ERROR_TIME = 3000
+
+/** Time to show error message before reload. */
+const SAVE_ERROR_RELOAD_TIME = 3000
+
+/** Save error timer id. */
+let saveTimer: NodeJS.Timeout
+
+/**
+ * There is a known issue where saving gets stuck after and/redo and further edits are not saved.
+ * If it takes longer than 3 seconds to save [to IndexedDB], then there is a major problem!
+ * Show an error for three seconds then force a reload to prevent data loss.
+ */
+const saveErrorReload = (savingProgress: number) => {
+  if (savingProgress === 1) {
+    clearTimeout(saveTimer)
+  }
+  // Only set timer if one is not already running.
+  // i.e. start timing from the first savingProgress < 1
+  else if (!saveTimer) {
+    saveTimer = setTimeout(() => {
+      store.dispatch(error({ value: 'Save error detected. Reloading to prevent data loss...' }))
+      setTimeout(() => {
+        // remove onBeforeUnload listener to prevent the confirmation dialog and force a reload
+        window.removeEventListener('beforeunload', onBeforeUnload)
+        window.location.reload()
+      }, SAVE_ERROR_RELOAD_TIME)
+    }, SAVE_ERROR_TIME)
+  }
+}
+
 /** Add window event handlers. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const initEvents = (store: Store<State, any>) => {
   let lastState: number
   let lastPath: Path | null
@@ -168,6 +219,10 @@ const initEvents = (store: Store<State, any>) => {
 
     // update command state store
     updateCommandState()
+
+    if (isTouch && isSafari() && !isIOS) {
+      updateSafariKeyboardState()
+    }
   }
 
   /** MouseMove event listener. */
@@ -234,22 +289,6 @@ const initEvents = (store: Store<State, any>) => {
   /** Stops the scroll-at-edge when dragging stops. */
   const onTouchEnd = () => {
     scrollAtEdge.stop()
-  }
-
-  /** Warns on close if saving is in progress. */
-  const onBeforeUnload = (e: BeforeUnloadEvent) => {
-    const syncStatus = syncStatusStore.getState()
-    if (
-      syncStatus.savingProgress < 1 &&
-      // do not warn user if importing, since it is resumable
-      store.getState().alert?.alertType !== AlertType.ImportFile
-    ) {
-      // Note: Showing confirmation dialog can vary between browsers.
-      // See: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
-      e.preventDefault()
-      e.returnValue = ''
-      return ''
-    }
   }
 
   /** Handle a page lifecycle state change, i.e. switching apps. */
@@ -341,12 +380,23 @@ const initEvents = (store: Store<State, any>) => {
   const resizeHost = window.visualViewport || window
   resizeHost.addEventListener('resize', updateSize)
 
+  // Add Visual Viewport resize listener for keyboard detection
+  if (isTouch && isAndroidWebView() && window.visualViewport) {
+    window.visualViewport.addEventListener('resize', handleKeyboardVisibility)
+
+    // Force an immediate check in case keyboard is already visible
+    handleKeyboardVisibility()
+  }
+
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
 
+  const unsubscribeSaveErrorReload = syncStatusStore.subscribeSelector(state => state.savingProgress, saveErrorReload)
+
   /** Remove window event handlers. */
   const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
+    unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
@@ -361,6 +411,11 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
+
+    // Remove Visual Viewport event listener
+    if (isTouch && isAndroidWebView() && window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', handleKeyboardVisibility)
+    }
   }
 
   // return input handlers as another way to remove them on cleanup
@@ -369,6 +424,7 @@ const initEvents = (store: Store<State, any>) => {
 
 /** Error event listener. This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
 // const onError = (e: { message: string; error?: Error }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onError = (e: any) => {
   console.error({ message: e.message, code: e.code, errors: e.errors })
   if (e.error && 'stack' in e.error) {

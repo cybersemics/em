@@ -323,7 +323,15 @@ const nodeMove = (state: State, tree: Tree, oldPath: Path, newPath: Path) => {
 
 /** Using immer to pass a draft object as the first argument to the given destructive function to avoid mutation. */
 const immerfy =
-  <T = any>(f: (state: State, draft: T, ...rest: any[]) => void) =>
+  <T>(
+    f: (
+      state: State,
+      draft: T,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ...rest: any[]
+    ) => void,
+  ) =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (state: State, obj: T, ...rest: any[]) =>
     produce(obj, (draft: T) => f(state, draft, ...rest))
 

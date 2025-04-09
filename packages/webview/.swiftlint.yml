@@ -1,0 +1,2 @@
+excluded:
+  - node_modules

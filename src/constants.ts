@@ -14,6 +14,9 @@ export const MAX_DEPTH = 20
 // number of ms to wait after thought hover to expand it's children
 export const EXPAND_HOVER_DELAY = 1000
 
+// threshold for keyboard visibility detection (percentage of height change)
+export const KEYBOARD_VISIBILITY_THRESHOLD = 0.15
+
 // ms on startup before offline mode is enabled
 // sufficient to avoid flash on login
 export const OFFLINE_TIMEOUT = 8 * 1000
@@ -134,6 +137,9 @@ export const noop = () => {}
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200
 
+/** The left and right padding of each toolbar button (px). */
+export const TOOLBAR_BUTTON_PADDING = 8
+
 // Used for scaling the size of icons according to the font size
 export const ICON_SCALING_FACTOR = 1.37
 
@@ -178,7 +184,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'pin',
   'pinAll',
   'toggleTableView',
-  'toggleSort',
+  'toggleSortPicker',
   'toggleDone',
   'bold',
   'italic',
@@ -188,8 +194,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'letterCase',
   'toggleContextView',
   'note',
-  'subcategorizeOne',
-  'subcategorizeAll',
+  'categorize',
   'delete',
   'splitSentences',
   'toggleHiddenThoughts',
@@ -226,8 +231,8 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'search',
   // 'textColor',
   // 'toggleDone',
+  // 'toggleSort',
   // 'toggleSidebar',
-  // 'toggleSplitView',
 ]
 
 // Throttle editThought when user is typing.
@@ -244,7 +249,7 @@ export const REGEX_HTML = /<\/?[a-z][\s\S]*>/i
 // can be used to replace all HTML in a string
 export const REGEX_TAGS = /(<([^>]+)>)/gi
 
-/** Matches HTML tags that indicate the snippet is a block of proper HTML, not just text formatted with HTML tags. Includes <html>, <body>, <meta>, <li> and <ul>. Does not match strings that just contain formattings tags like <b>, <i>, or <u>. */
+/** Matches HTML tags that indicate the snippet is a block of proper HTML, not just text formatted with HTML tags. Includes <html>, <body>, <li>, <meta>, <ol>, <ul>. Does not match strings that just contain formattings tags like <b>, <i>, or <u>. */
 export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/i
 
 // starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
@@ -255,7 +260,7 @@ export const IPFS_GATEWAY = 'ipfs.infura.io'
 
 // delay before long press is activated
 // also used for react-dnd's delayTouchStart
-export const TIMEOUT_LONG_PRESS_THOUGHT = 300
+export const TIMEOUT_LONG_PRESS_THOUGHT = 400
 
 export const MODIFIER_KEYS = {
   Alt: 1,
@@ -536,14 +541,13 @@ export const COMMAND_GROUPS: {
   {
     title: 'Creating thoughts',
     commands: [
+      'categorize',
       'newThought',
       'newThoughtAbove',
       'newSubthought',
       'newSubthoughtTop',
       'newUncle',
       'newGrandChild',
-      'subcategorizeOne',
-      'subcategorizeAll',
       'extractThought',
       'generateThought',
     ],
@@ -558,7 +562,17 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Editing thoughts',
-    commands: ['join', 'splitSentences', 'bold', 'italic', 'strikethrough', 'underline', 'code', 'copyCursor'],
+    commands: [
+      'join',
+      'splitSentences',
+      'bold',
+      'italic',
+      'strikethrough',
+      'underline',
+      'code',
+      'copyCursor',
+      'removeFormat',
+    ],
   },
   {
     title: 'Oops',
@@ -598,3 +612,6 @@ export const COMMAND_GROUPS: {
     commands: ['cancel'],
   },
 ]
+
+/** The duration of the haptics vibrate on delete or archive non-empty thought. */
+export const DELETE_VIBRATE_DURATION = 80

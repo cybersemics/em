@@ -10,12 +10,13 @@ const textColor: Command = {
   svg: TextColorWithColorPicker,
   canExecute: state => isDocumentEditable() && !!state.cursor,
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot change text color with multiple thoughts.',
   },
   exec: (dispatch, getState) => {
     const state = getState()
     if (state.showLetterCase) dispatch({ type: 'toggleLetterCase' })
+    if (state.showSortPicker) dispatch({ type: 'toggleSortPicker' })
     dispatch({
       type: 'toggleColorPicker',
       path: state.cursor,

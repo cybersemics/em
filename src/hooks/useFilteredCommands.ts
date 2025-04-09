@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { useMemo } from 'react'
+import { useLayoutEffect, useMemo } from 'react'
 import { useStore } from 'react-redux'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
@@ -30,7 +30,7 @@ const useFilteredCommands = (
     sortActiveCommandsFirst?: boolean
   },
 ) => {
-  const gestureInProgress = gestureStore.useState()
+  const gestureInProgress = gestureStore.useSelector(state => state.gesture)
   const store = useStore()
 
   const possibleCommandsSorted = useMemo(() => {
@@ -56,7 +56,7 @@ const useFilteredCommands = (
 
         const label = (
           sortActiveCommandsFirst && command.labelInverse && command.isActive?.(store.getState())
-            ? command.labelInverse!
+            ? command.labelInverse
             : command.label
         ).toLowerCase()
         const chars = search.toLowerCase().split('')
@@ -121,6 +121,13 @@ const useFilteredCommands = (
     })
     return sorted
   }, [gestureInProgress, sortActiveCommandsFirst, search, recentCommands, store, platformCommandsOnly])
+
+  // persist possible commands to gestureStore so that they can be accessed by the onGestureSegment in commands.ts
+  useLayoutEffect(() => {
+    if (isTouch) {
+      gestureStore.update({ possibleCommands: possibleCommandsSorted })
+    }
+  }, [possibleCommandsSorted])
 
   return possibleCommandsSorted
 }

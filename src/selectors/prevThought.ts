@@ -1,6 +1,6 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
-import getChildren from '../selectors/getChildren'
+import { getChildrenSorted } from '../selectors/getChildren'
 import isContextViewActive from '../selectors/isContextViewActive'
 import prevContext from '../selectors/prevContext'
 import prevSibling from '../selectors/prevSibling'
@@ -18,7 +18,7 @@ const lastVisibleDescendant = (state: State, path: Path): Path => {
   if (!state.expanded[hashPath(simplePath)]) return path
 
   // If no children, return current path
-  const children = getChildren(state, head(simplePath))
+  const children = getChildrenSorted(state, head(simplePath))
   if (children.length === 0) return path
 
   const lastChild = children[children.length - 1]

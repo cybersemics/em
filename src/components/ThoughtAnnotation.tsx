@@ -9,6 +9,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -29,6 +30,7 @@ import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import resolveArray from '../util/resolveArray'
 import stripTags from '../util/stripTags'
+import FauxCaret from './FauxCaret'
 import StaticSuperscript from './StaticSuperscript'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
@@ -152,6 +154,7 @@ const ThoughtAnnotation = React.memo(
           // maxWidth: '100%',
           marginTop: '0',
           display: 'inline-block',
+          textAlign: 'left',
           verticalAlign: 'top',
           whiteSpace: 'pre-wrap',
           /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
@@ -197,6 +200,15 @@ const ThoughtAnnotation = React.memo(
           style={styleAnnotation}
         >
           <span
+            className={css({
+              fontSize: '1.25em',
+              margin: textMarkup.length ? '-0.375em 0 0 -0.125em' : '-0.25em 0 0 -0.0875em',
+              position: 'absolute',
+            })}
+          >
+            <FauxCaret caretType='thoughtStart' />
+          </span>
+          <span
             className={css(
               {
                 visibility: 'hidden',
@@ -229,8 +241,13 @@ const ThoughtAnnotation = React.memo(
           {email && <EmailIconLink email={email} />}
           {
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-            showSuperscript ? <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} /> : null
+            showSuperscript ? (
+              <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
+            ) : null
           }
+          <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
+            <FauxCaret caretType='thoughtEnd' />
+          </span>
         </div>
       </div>
     )
@@ -338,7 +355,11 @@ const ThoughtAnnotationContainer = React.memo(
       setCalculateContexts(true)
     }, [])
 
-    return showSuperscript || url || email || styleAnnotation ? (
+    // In order to render a faux caret while hideCaret animations are playing, ThoughtAnnotation always needs
+    // to exist on mobile Safari. The line end faux caret must be placed inline-block at the end of the
+    // thought text in order to cover cases where the selection is an ELEMENT_NODE and its bounding box
+    // does not represent the screen position of the caret.
+    return showSuperscript || url || email || styleAnnotation || (isTouch && isSafari()) ? (
       <ThoughtAnnotation
         {...{
           simplePath,

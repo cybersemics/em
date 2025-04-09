@@ -8,7 +8,6 @@ import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
-import useHoveringPath from '../hooks/useHoveringPath'
 import { getChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
@@ -50,7 +49,6 @@ const DropEnd = ({
   const dropHoverColor = useDropHoverColor(depth + 1)
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
-  useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
   // a boolean indicating if the drop-hover component is shown
   // true if hovering and the context is not sorted

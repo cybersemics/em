@@ -90,7 +90,7 @@ const NavBar = ({ position }: { position: string }) => {
                 position: 'absolute',
                 /* offset .nav padding */
                 width: 'calc(100% - 30px)',
-                transition: 'background-color 0.2s ease-out',
+                transition: 'background-color {durations.fast} ease-out',
                 justifyContent: 'flex-end',
                 ...(position === 'bottom' && {
                   position: 'relative',

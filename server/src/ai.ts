@@ -27,12 +27,13 @@ const ai = async (
             status: 400,
           },
         }
-  } catch (e: any) {
+  } catch (e) {
+    const error = e as Error & { code?: string; status: number }
     return {
       err: {
-        message: e.message,
-        code: e.code,
-        status: e.status,
+        message: error.message,
+        code: error.code,
+        status: error.status,
       },
     }
   }

@@ -17,7 +17,6 @@ const indentCommand: Command = {
     keyboard: moveCursorForward.keyboard,
   },
   multicursor: {
-    enabled: true,
     filter: 'prefer-ancestor',
     execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
       // Make sure we can execute for all cursors before proceeding.

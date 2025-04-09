@@ -1,15 +1,31 @@
+import { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { Settings } from '../constants'
+import globals from '../globals'
 import useScrollTop from '../hooks/useScrollTop'
 import getUserSetting from '../selectors/getUserSetting'
 import viewportStore from '../stores/viewport'
+import haptics from '../util/haptics'
 
 /** An overlay for the scroll zone that blocks pointer events. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const scrollTop = useScrollTop()
+  const lastHapticScrollPosition = useRef<number>(0)
   const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
+
+  /** Haptic feedback on scroll. */
+  useEffect(() => {
+    const hapticScrollDifference = Math.abs(lastHapticScrollPosition.current - scrollTop)
+    if (hapticScrollDifference >= 5) {
+      if (globals.touching) {
+        haptics.light()
+      }
+      lastHapticScrollPosition.current = scrollTop
+    }
+  }, [scrollTop])
+
   if (hideScrollZone) return null
 
   return (

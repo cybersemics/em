@@ -28,7 +28,7 @@ const cursorForwardCommand: Command = {
   id: 'cursorForward',
   description: 'Move the cursor down a level.',
   label: 'Forward',
-  multicursor: 'ignore',
+  multicursor: false,
   gesture: 'l',
   svg: Icon,
   // must wrap in anonymous function since exit is defined at run time

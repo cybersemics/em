@@ -272,15 +272,7 @@ it('edit a child with the same value as its parent', () => {
     { value: 'ab', rank: 0, id: thoughtInContextA.id },
   ])
 
-  // cursor should be /a/ab
-  expectPathToEqual(stateNew, stateNew.cursor, [
-    {
-      value: 'a',
-    },
-    {
-      value: 'ab',
-    },
-  ])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'ab'])
 })
 
 it('do not duplicate children when new and old context are same', () => {

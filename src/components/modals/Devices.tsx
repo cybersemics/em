@@ -353,15 +353,15 @@ const ShareDetail = React.memo(
         () => {
           // flash the share url input without re-rendering the whole component
           const color = shareUrlInputRef.current?.style.color || ''
-          const textStrokeWidth = shareUrlInputRef.current?.style['WebkitTextStrokeWidth' as any] || ''
+          const textStrokeWidth = shareUrlInputRef.current?.style.webkitTextStrokeWidth || ''
           if (shareUrlInputRef.current) {
             shareUrlInputRef.current.style.color = token.var('colors.highlight')
-            shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = 'medium'
+            shareUrlInputRef.current.style.webkitTextStrokeWidth = 'medium'
           }
           setTimeout(() => {
             if (shareUrlInputRef.current) {
               shareUrlInputRef.current.style.color = color
-              shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = textStrokeWidth
+              shareUrlInputRef.current.style.webkitTextStrokeWidth = textStrokeWidth
             }
           }, 200)
 

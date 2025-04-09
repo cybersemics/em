@@ -6,8 +6,8 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
+import longPressStore from '../stores/longPressStore'
 import useLongPress from './useLongPress'
 
 /** Adds event handlers to detect long press and set state.dragHold while the user is long pressing a thought in preparation for a drag. */
@@ -30,15 +30,11 @@ const useDragHold = ({
   const dispatch = useDispatch()
 
   /** Highlight bullet and show alert on long press on Thought. */
-  const onLongPressStart = useCallback(
-    () => {
-      if (disabled) return
-      setIsPressed(true)
-      dispatch([dragHold({ value: true, simplePath, sourceZone })])
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
+  const onLongPressStart = useCallback(() => {
+    if (disabled) return
+    setIsPressed(true)
+    dispatch([dragHold({ value: true, simplePath, sourceZone })])
+  }, [disabled, dispatch, simplePath, sourceZone])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
   const onLongPressEnd = useCallback(
@@ -58,8 +54,7 @@ const useDragHold = ({
         }
       })
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [disabled, dispatch, simplePath, toggleMulticursorOnLongPress],
   )
 
   // react-dnd stops propagation so onLongPressEnd sometimes doesn't get called.
@@ -76,10 +71,15 @@ const useDragHold = ({
           dispatch(clearMulticursors())
         }
       }
+      // If we were dragging but now we're not, make sure to reset the lock
+      if (!isDragging && state.dragHold) {
+        // Reset the lock to allow immediate long press after drag ends
+        longPressStore.unlock()
+      }
     })
   }, [dispatch, isDragging])
 
-  const props = useLongPress(onLongPressStart, onLongPressEnd, null, TIMEOUT_LONG_PRESS_THOUGHT)
+  const props = useLongPress(onLongPressStart, onLongPressEnd)
 
   return {
     isPressed,

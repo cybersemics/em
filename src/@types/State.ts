@@ -78,7 +78,9 @@ interface State {
   error?: string | null
   /** A map of all Paths that are expanded. Recalculated whenever the cursor moves or the thoughts change. Keyed by hashPath(path). */
   expanded: Index<Path>
+  /** Expand thoughts during drag-and-drop by hovering over them. Tracked separately from state.expanded so they can be toggled on/off independently from autoexpansion. */
   expandHoverDownPaths: Index<Path>
+  /** Make hidden ancestors visible during drag-and-drop by hovering over them. This allows a thought to be dragged anywhere, even to thoughts that are initially hidden by autofocus. */
   expandHoverUpPath?: Path | null
   expandedContextThought?: Path
   fontSize: number
@@ -132,10 +134,11 @@ interface State {
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number
-  showLetterCase?: boolean
   showColorPicker?: boolean
+  showLetterCase?: boolean
   showCommandPalette: boolean
   showHiddenThoughts: boolean
+  showSortPicker?: boolean
   /**
    * The currently shown modal dialog box.
    * Initialized to the welcome modal, unless already completed.
@@ -143,11 +146,8 @@ interface State {
    */
   showModal?: Modal | null
   showSidebar: boolean
-  showSplitView: boolean
   /** Whether the gesture cheatsheet dialog is open. */
   showGestureCheatsheet?: boolean
-  /** The width of the react-split-pane (% or px). */
-  splitPosition: number
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
       'connecting'     Connecting.

@@ -9,7 +9,11 @@ export interface Ministore<T> {
   /** Subscribes to one update. */
   once: (predicate?: (state: T) => boolean) => CancellablePromise<T>
   /** Subscribes to changes to a slice of the state. Returns an unsubscribe function. */
-  subscribeSelector: <S>(selector: (state: T) => S, f: (slice: S) => void, equals?: (a: S, b: S) => boolean) => void
+  subscribeSelector: <S>(
+    selector: (state: T) => S,
+    f: (slice: S) => void,
+    equals?: (a: S, b: S) => boolean,
+  ) => () => void
   /** Updates the state. If the state is an object, accepts a partial update. Accepts an updater function that passes the old state. */
   update: (updatesOrUpdater: Partial<T> | ((oldState: T) => Partial<T>)) => void
 }
@@ -26,7 +30,8 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     // short circuit if value(s) are unchanged
     if (
       updates && typeof updates === 'object'
-        ? Object.entries(updates).every(([key, value]) => value === (state as any)[key])
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          Object.entries(updates).every(([key, value]) => value === (state as any)[key])
         : updates === state
     )
       return
@@ -53,7 +58,7 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     equals: (a: S, b: S) => boolean = (a, b) => a === b,
   ) => {
     let value = selector(state)
-    subscribe(() => {
+    return subscribe(() => {
       const valueOld = value
       value = selector(state)
       if (!equals(value, valueOld)) {
@@ -93,6 +98,7 @@ const ministore = <T>(initialState: T): Ministore<T> => {
 }
 
 /** Create a read-only computed ministore that derives its state from one or more ministores. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function compose<T, S extends any[]>(
   compute: (...states: S) => T,
   // accept the same number of Ministores as states, with corresponding generic types, by using a mapped type generated from the states array
