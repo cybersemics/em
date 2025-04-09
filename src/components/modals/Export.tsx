@@ -37,7 +37,6 @@ import theme from '../../selectors/theme'
 import ellipsize from '../../util/ellipsize'
 import equalPath from '../../util/equalPath'
 import exportPhrase from '../../util/exportPhrase'
-import fastClick from '../../util/fastClick'
 import head from '../../util/head'
 import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
@@ -246,7 +245,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
   return (
     <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>
-      <a className={css({ color: 'fg' })} {...fastClick(() => setIsOpen(!isOpen))}>
+      <a className={css({ color: 'fg' })} onClick={() => setIsOpen(!isOpen)} role='button'>
         {selected.label}
       </a>
       <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
@@ -632,7 +631,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
             backgroundColor: 'fg',
           })}
           disabled={exportContent === null}
-          {...fastClick(onExportClick)}
+          onClick={onExportClick}
+          role='button'
         >
           {exportWord}
         </button>
@@ -662,7 +662,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
                 opacity: advancedSettings ? 1 : 0.5,
               }),
             )}
-            {...fastClick(onAdvancedClick)}
+            onClick={onAdvancedClick}
+            role='button'
           >
             Advanced
           </a>
@@ -763,7 +764,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
                 border: 'none',
               })}
               disabled={!exportContent || publishing || publishedCIDs.length > 0}
-              {...fastClick(publish))}
+              onClick={publish}
+              role='button'
               style={{ color: colors.bg, backgroundColor: colors.fg }}
             >
               Publish
@@ -777,9 +779,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
                   outline: "none",
                   background: "none"
                 })}
-                {...fastClick(()) => {
-                  dispatch([alert(null), closeModal()])
-                })}
+                onClick={() => dispatch([alert(null), closeModal()])}
+                role='button'
                 style={{
                   color: colors.fg,
                   fontSize: '14px',

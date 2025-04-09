@@ -17,7 +17,6 @@ import * as selection from '../../device/selection'
 import useSharedType from '../../hooks/useSharedType'
 import useStatus from '../../hooks/useStatus'
 import modalDescriptionClass from '../../recipes/modalDescriptionClass'
-import fastClick from '../../util/fastClick'
 import strip from '../../util/strip'
 import FadeTransition from '../FadeTransition'
 import ActionButton from './../ActionButton'
@@ -139,7 +138,8 @@ const AddDeviceForm = ({
 
       <div>
         <a
-          {...fastClick(() => onSubmit({ name, role: 'owner' }))}
+          onClick={() => onSubmit({ name, role: 'owner' })}
+          role='button'
           className={cx(
             anchorButtonRecipe({
               outline: true,
@@ -149,7 +149,7 @@ const AddDeviceForm = ({
         >
           Add
         </a>
-        <a {...fastClick(onCancel)} className={css({ color: 'gray66', marginLeft: '1em' })}>
+        <a onClick={onCancel} role='button' className={css({ color: 'gray66', marginLeft: '1em' })}>
           Cancel
         </a>
       </div>
@@ -215,7 +215,8 @@ const ShareList = React.forwardRef<
               return (
                 <div
                   key={accessToken}
-                  {...fastClick(() => onSelect?.(accessToken))}
+                  onClick={() => onSelect?.(accessToken)}
+                  role='button'
                   className={css({ cursor: 'pointer' })}
                 >
                   <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
@@ -255,7 +256,8 @@ const ShareList = React.forwardRef<
                 <FadeTransition id='add-a-device' exit={false} duration='medium' unmountOnExit>
                   <div className={css({ marginTop: '1em' })}>
                     <a
-                      {...fastClick(() => setShowDeviceForm(true))}
+                      onClick={() => setShowDeviceForm(true)}
+                      role='button'
                       className={cx(
                         anchorButtonRecipe({
                           outline: true,
@@ -299,9 +301,8 @@ const EditableName = React.memo(
           style={{ fontSize: fontSize * 1.25 }}
         />
         <a
-          {...fastClick(() => {
-            selection.set(ref.current, { end: true })
-          })}
+          onClick={() => selection.set(ref.current, { end: true })}
+          role='button'
           className={css({
             display: 'inline-block',
             marginLeft: '1em',
@@ -452,7 +453,8 @@ const ShareDetail = React.memo(
                 />
               </span>
               <span
-                {...fastClick(copyShareUrl)}
+                onClick={copyShareUrl}
+                role='button'
                 className={css({ position: 'absolute', top: '0.75em', right: '1.25em', cursor: 'pointer' })}
               >
                 <CopyClipboard size={22} />
@@ -468,7 +470,8 @@ const ShareDetail = React.memo(
 
           {onBack && (
             <a
-              {...fastClick(onBack)}
+              onClick={onBack}
+              role='button'
               className={cx(
                 anchorButtonRecipe({
                   actionButton: true,
@@ -527,7 +530,7 @@ const ModalDevices = () => {
       center
       // do not show the close button on the detail view, since it renders the "Remove device" link at the very bottom of the page
       actions={({ close }) =>
-        !selected ? <ActionButton key='close' title='Close' {...fastClick(() => close())} /> : null
+        !selected ? <ActionButton key='close' title='Close' onClick={() => close()} role='button' /> : null
       }
     >
       <div className={modalClasses.wrapper}>
