@@ -16,6 +16,8 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
       className={css({
         width: '40px',
         height: '40px',
+        minWidth: '40px',
+        minHeight: '40px',
         borderRadius: '50%',
         marginRight: '0.5rem',
         backgroundColor: 'darkgray',
