@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
+import CommandOrderType from '../@types/CommandOrderType'
 import { isTouch } from '../browser'
 import { commandById, globalCommands } from '../commands'
 import { COMMAND_GROUPS } from '../constants'
@@ -41,7 +42,7 @@ interface CommandTableProps {
 const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table' }: CommandTableProps) => {
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
-  const [sortOrder, setSortOrder] = useState<'alphabetical' | 'type'>('type')
+  const [sortOrder, setSortOrder] = useState<CommandOrderType>('type')
   const sortButtonRef = useRef<SortButtonHandle>(null)
 
   /** Closes the sort dropdown when the user scrolls. */

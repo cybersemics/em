@@ -1,6 +1,7 @@
 import { forwardRef, useImperativeHandle, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
+import CommandOrderType from '../@types/CommandOrderType'
 import theme from '../selectors/theme'
 import SortIcon from './icons/SortIcon'
 
@@ -9,7 +10,7 @@ export interface SortButtonHandle {
 }
 
 interface SortButtonProps {
-  onSortChange: (sortOrder: 'alphabetical' | 'type') => void
+  onSortChange: (sortOrder: CommandOrderType) => void
 }
 
 /**
@@ -18,7 +19,7 @@ interface SortButtonProps {
 const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange }, ref) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
-  const [selectedSort, setSelectedSort] = useState<'alphabetical' | 'type'>('type')
+  const [selectedSort, setSelectedSort] = useState<CommandOrderType>('type')
 
   useImperativeHandle(
     ref,
@@ -31,7 +32,7 @@ const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange
   /**
    * Handles the sort change.
    */
-  const handleSortChange = (sortOrder: 'alphabetical' | 'type') => {
+  const handleSortChange = (sortOrder: CommandOrderType) => {
     setSelectedSort(sortOrder)
     onSortChange(sortOrder)
     setDropdownOpen(false)
