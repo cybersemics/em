@@ -65,9 +65,8 @@ const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange
         className={cx(
           css({
             opacity: 0,
-            visibility: 'hidden',
-            transition: 'opacity {durations.fast} ease-in-out, visibility {durations.fast} ease-in-out',
-            willChange: 'opacity, visibility',
+            transition: 'opacity {durations.fast} ease-in-out',
+            willChange: 'opacity',
             position: 'absolute',
             top: '100%',
             marginTop: '0.5rem',
@@ -84,7 +83,6 @@ const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange
           isDropdownOpen &&
             css({
               opacity: 1,
-              visibility: 'visible',
             }),
         )}
       >
