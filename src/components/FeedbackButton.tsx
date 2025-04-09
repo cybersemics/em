@@ -13,6 +13,7 @@ const FeedbackButton: React.FC = () => {
     <div
       className={css({ display: 'inline-flex' })}
       onClick={() => dispatch(showModal({ id: 'feedback' }))}
+      role='button'
       title='Feedback'
     >
       <FeedbackIcon size={26} />

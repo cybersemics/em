@@ -43,6 +43,7 @@ const BaseCloseButton = ({
   return (
     <a
       onClick={onClose}
+      role='button'
       onTouchStart={haptics.medium}
       className={css({
         color: 'inherit',

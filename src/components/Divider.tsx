@@ -98,6 +98,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
       })}
       style={{ width: `${dividerWidth}px` }}
       onClick={setCursorToDivider}
+      role='button'
     >
       <div
         aria-label={'editable-' + head(path)}

@@ -67,7 +67,12 @@ const Content: FC = () => {
   }
 
   return (
-    <div id='content-wrapper' onClick={() => dispatch(clickOnEmptySpace)} onMouseDown={() => setIsPressed(true)}>
+    <div
+      id='content-wrapper'
+      onClick={() => dispatch(clickOnEmptySpace)}
+      role='button'
+      onMouseDown={() => setIsPressed(true)}
+    >
       <div
         id='content'
         ref={contentRef}

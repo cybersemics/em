@@ -12,6 +12,7 @@ const Toggle: FC<{ expand?: boolean; title?: string } & PropsWithChildren> = ({ 
     <div>
       <div
         onClick={() => setExpanded(!expanded)}
+        role='button'
         className={css({ cursor: 'pointer', marginBottom: 20, userSelect: 'none' })}
       >
         <svg

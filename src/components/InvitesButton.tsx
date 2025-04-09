@@ -9,7 +9,11 @@ import InvitesIcon from './icons/InvitesIcon'
 const InvitesButton = () => {
   const dispatch = useDispatch()
   return (
-    <div className={css({ display: 'inline-flex' })} onClick={() => dispatch(showModal({ id: 'invites' }))}>
+    <div
+      className={css({ display: 'inline-flex' })}
+      onClick={() => dispatch(showModal({ id: 'invites' }))}
+      role='button'
+    >
       <InvitesIcon size={24} />
     </div>
   )

@@ -383,6 +383,7 @@ const ThoughtContainer = ({
       data-divider={isDivider(value)}
       data-editing={isEditing}
       onClick={isTouch ? undefined : handleMultiselect}
+      role='button'
       style={{
         transition: `transform ${token('durations.layoutSlowShift')} ease-out, opacity ${token('durations.layoutSlowShift')} ease-out`,
         ...style,
@@ -420,7 +421,7 @@ const ThoughtContainer = ({
         />
       ) : showContexts && simplePath.length > 2 ? (
         <span className={css({ fontSize: '75%' })}>
-          <a tabIndex={-1} onClick={() => dispatch(expandContextThought(path))}>
+          <a tabIndex={-1} onClick={() => dispatch(expandContextThought(path))} role='button'>
             ...{' '}
           </a>
         </span>
