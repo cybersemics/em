@@ -36,11 +36,9 @@ const GestureCheatsheet: React.FC = () => {
   }, [isOpen])
 
   useEffect(() => {
-    if (isOpen) {
-      allowScroll(false)
-    } else {
-      allowScroll(true)
-    }
+    /** Disable scrolling when the dialog is open. */
+    allowScroll(!isOpen)
+
     return () => {
       allowScroll(true)
     }
