@@ -44,20 +44,20 @@ const GestureCheatsheet: React.FC = () => {
     }
   }, [isOpen])
 
-  /** Styles for the dialog fade in and out animation. */
-  const dialogAnimationStyles = css({
-    opacity: 0,
-    transition: 'opacity {durations.medium} ease',
-    willChange: 'opacity',
-    zIndex: 'dialogContainer',
-    position: 'fixed',
-  })
-
   return (
     <>
       {isOpen && (
         <>
-          <div ref={dialogRef} className={dialogAnimationStyles}>
+          <div
+            ref={dialogRef}
+            className={css({
+              opacity: 0,
+              transition: 'opacity {durations.medium} ease',
+              willChange: 'opacity',
+              zIndex: 'dialogContainer',
+              position: 'fixed',
+            })}
+          >
             <Dialog onClose={handleClose}>
               <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
               <DialogContent>
