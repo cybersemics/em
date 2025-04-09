@@ -47,7 +47,7 @@ const GestureCheatsheet: React.FC = () => {
   /** Styles for the dialog fade in and out animation. */
   const dialogAnimationStyles = css({
     opacity: 0,
-    transition: 'opacity 0.5s ease',
+    transition: 'opacity {durations.medium} ease',
     willChange: 'opacity',
     zIndex: 'dialogContainer',
     position: 'fixed',

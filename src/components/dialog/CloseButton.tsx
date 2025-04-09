@@ -24,7 +24,7 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        transition: 'background-color 0.2s ease-in-out',
+        transition: 'background-color {durations.fast} ease-in-out',
         _hover: {
           backgroundColor: 'gray15',
         },

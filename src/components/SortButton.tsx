@@ -65,7 +65,7 @@ const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange
           css({
             opacity: 0,
             visibility: 'hidden',
-            transition: 'opacity 0.3s ease-in-out, visibility 0.3s ease-in-out',
+            transition: 'opacity {durations.fast} ease-in-out, visibility {durations.fast} ease-in-out',
             willChange: 'opacity, visibility',
             position: 'absolute',
             top: '100%',

@@ -103,7 +103,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
             pointerEvents: 'none',
             display: 'block',
             opacity: 1,
-            transition: 'opacity 0.2s ease',
+            transition: 'opacity {durations.fast} ease',
             zIndex: 2,
           })}
         />
