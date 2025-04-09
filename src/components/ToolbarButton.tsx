@@ -230,6 +230,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }}
       onMouseLeave={onMouseLeave}
       onClick={tapUp}
+      onMouseDown={tapDown}
       onTouchStart={tapDown}
       onTouchMove={touchMove}
       role='button'
