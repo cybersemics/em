@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
@@ -13,7 +13,6 @@ import CommandsGroup from './CommandsGroup'
 import FadeTransition from './FadeTransition'
 import SearchCommands from './SearchCommands'
 import SortButton from './SortButton'
-import { SortButtonHandle } from './SortButton'
 
 const commandsGroupedMap = keyValueBy(
   COMMAND_GROUPS.flatMap(group => group.commands),
@@ -43,19 +42,6 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
   const [sortOrder, setSortOrder] = useState<CommandSortType>('type')
-  const sortButtonRef = useRef<SortButtonHandle>(null)
-
-  /** Closes the sort dropdown when the user scrolls. */
-  const handleScroll = () => {
-    sortButtonRef.current?.closeDropdown()
-  }
-
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll, true)
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true)
-    }
-  }, [])
 
   /** This render function is used to render the content of the command table.
    * It renders groups of commands if the search is empty.
@@ -124,7 +110,7 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
         })}
       >
         <SearchCommands onInput={setSearch} />
-        <SortButton ref={sortButtonRef} onSortChange={setSortOrder} />
+        <SortButton onSortChange={setSortOrder} />
       </div>
 
       <SwitchTransition>

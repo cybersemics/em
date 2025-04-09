@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState } from 'react'
+import { forwardRef, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import CommandSortType from '../@types/CommandSortType'
@@ -22,13 +22,17 @@ const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      closeDropdown: () => setDropdownOpen(false),
-    }),
-    [],
-  )
+  /** Closes the sort dropdown when the user scrolls. */
+  const handleScroll = () => {
+    setDropdownOpen(false)
+  }
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, true)
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true)
+    }
+  }, [])
 
   /**
    * Handles the sort change.
