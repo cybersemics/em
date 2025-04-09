@@ -119,8 +119,6 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
           flexDirection: 'row',
           justifyContent: 'space-between',
           gap: '5px',
-          willChange: 'transform',
-          transform: 'translateZ(0)',
           position: 'relative',
           zIndex: 1,
         })}

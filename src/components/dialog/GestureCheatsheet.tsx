@@ -53,7 +53,6 @@ const GestureCheatsheet: React.FC = () => {
             className={css({
               opacity: 0,
               transition: 'opacity {durations.medium} ease',
-              willChange: 'opacity',
               zIndex: 'dialogContainer',
               position: 'fixed',
             })}
