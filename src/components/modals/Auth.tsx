@@ -5,7 +5,6 @@ import { buttonRecipe, modalActionLinkRecipe } from '../../../styled-system/reci
 import Index from '../../@types/IndexType'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { loginActionCreator as login } from '../../actions/login'
-import fastClick from '../../util/fastClick'
 import storage from '../../util/storage'
 import ActionButton from './../ActionButton'
 import ModalComponent from './ModalComponent'
@@ -139,14 +138,16 @@ const ModalAuth = () => {
             key={activeMode.modalKey}
             title={activeMode.modalTitle}
             isLoading={isSubmitting}
-            {...fastClick(() => submitAction(closeModal, email, password))}
+            onClick={() => submitAction(closeModal, email, password)}
+            role='button'
           />
 
           {!isModeActive(modes.login) && (
             <button
               disabled={isSubmitting}
               className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
-              {...fastClick(showLogin)}
+              onClick={showLogin}
+              role='button'
             >
               {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
             </button>
@@ -156,7 +157,8 @@ const ModalAuth = () => {
             <button
               disabled={isSubmitting}
               className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
-              {...fastClick(signInWithGoogle)}
+              onClick={signInWithGoogle}
+              role='button'
             >
               Sign in with Google
             </button>
@@ -170,11 +172,12 @@ const ModalAuth = () => {
             <a
               id='cancel-login'
               className={modalActionLinkRecipe()}
-              {...fastClick(() => {
+              onClick={() => {
                 // prevent the login modal on refresh once working offline
                 storage.setItem('modal-to-show', '')
                 closeModal()
-              })}
+              }}
+              role='button'
             >
               Work Offline
             </a>
@@ -190,7 +193,7 @@ const ModalAuth = () => {
         )}
 
         {isModeActive(modes.login) && (
-          <button disabled={isSubmitting} className='button' {...fastClick(showForgotPassword)}>
+          <button disabled={isSubmitting} className='button' onClick={showForgotPassword} role='button'>
             Forgot Password?
           </button>
         )}
