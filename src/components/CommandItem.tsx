@@ -78,7 +78,7 @@ const CommandItem = ({
       className={css({
         display: 'flex',
         flexDirection: viewType === 'grid' ? 'column' : 'row',
-        gap: viewType === 'grid' ? '0.5rem' : undefined,
+        gap: viewType === 'grid' ? '0.6rem' : undefined,
         position: 'relative',
         cursor: customize ? 'pointer' : undefined,
         ...(isDragging || selected
@@ -172,6 +172,8 @@ const CommandItem = ({
         <p
           className={css({
             fontSize: viewType === 'grid' ? '0.7rem' : undefined,
+            marginTop: '0.3rem',
+            marginBottom: '0.3rem',
           })}
         >
           {description}
