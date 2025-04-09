@@ -1,7 +1,6 @@
 import { PropsWithChildren } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import fastClick from '../util/fastClick'
 import haptics from '../util/haptics'
 
 type CloseButtonProps = {
@@ -43,7 +42,8 @@ const BaseCloseButton = ({
     : {}
   return (
     <a
-      {...fastClick(onClose, { tapDown: haptics.medium })}
+      onClick={onClose}
+      onTouchStart={haptics.medium}
       className={css({
         color: 'inherit',
         textDecoration: 'none',
