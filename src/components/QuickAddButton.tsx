@@ -2,7 +2,6 @@ import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { toggleAbsoluteContextActionCreator as toggleAbsoluteContext } from '../actions/toggleAbsoluteContext'
-import fastClick from '../util/fastClick'
 import isAbsolute from '../util/isAbsolute'
 import AddIcon from './AddIcon'
 
@@ -20,7 +19,7 @@ const QuickAddButton: React.FC = () => {
         transition: 'transform {durations.fast} ease-in-out',
         rotate: isAbsolute(rootContext) ? 'rotate(135deg)' : undefined,
       })}
-      {...fastClick(() => dispatch(toggleAbsoluteContext()))}
+      onClick={() => dispatch(toggleAbsoluteContext())}
       title='Quick Add'
     >
       <AddIcon size={20} />

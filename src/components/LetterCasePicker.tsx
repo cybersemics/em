@@ -6,7 +6,6 @@ import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/fo
 import { isTouch } from '../browser'
 import getThoughtById from '../selectors/getThoughtById'
 import applyLetterCase from '../util/applyLetterCase'
-import fastClick from '../util/fastClick'
 import head from '../util/head'
 import Popover from './Popover'
 import LowerCaseIcon from './icons/LowerCaseIcon'
@@ -48,7 +47,7 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
               border: selected === type ? `solid 1px {colors.fg}` : `solid 1px {colors.transparent}`,
             })}
             aria-label={type}
-            {...fastClick(e => e.stopPropagation())}
+            onTouchEnd={e => e.stopPropagation()}
             onTouchStart={e => toggleLetterCase(type, e)}
             onMouseDown={e => !isTouch && toggleLetterCase(type, e)}
           >
