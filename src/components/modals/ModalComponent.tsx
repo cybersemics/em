@@ -3,8 +3,8 @@ import { css, cx } from '../../../styled-system/css'
 import { modalRecipe } from '../../../styled-system/recipes'
 import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
-import { FADEOUT_DURATION } from '../../constants'
 import store from '../../stores/app'
+import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 
 interface ModalActionHelpers {
@@ -59,7 +59,7 @@ class ModalComponent extends React.Component<ModalProps> {
       }
       setTimeout(() => {
         store.dispatch(closeModal())
-      }, FADEOUT_DURATION)
+      }, durations.get('medium'))
     }
 
     // use capturing so that this fires before the global window Escape which removes the cursor

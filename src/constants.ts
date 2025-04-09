@@ -10,7 +10,6 @@ import emojiRegex from './emojiRegex'
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
-export const FADEOUT_DURATION = 400
 
 // number of ms to wait after thought hover to expand it's children
 export const EXPAND_HOVER_DELAY = 1000

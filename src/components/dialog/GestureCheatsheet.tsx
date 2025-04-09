@@ -2,8 +2,8 @@ import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { toggleGestureCheatsheetActionCreator } from '../../actions/toggleGestureCheatsheet'
-import { FADEOUT_DURATION } from '../../constants'
 import allowScroll from '../../device/disableScroll'
+import durations from '../../util/durations'
 import CommandTable from '../CommandTable'
 import Dialog from './Dialog'
 import DialogContent from './DialogContent'
@@ -25,7 +25,7 @@ const GestureCheatsheet: React.FC = () => {
       dialogRef.current.style.opacity = '0'
       setTimeout(() => {
         dispatch(toggleGestureCheatsheetActionCreator({ value: false }))
-      }, FADEOUT_DURATION)
+      }, durations.get('medium'))
     }
   }
 
