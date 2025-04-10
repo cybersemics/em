@@ -1,5 +1,6 @@
 import Command from '../@types/Command'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
+import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import ClearThoughtIcon from '../components/icons/ClearThoughtIcon'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -20,7 +21,12 @@ const clearThoughtCommand: Command = {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: (dispatch, getState) => {
-    const isCursorCleared = getState().cursorCleared
+    const { cursor, cursorCleared: isCursorCleared, noteFocus } = getState()
+
+    // move the cursor out of the note before clearing the thought
+    if (noteFocus && !isCursorCleared) {
+      dispatch(setCursor({ path: cursor, noteFocus: false }))
+    }
 
     dispatch(cursorCleared({ value: !isCursorCleared }))
 
