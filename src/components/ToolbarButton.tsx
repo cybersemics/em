@@ -233,6 +233,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       onMouseDown={tapDown}
       onTouchStart={tapDown}
       onTouchMove={touchMove}
+      onTouchEnd={tapUp}
       role='button'
     >
       {
