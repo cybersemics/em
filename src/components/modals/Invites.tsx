@@ -9,7 +9,6 @@ import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { alertActionCreator as alert } from '../../actions/alert'
 import modalDescriptionClass from '../../recipes/modalDescriptionClass'
-import fastClick from '../../util/fastClick'
 import timestamp from '../../util/timestamp'
 import ActionButton from './../ActionButton'
 import CheckmarkIcon from './../icons/CheckmarkIcon'
@@ -141,7 +140,7 @@ const Invites = () => {
       center
       actions={({ close }) => (
         <div>
-          <ActionButton key='close' title='Close' {...fastClick(() => close())} />
+          <ActionButton key='close' title='Close' onClick={() => close()} role='button' />
         </div>
       )}
     >
@@ -170,7 +169,8 @@ const Invites = () => {
             >
               <div
                 className={css({ display: 'inline-flex' })}
-                {...fastClick(() => (focusedGiftCode === id ? setFocusedGiftCode(null) : onInviteCodeSeen(id)))}
+                onClick={() => (focusedGiftCode === id ? setFocusedGiftCode(null) : onInviteCodeSeen(id))}
+                role='button'
               >
                 <InvitesIcon classes={svgClasses} fill={selectedIconFill} size={26} />
               </div>
@@ -193,7 +193,7 @@ const Invites = () => {
               ) : (
                 <CheckmarkIcon classes={svgClasses} fill={token('colors.bg')} size={21} />
               )}
-              <div className={css({ display: 'inline-flex' })} {...fastClick(() => updateCopy(link))}>
+              <div className={css({ display: 'inline-flex' })} onClick={() => updateCopy(link)} role='button'>
                 <CopyClipboard fill={selectedIconFill} size={26} />
               </div>
             </div>

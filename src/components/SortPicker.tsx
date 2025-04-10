@@ -9,7 +9,6 @@ import { isTouch } from '../browser'
 import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
-import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import Popover from './Popover'
@@ -50,7 +49,7 @@ const SortOption: FC<SortOptionProps> = ({ type, supportsDirection, label, sortP
         borderRadius: '2px',
       })}
       aria-label={type}
-      {...fastClick(e => e.stopPropagation())}
+      onTouchEnd={e => e.stopPropagation()}
       onTouchStart={e => onClick(type, e)}
       onMouseDown={e => !isTouch && onClick(type, e)}
     >

@@ -12,7 +12,6 @@ import { EM_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import ellipsize from '../util/ellipsize'
-import fastClick from '../util/fastClick'
 import head from '../util/head'
 import strip from '../util/strip'
 
@@ -46,7 +45,7 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
         ),
         className,
       )}
-      {...fastClick(e => {
+      onClick={e => {
         e.preventDefault()
         selection.clear()
         dispatch([
@@ -55,11 +54,12 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
           setCursor({ path: simplePath }),
           toggleSidebar({ value: false }),
         ])
-      })}
+      }}
       onMouseDown={e => {
         // prevent propagation to Content component which will trigger clickOnEmptySpace
         e.stopPropagation()
       }}
+      role='button'
       style={{
         userSelect: 'none',
         textDecoration: 'none',

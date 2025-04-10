@@ -37,6 +37,7 @@ const Tab = <T extends string>({
         }),
       })}
       onClick={onClick}
+      role='button'
     >
       <span
         className={css({

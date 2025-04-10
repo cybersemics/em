@@ -36,7 +36,6 @@ import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
-import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -384,6 +383,7 @@ const ThoughtContainer = ({
       data-divider={isDivider(value)}
       data-editing={isEditing}
       onClick={isTouch ? undefined : handleMultiselect}
+      role='button'
       style={{
         transition: `transform ${token('durations.layoutSlowShift')} ease-out, opacity ${token('durations.layoutSlowShift')} ease-out`,
         ...style,
@@ -421,15 +421,7 @@ const ThoughtContainer = ({
         />
       ) : showContexts && simplePath.length > 2 ? (
         <span className={css({ fontSize: '75%' })}>
-          <a
-            tabIndex={-1}
-            {...fastClick(
-              () => {
-                dispatch(expandContextThought(path))
-              },
-              { enableHaptics: false },
-            )}
-          >
+          <a tabIndex={-1} onClick={() => dispatch(expandContextThought(path))} role='button'>
             ...{' '}
           </a>
         </span>

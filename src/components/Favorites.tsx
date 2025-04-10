@@ -14,7 +14,6 @@ import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import thoughtToPath from '../selectors/thoughtToPath'
-import fastClick from '../util/fastClick'
 import head from '../util/head'
 import nonNull from '../util/nonNull'
 import Checkbox from './Checkbox'
@@ -115,7 +114,8 @@ const FavoritesOptions = ({
       {/* Show Options toggle */}
       <div className={css({ marginLeft: '1em' })}>
         <span
-          {...fastClick(() => setShowOptions(!showOptions))}
+          onClick={() => setShowOptions(!showOptions)}
+          role='button'
           className={css({
             color: 'modalExportUnused',
             cursor: 'pointer',

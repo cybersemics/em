@@ -5,7 +5,6 @@ import { css } from '../../../styled-system/css'
 import { modalActionLinkRecipe } from '../../../styled-system/recipes'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { AlertType } from '../../constants'
-import fastClick from '../../util/fastClick'
 import ActionButton from './../ActionButton'
 import ModalComponent from './ModalComponent'
 
@@ -82,10 +81,11 @@ const ModalFeedback = () => {
             title='Send'
             isLoading={isSubmitting}
             isDisabled={isDisabled}
-            {...fastClick(() => onSubmit({ close }))}
+            onClick={() => onSubmit({ close })}
+            role='button'
           />
           <div key='cancel' className={css({ fontSize: 22, marginTop: 10, opacity: 0.5 })}>
-            <a className={modalActionLinkRecipe()} id='skip-tutorial' {...fastClick(() => close())}>
+            <a className={modalActionLinkRecipe()} id='skip-tutorial' onClick={() => close()} role='button'>
               Cancel
             </a>
           </div>

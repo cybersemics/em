@@ -5,7 +5,6 @@ import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { FADEOUT_DURATION } from '../../constants'
 import store from '../../stores/app'
-import fastClick from '../../util/fastClick'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void
@@ -95,7 +94,8 @@ class ModalComponent extends React.Component<ModalProps> {
               /* spacing.safeAreaTop applies for rounded screens */
               top: 'calc(token(spacing.safeAreaTop) + 9px - 0.2em)',
             })}
-            {...fastClick(this.close)}
+            onClick={this.close}
+            role='button'
           >
             ✕
           </a>
@@ -137,7 +137,8 @@ class ModalComponent extends React.Component<ModalProps> {
                   borderColor: 'bgOverlay30',
                 },
               })}
-              {...fastClick(() => this.close())}
+              onClick={() => this.close()}
+              role='button'
             >
               <span>✕</span>
             </a>

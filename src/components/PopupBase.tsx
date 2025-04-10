@@ -11,7 +11,6 @@ import useCombinedRefs from '../hooks/useCombinedRefs'
 import usePositionFixed from '../hooks/usePositionFixed'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import syncStatusStore from '../stores/syncStatus'
-import fastClick from '../util/fastClick'
 import CloseButton from './CloseButton'
 
 export type PopupBaseProps = PropsWithChildren<
@@ -153,10 +152,11 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         )}
         {multicursor && (
           <a
-            {...fastClick(() => {
+            onClick={() => {
               dispatch(clearMulticursors())
               onClose?.()
-            })}
+            }}
+            role='button'
           >
             cancel
           </a>

@@ -8,7 +8,6 @@ import { dragInProgressActionCreator as dragInProgress } from '../actions/dragIn
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isTouch } from '../browser'
 import durations from '../util/durations'
-import fastClick from '../util/fastClick'
 import FadeTransition from './FadeTransition'
 import Favorites from './Favorites'
 import RecentlyDeleted from './RecentlyDeleted'
@@ -36,7 +35,8 @@ const SidebarLink = ({
 }) => {
   return (
     <a
-      {...fastClick(() => setSection(section))}
+      onClick={() => setSection(section)}
+      role='button'
       data-testid={`sidebar-${section}`}
       className={css({
         color: active ? 'fg' : 'gray50',

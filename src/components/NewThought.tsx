@@ -15,7 +15,6 @@ import getNextRank from '../selectors/getNextRank'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
-import fastClick from '../util/fastClick'
 import head from '../util/head'
 import unroot from '../util/unroot'
 
@@ -93,7 +92,8 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
                     css({ margin: '10px 0 15px -25px' }),
                   )
             }
-            {...fastClick(onClick)}
+            onClick={onClick}
+            role='button'
           >
             {label || <>Add a {showContexts ? 'context' : 'thought'}</>}
           </a>

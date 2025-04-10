@@ -4,7 +4,6 @@ import { css, cx } from '../../../styled-system/css'
 import { anchorButtonRecipe } from '../../../styled-system/recipes'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import getSetting from '../../selectors/getSetting'
-import fastClick from '../../util/fastClick'
 
 /** Renders a hint button that will advance the tutorial by a fractional step and show a hint. */
 const TutorialHint: FC<PropsWithChildren> = ({ children }) => {
@@ -25,13 +24,14 @@ const TutorialHint: FC<PropsWithChildren> = ({ children }) => {
           }),
           css({ fontSize: 'sm' }),
         )}
-        {...fastClick(() =>
+        onClick={() =>
           dispatch(
             setTutorialStep({
               value: !hint ? tutorialStep + 0.1 : Math.floor(tutorialStep),
             }),
-          ),
-        )}
+          )
+        }
+        role='button'
       >
         hint
       </a>
