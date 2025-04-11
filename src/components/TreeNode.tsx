@@ -4,8 +4,11 @@ import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
+import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import isTutorial from '../selectors/isTutorial'
+import BulletEllipsis from './BulletEllipsis'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
@@ -90,6 +93,9 @@ const TreeNode = ({
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
 
+  // true if the tutorial is on (used to hide the bullet ellipsis during tutorial)
+  const isTutorialOn = useSelector(isTutorial)
+
   useLayoutEffect(() => {
     if (y !== _y) {
       // When y changes React re-renders the component with the new value of y. It will result in a visual change in the DOM.
@@ -156,6 +162,7 @@ const TreeNode = ({
         }}
       >
         <div ref={fadeThoughtRef}>
+          {isCursor && isTouch && !isTutorialOn && <BulletEllipsis />}
           <VirtualThought
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
             depth={depth}
