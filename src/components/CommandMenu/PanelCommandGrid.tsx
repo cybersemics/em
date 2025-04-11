@@ -1,10 +1,10 @@
 import { css } from '../../../styled-system/css'
+import categorize from '../../commands/categorize'
 import deleteCommand from '../../commands/delete'
 import favorite from '../../commands/favorite'
 import indent from '../../commands/indent'
 import note from '../../commands/note'
 import outdent from '../../commands/outdent'
-import subcategorizeOne from '../../commands/subcategorizeOne'
 import swapParent from '../../commands/swapParent'
 import toggleDone from '../../commands/toggleDone'
 import PanelCommand from './PanelCommand'
@@ -37,7 +37,7 @@ const PanelCommandGrid = () => {
         <PanelCommand command={{ ...indent, label: '' }} size='small' />
       </PanelCommandGroup>
       <PanelCommand command={swapParent} size='medium' />
-      <PanelCommand command={{ ...subcategorizeOne, label: 'Subcategorize One' }} size='medium' />
+      <PanelCommand command={categorize} size='medium' />
     </div>
   )
 }
