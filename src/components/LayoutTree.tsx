@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css, cx } from '../../styled-system/css'
@@ -13,7 +13,6 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { toggleCommandMenuActionCreator } from '../actions/toggleCommandMenu'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
@@ -37,7 +36,6 @@ import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
-import fastClick from '../util/fastClick'
 import hideCaret, { getHideCaretAnimationName } from '../util/getHideCaretAnimationName'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -45,11 +43,11 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
+import BulletEllipsis from './BulletEllipsis'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import HoverArrow from './HoverArrow'
 import VirtualThought, { OnResize } from './VirtualThought'
-import EllipsisIcon from './icons/EllipsisIcon'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
 type TreeThought = {
@@ -433,7 +431,6 @@ const TreeNode = ({
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
-  const dispatch = useDispatch()
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
@@ -517,14 +514,7 @@ const TreeNode = ({
         }}
       >
         <div ref={fadeThoughtRef}>
-          {isCursor && !isTutorialOn && isTouch && (
-            <div
-              {...fastClick(() => dispatch(toggleCommandMenuActionCreator({ value: true })))}
-              style={{ position: 'absolute', left: -50, top: 2 }}
-            >
-              <EllipsisIcon />
-            </div>
-          )}
+          {isCursor && !isTutorialOn && isTouch && <BulletEllipsis />}
           <VirtualThought
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
             depth={depth}
