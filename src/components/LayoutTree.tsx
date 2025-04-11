@@ -37,6 +37,7 @@ import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
+import fastClick from '../util/fastClick'
 import hideCaret, { getHideCaretAnimationName } from '../util/getHideCaretAnimationName'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -518,7 +519,7 @@ const TreeNode = ({
         <div ref={fadeThoughtRef}>
           {isCursor && !isTutorialOn && isTouch && (
             <div
-              onClick={() => dispatch(toggleCommandMenuActionCreator({ value: true }))}
+              {...fastClick(() => dispatch(toggleCommandMenuActionCreator({ value: true })))}
               style={{ position: 'absolute', left: -50, top: 2 }}
             >
               <EllipsisIcon />
