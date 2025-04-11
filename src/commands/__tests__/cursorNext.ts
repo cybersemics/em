@@ -1,6 +1,5 @@
 import { cursorNextActionCreator as cursorNext } from '../../actions/cursorNext'
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { setCursorActionCreator } from '../../actions/setCursor'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import globals from '../../globals'
