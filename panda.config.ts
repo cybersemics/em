@@ -332,12 +332,12 @@ export default defineConfig({
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
         zIndex: {
           ...zIndexDescending([
-            'gestureTrace',
-            'modal',
-            'hamburgerMenu',
-            'sidebar',
             'popup',
             'hoverArrow',
+            'gestureTrace',
+            'hamburgerMenu',
+            'sidebar',
+            'modal',
             'toolbarContainer',
             'toolbarOverlay',
             'toolbarArrow',
