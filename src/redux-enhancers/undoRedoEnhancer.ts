@@ -147,6 +147,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   unknownAction: false,
   updateThoughts: false,
   updateHoveringPath: false,
+  toggleCommandMenu: false,
 }
 
 /** Returns if an action is undoable. */
