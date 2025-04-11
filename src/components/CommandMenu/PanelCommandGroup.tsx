@@ -16,6 +16,7 @@ const PanelCommandGroup: React.FC<PropsWithChildren> = ({ children }) => {
         css({
           display: 'grid',
           alignItems: 'stretch',
+          gap: '3px',
         }),
         panelCommandGroupRecipe({
           layout:
@@ -25,23 +26,21 @@ const PanelCommandGroup: React.FC<PropsWithChildren> = ({ children }) => {
         }),
       )}
     >
-      {React.Children.map(children, (child, index) => {
-        if (React.isValidElement(child)) {
-          return React.cloneElement(child as React.ReactElement, {
-            className: css({
-              borderRadius: index === 0 ? '16px 0 0 16px' : index === childCount - 1 ? '0 16px 16px 0' : '0',
-              flex: 1,
-              marginLeft: index > 0 ? '5px' : '0',
-              justifyContent: 'center',
-              ...(childCount === 2 &&
-                size === 'medium' && {
-                  gridColumn: 'span 1 !important',
-                }),
-            }),
-          })
-        }
-        return null
-      })}
+      {
+        /** Clone each of the children and set the position attribute to 'first', 'last'
+         * or 'between' depending on the index of the child. PanelCommand will use this
+         * property to change the styling of the button.
+         */
+
+        React.Children.map(children, (child, index) => {
+          if (React.isValidElement(child)) {
+            return React.cloneElement(child as React.ReactElement, {
+              groupPosition: index === 0 ? 'first' : index === childCount - 1 ? 'last' : 'between',
+            })
+          }
+          return null
+        })
+      }
     </div>
   )
 }

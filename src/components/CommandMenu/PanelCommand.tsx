@@ -1,6 +1,7 @@
 import React, { FC, useCallback, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { css, cx } from '../../../styled-system/css'
+import { css } from '../../../styled-system/css'
+import { panelCommandRecipe } from '../../../styled-system/recipes'
 import Command from '../../@types/Command'
 import Icon from '../../@types/IconType'
 import store from '../../stores/app'
@@ -8,13 +9,16 @@ import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import fastClick from '../../util/fastClick'
 
 interface PanelCommandProps {
+  /** The command to execute when the button is tapped. */
   command: Command
+  /** The size of the button. */
   size?: 'small' | 'medium' | 'large' | 'xlarge'
-  className?: string
+  /** If the button is inside a PanelCommandGroup, the position of the button within the group. */
+  groupPosition?: 'first' | 'last' | 'between'
 }
 
 /** A single button in the Panel Command Grid. */
-const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
+const PanelCommand: FC<PanelCommandProps> = ({ command, size, groupPosition }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
   if (!command) {
@@ -42,33 +46,12 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, className, size }) => {
 
   return (
     <div
-      className={cx(
-        css({
-          display: 'grid',
-          gridTemplateColumns: size === 'medium' ? '1fr 2fr' : 'auto',
-          minHeight: '3rem',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: 'bold',
-          padding: '0.5rem',
-          borderRadius: '16px',
-          backgroundColor: isButtonActive ? 'purple' : 'gray15',
-          cursor: isButtonExecutable ? 'pointer' : 'default',
-          transition: `opacity {durations.medium} ease, background-color {durations.medium} ease`,
-          gridColumn:
-            size === 'small'
-              ? 'span 1'
-              : size === 'medium'
-                ? 'span 2'
-                : size === 'large'
-                  ? 'span 2'
-                  : size === 'xlarge'
-                    ? 'span 4'
-                    : 'span 1',
-          opacity: isButtonExecutable ? 1 : 0.5,
-        }),
-        className ? className : css({}),
-      )}
+      className={panelCommandRecipe({
+        size,
+        isButtonExecutable,
+        isButtonActive,
+        groupPosition,
+      })}
       {...fastClick(handleTap)}
     >
       <SVG
