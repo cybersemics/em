@@ -14,7 +14,6 @@ import attributeEquals from '../selectors/attributeEquals'
 import { hasChildren } from '../selectors/getChildren'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
-import rootedGrandparentOf from '../selectors/rootedGrandparentOf'
 import rootedParentOf from '../selectors/rootedParentOf'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
@@ -213,13 +212,16 @@ const LayoutTree = () => {
   // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
   const tableDepth = useSelector(state => {
     if (state.cursor) {
-      // If the current thought is column 2 of a table, offset the indentDepth by 3
-      if (attributeEquals(state, head(rootedGrandparentOf(state, state.cursor)), '=view', 'Table')) return 3
-      // If the current thought is column 1 of a table, offset the indentDepth by 2.
-      // Offsetting by 2 allows for cases where column 2 contains a child and it is possible to
-      // navigate between that child and column 1. It is not possible to navigate from a grandchild
-      // to column 1 because, if there are 3 levels in column 2, column 1 animates and disappears.
-      if (attributeEquals(state, head(rootedParentOf(state, state.cursor)), '=view', 'Table')) return 2
+      // Since column 2 thoughts can be nested, this must traverse the thought tree to identify a parent
+      // that is in column 2
+      for (
+        let path = rootedParentOf(state, state.cursor);
+        head(path) !== head(state.rootContext);
+        path = rootedParentOf(state, path)
+      ) {
+        // If the current thought is in a table, offset the indentDepth by 1.
+        if (attributeEquals(state, head(path), '=view', 'Table')) return 1
+      }
     }
 
     return 0
