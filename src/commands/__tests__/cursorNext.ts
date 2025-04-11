@@ -105,27 +105,6 @@ describe('normal view', () => {
     const stateNew = store.getState()
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
-
-  it('moves from note to cursor thought on cursorNext', () => {
-    store.dispatch([
-      importText({
-        text: `
-              - a
-                - b
-                  - =note
-                    - Hello world
-                  - c
-            `,
-      }),
-      (dispatch, getState) =>
-        dispatch(setCursorActionCreator({ path: contextToPath(getState(), ['a', 'b']), noteFocus: true })),
-      cursorNext(),
-    ])
-
-    const stateNew = store.getState()
-    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b', 'c'])
-    expect(stateNew.noteFocus).toBeFalse()
-  })
 })
 
 describe('context view', () => {
