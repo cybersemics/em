@@ -1,5 +1,6 @@
 import { Browser, Element } from 'webdriverio'
-import getNativeElementRect from './getNativeElementRect'
+
+// import getNativeElementRect from './getNativeElementRect'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped
@@ -10,24 +11,26 @@ interface Options {
   x?: number
   // Number of pixels of y offset to add to the tap coordinates
   y?: number
+  // Milliseconds to delay the release of the tap.
+  releaseDelayMs?: number
 }
 
 /**
  * Tap a node with an optional text offset or x,y offset.
  */
 const tap = async (
-  browser: Browser<'async'>,
-  nodeHandle: Element<'async'>,
-  { horizontalTapLine = 'left', offset, x = 0, y = 0 }: Options = {},
+  browser: Browser,
+  nodeHandle: Element,
+  { horizontalTapLine = 'left', offset, x = 0, y = 0, releaseDelayMs = 100 }: Options = {},
 ) => {
   const boundingBox = await browser.getElementRect(nodeHandle.elementId)
-  if (!boundingBox) throw new Error('Bouding box of editable not found.')
+  if (!boundingBox) throw new Error('Bounding box of editable not found.')
 
   /** Get cordinates for specific text node if the given node has text child. */
   const offsetCoordinates = () =>
     browser.execute(
       function (ele, offset) {
-        // Element<'async'> does not contain native properties like nodeName, textContent, etc
+        // Element does not contain native properties like nodeName, textContent, etc
         // Not sure what the actual WebDriverIO type that is returned by findElement
         // Node does not contain property elementId; it is only a Node inside browser.execute, so we cannot change the typeo of the nodeHandle argument
         const textNode = (ele as unknown as Node).firstChild
@@ -59,13 +62,21 @@ const tap = async (
 
   if (!coordinate) throw new Error('Coordinate not found.')
 
-  const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
+  // const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
+  // console.log('topbarrect', topBarRect)
 
-  await browser.touchAction({
-    action: 'tap',
+  console.info(
+    `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
+  )
+
+  const finalCoords = {
     x: coordinate.x + x,
-    y: coordinate.y + y + (topBarRect.y + topBarRect.height + 3),
-  })
+    y: coordinate.y + y,
+  }
+
+  console.info(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)
+
+  await browser.action('pointer').move(finalCoords).down().pause(releaseDelayMs).up().perform()
 }
 
 export default tap

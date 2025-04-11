@@ -2,6 +2,7 @@ import React from 'react'
 import { css, cx } from '../../styled-system/css'
 import { AnchorButtonRecipeVariantProps, anchorButtonRecipe } from '../../styled-system/recipes'
 import fastClick from '../util/fastClick'
+import haptics from '../util/haptics'
 import Loader from './Loader'
 
 interface ActionButtonProps {
@@ -39,7 +40,7 @@ const ActionButton = ({
         }),
         css({ lineHeight: 2, marginInline: 5, whiteSpace: 'nowrap', fontWeight: 'normal' }),
       )}
-      {...(onClick && !isDisabled ? fastClick(onClick) : null)}
+      {...(onClick && !isDisabled ? fastClick(onClick, { tapDown: haptics.medium }) : null)}
       {...restProps}
     >
       {/* TODO: Animate on loader toggle. */}

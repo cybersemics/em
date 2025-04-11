@@ -12,6 +12,7 @@ import timestamp from '../../util/timestamp'
 const permissionsMap = permissionsClientDoc.getMap<Share>()
 
 // permissions model that waps permissionsClientDoc
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const permissionsModel: { [key in keyof Routes['share']]: any } = {
   add: ({ name, role }: Pick<Share, 'name' | 'role'>) => {
     const accessToken = nanoid()

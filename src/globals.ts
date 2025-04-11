@@ -10,9 +10,6 @@ let longpressing = false
 // not related to react-dnd
 let touching = false
 
-// track complete touch event in order to prevent react-dnd from initiating drag during scroll on first page load
-let touched = false
-
 // track whether the page has rendered yet to simulate onload event
 let rendered = false
 
@@ -37,8 +34,12 @@ let freeThoughtsThreshold = 500
 // TODO: Default to false but add a setting to enable.
 const ellipsizeContextThoughts = false
 
+/** Escape hatch to abandon imports when frozen. This is a workaround for a bug that has not been resolved. */
+let abandonImport = false
+
 // check duplicate ranks within the same context for debugging
 const globals = {
+  abandonImport,
   ellipsizeContextThoughts,
   freeThoughtsThreshold,
   errorTimer,
@@ -46,7 +47,6 @@ const globals = {
   longpressing,
   rendered,
   suppressExpansion,
-  touched,
   touching,
 }
 

@@ -16,6 +16,7 @@ import RecentlyEdited from './RecentlyEdited'
 
 // extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   SwipeableDrawerProps & { classes: any; ref: any }
 >
 
@@ -86,7 +87,7 @@ const Sidebar = () => {
         }),
         paperAnchorLeft: css({ top: 'safeAreaTop !important' }),
       }}
-      disableSwipeToOpen={!isTouch}
+      disableSwipeToOpen={true}
       ref={containerRef}
       transitionDuration={durations.get('fast')}
       // On iOS Safari, restoring focus works when tapping the backdrop to close the sidebar, but not when tapping the hamburger

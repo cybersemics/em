@@ -9,7 +9,7 @@ const toggleHiddenThoughtsCommand: Command = {
   description: 'Show all hidden thoughts.',
   descriptionInverse: 'Hide hidden thoughts.',
   keyboard: { key: 'h', shift: true, alt: true },
-  multicursor: 'ignore',
+  multicursor: false,
   svg: HiddenThoughtsIcon,
   exec: dispatch => dispatch(toggleHiddenThoughts()),
   isActive: state => state.showHiddenThoughts,

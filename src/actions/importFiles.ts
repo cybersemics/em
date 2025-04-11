@@ -21,6 +21,7 @@ import { pullActionCreator as pull } from '../actions/pull'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
+import globals from '../globals'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild } from '../selectors/getChildren'
@@ -110,6 +111,8 @@ const resumeImportsManager = (file: ResumableFile) => {
   /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
   // TODO: throttling update breaks resume file.path for some reason
   const update = async (path: Path | null, thoughtsImported: number, insertBefore?: boolean) => {
+    if (globals.abandonImport) return
+
     const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
     storage.setItem(
       RESUME_IMPORTS_KEY,
@@ -309,7 +312,10 @@ export const importFilesActionCreator =
               setImportThoughtPath(importThoughtPath),
 
               // delete empty destination thought
-              i === 0 && destEmpty ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) }) : null,
+              // ...unless it is a duplicate (i.e. if the pasted parent is empty), otherwise both the destination thought will be deleted and the duplicate will be skipped, leaving no parent to insert the descendants.
+              i === 0 && destEmpty && !duplicate
+                ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) })
+                : null,
               // If the thought is a duplicate, immediately update the import progress and resolve the task.
               duplicate
                 ? // It is possible for the Lexeme to be missing if the import was interrupted after the thought was saved but before the Lexeme was saved.

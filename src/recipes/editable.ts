@@ -23,19 +23,6 @@ const editableRecipe = defineRecipe({
       _mobile: '-2px',
     },
     paddingBottom: { _mobile: '0' },
-    /* On Safari, the caret is not lined up with the placeholder text on empty thoughts (due to either negative margin or line-height).
-      Add padding-top to shift the caret down.
-      This bumps the placeholder text off, so we need to shift the placeholder text up by the same amount.
-    */
-    '&:empty': {
-      paddingTop: { _safari: '0.2em' },
-      marginBottom: { _safari: '-0.2em' } /* offset padding-top, otherwise next sibling will be bumped down */,
-    },
-    '&:empty::before': {
-      /* shift placeholder up to offset padding-top */
-      top: { _safari: '-0.2em' },
-      position: { _safari: 'relative' },
-    },
   },
 })
 

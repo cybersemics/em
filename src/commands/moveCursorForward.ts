@@ -29,7 +29,6 @@ const moveCursorForward: Command = {
   description: 'Move the current thought to the end of the previous thought or to next column in table view.',
   keyboard: { key: Key.Tab },
   multicursor: {
-    enabled: true,
     filter: 'prefer-ancestor',
     execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
       // Make sure we can execute for all cursors before proceeding.

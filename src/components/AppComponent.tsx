@@ -1,11 +1,10 @@
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import _ from 'lodash'
-import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import SplitPane from 'react-split-pane'
+import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect } from 'react'
+import { useSelector } from 'react-redux'
+import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
-import { updateSplitPositionActionCreator as updateSplitPosition } from '../actions/updateSplitPosition'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { inputHandlers } from '../commands'
 import { Settings } from '../constants'
@@ -34,12 +33,6 @@ import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import * as modals from './modals'
-
-// This can be removed once Split Pane is working.
-const DISABLE_SPLIT_PANE = true
-
-const SPLIT_ANIMATION_DURATION = 400
-const SPLIT_RESIZE_THROTTLE = 8
 
 const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
@@ -111,26 +104,20 @@ const MultiGestureIfTouch: FC<PropsWithChildren> = ({ children }) => {
  * The main app component.
  */
 const AppComponent: FC = () => {
-  const dispatch = useDispatch()
-  const lastSplitViewRef = useRef(false)
-  const [isSplitting, setIsSplitting] = useState(false)
-
   const colors = useSelector(themeColors)
   const dark = useSelector(state => theme(state) !== 'Light')
   const dragInProgress = useSelector(state => state.dragInProgress)
   const enableLatestCommandsDiagram = useSelector(state => state.enableLatestCommandsDiagram)
   const showTutorial = useSelector(state => isTutorial(state) && !state.isLoading)
   const fontSize = useSelector(state => state.fontSize)
-  const showSplitView = useSelector(state => state.showSplitView)
   const showModal = useSelector(state => state.showModal)
   const tutorial = useSelector(isTutorial)
-  const splitPosition = useSelector(state => state.splitPosition)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const onSplitResize = useCallback(
-    _.throttle((n: number) => dispatch(updateSplitPosition(n)), SPLIT_RESIZE_THROTTLE),
-    [],
-  )
+  useEffect(() => {
+    WebviewBackground.changeBackgroundColor({ color: colors.bg })
+    document.documentElement.style.backgroundColor = colors.bg
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', colors.bg)
+  }, [colors.bg])
 
   useDisableLongPressToSelect()
 
@@ -162,21 +149,6 @@ const AppComponent: FC = () => {
       }
     }
   }, [colors, dark, dragInProgress])
-
-  useEffect(() => {
-    let splitAnimationTimer: number
-    if (showSplitView !== lastSplitViewRef.current) {
-      lastSplitViewRef.current = !!showSplitView
-      setIsSplitting(true)
-      splitAnimationTimer = setTimeout(() => {
-        setIsSplitting(false)
-      }, SPLIT_ANIMATION_DURATION) as unknown as number
-    }
-
-    return () => {
-      clearTimeout(splitAnimationTimer)
-    }
-  }, [showSplitView])
 
   if (showModal && !modals[showModal]) {
     throw new Error(`Missing component for Modal type: ${showModal}`)
@@ -211,69 +183,12 @@ const AppComponent: FC = () => {
         ) : (
           <>
             {showTutorial ? <Tutorial /> : null}
-            {DISABLE_SPLIT_PANE ? (
+            {
               // overflow: hidden is needed to prevent the content from briefly scrolling horizontally during a gesture.
               <div className={css({ position: 'relative', overflow: 'hidden' })} style={{ fontSize }}>
                 <Content />
               </div>
-            ) : (
-              <SplitPane
-                paneClassName={css({ transition: isSplitting ? 'width 0.2s ease' : undefined, userSelect: 'none' })}
-                resizerClassName={css({
-                  background: 'fg',
-                  opacity: 0.2,
-                  zIndex: 'resizer',
-                  boxSizing: 'border-box',
-                  backgroundClip: 'padding-box',
-                  userSelect: 'none',
-                  '&:hover': {
-                    transition: 'all {durations.fast} ease-out',
-                  },
-                  '&.horizontal': {
-                    height: '11px',
-                    margin: '-5px 0',
-                    borderTop: '5px solid {colors.fgTransparent}',
-                    borderBottom: '5px solid {colors.fgTransparent}',
-                    cursor: 'row-resize',
-                    width: '100%',
-                  },
-                  '&.horizontal:hover': {
-                    borderTop: '5px solid {colors.bgOverlay50}',
-                    borderBottom: '5px solid {colors.bgOverlay50}',
-                  },
-                  '&.vertical': {
-                    width: '11px',
-                    margin: '0 -5px',
-                    borderLeft: '5px solid {colors.fgTransparent}',
-                    borderRight: '5px solid {colors.fgTransparent}',
-                    cursor: 'col-resize',
-                  },
-                  '&.vertical:hover': {
-                    borderLeft: '5px solid {colors.fgOverlay50}',
-                    borderRight: '5px solid {colors.fgOverlay50}',
-                  },
-                  '&.disabled': { cursor: 'not-allowed' },
-                  '&.disabled:hover': { borderColor: 'transparent' },
-                })}
-                className={css({
-                  position: 'relative', // not applied due to `position: absolute` in style prop of react-split-pane
-                  userSelect: 'none',
-                })}
-                defaultSize={!showSplitView ? '100%' : splitPosition || '50%'}
-                onChange={onSplitResize}
-                size={!showSplitView ? '100%' : splitPosition || '50%'}
-                split='vertical'
-                style={{ fontSize }}
-              >
-                <Content />
-                {showSplitView ? (
-                  <Content />
-                ) : (
-                  // children required by SplitPane
-                  <></>
-                )}
-              </SplitPane>
-            )}
+            }
           </>
         )}
       </MultiGestureIfTouch>

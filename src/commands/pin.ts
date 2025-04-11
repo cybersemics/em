@@ -20,7 +20,6 @@ const pinCommand: Command = {
     return !!state.cursor || hasMulticursor(state)
   },
   multicursor: {
-    enabled: true,
     execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
       const numThougths = cursors.length
 

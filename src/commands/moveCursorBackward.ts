@@ -17,7 +17,6 @@ const moveCursorBackward: Command = {
   description: 'Move the current thought to the next sibling of its context or to previous column in table view.',
   keyboard: { key: Key.Tab, shift: true },
   multicursor: {
-    enabled: true,
     filter: 'prefer-ancestor',
     reverse: true,
   },

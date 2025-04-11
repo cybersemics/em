@@ -4,7 +4,6 @@ import Command from '../@types/Command'
 import DragCommandZone from '../@types/DragCommandZone'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toolbarLongPressActionCreator as toolbarLongPress } from '../actions/toolbarLongPress'
-import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import useLongPress from './useLongPress'
 
 /** Set state.toolbarLongPress when long pressing a toolbar button in the customize modal. */
@@ -55,7 +54,7 @@ const useToolbarLongPress = ({
     })
   }, [dispatch, isDragging])
 
-  const props = useLongPress(onLongPressStart, onLongPressEnd, null, TIMEOUT_LONG_PRESS_THOUGHT)
+  const props = useLongPress(onLongPressStart, onLongPressEnd)
 
   const result = useMemo(
     () => ({

@@ -13,6 +13,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { AlertText, AlertType } from '../constants'
 import store from '../stores/app'
+import haptics from '../util/haptics'
 
 /** Creates the props for drop. */
 const dropCollect = (monitor: DropTargetMonitor) => {
@@ -42,6 +43,7 @@ const QuickDropIcon = ({
 
   /** Invokes onDrop with the DragThoughtItem. */
   const drop = (monitor: DropTargetMonitor) => {
+    haptics.medium()
     dispatch(dragInProgress({ value: false }))
     onDrop(store.getState(), monitor.getItem())
   }
@@ -76,6 +78,9 @@ const QuickDropIcon = ({
 
   useEffect(
     () => {
+      if (isHovering) {
+        haptics.medium()
+      }
       hover(isHovering, zone)
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -158,7 +158,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         if (this.props.shouldCancelGesture?.()) {
           this.props.onCancel?.({ clientStart: this.clientStart, e })
-          gestureStore.update('')
+          gestureStore.update({ gesture: '' })
           this.abandon = true
           return
         }
@@ -166,9 +166,18 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // initialize this.currentStart on the the first trigger of the move event
         // TODO: Why doesn't onPanResponderStart work?
         if (!this.currentStart) {
-          // ensure that disableScroll is false when starting in case it wasn't reset properly
-          // may be related to https://github.com/cybersemics/em/issues/1189
-          this.disableScroll = false
+          // Check if we're in the gesture zone before deciding whether to disable scrolling
+          // This ensures we only prevent scrolling in the gesture zone, but allow it elsewhere
+          const touchLocation = e.nativeEvent.touches[0] || e.nativeEvent
+          const inGestureZone = isInGestureZone(touchLocation.pageX, touchLocation.pageY, this.leftHanded)
+
+          // Only keep disableScroll=true if we're actually in the gesture zone
+          // This addresses both issues: prevents scrolling in gesture zone during gestures,
+          // but allows scrolling to be re-enabled for normal scroll interactions
+          if (!inGestureZone) {
+            this.disableScroll = false
+          }
+
           this.currentStart = {
             x: gestureState.moveX,
             y: gestureState.moveY,
@@ -200,7 +209,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             // append the gesture to the sequence and call the onGesture handler
             this.sequence += g
             this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
-            gestureStore.update(this.sequence)
+            gestureStore.update({ gesture: this.sequence })
           }
         }
       },
@@ -233,7 +242,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.scrollYStart = null
     this.disableScroll = false
     this.sequence = ''
-    gestureStore.update('')
+    gestureStore.update({ gesture: '' })
   }
 
   render() {

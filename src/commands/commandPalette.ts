@@ -7,7 +7,7 @@ const commandPaletteCommand: Command = {
   label: 'Command Palette',
   description: 'Opens the command palette where commands can be executed by name.',
   hideFromCommandPalette: true,
-  multicursor: 'ignore',
+  multicursor: false,
   svg: CommandPaletteIcon,
   keyboard: { key: 'p', meta: true },
   exec: dispatch => dispatch(commandPalette()),

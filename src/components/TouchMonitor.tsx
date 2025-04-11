@@ -24,7 +24,6 @@ const TouchMonitor: FC<PropsWithChildren> = ({ children }) => {
       }}
       onTouchEnd={() => {
         globals.touching = false
-        globals.touched = true
       }}
     >
       {children}
