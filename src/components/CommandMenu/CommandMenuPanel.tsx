@@ -1,6 +1,6 @@
 import SwipeableDrawer from '@mui/material/SwipeableDrawer'
 import _ from 'lodash'
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -17,26 +17,8 @@ import PanelCommandGrid from './PanelCommandGrid'
 const CommandMenuPanel = () => {
   const dispatch = useDispatch()
   const showCommandMenu = useSelector(state => state.showCommandMenu)
-  const cursor = useSelector(state => state.cursor)
   const isTutorialOn = useSelector(isTutorial)
   const containerRef = useRef<HTMLInputElement>(null)
-  const prevCursorRef = useRef(cursor)
-
-  useEffect(() => {
-    // Only close the command menu if cursor becomes inactive but make sure it doesn't close if the cursor is just switching
-    if (showCommandMenu && !cursor) {
-      const timeoutId = setTimeout(() => {
-        // Check if cursor is still inactive after the delay
-        if (!cursor) {
-          dispatch(toggleCommandMenu({ value: false }))
-        }
-      }, 200) // Small delay to allow for cursor switching
-
-      return () => clearTimeout(timeoutId)
-    }
-
-    prevCursorRef.current = cursor
-  }, [showCommandMenu, cursor, dispatch])
 
   if (isTouch && !isTutorialOn) {
     return (
