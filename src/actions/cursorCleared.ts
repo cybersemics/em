@@ -15,6 +15,8 @@ const cursorCleared = (state: State, { value }: { value: boolean }): State => ({
   editableNonce: state.editableNonce + 1,
   // manually set edit mode to true since the cursor is not changing and normally setCursor handles this
   editing: value,
+  // clearing the cursor should always move the caret into the empty thought
+  noteFocus: false,
 })
 
 /** Temporary clear the cursor in response to the clearThought. NOOP if value is no different than current state. See actions/cursorCleared. */
