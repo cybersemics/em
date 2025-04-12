@@ -20,7 +20,7 @@ const clearThoughtCommand: Command = {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: (dispatch, getState) => {
-    const isCursorCleared = getState().cursorCleared
+    const { cursorCleared: isCursorCleared } = getState()
 
     dispatch(cursorCleared({ value: !isCursorCleared }))
 
