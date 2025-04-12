@@ -8,6 +8,7 @@ import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actio
 import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../../constants'
 import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
+import haptics from '../../util/haptics'
 import ThemeSwitch from '../ThemeSwitch'
 import ActionButton from './../ActionButton'
 import Checkbox from './../Checkbox'
@@ -127,6 +128,7 @@ const ModalSettings = () => {
         <p className={css({ marginBottom: '2em', marginTop: '-1em' })}>
           <a
             onClick={() => dispatch(showModal({ id: 'customizeToolbar' }))}
+            onTouchEnd={haptics.light}
             role='button'
             className={extendTapRecipe()}
           >

@@ -9,6 +9,7 @@ import { isTouch } from '../browser'
 import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import Popover from './Popover'
@@ -49,7 +50,10 @@ const SortOption: FC<SortOptionProps> = ({ type, supportsDirection, label, sortP
         borderRadius: '2px',
       })}
       aria-label={type}
-      onTouchEnd={e => e.stopPropagation()}
+      onTouchEnd={e => {
+        e.stopPropagation()
+        haptics.light()
+      }}
       onTouchStart={e => onClick(type, e)}
       onMouseDown={e => !isTouch && onClick(type, e)}
     >

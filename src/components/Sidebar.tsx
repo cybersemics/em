@@ -8,6 +8,7 @@ import { dragInProgressActionCreator as dragInProgress } from '../actions/dragIn
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isTouch } from '../browser'
 import durations from '../util/durations'
+import haptics from '../util/haptics'
 import FadeTransition from './FadeTransition'
 import Favorites from './Favorites'
 import RecentlyDeleted from './RecentlyDeleted'
@@ -36,6 +37,7 @@ const SidebarLink = ({
   return (
     <a
       onClick={() => setSection(section)}
+      onTouchEnd={haptics.light}
       role='button'
       data-testid={`sidebar-${section}`}
       className={css({

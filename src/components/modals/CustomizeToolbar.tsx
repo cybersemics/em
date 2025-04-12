@@ -17,6 +17,7 @@ import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
 import { commandById } from '../../commands'
 import { AlertText, AlertType } from '../../constants'
+import haptics from '../../util/haptics'
 import CommandTableOnly from '../CommandTableOnly'
 import FadeTransition from '../FadeTransition'
 import CommandTable from './../CommandTable'
@@ -121,7 +122,12 @@ const ModalCustomizeToolbar: FC = () => {
       <h1 className={modalClasses.title}>Customize Toolbar</h1>
       <p className={css({ marginTop: '-1em', marginBottom: '1em' })}>
         &lt;{' '}
-        <a onClick={() => dispatch(showModal({ id: 'settings' }))} role='button' className={extendTapRecipe()}>
+        <a
+          onClick={() => dispatch(showModal({ id: 'settings' }))}
+          role='button'
+          onTouchEnd={haptics.light}
+          className={extendTapRecipe()}
+        >
           Back to Settings
         </a>
       </p>
@@ -187,7 +193,12 @@ const ModalCustomizeToolbar: FC = () => {
 
       <p className={css({ marginTop: '2em', marginBottom: '2em' })}>
         &lt;{' '}
-        <a onClick={() => dispatch(showModal({ id: 'settings' }))} role='button' className={extendTapRecipe()}>
+        <a
+          onClick={() => dispatch(showModal({ id: 'settings' }))}
+          role='button'
+          onTouchEnd={haptics.light}
+          className={extendTapRecipe()}
+        >
           Back to Settings
         </a>
       </p>
@@ -195,6 +206,7 @@ const ModalCustomizeToolbar: FC = () => {
       <div className={css({ textAlign: 'center' })}>
         <a
           onClick={() => dispatch(closeModal())}
+          onTouchEnd={haptics.light}
           role='button'
           className={cx(
             anchorButtonRecipe({
@@ -216,6 +228,7 @@ const ModalCustomizeToolbar: FC = () => {
                 dispatch([initUserToolbar({ force: true }), alert('Toolbar reset', { clearDelay: 8000 })])
               }
             }}
+            onTouchEnd={haptics.light}
             role='button'
             className={cx(extendTapRecipe(), css({ color: 'red' }))}
           >

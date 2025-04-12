@@ -53,7 +53,11 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
         </div>
       )}
       <pre className={css({ whiteSpace: 'normal' })}>{componentStack}</pre>
-      <a onClick={() => window.location.reload()} className={cx(anchorButtonRecipe(), css({ minWidth: 0 }))}>
+      <a
+        onClick={() => window.location.reload()}
+        role='button'
+        className={cx(anchorButtonRecipe(), css({ minWidth: 0 }))}
+      >
         Refresh
       </a>
     </div>

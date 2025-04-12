@@ -8,6 +8,7 @@ import { tutorialStepActionCreator as tutorialStep } from '../../actions/tutoria
 import { HOME_TOKEN } from '../../constants'
 import { hasChildren } from '../../selectors/getChildren'
 import offlineStatusStore from '../../stores/offlineStatusStore'
+import haptics from '../../util/haptics'
 import ActionButton from './../ActionButton'
 import ModalComponent from './ModalComponent'
 
@@ -100,6 +101,8 @@ const ModalWelcome = () => {
                   endTutorial()
                   close()
                 }}
+                role='button'
+                onTouchEnd={haptics.light}
               >
                 New, empty thoughtspace
               </a>

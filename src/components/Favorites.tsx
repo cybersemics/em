@@ -14,6 +14,7 @@ import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import thoughtToPath from '../selectors/thoughtToPath'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import nonNull from '../util/nonNull'
 import Checkbox from './Checkbox'
@@ -115,6 +116,7 @@ const FavoritesOptions = ({
       <div className={css({ marginLeft: '1em' })}>
         <span
           onClick={() => setShowOptions(!showOptions)}
+          onTouchEnd={haptics.light}
           role='button'
           className={css({
             color: 'modalExportUnused',

@@ -8,6 +8,7 @@ import { commandById } from '../../commands'
 import { TUTORIAL2_STEP_SUCCESS, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import useIsVisible from '../../hooks/useIsVisible'
 import getSetting from '../../selectors/getSetting'
+import haptics from '../../util/haptics'
 import SlideTransition from '../SlideTransition'
 import { TutorialGesturePortal } from './TutorialGestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
@@ -82,6 +83,7 @@ const Tutorial: FC = () => {
             }
           }}
           role='button'
+          onTouchEnd={haptics.light}
         >
           ✕ close tutorial
         </a>

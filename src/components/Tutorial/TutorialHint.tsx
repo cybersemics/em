@@ -4,6 +4,7 @@ import { css, cx } from '../../../styled-system/css'
 import { anchorButtonRecipe } from '../../../styled-system/recipes'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import getSetting from '../../selectors/getSetting'
+import haptics from '../../util/haptics'
 
 /** Renders a hint button that will advance the tutorial by a fractional step and show a hint. */
 const TutorialHint: FC<PropsWithChildren> = ({ children }) => {
@@ -32,6 +33,7 @@ const TutorialHint: FC<PropsWithChildren> = ({ children }) => {
           )
         }
         role='button'
+        onTouchEnd={haptics.light}
       >
         hint
       </a>

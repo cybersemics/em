@@ -16,6 +16,7 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
+import haptics from '../../util/haptics'
 import TutorialNavigationButton from './TutorialNavigationButton'
 import TutorialNavigationNext from './TutorialNavigationNext'
 import TutorialNavigationPrev from './TutorialNavigationPrev'
@@ -63,6 +64,7 @@ const TutorialNavigation = ({
                 key={step}
                 onClick={() => dispatch(setTutorialStep({ value: step }))}
                 role='button'
+                onTouchEnd={haptics.light}
               >
                 •
               </a>

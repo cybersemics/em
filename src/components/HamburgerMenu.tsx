@@ -6,6 +6,7 @@ import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSi
 import { isSafari, isTouch } from '../browser'
 import usePositionFixed from '../hooks/usePositionFixed'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import haptics from '../util/haptics'
 import FadeTransition from './FadeTransition'
 
 const lineClassName = css({
@@ -103,6 +104,7 @@ const HamburgerMenu = () => {
           }
         }}
         role='button'
+        onTouchEnd={haptics.light}
       >
         <Menu width={width} height={width * 0.7} strokeWidth={fontSize / 20} />
       </div>

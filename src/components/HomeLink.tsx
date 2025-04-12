@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
 import { homeActionCreator as home } from '../actions/home'
+import haptics from '../util/haptics'
 import HomeIcon from './icons/HomeIcon'
 
 interface HomeLinkProps {
@@ -25,6 +26,7 @@ const HomeLink = ({ color, size, iconStyle, className, breadcrumb }: HomeLinkPro
           e.preventDefault()
           dispatch(home())
         }}
+        onTouchEnd={haptics.light}
         role='button'
       >
         <HomeIcon

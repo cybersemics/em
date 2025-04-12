@@ -37,6 +37,7 @@ const Tab = <T extends string>({
         }),
       })}
       onClick={onClick}
+      onTouchEnd={haptics.light}
       role='button'
     >
       <span

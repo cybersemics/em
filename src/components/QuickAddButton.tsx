@@ -2,6 +2,7 @@ import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { toggleAbsoluteContextActionCreator as toggleAbsoluteContext } from '../actions/toggleAbsoluteContext'
+import haptics from '../util/haptics'
 import isAbsolute from '../util/isAbsolute'
 import AddIcon from './AddIcon'
 
@@ -21,6 +22,7 @@ const QuickAddButton: React.FC = () => {
       })}
       onClick={() => dispatch(toggleAbsoluteContext())}
       role='button'
+      onTouchEnd={haptics.light}
       title='Quick Add'
     >
       <AddIcon size={20} />

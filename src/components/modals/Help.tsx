@@ -7,6 +7,7 @@ import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import getSetting from '../../selectors/getSetting'
+import haptics from '../../util/haptics'
 import Tabs from '../Tabs'
 import ActionButton from './../ActionButton'
 import CommandTable from './../CommandTable'
@@ -50,6 +51,8 @@ const Tutorials = () => {
                 closeModal(),
               ])
             }
+            role='button'
+            onTouchEnd={haptics.light}
           ></ActionButton>
         </div>
         <div className={css({ marginTop: '1em', marginBottom: '1em' })}>
@@ -63,6 +66,8 @@ const Tutorials = () => {
                 closeModal(),
               ])
             }
+            role='button'
+            onTouchEnd={haptics.light}
           />
         </div>
       </div>

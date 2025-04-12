@@ -1,5 +1,6 @@
 import React, { FC, PropsWithChildren } from 'react'
 import { css } from '../../styled-system/css'
+import haptics from '../util/haptics'
 
 /** A static checkbox component with em styling. */
 const CheckboxInput = ({ checked }: { checked?: boolean }) => {
@@ -76,6 +77,7 @@ const Checkbox: FC<
         e.preventDefault()
         onChange(e)
       }}
+      onTouchEnd={haptics.light}
       role='button'
     >
       <div

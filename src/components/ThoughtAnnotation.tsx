@@ -20,6 +20,7 @@ import getUserSetting from '../selectors/getUserSetting'
 import editingValueStore from '../stores/editingValue'
 import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
+import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -75,6 +76,7 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
           e.preventDefault()
         }
       }}
+      onTouchEnd={haptics.light}
       role='button'
     >
       <UrlIcon />
