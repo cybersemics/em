@@ -6,8 +6,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 /** Shows a popup with a tip and clears any existing alert. */
 const showTip = (state: State, { tip }: { tip: TipId }): State => ({
   ...state,
-  // for now, don't allow stacking tips
-  tips: [tip],
+  tip,
   // clear any existing alert when showing a tip
   ...(tip && { alert: null }),
 })
