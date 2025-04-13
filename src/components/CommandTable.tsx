@@ -1,115 +1,21 @@
-import { FC, useState } from 'react'
+import { useState } from 'react'
+import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../styled-system/css'
-import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
-import CommandId from '../@types/CommandId'
+import CommandSortType from '../@types/CommandSortType'
 import { isTouch } from '../browser'
 import { commandById, globalCommands } from '../commands'
+import { COMMAND_GROUPS } from '../constants'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
-import CommandTableOnly from './CommandTableOnly'
+import CommandsGroup from './CommandsGroup'
+import FadeTransition from './FadeTransition'
+import SearchCommands from './SearchCommands'
+import SortButton from './SortButton'
 
-// define the grouping and ordering of commands
-const groups: {
-  title: string
-  commands: CommandId[]
-}[] = [
-  {
-    title: 'Navigation',
-    commands: [
-      'cursorBack',
-      'cursorForward',
-      'cursorNext',
-      'cursorPrev',
-      'jumpBack',
-      'jumpForward',
-      'moveCursorBackward',
-      'moveCursorForward',
-      'commandPalette',
-      'home',
-      'search',
-      'selectAll',
-    ],
-  },
-  {
-    title: 'Creating thoughts',
-    commands: [
-      'categorize',
-      'newThought',
-      'newThoughtAbove',
-      'newSubthought',
-      'newSubthoughtTop',
-      'newUncle',
-      'newGrandChild',
-      'extractThought',
-      'generateThought',
-    ],
-  },
-  {
-    title: 'Deleting thoughts',
-    commands: ['delete', 'archive', 'collapseContext', 'clearThought'],
-  },
-  {
-    title: 'Moving thoughts',
-    commands: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp'],
-  },
-  {
-    title: 'Editing thoughts',
-    commands: [
-      'join',
-      'splitSentences',
-      'bold',
-      'italic',
-      'strikethrough',
-      'underline',
-      'code',
-      'copyCursor',
-      'removeFormat',
-    ],
-  },
-  {
-    title: 'Oops',
-    commands: ['undo', 'redo'],
-  },
-  {
-    title: 'Special Views',
-    commands: [
-      'note',
-      'swapNote',
-      'toggleContextView',
-      'proseView',
-      'toggleTableView',
-      'toggleSort',
-      'heading0',
-      'heading1',
-      'heading2',
-      'heading3',
-      'heading4',
-      'heading5',
-    ],
-  },
-  {
-    title: 'Visibility',
-    commands: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
-  },
-  {
-    title: 'Settings',
-    commands: ['customizeToolbar'],
-  },
-  {
-    title: 'Help',
-    commands: ['help'],
-  },
-  {
-    title: 'Cancel',
-    commands: ['cancel'],
-  },
-]
-
-// assert that groups include all necessary commands
 const commandsGroupedMap = keyValueBy(
-  groups.flatMap(group => group.commands),
+  COMMAND_GROUPS.flatMap(group => group.commands),
   true,
 )
 const commandsUngrouped = globalCommands.filter(
@@ -124,110 +30,94 @@ if (commandsUngrouped.length > 0) {
   )
 }
 
-/** Search bar for filtering commands. */
-const SearchCommands: FC<{
-  onInput?: (value: string) => void
-}> = ({ onInput }) => {
-  return (
-    <div id='search' className={css({ borderBottom: 'solid 1px {colors.gray50}' })}>
-      <input
-        type='text'
-        placeholder='Search commands by name...'
-        onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-          onInput?.(e.target.value)
-        }}
-        className={css({
-          marginLeft: 0,
-          marginBottom: 0,
-          marginTop: '1em',
-          border: 'none',
-          boxSizing: 'border-box',
-          width: '100%',
-        })}
-      />
-    </div>
-  )
-}
-
-/** Renders a group of commands with a heading. */
-const CommandsGroup: ({
-  customize,
-  onSelect,
-  selectedCommand,
-  title,
-  commands,
-  search,
-}: {
+interface CommandTableProps {
   customize?: boolean
   onSelect?: (command: Command | null) => void
   selectedCommand?: Command
-  title: string
-  search?: string
-  commands: (Command | null)[]
-}) => JSX.Element = ({ customize, onSelect, selectedCommand, commands, title, search }) => {
-  const modalClasses = modalTextRecipe()
-
-  return (
-    <div>
-      <h2 className={modalClasses.subtitle}>{title}</h2>
-      <CommandTableOnly
-        commands={commands}
-        selectedCommand={selectedCommand}
-        customize={customize}
-        onSelect={onSelect}
-        search={search}
-        applyIndexInToolbar
-      />
-    </div>
-  )
+  viewType?: 'table' | 'grid'
 }
 
-/** Renders a table of commands. */
-const CommandTable = ({
-  customize,
-  onSelect,
-  selectedCommand: selectedCommand,
-}: {
-  customize?: boolean
-  onSelect?: (command: Command | null) => void
-  selectedCommand?: Command
-}) => {
+/** Renders a table of commands with a fade-in animation when sorting changes. */
+const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table' }: CommandTableProps) => {
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
+  const [sortOrder, setSortOrder] = useState<CommandSortType>('type')
+
+  /** This render function is used to render the content of the command table.
+   * It renders groups of commands if the search is empty.
+   * It renders a single command if the search is not empty.
+   *
+   * Depending on the viewType prop, it renders the commands in a table or a grid.
+   */
+  const renderContent = () => {
+    if (search) {
+      return (
+        <CommandsGroup
+          title={'Results'}
+          commands={commands}
+          selectedCommand={selectedCommand}
+          customize={customize}
+          onSelect={onSelect}
+          search={search}
+          viewType={viewType}
+        />
+      )
+    } else if (sortOrder === 'type') {
+      return COMMAND_GROUPS.map(group => {
+        const commands = group.commands
+          .map(commandById)
+          .filter(command => (isTouch ? !!command.gesture : !!command.keyboard))
+
+        return commands.length > 0 ? (
+          <CommandsGroup
+            title={group.title}
+            commands={commands}
+            customize={customize}
+            key={group.title}
+            onSelect={onSelect}
+            selectedCommand={selectedCommand}
+            viewType={viewType}
+          />
+        ) : null
+      })
+    } else {
+      const commandsWithGestures = commands.filter(command => !!command.gesture)
+      const sortedCommands = commandsWithGestures.sort((a, b) => a.label.localeCompare(b.label))
+
+      return (
+        <CommandsGroup
+          title={'All Commands'}
+          commands={sortedCommands}
+          selectedCommand={selectedCommand}
+          customize={customize}
+          onSelect={onSelect}
+          viewType={viewType}
+        />
+      )
+    }
+  }
 
   return (
     <div>
-      <SearchCommands onInput={setSearch} />
-      <div className={css({ textAlign: 'left' })}>
-        {search ? (
-          <CommandsGroup
-            title={'Results'}
-            commands={commands}
-            selectedCommand={selectedCommand}
-            customize={customize}
-            onSelect={onSelect}
-            search={search}
-          />
-        ) : (
-          groups.map(group => {
-            const commands = group.commands
-              .map(commandById)
-              .filter((command): command is Command => (isTouch ? !!command.gesture : !!command.keyboard))
-
-            // do not render groups with no commands on this platform
-            return commands.length > 0 ? (
-              <CommandsGroup
-                title={group.title}
-                commands={commands}
-                key={group.title}
-                customize={customize}
-                onSelect={onSelect}
-                selectedCommand={selectedCommand}
-              />
-            ) : null
-          })
-        )}
+      <div
+        className={css({
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          gap: '5px',
+          position: 'relative',
+          zIndex: 1,
+        })}
+      >
+        <SearchCommands onInput={setSearch} />
+        <SortButton onSortChange={setSortOrder} />
       </div>
+
+      <SwitchTransition>
+        <FadeTransition key={`${sortOrder}-${search}`} in={true} duration='medium' unmountOnExit>
+          <div className={css({ textAlign: 'left' })}>{renderContent()}</div>
+        </FadeTransition>
+      </SwitchTransition>
     </div>
   )
 }
