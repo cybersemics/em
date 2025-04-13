@@ -6,6 +6,7 @@ import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import getQueryParam from '../../util/getQueryParam'
+import haptics from '../../util/haptics'
 import storage from '../../util/storage'
 import ActionButton from './../ActionButton'
 import InvitesIcon from './../icons/InvitesIcon'
@@ -153,6 +154,7 @@ const ModalSignup = () => {
                   isDisabled={isSubmitting}
                   isLoading={isSubmitting}
                   onClick={() => submitAction(closeModal)}
+                  onTouchEnd={haptics.light}
                   role='button'
                 />
               )}
@@ -160,6 +162,7 @@ const ModalSignup = () => {
                 disabled={isSubmitting}
                 className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
                 onClick={() => dispatch(showModal({ id: 'auth' }))}
+                onTouchEnd={haptics.light}
                 role='button'
               >
                 Log in
