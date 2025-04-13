@@ -10,7 +10,12 @@ import ThoughtId from '../@types/ThoughtId'
 import getSortPreference from '../selectors/getSortPreference'
 import appendToPath from '../util/appendToPath'
 import compareByRank from '../util/compareByRank'
-import { compareThought, compareThoughtDescending } from '../util/compareThought'
+import {
+  compareThought,
+  compareThoughtByCreated,
+  compareThoughtByUpdated,
+  compareThoughtDescending,
+} from '../util/compareThought'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import isAttribute from '../util/isAttribute'
@@ -135,17 +140,7 @@ const getChildrenSortedCreated = moize(
   (state: State, id: ThoughtId): Thought[] => {
     const sortPreference = getSortPreference(state, id)
     const sorted = getChildrenSortedBy(state, id, (a, b) => {
-      return sortPreference.direction === 'Desc'
-        ? b.created > a.created
-          ? 1
-          : b.created < a.created
-            ? -1
-            : 0
-        : a.created > b.created
-          ? 1
-          : a.created < b.created
-            ? -1
-            : 0
+      return sortPreference.direction === 'Desc' ? compareThoughtByCreated(b, a) : compareThoughtByCreated(a, b)
     })
     return sorted
   },
@@ -160,17 +155,7 @@ const getChildrenSortedUpdated = moize(
   (state: State, id: ThoughtId): Thought[] => {
     const sortPreference = getSortPreference(state, id)
     const sorted = getChildrenSortedBy(state, id, (a, b) => {
-      return sortPreference.direction === 'Desc'
-        ? b.lastUpdated > a.lastUpdated
-          ? 1
-          : b.lastUpdated < a.lastUpdated
-            ? -1
-            : 0
-        : a.lastUpdated > b.lastUpdated
-          ? 1
-          : a.lastUpdated < b.lastUpdated
-            ? -1
-            : 0
+      return sortPreference.direction === 'Desc' ? compareThoughtByUpdated(b, a) : compareThoughtByUpdated(a, b)
     })
     return sorted
   },
