@@ -11,9 +11,13 @@ import parentOf from '../util/parentOf'
 /** Swaps the current cursor's thought with its parent by moving nodes. */
 const swapParent = (state: State) => {
   const { cursor } = state
+
+  // If there is no cursor, do nothing.
   if (!cursor) return state
 
   const parent = parentOf(cursor)
+
+  // If the cursor is at the root, do nothing.
   if (!parent.length) return state
 
   const childId = head(cursor)
