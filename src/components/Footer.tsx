@@ -15,6 +15,7 @@ import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import syncStatusStore from '../stores/syncStatus'
+import haptics from '../util/haptics'
 
 /** Helper hook that allows web and native to share selectors for the footer component. */
 const useFooterUseSelectors = () => {
@@ -79,6 +80,7 @@ const ModalLink: FC<PropsWithChildren<{ id: Modal }>> = ({ id, children }) => {
     <a
       tabIndex={-1}
       onClick={() => dispatch(showModal({ id }))}
+      onTouchEnd={haptics.light}
       role='button'
       className={cx(extendTapRecipe(), css({ whiteSpace: 'nowrap' }))}
     >
@@ -93,6 +95,7 @@ const HelpButton: React.FC = () => {
   return (
     <div
       onClick={() => dispatch(showModal({ id: 'help' }))}
+      onTouchEnd={haptics.light}
       role='button'
       title='Help'
       className={css({
@@ -179,6 +182,7 @@ const Footer = () => {
               userSelect: 'none',
             })}
             onClick={() => dispatch(fontSizeUp())}
+            onTouchEnd={haptics.light}
             role='button'
           >
             A
@@ -193,6 +197,7 @@ const Footer = () => {
               userSelect: 'none',
             })}
             onClick={() => dispatch(fontSizeDown())}
+            onTouchEnd={haptics.light}
             role='button'
           >
             A

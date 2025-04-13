@@ -9,6 +9,7 @@ import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { alertActionCreator as alert } from '../../actions/alert'
 import modalDescriptionClass from '../../recipes/modalDescriptionClass'
+import haptics from '../../util/haptics'
 import timestamp from '../../util/timestamp'
 import ActionButton from './../ActionButton'
 import CheckmarkIcon from './../icons/CheckmarkIcon'
@@ -170,6 +171,7 @@ const Invites = () => {
               <div
                 className={css({ display: 'inline-flex' })}
                 onClick={() => (focusedGiftCode === id ? setFocusedGiftCode(null) : onInviteCodeSeen(id))}
+                onTouchEnd={haptics.light}
                 role='button'
               >
                 <InvitesIcon classes={svgClasses} fill={selectedIconFill} size={26} />
@@ -193,7 +195,12 @@ const Invites = () => {
               ) : (
                 <CheckmarkIcon classes={svgClasses} fill={token('colors.bg')} size={21} />
               )}
-              <div className={css({ display: 'inline-flex' })} onClick={() => updateCopy(link)} role='button'>
+              <div
+                className={css({ display: 'inline-flex' })}
+                onClick={() => updateCopy(link)}
+                onTouchEnd={haptics.light}
+                role='button'
+              >
                 <CopyClipboard fill={selectedIconFill} size={26} />
               </div>
             </div>

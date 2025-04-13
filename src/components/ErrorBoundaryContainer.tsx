@@ -3,6 +3,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { css, cx } from '../../styled-system/css'
 import { anchorButtonRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
+import haptics from '../util/haptics'
 
 /** A triangular toggle component. */
 const Toggle: FC<{ expand?: boolean; title?: string } & PropsWithChildren> = ({ children, title }) => {
@@ -12,6 +13,7 @@ const Toggle: FC<{ expand?: boolean; title?: string } & PropsWithChildren> = ({ 
     <div>
       <div
         onClick={() => setExpanded(!expanded)}
+        onTouchEnd={haptics.light}
         role='button'
         className={css({ cursor: 'pointer', marginBottom: 20, userSelect: 'none' })}
       >
@@ -55,6 +57,7 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
       <pre className={css({ whiteSpace: 'normal' })}>{componentStack}</pre>
       <a
         onClick={() => window.location.reload()}
+        onTouchEnd={haptics.light}
         role='button'
         className={cx(anchorButtonRecipe(), css({ minWidth: 0 }))}
       >

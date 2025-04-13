@@ -1,6 +1,7 @@
 import { useDispatch } from 'react-redux'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
+import haptics from '../../util/haptics'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepSuccess = () => {
@@ -14,7 +15,7 @@ const Tutorial2StepSuccess = () => {
       <p>
         That's right, you're on your own now. But you can always replay this tutorial or explore all of the available{' '}
         {isTouch ? 'gestures' : 'keyboard shortcuts'} by clicking the{' '}
-        <a onClick={() => dispatch(showModal({ id: 'help' }))} role='button'>
+        <a onClick={() => dispatch(showModal({ id: 'help' }))} onTouchEnd={haptics.light} role='button'>
           Help
         </a>{' '}
         link in the footer.

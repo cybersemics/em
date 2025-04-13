@@ -12,6 +12,7 @@ import { EM_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import ellipsize from '../util/ellipsize'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import strip from '../util/strip'
 
@@ -59,6 +60,7 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
         // prevent propagation to Content component which will trigger clickOnEmptySpace
         e.stopPropagation()
       }}
+      onTouchEnd={haptics.light}
       role='button'
       style={{
         userSelect: 'none',

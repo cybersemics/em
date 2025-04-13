@@ -2,6 +2,7 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { showModalActionCreator as showModal } from '../actions/showModal'
+import haptics from '../util/haptics'
 import FeedbackIcon from './icons/FeedbackIcon'
 
 /**
@@ -13,6 +14,7 @@ const FeedbackButton: React.FC = () => {
     <div
       className={css({ display: 'inline-flex' })}
       onClick={() => dispatch(showModal({ id: 'feedback' }))}
+      onTouchEnd={haptics.light}
       role='button'
       title='Feedback'
     >

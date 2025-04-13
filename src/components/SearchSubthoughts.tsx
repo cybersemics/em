@@ -11,6 +11,7 @@ import hasLexeme from '../selectors/hasLexeme'
 import store from '../stores/app'
 import escapeRegex from '../util/escapeRegex'
 import formatNumber from '../util/formatNumber'
+import haptics from '../util/haptics'
 import isDocumentEditable from '../util/isDocumentEditable'
 import sort from '../util/sort'
 import NewThought from './NewThought'
@@ -117,6 +118,7 @@ const SearchSubthoughts: FC = () => {
         <a
           className={cx(textNoteRecipe(), css({ display: 'inline-block', marginTop: '5px', marginLeft: '18px' }))}
           onClick={() => dispatch(setSearchLimit({ value: searchLimit + DEFAULT_SEARCH_LIMIT }))}
+          onTouchEnd={haptics.light}
           role='button'
         >
           More...

@@ -17,6 +17,7 @@ import * as selection from '../../device/selection'
 import useSharedType from '../../hooks/useSharedType'
 import useStatus from '../../hooks/useStatus'
 import modalDescriptionClass from '../../recipes/modalDescriptionClass'
+import haptics from '../../util/haptics'
 import strip from '../../util/strip'
 import FadeTransition from '../FadeTransition'
 import ActionButton from './../ActionButton'
@@ -139,6 +140,7 @@ const AddDeviceForm = ({
       <div>
         <a
           onClick={() => onSubmit({ name, role: 'owner' })}
+          onTouchEnd={haptics.light}
           role='button'
           className={cx(
             anchorButtonRecipe({
@@ -149,7 +151,12 @@ const AddDeviceForm = ({
         >
           Add
         </a>
-        <a onClick={onCancel} role='button' className={css({ color: 'gray66', marginLeft: '1em' })}>
+        <a
+          onClick={onCancel}
+          role='button'
+          onTouchEnd={haptics.light}
+          className={css({ color: 'gray66', marginLeft: '1em' })}
+        >
           Cancel
         </a>
       </div>
@@ -216,6 +223,7 @@ const ShareList = React.forwardRef<
                 <div
                   key={accessToken}
                   onClick={() => onSelect?.(accessToken)}
+                  onTouchEnd={haptics.light}
                   role='button'
                   className={css({ cursor: 'pointer' })}
                 >
@@ -257,6 +265,7 @@ const ShareList = React.forwardRef<
                   <div className={css({ marginTop: '1em' })}>
                     <a
                       onClick={() => setShowDeviceForm(true)}
+                      onTouchEnd={haptics.light}
                       role='button'
                       className={cx(
                         anchorButtonRecipe({
@@ -302,6 +311,7 @@ const EditableName = React.memo(
         />
         <a
           onClick={() => selection.set(ref.current, { end: true })}
+          onTouchEnd={haptics.light}
           role='button'
           className={css({
             display: 'inline-block',
@@ -454,6 +464,7 @@ const ShareDetail = React.memo(
               </span>
               <span
                 onClick={copyShareUrl}
+                onTouchEnd={haptics.light}
                 role='button'
                 className={css({ position: 'absolute', top: '0.75em', right: '1.25em', cursor: 'pointer' })}
               >
@@ -471,6 +482,7 @@ const ShareDetail = React.memo(
           {onBack && (
             <a
               onClick={onBack}
+              onTouchEnd={haptics.light}
               role='button'
               className={cx(
                 anchorButtonRecipe({

@@ -2,6 +2,7 @@ import React, { CSSProperties } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import ExportOption from '../@types/ExportOption'
+import haptics from '../util/haptics'
 
 interface DropDownMenuProps {
   dark?: boolean
@@ -52,6 +53,7 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
                 onSelect(option)
               }
             }}
+            onTouchEnd={haptics.light}
             role='button'
           >
             <div className={css({ display: 'flex', alignItems: 'center', marginLeft: '10px' })}>

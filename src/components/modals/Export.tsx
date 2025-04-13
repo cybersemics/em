@@ -37,6 +37,7 @@ import theme from '../../selectors/theme'
 import ellipsize from '../../util/ellipsize'
 import equalPath from '../../util/equalPath'
 import exportPhrase from '../../util/exportPhrase'
+import haptics from '../../util/haptics'
 import head from '../../util/head'
 import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
@@ -245,7 +246,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
   return (
     <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>
-      <a className={css({ color: 'fg' })} onClick={() => setIsOpen(!isOpen)} role='button'>
+      <a className={css({ color: 'fg' })} onClick={() => setIsOpen(!isOpen)} onTouchEnd={haptics.light} role='button'>
         {selected.label}
       </a>
       <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
@@ -632,6 +633,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
           })}
           disabled={exportContent === null}
           onClick={onExportClick}
+          onTouchEnd={haptics.light}
           role='button'
         >
           {exportWord}
@@ -663,6 +665,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
               }),
             )}
             onClick={onAdvancedClick}
+            onTouchEnd={haptics.light}
             role='button'
           >
             Advanced
@@ -765,6 +768,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
               })}
               disabled={!exportContent || publishing || publishedCIDs.length > 0}
               onClick={publish}
+              onTouchEnd={haptics.light}
               role='button'
               style={{ color: colors.bg, backgroundColor: colors.fg }}
             >
@@ -780,6 +784,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
                   background: "none"
                 })}
                 onClick={() => dispatch([alert(null), closeModal()])}
+                onTouchEnd={haptics.light}
                 role='button'
                 style={{
                   color: colors.fg,

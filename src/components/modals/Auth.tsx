@@ -5,6 +5,7 @@ import { buttonRecipe, modalActionLinkRecipe } from '../../../styled-system/reci
 import Index from '../../@types/IndexType'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { loginActionCreator as login } from '../../actions/login'
+import haptics from '../../util/haptics'
 import storage from '../../util/storage'
 import ActionButton from './../ActionButton'
 import ModalComponent from './ModalComponent'
@@ -139,6 +140,7 @@ const ModalAuth = () => {
             title={activeMode.modalTitle}
             isLoading={isSubmitting}
             onClick={() => submitAction(closeModal, email, password)}
+            onTouchEnd={haptics.light}
             role='button'
           />
 
@@ -147,6 +149,7 @@ const ModalAuth = () => {
               disabled={isSubmitting}
               className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
               onClick={showLogin}
+              onTouchEnd={haptics.light}
               role='button'
             >
               {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
@@ -158,6 +161,7 @@ const ModalAuth = () => {
               disabled={isSubmitting}
               className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
               onClick={signInWithGoogle}
+              onTouchEnd={haptics.light}
               role='button'
             >
               Sign in with Google
@@ -177,6 +181,7 @@ const ModalAuth = () => {
                 storage.setItem('modal-to-show', '')
                 closeModal()
               }}
+              onTouchEnd={haptics.light}
               role='button'
             >
               Work Offline
@@ -193,7 +198,13 @@ const ModalAuth = () => {
         )}
 
         {isModeActive(modes.login) && (
-          <button disabled={isSubmitting} className='button' onClick={showForgotPassword} role='button'>
+          <button
+            disabled={isSubmitting}
+            className='button'
+            onClick={showForgotPassword}
+            onTouchEnd={haptics.light}
+            role='button'
+          >
             Forgot Password?
           </button>
         )}

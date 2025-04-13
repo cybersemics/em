@@ -5,6 +5,7 @@ import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { FADEOUT_DURATION } from '../../constants'
 import store from '../../stores/app'
+import haptics from '../../util/haptics'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void
@@ -95,6 +96,7 @@ class ModalComponent extends React.Component<ModalProps> {
               top: 'calc(token(spacing.safeAreaTop) + 9px - 0.2em)',
             })}
             onClick={this.close}
+            onTouchEnd={haptics.light}
             role='button'
           >
             ✕
@@ -138,6 +140,7 @@ class ModalComponent extends React.Component<ModalProps> {
                 },
               })}
               onClick={() => this.close()}
+              onTouchEnd={haptics.light}
               role='button'
             >
               <span>✕</span>

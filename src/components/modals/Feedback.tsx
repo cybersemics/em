@@ -5,6 +5,7 @@ import { css } from '../../../styled-system/css'
 import { modalActionLinkRecipe } from '../../../styled-system/recipes'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { AlertType } from '../../constants'
+import haptics from '../../util/haptics'
 import ActionButton from './../ActionButton'
 import ModalComponent from './ModalComponent'
 
@@ -85,7 +86,13 @@ const ModalFeedback = () => {
             role='button'
           />
           <div key='cancel' className={css({ fontSize: 22, marginTop: 10, opacity: 0.5 })}>
-            <a className={modalActionLinkRecipe()} id='skip-tutorial' onClick={() => close()} role='button'>
+            <a
+              className={modalActionLinkRecipe()}
+              id='skip-tutorial'
+              onClick={() => close()}
+              onTouchEnd={haptics.light}
+              role='button'
+            >
               Cancel
             </a>
           </div>

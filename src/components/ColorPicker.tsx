@@ -112,6 +112,7 @@ const ColorSwatch: FC<{
       onTouchEnd={e => {
         // stop click empty space
         e.stopPropagation()
+        haptics.light()
       }}
       onTouchStart={toggleTextColor}
       // only add mousedown to desktop, otherwise it will activate twice on mobile
