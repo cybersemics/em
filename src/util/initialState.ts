@@ -147,7 +147,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     showModal: import.meta.env.VITE_DEMO || (!storage.getItem('welcomeComplete') && !tsidShared) ? 'welcome' : null,
     showSidebar: false,
     status: 'disconnected',
-    tips: [],
+    tip: null,
     pushQueue: [],
     thoughts: initialThoughts(created),
     undoPatches: [],

@@ -32,7 +32,7 @@ const Tip: FC<
   }>
 > = ({ tipId, children }) => {
   const dispatch = useDispatch()
-  const tip = useSelector(state => state.tips[0])
+  const tip = useSelector(state => state.tip)
 
   const onClose = useCallback(() => {
     dispatch(dismissTip())
