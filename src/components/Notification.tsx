@@ -46,6 +46,7 @@ const Notification: FC<
             // uses swipeToDismiss from PopupBase on mobile
             onClose={isTouch ? undefined : handleClose}
             swipeDownToDismiss
+            preventFromTouchingEdge
             {...props}
           >
             <div

@@ -37,6 +37,7 @@ export type PopupBaseProps = PropsWithChildren<
     showXOnHover?: boolean
     swipeDownToDismiss?: boolean
     textAlign?: 'center' | 'left' | 'right'
+    preventFromTouchingEdge?: boolean
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
 >
 
@@ -58,6 +59,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       showXOnHover,
       swipeDownToDismiss,
       textAlign,
+      preventFromTouchingEdge = false,
     },
     ref,
   ) => {
@@ -120,7 +122,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           textAlign,
           zIndex: 'popup',
           // leave space so the circledCloseButton doesn't get cut off from the screen
-          maxWidth: onClose && circledCloseButton ? 'calc(100% - 2em)' : '100%',
+          maxWidth: preventFromTouchingEdge || (onClose && circledCloseButton) ? 'calc(100% - 2em)' : '100%',
           ...borderStyles,
           ...centerStyles,
           ...fullWidthStyles,
