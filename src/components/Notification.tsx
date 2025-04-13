@@ -18,12 +18,12 @@ const Notification: FC<
   } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'showXOnHover' | 'textAlign'>
 > = ({ renderedIcon, onClose, value, transitionKey, testId, children, ...props }) => {
   const popupRef = useRef<HTMLDivElement>(null)
-  const [isDismissed, setDismiss] = useState(false)
+  const [isDismissed, setIsDismissed] = useState(false)
 
   /** Dismiss the alert on close. */
   const handleClose = useCallback(() => {
     if (!onClose) return
-    setDismiss(true)
+    setIsDismissed(true)
     onClose?.()
   }, [onClose])
 
@@ -34,7 +34,7 @@ const Notification: FC<
       childFactory={(child: React.ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {value ? (
-        <FadeTransition duration='slow' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
+        <FadeTransition duration='slow' nodeRef={popupRef} onEntering={() => setIsDismissed(false)}>
           <PopupBase
             anchorFromBottom
             anchorOffset={36}
