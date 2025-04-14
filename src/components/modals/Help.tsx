@@ -66,8 +66,6 @@ const Tutorials = () => {
                 closeModal(),
               ])
             }
-            role='button'
-            onTouchEnd={haptics.light}
           />
         </div>
       </div>

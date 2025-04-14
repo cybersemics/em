@@ -83,7 +83,6 @@ const ModalFeedback = () => {
             isLoading={isSubmitting}
             isDisabled={isDisabled}
             onClick={() => onSubmit({ close })}
-            role='button'
           />
           <div key='cancel' className={css({ fontSize: 22, marginTop: 10, opacity: 0.5 })}>
             <a

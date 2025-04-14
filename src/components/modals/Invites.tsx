@@ -141,7 +141,7 @@ const Invites = () => {
       center
       actions={({ close }) => (
         <div>
-          <ActionButton key='close' title='Close' onClick={() => close()} role='button' />
+          <ActionButton key='close' title='Close' onClick={() => close()} />
         </div>
       )}
     >

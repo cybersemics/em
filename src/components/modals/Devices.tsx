@@ -541,9 +541,7 @@ const ModalDevices = () => {
       title='Device Management'
       center
       // do not show the close button on the detail view, since it renders the "Remove device" link at the very bottom of the page
-      actions={({ close }) =>
-        !selected ? <ActionButton key='close' title='Close' onClick={() => close()} role='button' /> : null
-      }
+      actions={({ close }) => (!selected ? <ActionButton key='close' title='Close' onClick={() => close()} /> : null)}
     >
       <div className={modalClasses.wrapper}>
         <TransitionGroup>

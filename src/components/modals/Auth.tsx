@@ -140,8 +140,6 @@ const ModalAuth = () => {
             title={activeMode.modalTitle}
             isLoading={isSubmitting}
             onClick={() => submitAction(closeModal, email, password)}
-            onTouchEnd={haptics.light}
-            role='button'
           />
 
           {!isModeActive(modes.login) && (

@@ -154,8 +154,6 @@ const ModalSignup = () => {
                   isDisabled={isSubmitting}
                   isLoading={isSubmitting}
                   onClick={() => submitAction(closeModal)}
-                  onTouchEnd={haptics.light}
-                  role='button'
                 />
               )}
               <button
