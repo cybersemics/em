@@ -13,6 +13,8 @@ import compareByRank from '../util/compareByRank'
 import {
   compareThought,
   compareThoughtByCreated,
+  compareThoughtByNote,
+  compareThoughtByNoteDescending,
   compareThoughtByUpdated,
   compareThoughtDescending,
 } from '../util/compareThought'
@@ -265,6 +267,10 @@ export const getAllChildrenSorted = (state: State, id: ThoughtId): Thought[] => 
     return getChildrenSortedCreated(state, id)
   } else if (sortPreference.type === 'Updated') {
     return getChildrenSortedUpdated(state, id)
+  } else if (sortPreference.type === 'Note') {
+    return getChildrenRanked(state, id).sort(
+      sortPreference.direction === 'Desc' ? compareThoughtByNoteDescending(state) : compareThoughtByNote(state),
+    )
   } else {
     return getChildrenRanked(state, id)
   }

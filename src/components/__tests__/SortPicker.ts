@@ -500,3 +500,65 @@ it('subthoughts: Updated Desc', async () => {
 
   expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['4', '2', '3'])
 })
+
+it('home: Note Asc', async () => {
+  act(() => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =note
+              - 2
+          - b
+            - =note
+              - 3
+          - c
+            - =note
+              - 1
+        `,
+      }),
+      setCursor(['a']),
+    ])
+  })
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[aria-label="sort options"] [aria-label="Note"]')
+  await act(() => vi.runAllTimersAsync())
+
+  const thoughts = screen.getAllByTestId(/thought/)
+  expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c1', 'a2', 'b3'])
+})
+
+it('home: Note Desc', async () => {
+  act(() => {
+    store.dispatch([
+      importText({
+        text: `
+          - =sort
+            - Note
+          - a
+            - =note
+              - 2
+          - b
+            - =note
+              - 3
+          - c
+            - =note
+              - 1
+        `,
+      }),
+      setCursor(['a']),
+    ])
+  })
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[aria-label="sort options"] [aria-label="Note"]')
+  await act(() => vi.runAllTimersAsync())
+
+  const thoughts = screen.getAllByTestId(/thought/)
+  expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['b3', 'a2', 'c1'])
+})

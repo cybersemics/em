@@ -2,11 +2,13 @@
 import _ from 'lodash'
 import ComparatorFunction from '../@types/ComparatorFunction'
 import ComparatorValue from '../@types/ComparatorValue'
+import State from '../@types/State'
 import Thought from '../@types/Thought'
 import { ALLOWED_FORMATTING_TAGS, EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
 import compareByRank from './compareByRank'
 import isAttribute from './isAttribute'
 import lower from './lower'
+import noteValue from './noteValue'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
 const IGNORED_PREFIXES = ['the ']
@@ -259,3 +261,45 @@ export const compareThoughtByUpdatedDescending: ComparatorFunction<Thought> = (a
   }
   return compareReasonableDescending(a.value, b.value)
 }
+
+/** Compare two thoughts by their note value in ascending order. */
+export const compareThoughtByNote =
+  (state: State): ComparatorFunction<Thought> =>
+  (a: Thought, b: Thought) => {
+    const noteA = noteValue(state, a.id)
+    const noteB = noteValue(state, b.id)
+
+    // If both thoughts have notes, compare them
+    if (noteA !== null && noteB !== null) {
+      return compareReasonable(noteA, noteB)
+    }
+    // If only one has a note, the one with a note comes first
+    else if (noteA !== null && noteB === null) {
+      return -1
+    } else if (noteA === null && noteB !== null) {
+      return 1
+    }
+    // If neither has a note, fall back to comparing the values
+    return compareReasonable(a.value, b.value)
+  }
+
+/** Compare two thoughts by their note value in descending order. */
+export const compareThoughtByNoteDescending =
+  (state: State): ComparatorFunction<Thought> =>
+  (a: Thought, b: Thought) => {
+    const noteA = noteValue(state, a.id)
+    const noteB = noteValue(state, b.id)
+
+    // If both thoughts have notes, compare them in reverse order
+    if (noteA !== null && noteB !== null) {
+      return compareReasonableDescending(noteA, noteB)
+    }
+    // If only one has a note, the one with a note comes first
+    else if (noteA !== null && noteB === null) {
+      return -1
+    } else if (noteA === null && noteB !== null) {
+      return 1
+    }
+    // If neither has a note, fall back to comparing the values
+    return compareReasonableDescending(a.value, b.value)
+  }
