@@ -384,7 +384,10 @@ const ThoughtContainer = ({
       data-divider={isDivider(value)}
       data-editing={isEditing}
       onClick={isTouch ? undefined : handleMultiselect}
-      onTouchEnd={haptics.light}
+      onTouchEnd={e => {
+        haptics.light()
+        dragHoldResult.props.onTouchEnd(e)
+      }}
       role='button'
       style={{
         transition: `transform ${token('durations.layoutSlowShift')} ease-out, opacity ${token('durations.layoutSlowShift')} ease-out`,
