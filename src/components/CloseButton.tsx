@@ -45,6 +45,7 @@ const BaseCloseButton = ({
       onClick={onClose}
       role='button'
       onTouchStart={haptics.medium}
+      onTouchEnd={haptics.light}
       className={css({
         color: 'inherit',
         textDecoration: 'none',

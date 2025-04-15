@@ -41,6 +41,7 @@ const ActionButton = ({
       )}
       onClick={isDisabled ? undefined : onClick}
       onTouchStart={haptics.medium}
+      onTouchEnd={haptics.light}
       role='button'
       {...restProps}
     >
