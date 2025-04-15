@@ -73,10 +73,6 @@ const TreeNode = ({
     isTableCol1,
     path,
   })
-  const isLastActionNewThought = useSelector(state => {
-    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => patch.actions[0] === 'newThought')
-  })
 
   // true if the last action is any of archive/delete/collapse
   const isLastActionDelete = useSelector(state => {
@@ -110,11 +106,6 @@ const TreeNode = ({
   // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
-  // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
-  const transition = isLastActionNewThought
-    ? `left {durations.layoutNodeAnimationFast} ease-out,top {durations.layoutNodeAnimationFast} ease-out`
-    : `left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out`
-
   return (
     <FadeTransition
       id={thoughtKey}
@@ -133,7 +124,7 @@ const TreeNode = ({
         // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
         className={css({
           position: 'absolute',
-          transition,
+          transition: 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
         })}
         style={{
           // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
