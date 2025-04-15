@@ -109,10 +109,8 @@ const TreeNode = ({
   return (
     <FadeTransition
       id={thoughtKey}
-      // The FadeTransition is only responsible for fade out on unmount;
-      // or for fade in on mounting of a new thought.
-      // See autofocusChanged for normal opacity transition.
-      // Limit the fade/shrink/blur animation to the archive, delete, and uncategorize actions.
+      // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
+      // Archive, delete, and uncategorize get a special dissolve animation.
       duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}

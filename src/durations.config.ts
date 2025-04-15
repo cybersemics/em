@@ -27,7 +27,7 @@ const durationsConfig = {
   /** The animation duration of a node in the LayoutTree component. This animates thought positions when they are moved. */
   layoutNodeAnimation: 150,
   /* A fade in animation that is triggered for new thoughts. */
-  nodeFadeIn: 80,
+  nodeFadeIn: 150,
   /* A fade out animation that is triggered when a node unmounts. See autofocusChanged for normal opacity animations. */
   nodeFadeOut: 80,
   /* A dissolve animation that is triggered when a node is deleted. */
