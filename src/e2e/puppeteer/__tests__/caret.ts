@@ -1,6 +1,7 @@
 import { KnownDevices } from 'puppeteer'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
+import clickNote from '../helpers/clickNote'
 import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
 import getEditingText from '../helpers/getEditingText'
@@ -8,6 +9,7 @@ import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
+import swipe from '../helpers/swipe'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
@@ -271,5 +273,39 @@ describe('mobile only', () => {
 
     const focusNode = await getSelection().focusNode
     expect(focusNode).toBeUndefined()
+  })
+
+  describe('when caret is inside a note', () => {
+    it('cursorBack should move the cursor to the previous thought', async () => {
+      const importText = `
+      - a
+        - b
+          - =note
+            - Hello world
+          - c`
+      await paste(importText)
+      await clickNote('Hello world')
+
+      await swipe('r')
+
+      const textContext = await getSelection().focusNode?.textContent
+      expect(textContext).toBe('a')
+    })
+
+    it('cursorForward should move the cursor to the next thought', async () => {
+      const importText = `
+      - a
+        - b
+          - =note
+            - Hello world
+          - c`
+      await paste(importText)
+      await clickNote('Hello world')
+
+      await swipe('l')
+
+      const textContext = await getSelection().focusNode?.textContent
+      expect(textContext).toBe('c')
+    })
   })
 })
