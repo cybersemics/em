@@ -10,22 +10,18 @@ import toggleAbsoluteContext from './toggleAbsoluteContext'
 
 /** Moves the cursor up one level. */
 const cursorBack = (state: State) => {
-  const { cursor: cursorOld, editing, noteFocus, search, rootContext } = state
+  const { cursor: cursorOld, editing, search, rootContext } = state
 
   const isAbsoluteRoot = isAbsolute(rootContext)
 
-  const cursorNew = noteFocus ? cursorOld : cursorOld && parentOf(cursorOld)
+  const cursorNew = cursorOld && parentOf(cursorOld)
 
   return reducerFlow(
     // if there is a cursor, move it to its parent
     cursorOld
       ? [
           // move cursor back
-          setCursor({
-            path: cursorNew!.length > 0 ? cursorNew : null,
-            editing,
-            preserveMulticursor: true,
-          }),
+          setCursor({ path: cursorNew!.length > 0 ? cursorNew : null, editing, preserveMulticursor: true }),
 
           // append to cursor history to allow 'forward' gesture
           cursorHistory({ cursor: cursorOld }),

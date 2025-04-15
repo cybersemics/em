@@ -25,7 +25,7 @@ describe('normal view', () => {
     ])
 
     const stateNew = store.getState()
-    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a'])
     expect(stateNew.noteFocus).toBeFalse()
   })
 })
