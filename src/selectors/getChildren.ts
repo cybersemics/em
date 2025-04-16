@@ -131,18 +131,18 @@ const getChildrenSortedAlphabetical = (state: State, id: ThoughtId): Thought[] =
 /** Generates children sorted by their creation date. */
 const getChildrenSortedCreated = (state: State, id: ThoughtId): Thought[] => {
   const sortPreference = getSortPreference(state, id)
-  const sorted = getChildrenSortedBy(state, id, (a, b) => {
-    return sortPreference.direction === 'Desc' ? compareThoughtByCreated(b, a) : compareThoughtByCreated(a, b)
-  })
+  const sorted = getChildrenSortedBy(state, id, (a, b) =>
+    sortPreference.direction === 'Desc' ? compareThoughtByCreated(b, a) : compareThoughtByCreated(a, b),
+  )
   return sorted
 }
 
 /** Generates children sorted by their last updated date. */
 const getChildrenSortedUpdated = (state: State, id: ThoughtId): Thought[] => {
   const sortPreference = getSortPreference(state, id)
-  const sorted = getChildrenSortedBy(state, id, (a, b) => {
-    return sortPreference.direction === 'Desc' ? compareThoughtByUpdated(b, a) : compareThoughtByUpdated(a, b)
-  })
+  const sorted = getChildrenSortedBy(state, id, (a, b) =>
+    sortPreference.direction === 'Desc' ? compareThoughtByUpdated(b, a) : compareThoughtByUpdated(a, b),
+  )
   return sorted
 }
 
