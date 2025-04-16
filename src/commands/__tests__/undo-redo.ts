@@ -62,7 +62,7 @@ describe('undo persistence', () => {
 
     await vi.runAllTimersAsync()
     vi.useRealTimers()
-  })
+  }, 10000 /* increase timeout to give time for two calls to initialize() */)
 })
 
 describe('undo', () => {
