@@ -145,7 +145,7 @@ export const makeOrderedComparator =
         // if they are equal, move on to the next comparator
         makeOrderedComparator(comparators.slice(1))(a, b) // RECURSION
 
-/** A comparator that sorts basic text.
+/** A comparator that sorts human-readable text in natural ascending order. Handles letters, numbers, and dates.
  * 1. Numbers (8, 9, 10; #8, #9, #10).
  * 2. Dates (9/1, 10/1, 11/1).
  * 3. Lexicographic (default).
@@ -158,9 +158,11 @@ const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<st
   compareDateAndOther,
 ])
 
-/** A comparator that compares by reasonable, human-readable value:
- * 1. Empty.
+/** A comparator that sorts nearly anything in ascending order.
+ * 1. Empty string.
  * 2. Punctuation (=, +, #hi, =test).
+ * 3. Formatting (b, i, u, em, strong, span, strike, code, font).
+ * 4. Meta attributes.
  * 3. Emoji.
  * 4. CompareReadableText on text without emoji.
  */
@@ -179,6 +181,14 @@ const reverse =
   (a: T, b: T) =>
     comparator(b, a)
 
+/** A comparator that sorts anything in descending order. Not a strict reversal of compareReasonable, as empty strings, formatting, punctuation, and meta attributes are still sorted above plain text.
+ * 1. Empty string.
+ * 2. Punctuation (=, +, #hi, =test).
+ * 3. Formatting (b, i, u, em, strong, span, strike, code, font).
+ * 4. Meta attributes.
+ * 3. Emoji.
+ * 4. CompareReadableText on text without emoji.
+ */
 export const compareReasonableDescending: ComparatorFunction<string> = makeOrderedComparator<string>([
   compareFormatting,
   compareEmpty,
