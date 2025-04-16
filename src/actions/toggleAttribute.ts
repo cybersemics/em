@@ -18,26 +18,13 @@ import head from '../util/head'
 /** Toggles the given attribute value. If the attribute value exists, deletes the entire attribute. If value is not specified, toggles the attribute itself. */
 const toggleAttribute = (
   state: State,
-  {
-    path,
-    value,
-    values,
-    removeExisting = false,
-  }: { path: Path | null; value?: string; values?: string[]; removeExisting?: boolean },
+  { path, value, values }: { path: Path | null; value?: string; values?: string[] },
 ): State => {
   // normalize values if user passed single value
   const _values = values || [value!]
   if (!path || (!value && (!values || values.length === 0))) return state
 
   const thoughtId = head(path)
-
-  // If removeExisting is true, delete the attribute first if it exists
-  if (removeExisting && _values.length > 0) {
-    const existingAttributeId = findDescendant(state, thoughtId, _values[0])
-    if (existingAttributeId) {
-      state = deleteThought(state, { pathParent: path, thoughtId: existingAttributeId })
-    }
-  }
 
   const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
   const idNew = createId()
@@ -77,7 +64,6 @@ const toggleAttribute = (
   const stateNew = toggleAttribute(stateWithFirstSubthought, {
     path: appendToPath(path, firstSubthoughtId || idNew),
     values: _values.slice(1),
-    removeExisting,
   })
 
   // after recursion, delete empty descendants
