@@ -3,6 +3,7 @@ import { produce } from 'immer'
 import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import ActionType from '../@types/ActionType'
+import CommandId from '../@types/CommandId'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
@@ -13,6 +14,17 @@ import updateThoughts from '../actions/updateThoughts'
 import getThoughtById from '../selectors/getThoughtById'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
+
+/** Interface for the setIsMulticursorExecuting action. */
+interface SetIsMulticursorExecutingAction extends Action<'setIsMulticursorExecuting'> {
+  value: boolean
+  commandType?: ActionType | CommandId
+}
+
+/** Type guard to check if an action is a SetIsMulticursorExecutingAction. */
+function isSetIsMulticursorExecutingAction(action: Action<string>): action is SetIsMulticursorExecutingAction {
+  return 'value' in action
+}
 
 /** A map of action types to boolean. */
 type ActionFlags = {
@@ -111,6 +123,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   setDescendant: true,
   setImportThoughtPath: false,
   setFirstSubthought: true,
+  setIsMulticursorExecuting: false,
   setNoteFocus: true,
   setRemoteSearch: false,
   setResourceCache: false,
@@ -305,6 +318,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
     let lastActionType: ActionType
+    let multicursorStartState: State | null = null
+    let multicursorCommandType: ActionType | CommandId | null = null
 
     /**
      * Reducer to handle undo/redo actions and add/merge inverse-redoPatches for other actions.
@@ -333,6 +348,45 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return { ...undoOrRedoState!, ...omitted }
       }
 
+      // Track multicursor start state
+      if (actionType === 'setIsMulticursorExecuting') {
+        if (!isSetIsMulticursorExecutingAction(action)) {
+          return reducer(state, action)
+        }
+
+        const value = action.value
+        if (value) {
+          multicursorStartState = _.cloneDeep(state)
+
+          if (action.commandType) {
+            multicursorCommandType = action.commandType
+          }
+        } else {
+          // When multicursor execution ends, create a complete diff from the multicursor start state
+          if (multicursorStartState) {
+            const multicursorEndState = reducer(state, action)
+            const undoPatch = diffState(multicursorEndState as Index, multicursorStartState)
+
+            // Use the stored multicursor command type from the beginning of the operation
+            // This ensures we display the proper action name in undo alert
+            const actionToUse = multicursorCommandType || lastActionType
+
+            multicursorStartState = null
+            multicursorCommandType = null
+
+            return undoPatch.length
+              ? {
+                  ...multicursorEndState,
+                  redoPatches: [],
+                  undoPatches: [...undoPatches, addActionsToPatch(undoPatch, [actionToUse as ActionType])],
+                }
+              : multicursorEndState
+          }
+          multicursorStartState = null
+          multicursorCommandType = null
+        }
+      }
+
       // otherwise run the normal reducer for the action
       const newState = reducer(state, action)
 
@@ -344,7 +398,9 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         // ignore the first importText since it is part of app initialization and should not be undoable
         // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
         // See: https://github.com/cybersemics/em/issues/1494
-        (actionType === 'importText' && !newState.undoPatches.length)
+        (actionType === 'importText' && !newState.undoPatches.length) ||
+        // Skip intermediate multicursor actions
+        (state.isMulticursorExecuting && actionType !== 'setIsMulticursorExecuting')
       ) {
         return newState
       }

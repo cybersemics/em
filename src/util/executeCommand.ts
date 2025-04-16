@@ -9,6 +9,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { alertActionCreator as alert } from '../actions/alert'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { AlertType, HOME_PATH, noop } from '../constants'
 import documentSort from '../selectors/documentSort'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -150,6 +151,15 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
     filteredPaths.reverse()
   }
 
+  // Set isMulticursorExecuting before executing commands
+  // Include the command type to ensure proper undo labeling
+  store.dispatch(
+    setIsMulticursorExecuting({
+      value: true,
+      commandType: command.id,
+    }),
+  )
+
   /** Multicursor execution loop. */
   const execMulticursor = () => {
     // Execute the command for each multicursor path and restore the cursor to its original position.
@@ -185,6 +195,9 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
       }),
     )
   }
+
+  // Reset isMulticursorExecuting after all operations
+  store.dispatch(setIsMulticursorExecuting({ value: false }))
 }
 
 export default executeCommand
