@@ -18,6 +18,7 @@ import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import head from '../util/head'
+import parentOf from '../util/parentOf'
 import HoverArrow from './HoverArrow'
 import TreeNode from './TreeNode'
 
@@ -211,7 +212,9 @@ const LayoutTree = () => {
   // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
   const tableDepth = useSelector(state =>
     // return 1 if any ancestor is in table view
-    state.cursor && state.cursor.length > 1 && state.cursor.some(id => attributeEquals(state, id, '=view', 'Table'))
+    state.cursor &&
+    state.cursor.length > 1 &&
+    parentOf(state.cursor).some(id => attributeEquals(state, id, '=view', 'Table'))
       ? Math.min(3, state.cursor.length - 1)
       : 0,
   )
