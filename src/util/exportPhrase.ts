@@ -1,3 +1,4 @@
+import pluralize from 'pluralize'
 import ThoughtId from '../@types/ThoughtId'
 import ellipsize from '../util/ellipsize'
 import isRoot from '../util/isRoot'
@@ -10,9 +11,7 @@ interface Options {
 /** Generates a user-friendly phrase describing how many thoughts will be exported. */
 const exportPhrase = (idOrIds: ThoughtId | ThoughtId[], numDescendants: number | null, { value }: Options = {}) => {
   if (Array.isArray(idOrIds) && idOrIds.length > 1) {
-    return `${idOrIds.length} thoughts ${
-      numDescendants ? ` and ${numDescendants.toLocaleString()} subthought${numDescendants === 1 ? '' : 's'}` : ''
-    }`
+    return `${idOrIds.length} thoughts ${numDescendants ? ` and ${pluralize('subthought', numDescendants, true)}` : ''}`
   }
 
   const id = Array.isArray(idOrIds) ? idOrIds[0] : idOrIds
@@ -24,9 +23,7 @@ const exportPhrase = (idOrIds: ThoughtId | ThoughtId[], numDescendants: number |
     ? numDescendants === 1
       ? '1 thought'
       : `all${numDescendants ? ' ' + numDescendants.toLocaleString() : ''} thoughts`
-    : `"${label}"${
-        numDescendants ? ` and ${numDescendants.toLocaleString()} subthought${numDescendants === 1 ? '' : 's'}` : ''
-      }`
+    : `"${label}"${numDescendants ? ` and ${pluralize('subthought', numDescendants, true)}` : ''}`
 }
 
 export default exportPhrase

@@ -1,3 +1,4 @@
+import pluralize from 'pluralize'
 import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
@@ -17,13 +18,15 @@ const favorite: Command = {
   multicursor: {
     onComplete(filteredCursors, dispatch, getState) {
       const state = getState()
-      const allFavorites = filteredCursors.every(cursor => findDescendant(state, head(cursor), '=favorite'))
+      const cursorFavorites = filteredCursors.filter(cursor => findDescendant(state, head(cursor), '=favorite')).length
 
       dispatch(
         alert(
-          allFavorites
-            ? `Removed ${filteredCursors.length} thoughts from favorites.`
-            : `Added ${filteredCursors.length} thoughts to favorites.`,
+          cursorFavorites === filteredCursors.length
+            ? `Added ${pluralize('thought', filteredCursors.length, true)} to favorites.`
+            : cursorFavorites === 0
+              ? `Removed ${pluralize('thought', filteredCursors.length, true)} from favorites.`
+              : `Added ${pluralize('thought', filteredCursors.length - cursorFavorites, true)} and removed ${pluralize('thought', cursorFavorites, true)} from favorites.`,
         ),
       )
     },
