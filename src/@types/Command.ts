@@ -60,10 +60,10 @@ interface Command {
         /**
          * Filter the cursors before executing the command.
          *
-         * 'all' - Execute the command for all cursors (default).
-         * 'first-sibling' - Execute the command for only the first sibling within the same parent.
-         * 'last-sibling' - Execute the command for only the last sibling within the same parent.
-         * 'prefer-ancestor' - Execute the command for the highest direct ancestors in the selection.
+         * - 'all' - Execute the command for all cursors (default).
+         * - 'first-sibling' - Execute the command for only the first sibling within the same parent.
+         * - 'last-sibling' - Execute the command for only the last sibling within the same parent.
+         * - 'prefer-ancestor' - Execute the command for the highest direct ancestors in the selection.
          */
         filter?: MulticursorFilter
       }
