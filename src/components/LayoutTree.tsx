@@ -212,7 +212,7 @@ const LayoutTree = () => {
   const tableDepth = useSelector(state =>
     // return 1 if any ancestor is in table view
     state.cursor && state.cursor.length > 1 && state.cursor.some(id => attributeEquals(state, id, '=view', 'Table'))
-      ? 1
+      ? Math.min(3, state.cursor.length - 1)
       : 0,
   )
 
