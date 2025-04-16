@@ -68,7 +68,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   clearLatestCommands: false,
   clearMulticursors: false,
   closeModal: false,
-  collapseContext: true,
+  uncategorize: true,
   commandPalette: false,
   createThought: true,
   cursorBack: true,

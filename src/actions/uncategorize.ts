@@ -29,7 +29,7 @@ interface Options {
 }
 
 /** Deletes a thought and moves all its children to its parent. */
-const collapseContext = (state: State, { at }: Options): State => {
+const uncategorize = (state: State, { at }: Options): State => {
   const { cursor } = state
 
   const path = at || cursor
@@ -42,12 +42,12 @@ const collapseContext = (state: State, { at }: Options): State => {
 
   if (children.length === 0 || !thought) return state
 
-  // Collapsing a context in the context view is equivalent to collapsing the parent of the cursor SimplePath.
+  // Uncategorizing a context in the context view is equivalent to uncategorizing the parent of the cursor SimplePath.
   // The cursor needs to be updated to stay in the context view.
   const isInContextView = isContextViewActive(state, parentOf(path))
   if (isInContextView) {
     return reducerFlow([
-      state => collapseContext(state, { at: rootedParentOf(state, simplePath) }),
+      state => uncategorize(state, { at: rootedParentOf(state, simplePath) }),
       setCursor({
         path: appendToPath(parentOf(path), head(parentOf(parentOf(simplePath)))),
         editing: state.editing,
@@ -56,7 +56,7 @@ const collapseContext = (state: State, { at }: Options): State => {
     ])(state)
   }
 
-  /** Returns first moved child path as new cursor after collapse. */
+  /** Returns first moved child path as new cursor after uncategorize. */
   const getNewCursor = (state: State): Path | null => {
     const firstVisibleChildOfPrevCursor = (state.showHiddenThoughts ? children : children.filter(isVisible(state)))[0]
 
@@ -99,12 +99,12 @@ const collapseContext = (state: State, { at }: Options): State => {
       return getRankBefore(state, insertMetaBeforePath)
     }
 
-    // Otherwise, insert it before the collapsed context
+    // Otherwise, insert it before the uncategorized context
     return getRankBefore(state, simplePath)
   }
 
   return reducerFlow([
-    // first edit the collapsing thought to a unique value
+    // first edit the unacategorized thought to a unique value
     // otherwise, it could get merged when children are outdented in the next step
     editThought({
       oldValue: thought.value,
@@ -149,7 +149,7 @@ const collapseContext = (state: State, { at }: Options): State => {
         pathParent: parentOf(simplePath),
         thoughtId: childrenPinAttributeId,
       }),
-    // delete =children if it has no remaining children after collapsing
+    // delete =children if it has no remaining children after uncategorizing
     childrenAttributeId && shouldDeleteChildrenAttribute
       ? deleteThought({
           pathParent: parentOf(simplePath),
@@ -172,10 +172,10 @@ const collapseContext = (state: State, { at }: Options): State => {
   ])(state)
 }
 
-/** Action-creator for collapseContext. */
-export const collapseContextActionCreator =
-  (payload: Parameters<typeof collapseContext>[1]): Thunk =>
+/** Action-creator for uncategorize. */
+export const uncategorizeActionCreator =
+  (payload: Parameters<typeof uncategorize>[1]): Thunk =>
   dispatch =>
-    dispatch({ type: 'collapseContext', ...payload })
+    dispatch({ type: 'uncategorize', ...payload })
 
-export default _.curryRight(collapseContext)
+export default _.curryRight(uncategorize)

@@ -117,7 +117,7 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
   /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
   const multicursor = typeof command.multicursor === 'boolean' ? {} : command.multicursor
 
-  // multicursor is disallowed for this command, alert and exit early
+  // if multicursor is disallowed for this command, alert and exit early
   if (multicursor.disallow) {
     const errorMessage = !multicursor.error
       ? 'Cannot execute this command with multiple thoughts.'
@@ -133,17 +133,13 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
     return
   }
 
-  // Save the cursor before execution
-  const cursorBeforeExecution = state.cursor
-
   // For each multicursor, place the cursor on the path and execute the command by calling executeCommand.
   const paths = documentSort(state, Object.values(state.multicursors))
 
   const filteredPaths = filterCursors(state, paths, multicursor.filter)
 
+  // Exit early if the command cannot execute on any of the filtered paths
   const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
-
-  // Exit early if the command cannot execute
   if (!canExecute) return
 
   // Reverse the order of the cursors if the command has reverse multicursor mode enabled.
@@ -160,9 +156,11 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
     }),
   )
 
-  /** Multicursor execution loop. */
-  const execMulticursor = () => {
-    // Execute the command for each multicursor path and restore the cursor to its original position.
+  // If there is a custom execMulticursor function, call it with the filtered multicursors.
+  // Otherwise, execute the command once for each of the filtered multicursors.
+  if (multicursor.execMulticursor) {
+    multicursor.execMulticursor(filteredPaths, store.dispatch, store.getState)
+  } else {
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
       const recomputedPath = recomputePath(store.getState(), head(path))
@@ -173,20 +171,14 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
     }
   }
 
-  if (multicursor.execMulticursor) {
-    // The command has their own multicursor logic, so delegate to it and pass in the default execMulticursor function.
-    multicursor.execMulticursor(filteredPaths, store.dispatch, store.getState, event, { type }, execMulticursor)
-  } else {
-    execMulticursor()
+  // Restore the cursor to its original value if not prevented.
+  // Note that state.cursor is the old cursor, before any commands were executed.
+  if (!multicursor.preventSetCursor && state.cursor) {
+    store.dispatch(setCursor({ path: recomputePath(store.getState(), head(state.cursor)) }))
   }
 
-  // Restore the cursor to its original position if not prevented.
-  if (!multicursor.preventSetCursor && cursorBeforeExecution) {
-    store.dispatch(setCursor({ path: recomputePath(store.getState(), head(cursorBeforeExecution)) }))
-  }
-
+  // Restore multicursors
   if (!multicursor.clearMulticursor) {
-    // Restore multicursors
     store.dispatch(
       paths.map(path => (dispatch, getState) => {
         const recomputedPath = recomputePath(getState(), head(path))
@@ -195,6 +187,8 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
       }),
     )
   }
+
+  multicursor.onComplete?.(filteredPaths, store.dispatch, store.getState)
 
   // Reset isMulticursorExecuting after all operations
   store.dispatch(setIsMulticursorExecuting({ value: false }))

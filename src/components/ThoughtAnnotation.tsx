@@ -202,7 +202,7 @@ const ThoughtAnnotation = React.memo(
           <span
             className={css({
               fontSize: '1.25em',
-              margin: textMarkup.length ? '-0.375em 0 0 -0.125em' : '-0.25em 0 0 -0.0875em',
+              margin: '-0.375em 0 0 -0.05em',
               position: 'absolute',
             })}
           >

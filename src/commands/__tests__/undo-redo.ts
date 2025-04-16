@@ -14,7 +14,6 @@ import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
-import appStore from '../../stores/app'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
@@ -38,7 +37,7 @@ describe('undo persistence', () => {
   it('persists undo thought change', async () => {
     await initialize()
 
-    appStore.dispatch([
+    store.dispatch([
       importText({
         text: `
         - a
@@ -50,14 +49,14 @@ describe('undo persistence', () => {
     ])
 
     // clear and call initialize again to reload from local db (simulating page refresh)
-    appStore.dispatch(clear())
+    store.dispatch(clear())
 
     // Use fake timers here to ensure that the store operations run after loading into the db
     vi.useFakeTimers()
     await initialize()
     await vi.runAllTimersAsync()
 
-    const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
     const expectedOutput = `- ${HOME_TOKEN}
   - a
@@ -67,7 +66,7 @@ describe('undo persistence', () => {
 
     await vi.runAllTimersAsync()
     vi.useRealTimers()
-  })
+  }, 10000 /* increase timeout to give time for two calls to initialize() */)
 })
 
 describe('undo', () => {
@@ -188,9 +187,9 @@ describe('undo', () => {
   it('cursor should restore correctly after undo archive', async () => {
     await initialize()
 
-    appStore.dispatch([newThought({ value: 'a' }), setCursor(['a']), { type: 'archiveThought' }, undo()])
+    store.dispatch([newThought({ value: 'a' }), setCursor(['a']), { type: 'archiveThought' }, undo()])
 
-    const stateNew = appStore.getState()
+    const stateNew = store.getState()
     const expectedCursor = [{ value: 'a', rank: 0 }]
 
     const cursorThoughts = stateNew.cursor && childIdsToThoughts(stateNew, stateNew.cursor)
