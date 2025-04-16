@@ -325,3 +325,58 @@ describe('Updated', () => {
     expect(thoughtValues).toMatchObject(['d', 'c', 'a'])
   })
 })
+
+describe('Created to Updated', () => {
+  it('Ascending', async () => {
+    // Import initial thought 'a'
+    act(() => {
+      store.dispatch([
+        importText({
+          text: `
+          - a
+        `,
+        }),
+        setCursor(['a']),
+      ])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Create thought 'b'
+    act(() => {
+      store.dispatch([newThought({ value: 'b' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Create thought 'c'
+    act(() => {
+      store.dispatch([newThought({ value: 'c' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Edit thought 'b' to 'd'
+    act(() => {
+      store.dispatch([editThoughtByContext(['b'], 'd')])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+    // Click sort picker and select Created sort
+    await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+    await click('[aria-label="sort options"] [aria-label="Created"]')
+
+    // Click sort picker and select Updated sort
+    await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+    await click('[aria-label="sort options"] [aria-label="Updated"]')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Get all thoughts in order
+    const thoughts = screen.getAllByTestId(/thought/)
+    const thoughtValues = thoughts.map(t => t.textContent)
+
+    // Verify thoughts are sorted by update time ascending (a, c, d)
+    // d is last because it was edited most recently
+    expect(thoughtValues).toMatchObject(['a', 'c', 'd'])
+  })
+})
