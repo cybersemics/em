@@ -134,11 +134,15 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     [newKey]: lexemeNew,
   }
 
+  const sortPreference = getSortPreference(state, editedThought.parentId)
+  const sortType = sortPreference.type
+
   const thoughtNew: Thought = {
     ...editedThought,
     generating: false,
     rank:
-      newValue !== '' && getSortPreference(state, editedThought.parentId).type === 'Alphabetical'
+      newValue !== '' &&
+      (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated' || sortType === 'Note')
         ? getSortedRank(state, editedThought.parentId, newValue)
         : editedThought.rank,
     value: newValue,
@@ -190,7 +194,6 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     cursorOffset,
     lexemeIndexUpdates,
     thoughtIndexUpdates,
-    // recentlyEdited,
   })
 }
 

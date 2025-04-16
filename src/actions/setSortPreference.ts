@@ -98,10 +98,13 @@ const setSortPreference = (
 
           // Set the =sort attribute with the new type
           sortPreference.type !== currentSortPreference.type || sortPreference.type === globalSortPreference.type
-            ? toggleAttribute({
-                path: simplePath,
-                values: ['=sort', sortPreference.type],
-              })
+            ? reducerFlow([
+                toggleAttribute({
+                  path: simplePath,
+                  values: ['=sort', sortPreference.type],
+                  removeExisting: true,
+                }),
+              ])
             : null,
 
           // Handle direction changes

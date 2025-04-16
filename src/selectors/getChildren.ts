@@ -10,7 +10,14 @@ import ThoughtId from '../@types/ThoughtId'
 import getSortPreference from '../selectors/getSortPreference'
 import appendToPath from '../util/appendToPath'
 import compareByRank from '../util/compareByRank'
-import { compareThought, compareThoughtDescending } from '../util/compareThought'
+import {
+  compareThought,
+  compareThoughtByCreated,
+  compareThoughtByNote,
+  compareThoughtByNoteDescending,
+  compareThoughtByUpdated,
+  compareThoughtDescending,
+} from '../util/compareThought'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import isAttribute from '../util/isAttribute'
@@ -130,6 +137,36 @@ const getChildrenSortedAlphabetical = moize(
   },
 )
 
+/** Generates children sorted by their creation date. */
+const getChildrenSortedCreated = moize(
+  (state: State, id: ThoughtId): Thought[] => {
+    const sortPreference = getSortPreference(state, id)
+    const sorted = getChildrenSortedBy(state, id, (a, b) => {
+      return sortPreference.direction === 'Desc' ? compareThoughtByCreated(b, a) : compareThoughtByCreated(a, b)
+    })
+    return sorted
+  },
+  {
+    maxSize: 50,
+    profileName: 'getChildrenSortedCreated',
+  },
+)
+
+/** Generates children sorted by their last updated date. */
+const getChildrenSortedUpdated = moize(
+  (state: State, id: ThoughtId): Thought[] => {
+    const sortPreference = getSortPreference(state, id)
+    const sorted = getChildrenSortedBy(state, id, (a, b) => {
+      return sortPreference.direction === 'Desc' ? compareThoughtByUpdated(b, a) : compareThoughtByUpdated(a, b)
+    })
+    return sorted
+  },
+  {
+    maxSize: 50,
+    profileName: 'getChildrenSortedUpdated',
+  },
+)
+
 /** Finds any child that matches the predicate. If there is more than one child that matches the predicate, which one is returned is non-deterministic. */
 export const findAnyChild = (
   state: State,
@@ -223,9 +260,20 @@ export const childrenFilterPredicate = _.curry((state: State, parentPath: Simple
 }, 3)
 /** Gets all children of a Context sorted by rank or sort preference. */
 export const getAllChildrenSorted = (state: State, id: ThoughtId): Thought[] => {
-  const getThoughtsFunction =
-    getSortPreference(state, id).type === 'Alphabetical' ? getChildrenSortedAlphabetical : getChildrenRanked
-  return getThoughtsFunction(state, id)
+  const sortPreference = getSortPreference(state, id)
+  if (sortPreference.type === 'Alphabetical') {
+    return getChildrenSortedAlphabetical(state, id)
+  } else if (sortPreference.type === 'Created') {
+    return getChildrenSortedCreated(state, id)
+  } else if (sortPreference.type === 'Updated') {
+    return getChildrenSortedUpdated(state, id)
+  } else if (sortPreference.type === 'Note') {
+    return getChildrenRanked(state, id).sort(
+      sortPreference.direction === 'Desc' ? compareThoughtByNoteDescending(state) : compareThoughtByNote(state),
+    )
+  } else {
+    return getChildrenRanked(state, id)
+  }
 }
 
 /** Gets all visible children of a thought sorted by rank or sort preference.
