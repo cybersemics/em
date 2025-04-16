@@ -43,13 +43,7 @@ interface Command {
         /** An error message to display when multicursor mode is not enabled. */
         error?: ((state: State) => string) | string
         /** Optional override for executing the command for multiple cursors. */
-        execMulticursor?: (
-          cursors: Path[],
-          dispatch: Dispatch,
-          getState: () => State,
-          e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
-          { type }: { type: CommandType },
-        ) => void
+        execMulticursor?: (cursors: Path[], dispatch: Dispatch, getState: () => State) => void
         /** A callback that is invoked when the command finishes executing for all filtered multicursors. */
         onComplete?: (filteredCursors: Path[], dispatch: Dispatch, getState: () => State) => void
         /** Prevent the cursor from being set back at the end of the command execution. */

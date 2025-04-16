@@ -160,7 +160,7 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
   }
 
   if (multicursor.execMulticursor) {
-    multicursor.execMulticursor(filteredPaths, store.dispatch, store.getState, event, { type })
+    multicursor.execMulticursor(filteredPaths, store.dispatch, store.getState)
   } else {
     execFiltered()
   }
