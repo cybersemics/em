@@ -7,6 +7,8 @@ import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { undoActionCreator as undo } from '../../actions/undo'
+import indentCommand from '../../commands/indent'
+import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
@@ -14,9 +16,12 @@ import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import appStore from '../../stores/app'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import { executeCommandWithMulticursor } from '../../util/executeCommand'
+import deleteCommand from '../delete'
 
 beforeEach(initStore)
 
@@ -191,6 +196,130 @@ describe('undo', () => {
     const cursorThoughts = stateNew.cursor && childIdsToThoughts(stateNew, stateNew.cursor)
 
     expect(cursorThoughts).toMatchObject(expectedCursor)
+  })
+
+  it('undo should restore all thoughts after a multicursor moveThoughtDown operation', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e`,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    // Execute moveThoughtDown on all selected thoughts
+    executeCommandWithMulticursor(moveThoughtDownCommand, { store })
+
+    // Check intermediate state after moveThoughtDown but before undo
+    // This verifies that all three thoughts were moved down correctly
+    let exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    let expectedOutput = `- ${HOME_TOKEN}
+  - d
+  - a
+  - b
+  - c
+  - e`
+    expect(exported).toEqual(expectedOutput)
+
+    // Now perform one undo operation
+    store.dispatch(undo())
+
+    // On main branch, this would only move thought 'c' back up,
+    // leaving 'a' and 'b' in their moved positions
+    // With our fix, all three thoughts should be restored
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e`
+    expect(exported).toEqual(expectedOutput)
+  })
+
+  it('undo should restore complex multicursor operations involving multiple command types', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e
+        - f
+        - g`,
+      }),
+      // Select multiple thoughts
+      setCursor(['b']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+      addMulticursor(['d']),
+    ])
+
+    // Execute indent on selected thoughts
+    executeCommandWithMulticursor(indentCommand, { store })
+
+    // Check intermediate state after indent
+    let exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    let expectedOutput = `- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+    - d
+  - e
+  - f
+  - g`
+    expect(exported).toEqual(expectedOutput)
+
+    // Select different thoughts for deletion
+    store.dispatch([setCursor(['f']), addMulticursor(['f']), addMulticursor(['g'])])
+
+    executeCommandWithMulticursor(deleteCommand, { store })
+
+    // Check intermediate state after deletion
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expectedOutput = `- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+    - d
+  - e`
+    expect(exported).toEqual(expectedOutput)
+
+    // Single undo should restore the deletion
+    store.dispatch(undo())
+
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expectedOutput = `- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+    - d
+  - e
+  - f
+  - g`
+    expect(exported).toEqual(expectedOutput)
+
+    // Second undo should restore the indent
+    store.dispatch(undo())
+
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e
+  - f
+  - g`
+    expect(exported).toEqual(expectedOutput)
   })
 })
 
@@ -395,8 +524,14 @@ describe('grouping', () => {
 
     expect(exported).toEqual(expectedOutput)
   })
+})
 
-  it('undo should restore all thoughts after a multicursor moveThoughtDown operation', () => {
+/******************************************************************
+ * MULTICURSOR - Undo/Redo.
+ ******************************************************************/
+
+describe('multicursor undo/redo', () => {
+  it('should properly undo and redo multicursor operations as a single step', () => {
     store.dispatch([
       importText({
         text: `
@@ -406,103 +541,24 @@ describe('grouping', () => {
         - d
         - e`,
       }),
-      setCursor(['a']),
-      { type: 'toggleMulticursor' }, // Select first thought
-      setCursor(['b']),
-      { type: 'toggleMulticursor' }, // Select second thought
-      setCursor(['c']),
-      { type: 'toggleMulticursor' }, // Select third thought
-      moveThoughtDown(), // Move all three selected thoughts down
-      undo(), // Should undo all three moves in a single operation
-    ])
-
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    const expectedOutput = `- ${HOME_TOKEN}
-  - a
-  - b
-  - c
-  - d
-  - e`
-
-    expect(exported).toEqual(expectedOutput)
-  })
-
-  it('undo should restore complex multicursor operations involving multiple command types', () => {
-    store.dispatch([
-      importText({
-        text: `
-        - a
-        - b
-        - c
-        - d
-        - e
-        - f
-        - g`,
-      }),
-      // Select multiple thoughts and indent them
-      setCursor(['b']),
-      { type: 'toggleMulticursor' },
-      setCursor(['c']),
-      { type: 'toggleMulticursor' },
-      setCursor(['d']),
-      { type: 'toggleMulticursor' },
-      indent(), // Indent b, c, d under a
-
-      // Select different thoughts and delete them
-      setCursor(['f']),
-      { type: 'toggleMulticursor' },
-      setCursor(['g']),
-      { type: 'toggleMulticursor' },
-      { type: 'deleteThought' }, // Delete f and g
-
-      // Single undo should restore all changes
-      undo(),
-    ])
-
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    const expectedOutput = `- ${HOME_TOKEN}
-  - a
-  - b
-  - c
-  - d
-  - e
-  - f
-  - g`
-
-    expect(exported).toEqual(expectedOutput)
-  })
-})
-
-describe('multicursor undo/redo', () => {
-  it('should properly undo and redo multicursor operations as a single step', () => {
-    store.dispatch([
-      importText({
-        text: `
-        - a
-        - b
-        - c`,
-      }),
       // Select multiple thoughts with multicursor
       setCursor(['a']),
-      { type: 'toggleMulticursor' },
-      setCursor(['b']),
-      { type: 'toggleMulticursor' },
-      setCursor(['c']),
-      { type: 'toggleMulticursor' },
-      // Edit all thoughts via multicursor
-      editThought(['a'], 'A'),
-      editThought(['b'], 'B'),
-      editThought(['c'], 'C'),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
     ])
 
-    // Verify thoughts are edited
+    // Execute moveThoughtDown on all selected thoughts
+    executeCommandWithMulticursor(moveThoughtDownCommand, { store })
+
+    // Verify thoughts are moved
     let exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     let expectedOutput = `- ${HOME_TOKEN}
-  - A
-  - B
-  - C`
+  - d
+  - a
+  - b
+  - c
+  - e`
     expect(exported).toEqual(expectedOutput)
 
     // Undo the multicursor operation
@@ -513,18 +569,22 @@ describe('multicursor undo/redo', () => {
     expectedOutput = `- ${HOME_TOKEN}
   - a
   - b
-  - c`
+  - c
+  - d
+  - e`
     expect(exported).toEqual(expectedOutput)
 
     // Redo the multicursor operation
     store.dispatch({ type: 'redo' })
 
-    // Verify thoughts are edited again
+    // Verify thoughts are moved again
     exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expectedOutput = `- ${HOME_TOKEN}
-  - A
-  - B
-  - C`
+  - d
+  - a
+  - b
+  - c
+  - e`
     expect(exported).toEqual(expectedOutput)
   })
 })
