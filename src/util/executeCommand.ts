@@ -147,8 +147,11 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
     filteredPaths.reverse()
   }
 
-  /** Execute the command for each of the filtered multicursors. */
-  const execFiltered = () => {
+  // If there is a custom execMulticursor function, call it with the filtered multicursors.
+  // Otherwise, execute the command once for each of the filtered multicursors.
+  if (multicursor.execMulticursor) {
+    multicursor.execMulticursor(filteredPaths, store.dispatch, store.getState)
+  } else {
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
       const recomputedPath = recomputePath(store.getState(), head(path))
@@ -157,12 +160,6 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
       store.dispatch(setCursor({ path: recomputedPath }))
       executeCommand(command, { store, type, event })
     }
-  }
-
-  if (multicursor.execMulticursor) {
-    multicursor.execMulticursor(filteredPaths, store.dispatch, store.getState)
-  } else {
-    execFiltered()
   }
 
   multicursor.onComplete?.(filteredPaths, store.dispatch, store.getState)
