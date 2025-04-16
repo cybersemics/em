@@ -116,7 +116,7 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
   /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
   const multicursor = typeof command.multicursor === 'boolean' ? {} : command.multicursor
 
-  // multicursor is disallowed for this command, alert and exit early
+  // if multicursor is disallowed for this command, alert and exit early
   if (multicursor.disallow) {
     const errorMessage = !multicursor.error
       ? 'Cannot execute this command with multiple thoughts.'
@@ -137,9 +137,8 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
 
   const filteredPaths = filterCursors(state, paths, multicursor.filter)
 
+  // Exit early if the command cannot execute on any of the filtered paths
   const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
-
-  // Exit early if the command cannot execute
   if (!canExecute) return
 
   // Reverse the order of the cursors if the command has reverse multicursor mode enabled.
@@ -164,13 +163,14 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
 
   multicursor.onComplete?.(filteredPaths, store.dispatch, store.getState)
 
-  // Restore the cursor to its original position if not prevented.
+  // Restore the cursor to its original value if not prevented.
+  // Note that state.cursor is the old cursor, before any commands were executed.
   if (!multicursor.preventSetCursor && state.cursor) {
     store.dispatch(setCursor({ path: recomputePath(store.getState(), head(state.cursor)) }))
   }
 
+  // Restore multicursors
   if (!multicursor.clearMulticursor) {
-    // Restore multicursors
     store.dispatch(
       paths.map(path => (dispatch, getState) => {
         const recomputedPath = recomputePath(getState(), head(path))
