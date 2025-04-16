@@ -70,13 +70,9 @@ const archiveCommand: Command = {
   multicursor: {
     preventSetCursor: true,
     clearMulticursor: true,
-    execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
-      const numThougths = cursors.length
-
-      execAll()
-
+    onComplete(filteredCursors, dispatch, getState) {
       dispatch(
-        alert(`Deleted ${numThougths} thoughts.`, {
+        alert(`Deleted ${filteredCursors.length} thoughts.`, {
           alertType: AlertType.ThoughtDeleted,
           clearDelay: 8000,
           showCloseLink: true,

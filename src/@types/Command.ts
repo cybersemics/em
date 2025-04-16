@@ -49,8 +49,9 @@ interface Command {
           getState: () => State,
           e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
           { type }: { type: CommandType },
-          execAll: () => void,
         ) => void
+        /** A callback that is invoked when the command finishes executing for all filtered multicursors. */
+        onComplete?: (filteredCursors: Path[], dispatch: Dispatch, getState: () => State) => void
         /** Prevent the cursor from being set back at the end of the command execution. */
         preventSetCursor?: boolean
         /** Reverse the order of the cursors before executing the command. */

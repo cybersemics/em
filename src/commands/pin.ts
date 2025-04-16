@@ -20,13 +20,9 @@ const pinCommand: Command = {
     return !!state.cursor || hasMulticursor(state)
   },
   multicursor: {
-    execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
-      const numThougths = cursors.length
-
-      execAll()
-
+    onComplete: (filteredCursors, dispatch) => {
       dispatch(
-        alert(`Pinned ${numThougths} thoughts.`, {
+        alert(`Pinned ${filteredCursors.length} thoughts.`, {
           clearDelay: 2000,
           showCloseLink: false,
         }),

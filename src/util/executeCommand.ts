@@ -160,11 +160,12 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
   }
 
   if (multicursor.execMulticursor) {
-    // The command has their own multicursor logic, so delegate to it and pass in the default execMulticursor function.
-    multicursor.execMulticursor(filteredPaths, store.dispatch, store.getState, event, { type }, execFiltered)
+    multicursor.execMulticursor(filteredPaths, store.dispatch, store.getState, event, { type })
   } else {
     execFiltered()
   }
+
+  multicursor.onComplete?.(filteredPaths, store.dispatch, store.getState)
 
   // Restore the cursor to its original position if not prevented.
   if (!multicursor.preventSetCursor && state.cursor) {

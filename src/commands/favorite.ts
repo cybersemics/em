@@ -15,19 +15,15 @@ const favorite: Command = {
   description: 'Add the current thought to your Favorites list.',
   descriptionInverse: 'Remove the current thought from your Favorites list.',
   multicursor: {
-    execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
+    onComplete(filteredCursors, dispatch, getState) {
       const state = getState()
-      const numThougths = cursors.length
-
-      const allFavorites = cursors.map(cursor => findDescendant(state, head(cursor), '=favorite')).every(Boolean)
-
-      execAll()
+      const allFavorites = filteredCursors.every(cursor => findDescendant(state, head(cursor), '=favorite'))
 
       dispatch(
         alert(
           allFavorites
-            ? `Removed ${numThougths} thoughts from favorites.`
-            : `Added ${numThougths} thoughts to favorites.`,
+            ? `Removed ${filteredCursors.length} thoughts from favorites.`
+            : `Added ${filteredCursors.length} thoughts to favorites.`,
         ),
       )
     },
