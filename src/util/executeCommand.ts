@@ -161,8 +161,6 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
     }
   }
 
-  multicursor.onComplete?.(filteredPaths, store.dispatch, store.getState)
-
   // Restore the cursor to its original value if not prevented.
   // Note that state.cursor is the old cursor, before any commands were executed.
   if (!multicursor.preventSetCursor && state.cursor) {
@@ -179,6 +177,8 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
       }),
     )
   }
+
+  multicursor.onComplete?.(filteredPaths, store.dispatch, store.getState)
 }
 
 export default executeCommand
