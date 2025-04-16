@@ -66,98 +66,126 @@ export const formatSelectionActionCreator =
     const applyFormatting = () => {
       // eslint-disable-next-line no-restricted-properties
       const sel = window.getSelection()
-      if (!sel) return
+      if (!sel || sel.rangeCount === 0) return
 
-      const fullRange = document.createRange()
       const contentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
       if (!contentEditable) return
 
-      fullRange.selectNodeContents(contentEditable)
-      sel.removeAllRanges()
-      sel.addRange(fullRange)
+      const range = sel.getRangeAt(0)
 
-      const firstElem = contentEditable.firstElementChild as HTMLElement | null
-      let toggled = false
+      // Check if selection is inside contentEditable
+      if (!contentEditable.contains(range.commonAncestorContainer)) return
 
-      if (firstElem && firstElem.tagName.toLowerCase() === 'span') {
-        switch (command) {
-          case 'bold':
-            if (firstElem.style.fontWeight === 'bold' || firstElem.style.fontWeight === '700') {
-              firstElem.style.fontWeight = ''
-              toggled = true
-            } else {
-              firstElem.style.fontWeight = 'bold'
-            }
-            break
-          case 'italic':
-            if (firstElem.style.fontStyle === 'italic') {
-              firstElem.style.fontStyle = ''
-              toggled = true
-            } else {
-              firstElem.style.fontStyle = 'italic'
-            }
-            break
-          case 'underline':
-            if (firstElem.style.textDecoration.includes('underline')) {
-              firstElem.style.textDecoration = firstElem.style.textDecoration.replace('underline', '').trim()
-              toggled = true
-            } else {
-              firstElem.style.textDecoration = (firstElem.style.textDecoration + ' underline').trim()
-            }
-            break
-          case 'strikethrough':
-            if (firstElem.style.textDecoration.includes('line-through')) {
-              firstElem.style.textDecoration = firstElem.style.textDecoration.replace('line-through', '').trim()
-              toggled = true
-            } else {
-              firstElem.style.textDecoration = (firstElem.style.textDecoration + ' line-through').trim()
-            }
-            break
-          case 'code':
-            if (firstElem.style.fontFamily.toLowerCase().includes('monospace')) {
-              firstElem.style.fontFamily = ''
-              toggled = true
-            } else {
-              firstElem.style.fontFamily = 'monospace'
-            }
-            break
-          case 'foreColor':
-            if (firstElem.style.color === (color ? colors[color] : '')) {
-              firstElem.style.color = ''
-              toggled = true
-            } else {
-              firstElem.style.color = color ? colors[color] : ''
-            }
-            break
-          case 'backColor':
-            if (firstElem.style.backgroundColor === (color ? colors[color] : '')) {
-              firstElem.style.backgroundColor = ''
-              toggled = true
-            } else {
-              firstElem.style.backgroundColor = color ? colors[color] : ''
-            }
-            break
-        }
+      // CASE 1: Collapsed selection (no text selected)
+      if (range.collapsed) {
+        // Format entire thought (fallback to old logic)
+        const fullRange = document.createRange()
+        fullRange.selectNodeContents(contentEditable)
 
-        const remainingStyles = firstElem.getAttribute('style')
-        if (toggled && (!remainingStyles || remainingStyles.trim() === '')) {
-          while (firstElem.firstChild) {
-            contentEditable.insertBefore(firstElem.firstChild, firstElem)
+        const firstElem = contentEditable.firstElementChild as HTMLElement | null
+        let toggled = false
+
+        if (firstElem && firstElem.tagName.toLowerCase() === 'span') {
+          switch (command) {
+            case 'bold':
+              if (firstElem.style.fontWeight === 'bold' || firstElem.style.fontWeight === '700') {
+                firstElem.style.fontWeight = ''
+                toggled = true
+              } else {
+                firstElem.style.fontWeight = 'bold'
+              }
+              break
+            case 'italic':
+              if (firstElem.style.fontStyle === 'italic') {
+                firstElem.style.fontStyle = ''
+                toggled = true
+              } else {
+                firstElem.style.fontStyle = 'italic'
+              }
+              break
+            case 'underline':
+              if (firstElem.style.textDecoration.includes('underline')) {
+                firstElem.style.textDecoration = firstElem.style.textDecoration.replace('underline', '').trim()
+                toggled = true
+              } else {
+                firstElem.style.textDecoration = (firstElem.style.textDecoration + ' underline').trim()
+              }
+              break
+            case 'strikethrough':
+              if (firstElem.style.textDecoration.includes('line-through')) {
+                firstElem.style.textDecoration = firstElem.style.textDecoration.replace('line-through', '').trim()
+                toggled = true
+              } else {
+                firstElem.style.textDecoration = (firstElem.style.textDecoration + ' line-through').trim()
+              }
+              break
+            case 'code':
+              if (firstElem.style.fontFamily.toLowerCase().includes('monospace')) {
+                firstElem.style.fontFamily = ''
+                toggled = true
+              } else {
+                firstElem.style.fontFamily = 'monospace'
+              }
+              break
+            case 'foreColor':
+              if (firstElem.style.color === (color ? colors[color] : '')) {
+                firstElem.style.color = ''
+                toggled = true
+              } else {
+                firstElem.style.color = color ? colors[color] : ''
+              }
+              break
+            case 'backColor':
+              if (firstElem.style.backgroundColor === (color ? colors[color] : '')) {
+                firstElem.style.backgroundColor = ''
+                toggled = true
+              } else {
+                firstElem.style.backgroundColor = color ? colors[color] : ''
+              }
+              break
           }
-          contentEditable.removeChild(firstElem)
+
+          const remainingStyles = firstElem.getAttribute('style')
+          if (toggled && (!remainingStyles || remainingStyles.trim() === '')) {
+            while (firstElem.firstChild) {
+              contentEditable.insertBefore(firstElem.firstChild, firstElem)
+            }
+            contentEditable.removeChild(firstElem)
+          }
+
+          selection.restore(savedSelection)
+          return
         }
 
-        selection.restore(savedSelection)
+        // Not already wrapped — apply style to entire content
+        const wrapper = document.createElement('span')
+        wrapper.setAttribute('style', getInlineStyle())
+
+        try {
+          wrapper.appendChild(fullRange.extractContents())
+          fullRange.insertNode(wrapper)
+          selection.restore(savedSelection)
+        } catch (e) {
+          console.error('Failed to apply formatting:', e)
+        }
+
         return
       }
 
-      // Not already wrapped — apply style to entire content
+      // CASE 2: Non-collapsed selection — wrap selected part only
       const wrapper = document.createElement('span')
       wrapper.setAttribute('style', getInlineStyle())
 
       try {
-        wrapper.appendChild(fullRange.extractContents())
-        fullRange.insertNode(wrapper)
+        wrapper.appendChild(range.extractContents())
+        range.insertNode(wrapper)
+
+        // Move cursor after inserted node
+        sel.removeAllRanges()
+        const newRange = document.createRange()
+        newRange.setStartAfter(wrapper)
+        newRange.collapse(true)
+        sel.addRange(newRange)
 
         // Restore previous selection after inserting new wrapper
         selection.restore(savedSelection)
@@ -170,6 +198,21 @@ export const formatSelectionActionCreator =
       applyFormatting()
       updateCommandState()
       suppressFocusStore.update(false)
+
+      const contentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
+      const updatedContent = contentEditable?.innerHTML ?? ''
+      if (updatedContent && updatedContent !== thought.value) {
+        const simplePath = simplifyPath(getState(), getState().cursor!)
+        dispatch(
+          editThought({
+            oldValue: thought.value,
+            newValue: updatedContent,
+            path: simplePath,
+            cursorOffset: selection.offsetThought() ?? undefined,
+            force: true,
+          }),
+        )
+      }
     })
 
     // Additional cleanup for backColor === bg
