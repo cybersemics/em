@@ -14,7 +14,6 @@ import attributeEquals from '../selectors/attributeEquals'
 import { hasChildren } from '../selectors/getChildren'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
-import rootedParentOf from '../selectors/rootedParentOf'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
@@ -210,22 +209,12 @@ const LayoutTree = () => {
 
   // When the cursor is in a table, all thoughts beneath the table are hidden,
   // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
-  const tableDepth = useSelector(state => {
-    if (state.cursor) {
-      // Since column 2 thoughts can be nested, this must traverse the thought tree to identify a parent
-      // that is in column 2
-      for (
-        let path = rootedParentOf(state, state.cursor);
-        head(path) !== head(state.rootContext);
-        path = rootedParentOf(state, path)
-      ) {
-        // If the current thought is in a table, offset the indentDepth by 1.
-        if (attributeEquals(state, head(path), '=view', 'Table')) return 1
-      }
-    }
-
-    return 0
-  })
+  const tableDepth = useSelector(state =>
+    // return 1 if any ancestor is in table view
+    state.cursor && state.cursor.length > 1 && state.cursor.some(id => attributeEquals(state, id, '=view', 'Table'))
+      ? 1
+      : 0,
+  )
 
   const { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility } = usePositionedThoughts(
     treeThoughts,
