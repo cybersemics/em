@@ -31,7 +31,7 @@ it('home: Asc', async () => {
 
   await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
   await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
-  await act(() => vi.runAllTimersAsync())
+  await act(vi.runAllTimersAsync)
 
   const thoughtC = getThoughtByContext(['c'])
   expect(thoughtC).toBeTruthy()
@@ -58,7 +58,7 @@ it('subthoughts: Asc', async () => {
 
   await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
   await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
-  await act(() => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thought = getThoughtByContext(['a'])
   expect(thought).toBeTruthy()
@@ -85,7 +85,7 @@ it('home: Desc', async () => {
   })
   await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
   await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
-  await act(() => vi.runAllTimersAsync())
+  await act(vi.runAllTimersAsync)
 
   const thought = getThoughtByContext(['c'])
   expect(thought).toBeTruthy()
@@ -117,7 +117,7 @@ it('subthoughts: Desc', async () => {
   await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
   await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
 
-  await act(() => vi.runAllTimersAsync())
+  await act(vi.runAllTimersAsync)
 
   const thoughtA = getThoughtByContext(['a'])
   expect(thoughtA).toBeTruthy()
@@ -201,7 +201,7 @@ it('subthoughts: Created Asc', async () => {
 
   await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
   await click('[aria-label="sort options"] [aria-label="Created"]')
-  await act(() => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thought = getThoughtByContext(['a'])
   expect(thought).toBeTruthy()
@@ -244,7 +244,6 @@ it('home: Created Desc', async () => {
 
   // Click sort picker and select Created sort
   await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
-  await act(vi.runOnlyPendingTimersAsync)
   await click('[aria-label="sort options"] [aria-label="Created"]')
   await act(vi.runOnlyPendingTimersAsync)
 
@@ -289,7 +288,7 @@ it('subthoughts: Created Desc', async () => {
 
   await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
   await click('[aria-label="sort options"] [aria-label="Created"]')
-  await act(() => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thought = getThoughtByContext(['a'])
   expect(thought).toBeTruthy()
@@ -337,7 +336,6 @@ it('home: Updated Asc', async () => {
 
   // Click sort picker and select Updated sort
   await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
-  await act(vi.runOnlyPendingTimersAsync)
   await click('[aria-label="sort options"] [aria-label="Updated"]')
   await act(vi.runOnlyPendingTimersAsync)
 
@@ -388,7 +386,7 @@ it('subthoughts: Updated Asc', async () => {
 
   await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
   await click('[aria-label="sort options"] [aria-label="Updated"]')
-  await act(() => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thought = getThoughtByContext(['a'])
   expect(thought).toBeTruthy()
@@ -438,7 +436,6 @@ it('home: Updated Desc', async () => {
 
   // Click sort picker and select Updated sort
   await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
-  await act(vi.runOnlyPendingTimersAsync)
   await click('[aria-label="sort options"] [aria-label="Updated"]')
   await act(vi.runOnlyPendingTimersAsync)
 
@@ -491,7 +488,7 @@ it('subthoughts: Updated Desc', async () => {
 
   await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
   await click('[aria-label="sort options"] [aria-label="Updated"]')
-  await act(() => vi.runOnlyPendingTimersAsync())
+  await act(vi.runOnlyPendingTimersAsync)
 
   const thought = getThoughtByContext(['a'])
   expect(thought).toBeTruthy()
