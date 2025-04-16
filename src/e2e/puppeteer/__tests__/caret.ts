@@ -284,6 +284,8 @@ describe('mobile only', () => {
             - Hello world
           - c`
       await paste(importText)
+      await clickBullet('b')
+      await clickThought('b')
       await clickNote('Hello world')
 
       await swipe('r')
@@ -300,6 +302,8 @@ describe('mobile only', () => {
             - Hello world
           - c`
       await paste(importText)
+      await clickBullet('b')
+      await clickThought('b')
       await clickNote('Hello world')
 
       await swipe('l')
