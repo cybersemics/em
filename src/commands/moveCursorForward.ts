@@ -30,29 +30,23 @@ const moveCursorForward: Command = {
   keyboard: { key: Key.Tab },
   multicursor: {
     filter: 'prefer-ancestor',
-    execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
-      // Make sure we can execute for all cursors before proceeding.
-      // This is shifted here to allow `e.preventDefault()` to work.
-      const canExecute = cursors.every(cursor => {
-        const path = simplifyPath(getState(), cursor)
-        const parentId = head(rootedParentOf(getState(), path))
-        const isTable = attributeEquals(getState(), parentId, '=view', 'Table')
-        return isDocumentEditable() && (isTable || !!prevSibling(getState(), cursor))
-      })
-
-      if (!canExecute) return
-
-      return execAll()
-    },
   },
+  preventDefault: true,
   svg: MoveCursorForwardIcon,
-  canExecute: state => {
-    return isDocumentEditable() && !!state.cursor
-  },
+  canExecute: state =>
+    isDocumentEditable() &&
+    !!state.cursor &&
+    Object.values(state.multicursors).every(cursor => {
+      const path = simplifyPath(state, cursor)
+      const parentId = head(rootedParentOf(state, path))
+      const isTable = attributeEquals(state, parentId, '=view', 'Table')
+      return isDocumentEditable() && (isTable || !!prevSibling(state, cursor))
+    }),
   exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState) => {
     const state = getState()
     const { cursor } = state
     if (!cursor) return
+
     const path = simplifyPath(state, cursor)
     const parentId = head(rootedParentOf(state, path))
     const isTable = attributeEquals(state, parentId, '=view', 'Table')
