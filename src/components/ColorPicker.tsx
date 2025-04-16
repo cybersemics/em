@@ -118,6 +118,7 @@ const ColorSwatch: FC<{
       onTouchStart={toggleTextColor}
       // only add mousedown to desktop, otherwise it will activate twice on mobile
       onMouseDown={!isTouch ? toggleTextColor : undefined}
+      onMouseUp={e => e.stopPropagation()}
       className={css({ cursor: 'pointer' })}
     >
       {shape === 'bullet' ? (
