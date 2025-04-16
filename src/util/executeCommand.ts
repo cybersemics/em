@@ -132,9 +132,6 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
     return
   }
 
-  // Save the cursor before execution
-  const cursorBeforeExecution = state.cursor
-
   // For each multicursor, place the cursor on the path and execute the command by calling executeCommand.
   const paths = documentSort(state, Object.values(state.multicursors))
 
@@ -150,9 +147,8 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
     filteredPaths.reverse()
   }
 
-  /** Multicursor execution loop. */
-  const execMulticursor = () => {
-    // Execute the command for each multicursor path and restore the cursor to its original position.
+  /** Execute the command for each of the filtered multicursors. */
+  const execFiltered = () => {
     for (const path of filteredPaths) {
       // Make sure we have the correct path to the thought in case it was moved during execution.
       const recomputedPath = recomputePath(store.getState(), head(path))
@@ -165,14 +161,14 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
 
   if (multicursor.execMulticursor) {
     // The command has their own multicursor logic, so delegate to it and pass in the default execMulticursor function.
-    multicursor.execMulticursor(filteredPaths, store.dispatch, store.getState, event, { type }, execMulticursor)
+    multicursor.execMulticursor(filteredPaths, store.dispatch, store.getState, event, { type }, execFiltered)
   } else {
-    execMulticursor()
+    execFiltered()
   }
 
   // Restore the cursor to its original position if not prevented.
-  if (!multicursor.preventSetCursor && cursorBeforeExecution) {
-    store.dispatch(setCursor({ path: recomputePath(store.getState(), head(cursorBeforeExecution)) }))
+  if (!multicursor.preventSetCursor && state.cursor) {
+    store.dispatch(setCursor({ path: recomputePath(store.getState(), head(state.cursor)) }))
   }
 
   if (!multicursor.clearMulticursor) {
