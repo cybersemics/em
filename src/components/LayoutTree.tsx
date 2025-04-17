@@ -14,17 +14,17 @@ import attributeEquals from '../selectors/attributeEquals'
 import { hasChildren } from '../selectors/getChildren'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
-import rootedGrandparentOf from '../selectors/rootedGrandparentOf'
-import rootedParentOf from '../selectors/rootedParentOf'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import head from '../util/head'
+import parentOf from '../util/parentOf'
 import HoverArrow from './HoverArrow'
 import TreeNode from './TreeNode'
 
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
 const CONTENT_PADDING_BOTTOM = 153
+const HOME_TOKEN = '__ROOT__' as ThoughtId
 
 /** A computed store that tracks the bottom of the viewport. Used for list virtualization. Does not include overscroll, i.e. if the user scrolls past the top of the document viewportBottom will not change. */
 const viewportBottomStore = reactMinistore.compose(
@@ -212,14 +212,13 @@ const LayoutTree = () => {
   // When the cursor is in a table, all thoughts beneath the table are hidden,
   // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
   const tableDepth = useSelector(state => {
-    if (state.cursor) {
-      // If the current thought is column 2 of a table, offset the indentDepth by 3
-      if (attributeEquals(state, head(rootedGrandparentOf(state, state.cursor)), '=view', 'Table')) return 3
-      // If the current thought is column 1 of a table, offset the indentDepth by 1
-      if (attributeEquals(state, head(rootedParentOf(state, state.cursor)), '=view', 'Table')) return 1
-    }
-
-    return 0
+    if (!state.cursor) return 0
+    // return 1 if any ancestor is in table view
+    // rootedParentOf only includes HOME_TOKEN for top-level thoughts, so we can't use it
+    if (attributeEquals(state, HOME_TOKEN, '=view', 'Table')) return Math.min(3, state.cursor.length)
+    return state.cursor.length && parentOf(state.cursor).some(id => attributeEquals(state, id, '=view', 'Table'))
+      ? Math.min(3, state.cursor.length - 1)
+      : 0
   })
 
   const { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility } = usePositionedThoughts(
