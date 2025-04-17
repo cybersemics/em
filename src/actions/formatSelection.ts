@@ -11,6 +11,7 @@ import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
 import head from '../util/head'
+import strip from '../util/strip'
 import { editThoughtActionCreator as editThought } from './editThought'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
@@ -31,11 +32,18 @@ export const formatSelectionActionCreator =
     if (!thoughtContentEditable) return
 
     const savedSelection = selection.save()
-    /*
     const selectionText = selection.text()
+    const isCollapsedSelection = selection.isCollapsed()
+    const isEmptyThought = !thought.value || strip(thought.value).length === 0
+
+    // Prevent wrapping empty thought with empty span on collapsed selection
+    if (isCollapsedSelection && isEmptyThought) {
+      suppressFocusStore.update(false)
+      return
+    }
+
     const shouldSelectEntireThought =
       (!selectionText || selectionText.length === 0) && strip(thought.value).length !== 0
-    */
 
     /** Returns the corresponding inline CSS style string based on the provided formatting command and color. */
     const getInlineStyle = (): string => {
@@ -76,9 +84,9 @@ export const formatSelectionActionCreator =
       // Check if selection is inside contentEditable
       if (!contentEditable.contains(range.commonAncestorContainer)) return
 
-      // CASE 1: Collapsed selection (no text selected)
-      if (range.collapsed) {
-        // Format entire thought (fallback to old logic)
+      // CASE 1: Collapsed selection (no text selected) or should format the whole thought
+      if (range.collapsed || shouldSelectEntireThought) {
+        // Format entire thought
         const fullRange = document.createRange()
         fullRange.selectNodeContents(contentEditable)
 
