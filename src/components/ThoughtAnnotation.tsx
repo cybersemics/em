@@ -232,7 +232,7 @@ const ThoughtAnnotation = React.memo(
               cssRaw,
             )}
             style={style}
-            dangerouslySetInnerHTML={{ __html: textMarkup || placeholder || '' }}
+            dangerouslySetInnerHTML={{ __html: textMarkup || placeholder || '&ZeroWidthSpace;' }}
           />
           {
             // do not render url icon on root thoughts in publish mode
