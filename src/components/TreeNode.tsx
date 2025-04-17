@@ -90,14 +90,9 @@ const TreeNode = ({
     return lastPatches?.some(patch => patch.actions[0] === 'swapParent')
   })
 
-  const isLastActionEditThought = useSelector(state => {
+  const isLastActionMoveThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => patch.actions[0] === 'editThought')
-  })
-
-  const isLastActionSetCursor = useSelector(state => {
-    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => patch.actions[0] === 'setCursor')
+    return lastPatches?.some(patch => patch.actions[0] === 'moveThought')
   })
 
   const isParentSwapped = useSelector(state => {
@@ -139,8 +134,11 @@ const TreeNode = ({
   // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
 
-  // when a parent is swapped, we want to animate the curve if the last action is editThought or setCursor
-  const shouldAnimateCurve = isParentSwapped && (isLastActionEditThought || isLastActionSetCursor)
+  // By default, nodes use a simple transition animation without layers
+  // However, if a node has been swapped with its parent, we want to use a layered animation,
+  // EXCEPT when the last action was moveThought. This prevents unwanted animation artifacts
+  // when interacting with a previously swapped node.
+  const shouldAnimateCurve = isParentSwapped && !isLastActionMoveThought
 
   const outerDivStyle = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
