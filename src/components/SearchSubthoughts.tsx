@@ -1,3 +1,4 @@
+import pluralize from 'pluralize'
 import { FC, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
@@ -10,7 +11,6 @@ import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import hasLexeme from '../selectors/hasLexeme'
 import store from '../stores/app'
 import escapeRegex from '../util/escapeRegex'
-import formatNumber from '../util/formatNumber'
 import haptics from '../util/haptics'
 import isDocumentEditable from '../util/isDocumentEditable'
 import sort from '../util/sort'
@@ -105,7 +105,7 @@ const SearchSubthoughts: FC = () => {
         <NewThought path={[] as unknown as SimplePath} label={`Create "${search}"`} value={search} type='button' />
       ) : null}
       <span className={cx(textNoteRecipe(), css({ fontSize: 'sm' }))}>
-        {formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"
+        {pluralize('match', children.length, true)} for "{search}"
       </span>
       {/* TODO: VirtualTree */}
       {/* <Subthoughts

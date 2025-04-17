@@ -1,3 +1,4 @@
+import pluralize from 'pluralize'
 import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
@@ -20,13 +21,9 @@ const pinCommand: Command = {
     return !!state.cursor || hasMulticursor(state)
   },
   multicursor: {
-    execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
-      const numThougths = cursors.length
-
-      execAll()
-
+    onComplete(filteredCursors, dispatch) {
       dispatch(
-        alert(`Pinned ${numThougths} thoughts.`, {
+        alert(`Pinned ${pluralize('thought', filteredCursors.length, true)}.`, {
           clearDelay: 2000,
           showCloseLink: false,
         }),

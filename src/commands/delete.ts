@@ -1,3 +1,4 @@
+import pluralize from 'pluralize'
 import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
@@ -66,13 +67,9 @@ const deleteCommand: Command = {
     preventSetCursor: true,
     reverse: true,
     clearMulticursor: true,
-    execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
-      const numThougths = cursors.length
-
-      execAll()
-
+    onComplete(filteredCursors, dispatch, getState) {
       dispatch(
-        alert(`Deleted ${numThougths} thoughts.`, {
+        alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`, {
           alertType: AlertType.ThoughtDeleted,
           clearDelay: 8000,
           showCloseLink: true,

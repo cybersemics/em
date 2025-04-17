@@ -206,7 +206,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'bindContext',
   // 'bumpThoughtDown',
   // 'clearThought',
-  // 'collapseContext',
+  // 'uncategorize',
   // 'copyCursor',
   // 'cursorBack',
   // 'cursorDown',
