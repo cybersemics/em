@@ -114,11 +114,14 @@ const Note = React.memo(
     )
 
     /** Set editing to false onBlur, if keyboard is closed. */
-    const onBlur = useCallback(() => {
-      if (isTouch && !selection.isActive()) {
-        setTimeout(() => dispatch(editing({ value: false })))
-      }
-    }, [dispatch])
+    const onBlur = useCallback(
+      (e: React.FocusEvent) => {
+        if (isTouch && !e.relatedTarget) {
+          setTimeout(() => dispatch(editing({ value: false })))
+        }
+      },
+      [dispatch],
+    )
 
     if (note === null) return null
 
