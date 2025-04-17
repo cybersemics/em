@@ -3,7 +3,7 @@ import Thunk from '../@types/Thunk'
 
 interface SetIsMulticursorExecutingPayload {
   value: boolean
-  /** Label for the undo operation (typically the command name) */
+  /** Label for the undo operation (typically the command name). */
   operationLabel?: string
 }
 
