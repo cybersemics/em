@@ -40,9 +40,11 @@ const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHan
 //   return (
 //     <div className={css({ position: 'relative' })}>
 //       <div
-//         {...fastClick(() => {
+//         onClick={() => {
 //           store.dispatch(toggleSidebar({}))
-//         })}
+//         }}
+//         role='button'
+//         onTouchEnd={haptics.light}
 //         className={css({ position: 'absolute', height: 9999, width: 30, bottom: 30, zIndex: 1 })}
 //       ></div>
 //     </div>

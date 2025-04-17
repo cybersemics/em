@@ -6,7 +6,7 @@ import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSi
 import { isSafari, isTouch } from '../browser'
 import usePositionFixed from '../hooks/usePositionFixed'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import fastClick from '../util/fastClick'
+import haptics from '../util/haptics'
 import FadeTransition from './FadeTransition'
 
 const lineClassName = css({
@@ -91,8 +91,8 @@ const HamburgerMenu = () => {
           // Therefore, position the HamburgerMenu at top: 1px so that the sidebar is not accidentally opened on tab change.
           top: `calc(${positionFixedStyles.top} + 1px)`,
         }}
-        {...fastClick(e => {
-          // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?
+        onClick={e => {
+          // TODO: Why does the sidebar not open with onClick or onTouchEnd without a setTimeout?
           // onClick does not have the same problem
           setTimeout(() => {
             dispatch(toggleSidebar({}))
@@ -102,7 +102,9 @@ const HamburgerMenu = () => {
           if (isTouch && isSafari()) {
             e.preventDefault()
           }
-        })}
+        }}
+        role='button'
+        onTouchEnd={haptics.light}
       >
         <Menu width={width} height={width * 0.7} strokeWidth={fontSize / 20} />
       </div>

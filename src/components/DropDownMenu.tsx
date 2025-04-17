@@ -2,7 +2,7 @@ import React, { CSSProperties } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import ExportOption from '../@types/ExportOption'
-import fastClick from '../util/fastClick'
+import haptics from '../util/haptics'
 
 interface DropDownMenuProps {
   dark?: boolean
@@ -48,11 +48,13 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
             })}
             // composite key is unique
             key={`${option.type}-${option.label}`}
-            {...fastClick(() => {
+            onClick={() => {
               if (onSelect) {
                 onSelect(option)
               }
-            })}
+            }}
+            onTouchEnd={haptics.light}
+            role='button'
           >
             <div className={css({ display: 'flex', alignItems: 'center', marginLeft: '10px' })}>
               {option.label === (selected || options[0]).label ? (

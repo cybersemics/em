@@ -15,7 +15,7 @@ import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import syncStatusStore from '../stores/syncStatus'
-import fastClick from '../util/fastClick'
+import haptics from '../util/haptics'
 
 /** Helper hook that allows web and native to share selectors for the footer component. */
 const useFooterUseSelectors = () => {
@@ -79,7 +79,9 @@ const ModalLink: FC<PropsWithChildren<{ id: Modal }>> = ({ id, children }) => {
   return (
     <a
       tabIndex={-1}
-      {...fastClick(() => dispatch(showModal({ id })))}
+      onClick={() => dispatch(showModal({ id }))}
+      onTouchEnd={haptics.light}
+      role='button'
       className={cx(extendTapRecipe(), css({ whiteSpace: 'nowrap' }))}
     >
       {children}
@@ -92,7 +94,9 @@ const HelpButton: React.FC = () => {
   const dispatch = useDispatch()
   return (
     <div
-      {...fastClick(() => dispatch(showModal({ id: 'help' })))}
+      onClick={() => dispatch(showModal({ id: 'help' }))}
+      onTouchEnd={haptics.light}
+      role='button'
       title='Help'
       className={css({
         cursor: 'pointer',
@@ -177,7 +181,9 @@ const Footer = () => {
               paddingRight: '12px',
               userSelect: 'none',
             })}
-            {...fastClick(() => dispatch(fontSizeUp()))}
+            onClick={() => dispatch(fontSizeUp())}
+            onTouchEnd={haptics.light}
+            role='button'
           >
             A
           </a>
@@ -190,7 +196,9 @@ const Footer = () => {
               paddingRight: '12px',
               userSelect: 'none',
             })}
-            {...fastClick(() => dispatch(fontSizeDown()))}
+            onClick={() => dispatch(fontSizeDown())}
+            onTouchEnd={haptics.light}
+            role='button'
           >
             A
           </a>

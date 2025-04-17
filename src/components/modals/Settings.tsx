@@ -8,7 +8,6 @@ import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actio
 import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../../constants'
 import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
-import fastClick from '../../util/fastClick'
 import haptics from '../../util/haptics'
 import ThemeSwitch from '../ThemeSwitch'
 import ActionButton from './../ActionButton'
@@ -121,13 +120,18 @@ const ModalSettings = () => {
       title='Settings'
       actions={({ close }) => (
         <div className={css({ textAlign: 'center' })}>
-          <ActionButton key='close' title='Close' {...fastClick(() => close(), { tapDown: haptics.medium })} />
+          <ActionButton key='close' title='Close' onClick={() => close()} />
         </div>
       )}
     >
       <form>
         <p className={css({ marginBottom: '2em', marginTop: '-1em' })}>
-          <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))} className={extendTapRecipe()}>
+          <a
+            onClick={() => dispatch(showModal({ id: 'customizeToolbar' }))}
+            onTouchEnd={haptics.light}
+            role='button'
+            className={extendTapRecipe()}
+          >
             Customize Toolbar
           </a>{' '}
           &gt;

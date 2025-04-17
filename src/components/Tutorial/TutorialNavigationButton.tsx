@@ -1,7 +1,7 @@
 import React from 'react'
 import { cx } from '../../../styled-system/css'
 import { anchorButtonRecipe } from '../../../styled-system/recipes'
-import fastClick from '../../util/fastClick'
+import haptics from '../../util/haptics'
 
 const TutorialNavigationButton = React.forwardRef<
   HTMLAnchorElement,
@@ -15,7 +15,9 @@ const TutorialNavigationButton = React.forwardRef<
   <a
     className={cx(anchorButtonRecipe({ variableWidth: true, smallGapX: true }), classes)}
     {...{ disabled }}
-    {...fastClick(clickHandler)}
+    onClick={clickHandler}
+    role='button'
+    onTouchEnd={haptics.light}
     ref={ref}
   >
     {value}

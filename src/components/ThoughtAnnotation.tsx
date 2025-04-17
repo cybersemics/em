@@ -20,7 +20,7 @@ import getUserSetting from '../selectors/getUserSetting'
 import editingValueStore from '../stores/editingValue'
 import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
-import fastClick from '../util/fastClick'
+import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -63,7 +63,7 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
       rel='noopener noreferrer'
       target='_blank'
       className={urlLinkStyle}
-      {...fastClick(e => {
+      onClick={e => {
         e.stopPropagation() // prevent Editable onMouseDown
         if (isInternalLink(url)) {
           dispatch((dispatch, getState) => {
@@ -75,7 +75,9 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
           })
           e.preventDefault()
         }
-      })}
+      }}
+      onTouchEnd={haptics.light}
+      role='button'
     >
       <UrlIcon />
     </a>

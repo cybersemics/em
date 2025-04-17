@@ -11,7 +11,7 @@ import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import hasLexeme from '../selectors/hasLexeme'
 import store from '../stores/app'
 import escapeRegex from '../util/escapeRegex'
-import fastClick from '../util/fastClick'
+import haptics from '../util/haptics'
 import isDocumentEditable from '../util/isDocumentEditable'
 import sort from '../util/sort'
 import NewThought from './NewThought'
@@ -117,7 +117,9 @@ const SearchSubthoughts: FC = () => {
       {children.length > DEFAULT_SEARCH_LIMIT ? (
         <a
           className={cx(textNoteRecipe(), css({ display: 'inline-block', marginTop: '5px', marginLeft: '18px' }))}
-          {...fastClick(() => dispatch(setSearchLimit({ value: searchLimit + DEFAULT_SEARCH_LIMIT })))}
+          onClick={() => dispatch(setSearchLimit({ value: searchLimit + DEFAULT_SEARCH_LIMIT }))}
+          onTouchEnd={haptics.light}
+          role='button'
         >
           More...
         </a>

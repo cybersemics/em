@@ -17,7 +17,7 @@ import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
 import { commandById } from '../../commands'
 import { AlertText, AlertType } from '../../constants'
-import fastClick from '../../util/fastClick'
+import haptics from '../../util/haptics'
 import CommandTableOnly from '../CommandTableOnly'
 import FadeTransition from '../FadeTransition'
 import CommandTable from './../CommandTable'
@@ -122,7 +122,12 @@ const ModalCustomizeToolbar: FC = () => {
       <h1 className={modalClasses.title}>Customize Toolbar</h1>
       <p className={css({ marginTop: '-1em', marginBottom: '1em' })}>
         &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
+        <a
+          onClick={() => dispatch(showModal({ id: 'settings' }))}
+          role='button'
+          onTouchEnd={haptics.light}
+          className={extendTapRecipe()}
+        >
           Back to Settings
         </a>
       </p>
@@ -188,14 +193,21 @@ const ModalCustomizeToolbar: FC = () => {
 
       <p className={css({ marginTop: '2em', marginBottom: '2em' })}>
         &lt;{' '}
-        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className={extendTapRecipe()}>
+        <a
+          onClick={() => dispatch(showModal({ id: 'settings' }))}
+          role='button'
+          onTouchEnd={haptics.light}
+          className={extendTapRecipe()}
+        >
           Back to Settings
         </a>
       </p>
 
       <div className={css({ textAlign: 'center' })}>
         <a
-          {...fastClick(() => dispatch(closeModal()))}
+          onClick={() => dispatch(closeModal())}
+          onTouchEnd={haptics.light}
+          role='button'
           className={cx(
             anchorButtonRecipe({
               actionButton: true,
@@ -211,11 +223,13 @@ const ModalCustomizeToolbar: FC = () => {
             Reset the toolbar to its factory settings. Your current toolbar customization will be permanently deleted.
           </p>
           <a
-            {...fastClick(() => {
+            onClick={() => {
               if (window.confirm('Reset toolbar to factory settings?')) {
                 dispatch([initUserToolbar({ force: true }), alert('Toolbar reset', { clearDelay: 8000 })])
               }
-            })}
+            }}
+            onTouchEnd={haptics.light}
+            role='button'
             className={cx(extendTapRecipe(), css({ color: 'red' }))}
           >
             Reset toolbar

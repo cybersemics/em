@@ -1,6 +1,6 @@
 import React, { FC, PropsWithChildren } from 'react'
 import { css } from '../../styled-system/css'
-import fastClick from '../util/fastClick'
+import haptics from '../util/haptics'
 
 /** A static checkbox component with em styling. */
 const CheckboxInput = ({ checked }: { checked?: boolean }) => {
@@ -73,10 +73,12 @@ const Checkbox: FC<
         cursor: disabled ? 'default' : 'pointer',
       })}
       // prevent the default click behavior, which autoscrolls in chrome if there is a checkbox within the label
-      {...fastClick(e => {
+      onClick={e => {
         e.preventDefault()
         onChange(e)
-      })}
+      }}
+      onTouchEnd={haptics.light}
+      role='button'
     >
       <div
         className={css({

@@ -9,7 +9,7 @@ import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../a
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
 import newThoughtCommand from '../../commands/newThought'
-import fastClick from '../../util/fastClick'
+import haptics from '../../util/haptics'
 import GestureDiagram from '../GestureDiagram'
 import Tip from './Tip'
 
@@ -46,9 +46,9 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
         <div className={buttonContainerClassName}>
           <a
             className={anchorButtonRecipe()}
-            {...fastClick(() => {
-              dispatch(dismissTip())
-            })}
+            onClick={() => dispatch(dismissTip())}
+            role='button'
+            onTouchEnd={haptics.light}
           >
             Okay
           </a>
@@ -56,10 +56,12 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
         <div className={buttonContainerClassName}>
           <a
             tabIndex={-1}
-            {...fastClick(() => {
+            onClick={() => {
               dispatch(removeToolbarButton('newThought'))
               dispatch(dismissTip())
-            })}
+            }}
+            onTouchEnd={haptics.light}
+            role='button'
             className={anchorButtonRecipe()}
           >
             Remove this icon from the toolbar
@@ -68,9 +70,9 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
         <div>
           (you can customize the toolbar in{' '}
           <a
-            {...fastClick(() => {
-              dispatch([dismissTip(), showModal({ id: 'settings' })])
-            })}
+            onClick={() => dispatch([dismissTip(), showModal({ id: 'settings' })])}
+            role='button'
+            onTouchEnd={haptics.light}
           >
             Settings
           </a>

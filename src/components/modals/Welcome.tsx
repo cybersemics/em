@@ -8,7 +8,7 @@ import { tutorialStepActionCreator as tutorialStep } from '../../actions/tutoria
 import { HOME_TOKEN } from '../../constants'
 import { hasChildren } from '../../selectors/getChildren'
 import offlineStatusStore from '../../stores/offlineStatusStore'
-import fastClick from '../../util/fastClick'
+import haptics from '../../util/haptics'
 import ActionButton from './../ActionButton'
 import ModalComponent from './ModalComponent'
 
@@ -75,7 +75,7 @@ const ModalWelcome = () => {
         actions={() => (
           <div>
             <div>
-              <ActionButton key='start' title={`${isEmpty ? 'START' : 'RESUME'} TUTORIAL`} {...fastClick(close)} />
+              <ActionButton key='start' title={`${isEmpty ? 'START' : 'RESUME'} TUTORIAL`} onClick={close} />
             </div>
             {!isEmpty && (
               <div className={css({ margin: '1em 0' })}>
@@ -83,9 +83,9 @@ const ModalWelcome = () => {
                   key='resume'
                   title='RESTART TUTORIAL'
                   inverse
-                  {...fastClick(() => {
+                  onClick={() => {
                     dispatch([tutorial({ value: true }), tutorialStep({ value: 1 }), closeModal()])
-                  })}
+                  }}
                 />
               </div>
             )}
@@ -96,11 +96,13 @@ const ModalWelcome = () => {
                   modalActionLinkRecipe(),
                   css({ fontSize: 'sm', marginBottom: '-1em', paddingBottom: '1em', textDecoration: 'none' }),
                 )}
-                {...fastClick(() => {
+                onClick={() => {
                   dispatch([clear({ local: true, remote: true })])
                   endTutorial()
                   close()
-                })}
+                }}
+                role='button'
+                onTouchEnd={haptics.light}
               >
                 New, empty thoughtspace
               </a>

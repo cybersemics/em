@@ -1,7 +1,7 @@
 import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { showModalActionCreator as showModal } from '../actions/showModal'
-import fastClick from '../util/fastClick'
+import haptics from '../util/haptics'
 import InvitesIcon from './icons/InvitesIcon'
 
 /**
@@ -10,7 +10,12 @@ import InvitesIcon from './icons/InvitesIcon'
 const InvitesButton = () => {
   const dispatch = useDispatch()
   return (
-    <div className={css({ display: 'inline-flex' })} {...fastClick(() => dispatch(showModal({ id: 'invites' })))}>
+    <div
+      className={css({ display: 'inline-flex' })}
+      onClick={() => dispatch(showModal({ id: 'invites' }))}
+      onTouchEnd={haptics.light}
+      role='button'
+    >
       <InvitesIcon size={24} />
     </div>
   )

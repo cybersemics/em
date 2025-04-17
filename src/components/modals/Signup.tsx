@@ -5,8 +5,8 @@ import { buttonRecipe } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
-import fastClick from '../../util/fastClick'
 import getQueryParam from '../../util/getQueryParam'
+import haptics from '../../util/haptics'
 import storage from '../../util/storage'
 import ActionButton from './../ActionButton'
 import InvitesIcon from './../icons/InvitesIcon'
@@ -153,13 +153,15 @@ const ModalSignup = () => {
                   title={modes.signup.modalTitle}
                   isDisabled={isSubmitting}
                   isLoading={isSubmitting}
-                  {...fastClick(() => submitAction(closeModal))}
+                  onClick={() => submitAction(closeModal)}
                 />
               )}
               <button
                 disabled={isSubmitting}
                 className={cx(buttonRecipe(), css({ textDecoration: 'underline', marginTop: 15 }))}
-                {...fastClick(() => dispatch(showModal({ id: 'auth' })))}
+                onClick={() => dispatch(showModal({ id: 'auth' }))}
+                onTouchEnd={haptics.light}
+                role='button'
               >
                 Log in
               </button>

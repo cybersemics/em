@@ -36,7 +36,7 @@ import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
-import fastClick from '../util/fastClick'
+import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -384,6 +384,11 @@ const ThoughtContainer = ({
       data-divider={isDivider(value)}
       data-editing={isEditing}
       onClick={isTouch ? undefined : handleMultiselect}
+      onTouchEnd={e => {
+        haptics.light()
+        dragHoldResult.props.onTouchEnd(e)
+      }}
+      role='button'
       style={{
         transition: `transform ${token('durations.layoutSlowShift')} ease-out, opacity ${token('durations.layoutSlowShift')} ease-out`,
         ...style,
@@ -423,12 +428,9 @@ const ThoughtContainer = ({
         <span className={css({ fontSize: '75%' })}>
           <a
             tabIndex={-1}
-            {...fastClick(
-              () => {
-                dispatch(expandContextThought(path))
-              },
-              { enableHaptics: false },
-            )}
+            onClick={() => dispatch(expandContextThought(path))}
+            onTouchEnd={haptics.light}
+            role='button'
           >
             ...{' '}
           </a>

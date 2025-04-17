@@ -9,7 +9,7 @@ import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../a
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
 import newSubthoughtCommand from '../../commands/newSubthought'
-import fastClick from '../../util/fastClick'
+import haptics from '../../util/haptics'
 import GestureDiagram from '../GestureDiagram'
 import Tip from './Tip'
 
@@ -46,9 +46,9 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
         <div className={css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })}>
           <a
             className={anchorButtonRecipe()}
-            {...fastClick(() => {
-              dispatch(dismissTip())
-            })}
+            onClick={() => dispatch(dismissTip())}
+            role='button'
+            onTouchEnd={haptics.light}
           >
             Okay
           </a>
@@ -56,9 +56,9 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
         <div className={css({ display: 'flex', justifyContent: 'center', marginBottom: '0.5em' })}>
           <a
             tabIndex={-1}
-            {...fastClick(() => {
-              dispatch([removeToolbarButton('newSubthought'), dismissTip()])
-            })}
+            onClick={() => dispatch([removeToolbarButton('newSubthought'), dismissTip()])}
+            onTouchEnd={haptics.light}
+            role='button'
             className={anchorButtonRecipe()}
           >
             Remove this icon from the toolbar
@@ -67,9 +67,9 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
         <div>
           (you can customize the toolbar in{' '}
           <a
-            {...fastClick(() => {
-              dispatch([dismissTip(), showModal({ id: 'settings' })])
-            })}
+            onClick={() => dispatch([dismissTip(), showModal({ id: 'settings' })])}
+            role='button'
+            onTouchEnd={haptics.light}
           >
             Settings
           </a>
