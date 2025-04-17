@@ -1,11 +1,10 @@
-import ActionType from '../@types/ActionType'
-import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
 interface SetIsMulticursorExecutingPayload {
   value: boolean
-  commandType?: ActionType | CommandId
+  /** Label for the undo operation (typically the command name) */
+  operationLabel?: string
 }
 
 /** Sets the isMulticursorExecuting flag. */
@@ -23,7 +22,7 @@ export const setIsMulticursorExecutingActionCreator =
     dispatch({
       type: 'setIsMulticursorExecuting',
       value: payload.value,
-      commandType: payload.commandType,
+      operationLabel: payload.operationLabel,
     })
   }
 

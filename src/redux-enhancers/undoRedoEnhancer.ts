@@ -3,7 +3,6 @@ import { produce } from 'immer'
 import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import ActionType from '../@types/ActionType'
-import CommandId from '../@types/CommandId'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
@@ -18,7 +17,7 @@ import reducerFlow from '../util/reducerFlow'
 /** Interface for the setIsMulticursorExecuting action. */
 interface SetIsMulticursorExecutingAction extends Action<'setIsMulticursorExecuting'> {
   value: boolean
-  commandType?: ActionType | CommandId
+  operationLabel?: string
 }
 
 /** Type guard to check if an action is a SetIsMulticursorExecutingAction. */
@@ -319,7 +318,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
     let lastActionType: ActionType
     let multicursorStartState: State | null = null
-    let multicursorCommandType: ActionType | CommandId | null = null
+    let multicursorOperationLabel: string | null = null
 
     /**
      * Reducer to handle undo/redo actions and add/merge inverse-redoPatches for other actions.
@@ -356,10 +355,14 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
         const value = action.value
         if (value) {
-          multicursorStartState = _.cloneDeep(state)
+          // Using Immer's produce to create a deep clone of the state
+          // This ensures multicursorStartState is immutable since produce returns a new object
+          multicursorStartState = produce(state, (state: State) => {
+            return state
+          })
 
-          if (action.commandType) {
-            multicursorCommandType = action.commandType
+          if (action.operationLabel) {
+            multicursorOperationLabel = action.operationLabel
           }
         } else {
           // When multicursor execution ends, create a complete diff from the multicursor start state
@@ -367,12 +370,12 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             const multicursorEndState = reducer(state, action)
             const undoPatch = diffState(multicursorEndState as Index, multicursorStartState)
 
-            // Use the stored multicursor command type from the beginning of the operation
+            // Use the stored operation label from the beginning of the operation
             // This ensures we display the proper action name in undo alert
-            const actionToUse = multicursorCommandType || lastActionType
+            const actionToUse = multicursorOperationLabel || (lastActionType as string)
 
             multicursorStartState = null
-            multicursorCommandType = null
+            multicursorOperationLabel = null
 
             return undoPatch.length
               ? {
@@ -383,7 +386,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               : multicursorEndState
           }
           multicursorStartState = null
-          multicursorCommandType = null
+          multicursorOperationLabel = null
         }
       }
 
