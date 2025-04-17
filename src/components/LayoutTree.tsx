@@ -19,7 +19,9 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
+import equalPath from '../util/equalPath'
 import head from '../util/head'
+import BulletCursorOverlay from './BulletCursorOverlay'
 import HoverArrow from './HoverArrow'
 import TreeNode from './TreeNode'
 
@@ -231,6 +233,11 @@ const LayoutTree = () => {
     },
   )
 
+  // compare between state.cursor and the position of the thought
+  const activeThought = useSelector(state =>
+    treeThoughtsPositioned.find(thought => equalPath(state.cursor, thought.path)),
+  )
+
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
@@ -275,6 +282,13 @@ const LayoutTree = () => {
         }}
       >
         <TransitionGroup>
+          <BulletCursorOverlay
+            isCursorActive={activeThought?.isCursor}
+            x={activeThought?.x}
+            y={activeThought?.y}
+            simplePath={activeThought?.simplePath}
+            path={activeThought?.path}
+          />
           {treeThoughtsPositioned.map((thought, index) => (
             <TreeNode
               {...thought}
