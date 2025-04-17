@@ -24,6 +24,7 @@ import TreeNode from './TreeNode'
 
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
 const CONTENT_PADDING_BOTTOM = 153
+const HOME_TOKEN = '__ROOT__' as ThoughtId
 
 /** A computed store that tracks the bottom of the viewport. Used for list virtualization. Does not include overscroll, i.e. if the user scrolls past the top of the document viewportBottom will not change. */
 const viewportBottomStore = reactMinistore.compose(
@@ -210,14 +211,15 @@ const LayoutTree = () => {
 
   // When the cursor is in a table, all thoughts beneath the table are hidden,
   // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
-  const tableDepth = useSelector(state =>
+  const tableDepth = useSelector(state => {
+    if (!state.cursor) return 0
     // return 1 if any ancestor is in table view
-    state.cursor &&
-    state.cursor.length > 1 &&
-    parentOf(state.cursor).some(id => attributeEquals(state, id, '=view', 'Table'))
+    // rootedParentOf only includes HOME_TOKEN for top-level thoughts, so we can't use it
+    if (attributeEquals(state, HOME_TOKEN, '=view', 'Table')) return Math.min(3, state.cursor.length)
+    return state.cursor.length && parentOf(state.cursor).some(id => attributeEquals(state, id, '=view', 'Table'))
       ? Math.min(3, state.cursor.length - 1)
-      : 0,
-  )
+      : 0
+  })
 
   const { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility } = usePositionedThoughts(
     treeThoughts,
