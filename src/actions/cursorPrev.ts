@@ -1,4 +1,5 @@
 /* eslint-disable import/prefer-default-export */
+import Path from '../@types/Path'
 import Thunk from '../@types/Thunk'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { suppressExpansionActionCreator as suppressExpansion } from '../actions/suppressExpansion'
@@ -14,7 +15,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 
-/** Moves the cursor to the previous sibling, ignoring descendants. */
+/** Moves the cursor to the previous sibling, ignoring descendants. In table view, moves to the prevous row.*/
 export const cursorPrevActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
@@ -27,11 +28,28 @@ export const cursorPrevActionCreator = (): Thunk => (dispatch, getState) => {
     return
   }
 
+  const cursorParent = rootedParentOf(state, cursor)
   const showContexts = isContextViewActive(state, parentOf(cursor))
-  const prev = showContexts ? prevContext(state, cursor) : prevSibling(state, cursor)
-  if (!prev) return
+  let prev = showContexts ? prevContext(state, cursor) : prevSibling(state, cursor)
+  let path: Path | null = null
 
-  const path = appendToPath(rootedParentOf(state, cursor), prev.id)
+  // prev sibling
+  if (prev) {
+    path = appendToPath(cursorParent, prev.id)
+  }
+  // prev row in table view col2
+  // (prev row in table view col1 is handled by prevSibling in the usual way)
+  else if (attributeEquals(state, head(rootedParentOf(state, cursorParent)), '=view', 'Table')) {
+    const parentPath = cursorParent
+    const prevUncle = prevSibling(state, parentPath)
+    if (prevUncle) {
+      prev = getChildrenSorted(state, prevUncle.id).at(-1) || null
+      path = prev ? appendToPath(rootedParentOf(state, parentPath), prevUncle.id, prev.id) : null
+    }
+  }
+
+  if (!prev || !path) return
+
   const pathParent = rootedParentOf(state, path)
   const parentId = head(pathParent)
   const isCursorPinned =
