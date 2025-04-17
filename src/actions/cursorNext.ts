@@ -45,7 +45,7 @@ export const cursorNextActionCreator = (): Thunk => (dispatch, getState) => {
     const nextUncle = nextSibling(state, parentPath)
     if (nextUncle) {
       next = getChildrenSorted(state, nextUncle.id).at(0) || null
-      path = next ? appendToPath(rootedParentOf(state, parentPath), nextUncle.id, next.id) : null
+      path = next ? appendToPath(parentOf(parentPath), nextUncle.id, next.id) : null
     }
   }
 

@@ -44,7 +44,7 @@ export const cursorPrevActionCreator = (): Thunk => (dispatch, getState) => {
     const prevUncle = prevSibling(state, parentPath)
     if (prevUncle) {
       prev = getChildrenSorted(state, prevUncle.id).at(-1) || null
-      path = prev ? appendToPath(rootedParentOf(state, parentPath), prevUncle.id, prev.id) : null
+      path = prev ? appendToPath(parentOf(parentPath), prevUncle.id, prev.id) : null
     }
   }
 
