@@ -26,8 +26,6 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size, groupPosition }) =
   const commandState = useSelector(state => isActive?.(state))
   const isButtonActive = commandState
 
-  const SVG = svg as React.FC<Icon>
-
   /** Handles the onClick event. Executes the command when tapped. */
   const handleTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
@@ -39,6 +37,11 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size, groupPosition }) =
     [command, isButtonExecutable],
   )
 
+  let SVG: React.FC<Icon> | null = null
+  if (svg) {
+    SVG = svg as React.FC<Icon>
+  }
+
   return (
     <div
       className={panelCommandRecipe({
@@ -49,12 +52,14 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size, groupPosition }) =
       })}
       {...fastClick(handleTap)}
     >
-      <SVG
-        style={{ justifySelf: size === 'small' ? 'center' : 'center' }}
-        size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
-        animated={isAnimated}
-        animationComplete={() => setIsAnimated(false)}
-      />
+      {SVG && (
+        <SVG
+          style={{ justifySelf: size === 'small' ? 'center' : 'center' }}
+          size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
+          animated={isAnimated}
+          animationComplete={() => setIsAnimated(false)}
+        />
+      )}
       {!command.hideTitleInPanels && (
         <div
           className={css({
