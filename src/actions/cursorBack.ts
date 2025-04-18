@@ -21,7 +21,13 @@ const cursorBack = (state: State) => {
     cursorOld
       ? [
           // move cursor back
-          setCursor({ path: cursorNew!.length > 0 ? cursorNew : null, editing, preserveMulticursor: true }),
+          setCursor({
+            // offset shouldn't be null if we want useEditMode to set the selection to the new thought
+            offset: 0,
+            path: cursorNew!.length > 0 ? cursorNew : null,
+            editing,
+            preserveMulticursor: true,
+          }),
 
           // append to cursor history to allow 'forward' gesture
           cursorHistory({ cursor: cursorOld }),

@@ -37,7 +37,13 @@ const cursorForward = (state: State) => {
   }
 
   return cursorNew
-    ? setCursor(state, { path: cursorNew, cursorHistoryPop: isValidChild, preserveMulticursor: true })
+    ? setCursor(state, {
+        // offset shouldn't be null if we want useEditMode to set the selection to the new thought
+        offset: 0,
+        path: cursorNew,
+        cursorHistoryPop: isValidChild,
+        preserveMulticursor: true,
+      })
     : state
 }
 
