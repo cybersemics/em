@@ -149,6 +149,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     pushQueue: [],
     thoughts: initialThoughts(created),
     undoPatches: [],
+    showCommandMenu: false,
   }
 
   /**
