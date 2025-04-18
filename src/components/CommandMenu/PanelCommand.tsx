@@ -21,11 +21,6 @@ interface PanelCommandProps {
 const PanelCommand: FC<PanelCommandProps> = ({ command, size, groupPosition }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
-  if (!command) {
-    console.error('Missing command')
-    return null
-  }
-
   const { svg, isActive, canExecute } = command
   const isButtonExecutable = useSelector(state => !canExecute || canExecute(state))
   const commandState = useSelector(state => isActive?.(state))
