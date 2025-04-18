@@ -156,7 +156,7 @@ const setCursor = (
       : null),
     ...(!thoughtsResolved ? { showColorPicker: false, showLetterCase: false, showSortPicker: false } : null),
     // Close command menu when editing is set to true, or if there is no cursor.
-    showCommandMenu: editing === true || !thoughtsResolved ? false : state.showCommandMenu,
+    showCommandMenu: state.showCommandMenu && !editing && thoughtsResolved !== null,
   }
 
   return stateNew
