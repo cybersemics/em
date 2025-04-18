@@ -4,6 +4,7 @@ import { css } from '../../../styled-system/css'
 import { panelCommandRecipe } from '../../../styled-system/recipes'
 import Command from '../../@types/Command'
 import Icon from '../../@types/IconType'
+import { isTouch } from '../../browser'
 import store from '../../stores/app'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import fastClick from '../../util/fastClick'
@@ -30,6 +31,10 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       if (isButtonExecutable) {
         executeCommandWithMulticursor(command, { store, type: 'commandMenu', event: e })
         setIsAnimated(true)
+        // prevent Editable blur
+        if (isTouch) {
+          e.preventDefault()
+        }
       }
     },
     [command, isButtonExecutable],
