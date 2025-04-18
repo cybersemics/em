@@ -5,7 +5,7 @@ import Thunk from '../@types/Thunk'
 /** Toggles the Command Menu. */
 const toggleCommandMenu = (state: State, { value }: { value?: boolean } = {}) => ({
   ...state,
-  showCommandMenu: value == null ? !state.showCommandMenu : value,
+  showCommandMenu: value === undefined ? !state.showCommandMenu : value,
 })
 
 /** Action-creator for toggleCommandMenu. */
