@@ -26,21 +26,7 @@ const PanelCommandGroup: React.FC<PropsWithChildren> = ({ children }) => {
         }),
       )}
     >
-      {
-        /** Clone each of the children and set the position attribute to 'first', 'last'
-         * or 'between' depending on the index of the child. PanelCommand will use this
-         * property to change the styling of the button.
-         */
-
-        React.Children.map(children, (child, index) => {
-          if (React.isValidElement(child)) {
-            return React.cloneElement(child as React.ReactElement, {
-              groupPosition: index === 0 ? 'first' : index === childCount - 1 ? 'last' : 'between',
-            })
-          }
-          return null
-        })
-      }
+      {children}
     </div>
   )
 }

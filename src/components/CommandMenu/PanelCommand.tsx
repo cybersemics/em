@@ -13,12 +13,10 @@ interface PanelCommandProps {
   command: Command
   /** The size of the button. */
   size?: 'small' | 'medium' | 'large' | 'xlarge'
-  /** If the button is inside a PanelCommandGroup, the position of the button within the group. */
-  groupPosition?: 'first' | 'last' | 'between'
 }
 
 /** A single button in the Panel Command Grid. */
-const PanelCommand: FC<PanelCommandProps> = ({ command, size, groupPosition }) => {
+const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
   const { svg, isActive, canExecute } = command
@@ -48,7 +46,6 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size, groupPosition }) =
         size,
         isButtonExecutable,
         isButtonActive,
-        groupPosition,
       })}
       {...fastClick(handleTap)}
     >

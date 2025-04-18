@@ -15,6 +15,17 @@ export default defineRecipe({
     cursor: 'pointer',
     transition: 'opacity {durations.medium} ease, background-color {durations.medium} ease',
     opacity: 1,
+
+    // Add pseudo-selector styling
+    '.panelCommandGroupRecipe > &:first-of-type': {
+      borderRadius: '16px 0 0 16px',
+    },
+    '.panelCommandGroupRecipe > &:last-of-type': {
+      borderRadius: '0 16px 16px 0',
+    },
+    '.panelCommandGroupRecipe > &:not(:first-of-type):not(:last-of-type)': {
+      borderRadius: '0',
+    },
   },
   variants: {
     size: {
@@ -52,42 +63,7 @@ export default defineRecipe({
         backgroundColor: 'gray15',
       },
     },
-    groupPosition: {
-      first: {
-        borderRadius: '16px 0 0 16px',
-      },
-      last: {
-        borderRadius: '0 16px 16px 0',
-      },
-      between: {
-        borderRadius: '0',
-      },
-    },
   },
-  compoundVariants: [
-    /* When a medium button is in a group, it should span 1 column */
-    {
-      size: 'medium',
-      groupPosition: 'first',
-      css: {
-        gridColumn: 'span 1 !important',
-      },
-    },
-    {
-      size: 'medium',
-      groupPosition: 'last',
-      css: {
-        gridColumn: 'span 1 !important',
-      },
-    },
-    {
-      size: 'medium',
-      groupPosition: 'between',
-      css: {
-        gridColumn: 'span 1 !important',
-      },
-    },
-  ],
   defaultVariants: {
     size: 'small',
     isButtonExecutable: true,
@@ -98,7 +74,6 @@ export default defineRecipe({
       size: ['small', 'medium', 'large', 'xlarge'],
       isButtonExecutable: ['true', 'false'],
       isButtonActive: ['true', 'false'],
-      groupPosition: ['first', 'last', 'between'],
     },
   ],
 })
