@@ -316,6 +316,18 @@ export default defineConfig({
           easeInSlow: {
             value: 'cubic-bezier(.84, 0, 1, 1)',
           },
+          nodeCurveXLayer: {
+            value: 'cubic-bezier(0.8,0,0.2,0.2)',
+          },
+          nodeCurveYLayer: {
+            value: 'cubic-bezier(0.8,0.8,0.2,1)',
+          },
+          nodeCurveXLayerClockwise: {
+            value: 'cubic-bezier(0,0.8,0.2,0.8)',
+          },
+          nodeCurveYLayerClockwise: {
+            value: 'cubic-bezier(0.8,0.2,0.8,1)',
+          },
         },
         fontSizes: {
           sm: { value: '80%' },
