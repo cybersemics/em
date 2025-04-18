@@ -27,12 +27,10 @@ const PanelCommandGrid = () => {
         maxWidth: '100%',
       })}
     >
-      <PanelCommandGroup>
-        <PanelCommand command={{ ...toggleDone, label: 'Done' }} size='small' />
-        <PanelCommand command={note} size='small' />
-        <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
-        <PanelCommand command={deleteCommand} size='small' />
-      </PanelCommandGroup>
+      <PanelCommand command={{ ...toggleDone, label: 'Done' }} size='small' />
+      <PanelCommand command={note} size='small' />
+      <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
+      <PanelCommand command={deleteCommand} size='small' />
       <PanelCommandGroup>
         <PanelCommand command={{ ...outdent, label: '' }} size='small' />
         <PanelCommand command={{ ...indent, label: '' }} size='small' />
