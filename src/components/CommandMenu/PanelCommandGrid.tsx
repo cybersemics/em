@@ -7,6 +7,7 @@ import note from '../../commands/note'
 import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
 import toggleDone from '../../commands/toggleDone'
+import uncategorize from '../../commands/uncategorize'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
 
@@ -38,6 +39,7 @@ const PanelCommandGrid = () => {
       </PanelCommandGroup>
       <PanelCommand command={swapParent} size='medium' />
       <PanelCommand command={categorize} size='medium' />
+      <PanelCommand command={uncategorize} size='medium' />
     </div>
   )
 }
