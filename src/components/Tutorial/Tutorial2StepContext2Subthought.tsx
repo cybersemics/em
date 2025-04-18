@@ -1,3 +1,4 @@
+import pluralize from 'pluralize'
 import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
 import { commandById } from '../../commands'
@@ -71,7 +72,7 @@ const Tutorial2StepContext2Subthought = () => {
       <p>Very good!</p>
       <p>
         Notice the small number: <StaticSuperscript n={numContexts} />. This means that “{caseSensitiveValue}” appears
-        in {numeralToWord(numContexts)} place{numContexts === 1 ? '' : 's'}, or <i>contexts</i> (in our case{' '}
+        in {numeralToWord(numContexts)} {pluralize('place', numContexts)}, or <i>contexts</i> (in our case{' '}
         {joinConjunction(
           contextParentThoughts
             .filter(parent => parent && parent.value !== HOME_TOKEN)

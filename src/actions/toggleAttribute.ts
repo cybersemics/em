@@ -25,6 +25,7 @@ const toggleAttribute = (
   if (!path || (!value && (!values || values.length === 0))) return state
 
   const thoughtId = head(path)
+
   const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
   const idNew = createId()
 

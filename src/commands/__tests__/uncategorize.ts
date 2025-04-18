@@ -6,11 +6,11 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
-import collapseContextCommand from '../collapseContext'
+import uncategorizeCommand from '../uncategorize'
 
 beforeEach(initStore)
 
-describe('collapseContext', () => {
+describe('uncategorize', () => {
   describe('multicursor', () => {
     it('collapses multiple thoughts', async () => {
       store.dispatch([
@@ -30,7 +30,7 @@ describe('collapseContext', () => {
         addMulticursor(['b']),
       ])
 
-      executeCommandWithMulticursor(collapseContextCommand, { store })
+      executeCommandWithMulticursor(uncategorizeCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -66,7 +66,7 @@ describe('collapseContext', () => {
         addMulticursor(['d', 'e']),
       ])
 
-      executeCommandWithMulticursor(collapseContextCommand, { store })
+      executeCommandWithMulticursor(uncategorizeCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -101,7 +101,7 @@ describe('collapseContext', () => {
         addMulticursor(['c']),
       ])
 
-      executeCommandWithMulticursor(collapseContextCommand, { store })
+      executeCommandWithMulticursor(uncategorizeCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -131,7 +131,7 @@ describe('collapseContext', () => {
         addMulticursor(['e', 'f']),
       ])
 
-      executeCommandWithMulticursor(collapseContextCommand, { store })
+      executeCommandWithMulticursor(uncategorizeCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

@@ -1,15 +1,12 @@
 import { Key } from 'ts-key-enum'
-import { css, cx } from '../../styled-system/css'
-import { iconRecipe } from '../../styled-system/recipes'
-import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import Dispatch from '../@types/Dispatch'
-import IconType from '../@types/IconType'
 import State from '../@types/State'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { cursorUpActionCreator as cursorUp } from '../actions/cursorUp'
 import { removeMulticursorActionCreator as removeMulticursor } from '../actions/removeMulticursor'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import CursorUpIcon from '../components/icons/CursorUp'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
@@ -22,27 +19,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-// import directly since util/index is not loaded yet when command is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
-
-// eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
-const Icon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType) => (
-  <svg
-    version='1.1'
-    className={cx(iconRecipe(), css(cssRaw))}
-    xmlns='http://www.w3.org/2000/svg'
-    width={size}
-    height={size}
-    fill={fill}
-    style={style}
-    viewBox='0 0 19.481 19.481'
-    enableBackground='new 0 0 19.481 19.481'
-  >
-    <g>
-      <path d='m10.201,.758l2.478,5.865 6.344,.545c0.44,0.038 0.619,0.587 0.285,0.876l-4.812,4.169 1.442,6.202c0.1,0.431-0.367,0.77-0.745,0.541l-5.452-3.288-5.452,3.288c-0.379,0.228-0.845-0.111-0.745-0.541l1.442-6.202-4.813-4.17c-0.334-0.289-0.156-0.838 0.285-0.876l6.344-.545 2.478-5.864c0.172-0.408 0.749-0.408 0.921,0z' />
-    </g>
-  </svg>
-)
 
 const cursorUpCommand: Command = {
   id: 'cursorUp',
@@ -50,7 +27,7 @@ const cursorUpCommand: Command = {
   keyboard: { key: Key.ArrowUp },
   hideFromHelp: true,
   multicursor: false,
-  svg: Icon,
+  svg: CursorUpIcon,
   canExecute: state => {
     const { cursor } = state
 
