@@ -14,6 +14,17 @@ import getThoughtById from '../selectors/getThoughtById'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
 
+/** Interface for the setIsMulticursorExecuting action. */
+interface SetIsMulticursorExecutingAction extends Action<'setIsMulticursorExecuting'> {
+  value: boolean
+  operationLabel?: string
+}
+
+/** Type guard to check if an action is a SetIsMulticursorExecutingAction. */
+function isSetIsMulticursorExecutingAction(action: Action<string>): action is SetIsMulticursorExecutingAction {
+  return 'value' in action
+}
+
 /** A map of action types to boolean. */
 type ActionFlags = {
   [key in ActionType]: boolean
@@ -111,6 +122,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   setDescendant: true,
   setImportThoughtPath: false,
   setFirstSubthought: true,
+  setIsMulticursorExecuting: false,
   setNoteFocus: true,
   setRemoteSearch: false,
   setResourceCache: false,
@@ -305,6 +317,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
     let lastActionType: ActionType
+    let multicursorStartState: State | null = null
+    let multicursorOperationLabel: string | null = null
 
     /**
      * Reducer to handle undo/redo actions and add/merge inverse-redoPatches for other actions.
@@ -333,6 +347,49 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return { ...undoOrRedoState!, ...omitted }
       }
 
+      // Track multicursor start state
+      if (actionType === 'setIsMulticursorExecuting') {
+        if (!isSetIsMulticursorExecutingAction(action)) {
+          return reducer(state, action)
+        }
+
+        const value = action.value
+        if (value) {
+          // Using Immer's produce to create a deep clone of the state
+          // This ensures multicursorStartState is immutable since produce returns a new object
+          multicursorStartState = produce(state, (state: State) => {
+            return state
+          })
+
+          if (action.operationLabel) {
+            multicursorOperationLabel = action.operationLabel
+          }
+        } else {
+          // When multicursor execution ends, create a complete diff from the multicursor start state
+          if (multicursorStartState) {
+            const multicursorEndState = reducer(state, action)
+            const undoPatch = diffState(multicursorEndState as Index, multicursorStartState)
+
+            // Use the stored operation label from the beginning of the operation
+            // This ensures we display the proper action name in undo alert
+            const actionToUse = multicursorOperationLabel || (lastActionType as string)
+
+            multicursorStartState = null
+            multicursorOperationLabel = null
+
+            return undoPatch.length
+              ? {
+                  ...multicursorEndState,
+                  redoPatches: [],
+                  undoPatches: [...undoPatches, addActionsToPatch(undoPatch, [actionToUse as ActionType])],
+                }
+              : multicursorEndState
+          }
+          multicursorStartState = null
+          multicursorOperationLabel = null
+        }
+      }
+
       // otherwise run the normal reducer for the action
       const newState = reducer(state, action)
 
@@ -344,7 +401,9 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         // ignore the first importText since it is part of app initialization and should not be undoable
         // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
         // See: https://github.com/cybersemics/em/issues/1494
-        (actionType === 'importText' && !newState.undoPatches.length)
+        (actionType === 'importText' && !newState.undoPatches.length) ||
+        // Skip intermediate multicursor actions
+        (state.isMulticursorExecuting && actionType !== 'setIsMulticursorExecuting')
       ) {
         return newState
       }

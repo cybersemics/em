@@ -101,6 +101,11 @@ interface State {
    */
   isLoading: boolean
   /**
+   * Set to true when commands are being executed with multicursor.
+   * Used by the undoRedoEnhancer to group undo patches for multicursor operations.
+   */
+  isMulticursorExecuting: boolean
+  /**
    * History of edit points that can be navigated with the jump command.
    * New edit points are added to the beginning of the list.
    * Cannot use undoHistory because it omits the cursor from some edits.
