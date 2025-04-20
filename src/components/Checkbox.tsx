@@ -76,8 +76,8 @@ const Checkbox: FC<
       onClick={e => {
         e.preventDefault()
         onChange(e)
+        haptics.light()
       }}
-      onTouchEnd={haptics.light}
       role='button'
     >
       <div
