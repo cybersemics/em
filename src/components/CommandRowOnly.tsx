@@ -36,6 +36,7 @@ const CommandRowOnly = forwardRef<
     isTable?: boolean
     indexInToolbar?: number | null
     customize?: boolean
+    hideDescriptionIfNotSelectedOnMobile?: boolean
   }
 >(
   (
@@ -51,6 +52,7 @@ const CommandRowOnly = forwardRef<
       isTable,
       indexInToolbar,
       customize,
+      hideDescriptionIfNotSelectedOnMobile,
     },
     ref,
   ) => {
@@ -185,27 +187,29 @@ const CommandRowOnly = forwardRef<
             <HighlightedText value={label} match={search} disabled={disabled} />
           </div>
 
-          <div className={css({ flexGrow: 1, zIndex: 1 })}>
-            <div
-              className={css({
-                display: 'flex',
-              })}
-            >
-              {/* description */}
+          {(!isTouch || !hideDescriptionIfNotSelectedOnMobile || selected) && (
+            <div className={css({ flexGrow: 1, zIndex: 1 })}>
               <div
                 className={css({
-                  fontSize: '80%',
-                  ...(!isTouch
-                    ? {
-                        flexGrow: 1,
-                      }
-                    : null),
+                  display: 'flex',
                 })}
               >
-                {description}
+                {/* description */}
+                <div
+                  className={css({
+                    fontSize: '80%',
+                    ...(!isTouch
+                      ? {
+                          flexGrow: 1,
+                        }
+                      : null),
+                  })}
+                >
+                  {description}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </Cell>
 
         {/* keyboard shortcut */}
