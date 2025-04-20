@@ -177,7 +177,6 @@ const CommandsGroup: ({
         customize={customize}
         onSelect={onSelect}
         search={search}
-        applyIndexInToolbar
       />
     </div>
   )
