@@ -77,14 +77,16 @@ export const hashKeyDown = (e: KeyboardEvent): string =>
 
 /** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
 export const arrowTextToArrowCharacter = (s: string) => {
-  return ((
-    ({
-      ArrowLeft: '←',
-      ArrowRight: '→',
-      ArrowUp: '↑',
-      ArrowDown: '↓',
-    }) as Index
-  )[s] || s)
+  return (
+    (
+      {
+        ArrowLeft: '←',
+        ArrowRight: '→',
+        ArrowUp: '↑',
+        ArrowDown: '↓',
+      } as Index
+    )[s] || s
+  )
 }
 
 /** Formats a keyboard shortcut to display to the user. */
