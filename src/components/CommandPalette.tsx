@@ -163,6 +163,7 @@ const CommandRow: FC<{
       isActive={isActive}
       style={style}
       disabled={disabled}
+      hideDescriptionIfNotSelectedOnMobile
     />
   )
 }
