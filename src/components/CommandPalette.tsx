@@ -280,8 +280,8 @@ const CommandPalette: FC<{
         border: '1px solid {colors.cpBorder}',
         borderRadius: '12px',
         backgroundColor: 'cpBackground',
-        maxHeight: '500px',
-        maxWidth: '826px',
+        ...(isTouch ? { width: '100%' } : { maxWidth: '826px' }),
+        maxHeight: isTouch ? '50%' : '500px',
         cursor: 'default',
         display: 'flex',
         flexDirection: 'column',
@@ -290,13 +290,13 @@ const CommandPalette: FC<{
     >
       {!isTouch || (gestureInProgress && commands.length > 0) ? (
         <>
+          {!isTouch ? (
           <h2
             className={css({
               margin: 0,
               borderBottom: 'solid 1px {colors.cpBorder}',
             })}
           >
-            {!isTouch ? (
               <CommandSearch
                 onExecute={onExecuteSelected}
                 onInput={setSearch}
@@ -305,10 +305,8 @@ const CommandPalette: FC<{
                 onSelectTop={onSelectTop}
                 onSelectBottom={onSelectBottom}
               />
-            ) : (
-              'Gestures'
-            )}
           </h2>
+          ) : null}
 
           <div
             className={css({
@@ -399,10 +397,11 @@ const CommandPaletteWithTransition: FC = () => {
                 height: '100%',
                 boxSizing: 'border-box',
                 display: 'flex',
-                justifyContent: 'center',
+                flexDirection: 'column',
+                justifyContent: isTouch ? 'start' : 'center',
                 alignItems: 'center',
               })}
-              onClick={onClose}
+              onClick={!isTouch ? onClose : undefined}
             >
               <CommandPalette
                 commands={commands}
