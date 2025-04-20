@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
@@ -11,6 +11,11 @@ import head from '../util/head'
 import parentOf from '../util/parentOf'
 
 /** A larger circle that surrounds the bullet of the cursor thought. */
+
+type Position = {
+  x: number
+  y: number
+} | null
 const BulletCursorOverlay = ({
   isCursorActive,
   x = 0,
@@ -66,32 +71,135 @@ const BulletCursorOverlay = ({
 
   // calculate extra y position added because of context breadcrumb
   // calculation based on ctx breadcrumb size (font-size and padding-top) + margin-top
-  const contextBreadcrumbYPadding = isContextBreadcrumbExists
-    ? breadcrumbMarginTop + Math.max(fontSize, breadcrumbFontSize + breadcrumbPaddingTop)
-    : 0
+  // const contextBreadcrumbYPadding = isContextBreadcrumbExists
+  //   ? breadcrumbMarginTop + Math.max(fontSize, breadcrumbFontSize + breadcrumbPaddingTop)
+  //   : 0
 
   // calculate extra x position added because of context breadcrumb
   // calculation based on breadcrumb (thought annotation) margin-left - padding-left
   // adds bullet width into overlay position when thought is not table view col 1
-  const contextBreadcrumbXPadding = isContextBreadcrumbExists
-    ? Math.floor(
-        thoughtAnnotationMarginLeft - thoughtAnnotationHorizontalPadding + (!isTableCol1 ? bulletSpanWidth : 0),
-      )
-    : 0
+  // const contextBreadcrumbXPadding = isContextBreadcrumbExists
+  //   ? Math.floor(
+  //       thoughtAnnotationMarginLeft - thoughtAnnotationHorizontalPadding + (!isTableCol1 ? bulletSpanWidth : 0),
+  //     )
+  //   : 0
 
   // calculate X position of overlay by adding x position + left position of bullet + extra x position when context breadcrumb is exists su
   // when thought isnt table view col 1, we need add the bullet span left position to the overlay x position
 
-  const translateX =
-    x +
-    bulletSvgLeftPosition +
-    bulletSvgMarginLeft +
-    (isTableCol1 ? 0 : bulletSpanLeftPosition) +
-    contextBreadcrumbXPadding
+  // const translateX =
+  //   x +
+  //   bulletSvgLeftPosition +
+  //   bulletSvgMarginLeft +
+  //   (isTableCol1 ? 0 : bulletSpanLeftPosition) +
+  //   contextBreadcrumbXPadding
+
+  const translateX = useMemo(() => {
+    const contextBreadcrumbXPadding = isContextBreadcrumbExists
+      ? Math.floor(
+          thoughtAnnotationMarginLeft - thoughtAnnotationHorizontalPadding + (!isTableCol1 ? bulletSpanWidth : 0),
+        )
+      : 0
+
+    const translateX =
+      x +
+      bulletSvgLeftPosition +
+      bulletSvgMarginLeft +
+      (isTableCol1 ? 0 : bulletSpanLeftPosition) +
+      contextBreadcrumbXPadding
+
+    return translateX
+  }, [
+    isContextBreadcrumbExists,
+    thoughtAnnotationMarginLeft,
+    thoughtAnnotationHorizontalPadding,
+    isTableCol1,
+    bulletSpanWidth,
+    x,
+    bulletSvgLeftPosition,
+    bulletSvgMarginLeft,
+    bulletSpanLeftPosition,
+  ])
 
   // calculate X position of overlay by adding y position + top position of bullet + extra y position when context breadcrumb is exists
-  const translateY = y - glyphMarginBottom + contextBreadcrumbYPadding
+  // const translateY = y - glyphMarginBottom + contextBreadcrumbYPadding
 
+  const translateY = useMemo(() => {
+    const contextBreadcrumbYPadding = isContextBreadcrumbExists
+      ? breadcrumbMarginTop + Math.max(fontSize, breadcrumbFontSize + breadcrumbPaddingTop)
+      : 0
+
+    const translateY = y - glyphMarginBottom + contextBreadcrumbYPadding
+    return translateY
+  }, [
+    isContextBreadcrumbExists,
+    breadcrumbMarginTop,
+    fontSize,
+    breadcrumbFontSize,
+    breadcrumbPaddingTop,
+    y,
+    glyphMarginBottom,
+  ])
+
+  const initOverlayPosition = useRef<Position>(null)
+
+  const currentOverlayPosition = useRef<Position>(null)
+
+  // get the initial position of the bullet overlay
+  useEffect(() => {
+    if (svgElement.current) {
+      const currentBulletPosition = svgElement.current.getBoundingClientRect()
+      const fromX = currentBulletPosition.x
+      const fromY = currentBulletPosition.y
+      initOverlayPosition.current = {
+        x: fromX,
+        y: fromY,
+      }
+    }
+  }, [])
+
+  // animate the bullet overlay position
+  useEffect(() => {
+    if (svgElement.current) {
+      const fromX = currentOverlayPosition.current?.x ?? 0
+      const fromY = currentOverlayPosition.current?.y ?? 0
+
+      // Animate the bullet overlay position using the Web Animations API with duration 80ms
+      const animation = svgElement.current.animate(
+        [
+          {
+            transform: `translate(${fromX}px, ${fromY}px)`,
+            opacity: 1,
+          },
+          {
+            transform: `translate(${translateX}px, ${translateY}px)`,
+            opacity: 1,
+          },
+        ],
+        {
+          duration: 80,
+          easing: 'ease-in-out',
+        },
+      )
+
+      animation.onfinish = () => {
+        if (svgElement.current) {
+          // Trigger fade-out using Web Animations API
+          // will run after translation animation finish
+          svgElement.current.animate([{ opacity: 1 }, { opacity: 0 }], {
+            duration: 0,
+            easing: 'linear',
+            fill: 'forwards', // Keep opacity at 0 after fade completes
+          })
+        }
+      }
+      // Update the current overlay position
+      currentOverlayPosition.current = {
+        x: translateX,
+        y: translateY,
+      }
+    }
+  }, [translateX, translateY])
   return (
     <svg
       className={css({
@@ -100,10 +208,11 @@ const BulletCursorOverlay = ({
         // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
         // allowing the browser to optimize the animation.
         willChange: 'transform',
+        // display: 'none',
         ...(isCursorActive
           ? {
-              fillOpacity: 1,
-              transition: `transform {durations.veryFast} ease-in-out`,
+              // animation: `bulletOverlayFadeAnimation   {durations.slow} ease-in-out`,
+              // transition: `transform {durations.slow} ease-in-out`,
             }
           : null),
       })}
@@ -112,7 +221,10 @@ const BulletCursorOverlay = ({
         height: lineHeight,
         width: lineHeight,
         position: 'absolute',
-        transform: `translateY(${translateY}px) translateX(${translateX}px)`,
+        // Optional: initial position in case animation fails
+        opacity: 1,
+        transform: `translate(${translateX}px, ${translateY}px)`,
+        // transform: `translateY(${translateY}px) translateX(${translateX}px)`,
       }}
       ref={svgElement}
     >

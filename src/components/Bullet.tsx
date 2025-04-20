@@ -361,7 +361,15 @@ const BulletParent = ({
 }
 
 /** A larger circle that surrounds the bullet of the highlighted thought. */
-const BulletHighlightOverlay = ({ bulletOverlayRadius }: { bulletOverlayRadius: number }) => {
+const BulletHighlightOverlay = ({
+  bulletOverlayRadius,
+  isHighlighted,
+  isEditing,
+}: {
+  bulletOverlayRadius: number
+  isHighlighted?: boolean
+  isEditing?: boolean
+}) => {
   return (
     <ellipse
       ry={bulletOverlayRadius}
@@ -369,11 +377,34 @@ const BulletHighlightOverlay = ({ bulletOverlayRadius }: { bulletOverlayRadius: 
       cy='300'
       cx='300'
       className={css({
-        fillOpacity: 1,
         fill: 'highlight',
         stroke: 'highlight',
-        transition: `transform {durations.veryFast} ease-in-out`,
       })}
+    />
+  )
+}
+
+/** A larger circle that surrounds the bullet of the highlighted thought. */
+const BulletCursorOverlay = ({
+  bulletOverlayRadius,
+  isEditing,
+}: {
+  bulletOverlayRadius: number
+  isEditing?: boolean
+}) => {
+  return (
+    <ellipse
+      ry={bulletOverlayRadius}
+      rx={bulletOverlayRadius}
+      cy='300'
+      cx='300'
+      className={css({
+        fillOpacity: 0.25,
+        fill: 'fg',
+        opacity: isEditing ? 1 : 0,
+      })}
+      // Adds a 5ms delay to the animation to prevent a flicker caused by overlapping entry/exit transitions.
+      style={{ transition: `opacity  0ms linear ${isEditing ? '85' : '0'}ms` }}
     />
   )
 }
@@ -566,8 +597,11 @@ const Bullet = ({
         ref={svgElement}
       >
         <g>
+          {/* required to be rendered all the time to allow animation */}
+          <BulletCursorOverlay bulletOverlayRadius={bulletOverlayRadius} isEditing={isEditing} />
+
           {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && (
-            <BulletHighlightOverlay bulletOverlayRadius={bulletOverlayRadius} />
+            <BulletHighlightOverlay bulletOverlayRadius={bulletOverlayRadius} isHighlighted={isHighlighted} />
           )}
           {leaf && !showContexts ? (
             <BulletLeaf
