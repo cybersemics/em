@@ -9,18 +9,6 @@ import CommandKeys from './CommandKeys'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 
-/** Converts the integer into an ordinal, e.g. 1st, 2nd, 3rd, 4th, etc. */
-const ordinal = (n: number) => {
-  const s = n.toString()
-  return s.endsWith('1') && n !== 11
-    ? s + 'st'
-    : s.endsWith('2') && n !== 12
-      ? s + 'nd'
-      : s.endsWith('3') && n !== 13
-        ? s + 'rd'
-        : s + 'th'
-}
-
 /** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
 const CommandRowOnly = forwardRef<
   HTMLDivElement,
@@ -34,8 +22,6 @@ const CommandRowOnly = forwardRef<
     disabled?: boolean
     isActive?: boolean
     isTable?: boolean
-    indexInToolbar?: number | null
-    customize?: boolean
     hideDescriptionIfNotSelectedOnMobile?: boolean
   }
 >(
@@ -50,8 +36,6 @@ const CommandRowOnly = forwardRef<
       disabled,
       isActive,
       isTable,
-      indexInToolbar,
-      customize,
       hideDescriptionIfNotSelectedOnMobile,
     },
     ref,
@@ -84,17 +68,13 @@ const CommandRowOnly = forwardRef<
           backgroundColor: selected ? 'commandSelected' : undefined,
           // padding: selected ? '10px 0.3em 10px 0.5em' : undefined,
           borderRadius: '8px', // constant curve
-          padding: 12,
-          ...(!isTouch
-            ? {
-                display: 'flex',
-                // margin: selected ? '-5px 0' : undefined,
-                flexDirection: 'row',
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-                gap: 12,
-              }
-            : null),
+          padding: '4px 12px',
+          display: 'flex',
+          // margin: selected ? '-5px 0' : undefined,
+          flexDirection: 'row',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          gap: isTouch ? 8 : 12,
         })}
         onClick={e => {
           if (!disabled) {
@@ -104,7 +84,7 @@ const CommandRowOnly = forwardRef<
         style={style}
       >
         {/* div used to contain width:100% and height:100% of icons while in a flex box */}
-        <Cell>
+        <Cell className={css({ display: 'flex', justifyContent: 'center', alignItems: 'center' })}>
           {/* gesture diagram */}
           {isTouch ? (
             <GestureDiagram
@@ -131,14 +111,9 @@ const CommandRowOnly = forwardRef<
               }
               path={command.id === 'cancel' ? null : gestureString(command)}
               strokeWidth={4}
-              cssRaw={css.raw({
-                position: 'absolute',
-                marginLeft: selected ? 5 : 15,
-                left: command.id == 'cancel' ? '-2.3em' : selected ? '-1.75em' : '-2.2em',
-                top: selected ? '-0.2em' : '-0.75em',
-              })}
-              width={45}
-              height={45}
+              width={32}
+              height={32}
+              size={150}
               rounded={command.rounded}
             />
           ) : (
@@ -170,14 +145,6 @@ const CommandRowOnly = forwardRef<
               fontWeight: selected ? 'bold' : undefined,
             })}
           >
-            {customize && indexInToolbar && (
-              <span
-                className={css({ color: 'dim' })}
-                title={`This is the ${ordinal(indexInToolbar)} button in the toolbar`}
-              >
-                {indexInToolbar}.{' '}
-              </span>
-            )}
             <HighlightedText value={label} match={search} disabled={disabled} />
           </div>
 

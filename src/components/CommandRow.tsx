@@ -14,11 +14,9 @@ const CommandRow = ({
   onSelect,
   selected,
   command,
-  indexInToolbar,
   search,
 }: {
   customize?: boolean
-  indexInToolbar?: number | null
   onSelect?: (command: Command | null) => void
   selected?: boolean
   command: Command | null
@@ -48,13 +46,11 @@ const CommandRow = ({
     command && (
       <CommandRowOnly
         command={command}
-        indexInToolbar={indexInToolbar}
         search={search}
         selected={selected}
         onClick={(_, command) => {
           onSelect?.(selected ? null : command)
         }}
-        customize={customize}
         style={{ opacity: isDragging ? 0.5 : 1 }}
         ref={dragSource}
         isTable
