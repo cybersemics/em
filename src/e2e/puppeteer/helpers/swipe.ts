@@ -19,7 +19,6 @@ const swipePoints = async (points: { x: number; y: number }[], complete: boolean
 // TODO: Support other directions and multiple swipes.
 const swipe = async (direction: 'r') => {
   const y = 100
-
   await swipePoints(
     [
       { x: 100, y },
