@@ -209,11 +209,11 @@ const LayoutTree = () => {
   const cliffPadding = fontSize / 4
   const cliffPaddingStyle = useMemo(() => ({ paddingBottom: cliffPadding }), [cliffPadding])
 
-  // When the cursor is in a table, all thoughts beneath the table are hidden,
-  // so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
+  /** Gets an additional indentation table for nested tables that ensures the FauxCaret is activated when navigating between col1, col2, and descendants. Needed to cover additional indentation provided by indentCursorAncestorTables. */
+  // When the cursor is in a table, all thoughts beneath the table are hidden, so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
+  // The calculation is oblique, but seems to cover the necessary cases. If any missing edge cases or regressions are discovered in the future, consider one of the alternative solutions suggested in https://github.com/cybersemics/em/pull/2887#pullrequestreview-2778143348.
   const tableDepth = useSelector(state => {
     if (!state.cursor) return 0
-    // return 1 if any ancestor is in table view
     // rootedParentOf only includes HOME_TOKEN for top-level thoughts, so we can't use it
     if (attributeEquals(state, HOME_TOKEN, '=view', 'Table')) return Math.min(3, state.cursor.length)
     return state.cursor.length && parentOf(state.cursor).some(id => attributeEquals(state, id, '=view', 'Table'))
