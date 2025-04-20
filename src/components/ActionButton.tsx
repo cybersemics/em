@@ -40,8 +40,8 @@ const ActionButton = ({
         css({ lineHeight: 2, marginInline: 5, whiteSpace: 'nowrap', fontWeight: 'normal' }),
       )}
       onClick={isDisabled ? undefined : onClick}
-      onTouchStart={haptics.medium}
-      onTouchEnd={haptics.light}
+      onTouchStart={isDisabled ? undefined : haptics.medium}
+      onTouchEnd={isDisabled ? undefined : haptics.light}
       role='button'
       {...restProps}
     >
