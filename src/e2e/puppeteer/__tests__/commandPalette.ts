@@ -33,7 +33,7 @@ it('open with gesture', async () => {
   await page.emulate(KnownDevices['iPhone 15 Pro'])
   await paste(importText)
 
-  await swipe('r', false)
+  await swipe('r')
 
   // the command palette should open
   const popupValue = await page.locator('[data-testid=popup-value]').wait()
