@@ -2,6 +2,7 @@ import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } fro
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import Key from '../@types/Key'
@@ -19,7 +20,7 @@ import storageModel from '../stores/storageModel'
 import { executeCommandWithMulticursor } from '../util/executeCommand'
 import CommandRowOnly from './CommandRowOnly'
 import FadeTransition from './FadeTransition'
-import Popup from './Popup'
+import PopupBase from './PopupBase'
 
 /**********************************************************************
  * Constants
@@ -273,114 +274,91 @@ const CommandPalette: FC<{
   )
 
   return (
-    <>
-      <div
-        className={css({
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          top: '0',
-          left: '0',
-          right: '0',
-          bottom: '0',
-          backgroundColor: 'bgOverlay50',
-          cursor: 'pointer',
-        })}
-      />
-      <div
-        className={css({
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          position: 'absolute',
-          height: '100%',
-          width: '100%',
-        })}
-      >
-        <div
-          className={css({
-            marginBottom: isTouch ? 0 : fontSize,
-            textAlign: 'left',
-            border: '1px solid {colors.cpBorder}',
-            borderRadius: '12px',
-            backgroundColor: 'cpBackground',
-            maxHeight: '100%',
-            maxWidth: '826px',
-          })}
-        >
-          {!isTouch || (gestureInProgress && commands.length > 0) ? (
-            <div>
-              <h2
-                className={css({
-                  margin: 0,
-                  borderBottom: 'solid 1px {colors.cpBorder}',
-                })}
-                // style={{ marginLeft: -fontSize * 1.8 }}
-              >
-                {!isTouch ? (
-                  <CommandSearch
-                    onExecute={onExecuteSelected}
-                    onInput={setSearch}
-                    onSelectUp={onSelectUp}
-                    onSelectDown={onSelectDown}
-                    onSelectTop={onSelectTop}
-                    onSelectBottom={onSelectBottom}
-                  />
-                ) : (
-                  'Gestures'
-                )}
-              </h2>
+    <div
+      className={css({
+        marginBottom: isTouch ? 0 : fontSize,
+        textAlign: 'left',
+        border: '1px solid {colors.cpBorder}',
+        borderRadius: '12px',
+        backgroundColor: 'cpBackground',
+        maxHeight: '500px',
+        maxWidth: '826px',
+        cursor: 'default',
+        display: 'flex',
+        flexDirection: 'column',
+      })}
+      onClick={e => e.stopPropagation()}
+    >
+      {!isTouch || (gestureInProgress && commands.length > 0) ? (
+        <>
+          <h2
+            className={css({
+              margin: 0,
+              borderBottom: 'solid 1px {colors.cpBorder}',
+            })}
+          >
+            {!isTouch ? (
+              <CommandSearch
+                onExecute={onExecuteSelected}
+                onInput={setSearch}
+                onSelectUp={onSelectUp}
+                onSelectDown={onSelectDown}
+                onSelectTop={onSelectTop}
+                onSelectBottom={onSelectBottom}
+              />
+            ) : (
+              'Gestures'
+            )}
+          </h2>
 
-              <div
-                className={css({
-                  ...(!isTouch ? { maxHeight: 'calc(100vh - 19em)' } : null),
-                  overflow: 'auto',
-                  // TODO: move padding here
-                  padding: '12px',
-                })}
-              >
-                {commands.length > 0 ? (
-                  <>
-                    {(() => {
-                      const hasMatchingCommand = commands.some(cmd => gestureInProgress === cmd.gesture)
+          <div
+            className={css({
+              ...(!isTouch ? { maxHeight: 'calc(100vh - 19em)' } : null),
+              overflow: 'auto',
+              // TODO: move padding here
+              padding: '12px',
+            })}
+          >
+            {commands.length > 0 ? (
+              <>
+                {(() => {
+                  const hasMatchingCommand = commands.some(cmd => gestureInProgress === cmd.gesture)
 
-                      return commands.map(command => {
-                        // Check if the current gesture sequence ends with help gesture
-                        const isHelpMatch =
-                          command.id === 'help' &&
-                          (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
-                        const isCancelMatch =
-                          command.id === 'cancel' &&
-                          !hasMatchingCommand &&
-                          !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+                  return commands.map(command => {
+                    // Check if the current gesture sequence ends with help gesture
+                    const isHelpMatch =
+                      command.id === 'help' &&
+                      (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+                    const isCancelMatch =
+                      command.id === 'cancel' &&
+                      !hasMatchingCommand &&
+                      !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
 
-                        return (
-                          <CommandRow
-                            search={search}
-                            gestureInProgress={gestureInProgress as string}
-                            key={command.id}
-                            onClick={onExecute}
-                            onHover={onHover}
-                            selected={
-                              !isTouch
-                                ? command === selectedCommand
-                                : isHelpMatch || gestureInProgress == command.gesture || isCancelMatch
-                            }
-                            command={command}
-                          />
-                        )
-                      })
-                    })()}
-                  </>
-                ) : (
-                  <span className={css({ marginLeft: '1em' })}>No matching commands</span>
-                )}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </>
+                    return (
+                      <CommandRow
+                        search={search}
+                        gestureInProgress={gestureInProgress as string}
+                        key={command.id}
+                        onClick={onExecute}
+                        onHover={onHover}
+                        selected={
+                          !isTouch
+                            ? command === selectedCommand
+                            : isHelpMatch || gestureInProgress == command.gesture || isCancelMatch
+                        }
+                        command={command}
+                      />
+                    )
+                  })
+                })()}
+              </>
+            ) : (
+              <span className={css({ marginLeft: '1em' })}>No matching commands</span>
+            )}
+          </div>
+        </>
+      ) : null}
+    </div>
   )
 }
 
@@ -414,34 +392,28 @@ const CommandPaletteWithTransition: FC = () => {
     >
       {showCommandPalette ? (
         <FadeTransition duration='fast' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
-          <Popup
-            ref={popupRef}
-            // only show the close link on desktop
-            // do not show the close link on touch devices since the CommandPalette is automatically dismissed when the gesture ends.
-            {...(!isTouch ? { onClose } : null)}
-          >
-            {/* Overlay */}
+          <PopupBase background={token('colors.bgOverlay50')} ref={popupRef} fullScreen>
             <div
+              data-testid='popup-value'
               className={css({
-                position: 'absolute',
-                width: '100%',
+                zIndex: 'commandPalette',
                 height: '100%',
-                top: '0',
-                left: '0',
-                right: '0',
-                bottom: '0',
-                backgroundColor: 'bgOverlay50',
-                cursor: 'pointer',
+                boxSizing: 'border-box',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
               })}
-            />
-            <CommandPalette
-              commands={commands}
-              recentCommands={recentCommands}
-              setRecentCommands={setRecentCommands}
-              search={search}
-              setSearch={setSearch}
-            />
-          </Popup>
+              onClick={onClose}
+            >
+              <CommandPalette
+                commands={commands}
+                recentCommands={recentCommands}
+                setRecentCommands={setRecentCommands}
+                search={search}
+                setSearch={setSearch}
+              />
+            </div>
+          </PopupBase>
         </FadeTransition>
       ) : null}
     </TransitionGroup>
