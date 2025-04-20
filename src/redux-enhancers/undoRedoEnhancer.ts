@@ -47,6 +47,7 @@ const NAVIGATION_ACTIONS: Partial<ActionFlags> = {
   toggleNote: true,
   /**
    * Not technically a navigation action, but grouped with navigation actions.
+   * So that multicursors can be undone/redone as a single action.
    */
   toggleMulticursor: true,
   addMulticursor: true,
