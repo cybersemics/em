@@ -17,7 +17,7 @@ import reducerFlow from '../util/reducerFlow'
 /** Interface for the setIsMulticursorExecuting action. */
 interface SetIsMulticursorExecutingAction extends Action<'setIsMulticursorExecuting'> {
   value: boolean
-  operationLabel?: string
+  undoLabel?: string
 }
 
 /** Type guard to check if an action is a SetIsMulticursorExecutingAction. */
@@ -320,8 +320,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
     let lastActionType: ActionType
-    let isMulticursorExecuting = false
-    let multicursorOperationLabel: string | null = null
+    let multicursorUndoLabel: string | null = null
     let isFirstMulticursorAction = true // Flag to track if this is the first action in a multicursor sequence
 
     /**
@@ -329,6 +328,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
      */
     const undoAndRedoReducer = (state: State | undefined = initialState, action: A): State => {
       if (!state) return reducer(initialState, action)
+
       const { redoPatches, undoPatches } = state as State
       const actionType = action.type
 
@@ -358,17 +358,15 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         }
         const value = action.value
         if (value) {
-          isMulticursorExecuting = true
-          multicursorOperationLabel = action.operationLabel || null
+          multicursorUndoLabel = action.undoLabel || null
           isFirstMulticursorAction = true // Reset for a new multicursor operation
         } else {
-          isMulticursorExecuting = false
-          multicursorOperationLabel = null
+          multicursorUndoLabel = null
         }
       }
 
       // otherwise run the normal reducer for the action
-      const newState = reducer(state, action)
+      const newState = reducer(state, action) as State
 
       if (
         // bail if state has not changed
@@ -385,39 +383,42 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       // edit merge logic
       // combine navigation and thoughtChange actions into single redoPatches
-      if (
+      // Handle multicursor operations and action merging
+      const shouldMergeWithPreviousAction =
         (isNavigation(actionType) && isNavigation(lastActionType)) ||
         (lastActionType === 'editThought' && actionType === 'editThought') ||
         actionType === 'closeAlert' ||
-        // For multicursor operations, group all undoable actions
-        (isMulticursorExecuting && isUndoable(actionType))
-      ) {
-        // Handle multicursor operations
-        if (isMulticursorExecuting) {
-          // Use the operation label for all multicursor actions
-          lastActionType = (multicursorOperationLabel as ActionType) ?? actionType
+        (newState.isMulticursorExecuting && isUndoable(actionType))
 
-          // Create a clean break for the first multicursor action
-          if (isFirstMulticursorAction && undoPatches.length > 0) {
-            isFirstMulticursorAction = false
+      // For multicursor operations, use the operation label
+      if (newState.isMulticursorExecuting) {
+        lastActionType = (multicursorUndoLabel as ActionType) ?? actionType
+      } else {
+        lastActionType = actionType
+      }
 
-            // Create a new undo patch for the first multicursor action
-            const undoPatch = diffState(newState as Index, state)
+      // Determine if we need to create a new patch
+      const shouldCreateNewPatchForMulticursor =
+        newState.isMulticursorExecuting && isFirstMulticursorAction && undoPatches.length > 0
 
-            return undoPatch.length
-              ? {
-                  ...newState,
-                  redoPatches: [],
-                  undoPatches: [...newState.undoPatches, addActionsToPatch(undoPatch, [lastActionType])],
-                }
-              : newState
-          }
+      // Always reset the first multicursor action flag after processing
+      const shouldResetFirstMulticursorFlag = newState.isMulticursorExecuting && isFirstMulticursorAction
+      if (shouldResetFirstMulticursorFlag) {
+        isFirstMulticursorAction = false
+      }
 
-          isFirstMulticursorAction = false
-        } else {
-          lastActionType = actionType
-        }
-
+      // Either create a new patch or merge with the previous action
+      if (shouldCreateNewPatchForMulticursor || !shouldMergeWithPreviousAction) {
+        // Create a new undo patch
+        const undoPatch = diffState(newState as Index, state)
+        return undoPatch.length
+          ? {
+              ...newState,
+              redoPatches: [],
+              undoPatches: [...newState.undoPatches, addActionsToPatch(undoPatch, [lastActionType])],
+            }
+          : newState
+      } else {
         const lastUndoPatch = nthLast(state.undoPatches, 1)
         let lastState = state
         if (lastUndoPatch && lastUndoPatch.length > 0) {
@@ -445,19 +446,6 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
           ],
         }
       }
-
-      lastActionType = actionType
-
-      // add a new undo patch
-      const undoPatch = diffState(newState as Index, state)
-
-      return undoPatch.length
-        ? {
-            ...newState,
-            redoPatches: [],
-            undoPatches: [...newState.undoPatches, addActionsToPatch(undoPatch, [lastActionType])],
-          }
-        : newState
     }
 
     return createStore(undoAndRedoReducer, initialState)

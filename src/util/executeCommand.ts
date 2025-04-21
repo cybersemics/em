@@ -152,7 +152,7 @@ export const executeCommandWithMulticursor = (command: Command, { store, type, e
   store.dispatch(
     setIsMulticursorExecuting({
       value: true,
-      operationLabel: command.id,
+      undoLabel: command.id,
     }),
   )
 

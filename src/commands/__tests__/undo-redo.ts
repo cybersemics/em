@@ -230,9 +230,6 @@ describe('undo', () => {
     // Now perform one undo operation
     store.dispatch(undo())
 
-    // On main branch, this would only move thought 'c' back up,
-    // leaving 'a' and 'b' in their moved positions
-    // With our fix, all three thoughts should be restored
     exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expectedOutput = `- ${HOME_TOKEN}
   - a
@@ -525,11 +522,7 @@ describe('grouping', () => {
   })
 })
 
-/******************************************************************
- * MULTICURSOR - Undo/Redo.
- ******************************************************************/
-
-describe('multicursor undo/redo', () => {
+describe('multicursor grouping', () => {
   it('should properly undo and redo multicursor operations as a single step', () => {
     store.dispatch([
       importText({
