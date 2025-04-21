@@ -1,14 +1,10 @@
 import _ from 'lodash'
-import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
-import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
-import splitChain from '../selectors/splitChain'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -20,10 +16,6 @@ const swapParent = (state: State) => {
 
   // If there is no cursor, do nothing.
   if (!cursor) return state
-
-  // Check if we're in context view and get the context chain
-  const isInContextView = isContextViewActive(state, rootedParentOf(state, cursor))
-  const contextChain = isInContextView ? splitChain(state, cursor) : []
 
   // Get the parent path directly from the cursor
   const parent = parentOf(cursor)
@@ -47,23 +39,6 @@ const swapParent = (state: State) => {
 
   // Get the grandparent path
   const grandparent = parentOf(parent)
-
-  // Construct the new cursor path based on the context chain segments
-  let newCursorPath: Path
-  if (isInContextView && contextChain.length > 1) {
-    // Get the last two elements from the last segment (the ones being swapped)
-    const lastSegment = contextChain[contextChain.length - 1]
-    const swapElements = lastSegment.slice(-2)
-
-    // Create new cursor path by combining:
-    // 1. All segments except the last one
-    // 2. All elements from the last segment except the last two
-    // 3. The swapped elements in reverse order
-    const combinedPath = [...contextChain[0], ...lastSegment.slice(0, -2), swapElements[1], swapElements[0]]
-    newCursorPath = combinedPath as unknown as Path
-  } else {
-    newCursorPath = [...grandparent, childId, parentId] as Path
-  }
 
   return reducerFlow([
     // First move the child to replace its parent's position
@@ -100,7 +75,7 @@ const swapParent = (state: State) => {
 
     // Keep cursor on the child at its new position
     setCursor({
-      path: newCursorPath,
+      path: [...grandparent, childId, parentId],
       offset: childThought.value.length,
     }),
   ])(state)
