@@ -125,7 +125,7 @@ it('swapped parent should take the rank of the child', () => {
 })
 
 describe('context view', () => {
-  it('swapped parent should take the rank of the child', () => {
+  it('swap as normal and preserve cursor in descendants of contexts in the context view', () => {
     const text = `
     - a
       - m
@@ -158,7 +158,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b', 'y1', 'y'])
   })
 
-  it('swaps child with parent in context view', () => {
+  it('disallow on contexts in the context view', () => {
     const text = `
     - a
       - m
@@ -180,14 +180,16 @@ describe('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - m
-    - a
+  - a
+    - m
       - x
   - b
     - m
       - y
         - y1`)
 
-    expectPathToEqual(stateNew, stateNew.cursor, ['m'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
+
+    expect(stateNew.alert?.value).toBeTruthy()
   })
 })
