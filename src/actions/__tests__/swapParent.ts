@@ -157,4 +157,37 @@ describe('context view', () => {
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b', 'y1', 'y'])
   })
+
+  it('swaps child with parent in context view', () => {
+    const text = `
+    - a
+      - m
+        - x
+    - b
+      - m
+        - y
+          - y1
+    `
+
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a']),
+      swapParent,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - m
+    - a
+      - x
+  - b
+    - m
+      - y
+        - y1`)
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['m'])
+  })
 })
