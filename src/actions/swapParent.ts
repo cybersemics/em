@@ -5,6 +5,7 @@ import moveThought from '../actions/moveThought'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
@@ -13,14 +14,17 @@ import alert from './alert'
 import setCursor from './setCursor'
 
 /** Swaps the current cursor's thought with its parent by moving nodes. */
-const swapParent = (state: State) => {
+const swapParent = (state: State): State => {
   const { cursor } = state
 
   // If there is no cursor, do nothing.
   if (!cursor) return state
 
   // disallow swapParent in context view
-  if (isContextViewActive(state, parentOf(cursor))) {
+  if (
+    isContextViewActive(state, rootedParentOf(state, cursor)) ||
+    isContextViewActive(state, rootedParentOf(state, parentOf(cursor)))
+  ) {
     return alert(state, { value: 'Swap Parent cannot be performed in the context view.' })
   }
 

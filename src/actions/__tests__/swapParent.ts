@@ -192,4 +192,39 @@ describe('context view', () => {
 
     expect(stateNew.alert?.value).toBeTruthy()
   })
+
+  it('disallow on child of context in the context view', () => {
+    const text = `
+    - a
+      - m
+        - x
+    - b
+      - m
+        - y
+          - y1
+    `
+
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a', 'x']),
+      swapParent,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - b
+    - m
+      - y
+        - y1`)
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', 'x'])
+
+    expect(stateNew.alert?.value).toBeTruthy()
+  })
 })
