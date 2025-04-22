@@ -321,7 +321,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
     let lastActionType: ActionType
     let multicursorUndoLabel: string | null = null
-    let isFirstMulticursorAction = true // Flag to track if this is the first action in a multicursor sequence
+    let lastProcessedAction: ActionType | null = null // Track last processed action for sequence detection
 
     /**
      * Reducer to handle undo/redo actions and add/merge inverse-redoPatches for other actions.
@@ -359,7 +359,6 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         const value = action.value
         if (value) {
           multicursorUndoLabel = action.undoLabel || null
-          isFirstMulticursorAction = true // Reset for a new multicursor operation
         } else {
           multicursorUndoLabel = null
         }
@@ -378,6 +377,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         // See: https://github.com/cybersemics/em/issues/1494
         (actionType === 'importText' && !newState.undoPatches.length)
       ) {
+        // Store the current action for the next call
+        lastProcessedAction = actionType
         return newState
       }
 
@@ -397,15 +398,16 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         lastActionType = actionType
       }
 
-      // Determine if we need to create a new patch
+      // Determine if we need to create a new patch based on action sequence
+      // Create a new patch if this is the first undoable action after setIsMulticursorExecuting
+      const isFirstMulticursorAction =
+        newState.isMulticursorExecuting && lastProcessedAction === 'setIsMulticursorExecuting' && isUndoable(actionType)
+
       const shouldCreateNewPatchForMulticursor =
         newState.isMulticursorExecuting && isFirstMulticursorAction && undoPatches.length > 0
 
-      // Always reset the first multicursor action flag after processing
-      const shouldResetFirstMulticursorFlag = newState.isMulticursorExecuting && isFirstMulticursorAction
-      if (shouldResetFirstMulticursorFlag) {
-        isFirstMulticursorAction = false
-      }
+      // Store the current action for the next call
+      lastProcessedAction = actionType
 
       // Either create a new patch or merge with the previous action
       if (shouldCreateNewPatchForMulticursor || !shouldMergeWithPreviousAction) {
