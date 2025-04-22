@@ -53,8 +53,6 @@ const TutorialNavigation = ({
             return (
               <a
                 className={css({
-                  // inherit not yet supported by plugin
-                  // eslint-disable-next-line @pandacss/no-hardcoded-color
                   color: 'inherit',
                   textDecoration: 'none',
                   fontSize: '32px',

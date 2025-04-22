@@ -7,13 +7,13 @@ import globals from '../../globals'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import findAllThoughtsByText from '../../test-helpers/queries/findAllThoughtsByText'
 import findSubthoughts from '../../test-helpers/queries/findSubthoughts'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getClosestByLabel from '../../test-helpers/queries/getClosestByLabel'
 import queryThoughtByText from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import pathToContext from '../../util/pathToContext'
 import series from '../../util/series'
 
 beforeEach(createTestApp)
@@ -64,8 +64,8 @@ it('Clicking a context moves the cursor to that context', async () => {
   expect(cursor).toBeTruthy()
 
   // cursor should be on the context that was clicked
-  const cursorContext = pathToContext(store.getState(), cursor)
-  expect(cursorContext).toEqual(['b1', 'b2'])
+  const state = store.getState()
+  expectPathToEqual(state, state.cursor, ['b1', 'b2'])
 })
 
 describe('freeThoughts', () => {

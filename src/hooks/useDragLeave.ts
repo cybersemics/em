@@ -40,7 +40,7 @@ const useDragLeave = ({ isDeepHovering, canDropThought }: { isDeepHovering: bool
       return
     }
 
-    // If canDrop is false return
+    // If canDrop is false, clear hovering path and return
     if (!canDropThought) {
       dispatch(clearHoveringPath)
       return

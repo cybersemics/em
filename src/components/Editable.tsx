@@ -6,6 +6,7 @@ import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styl
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
+import { toggleSortPicker } from '../actions'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { editingActionCreator as editingAction } from '../actions/editing'
@@ -50,6 +51,7 @@ import addEmojiSpace from '../util/addEmojiSpace'
 import containsURL from '../util/containsURL'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
@@ -505,6 +507,11 @@ const Editable = ({
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      // Avoid triggering haptics twice since this handler is used for both onClick and onMouseDown.
+      if (e.type !== 'mousedown') {
+        haptics.light()
+      }
+
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
       if (isMultiselectClick) {
@@ -549,9 +556,10 @@ const Editable = ({
         if (!isVisible) {
           selection.clear()
 
+          // close all popups when clicking on a thought
           if (state.showColorPicker) dispatch(toggleColorPicker({ value: false }))
-
           if (state.showLetterCase) dispatch(toggleLetterCase({ value: false }))
+          if (state.showSortPicker) dispatch(toggleSortPicker({ value: false }))
         } else {
           setCursorOnThought()
 

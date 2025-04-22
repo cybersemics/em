@@ -28,8 +28,8 @@ import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
 import validateRoam from '../util/validateRoam'
-import collapseContext from './collapseContext'
 import newThought from './newThought'
+import uncategorize from './uncategorize'
 
 // a list item tag
 const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
@@ -204,7 +204,7 @@ const importText = (
         ? shouldImportIntoDummy
           ? getLastImportedAfterCollapse()
           : imported.lastImported
-        : // setCursor must still be called even if the cursor has not changed, as setCursor sets some other state, such as state.expanded. See the note about collapseContext below.
+        : // setCursor must still be called even if the cursor has not changed, as setCursor sets some other state, such as state.expanded. See the note about uncategorize below.
           // Note: Failing to call setCursor may not be noticeable in the app if expandThoughts gets triggered by another action, such as updateThoughts. However ommitting this will fail component tests that rely on the expanded state immediately after importText.
           state.cursor
 
@@ -217,11 +217,11 @@ const importText = (
       // thoughts will be expanded by setCursor, so no need to expand them here
       updateThoughts({ ...imported, preventExpandThoughts: true, idbSynced }),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
-      shouldImportIntoDummy ? collapseContext({ at: unroot(newDestinationPath) }) : null,
+      shouldImportIntoDummy ? uncategorize({ at: unroot(newDestinationPath) }) : null,
       // if original destination is empty then collapse once more.
-      shouldImportIntoDummy && destEmpty ? collapseContext({ at: parentOfDestination }) : null,
+      shouldImportIntoDummy && destEmpty ? uncategorize({ at: parentOfDestination }) : null,
       // restore the cursor to the last imported thought on the first level
-      // Note: collapseContext may be executed as part of the import. Since collapseContext moves the cursor, we need to set cursor back to the old cursor if preventSetCursor is true.
+      // Note: uncategorize may be executed as part of the import. Since uncategorize moves the cursor, we need to set cursor back to the old cursor if preventSetCursor is true.
       !preventSetCursor ? setLastImportedCursor : setCursor({ path: state.cursor }),
     ])(stateWithDummy)
   }

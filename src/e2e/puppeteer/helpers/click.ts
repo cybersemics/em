@@ -13,7 +13,7 @@ interface Options {
 }
 
 /**
- * Click a node with an optional text offset or x,y offset.
+ * Click a node with an optional text offset or x,y offset. Times out after 1 second.
  */
 const click = async (
   nodeHandleOrSelector: JSHandle | string,
@@ -35,11 +35,11 @@ const click = async (
   // otherwise if nodeHandleOrSelector is a selector, fetch the node handle
   const nodeHandle =
     typeof nodeHandleOrSelector === 'string'
-      ? (await page.$(nodeHandleOrSelector as string))!
+      ? await page.waitForSelector(nodeHandleOrSelector, { timeout: 1000 })
       : (nodeHandleOrSelector as JSHandle).asElement()!
-  const boundingBox = await nodeHandle.boundingBox()
+  const boundingBox = await nodeHandle?.boundingBox()
 
-  if (!boundingBox) throw new Error('Bouding box of editable not found.')
+  if (!boundingBox) throw new Error('Bounding box of element not found.')
 
   /** Get cordinates for specific text node if the given node has text child. */
   const offsetCoordinates = (): Promise<{ x: number; y: number } | undefined> =>

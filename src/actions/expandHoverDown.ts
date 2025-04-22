@@ -42,14 +42,13 @@ const expandDown = (state: State, { path }: { path: Path }): State => ({
   expandHoverDownPaths: { ...state.expandHoverDownPaths, [hashPath(path)]: path },
 })
 
-/** Handles expansion of the context due to hover on the thought's empty drop. */
+/** Expands state.hoveringPath after a delay. Only expands if it is a valid Path with children and it is not already expanded. Expands using state.expandHoverDownPaths so that it can be toggled independently from autoexpansion with expandThoughts. */
 export const expandHoverDownActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
   const { hoveringPath, hoverZone, expandHoverDownPaths, dragInProgress } = state
 
-  const hoveringContext = hoveringPath && pathToContext(state, hoveringPath)
-
+  // true if hovering over a valid Path with children
   const shouldExpand =
     hoverZone === DropThoughtZone.SubthoughtsDrop && hoveringPath && getChildren(state, head(hoveringPath)).length > 0
 
@@ -62,14 +61,12 @@ export const expandHoverDownActionCreator = (): Thunk => (dispatch, getState) =>
     return
   }
 
-  /** Check if current hovering context is already has active expansion. */
+  /** Check if current state.hoveringPath is already expanded. */
   const isAlreadyExpanded = () => {
-    // hoveringPath truthiness already checked in condition below
-    const parentId = head(hoveringPath!)
-    return hoveringContext && expandHoverDownPaths[parentId]
+    return hoveringPath && pathToContext(state, hoveringPath) && expandHoverDownPaths[head(hoveringPath)]
   }
 
-  if (shouldExpand && hoveringPath && !isAlreadyExpanded()) {
+  if (hoveringPath && !isAlreadyExpanded()) {
     dispatch(expandHoverDownDebounced(hoveringPath))
   }
 }

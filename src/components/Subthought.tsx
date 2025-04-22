@@ -107,13 +107,10 @@ const Subthought = ({
     [isEditingChildPath, style],
   )
 
-  // When autofocus changes, use a slow (750ms) ease-out to provide a gentle transition to non-focal thoughts.
-  // If autofocus has not changed, it means that the thought is being rendered for the first time, such as the children of a thought that was just expanded. In this case, match the tree-node top animation (150ms) to ensure that the newly rendered thoughts fade in to fill the space that is being opened up from the next uncle animating down.
-  // Note that ease-in is used in contrast to the tree-node's ease-out. This gives a little more time for the next uncle to animate down and clear space before the newly rendered thought fades in. Otherwise they overlap too much during the transition.
+  // Start opacity at 0 on initial render and set to actual opacity in useEffect to fade in.
   const opacity = autofocus === 'show' ? '1' : autofocus === 'dim' ? '0.5' : '0'
   useEffect(() => {
     if (!ref.current) return
-    // start opacity at 0 and set to actual opacity in useEffect
     ref.current.style.opacity = opacity
   })
 
@@ -129,10 +126,15 @@ const Subthought = ({
       <div
         ref={ref}
         className={css({
-          // Start opacity at 0 and set to actual opacity in useEffect.
+          // Start opacity at 0 on initial render and set to actual opacity in useEffect to fade in. See useEffect above.
+          // Do not fade in during integration tests. The useEffect can be flaky and cause the test to fail on GitHub Actions.
+          //   See: https://github.com/cybersemics/em/actions/runs/14115358795?pr=2872
           // Do not fade in empty thoughts. An instant snap in feels better here.
           // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropChild. Otherwise subsequent DropChild will be obscured.
-          opacity: thought.value === '' ? opacity : '0',
+          opacity: thought.value === '' || navigator.webdriver ? opacity : '0',
+          // When autofocus changes, use a slow (750ms) ease-out to provide a gentle transition to non-focal thoughts.
+          // If autofocus has not changed, it means that the thought is being rendered for the first time, such as the children of a thought that was just expanded. In this case, match the tree-node top animation (150ms) to ensure that the newly rendered thoughts fade in to fill the space that is being opened up from the next uncle animating down.
+          // Note that ease-in is used in contrast to the tree-node's ease-out. This gives a little more time for the next uncle to animate down and clear space before the newly rendered thought fades in. Otherwise they overlap too much during the transition.
           transition: autofocusChanged
             ? `opacity {durations.layoutSlowShift} ease-out`
             : `opacity {durations.layoutNodeAnimation} ease-in`,

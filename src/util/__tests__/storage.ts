@@ -17,6 +17,7 @@ it('types', () => {
     noDefault: { decode: () => 'noDefault' },
   })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type NonAny<T> = T extends any ? (any extends T ? never : T) : T
 
   /** Asserts that a value is not typed as any. */

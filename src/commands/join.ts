@@ -5,10 +5,9 @@ import JoinThoughtsIcon from '../components/icons/JoinThoughtsIcon'
 const joinThoughts: Command = {
   id: 'join',
   label: 'Join Thoughts',
-  description: 'join all siblings and merge their children',
-  keyboard: { key: 'i', alt: true, shift: true },
+  description: 'Join all thoughts at the same level into a single thought.',
+  keyboard: { key: 'j', alt: true },
   multicursor: {
-    enabled: true,
     clearMulticursor: true,
     execMulticursor: (cursors, dispatch) => {
       dispatch(join({ paths: cursors }))

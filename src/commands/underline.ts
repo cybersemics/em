@@ -13,7 +13,6 @@ const underline: Command = {
   svg: Icon,
   keyboard: { key: 'u', meta: true },
   multicursor: {
-    enabled: true,
     preventSetCursor: true,
   },
   canExecute: state => {

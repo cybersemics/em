@@ -4,6 +4,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 
 /** A standard interface for data providers that can sync thoughts. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface DataProvider<T extends any[] = any> {
   name?: string
   clear: () => Promise<unknown>

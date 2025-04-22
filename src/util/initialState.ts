@@ -9,7 +9,6 @@ import { clientId, tsidShared } from '../data-providers/yjs'
 import storageModel from '../stores/storageModel'
 import hashThought from '../util/hashThought'
 import never from '../util/never'
-import parseJsonSafe from '../util/parseJsonSafe'
 import timestamp from '../util/timestamp'
 import storage from './storage'
 
@@ -145,8 +144,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     showHiddenThoughts: false,
     showModal: import.meta.env.VITE_DEMO || (!storage.getItem('welcomeComplete') && !tsidShared) ? 'welcome' : null,
     showSidebar: false,
-    showSplitView: !!storage.getItem('showSplitView'),
-    splitPosition: parseJsonSafe(storage.getItem('splitPosition') || null, 50),
     status: 'disconnected',
     tips: [],
     pushQueue: [],

@@ -4,7 +4,7 @@ let t1 = Date.now()
 const enableLogging = false
 
 /** Measures and prints the time since its last call (seconds). Used for debugging. */
-const logWithTime = (...args: any[]) => {
+const logWithTime = <T>(...args: T[]) => {
   if (!enableLogging) return
 
   const t2 = Date.now()

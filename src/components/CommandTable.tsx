@@ -35,21 +35,20 @@ const groups: {
   {
     title: 'Creating thoughts',
     commands: [
+      'categorize',
       'newThought',
       'newThoughtAbove',
       'newSubthought',
       'newSubthoughtTop',
       'newUncle',
       'newGrandChild',
-      'subcategorizeOne',
-      'subcategorizeAll',
       'extractThought',
       'generateThought',
     ],
   },
   {
     title: 'Deleting thoughts',
-    commands: ['delete', 'archive', 'collapseContext', 'clearThought'],
+    commands: ['delete', 'archive', 'uncategorize', 'clearThought'],
   },
   {
     title: 'Moving thoughts',
@@ -57,7 +56,17 @@ const groups: {
   },
   {
     title: 'Editing thoughts',
-    commands: ['join', 'splitSentences', 'bold', 'italic', 'strikethrough', 'underline', 'code', 'copyCursor'],
+    commands: [
+      'join',
+      'splitSentences',
+      'bold',
+      'italic',
+      'strikethrough',
+      'underline',
+      'code',
+      'copyCursor',
+      'removeFormat',
+    ],
   },
   {
     title: 'Oops',

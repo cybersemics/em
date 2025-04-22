@@ -1,4 +1,3 @@
-import { ReactNode } from 'react'
 import { CSSTransition } from 'react-transition-group'
 import { TransitionProps } from 'react-transition-group/Transition'
 import { FadeTransitionRecipeVariant, fadeTransitionRecipe } from '../../styled-system/recipes'
@@ -19,7 +18,6 @@ const FadeTransition = ({
 }: {
   id?: string | number
   duration: FadeTransitionRecipeVariant['duration']
-  children: ReactNode
 } & RemoveFields<TransitionProps<HTMLElement>>) => {
   const fadeClasses = fadeTransitionRecipe({ duration })
   return (

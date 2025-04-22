@@ -12,15 +12,15 @@ const clearThoughtCommand: Command = {
   gesture: 'rl',
   keyboard: { key: 'c', alt: true, shift: true, meta: true },
   multicursor: {
-    enabled: false,
-    error: 'Cannot clear multiple thougths.',
+    disallow: true,
+    error: 'Cannot clear multiple thoughts.',
   },
   svg: ClearThoughtIcon,
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: (dispatch, getState) => {
-    const isCursorCleared = getState().cursorCleared
+    const { cursorCleared: isCursorCleared } = getState()
 
     dispatch(cursorCleared({ value: !isCursorCleared }))
 

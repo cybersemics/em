@@ -1,7 +1,9 @@
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
+import getThoughtById from '../../selectors/getThoughtById'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
@@ -131,4 +133,22 @@ it('move children to the correct sibling in a sorted context', () => {
       - A
       - B
       - C`)
+})
+
+it('split thought with whitespace in HTML formatting', () => {
+  const steps = [
+    newThought('<meta charset="utf-8">one<i> two</i>'),
+    splitThought({
+      splitResult: {
+        left: '<meta charset="utf-8">one',
+        right: '<i> two</i>',
+      },
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  // The whitespace inside the <i> tag should be trimmed in the output
+  const cursorThought = getThoughtById(stateNew, head(stateNew.cursor!))
+  expect(cursorThought?.value).toBe('<i>two</i>')
 })

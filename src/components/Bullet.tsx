@@ -17,6 +17,7 @@ import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
+import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -45,8 +46,6 @@ interface BulletProps {
 }
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
-const styleRegex = /style="[^"]*(background-)?color:\s*([^;"'>]+)[^"]*"/i
-const fontColorRegex = /<font[^>]*color="([^"]+)"[^>]*>/i
 
 const glyph = cva({
   base: {
@@ -259,6 +258,7 @@ const glyphFg = cva({
 
 /** A circle bullet for leaf thoughts. */
 const BulletLeaf = ({
+  done,
   fill,
   isHighlighted,
   missing,
@@ -266,6 +266,7 @@ const BulletLeaf = ({
   showContexts,
   isBulletExpanded,
 }: {
+  done?: boolean
   fill?: string
   isHighlighted?: boolean
   missing?: boolean
@@ -280,7 +281,7 @@ const BulletLeaf = ({
       data-pending={pending}
       className={cx(
         glyphFg({
-          gray: missing,
+          gray: missing || done,
           graypulse: pending,
           showContexts,
           leaf: true,
@@ -309,6 +310,7 @@ const BulletLeaf = ({
 /** A triangle-shaped bullet for thoughts with children. */
 const BulletParent = ({
   currentScale,
+  done,
   fill,
   childrenMissing,
   pending,
@@ -316,6 +318,7 @@ const BulletParent = ({
   isBulletExpanded,
 }: {
   currentScale?: number
+  done?: boolean
   fill?: string
   isHighlighted?: boolean
   childrenMissing?: boolean
@@ -340,7 +343,7 @@ const BulletParent = ({
     <path
       className={glyphFg({
         triangle: true,
-        gray: childrenMissing,
+        gray: childrenMissing || done,
         graypulse: pending,
         isBulletExpanded,
         showContexts,
@@ -410,6 +413,7 @@ const Bullet = ({
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
+  const isDone = useSelector(state => !!findDescendant(state, thoughtId, '=done'))
   const isMulticursor = useSelector(state => isMulticursorPath(state, path))
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
@@ -441,76 +445,7 @@ const Bullet = ({
     return children.length < Object.keys(thought.childrenMap).length
   })
 
-  /** Check if the entire value is wrapped in a single font or span tag. */
-  const isWrappedInSingleTag = (str: string): boolean => {
-    // Check if there's any text before the first tag or after the last tag
-    const firstTagIndex = str.indexOf('<')
-    const lastTagIndex = str.lastIndexOf('>')
-
-    if (firstTagIndex > 0 || lastTagIndex < str.length - 1) {
-      return false
-    }
-
-    const tagStack: string[] = []
-    let currentPos = 0
-
-    while (currentPos < str.length) {
-      // Find next tag
-      const openIndex = str.indexOf('<', currentPos)
-      if (openIndex === -1) break
-
-      const closeIndex = str.indexOf('>', openIndex)
-      if (closeIndex === -1) return false
-
-      const tag = str.substring(openIndex, closeIndex + 1)
-      currentPos = closeIndex + 1
-
-      if (tag.startsWith('</')) {
-        // Closing tag
-        const tagName = tag.slice(2, -1).toLowerCase()
-        // If stack is empty or last opening tag doesn't match, return false
-        if (tagStack.length === 0 || tagStack[tagStack.length - 1] !== tagName) {
-          return false
-        }
-
-        // Remove matching opening tag
-        tagStack.pop()
-
-        // If stack is empty before end of string, only valid if this is the last tag
-        if (tagStack.length === 0 && currentPos <= str.length) {
-          const remainingTags = str.slice(currentPos).match(/<\/?[a-z]+/g)
-          return !remainingTags
-        }
-      } else if (!tag.endsWith('/>')) {
-        // Opening tag (excluding self-closing tags)
-        const tagName = tag.slice(1).split(/[\s>]/)[0].toLowerCase()
-        tagStack.push(tagName)
-      }
-    }
-
-    // Valid if exactly one tag remains in stack (the outer tag)
-    return tagStack.length === 1 && (tagStack[0] === 'font' || tagStack[0] === 'span')
-  }
-
-  const fill = useSelector(state => {
-    const thought = getThoughtById(state, thoughtId)
-    if (!thought) return undefined
-
-    const value = thought.value
-    // Check if the entire value is wrapped in a single font or span tag
-    const isWrappedInTag = isWrappedInSingleTag(value)
-    if (isWrappedInTag) {
-      // Check for background-color and color in style attribute
-      const styleMatch = value.match(styleRegex)
-      if (styleMatch) return styleMatch[2]
-
-      // If no background-color, check for font color
-      const fontColorMatch = value.match(fontColorRegex)
-      if (fontColorMatch) return fontColorMatch[1]
-    }
-
-    return undefined
-  })
+  const fill = useSelector(state => getThoughtFill(state, thoughtId))
 
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
   const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded
@@ -604,7 +539,7 @@ const Bullet = ({
         paddingBottom: extendClickHeight + 2,
         width,
       }}
-      {...fastClick(clickHandler)}
+      {...fastClick(clickHandler, { enableHaptics: false })}
       // stop click event from bubbling up to Content.clickOnEmptySpace
       onClick={e => e.stopPropagation()}
     >
@@ -649,6 +584,7 @@ const Bullet = ({
           )}
           {leaf && !showContexts ? (
             <BulletLeaf
+              done={isDone}
               fill={fill}
               isHighlighted={isHighlighted}
               missing={missing}
@@ -659,6 +595,7 @@ const Bullet = ({
           ) : (
             <BulletParent
               currentScale={svgElement.current?.currentScale || 1}
+              done={isDone}
               fill={fill}
               isHighlighted={isHighlighted}
               childrenMissing={childrenMissing}

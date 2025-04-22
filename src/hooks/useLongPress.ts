@@ -5,13 +5,11 @@ import { isTouch } from '../browser'
 import { TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import longPressStore from '../stores/longPressStore'
+import haptics from '../util/haptics'
 
 // number of pixels of scrolling to allow before abandoning the long tap
 const SCROLL_THRESHOLD = 10
-
-// only one component can be pressed at a time
-// use a global lock since stopPropagation breaks MultiGesture
-let lock = false
 
 /** Custom hook to manage long press.
  * The onLongPressStart handler is called after the delay if the user is still pressing.
@@ -22,6 +20,8 @@ const useLongPress = (
   onLongPressEnd: ((options: { canceled: boolean }) => void) | null = noop,
 ) => {
   const [pressed, setPressed] = useState(false)
+  // Track isLocked state from longPressStore in local state
+  const isLocked = longPressStore.useSelector(state => state.isLocked)
   // useState doesn't work for some reason (???)
   // scrollY variable is always 0 in onPressed
   const clientCoords = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -37,7 +37,7 @@ const useLongPress = (
 
       // do not long press if another component is already pressed
       // do not long press if right-clicking, otherwise right-clicking on a bullet will cause it to get stuck in the pressed state
-      if (lock || (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2)) return
+      if (isLocked || (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2)) return
 
       if ('touches' in e) {
         clientCoords.current = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
@@ -47,26 +47,21 @@ const useLongPress = (
       clearTimeout(timerIdRef.current)
       timerIdRef.current = setTimeout(() => {
         globals.longpressing = true
+        haptics.light()
         onLongPressStart?.()
-        lock = true
+        longPressStore.lock()
         if (!unmounted.current) {
           setPressed(true)
         }
       }, TIMEOUT_LONG_PRESS_THOUGHT) as unknown as number
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      // TODO: Find a better way than adding an extraneous dependency
-      lock,
-      onLongPressStart,
-    ],
+    [onLongPressStart, isLocked],
   )
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.)
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
-    //eslint disable rule because e use in canhover function
     (e: React.MouseEvent | React.TouchEvent) => {
       // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
       // This gives other components a chance to short circuit.
@@ -74,14 +69,17 @@ const useLongPress = (
       setTimeout(() => {
         clearTimeout(timerIdRef.current)
         timerIdRef.current = 0
-        lock = false
+        longPressStore.unlock()
 
         // If not longpressing, it means that the long press was canceled by a move event.
         // in this case, onLongPressEnd should not be called, since it was already called by the move event.
         if (!globals.longpressing) return
 
         globals.longpressing = false
+
+        // If a long press occurred, mark it as not canceled
         onLongPressEnd?.({ canceled: false })
+
         if (!unmounted.current) {
           setPressed(false)
         }
@@ -134,7 +132,7 @@ const useLongPress = (
   useEffect(() => {
     return () => {
       unmounted.current = true
-      lock = false
+      longPressStore.unlock()
     }
   }, [])
 

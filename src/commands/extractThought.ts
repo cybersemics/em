@@ -9,7 +9,7 @@ const extractThought: Command = {
   description: 'Extract selected part of a thought as its child',
   keyboard: { key: 'e', control: true, meta: true },
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot extract multiple thoughts.',
   },
   svg: ExtractThoughtIcon,

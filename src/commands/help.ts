@@ -12,7 +12,7 @@ const openHelpCommand: Command = {
   }.`,
   gesture: 'rdld',
   keyboard: { key: '/', meta: true },
-  multicursor: 'ignore',
+  multicursor: false,
   svg: HelpIcon,
   exec: dispatch => {
     dispatch(showModal({ id: 'help' }))

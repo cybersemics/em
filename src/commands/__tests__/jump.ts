@@ -6,10 +6,10 @@ import { newSubthoughtActionCreator as newSubthought } from '../../actions/newSu
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import store from '../../stores/app'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import head from '../../util/head'
-import pathToContext from '../../util/pathToContext'
 
 /**
  * Use fake timers to ensure that cursor scrolling helpers complete.
@@ -37,7 +37,7 @@ describe('jump history', () => {
 
     const state = store.getState()
 
-    expect(pathToContext(state, state.jumpHistory[0]!)).toEqual(['a', 'xx'])
+    expectPathToEqual(state, state.jumpHistory[0], ['a', 'xx'])
   })
 
   it('navigaton does not push to jump history', () => {
@@ -54,12 +54,12 @@ describe('jump history', () => {
     ])
 
     const stateA = store.getState()
-    expect(pathToContext(stateA, stateA.jumpHistory[0]!)).toEqual(['aa'])
+    expectPathToEqual(stateA, stateA.jumpHistory[0], ['aa'])
 
     store.dispatch(setCursor(['b']))
 
     const stateB = store.getState()
-    expect(pathToContext(stateB, stateB.jumpHistory[0]!)).toEqual(['aa'])
+    expectPathToEqual(stateB, stateB.jumpHistory[0], ['aa'])
     expect(stateA.jumpHistory.length).toEqual(stateB.jumpHistory.length)
   })
 
@@ -77,13 +77,13 @@ describe('jump history', () => {
     ])
 
     const stateA = store.getState()
-    expect(pathToContext(stateA, stateA.jumpHistory[0]!)).toEqual(['aa'])
+    expectPathToEqual(stateA, stateA.jumpHistory[0], ['aa'])
 
     store.dispatch([setCursor(['b']), editThought(['b'], 'bb')])
 
     // the jump point is now bb, but the total number of jumps stayed the same
     const stateB = store.getState()
-    expect(pathToContext(stateB, stateB.jumpHistory[0]!)).toEqual(['bb'])
+    expectPathToEqual(stateB, stateB.jumpHistory[0], ['bb'])
     expect(stateA.jumpHistory.length).toEqual(stateB.jumpHistory.length)
   })
 
@@ -104,7 +104,7 @@ describe('jump history', () => {
     store.dispatch([setCursor(['aa', 'b']), editThought(['aa', 'b'], 'bb')])
 
     const stateB = store.getState()
-    expect(pathToContext(stateB, stateB.jumpHistory[0]!)).toEqual(['aa', 'bb'])
+    expectPathToEqual(stateB, stateB.jumpHistory[0], ['aa', 'bb'])
     expect(stateA.jumpHistory.length).toEqual(stateB.jumpHistory.length)
   })
 
@@ -126,8 +126,8 @@ describe('jump history', () => {
     ])
 
     const state = store.getState()
-    expect(pathToContext(state, state.jumpHistory[0]!)).toEqual(['a', 'b', 'c', 'd', 'e', 'ff'])
-    expect(pathToContext(state, state.jumpHistory[1]!)).toEqual(['a'])
+    expectPathToEqual(state, state.jumpHistory[0], ['a', 'b', 'c', 'd', 'e', 'ff'])
+    expectPathToEqual(state, state.jumpHistory[1], ['a'])
   })
 })
 
@@ -152,7 +152,7 @@ describe('jump back', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'b', 'cc'])
+    expectPathToEqual(state, state.cursor, ['a', 'b', 'cc'])
   })
 
   it('replace the last jump point when editing its parent', () => {
@@ -192,12 +192,12 @@ describe('jump back', () => {
 
     // jump batck to the updated second edit point
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'bb'])
+    expectPathToEqual(state, state.cursor, ['a', 'bb'])
 
     // jump back to the first edit point
     store.dispatch(jump(-1))
     const state2 = store.getState()
-    expect(state2.cursor && pathToContext(state2, state2.cursor)).toEqual(['x', 'yy'])
+    expectPathToEqual(state2, state2.cursor, ['x', 'yy'])
   })
 
   it('replace the last jump point when editing its child', () => {
@@ -237,12 +237,12 @@ describe('jump back', () => {
 
     // jump batck to the updated second edit point
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'bb'])
+    expectPathToEqual(state, state.cursor, ['a', 'bb'])
 
     // jump back to the first edit point
     store.dispatch(jump(-1))
     const state2 = store.getState()
-    expect(state2.cursor && pathToContext(state2, state2.cursor)).toEqual(['x', 'yy'])
+    expectPathToEqual(state2, state2.cursor, ['x', 'yy'])
   })
 
   it('replace the last jump point when editing its sibling', () => {
@@ -285,12 +285,12 @@ describe('jump back', () => {
 
     // jump batck to the updated second edit point
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'b', 'ee'])
+    expectPathToEqual(state, state.cursor, ['a', 'b', 'ee'])
 
     // jump back to the first edit point
     store.dispatch(jump(-1))
     const state2 = store.getState()
-    expect(state2.cursor && pathToContext(state2, state2.cursor)).toEqual(['x', 'yy'])
+    expectPathToEqual(state2, state2.cursor, ['x', 'yy'])
   })
 
   it('jump back to edit after indent', () => {
@@ -314,7 +314,7 @@ describe('jump back', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'bb'])
+    expectPathToEqual(state, state.cursor, ['a', 'bb'])
   })
 
   it('jump back after new subthought', () => {
@@ -335,7 +335,7 @@ describe('jump back', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'b'])
+    expectPathToEqual(state, state.cursor, ['a', 'b'])
   })
 
   it('jump back to edit after delete', () => {
@@ -368,7 +368,7 @@ describe('jump back', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'b', 'cc'])
+    expectPathToEqual(state, state.cursor, ['a', 'b', 'cc'])
   })
 
   it('jump back to parent of delete', () => {
@@ -401,7 +401,7 @@ describe('jump back', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['d', 'e'])
+    expectPathToEqual(state, state.cursor, ['d', 'e'])
   })
 
   it('jump back from null cursor', () => {
@@ -419,7 +419,7 @@ describe('jump back', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['aa'])
+    expectPathToEqual(state, state.cursor, ['aa'])
   })
 })
 
@@ -444,7 +444,7 @@ describe('jump forward', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['dd'])
+    expectPathToEqual(state, state.cursor, ['dd'])
   })
 
   it('jump back then forward then back should be equivalent to a single jump back', () => {
@@ -477,7 +477,7 @@ describe('jump forward', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'b', 'cc'])
+    expectPathToEqual(state, state.cursor, ['a', 'b', 'cc'])
   })
 
   it('jump back then forward after indent', () => {
@@ -492,7 +492,7 @@ describe('jump forward', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'b'])
+    expectPathToEqual(state, state.cursor, ['a', 'b'])
   })
 
   it('do nothing if jump back was not activated', () => {
@@ -514,7 +514,7 @@ describe('jump forward', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['dd'])
+    expectPathToEqual(state, state.cursor, ['dd'])
   })
 
   it('do nothing if already on most recent edit', () => {
@@ -539,7 +539,7 @@ describe('jump forward', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['dd'])
+    expectPathToEqual(state, state.cursor, ['dd'])
   })
 
   it('ignore jump back if already back to the beginning', () => {
@@ -566,7 +566,7 @@ describe('jump forward', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['dd'])
+    expectPathToEqual(state, state.cursor, ['dd'])
   })
 
   it('jump forward to parent after delete', () => {
@@ -600,6 +600,6 @@ describe('jump forward', () => {
     ])
 
     const state = store.getState()
-    expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['d', 'e'])
+    expectPathToEqual(state, state.cursor, ['d', 'e'])
   })
 })

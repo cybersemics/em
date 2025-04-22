@@ -34,6 +34,7 @@ interface PushBatch {
   remote?: boolean
   thoughtIndexUpdates: Index<Thought | null>
   /** Arbitrary updates: use with caution! */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updates?: Index<any>
 }
 

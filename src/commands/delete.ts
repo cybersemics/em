@@ -1,10 +1,11 @@
+import pluralize from 'pluralize'
 import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../actions/deleteThoughtWithCursor'
 import { errorActionCreator as error } from '../actions/error'
 import Icon from '../components/icons/DeleteIcon'
-import { AlertType, Settings } from '../constants'
+import { AlertType, DELETE_VIBRATE_DURATION, Settings } from '../constants'
 import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
@@ -12,13 +13,14 @@ import getUserSetting from '../selectors/getUserSetting'
 import hasMulticursor from '../selectors/hasMulticursor'
 import simplifyPath from '../selectors/simplifyPath'
 import ellipsize from '../util/ellipsize'
+import haptics from '../util/haptics'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec: Command['exec'] = (dispatch, getState) => {
+const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
   const state = getState()
   const { cursor } = state
 
@@ -34,7 +36,12 @@ const exec: Command['exec'] = (dispatch, getState) => {
   } else if (findDescendant(state, head(cursor), '=readonly')) {
     dispatch(error({ value: `"${ellipsize(value)}" is read-only and cannot be deleted.` }))
   } else {
-    dispatch(deleteThoughtWithCursor({ path: cursor }))
+    // only activate haptics on gesture, since mobile also executes the delete command when hitting backspace on the keyboard
+    if (type === 'gesture' && value !== '') {
+      haptics.vibrate(DELETE_VIBRATE_DURATION)
+    }
+
+    dispatch(deleteThoughtWithCursor())
 
     // Alert which thought was deleted.
     // Only show alert for empty thought in training mode.
@@ -57,17 +64,12 @@ const deleteCommand: Command = {
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
   gesture: 'ldldl',
   multicursor: {
-    enabled: true,
     preventSetCursor: true,
     reverse: true,
     clearMulticursor: true,
-    execMulticursor(cursors, dispatch, getState, e, {}, execAll) {
-      const numThougths = cursors.length
-
-      execAll()
-
+    onComplete(filteredCursors, dispatch, getState) {
       dispatch(
-        alert(`Deleted ${numThougths} thoughts.`, {
+        alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`, {
           alertType: AlertType.ThoughtDeleted,
           clearDelay: 8000,
           showCloseLink: true,

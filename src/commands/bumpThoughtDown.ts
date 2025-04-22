@@ -13,7 +13,7 @@ const bumpThoughtDownCommand: Command = {
   gesture: 'rld',
   keyboard: { key: 'd', meta: true, alt: true },
   multicursor: {
-    enabled: false,
+    disallow: true,
     error: 'Cannot bump down multiple thoughts.',
   },
   svg: BumpThoughtDownIcon,

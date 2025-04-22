@@ -17,7 +17,7 @@ import { editThoughtActionCreator as editThought } from './editThought'
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
   (
-    command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'code' | 'foreColor' | 'backColor',
+    command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'code' | 'foreColor' | 'backColor' | 'removeFormat',
     color?: ColorToken,
   ): Thunk =>
   (dispatch, getState) => {
@@ -27,7 +27,8 @@ export const formatSelectionActionCreator =
     if (!thought) return
     const colors = themeColors(state)
     suppressFocusStore.update(true)
-    // if there is no selection, format the entire thought by selecting the whole thought
+
+    // format whole thought (if there is no selection)
     const thoughtContentEditable = document.querySelector(`[aria-label="editable-${thought.id}"]`)
     if (!thoughtContentEditable) return
 

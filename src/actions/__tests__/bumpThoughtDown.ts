@@ -27,10 +27,7 @@ it('cursor should stay in empty thought', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectPathToEqual(stateNew, stateNew.cursor, [
-    { value: 'a', rank: 0 },
-    { value: '', rank: -1 },
-  ])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', ''])
 })
 
 it('bump thought with children', () => {

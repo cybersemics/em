@@ -6,7 +6,7 @@ const command: Command = {
   id: 'devices',
   label: 'Device Management',
   description: 'Add or remove devices that can access and edit this thoughtspace.',
-  multicursor: 'ignore',
+  multicursor: false,
   svg: DeviceIcon,
   exec: dispatch => dispatch(showModal({ id: 'devices' })),
   allowExecuteFromModal: true,

@@ -8,6 +8,7 @@ import { closeModalActionCreator as closeModal } from '../actions/closeModal'
 import { expandContextThoughtActionCreator as expandContextThought } from '../actions/expandContextThought'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
 import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
+import { toggleSortPickerActionCreator as toggleSortPicker } from '../actions/toggleSortPicker'
 import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
@@ -62,11 +63,16 @@ const Content: FC = () => {
       state.expandedContextThought && !state.noteFocus ? expandContextThought(null) : null,
       state.showColorPicker ? toggleColorPicker({ value: false }) : null,
       state.showLetterCase ? toggleLetterCase({ value: false }) : null,
+      state.showSortPicker ? toggleSortPicker({ value: false }) : null,
     ])
   }
 
   return (
-    <div id='content-wrapper' {...fastClick(() => dispatch(clickOnEmptySpace))} onMouseDown={() => setIsPressed(true)}>
+    <div
+      id='content-wrapper'
+      {...fastClick(() => dispatch(clickOnEmptySpace), { enableHaptics: false })}
+      onMouseDown={() => setIsPressed(true)}
+    >
       <div
         id='content'
         ref={contentRef}
