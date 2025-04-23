@@ -10,6 +10,7 @@ interface SetCursorActionWithMetadata {
 // This can eventually be a discriminated union
 export type ActionWithMetadata = SetCursorActionWithMetadata
 
+/** Casts an unknown action to an action with metadata. Needs some more work to make it flexible enough. */
 const hasMetadata = (action: unknown): action is ActionWithMetadata => !!action && action.hasOwnProperty('metadata')
 
 /** Action metadata should be ephemeral and must be updated for every action.
