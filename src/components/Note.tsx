@@ -14,6 +14,7 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
+import actionMetadataStore from '../stores/actionMetadata'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
@@ -48,6 +49,7 @@ const Note = React.memo(
           path,
           cursorHistoryClear: true,
           editing: true,
+          metadata: { userGenerated: true },
           noteFocus: true,
         }),
       )
@@ -57,6 +59,10 @@ const Note = React.memo(
     useEffect(() => {
       // cursor must be true if note is focused
       if (hasFocus) {
+        const actionMetadata = actionMetadataStore.getState()
+
+        if (actionMetadata?.type === 'setCursor' && actionMetadata.userGenerated) return
+
         selection.set(noteRef.current!, { end: true })
         // deleting a note, then closing the keyboard, then creating a new note could result in lack of focus,
         // perhaps related to iOS Safari's internal management of selection ranges and focus
