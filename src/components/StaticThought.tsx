@@ -166,7 +166,6 @@ const StaticThought = ({
         placeholder={placeholder}
         path={path}
         showContextBreadcrumbs={showContextBreadcrumbs}
-        simplePath={simplePath}
         cssRaw={cssRawThought}
         style={styleThought}
         styleAnnotation={styleAnnotation || undefined}

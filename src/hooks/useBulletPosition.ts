@@ -1,10 +1,10 @@
 import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
-import SimplePath from '../@types/SimplePath'
 import { isSafari, isTouch, isiPhone } from '../browser'
 import attributeEquals from '../selectors/attributeEquals'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 
@@ -17,8 +17,10 @@ const isIOSSafari: boolean = isTouch && isiPhone && isSafari()
  * that any changes in consuming components are automatically synchronized
  * across other components.
  */
-export default function useBulletPosition({ simplePath, path }: { simplePath?: SimplePath; path?: Path }) {
+export default function useBulletPosition({ path }: { path?: Path }) {
   const fontSize = useSelector(state => state.fontSize)
+
+  const simplePath = useSelector(state => path && simplifyPath(state, path))
 
   const isTableCol1 = useSelector(state =>
     simplePath ? attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table') : false,

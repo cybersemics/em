@@ -21,7 +21,7 @@ import viewportStore from '../stores/viewport'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
-import BulletCursorOverlay from './BulletCursorOverlay'
+import BulletAnimateOverlay from './Bullet/BulletAnimateOverlay'
 import HoverArrow from './HoverArrow'
 import TreeNode from './TreeNode'
 
@@ -233,7 +233,7 @@ const LayoutTree = () => {
   )
 
   // compare between state.cursor and the position of the thought
-  const activeThought = useSelector(state =>
+  const cursorThoughtPositioned = useSelector(state =>
     treeThoughtsPositioned.find(thought => equalPath(state.cursor, thought.path)),
   )
 
@@ -280,14 +280,15 @@ const LayoutTree = () => {
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
       >
-        <TransitionGroup>
-          <BulletCursorOverlay
-            isCursorActive={activeThought?.isCursor}
-            x={activeThought?.x}
-            y={activeThought?.y}
-            simplePath={activeThought?.simplePath}
-            path={activeThought?.path}
+        {cursorThoughtPositioned?.isCursor && (
+          <BulletAnimateOverlay
+            x={cursorThoughtPositioned?.x}
+            y={cursorThoughtPositioned?.y}
+            path={cursorThoughtPositioned?.path}
           />
+        )}
+
+        <TransitionGroup>
           {treeThoughtsPositioned.map((thought, index) => (
             <TreeNode
               {...thought}

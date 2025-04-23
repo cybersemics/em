@@ -188,7 +188,6 @@ const ContextBreadcrumbs = ({
     ctxViewWithBreadcrumb: { fontSize: breadcrumbFontSize, marginTop: breadcrumbMarginTop },
   } = useBulletPosition({
     path,
-    simplePath,
   })
   const ellipsizedThoughts = useEllipsizedThoughts(pathFiltered, { charLimit, disabled, thoughtsLimit })
 
