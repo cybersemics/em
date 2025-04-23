@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { RefObject, useEffect, useMemo, useRef } from 'react'
 import { useSelector } from 'react-redux'
+import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
 import Path from '../../@types/Path'
 import useBulletPosition from '../../hooks/useBulletPosition'
@@ -16,11 +17,21 @@ type Position = {
   y: number
 } | null
 
+const enter = css({
+  transform: `translateY(var(--from-y)) translateX(var(--from-x))`,
+  opacity: 1,
+})
+const enterAct = css({
+  animation: `overlayTranslation {durations.veryFast} ease-in-out forwards`,
+})
+const exit = css({ opacity: 0 })
+const base = css({ position: 'absolute', willChange: 'transform,opacity' })
+
 /**
  * Renders an animated bullet overlay that appears when the cursor is active.
  */
 const BulletAnimateOverlay = ({ x = 0, y = 0, path }: { x?: number; y?: number; path?: Path }) => {
-  const svgElement = useRef<SVGSVGElement>(null)
+  const svgElement = useRef<HTMLElement>(null)
 
   const isInContextView = useSelector(state => path && isContextViewActive(state, parentOf(path)))
   const simplePath = useSelector(state =>
@@ -112,97 +123,76 @@ const BulletAnimateOverlay = ({ x = 0, y = 0, path }: { x?: number; y?: number; 
     glyphMarginBottom,
   ])
 
-  const initOverlayPosition = useRef<Position>(null)
-
   const currentOverlayPosition = useRef<Position>(null)
 
   // get the initial position of the bullet overlay
   useEffect(() => {
     if (svgElement.current) {
-      const currentBulletPosition = svgElement.current.getBoundingClientRect()
-      const fromX = currentBulletPosition.x
-      const fromY = currentBulletPosition.y
-      initOverlayPosition.current = {
-        x: fromX,
-        y: fromY,
-      }
-    }
-  }, [])
-
-  // animate the bullet overlay position
-  useEffect(() => {
-    if (svgElement.current) {
-      const fromX = currentOverlayPosition.current?.x ?? 0
-      const fromY = currentOverlayPosition.current?.y ?? 0
-
-      // Animate the bullet overlay position using the Web Animations API with duration 80ms
-      const animation = svgElement.current.animate(
-        [
-          {
-            transform: `translate(${fromX}px, ${fromY}px)`,
-            opacity: 1,
-          },
-          {
-            transform: `translate(${translateX}px, ${translateY}px)`,
-            opacity: 1,
-          },
-        ],
-        {
-          duration: 80,
-          easing: 'ease-in-out',
-        },
-      )
-
-      animation.onfinish = () => {
-        if (svgElement.current) {
-          // Trigger fade-out using Web Animations API
-          // will run after translation animation finish
-          svgElement.current.animate([{ opacity: 1 }, { opacity: 0 }], {
-            duration: 0,
-            easing: 'linear',
-            fill: 'forwards', // Keep opacity at 0 after fade completes
-          })
-        }
-      }
-      // Update the current overlay position
       currentOverlayPosition.current = {
         x: translateX,
         y: translateY,
       }
     }
-  }, [translateX, translateY])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
-    <svg
-      className={css({
-        // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
-        // This caused the bullet slide animation to end with a jerky movement.
-        // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
-        // allowing the browser to optimize the animation.
-        willChange: 'transform',
-      })}
-      viewBox='0 0 600 600'
-      style={{
-        height: lineHeight,
-        width: lineHeight,
-        position: 'absolute',
-        opacity: 1,
-        transform: `translate(${translateX}px, ${translateY}px)`,
-      }}
-      ref={svgElement}
-    >
-      <g>
-        <ellipse
-          ry={bulletOverlayRadius}
-          rx={bulletOverlayRadius}
-          cy='300'
-          cx='300'
-          className={css({
-            fillOpacity: 0.25,
-            fill: 'fg',
-          })}
-        />
-      </g>
-    </svg>
+    <TransitionGroup>
+      <CSSTransition
+        key={`${translateX}-${translateY}`}
+        appear
+        timeout={{
+          enter: 80,
+          exit: 1,
+        }}
+        classNames={{
+          enter,
+          enterActive: enterAct,
+          exit,
+        }}
+        mountOnEnter
+        unmountOnExit
+        onEntered={() => {
+          // Update the current overlay position
+          currentOverlayPosition.current = {
+            x: translateX,
+            y: translateY,
+          }
+        }}
+      >
+        <svg
+          className={base}
+          viewBox='0 0 600 600'
+          style={
+            {
+              height: lineHeight,
+              width: lineHeight,
+              opacity: 0,
+              transform: `translate(${translateX}px, ${translateY}px)`,
+              // adds custom css variables so pandacss can consume the dynamic values
+              '--from-x': `${currentOverlayPosition.current?.x}px`,
+              '--from-y': `${currentOverlayPosition.current?.y}px`,
+              '--to-x': `${translateX}px`,
+              '--to-y': `${translateY}px`,
+            } as React.CSSProperties
+          }
+          ref={svgElement as unknown as RefObject<SVGSVGElement>}
+        >
+          <g>
+            <ellipse
+              ry={bulletOverlayRadius}
+              rx={bulletOverlayRadius}
+              cy='300'
+              cx='300'
+              className={css({
+                fillOpacity: 0.25,
+                fill: 'fg',
+              })}
+            />
+          </g>
+        </svg>
+      </CSSTransition>
+    </TransitionGroup>
   )
 }
 
