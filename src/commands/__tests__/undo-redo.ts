@@ -523,7 +523,7 @@ describe('grouping', () => {
 })
 
 describe('multicursor grouping', () => {
-  it('should properly undo and redo multicursor operations as a single step', () => {
+  it('should undo/redo all multicursor actions in a single step', () => {
     store.dispatch([
       importText({
         text: `
@@ -531,9 +531,11 @@ describe('multicursor grouping', () => {
         - b
         - c
         - d
-        - e`,
+        - x`,
       }),
-      // Select multiple thoughts with multicursor
+      // Add a a penultimate action to ensure that it doesn't get grouped with the multicursor.
+      // Otherwise undoTwice will not be under test coverage and there can be a false positive.
+      editThought(['x'], 'e'),
       setCursor(['a']),
       addMulticursor(['a']),
       addMulticursor(['b']),
