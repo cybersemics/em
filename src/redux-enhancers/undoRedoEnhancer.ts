@@ -20,9 +20,9 @@ interface SetIsMulticursorExecutingAction extends Action<'setIsMulticursorExecut
   undoLabel?: string
 }
 
-/** Type guard to check if an action is a SetIsMulticursorExecutingAction. */
+/** Type guard to check if an action is a setIsMulticursorExecuting action. */
 function isSetIsMulticursorExecutingAction(action: Action<string>): action is SetIsMulticursorExecutingAction {
-  return 'value' in action
+  return action.type === 'setIsMulticursorExecuting'
 }
 
 /** A map of action types to boolean. */
@@ -35,6 +35,9 @@ type ActionFlags = {
  * These need to be differentiated from the other actions because contiguous navigational actions are merged together to undo/redo all at once.
  */
 const NAVIGATION_ACTIONS: Partial<ActionFlags> = {
+  addMulticursor: true,
+  addAllMulticursor: true,
+  clearMulticursors: true,
   cursorBack: true,
   cursorBeforeSearch: true,
   cursorDown: true,
@@ -42,15 +45,10 @@ const NAVIGATION_ACTIONS: Partial<ActionFlags> = {
   cursorHistory: true,
   cursorUp: true,
   jump: true,
-  setNoteFocus: true,
   setCursor: true,
-  toggleNote: true,
-  /**
-   * Not technically a navigation action, but grouped with navigation actions.
-   * So that multicursors can be undone/redone as a single action.
-   */
+  setNoteFocus: true,
   toggleMulticursor: true,
-  addMulticursor: true,
+  toggleNote: true,
 }
 
 /** Returns if an action is navigational, i.e. cursor movements. Contiguous navigation actions will be merged and adjoined with the last non-navigational action. */
@@ -59,7 +57,7 @@ export const isNavigation = (actionType: ActionType) =>
 
 /** A list of all undoable actions. */
 const UNDOABLE_ACTIONS: ActionFlags = {
-  addAllMulticursor: false,
+  addAllMulticursor: true,
   addLatestCommands: false,
   addMulticursor: true,
   alert: false,
@@ -71,7 +69,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   clear: false,
   clearExpandDown: false,
   clearLatestCommands: false,
-  clearMulticursors: false,
+  clearMulticursors: true,
   closeModal: false,
   uncategorize: true,
   commandPalette: false,
@@ -119,7 +117,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   newThought: true,
   outdent: true,
   prependRevision: false,
-  removeMulticursor: false,
+  removeMulticursor: true,
   rerank: false,
   search: false,
   searchContexts: false,
@@ -128,7 +126,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   setDescendant: true,
   setImportThoughtPath: false,
   setFirstSubthought: true,
-  setIsMulticursorExecuting: false,
+  setIsMulticursorExecuting: true,
   setNoteFocus: true,
   setRemoteSearch: false,
   setResourceCache: false,
@@ -320,8 +318,6 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
     let lastActionType: ActionType
-    let multicursorUndoLabel: string | null = null
-    let lastProcessedAction: ActionType | null = null // Track last processed action for sequence detection
 
     /**
      * Reducer to handle undo/redo actions and add/merge inverse-redoPatches for other actions.
@@ -351,19 +347,6 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return { ...undoOrRedoState!, ...omitted }
       }
 
-      // Track multicursor execution state
-      if (actionType === 'setIsMulticursorExecuting') {
-        if (!isSetIsMulticursorExecutingAction(action)) {
-          return reducer(state, action)
-        }
-        const value = action.value
-        if (value) {
-          multicursorUndoLabel = action.undoLabel || null
-        } else {
-          multicursorUndoLabel = null
-        }
-      }
-
       // otherwise run the normal reducer for the action
       const newState = reducer(state, action) as State
 
@@ -377,47 +360,38 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         // See: https://github.com/cybersemics/em/issues/1494
         (actionType === 'importText' && !newState.undoPatches.length)
       ) {
-        // Store the current action for the next call
-        lastProcessedAction = actionType
         return newState
       }
 
-      // edit merge logic
-      // combine navigation and thoughtChange actions into single redoPatches
-      // Handle multicursor operations and action merging
+      // Some actions are merged together into a single undo/redo patch.
+      // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
+      // - Contiguous edits are merged into a single edit action. For example, if the user edits 'a' to 'b' and then 'b' to 'c', the undo will revert to 'a' in one step.
+      // - The closeAlert action is merged with the previous action so that the alert can be undone.
+      // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       const shouldMergeWithPreviousAction =
         (isNavigation(actionType) && isNavigation(lastActionType)) ||
         (lastActionType === 'editThought' && actionType === 'editThought') ||
         actionType === 'closeAlert' ||
-        (newState.isMulticursorExecuting && isUndoable(actionType))
+        state.isMulticursorExecuting
 
-      // For multicursor operations, use the operation label
-      if (newState.isMulticursorExecuting) {
-        lastActionType = (multicursorUndoLabel as ActionType) ?? actionType
-      } else {
-        lastActionType = actionType
-      }
-
-      // Determine if we need to create a new patch based on action sequence
-      // Create a new patch if this is the first undoable action after setIsMulticursorExecuting
-      const isFirstMulticursorAction =
-        newState.isMulticursorExecuting && lastProcessedAction === 'setIsMulticursorExecuting' && isUndoable(actionType)
-
-      const shouldCreateNewPatchForMulticursor =
-        newState.isMulticursorExecuting && isFirstMulticursorAction && undoPatches.length > 0
-
-      // Store the current action for the next call
-      lastProcessedAction = actionType
+      lastActionType = actionType
 
       // Either create a new patch or merge with the previous action
-      if (shouldCreateNewPatchForMulticursor || !shouldMergeWithPreviousAction) {
+      if (!shouldMergeWithPreviousAction) {
         // Create a new undo patch
         const undoPatch = diffState(newState as Index, state)
         return undoPatch.length
           ? {
               ...newState,
               redoPatches: [],
-              undoPatches: [...newState.undoPatches, addActionsToPatch(undoPatch, [lastActionType])],
+              undoPatches: [
+                ...newState.undoPatches,
+                addActionsToPatch(undoPatch, [
+                  // Override the action label with undoLabel so that the command label is used in the alert on undo/redo of a multicursor command.
+                  // TODO: A better solution would add a label to the Patch itself.
+                  isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastActionType,
+                ]),
+              ],
             }
           : newState
       } else {
