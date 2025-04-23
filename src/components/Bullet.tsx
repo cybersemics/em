@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { bulletRecipe } from '../../styled-system/recipes'
@@ -392,19 +392,75 @@ const BulletCursorOverlay = ({
   bulletOverlayRadius: number
   isEditing?: boolean
 }) => {
+  const overlayRef = useRef<SVGEllipseElement>(null)
+
+  useEffect(() => {
+    if (overlayRef.current) {
+      if (isEditing) {
+        const animate = overlayRef.current.animate(
+          [
+            {
+              opacity: 0,
+            },
+          ],
+          {
+            duration: 85,
+            easing: 'linear',
+            fill: 'forwards',
+          },
+        )
+        animate.onfinish = () => {
+          overlayRef.current?.animate(
+            [
+              {
+                opacity: 0,
+              },
+              {
+                opacity: 1,
+              },
+            ],
+            {
+              duration: 0,
+              easing: 'linear',
+              fill: 'forwards',
+            },
+          )
+        }
+      } else {
+        overlayRef.current.animate(
+          [
+            {
+              opacity: 1,
+            },
+            {
+              opacity: 0,
+            },
+          ],
+          {
+            duration: 0,
+            easing: 'linear',
+            fill: 'forwards',
+          },
+        )
+      }
+    }
+  }, [isEditing])
+
   return (
     <ellipse
       ry={bulletOverlayRadius}
       rx={bulletOverlayRadius}
       cy='300'
       cx='300'
+      ref={overlayRef}
       className={css({
         fillOpacity: 0.25,
         fill: 'fg',
-        opacity: isEditing ? 1 : 0,
+        opacity: 0,
+        // opacity: isEditing ? 1 : 0,
       })}
       // Adds a 5ms delay to the animation to prevent a flicker caused by overlapping entry/exit transitions.
-      style={{ transition: `opacity  0ms linear ${isEditing ? '85' : '0'}ms` }}
+      // style={{ transition: `opacity  0ms linear ${isEditing ? '85' : '0'}ms` }}
     />
   )
 }
@@ -451,7 +507,7 @@ const Bullet = ({
     },
     lineHeight,
     bulletOverlayRadius,
-  } = useBulletPosition({ simplePath, path })
+  } = useBulletPosition({ path })
 
   /** Returns true if th e thought is pending. */
   const pending = useSelector(state => {
