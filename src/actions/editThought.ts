@@ -134,17 +134,17 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     [newKey]: lexemeNew,
   }
 
+  const sortPreference = getSortPreference(state, editedThought.parentId)
+  const sortType = sortPreference.type
+
   const thoughtNew: Thought = {
     ...editedThought,
     generating: false,
     rank:
-      newValue !== '' && getSortPreference(state, editedThought.parentId).type === 'Alphabetical'
+      newValue !== '' && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
         ? getSortedRank(state, editedThought.parentId, newValue)
         : editedThought.rank,
     value: newValue,
-    // store the last non-empty value to preserve the sort order of thoughts edited to empty
-    // reset to undefined when newValue is non-empty
-    sortValue: newValue ? undefined : oldValue || editedThought.sortValue,
     lastUpdated: timestamp(),
     updatedBy: clientId,
   }

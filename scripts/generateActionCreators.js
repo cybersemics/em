@@ -9,7 +9,7 @@ const actionCreators = [
   'clearExpandDown',
   'clearLatestCommands',
   'clearPushQueue',
-  'collapseContext',
+  'uncategorize',
   'cursorBeforeSearch',
   'cursorBack',
   'cursorDown',

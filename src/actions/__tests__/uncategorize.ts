@@ -1,10 +1,10 @@
-import collapseContext from '../../actions/collapseContext'
 import cursorBack from '../../actions/cursorBack'
 import cursorUp from '../../actions/cursorUp'
 import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
+import uncategorize from '../../actions/uncategorize'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import contextToThought from '../../test-helpers/contextToThought'
@@ -15,7 +15,7 @@ import reducerFlow from '../../util/reducerFlow'
 
 describe('normal view', () => {
   it('do nothing on leaf', () => {
-    const steps = [newThought('a'), newSubthought('b'), collapseContext({})]
+    const steps = [newThought('a'), newSubthought('b'), uncategorize({})]
 
     const state = initialState()
     const stateNew = reducerFlow(steps)(state)
@@ -26,8 +26,8 @@ describe('normal view', () => {
     - b`)
   })
 
-  it('collapse context with single child', () => {
-    const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), cursorBack, collapseContext({})]
+  it('uncategorize context with single child', () => {
+    const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), cursorBack, uncategorize({})]
 
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -39,7 +39,7 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
-  it('collapse context with multiple children', () => {
+  it('uncategorize context with multiple children', () => {
     const steps = [
       newThought('a'),
       newSubthought('k'),
@@ -47,7 +47,7 @@ describe('normal view', () => {
       newSubthought('c'),
       newThought('d'),
       cursorBack,
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -71,7 +71,7 @@ describe('normal view', () => {
       newSubthought('c'),
       newThought('d'),
       cursorBack,
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -95,7 +95,7 @@ describe('normal view', () => {
       newSubthought('c'),
       newThought('d'),
       cursorBack,
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -109,14 +109,14 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
-  it('after collapse context set cursor to the first visible children.', () => {
+  it('after uncategorize context set cursor to the first visible children.', () => {
     const steps = [
       newThought('a'),
       newSubthought('b'),
       newSubthought('=x'),
       newThought('c'),
       cursorBack,
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -124,8 +124,8 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
-  it('after collapse context set cursor to the parent if there are no visible children.', () => {
-    const steps = [newThought('a'), newSubthought('b'), newSubthought('=x'), cursorBack, collapseContext({})]
+  it('after uncategorize context set cursor to the parent if there are no visible children.', () => {
+    const steps = [newThought('a'), newSubthought('b'), newSubthought('=x'), cursorBack, uncategorize({})]
 
     const stateNew = reducerFlow(steps)(initialState())
 
@@ -143,7 +143,7 @@ describe('normal view', () => {
     `,
       }),
       setCursor(['a', '']),
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -169,7 +169,7 @@ describe('normal view', () => {
       newThought('z'),
       // collapse y
       setCursor(['y']),
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -200,7 +200,7 @@ describe('normal view', () => {
     const c1 = contextToThought(state1, ['c'])!
     const f1 = contextToThought(state1, ['f'])!
 
-    const steps = [setCursor(['x']), collapseContext({})]
+    const steps = [setCursor(['x']), uncategorize({})]
     const stateNew = reducerFlow(steps)(state1)
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -231,7 +231,7 @@ describe('normal view', () => {
     expect(ranks.size).toEqual(6)
   })
 
-  it('should re-sort parent context when collapsing a thought with sort attribute', () => {
+  it('should re-sort parent context when uncategorizing a thought with sort attribute', () => {
     const steps = [
       importText({
         text: `
@@ -244,7 +244,7 @@ describe('normal view', () => {
         `,
       }),
       setCursor(['b']),
-      collapseContext({}),
+      uncategorize({}),
       setCursor(null),
     ]
 
@@ -259,7 +259,7 @@ describe('normal view', () => {
   - c`)
   })
 
-  it('should not re-sort parent context when collapsing a thought with sort set to None', () => {
+  it('should not re-sort parent context when uncategorizing a thought with sort set to None', () => {
     const steps = [
       importText({
         text: `
@@ -271,7 +271,7 @@ describe('normal view', () => {
         `,
       }),
       setCursor(['b']),
-      collapseContext({}),
+      uncategorize({}),
       setCursor(null),
     ]
 
@@ -285,7 +285,7 @@ describe('normal view', () => {
   - a`)
   })
 
-  it('prevents switching to manual sort order when collapsing', () => {
+  it('prevents switching to manual sort order when uncategorizing', () => {
     const steps = [
       importText({
         text: `
@@ -302,7 +302,7 @@ describe('normal view', () => {
         `,
       }),
       setCursor(['b']),
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -322,7 +322,7 @@ describe('normal view', () => {
 })
 
 describe('context view', () => {
-  it('collapse context', () => {
+  it('uncategorize context', () => {
     const text = `
       - a
         - m
@@ -337,7 +337,7 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'test']),
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -354,7 +354,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 
-  it('collapse context subthought in context view', () => {
+  it('uncategorize context subthought in context view', () => {
     const text = `
       - a
         - m
@@ -369,7 +369,7 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'b', 'y']),
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -385,8 +385,8 @@ describe('context view', () => {
   })
 })
 
-describe('collapsing contexts with meta attributes', () => {
-  it('should delete =pin when collapsing a context', () => {
+describe('uncategorizing contexts with meta attributes', () => {
+  it('should delete =pin when uncategorizing a context', () => {
     const steps = [
       importText({
         text: `
@@ -400,7 +400,7 @@ describe('collapsing contexts with meta attributes', () => {
         `,
       }),
       setCursor(['a', 'b']),
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -413,7 +413,7 @@ describe('collapsing contexts with meta attributes', () => {
   - e`)
   })
 
-  it('should delete =children/=pin when collapsing a context', () => {
+  it('should delete =children/=pin when uncategorizing a context', () => {
     const steps = [
       importText({
         text: `
@@ -428,7 +428,7 @@ describe('collapsing contexts with meta attributes', () => {
         `,
       }),
       setCursor(['a', 'b']),
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -441,7 +441,7 @@ describe('collapsing contexts with meta attributes', () => {
   - e`)
   })
 
-  it('should keep =children if it has remaining children after collapsing', () => {
+  it('should keep =children if it has remaining children after uncategorizing', () => {
     const steps = [
       importText({
         text: `
@@ -458,7 +458,7 @@ describe('collapsing contexts with meta attributes', () => {
         `,
       }),
       setCursor(['a', 'b']),
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -474,7 +474,7 @@ describe('collapsing contexts with meta attributes', () => {
   - e`)
   })
 
-  it('should move meta attributes to the top when collapsing a context', () => {
+  it('should move meta attributes to the top when uncategorizing a context', () => {
     const steps = [
       importText({
         text: `
@@ -486,7 +486,7 @@ describe('collapsing contexts with meta attributes', () => {
         `,
       }),
       setCursor(['b']),
-      collapseContext({}),
+      uncategorize({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())

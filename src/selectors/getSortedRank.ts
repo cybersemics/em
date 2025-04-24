@@ -10,6 +10,17 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
 
   const sortPreference = getSortPreference(state, id)
   const isDescending = sortPreference.direction === 'Desc'
+
+  // For Created or Updated sort types, we need specific handling
+  if (sortPreference.type === 'Created' || sortPreference.type === 'Updated') {
+    // If there are no children, return 0 as the default rank
+    if (children.length === 0) return 0
+    const thoughts = children.filter(thought => !state.cursor || thought.id !== state.cursor[state.cursor.length - 1])
+    // For "Updated and Created" sorting, always place at the beginning or end since this thought was just updated
+    return isDescending ? thoughts[0].rank - 1 : (thoughts[thoughts.length - 1]?.rank || 0) + 1
+  }
+
+  // For alphabetical sorting, use the existing logic
   // find the first child with value greater than or equal to the new value
   const index = children.findIndex(child =>
     isDescending

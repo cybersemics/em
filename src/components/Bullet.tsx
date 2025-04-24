@@ -258,6 +258,7 @@ const glyphFg = cva({
 
 /** A circle bullet for leaf thoughts. */
 const BulletLeaf = ({
+  done,
   fill,
   isHighlighted,
   missing,
@@ -265,6 +266,7 @@ const BulletLeaf = ({
   showContexts,
   isBulletExpanded,
 }: {
+  done?: boolean
   fill?: string
   isHighlighted?: boolean
   missing?: boolean
@@ -279,7 +281,7 @@ const BulletLeaf = ({
       data-pending={pending}
       className={cx(
         glyphFg({
-          gray: missing,
+          gray: missing || done,
           graypulse: pending,
           showContexts,
           leaf: true,
@@ -308,6 +310,7 @@ const BulletLeaf = ({
 /** A triangle-shaped bullet for thoughts with children. */
 const BulletParent = ({
   currentScale,
+  done,
   fill,
   childrenMissing,
   pending,
@@ -315,6 +318,7 @@ const BulletParent = ({
   isBulletExpanded,
 }: {
   currentScale?: number
+  done?: boolean
   fill?: string
   isHighlighted?: boolean
   childrenMissing?: boolean
@@ -339,7 +343,7 @@ const BulletParent = ({
     <path
       className={glyphFg({
         triangle: true,
-        gray: childrenMissing,
+        gray: childrenMissing || done,
         graypulse: pending,
         isBulletExpanded,
         showContexts,
@@ -409,6 +413,7 @@ const Bullet = ({
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
+  const isDone = useSelector(state => !!findDescendant(state, thoughtId, '=done'))
   const isMulticursor = useSelector(state => isMulticursorPath(state, path))
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
@@ -579,6 +584,7 @@ const Bullet = ({
           )}
           {leaf && !showContexts ? (
             <BulletLeaf
+              done={isDone}
               fill={fill}
               isHighlighted={isHighlighted}
               missing={missing}
@@ -589,6 +595,7 @@ const Bullet = ({
           ) : (
             <BulletParent
               currentScale={svgElement.current?.currentScale || 1}
+              done={isDone}
               fill={fill}
               isHighlighted={isHighlighted}
               childrenMissing={childrenMissing}

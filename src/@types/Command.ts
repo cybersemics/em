@@ -43,14 +43,9 @@ interface Command {
         /** An error message to display when multicursor mode is not enabled. */
         error?: ((state: State) => string) | string
         /** Optional override for executing the command for multiple cursors. */
-        execMulticursor?: (
-          cursors: Path[],
-          dispatch: Dispatch,
-          getState: () => State,
-          e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
-          { type }: { type: CommandType },
-          execAll: () => void,
-        ) => void
+        execMulticursor?: (cursors: Path[], dispatch: Dispatch, getState: () => State) => void
+        /** A callback that is invoked when the command finishes executing for all filtered multicursors. */
+        onComplete?: (filteredCursors: Path[], dispatch: Dispatch, getState: () => State) => void
         /** Prevent the cursor from being set back at the end of the command execution. */
         preventSetCursor?: boolean
         /** Reverse the order of the cursors before executing the command. */
@@ -60,10 +55,10 @@ interface Command {
         /**
          * Filter the cursors before executing the command.
          *
-         * 'all' - Execute the command for all cursors (default).
-         * 'first-sibling' - Execute the command for only the first sibling within the same parent.
-         * 'last-sibling' - Execute the command for only the last sibling within the same parent.
-         * 'prefer-ancestor' - Execute the command for the highest direct ancestors in the selection.
+         * - 'all' - Execute the command for all cursors (default).
+         * - 'first-sibling' - Execute the command for only the first sibling within the same parent.
+         * - 'last-sibling' - Execute the command for only the last sibling within the same parent.
+         * - 'prefer-ancestor' - Execute the command for the highest direct ancestors in the selection.
          */
         filter?: MulticursorFilter
       }

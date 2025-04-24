@@ -43,7 +43,7 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
 
-  it('do nothing when the cursor on the last sibling', () => {
+  it('do nothing when the cursor on the last thought', () => {
     store.dispatch([
       importText({
         text: `
@@ -58,10 +58,67 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
 
+  it('do nothing when the cursor on the last sibling', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+            - d`,
+      }),
+      setCursor(['a', 'b']),
+      cursorNext(),
+    ])
+
+    const stateNew = store.getState()
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
+  })
+
   it('do nothing when there are no thoughts', () => {
     store.dispatch(cursorNext())
 
     expect(store.getState().cursor).toBe(null)
+  })
+
+  it('move to first sibling of next row in table view col1', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =view
+              - Table
+            - b
+              - b1
+            - c
+              - c1`,
+      }),
+      setCursor(['a', 'b']),
+      cursorNext(),
+    ])
+
+    const stateNew = store.getState()
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
+  })
+
+  it('move to first sibling of next row in table view col2', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =view
+              - Table
+            - b
+              - b1
+            - c
+              - c1`,
+      }),
+      setCursor(['a', 'b', 'b1']),
+      cursorNext(),
+    ])
+
+    const stateNew = store.getState()
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c', 'c1'])
   })
 
   it('sorted thoughts', () => {
