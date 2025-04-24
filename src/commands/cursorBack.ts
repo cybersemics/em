@@ -2,7 +2,6 @@ import Command from '../@types/Command'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
 import { isTouch } from '../browser'
-// import directly since util/index is not loaded yet when command is initialized
 import BackIcon from '../components/icons/BackIcon'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'

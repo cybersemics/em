@@ -1,3 +1,4 @@
+import pluralize from 'pluralize'
 import Command from '../@types/Command'
 import Path from '../@types/Path'
 import { alertActionCreator as alert } from '../actions/alert'
@@ -62,8 +63,8 @@ const copyCursorCommand: Command = {
 
       dispatch(
         alert(
-          `Copied ${numThoughts} thought${numThoughts > 1 ? 's' : ''}${
-            numDescendants > 0 ? ` and ${numDescendants} descendant${numDescendants !== 1 ? 's' : ''}` : ''
+          `Copied ${pluralize('thought', numThoughts, true)}${
+            numDescendants > 0 ? ` and ${pluralize('descendant', numDescendants, true)}` : ''
           } to the clipboard`,
           {
             alertType: AlertType.Clipboard,

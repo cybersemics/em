@@ -108,12 +108,7 @@ const TreeNode = ({
 
   // true if the last action is any of archive/delete/collapse
   const isLastActionDelete = useSelector(state => {
-    const deleteActions: ActionType[] = [
-      'archiveThought',
-      'collapseContext',
-      'deleteThought',
-      'deleteThoughtWithCursor',
-    ]
+    const deleteActions: ActionType[] = ['archiveThought', 'uncategorize', 'deleteThought', 'deleteThoughtWithCursor']
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
@@ -216,10 +211,8 @@ const TreeNode = ({
   return (
     <FadeTransition
       id={thoughtKey}
-      // The FadeTransition is only responsible for fade out on unmount;
-      // or for fade in on mounting of a new thought.
-      // See autofocusChanged for normal opacity transition.
-      // Limit the fade/shrink/blur animation to the archive, delete, and collapseContext actions.
+      // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
+      // Archive, delete, and uncategorize get a special dissolve animation.
       duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
@@ -231,7 +224,7 @@ const TreeNode = ({
         // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
         className={css({
           position: 'absolute',
-          transition,
+          transition
         })}
         style={{
           // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.

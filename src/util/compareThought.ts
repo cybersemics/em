@@ -145,7 +145,7 @@ export const makeOrderedComparator =
         // if they are equal, move on to the next comparator
         makeOrderedComparator(comparators.slice(1))(a, b) // RECURSION
 
-/** A comparator that sorts basic text.
+/** A comparator that sorts human-readable text in natural ascending order. Handles letters, numbers, and dates.
  * 1. Numbers (8, 9, 10; #8, #9, #10).
  * 2. Dates (9/1, 10/1, 11/1).
  * 3. Lexicographic (default).
@@ -158,9 +158,11 @@ const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<st
   compareDateAndOther,
 ])
 
-/** A comparator that compares by reasonable, human-readable value:
- * 1. Empty.
+/** A comparator that sorts nearly anything in ascending order.
+ * 1. Empty string.
  * 2. Punctuation (=, +, #hi, =test).
+ * 3. Formatting (b, i, u, em, strong, span, strike, code, font).
+ * 4. Meta attributes.
  * 3. Emoji.
  * 4. CompareReadableText on text without emoji.
  */
@@ -179,6 +181,14 @@ const reverse =
   (a: T, b: T) =>
     comparator(b, a)
 
+/** A comparator that sorts anything in descending order. Not a strict reversal of compareReasonable, as empty strings, formatting, punctuation, and meta attributes are still sorted above plain text.
+ * 1. Empty string.
+ * 2. Punctuation (=, +, #hi, =test).
+ * 3. Formatting (b, i, u, em, strong, span, strike, code, font).
+ * 4. Meta attributes.
+ * 3. Emoji.
+ * 4. CompareReadableText on text without emoji.
+ */
 export const compareReasonableDescending: ComparatorFunction<string> = makeOrderedComparator<string>([
   compareFormatting,
   compareEmpty,
@@ -188,10 +198,26 @@ export const compareReasonableDescending: ComparatorFunction<string> = makeOrder
   (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
 ])
 
-/** Compare the value of two thoughts. If the thought has a sortValue, it takes precedence over value. This preserves the sort order of a thought edited to empty instead of moving it to the top of thi list. */
+/** Compare the value of two thoughts. */
 export const compareThought: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
-  compareReasonable(a.sortValue || a.value, b.sortValue || b.value)
+  compareReasonable(a.value, b.value)
 
 /** A comparator that sorts in descending order, with formatted text prioritized first. */
 export const compareThoughtDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
-  compareReasonableDescending(a.sortValue || a.value, b.sortValue || b.value)
+  compareReasonableDescending(a.value, b.value)
+
+/** Compare two thoughts by their created timestamp in ascending order (oldest first). Fall back to compareReasonable if created at thn same time. */
+export const compareThoughtByCreated: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
+  compare(a.created, b.created) || compareReasonable(a.value, b.value)
+
+/** Compare two thoughts by their created timestamp in descending order (newest first). Fall back to compareReasonable if created at the same time. */
+export const compareThoughtByCreatedDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
+  compare(b.created, a.created) || compareReasonable(a.value, b.value)
+
+/** Compare two thoughts by their lastUpdated timestamp in ascending order (oldest first). Fall back to compareReasonable if created at the same time. */
+export const compareThoughtByUpdated: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
+  compare(a.lastUpdated, b.lastUpdated) || compareReasonable(a.value, b.value)
+
+/** Compare two thoughts by their lastUpdated timestamp in descending order (newest first). Fall back to compareReasonable if created at the same time. */
+export const compareThoughtByUpdatedDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
+  compare(b.lastUpdated, a.lastUpdated) || compareReasonable(a.value, b.value)
