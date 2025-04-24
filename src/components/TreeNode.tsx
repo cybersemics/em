@@ -224,7 +224,7 @@ const TreeNode = ({
         // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
         className={css({
           position: 'absolute',
-          transition
+          transition,
         })}
         style={{
           // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
