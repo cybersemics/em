@@ -140,10 +140,10 @@ const TreeNode = ({
        `
 
   useEffect(() => {
-    const bulletElement = document.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement | null
     const element = fadeThoughtRef.current
     if (!element) return
 
+    const bulletElement = element?.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement | null
     const editable = element?.querySelector('.editable') as HTMLElement | null
     if (!editable) return
 
