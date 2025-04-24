@@ -76,21 +76,11 @@ const TreeNode = ({
   /** Calculates the horizontal translation needed to align the text to the right within its parent. */
   const calculateTranslateX = (): number => {
     const element = fadeThoughtRef.current
-    if (!element) {
-      return 0
-    }
-
+    if (!element) return 0
     const editable = element?.querySelector('.editable')
-    if (!editable) {
-      return 0
-    }
+    if (!editable) return 0
 
-    const parentWidth = element.getBoundingClientRect().width
-    const editableWidth = editable.getBoundingClientRect().width
-
-    const result = Math.max(0, parentWidth - editableWidth)
-
-    return result
+    return Math.max(0, element.getBoundingClientRect().width - editable.getBoundingClientRect().width)
   }
 
   const fauxCaretNodeProvider = useFauxCaretNodeProvider({
