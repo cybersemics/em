@@ -142,23 +142,21 @@ const TreeNode = ({
   useEffect(() => {
     const bulletElement = document.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement | null
     const element = fadeThoughtRef.current
-    if (!element) {
-      return
-    }
+    if (!element) return
 
     const editable = element?.querySelector('.editable') as HTMLElement | null
-    if (!editable) {
-      return
-    }
+    if (!editable) return
 
     const offset = calculateTranslateX()
+    const bulletEnterOffset = -7
+    const bulletExitOffset = 7
 
     if (isTableCol1) {
       // Entering col1 view
       translateXRef.current = offset
 
       if (bulletElement) {
-        bulletElement.style.transform = `translateX(${-7}px)`
+        bulletElement.style.transform = `translateX(${bulletEnterOffset}px)`
         bulletElement.style.transition = 'none'
       }
 
@@ -179,7 +177,7 @@ const TreeNode = ({
       const exitOffset = translateXRef.current || 0
 
       if (bulletElement) {
-        bulletElement.style.transform = `translateX(${7}px)`
+        bulletElement.style.transform = `translateX(${bulletExitOffset}px)`
         bulletElement.style.transition = 'none'
       }
 
