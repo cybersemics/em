@@ -96,8 +96,9 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
           className={css({
             position: 'absolute',
             bottom: 0,
-            left: 0,
             right: 0,
+            left: 0,
+            marginRight: 20,
             height: '100px',
             background: 'linear-gradient(to top, {colors.bg} 0%, transparent 100%)',
             pointerEvents: 'none',
