@@ -1,7 +1,6 @@
 import { isEqual } from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -18,7 +17,6 @@ import editingValueStore from '../stores/editingValue'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
-import hashPath from '../util/hashPath'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import DropChild from './DropChild'
@@ -215,116 +213,17 @@ const VirtualThought = ({
     [crossContextualKey, onResize, id],
   )
 
-  const [transientStyle, setTransientStyle] = useState<React.CSSProperties>({
-    textAlign: isTableCol1 ? 'right' : undefined,
-  })
-  const translateXRef = useRef<number>(0)
-  const duration = durations.get('layoutNodeAnimation')
-
-  const bulletTestId = `bullet-${hashPath(simplePath)}`
-
-  /** Calculates the horizontal translation needed to align the text to the right within its parent. */
-  const calculateTranslateX = (): number => {
-    const element = ref.current
-    if (!element) {
-      return 0
-    }
-
-    const editable = element?.querySelector('.editable')
-    if (!editable) {
-      return 0
-    }
-
-    const parentWidth = element.getBoundingClientRect().width
-    const editableWidth = editable.getBoundingClientRect().width
-
-    const result = Math.max(0, parentWidth - editableWidth)
-
-    return result
-  }
-
-  /** Updates the transient style by merging the given styles with the existing ones. */
-  const updateTransitionStyle = (updates: React.CSSProperties) => {
-    setTransientStyle(prev => ({
-      ...prev,
-      ...updates,
-    }))
-  }
-
   return (
-    <CSSTransition
-      in={isTableCol1}
-      timeout={duration}
-      nodeRef={ref}
-      onEnter={() => {
-        const bulletElement = document.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement
-        const offset = calculateTranslateX()
-        translateXRef.current = offset
-
-        if (bulletElement) {
-          bulletElement.style.transform = `translateX(${offset - 7}px)`
-          bulletElement.style.transition = 'none'
-        }
-
-        updateTransitionStyle({
-          transform: `translateX(-${offset}px)`,
-          textAlign: 'right',
-          transition: 'none',
-        })
-
-        requestAnimationFrame(() => {
-          if (bulletElement) {
-            bulletElement.style.transform = 'translateX(0)'
-            bulletElement.style.transition = `transform ${duration}ms ease-out`
-          }
-
-          updateTransitionStyle({
-            transform: 'translateX(0)',
-            textAlign: 'right',
-            transition: `transform ${duration}ms ease-out`,
-          })
-        })
-      }}
-      onExit={() => {
-        const offset = translateXRef.current || 0
-
-        const bulletElement = document.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement
-        if (bulletElement) {
-          bulletElement.style.transform = `translateX(-${offset - 7}px)`
-          bulletElement.style.transition = 'none'
-        }
-
-        updateTransitionStyle({
-          transform: `translateX(${offset}px)`,
-          textAlign: undefined,
-          transition: 'none',
-        })
-
-        requestAnimationFrame(() => {
-          if (bulletElement) {
-            bulletElement.style.transform = 'translateX(0)'
-            bulletElement.style.transition = `transform ${duration}ms ease-out`
-          }
-
-          updateTransitionStyle({
-            transform: 'translateX(0)',
-            transition: `transform ${duration}ms ease-out`,
-            textAlign: undefined,
-          })
-        })
+    <div
+      ref={ref}
+      style={{
+        // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
+        // Must include DropChild, or it will shift when the cursor moves.
+        height: shimHiddenThought && height != null ? height : undefined,
       }}
     >
-      <div
-        ref={ref}
-        style={{
-          // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
-          // Must include DropChild, or it will shift when the cursor moves.
-          height: shimHiddenThought && height != null ? height : undefined,
-          ...transientStyle,
-        }}
-      >
-        {
-          /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target after a hidden parent.
+      {
+        /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target after a hidden parent.
              e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we must insert DropUncle when e would not be rendered.
                - a
                 - b
@@ -333,43 +232,42 @@ const VirtualThought = ({
                   - d
                 - e
            */
-          !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
-        }
+        !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
+      }
 
-        {!shimHiddenThought && (
-          <Subthought
-            autofocus={autofocus}
-            debugIndex={debugIndex}
-            depth={depth + 1}
-            dropUncle={dropUncle}
-            env={env}
-            indexDescendant={indexDescendant}
-            isMultiColumnTable={isMultiColumnTable}
-            leaf={leaf}
-            updateSize={updateSize}
-            path={path}
-            prevChildId={prevChildId}
-            showContexts={showContexts}
-            simplePath={simplePath}
-            style={style}
-            zoomCursor={zoomCursor}
-            marginRight={marginRight}
-          />
-        )}
+      {!shimHiddenThought && (
+        <Subthought
+          autofocus={autofocus}
+          debugIndex={debugIndex}
+          depth={depth + 1}
+          dropUncle={dropUncle}
+          env={env}
+          indexDescendant={indexDescendant}
+          isMultiColumnTable={isMultiColumnTable}
+          leaf={leaf}
+          updateSize={updateSize}
+          path={path}
+          prevChildId={prevChildId}
+          showContexts={showContexts}
+          simplePath={simplePath}
+          style={style}
+          zoomCursor={zoomCursor}
+          marginRight={marginRight}
+        />
+      )}
 
-        {isVisible && (
-          <DropChild
-            depth={depth}
-            // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
-            // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
-            // TODO: DragAndDropSubthoughts should be able to handle this.
-            path={path}
-            simplePath={simplePath}
-            isLastVisible={isLastVisible}
-          />
-        )}
-      </div>
-    </CSSTransition>
+      {isVisible && (
+        <DropChild
+          depth={depth}
+          // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
+          // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
+          // TODO: DragAndDropSubthoughts should be able to handle this.
+          path={path}
+          simplePath={simplePath}
+          isLastVisible={isLastVisible}
+        />
+      )}
+    </div>
   )
 }
 

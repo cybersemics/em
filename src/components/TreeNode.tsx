@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
@@ -6,6 +6,8 @@ import ActionType from '../@types/ActionType'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import durations from '../util/durations'
+import hashPath from '../util/hashPath'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
@@ -66,6 +68,31 @@ const TreeNode = ({
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+
+  const translateXRef = useRef<number>(0)
+  const duration = durations.get('layoutNodeAnimation')
+  const bulletTestId = `bullet-${hashPath(simplePath)}`
+
+  /** Calculates the horizontal translation needed to align the text to the right within its parent. */
+  const calculateTranslateX = (): number => {
+    const element = fadeThoughtRef.current
+    if (!element) {
+      return 0
+    }
+
+    const editable = element?.querySelector('.editable')
+    if (!editable) {
+      return 0
+    }
+
+    const parentWidth = element.getBoundingClientRect().width
+    const editableWidth = editable.getBoundingClientRect().width
+
+    const result = Math.max(0, parentWidth - editableWidth)
+
+    return result
+  }
+
   const fauxCaretNodeProvider = useFauxCaretNodeProvider({
     editing,
     fadeThoughtElement: fadeThoughtRef.current,
@@ -73,6 +100,7 @@ const TreeNode = ({
     isTableCol1,
     path,
   })
+
   const isLastActionNewThought = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => patch.actions[0] === 'newThought')
@@ -126,6 +154,65 @@ const TreeNode = ({
        margin-right {durations.layoutNodeAnimation} ease-out
        `
 
+  useEffect(() => {
+    const bulletElement = document.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement | null
+    const element = fadeThoughtRef.current
+    if (!element) {
+      return
+    }
+
+    const editable = element?.querySelector('.editable') as HTMLElement | null
+    if (!editable) {
+      return
+    }
+
+    const offset = calculateTranslateX()
+
+    if (isTableCol1) {
+      // Entering col1 view
+      translateXRef.current = offset
+
+      if (bulletElement) {
+        bulletElement.style.transform = `translateX(${-7}px)`
+        bulletElement.style.transition = 'none'
+      }
+
+      editable.style.transform = `translateX(-${offset}px)`
+      editable.style.transition = 'none'
+
+      requestAnimationFrame(() => {
+        if (bulletElement) {
+          bulletElement.style.transform = 'translateX(0)'
+          bulletElement.style.transition = `transform ${duration}ms ease-out`
+        }
+
+        editable.style.transform = 'translateX(0)'
+        editable.style.transition = `transform ${duration}ms ease-out`
+      })
+    } else {
+      // Exiting col1 view
+      const exitOffset = translateXRef.current || 0
+
+      if (bulletElement) {
+        bulletElement.style.transform = `translateX(${7}px)`
+        bulletElement.style.transition = 'none'
+      }
+
+      editable.style.transform = `translateX(${exitOffset}px)`
+      editable.style.transition = 'none'
+
+      requestAnimationFrame(() => {
+        if (bulletElement) {
+          bulletElement.style.transform = 'translateX(0)'
+          bulletElement.style.transition = `transform ${duration}ms ease-out`
+        }
+
+        editable.style.transform = 'translateX(0)'
+        editable.style.transition = `transform ${duration}ms ease-out`
+      })
+    }
+  }, [isTableCol1, bulletTestId, duration])
+
   return (
     <FadeTransition
       id={thoughtKey}
@@ -157,6 +244,7 @@ const TreeNode = ({
           // (Maybe the 10px is from .content padding-left?)
           width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
           ...style,
+          textAlign: isTableCol1 ? 'right' : undefined,
           ...fauxCaretNodeProvider,
         }}
       >
@@ -185,7 +273,6 @@ const TreeNode = ({
             isLastVisible={isLastVisible}
             autofocus={autofocus}
             marginRight={isTableCol1 ? marginRight : 0}
-            isTableCol1={isTableCol1}
           />
         </div>
 
