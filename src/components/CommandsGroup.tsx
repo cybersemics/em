@@ -1,5 +1,5 @@
 import { FC } from 'react'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
 import CommandTableOnly from './CommandTableOnly'
@@ -30,19 +30,21 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
   return (
     <div className={css({ position: 'relative', willChange: 'transform' })}>
       <h2
-        className={css({
-          ...modalClasses,
-          ...(viewType === 'grid' && {
-            fontSize: '1.3rem',
-            borderBottom: 'none',
-            position: 'sticky',
-            top: '-1.5rem',
-            background: 'linear-gradient(to bottom, {colors.bg} 85%, transparent)',
-            padding: '0.7rem 0',
-            margin: '0.5rem 0',
-            zIndex: 1,
+        className={cx(
+          modalClasses.subtitle,
+          css({
+            ...(viewType === 'grid' && {
+              fontSize: '1.3rem',
+              borderBottom: 'none',
+              position: 'sticky',
+              top: '-1.5rem',
+              background: 'linear-gradient(to bottom, {colors.bg} 85%, transparent)',
+              padding: '0.7rem 0',
+              margin: '0.5rem 0',
+              zIndex: 1,
+            }),
           }),
-        })}
+        )}
       >
         {title}
       </h2>
