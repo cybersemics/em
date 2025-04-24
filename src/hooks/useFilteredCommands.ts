@@ -37,6 +37,9 @@ const useFilteredCommands = (
     const possibleCommands = visibleCommands.filter(command => {
       // Always include help command in gesture mode
       if (isTouch && (command.id === 'openGestureCheatsheet' || command.id === 'cancel')) return true
+      // Always exclude gestureCheatsheet command in keyboard mode
+      if (!isTouch && command.id === 'openGestureCheatsheet') return false
+      // Always exclude cancel command in keyboard mode
       if (!isTouch && command.id === 'cancel') return false
 
       // gesture
