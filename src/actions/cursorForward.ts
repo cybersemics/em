@@ -12,7 +12,8 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import unroot from '../util/unroot'
-import validatePath from '../util/validatePath'
+
+// import validatePath from '../util/validatePath'
 
 /** Moves the cursor forward in the cursorHistory. */
 const cursorForward = (state: State) => {
@@ -33,12 +34,13 @@ const cursorForward = (state: State) => {
   else {
     const simplePath = simplifyPath(state, cursor)
     const firstChild = firstVisibleChild(state, head(simplePath))
-    // Check if cursorFromHistory exists, is a valid child, and the full path is valid
-    isValidChild =
-      cursorFromHistory &&
-      !!getThoughtById(state, head(cursor))?.childrenMap[head(cursorFromHistory)] &&
-      validatePath(state, cursorFromHistory)
-    cursorNew = isValidChild ? cursorFromHistory : firstChild ? unroot([...cursor, firstChild.id]) : cursor
+    isValidChild = cursorFromHistory && !!getThoughtById(state, head(cursor))?.childrenMap[head(cursorFromHistory)]
+    cursorNew =
+      isValidChild && cursorFromHistory
+        ? appendToPath(cursor, head(cursorFromHistory))
+        : firstChild
+          ? unroot([...cursor, firstChild.id])
+          : cursor
   }
 
   return cursorNew
