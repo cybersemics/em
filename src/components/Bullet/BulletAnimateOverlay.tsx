@@ -24,6 +24,11 @@ const enter = css({
 const enterAct = css({
   animation: `overlayTranslation {durations.veryFast} ease-in-out forwards`,
 })
+const enterDone = css({
+  opacity: 0,
+  animation: `opacity 1ms linear forwards`,
+})
+
 const exit = css({ opacity: 0 })
 const base = css({ position: 'absolute', willChange: 'transform,opacity' })
 
@@ -142,12 +147,13 @@ const BulletAnimateOverlay = ({ x = 0, y = 0, path }: { x?: number; y?: number; 
         key={`${translateX}-${translateY}`}
         appear
         timeout={{
-          enter: 80,
+          enter: 80 + 1,
           exit: 1,
         }}
         classNames={{
           enter,
           enterActive: enterAct,
+          enterDone,
           exit,
         }}
         mountOnEnter

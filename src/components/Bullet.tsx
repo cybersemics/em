@@ -378,13 +378,28 @@ const BulletHighlightOverlay = ({ bulletOverlayRadius }: { bulletOverlayRadius: 
   )
 }
 
-const fadeInEnterAct = css({
+const overlayAppearActive = css({
   opacity: 0,
-  animation: `opacity 85ms linear forwards`,
+  animation: `opacity 80ms linear forwards`,
 })
 
-const fadeInExit = css({
+const overlayAppearDone = css({
   opacity: 1,
+  animation: `opacity 1ms linear forwards`,
+})
+
+const overlayEnterActive = css({
+  opacity: 0,
+  animation: `opacity 80ms linear forwards`,
+})
+
+const overlayEnterDone = css({
+  opacity: 1,
+  animation: `opacity 1ms linear forwards`,
+})
+
+const overlayExit = css({
+  opacity: 0,
   animation: `opacity 1ms linear forwards`,
 })
 
@@ -408,13 +423,20 @@ const BulletCursorOverlay = ({
       nodeRef={overlayRef}
       appear
       classNames={{
-        enterActive: fadeInEnterAct,
-        exit: fadeInExit,
+        // animation that runs when we have new thought
+        appearActive: overlayAppearActive,
+        appearDone: overlayAppearDone,
+
+        // animation that runs when isEditing is true
+        enterActive: overlayEnterActive,
+        enterDone: overlayEnterDone,
+
+        // animation that runs when isEditing is false
+        exit: overlayExit,
       }}
       timeout={{
-        appear: 0,
-        enter: 80, // set delay of 80ms before the overlay appears
-        // 80ms is also the duration of BulletAnimateOverlay animation transition
+        appear: 80 + 1, // 80ms of delay before the overlay appears and 1ms of opacity transition
+        enter: 80 + 1, // 80ms of delay before the overlay appears and 1ms of opacity transition
         exit: 1,
       }}
     >
@@ -427,7 +449,7 @@ const BulletCursorOverlay = ({
         className={css({
           fillOpacity: 0.25,
           fill: 'fg',
-          opacity: isEditing ? 1 : 0,
+          opacity: 0,
         })}
       />
     </CSSTransition>
