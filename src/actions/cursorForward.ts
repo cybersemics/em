@@ -26,11 +26,7 @@ const cursorForward = (state: State) => {
     const cursorValue = headValue(state, cursor)
     const contexts = cursorValue !== undefined ? getContextsSortedAndRanked(state, cursorValue) : []
     const firstContext = contexts[0]
-    // Check if cursorFromHistory exists and is a valid child and the full path is valid
-    isValidChild =
-      cursorFromHistory &&
-      contexts.some(cx => cx.parentId === head(cursorFromHistory)) &&
-      validatePath(state, cursorFromHistory)
+    isValidChild = cursorFromHistory && contexts.some(cx => cx.parentId === head(cursorFromHistory))
     cursorNew = isValidChild ? cursorFromHistory : appendToPath(cursor, firstContext?.parentId)
   }
   // normal view
