@@ -27,7 +27,7 @@ const cursorForward = (state: State) => {
     const contexts = cursorValue !== undefined ? getContextsSortedAndRanked(state, cursorValue) : []
     const firstContext = contexts[0]
     isValidChild = cursorFromHistory && contexts.some(cx => cx.parentId === head(cursorFromHistory))
-    cursorNew = isValidChild ? cursorFromHistory : appendToPath(cursor, firstContext?.parentId)
+    cursorNew = isValidChild ? cursorFromHistory : appendToPath(cursor, firstContext.parentId)
   }
   // normal view
   else {
