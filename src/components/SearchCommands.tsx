@@ -23,7 +23,7 @@ const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) 
         </div>
         <input
           type='text'
-          placeholder='Search gestures...'
+          placeholder='Search commands...'
           onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
             onInput?.(e.target.value)
           }}
