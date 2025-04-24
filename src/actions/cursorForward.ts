@@ -12,6 +12,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import unroot from '../util/unroot'
+import validatePath from '../util/validatePath'
 
 /** Moves the cursor forward in the cursorHistory. */
 const cursorForward = (state: State) => {
@@ -25,14 +26,22 @@ const cursorForward = (state: State) => {
     const cursorValue = headValue(state, cursor)
     const contexts = cursorValue !== undefined ? getContextsSortedAndRanked(state, cursorValue) : []
     const firstContext = contexts[0]
-    isValidChild = cursorFromHistory && contexts.some(cx => cx.parentId === head(cursorFromHistory))
-    cursorNew = isValidChild ? cursorFromHistory : appendToPath(cursor, firstContext.parentId)
+    // Check if cursorFromHistory exists and is a valid child and the full path is valid
+    isValidChild =
+      cursorFromHistory &&
+      contexts.some(cx => cx.parentId === head(cursorFromHistory)) &&
+      validatePath(state, cursorFromHistory)
+    cursorNew = isValidChild ? cursorFromHistory : appendToPath(cursor, firstContext?.parentId)
   }
   // normal view
   else {
     const simplePath = simplifyPath(state, cursor)
     const firstChild = firstVisibleChild(state, head(simplePath))
-    isValidChild = cursorFromHistory && !!getThoughtById(state, head(cursor))?.childrenMap[head(cursorFromHistory)]
+    // Check if cursorFromHistory exists, is a valid child, and the full path is valid
+    isValidChild =
+      cursorFromHistory &&
+      !!getThoughtById(state, head(cursor))?.childrenMap[head(cursorFromHistory)] &&
+      validatePath(state, cursorFromHistory)
     cursorNew = isValidChild ? cursorFromHistory : firstChild ? unroot([...cursor, firstChild.id]) : cursor
   }
 
