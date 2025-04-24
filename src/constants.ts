@@ -205,7 +205,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'bindContext',
   // 'bumpThoughtDown',
   // 'clearThought',
-  // 'collapseContext',
+  // 'uncategorize',
   // 'copyCursor',
   // 'cursorBack',
   // 'cursorDown',
@@ -554,7 +554,7 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Deleting thoughts',
-    commands: ['delete', 'archive', 'collapseContext', 'clearThought'],
+    commands: ['delete', 'archive', 'uncategorize', 'clearThought'],
   },
   {
     title: 'Moving thoughts',

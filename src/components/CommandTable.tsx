@@ -9,108 +9,10 @@ import { COMMAND_GROUPS } from '../constants'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
-import CommandTableOnly from './CommandTableOnly'
 import CommandsGroup from './CommandsGroup'
 import FadeTransition from './FadeTransition'
 import SearchCommands from './SearchCommands'
 import SortButton from './SortButton'
-
-// define the grouping and ordering of commands
-const groups: {
-  title: string
-  commands: CommandId[]
-}[] = [
-  {
-    title: 'Navigation',
-    commands: [
-      'cursorBack',
-      'cursorForward',
-      'cursorNext',
-      'cursorPrev',
-      'jumpBack',
-      'jumpForward',
-      'moveCursorBackward',
-      'moveCursorForward',
-      'commandPalette',
-      'home',
-      'search',
-      'selectAll',
-    ],
-  },
-  {
-    title: 'Creating thoughts',
-    commands: [
-      'categorize',
-      'newThought',
-      'newThoughtAbove',
-      'newSubthought',
-      'newSubthoughtTop',
-      'newUncle',
-      'newGrandChild',
-      'extractThought',
-      'generateThought',
-    ],
-  },
-  {
-    title: 'Deleting thoughts',
-    commands: ['delete', 'archive', 'collapseContext', 'clearThought'],
-  },
-  {
-    title: 'Moving thoughts',
-    commands: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp'],
-  },
-  {
-    title: 'Editing thoughts',
-    commands: [
-      'join',
-      'splitSentences',
-      'bold',
-      'italic',
-      'strikethrough',
-      'underline',
-      'code',
-      'copyCursor',
-      'removeFormat',
-    ],
-  },
-  {
-    title: 'Oops',
-    commands: ['undo', 'redo'],
-  },
-  {
-    title: 'Special Views',
-    commands: [
-      'note',
-      'swapNote',
-      'toggleContextView',
-      'proseView',
-      'toggleTableView',
-      'toggleSort',
-      'heading0',
-      'heading1',
-      'heading2',
-      'heading3',
-      'heading4',
-      'heading5',
-    ],
-  },
-  {
-    title: 'Visibility',
-    commands: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
-  },
-  {
-    title: 'Settings',
-    commands: ['customizeToolbar'],
-  },
-  {
-    title: 'Help',
-    commands: ['help'],
-  },
-  {
-    title: 'Cancel',
-    commands: ['cancel'],
-  },
-]
 
 // assert that groups include all necessary commands
 const commandsGroupedMap = keyValueBy(
