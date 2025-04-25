@@ -176,7 +176,12 @@ const usePositionedThoughts = (
           - a
           - [empty]
       */
-      const isNewCliff = !sizes[node.key] && cliff < 0 && prev && node.depth >= prev.depth
+
+      const isNewCliff =
+        sizes[node.key] !== undefined && // <-- only apply if size is known
+        cliff < 0 &&
+        prev &&
+        node.depth >= prev.depth
 
       // Capture the y position of the current thought before it is incremented by its own height for the next thought.
       const y = yaccum - (isNewCliff ? cliffPadding : 0)
