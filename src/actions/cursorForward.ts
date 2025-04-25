@@ -13,8 +13,6 @@ import head from '../util/head'
 import headValue from '../util/headValue'
 import unroot from '../util/unroot'
 
-// import validatePath from '../util/validatePath'
-
 /** Moves the cursor forward in the cursorHistory. */
 const cursorForward = (state: State) => {
   const cursorFromHistory = last(state.cursorHistory)

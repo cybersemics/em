@@ -39,19 +39,12 @@ describe('normal view', () => {
   it('should use a valid path after uncategorize and categorize operations', () => {
     const steps = [
       newThought('a'),
-
       setCursor(['a']),
-
       categorize,
-
       cursorForward,
-
       cursorBack,
-
       uncategorize({}),
-
       categorize,
-
       cursorForward,
     ]
 
