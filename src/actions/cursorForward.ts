@@ -33,7 +33,12 @@ const cursorForward = (state: State) => {
     const simplePath = simplifyPath(state, cursor)
     const firstChild = firstVisibleChild(state, head(simplePath))
     isValidChild = cursorFromHistory && !!getThoughtById(state, head(cursor))?.childrenMap[head(cursorFromHistory)]
-    cursorNew = isValidChild ? cursorFromHistory : firstChild ? unroot([...cursor, firstChild.id]) : cursor
+    cursorNew =
+      isValidChild && cursorFromHistory
+        ? appendToPath(cursor, head(cursorFromHistory))
+        : firstChild
+          ? unroot([...cursor, firstChild.id])
+          : cursor
   }
 
   return cursorNew

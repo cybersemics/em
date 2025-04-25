@@ -4,10 +4,12 @@ import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
+import categorize from '../categorize'
 import cursorBack from '../cursorBack'
 import cursorForward from '../cursorForward'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
+import uncategorize from '../uncategorize'
 
 describe('normal view', () => {
   it('reverse cursorBack', () => {
@@ -32,6 +34,24 @@ describe('normal view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+  })
+
+  it('should use a valid path after uncategorize and categorize operations', () => {
+    const steps = [
+      newThought('a'),
+      setCursor(['a']),
+      categorize,
+      cursorForward,
+      cursorBack,
+      uncategorize({}),
+      categorize,
+      cursorForward,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // The cursor should be on 'a' in the proper location, not using the stale path
+    expectPathToEqual(stateNew, stateNew.cursor, ['', 'a'])
   })
 })
 
