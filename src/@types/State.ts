@@ -123,6 +123,7 @@ interface State {
    * Passed to Yjs and cleared on every action.
    * See: /redux-enhancers/pushQueue.ts.
    */
+  noteOffset: number | null
   pushQueue: PushBatch[]
   recentlyEdited: RecentlyEditedTree
   /** Redo history. Contains diffs that can be applied to State to restore actions that were reverted with undo. State.redoPatches[0] is the oldest action that was undone. */

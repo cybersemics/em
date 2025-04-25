@@ -19,7 +19,6 @@ import expandThoughts from '../selectors/expandThoughts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
-import { SetCursorActionMetadata } from '../stores/actionMetadata'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -36,6 +35,7 @@ const setCursor = (
     cursorHistoryPop,
     editing,
     noteFocus = false,
+    noteOffset = null,
     offset,
     path,
     replaceContextViews,
@@ -45,8 +45,8 @@ const setCursor = (
     cursorHistoryClear?: boolean
     cursorHistoryPop?: boolean
     editing?: boolean | null
-    metadata?: SetCursorActionMetadata
     noteFocus?: boolean
+    noteOffset?: number | null
     offset?: number | null
     path: Path | null
     replaceContextViews?: Index<boolean>
@@ -150,6 +150,7 @@ const setCursor = (
     cursorOffset: updatedOffset,
     expanded,
     noteFocus,
+    noteOffset,
     cursorInitialized: true,
     ...(!preserveMulticursor
       ? {
