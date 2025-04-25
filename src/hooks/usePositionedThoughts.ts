@@ -178,7 +178,8 @@ const usePositionedThoughts = (
       */
 
       const isNewCliff =
-        sizes[node.key] !== undefined && // <-- only apply if size is known
+        testFlags.simulateDrop && // only during e2e simulateDrop
+        sizes[node.key] !== undefined && // after the measurement pass
         cliff < 0 &&
         prev &&
         node.depth >= prev.depth
