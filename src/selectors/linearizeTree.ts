@@ -19,6 +19,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
+import groupPaths from '../util/groupPaths'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
@@ -130,7 +131,7 @@ const linearizeTree = (
 
     const node: TreeThought = {
       belowCursor: !!belowCursor,
-      depth,
+      depth: depth, // + (contextViewActive ? thoughtToPath(state, child.id).length - 1 : 0),
       env: envNew || undefined,
       indexChild: i,
       indexDescendant: virtualIndexNew,
@@ -182,7 +183,61 @@ const linearizeTree = (
       belowCursor = true
     }
 
-    return [...accum, node, ...descendants]
+    // let contextViewThoughts: any = []
+    if (contextViewActive) {
+      const contextPaths = filteredChildren
+        .map(filteredChild => {
+          const child = getThoughtById(state, filteredChild.parentId)
+          if (!child) return null
+          const childPath = thoughtToPath(state, child.id)
+          return childPath
+        })
+        .filter(Boolean)
+      // console.log(filteredChildren.map(child => child.parentId))
+      // console.log(contextPaths)
+      const groups = groupPaths(contextPaths)
+      const contextViewThoughts: TreeThought[] = []
+      while (Object.keys(groups).length > 0) {
+        const cxid = Object.keys(groups)[0] as ThoughtId
+        const contextPath = [cxid] as unknown as SimplePath
+        contextViewThoughts.push({
+          path: contextPath,
+          belowCursor: !!belowCursor,
+          depth: depth + contextPath.length - 1, // + (contextViewActive ? thoughtToPath(state, child.id).length - 1 : 0),
+          env: envNew || undefined,
+          indexChild: i,
+          indexDescendant: virtualIndexNew,
+          isCursor,
+          isEmpty,
+          isInSortedContext,
+          isTableCol1,
+          isTableCol2,
+          isTableCol2Child,
+          autofocus,
+          // In the context view, use filteredChild.id (the context) rather than child.id (the context parent), otherwise duplicate thoughts in the same context will have the same key.
+          // For example, a/~m/cat and a/~m/cats need to use the ids of cat/cats rather than m.
+          // filteredChild === child in normal view, so it does not matter in that case.
+          key: crossContextualKey(contextChainNew, cxid),
+          // must filteredChild.id to work for both normal view and context view
+          leaf: false,
+          prevChild: filteredChildren[i - 1],
+          rank: child.rank,
+          // showContexts: contextViewActive,
+          simplePath: contextPath,
+          // style,
+          thoughtId: cxid,
+        })
+
+        // const group = groups[cxid]
+        // console.log({ cxid, group })
+
+        delete groups[cxid]
+      }
+
+      return contextViewThoughts
+    } else {
+      return [...accum, node, ...descendants]
+    }
   }, [])
 
   return thoughts
