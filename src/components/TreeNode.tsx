@@ -90,16 +90,6 @@ const TreeNode = ({
     return lastPatches?.some(patch => patch.actions[0] === 'swapParent')
   })
 
-  const isLastActionMoveThought = useSelector(state => {
-    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => patch.actions[0] === 'moveThought')
-  })
-
-  const isParentSwapped = useSelector(state => {
-    const allPatches = state.undoPatches
-    return allPatches?.flat().some(patch => patch.actions[0] === 'swapParent')
-  })
-
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
   // 2. Create L-shaped animation paths by controlling when each movement starts/ends
@@ -133,12 +123,6 @@ const TreeNode = ({
   const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
   // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
-
-  // By default, nodes use a simple transition animation without layers
-  // However, if a node has been swapped with its parent, we want to use a layered animation,
-  // EXCEPT when the last action was moveThought. This prevents unwanted animation artifacts
-  // when interacting with a previously swapped node.
-  const shouldAnimateCurve = isParentSwapped && !isLastActionMoveThought
 
   const outerDivStyle = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
@@ -178,12 +162,11 @@ const TreeNode = ({
         aria-label='tree-node'
         className={css({
           position: 'absolute',
-          transition:
-            isLastActionSwapParent || shouldAnimateCurve
-              ? cursorIsGreaterThanPrevSibling
-                ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
-                : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
-              : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
+          transition: isLastActionSwapParent
+            ? cursorIsGreaterThanPrevSibling
+              ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
+              : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
+            : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
         })}
         style={outerDivStyle}
       >
