@@ -31,7 +31,7 @@ const PanelCommandGrid = () => {
       <PanelCommand command={note} size='small' />
       <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
       <PanelCommand command={deleteCommand} size='small' />
-      <PanelCommandGroup>
+      <PanelCommandGroup commandSize='small' commandCount={2}>
         <PanelCommand command={{ ...outdent, label: '' }} size='small' />
         <PanelCommand command={{ ...indent, label: '' }} size='small' />
       </PanelCommandGroup>
