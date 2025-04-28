@@ -128,7 +128,7 @@ const TreeNode = ({
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
     // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
     left: x,
-    top: isLastActionSwapParent ? 0 : y,
+    top: isLastActionSwapParent ? 'auto' : y,
     // Table col1 uses its exact width since cannot extend to the right edge of the screen.
     // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
     // 1em + 10px is an eyeball measurement at font sizes 14 and 18
