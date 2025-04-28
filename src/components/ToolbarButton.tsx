@@ -14,7 +14,6 @@ import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
 import { executeCommandWithMulticursor } from '../util/executeCommand'
-import fastClick from '../util/fastClick'
 import getCursorSortDirection from '../util/getCursorSortDirection'
 import haptics from '../util/haptics'
 
