@@ -108,27 +108,6 @@ const TreeNode = ({
     }
   }, [y, _y])
 
-  // List Virtualization
-  // Do not render thoughts that are below the viewport.
-  // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
-  // Render virtualized thoughts with their estimated height so that document height is relatively stable.
-  // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
-  if (belowCursor && !isCursor && y > viewportBottom + height) return null
-
-  const nextThought = isTableCol1 ? treeThoughtsPositioned[index + 1] : null
-  const previousThought = isTableCol1 ? treeThoughtsPositioned[index - 1] : null
-
-  // Adjust col1 width to remove dead zones between col1 and col2, increase the width by the difference between col1 and col2 minus bullet width
-  const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
-  // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
-  const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
-
-  // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
-  const transition = `left {durations.layoutNodeAnimation} ease-out,
-       top {durations.layoutNodeAnimation} ease-out,
-       margin-right {durations.layoutNodeAnimation} ease-out
-       `
-
   useEffect(() => {
     const element = fadeThoughtRef.current
     if (!element) return
@@ -185,6 +164,27 @@ const TreeNode = ({
       })
     }
   }, [isTableCol1, bulletTestId, duration])
+
+  // List Virtualization
+  // Do not render thoughts that are below the viewport.
+  // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
+  // Render virtualized thoughts with their estimated height so that document height is relatively stable.
+  // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
+  if (belowCursor && !isCursor && y > viewportBottom + height) return null
+
+  const nextThought = isTableCol1 ? treeThoughtsPositioned[index + 1] : null
+  const previousThought = isTableCol1 ? treeThoughtsPositioned[index - 1] : null
+
+  // Adjust col1 width to remove dead zones between col1 and col2, increase the width by the difference between col1 and col2 minus bullet width
+  const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
+  // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
+  const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
+
+  // Speed up the tree-node's transition (normally layoutNodeAnimationDuration) by 50% on New (Sub)Thought only.
+  const transition = `left {durations.layoutNodeAnimation} ease-out,
+       top {durations.layoutNodeAnimation} ease-out,
+       margin-right {durations.layoutNodeAnimation} ease-out
+       `
 
   return (
     <FadeTransition
