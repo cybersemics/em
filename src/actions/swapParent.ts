@@ -23,7 +23,8 @@ const swapParent = (state: State): State => {
   // disallow swapParent in context view
   if (
     isContextViewActive(state, rootedParentOf(state, cursor)) ||
-    isContextViewActive(state, rootedParentOf(state, parentOf(cursor)))
+    isContextViewActive(state, rootedParentOf(state, parentOf(cursor))) ||
+    isContextViewActive(state, cursor)
   ) {
     return alert(state, { value: 'Swap Parent cannot be performed in the context view.' })
   }
@@ -87,7 +88,7 @@ const swapParent = (state: State): State => {
     // Keep cursor on the child at its new position
     setCursor({
       path: [...grandparent, childId, parentId],
-      offset: childThought.value.length,
+      offset: parentThought.value.length,
     }),
   ])(state)
 }
