@@ -79,7 +79,6 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   editing: false,
   editThought: true,
   error: false,
-  expandContextThought: true,
   expandHoverDown: false,
   expandHoverUp: false,
   extractThought: true,

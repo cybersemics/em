@@ -82,7 +82,6 @@ interface State {
   expandHoverDownPaths: Index<Path>
   /** Make hidden ancestors visible during drag-and-drop by hovering over them. This allows a thought to be dragged anywhere, even to thoughts that are initially hidden by autofocus. */
   expandHoverUpPath?: Path | null
-  expandedContextThought?: Path
   fontSize: number
   /**
    * Thought currently being hovered over.
