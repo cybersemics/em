@@ -58,9 +58,7 @@ const Note = React.memo(
     // set the caret on the note if editing this thought and noteFocus is true
     useEffect(() => {
       // cursor must be true if note is focused
-      if (hasFocus) {
-        if (noteOffset === null) return
-
+      if (hasFocus && noteOffset !== null) {
         selection.set(noteRef.current!, { offset: noteOffset })
         // deleting a note, then closing the keyboard, then creating a new note could result in lack of focus,
         // perhaps related to iOS Safari's internal management of selection ranges and focus
