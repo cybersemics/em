@@ -6,17 +6,18 @@ import { multilineRecipe } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
-import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
+import useBulletPosition from '../hooks/useBulletPosition'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, filterAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
+import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
 import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
@@ -100,22 +101,22 @@ const ThoughtAnnotation = React.memo(
     ellipsizedUrl,
     numContexts,
     showSuperscript,
-    simplePath,
     cssRaw,
     style,
     // only applied to the .subthought container
     styleAnnotation,
     url,
     placeholder,
+    path,
     value,
   }: {
+    path: Path
     email?: string
     isEditing?: boolean
     multiline?: boolean
     ellipsizedUrl?: boolean
     numContexts: number
     showSuperscript?: boolean
-    simplePath: SimplePath
     cssRaw?: SystemStyleObject
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
@@ -126,6 +127,16 @@ const ThoughtAnnotation = React.memo(
     const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
       isEditing ? (editingValue ?? value) : null,
     )
+
+    const simplePath = useSelector(state => path && simplifyPath(state, path))
+    const {
+      thoughtAnnotation: {
+        horizontalPadding: thoughtAnnotationHorizontalPadding,
+        marginLeft: thoughtAnnotationMarginLeft,
+      },
+    } = useBulletPosition({
+      path,
+    })
 
     /**
      * Adding dependency on lexemeIndex as the fetch for thought is async await.
@@ -180,15 +191,12 @@ const ThoughtAnnotation = React.memo(
                 }),
                 display: 'inline-block',
                 maxWidth: '100%',
-                padding: '0 0.333em',
                 boxSizing: 'border-box',
                 whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
                 /*
                   Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
                   To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
                 */
-                margin: '-0.5px 0 0 calc(1em - 18px)',
-                paddingRight: multiline ? '1em' : '0.333em',
               }),
             )
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
@@ -197,7 +205,11 @@ const ThoughtAnnotation = React.memo(
             //   border-bottom: solid 1px;
             // }
           }
-          style={styleAnnotation}
+          style={{
+            padding: `0 ${multiline ? 1 : 0.333}em 0 ${thoughtAnnotationHorizontalPadding}px`,
+            margin: `-0.5px 0 0 ${thoughtAnnotationMarginLeft}px`,
+            ...styleAnnotation,
+          }}
         >
           <span
             className={css({
@@ -257,7 +269,6 @@ const ThoughtAnnotation = React.memo(
 const ThoughtAnnotationContainer = React.memo(
   ({
     path,
-    simplePath,
     minContexts = 2,
     multiline,
     ellipsizedUrl,
@@ -277,7 +288,6 @@ const ThoughtAnnotationContainer = React.memo(
     path: Path
     placeholder?: string
     showContextBreadcrumbs?: boolean
-    simplePath: SimplePath
     cssRaw?: SystemStyleObject
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
@@ -291,6 +301,8 @@ const ThoughtAnnotationContainer = React.memo(
       const thought = getThoughtById(state, head(path))
       return thought?.value || ''
     })
+
+    const simplePath = useSelector(state => path && simplifyPath(state, path))
 
     const isEditing = useSelector(state => equalPath(state.cursor, path))
     const invalidStateIfEditing = useMemo(() => isEditing && invalidState, [isEditing, invalidState])
@@ -362,7 +374,7 @@ const ThoughtAnnotationContainer = React.memo(
     return showSuperscript || url || email || styleAnnotation || (isTouch && isSafari()) ? (
       <ThoughtAnnotation
         {...{
-          simplePath,
+          path,
           isEditing,
           multiline,
           ellipsizedUrl: ellipsizedUrl,

@@ -1,5 +1,6 @@
 import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { css, cva, cx } from '../../styled-system/css'
 import { bulletRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
@@ -11,8 +12,8 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
+import useBulletPosition from '../hooks/useBulletPosition'
 // import testFlags from '../e2e/testFlags'
-import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
@@ -20,7 +21,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
-import rootedParentOf from '../selectors/rootedParentOf'
 import fastClick, { type FastClickEvent } from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -361,17 +361,8 @@ const BulletParent = ({
   )
 }
 
-/** A larger circle that surrounds the bullet of the cursor thought. */
-const BulletCursorOverlay = ({
-  isHighlighted,
-}: {
-  isEditing?: boolean
-  isHighlighted?: boolean
-  leaf?: boolean
-  publish?: boolean
-  simplePath: SimplePath
-}) => {
-  const bulletOverlayRadius = isIOSSafari ? 300 : 245
+/** A larger circle that surrounds the bullet of the highlighted thought. */
+const BulletHighlightOverlay = ({ bulletOverlayRadius }: { bulletOverlayRadius: number }) => {
   return (
     <ellipse
       ry={bulletOverlayRadius}
@@ -379,11 +370,89 @@ const BulletCursorOverlay = ({
       cy='300'
       cx='300'
       className={css({
-        fillOpacity: isHighlighted ? 1 : 0.25,
-        fill: isHighlighted ? 'highlight' : 'fg',
-        stroke: isHighlighted ? 'highlight' : undefined,
+        fillOpacity: 1,
+        fill: 'highlight',
+        stroke: 'highlight',
       })}
     />
+  )
+}
+
+const overlayAppearActive = css({
+  opacity: 0,
+  animation: `opacity 80ms linear forwards`,
+})
+
+const overlayAppearDone = css({
+  opacity: 1,
+  animation: `opacity 1ms linear forwards`,
+})
+
+const overlayEnterActive = css({
+  opacity: 0,
+  animation: `opacity 80ms linear forwards`,
+})
+
+const overlayEnterDone = css({
+  opacity: 1,
+  animation: `opacity 1ms linear forwards`,
+})
+
+const overlayExit = css({
+  opacity: 0,
+  animation: `opacity 1ms linear forwards`,
+})
+
+/** A larger circle that surrounds the bullet of the highlighted thought. */
+const BulletCursorOverlay = ({
+  bulletOverlayRadius,
+  isEditing,
+  path,
+}: {
+  bulletOverlayRadius: number
+  isEditing?: boolean
+  path: Path
+}) => {
+  const overlayRef = useRef<HTMLElement>(null)
+
+  const objKey = path.join('-') + isEditing
+  return (
+    <CSSTransition
+      key={objKey}
+      in={!!isEditing}
+      nodeRef={overlayRef}
+      appear
+      classNames={{
+        // animation that runs when we have new thought
+        appearActive: overlayAppearActive,
+        appearDone: overlayAppearDone,
+
+        // animation that runs when isEditing is true
+        enterActive: overlayEnterActive,
+        enterDone: overlayEnterDone,
+
+        // animation that runs when isEditing is false
+        exit: overlayExit,
+      }}
+      timeout={{
+        appear: 80 + 1, // 80ms of delay before the overlay appears and 1ms of opacity transition
+        enter: 80 + 1, // 80ms of delay before the overlay appears and 1ms of opacity transition
+        exit: 1,
+      }}
+    >
+      <ellipse
+        ry={bulletOverlayRadius}
+        rx={bulletOverlayRadius}
+        cy='300'
+        cx='300'
+        ref={overlayRef as unknown as React.RefObject<SVGEllipseElement>}
+        className={css({
+          fillOpacity: 0.25,
+          fill: 'fg',
+          opacity: 0,
+        })}
+      />
+    </CSSTransition>
   )
 }
 
@@ -399,7 +468,6 @@ const Bullet = ({
   thoughtId,
   isCursorGrandparent,
   isCursorParent,
-  isInContextView,
   // depth,
   // debugIndex,
 }: BulletProps) => {
@@ -410,10 +478,9 @@ const Bullet = ({
   // if being edited and meta validation error has occured
   const invalid = useSelector(state => !!isEditing && state.invalidState)
   const fontSize = useSelector(state => state.fontSize)
-  const isTableCol1 = useSelector(state =>
-    attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
-  )
+
   const isDone = useSelector(state => !!findDescendant(state, thoughtId, '=done'))
+
   const isMulticursor = useSelector(state => isMulticursorPath(state, path))
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
@@ -421,7 +488,19 @@ const Bullet = ({
   })
   const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
-  /** Returns true if the thought is pending. */
+  const {
+    bullet: {
+      svgLeft: bulletSvgLeftPosition,
+      glyphMarginBottom,
+      svgMarginLeft: bulletSvgMarginLeft,
+      spanLeft: bulletSpanLeftPosition,
+      spanWidth: bulletSpanWidth,
+    },
+    lineHeight,
+    bulletOverlayRadius,
+  } = useBulletPosition({ path })
+
+  /** Returns true if th e thought is pending. */
   const pending = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     // Do not show context as pending since it will remain pending until expanded, and the context value is already loaded so there is nothing missing from the context view UI.
@@ -453,16 +532,8 @@ const Bullet = ({
   // offset margin with padding by equal amounts proportional to the font size to extend the click area
   const extendClickWidth = fontSize * 1.2
   const extendClickHeight = fontSize / 3
-  const lineHeight = fontSize * 1.25
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
-  // Bottom margin for bullet to align with thought text
-  const glyphBottomMargin = isIOSSafari ? '-0.2em' : '-0.3em'
-
-  // calculate position of bullet for different font sizes
-  // Table column 1 needs more space between the bullet and thought for some reason
-  const width = 11 - (fontSize - 9) * 0.5 + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
-  const marginLeft = -width
 
   // expand or collapse on click
   // has some additional logic to make it work intuitively with pin true/false
@@ -533,79 +604,78 @@ const Bullet = ({
       )}
       style={{
         top: -extendClickHeight,
-        left: -extendClickWidth + marginLeft,
+        left: -extendClickWidth + bulletSpanLeftPosition,
         paddingTop: extendClickHeight,
         paddingLeft: extendClickWidth,
         paddingBottom: extendClickHeight + 2,
-        width,
+        width: bulletSpanWidth,
       }}
       {...fastClick(clickHandler, { enableHaptics: false })}
       // stop click event from bubbling up to Content.clickOnEmptySpace
       onClick={e => e.stopPropagation()}
     >
-      <svg
-        className={cx(
-          glyph({ isBulletExpanded, showContexts, leaf }),
-          css({
-            // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
-            // This caused the bullet slide animation to end with a jerky movement.
-            // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
-            // allowing the browser to optimize the animation.
-            willChange: 'transform',
-            ...(isHighlighted
-              ? {
-                  fillOpacity: 1,
-                  fill: 'highlight',
-                  stroke: 'highlight',
-                }
-              : null),
-          }),
-        )}
-        viewBox='0 0 600 600'
-        style={{
-          height: lineHeight,
-          width: lineHeight,
-          marginLeft: -lineHeight,
-          // required to make the distance between bullet and thought scale properly at all font sizes.
-          left: lineHeight * 0.317,
-          marginBottom: glyphBottomMargin,
-        }}
-        ref={svgElement}
-      >
-        <g>
-          {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && (
-            <BulletCursorOverlay
-              isEditing={isEditing}
-              isHighlighted={isHighlighted}
-              leaf={leaf}
-              publish={publish}
-              simplePath={simplePath}
-            />
+      <TransitionGroup>
+        <svg
+          className={cx(
+            glyph({ isBulletExpanded, showContexts, leaf }),
+            css({
+              // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
+              // This caused the bullet slide animation to end with a jerky movement.
+              // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
+              // allowing the browser to optimize the animation.
+              willChange: 'transform',
+              ...(isHighlighted
+                ? {
+                    fillOpacity: 1,
+                    fill: 'highlight',
+                    stroke: 'highlight',
+                  }
+                : null),
+            }),
           )}
-          {leaf && !showContexts ? (
-            <BulletLeaf
-              done={isDone}
-              fill={fill}
-              isHighlighted={isHighlighted}
-              missing={missing}
-              pending={pending}
-              showContexts={showContexts}
-              isBulletExpanded={isBulletExpanded}
-            />
-          ) : (
-            <BulletParent
-              currentScale={svgElement.current?.currentScale || 1}
-              done={isDone}
-              fill={fill}
-              isHighlighted={isHighlighted}
-              childrenMissing={childrenMissing}
-              pending={pending}
-              showContexts={showContexts}
-              isBulletExpanded={isBulletExpanded}
-            />
-          )}
-        </g>
-      </svg>
+          viewBox='0 0 600 600'
+          style={{
+            height: lineHeight,
+            width: lineHeight,
+            marginLeft: bulletSvgMarginLeft,
+            // required to make the distance between bullet and thought scale properly at all font sizes.
+            left: bulletSvgLeftPosition,
+            marginBottom: glyphMarginBottom,
+          }}
+          ref={svgElement}
+        >
+          <g>
+            {/* required to be rendered all the time to allow animation */}
+            <BulletCursorOverlay bulletOverlayRadius={bulletOverlayRadius} isEditing={isEditing} path={path} />
+
+            {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && (
+              <BulletHighlightOverlay bulletOverlayRadius={bulletOverlayRadius} />
+            )}
+            {leaf && !showContexts ? (
+              <BulletLeaf
+                done={isDone}
+                fill={fill}
+                isHighlighted={isHighlighted}
+                missing={missing}
+                pending={pending}
+                showContexts={showContexts}
+                isBulletExpanded={isBulletExpanded}
+              />
+            ) : (
+              <BulletParent
+                currentScale={svgElement.current?.currentScale || 1}
+                done={isDone}
+                fill={fill}
+                isHighlighted={isHighlighted}
+                childrenMissing={childrenMissing}
+                pending={pending}
+                showContexts={showContexts}
+                isBulletExpanded={isBulletExpanded}
+              />
+            )}
+          </g>
+        </svg>
+      </TransitionGroup>
     </span>
   )
 }

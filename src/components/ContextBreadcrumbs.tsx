@@ -9,6 +9,7 @@ import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
+import useBulletPosition from '../hooks/useBulletPosition'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
@@ -183,6 +184,11 @@ const ContextBreadcrumbs = ({
     state => (hideArchive ? (path.filter(id => getThoughtById(state, id)?.value !== '=archive') as Path) : path),
     shallowEqual,
   )
+  const {
+    ctxViewWithBreadcrumb: { fontSize: breadcrumbFontSize, marginTop: breadcrumbMarginTop },
+  } = useBulletPosition({
+    path,
+  })
   const ellipsizedThoughts = useEllipsizedThoughts(pathFiltered, { charLimit, disabled, thoughtsLimit })
 
   /** Clones the direct breadcrumb children to inject isDeleting animation state. */
@@ -207,15 +213,17 @@ const ContextBreadcrumbs = ({
       aria-label={hidden ? undefined : 'context-breadcrumbs'}
       className={css(
         {
-          fontSize: '0.867em',
           color: 'gray66',
           marginLeft: 'calc(1.3em - 14.5px)',
-          marginTop: '0.533em',
           minHeight: '1em',
           visibility: hidden ? 'hidden' : undefined,
         },
         cssRaw,
       )}
+      style={{
+        fontSize: `${breadcrumbFontSize}px`,
+        marginTop: `${breadcrumbMarginTop}px`,
+      }}
     >
       {isRoot(simplePath) ? (
         /*
