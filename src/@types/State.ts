@@ -82,7 +82,6 @@ interface State {
   expandHoverDownPaths: Index<Path>
   /** Make hidden ancestors visible during drag-and-drop by hovering over them. This allows a thought to be dragged anywhere, even to thoughts that are initially hidden by autofocus. */
   expandHoverUpPath?: Path | null
-  expandedContextThought?: Path
   fontSize: number
   /**
    * Thought currently being hovered over.
@@ -118,6 +117,8 @@ interface State {
   multicursors: Index<Path>
   /** NoteFocus is true if the caret is on the note. */
   noteFocus: boolean
+  /** NoteOffset can be used to position the caret within a note. Setting it to null disables programmatic selection using selection.set. */
+  noteOffset: number | null
   /**
    * Temporarily stores updates that need to be persisted.
    * Passed to Yjs and cleared on every action.

@@ -145,9 +145,6 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
         ? getSortedRank(state, editedThought.parentId, newValue)
         : editedThought.rank,
     value: newValue,
-    // store the last non-empty value to preserve the sort order of thoughts edited to empty
-    // reset to undefined when newValue is non-empty
-    sortValue: newValue ? undefined : oldValue || editedThought.sortValue,
     lastUpdated: timestamp(),
     updatedBy: clientId,
   }

@@ -3,13 +3,17 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import headValue from '../util/headValue'
 
+type NoteFocusType = { value: false; offset?: never } | { value: true; offset: number | null }
+
 /** Sets state.noteFocus to true or false, indicating if the caret is on a note. Sets state.cursorOffset to the end of the thought when disabling note focus so the selection gets placed back correctly on the thought. */
-const setNoteFocus = (state: State, { value }: { value: boolean }): State => ({
+const setNoteFocus = (state: State, { value, offset }: NoteFocusType): State => ({
   ...state,
   // set the cursor offset to the end of the cursor thought
   // we cannot use state.editingValue since it is set to null when the Editable is blurred
   ...(!value && state.cursor ? { cursorOffset: headValue(state, state.cursor)?.length } : null),
   noteFocus: value,
+  // clear the offset when the caret leaves a note
+  noteOffset: value ? offset : null,
   // always enter edit mode when there is note focus
   // it will be set in the Note's onFocus anyway, but set it here so that we are not as dependent on what happens there
   ...(value ? { editing: true } : null),

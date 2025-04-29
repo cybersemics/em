@@ -70,10 +70,6 @@ const SortPicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
   const showSortPicker = useSelector(state => state.showSortPicker)
 
-  const simplePath = useSelector(state =>
-    state.cursor && !isRoot(state.cursor) ? simplifyPath(state, rootedParentOf(state, state.cursor)) : null,
-  )
-
   const sortPreference = useSelector(state => {
     if (!state.cursor || isRoot(state.cursor)) return { type: 'None', direction: null }
 
@@ -89,21 +85,26 @@ const SortPicker: FC<{ size?: number }> = memo(({ size }) => {
     e.stopPropagation()
     e.preventDefault()
 
-    if (!simplePath) return
+    dispatch((dispatch, getState) => {
+      const state = getState()
+      if (!state.cursor) return
 
-    const newSortPreference: SortPreference = {
-      type,
-      direction:
-        type === 'None' ? null : sortPreference.type === type && sortPreference.direction === 'Asc' ? 'Desc' : 'Asc',
-    }
-
-    dispatch([
-      setSortPreference({
-        simplePath,
-        sortPreference: newSortPreference,
-      }),
-      toggleSortPicker({ value: false }),
-    ])
+      dispatch([
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor)),
+          sortPreference: {
+            type,
+            direction:
+              type === 'None'
+                ? null
+                : sortPreference.type === type && sortPreference.direction === 'Asc'
+                  ? 'Desc'
+                  : 'Asc',
+          },
+        }),
+        toggleSortPicker({ value: false }),
+      ])
+    })
   }
 
   return (

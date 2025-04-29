@@ -40,6 +40,7 @@ const Note = React.memo(
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, thoughtId))
+    const noteOffset = useSelector(state => state.noteOffset)
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
@@ -48,6 +49,7 @@ const Note = React.memo(
           path,
           cursorHistoryClear: true,
           editing: true,
+          noteOffset: null,
           noteFocus: true,
         }),
       )
@@ -56,10 +58,10 @@ const Note = React.memo(
     // set the caret on the note if editing this thought and noteFocus is true
     useEffect(() => {
       // cursor must be true if note is focused
-      if (hasFocus) {
-        selection.set(noteRef.current!, { end: true })
+      if (hasFocus && noteOffset !== null) {
+        selection.set(noteRef.current!, { offset: noteOffset })
       }
-    }, [hasFocus])
+    }, [hasFocus, noteOffset])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(

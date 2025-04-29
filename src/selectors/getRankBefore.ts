@@ -48,9 +48,7 @@ const getRankBefore = (state: State, simplePath: SimplePath) => {
       prevSubthought.rank === nextSubthought.rank
       ? (console.warn('Duplicate ranks detected', prevSubthought, nextSubthought), prevSubthought.rank - Math.random()) // nudge into non-conflicting rank
       : // default case set the rank halfway between the prev and next thoughts
-        // set slightly closer to next thought to allow sorting empty thoughts at the point of creation in alphabetically sorted contexts
-        // use a fraction of nextSubthought.rank in order to maintain a nearby order of magnitude without forcing the halving function to jump an order of magnitude
-        (prevSubthought.rank + nextSubthought.rank) / 2 + nextSubthought.rank * 0.001
+        (prevSubthought.rank + nextSubthought.rank) / 2
     : // if there is no previous thought (i.e. the thought is the first child) then simply decrement the rank
       nextSubthought.rank - 1
 
