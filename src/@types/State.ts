@@ -117,6 +117,8 @@ interface State {
   multicursors: Index<Path>
   /** NoteFocus is true if the caret is on the note. */
   noteFocus: boolean
+  /** NoteOffset can be used to position the caret within a note. Setting it to null disables programmatic selection using selection.set. */
+  noteOffset: number | null
   /**
    * Temporarily stores updates that need to be persisted.
    * Passed to Yjs and cleared on every action.
