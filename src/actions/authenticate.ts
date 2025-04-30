@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
@@ -28,3 +29,8 @@ export const authenticateActionCreator =
 export type AuthenticateAction = { type: 'authenticate' } & Parameters<typeof authenticate>[1]
 
 export default _.curryRight(authenticate)
+
+// Register this action's metadata
+registerActionMetadata('authenticate', {
+  undoable: false,
+})

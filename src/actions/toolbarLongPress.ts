@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Command from '../@types/Command'
 import DragCommandZone from '../@types/DragCommandZone'
 import State from '../@types/State'
@@ -32,3 +33,8 @@ export const toolbarLongPressActionCreator =
     dispatch({ type: 'toolbarLongPress', ...payload })
 
 export default _.curryRight(toolbarLongPress)
+
+// Register this action's metadata
+registerActionMetadata('toolbarLongPress', {
+  undoable: false,
+})

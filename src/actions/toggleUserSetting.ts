@@ -1,5 +1,6 @@
 import { toggleThought } from '.'
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -23,3 +24,8 @@ export const toggleUserSettingActionCreator =
     dispatch({ type: 'toggleUserSetting', ...payload })
 
 export default _.curryRight(toggleUserSetting)
+
+// Register this action's metadata
+registerActionMetadata('toggleUserSetting', {
+  undoable: false,
+})

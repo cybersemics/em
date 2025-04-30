@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
@@ -16,3 +17,8 @@ export const searchActionCreator =
     dispatch({ type: 'search', ...payload })
 
 export default _.curryRight(search)
+
+// Register this action's metadata
+registerActionMetadata('search', {
+  undoable: false,
+})

@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 
 /** Forces content editable to update inner html if html has not changed. */
@@ -7,3 +8,8 @@ const editableRender = (state: State) => ({
 })
 
 export default editableRender
+
+// Register this action's metadata
+registerActionMetadata('editableRender', {
+  undoable: false,
+})

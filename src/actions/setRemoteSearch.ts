@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
@@ -11,3 +12,8 @@ export const setRemoteSearchActionCreator =
     dispatch({ type: 'setRemoteSearch', ...payload })
 
 export default setRemoteSearch
+
+// Register this action's metadata
+registerActionMetadata('setRemoteSearch', {
+  undoable: false,
+})

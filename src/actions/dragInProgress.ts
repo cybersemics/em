@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Dispatch from '../@types/Dispatch'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -142,3 +143,8 @@ export const dragInProgressActionCreator =
   }
 
 export default _.curryRight(dragInProgress)
+
+// Register this action's metadata
+registerActionMetadata('dragInProgress', {
+  undoable: false,
+})

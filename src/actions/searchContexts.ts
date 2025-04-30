@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import State from '../@types/State'
@@ -16,3 +17,8 @@ export const searchContextsActionCreator =
     dispatch({ type: 'searchContexts', ...payload })
 
 export default searchContexts
+
+// Register this action's metadata
+registerActionMetadata('searchContexts', {
+  undoable: false,
+})

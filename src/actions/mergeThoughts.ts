@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Path from '../@types/Path'
@@ -188,3 +189,8 @@ export const mergeThoughtsActionCreator =
     dispatch({ type: 'mergeThoughts', ...payload })
 
 export default _.curry(mergeThoughts)
+
+// Register this action's metadata
+registerActionMetadata('mergeThoughts', {
+  undoable: false,
+})

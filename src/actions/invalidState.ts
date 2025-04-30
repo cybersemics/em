@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
@@ -15,3 +16,8 @@ export const setInvalidStateActionCreator =
     getState().invalidState !== value ? dispatch({ type: 'invalidState', value }) : null
 
 export default _.curryRight(invalidState)
+
+// Register this action's metadata
+registerActionMetadata('invalidState', {
+  undoable: false,
+})

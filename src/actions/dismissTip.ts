@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
@@ -11,3 +12,8 @@ const dismissTip = (state: State): State => ({
 export const dismissTipActionCreator = (): Thunk => dispatch => dispatch({ type: 'dismissTip' })
 
 export default dismissTip
+
+// Register this action's metadata
+registerActionMetadata('dismissTip', {
+  undoable: false,
+})

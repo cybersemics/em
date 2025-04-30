@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Path from '../@types/Path'
@@ -270,3 +271,8 @@ export const updateThoughtsActionCreator =
     dispatch({ type: 'updateThoughts', ...payload })
 
 export default _.curryRight(updateThoughts)
+
+// Register this action's metadata
+registerActionMetadata('updateThoughts', {
+  undoable: false,
+})

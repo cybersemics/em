@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
@@ -15,3 +16,8 @@ export const toggleLetterCaseActionCreator =
     dispatch({ type: 'toggleLetterCase', ...payload })
 
 export default _.curryRight(toggleLetterCase)
+
+// Register this action's metadata
+registerActionMetadata('toggleLetterCase', {
+  undoable: false,
+})

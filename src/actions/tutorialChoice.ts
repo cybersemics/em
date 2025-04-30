@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import settings from './settings'
@@ -17,3 +18,8 @@ export const tutorialChoiceActionCreator =
     dispatch({ type: 'tutorialChoice', ...payload })
 
 export default _.curryRight(tutorialChoice)
+
+// Register this action's metadata
+registerActionMetadata('tutorialChoice', {
+  undoable: false,
+})

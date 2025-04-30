@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
@@ -18,3 +19,8 @@ export const setResourceCacheActionCreator =
     dispatch({ type: 'setResourceCache', ...payload })
 
 export default _.curryRight(setResourceCache)
+
+// Register this action's metadata
+registerActionMetadata('setResourceCache', {
+  undoable: false,
+})

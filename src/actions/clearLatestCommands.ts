@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
@@ -10,3 +11,8 @@ const clearLatestCommands = (state: State): State => ({ ...state, latestCommands
 export const clearLatestCommandsActionCreator = (): Thunk => dispatch => dispatch({ type: 'clearLatestCommands' })
 
 export default clearLatestCommands
+
+// Register this action's metadata
+registerActionMetadata('clearLatestCommands', {
+  undoable: false,
+})

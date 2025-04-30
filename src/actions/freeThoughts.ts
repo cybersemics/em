@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
@@ -108,3 +109,8 @@ const freeThoughts = (state: State) => {
 export const freeThoughtsActionCreator = (): Thunk => dispatch => dispatch({ type: 'freeThoughts' })
 
 export default freeThoughts
+
+// Register this action's metadata
+registerActionMetadata('freeThoughts', {
+  undoable: false,
+})

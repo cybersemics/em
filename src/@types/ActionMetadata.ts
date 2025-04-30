@@ -20,6 +20,9 @@ export const actionMetadataRegistry: Partial<Record<ActionType, ActionMetadata>>
  * This should be called in each action file to register its metadata.
  */
 export function registerActionMetadata(actionType: ActionType, metadata: ActionMetadata): void {
+  if (actionMetadataRegistry[actionType]) {
+    throw new Error(`Action "${actionType}" is already registered in the metadata registry.`)
+  }
   actionMetadataRegistry[actionType] = metadata
 }
 

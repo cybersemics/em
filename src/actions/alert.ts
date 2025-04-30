@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { FC } from 'react'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Alert from '../@types/Alert'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -123,3 +124,8 @@ export const alertWithMinistore =
   }
 
 export default _.curryRight(alertReducer)
+
+// Register this action's metadata
+registerActionMetadata('alert', {
+  undoable: false,
+})

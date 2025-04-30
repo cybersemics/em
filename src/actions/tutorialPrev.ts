@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import tutorialStepReducer from '../actions/tutorialStep'
@@ -17,3 +18,8 @@ const tutorialPrev = (state: State, { hint }: { hint?: boolean } = {}) => {
 export const tutorialPrevActionCreator = (): Thunk => dispatch => dispatch({ type: 'tutorialPrev' })
 
 export default _.curryRight(tutorialPrev)
+
+// Register this action's metadata
+registerActionMetadata('tutorialPrev', {
+  undoable: false,
+})

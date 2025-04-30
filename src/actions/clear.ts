@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
@@ -46,3 +47,8 @@ export const clearActionCreator =
     dispatch({ type: 'clear', ...payload })
 
 export default clear
+
+// Register this action's metadata
+registerActionMetadata('clear', {
+  undoable: false,
+})

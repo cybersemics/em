@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -34,3 +35,8 @@ export const dragHoldActionCreator =
     dispatch({ type: 'dragHold', ...payload })
 
 export default _.curryRight(dragHold)
+
+// Register this action's metadata
+registerActionMetadata('dragHold', {
+  undoable: false,
+})

@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
@@ -21,3 +22,8 @@ const toggleAbsoluteContext = (state: State): State => ({
 export const toggleAbsoluteContextActionCreator = (): Thunk => dispatch => dispatch({ type: 'toggleAbsoluteContext' })
 
 export default toggleAbsoluteContext
+
+// Register this action's metadata
+registerActionMetadata('toggleAbsoluteContext', {
+  undoable: false,
+})

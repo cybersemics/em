@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
@@ -68,3 +69,8 @@ export const prependRevisionActionCreator =
     dispatch({ type: 'prependRevision', ...payload })
 
 export default _.curryRight(prependRevision)
+
+// Register this action's metadata
+registerActionMetadata('prependRevision', {
+  undoable: false,
+})

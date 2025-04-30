@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import moveThought from '../actions/moveThought'
@@ -22,3 +23,8 @@ const rerank = (state: State, simplePath: SimplePath): State => {
 }
 
 export default _.curryRight(rerank)
+
+// Register this action's metadata
+registerActionMetadata('rerank', {
+  undoable: false,
+})

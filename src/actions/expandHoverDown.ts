@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import State from '../@types/State'
@@ -72,3 +73,8 @@ export const expandHoverDownActionCreator = (): Thunk => (dispatch, getState) =>
 }
 
 export default expandDown
+
+// Register this action's metadata
+registerActionMetadata('expandHoverDown', {
+  undoable: false,
+})

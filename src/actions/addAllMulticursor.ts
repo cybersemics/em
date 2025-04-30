@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -28,3 +29,8 @@ const addAllMulticursor = (state: State): State => {
 export const addAllMulticursorActionCreator = (): Thunk => dispatch => dispatch({ type: 'addAllMulticursor' })
 
 export default _.curryRight(addAllMulticursor)
+
+// Register this action's metadata
+registerActionMetadata('addAllMulticursor', {
+  undoable: false,
+})

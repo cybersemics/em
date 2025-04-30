@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
@@ -13,3 +14,8 @@ const clearMulticursors = (state: State): State => {
 export const clearMulticursorsActionCreator = (): Thunk => dispatch => dispatch({ type: 'clearMulticursors' })
 
 export default clearMulticursors
+
+// Register this action's metadata
+registerActionMetadata('clearMulticursors', {
+  undoable: false,
+})

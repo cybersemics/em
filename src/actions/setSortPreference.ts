@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import SimplePath from '../@types/SimplePath'
 import SortPreference from '../@types/SortPreference'
 import State from '../@types/State'
@@ -150,3 +151,8 @@ export const setSortPreferenceActionCreator =
     dispatch({ type: 'setSortPreference', ...payload })
 
 export default _.curryRight(setSortPreference, 2)
+
+// Register this action's metadata
+registerActionMetadata('setSortPreference', {
+  undoable: false,
+})

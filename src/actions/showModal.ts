@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Modal from '../@types/Modal'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -22,3 +23,8 @@ export const showModalActionCreator =
   }
 
 export default _.curryRight(showModal)
+
+// Register this action's metadata
+registerActionMetadata('showModal', {
+  undoable: false,
+})

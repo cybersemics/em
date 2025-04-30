@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Command from '../@types/Command'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -17,3 +18,8 @@ export const addLatestCommandsActionCreator =
     dispatch({ type: 'addLatestCommands', ...payload })
 
 export default addLatestCommands
+
+// Register this action's metadata
+registerActionMetadata('addLatestCommands', {
+  undoable: false,
+})

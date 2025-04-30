@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import keyValueBy from '../util/keyValueBy'
@@ -43,3 +44,8 @@ export const initThoughtsActionCreator =
   }
 
 export default _.curryRight(initThoughts)
+
+// Register this action's metadata
+registerActionMetadata('initThoughts', {
+  undoable: false,
+})

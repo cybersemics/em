@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import tutorial from '../actions/tutorial'
@@ -28,3 +29,8 @@ export const tutorialNextActionCreator =
     dispatch({ type: 'tutorialNext', ...payload })
 
 export default _.curryRight(tutorialNext)
+
+// Register this action's metadata
+registerActionMetadata('tutorialNext', {
+  undoable: false,
+})

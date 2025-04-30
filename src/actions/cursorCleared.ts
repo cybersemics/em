@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 
@@ -32,3 +33,8 @@ export const cursorClearedActionCreator =
   }
 
 export default cursorCleared
+
+// Register this action's metadata
+registerActionMetadata('cursorCleared', {
+  undoable: false,
+})

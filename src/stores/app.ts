@@ -20,6 +20,7 @@ import pullQueue from '../redux-middleware/pullQueue'
 import scrollCursorIntoView from '../redux-middleware/scrollCursorIntoView'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
+import validateActionRegistrations from '../util/validateActionRegistrations'
 
 // composeWithDevTools is typed as redux.compose, which hard codes up to four function arguments.
 // Therefore, type it as the functionally equivalent _.flowRight in order to compose more than four enhancers.
@@ -57,5 +58,14 @@ const store = createStore(
     pushQueue,
   ),
 )
+
+// Run validation
+if (import.meta.env.MODE === 'development') {
+  try {
+    validateActionRegistrations()
+  } catch (e) {
+    console.error('Action metadata validation failed:', e)
+  }
+}
 
 export default store

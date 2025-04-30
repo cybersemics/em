@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import DragCommandZone from '../@types/DragCommandZone'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -17,3 +18,8 @@ export const dragCommandZoneActionCreator =
   }
 
 export default _.curryRight(dragCommandZone)
+
+// Register this action's metadata
+registerActionMetadata('dragCommandZone', {
+  undoable: false,
+})
