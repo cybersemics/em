@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -89,3 +90,8 @@ export const joinActionCreator =
     dispatch({ type: 'join', ...payload })
 
 export default _.curryRight(join)
+
+// Register this action's metadata
+registerActionMetadata('join', {
+  undoable: true,
+})

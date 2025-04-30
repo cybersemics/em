@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import deleteThought from '../actions/deleteThought'
@@ -159,3 +160,8 @@ export const deleteEmptyThoughtActionCreator: Thunk = (dispatch, getState) => {
 }
 
 export default deleteEmptyThought
+
+// Register this action's metadata
+registerActionMetadata('deleteEmptyThought', {
+  undoable: true,
+})

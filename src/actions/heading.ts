@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import deleteThought from '../actions/deleteThought'
@@ -34,3 +35,8 @@ export const headingActionCreator =
     dispatch({ type: 'heading', ...payload })
 
 export default heading
+
+// Register this action's metadata
+registerActionMetadata('heading', {
+  undoable: true,
+})

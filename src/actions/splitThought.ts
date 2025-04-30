@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import SplitResult from '../@types/SplitResult'
 import State from '../@types/State'
@@ -88,3 +89,8 @@ export const splitThoughtActionCreator =
     dispatch({ type: 'splitThought', ...payload })
 
 export default _.curryRight(splitThought)
+
+// Register this action's metadata
+registerActionMetadata('splitThought', {
+  undoable: true,
+})

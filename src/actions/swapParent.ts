@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import editThought from '../actions/editThought'
@@ -45,3 +46,8 @@ const swapParent = (state: State) => {
 export const swapParentActionCreator = (): Thunk => dispatch => dispatch({ type: 'swapParent' })
 
 export default _.curryRight(swapParent)
+
+// Register this action's metadata
+registerActionMetadata('swapParent', {
+  undoable: true,
+})

@@ -1,4 +1,5 @@
 import { last } from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import setCursor from '../actions/setCursor'
@@ -56,3 +57,9 @@ const cursorForward = (state: State) => {
 export const cursorForwardActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorForward' })
 
 export default cursorForward
+
+// Register this action's metadata
+registerActionMetadata('cursorForward', {
+  undoable: true,
+  isNavigation: true,
+})

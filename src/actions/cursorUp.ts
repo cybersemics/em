@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -34,3 +35,9 @@ export const cursorUpActionCreator =
     dispatch({ type: 'cursorUp', ...payload })
 
 export default cursorUp
+
+// Register this action's metadata
+registerActionMetadata('cursorUp', {
+  undoable: true,
+  isNavigation: true,
+})

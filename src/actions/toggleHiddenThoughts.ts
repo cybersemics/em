@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import expandThoughts from '../selectors/expandThoughts'
@@ -18,3 +19,8 @@ const toggleHiddenThoughts = (state: State) => {
 export const toggleHiddenThoughtsActionCreator = (): Thunk => dispatch => dispatch({ type: 'toggleHiddenThoughts' })
 
 export default toggleHiddenThoughts
+
+// Register this action's metadata
+registerActionMetadata('toggleHiddenThoughts', {
+  undoable: true,
+})

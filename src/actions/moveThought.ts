@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -224,3 +225,8 @@ export const moveThoughtActionCreator =
     dispatch({ type: 'moveThought', ...payload })
 
 export default _.curryRight(moveThought, 2)
+
+// Register this action's metadata
+registerActionMetadata('moveThought', {
+  undoable: true,
+})

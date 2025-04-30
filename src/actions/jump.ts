@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import getThoughtById from '../selectors/getThoughtById'
@@ -45,3 +46,9 @@ export const jumpActionCreator =
     dispatch({ type: 'jump', steps })
 
 export default jump
+
+// Register this action's metadata
+registerActionMetadata('jump', {
+  undoable: true,
+  isNavigation: true,
+})

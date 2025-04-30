@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -99,3 +100,8 @@ export const deleteThoughtWithCursorActionCreator = (): Thunk => dispatch =>
   dispatch({ type: 'deleteThoughtWithCursor' })
 
 export default deleteThoughtWithCursor
+
+// Register this action's metadata
+registerActionMetadata('deleteThoughtWithCursor', {
+  undoable: true,
+})

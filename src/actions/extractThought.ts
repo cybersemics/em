@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
@@ -53,3 +54,8 @@ const extractThought = (state: State) => {
 export const extractThoughtActionCreator = (): Thunk => dispatch => dispatch({ type: 'extractThought' })
 
 export default _.curryRight(extractThought)
+
+// Register this action's metadata
+registerActionMetadata('extractThought', {
+  undoable: true,
+})

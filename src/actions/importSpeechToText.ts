@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -63,3 +64,8 @@ export const importSpeechToTextActionCreator =
     dispatch({ type: 'importSpeechToText', ...payload })
 
 export default importSpeechToText
+
+// Register this action's metadata
+registerActionMetadata('importSpeechToText', {
+  undoable: true,
+})

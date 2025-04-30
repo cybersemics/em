@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
@@ -134,3 +135,8 @@ const swapNote = (state: State) => {
 export const swapNoteActionCreator = (): Thunk => dispatch => dispatch({ type: 'swapNote' })
 
 export default swapNote
+
+// Register this action's metadata
+registerActionMetadata('swapNote', {
+  undoable: true,
+})

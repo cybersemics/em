@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
@@ -67,3 +68,8 @@ const indent = (state: State) => {
 export const indentActionCreator = (): Thunk => dispatch => dispatch({ type: 'indent' })
 
 export default indent
+
+// Register this action's metadata
+registerActionMetadata('indent', {
+  undoable: true,
+})

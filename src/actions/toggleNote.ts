@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import deleteAttribute from '../actions/deleteAttribute'
@@ -37,3 +38,9 @@ const toggleNote = (state: State) => {
 export const toggleNoteActionCreator = (): Thunk => dispatch => dispatch({ type: 'toggleNote' })
 
 export default toggleNote
+
+// Register this action's metadata
+registerActionMetadata('toggleNote', {
+  undoable: true,
+  isNavigation: true,
+})

@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -256,3 +257,8 @@ export const newThoughtActionCreator =
   }
 
 export default _.curryRight(newThought)
+
+// Register this action's metadata
+registerActionMetadata('newThought', {
+  undoable: true,
+})

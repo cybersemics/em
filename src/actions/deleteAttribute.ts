@@ -1,5 +1,6 @@
 import { deleteThought } from '.'
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -50,3 +51,8 @@ export const deleteAttributeActionCreator =
     dispatch({ type: 'deleteAttribute', ...payload })
 
 export default _.curryRight(deleteAttribute)
+
+// Register this action's metadata
+registerActionMetadata('deleteAttribute', {
+  undoable: true,
+})

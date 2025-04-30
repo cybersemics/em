@@ -1,4 +1,5 @@
 import { produce } from 'immer'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import settings from '../actions/settings'
@@ -54,3 +55,8 @@ const toggleContextView = (state: State) => {
 export const toggleContextViewActionCreator = (): Thunk => dispatch => dispatch({ type: 'toggleContextView' })
 
 export default toggleContextView
+
+// Register this action's metadata
+registerActionMetadata('toggleContextView', {
+  undoable: true,
+})

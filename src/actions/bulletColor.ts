@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import setDescendant from '../actions/setDescendant'
@@ -39,3 +40,8 @@ export const bulletColorActionCreator =
   }
 
 export default _.curryRight(bulletColor)
+
+// Register this action's metadata
+registerActionMetadata('bulletColor', {
+  undoable: true,
+})

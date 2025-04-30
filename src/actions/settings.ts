@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { EM_TOKEN } from '../constants'
@@ -19,3 +20,8 @@ export const settingsActionCreator =
     dispatch({ type: 'settings', ...payload })
 
 export default _.curryRight(settings)
+
+// Register this action's metadata
+registerActionMetadata('settings', {
+  undoable: true,
+})

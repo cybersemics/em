@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import setCursor from '../actions/setCursor'
@@ -24,3 +25,9 @@ export const cursorDownActionCreator =
   (payload?: Parameters<typeof cursorDown>[1]): Thunk =>
   dispatch =>
     dispatch({ type: 'cursorDown', ...payload })
+
+// Register this action's metadata
+registerActionMetadata('cursorDown', {
+  undoable: true,
+  isNavigation: true,
+})

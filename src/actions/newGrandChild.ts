@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import newThought from '../actions/newThought'
@@ -31,3 +32,8 @@ const newGrandChild = (state: State) => {
 export const newGrandChildActionCreator = (): Thunk => dispatch => dispatch({ type: 'newGrandChild' })
 
 export default newGrandChild
+
+// Register this action's metadata
+registerActionMetadata('newGrandChild', {
+  undoable: true,
+})

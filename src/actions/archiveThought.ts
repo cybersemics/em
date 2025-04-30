@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -163,3 +164,8 @@ export function archiveThoughtActionCreator(payload: Parameters<typeof archiveTh
 }
 
 export default _.curryRight(archiveThought)
+
+// Register this action's metadata
+registerActionMetadata('archiveThought', {
+  undoable: true,
+})

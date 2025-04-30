@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -170,3 +171,9 @@ export const setCursorActionCreator =
     dispatch({ type: 'setCursor', ...payload })
 
 export default _.curryRight(setCursor)
+
+// Register this action's metadata
+registerActionMetadata('setCursor', {
+  undoable: true,
+  isNavigation: true,
+})

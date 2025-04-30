@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -55,3 +56,8 @@ export const setDescendantActionCreator =
     dispatch({ type: 'setDescendant', ...payload })
 
 export default _.curryRight(setDescendant)
+
+// Register this action's metadata
+registerActionMetadata('setDescendant', {
+  undoable: true,
+})

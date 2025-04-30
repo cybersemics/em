@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -42,3 +43,8 @@ export const setFirstSubthoughtActionCreator =
     dispatch({ type: 'setFirstSubthought', ...payload })
 
 export default _.curryRight(setFirstSubthought)
+
+// Register this action's metadata
+registerActionMetadata('setFirstSubthought', {
+  undoable: true,
+})

@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -234,3 +235,8 @@ export const importTextActionCreator =
     dispatch({ type: 'importText', ...payload })
 
 export default _.curryRight(importText)
+
+// Register this action's metadata
+registerActionMetadata('importText', {
+  undoable: true,
+})

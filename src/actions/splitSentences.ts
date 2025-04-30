@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import editThought from '../actions/editThought'
@@ -49,3 +50,8 @@ const splitSentences = (state: State) => {
 export const splitSentencesActionCreator = (): Thunk => dispatch => dispatch({ type: 'splitSentences' })
 
 export default _.curryRight(splitSentences)
+
+// Register this action's metadata
+registerActionMetadata('splitSentences', {
+  undoable: true,
+})

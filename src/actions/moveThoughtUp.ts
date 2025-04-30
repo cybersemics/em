@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -77,3 +78,8 @@ const moveThoughtUp = (state: State) => {
 export const moveThoughtUpActionCreator = (): Thunk => dispatch => dispatch({ type: 'moveThoughtUp' })
 
 export default moveThoughtUp
+
+// Register this action's metadata
+registerActionMetadata('moveThoughtUp', {
+  undoable: true,
+})

@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import headValue from '../util/headValue'
@@ -26,3 +27,9 @@ export const setNoteFocusActionCreator =
     dispatch({ type: 'setNoteFocus', ...payload })
 
 export default _.curryRight(setNoteFocus, 2)
+
+// Register this action's metadata
+registerActionMetadata('setNoteFocus', {
+  undoable: true,
+  isNavigation: true,
+})

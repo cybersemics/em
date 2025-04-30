@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
@@ -179,3 +180,8 @@ export const uncategorizeActionCreator =
     dispatch({ type: 'uncategorize', ...payload })
 
 export default _.curryRight(uncategorize)
+
+// Register this action's metadata
+registerActionMetadata('uncategorize', {
+  undoable: true,
+})

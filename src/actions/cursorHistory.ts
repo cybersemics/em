@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -20,3 +21,9 @@ export const cursorHistoryActionCreator =
     dispatch({ type: 'cursorHistory', ...payload })
 
 export default _.curryRight(cursorHistory)
+
+// Register this action's metadata
+registerActionMetadata('cursorHistory', {
+  undoable: true,
+  isNavigation: true,
+})

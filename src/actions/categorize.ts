@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
@@ -112,3 +113,8 @@ const categorize = (state: State) => {
 export const categorizeActionCreator = (): Thunk => dispatch => dispatch({ type: 'categorize' })
 
 export default categorize
+
+// Register this action's metadata
+registerActionMetadata('categorize', {
+  undoable: true,
+})

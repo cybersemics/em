@@ -1,3 +1,4 @@
+import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import cursorHistory from '../actions/cursorHistory'
@@ -52,3 +53,9 @@ const cursorBack = (state: State) => {
 export const cursorBackActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorBack' })
 
 export default cursorBack
+
+// Register this action's metadata
+registerActionMetadata('cursorBack', {
+  undoable: true,
+  isNavigation: true,
+})
