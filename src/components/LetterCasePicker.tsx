@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import LetterCaseType from '../@types/LetterCaseType'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/formatLetterCase'
+import { manageDropdownsActionCreator as manageDropdowns } from '../actions/manageDropdowns'
 import { isTouch } from '../browser'
 import getThoughtById from '../selectors/getThoughtById'
 import applyLetterCase from '../util/applyLetterCase'
@@ -19,11 +20,11 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
   const showLetterCase = useSelector(state => state.showLetterCase)
 
-  /** Toggles the Letter Case to the clicked swatch. */
+  /** Toggles the Letter Case to the clicked swatch and closes the picker. */
   const toggleLetterCase = (command: LetterCaseType, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    dispatch(formatLetterCase(command))
+    dispatch([formatLetterCase(command), manageDropdowns({ dropDownType: 'letterCase', value: false })])
   }
   const selected = useSelector(state => {
     const value = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''

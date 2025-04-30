@@ -3,8 +3,8 @@ import React, { FC, memo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import SortPreference from '../@types/SortPreference'
+import { manageDropdownsActionCreator as manageDropdowns } from '../actions/manageDropdowns'
 import { setSortPreferenceActionCreator as setSortPreference } from '../actions/setSortPreference'
-import { toggleSortPickerActionCreator as toggleSortPicker } from '../actions/toggleSortPicker'
 import { isTouch } from '../browser'
 import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -102,7 +102,7 @@ const SortPicker: FC<{ size?: number }> = memo(({ size }) => {
                   : 'Asc',
           },
         }),
-        toggleSortPicker({ value: false }),
+        manageDropdowns({ dropDownType: 'sortPicker', value: false }),
       ])
     })
   }
