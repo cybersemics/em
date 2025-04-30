@@ -175,6 +175,7 @@ const Note = React.memo(
           }}
           onBlur={onBlur}
           onFocus={onFocus}
+          role='button'
         />
         <span className={css({ fontSize: '1.1em', position: 'absolute', margin: '-0.15em 0 0 -1.175em' })}>
           <FauxCaret caretType='noteEnd' />
