@@ -4,7 +4,6 @@ import * as actions from '../actions'
 
 /**
  * Validates that all actions have been registered in the metadata registry.
- * This should be called during application initialization after all actions are loaded.
  */
 export default function validateActionRegistrations(): void {
   const allActionTypes = Object.keys(actions) as ActionType[]
