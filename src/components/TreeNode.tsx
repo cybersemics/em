@@ -73,6 +73,9 @@ const TreeNode = ({
   const duration = durations.get('layoutNodeAnimation')
   const bulletTestId = `bullet-${hashPath(simplePath)}`
 
+  const hasMounted = useRef(false)
+  const prevIsTableCol1 = useRef(isTableCol1)
+
   /** Calculates the horizontal translation needed to align the text to the right within its parent. */
   const calculateTranslateX = (): number => {
     const element = fadeThoughtRef.current
@@ -109,6 +112,15 @@ const TreeNode = ({
   }, [y, _y])
 
   useEffect(() => {
+    // Skip animation on first render or if isTableCol1 hasn't changed
+    if (!hasMounted.current || prevIsTableCol1.current === isTableCol1) {
+      hasMounted.current = true
+      prevIsTableCol1.current = isTableCol1
+      return
+    }
+
+    prevIsTableCol1.current = isTableCol1
+
     const element = fadeThoughtRef.current
     if (!element) return
 
