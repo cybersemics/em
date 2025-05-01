@@ -45,7 +45,7 @@ export function isNavigation(actionType: ActionType): boolean {
  * Validates that all actions have been registered in the metadata registry.
  * Lazy-loads the actions module to avoid circular dependencies.
  */
-export function validateActionRegistrations(): void {
+export default function validateActionRegistrations(): void {
   import('../actions')
     .then(actions => {
       const allActionTypes = Object.keys(actions) as ActionType[]
