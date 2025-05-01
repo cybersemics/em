@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
+import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
@@ -89,6 +90,11 @@ const TreeNode = ({
     return lastPatches?.some(patch => patch.actions[0] === 'swapParent')
   })
 
+  /** The direction of the curved animation used for swapParent. If the child (cursor) thought value is greater than the parent thought value, rotate clockwise, otherwise rotate counterclockwise. This ensures that the parent and child curve in opposite directions, and activating swapParent twice will appear as a reversal instead of another rotation in the same direction. Returns null if the last action is not swapParent. */
+  const swapDirection = useSelector((state: State): 'clockwise' | 'counterclockwise' | null =>
+    !isLastActionSwapParent ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
+  )
+
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
   // 2. Create L-shaped animation paths by controlling when each movement starts/ends
@@ -145,10 +151,6 @@ const TreeNode = ({
       }
     : undefined
 
-  const cursorIsGreaterThanParent = useSelector(state => {
-    return isCursorGreaterThanParent(state)
-  })
-
   return (
     <FadeTransition
       id={thoughtKey}
@@ -166,7 +168,7 @@ const TreeNode = ({
         className={css({
           position: 'absolute',
           transition: isLastActionSwapParent
-            ? cursorIsGreaterThanParent
+            ? swapDirection === 'clockwise'
               ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
               : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
             : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
@@ -185,7 +187,7 @@ const TreeNode = ({
                   width: '100%',
                 }),
             transition: isLastActionSwapParent
-              ? cursorIsGreaterThanParent
+              ? swapDirection === 'clockwise'
                 ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
                 : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
               : undefined,
