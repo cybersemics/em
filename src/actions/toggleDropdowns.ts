@@ -18,7 +18,7 @@ const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
  * Toggle a specific dropdown and close all others.
  * If no dropdown type is provided, close all dropdowns.
  */
-const manageDropdowns = (state: State, { dropDownType, value }: { dropDownType?: DropdownType; value?: boolean }) => {
+const toggleDropDowns = (state: State, { dropDownType, value }: { dropDownType?: DropdownType; value?: boolean }) => {
   // Create an object with all dropdowns set to false
   const newState = Object.fromEntries(Object.values(DROPDOWN_STATE_KEYS).map(key => [key, false])) as Record<
     DropdownStateKeys,
@@ -45,13 +45,13 @@ const manageDropdowns = (state: State, { dropDownType, value }: { dropDownType?:
 }
 
 /** Action-creator for manageDropdowns. */
-export const manageDropdownsActionCreator =
-  (payload?: Parameters<typeof manageDropdowns>[1]): Thunk =>
+export const toggleDropDownsActionCreator =
+  (payload?: Parameters<typeof toggleDropDowns>[1]): Thunk =>
   dispatch =>
-    dispatch({ type: 'manageDropdowns', ...payload })
+    dispatch({ type: 'toggleDropDowns', ...payload })
 
-export default manageDropdowns
+export default toggleDropDowns
 
-registerActionMetadata('manageDropdowns', {
+registerActionMetadata('toggleDropDowns', {
   undoable: false,
 })

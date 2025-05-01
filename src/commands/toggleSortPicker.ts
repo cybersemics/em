@@ -1,5 +1,5 @@
 import Command from '../@types/Command'
-import { manageDropdownsActionCreator as toggleDropDown } from '../actions/manageDropdowns'
+import { toggleDropDownsActionCreator as toggleDropDowns } from '../actions/toggleDropdowns'
 import Icon from '../components/icons/SortWithPicker'
 import { getAllChildrenSorted, getChildrenRanked } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
@@ -21,7 +21,7 @@ const toggleSortCommand: Command = {
     if (!state.cursor || isRoot(state.cursor)) return
 
     // Toggle the sort picker dropdown
-    dispatch(toggleDropDown({ dropDownType: 'sortPicker' }))
+    dispatch(toggleDropDowns({ dropDownType: 'sortPicker' }))
   },
   isActive: state => {
     if (!state.cursor || isRoot(state.cursor)) return false

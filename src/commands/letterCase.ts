@@ -1,5 +1,5 @@
 import Command from '../@types/Command'
-import { manageDropdownsActionCreator as toggleDropDown } from '../actions/manageDropdowns'
+import { toggleDropDownsActionCreator as toggleDropDowns } from '../actions/toggleDropdowns'
 import Icon from '../components/icons/LetterCaseWithPicker'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -12,7 +12,7 @@ const letterCase: Command = {
   canExecute: state => isDocumentEditable() && !!state.cursor,
   multicursor: false,
   exec: (dispatch, _) => {
-    dispatch(toggleDropDown({ dropDownType: 'letterCase' }))
+    dispatch(toggleDropDowns({ dropDownType: 'letterCase' }))
   },
   isActive: state => !!state.cursor,
   isDropdownOpen: state => !!state.showLetterCase,
