@@ -133,7 +133,7 @@ const TreeNode = ({
     // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
     // 1em + 10px is an eyeball measurement at font sizes 14 and 18
     // (Maybe the 10px is from .content padding-left?)
-    width: isTableCol1 && width !== undefined ? width : `calc(100% - ${x}px + 1em + 10px)`,
+    width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
     ...(style || {}),
     textAlign: isTableCol1 ? ('right' as const) : undefined,
     ...fauxCaretNodeProvider,
@@ -172,13 +172,20 @@ const TreeNode = ({
       >
         <div
           className={css({
-            position: 'absolute',
+            ...(isTableCol1
+              ? {
+                  position: 'relative',
+                  width: 'auto',
+                }
+              : {
+                  position: 'absolute',
+                  width: '100%',
+                }),
             transition: isLastActionSwapParent
               ? cursorIsGreaterThanPrevSibling
                 ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
                 : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
               : undefined,
-            width: '100%',
           })}
           style={innerDivStyle}
         >
