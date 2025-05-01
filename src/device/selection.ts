@@ -2,6 +2,7 @@
 
 /** Wraps the browser Selection API in a device-agnostic interface. */
 import SplitResult from '../@types/SplitResult'
+import { isSafari, isTouch } from '../browser'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -369,7 +370,8 @@ export const set = (
   // deleting a note, then closing the keyboard, then creating a new note could result in lack of focus,
   // perhaps related to iOS Safari's internal management of selection ranges and focus
   // this also occurs when activating clearThought, closing the keyboard, and activating clearThought again
-  if (focusNode instanceof HTMLElement && document.activeElement !== focusNode) focusNode.focus()
+  if (isTouch && isSafari() && focusNode instanceof HTMLElement && document.activeElement !== focusNode)
+    focusNode.focus()
 }
 
 /**
