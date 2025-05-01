@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import DragCommandZone from '../@types/DragCommandZone'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Reducer for setting the zone that the toolbar-button is being hovered over in the CustomizeToolbar modal. */
 const dragCommandZone = (state: State, { zone }: { zone: DragCommandZone | null }) => ({

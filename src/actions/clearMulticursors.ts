@@ -1,6 +1,6 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Clears all multicursors. */
 const clearMulticursors = (state: State): State => {

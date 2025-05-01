@@ -1,4 +1,3 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import deleteThought from '../actions/deleteThought'
@@ -6,6 +5,7 @@ import setDescendant from '../actions/setDescendant'
 import { HeadingLevel } from '../commands/headings'
 import { filterAllChildren } from '../selectors/getChildren'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 

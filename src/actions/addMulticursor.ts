@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import hashPath from '../util/hashPath'
 
 /** Adds a cursor to the multicursor set. */

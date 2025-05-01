@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Sets the search. If not null, will open the search screen. */
 const search = (state: State, { value, archived }: { value: string | null; archived?: boolean }) => ({

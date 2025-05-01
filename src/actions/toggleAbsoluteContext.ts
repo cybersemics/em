@@ -1,8 +1,8 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../constants'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import isHome from '../util/isHome'
 import timestamp from '../util/timestamp'
 

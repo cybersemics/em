@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -8,6 +7,7 @@ import createThought from '../actions/createThought'
 import editThought from '../actions/editThought'
 import { anyChild } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 
 /** Sets the value of the first subthought in the given context. */

@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Sets the connection status. */
 const status = (state: State, { value }: { value: string }) => ({

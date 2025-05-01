@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import settings from '../actions/settings'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Sets the Tutorial Step settings value. */
 const tutorialStep = (state: State, { value }: { value: number }) =>

@@ -1,6 +1,6 @@
 import { Action } from 'redux'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Handles an unknown action by printing an error if it is not a @@ Redux action. Returns state as-is. */
 const unknownAction = (state: State, action: Action) => {

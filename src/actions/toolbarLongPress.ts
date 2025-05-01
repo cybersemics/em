@@ -1,10 +1,10 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import Command from '../@types/Command'
 import DragCommandZone from '../@types/DragCommandZone'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertText, AlertType } from '../constants'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import alert from './alert'
 
 interface Payload {

@@ -1,11 +1,11 @@
 import _ from 'lodash'
 import { FC } from 'react'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import Alert from '../@types/Alert'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 interface Options {
   alertType?: keyof typeof AlertType

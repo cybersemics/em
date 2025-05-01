@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Track editing independently of cursor to allow navigation when keyboard is hidden. */
 const editing = (state: State, { value }: { value: boolean }) => ({

@@ -1,4 +1,3 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import State from '../@types/State'
@@ -8,6 +7,7 @@ import { clearExpandDownActionCreator as clearExpandDown } from '../actions/clea
 import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
 import getChildren from '../selectors/getChildren'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import pathToContext from '../util/pathToContext'

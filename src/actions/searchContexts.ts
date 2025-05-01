@@ -1,8 +1,8 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Set search contexts map that needs to be picked up by pull queue middleware. */
 const searchContexts = (state: State, { value }: { value: Index<Context> | null }): State => ({

@@ -1,9 +1,9 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { EM_TOKEN } from '../constants'
 import findDescendant from '../selectors/findDescendant'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import toggleAttribute from './toggleAttribute'
 
 /** Sets a setting thought. */

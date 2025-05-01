@@ -1,10 +1,10 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { AlertText, AlertType } from '../constants'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Reducer for dragging a command in the customizeToolbar modal. */
 const dragCommand = (state: State, { commandId }: { commandId: CommandId | null }) => ({

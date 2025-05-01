@@ -1,11 +1,11 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertText, AlertType } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import alert from './alert'
 
 interface Payload {

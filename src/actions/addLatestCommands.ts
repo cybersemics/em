@@ -1,7 +1,7 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import Command from '../@types/Command'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /**
  * Add latest gesture to show on the screen.

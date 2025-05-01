@@ -1,7 +1,7 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import TipId from '../@types/TipId'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Shows a popup with a tip. */
 const showTip = (state: State, { tip }: { tip: TipId }): State => ({

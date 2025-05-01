@@ -1,9 +1,9 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import tutorialStepReducer from '../actions/tutorialStep'
 import getSetting from '../selectors/getSetting'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Disaddvances the tutorial one step (whole step by default; optional hint argument for fractional step). */
 const tutorialPrev = (state: State, { hint }: { hint?: boolean } = {}) => {

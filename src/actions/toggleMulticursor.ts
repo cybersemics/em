@@ -1,9 +1,9 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import addMulticursor from './addMulticursor'
 import removeMulticursor from './removeMulticursor'
 

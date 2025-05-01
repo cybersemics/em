@@ -1,7 +1,7 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import expandThoughts from '../selectors/expandThoughts'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Shows or hides all hidden and metaprogramming thoughts. */
 const toggleHiddenThoughts = (state: State) => {

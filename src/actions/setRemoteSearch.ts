@@ -1,6 +1,6 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Set availability of remote search. */
 const setRemoteSearch = (state: State, { value }: { value: boolean }): State => ({ ...state, remoteSearch: value })

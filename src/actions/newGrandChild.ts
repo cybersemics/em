@@ -1,10 +1,10 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import newThought from '../actions/newThought'
 import { TUTORIAL_STEP_START } from '../constants'
 import { firstVisibleChild } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 

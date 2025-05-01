@@ -1,4 +1,3 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import deleteAttribute from '../actions/deleteAttribute'
@@ -7,6 +6,7 @@ import setNoteFocus from '../actions/setNoteFocus'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
 import getChildren from '../selectors/getChildren'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 

@@ -1,5 +1,5 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Forces content editable to update inner html if html has not changed. */
 const editableRender = (state: State) => ({

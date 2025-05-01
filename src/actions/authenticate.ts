@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 interface Options {
   // used by the pullQueue to detect if the authenticated user is connected and thus able to pull

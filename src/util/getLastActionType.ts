@@ -1,5 +1,5 @@
-import { isNavigation } from '../@types/ActionMetadata'
 import Patch from '../@types/Patch'
+import { isNavigation } from '../util/actionMetadata.registry'
 
 /**
  * Recursively calculates last action type from patches/inversePatches history if it is one of the navigation actions and finally returns the action.

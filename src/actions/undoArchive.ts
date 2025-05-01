@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
@@ -9,6 +8,7 @@ import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import { getAllChildren, getChildrenRanked } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 

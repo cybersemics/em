@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Reducer for setting the hoveringPath when drag leave is firing. */
 const updateHoveringPath = (state: State, { path }: { path: Path | undefined }) => ({

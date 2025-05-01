@@ -1,10 +1,10 @@
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import setDescendant from '../actions/setDescendant'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import stripTags from '../util/stripTags'
 import deleteAttribute from './deleteAttribute'
 

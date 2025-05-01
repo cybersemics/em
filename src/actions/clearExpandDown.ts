@@ -1,7 +1,7 @@
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import expandThoughts from '../selectors/expandThoughts'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Clear expand down. */
 const clearExpandDown = (state: State): State => ({

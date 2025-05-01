@@ -1,11 +1,11 @@
 import { toggleThought } from '.'
 import _ from 'lodash'
-import { registerActionMetadata } from '../@types/ActionMetadata'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { EM_TOKEN, Settings } from '../constants'
 import findDescendant from '../selectors/findDescendant'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Toggles a user setting on/off. */
 const toggleUserSetting = (state: State, { key, value }: { key: Settings; value?: boolean }) => {
