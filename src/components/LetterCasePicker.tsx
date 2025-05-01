@@ -19,7 +19,7 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
   const showLetterCase = useSelector(state => state.showLetterCase)
 
-  /** Toggles the Letter Case to the clicked swatch and closes the picker. */
+  /** Toggles the Letter Case to the clicked swatch. */
   const toggleLetterCase = (command: LetterCaseType, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     e.preventDefault()
