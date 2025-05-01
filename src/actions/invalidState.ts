@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Real-time meta validation error status. */
 const invalidState = (state: State, { value }: { value: string }) => ({
@@ -15,3 +16,8 @@ export const setInvalidStateActionCreator =
     getState().invalidState !== value ? dispatch({ type: 'invalidState', value }) : null
 
 export default _.curryRight(invalidState)
+
+// Register this action's metadata
+registerActionMetadata('invalidState', {
+  undoable: false,
+})

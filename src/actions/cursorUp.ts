@@ -5,6 +5,7 @@ import setCursor from '../actions/setCursor'
 import { HOME_TOKEN } from '../constants'
 import { getChildrenSorted } from '../selectors/getChildren'
 import prevThought from '../selectors/prevThought'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Moves the cursor to the previous visible thought in visual order. If there is no cursor, sets the cursor on the last thought in the home context. */
 const cursorUp = (state: State, { preserveMulticursor }: { preserveMulticursor?: boolean } = {}) => {
@@ -34,3 +35,9 @@ export const cursorUpActionCreator =
     dispatch({ type: 'cursorUp', ...payload })
 
 export default cursorUp
+
+// Register this action's metadata
+registerActionMetadata('cursorUp', {
+  undoable: true,
+  isNavigation: true,
+})

@@ -2,6 +2,7 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import newThought, { NewThoughtPayload } from '../actions/newThought'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Alias for newThought with insertNewSubthought: true. */
 const newSubthought = (state: State, payload: NewThoughtPayload | string) => {
@@ -17,3 +18,8 @@ const newSubthought = (state: State, payload: NewThoughtPayload | string) => {
 export const newSubthoughtActionCreator = (): Thunk => dispatch => dispatch({ type: 'newSubthought' })
 
 export default _.curryRight(newSubthought)
+
+// Register this action's metadata
+registerActionMetadata('newSubthought', {
+  undoable: true,
+})

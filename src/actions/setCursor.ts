@@ -20,6 +20,7 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import pathToContext from '../util/pathToContext'
@@ -170,3 +171,9 @@ export const setCursorActionCreator =
     dispatch({ type: 'setCursor', ...payload })
 
 export default _.curryRight(setCursor)
+
+// Register this action's metadata
+registerActionMetadata('setCursor', {
+  undoable: true,
+  isNavigation: true,
+})

@@ -10,6 +10,7 @@ import { isSafari } from '../browser'
 import { AlertText, AlertType } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import alert, { alertActionCreator } from './alert'
@@ -142,3 +143,8 @@ export const dragInProgressActionCreator =
   }
 
 export default _.curryRight(dragInProgress)
+
+// Register this action's metadata
+registerActionMetadata('dragInProgress', {
+  undoable: false,
+})

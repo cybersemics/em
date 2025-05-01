@@ -103,6 +103,7 @@ const testSuite = () => {
       expect(image).toMatchImageSnapshot()
     })
 
+    // TODO: Test intermittently fails with small differences in 'b'.
     it('superscript', async () => {
       const image = await superscriptSnapshot()
       expect(image).toMatchImageSnapshot()

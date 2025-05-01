@@ -10,6 +10,9 @@ const click = async (selector: string) => {
   await act(async () => {
     fireEvent.mouseUp(el)
   })
+  await act(async () => {
+    fireEvent.click(el)
+  })
 }
 
 export default click

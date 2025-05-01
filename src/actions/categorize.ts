@@ -8,6 +8,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import ellipsize from '../util/ellipsize'
@@ -112,3 +113,8 @@ const categorize = (state: State) => {
 export const categorizeActionCreator = (): Thunk => dispatch => dispatch({ type: 'categorize' })
 
 export default categorize
+
+// Register this action's metadata
+registerActionMetadata('categorize', {
+  undoable: true,
+})

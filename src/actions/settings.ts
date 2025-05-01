@@ -3,6 +3,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { EM_TOKEN } from '../constants'
 import findDescendant from '../selectors/findDescendant'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import toggleAttribute from './toggleAttribute'
 
 /** Sets a setting thought. */
@@ -19,3 +20,8 @@ export const settingsActionCreator =
     dispatch({ type: 'settings', ...payload })
 
 export default _.curryRight(settings)
+
+// Register this action's metadata
+registerActionMetadata('settings', {
+  undoable: true,
+})

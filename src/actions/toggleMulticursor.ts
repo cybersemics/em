@@ -3,6 +3,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import addMulticursor from './addMulticursor'
 import removeMulticursor from './removeMulticursor'
 
@@ -21,3 +22,8 @@ export const toggleMulticursorActionCreator =
     dispatch({ type: 'toggleMulticursor', ...payload })
 
 export default _.curryRight(toggleMulticursor)
+
+// Register this action's metadata
+registerActionMetadata('toggleMulticursor', {
+  undoable: false,
+})

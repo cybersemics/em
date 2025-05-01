@@ -4,6 +4,7 @@ import DragCommandZone from '../@types/DragCommandZone'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertText, AlertType } from '../constants'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import alert from './alert'
 
 interface Payload {
@@ -32,3 +33,8 @@ export const toolbarLongPressActionCreator =
     dispatch({ type: 'toolbarLongPress', ...payload })
 
 export default _.curryRight(toolbarLongPress)
+
+// Register this action's metadata
+registerActionMetadata('toolbarLongPress', {
+  undoable: false,
+})

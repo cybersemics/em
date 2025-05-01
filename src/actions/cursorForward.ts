@@ -8,6 +8,7 @@ import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -56,3 +57,9 @@ const cursorForward = (state: State) => {
 export const cursorForwardActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorForward' })
 
 export default cursorForward
+
+// Register this action's metadata
+registerActionMetadata('cursorForward', {
+  undoable: true,
+  isNavigation: true,
+})

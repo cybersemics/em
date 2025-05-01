@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Sets an error. */
 const error = (state: State, { value }: { value: string | null }) => ({
@@ -18,3 +19,8 @@ export const errorActionCreator =
   }
 
 export default _.curryRight(error)
+
+// Register this action's metadata
+registerActionMetadata('error', {
+  undoable: false,
+})

@@ -1,8 +1,9 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
-export type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker'
+type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker'
 
 type DropdownStateKeys = 'showColorPicker' | 'showLetterCase' | 'showSortPicker'
 
@@ -50,3 +51,7 @@ export const manageDropdownsActionCreator =
     dispatch({ type: 'manageDropdowns', ...payload })
 
 export default manageDropdowns
+
+registerActionMetadata('manageDropdowns', {
+  undoable: false,
+})

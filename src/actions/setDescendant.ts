@@ -6,6 +6,7 @@ import createThought from '../actions/createThought'
 import setFirstSubthought from '../actions/setFirstSubthought'
 import findDescendant from '../selectors/findDescendant'
 import getPrevRank from '../selectors/getPrevRank'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
@@ -55,3 +56,8 @@ export const setDescendantActionCreator =
     dispatch({ type: 'setDescendant', ...payload })
 
 export default _.curryRight(setDescendant)
+
+// Register this action's metadata
+registerActionMetadata('setDescendant', {
+  undoable: true,
+})
