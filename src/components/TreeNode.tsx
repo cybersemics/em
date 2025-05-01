@@ -129,14 +129,12 @@ const TreeNode = ({
     const editable = element?.querySelector('.editable') as HTMLElement | null
     if (!editable) return
 
-    const offset = calculateTranslateX()
+    const offset = translateXRef.current
     const bulletEnterOffset = -7
     const bulletExitOffset = 7
 
     if (isTableCol1) {
       // Entering col1 view
-      translateXRef.current = offset
-
       if (bulletElement) {
         bulletElement.style.transform = `translateX(${bulletEnterOffset}px)`
         bulletElement.style.transition = 'none'
@@ -177,6 +175,13 @@ const TreeNode = ({
       })
     }
   }, [isTableCol1, bulletTestId, duration])
+
+  useLayoutEffect(() => {
+    if (isTableCol1) {
+      const offset = calculateTranslateX()
+      translateXRef.current = offset
+    }
+  }, [isTableCol1, editing, width])
 
   // List Virtualization
   // Do not render thoughts that are below the viewport.
