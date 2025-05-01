@@ -8,6 +8,8 @@ import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
+import equalPath from '../util/equalPath'
+import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
@@ -84,15 +86,20 @@ const TreeNode = ({
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
 
-  // true if the last action is swapParent
-  const isLastActionSwapParent = useSelector(state => {
+  /** True if the last action is swapParent and the thought is involved in the swap (cursor or parent). */
+  const isSwap = useSelector(state => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => patch.actions[0] === 'swapParent')
+    return (
+      // last action is swapParent
+      lastPatches?.some(patch => patch.actions[0] === 'swapParent') &&
+      // path is involved in the swap if it is the cursor or the parent of the cursor
+      (equalPath(state.cursor, path) || equalPath(parentOf(state.cursor!), path))
+    )
   })
 
-  /** The direction of the curved animation used for swapParent. If the child (cursor) thought value is greater than the parent thought value, rotate clockwise, otherwise rotate counterclockwise. This ensures that the parent and child curve in opposite directions, and activating swapParent twice will appear as a reversal instead of another rotation in the same direction. Returns null if the last action is not swapParent. */
+  /** The direction of the curved animation in swapParent. If the child (cursor) thought value is greater than the parent thought value, rotate clockwise, otherwise rotate counterclockwise. This ensures that the parent and child curve in opposite directions, and activating swapParent twice will appear as a reversal instead of another rotation in the same direction. Returns null if the last action is not swapParent. */
   const swapDirection = useSelector((state: State): 'clockwise' | 'counterclockwise' | null =>
-    !isLastActionSwapParent ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
+    !isSwap ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
   )
 
   // We split x and y transitions into separate nodes to:
@@ -133,7 +140,7 @@ const TreeNode = ({
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
     // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
     left: x,
-    top: isLastActionSwapParent ? 'auto' : y,
+    top: isSwap ? 'auto' : y,
     // Table col1 uses its exact width since cannot extend to the right edge of the screen.
     // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
     // 1em + 10px is an eyeball measurement at font sizes 14 and 18
@@ -144,7 +151,7 @@ const TreeNode = ({
     ...fauxCaretNodeProvider,
   }
 
-  const innerDivStyle = isLastActionSwapParent
+  const innerDivStyle = isSwap
     ? {
         top: y,
         left: 0,
@@ -167,7 +174,7 @@ const TreeNode = ({
         aria-label='tree-node'
         className={css({
           position: 'absolute',
-          transition: isLastActionSwapParent
+          transition: isSwap
             ? swapDirection === 'clockwise'
               ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
               : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
@@ -186,7 +193,7 @@ const TreeNode = ({
                   position: 'absolute',
                   width: '100%',
                 }),
-            transition: isLastActionSwapParent
+            transition: isSwap
               ? swapDirection === 'clockwise'
                 ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
                 : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
