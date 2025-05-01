@@ -14,6 +14,7 @@ import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import addContext from '../util/addContext'
 import createChildrenMap from '../util/createChildrenMap'
 import hashThought from '../util/hashThought'
@@ -201,3 +202,9 @@ export const editThoughtActionCreator =
     dispatch({ type: 'editThought', ...payload })
 
 export default _.curryRight(editThought)
+
+// Register this action's metadata
+registerActionMetadata('editThought', {
+  undoable: true,
+  isNavigation: false,
+})

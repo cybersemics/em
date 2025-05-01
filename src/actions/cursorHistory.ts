@@ -3,6 +3,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { MAX_CURSOR_HISTORY } from '../constants'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Updates the cursor history for navigating forward/backward. */
 const cursorHistory = (state: State, { cursor }: { cursor: Path }) => ({
@@ -20,3 +21,9 @@ export const cursorHistoryActionCreator =
     dispatch({ type: 'cursorHistory', ...payload })
 
 export default _.curryRight(cursorHistory)
+
+// Register this action's metadata
+registerActionMetadata('cursorHistory', {
+  undoable: true,
+  isNavigation: true,
+})

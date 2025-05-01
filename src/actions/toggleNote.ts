@@ -6,6 +6,7 @@ import setNoteFocus from '../actions/setNoteFocus'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
 import getChildren from '../selectors/getChildren'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 
@@ -37,3 +38,9 @@ const toggleNote = (state: State) => {
 export const toggleNoteActionCreator = (): Thunk => dispatch => dispatch({ type: 'toggleNote' })
 
 export default toggleNote
+
+// Register this action's metadata
+registerActionMetadata('toggleNote', {
+  undoable: true,
+  isNavigation: true,
+})

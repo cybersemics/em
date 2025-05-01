@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import headValue from '../util/headValue'
 
 type NoteFocusType = { value: false; offset?: never } | { value: true; offset: number | null }
@@ -26,3 +27,9 @@ export const setNoteFocusActionCreator =
     dispatch({ type: 'setNoteFocus', ...payload })
 
 export default _.curryRight(setNoteFocus, 2)
+
+// Register this action's metadata
+registerActionMetadata('setNoteFocus', {
+  undoable: true,
+  isNavigation: true,
+})

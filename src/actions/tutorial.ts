@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import storage from '../util/storage'
 import settings from './settings'
 
@@ -24,3 +25,8 @@ export const tutorialActionCreator =
   }
 
 export default _.curryRight(tutorial)
+
+// Register this action's metadata
+registerActionMetadata('tutorial', {
+  undoable: false,
+})

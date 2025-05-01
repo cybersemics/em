@@ -7,6 +7,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -97,3 +98,8 @@ const swapParent = (state: State): State => {
 export const swapParentActionCreator = (): Thunk => dispatch => dispatch({ type: 'swapParent' })
 
 export default _.curryRight(swapParent)
+
+// Register this action's metadata
+registerActionMetadata('swapParent', {
+  undoable: true,
+})

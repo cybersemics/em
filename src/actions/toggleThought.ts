@@ -8,6 +8,7 @@ import findDescendant from '../selectors/findDescendant'
 import { hasChildren } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
@@ -62,3 +63,8 @@ export const toggleThoughtActionCreator =
     dispatch({ type: 'toggleThought', ...payload })
 
 export default _.curryRight(toggleThought)
+
+// Register this action's metadata
+registerActionMetadata('toggleThought', {
+  undoable: true,
+})

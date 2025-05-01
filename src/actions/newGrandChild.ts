@@ -4,6 +4,7 @@ import newThought from '../actions/newThought'
 import { TUTORIAL_STEP_START } from '../constants'
 import { firstVisibleChild } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 
@@ -31,3 +32,8 @@ const newGrandChild = (state: State) => {
 export const newGrandChildActionCreator = (): Thunk => dispatch => dispatch({ type: 'newGrandChild' })
 
 export default newGrandChild
+
+// Register this action's metadata
+registerActionMetadata('newGrandChild', {
+  undoable: true,
+})

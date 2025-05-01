@@ -5,6 +5,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { EM_TOKEN, Settings } from '../constants'
 import findDescendant from '../selectors/findDescendant'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Toggles a user setting on/off. */
 const toggleUserSetting = (state: State, { key, value }: { key: Settings; value?: boolean }) => {
@@ -23,3 +24,8 @@ export const toggleUserSettingActionCreator =
     dispatch({ type: 'toggleUserSetting', ...payload })
 
 export default _.curryRight(toggleUserSetting)
+
+// Register this action's metadata
+registerActionMetadata('toggleUserSetting', {
+  undoable: false,
+})
