@@ -5,7 +5,7 @@ import parentOf from '../util/parentOf'
 import getThoughtById from './getThoughtById'
 
 /**
- * Returns true if the cursor's head thought ranks greater than its parent.
+ * Returns true if the cursor thought's value is greater than its parent's.
  */
 const isCursorGreaterThanParent = (state: State): boolean => {
   const { cursor } = state
