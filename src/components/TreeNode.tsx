@@ -83,7 +83,8 @@ const TreeNode = ({
     const editable = element?.querySelector('.editable')
     if (!editable) return 0
 
-    return Math.max(0, element.getBoundingClientRect().width - editable.getBoundingClientRect().width)
+    const MIN_TRANSLATE_X = -20
+    return Math.max(MIN_TRANSLATE_X, element.getBoundingClientRect().width - editable.getBoundingClientRect().width)
   }
 
   const fauxCaretNodeProvider = useFauxCaretNodeProvider({
