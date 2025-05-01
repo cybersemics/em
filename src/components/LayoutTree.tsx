@@ -5,7 +5,6 @@ import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
-import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
@@ -13,7 +12,6 @@ import useSizeTracking from '../hooks/useSizeTracking'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
 import attributeEquals from '../selectors/attributeEquals'
 import { hasChildren } from '../selectors/getChildren'
-import getThoughtById from '../selectors/getThoughtById'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
 import rootedGrandparentOf from '../selectors/rootedGrandparentOf'
@@ -21,7 +19,6 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
-import { compareThought } from '../util/compareThought'
 import head from '../util/head'
 import HoverArrow from './HoverArrow'
 import TreeNode from './TreeNode'
@@ -112,31 +109,6 @@ const useHideSpaceAbove = (spaceAbove: number) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [spaceAboveExtended],
   )
-}
-
-/** Calculate if the cursor is greater than the previous sibling at LayoutTree level. */
-const useCursorIsGreaterThanPrevSibling = (treeThoughtsPositioned: TreeThoughtPositioned[]) => {
-  // Calculate isGreaterThought at LayoutTree level
-  const cursorIsGreaterThanPrevSibling = useSelector(state => {
-    try {
-      if (!state.cursor) return false
-
-      const cursorThought = getThoughtById(state, head(state.cursor))
-      if (!cursorThought) return false
-
-      // Get the current thought and previous thought to compare
-      const index = treeThoughtsPositioned.findIndex(thought => thought.isCursor)
-      const prevThought = index > 0 ? getThoughtById(state, head(treeThoughtsPositioned[index - 1].path)) : null
-
-      // Compare the current thought with the previous thought to determine the animation curve
-      const thoughtComparison: number = prevThought && cursorThought ? compareThought(cursorThought, prevThought) : 0
-      return thoughtComparison > 0
-    } catch (error) {
-      return false
-    }
-  })
-
-  return cursorIsGreaterThanPrevSibling
 }
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
@@ -270,8 +242,6 @@ const LayoutTree = () => {
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
-  const cursorIsGreaterThanPrevSibling = useCursorIsGreaterThanPrevSibling(treeThoughtsPositioned)
-
   return (
     <div
       className={cx(
@@ -323,7 +293,6 @@ const LayoutTree = () => {
                 cliffPaddingStyle,
                 dragInProgress,
                 autofocusDepth,
-                cursorIsGreaterThanPrevSibling,
               }}
             />
           ))}

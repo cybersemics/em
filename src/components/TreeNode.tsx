@@ -6,6 +6,7 @@ import ActionType from '../@types/ActionType'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
@@ -43,7 +44,6 @@ const TreeNode = ({
   treeThoughtsPositioned,
   bulletWidth,
   cursorUncleId,
-  cursorIsGreaterThanPrevSibling,
   setSize,
   cliffPaddingStyle,
   dragInProgress,
@@ -57,7 +57,6 @@ const TreeNode = ({
   treeThoughtsPositioned: TreeThoughtPositioned[]
   bulletWidth: number
   cursorUncleId: string | null
-  cursorIsGreaterThanPrevSibling: boolean
   setSize: OnResize
   cliffPaddingStyle: { paddingBottom: number }
   dragInProgress: boolean
@@ -99,7 +98,7 @@ const TreeNode = ({
     // Track x position changes. When x prop changes, update state to trigger CSS transition.
     // State updates ensure smooth transitions by forcing a re-render that applies the new position.
     setX(_x)
-  }, [x, _x])
+  }, [_x])
 
   useLayoutEffect(() => {
     // When y changes React re-renders the component with the new value of y. It will result in a visual change in the DOM.
@@ -107,7 +106,7 @@ const TreeNode = ({
     // a CSS property has changed, thereby triggering the CSS transition.
     // Without this additional render, updates get batched and subsequent CSS transitions may not work properly. For example, when moving a thought down, it would not animate.
     setY(_y)
-  }, [y, _y])
+  }, [_y])
 
   // List Virtualization
   // Do not render thoughts that are below the viewport.
@@ -146,6 +145,10 @@ const TreeNode = ({
       }
     : undefined
 
+  const cursorIsGreaterThanParent = useSelector(state => {
+    return isCursorGreaterThanParent(state)
+  })
+
   return (
     <FadeTransition
       id={thoughtKey}
@@ -163,7 +166,7 @@ const TreeNode = ({
         className={css({
           position: 'absolute',
           transition: isLastActionSwapParent
-            ? cursorIsGreaterThanPrevSibling
+            ? cursorIsGreaterThanParent
               ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
               : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
             : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
@@ -182,7 +185,7 @@ const TreeNode = ({
                   width: '100%',
                 }),
             transition: isLastActionSwapParent
-              ? cursorIsGreaterThanPrevSibling
+              ? cursorIsGreaterThanParent
                 ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
                 : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
               : undefined,
