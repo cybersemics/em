@@ -85,7 +85,7 @@ const nthLast = <T>(arr: T[], n: number) => arr[arr.length - n]
 /**
  * Undoes a single action. Applies the last inverse-patch to get the next state and adds a corresponding reverse-patch for the same.
  */
-const undoOneReducer = (state: State) => {
+const undoOneReducer = (state: State): State => {
   const { redoPatches, undoPatches } = state
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
@@ -96,13 +96,14 @@ const undoOneReducer = (state: State) => {
     redoPatches: [...redoPatches, correspondingRedoPatch],
     undoPatches: undoPatches.slice(0, -1),
     cursorCleared: false,
+    lastUndoableActionType: lastUndoPatch[0].actions[0],
   }
 }
 
 /**
  * Redoes a single action. Applies the last patch to get the next state and adds a corresponding undo patch for the same.
  */
-const redoOneReducer = (state: State) => {
+const redoOneReducer = (state: State): State => {
   const { redoPatches, undoPatches } = state
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
@@ -113,13 +114,14 @@ const redoOneReducer = (state: State) => {
     redoPatches: redoPatches.slice(0, -1),
     undoPatches: [...undoPatches, correspondingUndoPatch],
     cursorCleared: false,
+    lastUndoableActionType: lastRedoPatch[0].actions[0],
   }
 }
 
 /**
  * Controls the number of undo operations based on the undo history.
  */
-const undoReducer = (state: State, undoPatches: Patch[]) => {
+const undoReducer = (state: State, undoPatches: Patch[]): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   const lastAction = lastUndoPatch && getPatchAction(lastUndoPatch)
   const penultimateUndoPatch = nthLast(undoPatches, 2)
@@ -142,7 +144,7 @@ const undoReducer = (state: State, undoPatches: Patch[]) => {
 /**
  * Controls the number of redo operations based on the patch history.
  */
-const redoReducer = (state: State, redoPatches: Patch[]) => {
+const redoReducer = (state: State, redoPatches: Patch[]): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   const lastAction = lastRedoPatch && getPatchAction(lastRedoPatch)
 
@@ -238,6 +240,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         const combinedUndoPatch = diffState(newState as Index, lastState)
         return {
           ...newState,
+          lastUndoableActionType: actionType,
           undoPatches: [
             ...newState.undoPatches.slice(0, -1),
             addActionsToPatch(combinedUndoPatch, [
@@ -256,6 +259,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       return undoPatch.length
         ? {
             ...newState,
+            lastUndoableActionType: actionType,
             redoPatches: [],
             undoPatches: [...newState.undoPatches, addActionsToPatch(undoPatch, [lastActionType])],
           }
