@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Sets the search. If not null, will open the search screen. */
 const search = (state: State, { value, archived }: { value: string | null; archived?: boolean }) => ({
@@ -16,3 +17,8 @@ export const searchActionCreator =
     dispatch({ type: 'search', ...payload })
 
 export default _.curryRight(search)
+
+// Register this action's metadata
+registerActionMetadata('search', {
+  undoable: false,
+})

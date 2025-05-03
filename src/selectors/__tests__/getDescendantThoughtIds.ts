@@ -60,7 +60,7 @@ it('get descendants ordered by rank', () => {
     { value: 'a', rank: 0 },
     { value: 'b', rank: 1 },
     { value: 'c', rank: 2 },
-    { value: 'x', rank: 1.502 }, // rank is nudged towards the next sibling (see getRankBefore)
+    { value: 'x', rank: 1.5 },
   ])
 
   // ordered
@@ -69,7 +69,7 @@ it('get descendants ordered by rank', () => {
   expect(descendantsOrdered).toMatchObject([
     { value: 'a', rank: 0 },
     { value: 'b', rank: 1 },
-    { value: 'x', rank: 1.502 }, // rank is nudged towards the next sibling (see getRankBefore)
+    { value: 'x', rank: 1.5 },
     { value: 'c', rank: 2 },
   ])
 })

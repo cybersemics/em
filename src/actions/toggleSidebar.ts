@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Toggles the sidebar. */
 const toggleSidebar = (state: State, { value }: { value?: boolean }) => ({
@@ -15,3 +16,8 @@ export const toggleSidebarActionCreator =
     dispatch({ type: 'toggleSidebar', ...payload })
 
 export default _.curryRight(toggleSidebar)
+
+// Register this action's metadata
+registerActionMetadata('toggleSidebar', {
+  undoable: false,
+})

@@ -10,6 +10,7 @@ import { clientId } from '../data-providers/yjs'
 import { getLexeme } from '../selectors/getLexeme'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import equalPath from '../util/equalPath'
 import hashThought from '../util/hashThought'
@@ -188,3 +189,8 @@ export const mergeThoughtsActionCreator =
     dispatch({ type: 'mergeThoughts', ...payload })
 
 export default _.curry(mergeThoughts)
+
+// Register this action's metadata
+registerActionMetadata('mergeThoughts', {
+  undoable: false,
+})

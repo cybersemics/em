@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Sets the connection status. */
 const status = (state: State, { value }: { value: string }) => ({
@@ -15,3 +16,8 @@ export const statusActionCreator =
     dispatch({ type: 'status', ...payload })
 
 export default _.curryRight(status)
+
+// Register this action's metadata
+registerActionMetadata('status', {
+  undoable: false,
+})

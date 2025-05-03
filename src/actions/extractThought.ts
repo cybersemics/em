@@ -4,6 +4,7 @@ import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
@@ -53,3 +54,8 @@ const extractThought = (state: State) => {
 export const extractThoughtActionCreator = (): Thunk => dispatch => dispatch({ type: 'extractThought' })
 
 export default _.curryRight(extractThought)
+
+// Register this action's metadata
+registerActionMetadata('extractThought', {
+  undoable: true,
+})

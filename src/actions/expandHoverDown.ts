@@ -7,6 +7,7 @@ import { clearExpandDownActionCreator as clearExpandDown } from '../actions/clea
 import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
 import getChildren from '../selectors/getChildren'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import pathToContext from '../util/pathToContext'
@@ -72,3 +73,8 @@ export const expandHoverDownActionCreator = (): Thunk => (dispatch, getState) =>
 }
 
 export default expandDown
+
+// Register this action's metadata
+registerActionMetadata('expandHoverDown', {
+  undoable: false,
+})

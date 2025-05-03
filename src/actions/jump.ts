@@ -3,6 +3,7 @@ import Thunk from '../@types/Thunk'
 import getThoughtById from '../selectors/getThoughtById'
 import pathExists from '../selectors/pathExists'
 import thoughtToPath from '../selectors/thoughtToPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import setCursor from './setCursor'
@@ -45,3 +46,9 @@ export const jumpActionCreator =
     dispatch({ type: 'jump', steps })
 
 export default jump
+
+// Register this action's metadata
+registerActionMetadata('jump', {
+  undoable: true,
+  isNavigation: true,
+})

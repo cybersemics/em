@@ -230,12 +230,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         padding: `14px ${TOOLBAR_BUTTON_PADDING}px ${isDraggingAny ? '7em' : 0}px ${TOOLBAR_BUTTON_PADDING}px`,
       }}
       onMouseLeave={onMouseLeave}
-      {...fastClick(tapUp, {
-        // disable default haptics in favor of custom haptics on touchstart and touchend
-        enableHaptics: false,
-        tapDown,
-        touchMove,
-      })}
+      {...fastClick(tapUp, { enableHaptics: false, tapDown, touchMove })}
     >
       {
         // selected top dash

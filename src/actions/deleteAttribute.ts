@@ -6,6 +6,7 @@ import Thunk from '../@types/Thunk'
 import findDescendant from '../selectors/findDescendant'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 
@@ -50,3 +51,8 @@ export const deleteAttributeActionCreator =
     dispatch({ type: 'deleteAttribute', ...payload })
 
 export default _.curryRight(deleteAttribute)
+
+// Register this action's metadata
+registerActionMetadata('deleteAttribute', {
+  undoable: true,
+})

@@ -10,12 +10,10 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { expandContextThoughtActionCreator as expandContextThought } from '../actions/expandContextThought'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isTouch } from '../browser'
 import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
 import testFlags from '../e2e/testFlags'
-import globals from '../globals'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
@@ -36,7 +34,6 @@ import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
-import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -139,7 +136,6 @@ const ThoughtContainer = ({
   //   state => parseJsonSafe(attribute(state, head(simplePath), '=bindContext') ?? '') as SimplePath | undefined,
   // )
   // const parentView = useSelector(state => attribute(state, head(parentOf(simplePath)), '=view'))
-  const expandedContextThought = useSelector(state => state.expandedContextThought)
   const view = useSelector(state => attribute(state, head(simplePath), '=view'))
 
   // Note: If the thought is the active expand hover top path then it should be treated as a cursor parent. It is because the current implementation allows tree to unfold visually starting from cursor parent.
@@ -373,9 +369,6 @@ const ThoughtContainer = ({
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: Subthoughts render
 
-  const showContextBreadcrumbs =
-    showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
-
   return (
     <div
       {...dragHoldResult.props}
@@ -407,7 +400,7 @@ const ThoughtContainer = ({
         }),
       )}
     >
-      {showContexts && simplePath.length > 1 ? (
+      {showContexts && simplePath.length > 1 && (
         <ContextBreadcrumbs
           cssRaw={css.raw({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
@@ -419,21 +412,7 @@ const ThoughtContainer = ({
           path={parentOf(simplePath)}
           homeContext={homeContext}
         />
-      ) : showContexts && simplePath.length > 2 ? (
-        <span className={css({ fontSize: '75%' })}>
-          <a
-            tabIndex={-1}
-            {...fastClick(
-              () => {
-                dispatch(expandContextThought(path))
-              },
-              { enableHaptics: false },
-            )}
-          >
-            ...{' '}
-          </a>
-        </span>
-      ) : null}
+      )}
 
       <div
         aria-label='thought-container'
@@ -476,7 +455,7 @@ const ThoughtContainer = ({
           onEdit={!isTouch ? onEdit : undefined}
           path={path}
           rank={rank}
-          showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
+          showContextBreadcrumbs={showContexts && value !== '__PENDING__'}
           simplePath={simplePath}
           cssRaw={cssRawThought}
           cssRawThought={cssRawThought}

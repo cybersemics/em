@@ -21,6 +21,7 @@ import nextSibling from '../selectors/nextSibling'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import splitChain from '../selectors/splitChain'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import equalThoughtValue from '../util/equalThoughtValue'
 import head from '../util/head'
@@ -163,3 +164,8 @@ export function archiveThoughtActionCreator(payload: Parameters<typeof archiveTh
 }
 
 export default _.curryRight(archiveThought)
+
+// Register this action's metadata
+registerActionMetadata('archiveThought', {
+  undoable: true,
+})

@@ -41,6 +41,7 @@ import getSortedRank from '../selectors/getSortedRank'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
@@ -256,3 +257,8 @@ export const newThoughtActionCreator =
   }
 
 export default _.curryRight(newThought)
+
+// Register this action's metadata
+registerActionMetadata('newThought', {
+  undoable: true,
+})

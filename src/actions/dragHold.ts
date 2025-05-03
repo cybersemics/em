@@ -5,6 +5,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertText, AlertType } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import alert from './alert'
 
 interface Payload {
@@ -34,3 +35,8 @@ export const dragHoldActionCreator =
     dispatch({ type: 'dragHold', ...payload })
 
 export default _.curryRight(dragHold)
+
+// Register this action's metadata
+registerActionMetadata('dragHold', {
+  undoable: false,
+})

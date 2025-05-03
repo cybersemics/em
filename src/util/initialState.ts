@@ -132,6 +132,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     modals: {},
     multicursors: {},
     noteFocus: false,
+    noteOffset: null,
     recentlyEdited: {},
     redoPatches: [],
     resourceCache: {},
