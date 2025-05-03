@@ -10,8 +10,7 @@ const BulletEllipsis = () => {
   return (
     <div
       {...fastClick(() => dispatch(toggleCommandMenuActionCreator()))}
-      // stop click & mouseDown events from bubbling up to Content.clickOnEmptySpace
-      onClick={e => e.stopPropagation()}
+      // stop mouseDown events from bubbling up to Content.clickOnEmptySpace
       onMouseDown={e => e.stopPropagation()}
       className={css({
         position: 'absolute',
