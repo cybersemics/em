@@ -1,4 +1,5 @@
 import path from 'path'
+import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
@@ -11,7 +12,6 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
-import waitForRender from '../helpers/waitForRender'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -32,8 +32,11 @@ const superscriptSnapshot = async () => {
 
   // TODO: Test intermittently fails with small differences in 'b'.
   // Tested manually with navigator.webdriver = true and 'b' renders at the correct opacity in the next frame, without any animation, so I do not know why this fails.
-  // Example failed test run: https://github.com/cybersemics/em/actions/runs/14236307211
-  await waitForRender()
+  // Example failed test runs:
+  // - https://github.com/cybersemics/em/actions/runs/14236307211
+  // - https://github.com/cybersemics/em/actions/runs/14783509675/job/41507408875?pr=2917
+  // Waiting for requestAnimationFrame does not fix the issue.
+  await sleep(200)
 
   return screenshot()
 }
@@ -103,6 +106,7 @@ const testSuite = () => {
       expect(image).toMatchImageSnapshot()
     })
 
+    // TODO: Test intermittently fails with small differences in 'b'.
     it('superscript', async () => {
       const image = await superscriptSnapshot()
       expect(image).toMatchImageSnapshot()
@@ -199,7 +203,8 @@ describe('multiline', () => {
     // TODO: Test intermittently fails with small differences in 'b'.
     // Tested manually with navigator.webdriver = true and 'b' renders at the correct opacity in the next frame, without any animation, so I do not know why this fails.
     // Example failed test run: https://github.com/cybersemics/em/actions/runs/14236307211
-    await waitForRender()
+    // Waiting for requestAnimationFrame does not fix the issue.
+    await sleep(200)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()

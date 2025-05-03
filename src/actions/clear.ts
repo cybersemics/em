@@ -2,6 +2,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import { getAllChildren } from '../selectors/getChildren'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import initialState from '../util/initialState'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
@@ -46,3 +47,8 @@ export const clearActionCreator =
     dispatch({ type: 'clear', ...payload })
 
 export default clear
+
+// Register this action's metadata
+registerActionMetadata('clear', {
+  undoable: false,
+})

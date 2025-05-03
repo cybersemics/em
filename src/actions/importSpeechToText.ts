@@ -3,6 +3,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import getThoughtById from '../selectors/getThoughtById'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import strip from '../util/strip'
@@ -63,3 +64,8 @@ export const importSpeechToTextActionCreator =
     dispatch({ type: 'importSpeechToText', ...payload })
 
 export default importSpeechToText
+
+// Register this action's metadata
+registerActionMetadata('importSpeechToText', {
+  undoable: true,
+})

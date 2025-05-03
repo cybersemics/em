@@ -8,6 +8,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -99,3 +100,8 @@ export const deleteThoughtWithCursorActionCreator = (): Thunk => dispatch =>
   dispatch({ type: 'deleteThoughtWithCursor' })
 
 export default deleteThoughtWithCursor
+
+// Register this action's metadata
+registerActionMetadata('deleteThoughtWithCursor', {
+  undoable: true,
+})

@@ -40,6 +40,7 @@ const Note = React.memo(
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, thoughtId))
+    const noteOffset = useSelector(state => state.noteOffset)
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
@@ -48,6 +49,7 @@ const Note = React.memo(
           path,
           cursorHistoryClear: true,
           editing: true,
+          noteOffset: null,
           noteFocus: true,
         }),
       )
@@ -56,13 +58,13 @@ const Note = React.memo(
     // set the caret on the note if editing this thought and noteFocus is true
     useEffect(() => {
       // cursor must be true if note is focused
-      if (hasFocus) {
-        selection.set(noteRef.current!, { end: true })
+      if (hasFocus && noteOffset !== null) {
+        selection.set(noteRef.current!, { offset: noteOffset })
         // deleting a note, then closing the keyboard, then creating a new note could result in lack of focus,
         // perhaps related to iOS Safari's internal management of selection ranges and focus
         if (isTouch && isSafari()) noteRef.current?.focus()
       }
-    }, [hasFocus])
+    }, [hasFocus, noteOffset])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
@@ -114,11 +116,21 @@ const Note = React.memo(
     )
 
     /** Set editing to false onBlur, if keyboard is closed. */
-    const onBlur = useCallback(() => {
-      if (isTouch && !selection.isActive()) {
-        setTimeout(() => dispatch(editing({ value: false })))
-      }
-    }, [dispatch])
+    const onBlur = useCallback(
+      (e: React.FocusEvent) => {
+        if (isTouch && !selection.isActive()) {
+          // if we know that the focus is changing to another editable or note then do not set editing to false
+          // (does not work when clicking a bullet as it is set to null)
+          const isRelatedTargetEditableOrNote =
+            e.relatedTarget &&
+            ((e.relatedTarget as Element).hasAttribute?.('data-editable') ||
+              !!(e.relatedTarget as Element).matches('[aria-label="note-editable"]'))
+
+          if (!isRelatedTargetEditableOrNote) setTimeout(() => dispatch(editing({ value: false })))
+        }
+      },
+      [dispatch],
+    )
 
     if (note === null) return null
 
@@ -173,6 +185,7 @@ const Note = React.memo(
           }}
           onBlur={onBlur}
           onFocus={onFocus}
+          role='button'
         />
         <span className={css({ fontSize: '1.1em', position: 'absolute', margin: '-0.15em 0 0 -1.175em' })}>
           <FauxCaret caretType='noteEnd' />

@@ -5,6 +5,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 interface Options {
   alertType?: keyof typeof AlertType
@@ -123,3 +124,8 @@ export const alertWithMinistore =
   }
 
 export default _.curryRight(alertReducer)
+
+// Register this action's metadata
+registerActionMetadata('alert', {
+  undoable: false,
+})

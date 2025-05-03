@@ -14,6 +14,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
@@ -179,3 +180,8 @@ export const uncategorizeActionCreator =
     dispatch({ type: 'uncategorize', ...payload })
 
 export default _.curryRight(uncategorize)
+
+// Register this action's metadata
+registerActionMetadata('uncategorize', {
+  undoable: true,
+})

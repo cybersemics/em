@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Toggles the ColorPicker. */
 const toggleColorPicker = (state: State, { value }: { value?: boolean }) => ({
@@ -15,3 +16,8 @@ export const toggleColorPickerActionCreator =
     dispatch({ type: 'toggleColorPicker', ...payload })
 
 export default _.curryRight(toggleColorPicker)
+
+// Register this action's metadata
+registerActionMetadata('toggleColorPicker', {
+  undoable: false,
+})

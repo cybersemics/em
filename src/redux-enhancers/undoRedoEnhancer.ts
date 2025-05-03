@@ -11,145 +11,9 @@ import ThoughtId from '../@types/ThoughtId'
 import editableRender from '../actions/editableRender'
 import updateThoughts from '../actions/updateThoughts'
 import getThoughtById from '../selectors/getThoughtById'
+import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
-
-/** A map of action types to boolean. */
-type ActionFlags = {
-  [key in ActionType]: boolean
-}
-
-/**
- * Actions representing any cursor movements.
- * These need to be differentiated from the other actions because contiguous navigational actions are merged together to undo/redo all at once.
- */
-const NAVIGATION_ACTIONS: Partial<ActionFlags> = {
-  cursorBack: true,
-  cursorBeforeSearch: true,
-  cursorDown: true,
-  cursorForward: true,
-  cursorHistory: true,
-  cursorUp: true,
-  jump: true,
-  setNoteFocus: true,
-  setCursor: true,
-  toggleNote: true,
-}
-
-/** Returns if an action is navigational, i.e. cursor movements. Contiguous navigation actions will be merged and adjoined with the last non-navigational action. */
-export const isNavigation = (actionType: ActionType) =>
-  NAVIGATION_ACTIONS[actionType as keyof typeof NAVIGATION_ACTIONS]
-
-/** A list of all undoable actions. */
-const UNDOABLE_ACTIONS: ActionFlags = {
-  addAllMulticursor: false,
-  addLatestCommands: false,
-  addMulticursor: false,
-  alert: false,
-  archiveThought: true,
-  authenticate: false,
-  bulletColor: true,
-  bumpThoughtDown: true,
-  categorize: true,
-  clear: false,
-  clearExpandDown: false,
-  clearLatestCommands: false,
-  clearMulticursors: false,
-  closeModal: false,
-  uncategorize: true,
-  commandPalette: false,
-  createThought: true,
-  cursorBack: true,
-  cursorBeforeSearch: true,
-  cursorCleared: false,
-  cursorDown: true,
-  cursorForward: true,
-  cursorHistory: true,
-  cursorUp: true,
-  deleteAttribute: true,
-  deleteEmptyThought: true,
-  deleteThought: true,
-  deleteThoughtWithCursor: true,
-  dismissTip: false,
-  dragHold: false,
-  dragInProgress: false,
-  dragCommand: false,
-  dragCommandZone: false,
-  editableRender: false,
-  editing: false,
-  editThought: true,
-  error: false,
-  expandHoverDown: false,
-  expandHoverUp: false,
-  extractThought: true,
-  freeThoughts: false,
-  fontSize: false,
-  heading: true,
-  importSpeechToText: true,
-  importText: true,
-  indent: true,
-  initThoughts: false,
-  invalidState: false,
-  join: true,
-  jump: true,
-  mergeThoughts: false,
-  moveThought: true,
-  moveThoughtDown: true,
-  moveThoughtUp: true,
-  newGrandChild: true,
-  newSubthought: true,
-  newThought: true,
-  outdent: true,
-  prependRevision: false,
-  removeMulticursor: false,
-  rerank: false,
-  search: false,
-  searchContexts: false,
-  searchLimit: true,
-  setCursor: true,
-  setDescendant: true,
-  setImportThoughtPath: false,
-  setFirstSubthought: true,
-  setNoteFocus: true,
-  setRemoteSearch: false,
-  setResourceCache: false,
-  setSortPreference: false,
-  settings: true,
-  showTip: false,
-  showModal: false,
-  splitSentences: true,
-  splitThought: true,
-  status: false,
-  swapNote: true,
-  swapParent: true,
-  toggleAbsoluteContext: false,
-  toggleAttribute: true,
-  toggleLetterCase: false,
-  toggleSortPicker: false,
-  toggleColorPicker: false,
-  toggleContextView: true,
-  toggleHiddenThoughts: true,
-  toggleMulticursor: false,
-  toggleNote: true,
-  toggleCommandsDiagram: false,
-  toggleSidebar: false,
-  toggleSort: true,
-  toggleThought: true,
-  toggleUserSetting: false,
-  toolbarLongPress: false,
-  tutorial: false,
-  tutorialChoice: false,
-  tutorialNext: false,
-  tutorialPrev: false,
-  tutorialStep: false,
-  undoArchive: false,
-  unknownAction: false,
-  updateThoughts: false,
-  updateHoveringPath: false,
-}
-
-/** Returns if an action is undoable. */
-const isUndoable = (actionType: ActionType) => UNDOABLE_ACTIONS[actionType as keyof typeof UNDOABLE_ACTIONS]
 
 /** Properties that are ignored when generating state patches. */
 const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'pushQueue']
@@ -221,7 +85,7 @@ const nthLast = <T>(arr: T[], n: number) => arr[arr.length - n]
 /**
  * Undoes a single action. Applies the last inverse-patch to get the next state and adds a corresponding reverse-patch for the same.
  */
-const undoOneReducer = (state: State) => {
+const undoOneReducer = (state: State): State => {
   const { redoPatches, undoPatches } = state
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
@@ -232,13 +96,14 @@ const undoOneReducer = (state: State) => {
     redoPatches: [...redoPatches, correspondingRedoPatch],
     undoPatches: undoPatches.slice(0, -1),
     cursorCleared: false,
+    lastUndoableActionType: lastUndoPatch[0].actions[0],
   }
 }
 
 /**
  * Redoes a single action. Applies the last patch to get the next state and adds a corresponding undo patch for the same.
  */
-const redoOneReducer = (state: State) => {
+const redoOneReducer = (state: State): State => {
   const { redoPatches, undoPatches } = state
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
@@ -249,13 +114,14 @@ const redoOneReducer = (state: State) => {
     redoPatches: redoPatches.slice(0, -1),
     undoPatches: [...undoPatches, correspondingUndoPatch],
     cursorCleared: false,
+    lastUndoableActionType: lastRedoPatch[0].actions[0],
   }
 }
 
 /**
  * Controls the number of undo operations based on the undo history.
  */
-const undoReducer = (state: State, undoPatches: Patch[]) => {
+const undoReducer = (state: State, undoPatches: Patch[]): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   const lastAction = lastUndoPatch && getPatchAction(lastUndoPatch)
   const penultimateUndoPatch = nthLast(undoPatches, 2)
@@ -278,7 +144,7 @@ const undoReducer = (state: State, undoPatches: Patch[]) => {
 /**
  * Controls the number of redo operations based on the patch history.
  */
-const redoReducer = (state: State, redoPatches: Patch[]) => {
+const redoReducer = (state: State, redoPatches: Patch[]): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   const lastAction = lastRedoPatch && getPatchAction(lastRedoPatch)
 
@@ -374,6 +240,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         const combinedUndoPatch = diffState(newState as Index, lastState)
         return {
           ...newState,
+          lastUndoableActionType: actionType,
           undoPatches: [
             ...newState.undoPatches.slice(0, -1),
             addActionsToPatch(combinedUndoPatch, [
@@ -392,6 +259,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       return undoPatch.length
         ? {
             ...newState,
+            lastUndoableActionType: actionType,
             redoPatches: [],
             undoPatches: [...newState.undoPatches, addActionsToPatch(undoPatch, [lastActionType])],
           }

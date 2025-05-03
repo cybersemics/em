@@ -8,6 +8,7 @@ import getRankAfter from '../selectors/getRankAfter'
 import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -134,3 +135,8 @@ const swapNote = (state: State) => {
 export const swapNoteActionCreator = (): Thunk => dispatch => dispatch({ type: 'swapNote' })
 
 export default swapNote
+
+// Register this action's metadata
+registerActionMetadata('swapNote', {
+  undoable: true,
+})

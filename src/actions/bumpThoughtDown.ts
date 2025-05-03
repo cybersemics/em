@@ -15,6 +15,7 @@ import getRankBefore from '../selectors/getRankBefore'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
@@ -97,3 +98,8 @@ export const bumpThoughtDownActionCreator =
     dispatch({ type: 'bumpThoughtDown', ...payload })
 
 export default _.curryRight(bumpThoughtDown)
+
+// Register this action's metadata
+registerActionMetadata('bumpThoughtDown', {
+  undoable: true,
+})

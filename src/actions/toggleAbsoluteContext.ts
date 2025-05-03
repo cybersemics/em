@@ -2,6 +2,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../constants'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import isHome from '../util/isHome'
 import timestamp from '../util/timestamp'
 
@@ -21,3 +22,8 @@ const toggleAbsoluteContext = (state: State): State => ({
 export const toggleAbsoluteContextActionCreator = (): Thunk => dispatch => dispatch({ type: 'toggleAbsoluteContext' })
 
 export default toggleAbsoluteContext
+
+// Register this action's metadata
+registerActionMetadata('toggleAbsoluteContext', {
+  undoable: false,
+})

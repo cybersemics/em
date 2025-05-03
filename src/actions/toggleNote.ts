@@ -5,6 +5,8 @@ import setDescendant from '../actions/setDescendant'
 import setNoteFocus from '../actions/setNoteFocus'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
+import getChildren from '../selectors/getChildren'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 
@@ -12,6 +14,8 @@ import reducerFlow from '../util/reducerFlow'
 const toggleNote = (state: State) => {
   const thoughtId = head(state.cursor!)
   const hasNote = findDescendant(state, thoughtId, '=note')
+  const noteChildren = hasNote ? getChildren(state, hasNote) : []
+  const offset = noteChildren.length ? noteChildren[0].value.length : 0
 
   return reducerFlow([
     // create an empty note if it doesn't exist
@@ -26,7 +30,7 @@ const toggleNote = (state: State) => {
         : null,
 
     // toggle state.noteFocus, which will trigger the Editable and Note to re-render and set the selection appropriately
-    setNoteFocus({ value: !state.noteFocus }),
+    state.noteFocus ? setNoteFocus({ value: false }) : setNoteFocus({ value: true, offset }),
   ])(state)
 }
 
@@ -34,3 +38,9 @@ const toggleNote = (state: State) => {
 export const toggleNoteActionCreator = (): Thunk => dispatch => dispatch({ type: 'toggleNote' })
 
 export default toggleNote
+
+// Register this action's metadata
+registerActionMetadata('toggleNote', {
+  undoable: true,
+  isNavigation: true,
+})

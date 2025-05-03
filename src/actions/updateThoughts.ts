@@ -17,6 +17,7 @@ import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 import mergeUpdates from '../util/mergeUpdates'
@@ -270,3 +271,8 @@ export const updateThoughtsActionCreator =
     dispatch({ type: 'updateThoughts', ...payload })
 
 export default _.curryRight(updateThoughts)
+
+// Register this action's metadata
+registerActionMetadata('updateThoughts', {
+  undoable: false,
+})

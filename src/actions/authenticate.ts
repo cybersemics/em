@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 interface Options {
   // used by the pullQueue to detect if the authenticated user is connected and thus able to pull
@@ -28,3 +29,8 @@ export const authenticateActionCreator =
 export type AuthenticateAction = { type: 'authenticate' } & Parameters<typeof authenticate>[1]
 
 export default _.curryRight(authenticate)
+
+// Register this action's metadata
+registerActionMetadata('authenticate', {
+  undoable: false,
+})

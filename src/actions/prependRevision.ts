@@ -6,6 +6,7 @@ import Thunk from '../@types/Thunk'
 import newThought from '../actions/newThought'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import getPublishUrl from '../util/getPublishUrl'
 import head from '../util/head'
@@ -68,3 +69,8 @@ export const prependRevisionActionCreator =
     dispatch({ type: 'prependRevision', ...payload })
 
 export default _.curryRight(prependRevision)
+
+// Register this action's metadata
+registerActionMetadata('prependRevision', {
+  undoable: false,
+})

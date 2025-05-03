@@ -2,6 +2,7 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import storageModel from '../stores/storageModel'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Sets the font size. */
 const fontSize = (state: State, { value }: { value: number }) => ({
@@ -20,3 +21,8 @@ export const fontSizeActionCreator =
   }
 
 export default _.curryRight(fontSize)
+
+// Register this action's metadata
+registerActionMetadata('fontSize', {
+  undoable: false,
+})

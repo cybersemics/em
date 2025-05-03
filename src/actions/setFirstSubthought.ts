@@ -7,6 +7,7 @@ import createThought from '../actions/createThought'
 import editThought from '../actions/editThought'
 import { anyChild } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 
 /** Sets the value of the first subthought in the given context. */
@@ -42,3 +43,8 @@ export const setFirstSubthoughtActionCreator =
     dispatch({ type: 'setFirstSubthought', ...payload })
 
 export default _.curryRight(setFirstSubthought)
+
+// Register this action's metadata
+registerActionMetadata('setFirstSubthought', {
+  undoable: true,
+})

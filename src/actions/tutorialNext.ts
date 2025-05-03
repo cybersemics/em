@@ -5,6 +5,7 @@ import tutorial from '../actions/tutorial'
 import tutorialStepReducer from '../actions/tutorialStep'
 import { TUTORIAL2_STEP_SUCCESS, TUTORIAL_STEP_SUCCESS } from '../constants'
 import getSetting from '../selectors/getSetting'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Advances the tutorial one step (whole step by default; optional hint argument for fractional step). */
 const tutorialNext = (state: State, { hint }: { hint?: boolean }) => {
@@ -28,3 +29,8 @@ export const tutorialNextActionCreator =
     dispatch({ type: 'tutorialNext', ...payload })
 
 export default _.curryRight(tutorialNext)
+
+// Register this action's metadata
+registerActionMetadata('tutorialNext', {
+  undoable: false,
+})

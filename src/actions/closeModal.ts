@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import storage from '../util/storage'
 
 /**
@@ -24,3 +25,8 @@ export const closeModalActionCreator = (): Thunk => (dispatch, getState) => {
 }
 
 export default _.curryRight(closeModal)
+
+// Register this action's metadata
+registerActionMetadata('closeModal', {
+  undoable: false,
+})
