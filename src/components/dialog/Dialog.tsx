@@ -88,7 +88,7 @@ const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
           border: '2px solid {colors.fgOverlay50}',
           overflow: 'hidden',
           position: 'relative',
-          maxHeight: '80vh',
+          maxHeight: '80dvh',
         })}
       >
         {children}
