@@ -36,9 +36,11 @@ const useFilteredCommands = (
   const possibleCommandsSorted = useMemo(() => {
     const possibleCommands = visibleCommands.filter(command => {
       // Always include help command in gesture mode
-      if (isTouch && (command.id === 'openGestureCheatsheet' || command.id === 'cancel')) return true
+      if (isTouch && command.id === 'openGestureCheatsheet') return true
       // Always exclude gestureCheatsheet command in keyboard mode
       if (!isTouch && command.id === 'openGestureCheatsheet') return false
+      // Show cancel command on touch devices when a gesture is in progress
+      if (isTouch && command.id === 'cancel' && gestureInProgress) return true
       // Always exclude cancel command in keyboard mode
       if (!isTouch && command.id === 'cancel') return false
 
