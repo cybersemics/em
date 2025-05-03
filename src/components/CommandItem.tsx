@@ -172,8 +172,8 @@ const CommandItem = ({
         <p
           className={css({
             fontSize: viewType === 'grid' ? '0.7rem' : undefined,
-            marginTop: '0.3rem',
-            marginBottom: '0.3rem',
+            marginTop: viewType === 'grid' ? '0.3rem' : undefined,
+            marginBottom: viewType === 'grid' ? '0.3rem' : undefined,
           })}
         >
           {description}
