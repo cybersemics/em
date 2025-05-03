@@ -5,7 +5,7 @@ import Dispatch from '../@types/Dispatch'
 import SimplePath from '../@types/SimplePath'
 import { Thunk } from '../@types/Thunk'
 import { closeModalActionCreator as closeModal } from '../actions/closeModal'
-import { toggleDropDownsActionCreator as closeAllDropdowns } from '../actions/toggleDropdowns'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
@@ -55,7 +55,7 @@ const Content: FC = () => {
     setIsPressed(false)
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-    dispatch([state.showModal ? closeModal() : null, closeAllDropdowns()])
+    dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
   }
 
   return (

@@ -15,7 +15,7 @@ import { importSpeechToTextActionCreator as importSpeechToText } from '../action
 import { setInvalidStateActionCreator as setInvalidState } from '../actions/invalidState'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { toggleDropDownsActionCreator as closeAllDropdowns } from '../actions/toggleDropdowns'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
@@ -555,7 +555,7 @@ const Editable = ({
           selection.clear()
 
           // close all popups when clicking on a thought
-          dispatch(closeAllDropdowns())
+          dispatch(toggleDropdown())
         } else {
           setCursorOnThought()
 
