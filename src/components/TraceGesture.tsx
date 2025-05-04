@@ -53,22 +53,35 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const signaturePadRef = useRef<SignaturePad | null>(null)
 
+  /** A small flag cancel the next stroke after touchcancel. Otherwise, opening the app switcher by swiping the bottom of the screen on iOS can accidentally draw a line from the bottom of the screen to the start of the gesture. */
+  // https://github.com/cybersemics/em/issues/2921
+  const cancelNextStroke = useRef(false)
+
   // Clear the signature pad when the stroke starts.
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
-  const onBeginStroke = useCallback(() => {
-    if (!signaturePadRef.current) return
+  const onBeginStroke = useCallback(
+    (e: Event) => {
+      // e.preventDefault() will prevent the stroke
+      // reset the cancelNextStroke flag to re-enable
+      if (!signaturePadRef.current || cancelNextStroke.current) {
+        e.preventDefault()
+        cancelNextStroke.current = false
+        return
+      }
 
-    const signaturePad = signaturePadRef.current['signaturePad'] as SignaturePadOverride
+      const signaturePad = signaturePadRef.current['signaturePad'] as SignaturePadOverride
 
-    signaturePad.clear()
+      signaturePad.clear()
 
-    // add glow
-    // TODO: WHy does GESTURE_GLOW_COLOR not work?
-    signaturePad._ctx.shadowColor = colors.highlight
-    signaturePad._ctx.shadowOffsetX = 0
-    signaturePad._ctx.shadowOffsetY = 0
-    signaturePad._ctx.shadowBlur = GESTURE_GLOW_BLUR
-  }, [colors])
+      // add glow
+      // TODO: WHy does GESTURE_GLOW_COLOR not work?
+      signaturePad._ctx.shadowColor = colors.highlight
+      signaturePad._ctx.shadowOffsetX = 0
+      signaturePad._ctx.shadowOffsetY = 0
+      signaturePad._ctx.shadowBlur = GESTURE_GLOW_BLUR
+    },
+    [colors],
+  )
 
   useEffect(() => {
     if (!signaturePadRef.current) return
@@ -113,11 +126,11 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     }
 
     /**
-     * Clear the signature pad when the gesture is cancelled.
+     * Cancel the next stroke when touchcancel is triggered.
      * Otherwise a stroke can be rendered from the bottom of the screen when switching apps on iPhone.
      */
     const onTouchCancel = () => {
-      signaturePad.clear()
+      cancelNextStroke.current = true
     }
 
     eventNode?.addEventListener('touchstart', onTouchStart)
