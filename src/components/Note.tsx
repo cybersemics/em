@@ -11,7 +11,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
-import { isSafari, isTouch } from '../browser'
+import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
 import store from '../stores/app'
@@ -60,9 +60,6 @@ const Note = React.memo(
       // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
         selection.set(noteRef.current!, { offset: noteOffset })
-        // deleting a note, then closing the keyboard, then creating a new note could result in lack of focus,
-        // perhaps related to iOS Safari's internal management of selection ranges and focus
-        if (isTouch && isSafari()) noteRef.current?.focus()
       }
     }, [hasFocus, noteOffset])
 
