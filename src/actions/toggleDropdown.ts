@@ -32,11 +32,19 @@ const toggleDropdown = (state: State, { dropDownType, value }: { dropDownType?: 
   }
 }
 
-/** Action-creator for manageDropdowns. */
+/** Dispatches toggleDropDown only if needed. */
 export const toggleDropdownActionCreator =
   (payload?: Parameters<typeof toggleDropdown>[1]): Thunk =>
-  dispatch =>
-    dispatch({ type: 'toggleDropdown', ...payload })
+  (dispatch, getState) => {
+    const state = getState()
+    const { dropDownType, value } = payload ?? {}
+    const stateKeys = Object.keys(DROPDOWN_STATE_KEYS) as DropdownStateKeys[]
+
+    // avoid closing all dropdowns if they are already closed
+    if (value || stateKeys.some(stateKey => state[stateKey])) {
+      dispatch({ type: 'toggleDropdown', dropDownType, value })
+    }
+  }
 
 export default toggleDropdown
 
