@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { CSSTransition } from 'react-transition-group'
 import { css, cva, cx } from '../../styled-system/css'
 import { bulletRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
@@ -385,7 +385,6 @@ const overlayAppearActive = css({
 
 const overlayAppearDone = css({
   opacity: 1,
-  animation: `opacity 1ms linear forwards`,
 })
 
 const overlayEnterActive = css({
@@ -395,12 +394,10 @@ const overlayEnterActive = css({
 
 const overlayEnterDone = css({
   opacity: 1,
-  animation: `opacity 1ms linear forwards`,
 })
 
 const overlayExit = css({
   opacity: 0,
-  animation: `opacity 1ms linear forwards`,
 })
 
 /** A larger circle that surrounds the bullet of the highlighted thought. */
@@ -614,68 +611,66 @@ const Bullet = ({
       // stop click event from bubbling up to Content.clickOnEmptySpace
       onClick={e => e.stopPropagation()}
     >
-      <TransitionGroup>
-        <svg
-          className={cx(
-            glyph({ isBulletExpanded, showContexts, leaf }),
-            css({
-              // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
-              // This caused the bullet slide animation to end with a jerky movement.
-              // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
-              // allowing the browser to optimize the animation.
-              willChange: 'transform',
-              ...(isHighlighted
-                ? {
-                    fillOpacity: 1,
-                    fill: 'highlight',
-                    stroke: 'highlight',
-                  }
-                : null),
-            }),
-          )}
-          viewBox='0 0 600 600'
-          style={{
-            height: lineHeight,
-            width: lineHeight,
-            marginLeft: bulletSvgMarginLeft,
-            // required to make the distance between bullet and thought scale properly at all font sizes.
-            left: bulletSvgLeftPosition,
-            marginBottom: glyphMarginBottom,
-          }}
-          ref={svgElement}
-        >
-          <g>
-            {/* required to be rendered all the time to allow animation */}
-            <BulletCursorOverlay bulletOverlayRadius={bulletOverlayRadius} isEditing={isEditing} path={path} />
+      <svg
+        className={cx(
+          glyph({ isBulletExpanded, showContexts, leaf }),
+          css({
+            // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
+            // This caused the bullet slide animation to end with a jerky movement.
+            // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
+            // allowing the browser to optimize the animation.
+            willChange: 'transform',
+            ...(isHighlighted
+              ? {
+                  fillOpacity: 1,
+                  fill: 'highlight',
+                  stroke: 'highlight',
+                }
+              : null),
+          }),
+        )}
+        viewBox='0 0 600 600'
+        style={{
+          height: lineHeight,
+          width: lineHeight,
+          marginLeft: bulletSvgMarginLeft,
+          // required to make the distance between bullet and thought scale properly at all font sizes.
+          left: bulletSvgLeftPosition,
+          marginBottom: glyphMarginBottom,
+        }}
+        ref={svgElement}
+      >
+        <g>
+          {/* required to be rendered all the time to allow animation */}
+          <BulletCursorOverlay bulletOverlayRadius={bulletOverlayRadius} isEditing={isEditing} path={path} />
 
-            {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && (
-              <BulletHighlightOverlay bulletOverlayRadius={bulletOverlayRadius} />
-            )}
-            {leaf && !showContexts ? (
-              <BulletLeaf
-                done={isDone}
-                fill={fill}
-                isHighlighted={isHighlighted}
-                missing={missing}
-                pending={pending}
-                showContexts={showContexts}
-                isBulletExpanded={isBulletExpanded}
-              />
-            ) : (
-              <BulletParent
-                currentScale={svgElement.current?.currentScale || 1}
-                done={isDone}
-                fill={fill}
-                isHighlighted={isHighlighted}
-                childrenMissing={childrenMissing}
-                pending={pending}
-                showContexts={showContexts}
-                isBulletExpanded={isBulletExpanded}
-              />
-            )}
-          </g>
-        </svg>
-      </TransitionGroup>
+          {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && (
+            <BulletHighlightOverlay bulletOverlayRadius={bulletOverlayRadius} />
+          )}
+          {leaf && !showContexts ? (
+            <BulletLeaf
+              done={isDone}
+              fill={fill}
+              isHighlighted={isHighlighted}
+              missing={missing}
+              pending={pending}
+              showContexts={showContexts}
+              isBulletExpanded={isBulletExpanded}
+            />
+          ) : (
+            <BulletParent
+              currentScale={svgElement.current?.currentScale || 1}
+              done={isDone}
+              fill={fill}
+              isHighlighted={isHighlighted}
+              childrenMissing={childrenMissing}
+              pending={pending}
+              showContexts={showContexts}
+              isBulletExpanded={isBulletExpanded}
+            />
+          )}
+        </g>
+      </svg>
     </span>
   )
 }

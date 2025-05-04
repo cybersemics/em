@@ -1,6 +1,6 @@
-import { RefObject, useEffect, useMemo, useRef } from 'react'
+import { RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { CSSTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
 import Path from '../../@types/Path'
 import useBulletPosition from '../../hooks/useBulletPosition'
@@ -26,17 +26,19 @@ const enterAct = css({
 })
 const enterDone = css({
   opacity: 0,
-  animation: `opacity 1ms linear forwards`,
 })
 
 const exit = css({ opacity: 0 })
 const base = css({ position: 'absolute', willChange: 'transform,opacity' })
 
 /**
- * Renders an animated bullet overlay that appears when the cursor is active.
+ * Renders an animated bullet overlay that shows when the cursor is active.
  */
 const BulletAnimateOverlay = ({ x = 0, y = 0, path }: { x?: number; y?: number; path?: Path }) => {
   const svgElement = useRef<HTMLElement>(null)
+
+  // show state pulses true for 80 ms whenever translatePosition changes
+  const [show, setShow] = useState(false)
 
   const isInContextView = useSelector(state => path && isContextViewActive(state, parentOf(path)))
   const simplePath = useSelector(state =>
@@ -141,64 +143,70 @@ const BulletAnimateOverlay = ({ x = 0, y = 0, path }: { x?: number; y?: number; 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    // if the translate position changes, set show to true
+    if (currentOverlayPosition.current?.x !== translateX || currentOverlayPosition.current?.y !== translateY) {
+      setShow(true)
+    }
+  }, [translateX, translateY])
+
   return (
-    <TransitionGroup>
-      <CSSTransition
-        key={`${translateX}-${translateY}`}
-        appear
-        timeout={{
-          enter: 80 + 1,
-          exit: 1,
-        }}
-        classNames={{
-          enter,
-          enterActive: enterAct,
-          enterDone,
-          exit,
-        }}
-        mountOnEnter
-        unmountOnExit
-        onEntered={() => {
-          // Update the current overlay position
-          currentOverlayPosition.current = {
-            x: translateX,
-            y: translateY,
-          }
-        }}
+    <CSSTransition
+      in={show}
+      timeout={{
+        enter: 80 + 1,
+        exit: 1,
+      }}
+      classNames={{
+        enter,
+        enterActive: enterAct,
+        enterDone,
+        exit,
+      }}
+      mountOnEnter
+      unmountOnExit
+      onEntered={() => {
+        // Update the current overlay position
+        currentOverlayPosition.current = {
+          x: translateX,
+          y: translateY,
+        }
+        setShow(false)
+      }}
+      nodeRef={svgElement}
+    >
+      <svg
+        className={base}
+        viewBox='0 0 600 600'
+        style={
+          {
+            height: lineHeight,
+            width: lineHeight,
+            opacity: 0,
+            transform: `translate(${translateX}px, ${translateY}px)`,
+            // adds custom css variables so pandacss can consume the dynamic values
+            '--from-x': `${currentOverlayPosition.current?.x}px`,
+            '--from-y': `${currentOverlayPosition.current?.y}px`,
+            '--to-x': `${translateX}px`,
+            '--to-y': `${translateY}px`,
+          } as React.CSSProperties
+        }
+        ref={svgElement as unknown as RefObject<SVGSVGElement>}
       >
-        <svg
-          className={base}
-          viewBox='0 0 600 600'
-          style={
-            {
-              height: lineHeight,
-              width: lineHeight,
-              opacity: 0,
-              transform: `translate(${translateX}px, ${translateY}px)`,
-              // adds custom css variables so pandacss can consume the dynamic values
-              '--from-x': `${currentOverlayPosition.current?.x}px`,
-              '--from-y': `${currentOverlayPosition.current?.y}px`,
-              '--to-x': `${translateX}px`,
-              '--to-y': `${translateY}px`,
-            } as React.CSSProperties
-          }
-          ref={svgElement as unknown as RefObject<SVGSVGElement>}
-        >
-          <g>
-            <ellipse
-              ry={bulletOverlayRadius}
-              rx={bulletOverlayRadius}
-              cy='300'
-              cx='300'
-              className={css({
-                fillOpacity: 0.25,
-                fill: 'fg',
-              })}
-            />
-          </g>
-        </svg>
-      </CSSTransition>
-    </TransitionGroup>
+        <g>
+          <ellipse
+            ry={bulletOverlayRadius}
+            rx={bulletOverlayRadius}
+            cy='300'
+            cx='300'
+            className={css({
+              fillOpacity: 0.25,
+              fill: 'fg',
+            })}
+          />
+        </g>
+      </svg>
+    </CSSTransition>
   )
 }
 
