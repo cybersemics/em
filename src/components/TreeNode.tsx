@@ -1,21 +1,83 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
+import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import attributeEquals from '../selectors/attributeEquals'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
+import rootedParentOf from '../selectors/rootedParentOf'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
-import hashPath from '../util/hashPath'
+import head from '../util/head'
+import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
 import VirtualThought, { OnResize } from './VirtualThought'
+
+/** Returns the width of a given text string using the specified font. */
+const getTextWidth = (text: string, font: string): number => {
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+  if (!context) return 0
+  context.font = font
+  return context.measureText(text).width
+}
+
+/** Custom hook to fetch thought IDs that affect the max width. */
+const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
+  return useSelector((state: State) => {
+    const parentPath = rootedParentOf(state, path)
+    const parentId = head(parentPath)
+    const grandParentPath = parentId ? rootedParentOf(state, parentPath) : null
+    const grandParentId = grandParentPath ? head(grandParentPath) : null
+    const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
+    const childrenWithoutDividers = children.filter(child => !isDivider(child.value))
+    const isOnlyChild = childrenWithoutDividers.length === 0
+    const isTableView =
+      attributeEquals(state, parentId, '=view', 'Table') || attributeEquals(state, grandParentId, '=view', 'Table')
+
+    const dependentThoughtIds = isOnlyChild
+      ? isTableView && grandParentId
+        ? // If the thought is the only child and in a table view, get the grandchildren's IDs
+          getAllChildrenAsThoughts(state, grandParentId)
+            .filter(child => !isDivider(child.value))
+            .flatMap(parent =>
+              (parent.id ? getAllChildrenAsThoughts(state, parent.id) : [])
+                .filter(child => !isDivider(child.value))
+                .map(child => child.id),
+            )
+        : // If the thought is the only child but not in a table view, return an empty array
+          []
+      : // If the thought is not the only child, get the sibling thought IDs
+        childrenWithoutDividers.map(child => child.id)
+
+    return dependentThoughtIds
+  }, shallowEqual)
+}
+
+/** Calculates the width of multiple thoughts by measuring their rendered widths in the DOM. */
+const getThoughtWidths = (ids: ThoughtId[]): number[] => {
+  return ids.map(id => {
+    const editable = document.querySelector(`[aria-label="editable-${id}"]`) as HTMLElement | null
+    if (editable) {
+      const text = editable?.innerText
+      const computedStyle = window.getComputedStyle(editable)
+      const font = `${computedStyle.fontSize} ${computedStyle.fontFamily}`
+      const editableWidth = getTextWidth(text, font)
+      return editableWidth
+    }
+    return 0
+  })
+}
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
 const TreeNode = ({
@@ -76,20 +138,30 @@ const TreeNode = ({
 
   const translateXRef = useRef<number>(0)
   const duration = durations.get('layoutNodeAnimation')
-  const bulletTestId = `bullet-${hashPath(simplePath)}`
+
+  const bulletTestId = `bullet-${thoughtId}`
 
   const hasMounted = useRef(false)
   const prevIsTableCol1 = useRef(isTableCol1)
+  const widthDependentThoughtIds = useWidthDependentThoughtIds(path)
 
   /** Calculates the horizontal translation needed to align the text to the right within its parent. */
   const calculateTranslateX = (): number => {
     const element = fadeThoughtRef.current
     if (!element) return 0
-    const editable = element?.querySelector('.editable')
+
+    const editable = element.querySelector('.editable') as HTMLElement | null
     if (!editable) return 0
 
-    const MIN_TRANSLATE_X = -20
-    return Math.max(MIN_TRANSLATE_X, element.getBoundingClientRect().width - editable.getBoundingClientRect().width)
+    const text = editable.innerText
+    const computedStyle = window.getComputedStyle(editable)
+    const font = `${computedStyle.fontSize} ${computedStyle.fontFamily}`
+    const editableWidth = getTextWidth(text, font)
+
+    const widths = getThoughtWidths(widthDependentThoughtIds)
+    const maxSiblingWidth = Math.max(...widths, 0)
+
+    return maxSiblingWidth - editableWidth
   }
 
   const fauxCaretNodeProvider = useFauxCaretNodeProvider({
@@ -152,16 +224,19 @@ const TreeNode = ({
     const element = fadeThoughtRef.current
     if (!element) return
 
-    const bulletElement = element?.querySelector(`[data-testid="${bulletTestId}"]`) as HTMLElement | null
+    const bulletElement = element?.querySelector(`[aria-label="bullet"]`) as HTMLElement | null
     const editable = element?.querySelector('.editable') as HTMLElement | null
     if (!editable) return
 
-    const offset = translateXRef.current
     const bulletEnterOffset = -7
     const bulletExitOffset = 7
 
+    translateXRef.current = calculateTranslateX()
+
     if (isTableCol1) {
-      // Entering col1 view
+      const offset = translateXRef.current
+
+      // Entering
       if (bulletElement) {
         bulletElement.style.transform = `translateX(${bulletEnterOffset}px)`
         bulletElement.style.transition = 'none'
@@ -180,8 +255,8 @@ const TreeNode = ({
         editable.style.transition = `transform ${duration}ms ease-out`
       })
     } else {
-      // Exiting col1 view
-      const exitOffset = translateXRef.current || 0
+      // Exiting
+      const exitOffset = translateXRef.current
 
       if (bulletElement) {
         bulletElement.style.transform = `translateX(${bulletExitOffset}px)`
@@ -201,14 +276,8 @@ const TreeNode = ({
         editable.style.transition = `transform ${duration}ms ease-out`
       })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTableCol1, bulletTestId, duration])
-
-  useLayoutEffect(() => {
-    if (isTableCol1) {
-      const offset = calculateTranslateX()
-      translateXRef.current = offset
-    }
-  }, [isTableCol1, editing, width])
 
   // List Virtualization
   // Do not render thoughts that are below the viewport.
