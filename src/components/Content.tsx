@@ -5,9 +5,7 @@ import Dispatch from '../@types/Dispatch'
 import SimplePath from '../@types/SimplePath'
 import { Thunk } from '../@types/Thunk'
 import { closeModalActionCreator as closeModal } from '../actions/closeModal'
-import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
-import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
-import { toggleSortPickerActionCreator as toggleSortPicker } from '../actions/toggleSortPicker'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
@@ -57,12 +55,7 @@ const Content: FC = () => {
     setIsPressed(false)
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-    dispatch([
-      state.showModal ? closeModal() : null,
-      state.showColorPicker ? toggleColorPicker({ value: false }) : null,
-      state.showLetterCase ? toggleLetterCase({ value: false }) : null,
-      state.showSortPicker ? toggleSortPicker({ value: false }) : null,
-    ])
+    dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
   }
 
   return (
