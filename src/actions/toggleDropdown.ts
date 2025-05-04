@@ -38,10 +38,10 @@ export const toggleDropdownActionCreator =
   (dispatch, getState) => {
     const state = getState()
     const { dropDownType, value } = payload ?? {}
-    const stateKeys = Object.keys(DROPDOWN_STATE_KEYS) as DropdownStateKeys[]
+    const stateKeys = Object.values(DROPDOWN_STATE_KEYS) as DropdownStateKeys[]
 
     // avoid closing all dropdowns if they are already closed
-    if (value || stateKeys.some(stateKey => state[stateKey])) {
+    if (dropDownType || stateKeys.some(stateKey => state[stateKey])) {
       dispatch({ type: 'toggleDropdown', dropDownType, value })
     }
   }
