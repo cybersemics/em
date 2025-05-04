@@ -65,7 +65,8 @@ describe('multiline', () => {
 
     // TODO: Test intermittently fails
     // e.g. https://github.com/cybersemics/em/actions/runs/13817648331/job/38654935147?pr=2800
-    await sleep(200)
+    // Fails with sleep(200): https://github.com/cybersemics/em/actions/runs/14812798110/job/41589583778
+    await sleep(400)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot({
