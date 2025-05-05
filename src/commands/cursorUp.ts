@@ -24,7 +24,7 @@ import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 const cursorUpCommand: Command = {
   id: 'cursorUp',
   label: 'Cursor Up',
-  keyboard: { key: Key.ArrowUp },
+  keyboard: [{ key: Key.ArrowUp }, { key: Key.ArrowUp, shift: true }],
   hideFromHelp: true,
   multicursor: false,
   svg: CursorUpIcon,
@@ -108,13 +108,6 @@ const cursorUpCommand: Command = {
       })
     } else dispatch(cursorUp())
   }),
-}
-
-export const cursorUpAlias: Command = {
-  ...cursorUpCommand,
-  id: 'cursorUpAlias',
-  gesture: undefined,
-  keyboard: { key: Key.ArrowUp, shift: true },
 }
 
 export default cursorUpCommand

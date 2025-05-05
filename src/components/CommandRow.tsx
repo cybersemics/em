@@ -116,8 +116,12 @@ const CommandRow = ({
         {isTouch && command.gesture ? (
           <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
             {isTouch && command.gesture ? (
-              // GesturePath[]
-              <GestureDiagram path={command.gesture as GesturePath} size={48} arrowSize={12} />
+              // Use first gesture for display
+              <GestureDiagram
+                path={Array.isArray(command.gesture) ? command.gesture[0] : (command.gesture as GesturePath)}
+                size={48}
+                arrowSize={12}
+              />
             ) : null}
           </td>
         ) : null}

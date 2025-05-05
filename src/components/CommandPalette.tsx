@@ -59,7 +59,7 @@ const CommandSearch: FC<{
       if (
         e.key === 'Escape' ||
         // manually check if the commandPalette command is entered since global commands are disabled while the command palette is open
-        hashKeyDown(e) === hashCommand(commandPaletteCommand)
+        hashCommand(commandPaletteCommand).includes(hashKeyDown(e))
       ) {
         e.preventDefault()
         e.stopPropagation()

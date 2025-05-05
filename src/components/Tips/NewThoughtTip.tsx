@@ -8,6 +8,7 @@ import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
+import { gestureString } from '../../commands'
 import newThoughtCommand from '../../commands/newThought'
 import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
@@ -28,7 +29,7 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
       You can add a new thought by swiping
       <GestureDiagram
         inGestureContainer
-        path={newThoughtCommand.gesture as GesturePath}
+        path={gestureString(newThoughtCommand) as GesturePath}
         size={30}
         color={token('colors.gray66')}
       />

@@ -9,23 +9,28 @@ const selectAllCommand: Command = {
   description: 'Selects all thoughts at the current level. May reduce wrist strain.',
   gesture: 'ldr',
   // meta + alt + a is the default keyboard shortcut and always works.
-  // See alias below for meta + a when multiselect is active.
-  keyboard: { key: 'a', meta: true, alt: true },
+  // meta + a is conditionally active when multicursor is active
+  keyboard: [
+    { key: 'a', meta: true, alt: true },
+    { key: 'a', meta: true },
+  ],
   multicursor: false,
-  canExecute: isDocumentEditable,
-  exec: addAllMulticursor(),
-}
+  canExecute: state => {
+    //document must be editable
+    if (!isDocumentEditable()) {
+      return false
+    }
 
-/** An alias to allow meta + a when multiselect is active (when it cannot interfere with selecting all text within a thought). */
-export const selectAllAlias: Command = {
-  id: 'selectAllAlias',
-  label: 'Select All',
-  keyboard: { key: 'a', meta: true },
-  hideFromHelp: true,
-  multicursor: false,
-  // This meta + a alias is active only when there is no multicursor.
-  // This allows the default browser behavior of selecting all text in the thought.
-  canExecute: state => isDocumentEditable() && hasMulticursor(state),
+    // Check which keyboard shortcut was used
+    // If we're using meta+a, only allow it when multicursor is active
+    // If we're using meta+alt+a, always allow it
+    const e = window.event as KeyboardEvent
+    if (e && e.key === 'a' && e.metaKey && !e.altKey) {
+      return hasMulticursor(state)
+    }
+
+    return true
+  },
   exec: addAllMulticursor(),
 }
 

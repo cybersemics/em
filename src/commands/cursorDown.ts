@@ -25,7 +25,7 @@ import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 const cursorDownCommand: Command = {
   id: 'cursorDown',
   label: 'Cursor Down',
-  keyboard: { key: Key.ArrowDown },
+  keyboard: [{ key: Key.ArrowDown }, { key: Key.ArrowDown, shift: true }],
   hideFromHelp: true,
   multicursor: false,
   svg: CursorDownIcon,
@@ -106,13 +106,6 @@ const cursorDownCommand: Command = {
       })
     } else dispatch(cursorDown())
   }),
-}
-
-export const cursorDownAlias: Command = {
-  ...cursorDownCommand,
-  id: 'cursorDownAlias',
-  gesture: undefined,
-  keyboard: { key: Key.ArrowDown, shift: true },
 }
 
 export default cursorDownCommand

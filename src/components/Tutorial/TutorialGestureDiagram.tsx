@@ -11,6 +11,9 @@ const TUTORIAL_GESTURE_PORTAL_DOM_ID = 'tutorial-gesture-diagram-portal'
 const TutorialGestureDiagram = ({ gesture }: { gesture: Command['gesture'] }) => {
   const target = document.getElementById(TUTORIAL_GESTURE_PORTAL_DOM_ID)
 
+  // Get the first gesture in the array for display
+  const displayGesture = Array.isArray(gesture) ? gesture[0] : gesture
+
   return (
     gesture &&
     target &&
@@ -28,7 +31,7 @@ const TutorialGestureDiagram = ({ gesture }: { gesture: Command['gesture'] }) =>
         })}
       >
         <GestureDiagram
-          path={gesture as GesturePath}
+          path={displayGesture as GesturePath}
           size={250}
           strokeWidth={5}
           arrowSize={50}

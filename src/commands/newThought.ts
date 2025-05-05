@@ -70,24 +70,14 @@ const newThoughtCommand: Command = {
   id: 'newThought',
   label: 'New Thought',
   description: 'Create a shiny new thought.',
-  keyboard: { key: Key.Enter },
-  gesture: 'rd',
+  // Support multiple keyboard shortcuts
+  // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
+  keyboard: isTouch ? [{ key: Key.Enter }, { key: Key.Enter, shift: true }] : { key: Key.Enter },
+  // Support multiple gesture patterns
+  // Main gesture and alternative patterns to help with mis-swipes since MultiGesture does not support diagonal swipes
+  gesture: ['rd', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   multicursor,
   svg: Icon,
-  canExecute: () => isDocumentEditable(),
-  exec,
-}
-
-// add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const newThoughtAliases: Command = {
-  id: 'newThoughtAliases',
-  label: 'New Thought',
-  hideFromHelp: true,
-  gesture: ['rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
-  multicursor,
-  // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
-  // smuggle it in with the aliases
-  ...(isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null),
   canExecute: () => isDocumentEditable(),
   exec,
 }

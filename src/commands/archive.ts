@@ -67,7 +67,23 @@ const archiveCommand: Command = {
   id: 'archive',
   label: 'Archive',
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
-  gesture: 'ldl',
+  // Main gesture and alternate patterns to help with mis-swipes
+  gesture: [
+    'ldl',
+    'ldlr',
+    'lrdl',
+    'lrdrl',
+    'lrdldr',
+    'lrdldlr',
+    'ldru',
+    'ldrlru',
+    'ldllru',
+    'ldlru',
+    'lrdru',
+    'lrdlru',
+    'lrdldru',
+    'lrdldlru',
+  ],
   multicursor: {
     preventSetCursor: true,
     clearMulticursor: true,
@@ -83,35 +99,6 @@ const archiveCommand: Command = {
   },
   svg: ArchiveIcon,
   keyboard: { key: Key.Backspace, shift: true, meta: true },
-  canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
-  },
-  exec,
-}
-
-// add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const archiveAliases: Command = {
-  id: 'archiveAliases',
-  label: 'Archive',
-  hideFromHelp: true,
-  multicursor: {
-    preventSetCursor: true,
-  },
-  gesture: [
-    'ldlr',
-    'lrdl',
-    'lrdrl',
-    'lrdldr',
-    'lrdldlr',
-    'ldru',
-    'ldrlru',
-    'ldllru',
-    'ldlru',
-    'lrdru',
-    'lrdlru',
-    'lrdldru',
-    'lrdldlru',
-  ],
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
