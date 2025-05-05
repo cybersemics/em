@@ -5,12 +5,6 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Toggles the Command Menu. */
 const toggleCommandMenu = (state: State, { value }: { value?: boolean } = {}) => {
-  // Blur the active element when opening
-  if (document && document.activeElement) {
-    const activeEl = document.activeElement as HTMLElement
-    activeEl?.blur?.()
-  }
-
   return {
     ...state,
     showCommandMenu: value === undefined ? !state.showCommandMenu : value,
