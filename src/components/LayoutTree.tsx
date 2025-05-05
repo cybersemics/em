@@ -6,12 +6,10 @@ import { css, cx } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
-import { HOME_TOKEN } from '../constants'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
-import attributeEquals from '../selectors/attributeEquals'
 import { hasChildren } from '../selectors/getChildren'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
@@ -19,7 +17,6 @@ import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import head from '../util/head'
-import parentOf from '../util/parentOf'
 import HoverArrow from './HoverArrow'
 import TreeNode from './TreeNode'
 
@@ -209,18 +206,6 @@ const LayoutTree = () => {
   const cliffPadding = fontSize / 4
   const cliffPaddingStyle = useMemo(() => ({ paddingBottom: cliffPadding }), [cliffPadding])
 
-  /** Gets an additional indentation table for nested tables that ensures the FauxCaret is activated when navigating between col1, col2, and descendants. Needed to cover additional indentation provided by indentCursorAncestorTables. */
-  // When the cursor is in a table, all thoughts beneath the table are hidden, so there is no concern about animation name conflicts with subsequent (deeper) thoughts.
-  // The calculation is oblique, but seems to cover the necessary cases. If any missing edge cases or regressions are discovered in the future, consider one of the alternative solutions suggested in https://github.com/cybersemics/em/pull/2887#pullrequestreview-2778143348.
-  const tableDepth = useSelector(state => {
-    if (!state.cursor) return 0
-    // rootedParentOf only includes HOME_TOKEN for top-level thoughts, so we can't use it
-    if (attributeEquals(state, HOME_TOKEN, '=view', 'Table')) return Math.min(3, state.cursor.length)
-    return state.cursor.length && parentOf(state.cursor).some(id => attributeEquals(state, id, '=view', 'Table'))
-      ? Math.min(3, state.cursor.length - 1)
-      : 0
-  })
-
   const { indentCursorAncestorTables, treeThoughtsPositioned, hoverArrowVisibility } = usePositionedThoughts(
     treeThoughts,
     {
@@ -247,7 +232,7 @@ const LayoutTree = () => {
         css({
           marginTop: '0.501em',
         }),
-        fauxCaretTreeProvider(indentDepth + tableDepth),
+        fauxCaretTreeProvider(Math.round(indent * 10)),
       )}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
