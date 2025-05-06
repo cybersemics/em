@@ -1,6 +1,5 @@
 import SwipeableDrawer from '@mui/material/SwipeableDrawer'
 import _ from 'lodash'
-import { useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -18,7 +17,6 @@ const CommandMenuPanel = () => {
   const dispatch = useDispatch()
   const showCommandMenu = useSelector(state => state.showCommandMenu)
   const isTutorialOn = useSelector(isTutorial)
-  const containerRef = useRef<HTMLInputElement>(null)
 
   if (isTouch && !isTutorialOn) {
     return (
@@ -26,7 +24,6 @@ const CommandMenuPanel = () => {
         data-testid='command-menu-panel'
         // Disable swipe to open - this removes the swipe-up-to-open functionality
         disableSwipeToOpen={true}
-        ref={containerRef}
         transitionDuration={durations.get('medium')}
         // Remove the SwipeAreaProps since we don't want to enable swipe to open
         anchor='bottom'
