@@ -6,7 +6,6 @@ import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styl
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
-import { toggleSortPicker } from '../actions'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { editingActionCreator as editingAction } from '../actions/editing'
@@ -16,8 +15,7 @@ import { importSpeechToTextActionCreator as importSpeechToText } from '../action
 import { setInvalidStateActionCreator as setInvalidState } from '../actions/invalidState'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
-import { toggleLetterCaseActionCreator as toggleLetterCase } from '../actions/toggleLetterCase'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isMac, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
@@ -557,9 +555,7 @@ const Editable = ({
           selection.clear()
 
           // close all popups when clicking on a thought
-          if (state.showColorPicker) dispatch(toggleColorPicker({ value: false }))
-          if (state.showLetterCase) dispatch(toggleLetterCase({ value: false }))
-          if (state.showSortPicker) dispatch(toggleSortPicker({ value: false }))
+          dispatch(toggleDropdown())
         } else {
           setCursorOnThought()
 
