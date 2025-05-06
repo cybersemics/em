@@ -4,7 +4,7 @@ import { useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
-import { toggleCommandMenuActionCreator as toggleCommandMenu } from '../../actions/toggleCommandMenu'
+import { toggleDropdownActionCreator } from '../../actions/toggleDropdown'
 import { isTouch } from '../../browser'
 import isTutorial from '../../selectors/isTutorial'
 import durations from '../../util/durations'
@@ -31,9 +31,9 @@ const CommandMenuPanel = () => {
         // Remove the SwipeAreaProps since we don't want to enable swipe to open
         anchor='bottom'
         // Keep onOpen for programmatic opening
-        onOpen={() => dispatch(toggleCommandMenu({ value: true }))}
+        onOpen={() => dispatch(toggleDropdownActionCreator({ dropDownType: 'commandMenu', value: true }))}
         // Keep onClose for swipe to dismiss
-        onClose={() => dispatch(toggleCommandMenu({ value: false }))}
+        onClose={() => dispatch(toggleDropdownActionCreator({ dropDownType: 'commandMenu', value: false }))}
         open={showCommandMenu}
         hideBackdrop={true}
         disableScrollLock={true}
@@ -68,7 +68,7 @@ const CommandMenuPanel = () => {
             })}
           >
             <button
-              onClick={() => dispatch(toggleCommandMenu({ value: false }))}
+              onClick={() => dispatch(toggleDropdownActionCreator({ dropDownType: 'commandMenu', value: false }))}
               className={css({
                 backgroundColor: 'transparent',
                 border: 'none',

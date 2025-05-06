@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { toggleCommandMenuActionCreator } from '../actions/toggleCommandMenu'
+import { toggleDropdownActionCreator } from '../actions/toggleDropdown'
 import fastClick from '../util/fastClick'
 import EllipsisIcon from './icons/EllipsisIcon'
 
@@ -9,7 +9,7 @@ const BulletEllipsis = () => {
   const dispatch = useDispatch()
   return (
     <div
-      {...fastClick(() => dispatch(toggleCommandMenuActionCreator()))}
+      {...fastClick(() => dispatch(toggleDropdownActionCreator({ dropDownType: 'commandMenu' })))}
       // stop mouseDown events from bubbling up to Content.clickOnEmptySpace
       onMouseDown={e => e.stopPropagation()}
       className={css({

@@ -3,15 +3,16 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
-type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker'
+type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandMenu'
 
-type DropdownStateKeys = 'showColorPicker' | 'showLetterCase' | 'showSortPicker'
+type DropdownStateKeys = 'showColorPicker' | 'showLetterCase' | 'showSortPicker' | 'showCommandMenu'
 
 // Map dropdown types to their state keys
 const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
   colorPicker: 'showColorPicker',
   letterCase: 'showLetterCase',
   sortPicker: 'showSortPicker',
+  commandMenu: 'showCommandMenu',
 }
 
 /**
