@@ -53,7 +53,6 @@ const useEditMode = ({
           selection.clear()
         } else {
           selection.set(contentRef.current, { offset: editingCursorOffset || 0 })
-          if (isTouch && isSafari()) contentRef.current?.focus()
         }
       }
 

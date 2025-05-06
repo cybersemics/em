@@ -6,6 +6,7 @@ import Timer from '../@types/Timer'
 import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
 import rootedParentOf from '../selectors/rootedParentOf'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
@@ -106,3 +107,8 @@ export const expandOnHoverTopActionCreator = (): Thunk => (dispatch, getState) =
 }
 
 export default expandHoverUp
+
+// Register this action's metadata
+registerActionMetadata('expandHoverUp', {
+  undoable: false,
+})

@@ -8,6 +8,7 @@ import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import { getAllChildren, getChildrenRanked } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 
@@ -58,3 +59,8 @@ export const undoArchiveActionCreator =
     dispatch({ type: 'undoArchive', ...payload })
 
 export default _.curryRight(undoArchive)
+
+// Register this action's metadata
+registerActionMetadata('undoArchive', {
+  undoable: false,
+})

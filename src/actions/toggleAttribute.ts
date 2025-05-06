@@ -11,6 +11,7 @@ import getPrevRank from '../selectors/getPrevRank'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
@@ -79,3 +80,8 @@ export const toggleAttributeActionCreator =
     dispatch({ type: 'toggleAttribute', ...payload })
 
 export default _.curryRight(toggleAttribute)
+
+// Register this action's metadata
+registerActionMetadata('toggleAttribute', {
+  undoable: true,
+})

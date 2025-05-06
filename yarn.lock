@@ -8394,7 +8394,7 @@ __metadata:
     vite: "npm:^5.4.10"
     vite-plugin-checker: "npm:^0.8.0"
     vite-plugin-html: "npm:^3.2.2"
-    vite-plugin-pwa: "npm:^0.21.0"
+    vite-plugin-pwa: "npm:^1.0.0"
     vite-plugin-terminal: "npm:^1.2.0"
     vitest: "npm:^2.1.4"
     vitest-canvas-mock: "npm:^0.3.3"
@@ -18796,9 +18796,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite-plugin-pwa@npm:^0.21.0":
-  version: 0.21.1
-  resolution: "vite-plugin-pwa@npm:0.21.1"
+"vite-plugin-pwa@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "vite-plugin-pwa@npm:1.0.0"
   dependencies:
     debug: "npm:^4.3.6"
     pretty-bytes: "npm:^6.1.1"
@@ -18806,14 +18806,14 @@ __metadata:
     workbox-build: "npm:^7.3.0"
     workbox-window: "npm:^7.3.0"
   peerDependencies:
-    "@vite-pwa/assets-generator": ^0.2.6
+    "@vite-pwa/assets-generator": ^1.0.0
     vite: ^3.1.0 || ^4.0.0 || ^5.0.0 || ^6.0.0
     workbox-build: ^7.3.0
     workbox-window: ^7.3.0
   peerDependenciesMeta:
     "@vite-pwa/assets-generator":
       optional: true
-  checksum: 10c0/ee9ccacd449fba21d8471d68002f0dcbdbaeae82ab9a851caad7aa0ac829ccb9f36b5fe9471da8c19135a1cb8e4cf17743615d758a13719368411db2834122c6
+  checksum: 10c0/284a7a0be50c6ffb742363767951efe76d751183c6b273b576d3d9ffa070e6d48d292f0a564e58dc6fc73cc1bdcdca6f076b7cd47e2e34ddfc28625eb937f3c7
   languageName: node
   linkType: hard
 

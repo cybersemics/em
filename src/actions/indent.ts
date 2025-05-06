@@ -7,6 +7,7 @@ import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import isContextViewActive from '../selectors/isContextViewActive'
 import prevSibling from '../selectors/prevSibling'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -67,3 +68,8 @@ const indent = (state: State) => {
 export const indentActionCreator = (): Thunk => dispatch => dispatch({ type: 'indent' })
 
 export default indent
+
+// Register this action's metadata
+registerActionMetadata('indent', {
+  undoable: true,
+})

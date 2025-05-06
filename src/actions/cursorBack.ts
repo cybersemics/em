@@ -3,6 +3,7 @@ import Thunk from '../@types/Thunk'
 import cursorHistory from '../actions/cursorHistory'
 import searchReducer from '../actions/search'
 import setCursor from '../actions/setCursor'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import isAbsolute from '../util/isAbsolute'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -52,3 +53,9 @@ const cursorBack = (state: State) => {
 export const cursorBackActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorBack' })
 
 export default cursorBack
+
+// Register this action's metadata
+registerActionMetadata('cursorBack', {
+  undoable: true,
+  isNavigation: true,
+})

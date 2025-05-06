@@ -9,6 +9,7 @@ import getPrevRank from '../selectors/getPrevRank'
 import getRankAfter from '../selectors/getRankAfter'
 import nextSibling from '../selectors/nextSibling'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -74,3 +75,8 @@ const moveThoughtDown = (state: State) => {
 export const moveThoughtDownActionCreator = (): Thunk => dispatch => dispatch({ type: 'moveThoughtDown' })
 
 export default moveThoughtDown
+
+// Register this action's metadata
+registerActionMetadata('moveThoughtDown', {
+  undoable: true,
+})

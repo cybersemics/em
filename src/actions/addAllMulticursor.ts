@@ -5,6 +5,7 @@ import Thunk from '../@types/Thunk'
 import { HOME_TOKEN } from '../constants'
 import { getChildrenSorted } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -28,3 +29,8 @@ const addAllMulticursor = (state: State): State => {
 export const addAllMulticursorActionCreator = (): Thunk => dispatch => dispatch({ type: 'addAllMulticursor' })
 
 export default _.curryRight(addAllMulticursor)
+
+// Register this action's metadata
+registerActionMetadata('addAllMulticursor', {
+  undoable: false,
+})
