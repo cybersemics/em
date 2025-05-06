@@ -5,14 +5,11 @@ import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
 import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
-import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
-import isTutorial from '../selectors/isTutorial'
 import equalPath from '../util/equalPath'
 import parentOf from '../util/parentOf'
-import BulletEllipsis from './BulletEllipsis'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
@@ -88,9 +85,6 @@ const TreeNode = ({
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
-
-  // true if the tutorial is on (used to hide the bullet ellipsis during tutorial)
-  const isTutorialOn = useSelector(isTutorial)
 
   /** True if the last action is swapParent and the thought is involved in the swap (cursor or parent). */
   const isSwap = useSelector(
@@ -205,7 +199,6 @@ const TreeNode = ({
           style={innerDivStyle}
         >
           <div ref={fadeThoughtRef}>
-            {isCursor && isTouch && !isTutorialOn && <BulletEllipsis />}
             <VirtualThought
               debugIndex={testFlags.simulateDrop ? indexChild : undefined}
               depth={depth}

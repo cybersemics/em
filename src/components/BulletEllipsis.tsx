@@ -14,16 +14,25 @@ const BulletEllipsis = () => {
       onMouseDown={e => e.stopPropagation()}
       className={css({
         position: 'absolute',
+        height: '2em',
+        width: '2em',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        left: -56,
-        top: 3,
-        width: 30,
-        height: 30,
+        marginLeft: '-1.75em',
       })}
     >
-      <EllipsisIcon />
+      <div
+        className={css({
+          width: '65%',
+          height: '65%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        })}
+      >
+        <EllipsisIcon />
+      </div>
     </div>
   )
 }
