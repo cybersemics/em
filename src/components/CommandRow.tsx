@@ -8,7 +8,7 @@ import DragToolbarItem from '../@types/DragToolbarItem'
 import GesturePath from '../@types/GesturePath'
 import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
-import { formatKeyboardShortcut } from '../commands'
+import { formatKeyboardShortcut, gestureString } from '../commands'
 import { noop } from '../constants'
 import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
@@ -116,12 +116,7 @@ const CommandRow = ({
         {isTouch && command.gesture ? (
           <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
             {isTouch && command.gesture ? (
-              // Use first gesture for display
-              <GestureDiagram
-                path={Array.isArray(command.gesture) ? command.gesture[0] : (command.gesture as GesturePath)}
-                size={48}
-                arrowSize={12}
-              />
+              <GestureDiagram path={gestureString(command) as GesturePath} size={48} arrowSize={12} />
             ) : null}
           </td>
         ) : null}

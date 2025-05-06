@@ -54,19 +54,22 @@ const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
   [48 + i]: i.toString(),
 }))
 
-/** Hash all the properties of a command into an array of strings that can be compared with the result of hashKeyDown. */
-export const hashCommand = (command: Command): string[] => {
-  if (!command.keyboard) return []
+/** Hash all the properties of a command into a string that can be compared with the result of hashKeyDown. */
+export const hashCommand = (command: Command): string => {
+  if (!command.keyboard) return ''
 
-  /** Process a keyboard shortcut into a string.*/
-  const processKeyboardShortcut = (keyboard: string | Key): string => {
-    const key = typeof keyboard === 'string' ? { key: keyboard } : keyboard
-    return (key.meta ? 'META_' : '') + (key.alt ? 'ALT_' : '') + (key.shift ? 'SHIFT_' : '') + key.key.toUpperCase()
-  }
+  // If command.keyboard is an array, return empty string as we handle arrays in index()
+  if (Array.isArray(command.keyboard)) return ''
 
-  return Array.isArray(command.keyboard)
-    ? command.keyboard.map(processKeyboardShortcut)
-    : [processKeyboardShortcut(command.keyboard)]
+  // Handle string or Key object
+  const keyboard = typeof command.keyboard === 'string' ? { key: command.keyboard } : command.keyboard || ({} as Key)
+
+  return (
+    (keyboard.meta ? 'META_' : '') +
+    (keyboard.alt ? 'ALT_' : '') +
+    (keyboard.shift ? 'SHIFT_' : '') +
+    keyboard.key?.toUpperCase()
+  )
 }
 
 /** Hash all the properties of a keydown event into a string that can be compared with the result of hashCommand. */
@@ -116,15 +119,20 @@ const index = (): {
   const commandKeyIndex: Index<Command> = keyValueBy(globalCommands, (command, i, accum) => {
     if (!command.keyboard) return null
 
-    const hash = hashCommand(command)
+    // Handle both single keyboard shortcut and arrays of shortcuts
+    const keyboardShortcuts = Array.isArray(command.keyboard) ? command.keyboard : [command.keyboard]
 
-    // Process each keyboard shortcut hash and create entries in the index
-    return hash.reduce((result, hash) => {
+    // Process each keyboard shortcut and create entries in the index
+    return keyboardShortcuts.reduce((result: Record<string, Command>, keyboardShortcut) => {
+      const singleCommand = { ...command, keyboard: keyboardShortcut }
+      const hash = hashCommand(singleCommand)
+
+      if (!hash) return result
+
       // check if the same shortcut is used by multiple commands
       if (accum[hash]) {
-        const keyboard = Array.isArray(command.keyboard) ? command.keyboard[0] : command.keyboard!
         console.error(
-          `"${command.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(keyboard)}"`,
+          `"${command.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(keyboardShortcut)}`,
         )
       }
 

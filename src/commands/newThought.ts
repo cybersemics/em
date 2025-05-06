@@ -72,7 +72,7 @@ const newThoughtCommand: Command = {
   description: 'Create a shiny new thought.',
   // Support multiple keyboard shortcuts
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
-  keyboard: isTouch ? [{ key: Key.Enter }, { key: Key.Enter, shift: true }] : { key: Key.Enter },
+  keyboard: [{ key: Key.Enter }, ...(isTouch ? [{ key: Key.Enter, shift: true }] : [])],
   // Support multiple gesture patterns
   // Main gesture and alternative patterns to help with mis-swipes since MultiGesture does not support diagonal swipes
   gesture: ['rd', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
