@@ -10,11 +10,9 @@ const BulletEllipsis = () => {
   return (
     <div
       {...fastClick(e => {
-        e.stopPropagation() // prevent the click from bubbling up to the wrapper span in Bullet.tsx
+        e.stopPropagation() // prevent the click from bubbling up to the wrapper span in Bullet.tsx or Content.clickOnEmptySpace
         dispatch(toggleDropdownActionCreator({ dropDownType: 'commandMenu' }))
       })}
-      // stop mouseDown events from bubbling up to Content.clickOnEmptySpace
-      onMouseDown={e => e.stopPropagation()}
       className={css({
         position: 'absolute',
         height: '2em',
