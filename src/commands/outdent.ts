@@ -29,6 +29,7 @@ const outdentCommand: Command = {
 
     dispatch(outdent())
   },
+  hideTitleInPanels: true,
 }
 
 export default outdentCommand
