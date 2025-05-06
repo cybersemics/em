@@ -267,6 +267,20 @@ const TreeNode = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTableCol1])
 
+  const vtStyle = useMemo<React.CSSProperties>(() => {
+    // Add a bit of space after a cliff to give nested lists some breathing room.
+    // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+    // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
+    const style: React.CSSProperties = cliff < 0 || isTableCol1 ? { ...cliffPaddingStyle } : {}
+
+    // only add textAlign when in col1
+    if (isTableCol1) {
+      style.textAlign = 'right'
+    }
+
+    return style
+  }, [cliff, cliffPaddingStyle, isTableCol1])
+
   // List Virtualization
   // Do not render thoughts that are below the viewport.
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
@@ -302,20 +316,6 @@ const TreeNode = ({
         left: 0,
       }
     : undefined
-
-  const vtStyle = useMemo<React.CSSProperties>(() => {
-    // Add a bit of space after a cliff to give nested lists some breathing room.
-    // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-    // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
-    const style: React.CSSProperties = cliff < 0 || isTableCol1 ? { ...cliffPaddingStyle } : {}
-
-    // only add textAlign when in col1
-    if (isTableCol1) {
-      style.textAlign = 'right'
-    }
-
-    return style
-  }, [cliff, cliffPaddingStyle, isTableCol1])
 
   return (
     <FadeTransition
