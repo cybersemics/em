@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
@@ -136,10 +136,7 @@ const TreeNode = ({
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
 
-  const translateXRef = useRef<number>(0)
   const duration = durations.get('layoutNodeAnimation')
-
-  const bulletTestId = `bullet-${thoughtId}`
 
   const hasMounted = useRef(false)
   const prevIsTableCol1 = useRef(isTableCol1)
@@ -212,72 +209,63 @@ const TreeNode = ({
   }, [_y])
 
   useLayoutEffect(() => {
-    // Skip animation on first render or if isTableCol1 hasn't changed
-    if (!hasMounted.current || prevIsTableCol1.current === isTableCol1) {
+    const element = fadeThoughtRef.current
+    if (!element) return
+
+    if (!hasMounted.current) {
       hasMounted.current = true
       prevIsTableCol1.current = isTableCol1
       return
     }
 
-    prevIsTableCol1.current = isTableCol1
+    // If we've already run once and the column flag didn't change, skip animation.
+    if (hasMounted.current && prevIsTableCol1.current === isTableCol1) {
+      return
+    }
 
-    const element = fadeThoughtRef.current
-    if (!element) return
+    // Mark that the effect has now run at least once.
+    hasMounted.current = true
 
-    const bulletElement = element?.querySelector(`[aria-label="bullet"]`) as HTMLElement | null
-    const editable = element?.querySelector('.editable') as HTMLElement | null
-    if (!editable) return
+    // Grab the bullet and editable elements.
+    const bulletEl = element.querySelector('[aria-label="bullet"]') as HTMLElement
+    const editableEl = element.querySelector('.editable') as HTMLElement
 
+    // Compute the slide offset and fine-tune bullet offsets.
+    const offset = calculateTranslateX()
     const bulletEnterOffset = -7
     const bulletExitOffset = 7
 
-    translateXRef.current = calculateTranslateX()
+    // 1) Place both elements in their “pre-animation” positions with no transition.
+    if (bulletEl) bulletEl.style.transition = 'none'
+    editableEl.style.transition = 'none'
 
     if (isTableCol1) {
-      const offset = translateXRef.current
-
-      // Entering
-      if (bulletElement) {
-        bulletElement.style.transform = `translateX(${bulletEnterOffset}px)`
-        bulletElement.style.transition = 'none'
-      }
-
-      editable.style.transform = `translateX(-${offset}px)`
-      editable.style.transition = 'none'
-
-      requestAnimationFrame(() => {
-        if (bulletElement) {
-          bulletElement.style.transform = 'translateX(0)'
-          bulletElement.style.transition = `transform ${duration}ms ease-out`
-        }
-
-        editable.style.transform = 'translateX(0)'
-        editable.style.transition = `transform ${duration}ms ease-out`
-      })
+      // Entering column 1: shift both left.
+      if (bulletEl) bulletEl.style.transform = `translateX(${bulletEnterOffset}px)`
+      editableEl.style.transform = `translateX(-${offset}px)`
     } else {
-      // Exiting
-      const exitOffset = translateXRef.current
-
-      if (bulletElement) {
-        bulletElement.style.transform = `translateX(${bulletExitOffset}px)`
-        bulletElement.style.transition = 'none'
-      }
-
-      editable.style.transform = `translateX(${exitOffset}px)`
-      editable.style.transition = 'none'
-
-      requestAnimationFrame(() => {
-        if (bulletElement) {
-          bulletElement.style.transform = 'translateX(0)'
-          bulletElement.style.transition = `transform ${duration}ms ease-out`
-        }
-
-        editable.style.transform = 'translateX(0)'
-        editable.style.transition = `transform ${duration}ms ease-out`
-      })
+      // Exiting column 1: shift both right.
+      if (bulletEl) bulletEl.style.transform = `translateX(${bulletExitOffset}px)`
+      editableEl.style.transform = `translateX(${offset}px)`
     }
+
+    // 2) On the next frame, restore transitions and animate back to zero.
+    requestAnimationFrame(() => {
+      const t = `transform ${duration}ms ease-out`
+      if (bulletEl) bulletEl.style.transition = t
+      editableEl.style.transition = t
+
+      if (bulletEl) bulletEl.style.transform = 'translateX(0)'
+      editableEl.style.transform = 'translateX(0)'
+    })
+
+    // 3) Remember the current column state for the next run.
+    prevIsTableCol1.current = isTableCol1
+
+    // We intentionally omit `calculateTranslateX` and `duration` from deps
+    // so this effect only fires when `isTableCol1` changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTableCol1, bulletTestId, duration])
+  }, [isTableCol1])
 
   // List Virtualization
   // Do not render thoughts that are below the viewport.
@@ -305,7 +293,6 @@ const TreeNode = ({
     // (Maybe the 10px is from .content padding-left?)
     width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
     ...(style || {}),
-    textAlign: isTableCol1 ? ('right' as const) : undefined,
     ...fauxCaretNodeProvider,
   }
 
@@ -315,6 +302,20 @@ const TreeNode = ({
         left: 0,
       }
     : undefined
+
+  const vtStyle = useMemo<React.CSSProperties>(() => {
+    // Add a bit of space after a cliff to give nested lists some breathing room.
+    // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+    // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
+    const style: React.CSSProperties = cliff < 0 || isTableCol1 ? { ...cliffPaddingStyle } : {}
+
+    // only add textAlign when in col1
+    if (isTableCol1) {
+      style.textAlign = 'right'
+    }
+
+    return style
+  }, [cliff, cliffPaddingStyle, isTableCol1])
 
   return (
     <FadeTransition
@@ -375,10 +376,7 @@ const TreeNode = ({
               showContexts={showContexts}
               simplePath={simplePath}
               singleLineHeight={singleLineHeightWithCliff}
-              // Add a bit of space after a cliff to give nested lists some breathing room.
-              // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-              // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
-              style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
+              style={vtStyle}
               crossContextualKey={thoughtKey}
               prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
               isLastVisible={isLastVisible}
