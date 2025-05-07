@@ -1,15 +1,14 @@
-import React, { useEffect, useRef } from 'react'
+import React, { PropsWithChildren, useEffect, useRef } from 'react'
 import { css } from '../../../styled-system/css'
 
 interface DialogProps {
-  children: React.ReactNode
   onClose: () => void
 }
 
 /**
  * Dialog component.
  */
-const Dialog: React.FC<DialogProps> = ({ children, onClose }) => {
+const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const overlayRef = useRef<HTMLDivElement | null>(null)
 

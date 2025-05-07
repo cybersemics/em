@@ -1,14 +1,10 @@
-import React from 'react'
+import React, { PropsWithChildren } from 'react'
 import { css } from '../../../styled-system/css'
-
-interface DialogContentProps {
-  children: React.ReactNode
-}
 
 /**
  * Content for dialog box.
  */
-const DialogContent: React.FC<DialogContentProps> = ({ children }) => {
+const DialogContent: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <div
       className={css({

@@ -1,16 +1,15 @@
-import React from 'react'
+import React, { PropsWithChildren } from 'react'
 import { css } from '../../../styled-system/css'
 import CloseButton from './CloseButton'
 
 interface DialogTitleProps {
-  children: React.ReactNode
   onClose: () => void
 }
 
 /**
  * Dialog title.
  */
-const DialogTitle: React.FC<DialogTitleProps> = ({ children, onClose }) => {
+const DialogTitle: React.FC<PropsWithChildren<DialogTitleProps>> = ({ children, onClose }) => {
   return (
     <div
       className={css({
