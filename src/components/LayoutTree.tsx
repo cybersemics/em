@@ -232,7 +232,7 @@ const LayoutTree = () => {
         css({
           marginTop: '0.501em',
         }),
-        fauxCaretTreeProvider(Math.ceil(indent * 2)),
+        fauxCaretTreeProvider(indent),
       )}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
