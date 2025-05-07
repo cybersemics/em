@@ -147,7 +147,6 @@ const CommandTableContent = ({
     })
   } else {
     /* All commands sorted by label, A-Z */
-    console.log({ commandsSortedByLabel })
     return (
       <CommandsGroup
         title={'All Commands'}
