@@ -209,6 +209,8 @@ const TreeNode = ({
   }, [_y])
 
   useLayoutEffect(() => {
+    if (dragInProgress) return
+    
     const element = fadeThoughtRef.current
     if (!element) return
 
