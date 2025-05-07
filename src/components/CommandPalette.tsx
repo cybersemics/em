@@ -283,7 +283,7 @@ const CommandPalette: FC<{
         borderRadius: '12px',
         backgroundColor: 'cpBackground',
         ...(isTouch ? { width: '100%' } : { maxWidth: '826px' }),
-        maxHeight: isTouch ? '50%' : '500px',
+        maxHeight: isTouch ? undefined : '500px',
         cursor: 'default',
         display: 'flex',
         flexDirection: 'column',
@@ -293,12 +293,12 @@ const CommandPalette: FC<{
       {!isTouch || (gestureInProgress && commands.length > 0) ? (
         <>
           {!isTouch ? (
-          <h2
-            className={css({
-              margin: 0,
-              borderBottom: 'solid 1px {colors.cpBorder}',
-            })}
-          >
+            <h2
+              className={css({
+                margin: 0,
+                borderBottom: 'solid 1px {colors.cpBorder}',
+              })}
+            >
               <CommandSearch
                 onExecute={onExecuteSelected}
                 onInput={setSearch}
@@ -307,7 +307,7 @@ const CommandPalette: FC<{
                 onSelectTop={onSelectTop}
                 onSelectBottom={onSelectBottom}
               />
-          </h2>
+            </h2>
           ) : null}
 
           <div
