@@ -6,7 +6,7 @@ import theme from '../selectors/theme'
 import SortOption from './SortOption'
 import SortIcon from './icons/SortIcon'
 
-export interface SortButtonHandle {
+interface SortButtonHandle {
   closeDropdown: () => void
 }
 
