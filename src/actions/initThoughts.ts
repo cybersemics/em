@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import keyValueBy from '../util/keyValueBy'
 
 /** Set the initial thoughts' updatedBy field once the cliendId is ready. */
@@ -43,3 +44,8 @@ export const initThoughtsActionCreator =
   }
 
 export default _.curryRight(initThoughts)
+
+// Register this action's metadata
+registerActionMetadata('initThoughts', {
+  undoable: false,
+})

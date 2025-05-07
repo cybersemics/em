@@ -8,6 +8,7 @@ import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -89,3 +90,8 @@ export const joinActionCreator =
     dispatch({ type: 'join', ...payload })
 
 export default _.curryRight(join)
+
+// Register this action's metadata
+registerActionMetadata('join', {
+  undoable: true,
+})

@@ -7,6 +7,7 @@ import globals from '../globals'
 import expandThoughts from '../selectors/expandThoughts'
 import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import hashPath from '../util/hashPath'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
@@ -54,3 +55,8 @@ const toggleContextView = (state: State) => {
 export const toggleContextViewActionCreator = (): Thunk => dispatch => dispatch({ type: 'toggleContextView' })
 
 export default toggleContextView
+
+// Register this action's metadata
+registerActionMetadata('toggleContextView', {
+  undoable: true,
+})

@@ -14,6 +14,7 @@ import { anyChild, findAnyChild, getAllChildren } from '../selectors/getChildren
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
@@ -234,3 +235,8 @@ export const importTextActionCreator =
     dispatch({ type: 'importText', ...payload })
 
 export default _.curryRight(importText)
+
+// Register this action's metadata
+registerActionMetadata('importText', {
+  undoable: true,
+})

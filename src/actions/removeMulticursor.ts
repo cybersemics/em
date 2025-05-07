@@ -2,6 +2,7 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import hashPath from '../util/hashPath'
 
 /** Removes a cursor from the multicursor set. */
@@ -21,3 +22,8 @@ export const removeMulticursorActionCreator =
     dispatch({ type: 'removeMulticursor', ...payload })
 
 export default _.curryRight(removeMulticursor)
+
+// Register this action's metadata
+registerActionMetadata('removeMulticursor', {
+  undoable: false,
+})

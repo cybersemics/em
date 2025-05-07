@@ -8,6 +8,7 @@ import setCursor from '../actions/setCursor'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import splitSentence from '../util/splitSentence'
@@ -49,3 +50,8 @@ const splitSentences = (state: State) => {
 export const splitSentencesActionCreator = (): Thunk => dispatch => dispatch({ type: 'splitSentences' })
 
 export default _.curryRight(splitSentences)
+
+// Register this action's metadata
+registerActionMetadata('splitSentences', {
+  undoable: true,
+})

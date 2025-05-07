@@ -10,6 +10,7 @@ import updateThoughts from '../actions/updateThoughts'
 import { clientId } from '../data-providers/yjs'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import { childrenMapKey } from '../util/createChildrenMap'
 import createId from '../util/createId'
 import hashThought from '../util/hashThought'
@@ -111,3 +112,8 @@ export const createThoughtActionCreator =
     dispatch({ type: 'createThought', ...payload })
 
 export default _.curryRight(createThought)
+
+// Register this action's metadata
+registerActionMetadata('createThought', {
+  undoable: true,
+})

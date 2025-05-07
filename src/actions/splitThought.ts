@@ -10,6 +10,7 @@ import newThought from '../actions/newThought'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
@@ -88,3 +89,8 @@ export const splitThoughtActionCreator =
     dispatch({ type: 'splitThought', ...payload })
 
 export default _.curryRight(splitThought)
+
+// Register this action's metadata
+registerActionMetadata('splitThought', {
+  undoable: true,
+})

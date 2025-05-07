@@ -7,7 +7,7 @@ import Loader from './Loader'
 
 interface ActionButtonProps {
   title: string
-  onClick?: (e: React.MouseEvent | React.TouchEvent) => void
+  onClick?: (e: React.MouseEvent) => void
   /** Render button with fg and bg colors inverted. */
   isLoading?: boolean
   isDisabled?: boolean

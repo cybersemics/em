@@ -15,6 +15,7 @@ import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -224,3 +225,8 @@ export const moveThoughtActionCreator =
     dispatch({ type: 'moveThought', ...payload })
 
 export default _.curryRight(moveThought, 2)
+
+// Register this action's metadata
+registerActionMetadata('moveThought', {
+  undoable: true,
+})

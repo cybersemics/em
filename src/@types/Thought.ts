@@ -17,8 +17,6 @@ interface Thought {
   /** Still loading from the database. */
   pending?: boolean
   rank: number
-  /** Takes precedence over value for sorting purposes. Used to preserve the sort order of thoughts that are edited to empty instead of moving them back to their insertion point. */
-  sortValue?: string
   /** Used to track if a space is required when merging two siblings/thoughts. */
   splitSource?: ThoughtId
   /** The public key of the user defined by a hash of their private access token. See: clientId (yjs/index.ts). */

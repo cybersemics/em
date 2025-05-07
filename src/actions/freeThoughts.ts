@@ -11,6 +11,7 @@ import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import thoughtToPath from '../selectors/thoughtToPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import deleteThought from './deleteThought'
@@ -108,3 +109,8 @@ const freeThoughts = (state: State) => {
 export const freeThoughtsActionCreator = (): Thunk => dispatch => dispatch({ type: 'freeThoughts' })
 
 export default freeThoughts
+
+// Register this action's metadata
+registerActionMetadata('freeThoughts', {
+  undoable: false,
+})

@@ -3,6 +3,7 @@ import Thunk from '../@types/Thunk'
 import cursorHistory from '../actions/cursorHistory'
 import searchReducer from '../actions/search'
 import setCursor from '../actions/setCursor'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import isAbsolute from '../util/isAbsolute'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -21,7 +22,13 @@ const cursorBack = (state: State) => {
     cursorOld
       ? [
           // move cursor back
-          setCursor({ path: cursorNew!.length > 0 ? cursorNew : null, editing, preserveMulticursor: true }),
+          setCursor({
+            // offset shouldn't be null if we want useEditMode to set the selection to the new thought
+            offset: 0,
+            path: cursorNew!.length > 0 ? cursorNew : null,
+            editing,
+            preserveMulticursor: true,
+          }),
 
           // append to cursor history to allow 'forward' gesture
           cursorHistory({ cursor: cursorOld }),
@@ -46,3 +53,9 @@ const cursorBack = (state: State) => {
 export const cursorBackActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorBack' })
 
 export default cursorBack
+
+// Register this action's metadata
+registerActionMetadata('cursorBack', {
+  undoable: true,
+  isNavigation: true,
+})

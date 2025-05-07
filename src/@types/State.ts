@@ -1,4 +1,5 @@
 import DropThoughtZone from '../@types/DropThoughtZone'
+import ActionType from './ActionType'
 import Alert from './Alert'
 import Command from './Command'
 import CommandId from './CommandId'
@@ -82,7 +83,6 @@ interface State {
   expandHoverDownPaths: Index<Path>
   /** Make hidden ancestors visible during drag-and-drop by hovering over them. This allows a thought to be dragged anywhere, even to thoughts that are initially hidden by autofocus. */
   expandHoverUpPath?: Path | null
-  expandedContextThought?: Path
   fontSize: number
   /**
    * Thought currently being hovered over.
@@ -116,6 +116,8 @@ interface State {
    * Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward.
    */
   jumpIndex: number
+  /** The last undoable action that was executed. Usually this is the same as undoPatches.at(-1).actions[0]. However, on undo this will equal redoPatches.at(-1).actions[0]. This is important for special case animatons, like swapParent, that should be enabled not just when the action is originally executed, but also when it is reversed via undo. */
+  lastUndoableActionType?: ActionType
   latestCommands: Command[]
   /** When a context is sorted, the manual sort order is saved so that it can be recovered when they cycle back through the sort options. If new thoughts have been added, their order relative to the original thoughts will be indeterminate, but both the old thoughts and the new thoughts will be sorted relative to themselves. The outer Index is keyed by parent ThoughtId, and the inner Index stores the manual ranks of each child at the time the context is sorted. This is stored in memory only and is lost when the app refreshes. */
   manualSortMap: Index<Index<number>>
@@ -123,6 +125,8 @@ interface State {
   multicursors: Index<Path>
   /** NoteFocus is true if the caret is on the note. */
   noteFocus: boolean
+  /** NoteOffset can be used to position the caret within a note. Setting it to null disables programmatic selection using selection.set. */
+  noteOffset: number | null
   /**
    * Temporarily stores updates that need to be persisted.
    * Passed to Yjs and cleared on every action.
@@ -144,6 +148,7 @@ interface State {
   showCommandPalette: boolean
   showHiddenThoughts: boolean
   showSortPicker?: boolean
+  showCommandMenu: boolean
   /**
    * The currently shown modal dialog box.
    * Initialized to the welcome modal, unless already completed.

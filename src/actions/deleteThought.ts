@@ -16,6 +16,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import hashPath from '../util/hashPath'
@@ -271,3 +272,8 @@ export const deleteThoughtActionCreator =
     dispatch({ type: 'deleteThought', ...payload })
 
 export default _.curryRight(deleteThought)
+
+// Register this action's metadata
+registerActionMetadata('deleteThought', {
+  undoable: true,
+})

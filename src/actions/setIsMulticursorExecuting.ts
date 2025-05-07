@@ -1,5 +1,6 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 interface SetIsMulticursorExecutingPayload {
   value: boolean
@@ -26,3 +27,7 @@ export const setIsMulticursorExecutingActionCreator =
   }
 
 export default setIsMulticursorExecuting
+
+registerActionMetadata('setIsMulticursorExecuting', {
+  undoable: true,
+})

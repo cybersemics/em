@@ -17,6 +17,8 @@ import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
 import multilineRecipe from './src/recipes/multiline'
+import panelCommandGroupRecipe from './src/recipes/panelCommandGroupRecipe'
+import panelCommandRecipe from './src/recipes/panelCommandRecipe'
 import slideTransitionRecipe from './src/recipes/slideTransition'
 import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
@@ -316,6 +318,18 @@ export default defineConfig({
           easeInSlow: {
             value: 'cubic-bezier(.84, 0, 1, 1)',
           },
+          nodeCurveXLayer: {
+            value: 'cubic-bezier(0.8,0,0.2,0.2)',
+          },
+          nodeCurveYLayer: {
+            value: 'cubic-bezier(0.8,0.8,0.2,1)',
+          },
+          nodeCurveXLayerClockwise: {
+            value: 'cubic-bezier(0,0.8,0.2,0.8)',
+          },
+          nodeCurveYLayerClockwise: {
+            value: 'cubic-bezier(0.8,0.2,0.8,1)',
+          },
         },
         fontSizes: {
           sm: { value: '80%' },
@@ -333,9 +347,9 @@ export default defineConfig({
             'popup',
             'hoverArrow',
             'gestureTrace',
-            'modal',
             'hamburgerMenu',
             'sidebar',
+            'modal',
             'toolbarContainer',
             'toolbarOverlay',
             'toolbarArrow',
@@ -374,6 +388,8 @@ export default defineConfig({
         dropHoverRecipe,
         dropEndRecipe,
         invalidOptionRecipe,
+        panelCommandGroupRecipe,
+        panelCommandRecipe,
       },
       slotRecipes: {
         modalRecipe,

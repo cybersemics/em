@@ -1,5 +1,6 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /**
  * Sets state.cursorCleared which controls a special state in which the cursor is rendered as an empty string. In this state the thought can be deleted or edited, but if the user navigates away the thought is restored to its previous value.
@@ -32,3 +33,8 @@ export const cursorClearedActionCreator =
   }
 
 export default cursorCleared
+
+// Register this action's metadata
+registerActionMetadata('cursorCleared', {
+  undoable: false,
+})

@@ -20,12 +20,15 @@ import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import isTutorial from '../selectors/isTutorial'
 import rootedParentOf from '../selectors/rootedParentOf'
-import fastClick, { type FastClickEvent } from '../util/fastClick'
+import equalPath from '../util/equalPath'
+import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
+import BulletEllipsis from './BulletEllipsis'
 
 interface BulletProps {
   // See: ThoughtProps['isContextPending']
@@ -258,6 +261,7 @@ const glyphFg = cva({
 
 /** A circle bullet for leaf thoughts. */
 const BulletLeaf = ({
+  done,
   fill,
   isHighlighted,
   missing,
@@ -265,6 +269,7 @@ const BulletLeaf = ({
   showContexts,
   isBulletExpanded,
 }: {
+  done?: boolean
   fill?: string
   isHighlighted?: boolean
   missing?: boolean
@@ -279,7 +284,7 @@ const BulletLeaf = ({
       data-pending={pending}
       className={cx(
         glyphFg({
-          gray: missing,
+          gray: missing || done,
           graypulse: pending,
           showContexts,
           leaf: true,
@@ -308,6 +313,7 @@ const BulletLeaf = ({
 /** A triangle-shaped bullet for thoughts with children. */
 const BulletParent = ({
   currentScale,
+  done,
   fill,
   childrenMissing,
   pending,
@@ -315,6 +321,7 @@ const BulletParent = ({
   isBulletExpanded,
 }: {
   currentScale?: number
+  done?: boolean
   fill?: string
   isHighlighted?: boolean
   childrenMissing?: boolean
@@ -339,7 +346,7 @@ const BulletParent = ({
     <path
       className={glyphFg({
         triangle: true,
-        gray: childrenMissing,
+        gray: childrenMissing || done,
         graypulse: pending,
         isBulletExpanded,
         showContexts,
@@ -409,6 +416,7 @@ const Bullet = ({
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
+  const isDone = useSelector(state => !!findDescendant(state, thoughtId, '=done'))
   const isMulticursor = useSelector(state => isMulticursorPath(state, path))
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
@@ -462,7 +470,7 @@ const Bullet = ({
   // expand or collapse on click
   // has some additional logic to make it work intuitively with pin true/false
   const clickHandler = useCallback(
-    (e: FastClickEvent) => {
+    (e: React.MouseEvent) => {
       // short circuit if dragHold
       // useLongPress stop is activated in onMouseUp but is delayed to ensure that dragHold is still true here
       // stopping propagation from useLongPress was not working either due to bubbling order or mismatched event type
@@ -494,9 +502,18 @@ const Bullet = ({
           setCursor({ path: shouldCollapse ? pathParent : path, preserveMulticursor: true }),
         ])
       })
+
+      e.stopPropagation()
+      // stop click event from bubbling up to Content.clickOnEmptySpace
     },
     [dispatch, dragHold, path, simplePath],
   )
+
+  // true if the tutorial is on (used to hide the bullet ellipsis during tutorial)
+  const isTutorialOn = useSelector(isTutorial)
+
+  // true if the cursor is on the bullet (used to show the bullet ellipsis)
+  const isCursor = useSelector(state => equalPath(state.cursor, path))
 
   return (
     <span
@@ -535,9 +552,18 @@ const Bullet = ({
         width,
       }}
       {...fastClick(clickHandler, { enableHaptics: false })}
-      // stop click event from bubbling up to Content.clickOnEmptySpace
-      onClick={e => e.stopPropagation()}
     >
+      {isCursor && isTouch && !isTutorialOn && (
+        <div
+          style={{
+            // the elipsis is positioned to the RIGHT of the bullet, and we need to move it to the LEFT.
+            // lineHeight is the width of the bullet, so setting that as a negative margin places it where we need it to be.
+            marginLeft: -lineHeight,
+          }}
+        >
+          <BulletEllipsis />
+        </div>
+      )}
       <svg
         className={cx(
           glyph({ isBulletExpanded, showContexts, leaf }),
@@ -579,6 +605,7 @@ const Bullet = ({
           )}
           {leaf && !showContexts ? (
             <BulletLeaf
+              done={isDone}
               fill={fill}
               isHighlighted={isHighlighted}
               missing={missing}
@@ -589,6 +616,7 @@ const Bullet = ({
           ) : (
             <BulletParent
               currentScale={svgElement.current?.currentScale || 1}
+              done={isDone}
               fill={fill}
               isHighlighted={isHighlighted}
               childrenMissing={childrenMissing}

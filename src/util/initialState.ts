@@ -133,6 +133,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     modals: {},
     multicursors: {},
     noteFocus: false,
+    noteOffset: null,
     recentlyEdited: {},
     redoPatches: [],
     resourceCache: {},
@@ -150,6 +151,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     pushQueue: [],
     thoughts: initialThoughts(created),
     undoPatches: [],
+    showCommandMenu: false,
   }
 
   /**

@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Sets a value in the resource cache. */
 const setResourceCache = (state: State, { key, value }: { key: string; value: boolean }) => ({
@@ -18,3 +19,8 @@ export const setResourceCacheActionCreator =
     dispatch({ type: 'setResourceCache', ...payload })
 
 export default _.curryRight(setResourceCache)
+
+// Register this action's metadata
+registerActionMetadata('setResourceCache', {
+  undoable: false,
+})

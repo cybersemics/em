@@ -1,4 +1,5 @@
 import Command from '../@types/Command'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import TextColorWithColorPicker from '../components/icons/TextColorWithColorPicker'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -13,14 +14,8 @@ const textColor: Command = {
     disallow: true,
     error: 'Cannot change text color with multiple thoughts.',
   },
-  exec: (dispatch, getState) => {
-    const state = getState()
-    if (state.showLetterCase) dispatch({ type: 'toggleLetterCase' })
-    if (state.showSortPicker) dispatch({ type: 'toggleSortPicker' })
-    dispatch({
-      type: 'toggleColorPicker',
-      path: state.cursor,
-    })
+  exec: (dispatch, _) => {
+    dispatch(toggleDropdown({ dropDownType: 'colorPicker' }))
   },
   isActive: state => !!state.cursor,
   isDropdownOpen: state => !!state.showColorPicker,

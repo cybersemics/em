@@ -7,6 +7,7 @@ import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
 import getSortPreference from '../selectors/getSortPreference'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
@@ -150,3 +151,8 @@ export const setSortPreferenceActionCreator =
     dispatch({ type: 'setSortPreference', ...payload })
 
 export default _.curryRight(setSortPreference, 2)
+
+// Register this action's metadata
+registerActionMetadata('setSortPreference', {
+  undoable: false,
+})

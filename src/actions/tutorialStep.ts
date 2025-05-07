@@ -2,6 +2,7 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import settings from '../actions/settings'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Sets the Tutorial Step settings value. */
 const tutorialStep = (state: State, { value }: { value: number }) =>
@@ -17,3 +18,8 @@ export const tutorialStepActionCreator =
     dispatch({ type: 'tutorialStep', ...payload })
 
 export default _.curryRight(tutorialStep)
+
+// Register this action's metadata
+registerActionMetadata('tutorialStep', {
+  undoable: false,
+})

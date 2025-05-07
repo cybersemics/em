@@ -1,6 +1,7 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import TipId from '../@types/TipId'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Shows a popup with a tip. */
 const showTip = (state: State, { tip }: { tip: TipId }): State => ({
@@ -15,3 +16,8 @@ export const showTipActionCreator =
     dispatch({ type: 'showTip', ...payload })
 
 export default showTip
+
+// Register this action's metadata
+registerActionMetadata('showTip', {
+  undoable: false,
+})

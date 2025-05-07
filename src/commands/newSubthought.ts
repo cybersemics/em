@@ -7,8 +7,9 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const exec = newThought({ insertNewSubthought: true })
 
 const multicursor: Command['multicursor'] = {
-  disallow: true,
-  error: 'Cannot create a new subthought with multiple thoughts.',
+  filter: 'last-sibling',
+  clearMulticursor: true,
+  preventSetCursor: true,
 }
 
 const newSubthoughtCommand: Command = {

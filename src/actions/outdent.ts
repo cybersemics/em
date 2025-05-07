@@ -8,6 +8,7 @@ import findDescendant from '../selectors/findDescendant'
 import getRankAfter from '../selectors/getRankAfter'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -69,3 +70,8 @@ const outdent = (state: State) => {
 export const outdentActionCreator = (): Thunk => dispatch => dispatch({ type: 'outdent' })
 
 export default outdent
+
+// Register this action's metadata
+registerActionMetadata('outdent', {
+  undoable: true,
+})

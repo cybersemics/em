@@ -20,6 +20,7 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import pathToContext from '../util/pathToContext'
@@ -35,6 +36,7 @@ const setCursor = (
     cursorHistoryPop,
     editing,
     noteFocus = false,
+    noteOffset = null,
     offset,
     path,
     replaceContextViews,
@@ -45,6 +47,7 @@ const setCursor = (
     cursorHistoryPop?: boolean
     editing?: boolean | null
     noteFocus?: boolean
+    noteOffset?: number | null
     offset?: number | null
     path: Path | null
     replaceContextViews?: Index<boolean>
@@ -148,6 +151,7 @@ const setCursor = (
     cursorOffset: updatedOffset,
     expanded,
     noteFocus,
+    noteOffset,
     cursorInitialized: true,
     ...(!preserveMulticursor
       ? {
@@ -155,6 +159,8 @@ const setCursor = (
         }
       : null),
     ...(!thoughtsResolved ? { showColorPicker: false, showLetterCase: false, showSortPicker: false } : null),
+    // Close command menu when editing is set to true, or if there is no cursor.
+    showCommandMenu: state.showCommandMenu && !editing && thoughtsResolved !== null,
   }
 
   return stateNew
@@ -163,7 +169,14 @@ const setCursor = (
 /** Action-creator for setCursor. */
 export const setCursorActionCreator =
   (payload: Parameters<typeof setCursor>[1]): Thunk =>
-  dispatch =>
+  dispatch => {
     dispatch({ type: 'setCursor', ...payload })
+  }
 
 export default _.curryRight(setCursor)
+
+// Register this action's metadata
+registerActionMetadata('setCursor', {
+  undoable: true,
+  isNavigation: true,
+})
