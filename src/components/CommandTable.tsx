@@ -38,65 +38,17 @@ interface CommandTableProps {
   viewType?: 'table' | 'grid'
 }
 
+interface CommandTableContentProps extends CommandTableProps {
+  search: string
+  commands: Command[]
+  sortOrder: CommandSortType
+}
+
 /** Renders a table of commands with a fade-in animation when sorting changes. */
 const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table' }: CommandTableProps) => {
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
   const [sortOrder, setSortOrder] = useState<CommandSortType>('type')
-
-  /** This render function is used to render the content of the command table.
-   * It renders groups of commands if the search is empty.
-   * It renders a single command if the search is not empty.
-   *
-   * Depending on the viewType prop, it renders the commands in a table or a grid.
-   */
-  const renderContent = () => {
-    if (search) {
-      return (
-        <CommandsGroup
-          title={'Results'}
-          commands={commands}
-          selectedCommand={selectedCommand}
-          customize={customize}
-          onSelect={onSelect}
-          search={search}
-          viewType={viewType}
-        />
-      )
-    } else if (sortOrder === 'type') {
-      return COMMAND_GROUPS.map(group => {
-        const commands = group.commands
-          .map(commandById)
-          .filter(command => (isTouch ? !!command.gesture : !!command.keyboard))
-
-        return commands.length > 0 ? (
-          <CommandsGroup
-            title={group.title}
-            commands={commands}
-            customize={customize}
-            key={group.title}
-            onSelect={onSelect}
-            selectedCommand={selectedCommand}
-            viewType={viewType}
-          />
-        ) : null
-      })
-    } else {
-      const commandsWithGestures = commands.filter(command => !!command.gesture)
-      const sortedCommands = commandsWithGestures.sort((a, b) => a.label.localeCompare(b.label))
-
-      return (
-        <CommandsGroup
-          title={'All Commands'}
-          commands={sortedCommands}
-          selectedCommand={selectedCommand}
-          customize={customize}
-          onSelect={onSelect}
-          viewType={viewType}
-        />
-      )
-    }
-  }
 
   return (
     <div>
@@ -116,11 +68,81 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
 
       <SwitchTransition>
         <FadeTransition key={`${sortOrder}-${search}`} in={true} duration='medium' unmountOnExit>
-          <div className={css({ textAlign: 'left' })}>{renderContent()}</div>
+          <CommandTableContent
+            search={search}
+            commands={commands}
+            selectedCommand={selectedCommand}
+            customize={customize}
+            onSelect={onSelect}
+            viewType={viewType}
+            sortOrder={sortOrder}
+          />
         </FadeTransition>
       </SwitchTransition>
     </div>
   )
+}
+
+/** Renders the content of the command table.
+ * It renders groups of commands if the search is empty.
+ * It renders a single command if the search is not empty.
+ *
+ * Depending on the viewType prop, it renders the commands in a table or a grid.
+ */
+const CommandTableContent = ({
+  search,
+  commands,
+  selectedCommand,
+  customize,
+  onSelect,
+  viewType = 'table',
+  sortOrder,
+}: CommandTableContentProps) => {
+  if (search) {
+    return (
+      <CommandsGroup
+        title={'Results'}
+        commands={commands}
+        selectedCommand={selectedCommand}
+        customize={customize}
+        onSelect={onSelect}
+        search={search}
+        viewType={viewType}
+      />
+    )
+  } else if (sortOrder === 'type') {
+    return COMMAND_GROUPS.map(group => {
+      const commands = group.commands
+        .map(commandById)
+        .filter(command => (isTouch ? !!command.gesture : !!command.keyboard))
+
+      return commands.length > 0 ? (
+        <CommandsGroup
+          title={group.title}
+          commands={commands}
+          customize={customize}
+          key={group.title}
+          onSelect={onSelect}
+          selectedCommand={selectedCommand}
+          viewType={viewType}
+        />
+      ) : null
+    })
+  } else {
+    const commandsWithGestures = commands.filter(command => !!command.gesture)
+    const sortedCommands = commandsWithGestures.sort((a, b) => a.label.localeCompare(b.label))
+
+    return (
+      <CommandsGroup
+        title={'All Commands'}
+        commands={sortedCommands}
+        selectedCommand={selectedCommand}
+        customize={customize}
+        onSelect={onSelect}
+        viewType={viewType}
+      />
+    )
+  }
 }
 
 export default CommandTable
