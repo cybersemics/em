@@ -51,7 +51,7 @@ const CommandRow = ({
         onClick={(_, command) => {
           onSelect?.(selected ? null : command)
         }}
-        style={{ opacity: isDragging ? 0.5 : 1 }}
+        style={{ opacity: isDragging ? 0.5 : 1, paddingInline: 0 }}
         ref={dragSource}
         isTable
       />

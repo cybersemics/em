@@ -18,7 +18,7 @@ const CommandTableOnly = ({
   search?: string
 }) => {
   return (
-    <table className={css({ fontSize: '14px' })}>
+    <table className={css({ fontSize: '14px', width: '100%' })}>
       <tbody>
         {commands.map(command => {
           return (

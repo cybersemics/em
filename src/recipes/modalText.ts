@@ -6,7 +6,10 @@ const modalTextRecipe = defineSlotRecipe({
   base: {
     subtitle: {
       fontFamily: "'Helvetica Neue'",
-      fontSize: '1.7em',
+      fontSize: '0.9em',
+      marginBlock: '0.9em 0px',
+      fontWeight: 700,
+      padding: '0.4em',
     },
     wrapper: {
       display: 'flex',
@@ -16,15 +19,6 @@ const modalTextRecipe = defineSlotRecipe({
     description: {
       fontSize: '18px',
       marginBottom: '30px',
-    },
-  },
-  variants: {
-    compact: {
-      true: {
-        subtitle: {
-          marginBottom: '0.8em',
-        },
-      },
     },
   },
 })

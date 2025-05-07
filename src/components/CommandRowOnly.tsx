@@ -2,6 +2,7 @@ import React, { forwardRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
+import { SystemStyleObject } from '../../styled-system/types'
 import Command from '../@types/Command'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
@@ -23,6 +24,7 @@ const CommandRowOnly = forwardRef<
     isActive?: boolean
     isTable?: boolean
     hideDescriptionIfNotSelectedOnMobile?: boolean
+    cssRaw?: SystemStyleObject
   }
 >(
   (
@@ -37,6 +39,7 @@ const CommandRowOnly = forwardRef<
       isActive,
       isTable,
       hideDescriptionIfNotSelectedOnMobile,
+      cssRaw,
     },
     ref,
   ) => {
@@ -54,34 +57,44 @@ const CommandRowOnly = forwardRef<
     const Container = isTable ? 'tr' : 'div'
     const Cell = isTable ? 'td' : 'div'
 
+    const fontSize = useSelector(state => state.fontSize)
+
     return (
       <Container
         // @ts-expect-error Container can be 'tr' or 'div'
         ref={ref}
-        className={css({
-          cursor: !disabled ? 'pointer' : undefined,
-          // paddingBottom: last ? (isTouch ? 0 : '4em') : 0,
-          // paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
-          position: 'relative',
-          textAlign: 'left',
+        className={css(
+          {
+            cursor: !disabled ? 'pointer' : undefined,
+            // paddingBottom: last ? (isTouch ? 0 : '4em') : 0,
+            // paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
+            position: 'relative',
+            textAlign: 'left',
 
-          backgroundColor: selected ? 'commandSelected' : undefined,
-          // padding: selected ? '10px 0.3em 10px 0.5em' : undefined,
-          borderRadius: '8px', // constant curve
-          padding: '4px 12px',
-          display: 'flex',
-          // margin: selected ? '-5px 0' : undefined,
-          flexDirection: 'row',
-          justifyContent: 'flex-start',
-          alignItems: 'center',
-          gap: isTouch ? 8 : 12,
-        })}
+            backgroundColor: selected ? 'commandSelected' : undefined,
+            // padding: selected ? '10px 0.3em 10px 0.5em' : undefined,
+            borderRadius: '8px',
+            display: 'flex',
+            // margin: selected ? '-5px 0' : undefined,
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+          },
+          cssRaw,
+        )}
         onClick={e => {
           if (!disabled) {
             onClick(e, command)
           }
         }}
-        style={style}
+        style={{
+          fontSize,
+          // split padding into paddingInline and paddingBlock so either property can be overridden
+          paddingInline: fontSize * 0.78,
+          paddingBlock: fontSize * 0.78,
+          gap: isTouch ? fontSize * 0.44 : fontSize * 0.78,
+          ...style,
+        }}
       >
         {/* div used to contain width:100% and height:100% of icons while in a flex box */}
         <Cell className={css({ display: 'flex', justifyContent: 'center', alignItems: 'center' })}>
@@ -136,6 +149,7 @@ const CommandRowOnly = forwardRef<
           <div
             className={css({
               minWidth: '4em',
+              lineHeight: '1em',
               whiteSpace: 'nowrap',
               color: disabled
                 ? 'gray'
@@ -153,6 +167,7 @@ const CommandRowOnly = forwardRef<
               <div
                 className={css({
                   display: 'flex',
+                  lineHeight: '0.83em',
                 })}
               >
                 {/* description */}
