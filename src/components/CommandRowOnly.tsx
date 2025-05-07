@@ -2,6 +2,7 @@ import React, { forwardRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
+import { SystemStyleObject } from '../../styled-system/types'
 import Command from '../@types/Command'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
@@ -23,6 +24,7 @@ const CommandRowOnly = forwardRef<
     isActive?: boolean
     isTable?: boolean
     hideDescriptionIfNotSelectedOnMobile?: boolean
+    cssRaw?: SystemStyleObject
   }
 >(
   (
@@ -37,6 +39,7 @@ const CommandRowOnly = forwardRef<
       isActive,
       isTable,
       hideDescriptionIfNotSelectedOnMobile,
+      cssRaw,
     },
     ref,
   ) => {
@@ -58,24 +61,27 @@ const CommandRowOnly = forwardRef<
       <Container
         // @ts-expect-error Container can be 'tr' or 'div'
         ref={ref}
-        className={css({
-          cursor: !disabled ? 'pointer' : undefined,
-          // paddingBottom: last ? (isTouch ? 0 : '4em') : 0,
-          // paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
-          position: 'relative',
-          textAlign: 'left',
+        className={css(
+          {
+            cursor: !disabled ? 'pointer' : undefined,
+            // paddingBottom: last ? (isTouch ? 0 : '4em') : 0,
+            // paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
+            position: 'relative',
+            textAlign: 'left',
 
-          backgroundColor: selected ? 'commandSelected' : undefined,
-          // padding: selected ? '10px 0.3em 10px 0.5em' : undefined,
-          borderRadius: '8px', // constant curve
-          padding: '4px 12px',
-          display: 'flex',
-          // margin: selected ? '-5px 0' : undefined,
-          flexDirection: 'row',
-          justifyContent: 'flex-start',
-          alignItems: 'center',
-          gap: isTouch ? 8 : 12,
-        })}
+            backgroundColor: selected ? 'commandSelected' : undefined,
+            // padding: selected ? '10px 0.3em 10px 0.5em' : undefined,
+            borderRadius: '8px', // constant curve
+            padding: '4px 12px',
+            display: 'flex',
+            // margin: selected ? '-5px 0' : undefined,
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            gap: isTouch ? 8 : 12,
+          },
+          cssRaw,
+        )}
         onClick={e => {
           if (!disabled) {
             onClick(e, command)
