@@ -61,45 +61,6 @@ interface CommandTableContentProps extends CommandTableProps {
   sortOrder: CommandSortType
 }
 
-/** Renders a table of commands with a fade-in animation when sorting changes. */
-const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table' }: CommandTableProps) => {
-  const [search, setSearch] = useState('')
-  const commands = useFilteredCommands(search, { platformCommandsOnly: true })
-  const [sortOrder, setSortOrder] = useState<CommandSortType>('type')
-
-  return (
-    <div>
-      <div
-        className={css({
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          gap: '5px',
-          position: 'relative',
-          zIndex: 1,
-        })}
-      >
-        <SearchCommands onInput={setSearch} />
-        <SortButton onSortChange={setSortOrder} />
-      </div>
-
-      <SwitchTransition>
-        <FadeTransition key={`${sortOrder}-${search}`} in={true} duration='medium' unmountOnExit>
-          <CommandTableContent
-            search={search}
-            commands={commands}
-            selectedCommand={selectedCommand}
-            customize={customize}
-            onSelect={onSelect}
-            viewType={viewType}
-            sortOrder={sortOrder}
-          />
-        </FadeTransition>
-      </SwitchTransition>
-    </div>
-  )
-}
-
 /** Renders the content of the command table.
  * It renders groups of commands if the search is empty.
  * It renders a single command if the search is not empty.
@@ -158,6 +119,45 @@ const CommandTableContent = ({
       />
     )
   }
+}
+
+/** Renders a table of commands with a fade-in animation when sorting changes. */
+const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table' }: CommandTableProps) => {
+  const [search, setSearch] = useState('')
+  const commands = useFilteredCommands(search, { platformCommandsOnly: true })
+  const [sortOrder, setSortOrder] = useState<CommandSortType>('type')
+
+  return (
+    <div>
+      <div
+        className={css({
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          gap: '5px',
+          position: 'relative',
+          zIndex: 1,
+        })}
+      >
+        <SearchCommands onInput={setSearch} />
+        <SortButton onSortChange={setSortOrder} />
+      </div>
+
+      <SwitchTransition>
+        <FadeTransition key={`${sortOrder}-${search}`} in={true} duration='medium' unmountOnExit>
+          <CommandTableContent
+            search={search}
+            commands={commands}
+            selectedCommand={selectedCommand}
+            customize={customize}
+            onSelect={onSelect}
+            viewType={viewType}
+            sortOrder={sortOrder}
+          />
+        </FadeTransition>
+      </SwitchTransition>
+    </div>
+  )
 }
 
 export default CommandTable
