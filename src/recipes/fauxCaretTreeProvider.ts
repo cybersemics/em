@@ -20,6 +20,22 @@ const hideCaretAnimationNames = [
   'hideCaretD',
   'hideCaretE',
   'hideCaretF',
+  'hideCaretG',
+  'hideCaretH',
+  'hideCaretI',
+  'hideCaretJ',
+  'hideCaretK',
+  'hideCaretL',
+  'hideCaretM',
+  'hideCaretN',
+  'hideCaretO',
+  'hideCaretP',
+  'hideCaretQ',
+  'hideCaretR',
+  'hideCaretS',
+  'hideCaretT',
+  'hideCaretU',
+  'hideCaretV',
 ] as const
 
 const fauxCaretRecipe = cva({
