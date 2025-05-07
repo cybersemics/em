@@ -125,6 +125,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     importThoughtPath: null,
     invalidState: false,
     isLoading: true,
+    isMulticursorExecuting: false,
     jumpHistory: storageModel.get('jumpHistory'),
     jumpIndex: 0,
     latestCommands: [],
