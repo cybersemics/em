@@ -1,14 +1,10 @@
-import { forwardRef, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import CommandSortType from '../@types/CommandSortType'
 import theme from '../selectors/theme'
 import SortOption from './SortOption'
 import SortIcon from './icons/SortIcon'
-
-interface SortButtonHandle {
-  closeDropdown: () => void
-}
 
 interface SortButtonProps {
   onSortChange: (sortOrder: CommandSortType) => void
@@ -17,7 +13,7 @@ interface SortButtonProps {
 /**
  * SortButton component.
  * */
-const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange }, ref) => {
+const SortButton = ({ onSortChange }: SortButtonProps) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
@@ -111,7 +107,6 @@ const SortButton = forwardRef<SortButtonHandle, SortButtonProps>(({ onSortChange
       </div>
     </button>
   )
-})
-SortButton.displayName = 'SortButton'
+}
 
 export default SortButton
