@@ -5,7 +5,7 @@ import { textNoteRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import { isTouch } from '../browser'
-import { commandById } from '../commands'
+import { commandById, gestureString } from '../commands'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
 import getSetting from '../selectors/getSetting'
 import offlineStatusStore from '../stores/offlineStatusStore'
@@ -59,7 +59,7 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
                   Swipe{' '}
                   <GestureDiagram
                     inGestureContainer
-                    path={newThoughtCommand.gesture as GesturePath}
+                    path={gestureString(newThoughtCommand) as GesturePath}
                     size={30}
                     color={token('colors.gray66')}
                   />

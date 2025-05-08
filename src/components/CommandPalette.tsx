@@ -5,6 +5,7 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
+import Key from '../@types/Key'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
@@ -59,7 +60,7 @@ const CommandSearch: FC<{
       if (
         e.key === 'Escape' ||
         // manually check if the commandPalette command is entered since global commands are disabled while the command palette is open
-        hashKeyDown(e) === hashCommand(commandPaletteCommand)
+        hashCommand(commandPaletteCommand.keyboard as Key) === hashKeyDown(e)
       ) {
         e.preventDefault()
         e.stopPropagation()

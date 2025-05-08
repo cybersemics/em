@@ -97,8 +97,8 @@ interface Command {
   /** When true, a small open dropdown indicator will be rendered beneath the icon. */
   isDropdownOpen?: (state: State) => boolean
 
-  /** A keyboard sequence to activate the command. */
-  keyboard?: Key | string
+  /** A keyboard sequence or array of sequences to activate the command. The first keyboard shortcut in the array will be shown in the UI. */
+  keyboard?: Key | Key[] | string
 
   /** For toggling commands, a short label that indicates the inverse action from the current state (e.g. "Add to Favorites" and "Remove from Favorites"). */
   labelInverse?: string
@@ -106,7 +106,7 @@ interface Command {
   /** Specify backup gesture or keyboard that is shown in the Toolbar overlay. */
   overlay?: {
     gesture?: GesturePath
-    keyboard?: Key | string
+    keyboard?: Key | Key[] | string
   }
 
   /** When true, do not prevent the default browser behavior even when canExecute returns true. */

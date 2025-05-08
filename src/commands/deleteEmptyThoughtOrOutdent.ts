@@ -74,27 +74,13 @@ const exec: Command['exec'] = (dispatch, getState) => {
 const deleteEmptyThoughtOrOutdent: Command = {
   id: 'deleteEmptyThoughtOrOutdent',
   label: 'Delete Empty Thought Or Outdent',
-  keyboard: { key: Key.Backspace },
+  keyboard: [{ key: Key.Backspace }, { key: Key.Backspace, shift: true }],
   hideFromHelp: true,
   multicursor: {
     preventSetCursor: true,
     reverse: true,
   },
   svg: DeleteEmptyThoughtIcon,
-  canExecute,
-  exec,
-}
-
-// also match Shift + Backspace
-export const deleteEmptyThoughtOrOutdentAlias: Command = {
-  id: 'deleteEmptyThoughtOrOutdentAlias',
-  label: 'Delete Empty Thought Or Outdent (alias)',
-  keyboard: { key: Key.Backspace, shift: true },
-  hideFromHelp: true,
-  multicursor: {
-    preventSetCursor: true,
-    reverse: true,
-  },
   canExecute,
   exec,
 }

@@ -20,6 +20,22 @@ const hideCaretAnimationNames = [
   'hideCaretD',
   'hideCaretE',
   'hideCaretF',
+  'hideCaretG',
+  'hideCaretH',
+  'hideCaretI',
+  'hideCaretJ',
+  'hideCaretK',
+  'hideCaretL',
+  'hideCaretM',
+  'hideCaretN',
+  'hideCaretO',
+  'hideCaretP',
+  'hideCaretQ',
+  'hideCaretR',
+  'hideCaretS',
+  'hideCaretT',
+  'hideCaretU',
+  'hideCaretV',
 ] as const
 
 const fauxCaretRecipe = cva({
@@ -45,9 +61,13 @@ const fauxCaretRecipe = cva({
 })
 
 /** The root fauxCaret recipe that sets the faux caret animation vars in LayoutTree. Picks from a set of identical hideCaret animations based on a thought's indent depth. This ensures that the animation plays again each time the indent depth changes. */
-const fauxCaretTreeProvider = (depth: number) =>
-  fauxCaretRecipe({
-    animation: isTouch && isSafari() ? hideCaretAnimationNames[depth % hideCaretAnimationNames.length] : 'none',
+const fauxCaretTreeProvider = (indent: number) => {
+  // Since indent is fractional, we need to scale bit up to get integer steps.
+  // There is nothing magical about the number 2, but it seems to cover all the cases without causing nearby collisions.
+  const indentStep = Math.ceil(indent * 2)
+  return fauxCaretRecipe({
+    animation: isTouch && isSafari() ? hideCaretAnimationNames[indentStep % hideCaretAnimationNames.length] : 'none',
   })
+}
 
 export default fauxCaretTreeProvider
