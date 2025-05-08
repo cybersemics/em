@@ -23,8 +23,6 @@ export type PopupBaseProps = PropsWithChildren<
     circledCloseButton?: boolean
     /** If true, the popup will take up the full width of the screen. */
     fullScreen?: boolean
-    /** Used to cancel imports. */
-    importFileId?: string
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
     padding?: string

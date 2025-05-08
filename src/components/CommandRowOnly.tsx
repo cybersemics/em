@@ -73,8 +73,7 @@ const CommandRowOnly = forwardRef<
             position: 'relative',
             textAlign: 'left',
 
-            backgroundColor: selected ? 'commandSelected' : undefined,
-            // padding: selected ? '10px 0.3em 10px 0.5em' : undefined,
+            backgroundColor: selected ? 'commandSelectedBg' : undefined,
             borderRadius: '8px',
             display: 'flex',
             // margin: selected ? '-5px 0' : undefined,
@@ -132,7 +131,7 @@ const CommandRowOnly = forwardRef<
               rounded={command.rounded}
             />
           ) : (
-            Icon && <Icon fill='white' />
+            Icon && <Icon fill={token('colors.fg')} />
           )}
         </Cell>
 

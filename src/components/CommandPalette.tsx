@@ -277,9 +277,9 @@ const CommandPalette: FC<{
       className={css({
         marginBottom: isTouch ? 0 : fontSize,
         textAlign: 'left',
-        border: '1px solid {colors.cpBorder}',
+        border: '1px solid {colors.gray15}',
         borderRadius: '12px',
-        backgroundColor: 'cpBackground',
+        backgroundColor: 'gray09',
         maxWidth: '100%',
         ...(isTouch ? { width: '100%' } : { width: '826px' }),
         maxHeight: isTouch ? undefined : '500px',
@@ -295,7 +295,7 @@ const CommandPalette: FC<{
             <h2
               className={css({
                 margin: 0,
-                borderBottom: 'solid 1px {colors.cpBorder}',
+                borderBottom: 'solid 1px {colors.gray15}',
               })}
             >
               <CommandSearch
@@ -386,7 +386,6 @@ const CommandPaletteWithTransition: FC = () => {
   return (
     <TransitionGroup
       childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
-      // className={css({ display: 'flex', justifyContent: 'center', alignItems: 'center' })}
     >
       {showCommandPalette ? (
         <FadeTransition duration='fast' nodeRef={popupRef} onEntering={() => setDismiss(false)}>

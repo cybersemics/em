@@ -1,8 +1,6 @@
 const colors = {
   dark: {
     // Background colors in capacitor app needs to be in hexadecimal codes
-    cpBorder: 'rgba(36, 36, 36, 1)', // #242424
-    cpBackground: 'rgba(23, 23, 23, 1)', // #171717
     bg: '#000000',
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
     bgOverlay50: 'rgba(0, 0, 0, 0.5)',
@@ -22,6 +20,7 @@ const colors = {
     fgOverlay70: 'rgba(255, 255, 255, 0.7)',
     fgOverlay80: 'rgba(20, 20, 20, 0.8)',
     fgOverlay90: 'rgba(20, 20, 20, 0.9)',
+    gray09: 'rgba(23, 23, 23, 1)', // #171717
     gray15: 'rgba(38, 38, 38, 1)', // #262626
     gray33: 'rgba(85, 85, 85, 1)',
     gray45: 'rgba(115, 115, 115, 1)',
@@ -67,7 +66,7 @@ const colors = {
     bulletGray: 'rgba(102, 102, 102, 1)', // #666
     midPink: 'rgba(255, 123, 195, 1)', // #ff7bc3
     dropChildTarget: '#32305f', // purple-eggplant
-    commandSelected: 'rgba(100, 199, 234, 0.15)', // #64c7ea26
+    commandSelectedBg: 'rgba(100, 199, 234, 0.15)', // #64c7ea26
     eggplant: 'rgba(82, 48, 95, 1)',
     checkboxForm: 'rgba(62, 62, 62, 1)', // #3e3e3e
     error: 'rgba(204, 34, 51, 1)',
@@ -79,8 +78,6 @@ const colors = {
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
-    cpBorder: 'rgba(36, 36, 36, 1)', // #242424
-    cpBackground: 'rgba(23, 23, 23, 1)', // #171717
     bg: '#FFFFFF',
     bgOverlay80: 'rgba(255, 255, 255, 0.8)',
     bgOverlay50: 'rgba(255, 255, 255, 0.5)',
@@ -100,6 +97,7 @@ const colors = {
     fgOverlay70: 'rgba(0, 0, 0, 0.7)',
     fgOverlay80: 'rgba(235, 235, 235, 0.8)',
     fgOverlay90: 'rgba(235, 235, 235, 0.9)',
+    gray09: 'rgba(232, 232, 232, 1)',
     gray15: 'rgba(217, 217, 217, 1)', // #262626
     gray33: 'rgba(170, 170, 170, 1)',
     gray45: 'rgba(140, 140, 140, 1)',
@@ -145,7 +143,7 @@ const colors = {
     bulletGray: 'rgba(153, 153, 153, 1)', // #999999
     midPink: 'rgba(255, 123, 195, 1)',
     dropChildTarget: '#a4a2cd',
-    commandSelected: 'rgba(222, 222, 222, 1)',
+    commandSelectedBg: 'rgba(100, 199, 234, 0.15)', // #64c7ea26
     eggplant: 'rgb(85, 51, 98)',
     checkboxForm: 'rgba(193, 193, 193, 1)',
     error: 'rgba(204, 34, 51, 1)',
