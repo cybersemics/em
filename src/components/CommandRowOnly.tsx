@@ -59,6 +59,8 @@ const CommandRowOnly = forwardRef<
 
     const fontSize = useSelector(state => state.fontSize)
 
+    const paddingSize = fontSize * (isTouch && !isTable ? 0.3 : 0.67)
+
     return (
       <Container
         // @ts-expect-error Container can be 'tr' or 'div'
@@ -90,9 +92,9 @@ const CommandRowOnly = forwardRef<
         style={{
           fontSize,
           // split padding into paddingInline and paddingBlock so either property can be overridden
-          paddingInline: fontSize * 0.78,
-          paddingBlock: fontSize * 0.78,
-          gap: isTouch ? fontSize * 0.44 : fontSize * 0.78,
+          paddingInline: paddingSize,
+          paddingBlock: paddingSize,
+          gap: paddingSize,
           ...style,
         }}
       >
