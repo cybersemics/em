@@ -361,7 +361,7 @@ const ModalHelp = () => {
       id='help'
       title='Help'
       actions={({ close }) => <ActionButton key='close' title='Close' {...fastClick(() => close())} />}
-      style={{ fontSize }}
+      style={{ fontSize, paddingInline: 0 }}
     >
       <Tabs currentTab={section} onTabChange={setSection} tabs={tabs} />
     </ModalComponent>

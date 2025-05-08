@@ -140,7 +140,7 @@ const SearchCommands: FC<{
         className={css({
           marginLeft: 0,
           marginBottom: 0,
-          marginTop: '1em',
+          marginTop: '0.3em',
           border: 'none',
           boxSizing: 'border-box',
           width: '100%',
