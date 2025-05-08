@@ -1,5 +1,4 @@
 import { DragSourceMonitor, useDrag } from 'react-dnd'
-import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragCommandZone from '../@types/DragCommandZone'
@@ -52,11 +51,8 @@ const CommandRow = ({
         onClick={(_, command) => {
           onSelect?.(selected ? null : command)
         }}
-        style={{ opacity: isDragging ? 0.5 : 1 }}
+        style={{ opacity: isDragging ? 0.5 : 1, paddingInline: 0 }}
         ref={dragSource}
-        cssRaw={css.raw({
-          padding: '12px 0 12px 0',
-        })}
       />
     )
   )
