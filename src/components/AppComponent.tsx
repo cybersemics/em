@@ -56,7 +56,7 @@ const useDisableLongPressToSelect = () => {
     // when isCollapsed is false, there is a selection with at least one character
     // long-press-to-select only selects one or more characters
     if (globals.longpressing && selection.isActive() && !selection.isCollapsed()) {
-      selection.clear()
+      selection.set(document.body)
     }
   }, [])
 
