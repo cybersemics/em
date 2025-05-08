@@ -4,6 +4,7 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
+import { dismissTipActionCreator as dismissTip } from '../actions/dismissTip'
 import { deleteResumableFile } from '../actions/importFiles'
 import { isTouch } from '../browser'
 import { AlertType } from '../constants'
@@ -36,6 +37,7 @@ export type PopupBaseProps = PropsWithChildren<
     showXOnHover?: boolean
     swipeDownToDismiss?: boolean
     textAlign?: 'center' | 'left' | 'right'
+    preventFromTouchingEdge?: boolean
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
 >
 
@@ -57,6 +59,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       showXOnHover,
       swipeDownToDismiss,
       textAlign,
+      preventFromTouchingEdge = false,
     },
     ref,
   ) => {
@@ -78,7 +81,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar
       onDismissEnd: () => {
-        dispatch(alert(null))
+        dispatch([alert(null), dismissTip()])
       },
       swipeDown: swipeDownToDismiss,
     })
@@ -109,7 +112,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           width: '100%',
           overflowY: 'auto',
           maxHeight: '100%',
-          maxWidth: '100%',
         }
       : {}
 
@@ -119,6 +121,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           boxSizing: 'border-box',
           textAlign,
           zIndex: 'popup',
+          // leave space so the circledCloseButton doesn't get cut off from the screen
+          maxWidth: preventFromTouchingEdge || (onClose && circledCloseButton) ? 'calc(100% - 2em)' : '100%',
           ...borderStyles,
           ...centerStyles,
           ...fullWidthStyles,
