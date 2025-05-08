@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import SortPreference from '../@types/SortPreference'
 import { setSortPreferenceActionCreator as setSortPreference } from '../actions/setSortPreference'
-import { toggleSortPickerActionCreator as toggleSortPicker } from '../actions/toggleSortPicker'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
 import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -102,7 +102,7 @@ const SortPicker: FC<{ size?: number }> = memo(({ size }) => {
                   : 'Asc',
           },
         }),
-        toggleSortPicker({ value: false }),
+        toggleDropdown({ dropDownType: 'sortPicker', value: false }),
       ])
     })
   }

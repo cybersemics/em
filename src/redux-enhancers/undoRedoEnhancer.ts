@@ -15,6 +15,17 @@ import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
 
+/** Interface for the setIsMulticursorExecuting action. */
+interface SetIsMulticursorExecutingAction extends Action<'setIsMulticursorExecuting'> {
+  value: boolean
+  undoLabel?: string
+}
+
+/** Type guard to check if an action is a setIsMulticursorExecuting action. */
+function isSetIsMulticursorExecutingAction(action: Action<string>): action is SetIsMulticursorExecutingAction {
+  return action.type === 'setIsMulticursorExecuting'
+}
+
 /** Properties that are ignored when generating state patches. */
 const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'pushQueue']
 
@@ -214,12 +225,16 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
-      // edit merge logic
-      // combine navigation and thoughtChange actions into single redoPatches
+      // Some actions are merged together into a single undo/redo patch.
+      // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
+      // - Contiguous edits are merged into a single edit action. For example, if the user edits 'a' to 'b' and then 'b' to 'c', the undo will revert to 'a' in one step.
+      // - The closeAlert action is merged with the previous action so that the alert can be undone.
+      // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       if (
         (isNavigation(actionType) && isNavigation(lastActionType)) ||
         (lastActionType === 'editThought' && actionType === 'editThought') ||
-        actionType === 'closeAlert'
+        actionType === 'closeAlert' ||
+        state.isMulticursorExecuting
       ) {
         lastActionType = actionType
         const lastUndoPatch = nthLast(state.undoPatches, 1)
@@ -255,13 +270,19 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       // add a new undo patch
       const undoPatch = diffState(newState as Index, state)
-
       return undoPatch.length
         ? {
             ...newState,
             lastUndoableActionType: actionType,
             redoPatches: [],
-            undoPatches: [...newState.undoPatches, addActionsToPatch(undoPatch, [lastActionType])],
+            undoPatches: [
+              ...newState.undoPatches,
+              addActionsToPatch(undoPatch, [
+                // Override the action label with undoLabel so that the command label is used in the alert on undo/redo of a multicursor command.
+                // TODO: A better solution would add a label to the Patch itself.
+                isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastActionType,
+              ]),
+            ],
           }
         : newState
     }

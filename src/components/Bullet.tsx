@@ -20,12 +20,15 @@ import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import isTutorial from '../selectors/isTutorial'
 import rootedParentOf from '../selectors/rootedParentOf'
+import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
+import BulletEllipsis from './BulletEllipsis'
 
 interface BulletProps {
   // See: ThoughtProps['isContextPending']
@@ -506,6 +509,12 @@ const Bullet = ({
     [dispatch, dragHold, path, simplePath],
   )
 
+  // true if the tutorial is on (used to hide the bullet ellipsis during tutorial)
+  const isTutorialOn = useSelector(isTutorial)
+
+  // true if the cursor is on the bullet (used to show the bullet ellipsis)
+  const isCursor = useSelector(state => equalPath(state.cursor, path))
+
   return (
     <span
       data-testid={'bullet-' + hashPath(path)}
@@ -544,6 +553,17 @@ const Bullet = ({
       }}
       {...fastClick(clickHandler, { enableHaptics: false })}
     >
+      {isCursor && isTouch && !isTutorialOn && (
+        <div
+          style={{
+            // the elipsis is positioned to the RIGHT of the bullet, and we need to move it to the LEFT.
+            // lineHeight is the width of the bullet, so setting that as a negative margin places it where we need it to be.
+            marginLeft: -lineHeight,
+          }}
+        >
+          <BulletEllipsis />
+        </div>
+      )}
       <svg
         className={cx(
           glyph({ isBulletExpanded, showContexts, leaf }),

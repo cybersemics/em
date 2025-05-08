@@ -1,4 +1,5 @@
 import Command from '../@types/Command'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import Icon from '../components/icons/LetterCaseWithPicker'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -10,11 +11,8 @@ const letterCase: Command = {
   svg: Icon,
   canExecute: state => isDocumentEditable() && !!state.cursor,
   multicursor: false,
-  exec: (dispatch, getState) => {
-    const state = getState()
-    if (state.showColorPicker) dispatch({ type: 'toggleColorPicker' })
-    if (state.showSortPicker) dispatch({ type: 'toggleSortPicker' })
-    dispatch({ type: 'toggleLetterCase' })
+  exec: (dispatch, _) => {
+    dispatch(toggleDropdown({ dropDownType: 'letterCase' }))
   },
   isActive: state => !!state.cursor,
   isDropdownOpen: state => !!state.showLetterCase,

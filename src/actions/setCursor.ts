@@ -159,6 +159,8 @@ const setCursor = (
         }
       : null),
     ...(!thoughtsResolved ? { showColorPicker: false, showLetterCase: false, showSortPicker: false } : null),
+    // Close command menu when editing is set to true, or if there is no cursor.
+    showCommandMenu: state.showCommandMenu && !editing && thoughtsResolved !== null,
   }
 
   return stateNew
@@ -167,8 +169,9 @@ const setCursor = (
 /** Action-creator for setCursor. */
 export const setCursorActionCreator =
   (payload: Parameters<typeof setCursor>[1]): Thunk =>
-  dispatch =>
+  dispatch => {
     dispatch({ type: 'setCursor', ...payload })
+  }
 
 export default _.curryRight(setCursor)
 
