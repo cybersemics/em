@@ -58,8 +58,8 @@ const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
  * Hash a keyboard shortcut into a string that can be compared with the result of hashKeyDown.
  * This function only handles a single keyboard shortcut, not arrays.
  */
-export const hashCommand = (keyboard: Exclude<Command['keyboard'], Key[]>): string => {
-  const key = typeof keyboard === 'string' ? { key: keyboard } : keyboard || ({} as Key)
+export const hashCommand = (keyboard: string | Key): string => {
+  const key = typeof keyboard === 'string' ? { key: keyboard } : keyboard
 
   return (key.meta ? 'META_' : '') + (key.alt ? 'ALT_' : '') + (key.shift ? 'SHIFT_' : '') + key.key?.toUpperCase()
 }
@@ -118,8 +118,6 @@ const index = (): {
     // Process each keyboard shortcut and create entries in the index
     return keyboardShortcuts.reduce((result: Record<string, Command>, keyboardShortcut) => {
       const hash = hashCommand(keyboardShortcut)
-
-      if (!hash) return result
 
       // check if the same shortcut is used by multiple commands
       if (accum[hash]) {
