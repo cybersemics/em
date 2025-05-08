@@ -116,7 +116,7 @@ const Tabs = <T extends string>({
           ))}
         </div>
       </div>
-      <div>{tabs.find(tab => tab.value === currentTab)?.content}</div>
+      <div className={css({ padding: '0.89em' })}>{tabs.find(tab => tab.value === currentTab)?.content}</div>
     </div>
   )
 }
