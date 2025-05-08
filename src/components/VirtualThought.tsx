@@ -64,7 +64,6 @@ const VirtualThought = ({
   isLastVisible,
   autofocus,
   marginRight,
-  isTableCol1,
 }: {
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
@@ -88,7 +87,6 @@ const VirtualThought = ({
   isLastVisible?: boolean
   autofocus: Autofocus
   marginRight: number
-  isTableCol1?: boolean
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
