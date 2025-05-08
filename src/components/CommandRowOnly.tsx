@@ -59,7 +59,7 @@ const CommandRowOnly = forwardRef<
 
     const fontSize = useSelector(state => state.fontSize)
 
-    const paddingSize = fontSize * (isTouch && !isTable ? 0.3 : 0.67)
+    const paddingSize = fontSize * (isTouch && !isTable ? 0.4 : 0.67)
 
     return (
       <Container
