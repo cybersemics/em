@@ -42,7 +42,7 @@ const CommandKeys = ({ keyboardOrString }: { keyboardOrString: Key | Key[] | str
       })}
     >
       {keyboard.meta && (isMac ? <Kbd>⌘</Kbd> : <Kbd isText>ctrl</Kbd>)}
-      {keyboard.alt && isMac ? <Kbd>⌥</Kbd> : <Kbd isText>alt</Kbd>}
+      {keyboard.alt && (isMac ? <Kbd>⌥</Kbd> : <Kbd isText>alt</Kbd>)}
       {keyboard.control && <Kbd isText>ctrl</Kbd>}
       {keyboard.shift && <Kbd>⇧</Kbd>}
       {keyboard.key === 'Backspace' ? (
