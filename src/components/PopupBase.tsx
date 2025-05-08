@@ -27,7 +27,7 @@ export type PopupBaseProps = PropsWithChildren<
     center?: boolean
     circledCloseButton?: boolean
     /** If true, the popup will take up the full width of the screen. */
-    fullWidth?: boolean
+    fullScreen?: boolean
     /** Used to cancel imports. */
     importFileId?: string
     /** If defined, will show a small x in the upper right corner. */
@@ -50,7 +50,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       center = false,
       children,
       circledCloseButton,
-      fullWidth = false,
+      fullScreen = false,
       importFileId,
       onClose,
       padding,
@@ -101,12 +101,13 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         }
       : {}
 
-    const fullWidthStyles = fullWidth
+    const fullWidthStyles = fullScreen
       ? {
           boxShadow: 'none',
           border: 'none',
           display: 'block',
           width: '100%',
+          height: '100%',
           overflowY: 'auto',
           maxHeight: '100%',
           maxWidth: '100%',
