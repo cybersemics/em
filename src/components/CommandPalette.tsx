@@ -126,8 +126,7 @@ const CommandRow: FC<{
   onHover: (e: MouseEvent, command: Command) => void
   selected?: boolean
   command: Command
-  style?: React.CSSProperties
-}> = ({ gestureInProgress, search, onClick, onHover, selected, command, style }) => {
+}> = ({ gestureInProgress, search, onClick, onHover, selected, command }) => {
   const store = useStore()
   const ref = React.useRef<HTMLDivElement>(null)
 
@@ -162,7 +161,6 @@ const CommandRow: FC<{
       selected={selected}
       command={command}
       isActive={isActive}
-      style={style}
       disabled={disabled}
       hideDescriptionIfNotSelectedOnMobile
     />
