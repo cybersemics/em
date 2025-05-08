@@ -59,8 +59,6 @@ const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
  * This function only handles a single keyboard shortcut, not arrays.
  */
 export const hashCommand = (keyboard: Exclude<Command['keyboard'], Key[]>): string => {
-  if (!keyboard) return ''
-
   const key = typeof keyboard === 'string' ? { key: keyboard } : keyboard || ({} as Key)
 
   return (key.meta ? 'META_' : '') + (key.alt ? 'ALT_' : '') + (key.shift ? 'SHIFT_' : '') + key.key?.toUpperCase()
@@ -102,21 +100,6 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | Key[] | string): 
     (keyboard.shift ? 'Shift + ' : '') +
     arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
   )
-}
-
-/** Checks if a command's keyboard shortcut matches a keydown event. */
-export const commandMatchesKeyDown = (command: Command, e: KeyboardEvent): boolean => {
-  if (!command.keyboard) return false
-
-  const keyDownHash = hashKeyDown(e)
-
-  if (Array.isArray(command.keyboard)) {
-    // For each keyboard shortcut in the array, check if it matches the keydown event
-    return command.keyboard.some(kb => hashCommand(kb) === keyDownHash)
-  } else {
-    // For a single keyboard shortcut, just compare the hashes
-    return hashCommand(command.keyboard) === keyDownHash
-  }
 }
 
 /** Initializes command indices and logs keyboard shortcut conflicts. */

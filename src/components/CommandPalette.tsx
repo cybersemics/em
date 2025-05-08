@@ -8,7 +8,7 @@ import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
-import { commandById, commandMatchesKeyDown, formatKeyboardShortcut, gestureString } from '../commands'
+import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -59,7 +59,9 @@ const CommandSearch: FC<{
       if (
         e.key === 'Escape' ||
         // manually check if the commandPalette command is entered since global commands are disabled while the command palette is open
-        commandMatchesKeyDown(commandPaletteCommand, e)
+        (commandPaletteCommand.keyboard &&
+          !Array.isArray(commandPaletteCommand.keyboard) &&
+          hashCommand(commandPaletteCommand.keyboard) === hashKeyDown(e))
       ) {
         e.preventDefault()
         e.stopPropagation()
