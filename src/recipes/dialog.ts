@@ -3,7 +3,7 @@ import { defineSlotRecipe } from '@pandacss/dev'
 /** Define heights for the gradient that indicates content/scrollability, and
  * the bottom spacer. */
 const gradientHeight = 48
-const contentBottomSpacerHeight = 24
+const contentBottomSpacerHeight = gradientHeight / 2
 
 const dialogRecipe = defineSlotRecipe({
   className: 'dialog',
@@ -54,7 +54,6 @@ const dialogRecipe = defineSlotRecipe({
       maxHeight: '70vh',
       overflow: 'auto',
       padding: '1rem',
-      paddingBottom: `${gradientHeight}px`,
       scrollbarColor: '{colors.fg} {colors.bg}',
       scrollbarWidth: 'thin',
       '&::-webkit-scrollbar': {
