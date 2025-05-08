@@ -1,33 +1,22 @@
 import React, { PropsWithChildren } from 'react'
-import { css } from '../../../styled-system/css'
+import { dialogRecipe } from '../../../styled-system/recipes'
 
 /**
  * Content for dialog box.
  */
 const DialogContent: React.FC<PropsWithChildren> = ({ children }) => {
+  const dialogClasses = dialogRecipe()
+
   return (
-    <div
-      className={css({
-        fontSize: '1.25rem',
-        color: 'fg',
-        maxHeight: '70vh',
-        overflow: 'auto',
-        padding: '1rem',
-        scrollbarColor: '{colors.fg} {colors.bg}',
-        scrollbarWidth: 'thin',
-        '&::-webkit-scrollbar': {
-          width: '8px',
-        },
-        '&::-webkit-scrollbar-track': {
-          background: 'bg',
-        },
-        position: 'relative',
-        '@media (min-width: 1200px)': {
-          fontSize: '1.7rem',
-        },
-      })}
-    >
+    <div className={dialogClasses.content}>
       {children}
+      {/* 
+          The 'gradient' slot provides a visual cue that the dialog is scrollable.
+          This spacer div at the end of the content, styled by 'contentBottomSpacer', 
+          adds a small buffer to ensure the last piece of actual content 
+          is clearly visible above where the gradient effect begins.
+      */}
+      <div className={dialogClasses.contentBottomSpacer} />
     </div>
   )
 }

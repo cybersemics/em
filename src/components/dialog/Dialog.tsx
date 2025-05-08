@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, useEffect, useRef } from 'react'
-import { css } from '../../../styled-system/css'
+import { dialogRecipe } from '../../../styled-system/recipes'
 
 interface DialogProps {
   onClose: () => void
@@ -11,6 +11,7 @@ interface DialogProps {
 const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const overlayRef = useRef<HTMLDivElement | null>(null)
+  const dialogClasses = dialogRecipe()
 
   /**
    * Handles the click outside the dialog.
@@ -59,51 +60,10 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose })
   }, [])
 
   return (
-    <div
-      ref={overlayRef}
-      className={css({
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'bgOverlay50',
-        zIndex: 'modal',
-        overflow: 'hidden',
-      })}
-    >
-      <div
-        ref={dialogRef}
-        className={css({
-          backgroundColor: 'bg',
-          color: 'fg',
-          padding: '0.8rem 0.8rem 0',
-          borderRadius: '8px',
-          maxWidth: '500px',
-          width: '80%',
-          border: '2px solid {colors.fgOverlay50}',
-          overflow: 'hidden',
-          position: 'relative',
-          maxHeight: '80dvh',
-        })}
-      >
+    <div ref={overlayRef} className={dialogClasses.overlay}>
+      <div ref={dialogRef} className={dialogClasses.container}>
         {children}
-        <div
-          className={css({
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-            left: 0,
-            marginRight: 20,
-            height: '100px',
-            background: 'linear-gradient(to top, {colors.bg} 0%, transparent 100%)',
-            pointerEvents: 'none',
-            display: 'block',
-          })}
-        />
+        <div className={dialogClasses.gradient} />
       </div>
     </div>
   )
