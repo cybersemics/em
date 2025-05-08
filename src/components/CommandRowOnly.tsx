@@ -57,6 +57,8 @@ const CommandRowOnly = forwardRef<
     const Container = isTable ? 'tr' : 'div'
     const Cell = isTable ? 'td' : 'div'
 
+    const fontSize = useSelector(state => state.fontSize)
+
     return (
       <Container
         // @ts-expect-error Container can be 'tr' or 'div'
@@ -71,14 +73,12 @@ const CommandRowOnly = forwardRef<
 
             backgroundColor: selected ? 'commandSelected' : undefined,
             // padding: selected ? '10px 0.3em 10px 0.5em' : undefined,
-            borderRadius: '8px', // constant curve
-            padding: '4px 12px',
+            borderRadius: '8px',
             display: 'flex',
             // margin: selected ? '-5px 0' : undefined,
             flexDirection: 'row',
             justifyContent: 'flex-start',
             alignItems: 'center',
-            gap: isTouch ? 8 : 12,
           },
           cssRaw,
         )}
@@ -87,7 +87,14 @@ const CommandRowOnly = forwardRef<
             onClick(e, command)
           }
         }}
-        style={style}
+        style={{
+          fontSize,
+          // split padding into paddingInline and paddingBlock so either property can be overridden
+          paddingInline: fontSize * 0.78,
+          paddingBlock: fontSize * 0.78,
+          gap: isTouch ? fontSize * 0.44 : fontSize * 0.78,
+          ...style,
+        }}
       >
         {/* div used to contain width:100% and height:100% of icons while in a flex box */}
         <Cell className={css({ display: 'flex', justifyContent: 'center', alignItems: 'center' })}>
@@ -142,6 +149,7 @@ const CommandRowOnly = forwardRef<
           <div
             className={css({
               minWidth: '4em',
+              lineHeight: '1em',
               whiteSpace: 'nowrap',
               color: disabled
                 ? 'gray'
@@ -150,10 +158,10 @@ const CommandRowOnly = forwardRef<
                     ? '#64C7EA'
                     : gestureInProgress === command.gesture
                       ? 'vividHighlight'
-                      : 'fg'
+                      : 'gray75'
                   : selected
                     ? 'vividHighlight'
-                    : 'fg',
+                    : 'gray75',
               fontWeight: selected ? 'bold' : undefined,
             })}
           >
@@ -165,12 +173,14 @@ const CommandRowOnly = forwardRef<
               <div
                 className={css({
                   display: 'flex',
+                  lineHeight: '0.83em',
                 })}
               >
                 {/* description */}
                 <div
                   className={css({
                     fontSize: '80%',
+                    color: 'gray45',
                     ...(!isTouch
                       ? {
                           flexGrow: 1,

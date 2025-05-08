@@ -24,8 +24,10 @@ const colors = {
     fgOverlay90: 'rgba(20, 20, 20, 0.9)',
     gray15: 'rgba(38, 38, 38, 1)', // #262626
     gray33: 'rgba(85, 85, 85, 1)',
+    gray45: 'rgba(115, 115, 115, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
     gray66: 'rgba(169, 169, 169, 1)', // #a9a9a9
+    gray75: 'rgba(191, 191, 191, 1)',
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9, this is used for disabled things + text color, unlike gray66 it is the same for both light and dark
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(173, 216, 230, 1)', // #add8e6 (lightblue)
@@ -100,8 +102,10 @@ const colors = {
     fgOverlay90: 'rgba(235, 235, 235, 0.9)',
     gray15: 'rgba(217, 217, 217, 1)', // #262626
     gray33: 'rgba(170, 170, 170, 1)',
+    gray45: 'rgba(140, 140, 140, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
     gray66: 'rgba(86, 86, 86, 1)', // #a9a9a9 (darkgray)
+    gray75: 'rgba(64, 64, 64, 1)',
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue)
