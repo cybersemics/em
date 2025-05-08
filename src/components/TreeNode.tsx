@@ -138,6 +138,7 @@ const TreeNode = ({
 
   const duration = durations.get('layoutNodeAnimation')
 
+  const fontSize = useSelector(state => state.fontSize)
   const hasMounted = useRef(false)
   const prevIsTableCol1 = useRef(isTableCol1)
   const widthDependentThoughtIds = useWidthDependentThoughtIds(path)
@@ -210,7 +211,7 @@ const TreeNode = ({
 
   useLayoutEffect(() => {
     if (dragInProgress) return
-    
+
     const element = fadeThoughtRef.current
     if (!element) return
 
@@ -288,7 +289,9 @@ const TreeNode = ({
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
   // Render virtualized thoughts with their estimated height so that document height is relatively stable.
   // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
-  if (belowCursor && !isCursor && y > viewportBottom + height) return null
+  if (belowCursor && !isCursor && y > viewportBottom + height) {
+     return null
+  }
 
   const nextThought = isTableCol1 ? treeThoughtsPositioned[index + 1] : null
   const previousThought = isTableCol1 ? treeThoughtsPositioned[index - 1] : null
@@ -297,11 +300,12 @@ const TreeNode = ({
   const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
   // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
   const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
+  const isDragAndDrop = testFlags.simulateDrag || testFlags.simulateDrop || navigator.webdriver
 
   const outerDivStyle = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
     // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
-    left: x,
+    left: x + (isTableCol1 && isDragAndDrop ? -1.5 * fontSize : 0),
     top: isSwap ? 'auto' : y,
     // Table col1 uses its exact width since cannot extend to the right edge of the screen.
     // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
