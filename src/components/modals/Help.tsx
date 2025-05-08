@@ -72,7 +72,11 @@ const Tutorials = () => {
 }
 
 /** A help section to view all gestures, commands, and toolbar buttons. */
-const CommandCenter = () => <CommandTable />
+const CommandCenter = () => (
+  <div className={css({ paddingTop: '1em' })}>
+    <CommandTable />
+  </div>
+)
 
 /** List the valid values for a metaprogramming attribute. */
 const Options = ({ options }: { options: string[] }) => (
