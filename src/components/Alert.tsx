@@ -54,6 +54,7 @@ const Alert: FC = () => {
             showXOnHover
             onClose={alert.showCloseLink && !isTouch ? onClose : undefined}
             swipeDownToDismiss
+            textAlign='center'
           >
             <div
               data-testid='alert-content'

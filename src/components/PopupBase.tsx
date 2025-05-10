@@ -1,6 +1,7 @@
 import React, { PropsWithChildren, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
+import { anchorButtonRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
@@ -150,13 +151,14 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         )}
         {multicursor && (
           <a
+            className={cx(anchorButtonRecipe(), css({ margin: '0 1em 1em' }))}
             aria-label='no-swipe-to-dismiss'
             {...fastClick(() => {
               dispatch(clearMulticursors())
               onClose?.()
             })}
           >
-            cancel
+            Cancel
           </a>
         )}
         {onClose ? (
