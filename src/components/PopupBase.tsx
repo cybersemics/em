@@ -27,7 +27,6 @@ export type PopupBaseProps = PropsWithChildren<
     onClose?: () => void
     padding?: string
     showXOnHover?: boolean
-    swipeDownToDismiss?: boolean
     textAlign?: 'center' | 'left' | 'right'
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
 >
@@ -47,7 +46,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       onClose,
       padding,
       showXOnHover,
-      swipeDownToDismiss,
       textAlign,
     },
     ref,
@@ -72,7 +70,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       onDismissEnd: () => {
         dispatch(alert(null))
       },
-      swipeDown: swipeDownToDismiss,
+      swipeDown: true,
     })
 
     const borderStyles = border

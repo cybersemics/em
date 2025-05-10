@@ -59,7 +59,6 @@ const Alert: FC = () => {
             background={token('colors.panelBg')}
             showXOnHover
             onClose={alert.showCloseLink && !isTouch ? onClose : undefined}
-            swipeDownToDismiss
             textAlign='center'
           >
             <div
