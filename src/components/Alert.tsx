@@ -52,6 +52,7 @@ const Alert: FC = () => {
             center
             background={token('colors.panelBg')}
             showXOnHover
+            importFileId={alert.importFileId}
             onClose={alert.showCloseLink && !isTouch ? onClose : undefined}
             swipeDownToDismiss
             textAlign='center'
