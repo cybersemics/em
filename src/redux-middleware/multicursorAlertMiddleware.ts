@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import pluralize from 'pluralize'
 import { ThunkMiddleware } from 'redux-thunk'
 import Dispatch from '../@types/Dispatch'
 import State from '../@types/State'
@@ -30,13 +31,9 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
 
     if (numMulticursors !== prevNumMulticursors) {
       // show or update multicursor alert
-      return throttledAlert(
-        dispatch,
-        numMulticursors === 1 ? '1 thought selected' : `${numMulticursors} thoughts selected`,
-        {
-          alertType: AlertType.MulticursorActive,
-        },
-      )
+      return throttledAlert(dispatch, `${pluralize('thought', numMulticursors, true)} selected`, {
+        alertType: AlertType.MulticursorActive,
+      })
     }
   }
 }
