@@ -71,7 +71,9 @@ const useSwipeToDismiss = (
   const stop = useCallback(
     (e: React.TouchEvent) => {
       // preventDefault on touchEnd to prevent ToolbarIcon click
-      if (!(e.target as HTMLElement).querySelector('[aria-label="no-swipe-to-dismiss"')) {
+      const target = e.target as HTMLElement
+      const selector = '[aria-label="no-swipe-to-dismiss"'
+      if (!target.matches(selector) && !target.querySelector(selector)) {
         e.preventDefault()
       }
 

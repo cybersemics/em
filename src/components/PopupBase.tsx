@@ -150,6 +150,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         )}
         {multicursor && (
           <a
+            aria-label='no-swipe-to-dismiss'
             {...fastClick(() => {
               dispatch(clearMulticursors())
               onClose?.()
