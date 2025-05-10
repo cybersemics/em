@@ -2,12 +2,17 @@ import React, { FC, useCallback, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
+import { anchorButtonRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator } from '../actions/alert'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
+import { deleteResumableFile } from '../actions/importFiles'
 import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
+import syncStatusStore from '../stores/syncStatus'
+import fastClick from '../util/fastClick'
 import strip from '../util/strip'
 import FadeTransition from './FadeTransition'
 import PopupBase from './PopupBase'
@@ -22,6 +27,7 @@ const Alert: FC = () => {
   const alertStoreValue = alertStore.useState()
   const value = strip(alertStoreValue ?? alert?.value ?? '')
   const iconSize = useSelector(state => 0.78 * state.fontSize)
+  const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
   const dispatch = useDispatch()
 
   /** Dismiss the alert on close. */
@@ -52,7 +58,6 @@ const Alert: FC = () => {
             center
             background={token('colors.panelBg')}
             showXOnHover
-            importFileId={alert.importFileId}
             onClose={alert.showCloseLink && !isTouch ? onClose : undefined}
             swipeDownToDismiss
             textAlign='center'
@@ -71,6 +76,30 @@ const Alert: FC = () => {
               {Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
               {value}
             </div>
+
+            {alert.importFileId && (
+              <a
+                onClick={() => {
+                  deleteResumableFile(alert.importFileId!)
+                  syncStatusStore.update({ importProgress: 1 })
+                  onClose?.()
+                }}
+              >
+                cancel
+              </a>
+            )}
+
+            {multicursor && (
+              <a
+                className={cx(anchorButtonRecipe(), css({ margin: '0 1em 1em' }))}
+                {...fastClick(() => {
+                  dispatch(clearMulticursors())
+                  onClose?.()
+                })}
+              >
+                Cancel
+              </a>
+            )}
           </PopupBase>
         </FadeTransition>
       ) : null}
