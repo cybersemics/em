@@ -126,7 +126,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
             },
           },
         })}
-        {...useSwipeToDismissProps}
+        // disable swipe-to-dismiss when multicursor is active
+        {...(!multicursor && useSwipeToDismissProps)}
         ref={useCombinedRefs([ref, useSwipeToDismissProps.ref])}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
@@ -134,7 +135,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           background,
           fontSize,
           padding,
-          ...useSwipeToDismissProps.style,
+          // disable swipe-to-dismiss when multicursor is active
+          ...(!multicursor && useSwipeToDismissProps.style),
         }}
       >
         {children}
@@ -152,7 +154,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         {multicursor && (
           <a
             className={cx(anchorButtonRecipe(), css({ margin: '0 1em 1em' }))}
-            aria-label='no-swipe-to-dismiss'
             {...fastClick(() => {
               dispatch(clearMulticursors())
               onClose?.()
