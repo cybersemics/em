@@ -5,7 +5,6 @@ import { token } from '../../styled-system/tokens'
 import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { deleteResumableFile } from '../actions/importFiles'
-import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 import useCombinedRefs from '../hooks/useCombinedRefs'
 import usePositionFixed from '../hooks/usePositionFixed'
@@ -126,15 +125,15 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
             },
           },
         })}
-        {...(isTouch ? useSwipeToDismissProps : null)}
-        ref={useCombinedRefs([ref, ...(isTouch ? [useSwipeToDismissProps.ref] : [])])}
+        {...useSwipeToDismissProps}
+        ref={useCombinedRefs([ref, useSwipeToDismissProps.ref])}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
           ...positionFixedStyles,
           background,
           fontSize,
           padding,
-          ...(isTouch ? useSwipeToDismissProps.style : null),
+          ...useSwipeToDismissProps.style,
         }}
       >
         {children}
