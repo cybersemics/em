@@ -83,8 +83,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       swipeDown: swipeDownToDismiss,
     })
 
-    const combinedRefs = useCombinedRefs(isTouch ? [useSwipeToDismissProps.ref, ref] : [ref])
-
     const borderStyles = border
       ? {
           border: '1px solid {colors.panelBorder}',
@@ -129,7 +127,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           },
         })}
         {...(isTouch ? useSwipeToDismissProps : null)}
-        ref={combinedRefs}
+        ref={useCombinedRefs([ref, ...(isTouch ? [useSwipeToDismissProps.ref] : [])])}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
           ...positionFixedStyles,
