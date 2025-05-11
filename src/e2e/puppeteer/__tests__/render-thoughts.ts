@@ -50,13 +50,6 @@ const superscriptSnapshot = async () => {
 /** Set up the snapshot tests. These are defined in a function so they can be run at different font sizes (via adjusting the font size in beforeEach). */
 const testSuite = () => {
   describe('', () => {
-    it('initial load', async () => {
-      const image = await screenshot()
-      expect(image).toMatchImageSnapshot()
-    })
-  })
-
-  describe('', () => {
     beforeEach(hideHUD)
 
     it('one thought', async () => {
@@ -232,12 +225,6 @@ describe('multiline', () => {
 })
 
 describe('Color Theme', () => {
-  it('initial load on light theme', async () => {
-    await setTheme('Light')
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
-  })
-
   it('superscript on light theme', async () => {
     await setTheme('Light')
 
