@@ -103,6 +103,7 @@ const CommandRowOnly = forwardRef<
           {isTouch ? (
             <GestureDiagram
               color={disabled ? token('colors.gray') : undefined}
+              styleCancelAsRegularGesture
               highlight={
                 !disabled && gestureInProgress !== undefined
                   ? command.id === 'help'

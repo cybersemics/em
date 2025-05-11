@@ -30,6 +30,7 @@ interface GestureDiagramProps {
   cssRaw?: SystemStyleObject
   /** Whether to render the gesture with rounded corners. */
   rounded?: boolean
+  styleCancelAsRegularGesture?: boolean
 }
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
@@ -73,6 +74,7 @@ const GestureDiagram = ({
   inGestureContainer,
   cssRaw,
   rounded,
+  styleCancelAsRegularGesture,
 }: GestureDiagramProps) => {
   const [id] = useState(createId())
 
@@ -87,10 +89,13 @@ const GestureDiagram = ({
   if (path === null) {
     return (
       <svg
-        width={20}
+        width={styleCancelAsRegularGesture ? width : 20}
         height={24}
         className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
-        style={{ ...style, marginTop: '12px', marginBottom: '20px', marginLeft: '20px' }}
+        style={{
+          ...style,
+          ...(!styleCancelAsRegularGesture && { marginTop: '12px', marginBottom: '20px', marginLeft: '20px' }),
+        }}
         viewBox='0 0 24 24'
       >
         <path
@@ -99,7 +104,7 @@ const GestureDiagram = ({
           strokeWidth={1.25}
           strokeLinecap='round'
           fill='none'
-          style={{ filter: dropShadow }}
+          style={styleCancelAsRegularGesture ? undefined : { filter: dropShadow }}
         />
       </svg>
     )
