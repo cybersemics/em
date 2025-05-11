@@ -30,6 +30,7 @@ const groups: {
       'home',
       'search',
       'selectAll',
+      'selectBetween',
     ],
   },
   {
