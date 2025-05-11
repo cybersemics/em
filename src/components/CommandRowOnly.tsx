@@ -68,15 +68,12 @@ const CommandRowOnly = forwardRef<
         className={css(
           {
             cursor: !disabled ? 'pointer' : undefined,
-            // paddingBottom: last ? (isTouch ? 0 : '4em') : 0,
-            // paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
             position: 'relative',
             textAlign: 'left',
 
             backgroundColor: selected ? 'commandSelectedBg' : undefined,
             borderRadius: '8px',
             display: 'flex',
-            // margin: selected ? '-5px 0' : undefined,
             flexDirection: 'row',
             justifyContent: 'flex-start',
             alignItems: 'center',
@@ -97,7 +94,6 @@ const CommandRowOnly = forwardRef<
           ...style,
         }}
       >
-        {/* div used to contain width:100% and height:100% of icons while in a flex box */}
         <Cell className={css({ display: 'flex', justifyContent: 'center', alignItems: 'center' })}>
           {/* gesture diagram */}
           {isTouch ? (
