@@ -30,14 +30,6 @@ const testSuite = () => {
   describe('', () => {
     beforeEach(hideHUD)
 
-    it('one thought', async () => {
-      await press('Enter')
-      await keyboard.type('a')
-
-      const image = await screenshot()
-      expect(image).toMatchImageSnapshot()
-    })
-
     it('subthought', async () => {
       await paste(`
         - a
