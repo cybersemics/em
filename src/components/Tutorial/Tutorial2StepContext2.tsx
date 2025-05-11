@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
-import { commandById } from '../../commands'
+import newSubthoughtCommand from '../../commands/newSubthought'
 import { HOME_TOKEN, TUTORIAL_CONTEXT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
@@ -52,7 +52,7 @@ const Tutorial2StepContext2 = () => {
                   to create a new thought <i>within</i> "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".
                 </>
               )}
-              {!select && <TutorialGestureDiagram gesture={commandById('newSubthought').gesture} />}
+              {!select && <TutorialGestureDiagram gesture={newSubthoughtCommand.gesture} />}
             </TutorialHint>
           </p>
         ) : (

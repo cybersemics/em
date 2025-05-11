@@ -1,7 +1,7 @@
 import pluralize from 'pluralize'
 import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
-import { commandById } from '../../commands'
+import newSubthoughtCommand from '../../commands/newSubthought'
 import {
   HOME_TOKEN,
   TUTORIAL_CONTEXT,
@@ -104,7 +104,7 @@ const Tutorial2StepContext2Subthought = () => {
               {selectChoice ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
               {isTouch ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}
               to create a new thought <i>within</i> "{TUTORIAL_CONTEXT[tutorialChoice]}".
-              {!selectChoice && <TutorialGestureDiagram gesture={commandById('newSubthought').gesture} />}
+              {!selectChoice && <TutorialGestureDiagram gesture={newSubthoughtCommand.gesture} />}
             </TutorialHint>
           </p>
         ) : (

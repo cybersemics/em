@@ -4,7 +4,7 @@ import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { isTouch } from '../../browser'
-import { commandById } from '../../commands'
+import newThoughtCommand from '../../commands/newThought'
 import { TUTORIAL2_STEP_SUCCESS, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import useIsVisible from '../../hooks/useIsVisible'
 import getSetting from '../../selectors/getSetting'
@@ -30,7 +30,6 @@ const WithCSSTransition = ({ component, transitionKey }: { component: FC; transi
 }
 
 // assert command at load time
-const newThoughtCommand = commandById('newThought')
 if (!newThoughtCommand) {
   throw new Error('newThought command not found.')
 }
