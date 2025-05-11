@@ -17,7 +17,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
-const indent = (state: State) => {
+const indent = (state: State): State => {
   const { cursor } = state
 
   if (!cursor) return state

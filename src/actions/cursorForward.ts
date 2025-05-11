@@ -15,7 +15,7 @@ import headValue from '../util/headValue'
 import unroot from '../util/unroot'
 
 /** Moves the cursor forward in the cursorHistory. */
-const cursorForward = (state: State) => {
+const cursorForward = (state: State): State => {
   const cursorFromHistory = last(state.cursorHistory)
   const cursor = state.cursor || HOME_PATH
   const showContexts = isContextViewActive(state, cursor)

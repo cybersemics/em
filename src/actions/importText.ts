@@ -168,7 +168,7 @@ const importText = (
     const imported = importJson(stateWithDummy, newDestinationPath, json, { lastUpdated, skipRoot, updatedBy })
 
     /** Set cursor to the last thought on the first level of imports. */
-    const setLastImportedCursor = (state: State) => {
+    const setLastImportedCursor = (state: State): State => {
       /** Get last imported cursor after using collapse. */
       const getLastImportedAfterCollapse = () => {
         const pathStart = imported.lastImported!.slice(0, newDestinationPath.length - (destEmpty ? 2 : 1)) as Path

@@ -11,7 +11,7 @@ import head from '../util/head'
 /**
  * Creates a new grandchild at first visible subthought.
  */
-const newGrandChild = (state: State) => {
+const newGrandChild = (state: State): State => {
   const { cursor } = state
 
   const tutorial = getSetting(state, 'Tutorial') !== 'Off'

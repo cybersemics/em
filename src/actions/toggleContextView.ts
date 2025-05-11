@@ -13,7 +13,7 @@ import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
 
 /** Toggles the context view on a given thought. */
-const toggleContextView = (state: State) => {
+const toggleContextView = (state: State): State => {
   if (!state.cursor) return state
 
   return reducerFlow([

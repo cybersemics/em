@@ -45,7 +45,7 @@ const findDeletableThought = (state: State, preserveSet: Set<ThoughtId>): Though
 }
 
 /** Frees a block of thoughts that are not visible from memory when the memory limit is exceeded. May not free any thoughts if all thoughts are expanded. */
-const freeThoughts = (state: State) => {
+const freeThoughts = (state: State): State => {
   const preserveSet = new Set<ThoughtId>([
     ABSOLUTE_TOKEN,
     EM_TOKEN,

@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { anchorButtonRecipe, bulletRecipe, childRecipe, thoughtRecipe } from '../../styled-system/recipes'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
@@ -33,7 +32,7 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
   const cursor = useSelector(state => state.cursor)
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth - 1)) : 0
   const dispatch = useDispatch()
-  const show = useSelector((state: State) => {
+  const show = useSelector(state => {
     const children = getChildrenRanked(state, head(path))
     return !children.length || children[children.length - 1].value !== ''
   })

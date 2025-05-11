@@ -14,7 +14,7 @@ import reducerFlow from '../util/reducerFlow'
 import splitSentence from '../util/splitSentence'
 
 /** Split thought by sentences. Create new thought for each sentence. Thought value, on which cursor is on, replace with first sentence. */
-const splitSentences = (state: State) => {
+const splitSentences = (state: State): State => {
   const { cursor } = state
   if (!cursor) return state
   const cursorThought = getThoughtById(state, head(cursor))

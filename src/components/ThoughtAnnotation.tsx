@@ -308,7 +308,7 @@ const ThoughtAnnotationContainer = React.memo(
 
     const numContexts = useSelector(
       moize(
-        (state: State) => {
+        (state: State): number => {
           if (!calculateContexts || hideSuperscriptsSetting) return 0
 
           // only show real time update if being edited while having meta validation error
