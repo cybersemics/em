@@ -117,6 +117,26 @@ const testSuite = () => {
 describe('Font Size: 18 (default)', () => {
   // run the snapshot tests at font size 18 (default)
   testSuite()
+
+  it('divider', async () => {
+    await paste(`
+        - a
+        - ---
+        - b
+      `)
+
+    // Ensure cursor is not on the divider
+    await clickThought('a')
+
+    const image1 = await screenshot()
+    expect(image1).toMatchImageSnapshot()
+
+    // Move cursor to the divider to ensure it's properly highlighted
+    await press('ArrowDown')
+
+    const image2 = await screenshot()
+    expect(image2).toMatchImageSnapshot()
+  })
 })
 
 describe('Font Size: 13', () => {
