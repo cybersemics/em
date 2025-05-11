@@ -10,7 +10,7 @@ import reducerFlow from '../util/reducerFlow'
 import toggleAbsoluteContext from './toggleAbsoluteContext'
 
 /** Moves the cursor up one level. */
-const cursorBack = (state: State) => {
+const cursorBack = (state: State): State => {
   const { cursor: cursorOld, editing, search, rootContext } = state
 
   const isAbsoluteRoot = isAbsolute(rootContext)

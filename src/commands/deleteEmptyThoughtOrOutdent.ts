@@ -16,7 +16,7 @@ import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
-const canExecuteDeleteEmptyThought = (state: State) => {
+const canExecuteDeleteEmptyThought = (state: State): boolean => {
   const { cursor } = state
 
   // isActive is not enough on its own, because there is a case where there is a selection object but no focusNode and we want to still execute the command
@@ -40,11 +40,11 @@ const canExecuteDeleteEmptyThought = (state: State) => {
 }
 
 /** A selector that returns true if the cursor is on an only child that can be outdented by the delete command. */
-const canExecuteOutdent = (state: State) => {
+const canExecuteOutdent = (state: State): boolean => {
   const { cursor } = state
 
   return (
-    cursor &&
+    !!cursor &&
     (selection.isActive() || !selection.isText()) &&
     selection.offset() === 0 &&
     selection.isCollapsed() &&
@@ -55,9 +55,8 @@ const canExecuteOutdent = (state: State) => {
 }
 
 /** A selector that returns true if either the cursor is on an empty thought that can be deleted, or is on an only child that can be outdented. */
-const canExecute = (state: State) => {
-  return canExecuteOutdent(state) || canExecuteDeleteEmptyThought(state) || hasMulticursor(state)
-}
+const canExecute = (state: State): boolean =>
+  canExecuteOutdent(state) || canExecuteDeleteEmptyThought(state) || hasMulticursor(state)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState) => {

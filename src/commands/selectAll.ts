@@ -11,7 +11,7 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Returns true if the cursor and all its siblings are selected in the multicursor. */
-const isAllSelected = (state: State) => {
+const isAllSelected = (state: State): boolean => {
   const { cursor } = state
   const parentId = cursor ? head(rootedParentOf(state, cursor)) : HOME_TOKEN
   const childrenIds = getChildren(state, parentId).map(child => child.id)

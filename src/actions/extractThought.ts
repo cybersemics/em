@@ -12,7 +12,7 @@ import editThought from './editThought'
 import newThought from './newThought'
 
 /** Extract the selection as child thought. */
-const extractThought = (state: State) => {
+const extractThought = (state: State): State => {
   const { cursor } = state
   if (!cursor) return state
 

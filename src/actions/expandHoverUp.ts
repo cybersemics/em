@@ -43,7 +43,7 @@ const expandHoverUpDebounced =
   }
 
 /** Checks if the current hovering thought's parent should expand its context. */
-const shouldAllowActiveHoverTop = (state: State) => {
+const shouldAllowActiveHoverTop = (state: State): boolean => {
   const { cursor, expandHoverUpPath, hoveringPath } = state
 
   if (!hoveringPath || state.hoverZone !== DropThoughtZone.ThoughtDrop) return false
@@ -61,12 +61,12 @@ const shouldAllowActiveHoverTop = (state: State) => {
 
   // Check if the current thought is the parent of first visible thought nearest to the root.
   const isParentOfFirstVisibleThought =
-    cursor &&
+    !!cursor &&
     distanceFromCusor - 1 === visibleDistanceAboveCursor(state) &&
     isDescendantPath(cursor, parentOfHoveringThought)
 
   /** Check if current hovering thought is actually the current expanded hover top path and the given path is its parent. */
-  const isParentOfCurrentExpandedTop = () => expandHoverUpPath && equalPath(hoveringPath, expandHoverUpPath)
+  const isParentOfCurrentExpandedTop = () => !!expandHoverUpPath && equalPath(hoveringPath, expandHoverUpPath)
 
   const newExpandHoverPath = rootedParentOf(state, hoveringPath)
 
@@ -75,7 +75,7 @@ const shouldAllowActiveHoverTop = (state: State) => {
     expandHoverUpPath && equalPath(expandHoverUpPath, newExpandTopPath)
 
   return (
-    newExpandHoverPath &&
+    !!newExpandHoverPath &&
     !isSameexpandHoverUpPath(newExpandHoverPath) &&
     (isParentOfFirstVisibleThought || isParentOfCurrentExpandedTop())
   )
