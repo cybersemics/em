@@ -19,28 +19,6 @@ expect.extend({
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
-/** Returns a snapshot for render-thoughts/superscript. */
-const superscriptSnapshot = async () => {
-  await paste(`
-    - a
-      - m
-    - b
-      - m
-  `)
-
-  await press('ArrowUp')
-
-  // TODO: Test intermittently fails with small differences in 'b'.
-  // Tested manually with navigator.webdriver = true and 'b' renders at the correct opacity in the next frame, without any animation, so I do not know why this fails.
-  // Example failed test runs:
-  // - https://github.com/cybersemics/em/actions/runs/14236307211
-  // - https://github.com/cybersemics/em/actions/runs/14783509675/job/41507408875?pr=2917
-  // Waiting for requestAnimationFrame does not fix the issue.
-  await sleep(200)
-
-  return screenshot()
-}
-
 /* From jest-image-snapshot README:
 
   Jest supports automatic retries on test failures. This can be useful for browser screenshot tests which tend to have more frequent false positives. Note that when using jest.retryTimes you'll have to use a unique customSnapshotIdentifier as that's the only way to reliably identify snapshots.
@@ -101,8 +79,24 @@ const testSuite = () => {
 
     // TODO: Test intermittently fails with small differences in 'b'.
     it('superscript', async () => {
-      const image = await superscriptSnapshot()
-      expect(image).toMatchImageSnapshot()
+      await paste(`
+    - a
+      - m
+    - b
+      - m
+  `)
+
+      await press('ArrowUp')
+
+      // TODO: Test intermittently fails with small differences in 'b'.
+      // Tested manually with navigator.webdriver = true and 'b' renders at the correct opacity in the next frame, without any animation, so I do not know why this fails.
+      // Example failed test runs:
+      // - https://github.com/cybersemics/em/actions/runs/14236307211
+      // - https://github.com/cybersemics/em/actions/runs/14783509675/job/41507408875?pr=2917
+      // Waiting for requestAnimationFrame does not fix the issue.
+      await sleep(200)
+
+      expect(await screenshot()).toMatchImageSnapshot()
     })
   })
 }
@@ -199,6 +193,8 @@ describe('multiline', () => {
     await press('ArrowUp')
     await press('ArrowUp')
 
+    // TODO: Test intermittently fails if not given time to expand.
+    await sleep(100)
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -229,8 +225,25 @@ describe('Color Theme', () => {
     await setTheme('Light')
 
     await hideHUD()
-    const image = await superscriptSnapshot()
-    expect(image).toMatchImageSnapshot()
+
+    await paste(`
+    - a
+      - m
+    - b
+      - m
+  `)
+
+    await press('ArrowUp')
+
+    // TODO: Test intermittently fails with small differences in 'b'.
+    // Tested manually with navigator.webdriver = true and 'b' renders at the correct opacity in the next frame, without any animation, so I do not know why this fails.
+    // Example failed test runs:
+    // - https://github.com/cybersemics/em/actions/runs/14236307211
+    // - https://github.com/cybersemics/em/actions/runs/14783509675/job/41507408875?pr=2917
+    // Waiting for requestAnimationFrame does not fix the issue.
+    await sleep(200)
+
+    expect(await screenshot()).toMatchImageSnapshot()
   })
 
   it('colored and highlighted text', async () => {
