@@ -1,4 +1,5 @@
 import { FC, PropsWithChildren } from 'react'
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Key from '../@types/Key'
 import { isMac } from '../browser'
@@ -6,18 +7,22 @@ import { arrowTextToArrowCharacter } from '../commands'
 
 /** A border around special keys. */
 const Kbd: FC<PropsWithChildren<{ isText?: boolean }>> = ({ children, isText }) => {
+  const size = useSelector(state => state.fontSize * 1.1)
+
   return (
     <kbd
       className={css({
-        height: 20, // TODO use em instead of px, control should be smaller font size than rest (~2-3px smaller)
-        width: 20,
+        boxSizing: 'border-box',
+        height: '1.1em', // TODO use em instead of px, control should be smaller font size than rest (~2-3px smaller)
+        width: '1.1em',
         border: '1px solid {colors.fgOverlay30}',
-        fontSize: isText ? 7.5 : 'inherit',
+        fontSize: isText ? '0.42em' : '0.7em',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 3,
       })}
+      style={{ width: size, height: size }}
     >
       {children}
     </kbd>
@@ -26,6 +31,8 @@ const Kbd: FC<PropsWithChildren<{ isText?: boolean }>> = ({ children, isText }) 
 
 /** Displays keyboard shortcuts. Replaces formatKeyboardShortcut in commands.ts. */
 const CommandKeys = ({ keyboardOrString }: { keyboardOrString: Key | Key[] | string }): JSX.Element => {
+  const fontSize = useSelector(state => state.fontSize)
+
   if (Array.isArray(keyboardOrString)) {
     return <CommandKeys keyboardOrString={keyboardOrString[0]} />
   }
@@ -40,6 +47,7 @@ const CommandKeys = ({ keyboardOrString }: { keyboardOrString: Key | Key[] | str
         gap: 7,
         color: 'fgOverlay50',
       })}
+      style={{ fontSize }}
     >
       {keyboard.meta && (isMac ? <Kbd>⌘</Kbd> : <Kbd isText>ctrl</Kbd>)}
       {keyboard.alt && (isMac ? <Kbd>⌥</Kbd> : <Kbd isText>alt</Kbd>)}
@@ -48,9 +56,11 @@ const CommandKeys = ({ keyboardOrString }: { keyboardOrString: Key | Key[] | str
       {keyboard.key === 'Backspace' ? (
         <Kbd>⌫</Kbd>
       ) : (
-        arrowTextToArrowCharacter(
-          keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key,
-        )
+        <kbd className={css({ fontSize: '0.56em' })}>
+          {arrowTextToArrowCharacter(
+            keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key,
+          )}
+        </kbd>
       )}
     </div>
   )
