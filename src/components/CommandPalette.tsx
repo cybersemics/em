@@ -9,7 +9,9 @@ import Key from '../@types/Key'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
-import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
+import { formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
+import commandPaletteCommand from '../commands/commandPalette'
+import helpCommand from '../commands/help'
 import allowScroll from '../device/disableScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -27,8 +29,6 @@ import Popup from './Popup'
 
 /** The maximum number of recent commands to store for the command palette. */
 const MAX_RECENT_COMMANDS = 5
-
-const commandPaletteCommand = commandById('commandPalette')
 
 /**********************************************************************
  * Helper Functions
@@ -461,7 +461,6 @@ const CommandPalette: FC<{
               <>
                 {(() => {
                   const hasMatchingCommand = commands.some(cmd => gestureInProgress === cmd.gesture)
-                  const helpCommand = commandById('help')
 
                   return commands.map(command => {
                     // Check if the current gesture sequence ends with help gesture

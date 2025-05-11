@@ -1,6 +1,7 @@
 import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
-import { commandById, formatKeyboardShortcut } from '../../commands'
+import { formatKeyboardShortcut } from '../../commands'
+import toggleContextViewCommand from '../../commands/toggleContextView'
 import { TUTORIAL_CONTEXT } from '../../constants'
 import getContexts from '../../selectors/getContexts'
 import getSetting from '../../selectors/getSetting'
@@ -35,12 +36,10 @@ const Tutorial2StepContextViewToggle = () => {
             </p>
           ) : null}
           <p>
-            {isTouch
-              ? 'Trace the line below'
-              : `Hit ${formatKeyboardShortcut(commandById('toggleContextView')!.keyboard!)}`}{' '}
-            to view the current thought's contexts.
+            {isTouch ? 'Trace the line below' : `Hit ${formatKeyboardShortcut(toggleContextViewCommand.keyboard!)}`} to
+            view the current thought's contexts.
           </p>
-          <TutorialGestureDiagram gesture={commandById('toggleContextView').gesture} />
+          <TutorialGestureDiagram gesture={toggleContextViewCommand.gesture} />
         </>
       )}
     </>
