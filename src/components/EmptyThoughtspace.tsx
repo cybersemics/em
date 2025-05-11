@@ -5,14 +5,13 @@ import { textNoteRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import { isTouch } from '../browser'
-import { commandById, gestureString } from '../commands'
+import { gestureString } from '../commands'
+import newThoughtCommand from '../commands/newThought'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
 import getSetting from '../selectors/getSetting'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
-
-const newThoughtCommand = commandById('newThought')
 
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
 const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {

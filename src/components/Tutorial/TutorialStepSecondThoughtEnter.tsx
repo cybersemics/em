@@ -2,11 +2,10 @@ import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import GesturePath from '../../@types/GesturePath'
 import { isTouch } from '../../browser'
-import { commandById, gestureString } from '../../commands'
+import { gestureString } from '../../commands'
+import newThoughtCommand from '../../commands/newThought'
 import headValue from '../../util/headValue'
 import GestureDiagram from '../GestureDiagram'
-
-const newThoughtCommand = commandById('newThought')!
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSecondThoughtEnter = () => {

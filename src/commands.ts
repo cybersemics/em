@@ -16,6 +16,7 @@ import { commandPaletteActionCreator as commandPalette } from './actions/command
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { isMac } from './browser'
+import helpCommand from './commands/help'
 import * as commandsObject from './commands/index'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, Settings } from './constants'
 import * as selection from './device/selection'
@@ -246,7 +247,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // Get the command from the command gesture index.
     // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
 
-    const helpCommand = commandById('help')
     const helpGesture = gestureString(helpCommand)
 
     // If sequence ends with help gesture, use help command

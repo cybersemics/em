@@ -1,5 +1,5 @@
 import { isTouch } from '../../browser'
-import { commandById } from '../../commands'
+import newThoughtCommand from '../../commands/newThought'
 import TutorialGestureDiagram from './TutorialGestureDiagram'
 import TutorialHint from './TutorialHint'
 
@@ -13,7 +13,7 @@ const TutorialStepSecondThought = () => (
         <br />
         <br />
         {isTouch ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought.
-        <TutorialGestureDiagram gesture={commandById('newThought').gesture} />
+        <TutorialGestureDiagram gesture={newThoughtCommand.gesture} />
       </TutorialHint>
     </p>
   </>
