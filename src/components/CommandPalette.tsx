@@ -52,7 +52,7 @@ const CommandSearch: FC<{
 }> = ({ onExecute, onInput, onSelectDown, onSelectUp, onSelectTop, onSelectBottom }) => {
   const dispatch = useDispatch()
   const inputRef = useRef<HTMLInputElement | null>(null)
-
+  const marginBlock = useSelector(state => state.fontSize * (2 / 3))
   /** Handle command palette commands. */
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -112,7 +112,8 @@ const CommandSearch: FC<{
         onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
           onInput?.(e.target.value)
         }}
-        className={css({ margin: '12px 24px', padding: 0, border: 'none', background: 'transparent' })}
+        className={css({ padding: 0, border: 'none', background: 'transparent' })}
+        style={{ marginBlock, marginInline: marginBlock * 2 }}
       />
     </div>
   )
@@ -313,9 +314,8 @@ const CommandPalette: FC<{
             className={css({
               ...(!isTouch ? { maxHeight: 'calc(100vh - 19em)' } : null),
               overflow: 'auto',
-              // TODO: move padding here
-              padding: '12px',
             })}
+            style={{ padding: fontSize * (2 / 3) }}
           >
             {commands.length > 0 ? (
               <>
