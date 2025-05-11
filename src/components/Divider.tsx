@@ -65,10 +65,10 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
   const widthDependentThoughtIds = useWidthDependentThoughtIds(path)
-  const editingThoughtId = useSelector((state: State) => state.cursor && head(state.cursor))
+  const editingThoughtId = useSelector(state => state.cursor && head(state.cursor))
   const editingValueUntrimmed = editingValueUntrimmedStore.useState()
-  const fontSize = useSelector((state: State) => state.fontSize)
-  const isCursorOnDivider = useSelector((state: State) => state.cursor && equalPath(state.cursor, path))
+  const fontSize = useSelector(state => state.fontSize)
+  const isCursorOnDivider = useSelector(state => equalPath(state.cursor, path))
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -108,7 +108,7 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
           {
             border: 'solid 1px {colors.divider}',
             // Remove highlight styling when cursor is not this divider
-            ...(!isCursorOnDivider && { borderColor: '{colors.bgMuted}' }),
+            ...(!isCursorOnDivider && { borderColor: 'bgMuted' }),
           },
 
           cssRaw,
