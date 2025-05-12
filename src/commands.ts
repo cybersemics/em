@@ -162,7 +162,7 @@ const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 
 /** Gets the canonical gesture of the command as a string, ignoring aliases. Returns an empty string if the command does not have a gesture. */
 export const gestureString = (command: Command): string =>
-  (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string
+  (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || ' ') as string
 
 /** Get a command by its id. */
 export const commandById = (id: CommandId): Command => commandIdIndex[id]
