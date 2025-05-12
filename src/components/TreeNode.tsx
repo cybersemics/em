@@ -138,8 +138,6 @@ const TreeNode = ({
 
   const duration = durations.get('layoutNodeAnimation')
 
-  const hasMounted = useRef(false)
-  const prevIsTableCol1 = useRef(isTableCol1)
   const widthDependentThoughtIds = useWidthDependentThoughtIds(path)
 
   /** Calculates the horizontal translation needed to align the text to the right within its parent. */
@@ -214,20 +212,6 @@ const TreeNode = ({
     const element = fadeThoughtRef.current
     if (!element) return
 
-    if (!hasMounted.current) {
-      hasMounted.current = true
-      prevIsTableCol1.current = isTableCol1
-      return
-    }
-
-    // If we've already run once and the column flag didn't change, skip animation.
-    if (hasMounted.current && prevIsTableCol1.current === isTableCol1) {
-      return
-    }
-
-    // Mark that the effect has now run at least once.
-    hasMounted.current = true
-
     // Grab the bullet and editable elements.
     const bulletEl = element.querySelector('[aria-label="bullet"]') as HTMLElement
     const editableEl = element.querySelector('.editable') as HTMLElement
@@ -260,9 +244,6 @@ const TreeNode = ({
       if (bulletEl) bulletEl.style.transform = 'translateX(0)'
       editableEl.style.transform = 'translateX(0)'
     })
-
-    // 3) Remember the current column state for the next run.
-    prevIsTableCol1.current = isTableCol1
 
     // We intentionally omit `calculateTranslateX` and `duration` from deps
     // so this effect only fires when `isTableCol1` changes.
