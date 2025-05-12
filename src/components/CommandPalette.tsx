@@ -312,7 +312,7 @@ const CommandPalette: FC<{
 
           <div
             className={css({
-              ...(!isTouch ? { maxHeight: 'calc(100vh - 19em)' } : null),
+              ...(!isTouch ? { maxHeight: 'calc(100vh - 10em)' } : null),
               overflow: 'auto',
             })}
             style={{ padding: fontSize * (2 / 3) }}
