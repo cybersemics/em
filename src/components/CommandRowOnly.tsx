@@ -71,7 +71,7 @@ const CommandRowOnly = forwardRef<
             position: 'relative',
             textAlign: 'left',
 
-            backgroundColor: selected ? 'commandSelected' : undefined,
+            backgroundColor: selected ? 'commandSelectedBg' : undefined,
             borderRadius: '8px',
             display: 'flex',
             flexDirection: 'row',
@@ -128,7 +128,7 @@ const CommandRowOnly = forwardRef<
               rounded={command.rounded}
             />
           ) : (
-            Icon && <Icon fill='white' />
+            Icon && <Icon fill={token('colors.fg')} />
           )}
         </Cell>
 
@@ -153,7 +153,7 @@ const CommandRowOnly = forwardRef<
                 ? 'gray'
                 : isTouch
                   ? selected
-                    ? '#64C7EA'
+                    ? 'blueHighlight'
                     : gestureInProgress === command.gesture
                       ? 'vividHighlight'
                       : 'gray75'
