@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Key from '../@types/Key'
 import { isMac } from '../browser'
-import { arrowTextToArrowCharacter } from '../commands'
+import { arrowTextToArrowCharacter, isArrowKey } from '../commands'
 
 /** A border around special keys. */
 const Kbd: FC<PropsWithChildren<{ isText?: boolean }>> = ({ children, isText }) => {
@@ -38,6 +38,7 @@ const CommandKeys = ({ keyboardOrString }: { keyboardOrString: Key | Key[] | str
   }
   const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString as string } : keyboardOrString
 
+  const regularKey = keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key
   return (
     <div
       className={css({
@@ -46,6 +47,7 @@ const CommandKeys = ({ keyboardOrString }: { keyboardOrString: Key | Key[] | str
         alignItems: 'center',
         gap: 7,
         color: 'fgOverlay50',
+        fontWeight: 400,
       })}
       style={{ fontSize }}
     >
@@ -55,12 +57,10 @@ const CommandKeys = ({ keyboardOrString }: { keyboardOrString: Key | Key[] | str
       {keyboard.shift && <Kbd>⇧</Kbd>}
       {keyboard.key === 'Backspace' ? (
         <Kbd>⌫</Kbd>
+      ) : isArrowKey(regularKey) ? (
+        <Kbd>{arrowTextToArrowCharacter(regularKey)}</Kbd>
       ) : (
-        <kbd className={css({ fontSize: '0.56em' })}>
-          {arrowTextToArrowCharacter(
-            keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key,
-          )}
-        </kbd>
+        <kbd className={css({ fontSize: '0.56em' })}>{regularKey}</kbd>
       )}
     </div>
   )
