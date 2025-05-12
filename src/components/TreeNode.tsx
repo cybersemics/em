@@ -334,7 +334,7 @@ const TreeNode = ({
             ? swapDirection === 'clockwise'
               ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
               : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
-            : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out, margin-right {durations.layoutNodeAnimation} ease-out',
+            : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
         })}
         style={outerDivStyle}
       >
