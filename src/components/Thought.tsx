@@ -237,8 +237,12 @@ const ThoughtContainer = ({
       return false
     }
 
-    // Do not highlight parent of dragging thought (i.e. when simply reordering but not moving to a new parent)
-    if (equalPath(rootedParentOf(state, state.draggingThought), simplePath)) {
+    // Do not highlight parent of dragging thought (i.e. when simply reordering but not moving to a new parent).
+    // The only exception is table view col1, which needs highlighting as the first thought of row1 abuts the first thought in row2.
+    if (
+      equalPath(rootedParentOf(state, state.draggingThought), simplePath) &&
+      !attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
+    ) {
       return false
     }
 
