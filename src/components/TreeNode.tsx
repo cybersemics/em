@@ -358,7 +358,6 @@ const TreeNode = ({
               prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
               isLastVisible={isLastVisible}
               autofocus={autofocus}
-              marginRight={0}
             />
           </div>
           {dragInProgress &&
