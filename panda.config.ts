@@ -221,6 +221,10 @@ const globalCss = defineGlobalStyles({
     fontFamily: "'Helvetica'",
     lineHeight: 1.25,
   },
+  // override default font-weight of 400 which breaks document.execCommand in Chrome v135
+  b: {
+    fontWeight: 600,
+  },
   /* Disables pull-to-refresh but allows overscroll glow effects. */
   body: { overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
   button: { fontSize: '1.2em' },
