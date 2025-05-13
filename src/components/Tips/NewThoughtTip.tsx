@@ -16,7 +16,6 @@ import Tip from './Tip'
 /** A tip that explains how to add a new thought. */
 const NewThoughtTip: FC = () => {
   const dispatch = useDispatch()
-  const returnKey = isMac ? 'Return' : 'Enter'
   const instructions = isTouch ? (
     <span>
       You can add a new thought by swiping
@@ -29,7 +28,8 @@ const NewThoughtTip: FC = () => {
     </span>
   ) : (
     <span>
-      You can add a new thought by pressing {returnKey} on the keyboard. You can customize the toolbar in{' '}
+      You can add a new thought by pressing {isMac ? 'Return' : 'Enter'} on the keyboard. You can customize the toolbar
+      in{' '}
       <a
         {...fastClick(() => {
           dispatch([dismissTip(), showModal({ id: 'settings' })])

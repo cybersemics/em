@@ -17,8 +17,6 @@ import Tip from './Tip'
 const NewSubthoughtTip: FC = () => {
   const dispatch = useDispatch()
 
-  const commandKey = isMac ? '⌘' : 'Control'
-  const returnKey = isMac ? 'Return' : 'Enter'
   const instructions = isTouch ? (
     <span>
       You can add a new subthought by swiping
@@ -31,8 +29,8 @@ const NewSubthoughtTip: FC = () => {
     </span>
   ) : (
     <span>
-      You can add a new subthought by pressing {commandKey} + {returnKey} on the keyboard. You can customize the toolbar
-      in{' '}
+      You can add a new subthought by pressing {isMac ? '⌘' : 'Control'} + {isMac ? 'Return' : 'Enter'} on the keyboard.
+      You can customize the toolbar in{' '}
       <a
         {...fastClick(() => {
           dispatch([dismissTip(), showModal({ id: 'settings' })])
