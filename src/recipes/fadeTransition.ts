@@ -1,5 +1,18 @@
 import { defineSlotRecipe } from '@pandacss/dev'
 
+export type FadeTransitionRecipeVariant = {
+  duration:
+    | 'fast'
+    | 'slow'
+    | 'medium'
+    | 'distractionFreeTyping'
+    | 'nodeFadeIn'
+    | 'nodeFadeOut'
+    | 'nodeDissolve'
+    | 'disappearingUpperRight'
+    | 'disappearingLowerLeft'
+}
+
 const fadeTransitionRecipe = defineSlotRecipe({
   className: 'fade',
   slots: ['enter', 'exit', 'exitActive', 'enterActive', 'enterDone', 'exitDone'],
@@ -61,6 +74,56 @@ const fadeTransitionRecipe = defineSlotRecipe({
           filter: 'blur(4px)',
           transformOrigin: 'left',
           transition: `opacity {durations.nodeDissolve} ease-out, transform {durations.nodeDissolve} ease-out, filter {durations.nodeDissolve} ease-out`,
+        },
+      },
+      // Context view fades in from upper right.
+      disappearingUpperRight: {
+        enter: {
+          opacity: 0,
+          transform: 'skew(-100deg) translateX(-10%) translateY(300%)',
+          textShadow: '0px 0px 0px transparent',
+        },
+        enterActive: {
+          opacity: 1,
+          transform: 'skew(0deg) translateX(0) translateY(0)',
+          textShadow: '0px 0px 0px currentColor',
+          transition: `opacity {durations.nodeFadeIn} ease-out, transform {durations.nodeFadeIn} ease-out, text-shadow {durations.nodeFadeIn} ease-out`,
+        },
+        exit: {
+          opacity: 1,
+          transform: 'skew(0deg) translateX(0) translateY(0)',
+          textShadow: '0px 0px 0px currentColor',
+        },
+        exitActive: {
+          opacity: 0,
+          transform: 'skew(-100deg) translateX(10%) translateY(-300%)',
+          textShadow: '0px 0px 2em currentColor',
+          transition: `opacity {durations.nodeFadeOut} ease-out, transform {durations.nodeFadeOut} ease-out, text-shadow {durations.nodeFadeOut} ease-out`,
+        },
+      },
+      // Normal view fades out from lower left.
+      disappearingLowerLeft: {
+        enter: {
+          opacity: 0,
+          transform: 'skew(-100deg) translateX(10%) translateY(-300%)',
+          textShadow: '0px 0px 0px transparent',
+        },
+        enterActive: {
+          opacity: 1,
+          transform: 'skew(0deg) translateX(0) translateY(0)',
+          textShadow: '0px 0px 0px currentColor',
+          transition: `opacity {durations.nodeFadeIn} ease-out, transform {durations.nodeFadeIn} ease-out, text-shadow {durations.nodeFadeIn} ease-out`,
+        },
+        exit: {
+          opacity: 1,
+          transform: 'skew(0deg) translateX(0) translateY(0)',
+          textShadow: '0px 0px 0px currentColor',
+        },
+        exitActive: {
+          opacity: 0,
+          transform: 'skew(-100deg) translateY(300%)',
+          textShadow: '0px 0px 2em currentColor',
+          transition: `opacity {durations.nodeFadeOut} ease-out, transform {durations.nodeFadeOut} ease-out, text-shadow {durations.nodeFadeOut} ease-out`,
         },
       },
     },
