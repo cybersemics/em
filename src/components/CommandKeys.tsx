@@ -13,7 +13,7 @@ const Kbd: FC<PropsWithChildren<{ isText?: boolean }>> = ({ children, isText }) 
     <kbd
       className={css({
         boxSizing: 'border-box',
-        height: '1.1em', // TODO use em instead of px, control should be smaller font size than rest (~2-3px smaller)
+        height: '1.1em',
         width: '1.1em',
         border: '1px solid {colors.fgOverlay30}',
         fontSize: isText ? '0.42em' : '0.7em',
