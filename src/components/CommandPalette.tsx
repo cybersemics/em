@@ -249,7 +249,7 @@ const CommandRow: FC<{
               color: disabled
                 ? 'gray'
                 : isTouch
-                  ? selected || (gestureInProgress as string).startsWith(gestureString(command))
+                  ? selected || (gestureInProgress as string) === gestureString(command)
                     ? 'vividHighlight'
                     : 'fg'
                   : 'fg',
@@ -460,9 +460,7 @@ const CommandPalette: FC<{
             {commands.length > 0 ? (
               <>
                 {(() => {
-                  const hasMatchingCommand = commands.some(cmd =>
-                    (gestureInProgress as string).startsWith(gestureString(cmd)),
-                  )
+                  const hasMatchingCommand = commands.some(cmd => (gestureInProgress as string) === gestureString(cmd))
 
                   return commands.map(command => {
                     // Check if the current gesture sequence ends with help gesture
@@ -485,9 +483,7 @@ const CommandPalette: FC<{
                         selected={
                           !isTouch
                             ? command === selectedCommand
-                            : isHelpMatch ||
-                              (gestureInProgress as string).startsWith(gestureString(command)) ||
-                              isCancelMatch
+                            : isHelpMatch || (gestureInProgress as string) === gestureString(command) || isCancelMatch
                         }
                         command={command}
                       />
