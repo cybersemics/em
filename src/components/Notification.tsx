@@ -15,7 +15,7 @@ const Notification: FC<
     transitionKey: string | number
     testId?: string
     children?: ReactNode
-  } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'showXOnHover' | 'textAlign'>
+  } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'textAlign'>
 > = ({ renderedIcon, onClose, value, transitionKey, testId, children, ...props }) => {
   const popupRef = useRef<HTMLDivElement>(null)
   const [isDismissed, setIsDismissed] = useState(false)
@@ -47,6 +47,7 @@ const Notification: FC<
             // uses swipe to dismess from PopupBase on mobile
             onClose={isTouch ? undefined : handleClose}
             preventFromTouchingEdge
+            showXOnHover
             {...props}
           >
             <div
