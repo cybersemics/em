@@ -17,7 +17,7 @@ import Tip from './Tip'
 const NewSubthoughtTip: FC = () => {
   const dispatch = useDispatch()
 
-  const commandKey = isMac ? 'CMD' : 'Control'
+  const commandKey = isMac ? '⌘' : 'Control'
   const returnKey = isMac ? 'Return' : 'Enter'
   const instructions = isTouch ? (
     <span>
