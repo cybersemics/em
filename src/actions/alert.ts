@@ -6,6 +6,7 @@ import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import clearMulticursors from './clearMulticursors'
 
 interface Options {
   alertType?: keyof typeof AlertType
@@ -25,6 +26,8 @@ const alertReducer = (state: State, { alertType, showCloseLink, value, importFil
   if (value === state.alert?.value) return state
   return {
     ...state,
+    // Deselect All when closing the MulticursorActive alert
+    ...(state.alert?.alertType === AlertType.MulticursorActive && value === null ? clearMulticursors(state) : null),
     alert: value
       ? {
           alertType,
