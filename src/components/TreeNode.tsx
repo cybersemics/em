@@ -7,6 +7,7 @@ import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
 import parentOf from '../util/parentOf'
@@ -99,6 +100,10 @@ const TreeNode = ({
     !isSwap ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
   )
 
+  // Determine if this node is a child of a context node and if context view is active
+  const isContextViewChild = useSelector((state: State): boolean => isContextViewActive(state, parentOf(path)))
+  const isContextViewActiveForPath = useSelector((state: State): boolean => isContextViewActive(state, path))
+
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
   // 2. Create L-shaped animation paths by controlling when each movement starts/ends
@@ -160,7 +165,18 @@ const TreeNode = ({
       id={thoughtKey}
       // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
       // Archive, delete, and uncategorize get a special dissolve animation.
-      duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
+      // Context view children get special disappearing text animations
+      duration={
+        isContextViewChild
+          ? isContextViewActiveForPath
+            ? 'disappearingUpperRight'
+            : 'disappearingLowerLeft'
+          : isEmpty
+            ? 'nodeFadeIn'
+            : isLastActionDelete
+              ? 'nodeDissolve'
+              : 'nodeFadeOut'
+      }
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
       unmountOnExit
