@@ -38,7 +38,6 @@ const Alert: FC = () => {
       transitionKey={value}
       onClose={alert?.showCloseLink ? onClose : undefined}
       value={alert ? value : null}
-      testId='alert'
       renderedIcon={
         Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null
       }
