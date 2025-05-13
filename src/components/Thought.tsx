@@ -171,6 +171,9 @@ const ThoughtContainer = ({
 
   const isPublishChild = useSelector(state => !state.search && publishMode() && simplePath.length === 2)
   const publish = useSelector(state => !state.search && publishMode())
+  const isTableCol1 = useSelector(state =>
+    attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
+  )
   const isTableCol2 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
@@ -390,6 +393,7 @@ const ThoughtContainer = ({
               backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
             }
           : null),
+        textAlign: isTableCol1 ? 'right' : undefined,
       }}
       className={cx(
         childRecipe(),

@@ -256,11 +256,6 @@ const TreeNode = ({
     // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
     const style: React.CSSProperties = cliff < 0 || isTableCol1 ? { ...cliffPaddingStyle } : {}
 
-    // only add textAlign when in col1
-    if (isTableCol1) {
-      style.textAlign = 'right'
-    }
-
     return style
   }, [cliff, cliffPaddingStyle, isTableCol1])
 
