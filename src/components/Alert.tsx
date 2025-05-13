@@ -36,7 +36,6 @@ const Alert: FC = () => {
   return (
     <Notification
       transitionKey={value}
-      showXOnHover
       onClose={alert?.showCloseLink ? onClose : undefined}
       value={alert ? value : null}
       testId='alert'
