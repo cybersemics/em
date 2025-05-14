@@ -1,21 +1,17 @@
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import _ from 'lodash'
-import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect } from 'react'
+import React, { FC, useCallback, useEffect, useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
-import { inputHandlers } from '../commands'
-import { Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import globals from '../globals'
-import getUserSetting from '../selectors/getUserSetting'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
-import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
 import CommandMenuPanel from './CommandMenu/CommandMenuPanel'
@@ -25,7 +21,6 @@ import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
-import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import QuickDropPanel from './QuickDropPanel'
 import Sidebar from './Sidebar'
@@ -33,8 +28,6 @@ import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import * as modals from './modals'
-
-const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
 /** A gutter that toggles the sidebar. Positioned above the NavBar so that it doesn't block NavBar or Footer clicks. */
 // const SidebarGutter = () => {
@@ -66,38 +59,6 @@ const useDisableLongPressToSelect = () => {
       document.removeEventListener('selectionchange', onSelectionChange)
     }
   }, [onSelectionChange])
-}
-
-/** Cancel gesture if there is an active text selection, drag, modal, or sidebar. */
-const shouldCancelGesture = (
-  /** The x coordinate of the touch event. If x and y are provided, cancels the gesture if the touch point is too close to the selection. See selection.isNear. */
-  x?: number,
-  /** The y coordinate of the touch event. If x and y are provided, cancels the gesture if the touch point is too close to the selection. See selection.isNear. */
-  y?: number,
-): boolean => {
-  const state = store.getState()
-  const distance = state.fontSize * 2
-  return (x && y && selection.isNear(x, y, distance)) || state.dragInProgress || !!state.showModal || state.showSidebar
-}
-
-/**
- * Wrap an element in the MultiGesture component if the user has a touch screen.
- */
-const MultiGestureIfTouch: FC<PropsWithChildren> = ({ children }) => {
-  const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
-  return isTouch ? (
-    <MultiGesture
-      leftHanded={leftHanded}
-      onGesture={handleGestureSegment}
-      onEnd={handleGestureEnd}
-      shouldCancelGesture={shouldCancelGesture}
-      onCancel={handleGestureCancel}
-    >
-      {children}
-    </MultiGesture>
-  ) : (
-    <>{children}</>
-  )
 }
 
 /**
@@ -177,21 +138,19 @@ const AppComponent: FC = () => {
       {!showModal && !tutorial && <Toolbar />}
       <QuickDropPanel />
 
-      <MultiGestureIfTouch>
-        {showModal ? (
-          <div style={{ fontSize }}>{Modal && <Modal />}</div>
-        ) : (
-          <>
-            {showTutorial ? <Tutorial /> : null}
-            {
-              // overflow: hidden is needed to prevent the content from briefly scrolling horizontally during a gesture.
-              <div className={css({ position: 'relative', overflow: 'hidden' })} style={{ fontSize }}>
-                <Content />
-              </div>
-            }
-          </>
-        )}
-      </MultiGestureIfTouch>
+      {showModal ? (
+        <div style={{ fontSize }}>{Modal && <Modal />}</div>
+      ) : (
+        <>
+          {showTutorial ? <Tutorial /> : null}
+          {
+            // overflow: hidden is needed to prevent the content from briefly scrolling horizontally during a gesture.
+            <div className={css({ position: 'relative', overflow: 'hidden' })} style={{ fontSize }}>
+              <Content />
+            </div>
+          }
+        </>
+      )}
 
       {!showModal && isDocumentEditable() && (
         <>
