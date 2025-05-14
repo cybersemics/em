@@ -9,14 +9,12 @@ import ThoughtId from '../@types/ThoughtId'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
-import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import rootedParentOf from '../selectors/rootedParentOf'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
-import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
@@ -37,30 +35,8 @@ const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
   return useSelector((state: State) => {
     const parentPath = rootedParentOf(state, path)
     const parentId = head(parentPath)
-    const grandParentPath = parentId ? rootedParentOf(state, parentPath) : null
-    const grandParentId = grandParentPath ? head(grandParentPath) : null
     const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
-    const childrenWithoutDividers = children.filter(child => !isDivider(child.value))
-    const isOnlyChild = childrenWithoutDividers.length === 0
-    const isTableView =
-      attributeEquals(state, parentId, '=view', 'Table') || attributeEquals(state, grandParentId, '=view', 'Table')
-
-    const dependentThoughtIds = isOnlyChild
-      ? isTableView && grandParentId
-        ? // If the thought is the only child and in a table view, get the grandchildren's IDs
-          getAllChildrenAsThoughts(state, grandParentId)
-            .filter(child => !isDivider(child.value))
-            .flatMap(parent =>
-              (parent.id ? getAllChildrenAsThoughts(state, parent.id) : [])
-                .filter(child => !isDivider(child.value))
-                .map(child => child.id),
-            )
-        : // If the thought is the only child but not in a table view, return an empty array
-          []
-      : // If the thought is not the only child, get the sibling thought IDs
-        childrenWithoutDividers.map(child => child.id)
-
-    return dependentThoughtIds
+    return children.map(child => child.id)
   }, shallowEqual)
 }
 
@@ -215,6 +191,7 @@ const TreeNode = ({
     // Grab the bullet and editable elements.
     const bulletEl = element.querySelector('[aria-label="bullet"]') as HTMLElement
     const editableEl = element.querySelector('.editable') as HTMLElement
+    if (!editableEl) return
 
     // Compute the slide offset and fine-tune bullet offsets.
     const offset = calculateTranslateX()
