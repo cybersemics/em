@@ -609,6 +609,14 @@ const Editable = ({
       // must call onMouseDown on mobile since onTap cannot preventDefault
       // otherwise gestures and scrolling can trigger cursorBack (#1054)
       onMouseDown={onTap}
+      onTouchEnd={e => {
+        e.stopPropagation()
+        e.preventDefault()
+      }}
+      onTouchStart={e => {
+        e.stopPropagation()
+        e.preventDefault()
+      }}
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
