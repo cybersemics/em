@@ -146,10 +146,10 @@ const useEditMode = ({
   // Otherwise the caret is moved to the beginning of the thought.
   const allowDefaultSelection = useCallback(() => {
     disabledRef.current = true
-    // enable after 10ms, which is long enough to skip the next setSelectionToCursorOffset
+    // enable on next tick, which is long enough to skip the next setSelectionToCursorOffset
     setTimeout(() => {
       disabledRef.current = false
-    }, 10)
+    })
   }, [])
 
   // Resume focus if sidebar was just closed and isEditing is true.

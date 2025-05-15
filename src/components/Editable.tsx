@@ -549,9 +549,6 @@ const Editable = ({
             bottomMargin: fontSize * 2,
           })
         }
-
-        // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
-        allowDefaultSelection()
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -579,6 +576,8 @@ const Editable = ({
                 : value
       }
       placeholder={placeholder}
+      // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
+      onMouseDown={allowDefaultSelection}
       // stop propagation to prevent default content onClick (which removes the cursor)
       onClick={onTap}
       onTouchEnd={onTap}
