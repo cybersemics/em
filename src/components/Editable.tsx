@@ -129,7 +129,7 @@ const Editable = ({
 
   /** Used to prevent edit mode from being incorrectly activated on long tap. The default browser behavior must be prevented if setCursorOnThought was just called. */
   // https://github.com/cybersemics/em/issues/1793
-  const disableTapRef = useRef(false)
+  // const disableTapRef = useRef(false)
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -506,7 +506,7 @@ const Editable = ({
   const onTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       // Avoid triggering haptics twice since this handler is used for both onClick and onMouseDown.
-      if (e.type !== 'mousedown') {
+      if (e.type !== 'touchend') {
         haptics.light()
       }
 
@@ -518,17 +518,17 @@ const Editable = ({
       }
 
       // stop propagation to prevent clickOnEmptySpace onClick handler in Content component
-      if (e.nativeEvent instanceof MouseEvent) {
+      if (e.nativeEvent instanceof TouchEvent) {
         e.stopPropagation()
 
         // preventDefault after setCursorOnThought to avoid activating edit mode.
         // onMouseDown is the only place that the browser selection can be prevented on tap.
-        if (disableTapRef.current) {
-          e.preventDefault()
+        // if (disableTapRef.current) {
+        //   e.preventDefault()
 
-          // after the default browser behavior has been prevented, we can safely reset disableTapRef
-          disableTapRef.current = false
-        }
+        // after the default browser behavior has been prevented, we can safely reset disableTapRef
+        // disableTapRef.current = false
+        // }
       }
       // when the MultiGesture is below the gesture threshold it is possible that onTap and onMouseDown are both triggered
       // in this case, we need to prevent onTap from being called a second time via onMouseDown
@@ -561,14 +561,13 @@ const Editable = ({
 
           // When the the cursor is first set on a thought, prevent the default browser behavior to avoid activating edit mode.
           // Do not reset until the long tap is definitely over.
-          disableTapRef.current = true
-          setTimeout(() => {
-            disableTapRef.current = false
-          }, 400)
+          // disableTapRef.current = true
+          // setTimeout(() => {
+          //   disableTapRef.current = false
+          // }, 400)
         }
       } else {
-        // for some reason doesn't work ontouchend
-        if (editingOrOnCursor && e.type === 'mousedown' && isTouch) {
+        if (editingOrOnCursor && e.type === 'touchend' && isTouch) {
           preventAutoscroll(contentRef.current, {
             // about the height of a single-line thought
             bottomMargin: fontSize * 2,
@@ -606,17 +605,8 @@ const Editable = ({
       placeholder={placeholder}
       // stop propagation to prevent default content onClick (which removes the cursor)
       onClick={onTap}
-      // must call onMouseDown on mobile since onTap cannot preventDefault
-      // otherwise gestures and scrolling can trigger cursorBack (#1054)
-      onMouseDown={onTap}
-      onTouchEnd={e => {
-        e.stopPropagation()
-        e.preventDefault()
-      }}
-      onTouchStart={e => {
-        e.stopPropagation()
-        e.preventDefault()
-      }}
+      onTouchStart={e => e.stopPropagation()}
+      onTouchEnd={onTap}
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
