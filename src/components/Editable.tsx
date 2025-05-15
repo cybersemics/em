@@ -127,10 +127,6 @@ const Editable = ({
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
 
-  /** Used to prevent edit mode from being incorrectly activated on long tap. The default browser behavior must be prevented if setCursorOnThought was just called. */
-  // https://github.com/cybersemics/em/issues/1793
-  // const disableTapRef = useRef(false)
-
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
   //   cursorOffset,
@@ -517,19 +513,6 @@ const Editable = ({
         return
       }
 
-      // stop propagation to prevent clickOnEmptySpace onClick handler in Content component
-      if (e.nativeEvent instanceof TouchEvent) {
-        e.stopPropagation()
-
-        // preventDefault after setCursorOnThought to avoid activating edit mode.
-        // onMouseDown is the only place that the browser selection can be prevented on tap.
-        // if (disableTapRef.current) {
-        //   e.preventDefault()
-
-        // after the default browser behavior has been prevented, we can safely reset disableTapRef
-        // disableTapRef.current = false
-        // }
-      }
       // when the MultiGesture is below the gesture threshold it is possible that onTap and onMouseDown are both triggered
       // in this case, we need to prevent onTap from being called a second time via onMouseDown
       // https://github.com/cybersemics/em/issues/1268
@@ -558,13 +541,6 @@ const Editable = ({
           dispatch(toggleDropdown())
         } else {
           setCursorOnThought()
-
-          // When the the cursor is first set on a thought, prevent the default browser behavior to avoid activating edit mode.
-          // Do not reset until the long tap is definitely over.
-          // disableTapRef.current = true
-          // setTimeout(() => {
-          //   disableTapRef.current = false
-          // }, 400)
         }
       } else {
         if (editingOrOnCursor && e.type === 'touchend' && isTouch) {
@@ -605,7 +581,6 @@ const Editable = ({
       placeholder={placeholder}
       // stop propagation to prevent default content onClick (which removes the cursor)
       onClick={onTap}
-      onTouchStart={e => e.stopPropagation()}
       onTouchEnd={onTap}
       onFocus={onFocus}
       onBlur={onBlur}
