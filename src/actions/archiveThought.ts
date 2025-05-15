@@ -30,6 +30,7 @@ import isThoughtArchived from '../util/isThoughtArchived'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
+import resolvePathReference from '../util/resolvePathReference'
 import unroot from '../util/unroot'
 import updateCursorAfterDelete from './updateCursorAfterDelete'
 
@@ -54,12 +55,33 @@ export const pathAndRankToArchive = (
 
 /** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
  *
- * @param path     Defaults to cursor.
+ * @param path                 Defaults to cursor.
+ * @param archivePathReference If true and the path points to a note with =path, also archives the target thought.
  */
-const archiveThought = (state: State, options: { path?: Path }): State => {
+const archiveThought = (state: State, options: { path?: Path; archivePathReference?: boolean }): State => {
   const path = options.path || state.cursor
-
+  const archivePathReference = options.archivePathReference || false
   if (!path) return state
+
+  // If this is a note with a path reference that needs to be archived as well
+  if (archivePathReference) {
+    const noteId = head(path)
+    const parentThought = getThoughtById(state, noteId)
+    if (!parentThought || !parentThought.parentId) return state
+
+    const targetPath = resolvePathReference(state, parentThought.parentId, noteId)?.targetPath
+
+    // If we found a valid target path, archive it first, then proceed with archiving the note
+    if (targetPath) {
+      return reducerFlow([
+        // Archive the target thought first
+        state => archiveThought(state, { path: targetPath }),
+
+        // Then continue with normal archive of the note
+        state => archiveThought(state, { path }),
+      ])(state)
+    }
+  }
 
   const showContexts = isContextViewActive(state, rootedParentOf(state, path))
   const contextChain = splitChain(state, path)

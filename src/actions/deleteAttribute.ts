@@ -9,6 +9,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import resolvePathReference from '../util/resolvePathReference'
 
 /** Deletes an attribute. */
 const deleteAttribute = (
@@ -19,6 +20,36 @@ const deleteAttribute = (
   const _values = values || [value!]
 
   if (!path || (!value && (!values || values.length === 0))) return state
+
+  // Special handling for =note attribute with =path subattribute
+  if (_values.length === 1 && _values[0] === '=note') {
+    const thoughtId = head(path)
+    const noteId = findDescendant(state, thoughtId, '=note')
+
+    if (noteId) {
+      const pathReference = resolvePathReference(state, thoughtId, noteId)
+
+      if (pathReference && pathReference.targetExists && pathReference.targetId) {
+        // Delete the target thought itself (the referenced path)
+        const stateWithDeletedTarget = deleteThought(state, {
+          pathParent: [thoughtId],
+          thoughtId: pathReference.targetId,
+        })
+
+        // Delete the entire =note structure
+        const updatedNoteId = findDescendant(stateWithDeletedTarget, thoughtId, '=note')
+
+        if (updatedNoteId) {
+          return deleteThought(stateWithDeletedTarget, {
+            pathParent: path,
+            thoughtId: updatedNoteId,
+          })
+        }
+
+        return stateWithDeletedTarget
+      }
+    }
+  }
 
   const thoughtId = head(path)
   const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])

@@ -14,6 +14,7 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
+import usePathReference from '../hooks/usePathReference'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
@@ -37,6 +38,7 @@ const Note = React.memo(
     const fontSize = useSelector(state => state.fontSize)
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
+    const pathReference = usePathReference(thoughtId)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, thoughtId))
@@ -102,14 +104,25 @@ const Note = React.memo(
           : // Mobile Safari inserts <br> when all text is deleted
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
-        dispatch(
-          setDescendant({
-            path,
-            values: ['=note', value],
-          }),
-        )
+
+        if (pathReference?.targetPath) {
+          // If we have a =path reference, update the referenced thought directly
+          dispatch(
+            setDescendant({
+              path: pathReference.targetPath,
+              values: [value],
+            }),
+          )
+        } else {
+          dispatch(
+            setDescendant({
+              path,
+              values: ['=note', value],
+            }),
+          )
+        }
       },
-      [dispatch, path, justPasted],
+      [dispatch, path, justPasted, pathReference],
     )
 
     /** Set editing to false onBlur, if keyboard is closed. */
