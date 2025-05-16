@@ -73,9 +73,8 @@ const toggleNote = (state: State): State => {
       }
     }
   } else if (hasNote) {
-    // Get the note content
-    const noteContent = attribute(newState, hasNote, '')
-    offset = noteContent?.length || 0
+    const noteChildren = getChildren(newState, hasNote)
+    offset = noteChildren.length ? noteChildren[0].value.length : 0
   }
 
   const finalState = reducerFlow([

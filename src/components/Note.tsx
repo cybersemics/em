@@ -106,7 +106,7 @@ const Note = React.memo(
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
         if (pathReference?.targetPath) {
-          // If we have a =path reference, update the referenced thought directly
+          // update the referenced thought directly if it exists
           dispatch(
             setDescendant({
               path: pathReference.targetPath,
