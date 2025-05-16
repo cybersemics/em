@@ -577,7 +577,10 @@ const Editable = ({
       }
       placeholder={placeholder}
       // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
-      onMouseDown={allowDefaultSelection}
+      onMouseDown={e => {
+        e.stopPropagation()
+        allowDefaultSelection()
+      }}
       // stop propagation to prevent default content onClick (which removes the cursor)
       onClick={onTap}
       onTouchEnd={onTap}
