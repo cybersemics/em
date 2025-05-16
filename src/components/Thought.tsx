@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { CSSProperties, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -8,6 +8,7 @@ import DropThoughtZone from '../@types/DropThoughtZone'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
@@ -32,6 +33,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import containsURL from '../util/containsURL'
+import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import hashPath from '../util/hashPath'
@@ -95,6 +97,40 @@ export interface ThoughtContainerProps {
 const equalChildren = (a: Thought[], b: Thought[]) =>
   a === b ||
   (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
+
+/** Returns the width of a given text string using the specified font. */
+const getTextWidth = (text: string, font: string): number => {
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+  if (!context) return 0
+  context.font = font
+  return context.measureText(text).width
+}
+
+/** Custom hook to fetch thought IDs that affect the max width. */
+const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
+  return useSelector((state: State) => {
+    const parentPath = rootedParentOf(state, path)
+    const parentId = head(parentPath)
+    const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
+    return children.map(child => child.id)
+  }, shallowEqual)
+}
+
+/** Calculates the width of multiple thoughts by measuring their rendered widths in the DOM. */
+const getThoughtWidths = (ids: ThoughtId[]): number[] => {
+  return ids.map(id => {
+    const editable = document.querySelector(`[aria-label="editable-${id}"]`) as HTMLElement | null
+    if (editable) {
+      const text = editable?.innerText
+      const computedStyle = window.getComputedStyle(editable)
+      const font = `${computedStyle.fontSize} ${computedStyle.fontFamily}`
+      const editableWidth = getTextWidth(text, font)
+      return editableWidth
+    }
+    return 0
+  })
+}
 
 /**********************************************************************
  * Components
@@ -365,6 +401,60 @@ const ThoughtContainer = ({
     [dispatch, path],
   )
 
+  const bulletRef = useRef(null)
+  const editableRef = useRef(null)
+
+  const duration = durations.get('layoutNodeAnimation')
+  const widthDependentThoughtIds = useWidthDependentThoughtIds(path)
+
+  /** Calculates the horizontal translation needed to align the text to the right within its parent. */
+  const calculateTranslateX = (): number => {
+    const element = editableRef.current as HTMLElement | null
+    if (!element) return 0
+
+    const editable = element.querySelector('.editable') as HTMLElement | null
+    if (!editable) return 0
+
+    const text = editable.innerText
+    const computedStyle = window.getComputedStyle(editable)
+    const font = `${computedStyle.fontSize} ${computedStyle.fontFamily}`
+    const editableWidth = getTextWidth(text, font)
+
+    const widths = getThoughtWidths(widthDependentThoughtIds)
+    const maxSiblingWidth = Math.max(...widths, 0)
+
+    return maxSiblingWidth - editableWidth
+  }
+
+  interface AnimationState {
+    bullet: CSSProperties
+    editable: CSSProperties
+  }
+
+  const [animation, setAnimation] = useState<AnimationState>({
+    bullet: {},
+    editable: {},
+  })
+
+  useLayoutEffect(() => {
+    const offset = calculateTranslateX()
+    const bulletX = isTableCol1 ? -7 : 7
+    const editableX = isTableCol1 ? -offset : offset
+
+    setAnimation({
+      bullet: { transition: 'none', transform: `translateX(${bulletX}px)` },
+      editable: { transition: 'none', transform: `translateX(${editableX}px)` },
+    })
+
+    requestAnimationFrame(() => {
+      setAnimation({
+        bullet: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
+        editable: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
+      })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTableCol1])
+
   // thought does not exist
   if (value == null) return null
 
@@ -431,46 +521,50 @@ const ThoughtContainer = ({
         })}
       >
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
-          <Bullet
-            isContextPending={isContextPending}
-            isDragging={isDragging}
-            isEditing={isEditing}
-            leaf={leaf}
-            path={path}
-            publish={publish}
-            simplePath={simplePath}
-            thoughtId={thoughtId}
-            isInContextView={isInContextView}
-            // debugIndex={debugIndex}
-            // depth={depth}
-          />
+          <div ref={bulletRef} style={animation.bullet}>
+            <Bullet
+              isContextPending={isContextPending}
+              isDragging={isDragging}
+              isEditing={isEditing}
+              leaf={leaf}
+              path={path}
+              publish={publish}
+              simplePath={simplePath}
+              thoughtId={thoughtId}
+              isInContextView={isInContextView}
+              // debugIndex={debugIndex}
+              // depth={depth}
+            />
+          </div>
         )}
 
         <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
-        <StaticThought
-          allowSingleContext={allowSingleContext}
-          env={env}
-          isContextPending={isContextPending}
-          isEditing={isEditing}
-          ellipsizedUrl={!isEditing && containsURL(value)}
-          isPublishChild={isPublishChild}
-          isVisible={isVisible}
-          onEdit={!isTouch ? onEdit : undefined}
-          path={path}
-          rank={rank}
-          showContextBreadcrumbs={showContexts && value !== '__PENDING__'}
-          simplePath={simplePath}
-          cssRaw={cssRawThought}
-          cssRawThought={cssRawThought}
-          style={styleThought}
-          styleAnnotation={styleAnnotation || undefined}
-          styleThought={styleThought}
-          updateSize={updateSize}
-          view={view}
-          marginRight={marginRight}
-          isPressed={dragHoldResult.isPressed}
-        />
+        <div ref={editableRef} style={animation.editable}>
+          <StaticThought
+            allowSingleContext={allowSingleContext}
+            env={env}
+            isContextPending={isContextPending}
+            isEditing={isEditing}
+            ellipsizedUrl={!isEditing && containsURL(value)}
+            isPublishChild={isPublishChild}
+            isVisible={isVisible}
+            onEdit={!isTouch ? onEdit : undefined}
+            path={path}
+            rank={rank}
+            showContextBreadcrumbs={showContexts && value !== '__PENDING__'}
+            simplePath={simplePath}
+            cssRaw={cssRawThought}
+            cssRawThought={cssRawThought}
+            style={{ ...styleThought }}
+            styleAnnotation={styleAnnotation || undefined}
+            styleThought={styleThought}
+            updateSize={updateSize}
+            view={view}
+            marginRight={marginRight}
+            isPressed={dragHoldResult.isPressed}
+          />
+        </div>
         <Note path={path} disabled={!isVisible} />
       </div>
 

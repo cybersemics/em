@@ -1,59 +1,19 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
-import Path from '../@types/Path'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
-import rootedParentOf from '../selectors/rootedParentOf'
-import durations from '../util/durations'
 import equalPath from '../util/equalPath'
-import head from '../util/head'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
 import VirtualThought, { OnResize } from './VirtualThought'
-
-/** Returns the width of a given text string using the specified font. */
-const getTextWidth = (text: string, font: string): number => {
-  const canvas = document.createElement('canvas')
-  const context = canvas.getContext('2d')
-  if (!context) return 0
-  context.font = font
-  return context.measureText(text).width
-}
-
-/** Custom hook to fetch thought IDs that affect the max width. */
-const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
-  return useSelector((state: State) => {
-    const parentPath = rootedParentOf(state, path)
-    const parentId = head(parentPath)
-    const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
-    return children.map(child => child.id)
-  }, shallowEqual)
-}
-
-/** Calculates the width of multiple thoughts by measuring their rendered widths in the DOM. */
-const getThoughtWidths = (ids: ThoughtId[]): number[] => {
-  return ids.map(id => {
-    const editable = document.querySelector(`[aria-label="editable-${id}"]`) as HTMLElement | null
-    if (editable) {
-      const text = editable?.innerText
-      const computedStyle = window.getComputedStyle(editable)
-      const font = `${computedStyle.fontSize} ${computedStyle.fontFamily}`
-      const editableWidth = getTextWidth(text, font)
-      return editableWidth
-    }
-    return 0
-  })
-}
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
 const TreeNode = ({
@@ -112,29 +72,6 @@ const TreeNode = ({
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
 
-  const duration = durations.get('layoutNodeAnimation')
-
-  const widthDependentThoughtIds = useWidthDependentThoughtIds(path)
-
-  /** Calculates the horizontal translation needed to align the text to the right within its parent. */
-  const calculateTranslateX = (): number => {
-    const element = fadeThoughtRef.current
-    if (!element) return 0
-
-    const editable = element.querySelector('.editable') as HTMLElement | null
-    if (!editable) return 0
-
-    const text = editable.innerText
-    const computedStyle = window.getComputedStyle(editable)
-    const font = `${computedStyle.fontSize} ${computedStyle.fontFamily}`
-    const editableWidth = getTextWidth(text, font)
-
-    const widths = getThoughtWidths(widthDependentThoughtIds)
-    const maxSiblingWidth = Math.max(...widths, 0)
-
-    return maxSiblingWidth - editableWidth
-  }
-
   const fauxCaretNodeProvider = useFauxCaretNodeProvider({
     editing,
     fadeThoughtElement: fadeThoughtRef.current,
@@ -181,51 +118,6 @@ const TreeNode = ({
     // Without this additional render, updates get batched and subsequent CSS transitions may not work properly. For example, when moving a thought down, it would not animate.
     setY(_y)
   }, [_y])
-
-  useLayoutEffect(() => {
-    if (dragInProgress) return
-
-    const element = fadeThoughtRef.current
-    if (!element) return
-
-    // Grab the bullet and editable elements.
-    const bulletEl = element.querySelector('[aria-label="bullet"]') as HTMLElement
-    const editableEl = element.querySelector('.editable') as HTMLElement
-    if (!editableEl) return
-
-    // Compute the slide offset and fine-tune bullet offsets.
-    const offset = calculateTranslateX()
-    const bulletEnterOffset = -7
-    const bulletExitOffset = 7
-
-    // 1) Place both elements in their “pre-animation” positions with no transition.
-    if (bulletEl) bulletEl.style.transition = 'none'
-    editableEl.style.transition = 'none'
-
-    if (isTableCol1) {
-      // Entering column 1: shift both left.
-      if (bulletEl) bulletEl.style.transform = `translateX(${bulletEnterOffset}px)`
-      editableEl.style.transform = `translateX(-${offset}px)`
-    } else {
-      // Exiting column 1: shift both right.
-      if (bulletEl) bulletEl.style.transform = `translateX(${bulletExitOffset}px)`
-      editableEl.style.transform = `translateX(${offset}px)`
-    }
-
-    // 2) On the next frame, restore transitions and animate back to zero.
-    requestAnimationFrame(() => {
-      const t = `transform ${duration}ms ease-out`
-      if (bulletEl) bulletEl.style.transition = t
-      editableEl.style.transition = t
-
-      if (bulletEl) bulletEl.style.transform = 'translateX(0)'
-      editableEl.style.transform = 'translateX(0)'
-    })
-
-    // We intentionally omit `calculateTranslateX` and `duration` from deps
-    // so this effect only fires when `isTableCol1` changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTableCol1])
 
   const vtStyle = useMemo<React.CSSProperties>(() => {
     // Add a bit of space after a cliff to give nested lists some breathing room.
