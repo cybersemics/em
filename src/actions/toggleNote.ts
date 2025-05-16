@@ -20,7 +20,7 @@ const toggleNote = (state: State): State => {
   const hasNote = findDescendant(state, thoughtId, '=note')
 
   // Check if there's a path reference
-  const pathReference = resolvePathReference(state, thoughtId, hasNote || undefined)
+  const pathReference = resolvePathReference(state, thoughtId, hasNote)
 
   // Calculate offset and handle target thought creation if needed
   let offset = 0
@@ -43,7 +43,7 @@ const toggleNote = (state: State): State => {
         rank: pathRank,
       })
 
-      // Find the newly created thought - this will not be null after creation
+      // Find the newly created thought: this should not be null after creation
       const newTargetId = findDescendant(newState, thoughtId, pathReference.pathValue)
       if (newTargetId) {
         targetId = newTargetId
@@ -66,11 +66,7 @@ const toggleNote = (state: State): State => {
           rank: childRank,
         })
 
-        // Get the updated children to calculate offset
-        const updatedChildren = getChildren(newState, targetId)
-        if (updatedChildren.length) {
-          offset = updatedChildren[0].value.length
-        }
+        offset = 0
       } else {
         // If target already has children, set offset to the length of the first child's value
         offset = targetChildren[0].value.length
@@ -82,7 +78,6 @@ const toggleNote = (state: State): State => {
     offset = noteContent?.length || 0
   }
 
-  // Apply note changes on top of the newState
   const finalState = reducerFlow([
     // Create an empty note if it doesn't exist
     !hasNote

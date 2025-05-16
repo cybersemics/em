@@ -5,12 +5,8 @@ import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
 
-/**
- * Returns path reference information for a thought if it has a =note/=path attribute.
- * If the target thought doesn't exist yet but the pathValue is valid, still returns information.
- */
-export const resolvePathReference = (state: State, thoughtId: ThoughtId, noteId?: ThoughtId) => {
-  // Find the =note attribute if not provided
+/** Returns path reference information for a thought if it has a =note/=path attribute.*/
+export const resolvePathReference = (state: State, thoughtId: ThoughtId, noteId?: ThoughtId | null) => {
   const _noteId = noteId || findDescendant(state, thoughtId, '=note')
   if (!_noteId) return null
 

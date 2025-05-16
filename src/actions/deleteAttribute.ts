@@ -31,22 +31,22 @@ const deleteAttribute = (
 
       if (pathReference && pathReference.targetExists && pathReference.targetId) {
         // Delete the target thought itself (the referenced path)
-        const stateWithDeletedTarget = deleteThought(state, {
+        const stateNew = deleteThought(state, {
           pathParent: [thoughtId],
           thoughtId: pathReference.targetId,
         })
 
         // Delete the entire =note structure
-        const updatedNoteId = findDescendant(stateWithDeletedTarget, thoughtId, '=note')
+        const updatedNoteId = findDescendant(stateNew, thoughtId, '=note')
 
         if (updatedNoteId) {
-          return deleteThought(stateWithDeletedTarget, {
+          return deleteThought(stateNew, {
             pathParent: path,
             thoughtId: updatedNoteId,
           })
         }
 
-        return stateWithDeletedTarget
+        return stateNew
       }
     }
   }
