@@ -113,11 +113,12 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     }
 
     /**
-     * Clear the signature pad when the gesture is cancelled.
+     * End the stroke when the gesture is cancelled.
      * Otherwise a stroke can be rendered from the bottom of the screen when switching apps on iPhone.
      */
-    const onTouchCancel = () => {
-      signaturePad.clear()
+    const onTouchCancel = (e: TouchEvent) => {
+      // singaturePad.clear() is insufficient since the stroke has already begun. We need to end the stroke so that the touchmove handlers within signaturePad that draw the signature are removed.
+      signaturePad._handleTouchEnd(e)
     }
 
     eventNode?.addEventListener('touchstart', onTouchStart)
