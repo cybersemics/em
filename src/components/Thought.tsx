@@ -436,9 +436,12 @@ const ThoughtContainer = ({
     editable: {},
   })
 
+  const fontSize = useSelector(state => state.fontSize)
+
   useLayoutEffect(() => {
     const offset = calculateTranslateX()
-    const bulletX = isTableCol1 ? -7 : 7
+    const bulletAnimationOffset = 11 - (fontSize - 9) * 0.5
+    const bulletX = isTableCol1 ? -bulletAnimationOffset : bulletAnimationOffset
     const editableX = isTableCol1 ? -offset : offset
 
     setAnimation({
