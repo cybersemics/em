@@ -477,7 +477,7 @@ const Editable = ({
 
   /**
    * Sets the cursor on focus.
-   * Prevented by mousedown event above for hidden thoughts.
+   * Prevented by touchend event above for hidden thoughts.
    */
   const onFocus = useCallback(
     () => {
@@ -498,10 +498,10 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
-  /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
+  /** Sets the cursor on the thought on touchend or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      // Avoid triggering haptics twice since this handler is used for both onClick and onMouseDown.
+      // Avoid triggering haptics twice since this handler is used for both onClick and onTouchEnd.
       if (e.type !== 'touchend') {
         haptics.light()
       }
@@ -513,8 +513,8 @@ const Editable = ({
         return
       }
 
-      // when the MultiGesture is below the gesture threshold it is possible that onTap and onMouseDown are both triggered
-      // in this case, we need to prevent onTap from being called a second time via onMouseDown
+      // when the MultiGesture is below the gesture threshold it is possible that onTap and onTouchEnd are both triggered
+      // in this case, we need to prevent onTap from being called a second time via onTouchEnd
       // https://github.com/cybersemics/em/issues/1268
       else if (globals.touching && e.cancelable) {
         e.preventDefault()
