@@ -17,6 +17,7 @@ import { showLatestCommandsActionCreator as showLatestCommands } from './actions
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
+import openGestureCheatsheetCommand from './commands/openGestureCheatsheet'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, Settings } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'
@@ -163,7 +164,7 @@ const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 export const gestureString = (command: Command): string =>
   (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string
 
-/** Get a command by its id. */
+/** Get a command by its id. Only use this for dynamic ids that are only known at runtime. If you know the id of the command at compile time, use a static import. */
 export const commandById = (id: CommandId): Command => commandIdIndex[id]
 
 /**
@@ -246,7 +247,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // Get the command from the command gesture index.
     // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
 
-    const openGestureCheatsheetCommand = commandById('openGestureCheatsheet')
     const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
 
     // If sequence ends with help gesture, use help command
