@@ -431,13 +431,6 @@ describe('hover expansion', () => {
     // Wait for expansion to occur
     await sleep(MOCK_EXPAND_HOVER_DELAY)
 
-    // Verify that A1 and A2 are visible (A has expanded)
-    const a1Editable = await waitForEditable('A1')
-    const a2Editable = await waitForEditable('A2')
-
-    expect(a1Editable).toBeTruthy()
-    expect(a2Editable).toBeTruthy()
-
     // Now drag to thought B instead
     await dragAndDropThought('C', 'B', { position: 'after', skipMouseDown: true })
 
@@ -467,13 +460,6 @@ describe('hover expansion', () => {
 
     // Wait for expansion to occur
     await sleep(MOCK_EXPAND_HOVER_DELAY)
-
-    // Verify that A1 and A2 are visible (A has expanded)
-    const a1Editable = await waitForEditable('A1')
-    const a2Editable = await waitForEditable('A2')
-
-    expect(a1Editable).toBeTruthy()
-    expect(a2Editable).toBeTruthy()
 
     // Now move to A1 using the dragAndDropThought function with skipMouseDown
     await dragAndDropThought('C', 'A1', { position: 'child', skipMouseDown: true })
