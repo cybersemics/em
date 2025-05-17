@@ -127,10 +127,6 @@ const Editable = ({
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
 
-  /** Used to prevent edit mode from being incorrectly activated on long tap. The default browser behavior must be prevented if setCursorOnThought was just called. */
-  // https://github.com/cybersemics/em/issues/1793
-  const disableTapRef = useRef(false)
-
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
   //   cursorOffset,
@@ -481,7 +477,7 @@ const Editable = ({
 
   /**
    * Sets the cursor on focus.
-   * Prevented by mousedown event above for hidden thoughts.
+   * Prevented by touchend event above for hidden thoughts.
    */
   const onFocus = useCallback(
     () => {
@@ -502,11 +498,11 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
-  /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
+  /** Sets the cursor on the thought on touchend or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      // Avoid triggering haptics twice since this handler is used for both onClick and onMouseDown.
-      if (e.type !== 'mousedown') {
+      // Avoid triggering haptics twice since this handler is used for both onClick and onTouchEnd.
+      if (e.type !== 'touchend') {
         haptics.light()
       }
 
@@ -517,21 +513,8 @@ const Editable = ({
         return
       }
 
-      // stop propagation to prevent clickOnEmptySpace onClick handler in Content component
-      if (e.nativeEvent instanceof MouseEvent) {
-        e.stopPropagation()
-
-        // preventDefault after setCursorOnThought to avoid activating edit mode.
-        // onMouseDown is the only place that the browser selection can be prevented on tap.
-        if (disableTapRef.current) {
-          e.preventDefault()
-
-          // after the default browser behavior has been prevented, we can safely reset disableTapRef
-          disableTapRef.current = false
-        }
-      }
-      // when the MultiGesture is below the gesture threshold it is possible that onTap and onMouseDown are both triggered
-      // in this case, we need to prevent onTap from being called a second time via onMouseDown
+      // when the MultiGesture is below the gesture threshold it is possible that onTap and onTouchEnd are both triggered
+      // in this case, we need to prevent onTap from being called a second time via onTouchEnd
       // https://github.com/cybersemics/em/issues/1268
       else if (globals.touching && e.cancelable) {
         e.preventDefault()
@@ -558,25 +541,14 @@ const Editable = ({
           dispatch(toggleDropdown())
         } else {
           setCursorOnThought()
-
-          // When the the cursor is first set on a thought, prevent the default browser behavior to avoid activating edit mode.
-          // Do not reset until the long tap is definitely over.
-          disableTapRef.current = true
-          setTimeout(() => {
-            disableTapRef.current = false
-          }, 400)
         }
       } else {
-        // for some reason doesn't work ontouchend
-        if (editingOrOnCursor && e.type === 'mousedown' && isTouch) {
+        if (editingOrOnCursor && e.type === 'touchend' && isTouch) {
           preventAutoscroll(contentRef.current, {
             // about the height of a single-line thought
             bottomMargin: fontSize * 2,
           })
         }
-
-        // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
-        allowDefaultSelection()
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -604,11 +576,14 @@ const Editable = ({
                 : value
       }
       placeholder={placeholder}
+      // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
+      onMouseDown={e => {
+        e.stopPropagation()
+        allowDefaultSelection()
+      }}
       // stop propagation to prevent default content onClick (which removes the cursor)
       onClick={onTap}
-      // must call onMouseDown on mobile since onTap cannot preventDefault
-      // otherwise gestures and scrolling can trigger cursorBack (#1054)
-      onMouseDown={onTap}
+      onTouchEnd={onTap}
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
