@@ -31,6 +31,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import col1MaxWidthStore from '../stores/col1MaxWidthStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import containsURL from '../util/containsURL'
 import durations from '../util/durations'
@@ -115,21 +116,6 @@ const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
     const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
     return children.map(child => child.id)
   }, shallowEqual)
-}
-
-/** Calculates the width of multiple thoughts by measuring their rendered widths in the DOM. */
-const getThoughtWidths = (ids: ThoughtId[]): number[] => {
-  return ids.map(id => {
-    const editable = document.querySelector(`[aria-label="editable-${id}"]`) as HTMLElement | null
-    if (editable) {
-      const text = editable?.innerText
-      const computedStyle = window.getComputedStyle(editable)
-      const font = `${computedStyle.fontSize} ${computedStyle.fontFamily}`
-      const editableWidth = getTextWidth(text, font)
-      return editableWidth
-    }
-    return 0
-  })
 }
 
 /**********************************************************************
@@ -304,6 +290,25 @@ const ThoughtContainer = ({
     return isSubthoughtsDropTarget || isThoughtDropTarget
   })
 
+  const col1MaxWidth = col1MaxWidthStore.useState()
+
+  const prevValueRef = useRef<string>()
+  const fontSize = useSelector(state => state.fontSize)
+  const currentCursor = useSelector(state => state.cursor)
+  const [thoughtWidth, setThoughtWidth] = useState(0)
+  const widthDependentThoughtIds = currentCursor ? useWidthDependentThoughtIds(currentCursor) : []
+  const isInCol1 = widthDependentThoughtIds.includes(thoughtId)
+
+  useLayoutEffect(() => {
+    if (!isInCol1) return
+    const newWidth = value ? getTextWidth(value, `${fontSize}px Helvetica`) : 0
+    if (!col1MaxWidth || newWidth > col1MaxWidth || prevValueRef.current != value) {
+      col1MaxWidthStore.update(newWidth)
+    }
+    setThoughtWidth(newWidth)
+    prevValueRef.current = value
+  }, [isInCol1, col1MaxWidth, fontSize, value])
+
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
     // only hide when typing, not when deleting
@@ -405,26 +410,6 @@ const ThoughtContainer = ({
   const editableRef = useRef(null)
 
   const duration = durations.get('layoutNodeAnimation')
-  const widthDependentThoughtIds = useWidthDependentThoughtIds(path)
-
-  /** Calculates the horizontal translation needed to align the text to the right within its parent. */
-  const calculateTranslateX = (): number => {
-    const element = editableRef.current as HTMLElement | null
-    if (!element) return 0
-
-    const editable = element.querySelector('.editable') as HTMLElement | null
-    if (!editable) return 0
-
-    const text = editable.innerText
-    const computedStyle = window.getComputedStyle(editable)
-    const font = `${computedStyle.fontSize} ${computedStyle.fontFamily}`
-    const editableWidth = getTextWidth(text, font)
-
-    const widths = getThoughtWidths(widthDependentThoughtIds)
-    const maxSiblingWidth = Math.max(...widths, 0)
-
-    return maxSiblingWidth - editableWidth
-  }
 
   interface AnimationState {
     bullet: CSSProperties
@@ -436,10 +421,8 @@ const ThoughtContainer = ({
     editable: {},
   })
 
-  const fontSize = useSelector(state => state.fontSize)
-
   useLayoutEffect(() => {
-    const offset = calculateTranslateX()
+    const offset = col1MaxWidth ? col1MaxWidth - thoughtWidth : 0
     const bulletAnimationOffset = 11 - (fontSize - 9) * 0.5
     const bulletX = isTableCol1 ? -bulletAnimationOffset : bulletAnimationOffset
     const editableX = isTableCol1 ? -offset : offset
