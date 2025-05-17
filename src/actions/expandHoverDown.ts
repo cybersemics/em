@@ -6,11 +6,8 @@ import Timer from '../@types/Timer'
 import { clearExpandDownActionCreator as clearExpandDown } from '../actions/clearExpandDown'
 import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
-import getChildren from '../selectors/getChildren'
+import rootedParentOf from '../selectors/rootedParentOf'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import equalPath from '../util/equalPath'
-import head from '../util/head'
-import pathToContext from '../util/pathToContext'
 
 let expandDownTimer: Timer | null = null
 
@@ -36,10 +33,16 @@ const expandHoverDownDebounced =
       expandDownTimer = null
     }, EXPAND_HOVER_DELAY)
   }
+
 /** Calculates the expanded context due to hover expansion on empty child drop. */
 const expandDown = (state: State, { path }: { path: Path }): State => ({
   ...state,
-  expanded: expandThoughts(state, path),
+  expanded: {
+    // always expand from cursor
+    ...expandThoughts(state, state.cursor),
+    // additionally expand from the the new expandHoverDownPath
+    ...expandThoughts(state, path),
+  },
   expandHoverDownPath: path,
 })
 
@@ -47,28 +50,22 @@ const expandDown = (state: State, { path }: { path: Path }): State => ({
 export const expandHoverDownActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
-  const { hoveringPath, hoverZone, expandHoverDownPath, dragInProgress } = state
+  const { hoveringPath, hoverZone, dragInProgress } = state
 
-  // true if hovering over a valid Path with children
-  const shouldExpand =
-    hoverZone === DropThoughtZone.SubthoughtsDrop && hoveringPath && getChildren(state, head(hoveringPath)).length > 0
+  clearTimer()
 
+  // clear expandHoverDown immediately if drag-and-drop ends
   if (!dragInProgress) {
-    clearTimer()
     dispatch(clearExpandDown())
-    return
-  } else if (!shouldExpand) {
-    clearTimer()
-    return
   }
-
-  /** Check if current state.hoveringPath is already expanded. */
-  const isAlreadyExpanded = () => {
-    return hoveringPath && pathToContext(state, hoveringPath) && equalPath(expandHoverDownPath, hoveringPath)
-  }
-
-  if (hoveringPath && !isAlreadyExpanded()) {
-    dispatch(expandHoverDownDebounced(hoveringPath))
+  // otherwise, expand the hoveringPath
+  else if (hoveringPath) {
+    dispatch(
+      expandHoverDownDebounced(
+        // if hovering over a ThoughtDrop zone, then hoveringPath points to a sibling thought and we need to expand the parent
+        hoverZone === DropThoughtZone.ThoughtDrop ? rootedParentOf(state, hoveringPath) : hoveringPath,
+      ),
+    )
   }
 }
 
