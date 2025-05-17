@@ -410,8 +410,8 @@ describe('hover expansion', () => {
     await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Verify that A1 and A2 are visible (A has expanded)
-    const a1Editable = await waitForEditable('A1', { timeout: 2000 })
-    const a2Editable = await waitForEditable('A2', { timeout: 2000 })
+    const a1Editable = await waitForEditable('A1')
+    const a2Editable = await waitForEditable('A2')
 
     expect(a1Editable).toBeTruthy()
     expect(a2Editable).toBeTruthy()
@@ -469,8 +469,8 @@ describe('hover expansion', () => {
     await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Verify that A1 and A2 are visible (A has expanded)
-    const a1Editable = await waitForEditable('A1', { timeout: 2000 })
-    const a2Editable = await waitForEditable('A2', { timeout: 2000 })
+    const a1Editable = await waitForEditable('A1')
+    const a2Editable = await waitForEditable('A2')
 
     expect(a1Editable).toBeTruthy()
     expect(a2Editable).toBeTruthy()
@@ -482,8 +482,8 @@ describe('hover expansion', () => {
     await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Verify that A1-1 and A1-2 are visible (A1 has expanded)
-    const a11Editable = await waitForEditable('A1-1', { timeout: 2000 })
-    const a12Editable = await waitForEditable('A1-2', { timeout: 2000 })
+    const a11Editable = await waitForEditable('A1-1')
+    const a12Editable = await waitForEditable('A1-2')
 
     expect(a11Editable).toBeTruthy()
     expect(a12Editable).toBeTruthy()
