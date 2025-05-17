@@ -11,8 +11,8 @@ import { commandPaletteActionCreator as commandPalette } from '../actions/comman
 import { isTouch } from '../browser'
 import { formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
 import commandPaletteCommand from '../commands/commandPalette'
-import helpCommand from '../commands/help'
-import allowScroll from '../device/disableScroll'
+import openGestureCheatsheetCommand from '../commands/openGestureCheatsheet'
+import allowScroll from '../device/allowScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import gestureStore from '../stores/gesture'
@@ -36,7 +36,8 @@ const MAX_RECENT_COMMANDS = 5
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
-  (!command.canExecute || command.canExecute(state)) && (command.allowExecuteFromModal || !state.showModal)
+  (!command.canExecute || command.canExecute(state)) &&
+  (command.allowExecuteFromModal || !state.showModal || !state.showGestureCheatsheet)
 
 /**********************************************************************
  * Components
@@ -200,14 +201,14 @@ const CommandRow: FC<{
               color={disabled ? token('colors.gray') : undefined}
               highlight={
                 !disabled
-                  ? command.id === 'help'
-                    ? // For help command, find the longest matching end portion
+                  ? command.id === 'openGestureCheatsheet'
+                    ? // For gesture cheatsheet command, find the longest matching end portion
                       (() => {
-                        const helpGesture = gestureString(command)
+                        const gestureCheatsheetGesture = gestureString(command)
                         return (
-                          [...helpGesture]
-                            .map((_, i) => helpGesture.length - i)
-                            .find(len => gestureInProgress.endsWith(helpGesture.slice(0, len))) ?? 0
+                          [...gestureCheatsheetGesture]
+                            .map((_, i) => gestureCheatsheetGesture.length - i)
+                            .find(len => gestureInProgress.endsWith(gestureCheatsheetGesture.slice(0, len))) ?? 0
                         )
                       })()
                     : // For other commands, use normal highlighting
@@ -464,13 +465,11 @@ const CommandPalette: FC<{
 
                   return commands.map(command => {
                     // Check if the current gesture sequence ends with help gesture
-                    const isHelpMatch =
-                      command.id === 'help' &&
-                      (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
-                    const isCancelMatch =
-                      command.id === 'cancel' &&
-                      !hasMatchingCommand &&
-                      !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+                    const cheatsheetInProgress = gestureInProgress
+                      ?.toString()
+                      .endsWith(gestureString(openGestureCheatsheetCommand))
+                    const isCheatsheetMatch = command.id === 'openGestureCheatsheet' && cheatsheetInProgress
+                    const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
 
                     return (
                       <CommandRow
@@ -483,7 +482,7 @@ const CommandPalette: FC<{
                         selected={
                           !isTouch
                             ? command === selectedCommand
-                            : isHelpMatch || (gestureInProgress as string) === gestureString(command) || isCancelMatch
+                            : isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch
                         }
                         command={command}
                       />

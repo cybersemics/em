@@ -30,6 +30,8 @@ interface GestureDiagramProps {
   cssRaw?: SystemStyleObject
   /** Whether to render the gesture with rounded corners. */
   rounded?: boolean
+  /** Which kind of arrowhead to draw gesture diagrams with. By default, the arrowhead is filled. */
+  arrowhead?: 'filled' | 'outlined'
 }
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
@@ -73,6 +75,7 @@ const GestureDiagram = ({
   inGestureContainer,
   cssRaw,
   rounded,
+  arrowhead = 'filled',
 }: GestureDiagramProps) => {
   const [id] = useState(createId())
 
@@ -196,7 +199,7 @@ const GestureDiagram = ({
       el.setAttribute(
         'viewBox',
         `${bbox.x - arrowSize! - strokeWidth * 4} ${bbox.y - arrowSize! - strokeWidth * 2} ${
-          +bbox.width + +arrowSize! * 5 + +strokeWidth * 8
+          +bbox.width + +arrowSize! * (arrowhead === 'outlined' ? 2 : 5) + +strokeWidth * 8
         } ${+bbox.height + +arrowSize! * 2 + +strokeWidth * 4}`,
       )
     }
@@ -262,19 +265,28 @@ const GestureDiagram = ({
           viewBox='0 0 10 10'
           refX={rounded ? '0' : '5'}
           refY='5'
-          markerWidth={arrowSize!}
-          markerHeight={arrowSize}
+          markerWidth={arrowSize! * (arrowhead === 'outlined' ? 2 : 1)}
+          markerHeight={arrowSize! * (arrowhead === 'outlined' ? 3 : 1)}
           markerUnits='userSpaceOnUse'
           orient='auto-start-reverse'
         >
           <path
-            d='M 0 0 L 10 5 L 0 10 z'
-            fill={
-              highlight != null && highlight >= path.length
-                ? token('colors.vividHighlight')
-                : color || token('colors.fg')
+            d={
+              arrowhead === 'filled'
+                ? 'M 0 0 L 10 5 L 0 10 z'
+                : arrowhead === 'outlined'
+                  ? 'M 0 0 L 5 5 L 0 10'
+                  : undefined
             }
-            stroke='none'
+            fill={
+              arrowhead === 'outlined'
+                ? 'none'
+                : highlight != null && highlight >= path.length
+                  ? token('colors.vividHighlight')
+                  : color || token('colors.fg')
+            }
+            stroke={arrowhead === 'outlined' ? color || token('colors.fg') : 'none'}
+            strokeWidth={arrowhead === 'outlined' ? strokeWidth / 3 : 0}
             style={{ filter: dropShadow }}
           />
         </marker>
