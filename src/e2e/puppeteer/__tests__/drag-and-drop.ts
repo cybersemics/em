@@ -390,8 +390,8 @@ describe('hover expansion', () => {
     // Release mouse button if it's still down
     await page.mouse.up()
 
-    // TODO: "collapses nested thoughts when dragging away" fails intermittently when this is omitted
-    await sleep(10)
+    // TODO: "collapses nested thoughts when dragging away" fails intermittently with 10ms
+    await sleep(100)
   })
 
   it('expands a thought on hover down during drag', async () => {
