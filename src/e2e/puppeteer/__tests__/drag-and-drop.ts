@@ -20,8 +20,8 @@ import { page } from '../setup'
 const UNCLE_DIFF_THRESHOLD = 0.4
 
 // Override EXPAND_HOVER_DELAY
-// TODO: Fails intermittently with "Drag destination element not found" when set to 0.
-const MOCK_EXPAND_HOVER_DELAY = 10
+// TODO: Fails intermittently with "Drag destination element not found" when set to 10.
+const MOCK_EXPAND_HOVER_DELAY = 100
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
