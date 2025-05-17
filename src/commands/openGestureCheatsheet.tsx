@@ -1,15 +1,7 @@
 import Command from '../@types/Command'
-import { toggleGestureCheatsheetActionCreator } from '../actions/toggleGestureCheatsheet'
+import { toggleGestureCheatsheetActionCreator as toggleGestureCheatsheet } from '../actions/toggleGestureCheatsheet'
 import GestureCheatsheetIcon from '../components/icons/GestureCheatsheetIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
-
-/**
- * Execute the openGestureCheatsheet command by calling the
- * toggleGestureCheatsheetActionCreator.
- */
-const exec: Command['exec'] = dispatch => {
-  dispatch(toggleGestureCheatsheetActionCreator({ value: true }))
-}
 
 const openGestureCheatsheetCommand: Command = {
   id: 'openGestureCheatsheet',
@@ -19,7 +11,9 @@ const openGestureCheatsheetCommand: Command = {
   multicursor: false,
   svg: GestureCheatsheetIcon,
   canExecute: () => isDocumentEditable(),
-  exec,
+  exec: dispatch => {
+    dispatch(toggleGestureCheatsheet({ value: true }))
+  },
 }
 
 export default openGestureCheatsheetCommand
