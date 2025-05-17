@@ -1,4 +1,5 @@
 import path from 'path'
+import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
@@ -17,6 +18,10 @@ import { page } from '../setup'
 // puppeteer-screen-recorder does not reveal any active animations.
 // Adding sleep(1000) before the snapshot does not help.
 const UNCLE_DIFF_THRESHOLD = 0.4
+
+// Override EXPAND_HOVER_DELAY
+// TODO: Fails intermittently with "Drag destination element not found" when set to 0.
+const MOCK_EXPAND_HOVER_DELAY = 10
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -370,18 +375,23 @@ describe('drop', () => {
 })
 
 describe('hover expansion', () => {
-  beforeEach(hideHUD)
+  beforeEach(async () => {
+    await hideHUD()
+
+    // inject MOCK_EXPAND_HOVER_DELAY
+    const em = window.em as WindowEm
+    await page.evaluate(value => {
+      em.testFlags.expandHoverDelay = value
+    }, MOCK_EXPAND_HOVER_DELAY)
+  })
 
   // Clean up after each test by releasing the mouse button
   afterEach(async () => {
-    try {
-      // Release mouse button if it's still down
-      await page.mouse.up()
-      // Add a small delay to ensure the UI updates
-      await sleep(500)
-    } catch (err) {
-      console.error('Error during test cleanup:', err)
-    }
+    // Release mouse button if it's still down
+    await page.mouse.up()
+
+    // TODO: "collapses nested thoughts when dragging away" fails intermittently when this is omitted
+    await sleep(10)
   })
 
   it('expands a thought on hover down during drag', async () => {
@@ -400,7 +410,7 @@ describe('hover expansion', () => {
     })
 
     // Wait for expansion to occur
-    await sleep(1000)
+    await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Verify that A1 and A2 are visible (A has expanded)
     const a1Editable = await waitForEditable('A1', { timeout: 2000 })
@@ -425,7 +435,7 @@ describe('hover expansion', () => {
     })
 
     // Wait for expansion to occur
-    await sleep(1000)
+    await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Verify that A1 and A2 are visible (A has expanded)
     const a1Editable = await waitForEditable('A1')
@@ -441,7 +451,7 @@ describe('hover expansion', () => {
       skipMouseDown: true,
     })
 
-    await sleep(1000)
+    await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Verify that A1 and A2 are no longer visible (A has collapsed)
     const a1Visible = await isElementVisible('A1')
@@ -469,7 +479,7 @@ describe('hover expansion', () => {
     })
 
     // Wait for expansion to occur
-    await sleep(1000)
+    await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Verify that A1 and A2 are visible (A has expanded)
     const a1Editable = await waitForEditable('A1', { timeout: 2000 })
@@ -486,7 +496,7 @@ describe('hover expansion', () => {
     })
 
     // Wait for A1 to expand
-    await sleep(1000)
+    await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Verify that A1-1 and A1-2 are visible (A1 has expanded)
     const a11Editable = await waitForEditable('A1-1', { timeout: 2000 })
@@ -503,7 +513,7 @@ describe('hover expansion', () => {
     })
 
     // Wait for any state changes
-    await sleep(1000)
+    await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Verify that A1-1 and A1-2 are no longer visible (A1 has collapsed)
     const a11Visible = await isElementVisible('A1-1')
@@ -519,7 +529,7 @@ describe('hover expansion', () => {
       skipMouseDown: true,
     })
 
-    await sleep(1000)
+    await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Verify that all A's children (A1 and A2) are no longer visible (A has collapsed)
     const a1Visible = await isElementVisible('A1')

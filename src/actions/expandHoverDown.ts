@@ -5,6 +5,7 @@ import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import { clearExpandDownActionCreator as clearExpandDown } from '../actions/clearExpandDown'
 import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
+import testFlags from '../e2e/testFlags'
 import expandThoughts from '../selectors/expandThoughts'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -31,7 +32,7 @@ const expandHoverDownDebounced =
         return
       dispatch({ type: 'expandHoverDown', path })
       expandDownTimer = null
-    }, EXPAND_HOVER_DELAY)
+    }, testFlags.expandHoverDelay ?? EXPAND_HOVER_DELAY)
   }
 
 /** Calculates the expanded context due to hover expansion on empty child drop. */
