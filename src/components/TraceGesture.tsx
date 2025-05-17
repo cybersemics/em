@@ -174,8 +174,9 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 /** Renders the TraceGesture component as long as it is not disabled in the settings. */
 const TraceGestureWrapper = (props: TraceGestureProps) => {
   const showModal = useSelector(state => state.showModal)
+  const showGestureCheatsheet = useSelector(state => state.showGestureCheatsheet)
   const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
-  return <>{!disableGestureTracing && !showModal && <TraceGesture {...props} />}</>
+  return <>{!disableGestureTracing && !showModal && !showGestureCheatsheet && <TraceGesture {...props} />}</>
 }
 
 export default TraceGestureWrapper
