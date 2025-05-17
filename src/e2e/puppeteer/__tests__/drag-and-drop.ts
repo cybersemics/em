@@ -404,10 +404,7 @@ describe('hover expansion', () => {
         `)
 
     // Start dragging thought C
-    await dragAndDropThought('C', 'A', {
-      position: 'child',
-      mouseUp: false, // Don't complete the drag yet
-    })
+    await dragAndDropThought('C', 'A', { position: 'child' })
 
     // Wait for expansion to occur
     await sleep(MOCK_EXPAND_HOVER_DELAY)
@@ -429,10 +426,7 @@ describe('hover expansion', () => {
           - C
           `)
     // First expand thought A by dragging over it
-    await dragAndDropThought('C', 'A', {
-      position: 'child',
-      mouseUp: false,
-    })
+    await dragAndDropThought('C', 'A', { position: 'child' })
 
     // Wait for expansion to occur
     await sleep(MOCK_EXPAND_HOVER_DELAY)
@@ -445,11 +439,7 @@ describe('hover expansion', () => {
     expect(a2Editable).toBeTruthy()
 
     // Now drag to thought B instead
-    await dragAndDropThought('C', 'B', {
-      position: 'after',
-      mouseUp: false,
-      skipMouseDown: true,
-    })
+    await dragAndDropThought('C', 'B', { position: 'after', skipMouseDown: true })
 
     await sleep(MOCK_EXPAND_HOVER_DELAY)
 
@@ -473,10 +463,7 @@ describe('hover expansion', () => {
     `)
 
     // First expand thought A by dragging over it
-    await dragAndDropThought('C', 'A', {
-      position: 'child',
-      mouseUp: false,
-    })
+    await dragAndDropThought('C', 'A', { position: 'child' })
 
     // Wait for expansion to occur
     await sleep(MOCK_EXPAND_HOVER_DELAY)
@@ -489,11 +476,7 @@ describe('hover expansion', () => {
     expect(a2Editable).toBeTruthy()
 
     // Now move to A1 using the dragAndDropThought function with skipMouseDown
-    await dragAndDropThought('C', 'A1', {
-      position: 'child',
-      mouseUp: false,
-      skipMouseDown: true, // Skip pressing the mouse button down again
-    })
+    await dragAndDropThought('C', 'A1', { position: 'child', skipMouseDown: true })
 
     // Wait for A1 to expand
     await sleep(MOCK_EXPAND_HOVER_DELAY)
@@ -506,11 +489,7 @@ describe('hover expansion', () => {
     expect(a12Editable).toBeTruthy()
 
     // Now drag to A2
-    await dragAndDropThought('C', 'A2', {
-      position: 'child',
-      mouseUp: false,
-      skipMouseDown: true, // Skip pressing the mouse button down again
-    })
+    await dragAndDropThought('C', 'A2', { position: 'child', skipMouseDown: true })
 
     // Wait for any state changes
     await sleep(MOCK_EXPAND_HOVER_DELAY)
@@ -523,11 +502,7 @@ describe('hover expansion', () => {
     expect(a12Visible).toBe(false)
 
     // Now drag completely away to B
-    await dragAndDropThought('C', 'B', {
-      position: 'after',
-      mouseUp: false,
-      skipMouseDown: true,
-    })
+    await dragAndDropThought('C', 'B', { position: 'after', skipMouseDown: true })
 
     await sleep(MOCK_EXPAND_HOVER_DELAY)
 
