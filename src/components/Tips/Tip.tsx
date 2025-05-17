@@ -15,7 +15,7 @@ const icon = (
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      background: 'lightbulbIconBg',
+      background: 'popupIconBg',
       borderRadius: '50%',
       aspectRatio: '1 / 1',
       position: 'relative',
@@ -38,9 +38,7 @@ const Tip: FC<
     dispatch(dismissTip())
   }, [dispatch])
 
-  return (
-    <Notification renderedIcon={icon} transitionKey={tipId} value={tip === tipId ? children : null} onClose={onClose} />
-  )
+  return <Notification icon={icon} transitionKey={tipId} value={tip === tipId ? children : null} onClose={onClose} />
 }
 
 Tip.displayName = 'Tip'

@@ -38,9 +38,7 @@ const Alert: FC = () => {
       transitionKey={value}
       onClose={alert?.showCloseLink ? onClose : undefined}
       value={alert ? value : null}
-      renderedIcon={
-        Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null
-      }
+      icon={Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
     >
       {alert?.importFileId && (
         <a

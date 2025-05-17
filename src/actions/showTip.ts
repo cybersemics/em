@@ -8,7 +8,7 @@ const showTip = (state: State, { tip }: { tip: TipId }): State => ({
   ...state,
   tip,
   // clear any existing alert when showing a tip
-  ...(tip && { alert: null }),
+  alert: null,
 })
 
 /** Action-creator for showTip. */

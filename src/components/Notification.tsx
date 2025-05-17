@@ -9,13 +9,13 @@ import PopupBase from './PopupBase'
 /** A popup component in which you can customize what is rendered. Used for Alerts + Tips. */
 const Notification: FC<
   {
-    renderedIcon?: ReactNode
+    icon?: ReactNode
     value: ReactNode | null
     /* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */
     transitionKey: string | number
     children?: ReactNode
   } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'textAlign'>
-> = ({ renderedIcon, onClose, value, transitionKey, children, ...props }) => {
+> = ({ icon, onClose, value, transitionKey, children, ...props }) => {
   const popupRef = useRef<HTMLDivElement>(null)
   const [isDismissed, setIsDismissed] = useState(false)
 
@@ -61,7 +61,7 @@ const Notification: FC<
                 maxWidth: '30em',
               })}
             >
-              {renderedIcon}
+              {icon}
               {value}
             </div>
             {children}
