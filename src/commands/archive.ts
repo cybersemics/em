@@ -38,7 +38,16 @@ const exec: Command['exec'] = (dispatch, getState) => {
       // we know there is a =note child if noteFocus is true
       // we just need to get the Child object so that archiveThought has the full path
       const pathNote = appendToPath(path, childNote!.id)
-      dispatch(archiveThought({ path: pathNote }))
+      // Check if this note has a =path reference
+      const hasPathReference = !!findDescendant(state, childNote!.id, '=path')
+
+      // Pass the path and archivePathReference flag to archiveThought
+      dispatch(
+        archiveThought({
+          path: pathNote,
+          archivePathReference: hasPathReference,
+        }),
+      )
     } else {
       const value = getThoughtById(state, head(cursor))?.value
       if (value !== '') {
