@@ -39,7 +39,7 @@ const expandHoverDownDebounced =
 /** Calculates the expanded context due to hover expansion on empty child drop. */
 const expandDown = (state: State, { path }: { path: Path }): State => ({
   ...state,
-  expanded: { ...state.expanded, ...expandThoughts(state, path) },
+  expanded: expandThoughts(state, path),
   expandHoverDownPath: path,
 })
 
