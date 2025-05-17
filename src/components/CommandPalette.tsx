@@ -5,10 +5,13 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
+import Key from '../@types/Key'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
-import { commandById, formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
+import { formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
+import commandPaletteCommand from '../commands/commandPalette'
+import helpCommand from '../commands/help'
 import allowScroll from '../device/allowScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -26,8 +29,6 @@ import Popup from './Popup'
 
 /** The maximum number of recent commands to store for the command palette. */
 const MAX_RECENT_COMMANDS = 5
-
-const commandPaletteCommand = commandById('commandPalette')
 
 /**********************************************************************
  * Helper Functions
@@ -60,7 +61,7 @@ const CommandSearch: FC<{
       if (
         e.key === 'Escape' ||
         // manually check if the commandPalette command is entered since global commands are disabled while the command palette is open
-        hashKeyDown(e) === hashCommand(commandPaletteCommand)
+        hashCommand(commandPaletteCommand.keyboard as Key) === hashKeyDown(e)
       ) {
         e.preventDefault()
         e.stopPropagation()
@@ -249,7 +250,7 @@ const CommandRow: FC<{
               color: disabled
                 ? 'gray'
                 : isTouch
-                  ? selected || gestureInProgress === command.gesture
+                  ? selected || (gestureInProgress as string) === gestureString(command)
                     ? 'vividHighlight'
                     : 'fg'
                   : 'fg',
@@ -460,8 +461,7 @@ const CommandPalette: FC<{
             {commands.length > 0 ? (
               <>
                 {(() => {
-                  const hasMatchingCommand = commands.some(cmd => gestureInProgress === cmd.gesture)
-                  const helpCommand = commandById('help')
+                  const hasMatchingCommand = commands.some(cmd => (gestureInProgress as string) === gestureString(cmd))
 
                   return commands.map(command => {
                     // Check if the current gesture sequence ends with help gesture
@@ -484,7 +484,7 @@ const CommandPalette: FC<{
                         selected={
                           !isTouch
                             ? command === selectedCommand
-                            : isHelpMatch || gestureInProgress == command.gesture || isCancelMatch
+                            : isHelpMatch || (gestureInProgress as string) === gestureString(command) || isCancelMatch
                         }
                         command={command}
                       />

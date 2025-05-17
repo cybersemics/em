@@ -146,7 +146,7 @@ const GestureDiagram = ({
   // Special cases:
   // - Extend the last segment of →↓← so that the New Uncle gesture is more intuitive
   // - Extend the middle segment of ←↓→ so that the Select All gesture is more intuitive
-  const extendedPath = path === 'rdl' ? 'rdll' : path === 'ldr' ? 'lddr' : path
+  const extendedPath = path === 'rdl' ? 'rddl' : path === 'ldr' ? 'lddr' : path
   const extendedIndex = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
   const pathSegments = (Array.from(extendedPath) as Direction[]).map(pathSegmentDelta)
 

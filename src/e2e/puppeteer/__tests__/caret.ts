@@ -182,6 +182,29 @@ describe('all platforms', () => {
     const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('firstlast')
   })
+
+  it('backspace on empty thought should move caret to the end of the previous thought', async () => {
+    const importText = `
+    - first
+    - last`
+
+    await paste(importText)
+
+    const first = await waitForEditable('first')
+
+    await click(first)
+    await press('Enter')
+    await press('Backspace')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('first')
+
+    const offset = await getSelection().focusOffset
+
+    // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
+    const focusNodeType = await getSelection().focusNode?.nodeType
+    expect(offset).toBe(focusNodeType === Node.TEXT_NODE ? 'first'.length : 1)
+  })
 })
 
 it('clicking backspace when the caret is at the end of a thought should delete a character.', async () => {

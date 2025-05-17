@@ -536,6 +536,7 @@ export const COMMAND_GROUPS: {
       'home',
       'search',
       'selectAll',
+      'selectBetween',
     ],
   },
   {

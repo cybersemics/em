@@ -10,7 +10,6 @@ const newUncleCommand: Command = {
   id: 'newUncle',
   label: 'New Subthought (next)',
   description: 'Add a new thought one level up. Same as creating a new thought and then outdenting it.',
-  gesture: 'rdl',
   keyboard: { key: Key.Enter, meta: true, alt: true },
   multicursor: {
     disallow: true,

@@ -16,20 +16,9 @@ const newSubthoughtCommand: Command = {
   id: 'newSubthought',
   label: 'New Subthought',
   description: 'Create a new subthought in the current thought. Adds it to the bottom of any existing subthoughts.',
-  gesture: 'rdr',
-  keyboard: { key: Key.Enter, meta: true },
-  multicursor,
-  svg: Icon,
-  canExecute: () => isDocumentEditable(),
-  exec,
-}
-
-// add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const newSubthoughtAliases: Command = {
-  id: 'newSubthoughtAliases',
-  label: 'New Subthought',
-  hideFromHelp: true,
+  // Main gesture and alternative patterns to help with mis-swipes since MultiGesture does not support diagonal swipes
   gesture: [
+    'rdr',
     'rdldr',
     'rdldlr',
     'rdldldr',
@@ -61,7 +50,9 @@ export const newSubthoughtAliases: Command = {
     'rldldru',
     'rldldlru',
   ],
+  keyboard: { key: Key.Enter, meta: true },
   multicursor,
+  svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,
 }

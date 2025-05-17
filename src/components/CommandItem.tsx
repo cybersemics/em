@@ -8,7 +8,7 @@ import DragToolbarItem from '../@types/DragToolbarItem'
 import GesturePath from '../@types/GesturePath'
 import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
-import { formatKeyboardShortcut } from '../commands'
+import { formatKeyboardShortcut, gestureString } from '../commands'
 import { noop } from '../constants'
 import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
@@ -127,7 +127,7 @@ const CommandItem = ({
                   width: { sm: '80px', md: '130px' },
                   height: { sm: '80px', md: '130px' },
                 })}
-                path={command.gesture as GesturePath}
+                path={gestureString(command) as GesturePath}
                 size={130}
                 arrowSize={25}
                 strokeWidth={7.5}
@@ -135,7 +135,7 @@ const CommandItem = ({
               />
             </div>
           ) : (
-            <GestureDiagram path={command.gesture as GesturePath} size={48} arrowSize={12} />
+            <GestureDiagram path={gestureString(command) as GesturePath} size={48} arrowSize={12} />
           )}
         </td>
       ) : null}

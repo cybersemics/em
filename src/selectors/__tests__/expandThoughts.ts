@@ -20,12 +20,6 @@ const isContextExpanded = (state: State, context: Context) => {
   return !!expandThoughts(state, state.cursor)[hashPath(path)]
 }
 
-/** Returns a list of expanded contexts. */
-const expandAtCursor = (state: State) => {
-  const expandedPathMap = expandThoughts(state, state.cursor)
-  return Object.values(expandedPathMap).map(path => pathToContext(state, path))
-}
-
 describe('normal view', () => {
   it('ROOT is always expanded', () => {
     expect(isContextExpanded(initialState(), [HOME_TOKEN])).toBeTruthy()
@@ -125,7 +119,10 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(expandAtCursor(stateNew)).toIncludeSameMembers([[HOME_TOKEN], ['To Do'], ['To Do', '::'], ['To Do', '✓']])
+    const expandedPathMap = expandThoughts(stateNew, stateNew.cursor)
+    const expandedContexts = Object.values(expandedPathMap).map(path => pathToContext(stateNew, path))
+
+    expect(expandedContexts).toIncludeSameMembers([[HOME_TOKEN], ['To Do'], ['To Do', '::'], ['To Do', '✓']])
   })
 
   // Related issue: https://github.com/cybersemics/em/issues/1238

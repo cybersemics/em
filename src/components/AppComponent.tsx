@@ -18,6 +18,7 @@ import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
+import CommandMenuPanel from './CommandMenu/CommandMenuPanel'
 import CommandPalette from './CommandPalette'
 import Content from './Content'
 import ErrorMessage from './ErrorMessage'
@@ -56,7 +57,7 @@ const useDisableLongPressToSelect = () => {
     // when isCollapsed is false, there is a selection with at least one character
     // long-press-to-select only selects one or more characters
     if (globals.longpressing && selection.isActive() && !selection.isCollapsed()) {
-      selection.clear()
+      selection.set(document.body)
     }
   }, [])
 
@@ -205,6 +206,8 @@ const AppComponent: FC = () => {
         <>
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
+
+          <CommandMenuPanel />
           <div style={{ fontSize }}>
             <Footer />
           </div>

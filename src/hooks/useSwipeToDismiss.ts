@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { isTouch } from '../browser'
 
 const defaultOptions = {
   dismissThreshold: '50%',
@@ -8,7 +9,7 @@ const defaultOptions = {
   swipeDown: false,
 }
 
-/** Custom hook to manage swipe to dismiss alerts. */
+/** Custom hook to manage swipe to dismiss alerts. Returns a set of touch event handlers that can be merged into the PopupBase dev on touch devices. If not a touch device, returns an empty object. */
 const useSwipeToDismiss = (
   options: {
     // y offset at which onDismiss is fired, in px or % (of height)
@@ -34,6 +35,8 @@ const useSwipeToDismiss = (
     swipeDown?: boolean
   } = {},
 ) => {
+  if (!isTouch) return {}
+
   // initialize default options
   const { dismissThreshold, dx, onDismiss, onDismissEnd, snapbackDuration, snapbackEasing, swipeDown } = {
     ...defaultOptions,
@@ -68,7 +71,9 @@ const useSwipeToDismiss = (
   const stop = useCallback(
     (e: React.TouchEvent) => {
       // preventDefault on touchEnd to prevent ToolbarIcon click
-      if (!(e.target as HTMLElement).querySelector('[aria-label="no-swipe-to-dismiss"')) {
+      const target = e.target as HTMLElement
+      const selector = '[aria-label="no-swipe-to-dismiss"'
+      if (!target.matches(selector) && !target.querySelector(selector)) {
         e.preventDefault()
       }
 

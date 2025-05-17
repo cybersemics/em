@@ -7,8 +7,8 @@ import GestureDiagram from './GestureDiagram'
 const Command = ({ gesture, keyboard, overlay, rounded }: CommandInterface): JSX.Element | null => {
   const key = overlay && overlay.keyboard ? overlay.keyboard : keyboard
   return isTouch ? (
-    gesture && typeof gesture === 'string' ? (
-      <GestureDiagram path={gesture} rounded={rounded} />
+    gesture ? (
+      <GestureDiagram path={gesture[0]} rounded={rounded} />
     ) : null
   ) : key ? (
     <>{formatKeyboardShortcut(key)}</>

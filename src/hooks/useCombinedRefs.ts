@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 
 /** Combines multiple refs into a single ref. */
-const useCombinedRefs = <T>(refs: React.Ref<T>[]): React.Ref<T> => {
+const useCombinedRefs = <T>(refs: (React.Ref<T> | undefined | null)[]): React.Ref<T> => {
   return useCallback(
     (instance: T) => {
       refs.forEach(ref => {

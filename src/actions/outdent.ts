@@ -18,7 +18,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 
 /** Decreases the indent level of the given thought, moving it to its parent. */
-const outdent = (state: State) => {
+const outdent = (state: State): State => {
   const { cursor } = state
   if (!cursor || cursor.length <= 1) return state
 

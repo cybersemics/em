@@ -17,7 +17,7 @@ import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
 
 /** Swaps the thought with its next siblings. */
-const moveThoughtDown = (state: State) => {
+const moveThoughtDown = (state: State): State => {
   const { cursor } = state
 
   if (!cursor) return state

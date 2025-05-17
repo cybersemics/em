@@ -3,6 +3,8 @@ import { ThunkMiddleware } from 'redux-thunk'
 import Dispatch from '../@types/Dispatch'
 import State from '../@types/State'
 import { alertActionCreator } from '../actions/alert'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
+import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 
 /** Throttled dispatch for alert actions. */
@@ -20,23 +22,35 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
     next(action)
 
     const state = getState()
-
     const numMulticursors = Object.keys(state.multicursors).length
 
-    // clear multicursor alert
-    if (!numMulticursors && state.alert?.alertType === AlertType.MulticursorActive) {
-      return throttledAlert(dispatch, null)
-    }
+    // on mobile, show the command menu when multicursor is active
+    if (isTouch) {
+      const numMulticursors = Object.keys(state.multicursors).length
 
-    if (numMulticursors !== prevNumMulticursors) {
-      // show or update multicursor alert
-      return throttledAlert(
-        dispatch,
-        numMulticursors === 1 ? '1 thought selected' : `${numMulticursors} thoughts selected`,
-        {
-          alertType: AlertType.MulticursorActive,
-        },
-      )
+      if (numMulticursors === 0 && state.showCommandMenu) {
+        dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: false }))
+      } else if (numMulticursors > 0 && !state.showCommandMenu) {
+        dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: true }))
+      }
+    }
+    // on desktop, show a persistent alert
+    else {
+      // clear multicursor alert
+      if (!numMulticursors && state.alert?.alertType === AlertType.MulticursorActive) {
+        throttledAlert(dispatch, null)
+      }
+
+      if (numMulticursors !== prevNumMulticursors) {
+        // show or update multicursor alert
+        throttledAlert(
+          dispatch,
+          numMulticursors === 1 ? '1 thought selected' : `${numMulticursors} thoughts selected`,
+          {
+            alertType: AlertType.MulticursorActive,
+          },
+        )
+      }
     }
   }
 }

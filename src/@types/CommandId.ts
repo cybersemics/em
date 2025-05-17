@@ -1,7 +1,5 @@
 import * as commands from '../commands/index'
 
-type CommandSimple = keyof typeof commands
-type CommandAlias = `${CommandSimple}Alias`
-type CommandId = CommandSimple | CommandAlias
+type CommandId = keyof typeof commands
 
 export default CommandId

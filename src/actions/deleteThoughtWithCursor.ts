@@ -25,7 +25,7 @@ const getContext = (state: State, path: Path) => {
 }
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. Works in normal view and context view. */
-const deleteThoughtWithCursor = (state: State) => {
+const deleteThoughtWithCursor = (state: State): State => {
   if (!state.cursor) return state
 
   const cursor = state.cursor

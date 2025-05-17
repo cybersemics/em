@@ -11,7 +11,7 @@ import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 
 /** Toggle the caret between the cursor and its note. Set the selection to the end. If the note is empty, delete it. */
-const toggleNote = (state: State) => {
+const toggleNote = (state: State): State => {
   const thoughtId = head(state.cursor!)
   const hasNote = findDescendant(state, thoughtId, '=note')
   const noteChildren = hasNote ? getChildren(state, hasNote) : []
