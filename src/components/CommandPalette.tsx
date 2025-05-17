@@ -11,7 +11,7 @@ import { commandPaletteActionCreator as commandPalette } from '../actions/comman
 import { isTouch } from '../browser'
 import { formatKeyboardShortcut, gestureString, hashCommand, hashKeyDown } from '../commands'
 import commandPaletteCommand from '../commands/commandPalette'
-import helpCommand from '../commands/help'
+import openGestureCheatsheetCommand from '../commands/openGestureCheatsheet'
 import allowScroll from '../device/allowScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -465,13 +465,11 @@ const CommandPalette: FC<{
 
                   return commands.map(command => {
                     // Check if the current gesture sequence ends with help gesture
-                    const isHelpMatch =
-                      command.id === 'help' &&
-                      (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
-                    const isCancelMatch =
-                      command.id === 'cancel' &&
-                      !hasMatchingCommand &&
-                      !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+                    const cheatsheetInProgress = gestureInProgress
+                      ?.toString()
+                      .endsWith(gestureString(openGestureCheatsheetCommand))
+                    const isCheatsheetMatch = command.id === 'openGestureCheatsheet' && cheatsheetInProgress
+                    const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
 
                     return (
                       <CommandRow
@@ -484,7 +482,7 @@ const CommandPalette: FC<{
                         selected={
                           !isTouch
                             ? command === selectedCommand
-                            : isHelpMatch || (gestureInProgress as string) === gestureString(command) || isCancelMatch
+                            : isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch
                         }
                         command={command}
                       />
