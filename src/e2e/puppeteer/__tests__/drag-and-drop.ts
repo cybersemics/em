@@ -1,4 +1,5 @@
 import path from 'path'
+import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
@@ -6,6 +7,8 @@ import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
+import waitForEditable from '../helpers/waitForEditable'
+import { page } from '../setup'
 
 // TODO: Why do the uncle tests fail with the default threshold of 0.18?
 // 'd' fails with slight rendering differences for some reason.
@@ -21,6 +24,41 @@ expect.extend({
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
+/**
+ * Checks if an element with the given text content is visible in the UI.
+ *
+ * This function checks not only if the element exists in the DOM, but also if it or any parent has CSS properties that would hide it (display: none, visibility: hidden, opacity: 0).
+ *
+ * @param text The exact text content to search for.
+ * @param selector The CSS selector to search within (defaults to '[data-editable]', which selects thoughts).
+ * @returns Promise<boolean> True if the element is visible, false otherwise.
+ */
+const isElementVisible = async (text: string, selector = '[data-editable]'): Promise<boolean> => {
+  return await page.evaluate(
+    (text, selector) => {
+      const elements = Array.from(document.querySelectorAll(selector))
+      const element = elements.find(el => el.innerHTML === text)
+
+      // If element doesn't exist, it's not visible
+      if (!element) return false
+
+      // Check if the element or any of its ancestors has display: none or visibility: hidden
+      let currentNode: Element | null = element
+      while (currentNode) {
+        const style = window.getComputedStyle(currentNode)
+        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+          return false
+        }
+        // Move up to parent node
+        currentNode = currentNode.parentElement
+      }
+
+      return true
+    },
+    text,
+    selector,
+  )
+}
 /* From jest-image-snapshot README:
     
   Jest supports automatic retries on test failures. This can be useful for browser screenshot tests which tend to have more frequent false positives. Note that when using jest.retryTimes you'll have to use a unique customSnapshotIdentifier as that's the only way to reliably identify snapshots.
@@ -328,5 +366,166 @@ describe('drop', () => {
         },
       })
     })
+  })
+})
+
+describe('hover expansion', () => {
+  beforeEach(hideHUD)
+
+  // Clean up after each test by releasing the mouse button
+  afterEach(async () => {
+    try {
+      // Release mouse button if it's still down
+      await page.mouse.up()
+      // Add a small delay to ensure the UI updates
+      await sleep(500)
+    } catch (err) {
+      console.error('Error during test cleanup:', err)
+    }
+  })
+
+  it('expands a thought on hover down during drag', async () => {
+    await paste(`
+        - A
+          - A1
+          - A2
+        - B
+        - C
+        `)
+
+    // Start dragging thought C
+    await dragAndDropThought('C', 'A', {
+      position: 'child',
+      mouseUp: false, // Don't complete the drag yet
+    })
+
+    // Wait for expansion to occur
+    await sleep(1000)
+
+    // Verify that A1 and A2 are visible (A has expanded)
+    const a1Editable = await waitForEditable('A1', { timeout: 2000 })
+    const a2Editable = await waitForEditable('A2', { timeout: 2000 })
+
+    expect(a1Editable).toBeTruthy()
+    expect(a2Editable).toBeTruthy()
+  })
+
+  it('collapses a thought when dragging away', async () => {
+    await paste(`
+          - A
+            - A1
+            - A2
+          - B
+          - C
+          `)
+    // First expand thought A by dragging over it
+    await dragAndDropThought('C', 'A', {
+      position: 'child',
+      mouseUp: false,
+    })
+
+    // Wait for expansion to occur
+    await sleep(1000)
+
+    // Verify that A1 and A2 are visible (A has expanded)
+    const a1Editable = await waitForEditable('A1')
+    const a2Editable = await waitForEditable('A2')
+
+    expect(a1Editable).toBeTruthy()
+    expect(a2Editable).toBeTruthy()
+
+    // Now drag to thought B instead
+    await dragAndDropThought('C', 'B', {
+      position: 'after',
+      mouseUp: false,
+      skipMouseDown: true,
+    })
+
+    await sleep(1000)
+
+    // Verify that A1 and A2 are no longer visible (A has collapsed)
+    const a1Visible = await isElementVisible('A1')
+    const a2Visible = await isElementVisible('A2')
+
+    expect(a1Visible).toBe(false)
+    expect(a2Visible).toBe(false)
+  })
+
+  it('collapses nested thoughts when dragging away', async () => {
+    await paste(`
+    - A
+      - A1
+        - A1-1
+        - A1-2
+      - A2
+    - B
+    - C
+    `)
+
+    // First expand thought A by dragging over it
+    await dragAndDropThought('C', 'A', {
+      position: 'child',
+      mouseUp: false,
+    })
+
+    // Wait for expansion to occur
+    await sleep(1000)
+
+    // Verify that A1 and A2 are visible (A has expanded)
+    const a1Editable = await waitForEditable('A1', { timeout: 2000 })
+    const a2Editable = await waitForEditable('A2', { timeout: 2000 })
+
+    expect(a1Editable).toBeTruthy()
+    expect(a2Editable).toBeTruthy()
+
+    // Now move to A1 using the dragAndDropThought function with skipMouseDown
+    await dragAndDropThought('C', 'A1', {
+      position: 'child',
+      mouseUp: false,
+      skipMouseDown: true, // Skip pressing the mouse button down again
+    })
+
+    // Wait for A1 to expand
+    await sleep(1000)
+
+    // Verify that A1-1 and A1-2 are visible (A1 has expanded)
+    const a11Editable = await waitForEditable('A1-1', { timeout: 2000 })
+    const a12Editable = await waitForEditable('A1-2', { timeout: 2000 })
+
+    expect(a11Editable).toBeTruthy()
+    expect(a12Editable).toBeTruthy()
+
+    // Now drag to A2
+    await dragAndDropThought('C', 'A2', {
+      position: 'child',
+      mouseUp: false,
+      skipMouseDown: true, // Skip pressing the mouse button down again
+    })
+
+    // Wait for any state changes
+    await sleep(1000)
+
+    // Verify that A1-1 and A1-2 are no longer visible (A1 has collapsed)
+    const a11Visible = await isElementVisible('A1-1')
+    const a12Visible = await isElementVisible('A1-2')
+
+    expect(a11Visible).toBe(false)
+    expect(a12Visible).toBe(false)
+
+    // Now drag completely away to B
+    await dragAndDropThought('C', 'B', {
+      position: 'after',
+      mouseUp: false,
+      skipMouseDown: true,
+    })
+
+    await sleep(1000)
+
+    // Verify that all A's children (A1 and A2) are no longer visible (A has collapsed)
+    const a1Visible = await isElementVisible('A1')
+    const a2Visible = await isElementVisible('A2')
+
+    expect(a1Visible).toBe(false)
+    expect(a2Visible).toBe(false)
   })
 })
