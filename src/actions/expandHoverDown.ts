@@ -8,7 +8,7 @@ import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
 import getChildren from '../selectors/getChildren'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import hashPath from '../util/hashPath'
+import equalPath from '../util/equalPath'
 import head from '../util/head'
 import pathToContext from '../util/pathToContext'
 
@@ -40,14 +40,14 @@ const expandHoverDownDebounced =
 const expandDown = (state: State, { path }: { path: Path }): State => ({
   ...state,
   expanded: { ...state.expanded, ...expandThoughts(state, path) },
-  expandHoverDownPaths: { ...state.expandHoverDownPaths, [hashPath(path)]: path },
+  expandHoverDownPath: path,
 })
 
 /** Expands state.hoveringPath after a delay. Only expands if it is a valid Path with children and it is not already expanded. Expands using state.expandHoverDownPaths so that it can be toggled independently from autoexpansion with expandThoughts. */
 export const expandHoverDownActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
-  const { hoveringPath, hoverZone, expandHoverDownPaths, dragInProgress } = state
+  const { hoveringPath, hoverZone, expandHoverDownPath, dragInProgress } = state
 
   // true if hovering over a valid Path with children
   const shouldExpand =
@@ -64,7 +64,7 @@ export const expandHoverDownActionCreator = (): Thunk => (dispatch, getState) =>
 
   /** Check if current state.hoveringPath is already expanded. */
   const isAlreadyExpanded = () => {
-    return hoveringPath && pathToContext(state, hoveringPath) && expandHoverDownPaths[head(hoveringPath)]
+    return hoveringPath && pathToContext(state, hoveringPath) && equalPath(expandHoverDownPath, hoveringPath)
   }
 
   if (hoveringPath && !isAlreadyExpanded()) {
