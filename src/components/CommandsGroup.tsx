@@ -47,7 +47,7 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
               top: '-1.5rem',
               background: 'linear-gradient(to bottom, {colors.bg} 85%, transparent)',
               padding: '0.7rem 0',
-              margin: '0.5rem 0',
+              margin: '0.5rem 0 0 0',
               zIndex: 1,
             }),
           }),
