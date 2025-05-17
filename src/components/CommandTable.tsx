@@ -22,7 +22,6 @@ const commandsGroupedMap = keyValueBy(
 const commandsUngrouped = globalCommands.filter(
   command => !commandsGroupedMap[command.id] && !command.hideFromHelp && (isTouch ? command.gesture : command.keyboard),
 )
-
 if (commandsUngrouped.length > 0) {
   throw new Error(
     `CommandTable groups are missing command(s). Please add ${conjunction(
@@ -36,16 +35,16 @@ if (commandsUngrouped.length > 0) {
 // TODO: Currently, CommandTable uses a constant value COMMAND_GROUPS as the source of
 // truth for commands. This needs to change to address #2863.
 
-// categories grouped by type
+/* Commands grouped by type. Current platform only. */
 const commandsGroupedByType = COMMAND_GROUPS.map(group => ({
-  ...group,
-  commands: group.commands.map(commandById).filter(command => (isTouch ? !!command.gesture : !!command.keyboard)),
+  title: group.title,
+  commands: group.commands.map(commandById).filter(command => (isTouch ? command.gesture : command.keyboard)),
 })).filter(group => group.commands.length > 0)
 
-// commands sorted by label, A-Z
+/* Commands sorted by label, A-Z. Current platform only. */
 const commandsSortedByLabel = COMMAND_GROUPS.flatMap(group => group.commands)
   .map(commandById)
-  .filter(command => (isTouch ? !!command.gesture : !!command.keyboard))
+  .filter(command => (isTouch ? command.gesture : command.keyboard))
   .sort((a, b) => a.label.localeCompare(b.label))
 
 interface CommandTableProps {

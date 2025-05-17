@@ -14,7 +14,7 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose })
   const dialogClasses = dialogRecipe()
 
   /**
-   * Handles the click outside the dialog.
+   * Calls the onClose function when the user clicks outside the dialog.
    */
   useEffect(() => {
     const currentDialogRef = dialogRef.current
@@ -34,6 +34,7 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose })
   }, [onClose])
 
   /**
+   * Disable scroll while the dialog is open.
    * On iOS, there was a bug where the user could scroll the page via the modal overlay.
    * It's difficult to disable scrolling entirely on iOS, so this effect prevents scrolling
    * on the modal overlay by preventing touch events.
