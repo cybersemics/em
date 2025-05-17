@@ -28,7 +28,14 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
   const modalClasses = modalTextRecipe()
 
   return (
-    <div className={css({ position: 'relative', willChange: 'transform' })}>
+    <div
+      className={css({
+        position: 'relative',
+        // We need to create a new a stacking context for the sticky title – otherwise, there are some visual artifacts
+        // when the title is sticky and the commands are scrolling on iOS.
+        contain: 'layout paint',
+      })}
+    >
       <h2
         className={cx(
           modalClasses.subtitle,
