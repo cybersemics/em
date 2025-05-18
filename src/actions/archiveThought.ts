@@ -54,11 +54,11 @@ export const pathAndRankToArchive = (
 
 /** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
  *
- * @param path                 Defaults to cursor.
- * @param archivePathReference If true and the path points to a note with =path, also archives the target thought.
+ * @param path     Defaults to cursor.
  */
-const archiveThought = (state: State, options: { path?: Path; archivePathReference?: boolean }): State => {
+const archiveThought = (state: State, options: { path?: Path }): State => {
   const path = options.path || state.cursor
+
   if (!path) return state
 
   const showContexts = isContextViewActive(state, rootedParentOf(state, path))
