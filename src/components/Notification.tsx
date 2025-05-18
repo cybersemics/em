@@ -47,7 +47,6 @@ const Notification: FC<
             background={token('colors.panelBg')}
             // uses swipe to dismess from PopupBase on mobile
             onClose={isTouch ? undefined : handleClose}
-            preventFromTouchingEdge
             showXOnHover
             {...props}
           >
