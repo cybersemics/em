@@ -4,9 +4,6 @@ import SimplePath from '../../@types/SimplePath'
 import { editThoughtActionCreator as editThought } from '../../actions/editThought'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
-import { HOME_TOKEN } from '../../constants'
-import findDescendant from '../../selectors/findDescendant'
-import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -190,19 +187,64 @@ describe('Path Reference Notes', () => {
             - =path
               - a`,
       }),
-      // Focus the parent thought
       setCursor(['x']),
-      toggleNote(),
     ])
 
     await act(vi.runOnlyPendingTimersAsync)
 
-    // Verify the note editor is visible (which means the target was created)
-    const noteEditor = document.querySelector('[contenteditable="true"]')
+    // Simulate keyboard shortcut for hidden thoughts
+    await act(async () => {
+      fireEvent.keyDown(document.body, {
+        key: 'h',
+        shiftKey: true,
+        altKey: true,
+      })
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Verify that 'a' thought doesn't exist yet in the DOM
+    // Note: we only see 'a' as a value inside =path, not as a sibling thought
+    const aElements = screen.getAllByText('a')
+    expect(aElements.length).toBe(1) // Only the one inside =path
+
+    // Toggle hidden thoughts back to normal view
+    await act(async () => {
+      fireEvent.keyDown(document.body, {
+        key: 'h',
+        shiftKey: true,
+        altKey: true,
+      })
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Focus the parent thought and toggle its note
+    await dispatch([setCursor(['x']), toggleNote()])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Verify the note editor is visible
+    const noteEditor = document.querySelector('[aria-label="note-editable"]')
     expect(noteEditor).toBeInTheDocument()
 
-    // After creating the thought, we should see the "a" thought in the UI
+    // Verify the 'a' thought was created and is visible in the DOM
     expect(screen.getByText('a')).toBeInTheDocument()
+
+    // Verify that the note is empty (since 'a' was just created)
+    expect(noteEditor?.innerHTML).toBe('')
+
+    // Test that editing the note updates the newly created thought
+    await act(async () => {
+      fireEvent.focus(noteEditor!)
+      fireEvent.input(noteEditor!, { target: { innerHTML: 'New content' } })
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Verify the content appears in both places: in the note and in the actual thought
+    const contentElements = screen.getAllByText('New content')
+    expect(contentElements).toHaveLength(2)
   })
 
   it('archives both note and target when archiving a note via user interaction', async () => {
@@ -246,11 +288,17 @@ describe('Path Reference Notes', () => {
     // Verify original note content is no longer visible
     expect(screen.queryByText('Test')).toBeNull()
 
-    // Verify the =archive thought exists (we can use findDescendant here since =archive is typically hidden in UI)
-    // This is one case where checking state might be appropriate since archive is usually hidden in UI
-    const state = store.getState()
-    const xId = findDescendant(state, HOME_TOKEN, 'x')
-    const archiveId = xId ? findDescendant(state, xId, '=archive') : null
-    expect(archiveId).not.toBeNull()
+    // Show hidden thoughts to make the =archive visible in the UI
+    await act(async () => {
+      fireEvent.keyDown(document.body, {
+        key: 'h',
+        shiftKey: true,
+        altKey: true,
+      })
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // verify the archived content exists inside =archive
+    expect(screen.getAllByText('a')).toHaveLength(2)
   })
 })
