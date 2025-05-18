@@ -10,9 +10,11 @@ import PopupBase from './PopupBase'
 const Notification: FC<
   {
     icon?: ReactNode
+    /** The content rendered with padding in the center of the notification. */
     value: ReactNode | null
     /* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */
     transitionKey: string | number
+    /** Optional content rendered after the value without padding or alignment. Must be positioned independently. */
     children?: ReactNode
   } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'textAlign'>
 > = ({ icon, onClose, value, transitionKey, children, ...props }) => {
