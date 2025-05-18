@@ -8,76 +8,63 @@ import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
 import getChildren from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
+import getPathReferenceValue, {
+  getPathReferenceTargetId,
+  hasValidPathReference,
+} from '../selectors/resolvePathReference'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import createId from '../util/createId'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
-import resolvePathReference from '../util/resolvePathReference'
 
 /** Toggle the caret between the cursor and its note. Set the selection to the end. If the note is empty, delete it. */
 const toggleNote = (state: State): State => {
   const thoughtId = head(state.cursor!)
   const hasNote = findDescendant(state, thoughtId, '=note')
 
-  // Check if there's a path reference
-  const pathReference = resolvePathReference(state, thoughtId, hasNote)
+  // Check if there's a path reference (=note/=path)
+  const hasPathReference = hasValidPathReference(state, state.cursor!)
 
-  // Calculate offset and handle target thought creation if needed
-  let offset = 0
-  let newState = state
+  return reducerFlow([
+    // Handle path reference: create target thought if needed
+    hasPathReference
+      ? state => {
+          const pathValue = getPathReferenceValue(state, state.cursor!)
+          const targetId = getPathReferenceTargetId(state, state.cursor!)
 
-  if (pathReference) {
-    // Start with the targetId from pathReference (could be undefined if target doesn't exist)
-    let targetId = pathReference.targetId
+          // If target doesn't exist but we have a path value, create the target thought
+          if (!targetId && pathValue) {
+            const pathRank = getNextRank(state, thoughtId)
+            return createThought(state, {
+              path: [thoughtId],
+              value: pathValue,
+              rank: pathRank,
+            })
+          }
+          return state
+        }
+      : null,
 
-    // Create the missing target thought if it doesn't exist
-    if (!pathReference.targetExists) {
-      // Calculate appropriate rank for the new thought
-      const pathRank = getNextRank(state, thoughtId)
+    // Create an empty child for target if needed
+    hasPathReference
+      ? state => {
+          const targetId = getPathReferenceTargetId(state, state.cursor!)
+          if (!targetId) return state
 
-      // Create the target thought
-      newState = createThought(state, {
-        id: createId(),
-        path: [thoughtId],
-        value: pathReference.pathValue,
-        rank: pathRank,
-      })
+          // Check if target has children
+          const targetChildren = getChildren(state, targetId)
+          if (targetChildren.length === 0) {
+            // Create empty child for target
+            const childRank = getNextRank(state, targetId)
+            return createThought(state, {
+              path: [targetId],
+              value: '',
+              rank: childRank,
+            })
+          }
+          return state
+        }
+      : null,
 
-      // Find the newly created thought: this should not be null after creation
-      const newTargetId = findDescendant(newState, thoughtId, pathReference.pathValue)
-      if (newTargetId) {
-        targetId = newTargetId
-      }
-    }
-
-    if (targetId) {
-      // Check if the target thought has children
-      const targetChildren = getChildren(newState, targetId)
-
-      // If the target has no children, create an empty child
-      if (targetChildren.length === 0) {
-        // Calculate appropriate rank for the child thought
-        const childRank = getNextRank(newState, targetId)
-
-        // Create an empty child for the target path
-        newState = createThought(newState, {
-          path: [targetId],
-          value: '',
-          rank: childRank,
-        })
-
-        offset = 0
-      } else {
-        // If target already has children, set offset to the length of the first child's value
-        offset = targetChildren[0].value.length
-      }
-    }
-  } else if (hasNote) {
-    const noteChildren = getChildren(newState, hasNote)
-    offset = noteChildren.length ? noteChildren[0].value.length : 0
-  }
-
-  const finalState = reducerFlow([
     // Create an empty note if it doesn't exist
     !hasNote
       ? state =>
@@ -86,17 +73,32 @@ const toggleNote = (state: State): State => {
             values: ['=note', ''],
           })
       : // Only delete the note if it's empty (no value and no path reference)
-        state.noteFocus && !attribute(state, thoughtId, '=note') && !pathReference
+        state.noteFocus && !attribute(state, thoughtId, '=note') && !hasPathReference
         ? state => deleteAttribute(state, { path: state.cursor!, value: '=note' })
         : null,
 
     // Toggle state.noteFocus, which will trigger the Editable and Note to re-render and set the selection appropriately
-    state.noteFocus
-      ? state => setNoteFocus(state, { value: false })
-      : state => setNoteFocus(state, { value: true, offset }),
-  ])(newState)
+    state => {
+      if (state.noteFocus) {
+        return setNoteFocus(state, { value: false })
+      } else {
+        let offset = 0
 
-  return finalState
+        if (hasPathReference) {
+          const targetId = getPathReferenceTargetId(state, state.cursor!)
+          if (targetId) {
+            const targetChildren = getChildren(state, targetId)
+            offset = targetChildren.length > 0 ? targetChildren[0].value.length : 0
+          }
+        } else if (hasNote) {
+          const noteChildren = getChildren(state, hasNote)
+          offset = noteChildren.length ? noteChildren[0].value.length : 0
+        }
+
+        return setNoteFocus(state, { value: true, offset })
+      }
+    },
+  ])(state)
 }
 
 /** Action-creator for toggleNote. */

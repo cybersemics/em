@@ -6,6 +6,7 @@ import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
+import { deleteNotePathAttributeActionCreator as deleteNotePathAttribute } from '../actions/deleteNotePathAttribute'
 import { editingActionCreator as editing } from '../actions/editing'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
@@ -14,7 +15,7 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
-import usePathReference from '../hooks/usePathReference'
+import { getPathReferencePath, hasValidPathReference } from '../selectors/resolvePathReference'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
@@ -38,7 +39,6 @@ const Note = React.memo(
     const fontSize = useSelector(state => state.fontSize)
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
-    const pathReference = usePathReference(thoughtId)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, thoughtId))
@@ -83,7 +83,17 @@ const Note = React.memo(
         else if (e.key === 'Backspace' && !note) {
           e.stopPropagation()
           e.preventDefault()
-          dispatch(deleteAttribute({ path, value: '=note' }))
+
+          // delete note path attribute if it exists
+          dispatch((dispatch, getState) => {
+            const state = getState()
+            if (hasValidPathReference(state, path)) {
+              dispatch(deleteNotePathAttribute({ path }))
+            } else {
+              dispatch(deleteAttribute({ path, value: '=note' }))
+            }
+          })
+
           dispatch(setNoteFocus({ value: false }))
         } else if (e.key === 'ArrowDown') {
           e.stopPropagation()
@@ -105,24 +115,18 @@ const Note = React.memo(
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
-        if (pathReference?.targetPath) {
-          // update the referenced thought directly if it exists
+        // update the referenced thought directly if it exists
+        dispatch((dispatch, getState) => {
+          const state = getState()
+
+          const targetPath = getPathReferencePath(state, path)
+
           dispatch(
-            setDescendant({
-              path: pathReference.targetPath,
-              values: [value],
-            }),
+            setDescendant(targetPath ? { path: targetPath, values: [value] } : { path, values: ['=note', value] }),
           )
-        } else {
-          dispatch(
-            setDescendant({
-              path,
-              values: ['=note', value],
-            }),
-          )
-        }
+        })
       },
-      [dispatch, path, justPasted, pathReference],
+      [dispatch, path, justPasted],
     )
 
     /** Set editing to false onBlur, if keyboard is closed. */

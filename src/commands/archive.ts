@@ -2,6 +2,7 @@ import pluralize from 'pluralize'
 import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
+import { archivePathReferenceThoughtActionCreator as archivePathReferenceThought } from '../actions/archivePathReferencedThought'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { errorActionCreator as error } from '../actions/error'
 import ArchiveIcon from '../components/icons/ArchiveIcon'
@@ -41,13 +42,11 @@ const exec: Command['exec'] = (dispatch, getState) => {
       // Check if this note has a =path reference
       const hasPathReference = !!findDescendant(state, childNote!.id, '=path')
 
-      // Pass the path and archivePathReference flag to archiveThought
-      dispatch(
-        archiveThought({
-          path: pathNote,
-          archivePathReference: hasPathReference,
-        }),
-      )
+      if (hasPathReference) {
+        dispatch(archivePathReferenceThought({ path, pathNote }))
+      } else {
+        dispatch(archiveThought({ path: pathNote }))
+      }
     } else {
       const value = getThoughtById(state, head(cursor))?.value
       if (value !== '') {
