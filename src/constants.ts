@@ -11,7 +11,7 @@ import emojiRegex from './emojiRegex'
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
 
-// number of ms to wait after thought hover to expand it's children
+// Number of ms to wait after hovering over a thought before expanding, during drag-and-drop. Overriden by testFlags.expandHoverDelay during drag-and-drop tests.
 export const EXPAND_HOVER_DELAY = 1000
 
 // threshold for keyboard visibility detection (percentage of height change)

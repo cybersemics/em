@@ -75,7 +75,7 @@ const linearizeTree = (
 ): TreeThought[] => {
   const path = basePath || HOME_PATH
   const hashedPath = hashPath(path)
-  if (!isRoot(path) && !state.expanded[hashedPath] && !state.expandHoverDownPaths[hashedPath]) return []
+  if (!isRoot(path) && !state.expanded[hashedPath] && !equalPath(state.expandHoverDownPath, path)) return []
 
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
