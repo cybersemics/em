@@ -172,7 +172,7 @@ interface State {
    */
   storageCache?: StorageCache
   thoughts: ThoughtIndices
-  tips: Tip[]
+  tip: Tip | null
   /** Command of a toolbar button that is being long pressed in the customize modal. */
   toolbarLongPress?: Command
   transientFocus?: boolean

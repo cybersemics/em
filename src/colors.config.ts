@@ -38,6 +38,7 @@ const colors = {
     breadcrumbs: 'rgba(153, 153, 153, 1)',
     activeBreadCrumb: 'rgba(144, 144, 144, 1)', // #909090
     link: 'rgba(135, 206, 235, 1)', // #87ceeb
+    popupIconBg: 'rgba(135, 206, 235, 0.2)',
     dim: 'rgba(255, 255, 255, 0.5)',
     dimInverse: 'rgba(7, 7, 7, 0.5)',
     bullet: 'rgba(217, 217, 217, 1)',
@@ -110,6 +111,7 @@ const colors = {
     breadcrumbs: 'rgba(102, 102, 102, 1)',
     activeBreadCrumb: 'rgba(111, 111, 111, 1)', // #909090
     link: 'rgba(27, 111, 154, 1)', // #1b6f9a
+    popupIconBg: 'rgba(27, 111, 154, 0.2)',
     dim: 'rgba(7, 7, 7, 0.5)',
     dimInverse: 'rgba(255, 255, 255, 0.5)',
     bullet: 'rgba(39, 39, 39, 1)',
