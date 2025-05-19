@@ -5,6 +5,7 @@ import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
 import childRecipe from './src/recipes/child'
+import dialogRecipe from './src/recipes/dialog'
 import dropEndRecipe from './src/recipes/dropEnd'
 import dropHoverRecipe from './src/recipes/dropHover'
 import editableRecipe from './src/recipes/editable'
@@ -330,6 +331,14 @@ export default defineConfig({
   theme: {
     extend: {
       keyframes,
+      breakpoints: {
+        sm: '320px', // approx size of iPhone SE
+        md: '400px', // approx size of iPhone 12 Pro
+        lg: '600px', // approx size of iPad
+        xl: '800px', // approx size of a laptop
+        '2xl': '1000px', // approx size of a desktop
+        '3xl': '1200px', // approx size of a large desktop
+      },
       tokens: {
         colors: colorTokens,
         easings: {
@@ -364,6 +373,8 @@ export default defineConfig({
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
         zIndex: {
           ...zIndexDescending([
+            'dialog',
+            'dialogContainer',
             'popup',
             'hoverArrow',
             'gestureTrace',
@@ -412,6 +423,7 @@ export default defineConfig({
         panelCommandRecipe,
       },
       slotRecipes: {
+        dialogRecipe,
         modalRecipe,
         modalTextRecipe,
         fadeTransitionRecipe,

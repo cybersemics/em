@@ -42,6 +42,8 @@ it('modal', async () => {
     customSnapshotIdentifier: 'modal-devices-light',
   })
 
+  // TODO: Intermittently fails with exported content still loading when snapshot is taken
+  // https://github.com/cybersemics/em/actions/runs/15088412461/job/42416149446
   const exportImages = await modalSnapshots('export')
   expect(exportImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-export` })
   expect(exportImages.light).toMatchImageSnapshot({
