@@ -109,8 +109,9 @@ const getTextWidth = (text: string, font: string): number => {
 }
 
 /** Custom hook to fetch thought IDs that affect the max width. */
-const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
+const useWidthDependentThoughtIds = (path: Path | null): ThoughtId[] => {
   return useSelector((state: State) => {
+    if (!path) return []
     const parentPath = rootedParentOf(state, path)
     const parentId = head(parentPath)
     const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
@@ -296,7 +297,7 @@ const ThoughtContainer = ({
   const fontSize = useSelector(state => state.fontSize)
   const currentCursor = useSelector(state => state.cursor)
   const [thoughtWidth, setThoughtWidth] = useState(0)
-  const widthDependentThoughtIds = currentCursor ? useWidthDependentThoughtIds(currentCursor) : []
+  const widthDependentThoughtIds = useWidthDependentThoughtIds(currentCursor)
   const isInCol1 = widthDependentThoughtIds.includes(thoughtId)
 
   useLayoutEffect(() => {
