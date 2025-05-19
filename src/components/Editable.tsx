@@ -536,8 +536,6 @@ const Editable = ({
 
       const state = store.getState()
 
-      const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
-
       if (
         // disable editing when multicursor is enabled
         hasMulticursorSelector(state) ||
@@ -566,7 +564,7 @@ const Editable = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [disabled, isVisible, path, setCursorOnThought],
+    [disabled, editingOrOnCursor, isVisible, path, setCursorOnThought],
   )
 
   return (
