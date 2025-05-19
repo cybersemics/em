@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator as alert } from '../actions/alert'
+import { dismissTipActionCreator as dismissTip } from '../actions/dismissTip'
 import { AlertType } from '../constants'
 import useCombinedRefs from '../hooks/useCombinedRefs'
 import usePositionFixed from '../hooks/usePositionFixed'
@@ -68,7 +69,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar
       onDismissEnd: () => {
-        dispatch(alert(null))
+        dispatch([alert(null), dismissTip()])
       },
       swipeDown: true,
     })
@@ -97,7 +98,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           width: '100%',
           overflowY: 'auto',
           maxHeight: '100%',
-          maxWidth: '100%',
         }
       : {}
 
@@ -107,6 +107,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           boxSizing: 'border-box',
           textAlign,
           zIndex: 'popup',
+          // leave space so the circledCloseButton doesn't get cut off from the screen
+          maxWidth: circledCloseButton ? 'calc(100% - 2em)' : '100%',
           ...borderStyles,
           ...centerStyles,
           ...fullWidthStyles,
