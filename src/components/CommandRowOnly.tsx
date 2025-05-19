@@ -164,15 +164,9 @@ const CommandRowOnly = forwardRef<
               whiteSpace: 'nowrap',
               color: disabled
                 ? 'gray'
-                : isTouch
-                  ? selected
-                    ? '#64C7EA'
-                    : gestureInProgress === command.gesture
-                      ? 'vividHighlight'
-                      : 'fg'
-                  : selected
-                    ? 'vividHighlight'
-                    : 'fg',
+                : selected || (isTouch && (gestureInProgress as string) === gestureString(command))
+                  ? 'blueHighlight'
+                  : 'gray75',
               fontWeight: selected ? 'bold' : undefined,
             })}
           >
@@ -198,6 +192,7 @@ const CommandRowOnly = forwardRef<
                 <div
                   className={css({
                     fontSize: '80%',
+                    color: selected ? 'gray75' : 'gray45',
                     ...(!isTouch
                       ? {
                           flexGrow: 1,
