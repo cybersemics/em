@@ -121,7 +121,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     error: null,
     expanded: {},
     fontSize: storageModel.get('fontSize'),
-    expandHoverDownPaths: {},
     importThoughtPath: null,
     invalidState: false,
     isLoading: true,
