@@ -81,7 +81,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enter: {
           opacity: 0,
           transform: 'skew(-100deg) translateX(-10%) translateY(100%)',
-          textShadow: '0px 0px 0px transparent',
+          textShadow: '0px 0px 20px white',
         },
         enterActive: {
           opacity: 1,
@@ -92,21 +92,23 @@ const fadeTransitionRecipe = defineSlotRecipe({
         exit: {
           opacity: 1,
           transform: 'skew(0deg) translateX(0) translateY(0)',
-          textShadow: '0px 0px 2px white',
+          textShadow: '0px 0px 20px white',
+          color: 'transparent',
         },
         exitActive: {
           opacity: 0,
           transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
-          textShadow: '0px 0px 2px white',
+          textShadow: '0px 0px 20px white',
+          color: 'transparent',
           transition: `opacity {durations.disappearingUpperRight} ease-out, transform {durations.disappearingUpperRight} ease-out, text-shadow {durations.disappearingUpperRight} ease-out`,
         },
       },
       // Normal view fades out from lower left.
       disappearingLowerLeft: {
         enter: {
-          opacity: 0,
+          opacity: 1,
           transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
-          textShadow: '0px 0px 0px transparent',
+          textShadow: '0px 0px 20px white',
         },
         enterActive: {
           opacity: 1,
@@ -117,12 +119,14 @@ const fadeTransitionRecipe = defineSlotRecipe({
         exit: {
           opacity: 1,
           transform: 'skew(0deg) translateX(0) translateY(0)',
-          textShadow: '0px 0px 2px white',
+          textShadow: '0px 0px 20px white',
+          color: 'transparent',
         },
         exitActive: {
           opacity: 0,
           transform: 'skew(-100deg) translateY(100%)',
-          textShadow: '0px 0px 2px white',
+          textShadow: '0px 0px 20px white',
+          color: 'transparent',
           transition: `opacity {durations.disappearingLowerLeft} ease-out, transform {durations.disappearingLowerLeft} ease-out, text-shadow {durations.disappearingLowerLeft} ease-out`,
         },
       },
