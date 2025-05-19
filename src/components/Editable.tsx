@@ -126,6 +126,7 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
+  const editingOrOnCursor = useSelector(state => state.editing || equalPath(path, state.cursor))
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -498,6 +499,19 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+
+      // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
+      if (editingOrOnCursor) allowDefaultSelection()
+      // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
+      // In those cases, it is best to prevent onFocus or onClick.
+      else e.preventDefault()
+    },
+    [editingOrOnCursor, allowDefaultSelection],
+  )
+
   /** Sets the cursor on the thought on touchend or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
@@ -576,11 +590,7 @@ const Editable = ({
                 : value
       }
       placeholder={placeholder}
-      // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
-      onMouseDown={e => {
-        e.stopPropagation()
-        allowDefaultSelection()
-      }}
+      onMouseDown={onMouseDown}
       // stop propagation to prevent default content onClick (which removes the cursor)
       onClick={onTap}
       onTouchEnd={onTap}
