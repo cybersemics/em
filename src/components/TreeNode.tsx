@@ -87,6 +87,11 @@ const TreeNode = ({
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
 
+  const isLastActionContextView = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'toggleContextView')
+  })
+
   /** True if the last action is swapParent and the thought is involved in the swap (cursor or parent). */
   const isSwap = useSelector(
     state =>
@@ -102,7 +107,7 @@ const TreeNode = ({
 
   // Determine if this node is a child of a context node and if context view is active
   const isContextViewChild = useSelector((state: State): boolean => isContextViewActive(state, parentOf(path)))
-  const isContextViewActiveForPath = useSelector((state: State): boolean => isContextViewActive(state, path))
+  const isInContextView = useSelector((state: State): boolean => isContextViewActive(state, path))
 
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
@@ -168,14 +173,18 @@ const TreeNode = ({
       // Context view children get special disappearing text animations
       duration={
         isContextViewChild
-          ? isContextViewActiveForPath
+          ? isInContextView
             ? 'disappearingUpperRight'
             : 'disappearingLowerLeft'
           : isEmpty
             ? 'nodeFadeIn'
             : isLastActionDelete
               ? 'nodeDissolve'
-              : 'nodeFadeOut'
+              : isLastActionContextView
+                ? isInContextView
+                  ? 'disappearingLowerLeft'
+                  : 'disappearingUpperRight'
+                : 'nodeFadeOut'
       }
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
