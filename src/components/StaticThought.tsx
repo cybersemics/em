@@ -136,6 +136,7 @@ const StaticThought = ({
     _.isEqual,
   )
 
+  const dragInProgress = useSelector(state => state.dragInProgress)
   const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
 
   // console.info('<StaticThought> ' + prettyPath(store.getState(), simplePath))
@@ -198,7 +199,7 @@ const StaticThought = ({
             multiline={multiline}
             placeholder={placeholder}
             path={path}
-            disabled={!isDocumentEditable()}
+            disabled={!isDocumentEditable() || dragInProgress}
             isEditing={isEditing}
             isVisible={isVisible}
             rank={rank}
