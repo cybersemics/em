@@ -294,6 +294,7 @@ const ThoughtContainer = ({
   const col1MaxWidth = col1MaxWidthStore.useState()
 
   const prevValueRef = useRef<string>()
+  const prevIsTableCol1 = useRef<boolean>(isTableCol1)
   const fontSize = useSelector(state => state.fontSize)
   const currentCursor = useSelector(state => state.cursor)
   const thoughtWidthRef = useRef<number>(0)
@@ -424,6 +425,10 @@ const ThoughtContainer = ({
   })
 
   useLayoutEffect(() => {
+    const hasChanged = prevIsTableCol1.current !== undefined && prevIsTableCol1.current !== isTableCol1
+    if (!hasChanged) return
+    prevIsTableCol1.current = isTableCol1
+
     const offset = col1MaxWidth ? col1MaxWidth - thoughtWidthRef.current : 0
     const bulletAnimationOffset = 11 - (fontSize - 9) * 0.5
     const bulletX = isTableCol1 ? -bulletAnimationOffset : bulletAnimationOffset
