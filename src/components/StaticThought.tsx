@@ -7,6 +7,7 @@ import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import { isSafari, isTouch } from '../browser'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -136,7 +137,7 @@ const StaticThought = ({
     _.isEqual,
   )
 
-  const dragInProgress = useSelector(state => state.dragInProgress)
+  const dragInProgress = useSelector(state => isTouch && isSafari() && state.dragInProgress)
   const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
 
   // console.info('<StaticThought> ' + prettyPath(store.getState(), simplePath))
