@@ -230,18 +230,16 @@ const Editable = ({
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause contentEditable to be out of sync.
     invalidStateError(null)
 
-    // make sure to get updated state
-    const state = store.getState()
-
     const oldValue = oldValueRef.current
 
     if (transient) {
-      dispatch(
-        newThought({
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        return newThought({
           at: rootedParentOf(state, path),
           value: newValue,
-        }),
-      )
+        })
+      })
       return
     }
 
@@ -262,21 +260,24 @@ const Editable = ({
     // store the value so that we have a transcendental head when it is changed
     oldValueRef.current = newValue
 
-    const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
-    const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
-    if (
-      newValue &&
-      ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
-        newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
-        (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
-        ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
-          Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
-      newValue.length > 0
-    ) {
-      dispatch(tutorialNext({}))
-    }
+    dispatch((dispatch, getState) => {
+      const state = getState()
+      const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
+      const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
+      if (
+        newValue &&
+        ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
+          newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
+          (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
+            newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
+          ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
+            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
+            newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
+        newValue.length > 0
+      ) {
+        dispatch(tutorialNext({}))
+      }
+    })
 
     onEdit?.({ path, oldValue, newValue })
   }
