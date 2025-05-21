@@ -313,7 +313,6 @@ const Editable = ({
   const onChangeHandler = useCallback(
     (e: ContentEditableEvent) => {
       // make sure to get updated state
-      const state = store.getState()
 
       // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
       const oldValue = oldValueRef.current
@@ -392,27 +391,32 @@ const Editable = ({
         return
       }
 
-      const newNumContext = getContexts(state, newValue).length
-      const isNewValueURL = containsURL(newValue)
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        const newNumContext = getContexts(state, newValue).length
+        const isNewValueURL = containsURL(newValue)
 
-      const contextLengthChange =
-        newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
-      const urlChange = isNewValueURL || isNewValueURL !== containsURL(oldValueRef.current)
+        const contextLengthChange =
+          newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
+        const urlChange = isNewValueURL || isNewValueURL !== containsURL(oldValueRef.current)
 
-      const isEmpty = newValue.length === 0
+        const isEmpty = newValue.length === 0
 
-      // Safari adds <br> to empty contenteditables after editing, so strip them out.
-      // Make sure empty thoughts are truly empty.
-      if (contentRef.current && isEmpty) {
-        contentRef.current.innerHTML = newValue
-      }
+        // Safari adds <br> to empty contenteditables after editing, so strip them out.
+        // Make sure empty thoughts are truly empty.
+        if (contentRef.current && isEmpty) {
+          contentRef.current.innerHTML = newValue
+        }
 
-      // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
-      if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
-        // update new supercript value and url boolean
-        throttledChangeRef.current.flush()
-        thoughtChangeHandler(newValue, { rank, simplePath })
-      } else throttledChangeRef.current(newValue, { rank, simplePath })
+        // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
+        if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
+          // update new supercript value and url boolean
+          throttledChangeRef.current.flush()
+          thoughtChangeHandler(newValue, { rank, simplePath })
+        } else {
+          throttledChangeRef.current(newValue, { rank, simplePath })
+        }
+      })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [readonly, uneditable /* TODO: options */],
