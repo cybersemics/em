@@ -187,34 +187,36 @@ const Editable = ({
   /** Set the cursor on the thought. */
   const setCursorOnThought = useCallback(
     ({ editing }: { editing?: boolean } = {}) => {
-      const { cursor, editing: editingMode } = store.getState() // use fresh state
+      dispatch((dispatch, getState) => {
+        const state = getState()
 
-      // do not set cursor if it is unchanged and we are not entering edit mode
-      if ((!editing || editingMode) && equalPath(cursor, path)) return
+        // do not set cursor if it is unchanged and we are not entering edit mode
+        if ((!editing || state.editing) && equalPath(state.cursor, path)) return
 
-      // set offset to null to allow the browser to set the position of the selection
-      let offset = null
+        // set offset to null to allow the browser to set the position of the selection
+        let offset = null
 
-      // if running for the first time, restore the offset if the path matches the restored cursor
-      if (!cursorOffsetInitialized) {
-        const restored: { path: Path | null; offset: number | null } = storageModel.get('cursor')
-        if (path && restored.offset && equalPath(restored.path, path)) {
-          offset = restored.offset || null
+        // if running for the first time, restore the offset if the path matches the restored cursor
+        if (!cursorOffsetInitialized) {
+          const restored: { path: Path | null; offset: number | null } = storageModel.get('cursor')
+          if (path && restored.offset && equalPath(restored.path, path)) {
+            offset = restored.offset || null
+          }
         }
-      }
 
-      // Prevent the cursor offset from being restored after the initial setCursorOnThought.
-      cursorOffsetInitialized = true
+        // Prevent the cursor offset from being restored after the initial setCursorOnThought.
+        cursorOffsetInitialized = true
 
-      dispatch(
-        setCursor({
-          cursorHistoryClear: true,
-          preserveMulticursor: true,
-          editing,
-          offset,
-          path,
-        }),
-      )
+        dispatch(
+          setCursor({
+            cursorHistoryClear: true,
+            preserveMulticursor: true,
+            editing,
+            offset,
+            path,
+          }),
+        )
+      })
     },
     // When isEditing changes, we need to reset the cursor on the thought.
     // eslint-disable-next-line react-hooks/exhaustive-deps
