@@ -501,18 +501,23 @@ const Editable = ({
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      // stop propagation to prevent the event from propagating down to the Content component and triggering clickOnEmptySpace
       e.stopPropagation()
 
-      // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
+      // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
+      // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
+      // See: #981
       if (editingOrOnCursor) allowDefaultSelection()
       // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
-      // In those cases, it is best to prevent onFocus or onClick.
+      // In those cases, it is best to prevent onFocus or onClick, otherwise edit mode will be incorrectly activated.
+      // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
+      // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
       else e.preventDefault()
     },
     [editingOrOnCursor, allowDefaultSelection],
   )
 
-  /** Sets the cursor on the thought on touchend or tap. Handles hidden elements, drags, and editing mode. */
+  /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       // Avoid triggering haptics twice since this handler is used for both onClick and onTouchEnd.
@@ -554,13 +559,11 @@ const Editable = ({
         } else {
           setCursorOnThought()
         }
-      } else {
-        if (editingOrOnCursor && e.type === 'touchend' && isTouch) {
-          preventAutoscroll(contentRef.current, {
-            // about the height of a single-line thought
-            bottomMargin: fontSize * 2,
-          })
-        }
+      } else if (editingOrOnCursor && e.type === 'touchend') {
+        preventAutoscroll(contentRef.current, {
+          // about the height of a single-line thought
+          bottomMargin: fontSize * 2,
+        })
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -589,7 +592,6 @@ const Editable = ({
       }
       placeholder={placeholder}
       onMouseDown={onMouseDown}
-      // stop propagation to prevent default content onClick (which removes the cursor)
       onClick={onTap}
       onTouchEnd={onTap}
       onFocus={onFocus}
