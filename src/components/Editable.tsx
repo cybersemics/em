@@ -438,9 +438,12 @@ const Editable = ({
       // oldValueRef.current is the latest value since throttledChangeRef was just flushed
       if (contentRef.current?.innerHTML !== oldValueRef.current) {
         // remove the invalid state error, remove invalid-option class, and reset editable html
-        if (store.getState().invalidState) {
-          invalidStateError(null)
-        }
+        dispatch((dispatch, getState) => {
+          const state = getState()
+          if (state.invalidState) {
+            invalidStateError(null)
+          }
+        })
         contentRef.current!.innerHTML = oldValueRef.current
       }
 
