@@ -553,32 +553,33 @@ const Editable = ({
         e.preventDefault()
       }
 
-      const state = store.getState()
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        if (
+          // disable editing when multicursor is enabled
+          hasMulticursorSelector(state) ||
+          disabled ||
+          // do not set cursor on hidden thought
+          // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
+          (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
+        ) {
+          e.preventDefault()
 
-      if (
-        // disable editing when multicursor is enabled
-        hasMulticursorSelector(state) ||
-        disabled ||
-        // do not set cursor on hidden thought
-        // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-        (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
-      ) {
-        e.preventDefault()
+          if (!isVisible) {
+            selection.clear()
 
-        if (!isVisible) {
-          selection.clear()
-
-          // close all popups when clicking on a thought
-          dispatch(toggleDropdown())
-        } else {
-          setCursorOnThought()
+            // close all popups when clicking on a thought
+            dispatch(toggleDropdown())
+          } else {
+            setCursorOnThought()
+          }
+        } else if (editingOrOnCursor && e.type === 'touchend') {
+          preventAutoscroll(contentRef.current, {
+            // about the height of a single-line thought
+            bottomMargin: fontSize * 2,
+          })
         }
-      } else if (editingOrOnCursor && e.type === 'touchend') {
-        preventAutoscroll(contentRef.current, {
-          // about the height of a single-line thought
-          bottomMargin: fontSize * 2,
-        })
-      }
+      })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [disabled, editingOrOnCursor, isVisible, path, setCursorOnThought],
