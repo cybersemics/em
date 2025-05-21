@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
@@ -107,15 +107,16 @@ const Editable = ({
   className,
   transient,
 }: EditableProps) => {
-  const state = store.getState()
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
-  const parentId = head(rootedParentOf(state, simplePath))
-  const readonly = findDescendant(state, thoughtId, '=readonly')
-  const uneditable = findDescendant(state, thoughtId, '=uneditable')
-  const optionsId = findDescendant(state, parentId, '=options')
-  const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
-  const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
+  const parentId = useSelector(state => head(rootedParentOf(state, simplePath)))
+  const readonly = useSelector(state => findDescendant(state, thoughtId, '=readonly'))
+  const uneditable = useSelector(state => findDescendant(state, thoughtId, '=uneditable'))
+  const optionsId = useSelector(state => findDescendant(state, parentId, '=options'))
+  const options = useSelector(state => {
+    const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
+    return childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
+  }, shallowEqual)
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
@@ -147,8 +148,10 @@ const Editable = ({
   //   isCursorCleared,
   // })
 
-  const labelId = findDescendant(state, parentId, '=label')
-  const childrenLabel = anyChild(state, labelId)
+  const childrenLabel = useSelector(state => {
+    const labelId = findDescendant(state, parentId, '=label')
+    return anyChild(state, labelId)?.value
+  })
 
   if (contentRef.current) {
     contentRef.current.style.opacity = '1.0'
@@ -421,7 +424,6 @@ const Editable = ({
     e => {
       blurring = true
 
-      const { invalidState } = state
       throttledChangeRef.current.flush()
 
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
@@ -429,7 +431,7 @@ const Editable = ({
       // oldValueRef.current is the latest value since throttledChangeRef was just flushed
       if (contentRef.current?.innerHTML !== oldValueRef.current) {
         // remove the invalid state error, remove invalid-option class, and reset editable html
-        if (invalidState) {
+        if (store.getState().invalidState) {
           invalidStateError(null)
         }
         contentRef.current!.innerHTML = oldValueRef.current
@@ -586,9 +588,7 @@ const Editable = ({
             ? ''
             : isEditing
               ? value
-              : childrenLabel
-                ? childrenLabel.value
-                : value
+              : (childrenLabel ?? value)
       }
       placeholder={placeholder}
       onMouseDown={onMouseDown}
