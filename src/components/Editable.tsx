@@ -502,10 +502,12 @@ const Editable = ({
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
-      const { dragHold, dragInProgress } = store.getState()
-      if (!dragHold && !dragInProgress) {
-        setCursorOnThought({ editing: true })
-      }
+      dispatch((dispatch, getState) => {
+        const { dragHold, dragInProgress } = getState()
+        if (!dragHold && !dragInProgress) {
+          setCursorOnThought({ editing: true })
+        }
+      })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [value, setCursorOnThought],
