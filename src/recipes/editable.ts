@@ -23,6 +23,7 @@ const editableRecipe = defineRecipe({
       _mobile: '-2px',
     },
     paddingBottom: { _mobile: '0' },
+    userSelect: 'text',
   },
 })
 
