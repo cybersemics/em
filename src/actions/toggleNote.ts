@@ -5,12 +5,12 @@ import setDescendant from '../actions/setDescendant'
 import setNoteFocus from '../actions/setNoteFocus'
 import getChildren from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
-import resolveNotePath, { hasNotePath } from '../selectors/resolveNotePath'
+import resolveNotePath from '../selectors/resolveNotePath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import deleteAttribute from './deleteAttribute'
-import deleteNotePathAttribute from './deleteNotePathAttribute'
+import deleteThought from './deleteThought'
 
 /**
  * Calculate the offset for note focus positioning.
@@ -27,25 +27,32 @@ const toggleNote = (state: State): State => {
   const targetThoughtPath = resolveNotePath(state, path)
   const targetThought = targetThoughtPath ? getThoughtById(state, head(targetThoughtPath)) : undefined
   const offset = calculateOffset(state, targetThought?.id)
+  const isNoteContentEmpty = !offset
+  const isNoteAttribute = targetThought && targetThought.value === '=note'
 
   return reducerFlow([
-    // Create note if it doesn't exist or delete if empty
+    // Create note if target thought doesn't exist (=note attribute)
     !targetThought
       ? state => setDescendant(state, { path: state.cursor!, values: ['=note', ''] })
-      : // create a target thought if =path attribute has a value
-        targetThought && targetThought.value !== '=note' && !offset
-        ? state => setDescendant(state, { path: state.cursor!, values: [targetThought?.value, ''] })
+      : !isNoteAttribute && isNoteContentEmpty
+        ? state.noteFocus
+          ? // delete the target thought if it exists via =path
+            state =>
+              deleteThought(state, {
+                pathParent: path,
+                thoughtId: targetThought.id,
+              })
+          : // create a missing target thought if it doesn't exist via =path
+            state => setDescendant(state, { path: state.cursor!, values: [targetThought?.value, ''] })
         : null,
 
-    // if noteFocus is true, delete the note path attribute if it exists else delete the note attribute
-    state.noteFocus && !offset
-      ? hasNotePath(state, head(path))
-        ? deleteNotePathAttribute({ path })
-        : deleteAttribute({ path: state.cursor!, value: '=note' })
+    // if targetThought is a noteAttribute and the note content is empty and noteFocus is true, delete the note attribute
+    state.noteFocus && isNoteAttribute && isNoteContentEmpty
+      ? deleteAttribute({ path: state.cursor!, value: '=note' })
       : null,
 
     // Toggle state.noteFocus, which will trigger the Editable and Note to re-render and set the selection appropriately
-    state => (state.noteFocus ? setNoteFocus(state, { value: false }) : setNoteFocus(state, { value: true, offset })),
+    state.noteFocus ? setNoteFocus({ value: false }) : setNoteFocus({ value: true, offset }),
   ])(state)
 }
 

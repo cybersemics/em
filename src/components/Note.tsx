@@ -6,7 +6,7 @@ import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
-import { deleteNotePathAttributeActionCreator as deleteNotePathAttribute } from '../actions/deleteNotePathAttribute'
+import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
 import { editingActionCreator as editing } from '../actions/editing'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
@@ -15,7 +15,8 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
-import resolveNotePath, { hasNotePath } from '../selectors/resolveNotePath'
+import getThoughtById from '../selectors/getThoughtById'
+import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
@@ -84,11 +85,14 @@ const Note = React.memo(
           e.stopPropagation()
           e.preventDefault()
 
-          // delete note path attribute if it exists
+          // delete target thought if it exists or =note attribute if it exists
           dispatch((dispatch, getState) => {
             const state = getState()
-            if (hasNotePath(state, thoughtId)) {
-              dispatch(deleteNotePathAttribute({ path }))
+            const targetThoughtPath = resolveNotePath(state, path)
+            const targetThought = targetThoughtPath ? getThoughtById(state, head(targetThoughtPath)) : undefined
+
+            if (targetThought && targetThought.value !== '=note') {
+              dispatch(deleteThought({ pathParent: path, thoughtId: targetThought.id }))
             } else {
               dispatch(deleteAttribute({ path, value: '=note' }))
             }
