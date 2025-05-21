@@ -15,7 +15,7 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
-import { getPathReferencePath, hasValidPathReference } from '../selectors/resolvePathReference'
+import resolveNotePath, { hasNotePath } from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
@@ -87,7 +87,7 @@ const Note = React.memo(
           // delete note path attribute if it exists
           dispatch((dispatch, getState) => {
             const state = getState()
-            if (hasValidPathReference(state, path)) {
+            if (hasNotePath(state, thoughtId)) {
               dispatch(deleteNotePathAttribute({ path }))
             } else {
               dispatch(deleteAttribute({ path, value: '=note' }))
@@ -119,7 +119,7 @@ const Note = React.memo(
         dispatch((dispatch, getState) => {
           const state = getState()
 
-          const targetPath = getPathReferencePath(state, path)
+          const targetPath = resolveNotePath(state, path)
 
           dispatch(
             setDescendant(targetPath ? { path: targetPath, values: [value] } : { path, values: ['=note', value] }),

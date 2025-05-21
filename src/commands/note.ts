@@ -3,7 +3,7 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import PencilIcon from '../components/icons/PencilIcon'
 import { HOME_PATH } from '../constants'
 import asyncFocus from '../device/asyncFocus'
-import attribute from '../selectors/attribute'
+import { hasNotePath } from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -33,7 +33,7 @@ const noteCommand: Command = {
   isActive: state => {
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
-    return attribute(state, head(path), '=note') !== null
+    return hasNotePath(state, head(path))
   },
 }
 

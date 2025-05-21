@@ -1,8 +1,10 @@
 import pluralize from 'pluralize'
+import { Dispatch } from 'redux'
 import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
+import Path from '../@types/Path'
+import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
-import { archivePathReferenceThoughtActionCreator as archivePathReferenceThought } from '../actions/archivePathReferencedThought'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { errorActionCreator as error } from '../actions/error'
 import ArchiveIcon from '../components/icons/ArchiveIcon'
@@ -11,8 +13,10 @@ import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
+import resolveNotePath from '../selectors/resolveNotePath'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
+import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -20,6 +24,18 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
 let undoArchiveTimer: number
+
+/** Archives a note path and its optional target path if =note/=path structure exists. */
+const archiveNoteAndTargetThought =
+  (notePath: Path | null, targetPath: Path | null): Thunk =>
+  (dispatch: Dispatch) => {
+    if (targetPath) {
+      dispatch(archiveThought({ path: targetPath }))
+    }
+    if (notePath) {
+      dispatch(archiveThought({ path: notePath }))
+    }
+  }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState) => {
@@ -36,16 +52,17 @@ const exec: Command['exec'] = (dispatch, getState) => {
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH
       const childNote = findAnyChild(state, head(path), child => child.value === '=note')
-      // we know there is a =note child if noteFocus is true
-      // we just need to get the Child object so that archiveThought has the full path
-      const pathNote = appendToPath(path, childNote!.id)
-      // Check if this note has a =path reference
-      const hasPathReference = !!findDescendant(state, childNote!.id, '=path')
 
-      if (hasPathReference) {
-        dispatch(archivePathReferenceThought({ path, pathNote }))
-      } else {
+      const pathNote = childNote ? appendToPath(path, childNote.id) : null
+
+      // At a minimum, this resolves to a path when =note is present.
+      // If =path is present, this resolves to a path with =note/=path structure.
+
+      const targetThoughtPath = resolveNotePath(state, path)
+      if (pathNote && equalPath(pathNote, targetThoughtPath)) {
         dispatch(archiveThought({ path: pathNote }))
+      } else {
+        dispatch(archiveNoteAndTargetThought(pathNote, targetThoughtPath))
       }
     } else {
       const value = getThoughtById(state, head(cursor))?.value
