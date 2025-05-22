@@ -26,7 +26,7 @@ import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts, getChildrenRanked, hasChildren } from '../selectors/getChildren'
+import { getAllChildren, getAllChildrenAsThoughts, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -107,15 +107,12 @@ const getTextWidth = (text: string, font: string): number => {
   return context.measureText(text).width
 }
 
-/** Custom hook to fetch thought IDs that affect the max width. */
-const useWidthDependentThoughtIds = (path: Path | null): ThoughtId[] => {
-  return useSelector((state: State) => {
-    if (!path) return []
-    const parentPath = rootedParentOf(state, path)
-    const parentId = head(parentPath)
-    const children = parentId ? getAllChildrenAsThoughts(state, parentId) : []
-    return children.map(child => child.id)
-  }, shallowEqual)
+/** Returns the sibling thought IDs of the given path. */
+const selectSiblingThoughtIds = (state: State, path: Path | null): ThoughtId[] => {
+  if (!path) return []
+  const parentPath = rootedParentOf(state, path)
+  const parentId = head(parentPath)
+  return parentId ? getAllChildren(state, parentId) : []
 }
 
 /**********************************************************************
@@ -297,8 +294,9 @@ const ThoughtContainer = ({
   const currentCursor = useSelector(state => state.cursor)
   const thoughtWidthRef = useRef<number>(0) // stores this node’s last measured width
 
-  const widthDependentThoughtIds = useWidthDependentThoughtIds(currentCursor)
-  const isInCol1 = widthDependentThoughtIds.includes(thoughtId)
+  const siblingThoughtIds = useSelector(state => selectSiblingThoughtIds(state, currentCursor), shallowEqual)
+  const isInCol1 = siblingThoughtIds.includes(thoughtId)
+
   const prevCursorRef = useRef<Path | null>(null) // holds last cursor to detect when a new col1 node is focused
 
   useEffect(() => {
