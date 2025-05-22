@@ -248,7 +248,6 @@ const VirtualThought = ({
           simplePath={simplePath}
           style={style}
           zoomCursor={zoomCursor}
-          marginRight={0}
         />
       )}
 
