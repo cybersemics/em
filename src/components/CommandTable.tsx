@@ -10,7 +10,7 @@ import useFilteredCommands from '../hooks/useFilteredCommands'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import CommandsGroup from './CommandsGroup'
-import FadeTransition from './FadeTransition' 
+import FadeTransition from './FadeTransition'
 import SearchCommands from './SearchCommands'
 import SortButton from './SortButton'
 
