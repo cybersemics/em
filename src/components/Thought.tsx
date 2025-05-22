@@ -451,6 +451,7 @@ const ThoughtContainer = ({
         editable: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
       })
     })
+    // Only re-run animation when isTableCol1 changes; intentionally omitting col1MaxWidth to avoid unintended re-triggers
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTableCol1])
 
