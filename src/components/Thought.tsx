@@ -1,4 +1,4 @@
-import React, { CSSProperties, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -301,16 +301,31 @@ const ThoughtContainer = ({
 
   const widthDependentThoughtIds = useWidthDependentThoughtIds(currentCursor)
   const isInCol1 = widthDependentThoughtIds.includes(thoughtId)
+  const prevCursorRef = useRef<Path | null>(null)
 
-  useLayoutEffect(() => {
-    if (!isInCol1) return
-    const newWidth = value ? getTextWidth(value, `${fontSize}px Helvetica`) : 0
-    if (!col1MaxWidth || newWidth > col1MaxWidth || prevValueRef.current != value) {
-      col1MaxWidthStore.update(newWidth)
+  useEffect(() => {
+    const cursorChanged = prevCursorRef.current !== currentCursor
+    const justEnteredCol1 = cursorChanged && isInCol1
+
+    if (!isInCol1) {
+      prevCursorRef.current = currentCursor
+      return
     }
+
+    const newWidth = value ? getTextWidth(value, `${fontSize}px Helvetica`) : 0
+
+    if (justEnteredCol1) {
+      col1MaxWidthStore.update(newWidth)
+    } else {
+      if (!col1MaxWidth || newWidth > col1MaxWidth || prevValueRef.current != value) {
+        col1MaxWidthStore.update(newWidth)
+      }
+    }
+
     thoughtWidthRef.current = newWidth
     prevValueRef.current = value
-  }, [isInCol1, col1MaxWidth, fontSize, value])
+    prevCursorRef.current = currentCursor
+  }, [isInCol1, col1MaxWidth, fontSize, value, currentCursor])
 
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
