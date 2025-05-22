@@ -107,14 +107,6 @@ const getTextWidth = (text: string, font: string): number => {
   return context.measureText(text).width
 }
 
-/** Returns the sibling thought IDs of the given path. */
-const selectSiblingThoughtIds = (state: State, path: Path | null): ThoughtId[] => {
-  if (!path) return []
-  const parentPath = rootedParentOf(state, path)
-  const parentId = head(parentPath)
-  return parentId ? getAllChildren(state, parentId) : []
-}
-
 /**********************************************************************
  * Components
  **********************************************************************/
@@ -294,7 +286,13 @@ const ThoughtContainer = ({
   const currentCursor = useSelector(state => state.cursor)
   const thoughtWidthRef = useRef<number>(0) // stores this node’s last measured width
 
-  const siblingThoughtIds = useSelector(state => selectSiblingThoughtIds(state, currentCursor), shallowEqual)
+  /** Sibling thought IDs for the current cursor. */
+  const siblingThoughtIds = useSelector((state: State) => {
+    if (!currentCursor) return []
+    const parentId = head(rootedParentOf(state, currentCursor))
+    return parentId ? getAllChildren(state, parentId) : []
+  }, shallowEqual)
+
   const isInCol1 = siblingThoughtIds.includes(thoughtId)
 
   const prevCursorRef = useRef<Path | null>(null) // holds last cursor to detect when a new col1 node is focused
