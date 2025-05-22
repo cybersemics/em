@@ -118,7 +118,7 @@ const getTextWidth = (text: string, font: string): number => {
 const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
-  cursor,
+  cursor: propCursor,
   debugIndex,
   depth = 0,
   env,
@@ -154,7 +154,7 @@ const ThoughtContainer = ({
     if (isExpandedHoverTopPath) return true
     if (!state.cursor) return false
 
-    const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
+    const distance = propCursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, propCursor.length - depth!)) : 0
     const cursorParent = state.cursor && parentOf(state.cursor)
     const cursorGrandparent = cursorParent && rootedParentOf(state, cursorParent)
 
@@ -283,13 +283,13 @@ const ThoughtContainer = ({
   const prevValueRef = useRef<string>() // tracks previous value to avoid redundant updates
   const prevIsTableCol1 = useRef<boolean>(isTableCol1) // remembers last table‐view state to prevent initial animation
   const fontSize = useSelector(state => state.fontSize)
-  const currentCursor = useSelector(state => state.cursor)
+  const cursor = useSelector(state => state.cursor)
   const thoughtWidthRef = useRef<number>(0) // stores this node’s last measured width
 
   /** Sibling thought IDs for the current cursor. */
   const siblingThoughtIds = useSelector((state: State) => {
-    if (!currentCursor) return []
-    const parentId = head(rootedParentOf(state, currentCursor))
+    if (!cursor) return []
+    const parentId = head(rootedParentOf(state, cursor))
     return parentId ? getAllChildren(state, parentId) : []
   }, shallowEqual)
 
@@ -298,11 +298,11 @@ const ThoughtContainer = ({
   const prevCursorRef = useRef<Path | null>(null) // holds last cursor to detect when a new col1 node is focused
 
   useEffect(() => {
-    const cursorChanged = prevCursorRef.current !== currentCursor
+    const cursorChanged = prevCursorRef.current !== cursor
     const justEnteredCol1 = cursorChanged && isInCol1
 
     if (!isInCol1) {
-      prevCursorRef.current = currentCursor
+      prevCursorRef.current = cursor
       return
     }
 
@@ -318,8 +318,8 @@ const ThoughtContainer = ({
 
     thoughtWidthRef.current = newWidth
     prevValueRef.current = value
-    prevCursorRef.current = currentCursor
-  }, [isInCol1, col1MaxWidth, fontSize, value, currentCursor])
+    prevCursorRef.current = cursor
+  }, [isInCol1, col1MaxWidth, fontSize, value, cursor])
 
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
