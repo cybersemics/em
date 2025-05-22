@@ -1,15 +1,18 @@
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
-import CommandRow from './CommandRow'
+import { CommandViewType } from '../@types/CommandViewType'
+import CommandItem from './CommandItem'
 
 /** Renders a table of commands, with nothing else added. */
 const CommandTableOnly = ({
+  viewType = 'table',
   commands,
   selectedCommand,
   customize,
   onSelect,
   search,
 }: {
+  viewType?: CommandViewType
   commands: (Command | null)[]
   selectedCommand?: Command
   customize?: boolean
@@ -18,11 +21,20 @@ const CommandTableOnly = ({
   search?: string
 }) => {
   return (
-    <table className={css({ fontSize: '14px', width: '100%' })}>
-      <tbody>
+    <table className={css({ fontSize: '14px', width: viewType === 'grid' ? undefined : '100%' })}>
+      <tbody
+        className={css({
+          display: viewType === 'grid' ? 'grid' : 'table-row-group',
+          ...(viewType === 'grid' && {
+            gridTemplateColumns: '1fr 1fr',
+            gap: '1rem',
+          }),
+        })}
+      >
         {commands.map(command => {
           return (
-            <CommandRow
+            <CommandItem
+              viewType={viewType}
               customize={customize}
               key={command?.id}
               onSelect={onSelect}
@@ -36,4 +48,5 @@ const CommandTableOnly = ({
     </table>
   )
 }
+
 export default CommandTableOnly

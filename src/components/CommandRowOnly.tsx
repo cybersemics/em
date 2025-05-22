@@ -4,6 +4,8 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
 import Command from '../@types/Command'
+import { CommandViewType } from '../@types/CommandViewType'
+import GesturePath from '../@types/GesturePath'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import CommandKeys from './CommandKeys'
@@ -14,6 +16,7 @@ import HighlightedText from './HighlightedText'
 const CommandRowOnly = forwardRef<
   HTMLDivElement,
   {
+    viewType?: CommandViewType
     search: string | undefined
     onClick: (e: React.MouseEvent, command: Command) => void
     selected: boolean | undefined
@@ -25,10 +28,12 @@ const CommandRowOnly = forwardRef<
     isTable?: boolean
     hideDescriptionIfNotSelectedOnMobile?: boolean
     cssRaw?: SystemStyleObject
+    isDragging?: boolean
   }
 >(
   (
     {
+      viewType = 'table',
       search = '',
       onClick,
       selected,
@@ -40,6 +45,7 @@ const CommandRowOnly = forwardRef<
       isTable,
       hideDescriptionIfNotSelectedOnMobile,
       cssRaw,
+      isDragging,
     },
     ref,
   ) => {
@@ -61,6 +67,8 @@ const CommandRowOnly = forwardRef<
 
     const paddingSize = fontSize * (isTouch && !isTable ? 0.4 : 0.67)
 
+    const isSelectedStyle = selected || isDragging
+
     return (
       <Container
         // @ts-expect-error Container can be 'tr' or 'div'
@@ -71,10 +79,11 @@ const CommandRowOnly = forwardRef<
             position: 'relative',
             textAlign: 'left',
 
-            backgroundColor: selected ? 'commandSelectedBg' : undefined,
+            backgroundColor: isSelectedStyle ? 'commandSelectedBg' : undefined,
             borderRadius: '8px',
             display: 'flex',
-            flexDirection: 'row',
+            flexDirection: viewType === 'grid' ? 'column' : 'row',
+            gap: viewType === 'grid' ? '0.6rem' : undefined,
             justifyContent: 'flex-start',
             alignItems: 'center',
           },
@@ -88,47 +97,79 @@ const CommandRowOnly = forwardRef<
         style={{
           fontSize,
           // split padding into paddingInline and paddingBlock so either property can be overridden
-          paddingInline: paddingSize,
-          paddingBlock: paddingSize,
+          paddingInline: viewType === 'grid' ? undefined : paddingSize,
+          paddingBlock: viewType === 'grid' ? undefined : paddingSize,
           gap: paddingSize,
           ...style,
         }}
       >
-        <Cell className={css({ display: 'flex', justifyContent: 'center', alignItems: 'center' })}>
+        <Cell
+          className={css(
+            { boxSizing: 'border-box' },
+            viewType === 'grid'
+              ? { minWidth: { base: '10rem', _mobile: 'auto' }, width: '100%' }
+              : { display: 'flex', justifyContent: 'center', alignItems: 'center' },
+          )}
+        >
           {/* gesture diagram */}
           {isTouch ? (
-            <GestureDiagram
-              color={disabled ? token('colors.gray') : undefined}
-              styleCancelAsRegularGesture
-              highlight={
-                !disabled && gestureInProgress !== undefined
-                  ? command.id === 'help'
-                    ? // For help command, find the longest matching end portion
-                      (() => {
-                        const helpGesture = gestureString(command)
-                        return (
-                          [...helpGesture]
-                            .map((_, i) => helpGesture.length - i)
-                            .find(len => gestureInProgress.endsWith(helpGesture.slice(0, len))) ?? 0
-                        )
-                      })()
-                    : // For other commands, use normal highlighting
-                      command.id === 'cancel'
-                      ? selected
-                        ? 1
-                        : undefined
-                      : gestureInProgress.length
-                  : undefined
-              }
-              path={command.id === 'cancel' ? null : gestureString(command)}
-              strokeWidth={4}
-              width={32}
-              height={32}
-              size={150}
-              rounded={command.rounded}
-            />
+            viewType === 'grid' ? (
+              <div
+                className={css({
+                  border: '1px solid {colors.fgOverlay50}',
+                  borderRadius: '8px',
+                  textAlign: { _mobile: 'center' },
+                })}
+              >
+                <GestureDiagram
+                  cssRaw={css.raw({
+                    width: { sm: '80px', md: '130px' },
+                    height: { sm: '80px', md: '130px' },
+                  })}
+                  path={gestureString(command) as GesturePath}
+                  size={130}
+                  arrowSize={25}
+                  strokeWidth={7.5}
+                  arrowhead={'outlined'}
+                />
+              </div>
+            ) : (
+              <GestureDiagram
+                color={disabled ? token('colors.gray') : undefined}
+                styleCancelAsRegularGesture
+                highlight={
+                  !disabled && gestureInProgress !== undefined
+                    ? command.id === 'openGestureCheatsheet'
+                      ? // For gesture cheatsheet command, find the longest matching end portion
+                        (() => {
+                          const gestureCheatsheetGesture = gestureString(command)
+                          return (
+                            [...gestureCheatsheetGesture]
+                              .map((_, i) => gestureCheatsheetGesture.length - i)
+                              .find(len => gestureInProgress.endsWith(gestureCheatsheetGesture.slice(0, len))) ?? 0
+                          )
+                        })()
+                      : // For other commands, use normal highlighting
+                        command.id === 'cancel'
+                        ? selected
+                          ? 1
+                          : undefined
+                        : gestureInProgress.length
+                    : undefined
+                }
+                path={command.id === 'cancel' ? null : gestureString(command)}
+                strokeWidth={4}
+                width={32}
+                height={32}
+                size={150}
+                rounded={command.rounded}
+              />
+            )
+          ) : Icon ? (
+            <Icon fill={token('colors.fg')} />
           ) : (
-            Icon && <Icon fill={token('colors.fg')} />
+            // placeholder for icon to keep spacing consistent
+            <div className={css({ width: 24, height: 24 })} />
           )}
         </Cell>
 
@@ -139,56 +180,62 @@ const CommandRowOnly = forwardRef<
             flexDirection: 'column',
             alignItems: 'flex-start',
             gap: '0.2em',
-            marginRight: '3em',
             flexWrap: 'wrap',
+            marginRight: viewType === 'grid' ? undefined : '3em',
+            fontWeight: viewType === 'grid' ? 'normal' : undefined,
+            width: '100%',
           })}
         >
-          {/* label */}
-          <div
+          <b
             className={css({
               minWidth: '4em',
               lineHeight: '1em',
               whiteSpace: 'nowrap',
+              fontSize: viewType === 'grid' ? '0.9rem' : undefined,
               color: disabled
                 ? 'gray'
-                : selected || (isTouch && (gestureInProgress as string) === gestureString(command))
-                  ? 'blueHighlight'
-                  : 'gray75',
-              fontWeight: selected ? 'bold' : undefined,
+                : viewType === 'grid'
+                  ? 'fg'
+                  : isSelectedStyle || (isTouch && (gestureInProgress as string) === gestureString(command))
+                    ? 'blueHighlight'
+                    : 'gray75',
+              fontWeight: isSelectedStyle && viewType !== 'grid' ? 'bold' : undefined,
             })}
           >
             <HighlightedText value={label} match={search} disabled={disabled} />
-          </div>
+          </b>
 
           {(!isTouch || !hideDescriptionIfNotSelectedOnMobile || selected) && (
-            <div className={css({ flexGrow: 1, zIndex: 1 })}>
-              <div
-                className={css({
-                  display: 'flex',
-                  lineHeight: '0.83em',
-                })}
-              >
-                {/* description */}
-                <div
-                  className={css({
-                    fontSize: '80%',
-                    color: selected ? 'gray75' : 'gray45',
-                    ...(!isTouch
-                      ? {
-                          flexGrow: 1,
-                        }
-                      : null),
-                  })}
-                >
-                  {description}
-                </div>
-              </div>
-            </div>
+            <p
+              className={css(
+                viewType === 'grid'
+                  ? {
+                      fontSize: '0.7rem',
+                      marginTop: '0.3rem',
+                      marginBottom: '0.3rem',
+                    }
+                  : {
+                      flexGrow: 1,
+                      zIndex: 1,
+                      lineHeight: '0.83em',
+                      fontSize: '80%',
+                      color: isSelectedStyle ? 'gray75' : 'gray45',
+                      marginBlock: 0,
+                      ...(!isTouch
+                        ? {
+                            flexGrow: 1,
+                          }
+                        : null),
+                    },
+              )}
+            >
+              {description}
+            </p>
           )}
         </Cell>
 
         {/* keyboard shortcut */}
-        {!isTouch && (
+        {command.keyboard && !isTouch && viewType !== 'grid' ? (
           <Cell
             className={css({
               fontSize: '80%',
@@ -205,7 +252,7 @@ const CommandRowOnly = forwardRef<
               {command.keyboard && <CommandKeys keyboardOrString={command.keyboard} />}
             </span>
           </Cell>
-        )}
+        ) : null}
       </Container>
     )
   },

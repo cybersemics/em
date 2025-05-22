@@ -11,8 +11,8 @@ import { commandPaletteActionCreator as commandPalette } from '../actions/comman
 import { isTouch } from '../browser'
 import { gestureString, hashCommand, hashKeyDown } from '../commands'
 import commandPaletteCommand from '../commands/commandPalette'
-import helpCommand from '../commands/help'
-import allowScroll from '../device/disableScroll'
+import openGestureCheatsheetCommand from '../commands/openGestureCheatsheet'
+import allowScroll from '../device/allowScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import gestureStore from '../stores/gesture'
@@ -35,7 +35,8 @@ const MAX_RECENT_COMMANDS = 5
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
-  (!command.canExecute || command.canExecute(state)) && (command.allowExecuteFromModal || !state.showModal)
+  (!command.canExecute || command.canExecute(state)) &&
+  (command.allowExecuteFromModal || !state.showModal || !state.showGestureCheatsheet)
 
 /**********************************************************************
  * Components
@@ -320,17 +321,15 @@ const CommandPalette: FC<{
             {commands.length > 0 ? (
               <>
                 {(() => {
-                  const hasMatchingCommand = commands.some(cmd => gestureInProgress === cmd.gesture)
+                  const hasMatchingCommand = commands.some(cmd => (gestureInProgress as string) === gestureString(cmd))
 
                   return commands.map(command => {
                     // Check if the current gesture sequence ends with help gesture
-                    const isHelpMatch =
-                      command.id === 'help' &&
-                      (gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
-                    const isCancelMatch =
-                      command.id === 'cancel' &&
-                      !hasMatchingCommand &&
-                      !(gestureInProgress as string)?.toString().endsWith(gestureString(helpCommand))
+                    const cheatsheetInProgress = gestureInProgress
+                      ?.toString()
+                      .endsWith(gestureString(openGestureCheatsheetCommand))
+                    const isCheatsheetMatch = command.id === 'openGestureCheatsheet' && cheatsheetInProgress
+                    const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
 
                     return (
                       <CommandRow
@@ -342,7 +341,7 @@ const CommandPalette: FC<{
                         selected={
                           !isTouch
                             ? command === selectedCommand
-                            : isHelpMatch || gestureInProgress == command.gesture || isCancelMatch
+                            : isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch
                         }
                         command={command}
                       />

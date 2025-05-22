@@ -1,5 +1,7 @@
 import { DragSourceMonitor, useDrag } from 'react-dnd'
+import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
+import { CommandViewType } from '../@types/CommandViewType'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragCommandZone from '../@types/DragCommandZone'
 import DragToolbarItem from '../@types/DragToolbarItem'
@@ -8,14 +10,16 @@ import { noop } from '../constants'
 import store from '../stores/app'
 import CommandRowOnly from './CommandRowOnly'
 
-/** Renders all of a command's details as a table row. */
-const CommandRow = ({
+/** Renders all of a command's details as either a grid item or table row. */
+const CommandItem = ({
+  viewType = 'table',
   customize,
   onSelect,
   selected,
   command,
   search,
 }: {
+  viewType?: CommandViewType
   customize?: boolean
   onSelect?: (command: Command | null) => void
   selected?: boolean
@@ -33,7 +37,6 @@ const CommandRow = ({
     end: () => store.dispatch(dragCommand(null)),
     collect: (monitor: DragSourceMonitor) => {
       const item = monitor.getItem() as DragToolbarItem
-
       return {
         dragPreview: noop,
         isDragging: monitor.isDragging(),
@@ -42,21 +45,31 @@ const CommandRow = ({
     },
   })
 
+  if (!command) return null
+
   return (
-    command && (
-      <CommandRowOnly
-        command={command}
-        search={search}
-        selected={selected}
-        onClick={(_, command) => {
-          onSelect?.(selected ? null : command)
-        }}
-        style={{ opacity: isDragging ? 0.5 : 1, paddingInline: 0 }}
-        ref={dragSource}
-        isTable
-      />
-    )
+    <CommandRowOnly
+      command={command}
+      search={search}
+      selected={selected}
+      onClick={(_, command) => {
+        onSelect?.(selected ? null : command)
+      }}
+      style={{ opacity: isDragging ? 0.5 : 1, paddingInline: 0 }}
+      ref={dragSource}
+      isTable
+      cssRaw={css.raw({
+        ...(customize
+          ? {
+              '&:active, [data-drop-to-remove-from-toolbar-hovering] &': {
+                WebkitTextStrokeWidth: '0.05em',
+              },
+            }
+          : null),
+      })}
+      viewType={viewType}
+    />
   )
 }
 
-export default CommandRow
+export default CommandItem
