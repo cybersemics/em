@@ -311,9 +311,9 @@ const ThoughtContainer = ({
     if (justEnteredCol1) {
       col1MaxWidthStore.update(newWidth)
     } else {
-      if (!col1MaxWidth || newWidth > col1MaxWidth || prevValueRef.current != value) {
-        col1MaxWidthStore.update(newWidth)
-      }
+      col1MaxWidthStore.update(maxWidth =>
+        !maxWidth || newWidth > maxWidth || prevValueRef.current != value ? newWidth : maxWidth,
+      )
     }
 
     thoughtWidthRef.current = newWidth
