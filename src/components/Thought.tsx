@@ -293,15 +293,15 @@ const ThoughtContainer = ({
     return parentId ? getAllChildren(state, parentId) : []
   }, shallowEqual)
 
-  const isInCol1 = siblingThoughtIds.includes(thoughtId)
+  const isSiblingOfCursor = siblingThoughtIds.includes(thoughtId)
 
   const prevCursorRef = useRef<Path | null>(null) // holds last cursor to detect when a new col1 node is focused
 
   useEffect(() => {
     const cursorChanged = prevCursorRef.current !== cursor
-    const justEnteredCol1 = cursorChanged && isInCol1
+    const justEnteredCol1 = cursorChanged && isSiblingOfCursor
 
-    if (!isInCol1) {
+    if (!isSiblingOfCursor) {
       prevCursorRef.current = cursor
       return
     }
@@ -319,7 +319,7 @@ const ThoughtContainer = ({
     thoughtWidthRef.current = newWidth
     prevValueRef.current = value
     prevCursorRef.current = cursor
-  }, [isInCol1, col1MaxWidth, fontSize, value, cursor])
+  }, [isSiblingOfCursor, col1MaxWidth, fontSize, value, cursor])
 
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
