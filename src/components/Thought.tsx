@@ -293,15 +293,15 @@ const ThoughtContainer = ({
 
   const col1MaxWidth = col1MaxWidthStore.useState()
 
-  const prevValueRef = useRef<string>()
-  const prevIsTableCol1 = useRef<boolean>(isTableCol1)
+  const prevValueRef = useRef<string>() // tracks previous value to avoid redundant updates
+  const prevIsTableCol1 = useRef<boolean>(isTableCol1) // remembers last table‐view state to prevent initial animation
   const fontSize = useSelector(state => state.fontSize)
   const currentCursor = useSelector(state => state.cursor)
-  const thoughtWidthRef = useRef<number>(0)
+  const thoughtWidthRef = useRef<number>(0) // stores this node’s last measured width
 
   const widthDependentThoughtIds = useWidthDependentThoughtIds(currentCursor)
   const isInCol1 = widthDependentThoughtIds.includes(thoughtId)
-  const prevCursorRef = useRef<Path | null>(null)
+  const prevCursorRef = useRef<Path | null>(null) // holds last cursor to detect when a new col1 node is focused
 
   useEffect(() => {
     const cursorChanged = prevCursorRef.current !== currentCursor
