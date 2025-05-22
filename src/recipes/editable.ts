@@ -23,6 +23,9 @@ const editableRecipe = defineRecipe({
       _mobile: '-2px',
     },
     paddingBottom: { _mobile: '0' },
+    // Re-enable text selection that was disabled on the LayoutTree.
+    // https://github.com/cybersemics/em/pull/2962
+    userSelect: 'text',
   },
 })
 
