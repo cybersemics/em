@@ -4,6 +4,7 @@
 import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
+import { ArrowKey } from './@types/ArrowKey'
 import Command from './@types/Command'
 import CommandId from './@types/CommandId'
 import Direction from './@types/Direction'
@@ -75,7 +76,7 @@ export const hashKeyDown = (e: KeyboardEvent): string =>
   // use e.keyCode if available instead
   (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
 
-const ARROW_KEYS_TO_CHARACTER = {
+const ARROW_KEYS_TO_CHARACTER: Record<ArrowKey, string> = {
   ArrowLeft: '←',
   ArrowRight: '→',
   ArrowUp: '↑',
@@ -83,7 +84,7 @@ const ARROW_KEYS_TO_CHARACTER = {
 }
 
 /** Returns true if key is an arrow key. */
-export const isArrowKey = (key: string): key is keyof typeof ARROW_KEYS_TO_CHARACTER => {
+export const isArrowKey = (key: string): key is ArrowKey => {
   return key in ARROW_KEYS_TO_CHARACTER
 }
 

@@ -75,7 +75,7 @@ const CommandRowOnly = forwardRef<
         ref={ref}
         className={css(
           {
-            cursor: !disabled ? 'pointer' : undefined,
+            cursor: disabled ? undefined : 'pointer',
             position: 'relative',
             textAlign: 'left',
 
@@ -199,7 +199,7 @@ const CommandRowOnly = forwardRef<
                   : isSelectedStyle || (isTouch && (gestureInProgress as string) === gestureString(command))
                     ? 'blueHighlight'
                     : 'gray75',
-              fontWeight: isSelectedStyle && viewType !== 'grid' ? 'bold' : undefined,
+              fontWeight: isSelectedStyle && viewType !== 'grid' ? 'bold' : 'normal',
             })}
           >
             <HighlightedText value={label} match={search} disabled={disabled} />
