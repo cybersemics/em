@@ -422,9 +422,6 @@ const ThoughtContainer = ({
     [dispatch, path],
   )
 
-  const bulletRef = useRef(null)
-  const editableRef = useRef(null)
-
   const duration = durations.get('layoutNodeAnimation')
 
   interface AnimationState {
@@ -526,7 +523,7 @@ const ThoughtContainer = ({
         })}
       >
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
-          <div ref={bulletRef} style={animation.bullet}>
+          <div style={animation.bullet}>
             <Bullet
               isContextPending={isContextPending}
               isDragging={isDragging}
@@ -545,7 +542,7 @@ const ThoughtContainer = ({
 
         <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
-        <div ref={editableRef} style={animation.editable}>
+        <div style={animation.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
             env={env}
