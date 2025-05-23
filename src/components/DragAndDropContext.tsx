@@ -7,11 +7,15 @@ import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 
 const options = {
   backends: [
+    // HTML5 backend
+    // https://react-dnd.github.io/react-dnd/docs/backends/html5
     {
       id: 'html5',
       backend: HTML5Backend,
       transition: MouseTransition,
     },
+    // Touch backend
+    // https://react-dnd.github.io/react-dnd/docs/backends/touch
     {
       id: 'touch',
       backend: TouchBackend,
