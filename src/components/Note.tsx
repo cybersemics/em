@@ -15,7 +15,6 @@ import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
 import getThoughtById from '../selectors/getThoughtById'
-import parentOfThought from '../selectors/parentOfThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
@@ -84,15 +83,13 @@ const Note = React.memo(
           e.stopPropagation()
           e.preventDefault()
 
-          // delete target thought if it exists or =note attribute if it exists
+          // delete target thought if it exists
           dispatch((dispatch, getState) => {
             const state = getState()
             const targetPath = resolveNotePath(state, path) ?? path
             const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
 
-            const noteThoughtParent =
-              targetThought && targetThought.value === '=note' ? parentOfThought(state, targetThought.id) : undefined
-            if (targetThought && noteThoughtParent?.value !== '=children') {
+            if (targetThought) {
               dispatch(deleteThought({ pathParent: path, thoughtId: targetThought.id }))
             }
           })

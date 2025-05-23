@@ -5,7 +5,6 @@ import setDescendant from '../actions/setDescendant'
 import setNoteFocus from '../actions/setNoteFocus'
 import getChildren from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
-import parentOfThought from '../selectors/parentOfThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
@@ -22,25 +21,21 @@ const calculateOffset = (state: State, thoughtId: ThoughtId | undefined): number
 /** Toggle the caret between the cursor and its note. Set the selection to the end. If the note is empty, delete it. */
 const toggleNote = (state: State): State => {
   const path = state.cursor!
-  const targetThoughtPath = resolveNotePath(state, path)
-  const targetThought = targetThoughtPath ? getThoughtById(state, head(targetThoughtPath)) : undefined
+  const targetPath = resolveNotePath(state, path)
+  const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
   const offset = calculateOffset(state, targetThought?.id)
   const isNoteContentEmpty = !offset
-  const noteThoughtParent =
-    targetThought && targetThought.value === '=note' ? parentOfThought(state, targetThought.id) : undefined
 
   return reducerFlow([
     // if noteFocus is true, delete the target thought if the note is empty, otherwise set the note to the target thought or create a missing target thought
     state.noteFocus
       ? isNoteContentEmpty && targetThought
-        ? noteThoughtParent?.value !== '=children'
-          ? deleteThought({
-              pathParent: path,
-              thoughtId: targetThought.id,
-            })
-          : null
+        ? deleteThought({
+            pathParent: path,
+            thoughtId: targetThought.id,
+          })
         : null
-      : isNoteContentEmpty && noteThoughtParent?.value !== '=children'
+      : isNoteContentEmpty
         ? setDescendant({ path: state.cursor!, values: [targetThought?.value || '=note', ''] })
         : null,
 

@@ -10,7 +10,6 @@ import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
-import parentOfThought from '../selectors/parentOfThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -45,14 +44,6 @@ const exec: Command['exec'] = (dispatch, getState) => {
       const targetPath = resolveNotePath(state, path) ?? path
 
       const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
-
-      const noteThoughtParent =
-        targetThought && targetThought.value === '=note' ? parentOfThought(state, targetThought.id) : undefined
-
-      if (noteThoughtParent?.value === '=children') {
-        dispatch(alert('Archiving a children note is not supported.', { clearDelay: 2000 }))
-        return
-      }
 
       // Archive the target thought if it exists and the note path is different
       if (targetThought && (!pathNote || !equalPath(pathNote, targetPath))) {

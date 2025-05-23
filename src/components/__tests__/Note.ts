@@ -302,3 +302,115 @@ describe('Path Reference Notes', () => {
     expect(screen.getAllByText('a')).toHaveLength(2)
   })
 })
+
+describe('Children Notes', () => {
+  it('=children/=note should allow a note to be defined for all children', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - x
+          - =children
+            - =note
+              - Test
+          - a
+          - b
+          - c`,
+      }),
+      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
+      setCursor(null),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const contentInstances = screen.getAllByText('Test')
+
+    // We expect three instances: Test rendered as note in all of the children
+    expect(contentInstances).toHaveLength(3)
+  })
+
+  it('=children/=note/=path should render a note if the =path thought (e.g., Year) exists as a nested thought within each child of x.', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - x
+          - =children
+            - =note
+              - =path
+                - Year
+          - a
+            - Year
+              - 2009
+          - b
+           - Year
+              - 2010
+          - c
+           - year
+              - 2011`,
+      }),
+      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
+      setCursor(null),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const year1 = screen.getAllByText('2009')
+    const year2 = screen.getAllByText('2010')
+    const year3 = screen.queryByText('2011')
+
+    // We expect each year to be rendered in the note once: as a note value
+    expect(year1).toHaveLength(1)
+    expect(year2).toHaveLength(1)
+    expect(year3).toBeNull()
+  })
+
+  it('should update the target thought when the note is edited and vice versa', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - x
+          - =children
+            - =note
+              - =path
+                - Year
+          - a
+            - Year
+              - 2009
+          - b
+           - Year
+              - 2010
+          - c
+           - Year
+              - 2011`,
+      }),
+      // Focus the note for editing
+      setCursor(['x', 'a']),
+      toggleNote(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Find the note elements - we expect two instances of the text
+    const noteElements = screen.getAllByText('2009')
+
+    // Target the first note element, even though both share the same text as it is the one that is part of the note
+    const noteElement = noteElements[0]
+
+    // Simulate editing the note
+    await act(async () => {
+      // Focus the element first
+      fireEvent.focus(noteElement)
+
+      // Clear the content and type new text
+      fireEvent.input(noteElement, { target: { innerHTML: '2025' } })
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Verify both the note and original thought now show the updated text
+    const updatedElements = screen.getAllByText('2025')
+    expect(updatedElements).toHaveLength(2)
+
+    // Verify the original year is no longer present
+    expect(screen.queryByText('2009')).toBeNull()
+  })
+})
