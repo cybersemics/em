@@ -425,7 +425,7 @@ const ThoughtContainer = ({
     editable: CSSProperties
   }
 
-  const [animation, setAnimation] = useState<AnimationState>({
+  const [alignmentTransition, setAlignmentTransition] = useState<AnimationState>({
     bullet: {},
     editable: {},
   })
@@ -444,7 +444,7 @@ const ThoughtContainer = ({
     const bulletAnimationOffset = 11 - (fontSize - 9) * 0.5
 
     // “Pop” elements into their initial offset positions
-    setAnimation({
+    setAlignmentTransition({
       bullet: {
         transition: 'none',
         transform: `translateX(${isTableCol1 ? -bulletAnimationOffset : bulletAnimationOffset}px)`,
@@ -454,7 +454,7 @@ const ThoughtContainer = ({
 
     // On the next frame, slide both back to 0 with an ease-out transition
     requestAnimationFrame(() => {
-      setAnimation({
+      setAlignmentTransition({
         bullet: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
         editable: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
       })
@@ -528,7 +528,7 @@ const ThoughtContainer = ({
         })}
       >
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
-          <div style={animation.bullet}>
+          <div style={alignmentTransition.bullet}>
             <Bullet
               isContextPending={isContextPending}
               isDragging={isDragging}
@@ -547,7 +547,7 @@ const ThoughtContainer = ({
 
         <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
-        <div style={animation.editable}>
+        <div style={alignmentTransition.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
             env={env}
