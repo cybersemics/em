@@ -430,6 +430,11 @@ const ThoughtContainer = ({
     editable: {},
   })
 
+  /**
+   * When the `isTableCol1` flag flips (i.e. this thought moves in or out of column-1 in Table view),
+   * we want to slide both the bullet and the editable text horizontally to their new positions.
+   * This animates the change in text alignment from left to right (and back) when switching between Tree and Table views.
+   */
   useLayoutEffect(() => {
     const hasChanged = prevIsTableCol1.current !== undefined && prevIsTableCol1.current !== isTableCol1
     if (!hasChanged) return
@@ -438,6 +443,7 @@ const ThoughtContainer = ({
     const offset = col1MaxWidth ? col1MaxWidth - thoughtWidthRef.current : 0
     const bulletAnimationOffset = 11 - (fontSize - 9) * 0.5
 
+    // “Pop” elements into their initial offset positions
     setAnimation({
       bullet: {
         transition: 'none',
@@ -446,13 +452,14 @@ const ThoughtContainer = ({
       editable: { transition: 'none', transform: `translateX(${isTableCol1 ? -offset : offset}px)` },
     })
 
+    // On the next frame, slide both back to 0 with an ease-out transition
     requestAnimationFrame(() => {
       setAnimation({
         bullet: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
         editable: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
       })
     })
-    // Only re-run animation when isTableCol1 changes; intentionally omitting col1MaxWidth to avoid unintended re-triggers
+    // Only re-run when isTableCol1 changes; omitting col1MaxWidth/etc. to avoid unintended retriggers
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTableCol1])
 
