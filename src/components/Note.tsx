@@ -5,7 +5,6 @@ import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
-import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
 import { editingActionCreator as editing } from '../actions/editing'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
@@ -16,6 +15,7 @@ import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
 import getThoughtById from '../selectors/getThoughtById'
+import parentOfThought from '../selectors/parentOfThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
@@ -42,7 +42,7 @@ const Note = React.memo(
     const [justPasted, setJustPasted] = useState(false)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
-    const note = useSelector(state => noteValue(state, thoughtId))
+    const note = useSelector(state => noteValue(state, path))
     const noteOffset = useSelector(state => state.noteOffset)
 
     /** Focus Handling with useFreshCallback. */
@@ -70,7 +70,7 @@ const Note = React.memo(
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
         // delete empty note
-        const note = noteValue(store.getState(), thoughtId)
+        const note = noteValue(store.getState(), path)
 
         // select thought
         if (e.key === 'Escape' || e.key === 'ArrowUp') {
@@ -88,14 +88,14 @@ const Note = React.memo(
           // delete target thought if it exists or =note attribute if it exists
           dispatch((dispatch, getState) => {
             const state = getState()
-            const targetThoughtPath = resolveNotePath(state, path)
-            const targetThought = targetThoughtPath ? getThoughtById(state, head(targetThoughtPath)) : undefined
+            const targetPath = resolveNotePath(state, path) ?? path
+            const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
 
-            if (targetThought && targetThought.value !== '=note') {
+            const noteThoughtParent =
+              targetThought && targetThought.value === '=note' ? parentOfThought(state, targetThought.id) : undefined
+            targetThought &&
+              noteThoughtParent?.value !== '=children' &&
               dispatch(deleteThought({ pathParent: path, thoughtId: targetThought.id }))
-            } else {
-              dispatch(deleteAttribute({ path, value: '=note' }))
-            }
           })
 
           dispatch(setNoteFocus({ value: false }))
@@ -123,11 +123,9 @@ const Note = React.memo(
         dispatch((dispatch, getState) => {
           const state = getState()
 
-          const targetPath = resolveNotePath(state, path)
+          const targetPath = resolveNotePath(state, path) ?? path
 
-          dispatch(
-            setDescendant(targetPath ? { path: targetPath, values: [value] } : { path, values: ['=note', value] }),
-          )
+          dispatch(setDescendant({ path: targetPath, values: [value] }))
         })
       },
       [dispatch, path, justPasted],

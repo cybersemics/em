@@ -1,14 +1,13 @@
+import Path from '../@types/Path'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import { firstVisibleChild } from '../selectors/getChildren'
 import resolveNotePath from '../selectors/resolveNotePath'
-import thoughtToPath from '../selectors/thoughtToPath'
 import head from './head'
 
 /** Gets the value of a thought's note. Returns null if the thought does not have a note. */
-const noteValue = (state: State, id: ThoughtId) => {
+const noteValue = (state: State, path: Path) => {
   // Try to resolve path (checks =children first, then regular =note/=path)
-  const targetPath = resolveNotePath(state, thoughtToPath(state, id))
+  const targetPath = resolveNotePath(state, path)
   if (targetPath) {
     return firstVisibleChild(state, head(targetPath))?.value ?? null
   }

@@ -1,9 +1,6 @@
 import pluralize from 'pluralize'
-import { Dispatch } from 'redux'
 import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
-import Path from '../@types/Path'
-import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { errorActionCreator as error } from '../actions/error'
@@ -13,6 +10,7 @@ import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
+import parentOfThought from '../selectors/parentOfThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -24,18 +22,6 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
 let undoArchiveTimer: number
-
-/** Archives a note path and its optional target path if =note/=path structure exists. */
-const archiveNoteAndTargetThought =
-  (notePath: Path | null, targetPath: Path | null): Thunk =>
-  (dispatch: Dispatch) => {
-    if (targetPath) {
-      dispatch(archiveThought({ path: targetPath }))
-    }
-    if (notePath) {
-      dispatch(archiveThought({ path: notePath }))
-    }
-  }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState) => {
@@ -52,17 +38,30 @@ const exec: Command['exec'] = (dispatch, getState) => {
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH
       const childNote = findAnyChild(state, head(path), child => child.value === '=note')
-
       const pathNote = childNote ? appendToPath(path, childNote.id) : null
 
       // At a minimum, this resolves to a path when =note is present.
       // If =path is present, this resolves to a path with =note/=path structure.
+      const targetPath = resolveNotePath(state, path) ?? path
 
-      const targetThoughtPath = resolveNotePath(state, path)
-      if (pathNote && equalPath(pathNote, targetThoughtPath)) {
+      const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
+
+      const noteThoughtParent =
+        targetThought && targetThought.value === '=note' ? parentOfThought(state, targetThought.id) : undefined
+
+      if (noteThoughtParent?.value === '=children') {
+        dispatch(alert('Archiving a children note is not supported.', { clearDelay: 2000 }))
+        return
+      }
+
+      // Archive the target thought if it exists and the note path is different
+      if (targetThought && (!pathNote || !equalPath(pathNote, targetPath))) {
+        dispatch(archiveThought({ path: targetPath }))
+      }
+
+      // Always archive the note path if it exists
+      if (pathNote) {
         dispatch(archiveThought({ path: pathNote }))
-      } else {
-        dispatch(archiveNoteAndTargetThought(pathNote, targetThoughtPath))
       }
     } else {
       const value = getThoughtById(state, head(cursor))?.value
