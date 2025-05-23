@@ -165,6 +165,19 @@ const TreeNode = ({
       }
     : undefined
 
+  // Context view children use disappearing text animations
+  // When context view is active, context view children disappear to the top right
+  // And normal view children disappear to the bottom left
+  // When context view is not active, normal view children disappear to the top right
+  // And context view children disappear to the bottom left
+  const contextAnimation = isInContextView
+    ? isContextViewChild
+      ? 'disappearingUpperRight'
+      : 'disappearingLowerLeft'
+    : isContextViewChild
+      ? 'disappearingLowerLeft'
+      : 'disappearingUpperRight'
+
   return (
     <FadeTransition
       id={thoughtKey}
@@ -172,19 +185,13 @@ const TreeNode = ({
       // Archive, delete, and uncategorize get a special dissolve animation.
       // Context view children get special disappearing text animations
       duration={
-        isContextViewChild
-          ? isInContextView
-            ? 'disappearingUpperRight'
-            : 'disappearingLowerLeft'
+        isLastActionDelete
+          ? 'nodeDissolve'
           : isEmpty
             ? 'nodeFadeIn'
-            : isLastActionDelete
-              ? 'nodeDissolve'
-              : isLastActionContextView
-                ? isInContextView
-                  ? 'disappearingLowerLeft'
-                  : 'disappearingUpperRight'
-                : 'nodeFadeOut'
+            : isLastActionContextView
+              ? contextAnimation
+              : 'nodeFadeOut'
       }
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
