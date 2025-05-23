@@ -30,11 +30,11 @@ const Kbd: FC<PropsWithChildren<{ isText?: boolean }>> = ({ children, isText }) 
 }
 
 /** Displays keyboard shortcuts. Replaces formatKeyboardShortcut in commands.ts. */
-const CommandKeys = ({ keyboardOrString }: { keyboardOrString: Key | Key[] | string }): JSX.Element => {
+const CommandKeyboardShortcut = ({ keyboardOrString }: { keyboardOrString: Key | Key[] | string }): JSX.Element => {
   const fontSize = useSelector(state => state.fontSize)
 
   if (Array.isArray(keyboardOrString)) {
-    return <CommandKeys keyboardOrString={keyboardOrString[0]} />
+    return <CommandKeyboardShortcut keyboardOrString={keyboardOrString[0]} />
   }
   const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString as string } : keyboardOrString
 
@@ -66,4 +66,4 @@ const CommandKeys = ({ keyboardOrString }: { keyboardOrString: Key | Key[] | str
   )
 }
 
-export default CommandKeys
+export default CommandKeyboardShortcut

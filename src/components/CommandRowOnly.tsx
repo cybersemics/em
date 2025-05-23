@@ -8,7 +8,7 @@ import { CommandViewType } from '../@types/CommandViewType'
 import GesturePath from '../@types/GesturePath'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
-import CommandKeys from './CommandKeys'
+import CommandKeyboardShortcut from './CommandKeyboardShortcut'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 
@@ -26,7 +26,12 @@ const CommandRowOnly = forwardRef<
     disabled?: boolean
     isActive?: boolean
     isTable?: boolean
-    hideDescriptionIfNotSelectedOnMobile?: boolean
+    /**
+     * Controls when the command description is displayed.
+     * - If true: Always show the description.
+     * - If false: On non-touch devices, always show the description. On touch devices, show only when the command is selected.
+     */
+    alwaysShowDescription?: boolean
     cssRaw?: SystemStyleObject
     isDragging?: boolean
   }
@@ -43,7 +48,7 @@ const CommandRowOnly = forwardRef<
       disabled,
       isActive,
       isTable,
-      hideDescriptionIfNotSelectedOnMobile,
+      alwaysShowDescription,
       cssRaw,
       isDragging,
     },
@@ -179,7 +184,7 @@ const CommandRowOnly = forwardRef<
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
-            gap: '0.2em',
+            gap: '0.25em',
             flexWrap: 'wrap',
             marginRight: viewType === 'grid' ? undefined : '3em',
             fontWeight: viewType === 'grid' ? 'normal' : undefined,
@@ -191,13 +196,13 @@ const CommandRowOnly = forwardRef<
               minWidth: '4em',
               lineHeight: '1em',
               whiteSpace: 'nowrap',
-              fontSize: viewType === 'grid' ? '0.9rem' : undefined,
+              fontSize: viewType === 'grid' ? '0.9rem' : '0.9em',
               color: disabled
                 ? 'gray'
                 : viewType === 'grid'
                   ? 'fg'
                   : isSelectedStyle || (isTouch && (gestureInProgress as string) === gestureString(command))
-                    ? 'blueHighlight'
+                    ? 'vividHighlight'
                     : 'gray75',
               fontWeight: isSelectedStyle && viewType !== 'grid' ? 'bold' : 'normal',
             })}
@@ -205,7 +210,7 @@ const CommandRowOnly = forwardRef<
             <HighlightedText value={label} match={search} disabled={disabled} />
           </b>
 
-          {(!isTouch || !hideDescriptionIfNotSelectedOnMobile || selected) && (
+          {(alwaysShowDescription || !isTouch || selected) && (
             <p
               className={css(
                 viewType === 'grid'
@@ -217,8 +222,8 @@ const CommandRowOnly = forwardRef<
                   : {
                       flexGrow: 1,
                       zIndex: 1,
-                      lineHeight: '0.83em',
-                      fontSize: '80%',
+                      lineHeight: '1em',
+                      fontSize: '0.8em',
                       color: isSelectedStyle ? 'gray75' : 'gray45',
                       marginBlock: 0,
                       ...(!isTouch
@@ -249,7 +254,7 @@ const CommandRowOnly = forwardRef<
             })}
           >
             <span className={css({ whiteSpace: 'nowrap' })}>
-              {command.keyboard && <CommandKeys keyboardOrString={command.keyboard} />}
+              {command.keyboard && <CommandKeyboardShortcut keyboardOrString={command.keyboard} />}
             </span>
           </Cell>
         ) : null}

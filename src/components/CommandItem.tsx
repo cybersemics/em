@@ -68,6 +68,7 @@ const CommandItem = ({
           : null),
       })}
       viewType={viewType}
+      alwaysShowDescription
     />
   )
 }
