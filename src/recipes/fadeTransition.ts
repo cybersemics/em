@@ -1,5 +1,18 @@
 import { defineSlotRecipe } from '@pandacss/dev'
 
+export type FadeTransitionRecipeVariant = {
+  duration:
+    | 'fast'
+    | 'slow'
+    | 'medium'
+    | 'distractionFreeTyping'
+    | 'nodeFadeIn'
+    | 'nodeFadeOut'
+    | 'nodeDissolve'
+    | 'disappearingUpperRight'
+    | 'disappearingLowerLeft'
+}
+
 const fadeTransitionRecipe = defineSlotRecipe({
   className: 'fade',
   slots: ['enter', 'exit', 'exitActive', 'enterActive', 'enterDone', 'exitDone'],
@@ -61,6 +74,50 @@ const fadeTransitionRecipe = defineSlotRecipe({
           filter: 'blur(4px)',
           transformOrigin: 'left',
           transition: `opacity {durations.nodeDissolve} ease-out, transform {durations.nodeDissolve} ease-out, filter {durations.nodeDissolve} ease-out`,
+        },
+      },
+      // Context view fades in from upper right.
+      disappearingUpperRight: {
+        enter: {
+          transform: 'skew(-25deg) translateX(-5%) translateY(50%)',
+          textShadow: '0px 0px 2em',
+          color: 'transparent',
+        },
+        enterActive: {
+          transform: 'skew(0) translateX(0) translateY(0)',
+          textShadow: '0px 0px 0px white',
+          transition: `opacity {durations.disappearingUpperRight} ease-in, color {durations.disappearingLowerLeft} ease-in, transform {durations.disappearingUpperRight} ease-in, text-shadow {durations.disappearingUpperRight} ease-in`,
+        },
+        exit: {
+          textShadow: '0px 0px 0px white',
+        },
+        exitActive: {
+          transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
+          textShadow: '0px 0px 2em',
+          color: 'transparent',
+          transition: `opacity {durations.disappearingUpperRight} ease, color {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
+        },
+      },
+      // Normal view fades out from lower left.
+      disappearingLowerLeft: {
+        enter: {
+          transform: 'skew(-25deg) translateX(5%) translateY(-50%)',
+          textShadow: '0px 0px 2em',
+          color: 'transparent',
+        },
+        enterActive: {
+          transform: 'skew(0) translateX(0) translateY(0)',
+          textShadow: '0px 0px 0px white',
+          transition: `opacity {durations.disappearingLowerLeft} ease-in, color {durations.disappearingLowerLeft} ease-in, transform {durations.disappearingLowerLeft} ease-in, text-shadow {durations.disappearingLowerLeft} ease-in`,
+        },
+        exit: {
+          textShadow: '0px 0px 0px white',
+        },
+        exitActive: {
+          transform: 'skew(-100deg) translateY(100%)',
+          textShadow: '0px 0px 2em',
+          color: 'transparent',
+          transition: `opacity {durations.disappearingLowerLeft} ease, color {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
         },
       },
     },
