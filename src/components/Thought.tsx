@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -8,6 +8,7 @@ import DropThoughtZone from '../@types/DropThoughtZone'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
@@ -25,13 +26,15 @@ import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts, getChildrenRanked, hasChildren } from '../selectors/getChildren'
+import { getAllChildren, getAllChildrenAsThoughts, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import col1MaxWidthStore from '../stores/col1MaxWidthStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import containsURL from '../util/containsURL'
+import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import hashPath from '../util/hashPath'
@@ -88,13 +91,21 @@ export interface ThoughtContainerProps {
   style?: React.CSSProperties
   styleContainer?: React.CSSProperties
   updateSize?: () => void
-  marginRight: number
 }
 
 /** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
 const equalChildren = (a: Thought[], b: Thought[]) =>
   a === b ||
   (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
+
+/** Returns the width of a given text string using the specified font. */
+const getTextWidth = (text: string, font: string): number => {
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+  if (!context) return 0
+  context.font = font
+  return context.measureText(text).width
+}
 
 /**********************************************************************
  * Components
@@ -107,7 +118,7 @@ const equalChildren = (a: Thought[], b: Thought[]) =>
 const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
-  cursor,
+  cursor: propCursor,
   debugIndex,
   depth = 0,
   env,
@@ -123,7 +134,6 @@ const ThoughtContainer = ({
   style: styleProp,
   styleContainer: styleContainerProp,
   updateSize,
-  marginRight,
 }: ThoughtContainerProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
@@ -144,7 +154,7 @@ const ThoughtContainer = ({
     if (isExpandedHoverTopPath) return true
     if (!state.cursor) return false
 
-    const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
+    const distance = propCursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, propCursor.length - depth!)) : 0
     const cursorParent = state.cursor && parentOf(state.cursor)
     const cursorGrandparent = cursorParent && rootedParentOf(state, cursorParent)
 
@@ -171,6 +181,9 @@ const ThoughtContainer = ({
 
   const isPublishChild = useSelector(state => !state.search && publishMode() && simplePath.length === 2)
   const publish = useSelector(state => !state.search && publishMode())
+  const isTableCol1 = useSelector(state =>
+    attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
+  )
   const isTableCol2 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
@@ -269,6 +282,49 @@ const ThoughtContainer = ({
     return isSubthoughtsDropTarget || isThoughtDropTarget
   })
 
+  const col1MaxWidth = col1MaxWidthStore.useState()
+
+  const prevValueRef = useRef<string>() // tracks previous value to avoid redundant updates
+  const prevIsTableCol1 = useRef<boolean>(isTableCol1) // remembers last table‐view state to prevent initial animation
+  const fontSize = useSelector(state => state.fontSize)
+  const cursor = useSelector(state => state.cursor)
+  const thoughtWidthRef = useRef<number>(0) // stores this node’s last measured width
+
+  /** Sibling thought IDs for the current cursor. */
+  const siblingThoughtIds = useSelector((state: State) => {
+    if (!cursor) return []
+    const parentId = head(rootedParentOf(state, cursor))
+    return parentId ? getAllChildren(state, parentId) : []
+  }, shallowEqual)
+
+  const isSiblingOfCursor = siblingThoughtIds.includes(thoughtId)
+
+  const prevCursorRef = useRef<Path | null>(null) // holds last cursor to detect when a new col1 node is focused
+
+  useEffect(() => {
+    const cursorChanged = prevCursorRef.current !== cursor
+    const justEnteredCol1 = cursorChanged && isSiblingOfCursor
+
+    if (!isSiblingOfCursor) {
+      prevCursorRef.current = cursor
+      return
+    }
+
+    const newWidth = value ? getTextWidth(value, `${fontSize}px Helvetica`) : 0
+
+    if (justEnteredCol1) {
+      col1MaxWidthStore.update(newWidth)
+    } else {
+      col1MaxWidthStore.update(maxWidth =>
+        !maxWidth || newWidth > maxWidth || prevValueRef.current != value ? newWidth : maxWidth,
+      )
+    }
+
+    thoughtWidthRef.current = newWidth
+    prevValueRef.current = value
+    prevCursorRef.current = cursor
+  }, [isSiblingOfCursor, col1MaxWidth, fontSize, value, cursor])
+
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
     // only hide when typing, not when deleting
@@ -366,6 +422,51 @@ const ThoughtContainer = ({
     [dispatch, path],
   )
 
+  const duration = durations.get('layoutNodeAnimation')
+
+  interface AnimationState {
+    bullet: CSSProperties
+    editable: CSSProperties
+  }
+
+  const [alignmentTransition, setAlignmentTransition] = useState<AnimationState>({
+    bullet: {},
+    editable: {},
+  })
+
+  /**
+   * When the `isTableCol1` flag flips (i.e. this thought moves in or out of column-1 in Table view),
+   * we want to slide both the bullet and the editable text horizontally to their new positions.
+   * This animates the change in text alignment from left to right (and back) when switching between Tree and Table views.
+   */
+  useLayoutEffect(() => {
+    const hasChanged = prevIsTableCol1.current !== undefined && prevIsTableCol1.current !== isTableCol1
+    if (!hasChanged) return
+    prevIsTableCol1.current = isTableCol1
+
+    const offset = col1MaxWidth ? col1MaxWidth - thoughtWidthRef.current : 0
+    const bulletAnimationOffset = 11 - (fontSize - 9) * 0.5
+
+    // “Pop” elements into their initial offset positions
+    setAlignmentTransition({
+      bullet: {
+        transition: 'none',
+        transform: `translateX(${isTableCol1 ? -bulletAnimationOffset : bulletAnimationOffset}px)`,
+      },
+      editable: { transition: 'none', transform: `translateX(${isTableCol1 ? -offset : offset}px)` },
+    })
+
+    // On the next frame, slide both back to 0 with an ease-out transition
+    requestAnimationFrame(() => {
+      setAlignmentTransition({
+        bullet: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
+        editable: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
+      })
+    })
+    // Only re-run when isTableCol1 changes; omitting col1MaxWidth/etc. to avoid unintended retriggers
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTableCol1])
+
   // thought does not exist
   if (value == null) return null
 
@@ -388,12 +489,12 @@ const ThoughtContainer = ({
         // extend the click area to the left (except if table column 2)
         marginLeft: `calc(${style?.marginLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
         paddingLeft: `calc(${style?.paddingLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
-        marginRight: `-${marginRight}px`,
         ...(testFlags.simulateDrop
           ? {
               backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
             }
           : null),
+        textAlign: isTableCol1 ? 'right' : undefined,
       }}
       className={cx(
         childRecipe(),
@@ -431,46 +532,49 @@ const ThoughtContainer = ({
         })}
       >
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
-          <Bullet
-            isContextPending={isContextPending}
-            isDragging={isDragging}
-            isEditing={isEditing}
-            leaf={leaf}
-            path={path}
-            publish={publish}
-            simplePath={simplePath}
-            thoughtId={thoughtId}
-            isInContextView={isInContextView}
-            // debugIndex={debugIndex}
-            // depth={depth}
-          />
+          <div style={alignmentTransition.bullet}>
+            <Bullet
+              isContextPending={isContextPending}
+              isDragging={isDragging}
+              isEditing={isEditing}
+              leaf={leaf}
+              path={path}
+              publish={publish}
+              simplePath={simplePath}
+              thoughtId={thoughtId}
+              isInContextView={isInContextView}
+              // debugIndex={debugIndex}
+              // depth={depth}
+            />
+          </div>
         )}
 
         <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
-        <StaticThought
-          allowSingleContext={allowSingleContext}
-          env={env}
-          isContextPending={isContextPending}
-          isEditing={isEditing}
-          ellipsizedUrl={!isEditing && containsURL(value)}
-          isPublishChild={isPublishChild}
-          isVisible={isVisible}
-          onEdit={!isTouch ? onEdit : undefined}
-          path={path}
-          rank={rank}
-          showContextBreadcrumbs={showContexts && value !== '__PENDING__'}
-          simplePath={simplePath}
-          cssRaw={cssRawThought}
-          cssRawThought={cssRawThought}
-          style={styleThought}
-          styleAnnotation={styleAnnotation || undefined}
-          styleThought={styleThought}
-          updateSize={updateSize}
-          view={view}
-          marginRight={marginRight}
-          isPressed={dragHoldResult.isPressed}
-        />
+        <div style={alignmentTransition.editable}>
+          <StaticThought
+            allowSingleContext={allowSingleContext}
+            env={env}
+            isContextPending={isContextPending}
+            isEditing={isEditing}
+            ellipsizedUrl={!isEditing && containsURL(value)}
+            isPublishChild={isPublishChild}
+            isVisible={isVisible}
+            onEdit={!isTouch ? onEdit : undefined}
+            path={path}
+            rank={rank}
+            showContextBreadcrumbs={showContexts && value !== '__PENDING__'}
+            simplePath={simplePath}
+            cssRaw={cssRawThought}
+            cssRawThought={cssRawThought}
+            style={{ ...styleThought }}
+            styleAnnotation={styleAnnotation || undefined}
+            styleThought={styleThought}
+            updateSize={updateSize}
+            view={view}
+            isPressed={dragHoldResult.isPressed}
+          />
+        </div>
         <Note path={path} disabled={!isVisible} />
       </div>
 
