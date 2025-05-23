@@ -20,7 +20,7 @@ const findNoteId = (state: State, thoughtId: ThoughtId): ThoughtId | null => {
   return parentNoteId || findDescendant(state, thoughtId, '=note')
 }
 
-/** Resolves note path by checking parent's =children/=note first, then own =note */
+/** Resolves note path by checking parent's =children/=note first, then own =note.*/
 const resolveNotePath = (state: State, path: Path): Path | null => {
   const thoughtId = head(path)
   const parentPath = thoughtToPath(state, thoughtId)

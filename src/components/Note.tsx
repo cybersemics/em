@@ -34,7 +34,6 @@ const Note = React.memo(
     disabled?: boolean
     path: Path
   }) => {
-    const thoughtId = head(path)
     const dispatch = useDispatch()
     const noteRef: { current: HTMLElement | null } = useRef(null)
     const fontSize = useSelector(state => state.fontSize)
@@ -93,9 +92,9 @@ const Note = React.memo(
 
             const noteThoughtParent =
               targetThought && targetThought.value === '=note' ? parentOfThought(state, targetThought.id) : undefined
-            targetThought &&
-              noteThoughtParent?.value !== '=children' &&
+            if (targetThought && noteThoughtParent?.value !== '=children') {
               dispatch(deleteThought({ pathParent: path, thoughtId: targetThought.id }))
+            }
           })
 
           dispatch(setNoteFocus({ value: false }))
@@ -105,7 +104,7 @@ const Note = React.memo(
           dispatch(cursorDown())
         }
       },
-      [dispatch, path, thoughtId],
+      [dispatch, path],
     )
 
     /** Updates the =note attribute when the note text is edited. */
