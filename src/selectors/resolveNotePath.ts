@@ -1,6 +1,5 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import attribute from './attribute'
@@ -9,22 +8,17 @@ import getChildren, { findAnyChild } from './getChildren'
 import getThoughtById from './getThoughtById'
 import parentOfThought from './parentOfThought'
 
-/** Finds the note ID for a thought by checking first in the parent's =children/=note, then in the thought's own =note. */
-const findNoteId = (state: State, thoughtId: ThoughtId): ThoughtId | null => {
+/** Resolves note path by checking parent's =children/=note first, then own =note.*/
+const resolveNotePath = (state: State, path: Path): Path | null => {
+  const thoughtId = head(path)
+
   // Check parent's =children/=note first
   const parent = parentOfThought(state, thoughtId)
   const parentChildrenId = parent && findDescendant(state, parent.id, '=children')
   const parentNoteId = parentChildrenId && findDescendant(state, parentChildrenId, '=note')
 
-  return parentNoteId || findDescendant(state, thoughtId, '=note')
-}
-
-/** Resolves note path by checking parent's =children/=note first, then own =note.*/
-const resolveNotePath = (state: State, path: Path): Path | null => {
-  const thoughtId = head(path)
-
-  // Get the =note thought ID
-  const noteId = findNoteId(state, thoughtId)
+  // if parent has a note, use it, otherwise use the thought's own note
+  const noteId = parentNoteId || findDescendant(state, thoughtId, '=note')
   if (!noteId) return null
 
   const noteThought = getThoughtById(state, noteId)
