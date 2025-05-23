@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
@@ -119,15 +119,6 @@ const TreeNode = ({
     setY(_y)
   }, [_y])
 
-  const vtStyle = useMemo<React.CSSProperties>(() => {
-    // Add a bit of space after a cliff to give nested lists some breathing room.
-    // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-    // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
-    const style: React.CSSProperties = cliff < 0 || isTableCol1 ? { ...cliffPaddingStyle } : {}
-
-    return style
-  }, [cliff, cliffPaddingStyle, isTableCol1])
-
   // List Virtualization
   // Do not render thoughts that are below the viewport.
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
@@ -217,7 +208,7 @@ const TreeNode = ({
               showContexts={showContexts}
               simplePath={simplePath}
               singleLineHeight={singleLineHeightWithCliff}
-              style={vtStyle}
+              style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
               crossContextualKey={thoughtKey}
               prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
               isLastVisible={isLastVisible}
