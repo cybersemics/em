@@ -437,12 +437,13 @@ const ThoughtContainer = ({
 
     const offset = col1MaxWidth ? col1MaxWidth - thoughtWidthRef.current : 0
     const bulletAnimationOffset = 11 - (fontSize - 9) * 0.5
-    const bulletX = isTableCol1 ? -bulletAnimationOffset : bulletAnimationOffset
-    const editableX = isTableCol1 ? -offset : offset
 
     setAnimation({
-      bullet: { transition: 'none', transform: `translateX(${bulletX}px)` },
-      editable: { transition: 'none', transform: `translateX(${editableX}px)` },
+      bullet: {
+        transition: 'none',
+        transform: `translateX(${isTableCol1 ? -bulletAnimationOffset : bulletAnimationOffset}px)`,
+      },
+      editable: { transition: 'none', transform: `translateX(${isTableCol1 ? -offset : offset}px)` },
     })
 
     requestAnimationFrame(() => {
