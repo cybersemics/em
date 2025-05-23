@@ -586,8 +586,7 @@ const Editable = ({
         }
       })
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [disabled, editingOrOnCursor, isVisible, path, setCursorOnThought],
+    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
   return (
