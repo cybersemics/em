@@ -520,14 +520,25 @@ const Editable = ({
       // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
       // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
       // See: #981
-      if (editingOrOnCursor) allowDefaultSelection()
+      if (editingOrOnCursor) {
+        // Prevent the browser from autoscrolling to this editable element.
+        // For some reason doesn't work on touchend.
+        preventAutoscroll(contentRef.current, {
+          // about the height of a single-line thought
+          bottomMargin: fontSize * 2,
+        })
+
+        allowDefaultSelection()
+      }
       // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
       // In those cases, it is best to prevent onFocus or onClick, otherwise edit mode will be incorrectly activated.
       // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
       // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
-      else e.preventDefault()
+      else {
+        e.preventDefault()
+      }
     },
-    [editingOrOnCursor, allowDefaultSelection],
+    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection],
   )
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
@@ -572,11 +583,6 @@ const Editable = ({
           } else {
             setCursorOnThought()
           }
-        } else if (editingOrOnCursor && e.type === 'touchend') {
-          preventAutoscroll(contentRef.current, {
-            // about the height of a single-line thought
-            bottomMargin: fontSize * 2,
-          })
         }
       })
     },
