@@ -1,7 +1,6 @@
 import { FC, PropsWithChildren } from 'react'
-import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import { MultiBackend, PointerTransition, TouchTransition } from 'react-dnd-multi-backend'
+import { DndProvider, PointerTransition, TouchTransition } from 'react-dnd-multi-backend'
 import { TouchBackend } from 'react-dnd-touch-backend'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 
@@ -28,9 +27,7 @@ const options = {
 
 /** Drag and Drop Provider HOC. */
 const DragAndDropContext: FC<PropsWithChildren> = ({ children }) => (
-  <DndProvider backend={MultiBackend} options={options}>
-    {children}
-  </DndProvider>
+  <DndProvider options={options}>{children}</DndProvider>
 )
 
 export default DragAndDropContext
