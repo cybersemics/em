@@ -1,0 +1,24 @@
+diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
+index 161095a0742bc11a0755b842a45d39ad337a15a4..5fccc4682fa17cd798f33fd21022026e62c1fa9d 100644
+--- a/dist/TouchBackendImpl.js
++++ b/dist/TouchBackendImpl.js
+@@ -242,6 +242,7 @@ export class TouchBackendImpl {
+                 return;
+             }
+             const delay = e.type === eventNames.touch.start ? this.options.delayTouchStart : this.options.delayMouseStart;
++            clearTimeout(this.timeout);
+             this.timeout = setTimeout(this.handleTopMoveStart.bind(this, e), delay);
+             this.waitingForDelay = true;
+         };
+diff --git a/src/TouchBackendImpl.ts b/src/TouchBackendImpl.ts
+index f2c164b1157180b6234da5a3cf2f38ddd165929d..2543893aa4a83999d3fc583ea00cbdca22bbeb05 100644
+--- a/src/TouchBackendImpl.ts
++++ b/src/TouchBackendImpl.ts
+@@ -388,6 +388,7 @@ export class TouchBackendImpl implements Backend {
+ 			e.type === eventNames.touch.start
+ 				? this.options.delayTouchStart
+ 				: this.options.delayMouseStart
++		clearTimeout(this.timeout)
+ 		this.timeout = setTimeout(
+ 			this.handleTopMoveStart.bind(this, e as any),
+ 			delay,
