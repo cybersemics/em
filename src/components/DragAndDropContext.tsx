@@ -1,7 +1,7 @@
 import { FC, PropsWithChildren } from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import { MouseTransition, MultiBackend, TouchTransition } from 'react-dnd-multi-backend'
+import { MultiBackend, PointerTransition, TouchTransition } from 'react-dnd-multi-backend'
 import { TouchBackend } from 'react-dnd-touch-backend'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 
@@ -12,7 +12,7 @@ const options = {
     {
       id: 'html5',
       backend: HTML5Backend,
-      transition: MouseTransition,
+      transition: PointerTransition,
     },
     // Touch backend
     // https://react-dnd.github.io/react-dnd/docs/backends/touch
