@@ -96,7 +96,7 @@ const colors = {
     fgOverlay70: 'rgba(0, 0, 0, 0.7)',
     fgOverlay80: 'rgba(235, 235, 235, 0.8)',
     fgOverlay90: 'rgba(235, 235, 235, 0.9)',
-    gray09: 'rgba(232, 232, 232, 1)',
+    gray09: 'rgba(232, 232, 232, 1)', // #e8e8e8
     gray15: 'rgba(217, 217, 217, 1)', // #262626
     gray33: 'rgba(170, 170, 170, 1)',
     gray45: 'rgba(140, 140, 140, 1)',
