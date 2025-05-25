@@ -89,7 +89,7 @@ export const isArrowKey = (key: string): key is ArrowKey => {
 }
 
 /** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
-export const arrowTextToArrowCharacter = (s: string) => (ARROW_KEYS_TO_CHARACTER as Index)[s] || s
+export const arrowTextToArrowCharacter = (s: ArrowKey) => ARROW_KEYS_TO_CHARACTER[s]
 
 /** Formats a keyboard shortcut to display to the user. */
 export const formatKeyboardShortcut = (keyboardOrString: Key | Key[] | string): string => {
@@ -98,13 +98,15 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | Key[] | string): 
     return formatKeyboardShortcut(keyboardOrString[0])
   }
 
-  const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString as string } : keyboardOrString
+  const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString } : keyboardOrString
+
+  const text = keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key
   return (
     (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
     (keyboard.alt ? (isMac ? 'Option' : 'Alt') + ' + ' : '') +
     (keyboard.control ? 'Control + ' : '') +
     (keyboard.shift ? 'Shift + ' : '') +
-    arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
+    (isArrowKey(text) ? arrowTextToArrowCharacter(text) : text)
   )
 }
 

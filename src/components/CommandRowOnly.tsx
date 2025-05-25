@@ -5,7 +5,6 @@ import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
 import Command from '../@types/Command'
 import { CommandViewType } from '../@types/CommandViewType'
-import GesturePath from '../@types/GesturePath'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import CommandKeyboardShortcut from './CommandKeyboardShortcut'
@@ -18,7 +17,7 @@ const CommandRowOnly = forwardRef<
   {
     viewType?: CommandViewType
     search: string | undefined
-    onClick: (e: React.MouseEvent, command: Command) => void
+    onClick?: (e: React.MouseEvent, command: Command) => void
     selected: boolean | undefined
     command: Command
     gestureInProgress?: string
@@ -60,7 +59,7 @@ const CommandRowOnly = forwardRef<
     // convert the description to a string
     const description = useSelector(state => {
       const descriptionStringOrFunction = (isActive && command.descriptionInverse) || command.description
-      return descriptionStringOrFunction instanceof Function
+      return typeof descriptionStringOrFunction === 'function'
         ? descriptionStringOrFunction(state)
         : descriptionStringOrFunction
     })
@@ -80,7 +79,7 @@ const CommandRowOnly = forwardRef<
         ref={ref}
         className={css(
           {
-            cursor: disabled ? undefined : 'pointer',
+            cursor: onClick && !disabled ? 'pointer' : undefined,
             position: 'relative',
             textAlign: 'left',
 
@@ -96,7 +95,7 @@ const CommandRowOnly = forwardRef<
         )}
         onClick={e => {
           if (!disabled) {
-            onClick(e, command)
+            onClick?.(e, command)
           }
         }}
         style={{
@@ -131,7 +130,7 @@ const CommandRowOnly = forwardRef<
                     width: { sm: '80px', md: '130px' },
                     height: { sm: '80px', md: '130px' },
                   })}
-                  path={gestureString(command) as GesturePath}
+                  path={gestureString(command)}
                   size={130}
                   arrowSize={25}
                   strokeWidth={7.5}
@@ -171,7 +170,7 @@ const CommandRowOnly = forwardRef<
               />
             )
           ) : Icon ? (
-            <Icon fill={token('colors.fg')} />
+            <Icon cssRaw={css.raw({ cursor: onClick ? 'pointer' : 'default' })} fill={token('colors.fg')} />
           ) : (
             // placeholder for icon to keep spacing consistent
             <div className={css({ width: 24, height: 24 })} />
@@ -245,11 +244,11 @@ const CommandRowOnly = forwardRef<
             className={css({
               fontSize: '80%',
               position: 'relative',
-              ...(!isTouch
-                ? {
+              ...(isTouch
+                ? null
+                : {
                     display: 'inline',
-                  }
-                : null),
+                  }),
               marginLeft: 'auto',
             })}
           >

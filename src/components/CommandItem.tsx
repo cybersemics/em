@@ -52,9 +52,12 @@ const CommandItem = ({
       command={command}
       search={search}
       selected={selected}
-      onClick={(_, command) => {
-        onSelect?.(selected ? null : command)
-      }}
+      onClick={
+        onSelect &&
+        ((_, command) => {
+          onSelect(selected ? null : command)
+        })
+      }
       style={{ opacity: isDragging ? 0.5 : 1, paddingInline: 0 }}
       ref={dragSource}
       isTable
