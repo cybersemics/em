@@ -16,7 +16,7 @@ const Kbd: FC<PropsWithChildren<{ isText?: boolean }>> = ({ children, isText }) 
         height: '1.1em',
         width: '1.1em',
         border: '1px solid {colors.fgOverlay30}',
-        fontSize: isText ? '0.42em' : '0.7em',
+        fontSize: isText ? '0.65em' : '0.7em',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -60,7 +60,7 @@ const CommandKeyboardShortcut = ({ keyboardOrString }: { keyboardOrString: Key |
       ) : isArrowKey(regularKey) ? (
         <Kbd>{arrowTextToArrowCharacter(regularKey)}</Kbd>
       ) : (
-        <kbd className={css({ fontSize: '0.56em' })}>{regularKey}</kbd>
+        <kbd className={css({ fontSize: '0.7em' })}>{regularKey}</kbd>
       )}
     </div>
   )

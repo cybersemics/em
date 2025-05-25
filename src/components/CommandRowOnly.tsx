@@ -225,11 +225,11 @@ const CommandRowOnly = forwardRef<
                       fontSize: '0.8em',
                       color: isSelectedStyle ? 'gray75' : 'gray45',
                       marginBlock: 0,
-                      ...(!isTouch
-                        ? {
+                      ...(isTouch
+                        ? null
+                        : {
                             flexGrow: 1,
-                          }
-                        : null),
+                          }),
                     },
               )}
             >
