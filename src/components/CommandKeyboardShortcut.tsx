@@ -36,7 +36,7 @@ const CommandKeyboardShortcut = ({ keyboardOrString }: { keyboardOrString: Key |
   if (Array.isArray(keyboardOrString)) {
     return <CommandKeyboardShortcut keyboardOrString={keyboardOrString[0]} />
   }
-  const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString as string } : keyboardOrString
+  const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString } : keyboardOrString
 
   const regularKey = keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key
   return (
