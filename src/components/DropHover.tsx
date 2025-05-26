@@ -70,18 +70,24 @@ const DropHoverIfVisible = ({
 }) => {
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector(state => {
+    // Don't show drop hover between selected thoughts during multiselect
+    const isThisThoughtBeingDragged =
+      state.draggingThought?.some(draggingPath => equalPath(draggingPath, simplePath)) || false
+
+    if (isThisThoughtBeingDragged) return false // Don't show hover lines on thoughts that are being dragged
+
     // Typically we show the drop hover if the thought is being directly hovered over.
     // However, when moving into a different context that is sorted, we need to show the drop hover on the sorted drop destination if the thought is hovered over any of the thoughts in the sorted context.
     const parentId = getThoughtById(state, head(simplePath))?.parentId
     const sameContext =
       state.draggingThought &&
-      equalPath(rootedParentOf(state, state.draggingThought), rootedParentOf(state, simplePath))
+      equalPath(rootedParentOf(state, state.draggingThought[0]), rootedParentOf(state, simplePath))
     const isParentSorted = parentId && getSortPreference(state, parentId).type === 'Alphabetical'
     if (!isParentSorted || sameContext) return testFlags.simulateDrag || isHovering
     else if (!state.dragInProgress) return false
 
     const draggingThoughtValue = state.draggingThought
-      ? getThoughtById(state, head(state.draggingThought))?.value
+      ? getThoughtById(state, head(state.draggingThought[0]))?.value
       : null
 
     // render the drop-hover if hovering over any thought in a sorted list

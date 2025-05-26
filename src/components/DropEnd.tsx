@@ -65,7 +65,7 @@ const DropEnd = ({
 
     // only render drop-hover during drag-and-drop
     const draggingThoughtValue = state.draggingThought
-      ? getThoughtById(state, head(state.draggingThought))?.value
+      ? getThoughtById(state, head(state.draggingThought[0]))?.value
       : null
     if (!draggingThoughtValue) return false
 

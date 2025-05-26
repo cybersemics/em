@@ -6,17 +6,18 @@ import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
+import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { AlertType, HOME_TOKEN } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
@@ -41,9 +42,6 @@ interface DroppableSubthoughts {
   simplePath?: SimplePath
   showContexts?: boolean
 }
-
-/** Returns true if the path is expanded. */
-const isPathExpanded = (state: State, path: Path) => !!state.expanded[hashPath(path)]
 
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 // Fires much less frequently than DragAndDropThought:canDrop
@@ -101,66 +99,112 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     return
   }
 
-  const thoughtsFrom = item.path
+  // Handle multiselect drag operations
+  const draggedItem = item as unknown as DragThoughtItem[]
 
-  if (!thoughtsFrom) {
-    console.warn('item.path not defined', { item: monitor.getItem() })
-    return
-  } else if (!props.path) {
-    console.warn('props.path not defined', { item: monitor.getItem() })
-    return
-  }
-
-  const pathTo = appendToPath(props.showContexts ? simplifyPath(state, props.path) : props.path, head(thoughtsFrom))
-
-  const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const thoughtTo = getThoughtById(state, head(rootedParentOf(state, pathTo)))
-  const thoughtFrom = getThoughtById(state, head(thoughtsFrom))
-  const parentIdFrom = head(rootedParentOf(state, thoughtsFrom))
-  const parentIdTo = head(rootedParentOf(state, pathTo))
-  const sameContext = parentIdFrom === parentIdTo
-  const isExpanded = isPathExpanded(state, rootedParentOf(state, pathTo))
-
-  const dropTop = !isExpanded && attributeEquals(state, parentIdTo, '=drop', 'top')
-
-  // cannot drop on itself
-  if (!thoughtFrom || !thoughtTo || equalPath(thoughtsFrom, props.simplePath)) return
-
-  // cannot move root or em context or target is divider
-  if (isDivider(thoughtTo?.value) || (isRootOrEM && !sameContext)) {
+  // Set isMulticursorExecuting for multiselect operations to group them as a single undo operation
+  const isMultiselectOperation = draggedItem.length > 1
+  if (isMultiselectOperation) {
     store.dispatch(
-      error({ value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.` }),
+      setIsMulticursorExecuting({
+        value: true,
+        undoLabel: 'Move Thoughts',
+      }),
     )
-    return
   }
 
-  haptics.medium()
+  // Sort by original rank to preserve order
+  const sortedItems = [...draggedItem].sort((a, b) => {
+    const thoughtA = pathToThought(state, a.simplePath)
+    const thoughtB = pathToThought(state, b.simplePath)
+    if (!thoughtA || !thoughtB) return 0
+    return thoughtA.rank - thoughtB.rank
+  })
 
-  store.dispatch(
-    moveThought({
-      oldPath: thoughtsFrom,
-      newPath: pathTo,
-      newRank: (dropTop ? getPrevRank : getNextRank)(state, thoughtTo.id),
-    }),
-  )
+  // Process each thought
+  for (let i = 0; i < sortedItems.length; i++) {
+    const thoughtItem = sortedItems[i]
+    const thoughtsFrom = thoughtItem.path
 
-  // alert user of move to another context
-  if (!sameContext) {
-    // wait until after MultiGesture has cleared the error so this alert does no get cleared
-    setTimeout(() => {
-      const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
-      const alertTo = parentIdTo === HOME_TOKEN ? 'home' : '"' + ellipsize(thoughtTo.value) + '"'
-      const inContext = props.showContexts
-        ? ` in the context of ${ellipsize(headValue(state, props.simplePath ?? props.path) ?? 'MISSING_CONTEXT')}`
-        : ''
+    if (!thoughtsFrom) {
+      console.warn('item.path not defined', { item: thoughtItem })
+      continue
+    } else if (!props.path) {
+      console.warn('props.path not defined', { item: thoughtItem })
+      continue
+    }
+    // Recompute state for each move
+    const currentState = store.getState()
+    const pathTo = appendToPath(
+      props.showContexts ? simplifyPath(currentState, props.path) : props.path,
+      head(thoughtsFrom),
+    )
 
+    const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
+    const thoughtTo = getThoughtById(currentState, head(rootedParentOf(currentState, pathTo)))
+    const thoughtFrom = getThoughtById(currentState, head(thoughtsFrom))
+    const parentIdFrom = head(rootedParentOf(currentState, thoughtsFrom))
+    const parentIdTo = head(rootedParentOf(currentState, pathTo))
+    const sameContext = parentIdFrom === parentIdTo
+    const isExpanded = !!currentState.expanded[hashPath(rootedParentOf(currentState, pathTo))]
+
+    const dropTop = !isExpanded && attributeEquals(currentState, parentIdTo, '=drop', 'top')
+
+    // cannot drop on itself
+    if (!thoughtFrom || !thoughtTo || equalPath(thoughtsFrom, props.simplePath)) continue
+
+    // cannot move root or em context or target is divider
+    if (isDivider(thoughtTo?.value) || (isRootOrEM && !sameContext)) {
       store.dispatch(
-        alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {
-          alertType: AlertType.ThoughtMoved,
-          clearDelay: 5000,
-        }),
+        error({ value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.` }),
       )
-    }, 100)
+      continue
+    }
+
+    haptics.medium()
+
+    // Calculate rank with offset to maintain order
+    const baseRank = (dropTop ? getPrevRank : getNextRank)(currentState, thoughtTo.id)
+    const rankOffset = i * 0.001
+    const newRank = baseRank + rankOffset
+
+    store.dispatch(
+      moveThought({
+        oldPath: thoughtsFrom,
+        newPath: pathTo,
+        newRank,
+      }),
+    )
+
+    // Alert for context move (only for first thought)
+    if (i === 0 && !sameContext) {
+      setTimeout(() => {
+        const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
+        const alertTo = parentIdTo === HOME_TOKEN ? 'home' : '"' + ellipsize(thoughtTo.value) + '"'
+        const inContext = props.showContexts
+          ? ` in the context of ${ellipsize(headValue(currentState, props.simplePath ?? props.path) ?? 'MISSING_CONTEXT')}`
+          : ''
+
+        const numThoughts = sortedItems.length
+        const finalAlertFrom = numThoughts === 1 ? alertFrom : `${numThoughts} thoughts`
+
+        store.dispatch(
+          alert(`${finalAlertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {
+            alertType: AlertType.ThoughtMoved,
+            clearDelay: 5000,
+          }),
+        )
+      }, 100)
+    }
+  }
+
+  // Clear isMulticursorExecuting after all operations are complete
+  if (isMultiselectOperation) {
+    store.dispatch(
+      setIsMulticursorExecuting({
+        value: false,
+      }),
+    )
   }
 }
 

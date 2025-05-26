@@ -1,5 +1,5 @@
 import React from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
@@ -89,11 +89,16 @@ const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) =
 /** Render the DropChild component if the thought is collapsed, and does not match the dragging thought. This component is an optimization to avoid calculating DropChild hooks when unnecessary. */
 const DropChildIfCollapsed = ({ depth, last, path, simplePath, isLastVisible }: DropChildProps) => {
   const isExpanded = useSelector(state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(path)])
-  const draggingThought = useSelector(state => state.draggingThought, shallowEqual)
 
-  // Do not render DropChild on expanded thoughts or on the dragging thought.
+  // Check if this thought is any of the dragging thoughts (single or multiple)
+  const isDraggingThisThought = useSelector(state => {
+    return state.draggingThought?.some(draggingThought => equalPath(draggingThought, simplePath)) || false
+  })
+
+  // Do not render DropChild on expanded thoughts or on any of the dragging thoughts.
   // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
-  if (isExpanded || equalPath(draggingThought, simplePath)) return null
+  // However, we should still allow dropping ON other thoughts when dragging multiple thoughts.
+  if (isExpanded || isDraggingThisThought) return null
 
   return <DropChild depth={depth} last={last} path={path} simplePath={simplePath} isLastVisible={isLastVisible} />
 }

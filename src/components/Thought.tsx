@@ -228,21 +228,21 @@ const ThoughtContainer = ({
   // TODO: It would be nice if we could reuse canDrop.
   const isChildHovering = useSelector(state => {
     // Early return if essential conditions are not met
-    if (!isVisible || !state.hoveringPath || !state.draggingThought) {
+    if (!isVisible || !state.hoveringPath || !state.draggingThought || !state.draggingThought.length) {
       return false
     }
 
-    // Make sure we're not hovering over a thought that cannot be dropped on
-    if (isDescendantPath(state.hoveringPath, state.draggingThought)) {
-      return false
-    }
+    const wouldCauseHighlightingIssues = state.draggingThought.some(
+      draggingThought =>
+        // Make sure we're not hovering over a thought that cannot be dropped on
+        isDescendantPath(state.hoveringPath!, draggingThought) ||
+        // Do not highlight parent of any dragging thought (i.e. when simply reordering but not moving to a new parent).
+        // The only exception is table view col1, which needs highlighting as the first thought of row1 abuts the first thought in row2.
+        (equalPath(rootedParentOf(state, draggingThought), simplePath) &&
+          !attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')),
+    )
 
-    // Do not highlight parent of dragging thought (i.e. when simply reordering but not moving to a new parent).
-    // The only exception is table view col1, which needs highlighting as the first thought of row1 abuts the first thought in row2.
-    if (
-      equalPath(rootedParentOf(state, state.draggingThought), simplePath) &&
-      !attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
-    ) {
+    if (wouldCauseHighlightingIssues) {
       return false
     }
 
@@ -260,11 +260,11 @@ const ThoughtContainer = ({
     const isSubthoughtsDropTarget =
       state.hoverZone === DropThoughtZone.SubthoughtsDrop && equalPath(simplePath, state.hoveringPath)
 
-    // ThoughtDrop: Can drop on ThoughtDrop if this thought is a parent of the hovered thought and not a descendant of the dragging thought.
+    // ThoughtDrop: Can drop on ThoughtDrop if this thought is a parent of the hovered thought and not a descendant of any dragging thought.
     const isThoughtDropTarget =
       state.hoverZone === DropThoughtZone.ThoughtDrop &&
       equalPath(rootedParentOf(state, state.hoveringPath), simplePath) &&
-      !isDescendantPath(simplePath, state.draggingThought)
+      !state.draggingThought?.some(draggingThought => isDescendantPath(simplePath, draggingThought))
 
     return isSubthoughtsDropTarget || isThoughtDropTarget
   })

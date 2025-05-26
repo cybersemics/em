@@ -20,7 +20,7 @@ import { expandOnHoverTopActionCreator as expandHoverUp } from './expandHoverUp'
 interface DragInProgressPayload {
   value: boolean
   // Sets state.draggingThought. Either hoveringPath or file must be set if value is true.
-  draggingThought?: SimplePath
+  draggingThought?: SimplePath[]
   hoveringPath?: Path
   hoverZone?: DropThoughtZone
   // Sets state.draggingFile. Either hoveringPath or file must be set if value is true.
