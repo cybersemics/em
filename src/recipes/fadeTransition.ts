@@ -86,7 +86,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
           textShadow: '0px 0px 0px white',
-          transition: `opacity {durations.disappearingUpperRight} ease-in, color {durations.disappearingLowerLeft} ease-in, transform {durations.disappearingUpperRight} ease-in, text-shadow {durations.disappearingUpperRight} ease-in`,
+          transition: `opacity {durations.disappearingUpperRight} ease-in, color {durations.disappearingUpperRight} ease-in, transform {durations.disappearingUpperRight} ease-in, text-shadow {durations.disappearingUpperRight} ease-in`,
         },
         exit: {
           textShadow: '0px 0px 0px white',
