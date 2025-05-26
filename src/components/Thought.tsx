@@ -26,7 +26,7 @@ import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildren, getAllChildrenAsThoughts, getChildrenRanked, hasChildren } from '../selectors/getChildren'
+import getChildren, { getAllChildrenAsThoughts, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -287,39 +287,47 @@ const ThoughtContainer = ({
   const thoughtWidthRef = useRef<number>(0) // stores this node’s last measured width
 
   /** Sibling thought IDs for the current cursor. */
-  const siblingThoughtIds = useSelector((state: State) => {
+  const siblingThoughts = useSelector((state: State) => {
     if (!cursor) return []
     const parentId = head(rootedParentOf(state, cursor))
-    return parentId ? getAllChildren(state, parentId) : []
+    return parentId ? getChildren(state, parentId) : []
   }, shallowEqual)
 
-  const isSiblingOfCursor = siblingThoughtIds.includes(thoughtId)
+  const isSiblingOfCursor = siblingThoughts.map(t => t.id).includes(thoughtId)
 
   const prevCursorRef = useRef<Path | null>(null) // holds last cursor to detect when a new col1 node is focused
 
+  // Updates col1MaxWidthStore based on the current thought's width when it's the cursor or a sibling of the cursor.
   useEffect(() => {
     const cursorChanged = prevCursorRef.current !== cursor
-    const justEnteredCol1 = cursorChanged && isSiblingOfCursor
-
-    if (!isSiblingOfCursor) {
-      prevCursorRef.current = cursor
-      return
-    }
-
+    const isCursor = equalPath(path, cursor)
     const newWidth = value ? getTextWidth(value, `${fontSize}px Helvetica`) : 0
 
-    if (justEnteredCol1) {
-      col1MaxWidthStore.update(newWidth)
-    } else {
-      col1MaxWidthStore.update(maxWidth =>
-        !maxWidth || newWidth > maxWidth || prevValueRef.current != value ? newWidth : maxWidth,
-      )
+    if (isCursor && siblingThoughts.length) {
+      const siblingWidths = siblingThoughts.map(t => getTextWidth(t.value, `${fontSize}px Helvetica`))
+
+      const maxSiblingWidth = Math.max(...siblingWidths, newWidth)
+
+      col1MaxWidthStore.update(maxSiblingWidth)
+    } else if (isSiblingOfCursor) {
+      if (cursorChanged) {
+        col1MaxWidthStore.update(newWidth)
+      } else {
+        col1MaxWidthStore.update(maxWidth =>
+          !maxWidth || newWidth > maxWidth || prevValueRef.current !== value ? newWidth : maxWidth,
+        )
+      }
     }
 
     thoughtWidthRef.current = newWidth
     prevValueRef.current = value
     prevCursorRef.current = cursor
-  }, [isSiblingOfCursor, col1MaxWidth, fontSize, value, cursor])
+
+    // Dependencies like siblingThoughts, path, and col1MaxWidthStore are intentionally excluded.
+    // They are either stable (e.g. store instance), or would cause unnecessary re-renders (e.g. siblingThoughts),
+    // which are already handled via cursor/value changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSiblingOfCursor, col1MaxWidth, fontSize, value, cursor, isTableCol1])
 
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
