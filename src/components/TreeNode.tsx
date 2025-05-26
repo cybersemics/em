@@ -165,18 +165,20 @@ const TreeNode = ({
       }
     : undefined
 
-  // Context view children use disappearing text animations
-  // When context view is active, context view children disappear to the top right
-  // And normal view children disappear to the bottom left
-  // When context view is not active, normal view children disappear to the top right
-  // And context view children disappear to the bottom left
-  const contextAnimation = isInContextView
-    ? isContextViewChild
-      ? 'disappearingUpperRight'
-      : 'disappearingLowerLeft'
-    : isContextViewChild
-      ? 'disappearingLowerLeft'
-      : 'disappearingUpperRight'
+  // Determine the animation direction for disappearing text
+  let contextAnimation: 'disappearingUpperRight' | 'disappearingLowerLeft'
+
+  if (isInContextView) {
+    // When context view is active:
+    // - Context view children fade in from upper right
+    // - Normal view children disappear to lower left
+    contextAnimation = isContextViewChild ? 'disappearingUpperRight' : 'disappearingLowerLeft'
+  } else {
+    // When context view is inactive:
+    // - Context view children disappear to upper right
+    // - Normal view children disappear to lower left
+    contextAnimation = isContextViewChild ? 'disappearingLowerLeft' : 'disappearingUpperRight'
+  }
 
   return (
     <FadeTransition
