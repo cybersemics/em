@@ -45,15 +45,16 @@ const exec: Command['exec'] = (dispatch, getState) => {
 
       const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
 
-      // Archive the target thought if it exists and the note path is different
-      if (targetThought && (!pathNote || !equalPath(pathNote, targetPath))) {
-        dispatch(archiveThought({ path: targetPath }))
-      }
+      // collect paths to archive
+      const pathsToArchive = [
+        // archive the target thought if it exists and the note path is different
+        ...(targetThought && (!pathNote || !equalPath(pathNote, targetPath)) ? [targetPath] : []),
+        // always archive the note path if it exists
+        ...(pathNote ? [pathNote] : []),
+      ]
 
-      // Always archive the note path if it exists
-      if (pathNote) {
-        dispatch(archiveThought({ path: pathNote }))
-      }
+      // Batch archive paths
+      pathsToArchive.forEach(pathToArchive => dispatch(archiveThought({ path: pathToArchive })))
     } else {
       const value = getThoughtById(state, head(cursor))?.value
       if (value !== '') {

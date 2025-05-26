@@ -1,9 +1,8 @@
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import setDescendant from '../actions/setDescendant'
 import setNoteFocus from '../actions/setNoteFocus'
-import getChildren from '../selectors/getChildren'
+import { anyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import resolveNotePath from '../selectors/resolveNotePath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -11,33 +10,23 @@ import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
 
-/** Calculate the offset for note focus positioning.*/
-const calculateOffset = (state: State, thoughtId: ThoughtId | undefined): number => {
-  if (!thoughtId) return 0
-  const noteChildren = getChildren(state, thoughtId)
-  return noteChildren.length ? noteChildren[0].value.length : 0
-}
-
 /** Toggle the caret between the cursor and its note. Set the selection to the end. If the note is empty, delete it. */
 const toggleNote = (state: State): State => {
   const path = state.cursor!
   const targetPath = resolveNotePath(state, path)
   const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
-  const offset = calculateOffset(state, targetThought?.id)
-  const isNoteContentEmpty = !offset
+  const offset = anyChild(state, targetThought?.id)?.value.length ?? 0
 
   return reducerFlow([
-    // if noteFocus is true, delete the target thought if the note is empty, otherwise set the note to the target thought or create a missing target thought
-    state.noteFocus
-      ? isNoteContentEmpty && targetThought
+    // if offset is 0 i.e. note is empty, and noteFocus is true, delete the target thought, otherwise set the note to the target thought or create a missing target thought
+    offset
+      ? null
+      : state.noteFocus && targetThought
         ? deleteThought({
             pathParent: path,
             thoughtId: targetThought.id,
           })
-        : null
-      : isNoteContentEmpty
-        ? setDescendant({ path: state.cursor!, values: [targetThought?.value || '=note', ''] })
-        : null,
+        : setDescendant({ path: state.cursor!, values: [targetThought?.value || '=note', ''] }),
 
     // Toggle state.noteFocus, which will trigger the Editable and Note to re-render and set the selection appropriately
     setNoteFocus(state.noteFocus ? { value: false } : { value: true, offset }),
