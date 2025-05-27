@@ -203,7 +203,7 @@ describe('Path Reference Notes', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     // Verify the note editor is visible
-    const noteEditor = document.querySelector('[aria-label="note-editable"]')
+    const noteEditor = screen.queryByLabelText('note-editable')
     expect(noteEditor).toBeInTheDocument()
 
     // Verify the 'a' thought was created and is visible in the DOM
@@ -265,6 +265,9 @@ describe('Path Reference Notes', () => {
 
     // Verify original note content is no longer visible
     expect(screen.queryByText('Test')).toBeNull()
+
+    // Verify the target thought is archived
+    expect(screen.queryByText('a')).toBeNull()
   })
 })
 
@@ -445,7 +448,7 @@ describe('Children Notes', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     // Verify the note editor is visible for child 'b'
-    const noteEditor = document.querySelector('[aria-label="note-editable"]')
+    const noteEditor = screen.queryByLabelText('note-editable')
     expect(noteEditor).toBeInTheDocument()
 
     // Verify Year thought is created and is visible in the DOM

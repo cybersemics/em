@@ -3,7 +3,6 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
-import attribute from './attribute'
 import findDescendant from './findDescendant'
 import { anyChild, findAnyChild } from './getChildren'
 import getThoughtById from './getThoughtById'
@@ -14,22 +13,6 @@ const getParentNoteId = (state: State, thoughtId: ThoughtId): ThoughtId | null =
   const parent = parentOfThought(state, thoughtId)
   const parentChildrenId = parent && findDescendant(state, parent.id, '=children')
   return parentChildrenId && findDescendant(state, parentChildrenId, '=note')
-}
-
-/** Resolves the target thought ID when a path value exists. */
-const resolvePathThought = (
-  state: State,
-  thoughtId: ThoughtId,
-  noteId: ThoughtId,
-  pathValue: string,
-): ThoughtId | null => {
-  // Find child matching path value
-  const targetThought = findAnyChild(state, thoughtId, child => child.value === pathValue)
-  if (targetThought) return targetThought.id
-
-  // If no matching child, use first child of =path attribute
-  const pathChildren = anyChild(state, findDescendant(state, noteId, '=path'))
-  return pathChildren?.id || null
 }
 
 /** Resolves note path by looking for a note thought, then checking the parent's =children/=note.*/
@@ -45,12 +28,16 @@ const resolveNotePath = (state: State, path: Path): Path | null => {
 
   if (noteThought?.pending) return null
 
-  const pathValue = attribute(state, noteId, '=path')
+  const pathId = findDescendant(state, noteId, '=path')
+  const pathChild = pathId && anyChild(state, pathId)
+  // Resolves to a thought that is a child of `thoughtId` if the `=path` contains a descendant with the same value
+  const targetThought = pathChild && findAnyChild(state, thoughtId, child => child.value === pathChild.value)
 
-  // Determine the target ID to append to the path
-  const targetId = pathValue ? resolvePathThought(state, thoughtId, noteId, pathValue) : noteId // Use note directly if no path value
-
-  return targetId ? appendToPath(path, targetId) : null
+  // Determines the appropriate target thought to use:
+  // - Uses `targetThought` if available
+  // - Falls back to `pathChild` for resolving or creating a missing thought
+  // - Uses `noteId` as a final fallback to identify the note
+  return appendToPath(path, targetThought?.id ?? pathChild?.id ?? noteId)
 }
 
 export default resolveNotePath

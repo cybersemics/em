@@ -7,13 +7,10 @@ import { errorActionCreator as error } from '../actions/error'
 import ArchiveIcon from '../components/icons/ArchiveIcon'
 import { AlertType, DELETE_VIBRATE_DURATION, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
-import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import resolveNotePath from '../selectors/resolveNotePath'
-import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
-import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -36,25 +33,12 @@ const exec: Command['exec'] = (dispatch, getState) => {
       dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH
-      const childNote = findAnyChild(state, head(path), child => child.value === '=note')
-      const pathNote = childNote ? appendToPath(path, childNote.id) : null
-
       // At a minimum, this resolves to a path when =note is present.
       // If =path is present, this resolves to a path with =note/=path structure.
-      const targetPath = resolveNotePath(state, path) ?? path
+      const targetPath = resolveNotePath(state, path)
+      if (!targetPath) return
 
-      const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
-
-      // collect paths to archive
-      const pathsToArchive = [
-        // archive the target thought if it exists and the note path is different
-        ...(targetThought && (!pathNote || !equalPath(pathNote, targetPath)) ? [targetPath] : []),
-        // always archive the note path if it exists
-        ...(pathNote ? [pathNote] : []),
-      ]
-
-      // Batch archive paths
-      pathsToArchive.forEach(pathToArchive => dispatch(archiveThought({ path: pathToArchive })))
+      dispatch(archiveThought({ path: targetPath }))
     } else {
       const value = getThoughtById(state, head(cursor))?.value
       if (value !== '') {
