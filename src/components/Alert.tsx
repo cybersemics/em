@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useRef, useState } from 'react'
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
@@ -30,6 +30,36 @@ const Alert: FC = () => {
   const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
   const dispatch = useDispatch()
 
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const clearDelay = alert?.clearDelay
+
+  const startTimer = useCallback(() => {
+    if (!clearDelay) return
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current)
+    }
+    timerRef.current = setTimeout(() => {
+      setDismiss(true)
+      dispatch(alertActionCreator(null))
+    }, clearDelay)
+  }, [clearDelay, dispatch])
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (alert && clearDelay) {
+      startTimer()
+    }
+    return () => {
+      clearTimer()
+    }
+  }, [alert, clearDelay, startTimer, clearTimer])
+
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
     if (!alert?.showCloseLink) return
@@ -60,6 +90,8 @@ const Alert: FC = () => {
             showXOnHover
             onClose={alert.showCloseLink && !isTouch ? onClose : undefined}
             textAlign='center'
+            onMouseOver={clearTimer}
+            onMouseLeave={startTimer}
           >
             <div
               data-testid='alert-content'

@@ -14,15 +14,15 @@ interface Options {
   value: string | null
   // used to cancel imports
   importFileId?: string
+  clearDelay?: number
 }
 
 /** A special alert value that is masked by alertStore. This just needs to be a non-empty stable value to avoid Redux state changes. */
 const ALERT_WITH_MINITORE = '__ALERT_WITH_MINITORE__'
 
-let clearAlertTimeoutId: ReturnType<typeof setTimeout> | null = null
 
 /** Set an alert with an optional close link. */
-const alertReducer = (state: State, { alertType, showCloseLink, value, importFileId }: Options) => {
+const alertReducer = (state: State, { alertType, showCloseLink, value, importFileId, clearDelay }: Options) => {
   if (value === state.alert?.value) return state
   return {
     ...state,
@@ -34,6 +34,7 @@ const alertReducer = (state: State, { alertType, showCloseLink, value, importFil
           showCloseLink: showCloseLink !== false,
           value,
           importFileId,
+          clearDelay,
         }
       : null,
   }
@@ -62,39 +63,6 @@ export const alertActionCreator =
   (dispatch, getState) => {
     const { alert } = getState()
 
-    /** Clears the original alert, or noop if the alert has changed. */
-    const clearOriginalAlert = () => {
-      dispatch((dispatch, getState) => {
-        const state = getState()
-        // Do not clear a different alert than was originally shown.
-        // For example, the command palette would be incorrectly cleared after a delay.
-        if (alertType !== state.alert?.alertType) return
-
-        // clear alert store value
-        if (!value) {
-          alertStore.update(null)
-        }
-
-        dispatch({
-          type: 'alert',
-          alertType,
-          showCloseLink,
-          value: null,
-        })
-      })
-      clearAlertTimeoutId = null
-    }
-
-    // if clearDelay is not provided i.e undefined alert should not dismiss.
-    if (clearDelay) {
-      // if clearAlertTimeoutId !== null, it means that previous alert hasn't been cleared yet. In this case cancel previous timeout and start new.
-      if (clearAlertTimeoutId) {
-        clearTimeout(clearAlertTimeoutId)
-      }
-
-      clearAlertTimeoutId = setTimeout(clearOriginalAlert, clearDelay)
-    }
-
     // do not show the same alert twice
     // do not clear an alert with a non-matching alertType
     if (value === (alert?.value || null) || (!value && alert && alertType && alertType !== alert.alertType)) return
@@ -110,6 +78,7 @@ export const alertActionCreator =
       showCloseLink,
       value,
       importFileId,
+      clearDelay,
     })
   }
 

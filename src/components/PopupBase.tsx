@@ -47,6 +47,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       padding,
       showXOnHover,
       textAlign,
+      onMouseOver,
+      onMouseLeave,
     },
     ref,
   ) => {
@@ -128,6 +130,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           // disable swipe-to-dismiss when multicursor is active
           ...(!multicursor && useSwipeToDismissProps.style),
         }}
+        onMouseOver={onMouseOver}
+        onMouseLeave={onMouseLeave}
       >
         {children}
         {onClose ? (
