@@ -8006,12 +8006,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dnd-multi-backend@npm:^8.0.3":
-  version: 8.0.3
-  resolution: "dnd-multi-backend@npm:8.0.3"
+"dnd-multi-backend@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "dnd-multi-backend@npm:9.0.0"
   peerDependencies:
     dnd-core: ^16.0.1
-  checksum: 10c0/4395fd82785dd5ab44d36fbe95dc09bba42aaad5bf4147e9d5ab710d2356764630dc893bbe6030d4b82481392920a711259715100a5d266ecb1a403c6d3f79b7
+  checksum: 10c0/06bd814108aebe2f7d70e5324bc8c039f5d95772777c890d5610c7d2024a4f8d7935257a69c767cf7180e5c90606a3da66ee98fd38059e1bb98578fbf8054f94
   languageName: node
   linkType: hard
 
@@ -8367,10 +8367,10 @@ __metadata:
     react-contenteditable: "npm:^3.3.7"
     react-dnd: "npm:^16.0.1"
     react-dnd-html5-backend: "npm:^16.0.1"
-    react-dnd-multi-backend: "npm:8.0.3"
+    react-dnd-multi-backend: "npm:^9.0.0"
     react-dnd-test-backend: "npm:^16.0.1"
     react-dnd-test-utils: "npm:^16.0.1"
-    react-dnd-touch-backend: "npm:16.0.1"
+    react-dnd-touch-backend: "patch:react-dnd-touch-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch"
     react-dom: "npm:18.3.1"
     react-error-boundary: "npm:^4.1.2"
     react-gravatar: "npm:^2.6.3"
@@ -15670,28 +15670,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dnd-multi-backend@npm:8.0.3":
-  version: 8.0.3
-  resolution: "react-dnd-multi-backend@npm:8.0.3"
+"react-dnd-multi-backend@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "react-dnd-multi-backend@npm:9.0.0"
   dependencies:
-    dnd-multi-backend: "npm:^8.0.3"
-    react-dnd-preview: "npm:^8.0.3"
+    dnd-multi-backend: "npm:^9.0.0"
+    react-dnd-preview: "npm:^9.0.0"
   peerDependencies:
     dnd-core: ^16.0.1
-    react: ^16.14.0 || ^17.0.2 || ^18.0.0
+    react: ^16.14.0 || ^17.0.2 || ^18.0.0 || ^19.0.0
     react-dnd: ^16.0.1
-    react-dom: ^16.14.0 || ^17.0.2 || ^18.0.0
-  checksum: 10c0/9a6842cdf290bf4cd28105dc14cfe8aa6c09bd1f0da74fd459c2300aa26d0b141fcf5e2906dbe77b46eb6f555a93f7e1fdd64bac6930cd8d971992be79a6b39c
+    react-dom: ^16.14.0 || ^17.0.2 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/f60bbe9eeed1549adfcd0539f59221b0fc8a7bbcc7b0ccb9f0fde78052a2e8fd5645373ab3e5b90640b99259c664d15a0e78c5817ab9312130f9db95a53bfc14
   languageName: node
   linkType: hard
 
-"react-dnd-preview@npm:^8.0.3":
-  version: 8.0.3
-  resolution: "react-dnd-preview@npm:8.0.3"
+"react-dnd-preview@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "react-dnd-preview@npm:9.0.0"
   peerDependencies:
-    react: ^16.14.0 || ^17.0.2 || ^18.0.0
+    react: ^16.14.0 || ^17.0.2 || ^18.0.0 || ^19.0.0
     react-dnd: ^16.0.1
-  checksum: 10c0/f010d04a386debe37c5375a0655686dc00b6e42f3b45aabb074ac52f9f1d92379fec552714991125789cbc7d370f94b0100b6c77d2d41037e87bff00234bc3ef
+  checksum: 10c0/89c36b551806533b364addc3c862450195a185ea754ab61c44aa57fb2a6fd297631f6dc6c518402343f903a1df58582997ff357a9b9f84ebba9be329f8844ae9
   languageName: node
   linkType: hard
 
@@ -15739,6 +15739,16 @@ __metadata:
     "@react-dnd/invariant": "npm:^4.0.1"
     dnd-core: "npm:^16.0.1"
   checksum: 10c0/88096146939a0466d43b9b4e33a3761284e36f40e82d2dbd1ab1130d81b40110b45492fb828db7857f3822cd44f604f646de0a2285f18ccb0697b5b088fa4b22
+  languageName: node
+  linkType: hard
+
+"react-dnd-touch-backend@patch:react-dnd-touch-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch":
+  version: 16.0.1
+  resolution: "react-dnd-touch-backend@patch:react-dnd-touch-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch::version=16.0.1&hash=dacaf8"
+  dependencies:
+    "@react-dnd/invariant": "npm:^4.0.1"
+    dnd-core: "npm:^16.0.1"
+  checksum: 10c0/3d89d02400e668b72b272fb61931e13b4e0f335efe51e28324d435b6eda4eeef58ba70e413fba16cbc43b9024cbf238d0626998280a9f3c7070f87ddcf6ba586
   languageName: node
   linkType: hard
 

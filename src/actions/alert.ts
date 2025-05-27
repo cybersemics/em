@@ -7,6 +7,7 @@ import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import clearMulticursors from './clearMulticursors'
+import dismissTip from './dismissTip'
 
 interface Options {
   alertType?: keyof typeof AlertType
@@ -24,7 +25,7 @@ const ALERT_WITH_MINITORE = '__ALERT_WITH_MINITORE__'
 const alertReducer = (state: State, { alertType, showCloseLink, value, importFileId, clearDelay }: Options) => {
   if (value === state.alert?.value) return state
   return {
-    ...state,
+    ...(value ? dismissTip(state) : state),
     // Deselect All when closing the MulticursorActive alert
     ...(state.alert?.alertType === AlertType.MulticursorActive && value === null ? clearMulticursors(state) : null),
     alert: value
