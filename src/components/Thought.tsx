@@ -279,14 +279,11 @@ const ThoughtContainer = ({
   })
 
   const col1MaxWidth = col1MaxWidthStore.useState()
-
-  const prevValueRef = useRef<string>() // tracks previous value to avoid redundant updates
   const prevIsTableCol1 = useRef<boolean>(isTableCol1) // remembers last table‐view state to prevent initial animation
   const fontSize = useSelector(state => state.fontSize)
   const cursor = useSelector(state => state.cursor)
-  const thoughtWidthRef = useRef<number>(0) // stores this node’s last measured width
 
-  /** Sibling thought IDs for the current cursor. */
+  /** Sibling thoughts for the current cursor. */
   const siblingThoughts = useSelector((state: State) => {
     if (!cursor) return []
     const parentId = head(rootedParentOf(state, cursor))
@@ -295,39 +292,38 @@ const ThoughtContainer = ({
 
   const isSiblingOfCursor = siblingThoughts.map(t => t.id).includes(thoughtId)
 
-  const prevCursorRef = useRef<Path | null>(null) // holds last cursor to detect when a new col1 node is focused
-
-  // Updates col1MaxWidthStore based on the current thought's width when it's the cursor or a sibling of the cursor.
+  // Recalculates and updates col1MaxWidthStore when switching into Table View column 1.
   useEffect(() => {
-    const cursorChanged = prevCursorRef.current !== cursor
-    const isCursor = equalPath(path, cursor)
-    const newWidth = value ? getTextWidth(value, `${fontSize}px Helvetica`) : 0
+    const justFlipped = prevIsTableCol1.current !== undefined && prevIsTableCol1.current !== isTableCol1
 
-    if (isCursor && siblingThoughts.length) {
-      const siblingWidths = siblingThoughts.map(t => getTextWidth(t.value, `${fontSize}px Helvetica`))
-
-      const maxSiblingWidth = Math.max(...siblingWidths, newWidth)
-
-      col1MaxWidthStore.update(maxSiblingWidth)
-    } else if (isSiblingOfCursor) {
-      if (cursorChanged) {
-        col1MaxWidthStore.update(newWidth)
-      } else {
-        col1MaxWidthStore.update(maxWidth =>
-          !maxWidth || newWidth > maxWidth || prevValueRef.current !== value ? newWidth : maxWidth,
-        )
-      }
+    if (!justFlipped) {
+      prevIsTableCol1.current = isTableCol1
+      return
     }
 
-    thoughtWidthRef.current = newWidth
-    prevValueRef.current = value
-    prevCursorRef.current = cursor
+    // Only the single node under the cursor does the measurement:
+    const isCursorNode = cursor ? equalPath(cursor, path) : false
+    if (isCursorNode) {
+      // (a) Clear the old max so siblings know “we’re recalculating.”
+      col1MaxWidthStore.update(() => null)
+
+      // (b) Loop over **all** cursor‐siblings and measure their widths:
+      const allWidths = siblingThoughts.map(thought => {
+        const text = thought.value || ''
+        return getTextWidth(text, `${fontSize}px Helvetica`)
+      })
+
+      // (c) Compute the “one true max” of allWidths (or zero if no siblings):
+      const newMax = allWidths.length > 0 ? Math.max(...allWidths) : 0
+
+      // (d) Write that newMax into the store so Hook B can see it:
+      col1MaxWidthStore.update(() => newMax)
+    }
 
     // Dependencies like siblingThoughts, path, and col1MaxWidthStore are intentionally excluded.
-    // They are either stable (e.g. store instance), or would cause unnecessary re-renders (e.g. siblingThoughts),
-    // which are already handled via cursor/value changes.
+    // They are either stable (e.g. store instance), or would cause unnecessary re-renders (e.g. siblingThoughts).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSiblingOfCursor, col1MaxWidth, fontSize, value, cursor, isTableCol1])
+  }, [isTableCol1])
 
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
@@ -439,37 +435,49 @@ const ThoughtContainer = ({
   })
 
   /**
-   * When the `isTableCol1` flag flips (i.e. this thought moves in or out of column-1 in Table view),
-   * we want to slide both the bullet and the editable text horizontally to their new positions.
-   * This animates the change in text alignment from left to right (and back) when switching between Tree and Table views.
+   * Animates the horizontal repositioning of the bullet and editable text
+   * when switching into or out of Table View column 1 (`isTableCol1`).
+   * Aligns text based on the maximum width of all cursor siblings,
+   * creating a smooth left/right shift effect between Tree and Table views.
    */
   useLayoutEffect(() => {
-    const hasChanged = prevIsTableCol1.current !== undefined && prevIsTableCol1.current !== isTableCol1
-    if (!hasChanged) return
-    prevIsTableCol1.current = isTableCol1
+    if (col1MaxWidth == null || !isSiblingOfCursor) return
 
-    const offset = col1MaxWidth ? col1MaxWidth - thoughtWidthRef.current : 0
-    const bulletAnimationOffset = 11 - (fontSize - 9) * 0.5
+    // Each sibling now measures its own width on the fly:
+    const myText = value || ''
+    const myWidth = getTextWidth(myText, `${fontSize}px Helvetica`)
+    const offset = col1MaxWidth - myWidth
+    const bulletOffset = 11 - (fontSize - 9) * 0.5
 
     // “Pop” elements into their initial offset positions
     setAlignmentTransition({
       bullet: {
         transition: 'none',
-        transform: `translateX(${isTableCol1 ? -bulletAnimationOffset : bulletAnimationOffset}px)`,
+        transform: `translateX(${isTableCol1 ? -bulletOffset : bulletOffset}px)`,
       },
-      editable: { transition: 'none', transform: `translateX(${isTableCol1 ? -offset : offset}px)` },
+      editable: {
+        transition: 'none',
+        transform: `translateX(${isTableCol1 ? -offset : offset}px)`,
+      },
     })
 
     // On the next frame, slide both back to 0 with an ease-out transition
     requestAnimationFrame(() => {
       setAlignmentTransition({
-        bullet: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
-        editable: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
+        bullet: {
+          transition: `transform ${duration}ms ease-out`,
+          transform: 'translateX(0)',
+        },
+        editable: {
+          transition: `transform ${duration}ms ease-out`,
+          transform: 'translateX(0)',
+        },
       })
     })
-    // Only re-run when isTableCol1 changes; omitting col1MaxWidth/etc. to avoid unintended retriggers
+    // Dependencies like `value`, `fontSize`, and `isSiblingOfCursor` are intentionally excluded
+    // to prevent unnecessary retriggers on unrelated state changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTableCol1])
+  }, [isTableCol1, col1MaxWidth])
 
   // thought does not exist
   if (value == null) return null
