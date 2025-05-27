@@ -20,7 +20,6 @@ interface Options {
 /** A special alert value that is masked by alertStore. This just needs to be a non-empty stable value to avoid Redux state changes. */
 const ALERT_WITH_MINITORE = '__ALERT_WITH_MINITORE__'
 
-
 /** Set an alert with an optional close link. */
 const alertReducer = (state: State, { alertType, showCloseLink, value, importFileId, clearDelay }: Options) => {
   if (value === state.alert?.value) return state
