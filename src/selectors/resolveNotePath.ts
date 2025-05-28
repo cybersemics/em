@@ -30,12 +30,12 @@ const resolveNotePath = (state: State, path: Path): Path | null => {
 
   const pathId = findDescendant(state, noteId, '=path')
   const pathChild = pathId && anyChild(state, pathId)
-  // Resolves to a thought that is a child of `thoughtId` if the `=path` contains a descendant with the same value
+  // Resolves to a thought that is a child of `thoughtId` if the `=path` contains a descendant thought with the same value
   const targetThought = pathChild && findAnyChild(state, thoughtId, child => child.value === pathChild.value)
 
   // Determines the appropriate target thought to use:
   // - Uses `targetThought` if available
-  // - Falls back to `pathChild` for resolving or creating a missing thought
+  // - Falls back to `pathChild` for resolving or creating a missing thought via toggleNote()
   // - Uses `noteId` as a final fallback to identify the note
   return appendToPath(path, targetThought?.id ?? pathChild?.id ?? noteId)
 }
