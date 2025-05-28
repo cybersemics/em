@@ -4,7 +4,7 @@ import ThoughtId from '../@types/ThoughtId'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import findDescendant from './findDescendant'
-import { anyChild, findAnyChild } from './getChildren'
+import { findAnyChild, isVisible } from './getChildren'
 import getThoughtById from './getThoughtById'
 import parentOfThought from './parentOfThought'
 
@@ -29,7 +29,7 @@ const resolveNotePath = (state: State, path: Path): Path | null => {
   if (noteThought?.pending) return null
 
   const pathId = findDescendant(state, noteId, '=path')
-  const pathChild = pathId && anyChild(state, pathId)
+  const pathChild = pathId && findAnyChild(state, pathId, isVisible(state))
   // Resolves to a thought that is a child of `thoughtId` if the `=path` contains a descendant thought with the same value
   const targetThought = pathChild && findAnyChild(state, thoughtId, child => child.value === pathChild.value)
 
