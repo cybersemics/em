@@ -1,6 +1,5 @@
-import React, { useCallback, useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { CSSTransition } from 'react-transition-group'
 import { css, cva, cx } from '../../styled-system/css'
 import { bulletRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
@@ -21,6 +20,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import bulletElementsStore from '../stores/bulletElementsStore'
 import fastClick, { type FastClickEvent } from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -294,8 +294,8 @@ const BulletLeaf = ({
       data-bullet='leaf'
       ry={radius}
       rx={radius}
-      cy='298'
-      cx='297'
+      cy='300'
+      cx='300'
       style={{
         // allow .gray to define fill when missing
         // allow .graypulse to define fill when pending
@@ -378,81 +378,6 @@ const BulletHighlightOverlay = ({ bulletOverlayRadius }: { bulletOverlayRadius: 
   )
 }
 
-const overlayAppearActive = css({
-  opacity: 0,
-  animation: `opacity 80ms linear forwards`,
-})
-
-const overlayAppearDone = css({
-  opacity: 1,
-})
-
-const overlayEnterActive = css({
-  opacity: 0,
-  animation: `opacity 80ms linear forwards`,
-})
-
-const overlayEnterDone = css({
-  opacity: 1,
-})
-
-const overlayExit = css({
-  opacity: 0,
-})
-
-/** A larger circle that surrounds the bullet of the highlighted thought. */
-const BulletCursorOverlay = ({
-  bulletOverlayRadius,
-  isEditing,
-  path,
-}: {
-  bulletOverlayRadius: number
-  isEditing?: boolean
-  path: Path
-}) => {
-  const overlayRef = useRef<HTMLElement>(null)
-
-  const objKey = path.join('-') + isEditing
-  return (
-    <CSSTransition
-      key={objKey}
-      in={!!isEditing}
-      nodeRef={overlayRef}
-      appear
-      classNames={{
-        // animation that runs when we have new thought
-        appearActive: overlayAppearActive,
-        appearDone: overlayAppearDone,
-
-        // animation that runs when isEditing is true
-        enterActive: overlayEnterActive,
-        enterDone: overlayEnterDone,
-
-        // animation that runs when isEditing is false
-        exit: overlayExit,
-      }}
-      timeout={{
-        appear: 80 + 1, // 80ms of delay before the overlay appears and 1ms of opacity transition
-        enter: 80 + 1, // 80ms of delay before the overlay appears and 1ms of opacity transition
-        exit: 1,
-      }}
-    >
-      <ellipse
-        ry={bulletOverlayRadius}
-        rx={bulletOverlayRadius}
-        cy='300'
-        cx='300'
-        ref={overlayRef as unknown as React.RefObject<SVGEllipseElement>}
-        className={css({
-          fillOpacity: 0.25,
-          fill: 'fg',
-          opacity: 0,
-        })}
-      />
-    </CSSTransition>
-  )
-}
-
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
   isContextPending,
@@ -497,6 +422,23 @@ const Bullet = ({
     bulletOverlayRadius,
   } = useBulletPosition({ path })
 
+  useEffect(() => {
+    // add the bullet element to the bulletElementsStore
+    if (!svgElement.current) {
+      return
+    }
+    const currentState = bulletElementsStore.getState()
+    const newState = { ...currentState, [head(path)]: svgElement.current }
+    bulletElementsStore.update(newState)
+
+    return () => {
+      const currentState = bulletElementsStore.getState()
+      const newState = { ...currentState }
+      delete newState[head(path)]
+      bulletElementsStore.update(newState)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   /** Returns true if th e thought is pending. */
   const pending = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
@@ -641,9 +583,6 @@ const Bullet = ({
         ref={svgElement}
       >
         <g>
-          {/* required to be rendered all the time to allow animation */}
-          <BulletCursorOverlay bulletOverlayRadius={bulletOverlayRadius} isEditing={isEditing} path={path} />
-
           {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && (
             <BulletHighlightOverlay bulletOverlayRadius={bulletOverlayRadius} />
           )}
