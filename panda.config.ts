@@ -163,11 +163,9 @@ const keyframes = defineKeyframes({
   },
   overlayTranslation: {
     '0%': {
-      opacity: 1,
       transform: `translateY(var(--from-y)) translateX(var(--from-x))`,
     },
     '100%': {
-      opacity: 1,
       transform: `translateY(var(--to-y)) translateX(var(--to-x))`,
     },
   },

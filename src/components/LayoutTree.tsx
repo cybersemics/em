@@ -248,6 +248,9 @@ const LayoutTree = () => {
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
+  // state to delay in order to prevent layout shift before we get the init position of the bullet overlay
+  const [allowIndentChangeAfterPageRefresh, setAllowIndentChangeAfterPageRefresh] = useState(false)
+
   return (
     <div
       className={cx(
@@ -275,18 +278,19 @@ const LayoutTree = () => {
           height: totalHeight + spaceBelow,
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
-          transform: `translateX(${1.5 - indent}em`,
+          transform: allowIndentChangeAfterPageRefresh ? `translateX(${1.5 - indent}em)` : `translateX(1.5em)`,
           // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
       >
-        {cursorThoughtPositioned?.isCursor && (
-          <BulletAnimateOverlay
-            x={cursorThoughtPositioned?.x}
-            y={cursorThoughtPositioned?.y}
-            path={cursorThoughtPositioned?.path}
-          />
-        )}
+        <BulletAnimateOverlay
+          x={cursorThoughtPositioned?.x ?? 0}
+          y={cursorThoughtPositioned?.y ?? 0}
+          path={cursorThoughtPositioned?.path}
+          indent={indent}
+          isOverlayPositionInitialized={allowIndentChangeAfterPageRefresh}
+          setOverlayPositionInitialized={setAllowIndentChangeAfterPageRefresh}
+        />
 
         <TransitionGroup>
           {treeThoughtsPositioned.map((thought, index) => (
