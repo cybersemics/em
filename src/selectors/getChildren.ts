@@ -12,6 +12,8 @@ import compareByRank from '../util/compareByRank'
 import {
   compareThought,
   compareThoughtByCreated,
+  compareThoughtByNote,
+  compareThoughtByNoteDescending,
   compareThoughtByUpdated,
   compareThoughtDescending,
 } from '../util/compareThought'
@@ -87,6 +89,17 @@ const getChildrenSortedUpdated = (state: State, id: ThoughtId): Thought[] => {
   const sortPreference = getSortPreference(state, id)
   const sorted = getChildrenSortedBy(state, id, (a, b) =>
     sortPreference.direction === 'Desc' ? compareThoughtByUpdated(b, a) : compareThoughtByUpdated(a, b),
+  )
+  return sorted
+}
+
+/** Generates children sorted by their note value. */
+const getChildrenSortedNote = (state: State, id: ThoughtId): Thought[] => {
+  const sortPreference = getSortPreference(state, id)
+  const sorted = getChildrenSortedBy(state, id, (a, b) =>
+    sortPreference.direction === 'Desc'
+      ? compareThoughtByNoteDescending(state)(a, b)
+      : compareThoughtByNote(state)(a, b),
   )
   return sorted
 }
@@ -185,6 +198,8 @@ export const getAllChildrenSorted = (state: State, id: ThoughtId): Thought[] => 
     return getChildrenSortedCreated(state, id)
   } else if (sortPreference.type === 'Updated') {
     return getChildrenSortedUpdated(state, id)
+  } else if (sortPreference.type === 'Note') {
+    return getChildrenSortedNote(state, id)
   } else {
     return getChildrenRanked(state, id)
   }

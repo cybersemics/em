@@ -1,6 +1,11 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { compareReasonable, compareReasonableDescending } from '../util/compareThought'
+import {
+  compareReasonable,
+  compareReasonableDescending,
+  compareThoughtByNote,
+  compareThoughtByNoteDescending,
+} from '../util/compareThought'
 import { getAllChildrenSorted } from './getChildren'
 import getSortPreference from './getSortPreference'
 
@@ -8,18 +13,26 @@ import getSortPreference from './getSortPreference'
 const getSortedRank = (state: State, id: ThoughtId, value: string) => {
   const children = id ? getAllChildrenSorted(state, id) : []
 
+  if (children.length === 0) return 0
+
   const sortPreference = getSortPreference(state, id)
   const isDescending = sortPreference.direction === 'Desc'
+  const thoughts = children.filter(thought => !state.cursor || thought.id !== state.cursor[state.cursor.length - 1])
 
-  // For Created or Updated sort types, we need specific handling
-  if (sortPreference.type === 'Created' || sortPreference.type === 'Updated') {
-    // If there are no children, return 0 as the default rank
-    if (children.length === 0) return 0
-    const thoughts = children.filter(thought => !state.cursor || thought.id !== state.cursor[state.cursor.length - 1])
-    // For "Updated and Created" sorting, always place at the beginning or end since this thought was just updated
+  // Handle Created/Updated sorting
+  if (sortPreference.type === 'Created' || sortPreference.type === 'Updated')
     return isDescending ? thoughts[0].rank - 1 : (thoughts[thoughts.length - 1]?.rank || 0) + 1
-  }
 
+  // Handle Note sorting
+  if (sortPreference.type === 'Note') {
+    const compareFn = isDescending ? compareThoughtByNoteDescending(state) : compareThoughtByNote(state)
+    const index = thoughts.findIndex(thought => compareFn(value, thought) === -1)
+    return index === -1
+      ? (thoughts[thoughts.length - 1]?.rank || 0) + 1
+      : index === 0
+        ? thoughts[0].rank - 1
+        : (thoughts[index - 1].rank + thoughts[index].rank) / 2
+  }
   // For alphabetical sorting, use the existing logic
   // find the first child with value greater than or equal to the new value
   const index = children.findIndex(child =>

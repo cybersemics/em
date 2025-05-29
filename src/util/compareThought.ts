@@ -2,10 +2,12 @@
 import _ from 'lodash'
 import ComparatorFunction from '../@types/ComparatorFunction'
 import ComparatorValue from '../@types/ComparatorValue'
+import State from '../@types/State'
 import Thought from '../@types/Thought'
 import { ALLOWED_FORMATTING_TAGS, EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
 import isAttribute from './isAttribute'
 import lower from './lower'
+import noteValue from './noteValue'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
 const IGNORED_PREFIXES = ['the ']
@@ -221,3 +223,21 @@ export const compareThoughtByUpdated: ComparatorFunction<Thought> = (a: Thought,
 /** Compare two thoughts by their lastUpdated timestamp in descending order (newest first). Fall back to compareReasonable if created at the same time. */
 export const compareThoughtByUpdatedDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
   compare(b.lastUpdated, a.lastUpdated) || compareReasonable(a.value, b.value)
+
+/** Get note value or fallback for a Thought or string input. */
+const getNoteOrFallback = (state: State, input: Thought | string): string => {
+  if (typeof input === 'string') return input
+  return noteValue(state, input.id) || input.rank.toString()
+}
+
+/** Compare two thoughts by their note value in ascending order, falling back to their rank if notes are absent or equal. */
+export const compareThoughtByNote =
+  (state: State): ComparatorFunction<Thought | string> =>
+  (a: Thought | string, b: Thought | string) =>
+    compareReasonable(getNoteOrFallback(state, a), getNoteOrFallback(state, b))
+
+/** Compare two thoughts by their note value in descending order, falling back to their rank if notes are absent or equal. */
+export const compareThoughtByNoteDescending =
+  (state: State): ComparatorFunction<Thought | string> =>
+  (a: Thought | string, b: Thought | string) =>
+    compareReasonableDescending(getNoteOrFallback(state, a), getNoteOrFallback(state, b))
