@@ -6,6 +6,7 @@ import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
@@ -17,7 +18,6 @@ import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
@@ -43,13 +43,16 @@ interface DroppableSubthoughts {
   showContexts?: boolean
 }
 
+/** Returns true if the path is expanded. */
+const isPathExpanded = (state: State, path: Path) => !!state.expanded[hashPath(path)]
+
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 // Fires much less frequently than DragAndDropThought:canDrop
 const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTargetMonitor): boolean => {
   const state = store.getState()
 
   const item = monitor.getItem() as DragThoughtOrFiles
-  const thoughtsFrom = (item as DragThoughtItem).path
+  const draggedItems = item as DragThoughtItem[]
 
   /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
   const isExpandedTop = () =>
@@ -78,7 +81,7 @@ const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTarget
     // do not drop on thoughts hidden by autofocus
     (!isHidden() || isClosestHiddenParent()) &&
     // do not drop on descendants
-    !isDescendantPath(thoughtsTo, thoughtsFrom) &&
+    draggedItems.every(item => !isDescendantPath(thoughtsTo, item.path)) &&
     // do not drop on dividers
     !isDivider(getThoughtById(state, head(thoughtsTo))?.value) &&
     // do not drop on context view
@@ -88,8 +91,6 @@ const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTarget
 
 /** Moves a thought on drop, or imports a file on drop. */
 const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
-  const state = store.getState()
-
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
@@ -100,10 +101,15 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   }
 
   // Handle multiselect drag operations
-  const draggedItem = item as unknown as DragThoughtItem[]
+  const draggedItems = item as DragThoughtItem[]
+
+  if (!props.path) {
+    console.warn('props.path not defined', { item: draggedItems })
+    return
+  }
 
   // Set isMulticursorExecuting for multiselect operations to group them as a single undo operation
-  const isMultiselectOperation = draggedItem.length > 1
+  const isMultiselectOperation = draggedItems.length > 1
   if (isMultiselectOperation) {
     store.dispatch(
       setIsMulticursorExecuting({
@@ -113,42 +119,29 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     )
   }
 
-  // Sort by original rank to preserve order
-  const sortedItems = [...draggedItem].sort((a, b) => {
-    const thoughtA = pathToThought(state, a.simplePath)
-    const thoughtB = pathToThought(state, b.simplePath)
-    if (!thoughtA || !thoughtB) return 0
-    return thoughtA.rank - thoughtB.rank
-  })
-
-  // Process each thought
-  for (let i = 0; i < sortedItems.length; i++) {
-    const thoughtItem = sortedItems[i]
+  // Process each thought in document order
+  for (let i = 0; i < draggedItems.length; i++) {
+    // Recompute state for each move
+    const state = store.getState()
+    const thoughtItem = draggedItems[i]
     const thoughtsFrom = thoughtItem.path
 
     if (!thoughtsFrom) {
       console.warn('item.path not defined', { item: thoughtItem })
-      continue
-    } else if (!props.path) {
-      console.warn('props.path not defined', { item: thoughtItem })
-      continue
+      return
     }
-    // Recompute state for each move
-    const currentState = store.getState()
-    const pathTo = appendToPath(
-      props.showContexts ? simplifyPath(currentState, props.path) : props.path,
-      head(thoughtsFrom),
-    )
+
+    const pathTo = appendToPath(props.showContexts ? simplifyPath(state, props.path) : props.path, head(thoughtsFrom))
 
     const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-    const thoughtTo = getThoughtById(currentState, head(rootedParentOf(currentState, pathTo)))
-    const thoughtFrom = getThoughtById(currentState, head(thoughtsFrom))
-    const parentIdFrom = head(rootedParentOf(currentState, thoughtsFrom))
-    const parentIdTo = head(rootedParentOf(currentState, pathTo))
+    const thoughtTo = getThoughtById(state, head(rootedParentOf(state, pathTo)))
+    const thoughtFrom = getThoughtById(state, head(thoughtsFrom))
+    const parentIdFrom = head(rootedParentOf(state, thoughtsFrom))
+    const parentIdTo = head(rootedParentOf(state, pathTo))
     const sameContext = parentIdFrom === parentIdTo
-    const isExpanded = !!currentState.expanded[hashPath(rootedParentOf(currentState, pathTo))]
+    const isExpanded = isPathExpanded(state, rootedParentOf(state, pathTo))
 
-    const dropTop = !isExpanded && attributeEquals(currentState, parentIdTo, '=drop', 'top')
+    const dropTop = !isExpanded && attributeEquals(state, parentIdTo, '=drop', 'top')
 
     // cannot drop on itself
     if (!thoughtFrom || !thoughtTo || equalPath(thoughtsFrom, props.simplePath)) continue
@@ -163,16 +156,11 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
 
     haptics.medium()
 
-    // Calculate rank with offset to maintain order
-    const baseRank = (dropTop ? getPrevRank : getNextRank)(currentState, thoughtTo.id)
-    const rankOffset = i * 0.001
-    const newRank = baseRank + rankOffset
-
     store.dispatch(
       moveThought({
         oldPath: thoughtsFrom,
         newPath: pathTo,
-        newRank,
+        newRank: (dropTop ? getPrevRank : getNextRank)(state, thoughtTo.id),
       }),
     )
 
@@ -182,10 +170,10 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
         const alertTo = parentIdTo === HOME_TOKEN ? 'home' : '"' + ellipsize(thoughtTo.value) + '"'
         const inContext = props.showContexts
-          ? ` in the context of ${ellipsize(headValue(currentState, props.simplePath ?? props.path) ?? 'MISSING_CONTEXT')}`
+          ? ` in the context of ${ellipsize(headValue(state, props.simplePath ?? props.path) ?? 'MISSING_CONTEXT')}`
           : ''
 
-        const numThoughts = sortedItems.length
+        const numThoughts = draggedItems.length
         const finalAlertFrom = numThoughts === 1 ? alertFrom : `${numThoughts} thoughts`
 
         store.dispatch(
