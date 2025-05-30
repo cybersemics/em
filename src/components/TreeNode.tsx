@@ -105,10 +105,6 @@ const TreeNode = ({
     !isSwap ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
   )
 
-  // Determine if this node is a child of a context node and if context view is active
-  const isContextViewChild = useSelector((state: State): boolean => isContextViewActive(state, parentOf(path)))
-  const isInContextView = useSelector((state: State): boolean => isContextViewActive(state, path))
-
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
   // 2. Create L-shaped animation paths by controlling when each movement starts/ends
@@ -165,6 +161,10 @@ const TreeNode = ({
       }
     : undefined
 
+  // Determine if this node is a child of a context node and if context view is active
+  const isContextViewChild = useSelector((state: State): boolean => isContextViewActive(state, parentOf(path)))
+  const isInContextView = useSelector((state: State): boolean => isContextViewActive(state, path))
+
   // Determine the animation direction for disappearing text
   let contextAnimation: 'disappearingUpperRight' | 'disappearingLowerLeft'
 
@@ -176,7 +176,7 @@ const TreeNode = ({
   } else {
     // When context view is inactive:
     // - Context view children disappear to upper right
-    // - Normal view children disappear to lower left
+    // - Normal view children fade in from lower left
     contextAnimation = isContextViewChild ? 'disappearingLowerLeft' : 'disappearingUpperRight'
   }
 
