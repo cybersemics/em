@@ -92,6 +92,25 @@ const TreeNode = ({
     return lastPatches?.some(patch => patch.actions[0] === 'toggleContextView')
   })
 
+  // Determine if this node is a child of a context node and if context view is active
+  const isContextViewChild = useSelector((state: State): boolean => isContextViewActive(state, parentOf(path)))
+  const isInContextView = useSelector((state: State): boolean => isContextViewActive(state, path))
+
+  // Determine the animation direction for disappearing text
+  let contextAnimation: 'disappearingUpperRight' | 'disappearingLowerLeft'
+
+  if (isInContextView) {
+    // When context view is active:
+    // - Context view children fade in from upper right
+    // - Normal view children disappear to lower left
+    contextAnimation = isContextViewChild ? 'disappearingUpperRight' : 'disappearingLowerLeft'
+  } else {
+    // When context view is inactive:
+    // - Context view children disappear to upper right
+    // - Normal view children fade in from lower left
+    contextAnimation = isContextViewChild ? 'disappearingLowerLeft' : 'disappearingUpperRight'
+  }
+
   /** True if the last action is swapParent and the thought is involved in the swap (cursor or parent). */
   const isSwap = useSelector(
     state =>
@@ -160,25 +179,6 @@ const TreeNode = ({
         left: 0,
       }
     : undefined
-
-  // Determine if this node is a child of a context node and if context view is active
-  const isContextViewChild = useSelector((state: State): boolean => isContextViewActive(state, parentOf(path)))
-  const isInContextView = useSelector((state: State): boolean => isContextViewActive(state, path))
-
-  // Determine the animation direction for disappearing text
-  let contextAnimation: 'disappearingUpperRight' | 'disappearingLowerLeft'
-
-  if (isInContextView) {
-    // When context view is active:
-    // - Context view children fade in from upper right
-    // - Normal view children disappear to lower left
-    contextAnimation = isContextViewChild ? 'disappearingUpperRight' : 'disappearingLowerLeft'
-  } else {
-    // When context view is inactive:
-    // - Context view children disappear to upper right
-    // - Normal view children fade in from lower left
-    contextAnimation = isContextViewChild ? 'disappearingLowerLeft' : 'disappearingUpperRight'
-  }
 
   return (
     <FadeTransition
