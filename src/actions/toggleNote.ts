@@ -4,7 +4,7 @@ import setDescendant from '../actions/setDescendant'
 import setNoteFocus from '../actions/setNoteFocus'
 import { anyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
-import resolveNotePath from '../selectors/resolveNotePath'
+import resolveNotePath, { resolveNoteKey } from '../selectors/resolveNotePath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
@@ -15,6 +15,7 @@ const toggleNote = (state: State): State => {
   const path = state.cursor!
   const targetPath = resolveNotePath(state, path)
   const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
+  const noteKey = resolveNoteKey(state, path)
   const offset = anyChild(state, targetThought?.id)?.value.length ?? 0
 
   return reducerFlow([
@@ -26,7 +27,7 @@ const toggleNote = (state: State): State => {
             pathParent: path,
             thoughtId: targetThought.id,
           })
-        : setDescendant({ path: state.cursor!, values: [targetThought?.value || '=note', ''] }),
+        : setDescendant({ path, values: [noteKey, ''] }),
 
     // Toggle state.noteFocus, which will trigger the Editable and Note to re-render and set the selection appropriately
     setNoteFocus(state.noteFocus ? { value: false } : { value: true, offset }),
