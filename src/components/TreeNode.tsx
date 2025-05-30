@@ -187,10 +187,10 @@ const TreeNode = ({
       // Archive, delete, and uncategorize get a special dissolve animation.
       // Context view children get special disappearing text animations
       duration={
-        isLastActionDelete
-          ? 'nodeDissolve'
-          : isEmpty
-            ? 'nodeFadeIn'
+        isEmpty
+          ? 'nodeFadeIn'
+          : isLastActionDelete
+            ? 'nodeDissolve'
             : isLastActionContextView
               ? contextAnimation
               : 'nodeFadeOut'
