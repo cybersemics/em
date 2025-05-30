@@ -67,20 +67,19 @@ const fadeTransitionRecipe = defineSlotRecipe({
       disappearingUpperRight: {
         enter: {
           transform: 'skew(-25deg) translateX(-5%) translateY(50%)',
-          textShadow: '0px 0px 2em',
-          color: 'transparent',
+          textShadow: '0px 0px 2em white',
         },
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
           textShadow: '0px 0px 0px white',
-          transition: `opacity {durations.disappearingUpperRight} ease-in, color {durations.disappearingUpperRight} ease-in, transform {durations.disappearingUpperRight} ease-in, text-shadow {durations.disappearingUpperRight} ease-in`,
+          transition: `opacity {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
         },
         exit: {
           textShadow: '0px 0px 0px white',
         },
         exitActive: {
           transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
-          textShadow: '0px 0px 2em',
+          textShadow: '0px 0px 2em white',
           color: 'transparent',
           transition: `opacity {durations.disappearingUpperRight} ease, color {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
         },
@@ -93,15 +92,15 @@ const fadeTransitionRecipe = defineSlotRecipe({
         },
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
-          textShadow: '0px 0px 2em transparent',
-          transition: `opacity {durations.disappearingLowerLeft} ease-in, color {durations.disappearingLowerLeft} ease-in, transform {durations.disappearingLowerLeft} ease-in, text-shadow {durations.disappearingLowerLeft} ease-in`,
+          textShadow: '0px 0px 2em white',
+          transition: `opacity {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
         },
         exit: {
           textShadow: '0px 0px 0px white',
         },
         exitActive: {
           transform: 'skew(-100deg) translateY(100%)',
-          textShadow: '0px 0px 2em',
+          textShadow: '0px 0px 2em white',
           color: 'transparent',
           transition: `opacity {durations.disappearingLowerLeft} ease, color {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
         },
