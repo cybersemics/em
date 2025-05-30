@@ -1,26 +1,18 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import findDescendant from './findDescendant'
 import { findAnyChild, isVisible } from './getChildren'
 import getThoughtById from './getThoughtById'
-import parentOfThought from './parentOfThought'
-
-/** Gets the parent note ID if it exists. */
-const getParentNoteId = (state: State, thoughtId: ThoughtId): ThoughtId | null => {
-  const parent = parentOfThought(state, thoughtId)
-  const parentChildrenId = parent && findDescendant(state, parent.id, '=children')
-  return parentChildrenId && findDescendant(state, parentChildrenId, '=note')
-}
 
 /** Resolves note path by looking for a note thought, then checking the parent's =children/=note.*/
 const resolveNotePath = (state: State, path: Path): Path | null => {
   const thoughtId = head(path)
+  const parentId = getThoughtById(state, thoughtId)?.parentId ?? null
 
-  // if thought has a note, use it, otherwise use the parent's note
-  const noteId = findDescendant(state, thoughtId, '=note') || getParentNoteId(state, thoughtId)
+  // the id of the thought's =note or the parent's =children/=note
+  const noteId = findDescendant(state, thoughtId, '=note') || findDescendant(state, parentId, ['=children', '=note'])
 
   if (!noteId) return null
 
