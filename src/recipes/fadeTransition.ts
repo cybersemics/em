@@ -1,18 +1,5 @@
 import { defineSlotRecipe } from '@pandacss/dev'
 
-export type FadeTransitionRecipeVariant = {
-  duration:
-    | 'fast'
-    | 'slow'
-    | 'medium'
-    | 'distractionFreeTyping'
-    | 'nodeFadeIn'
-    | 'nodeFadeOut'
-    | 'nodeDissolve'
-    | 'disappearingUpperRight'
-    | 'disappearingLowerLeft'
-}
-
 const fadeTransitionRecipe = defineSlotRecipe({
   className: 'fade',
   slots: ['enter', 'exit', 'exitActive', 'enterActive', 'enterDone', 'exitDone'],
@@ -102,12 +89,11 @@ const fadeTransitionRecipe = defineSlotRecipe({
       disappearingLowerLeft: {
         enter: {
           transform: 'skew(-25deg) translateX(5%) translateY(-50%)',
-          textShadow: '0px 0px 2em',
-          color: 'transparent',
+          textShadow: '0px 0px 2em white',
         },
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
-          textShadow: '0px 0px 0px white',
+          textShadow: '0px 0px 2em transparent',
           transition: `opacity {durations.disappearingLowerLeft} ease-in, color {durations.disappearingLowerLeft} ease-in, transform {durations.disappearingLowerLeft} ease-in, text-shadow {durations.disappearingLowerLeft} ease-in`,
         },
         exit: {
