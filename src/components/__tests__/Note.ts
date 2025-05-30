@@ -11,112 +11,114 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('basic note', async () => {
-  await dispatch([
-    importText({
-      text: `
+describe('=note', () => {
+  test('basic', async () => {
+    await dispatch([
+      importText({
+        text: `
       - a
         - =note
           - foo`,
-    }),
-    // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-    setCursor(null),
-  ])
+      }),
+      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
+      setCursor(null),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  // Verify note is rendered
-  const noteElement = screen.queryByLabelText('note')
-  expect(noteElement).toBeInTheDocument()
+    // Verify note is rendered
+    const noteElement = screen.queryByLabelText('note')
+    expect(noteElement).toBeInTheDocument()
 
-  // Verify note content
-  const element = screen.getByText('foo')
-  expect(element)
-})
+    // Verify note content
+    const element = screen.getByText('foo')
+    expect(element)
+  })
 
-it('re-render note when =note subthought value changes', async () => {
-  await dispatch([
-    importText({
-      text: `
+  test('re-render note when =note subthought value changes', async () => {
+    await dispatch([
+      importText({
+        text: `
       - a
         - =note
           - foo`,
-    }),
-    setCursor(['a', '=note', 'foo']),
-    (dispatch, getState) =>
-      dispatch(
-        editThought({
-          oldValue: 'foo',
-          newValue: 'bar',
-          path: getState().cursor as SimplePath,
-        }),
-      ),
-    // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-    setCursor(null),
-  ])
+      }),
+      setCursor(['a', '=note', 'foo']),
+      (dispatch, getState) =>
+        dispatch(
+          editThought({
+            oldValue: 'foo',
+            newValue: 'bar',
+            path: getState().cursor as SimplePath,
+          }),
+        ),
+      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
+      setCursor(null),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  const element = screen.getByText('bar')
-  expect(element)
-})
+    const element = screen.getByText('bar')
+    expect(element)
+  })
 
-it('render note when subthought is edited from non-attribute', async () => {
-  await dispatch([
-    importText({
-      text: `
+  test('render note when subthought is edited from non-attribute', async () => {
+    await dispatch([
+      importText({
+        text: `
       - a
         - note
           - foo`,
-    }),
-    setCursor(['a', 'note']),
-    (dispatch, getState) =>
-      dispatch(
-        editThought({
-          oldValue: 'note',
-          newValue: '=note',
-          path: getState().cursor as SimplePath,
-        }),
-      ),
-    // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-    setCursor(null),
-  ])
+      }),
+      setCursor(['a', 'note']),
+      (dispatch, getState) =>
+        dispatch(
+          editThought({
+            oldValue: 'note',
+            newValue: '=note',
+            path: getState().cursor as SimplePath,
+          }),
+        ),
+      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
+      setCursor(null),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  const element = screen.getByText('foo')
-  expect(element)
-})
+    const element = screen.getByText('foo')
+    expect(element)
+  })
 
-it('render note when subthought is edited from non-note attribute', async () => {
-  await dispatch([
-    importText({
-      text: `
+  test('render note when subthought is edited from non-note attribute', async () => {
+    await dispatch([
+      importText({
+        text: `
       - a
         - =test
           - foo`,
-    }),
-    setCursor(['a', '=test']),
-    (dispatch, getState) =>
-      dispatch(
-        editThought({
-          oldValue: '=test',
-          newValue: '=note',
-          path: getState().cursor as SimplePath,
-        }),
-      ),
-    // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-    setCursor(null),
-  ])
+      }),
+      setCursor(['a', '=test']),
+      (dispatch, getState) =>
+        dispatch(
+          editThought({
+            oldValue: '=test',
+            newValue: '=note',
+            path: getState().cursor as SimplePath,
+          }),
+        ),
+      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
+      setCursor(null),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  const element = screen.getByText('foo')
-  expect(element)
+    const element = screen.getByText('foo')
+    expect(element)
+  })
 })
 
-describe('Path Reference Notes', () => {
-  it('renders a path-based note with correct content', async () => {
+describe('=note/=path', () => {
+  test('renders a path-based note with correct content', async () => {
     await dispatch([
       importText({
         text: `
@@ -144,7 +146,7 @@ describe('Path Reference Notes', () => {
     expect(contentInstances).toHaveLength(2)
   })
 
-  it('updates target thought when path-based note is edited', async () => {
+  test('updates target thought when path-based note is edited', async () => {
     await dispatch([
       importText({
         text: `
@@ -187,7 +189,7 @@ describe('Path Reference Notes', () => {
     expect(screen.queryByText('Test')).toBeNull()
   })
 
-  it('creates missing thought if it does not exist when toggling note', async () => {
+  test('creates missing thought if it does not exist when toggling note', async () => {
     await dispatch([
       importText({
         text: `
@@ -225,7 +227,7 @@ describe('Path Reference Notes', () => {
     expect(contentElements).toHaveLength(2)
   })
 
-  it('archives both note and target when archiving a note via user interaction', async () => {
+  test('archives both note and target when archiving a note via user interaction', async () => {
     await dispatch([
       importText({
         text: `
@@ -271,8 +273,8 @@ describe('Path Reference Notes', () => {
   })
 })
 
-describe('Children Notes', () => {
-  it('=children/=note should allow a note to be defined for all children', async () => {
+describe('=children/=note', () => {
+  test('=children/=note should allow a note to be defined for all children', async () => {
     await dispatch([
       importText({
         text: `
@@ -298,8 +300,10 @@ describe('Children Notes', () => {
     const contentInstances = screen.getAllByText('Test')
     expect(contentInstances).toHaveLength(3)
   })
+})
 
-  it('=children/=note/=path should render a note if the =path thought (e.g., Year) exists as a nested thought within each child of x.', async () => {
+describe('=children/=note/=path', () => {
+  test('basic', async () => {
     await dispatch([
       importText({
         text: `
@@ -339,7 +343,7 @@ describe('Children Notes', () => {
     expect(year3).toBeNull() // lowercase 'year' doesn't match 'Year' path
   })
 
-  it('should update the target thought when the note is edited and vice versa', async () => {
+  test('update the target thought when the note is edited and vice versa', async () => {
     await dispatch([
       importText({
         text: `
@@ -390,7 +394,7 @@ describe('Children Notes', () => {
     expect(screen.queryByText('2009')).toBeNull()
   })
 
-  it('should render only existing notes (empty notes are not rendered)', async () => {
+  test('render only existing notes (empty notes are not rendered)', async () => {
     await dispatch([
       importText({
         text: `
@@ -427,7 +431,7 @@ describe('Children Notes', () => {
     expect(year2011).toBeNull() // lowercase 'year' doesn't match 'Year' path
   })
 
-  it('should allow adding a missing note via =children/=note/=path', async () => {
+  test('allow adding a missing note via =children/=note/=path', async () => {
     await dispatch([
       importText({
         text: `
@@ -470,7 +474,7 @@ describe('Children Notes', () => {
     expect(year2010Elements).toHaveLength(2) // One in the note, one in the actual thought
   })
 
-  it('should allow deleting a note via =children/=note/=path', async () => {
+  test('allow deleting a note via =children/=note/=path', async () => {
     await dispatch([
       importText({
         text: `
