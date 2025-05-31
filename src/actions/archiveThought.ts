@@ -9,7 +9,7 @@ import deleteThought from '../actions/deleteThought'
 import moveThought from '../actions/moveThought'
 import newThought from '../actions/newThought'
 import setCursor from '../actions/setCursor'
-import { AlertType, HOME_PATH } from '../constants'
+import { HOME_PATH } from '../constants'
 import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, getAllChildren } from '../selectors/getChildren'
@@ -132,8 +132,6 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           // alert
           alert({
             value: deleteThoughtAlertText(state, path, { archive: true }),
-            // provide an alertType so the delete command can null the alert after a delay
-            alertType: AlertType.ThoughtArchived,
             showCloseLink: true,
             clearDelay: 5000,
           }),
