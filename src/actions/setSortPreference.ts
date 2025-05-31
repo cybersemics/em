@@ -49,7 +49,6 @@ const setSortPreference = (
             (sortPreference.type !== 'None'
               ? `${sortPreference.direction === 'Asc' ? 'ascending' : 'descending'}`
               : 'manually'),
-          alertType: 'Sort',
         })
       : null,
 

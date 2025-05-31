@@ -462,8 +462,6 @@ export enum AlertType {
   MulticursorError = 'MulticursorError',
   // shown when the user redoes an action
   Redo = 'Redo',
-  // shown when the sort setting is changed
-  Sort = 'Sort',
   // shown when a thought has been deleted
   ThoughtDeleted = 'ThoughtDeleted',
   // shown when a thought has been moved to a different context

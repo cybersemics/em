@@ -73,7 +73,6 @@ const toggleSort = (
             (nextSortPreference.type !== 'None'
               ? `${nextSortPreference.direction === 'Asc' ? 'ascending' : 'descending'}`
               : 'manually'),
-          alertType: 'Sort',
         })
       : null,
 
