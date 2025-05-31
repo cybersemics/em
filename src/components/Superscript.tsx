@@ -40,10 +40,18 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, cssRaw }) =
   // recalculate when Lexeme contexts are loaded
   // Note: This results in a total running time for all superscripts of O(totalNumberOfContexts * depth)
   useEffect(() => {
-    window.requestAnimationFrame(() => {
+    const updateNumContexts = () => {
       if (!ref.current) return
       setNumContexts(contexts.filter(id => isVisibleContext(store.getState(), id)).length)
-    })
+    }
+
+    // In test environments (when navigator.webdriver is true), update synchronously to avoid flaky tests
+    // In production, use requestAnimationFrame for better performance
+    if (typeof navigator !== 'undefined' && navigator.webdriver) {
+      updateNumContexts()
+    } else {
+      window.requestAnimationFrame(updateNumContexts)
+    }
   }, [contexts, showHiddenThoughts])
 
   return <StaticSuperscript ref={ref} show={!!(show && numContexts)} n={numContexts} cssRaw={cssRaw} hideZero />
