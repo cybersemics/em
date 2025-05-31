@@ -63,6 +63,48 @@ const fadeTransitionRecipe = defineSlotRecipe({
           transition: `opacity {durations.nodeDissolve} ease-out, transform {durations.nodeDissolve} ease-out, filter {durations.nodeDissolve} ease-out`,
         },
       },
+      // Context view fades in from upper right.
+      disappearingUpperRight: {
+        enter: {
+          transform: 'skew(-25deg) translateX(-5%) translateY(50%)',
+          textShadow: '0px 0px 2em white',
+        },
+        enterActive: {
+          transform: 'skew(0) translateX(0) translateY(0)',
+          textShadow: '0px 0px 0px white',
+          transition: `opacity {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
+        },
+        exit: {
+          textShadow: '0px 0px 0px white',
+        },
+        exitActive: {
+          transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
+          textShadow: '0px 0px 2em white',
+          color: 'transparent',
+          transition: `opacity {durations.disappearingUpperRight} ease, color {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
+        },
+      },
+      // Normal view fades out from lower left.
+      disappearingLowerLeft: {
+        enter: {
+          transform: 'skew(-25deg) translateX(5%) translateY(-50%)',
+          textShadow: '0px 0px 2em white',
+        },
+        enterActive: {
+          transform: 'skew(0) translateX(0) translateY(0)',
+          textShadow: '0px 0px 2em white',
+          transition: `opacity {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
+        },
+        exit: {
+          textShadow: '0px 0px 0px white',
+        },
+        exitActive: {
+          transform: 'skew(-100deg) translateY(100%)',
+          textShadow: '0px 0px 2em white',
+          color: 'transparent',
+          transition: `opacity {durations.disappearingLowerLeft} ease, color {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
+        },
+      },
     },
   },
   staticCss: ['*'],

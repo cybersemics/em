@@ -7,6 +7,7 @@ import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
 import parentOf from '../util/parentOf'
@@ -86,6 +87,30 @@ const TreeNode = ({
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
 
+  const isLastActionContextView = useSelector(state => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => patch.actions[0] === 'toggleContextView')
+  })
+
+  // Determine if this node is a child of a context node and if context view is active
+  const isContextViewChild = useSelector((state: State): boolean => isContextViewActive(state, parentOf(path)))
+  const isInContextView = useSelector((state: State): boolean => isContextViewActive(state, path))
+
+  // Determine the animation direction for disappearing text
+  let contextAnimation: 'disappearingUpperRight' | 'disappearingLowerLeft'
+
+  if (isInContextView) {
+    // When context view is active:
+    // - Context view children fade in from upper right
+    // - Normal view children disappear to lower left
+    contextAnimation = isContextViewChild ? 'disappearingUpperRight' : 'disappearingLowerLeft'
+  } else {
+    // When context view is inactive:
+    // - Context view children disappear to upper right
+    // - Normal view children fade in from lower left
+    contextAnimation = isContextViewChild ? 'disappearingLowerLeft' : 'disappearingUpperRight'
+  }
+
   /** True if the last action is swapParent and the thought is involved in the swap (cursor or parent). */
   const isSwap = useSelector(
     state =>
@@ -160,7 +185,16 @@ const TreeNode = ({
       id={thoughtKey}
       // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
       // Archive, delete, and uncategorize get a special dissolve animation.
-      duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
+      // Context view children get special disappearing text animations
+      duration={
+        isEmpty
+          ? 'nodeFadeIn'
+          : isLastActionDelete
+            ? 'nodeDissolve'
+            : isLastActionContextView
+              ? contextAnimation
+              : 'nodeFadeOut'
+      }
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
       unmountOnExit
