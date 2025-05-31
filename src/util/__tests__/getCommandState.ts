@@ -110,6 +110,31 @@ it('background color thought', () => {
   })
 })
 
+it('text and background color on font tag', () => {
+  expect(getCommandState('<font color="#000000" style="background-color: rgb(0, 0, 255);">a</font>')).toStrictEqual({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    code: false,
+    foreColor: '#000000',
+    backColor: 'rgb(0, 0, 255)',
+  })
+})
+
+// NOT IMPLEMENTED
+it.skip('text and background color on span tag', () => {
+  expect(getCommandState('<span style="color: #000000; background-color: rgb(0, 0, 255);">a</span>')).toStrictEqual({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    code: false,
+    foreColor: '#000000',
+    backColor: 'rgb(0, 0, 255)',
+  })
+})
+
 it('fully styled thought', () => {
   expect(
     getCommandState(
