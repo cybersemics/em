@@ -22,14 +22,6 @@ jobs:
           # If you're using actions/checkout@v2 you must set persist-credentials to false in most cases for the deployment to work correctly.
           persist-credentials: false
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Set Node.js version
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Install npm dependencies 🛠
         run: yarn
 
