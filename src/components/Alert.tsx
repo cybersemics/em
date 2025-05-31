@@ -1,4 +1,4 @@
-import { FC, useCallback } from 'react'
+import { FC, useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
@@ -25,6 +25,35 @@ const Alert: FC = () => {
   const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
   const dispatch = useDispatch()
 
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const clearDelay = alert?.clearDelay
+
+  const startTimer = useCallback(() => {
+    if (!clearDelay) return
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+    }
+    timerRef.current = setTimeout(() => {
+      dispatch(alertActionCreator(null))
+    }, clearDelay)
+  }, [clearDelay, dispatch])
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (alert && clearDelay) {
+      startTimer()
+    }
+    return () => {
+      clearTimer()
+    }
+  }, [alert, clearDelay, startTimer, clearTimer])
+
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
     dispatch(alertActionCreator(null))
@@ -39,6 +68,8 @@ const Alert: FC = () => {
       onClose={alert?.showCloseLink ? onClose : undefined}
       value={alert ? value : null}
       icon={Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
+      onMouseLeave={startTimer}
+      onMouseOver={clearTimer}
     >
       {alert?.importFileId && (
         <a
