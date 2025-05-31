@@ -3,11 +3,14 @@ import { ThunkMiddleware } from 'redux-thunk'
 import State from '../@types/State'
 import { isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
+import getSortPreference from '../selectors/getSortPreference'
+import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import scrollTopStore from '../stores/scrollTop'
 import syncStatusStore from '../stores/syncStatus'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
+import head from '../util/head'
 
 // Tracks whether the has scrolled since the last cursor navigation
 let userInteractedAfterNavigation: boolean = false
@@ -154,13 +157,20 @@ scrollTopStore.subscribe(() => {
 /** Runs a throttled session keepalive on every action. */
 const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
-    const cursorLast = getState().cursor
+    const stateOld = getState()
+    const cursorOld = stateOld.cursor
+    const sortPreferenceOld =
+      stateOld.cursor && getSortPreference(stateOld, head(rootedParentOf(stateOld, stateOld.cursor)))
 
     next(action)
 
     // if the cursor has changed, scroll it into view
-    const cursor = getState().cursor
-    if (!isEqual(cursor, cursorLast)) {
+    const stateNew = getState()
+    const cursorNew = stateNew.cursor
+    const sortPreferenceNew =
+      stateNew.cursor && getSortPreference(stateNew, head(rootedParentOf(stateNew, stateNew.cursor)))
+
+    if (!isEqual(cursorNew, cursorOld) || !isEqual(sortPreferenceNew, sortPreferenceOld)) {
       // indicate that the cursor has changed and we want to scroll it into view
       // this is needed for when thoughts need to be pulled from storage prior to scrolling
       userInteractedAfterNavigation = false
