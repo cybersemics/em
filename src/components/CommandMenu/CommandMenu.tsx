@@ -1,7 +1,7 @@
 import SwipeableDrawer from '@mui/material/SwipeableDrawer'
 import _ from 'lodash'
 import pluralize from 'pluralize'
-import { FC, useCallback } from 'react'
+import { FC, useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -14,12 +14,25 @@ import fastClick from '../../util/fastClick'
 import CloseIcon from '../icons/CloseIcon'
 import PanelCommandGrid from './PanelCommandGrid'
 
+/**
+ * A custom hook that returns the last non-zero number of multicursors.
+ * This is used to avoid showing the MultiselectMessage changing as the Command Menu is closed.
+ */
+const useNonzeroNumMulticursors = () => {
+  const numMulticursors = useSelector(state => Object.keys(state.multicursors).length)
+  const lastNumMulticursorsRef = useRef(numMulticursors)
+
+  // update ref if numMulticursors is not zero
+  if (numMulticursors !== 0) {
+    lastNumMulticursorsRef.current = numMulticursors
+  }
+
+  return lastNumMulticursorsRef.current
+}
+
 /** Shows a message with the number of thoughts selected, and a cancel button to deselect all. */
 const MultiselectMessage: FC = () => {
-  const numMulticursors = useSelector(state => Object.keys(state.multicursors).length)
-
-  if (numMulticursors === 0) return null
-
+  const displayNumMulticursors = useNonzeroNumMulticursors()
   return (
     <div>
       <span
@@ -36,9 +49,9 @@ const MultiselectMessage: FC = () => {
             textAlign: 'right',
           }}
         >
-          {numMulticursors}
+          {displayNumMulticursors}
         </span>{' '}
-        {pluralize('thought', numMulticursors, false)} selected
+        {pluralize('thought', displayNumMulticursors, false)} selected
       </span>
     </div>
   )
