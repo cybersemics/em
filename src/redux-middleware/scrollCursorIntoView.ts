@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { isEqual, throttle } from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import State from '../@types/State'
 import { isSafari, isTouch } from '../browser'
@@ -121,7 +121,7 @@ const scrollCursorIntoView = () => {
 editingValueStore.subscribe(
   // The cursor typically changes rank most dramatically on the first edit, and then less as its rank stabilizes.
   // Throttle aggressively since scrollCursorIntoView reads from the DOM and this is called on all edits.
-  _.throttle(() => {
+  throttle(() => {
     // we need to wait for the cursor to animate into its final position before scrollCursorIntoView can accurately determine if it is in the viewport
     setTimeout(scrollCursorIntoView, durations.get('layoutNodeAnimation'))
   }, 400),
@@ -160,7 +160,7 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) =>
 
     // if the cursor has changed, scroll it into view
     const cursor = getState().cursor
-    if (cursor !== cursorLast) {
+    if (!isEqual(cursor, cursorLast)) {
       // indicate that the cursor has changed and we want to scroll it into view
       // this is needed for when thoughts need to be pulled from storage prior to scrolling
       userInteractedAfterNavigation = false
