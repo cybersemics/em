@@ -15,6 +15,7 @@ on:
 
 env:
   CI: true
+  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
 
 jobs:
   run:
