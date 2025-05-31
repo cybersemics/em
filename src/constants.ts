@@ -440,8 +440,6 @@ export enum AlertType {
   CopyOneDropHint = 'CopyOneDropHint',
   // shown when a dragged thought is hovering over the DeleteDrop component
   DeleteDropHint = 'DeleteDropHint',
-  // shown when a thought is deleted
-  DeleteThoughtComplete = 'DeleteThoughtComplete',
   // shown when dragging a file
   DragAndDropFile = 'DragAndDropFile',
   // shown when dragging a thought

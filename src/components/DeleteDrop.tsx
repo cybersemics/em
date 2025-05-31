@@ -26,7 +26,6 @@ const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
     store.dispatch([
       toggleAttribute({ path: simplePath, values: ['=favorite', 'true'] }),
       alert(`Removed ${ellipsize(value)} from favorites`, {
-        alertType: AlertType.DeleteThoughtComplete,
         clearDelay: 8000,
         showCloseLink: true,
       }),
