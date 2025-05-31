@@ -214,7 +214,6 @@ it('Verify superscript colors in different views', async () => {
 
   // Test 2: Verify superscript color when entire thought is colored
   await clickThought('k')
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const supColor2 = await getSuperscriptColor()
@@ -224,12 +223,10 @@ it('Verify superscript colors in different views', async () => {
   // Test 3: Set up nested thought colors for context view testing
   // Color parent thought 'v' red
   await clickThought('v')
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="red"]')
 
   // Color child thought 'b' green
   await clickThought('b')
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="green"]')
 
   // Switch to context view and verify superscript color
@@ -237,6 +234,8 @@ it('Verify superscript colors in different views', async () => {
   await clickThought('m')
   await click('[data-testid="toolbar-icon"][aria-label="Context View"]')
 
+  // ArrowDown to first context 'b'
+  // TODO: Why does clickThought('b') not work here?
   await press('ArrowDown')
   const supColor3 = await getSuperscriptColor()
   expect(supColor3).toBeTruthy()
