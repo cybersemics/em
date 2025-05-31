@@ -282,7 +282,7 @@ const CommandPalette: FC<{
         borderRadius: '12px',
         backgroundColor: 'gray09',
         maxWidth: '100%',
-        ...(isTouch ? { width: '100%' } : { width: '826px' }),
+        width: 826,
         maxHeight: isTouch ? undefined : '500px',
         cursor: 'default',
         display: 'flex',
