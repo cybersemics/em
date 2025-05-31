@@ -468,8 +468,6 @@ export enum AlertType {
   ThoughtMoved = 'ThoughtMoved',
   // shown when a toolbar button is hovering over the area for removal in the CustomizeToolbar modal
   ToolbarButtonRemoveHint = 'ToolbarButtonRemoveHint',
-  // shown when a toolbar button has been removed from the toolbar in the CustomizeToolbar modal
-  ToolbarButtonRemoved = 'ToolbarButtonRemoved',
   // shown when the user has exceeded the maximimum number of characters allowed in feedback
   ModalFeedbackMaxChars = 'ModalFeedbackMaxChars',
   // shown when the user undoes an action
