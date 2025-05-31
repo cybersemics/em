@@ -163,28 +163,28 @@ const ColorPicker: FC<{ size?: number }> = ({ size }) => {
     <Popover show={showColorPicker} size={size}>
       {/* Text Color */}
       <div aria-label='text color swatches' className={css({ whiteSpace: 'nowrap' })}>
-        <ColorSwatch color={'fg'} label='default' />
-        <ColorSwatch color={'gray'} label='gray' />
-        <ColorSwatch color={'orange'} label='orange' />
-        <ColorSwatch color={'yellow'} label='yellow' />
-        <ColorSwatch color={'green'} label='green' />
-        <ColorSwatch color={'blue'} label='blue' />
-        <ColorSwatch color={'purple'} label='purple' />
-        <ColorSwatch color={'pink'} label='pink' />
-        <ColorSwatch color={'red'} label='red' />
+        <ColorSwatch color='fg' label='default' />
+        <ColorSwatch color='gray' label='gray' />
+        <ColorSwatch color='orange' label='orange' />
+        <ColorSwatch color='yellow' label='yellow' />
+        <ColorSwatch color='green' label='green' />
+        <ColorSwatch color='blue' label='blue' />
+        <ColorSwatch color='purple' label='purple' />
+        <ColorSwatch color='pink' label='pink' />
+        <ColorSwatch color='red' label='red' />
       </div>
 
       {/* Background Color */}
       <div aria-label='background color swatches' className={css({ whiteSpace: 'nowrap' })}>
-        <ColorSwatch backgroundColor={'fg'} label='inverse' />
-        <ColorSwatch backgroundColor={'gray'} label='gray' />
-        <ColorSwatch backgroundColor={'orange'} label='orange' />
-        <ColorSwatch backgroundColor={'yellow'} label='yellow' />
-        <ColorSwatch backgroundColor={'green'} label='green' />
-        <ColorSwatch backgroundColor={'blue'} label='blue' />
-        <ColorSwatch backgroundColor={'purple'} label='purple' />
-        <ColorSwatch backgroundColor={'pink'} label='pink' />
-        <ColorSwatch backgroundColor={'red'} label='red' />
+        <ColorSwatch backgroundColor='fg' label='inverse' />
+        <ColorSwatch backgroundColor='gray' label='gray' />
+        <ColorSwatch backgroundColor='orange' label='orange' />
+        <ColorSwatch backgroundColor='yellow' label='yellow' />
+        <ColorSwatch backgroundColor='green' label='green' />
+        <ColorSwatch backgroundColor='blue' label='blue' />
+        <ColorSwatch backgroundColor='purple' label='purple' />
+        <ColorSwatch backgroundColor='pink' label='pink' />
+        <ColorSwatch backgroundColor='red' label='red' />
       </div>
     </Popover>
   )
