@@ -26,8 +26,8 @@ const tags = {
  * If the string does not contain a font or span tag, undefined is returned.
  */
 const extractColors = (savedValue: string) => {
-  const foreColorRegex = /<font[^>]*\scolor=["']?([^"']+)["']?[^>]*>/i
-  const backColorRegex = /<span[^>]*\sstyle=["'][^"']*background-color:\s*([^;"']+)/i
+  const foreColorRegex = /<(?:span|font)[^>]*\s(?:color=["']?([^"']+)["']?[^>]*>)/i
+  const backColorRegex = /<(?:span|font)[^>]*\sstyle=["'][^"']*background-color:\s*([^;"']+)/i
 
   // Attempt to extract the font color
   const foreColorMatch = savedValue.match(foreColorRegex)
