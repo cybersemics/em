@@ -4,7 +4,6 @@ import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { modalActionLinkRecipe } from '../../../styled-system/recipes'
 import { alertActionCreator as alert } from '../../actions/alert'
-import { AlertType } from '../../constants'
 import fastClick from '../../util/fastClick'
 import ActionButton from './../ActionButton'
 import ModalComponent from './ModalComponent'
@@ -32,12 +31,7 @@ const ModalFeedback = () => {
 
     // minimum characters
     if (feedback.length < FEEDBACK_MIN_LENGTH) {
-      dispatch(
-        alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`, {
-          alertType: AlertType.ModalFeedbackMaxChars,
-          clearDelay: 5000,
-        }),
-      )
+      dispatch(alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`, { clearDelay: 5000 }))
       setIsDisabled(true)
       return
     }
@@ -62,7 +56,7 @@ const ModalFeedback = () => {
         const disable = feedback.length < FEEDBACK_MIN_LENGTH
         setIsDisabled(disable)
         if (!disable) {
-          dispatch(alert(null, { alertType: AlertType.ModalFeedbackMaxChars }))
+          dispatch(alert(null))
         }
       }
     },
