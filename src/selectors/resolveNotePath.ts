@@ -1,35 +1,45 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import findDescendant from './findDescendant'
-import { findAnyChild, isVisible } from './getChildren'
+import { anyChild } from './getChildren'
 import getThoughtById from './getThoughtById'
 
-/** Resolves note path by looking for a note thought, then checking the parent's =children/=note.*/
-const resolveNotePath = (state: State, path: Path): Path | null => {
-  const thoughtId = head(path)
+interface NoteKeyResult {
+  noteKey: string
+  noteId?: ThoughtId
+}
+
+/** Resolves note key and note id by checking for note thoughts. */
+export const resolveNoteKey = (state: State, thoughtId: ThoughtId): NoteKeyResult => {
   const parentId = getThoughtById(state, thoughtId)?.parentId ?? null
 
   // the id of the thought's =note or the parent's =children/=note
   const noteId = findDescendant(state, thoughtId, '=note') || findDescendant(state, parentId, ['=children', '=note'])
 
-  if (!noteId) return null
+  if (!noteId) return { noteKey: '=note' }
 
   const noteThought = getThoughtById(state, noteId)
 
-  if (noteThought?.pending) return null
+  if (noteThought?.pending) return { noteKey: '=note' }
 
-  const pathId = findDescendant(state, noteId, '=path')
-  const pathChild = pathId && findAnyChild(state, pathId, isVisible(state))
-  // Resolves to a thought that is a child of `thoughtId` if the `=path` contains a descendant thought with the same value
-  const targetThought = pathChild && findAnyChild(state, thoughtId, child => child.value === pathChild.value)
+  const notePathId = findDescendant(state, noteId, '=path')
+  const noteKey = anyChild(state, notePathId)?.value ?? '=note'
+  return {
+    noteKey,
+    ...(notePathId ? {} : { noteId }),
+  }
+}
 
-  // Determines the appropriate target thought to use:
-  // - Uses `targetThought` if available
-  // - Falls back to `pathChild` for resolving or creating a missing thought via toggleNote()
-  // - Uses `noteId` as a final fallback to identify the note
-  return appendToPath(path, targetThought?.id ?? pathChild?.id ?? noteId)
+/** Resolves note path by looking for a note thought, then checking the parent's =children/=note.*/
+const resolveNotePath = (state: State, path: Path): Path | null => {
+  const thoughtId = head(path)
+  const { noteKey, noteId } = resolveNoteKey(state, thoughtId)
+  const noteValueId = findDescendant(state, thoughtId, noteKey) ?? noteId
+
+  return noteValueId ? appendToPath(path, noteValueId) : null
 }
 
 export default resolveNotePath
