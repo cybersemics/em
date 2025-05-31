@@ -18,7 +18,7 @@ import useFilteredCommands from '../hooks/useFilteredCommands'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import { executeCommandWithMulticursor } from '../util/executeCommand'
-import CommandRowOnly from './CommandRowOnly'
+import CommandItem from './CommandRowOnly'
 import FadeTransition from './FadeTransition'
 import PopupBase from './PopupBase'
 
@@ -135,7 +135,7 @@ const CommandRow: FC<{
   const disabled = useSelector(state => !isExecutable(state, command))
 
   return (
-    <CommandRowOnly
+    <CommandItem
       gestureInProgress={gestureInProgress}
       search={search}
       onClick={onClick}

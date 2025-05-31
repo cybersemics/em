@@ -18,9 +18,10 @@ import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 
 /** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
-const CommandRowOnly: FC<{
+const CommandItem: FC<{
   viewType?: CommandViewType
   search: string | undefined
+  /** Click handler for the command. Applies pointer styles when defined. */
   onClick?: (e: React.MouseEvent, command: Command) => void
   selected: boolean | undefined
   command: Command
@@ -309,6 +310,4 @@ const CommandRowOnly: FC<{
   )
 }
 
-CommandRowOnly.displayName = 'CommandRowOnly'
-
-export default CommandRowOnly
+export default CommandItem

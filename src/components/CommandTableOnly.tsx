@@ -1,7 +1,7 @@
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import { CommandViewType } from '../@types/CommandViewType'
-import CommandItem from './CommandItem'
+import CommandItem from './CommandRowOnly'
 
 /** Renders a table of commands, with nothing else added. */
 const CommandTableOnly = ({
@@ -31,19 +31,30 @@ const CommandTableOnly = ({
           }),
         })}
       >
-        {commands.map(command => {
-          return (
-            <CommandItem
-              viewType={viewType}
-              customize={customize}
-              key={command?.id}
-              onSelect={onSelect}
-              selected={selectedCommand && command?.id === selectedCommand.id}
-              command={command}
-              search={search}
-            />
-          )
-        })}
+        {commands
+          .filter((command): command is Command => command !== null)
+          .map(command => {
+            const selected = selectedCommand && command?.id === selectedCommand.id
+            return (
+              <CommandItem
+                viewType={viewType}
+                customize={customize}
+                key={command.id}
+                onClick={
+                  onSelect &&
+                  ((_, command) => {
+                    onSelect(selected ? null : command)
+                  })
+                }
+                style={{ paddingInline: 0 }}
+                selected={selected}
+                command={command}
+                search={search}
+                alwaysShowDescription
+                isTable
+              />
+            )
+          })}
       </tbody>
     </table>
   )
