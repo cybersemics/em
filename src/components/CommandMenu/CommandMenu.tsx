@@ -110,7 +110,7 @@ const CommandMenu = () => {
         }}
       >
         <div>
-          <div className={css({ margin: '1.2rem 1.2rem' })}>
+          <div className={css({ margin: '1.2rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom)) 1.2rem' })}>
             <div className={css({ marginBottom: '1rem' })}>
               <div
                 className={css({
