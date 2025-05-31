@@ -1,5 +1,5 @@
 import { rgbToHex } from '@mui/material'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -92,11 +92,7 @@ const ColorSwatch: FC<{
   })
 
   /** Toggles the text color to the clicked swatch. */
-  const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
-    // stop toolbar button dip
-    e.stopPropagation()
-    e.preventDefault()
-
+  const toggleTextColor = () => {
     dispatch(formatSelection('foreColor', color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg')))
 
     // Apply background color to the selection
@@ -107,10 +103,11 @@ const ColorSwatch: FC<{
     <span
       aria-label={label || color || backgroundColor}
       {...fastClick(e => {
-        // stop click empty space
+        // stop toolbar button dip and click empty space
         e.stopPropagation()
+        e.preventDefault()
 
-        toggleTextColor(e)
+        toggleTextColor()
       })}
       className={css({ cursor: 'pointer' })}
     >
