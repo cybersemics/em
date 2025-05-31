@@ -4,7 +4,6 @@ import Path from '../@types/Path'
 import { alertActionCreator as alert } from '../actions/alert'
 import { pullActionCreator as pull } from '../actions/pull'
 import SettingsIcon from '../components/icons/SettingsIcon'
-import { AlertType } from '../constants'
 import copy from '../device/copy'
 import * as selection from '../device/selection'
 import exportContext from '../selectors/exportContext'
@@ -39,7 +38,7 @@ const copyCursorCommand: Command = {
       )
 
       if (needsPull) {
-        dispatch(alert('Loading thoughts...', { alertType: AlertType.Clipboard }))
+        dispatch(alert('Loading thoughts...'))
         await dispatch(
           pull(
             filteredCursors.map(cursor => head(cursor)),
@@ -67,7 +66,6 @@ const copyCursorCommand: Command = {
             numDescendants > 0 ? ` and ${pluralize('descendant', numDescendants, true)}` : ''
           } to the clipboard`,
           {
-            alertType: AlertType.Clipboard,
             clearDelay: 3000,
           },
         ),
@@ -88,7 +86,7 @@ const copyCursorCommand: Command = {
     // if there are any pending descendants, do a pull
     // otherwise copy whatever is in state
     if (someDescendants(state, head(simplePath), child => isPending(state, getThoughtById(state, child.id)))) {
-      dispatch(alert('Loading thoughts...', { alertType: AlertType.Clipboard }))
+      dispatch(alert('Loading thoughts...'))
       await dispatch(pull([head(simplePath)], { maxDepth: Infinity }))
     }
 
@@ -106,7 +104,6 @@ const copyCursorCommand: Command = {
 
     dispatch(
       alert(`Copied ${phrase} to the clipboard`, {
-        alertType: AlertType.Clipboard,
         clearDelay: 3000,
       }),
     )
