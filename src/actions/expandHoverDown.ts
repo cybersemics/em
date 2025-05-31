@@ -28,7 +28,8 @@ const expandHoverDownDebounced =
     expandDownTimer = setTimeout(() => {
       const state = getState()
       // abort if dragging over quick drop components
-      if (state.alert?.alertType === AlertType.CopyOneDropHint) return
+      if (state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
+        return
       dispatch({ type: 'expandHoverDown', path })
       expandDownTimer = null
     }, testFlags.expandHoverDelay ?? EXPAND_HOVER_DELAY)

@@ -438,6 +438,8 @@ export const AlertText = {
 export enum AlertType {
   // shown when a dragged thought is hovering over the CopyOneDrop component
   CopyOneDropHint = 'CopyOneDropHint',
+  // shown when a dragged thought is hovering over the DeleteDrop component
+  DeleteDropHint = 'DeleteDropHint',
   // shown when a thought is deleted
   DeleteThoughtComplete = 'DeleteThoughtComplete',
   // shown when dragging a file

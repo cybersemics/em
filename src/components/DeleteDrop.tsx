@@ -49,7 +49,7 @@ const hoverMessage = (state: State, zone: DragThoughtZone) => {
 
 /** An icon that a thought can be dropped on to delete. */
 const DeleteDrop = () => (
-  <QuickDropIcon alertType={AlertType.DragAndDropHint} Icon={DeleteIcon} onDrop={drop} onHoverMessage={hoverMessage} />
+  <QuickDropIcon alertType={AlertType.DeleteDropHint} Icon={DeleteIcon} onDrop={drop} onHoverMessage={hoverMessage} />
 )
 
 export default DeleteDrop

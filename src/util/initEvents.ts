@@ -259,7 +259,10 @@ const initEvents = (store: Store<State, any>) => {
       }
     }
     // do not scroll-at-edge when hovering over QuickDrop component
-    else if (state.dragInProgress && !(state.alert?.alertType === AlertType.CopyOneDropHint)) {
+    else if (
+      state.dragInProgress &&
+      !(state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
+    ) {
       const y = e.touches[0].clientY
       scrollContainer = (target.closest('[data-scroll-at-edge]') as HTMLElement) || window
 
