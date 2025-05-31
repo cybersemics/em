@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
-import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
@@ -103,16 +102,16 @@ const ColorSwatch: FC<{
     // Apply background color to the selection
     dispatch(formatSelection('backColor', backgroundColor ?? 'bg'))
   }
+
   return (
     <span
       aria-label={label || color || backgroundColor}
       {...fastClick(e => {
         // stop click empty space
         e.stopPropagation()
+
+        toggleTextColor(e)
       })}
-      onTouchStart={toggleTextColor}
-      // only add mousedown to desktop, otherwise it will activate twice on mobile
-      onMouseDown={!isTouch ? toggleTextColor : undefined}
       className={css({ cursor: 'pointer' })}
     >
       {shape === 'bullet' ? (
