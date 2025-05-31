@@ -468,8 +468,6 @@ export enum AlertType {
   SpaceToIndentHint = 'SpaceToIndentHint',
   // shown when the sort setting is changed
   Sort = 'Sort',
-  // shown when a thought is archived
-  ThoughtArchived = 'ThoughtArchived',
   // shown when a thought has been deleted
   ThoughtDeleted = 'ThoughtDeleted',
   // shown when a thought has been moved to a different context
