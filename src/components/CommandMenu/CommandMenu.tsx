@@ -47,7 +47,7 @@ const MultiselectMessage: FC = () => {
 /**
  * A panel that displays the command menu.
  */
-const CommandMenuPanel = () => {
+const CommandMenu = () => {
   const dispatch = useDispatch()
   const showCommandMenu = useSelector(state => state.showCommandMenu)
   const isTutorialOn = useSelector(isTutorial)
@@ -126,4 +126,4 @@ const CommandMenuPanel = () => {
   }
 }
 
-export default CommandMenuPanel
+export default CommandMenu
