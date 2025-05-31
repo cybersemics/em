@@ -20,7 +20,6 @@ const drop = (state: State, { simplePath }: DragThoughtItem) => {
   copy(value)
   store.dispatch([
     alert(`Copied ${ellipsize(value)} to the clipboard`, {
-      alertType: AlertType.Clipboard,
       clearDelay: 8000,
       showCloseLink: true,
     }),
