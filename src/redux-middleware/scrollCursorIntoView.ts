@@ -170,11 +170,21 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) =>
     const sortPreferenceNew =
       stateNew.cursor && getSortPreference(stateNew, head(rootedParentOf(stateNew, stateNew.cursor)))
 
-    if (!isEqual(cursorNew, cursorOld) || !isEqual(sortPreferenceNew, sortPreferenceOld)) {
-      // indicate that the cursor has changed and we want to scroll it into view
-      // this is needed for when thoughts need to be pulled from storage prior to scrolling
-      userInteractedAfterNavigation = false
-      scrollCursorIntoView()
+    const cursorChanged = !isEqual(cursorNew, cursorOld)
+    const sortChanged = !isEqual(sortPreferenceNew, sortPreferenceOld)
+    if (cursorChanged || sortChanged) {
+      setTimeout(
+        () => {
+          // indicate that the cursor has changed and we want to scroll it into view
+          // this is needed for when thoughts need to be pulled from storage prior to scrolling
+          userInteractedAfterNavigation = false
+          scrollCursorIntoView()
+        },
+        // If the cursor changed, we need to wait for most of the layout animaton to complete before scrolling.
+        // Otherwise the cursor will not be at its final position and it will nott scroll far enough.
+        // 50% seems to be enough to avoid the issue, but this can be fine-tuned as needed.
+        sortChanged ? durations.get('layoutNodeAnimation') / 2 : 0,
+      )
     }
   }
 }
