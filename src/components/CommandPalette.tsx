@@ -130,33 +130,12 @@ const CommandRow: FC<{
   command: Command
 }> = ({ gestureInProgress, search, onClick, onHover, selected, command }) => {
   const store = useStore()
-  const ref = React.useRef<HTMLDivElement>(null)
 
   const isActive = command.isActive?.(store.getState())
   const disabled = useSelector(state => !isExecutable(state, command))
 
-  useEffect(() => {
-    if (selected) {
-      ref.current?.scrollIntoView({ block: 'nearest' })
-    }
-  })
-
-  useEffect(() => {
-    /** Hover handler. */
-    const onHoverCommand = (e: MouseEvent) => onHover(e, command)
-
-    // mouseover and mouseenter cause the command under the cursor to get selected on render, so we use mousemove to ensure that it only gets selected on an actual hover
-    ref.current?.addEventListener('mousemove', onHoverCommand)
-
-    return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      ref.current?.removeEventListener('mousemove', onHoverCommand)
-    }
-  }, [onHover, command])
-
   return (
     <CommandRowOnly
-      ref={ref}
       gestureInProgress={gestureInProgress}
       search={search}
       onClick={onClick}
@@ -164,6 +143,8 @@ const CommandRow: FC<{
       command={command}
       isActive={isActive}
       disabled={disabled}
+      onHover={onHover}
+      shouldScrollSelectionIntoView
     />
   )
 }
