@@ -5,7 +5,7 @@ import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
-import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
+import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
 import { editingActionCreator as editing } from '../actions/editing'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
@@ -14,6 +14,8 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
+import getThoughtById from '../selectors/getThoughtById'
+import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
@@ -31,7 +33,6 @@ const Note = React.memo(
     disabled?: boolean
     path: Path
   }) => {
-    const thoughtId = head(path)
     const dispatch = useDispatch()
     const noteRef: { current: HTMLElement | null } = useRef(null)
     const fontSize = useSelector(state => state.fontSize)
@@ -39,7 +40,7 @@ const Note = React.memo(
     const [justPasted, setJustPasted] = useState(false)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
-    const note = useSelector(state => noteValue(state, thoughtId))
+    const note = useSelector(state => noteValue(state, path))
     const noteOffset = useSelector(state => state.noteOffset)
 
     /** Focus Handling with useFreshCallback. */
@@ -67,7 +68,7 @@ const Note = React.memo(
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
         // delete empty note
-        const note = noteValue(store.getState(), thoughtId)
+        const note = noteValue(store.getState(), path)
 
         // select thought
         if (e.key === 'Escape' || e.key === 'ArrowUp') {
@@ -81,7 +82,18 @@ const Note = React.memo(
         else if (e.key === 'Backspace' && !note) {
           e.stopPropagation()
           e.preventDefault()
-          dispatch(deleteAttribute({ path, value: '=note' }))
+
+          // delete target thought if it exists
+          dispatch((dispatch, getState) => {
+            const state = getState()
+            const targetPath = resolveNotePath(state, path) ?? path
+            const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
+
+            if (targetThought) {
+              dispatch(deleteThought({ pathParent: path, thoughtId: targetThought.id }))
+            }
+          })
+
           dispatch(setNoteFocus({ value: false }))
         } else if (e.key === 'ArrowDown') {
           e.stopPropagation()
@@ -89,7 +101,7 @@ const Note = React.memo(
           dispatch(cursorDown())
         }
       },
-      [dispatch, path, thoughtId],
+      [dispatch, path],
     )
 
     /** Updates the =note attribute when the note text is edited. */
@@ -102,12 +114,15 @@ const Note = React.memo(
           : // Mobile Safari inserts <br> when all text is deleted
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
-        dispatch(
-          setDescendant({
-            path,
-            values: ['=note', value],
-          }),
-        )
+
+        // update the referenced thought directly if it exists
+        dispatch((dispatch, getState) => {
+          const state = getState()
+
+          const targetPath = resolveNotePath(state, path) ?? path
+
+          dispatch(setDescendant({ path: targetPath, values: [value] }))
+        })
       },
       [dispatch, path, justPasted],
     )
