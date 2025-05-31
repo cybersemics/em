@@ -196,7 +196,6 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
         const alertTo = isRoot([parentThought.id]) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
         dispatch(
           alert(`${alertFrom} moved to ${alertTo} context.`, {
-            alertType: AlertType.ThoughtMoved,
             clearDelay: 5000,
           }),
         )

@@ -11,7 +11,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
-import { AlertType, HOME_TOKEN } from '../constants'
+import { HOME_TOKEN } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -156,7 +156,6 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
 
       store.dispatch(
         alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {
-          alertType: AlertType.ThoughtMoved,
           clearDelay: 5000,
         }),
       )
