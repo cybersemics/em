@@ -462,8 +462,6 @@ export enum AlertType {
   MulticursorError = 'MulticursorError',
   // shown when the user redoes an action
   Redo = 'Redo',
-  // shown the first time the user types space to indent
-  SpaceToIndentHint = 'SpaceToIndentHint',
   // shown when the sort setting is changed
   Sort = 'Sort',
   // shown when a thought has been deleted
