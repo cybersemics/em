@@ -21,7 +21,7 @@ const MultiselectMessage: FC = () => {
   if (numMulticursors === 0) return null
 
   return (
-    <div style={{ marginBottom: '1em' }}>
+    <div>
       <span
         className={css({
           fontStyle: 'italic',
@@ -97,28 +97,34 @@ const CommandMenu = () => {
         }}
       >
         <div>
-          <div className={css({ margin: '1.8rem 1.8rem 1rem' })}>
-            <MultiselectMessage />
+          <div className={css({ margin: '1.2rem 1.2rem' })}>
+            <div className={css({ marginBottom: '1rem' })}>
+              <div
+                className={css({
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                })}
+              >
+                <MultiselectMessage />
+                <button
+                  {...fastClick(onClose)}
+                  className={css({
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    marginLeft: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                  })}
+                >
+                  <CloseIcon size={20} fill={token('colors.fg')} />
+                </button>
+              </div>
+            </div>
             <PanelCommandGrid />
-          </div>
-          <div
-            className={css({
-              display: 'flex',
-              justifyContent: 'flex-end',
-              marginBottom: '1rem',
-              marginRight: '1rem',
-            })}
-          >
-            <button
-              {...fastClick(onClose)}
-              className={css({
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-              })}
-            >
-              <CloseIcon size={20} fill={token('colors.fg')} />
-            </button>
           </div>
         </div>
       </SwipeableDrawer>
