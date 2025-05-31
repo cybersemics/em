@@ -466,8 +466,7 @@ export enum AlertType {
   SpaceToIndentHint = 'SpaceToIndentHint',
   // shown when the sort setting is changed
   Sort = 'Sort',
-  // shown when a thought has been deleted
-  ThoughtDeleted = 'ThoughtDeleted',
+
   // shown when a thought has been moved to a different context
   ThoughtMoved = 'ThoughtMoved',
   // shown when a toolbar button is hovering over the area for removal in the CustomizeToolbar modal

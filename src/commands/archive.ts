@@ -5,7 +5,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { errorActionCreator as error } from '../actions/error'
 import ArchiveIcon from '../components/icons/ArchiveIcon'
-import { AlertType, DELETE_VIBRATE_DURATION, HOME_PATH } from '../constants'
+import { DELETE_VIBRATE_DURATION, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -76,7 +76,6 @@ const archiveCommand: Command = {
     onComplete(filteredCursors, dispatch, getState) {
       dispatch(
         alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`, {
-          alertType: AlertType.ThoughtDeleted,
           clearDelay: 8000,
           showCloseLink: true,
         }),
