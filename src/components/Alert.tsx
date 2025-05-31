@@ -30,7 +30,7 @@ const Alert: FC = () => {
 
   const startTimer = useCallback(() => {
     if (!clearDelay) return
-    if (timerRef.current !== null) {
+    if (timerRef.current) {
       clearTimeout(timerRef.current)
     }
     timerRef.current = setTimeout(() => {
@@ -39,7 +39,7 @@ const Alert: FC = () => {
   }, [clearDelay, dispatch])
 
   const clearTimer = useCallback(() => {
-    if (timerRef.current !== null) {
+    if (timerRef.current) {
       clearTimeout(timerRef.current)
       timerRef.current = null
     }

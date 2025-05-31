@@ -135,6 +135,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
             // provide an alertType so the delete command can null the alert after a delay
             alertType: AlertType.ThoughtArchived,
             showCloseLink: true,
+            clearDelay: 5000,
           }),
 
           // execute moveThought after newThought has updated the state
