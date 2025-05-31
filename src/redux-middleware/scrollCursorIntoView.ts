@@ -172,4 +172,5 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) =>
   }
 }
 
+export { scrollCursorIntoView }
 export default scrollCursorIntoViewMiddleware
