@@ -115,6 +115,26 @@ const CommandItem: FC<{
     }
   }, [onHover, command])
 
+  /** Returns the first n segments of the gesture diagram to highlight. */
+  const getGestureHighlight = () => {
+    if (disabled || gestureInProgress === undefined) return undefined
+    if (command.id === 'openGestureCheatsheet') {
+      // For gesture cheatsheet command, find the longest matching end portion
+
+      const gestureCheatsheetGesture = gestureString(command)
+      return (
+        [...gestureCheatsheetGesture]
+          .map((_, i) => gestureCheatsheetGesture.length - i)
+          .find(len => gestureInProgress.endsWith(gestureCheatsheetGesture.slice(0, len))) ?? 0
+      )
+    }
+    // For other commands, use normal highlighting
+    if (command.id === 'cancel') {
+      return selected ? 1 : undefined
+    }
+    return gestureInProgress.length
+  }
+
   return (
     <Container
       ref={current => {
@@ -190,26 +210,7 @@ const CommandItem: FC<{
             <GestureDiagram
               color={disabled ? token('colors.gray') : undefined}
               styleCancelAsRegularGesture
-              highlight={
-                !disabled && gestureInProgress !== undefined
-                  ? command.id === 'openGestureCheatsheet'
-                    ? // For gesture cheatsheet command, find the longest matching end portion
-                      (() => {
-                        const gestureCheatsheetGesture = gestureString(command)
-                        return (
-                          [...gestureCheatsheetGesture]
-                            .map((_, i) => gestureCheatsheetGesture.length - i)
-                            .find(len => gestureInProgress.endsWith(gestureCheatsheetGesture.slice(0, len))) ?? 0
-                        )
-                      })()
-                    : // For other commands, use normal highlighting
-                      command.id === 'cancel'
-                      ? selected
-                        ? 1
-                        : undefined
-                      : gestureInProgress.length
-                  : undefined
-              }
+              highlight={getGestureHighlight()}
               path={command.id === 'cancel' ? null : gestureString(command)}
               strokeWidth={4}
               width={32}
