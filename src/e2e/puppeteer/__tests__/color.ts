@@ -218,6 +218,7 @@ it('Verify superscript colors in different views', async () => {
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const supColor2 = await getSuperscriptColor()
+  expect(supColor2).toBeTruthy()
   expect(rgbToHex(supColor2!)).toBe(rgbaToHex(colors.light.blue)) // Superscript should match thought color
 
   // Test 3: Set up nested thought colors for context view testing
@@ -238,5 +239,6 @@ it('Verify superscript colors in different views', async () => {
 
   await press('ArrowDown')
   const supColor3 = await getSuperscriptColor()
+  expect(supColor3).toBeTruthy()
   expect(rgbToHex(supColor3!)).toBe(rgbaToHex(colors.light.green)) // Superscript should match the green color in context view
 })
