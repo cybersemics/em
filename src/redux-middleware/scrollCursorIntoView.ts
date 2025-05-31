@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { isAction } from 'redux'
 import { ThunkMiddleware } from 'redux-thunk'
 import Path from '../@types/Path'
 import State from '../@types/State'
@@ -169,8 +170,13 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) =>
       scrollCursorIntoView()
     }
     cursorLast = cursor
+
+    // scroll cursor into view after sort actions to ensure it remains visible
+    if (isAction(action) && (action.type === 'toggleSort' || action.type === 'setSortPreference')) {
+      userInteractedAfterNavigation = false
+      scrollCursorIntoView()
+    }
   }
 }
 
-export { scrollCursorIntoView }
 export default scrollCursorIntoViewMiddleware

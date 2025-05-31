@@ -3,7 +3,6 @@ import SimplePath from '../@types/SimplePath'
 import SortPreference from '../@types/SortPreference'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import { scrollCursorIntoView } from '../redux-middleware/scrollCursorIntoView'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
@@ -171,11 +170,8 @@ const toggleSort = (
 /** Action-creator for toggleSort. */
 export const toggleSortActionCreator =
   (payload: Parameters<typeof toggleSort>[1]): Thunk =>
-  dispatch => {
+  dispatch =>
     dispatch({ type: 'toggleSort', ...payload })
-    // Scroll cursor into view after sorting to ensure it remains visible
-    scrollCursorIntoView()
-  }
 
 export default _.curryRight(toggleSort, 2)
 
