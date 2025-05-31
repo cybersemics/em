@@ -11,12 +11,14 @@ import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
+import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, filterAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
+import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
@@ -127,6 +129,10 @@ const ThoughtAnnotation = React.memo(
       isEditing ? (editingValue ?? value) : null,
     )
 
+    const isTableCol1 = useSelector((state: State) =>
+      attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
+    )
+
     /**
      * Adding dependency on lexemeIndex as the fetch for thought is async await.
      * ThoughtAnnotation wasn't waiting for all the lexemeIndex to be set before it was rendered.
@@ -187,7 +193,7 @@ const ThoughtAnnotation = React.memo(
                   Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
                   To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
                 */
-                margin: '-0.5px 0 0 calc(1em - 18px)',
+                margin: isTableCol1 ? '-0.5px 0 0 calc(2em - 11px)' : '-0.5px 0 0 calc(1em - 18px)',
                 paddingRight: multiline ? '1em' : '0.333em',
               }),
             )

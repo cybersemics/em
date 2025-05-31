@@ -58,7 +58,6 @@ export interface ThoughtProps {
   styleContainer?: React.CSSProperties
   styleThought?: React.CSSProperties
   view?: string | null
-  marginRight: number
   isPressed: boolean
 }
 
@@ -109,7 +108,6 @@ const StaticThought = ({
   style,
   styleThought,
   styleAnnotation,
-  marginRight,
   updateSize,
   isPressed,
 }: ThoughtProps) => {
@@ -186,10 +184,9 @@ const StaticThought = ({
           }),
           css({
             // do not set a min-width on table column 1 since there is no room for additional click area
-            minWidth: !isTableCol1 ? '3em' : undefined,
+            minWidth: !isTableCol1 ? '3em' : '3em',
           }),
         )}
-        style={{ marginRight: `${marginRight}px` }}
       >
         {homeContext ? (
           // left, top are eyeballed for different font sizes
