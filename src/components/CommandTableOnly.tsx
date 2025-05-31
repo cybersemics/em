@@ -32,7 +32,7 @@ const CommandTableOnly = ({
         })}
       >
         {commands
-          .filter((command): command is Command => command !== null)
+          .filter(command => command !== null)
           .map(command => {
             const selected = selectedCommand && command?.id === selectedCommand.id
             return (

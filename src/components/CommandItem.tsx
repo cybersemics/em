@@ -55,7 +55,7 @@ const CommandItem: FC<{
   customize,
   shouldScrollSelectionIntoView,
 }) => {
-  const label = command.labelInverse && isActive ? command.labelInverse! : command.label
+  const label = command.labelInverse && isActive ? command.labelInverse : command.label
   const Icon = command.svg
   const ref = React.useRef<Pick<HTMLDivElement, 'scrollIntoView' | 'addEventListener' | 'removeEventListener'> | null>(
     null,
@@ -65,7 +65,7 @@ const CommandItem: FC<{
     type: DragAndDropType.ToolbarButton,
     item: (): DragToolbarItem => {
       store.dispatch(dragCommand(command?.id || null))
-      return { command: command!, zone: DragCommandZone.Remove }
+      return { command: command, zone: DragCommandZone.Remove }
     },
     canDrag: () => !!command && !!customize,
     end: () => store.dispatch(dragCommand(null)),
