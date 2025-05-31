@@ -178,7 +178,7 @@ const StaticThought = ({
           }),
           css({
             // do not set a min-width on table column 1 since there is no room for additional click area
-            minWidth: !isTableCol1 ? '3em' : undefined,
+            minWidth: !isTableCol1 ? '3em' : '3em',
           }),
         )}
       >
