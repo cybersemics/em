@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import Path from '../@types/Path'
 import State from '../@types/State'
 import { isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
@@ -9,9 +8,6 @@ import scrollTopStore from '../stores/scrollTop'
 import syncStatusStore from '../stores/syncStatus'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
-
-// store the last cursor
-let cursorLast: Path | null = null
 
 // Tracks whether the has scrolled since the last cursor navigation
 let userInteractedAfterNavigation: boolean = false
@@ -158,6 +154,8 @@ scrollTopStore.subscribe(() => {
 /** Runs a throttled session keepalive on every action. */
 const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
+    const cursorLast = getState().cursor
+
     next(action)
 
     // if the cursor has changed, scroll it into view
@@ -168,7 +166,6 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) =>
       userInteractedAfterNavigation = false
       scrollCursorIntoView()
     }
-    cursorLast = cursor
   }
 }
 
