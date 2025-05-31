@@ -91,12 +91,17 @@ const ColorSwatch: FC<{
     )
   })
 
-  /** Toggles the text color to the clicked swatch. */
+  /** Toggles the text color to the clicked swatch. If the swatch is already selected, sets text color and background color back to default. */
   const toggleTextColor = () => {
-    dispatch(formatSelection('foreColor', color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg')))
+    dispatch(
+      formatSelection(
+        'foreColor',
+        selected ? 'fg' : color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg'),
+      ),
+    )
 
     // Apply background color to the selection
-    dispatch(formatSelection('backColor', backgroundColor ?? 'bg'))
+    dispatch(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')))
   }
 
   return (
