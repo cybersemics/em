@@ -2022,15 +2022,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@egjs/hammerjs@npm:^2.0.17":
-  version: 2.0.17
-  resolution: "@egjs/hammerjs@npm:2.0.17"
-  dependencies:
-    "@types/hammerjs": "npm:^2.0.36"
-  checksum: 10c0/dbedc15a0e633f887c08394bd636faf6a3abd05726dc0909a0e01209d5860a752d9eca5e512da623aecfabe665f49f1d035de3103eb2f9022c5cea692f9cc9be
-  languageName: node
-  linkType: hard
-
 "@emotion/babel-plugin@npm:^11.12.0":
   version: 11.12.0
   resolution: "@emotion/babel-plugin@npm:11.12.0"
@@ -4799,13 +4790,6 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10c0/235d2fc69741448e853333b7c3d1180a966dd2b8972c8cbcd6b2a0c6cd7f8d582ab2b8e58219dbc62cce8f1b40aa317ff78ea2201cdd8249da5025adebed6f0b
-  languageName: node
-  linkType: hard
-
-"@types/hammerjs@npm:^2.0.36":
-  version: 2.0.46
-  resolution: "@types/hammerjs@npm:2.0.46"
-  checksum: 10c0/f3c1cb20dc2f0523f7b8c76065078544d50d8ae9b0edc1f62fed657210ed814266ff2dfa835d2c157a075991001eec3b64c88bf92e3e6e895c0db78d05711d06
   languageName: node
   linkType: hard
 
@@ -8374,7 +8358,6 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-error-boundary: "npm:^4.1.2"
     react-gravatar: "npm:^2.6.3"
-    react-native-gesture-handler: "npm:^2.21.1"
     react-native-web: "npm:^0.19.13"
     react-redux: "npm:^9.1.2"
     react-signature-pad-wrapper: "npm:^4.1.0"
@@ -15838,20 +15821,6 @@ __metadata:
   version: 19.0.0
   resolution: "react-is@npm:19.0.0"
   checksum: 10c0/d1be8e8500cf04f76df71942a21ef3a71266397a383d7ec8885f35190df818d35c65efd35aed7be47a89ad99aaff2c52e0c4e39e8930844a6b997622e50625a8
-  languageName: node
-  linkType: hard
-
-"react-native-gesture-handler@npm:^2.21.1":
-  version: 2.22.1
-  resolution: "react-native-gesture-handler@npm:2.22.1"
-  dependencies:
-    "@egjs/hammerjs": "npm:^2.0.17"
-    hoist-non-react-statics: "npm:^3.3.0"
-    invariant: "npm:^2.2.4"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10c0/f4e1e08a25f4555491d6d2d9428c8f9cda343c6508f2e0f8d212698e5d5dc370cecadf08774243c6502b2c46e85a0d70f7bd426626d3ae27e180950a41415e2f
   languageName: node
   linkType: hard
 
