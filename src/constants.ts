@@ -468,8 +468,6 @@ export enum AlertType {
   Sort = 'Sort',
   // shown when a thought has been deleted
   ThoughtDeleted = 'ThoughtDeleted',
-  // shown when a thought has been moved to a different context
-  ThoughtMoved = 'ThoughtMoved',
   // shown when a toolbar button is hovering over the area for removal in the CustomizeToolbar modal
   ToolbarButtonRemoveHint = 'ToolbarButtonRemoveHint',
   // shown when a toolbar button has been removed from the toolbar in the CustomizeToolbar modal
