@@ -252,7 +252,7 @@ const ThoughtContainer = ({
     }
 
     // Do not highlight during delete or copy alerts
-    if (state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint) {
+    if (state.alert?.alertType === AlertType.CopyOneDropHint) {
       return false
     }
 
