@@ -436,8 +436,6 @@ export const AlertText = {
 }
 
 export enum AlertType {
-  // shown when a thought is copied to the clipboard or still loading in the export modal
-  Clipboard = 'Clipboard',
   // shown when a dragged thought is hovering over the CopyOneDrop component
   CopyOneDropHint = 'CopyOneDropHint',
   // shown when a dragged thought is hovering over the DeleteDrop component
