@@ -18,7 +18,7 @@ import useFilteredCommands from '../hooks/useFilteredCommands'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import { executeCommandWithMulticursor } from '../util/executeCommand'
-import CommandItem from './CommandRowOnly'
+import CommandItem from './CommandItem'
 import FadeTransition from './FadeTransition'
 import PopupBase from './PopupBase'
 

@@ -1,7 +1,7 @@
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import { CommandViewType } from '../@types/CommandViewType'
-import CommandItem from './CommandRowOnly'
+import CommandItem from './CommandItem'
 
 /** Renders a table of commands, with nothing else added. */
 const CommandTableOnly = ({
