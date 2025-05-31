@@ -11,7 +11,7 @@ import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
 import { inputHandlers } from '../commands'
-import { AlertText, AlertType } from '../constants'
+import { AlertType } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
@@ -325,7 +325,7 @@ const initEvents = (store: Store<State, any>) => {
       // e.dataTransfer.types is not available in dragLeave for some reason, so we check state.draggingFile
       const state = getState()
       if (state.draggingFile) {
-        dispatch([alert(null, { alertType: AlertType.DragAndDropFile }), dragInProgress({ value: false })])
+        dispatch([alert(null), dragInProgress({ value: false })])
       }
     })
   }, 100)
@@ -340,7 +340,7 @@ const initEvents = (store: Store<State, any>) => {
     })
     if (e.dataTransfer?.types.includes('Files')) {
       store.dispatch([
-        alert(AlertText.DragAndDropFile, { alertType: AlertType.DragAndDropFile }),
+        alert('Drop to import file'),
         dragInProgress({ value: true, draggingFile: true }),
       ])
     }
@@ -352,7 +352,7 @@ const initEvents = (store: Store<State, any>) => {
       // wait until the next tick so that the thought/subthought drop handler has a chance to be called before draggingFile is reset
       // See: DragAndDropThought and DragAndDropSubthoughts
       setTimeout(() => {
-        store.dispatch([alert(null, { alertType: AlertType.DragAndDropFile }), dragInProgress({ value: false })])
+        store.dispatch([alert(null), dragInProgress({ value: false })])
       })
     }
   }
