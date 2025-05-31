@@ -6,6 +6,7 @@ type Alert = {
   value: string | null
   /** Used to cancel imports. */
   importFileId?: string
+  clearDelay?: number
 }
 
 export default Alert
