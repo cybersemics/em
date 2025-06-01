@@ -129,7 +129,7 @@ export const observeNodeMetrics = () => {
         values.map(({ labels }: { labels: any }) => ({
           name: `em.server.node.${name}` as const,
           value: values[0]?.value,
-          tags: keyValueBy(labels, (key, value) => ({ [key]: value?.toString() })),
+          tags: keyValueBy(labels, (key, value) => ({ [key as any]: value?.toString() })),
         })),
       )
 
