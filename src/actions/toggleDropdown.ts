@@ -37,7 +37,7 @@ const toggleDropdown = (state: State, { dropDownType, value }: { dropDownType?: 
   ])(state)
 }
 
-/** Dispatches toggleDropDown only if needed. */
+/** Dispatches toggleDropdown only if needed. */
 export const toggleDropdownActionCreator =
   (payload?: Parameters<typeof toggleDropdown>[1]): Thunk =>
   (dispatch, getState) => {
