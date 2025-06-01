@@ -361,6 +361,13 @@ const CommandPaletteWithTransition: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
+  // clear search when command palette is closed
+  useEffect(() => {
+    if (!showCommandPalette) {
+      setSearch('')
+    }
+  }, [showCommandPalette])
+
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
     <TransitionGroup
