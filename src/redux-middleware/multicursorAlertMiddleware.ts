@@ -26,8 +26,6 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
 
     // on mobile, show the command menu when multicursor is active
     if (isTouch) {
-      const numMulticursors = Object.keys(state.multicursors).length
-
       if (numMulticursors === 0 && state.showCommandMenu) {
         dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: false }))
       } else if (numMulticursors > 0 && !state.showCommandMenu) {
