@@ -11,5 +11,16 @@ jobs:
     # You can define any steps you want, and they will run before the agent starts.
     # If you do not check out your code, Copilot will do this for you.
     steps:
-      - name: Enable corepack
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
         run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install npm dependencies
+        run: yarn
