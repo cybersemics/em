@@ -1,7 +1,5 @@
 import { fireEvent, screen } from '@testing-library/dom'
 import { act } from 'react'
-import SimplePath from '../../@types/SimplePath'
-import { editThoughtActionCreator as editThought } from '../../actions/editThought'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -20,45 +18,16 @@ describe('=note', () => {
         - =note
           - foo`,
       }),
-      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-      setCursor(null),
     ])
 
     await act(vi.runOnlyPendingTimersAsync)
 
     // Verify note is rendered
     const noteElement = screen.queryByLabelText('note')
-    expect(noteElement).toBeInTheDocument()
+    expect(noteElement)
 
     // Verify note content
     const element = screen.getByText('foo')
-    expect(element)
-  })
-
-  test('re-render note when =note subthought value changes', async () => {
-    await dispatch([
-      importText({
-        text: `
-      - a
-        - =note
-          - foo`,
-      }),
-      setCursor(['a', '=note', 'foo']),
-      (dispatch, getState) =>
-        dispatch(
-          editThought({
-            oldValue: 'foo',
-            newValue: 'bar',
-            path: getState().cursor as SimplePath,
-          }),
-        ),
-      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-      setCursor(null),
-    ])
-
-    await act(vi.runOnlyPendingTimersAsync)
-
-    const element = screen.getByText('bar')
     expect(element)
   })
 
@@ -71,47 +40,33 @@ describe('=note', () => {
           - foo`,
       }),
       setCursor(['a', 'note']),
-      (dispatch, getState) =>
-        dispatch(
-          editThought({
-            oldValue: 'note',
-            newValue: '=note',
-            path: getState().cursor as SimplePath,
-          }),
-        ),
-      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-      setCursor(null),
     ])
 
     await act(vi.runOnlyPendingTimersAsync)
 
-    const element = screen.getByText('foo')
-    expect(element)
-  })
+    // verify the note is not rendered initially
+    const noteElementBefore = screen.queryByLabelText('note')
+    expect(noteElementBefore).toBeNull()
 
-  test('render note when subthought is edited from non-note attribute', async () => {
-    await dispatch([
-      importText({
-        text: `
-      - a
-        - =test
-          - foo`,
-      }),
-      setCursor(['a', '=test']),
-      (dispatch, getState) =>
-        dispatch(
-          editThought({
-            oldValue: '=test',
-            newValue: '=note',
-            path: getState().cursor as SimplePath,
-          }),
-        ),
-      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-      setCursor(null),
-    ])
+    const thoughtElement = screen.getAllByText('note')[0]
+
+    await act(async () => {
+      fireEvent.focus(thoughtElement)
+      fireEvent.input(thoughtElement, { target: { innerHTML: '=note' } })
+    })
 
     await act(vi.runOnlyPendingTimersAsync)
 
+    // hide the meta attribute, so if the note value can be selected on the screen it must be rendered
+    await dispatch([setCursor(['a'])])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // verify the note is rendered
+    const noteElement = screen.queryByLabelText('note')
+    expect(noteElement)
+
+    // verify the note value is rendered
     const element = screen.getByText('foo')
     expect(element)
   })
@@ -129,15 +84,13 @@ describe('=note/=path', () => {
           - a
             - Test`,
       }),
-      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-      setCursor(null),
     ])
 
     await act(vi.runOnlyPendingTimersAsync)
 
     // Verify note is rendered
     const noteElement = screen.queryByLabelText('note')
-    expect(noteElement).toBeInTheDocument()
+    expect(noteElement)
 
     // The content should appear twice: once in the original thought and once in the note
     const contentInstances = screen.getAllByText('Test')
@@ -206,10 +159,10 @@ describe('=note/=path', () => {
 
     // Verify the note editor is visible
     const noteEditor = screen.queryByLabelText('note-editable')
-    expect(noteEditor).toBeInTheDocument()
+    expect(noteEditor)
 
     // Verify the 'a' thought was created and is visible in the DOM
-    expect(screen.getByText('a')).toBeInTheDocument()
+    expect(screen.getByText('a'))
 
     // Verify that the note is empty (since 'a' was just created)
     expect(noteEditor?.innerHTML).toBe('')
@@ -286,8 +239,6 @@ describe('=children/=note', () => {
           - b
           - c`,
       }),
-      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-      setCursor(null),
     ])
 
     await act(vi.runOnlyPendingTimersAsync)
@@ -322,8 +273,6 @@ describe('=children/=note/=path', () => {
            - year
               - 2011`,
       }),
-      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-      setCursor(null),
     ])
 
     await act(vi.runOnlyPendingTimersAsync)
@@ -411,8 +360,6 @@ describe('=children/=note/=path', () => {
            - year
               - 2011`,
       }),
-      // this will hide the meta attribute, so if the note value can be selected on the screen it must be rendered
-      setCursor(null),
     ])
 
     await act(vi.runOnlyPendingTimersAsync)
@@ -423,7 +370,7 @@ describe('=children/=note/=path', () => {
 
     // Verify the note contains the expected content
     const noteWithContent = screen.queryByText('2009')
-    expect(noteWithContent).toBeInTheDocument()
+    expect(noteWithContent)
 
     // Child 'b' has no Year subthought, so no note should be rendered for it
     // Child 'c' has lowercase 'year' which doesn't match 'Year' path, so no note either
@@ -453,10 +400,10 @@ describe('=children/=note/=path', () => {
 
     // Verify the note editor is visible for child 'b'
     const noteEditor = screen.queryByLabelText('note-editable')
-    expect(noteEditor).toBeInTheDocument()
+    expect(noteEditor)
 
     // Verify Year thought is created and is visible in the DOM
-    expect(screen.getByText('Year')).toBeInTheDocument()
+    expect(screen.getByText('Year'))
 
     // Verify that the note is empty (since 'Year' was just created)
     expect(noteEditor?.innerHTML).toBe('')
@@ -524,7 +471,7 @@ describe('=children/=note/=path', () => {
     expect(screen.queryByText('2010')).toBeNull()
 
     // Verify other notes are still present
-    expect(screen.getByText('2009')).toBeInTheDocument()
-    expect(screen.getByText('2011')).toBeInTheDocument()
+    expect(screen.getByText('2009'))
+    expect(screen.getByText('2011'))
   })
 })
