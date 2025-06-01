@@ -38,7 +38,7 @@ const CommandKeyboardShortcut = ({ keyboardOrString }: { keyboardOrString: Key |
   }
   const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString } : keyboardOrString
 
-  const regularKey = keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key
+  const regularKey = keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key
   return (
     <div
       className={css({
