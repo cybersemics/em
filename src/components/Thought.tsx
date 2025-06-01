@@ -128,19 +128,13 @@ const useCol1Alignment = ({
   siblingThoughts,
 }: UseCol1AlignParams) => {
   const prevIsTableCol1 = useRef<boolean>(isTableCol1)
+  const isCursorNode = cursor ? equalPath(cursor, path) : false
 
   // Recalculate and update col1MaxWidthStore.
   useEffect(() => {
-    const justFlipped = prevIsTableCol1.current !== undefined && prevIsTableCol1.current !== isTableCol1
-
-    if (!justFlipped) {
-      prevIsTableCol1.current = isTableCol1
-      return
-    }
-
-    // Only the single node under the cursor does the measurement
-    const isCursorNode = cursor ? equalPath(cursor, path) : false
     if (isCursorNode) {
+      prevIsTableCol1.current = isTableCol1
+
       // Clear the old max so siblings know “we’re recalculating.”
       col1MaxWidthStore.update(() => null)
 
@@ -154,10 +148,10 @@ const useCol1Alignment = ({
       col1MaxWidthStore.update(() => newMax)
     }
 
-    // Dependencies like siblingThoughts, path, and col1MaxWidthStore are intentionally excluded.
-    // They are either stable (e.g. store instance), or would cause unnecessary re-renders (e.g. siblingThoughts).
+    // Dependencies like path, and col1MaxWidthStore are intentionally excluded.
+    // They are either stable (e.g. store instance), or would cause unnecessary re-renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTableCol1])
+  }, [isTableCol1, siblingThoughts])
 
   const col1MaxWidth = col1MaxWidthStore.useState()
   const isSiblingOfCursor = siblingThoughts.map(t => t.id).includes(simplePath[simplePath.length - 1])
@@ -175,7 +169,9 @@ const useCol1Alignment = ({
    * between Tree and Table views.
    */
   useLayoutEffect(() => {
-    if (col1MaxWidth == null || !isSiblingOfCursor) return
+    const justFlipped = prevIsTableCol1.current !== isTableCol1
+    prevIsTableCol1.current = isTableCol1
+    if (!justFlipped || col1MaxWidth == null || !isSiblingOfCursor) return
 
     const myText = value || ''
     const myWidth = getTextWidth(myText, `${fontSize}px Helvetica`)
