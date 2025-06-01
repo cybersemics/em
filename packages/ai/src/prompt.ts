@@ -5,14 +5,16 @@ const openai = new OpenAI({
 })
 
 /** Prompts AI for a thought. */
-const ai = async (
+const prompt = async (
   /** Input prompt of existing thoughts exported in plaintext that include a blank thought to be filled in. */
   input: string,
 ): Promise<{ content?: string | null; err?: { code?: string; status: number; message: string } }> => {
-  const prompt = `Fill in the empty item. If multiple entities, just give the first.\n\n${input}`
+
+  const content = `Fill in the empty item. If multiple entities, just give the first.\n\n${input}`
+
   try {
     const completion = await openai.chat.completions.create({
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content }],
       model: 'gpt-3.5-turbo',
     })
     const choice = completion.choices[0]
@@ -39,4 +41,4 @@ const ai = async (
   }
 }
 
-export default ai
+export default prompt
