@@ -39,7 +39,6 @@ describe('=note', () => {
         - note
           - foo`,
       }),
-      setCursor(['a', 'note']),
     ])
 
     await act(vi.runOnlyPendingTimersAsync)
@@ -189,7 +188,7 @@ describe('=note/=path', () => {
                 - =path
                   - a
               - a
-                - Test`,
+                - Hello`,
       }),
       // Focus the note for editing
       setCursor(['x']),
@@ -198,17 +197,15 @@ describe('=note/=path', () => {
 
     await act(vi.runOnlyPendingTimersAsync)
 
-    // Find the note elements
-    const noteElements = screen.getAllByText('Test')
-    const noteElement = noteElements[0]
+    expect(screen.getAllByText('Hello')).toHaveLength(2)
 
-    // Focus the note element
+    const noteElement = screen.getAllByText('Hello')[0]
+
+    // Simulate keyboard shortcut for archive/delete
     await act(async () => {
+      // Focus the element first
       fireEvent.focus(noteElement)
-    })
 
-    // Simulate keyboard shortcut for archive
-    await act(async () => {
       fireEvent.keyDown(noteElement, {
         key: 'Backspace',
         shiftKey: true,
@@ -216,13 +213,41 @@ describe('=note/=path', () => {
       })
     })
 
-    await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runAllTimersAsync)
 
     // Verify original note content is no longer visible
-    expect(screen.queryByText('Test')).toBeNull()
+    expect(screen.queryByText('Hello')).toBeNull()
 
     // Verify the target thought is archived
     expect(screen.queryByText('a')).toBeNull()
+  })
+})
+
+describe('=children/=note', () => {
+  test('=children/=note should allow a note to be defined for all children', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - x
+          - =children
+            - =note
+              - hello
+          - a
+          - b
+          - c`,
+      }),
+    ])
+
+    // Wait for all timers and async operations to complete
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Should render one note for child 'a'
+    const noteElements = screen.queryAllByLabelText('note')
+    expect(noteElements).toHaveLength(3)
+
+    // Verify the note content is correct
+    const noteContent = screen.getAllByText('hello')
+    expect(noteContent).toHaveLength(3)
   })
 })
 
@@ -420,17 +445,13 @@ describe('=children/=note/=path', () => {
 
     await act(vi.runOnlyPendingTimersAsync)
 
-    // Find the note element for 2010
-    const noteElements = screen.getAllByText('2010')
-    const noteElement = noteElements[0] // The note element
-
-    // Focus the note element
-    await act(async () => {
-      fireEvent.focus(noteElement)
-    })
+    const noteElement = screen.getAllByText('2010')[0]
 
     // Simulate keyboard shortcut for archive/delete
     await act(async () => {
+      // Focus the element first
+      fireEvent.focus(noteElement)
+
       fireEvent.keyDown(noteElement, {
         key: 'Backspace',
         shiftKey: true,
@@ -438,7 +459,7 @@ describe('=children/=note/=path', () => {
       })
     })
 
-    await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runAllTimersAsync)
 
     // Verify the note content is no longer visible
     expect(screen.queryByText('2010')).toBeNull()
