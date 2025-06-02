@@ -339,10 +339,7 @@ const initEvents = (store: Store<State, any>) => {
       dragLeave.cancel()
     })
     if (e.dataTransfer?.types.includes('Files')) {
-      store.dispatch([
-        alert('Drop to import file'),
-        dragInProgress({ value: true, draggingFile: true }),
-      ])
+      store.dispatch([alert('Drop to import file'), dragInProgress({ value: true, draggingFile: true })])
     }
   }
 
