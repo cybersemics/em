@@ -40,6 +40,7 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, cssRaw }) =
   // recalculate when Lexeme contexts are loaded
   // Note: This results in a total running time for all superscripts of O(totalNumberOfContexts * depth)
   useEffect(() => {
+    /** Updates the number of visible contexts for the superscript display. */
     const updateNumContexts = () => {
       if (!ref.current) return
       setNumContexts(contexts.filter(id => isVisibleContext(store.getState(), id)).length)
