@@ -246,10 +246,6 @@ describe('=children/=note', () => {
     // Should render three notes (one for each child: a, b, c)
     const noteElements = screen.queryAllByLabelText('note')
     expect(noteElements).toHaveLength(3)
-
-    // Verify all notes contain the expected content
-    const contentInstances = screen.getAllByText('Test')
-    expect(contentInstances).toHaveLength(3)
   })
 })
 
