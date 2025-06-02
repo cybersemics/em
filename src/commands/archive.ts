@@ -17,8 +17,6 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
-let undoArchiveTimer: number
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState) => {
   const state = getState()
@@ -44,18 +42,6 @@ const exec: Command['exec'] = (dispatch, getState) => {
       if (value !== '') {
         haptics.vibrate(DELETE_VIBRATE_DURATION)
       }
-
-      // clear the undo alert timer to prevent previously cleared undo alert from closing this one
-      clearTimeout(undoArchiveTimer)
-
-      // close the alert after a delay
-      // only close the alert if it is a ThoughtArchive alert
-      undoArchiveTimer = window.setTimeout(() => {
-        const state = getState()
-        if (state.alert && state.alert.alertType === AlertType.ThoughtArchived) {
-          dispatch(alert(null))
-        }
-      }, 5000)
 
       // archive the thought
       dispatch(archiveThought({ path: state.cursor ?? undefined }))

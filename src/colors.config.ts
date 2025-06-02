@@ -25,6 +25,7 @@ const colors = {
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(173, 216, 230, 1)', // #add8e6 (lightblue)
     highlight2: 'rgba(155, 170, 220, 1)', // (slight variation on highlight color for alternating highlights)
+    lightgray: '#999999', // #999999
     lightgreen: 'rgba(144, 238, 144)', // #90ee90 (lightgreen)
     orange: 'rgba(255, 136, 0, 1)', // #ff8800
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
@@ -37,6 +38,7 @@ const colors = {
     breadcrumbs: 'rgba(153, 153, 153, 1)',
     activeBreadCrumb: 'rgba(144, 144, 144, 1)', // #909090
     link: 'rgba(135, 206, 235, 1)', // #87ceeb
+    popupIconBg: 'rgba(135, 206, 235, 0.2)',
     dim: 'rgba(255, 255, 255, 0.5)',
     dimInverse: 'rgba(7, 7, 7, 0.5)',
     bullet: 'rgba(217, 217, 217, 1)',
@@ -96,6 +98,7 @@ const colors = {
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue)
     highlight2: 'rgba(155, 170, 220, 1)', // (slight variation on highlight color for alternating highlights)
+    lightgray: '#666666', // #666666
     lightgreen: 'rgba(0, 214, 136, 1)', // #00d688 (same as green in the light theme)
     orange: 'rgba(255, 136, 0, 1)', // #ff8800
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
@@ -108,6 +111,7 @@ const colors = {
     breadcrumbs: 'rgba(102, 102, 102, 1)',
     activeBreadCrumb: 'rgba(111, 111, 111, 1)', // #909090
     link: 'rgba(27, 111, 154, 1)', // #1b6f9a
+    popupIconBg: 'rgba(27, 111, 154, 0.2)',
     dim: 'rgba(7, 7, 7, 0.5)',
     dimInverse: 'rgba(255, 255, 255, 0.5)',
     bullet: 'rgba(39, 39, 39, 1)',

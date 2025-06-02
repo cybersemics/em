@@ -2,6 +2,8 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import reducerFlow from '../util/reducerFlow'
+import clearMulticursors from './clearMulticursors'
 
 type DropdownType = 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandMenu'
 
@@ -27,13 +29,15 @@ const toggleDropdown = (state: State, { dropDownType, value }: { dropDownType?: 
     ]),
   )
 
-  return {
-    ...state,
-    ...dropdownStates,
-  }
+  return reducerFlow([
+    state => ({ ...state, ...dropdownStates }),
+    // When closing the commandMenu, clear the multicursors.
+    // This is necessary because multicursorAlertMiddleware only handles Multiselect -> Alert/CommandMenu.
+    (!dropDownType || dropDownType === 'commandMenu') && !value ? clearMulticursors : null,
+  ])(state)
 }
 
-/** Dispatches toggleDropDown only if needed. */
+/** Dispatches toggleDropdown only if needed. */
 export const toggleDropdownActionCreator =
   (payload?: Parameters<typeof toggleDropdown>[1]): Thunk =>
   (dispatch, getState) => {

@@ -1,9 +1,10 @@
 import _ from 'lodash'
-import pluralize from 'pluralize'
 import { ThunkMiddleware } from 'redux-thunk'
 import Dispatch from '../@types/Dispatch'
 import State from '../@types/State'
 import { alertActionCreator } from '../actions/alert'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
+import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 
 /** Throttled dispatch for alert actions. */
@@ -13,7 +14,7 @@ const throttledAlert = _.throttle(
   { leading: false, trailing: true },
 )
 
-/** A middleware that manages multicursor alerts. */
+/** A middleware that manages multicursor alerts and shows/hides the Command Menu on mobile. This is done so that the Alert and Command Menu are updated regardless of which action the multiselect is triggered from. Note that this only works in one direction: Multiselect -> Alert/CommandMenu. If the Command Menu is closed somewhere else (e.g. toggleDropdown) it will need to clear the multicursors itself. */
 const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
   return next => action => {
     const prevNumMulticursors = Object.keys(getState().multicursors).length
@@ -21,19 +22,33 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
     next(action)
 
     const state = getState()
-
     const numMulticursors = Object.keys(state.multicursors).length
 
-    // clear multicursor alert
-    if (!numMulticursors && state.alert?.alertType === AlertType.MulticursorActive) {
-      return throttledAlert(dispatch, null)
+    // On mobile, show the command menu when multicursor is active, and hide it when inactive.
+    if (isTouch) {
+      if (numMulticursors === 0 && state.showCommandMenu) {
+        dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: false }))
+      } else if (numMulticursors > 0 && !state.showCommandMenu) {
+        dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: true }))
+      }
     }
+    // on desktop, show a persistent alert
+    else {
+      // clear multicursor alert
+      if (!numMulticursors && state.alert?.alertType === AlertType.MulticursorActive) {
+        throttledAlert(dispatch, null)
+      }
 
-    if (numMulticursors !== prevNumMulticursors) {
-      // show or update multicursor alert
-      return throttledAlert(dispatch, `${pluralize('thought', numMulticursors, true)} selected`, {
-        alertType: AlertType.MulticursorActive,
-      })
+      if (numMulticursors !== prevNumMulticursors) {
+        // show or update multicursor alert
+        throttledAlert(
+          dispatch,
+          numMulticursors === 1 ? '1 thought selected' : `${numMulticursors} thoughts selected`,
+          {
+            alertType: AlertType.MulticursorActive,
+          },
+        )
+      }
     }
   }
 }

@@ -7,9 +7,15 @@ on:
   pull_request:
     branches:
       - '**'
+  workflow_dispatch:
+    inputs:
+      rerun_id:
+        description: 'Optional ID for tracking repeated runs'
+        required: false
 
 env:
   CI: true
+  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
 
 jobs:
   run:

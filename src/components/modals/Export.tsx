@@ -23,7 +23,7 @@ import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { errorActionCreator as error } from '../../actions/error'
 import { isMac, isTouch } from '../../browser'
-import { AlertType, HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
@@ -47,7 +47,7 @@ import throttleConcat from '../../util/throttleConcat'
 import timestamp from '../../util/timestamp'
 import Checkbox from './../Checkbox'
 import ChevronImg from './../ChevronImg'
-import DropDownMenu from './../DropDownMenu'
+import Dropdown from './../Dropdown'
 import LoadingEllipsis from './../LoadingEllipsis'
 import ModalComponent from './ModalComponent'
 
@@ -252,7 +252,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
       <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
         <ChevronImg onClickHandle={() => setIsOpen(!isOpen)} cssRaw={isOpen ? rotate180Class : undefined} />
         <span>
-          <DropDownMenu
+          <Dropdown
             isOpen={isOpen}
             selected={selected}
             onSelect={(option: ExportOption) => {
@@ -342,7 +342,6 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     dispatch([
       closeModal(),
       alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`, {
-        alertType: AlertType.Clipboard,
         clearDelay: 3000,
       }),
     ])
@@ -395,7 +394,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         dispatch(error({ value: 'Error copying thoughts' }))
 
         clearTimeout(globals.errorTimer)
-        globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: AlertType.Clipboard })), 10000)
+        globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
       })
 
       return () => {

@@ -96,6 +96,7 @@ const useSwipeToDismiss = (
         onDismiss?.()
         setTimeout(() => {
           onDismissEnd?.()
+          setDY(0)
         }, snapbackDuration * 1000)
       } else {
         setDY(0)

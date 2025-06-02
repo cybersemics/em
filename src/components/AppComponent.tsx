@@ -18,7 +18,7 @@ import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
-import CommandMenuPanel from './CommandMenu/CommandMenuPanel'
+import CommandMenu from './CommandMenu/CommandMenu'
 import CommandPalette from './CommandPalette'
 import Content from './Content'
 import ErrorMessage from './ErrorMessage'
@@ -32,6 +32,7 @@ import Sidebar from './Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
+import GestureCheatsheet from './dialog/GestureCheatsheet'
 import * as modals from './modals'
 
 const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
@@ -77,7 +78,13 @@ const shouldCancelGesture = (
 ): boolean => {
   const state = store.getState()
   const distance = state.fontSize * 2
-  return (x && y && selection.isNear(x, y, distance)) || state.dragInProgress || !!state.showModal || state.showSidebar
+  return (
+    (x && y && selection.isNear(x, y, distance)) ||
+    state.dragInProgress ||
+    !!state.showModal ||
+    state.showSidebar ||
+    !!state.showGestureCheatsheet
+  )
 }
 
 /**
@@ -168,6 +175,8 @@ const AppComponent: FC = () => {
       <CommandPalette />
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
+      <GestureCheatsheet />
+
       {isDocumentEditable() && !tutorial && !showModal && (
         <>
           <Sidebar />
@@ -198,7 +207,7 @@ const AppComponent: FC = () => {
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
 
-          <CommandMenuPanel />
+          <CommandMenu />
           <div style={{ fontSize }}>
             <Footer />
           </div>
