@@ -4,7 +4,7 @@ This is a Typescript/React/Redux web app that runs as a PWA on mobile.
 
 ### Required Before Each Commit
 
-- Run `prettier --write` before committing any changes to ensure proper code formatting.
+- Run `yarn prettier --write .` before committing any changes to ensure proper code formatting.
 
 ### Functional Programming
 
