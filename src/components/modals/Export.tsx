@@ -47,7 +47,7 @@ import throttleConcat from '../../util/throttleConcat'
 import timestamp from '../../util/timestamp'
 import Checkbox from './../Checkbox'
 import ChevronImg from './../ChevronImg'
-import DropDownMenu from './../DropDownMenu'
+import Dropdown from './../Dropdown'
 import LoadingEllipsis from './../LoadingEllipsis'
 import ModalComponent from './ModalComponent'
 
@@ -252,7 +252,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
       <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
         <ChevronImg onClickHandle={() => setIsOpen(!isOpen)} cssRaw={isOpen ? rotate180Class : undefined} />
         <span>
-          <DropDownMenu
+          <Dropdown
             isOpen={isOpen}
             selected={selected}
             onSelect={(option: ExportOption) => {

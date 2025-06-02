@@ -103,7 +103,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
-  const showDropDown = useSelector(state => state.showColorPicker || state.showLetterCase)
+  const showDropdown = useSelector(state => state.showColorPicker || state.showLetterCase)
   const positionFixedStyles = usePositionFixed()
 
   // re-render only (why?)
@@ -219,7 +219,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
         aria-label='toolbar'
         className={cx(
           // When a dropdown like ColorPicker or LetterCase is open, set pointer-events: none, otherwise the toolbar will block the editor. This will be overridden by the toolbar buttons to allow interaction.
-          showDropDown && toolbarPointerEventsRecipe(),
+          showDropdown && toolbarPointerEventsRecipe(),
           css({
             right: 0,
             textAlign: 'right',

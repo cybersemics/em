@@ -5,7 +5,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../actions/deleteThoughtWithCursor'
 import { errorActionCreator as error } from '../actions/error'
 import Icon from '../components/icons/DeleteIcon'
-import { AlertType, DELETE_VIBRATE_DURATION, Settings } from '../constants'
+import { DELETE_VIBRATE_DURATION, Settings } from '../constants'
 import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
@@ -49,7 +49,6 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
     if (value || !experienceMode) {
       dispatch(
         alert(deleteThoughtAlertText(state, cursor), {
-          alertType: AlertType.ThoughtDeleted,
           clearDelay: 8000,
           showCloseLink: true,
         }),
@@ -70,7 +69,6 @@ const deleteCommand: Command = {
     onComplete(filteredCursors, dispatch, getState) {
       dispatch(
         alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`, {
-          alertType: AlertType.ThoughtDeleted,
           clearDelay: 8000,
           showCloseLink: true,
         }),

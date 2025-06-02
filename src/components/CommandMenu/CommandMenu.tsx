@@ -1,7 +1,7 @@
 import SwipeableDrawer from '@mui/material/SwipeableDrawer'
 import _ from 'lodash'
 import pluralize from 'pluralize'
-import { FC, useCallback } from 'react'
+import { FC, useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -14,14 +14,27 @@ import fastClick from '../../util/fastClick'
 import CloseIcon from '../icons/CloseIcon'
 import PanelCommandGrid from './PanelCommandGrid'
 
+/**
+ * A custom hook that returns the last non-zero number of multicursors.
+ * This is used to avoid showing the MultiselectMessage changing as the Command Menu is closed.
+ */
+const useNonzeroNumMulticursors = () => {
+  const numMulticursors = useSelector(state => Object.keys(state.multicursors).length)
+  const lastNumMulticursorsRef = useRef(numMulticursors)
+
+  // update ref if numMulticursors is not zero
+  if (numMulticursors !== 0) {
+    lastNumMulticursorsRef.current = numMulticursors
+  }
+
+  return lastNumMulticursorsRef.current
+}
+
 /** Shows a message with the number of thoughts selected, and a cancel button to deselect all. */
 const MultiselectMessage: FC = () => {
-  const numMulticursors = useSelector(state => Object.keys(state.multicursors).length)
-
-  if (numMulticursors === 0) return null
-
+  const displayNumMulticursors = useNonzeroNumMulticursors()
   return (
-    <div style={{ marginBottom: '1em' }}>
+    <div>
       <span
         className={css({
           fontStyle: 'italic',
@@ -36,9 +49,9 @@ const MultiselectMessage: FC = () => {
             textAlign: 'right',
           }}
         >
-          {numMulticursors}
+          {displayNumMulticursors}
         </span>{' '}
-        {pluralize('thought', numMulticursors, false)} selected
+        {pluralize('thought', displayNumMulticursors, false)} selected
       </span>
     </div>
   )
@@ -47,7 +60,7 @@ const MultiselectMessage: FC = () => {
 /**
  * A panel that displays the command menu.
  */
-const CommandMenuPanel = () => {
+const CommandMenu = () => {
   const dispatch = useDispatch()
   const showCommandMenu = useSelector(state => state.showCommandMenu)
   const isTutorialOn = useSelector(isTutorial)
@@ -97,28 +110,34 @@ const CommandMenuPanel = () => {
         }}
       >
         <div>
-          <div className={css({ margin: '1.8rem 1.8rem 1rem' })}>
-            <MultiselectMessage />
+          <div className={css({ margin: '1.2rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom)) 1.2rem' })}>
+            <div className={css({ marginBottom: '1rem' })}>
+              <div
+                className={css({
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                })}
+              >
+                <MultiselectMessage />
+                <button
+                  {...fastClick(onClose)}
+                  className={css({
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    marginLeft: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                  })}
+                >
+                  <CloseIcon size={20} fill={token('colors.fg')} />
+                </button>
+              </div>
+            </div>
             <PanelCommandGrid />
-          </div>
-          <div
-            className={css({
-              display: 'flex',
-              justifyContent: 'flex-end',
-              marginBottom: '1rem',
-              marginRight: '1rem',
-            })}
-          >
-            <button
-              {...fastClick(onClose)}
-              className={css({
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-              })}
-            >
-              <CloseIcon size={20} fill={token('colors.fg')} />
-            </button>
           </div>
         </div>
       </SwipeableDrawer>
@@ -126,4 +145,4 @@ const CommandMenuPanel = () => {
   }
 }
 
-export default CommandMenuPanel
+export default CommandMenu
