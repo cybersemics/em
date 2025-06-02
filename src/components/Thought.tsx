@@ -151,7 +151,7 @@ const useCol1Alignment = ({
     // Dependencies like path, and col1MaxWidthStore are intentionally excluded.
     // They are either stable (e.g. store instance), or would cause unnecessary re-renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTableCol1, siblingThoughts])
+  }, [isTableCol1, siblingThoughts, fontSize])
 
   const col1MaxWidth = col1MaxWidthStore.useState()
   const isSiblingOfCursor = siblingThoughts.map(t => t.id).includes(simplePath[simplePath.length - 1])
@@ -161,6 +161,7 @@ const useCol1Alignment = ({
   }>({ bullet: {}, editable: {} })
 
   const duration = durations.get('layoutNodeAnimation')
+  const [annotationOffset, setAnnotationOffset] = useState<number | null>(null)
 
   /**
    * Animates transitioning text alignment from left to right (and back)
@@ -171,15 +172,25 @@ const useCol1Alignment = ({
   useLayoutEffect(() => {
     const justFlipped = prevIsTableCol1.current !== isTableCol1
     prevIsTableCol1.current = isTableCol1
-    if (!justFlipped || col1MaxWidth == null || !isSiblingOfCursor) return
 
+    // Measure our own text width
     const myText = value || ''
     const myWidth = getTextWidth(myText, `${fontSize}px Helvetica`)
 
-    const paddingLeftPx = fontSize * 0.333 // 0.333 em
-    const paddingRightPx = fontSize * 1.0 // 1 em
+    // Compute “minimum content” (3em minus left/right padding)
+    const paddingLeftPx = fontSize * 0.333 // 0.333em
+    const paddingRightPx = fontSize * 1.0 // 1em
     const minContentPx = 3 * fontSize - (paddingLeftPx + paddingRightPx)
-    // └─ equivalent to: 1.667 * fontSize
+    // └─ exactly the same as “1.667 × fontSize”
+
+    // If our text is narrower than that “minContentPx,” compute annotationOffset:
+    setAnnotationOffset(myWidth < minContentPx ? Math.round(minContentPx - myWidth) : null)
+
+    if (!justFlipped || col1MaxWidth == null || !isSiblingOfCursor) {
+      // If we’re leaving table‐view or not a sibling of cursor, clear any leftover offset
+      if (!isTableCol1) setAnnotationOffset(null)
+      return
+    }
 
     const offset = Math.max(minContentPx, col1MaxWidth) - myWidth
     const bulletOffset = 11 - (fontSize - 9) * 0.5
@@ -207,9 +218,9 @@ const useCol1Alignment = ({
     // Dependencies like `value`, `fontSize`, and `isSiblingOfCursor` are intentionally excluded
     // to prevent unnecessary retriggers on unrelated state changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTableCol1, col1MaxWidth])
+  }, [isTableCol1, col1MaxWidth, fontSize, value])
 
-  return { alignmentTransition }
+  return { alignmentTransition, annotationOffset }
 }
 
 /**********************************************************************
@@ -491,7 +502,7 @@ const ThoughtContainer = ({
   )
 
   // Use custom hook for col1 alignment
-  const { alignmentTransition } = useCol1Alignment({
+  const { alignmentTransition, annotationOffset } = useCol1Alignment({
     path,
     simplePath,
     value,
@@ -607,6 +618,7 @@ const ThoughtContainer = ({
             updateSize={updateSize}
             view={view}
             isPressed={dragHoldResult.isPressed}
+            annotationOffset={annotationOffset}
           />
         </div>
         <Note path={path} disabled={!isVisible} />
