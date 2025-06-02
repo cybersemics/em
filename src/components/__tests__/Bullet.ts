@@ -1,6 +1,5 @@
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
-import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { HOME_TOKEN } from '../../constants'
@@ -9,6 +8,7 @@ import { exportContext } from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
+import paste from '../../test-helpers/paste'
 import findCursor from '../../test-helpers/queries/findCursor'
 import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -19,15 +19,11 @@ afterEach(cleanupTestApp)
 
 describe('render', () => {
   it('render a bullet next to each thought', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - b
             - c
-      `,
-      }),
-    ])
+      `)
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -36,15 +32,11 @@ describe('render', () => {
   })
 
   it('do not render a bullet with =bullet/None', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - =bullet
             - None
-      `,
-      }),
-    ])
+      `)
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -55,18 +47,14 @@ describe('render', () => {
   })
 
   it('do not render bullets on a child of a thought with =children/=bullet/None', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - =children
             - =bullet
               - None
           - b
           - c
-      `,
-      }),
-    ])
+      `)
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -79,17 +67,13 @@ describe('render', () => {
   // this is in contrast to how =children/=style works
   // it seems visually disruptive to have inconsistent bullets within a context
   it('do not render bullet of =children itself since it is one of the children', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - =children
             - =bullet
               - None
-      `,
-      }),
-      toggleHiddenThoughts(),
-    ])
+      `)
+    await dispatch([toggleHiddenThoughts()])
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -99,9 +83,7 @@ describe('render', () => {
   })
 
   it('do not render bullets on a grandchild of a thought with =grandchildren/=bullet/None', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - =grandchildren
             - =bullet
@@ -111,9 +93,7 @@ describe('render', () => {
             - d
             - e
             - f
-      `,
-      }),
-    ])
+      `)
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -124,17 +104,13 @@ describe('render', () => {
 
   // in contrast to =children/=bullet, =grandchildren/=bullet does not naturally apply to =grandchildren, so we need to prevent the normal behavior of =bullet being applied to its parent
   it('render bullet of =grandchildren itself', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - =grandchildren
             - =bullet
               - None
-      `,
-      }),
-      toggleHiddenThoughts(),
-    ])
+      `)
+    await dispatch([toggleHiddenThoughts()])
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -143,15 +119,11 @@ describe('render', () => {
   })
 
   it('renders a parent bullet on the parent of a visible meta attribute', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - A
           - =test
-      `,
-      }),
-      toggleHiddenThoughts(),
-    ])
+      `)
+    await dispatch([toggleHiddenThoughts()])
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -160,9 +132,7 @@ describe('render', () => {
   })
 
   it('render bullets in context view entries even when parent has =view/Table', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - a1
             - m
@@ -173,9 +143,7 @@ describe('render', () => {
           - b1
             - m
               - y
-      `,
-      }),
-    ])
+      `)
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -194,17 +162,13 @@ describe('render', () => {
 
 describe('expansion', () => {
   it('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - b
             - c
           - d
-      `,
-      }),
-      setCursor(['a', 'b']),
-    ])
+      `)
+    await dispatch([setCursor(['a', 'b'])])
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -220,18 +184,14 @@ describe('expansion', () => {
   })
 
   it('tapping the cursor bullet on an ancestor should collapse all descendants', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - x
           - a
             - b
               - c
           - d
-      `,
-      }),
-      setCursor(['x', 'a', 'b', 'c']),
-    ])
+      `)
+    await dispatch([setCursor(['x', 'a', 'b', 'c'])])
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -247,17 +207,13 @@ describe('expansion', () => {
   })
 
   it('tapping an expanded root thought bullet should set the cursor to null', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - b
             - c
           - d
-      `,
-      }),
-      setCursor(['a', 'b', 'c']),
-    ])
+      `)
+    await dispatch([setCursor(['a', 'b', 'c'])])
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -273,16 +229,12 @@ describe('expansion', () => {
   })
 
   it('tapping on a collapsed non-cursor bullet should move the cursor to that thought', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - b
             - c
           - d
-      `,
-      }),
-    ])
+      `)
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -298,9 +250,7 @@ describe('expansion', () => {
   })
 
   it('tapping on the bullet of a pinned thought should unpin it', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - b
             - =pin
@@ -308,9 +258,7 @@ describe('expansion', () => {
             - c
           - d
             - e
-      `,
-      }),
-    ])
+      `)
 
     await act(vi.runOnlyPendingTimersAsync)
 
@@ -331,15 +279,11 @@ describe('expansion', () => {
   })
 
   it('tapping on the bullet of an expanded only child should unpin it', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - b
             - c
-      `,
-      }),
-    ])
+      `)
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
@@ -358,9 +302,7 @@ describe('expansion', () => {
   })
 
   it('tapping on the bullet of a thought expanded by =children should unpin it', async () => {
-    await dispatch([
-      importText({
-        text: `
+    paste(`
         - a
           - =children
             - =pin
@@ -369,9 +311,7 @@ describe('expansion', () => {
             - c
           - d
             - e
-      `,
-      }),
-    ])
+      `)
 
     const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
