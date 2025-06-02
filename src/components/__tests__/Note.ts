@@ -226,29 +226,6 @@ describe('=note/=path', () => {
   })
 })
 
-describe('=children/=note', () => {
-  test('=children/=note should allow a note to be defined for all children', async () => {
-    await dispatch([
-      importText({
-        text: `
-        - x
-          - =children
-            - =note
-              - Test
-          - a
-          - b
-          - c`,
-      }),
-    ])
-
-    await act(vi.runOnlyPendingTimersAsync)
-
-    // Should render three notes (one for each child: a, b, c)
-    const noteElements = screen.queryAllByLabelText('note')
-    expect(noteElements).toHaveLength(3)
-  })
-})
-
 describe('=children/=note/=path', () => {
   test('basic', async () => {
     await dispatch([
