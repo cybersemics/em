@@ -27,6 +27,13 @@ const editableRecipe = defineRecipe({
     // https://github.com/cybersemics/em/pull/2962
     userSelect: 'text',
   },
+  variants: {
+    editing: {
+      disabled: {
+        pointerEvents: 'none',
+      },
+    },
+  },
 })
 
 export default editableRecipe

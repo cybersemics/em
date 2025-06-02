@@ -595,7 +595,11 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
-      className={cx(multiline ? multilineRecipe() : null, editableRecipe(), className)}
+      className={cx(
+        multiline ? multilineRecipe() : null,
+        editableRecipe({ editing: disabled ? 'disabled' : undefined }),
+        className,
+      )}
       html={
         value === EM_TOKEN
           ? '<b>em</b>'

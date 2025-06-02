@@ -140,7 +140,7 @@ const StaticThought = ({
   // Disable contenteditable on Mobile Safari during drag-and-drop, otherwise thought text will become selected.
   // This is restricted to Mobile Safari, because on Chrome it creates a small layout shift.
   // https://github.com/cybersemics/em/pull/2960
-  const dragInProgressSafari = useSelector(state => isTouch && isSafari() && state.dragInProgress)
+  const dragInProgressSafari = useSelector(state => isTouch && isSafari() && (state.dragHold || state.dragInProgress))
 
   const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
 
