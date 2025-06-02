@@ -175,7 +175,13 @@ const useCol1Alignment = ({
 
     const myText = value || ''
     const myWidth = getTextWidth(myText, `${fontSize}px Helvetica`)
-    const offset = Math.max(30, col1MaxWidth) - myWidth
+
+    const paddingLeftPx = fontSize * 0.333 // 0.333 em
+    const paddingRightPx = fontSize * 1.0 // 1 em
+    const minContentPx = 3 * fontSize - (paddingLeftPx + paddingRightPx)
+    // └─ equivalent to: 1.667 * fontSize
+
+    const offset = Math.max(minContentPx, col1MaxWidth) - myWidth
     const bulletOffset = 11 - (fontSize - 9) * 0.5
 
     // “Pop” elements into their initial offset positions
