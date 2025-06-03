@@ -4,7 +4,7 @@ import { token } from '../../styled-system/tokens'
 import ExportOption from '../@types/ExportOption'
 import fastClick from '../util/fastClick'
 
-interface DropDownMenuProps {
+interface DropdownProps {
   dark?: boolean
   isOpen?: boolean
   onSelect?: (option: ExportOption) => void
@@ -15,7 +15,7 @@ interface DropDownMenuProps {
 
 /** A custom drop down menu. */
 // eslint-disable-next-line react/display-name
-const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
+const Dropdown = React.forwardRef<HTMLDivElement, DropdownProps>(
   ({ isOpen, onSelect, selected, options, dark, style }, ref) => {
     return isOpen ? (
       <div
@@ -80,4 +80,4 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
   },
 )
 
-export default DropDownMenu
+export default Dropdown

@@ -1,17 +1,16 @@
-import _ from 'lodash'
+import { isEqual, throttle } from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import Path from '../@types/Path'
 import State from '../@types/State'
 import { isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
+import getSortPreference from '../selectors/getSortPreference'
+import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import scrollTopStore from '../stores/scrollTop'
 import syncStatusStore from '../stores/syncStatus'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
-
-// store the last cursor
-let cursorLast: Path | null = null
+import head from '../util/head'
 
 // Tracks whether the has scrolled since the last cursor navigation
 let userInteractedAfterNavigation: boolean = false
@@ -125,7 +124,7 @@ const scrollCursorIntoView = () => {
 editingValueStore.subscribe(
   // The cursor typically changes rank most dramatically on the first edit, and then less as its rank stabilizes.
   // Throttle aggressively since scrollCursorIntoView reads from the DOM and this is called on all edits.
-  _.throttle(() => {
+  throttle(() => {
     // we need to wait for the cursor to animate into its final position before scrollCursorIntoView can accurately determine if it is in the viewport
     setTimeout(scrollCursorIntoView, durations.get('layoutNodeAnimation'))
   }, 400),
@@ -158,17 +157,35 @@ scrollTopStore.subscribe(() => {
 /** Runs a throttled session keepalive on every action. */
 const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
+    const stateOld = getState()
+    const cursorOld = stateOld.cursor
+    const sortPreferenceOld =
+      stateOld.cursor && getSortPreference(stateOld, head(rootedParentOf(stateOld, stateOld.cursor)))
+
     next(action)
 
     // if the cursor has changed, scroll it into view
-    const cursor = getState().cursor
-    if (cursor !== cursorLast) {
-      // indicate that the cursor has changed and we want to scroll it into view
-      // this is needed for when thoughts need to be pulled from storage prior to scrolling
-      userInteractedAfterNavigation = false
-      scrollCursorIntoView()
+    const stateNew = getState()
+    const cursorNew = stateNew.cursor
+    const sortPreferenceNew =
+      stateNew.cursor && getSortPreference(stateNew, head(rootedParentOf(stateNew, stateNew.cursor)))
+
+    const cursorChanged = !isEqual(cursorNew, cursorOld)
+    const sortChanged = !isEqual(sortPreferenceNew, sortPreferenceOld)
+    if (cursorChanged || sortChanged) {
+      setTimeout(
+        () => {
+          // indicate that the cursor has changed and we want to scroll it into view
+          // this is needed for when thoughts need to be pulled from storage prior to scrolling
+          userInteractedAfterNavigation = false
+          scrollCursorIntoView()
+        },
+        // If the cursor changed, we need to wait for most of the layout animaton to complete before scrolling.
+        // Otherwise the cursor will not be at its final position and it will nott scroll far enough.
+        // 50% seems to be enough to avoid the issue, but this can be fine-tuned as needed.
+        sortChanged ? durations.get('layoutNodeAnimation') / 2 : 0,
+      )
     }
-    cursorLast = cursor
   }
 }
 

@@ -1,10 +1,9 @@
 import { rgbToHex } from '@mui/material'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
-import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
@@ -92,31 +91,29 @@ const ColorSwatch: FC<{
     )
   })
 
-  /** Toggles the text color to the clicked swatch. */
-  const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
-    // stop toolbar button dip
-    e.stopPropagation()
-    e.preventDefault()
-
-    dispatch(formatSelection('foreColor', color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg')))
+  /** Toggles the text color to the clicked swatch. If the swatch is already selected, sets text color and background color back to default. */
+  const toggleTextColor = () => {
+    dispatch(
+      formatSelection(
+        'foreColor',
+        selected ? 'fg' : color || (backgroundColor && backgroundColor !== 'fg' ? 'black' : 'bg'),
+      ),
+    )
 
     // Apply background color to the selection
-    if (backgroundColor && backgroundColor !== 'bg') {
-      dispatch(formatSelection('backColor', backgroundColor))
-    } else {
-      dispatch(formatSelection('backColor', 'bg'))
-    }
+    dispatch(formatSelection('backColor', selected ? 'bg' : (backgroundColor ?? 'bg')))
   }
+
   return (
     <span
       aria-label={label || color || backgroundColor}
       {...fastClick(e => {
-        // stop click empty space
+        // stop toolbar button dip and click empty space
         e.stopPropagation()
+        e.preventDefault()
+
+        toggleTextColor()
       })}
-      onTouchStart={toggleTextColor}
-      // only add mousedown to desktop, otherwise it will activate twice on mobile
-      onMouseDown={!isTouch ? toggleTextColor : undefined}
       className={css({ cursor: 'pointer' })}
     >
       {shape === 'bullet' ? (
@@ -166,28 +163,28 @@ const ColorPicker: FC<{ size?: number }> = ({ size }) => {
     <Popover show={showColorPicker} size={size}>
       {/* Text Color */}
       <div aria-label='text color swatches' className={css({ whiteSpace: 'nowrap' })}>
-        <ColorSwatch color={'fg'} label='default' />
-        <ColorSwatch color={'gray'} label='gray' />
-        <ColorSwatch color={'orange'} label='orange' />
-        <ColorSwatch color={'yellow'} label='yellow' />
-        <ColorSwatch color={'green'} label='green' />
-        <ColorSwatch color={'blue'} label='blue' />
-        <ColorSwatch color={'purple'} label='purple' />
-        <ColorSwatch color={'pink'} label='pink' />
-        <ColorSwatch color={'red'} label='red' />
+        <ColorSwatch color='fg' label='default' />
+        <ColorSwatch color='gray' label='gray' />
+        <ColorSwatch color='orange' label='orange' />
+        <ColorSwatch color='yellow' label='yellow' />
+        <ColorSwatch color='green' label='green' />
+        <ColorSwatch color='blue' label='blue' />
+        <ColorSwatch color='purple' label='purple' />
+        <ColorSwatch color='pink' label='pink' />
+        <ColorSwatch color='red' label='red' />
       </div>
 
       {/* Background Color */}
       <div aria-label='background color swatches' className={css({ whiteSpace: 'nowrap' })}>
-        <ColorSwatch backgroundColor={'fg'} label='inverse' />
-        <ColorSwatch backgroundColor={'gray'} label='gray' />
-        <ColorSwatch backgroundColor={'orange'} label='orange' />
-        <ColorSwatch backgroundColor={'yellow'} label='yellow' />
-        <ColorSwatch backgroundColor={'green'} label='green' />
-        <ColorSwatch backgroundColor={'blue'} label='blue' />
-        <ColorSwatch backgroundColor={'purple'} label='purple' />
-        <ColorSwatch backgroundColor={'pink'} label='pink' />
-        <ColorSwatch backgroundColor={'red'} label='red' />
+        <ColorSwatch backgroundColor='fg' label='inverse' />
+        <ColorSwatch backgroundColor='gray' label='gray' />
+        <ColorSwatch backgroundColor='orange' label='orange' />
+        <ColorSwatch backgroundColor='yellow' label='yellow' />
+        <ColorSwatch backgroundColor='green' label='green' />
+        <ColorSwatch backgroundColor='blue' label='blue' />
+        <ColorSwatch backgroundColor='purple' label='purple' />
+        <ColorSwatch backgroundColor='pink' label='pink' />
+        <ColorSwatch backgroundColor='red' label='red' />
       </div>
     </Popover>
   )

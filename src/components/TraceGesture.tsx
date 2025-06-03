@@ -107,9 +107,11 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     const onTouchEnd = (e: TouchEvent) => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
+      const preventDefault = e.preventDefault
       e.preventDefault = noop
 
       signaturePad._handleTouchEnd(e)
+      e.preventDefault = preventDefault
     }
 
     /**

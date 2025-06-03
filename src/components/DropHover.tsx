@@ -72,7 +72,7 @@ const DropHoverIfVisible = ({
   const showDropHover = useSelector(state => {
     // Don't show drop hover between selected thoughts during multiselect
     const isThisThoughtBeingDragged =
-      state.draggingThought?.some(draggingPath => equalPath(draggingPath, simplePath)) || false
+      state.draggingThought?.slice(1).some(draggingPath => equalPath(draggingPath, simplePath)) || false
 
     if (isThisThoughtBeingDragged) return false // Don't show hover lines on thoughts that are being dragged
 

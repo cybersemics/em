@@ -5,7 +5,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { errorActionCreator as error } from '../actions/error'
 import ArchiveIcon from '../components/icons/ArchiveIcon'
-import { AlertType, DELETE_VIBRATE_DURATION, HOME_PATH } from '../constants'
+import { DELETE_VIBRATE_DURATION, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -17,8 +17,6 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
-
-let undoArchiveTimer: number
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState) => {
@@ -44,18 +42,6 @@ const exec: Command['exec'] = (dispatch, getState) => {
       if (value !== '') {
         haptics.vibrate(DELETE_VIBRATE_DURATION)
       }
-
-      // clear the undo alert timer to prevent previously cleared undo alert from closing this one
-      clearTimeout(undoArchiveTimer)
-
-      // close the alert after a delay
-      // only close the alert if it is a ThoughtArchive alert
-      undoArchiveTimer = window.setTimeout(() => {
-        const state = getState()
-        if (state.alert && state.alert.alertType === AlertType.ThoughtArchived) {
-          dispatch(alert(null))
-        }
-      }, 5000)
 
       // archive the thought
       dispatch(archiveThought({ path: state.cursor ?? undefined }))
@@ -90,7 +76,6 @@ const archiveCommand: Command = {
     onComplete(filteredCursors, dispatch, getState) {
       dispatch(
         alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`, {
-          alertType: AlertType.ThoughtDeleted,
           clearDelay: 8000,
           showCloseLink: true,
         }),

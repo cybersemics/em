@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
@@ -40,7 +40,6 @@ import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
-import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
@@ -107,15 +106,16 @@ const Editable = ({
   className,
   transient,
 }: EditableProps) => {
-  const state = store.getState()
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
-  const parentId = head(rootedParentOf(state, simplePath))
-  const readonly = findDescendant(state, thoughtId, '=readonly')
-  const uneditable = findDescendant(state, thoughtId, '=uneditable')
-  const optionsId = findDescendant(state, parentId, '=options')
-  const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
-  const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
+  const parentId = useSelector(state => head(rootedParentOf(state, simplePath)))
+  const readonly = useSelector(state => findDescendant(state, thoughtId, '=readonly'))
+  const uneditable = useSelector(state => findDescendant(state, thoughtId, '=uneditable'))
+  const optionsId = useSelector(state => findDescendant(state, parentId, '=options'))
+  const options = useSelector(state => {
+    const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
+    return childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
+  }, shallowEqual)
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
@@ -126,10 +126,7 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
-
-  /** Used to prevent edit mode from being incorrectly activated on long tap. The default browser behavior must be prevented if setCursorOnThought was just called. */
-  // https://github.com/cybersemics/em/issues/1793
-  const disableTapRef = useRef(false)
+  const editingOrOnCursor = useSelector(state => state.editing || equalPath(path, state.cursor))
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -150,8 +147,10 @@ const Editable = ({
   //   isCursorCleared,
   // })
 
-  const labelId = findDescendant(state, parentId, '=label')
-  const childrenLabel = anyChild(state, labelId)
+  const childrenLabel = useSelector(state => {
+    const labelId = findDescendant(state, parentId, '=label')
+    return anyChild(state, labelId)?.value
+  })
 
   if (contentRef.current) {
     contentRef.current.style.opacity = '1.0'
@@ -176,7 +175,7 @@ const Editable = ({
   /** Set or reset invalid state. */
   const invalidStateError = (invalidValue: string | null) => {
     const isInvalid = invalidValue != null
-    store.dispatch(error({ value: isInvalid ? `Invalid Value: "${invalidValue}"` : null }))
+    dispatch(error({ value: isInvalid ? `Invalid Value: "${invalidValue}"` : null }))
     setInvalidState(isInvalid)
 
     // the Editable cannot connect to state.invalidState, as it would re-render during editing
@@ -187,34 +186,36 @@ const Editable = ({
   /** Set the cursor on the thought. */
   const setCursorOnThought = useCallback(
     ({ editing }: { editing?: boolean } = {}) => {
-      const { cursor, editing: editingMode } = store.getState() // use fresh state
+      dispatch((dispatch, getState) => {
+        const state = getState()
 
-      // do not set cursor if it is unchanged and we are not entering edit mode
-      if ((!editing || editingMode) && equalPath(cursor, path)) return
+        // do not set cursor if it is unchanged and we are not entering edit mode
+        if ((!editing || state.editing) && equalPath(state.cursor, path)) return
 
-      // set offset to null to allow the browser to set the position of the selection
-      let offset = null
+        // set offset to null to allow the browser to set the position of the selection
+        let offset = null
 
-      // if running for the first time, restore the offset if the path matches the restored cursor
-      if (!cursorOffsetInitialized) {
-        const restored: { path: Path | null; offset: number | null } = storageModel.get('cursor')
-        if (path && restored.offset && equalPath(restored.path, path)) {
-          offset = restored.offset || null
+        // if running for the first time, restore the offset if the path matches the restored cursor
+        if (!cursorOffsetInitialized) {
+          const restored: { path: Path | null; offset: number | null } = storageModel.get('cursor')
+          if (path && restored.offset && equalPath(restored.path, path)) {
+            offset = restored.offset || null
+          }
         }
-      }
 
-      // Prevent the cursor offset from being restored after the initial setCursorOnThought.
-      cursorOffsetInitialized = true
+        // Prevent the cursor offset from being restored after the initial setCursorOnThought.
+        cursorOffsetInitialized = true
 
-      dispatch(
-        setCursor({
-          cursorHistoryClear: true,
-          preserveMulticursor: true,
-          editing,
-          offset,
-          path,
-        }),
-      )
+        dispatch(
+          setCursor({
+            cursorHistoryClear: true,
+            preserveMulticursor: true,
+            editing,
+            offset,
+            path,
+          }),
+        )
+      })
     },
     // When isEditing changes, we need to reset the cursor on the thought.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -230,18 +231,16 @@ const Editable = ({
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause contentEditable to be out of sync.
     invalidStateError(null)
 
-    // make sure to get updated state
-    const state = store.getState()
-
     const oldValue = oldValueRef.current
 
     if (transient) {
-      dispatch(
-        newThought({
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        return newThought({
           at: rootedParentOf(state, path),
           value: newValue,
-        }),
-      )
+        })
+      })
       return
     }
 
@@ -262,21 +261,24 @@ const Editable = ({
     // store the value so that we have a transcendental head when it is changed
     oldValueRef.current = newValue
 
-    const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
-    const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
-    if (
-      newValue &&
-      ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
-        newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
-        (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
-        ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
-          Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
-      newValue.length > 0
-    ) {
-      dispatch(tutorialNext({}))
-    }
+    dispatch((dispatch, getState) => {
+      const state = getState()
+      const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
+      const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
+      if (
+        newValue &&
+        ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
+          newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
+          (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
+            newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
+          ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
+            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
+            newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
+        newValue.length > 0
+      ) {
+        dispatch(tutorialNext({}))
+      }
+    })
 
     onEdit?.({ path, oldValue, newValue })
   }
@@ -310,7 +312,6 @@ const Editable = ({
   const onChangeHandler = useCallback(
     (e: ContentEditableEvent) => {
       // make sure to get updated state
-      const state = store.getState()
 
       // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
       const oldValue = oldValueRef.current
@@ -389,27 +390,32 @@ const Editable = ({
         return
       }
 
-      const newNumContext = getContexts(state, newValue).length
-      const isNewValueURL = containsURL(newValue)
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        const newNumContext = getContexts(state, newValue).length
+        const isNewValueURL = containsURL(newValue)
 
-      const contextLengthChange =
-        newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
-      const urlChange = isNewValueURL || isNewValueURL !== containsURL(oldValueRef.current)
+        const contextLengthChange =
+          newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
+        const urlChange = isNewValueURL || isNewValueURL !== containsURL(oldValueRef.current)
 
-      const isEmpty = newValue.length === 0
+        const isEmpty = newValue.length === 0
 
-      // Safari adds <br> to empty contenteditables after editing, so strip them out.
-      // Make sure empty thoughts are truly empty.
-      if (contentRef.current && isEmpty) {
-        contentRef.current.innerHTML = newValue
-      }
+        // Safari adds <br> to empty contenteditables after editing, so strip them out.
+        // Make sure empty thoughts are truly empty.
+        if (contentRef.current && isEmpty) {
+          contentRef.current.innerHTML = newValue
+        }
 
-      // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
-      if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
-        // update new supercript value and url boolean
-        throttledChangeRef.current.flush()
-        thoughtChangeHandler(newValue, { rank, simplePath })
-      } else throttledChangeRef.current(newValue, { rank, simplePath })
+        // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
+        if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
+          // update new supercript value and url boolean
+          throttledChangeRef.current.flush()
+          thoughtChangeHandler(newValue, { rank, simplePath })
+        } else {
+          throttledChangeRef.current(newValue, { rank, simplePath })
+        }
+      })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [readonly, uneditable /* TODO: options */],
@@ -424,7 +430,6 @@ const Editable = ({
     e => {
       blurring = true
 
-      const { invalidState } = state
       throttledChangeRef.current.flush()
 
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
@@ -432,9 +437,12 @@ const Editable = ({
       // oldValueRef.current is the latest value since throttledChangeRef was just flushed
       if (contentRef.current?.innerHTML !== oldValueRef.current) {
         // remove the invalid state error, remove invalid-option class, and reset editable html
-        if (invalidState) {
-          invalidStateError(null)
-        }
+        dispatch((dispatch, getState) => {
+          const state = getState()
+          if (state.invalidState) {
+            invalidStateError(null)
+          }
+        })
         contentRef.current!.innerHTML = oldValueRef.current
       }
 
@@ -481,7 +489,7 @@ const Editable = ({
 
   /**
    * Sets the cursor on focus.
-   * Prevented by mousedown event above for hidden thoughts.
+   * Prevented by touchend event above for hidden thoughts.
    */
   const onFocus = useCallback(
     () => {
@@ -493,20 +501,51 @@ const Editable = ({
       // Update editingValueUntrimmedStore with the current value
       editingValueUntrimmedStore.update(value)
 
-      const { dragHold, dragInProgress } = store.getState()
-      if (!dragHold && !dragInProgress) {
-        setCursorOnThought({ editing: true })
-      }
+      dispatch((dispatch, getState) => {
+        const { dragHold, dragInProgress } = getState()
+        if (!dragHold && !dragInProgress) {
+          setCursorOnThought({ editing: true })
+        }
+      })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [value, setCursorOnThought],
   )
 
-  /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      // stop propagation to prevent the event from propagating down to the Content component and triggering clickOnEmptySpace
+      e.stopPropagation()
+
+      // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
+      // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
+      // See: #981
+      if (editingOrOnCursor) {
+        // Prevent the browser from autoscrolling to this editable element.
+        // For some reason doesn't work on touchend.
+        preventAutoscroll(contentRef.current, {
+          // about the height of a single-line thought
+          bottomMargin: fontSize * 2,
+        })
+
+        allowDefaultSelection()
+      }
+      // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
+      // In those cases, it is best to prevent onFocus or onClick, otherwise edit mode will be incorrectly activated.
+      // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
+      // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
+      else {
+        e.preventDefault()
+      }
+    },
+    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection],
+  )
+
+  /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      // Avoid triggering haptics twice since this handler is used for both onClick and onMouseDown.
-      if (e.type !== 'mousedown') {
+      // Avoid triggering haptics twice since this handler is used for both onClick and onTouchEnd.
+      if (e.type !== 'touchend') {
         haptics.light()
       }
 
@@ -517,70 +556,37 @@ const Editable = ({
         return
       }
 
-      // stop propagation to prevent clickOnEmptySpace onClick handler in Content component
-      if (e.nativeEvent instanceof MouseEvent) {
-        e.stopPropagation()
-
-        // preventDefault after setCursorOnThought to avoid activating edit mode.
-        // onMouseDown is the only place that the browser selection can be prevented on tap.
-        if (disableTapRef.current) {
-          e.preventDefault()
-
-          // after the default browser behavior has been prevented, we can safely reset disableTapRef
-          disableTapRef.current = false
-        }
-      }
-      // when the MultiGesture is below the gesture threshold it is possible that onTap and onMouseDown are both triggered
-      // in this case, we need to prevent onTap from being called a second time via onMouseDown
+      // when the MultiGesture is below the gesture threshold it is possible that onTap and onTouchEnd are both triggered
+      // in this case, we need to prevent onTap from being called a second time via onTouchEnd
       // https://github.com/cybersemics/em/issues/1268
       else if (globals.touching && e.cancelable) {
         e.preventDefault()
       }
 
-      const state = store.getState()
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        if (
+          // disable editing when multicursor is enabled
+          hasMulticursorSelector(state) ||
+          disabled ||
+          // do not set cursor on hidden thought
+          // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
+          (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
+        ) {
+          e.preventDefault()
 
-      const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
+          if (!isVisible) {
+            selection.clear()
 
-      if (
-        // disable editing when multicursor is enabled
-        hasMulticursorSelector(state) ||
-        disabled ||
-        // do not set cursor on hidden thought
-        // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-        (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
-      ) {
-        e.preventDefault()
-
-        if (!isVisible) {
-          selection.clear()
-
-          // close all popups when clicking on a thought
-          dispatch(toggleDropdown())
-        } else {
-          setCursorOnThought()
-
-          // When the the cursor is first set on a thought, prevent the default browser behavior to avoid activating edit mode.
-          // Do not reset until the long tap is definitely over.
-          disableTapRef.current = true
-          setTimeout(() => {
-            disableTapRef.current = false
-          }, 400)
+            // close all popups when clicking on a thought
+            dispatch(toggleDropdown())
+          } else {
+            setCursorOnThought()
+          }
         }
-      } else {
-        // for some reason doesn't work ontouchend
-        if (editingOrOnCursor && e.type === 'mousedown' && isTouch) {
-          preventAutoscroll(contentRef.current, {
-            // about the height of a single-line thought
-            bottomMargin: fontSize * 2,
-          })
-        }
-
-        // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
-        allowDefaultSelection()
-      }
+      })
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [disabled, isVisible, path, setCursorOnThought],
+    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
   return (
@@ -599,16 +605,12 @@ const Editable = ({
             ? ''
             : isEditing
               ? value
-              : childrenLabel
-                ? childrenLabel.value
-                : value
+              : (childrenLabel ?? value)
       }
       placeholder={placeholder}
-      // stop propagation to prevent default content onClick (which removes the cursor)
+      onMouseDown={onMouseDown}
       onClick={onTap}
-      // must call onMouseDown on mobile since onTap cannot preventDefault
-      // otherwise gestures and scrolling can trigger cursorBack (#1054)
-      onMouseDown={onTap}
+      onTouchEnd={onTap}
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
