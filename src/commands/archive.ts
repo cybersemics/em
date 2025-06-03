@@ -7,10 +7,9 @@ import { errorActionCreator as error } from '../actions/error'
 import ArchiveIcon from '../components/icons/ArchiveIcon'
 import { DELETE_VIBRATE_DURATION, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
-import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
-import appendToPath from '../util/appendToPath'
+import resolveNotePath from '../selectors/resolveNotePath'
 import ellipsize from '../util/ellipsize'
 import haptics from '../util/haptics'
 import head from '../util/head'
@@ -32,11 +31,12 @@ const exec: Command['exec'] = (dispatch, getState) => {
       dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH
-      const childNote = findAnyChild(state, head(path), child => child.value === '=note')
-      // we know there is a =note child if noteFocus is true
-      // we just need to get the Child object so that archiveThought has the full path
-      const pathNote = appendToPath(path, childNote!.id)
-      dispatch(archiveThought({ path: pathNote }))
+      // At a minimum, this resolves to a path when =note is present.
+      // If =path is present, this resolves to a path with =note/=path structure.
+      const targetPath = resolveNotePath(state, path)
+      if (!targetPath) return
+
+      dispatch(archiveThought({ path: targetPath }))
     } else {
       const value = getThoughtById(state, head(cursor))?.value
       if (value !== '') {
