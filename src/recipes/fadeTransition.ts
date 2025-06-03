@@ -66,7 +66,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
       // Context view fades in from upper right.
       disappearingUpperRight: {
         enter: {
-          transform: 'skew(-25deg) translateX(-5%) translateY(50%)',
+          transform: 'skew(-100deg) translateY(100%)',
           textShadow: '0px 0px 2em white',
         },
         enterActive: {
@@ -87,7 +87,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
       // Normal view fades out from lower left.
       disappearingLowerLeft: {
         enter: {
-          transform: 'skew(-25deg) translateX(5%) translateY(-50%)',
+          transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
           textShadow: '0px 0px 2em white',
         },
         enterActive: {
