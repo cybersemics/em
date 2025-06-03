@@ -9,6 +9,7 @@ import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
+import splitChain from '../selectors/splitChain'
 import equalPath from '../util/equalPath'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
@@ -93,7 +94,12 @@ const TreeNode = ({
   })
 
   // Determine if this node is a child of a context node and if context view is active
-  const isContextViewChild = useSelector((state: State): boolean => isContextViewActive(state, parentOf(path)))
+  const isContextViewChild = useSelector((state: State): boolean => {
+    // Get all paths in the context chain
+    const contextChain = splitChain(state, path)
+    // Check if any ancestor in the chain has context view active
+    return contextChain.some(ancestorPath => isContextViewActive(state, ancestorPath))
+  })
   const isInContextView = useSelector((state: State): boolean => isContextViewActive(state, path))
 
   // Determine the animation direction for disappearing text
