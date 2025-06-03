@@ -73,6 +73,7 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
 
   const activeMulticursors = isMulticursorActive ? Object.values(state.multicursors) : []
 
+  // Add the current thought to the multicursor if it is not already selected
   if (isMulticursorActive && !isCurrentThoughtSelected) {
     store.dispatch(addMulticursor({ path }))
   }
