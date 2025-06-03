@@ -161,6 +161,14 @@ const useCol1Alignment = ({
   }>({ bullet: {}, editable: {} })
 
   const duration = durations.get('layoutNodeAnimation')
+
+  /**
+   * AnnotationOffset is used to ensure that superscripts (or other annotations)
+   * in Table View column 1 remain visually aligned to the right edge, even if the
+   * thought’s text is too short to fill the minimum content width.
+   * This value is dynamically calculated based on the difference between the
+   * minimum required width and the actual rendered text width.
+   */
   const [annotationOffset, setAnnotationOffset] = useState<number | null>(null)
 
   /**
