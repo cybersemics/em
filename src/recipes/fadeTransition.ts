@@ -67,19 +67,19 @@ const fadeTransitionRecipe = defineSlotRecipe({
       disappearingUpperRight: {
         enter: {
           transform: 'skew(-100deg) translateY(100%)',
-          textShadow: '0px 0px 2em white',
+          textShadow: '0px 0px 2em {colors.fg}',
         },
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
-          textShadow: '0px 0px 0px white',
+          textShadow: '0px 0px 0px {colors.fg}',
           transition: `opacity {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
         },
         exit: {
-          textShadow: '0px 0px 0px white',
+          textShadow: '0px 0px 0px {colors.fg}',
         },
         exitActive: {
           transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
-          textShadow: '0px 0px 2em white',
+          textShadow: '0px 0px 2em {colors.fg}',
           color: 'transparent',
           transition: `opacity {durations.disappearingUpperRight} ease, color {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
         },
@@ -88,19 +88,19 @@ const fadeTransitionRecipe = defineSlotRecipe({
       disappearingLowerLeft: {
         enter: {
           transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
-          textShadow: '0px 0px 2em white',
+          textShadow: '0px 0px 2em {colors.fg}',
         },
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
-          textShadow: '0px 0px 2em white',
+          textShadow: '0px 0px 2em {colors.fg}',
           transition: `opacity {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
         },
         exit: {
-          textShadow: '0px 0px 0px white',
+          textShadow: '0px 0px 0px {colors.fg}',
         },
         exitActive: {
           transform: 'skew(-100deg) translateY(100%)',
-          textShadow: '0px 0px 2em white',
+          textShadow: '0px 0px 2em {colors.fg}',
           color: 'transparent',
           transition: `opacity {durations.disappearingLowerLeft} ease, color {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
         },
