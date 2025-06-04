@@ -614,6 +614,14 @@ const Editable = ({
       placeholder={placeholder}
       onMouseDown={onMouseDown}
       onClick={onTap}
+      onTouchStart={() => {
+        setTimeout(() => {
+          if (contentRef.current) contentRef.current.style.pointerEvents = 'none'
+          setTimeout(() => {
+            if (contentRef.current) contentRef.current.style.pointerEvents = ''
+          }, 100)
+        }, 100)
+      }}
       onTouchEnd={onTap}
       onFocus={onFocus}
       onBlur={onBlur}
