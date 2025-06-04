@@ -3,7 +3,15 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/07-pin_3.json'
 
 /** Pin Icon with Conditional Lottie Animation. */
-const PinIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete, active }: IconType & { active?: boolean }) => {
+const PinIcon = ({
+  fill,
+  size = 18,
+  style = {},
+  cssRaw,
+  animated,
+  animationComplete,
+  active,
+}: IconType & { active?: boolean }) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
