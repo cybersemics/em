@@ -7,9 +7,7 @@ import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
-import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
-import splitChain from '../selectors/splitChain'
 import equalPath from '../util/equalPath'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
@@ -93,28 +91,14 @@ const TreeNode = ({
     return lastPatches?.some(patch => patch.actions[0] === 'toggleContextView')
   })
 
-  // Determine if this node is a child of a context node and if context view is active
-  const isContextViewChild = useSelector((state: State): boolean => {
-    // Get all paths in the context chain
-    const contextChain = splitChain(state, path)
-    // Check if any ancestor in the chain has context view active
-    return contextChain.some(ancestorPath => isContextViewActive(state, ancestorPath))
-  })
-  const isInContextView = useSelector((state: State): boolean => isContextViewActive(state, path))
-
   // Determine the animation direction for disappearing text
-  let contextAnimation: 'disappearingUpperRight' | 'disappearingLowerLeft'
-
-  if (isInContextView) {
-    // When context view is active:
-    // - Context view children fade in from upper right
-    // - Normal view children disappear to lower left
-    contextAnimation = isContextViewChild ? 'disappearingUpperRight' : 'disappearingLowerLeft'
+  let contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight'
+  if (!equalPath(path, simplePath)) {
+    // This is a contextual thought (needs rightward symmetric animation)
+    contextAnimation = 'disappearingUpperRight'
   } else {
-    // When context view is inactive:
-    // - Context view children disappear to upper right
-    // - Normal view children fade in from lower left
-    contextAnimation = isContextViewChild ? 'disappearingLowerLeft' : 'disappearingUpperRight'
+    // This is an original thought (needs leftward symmetric animation)
+    contextAnimation = 'disappearingLowerLeft'
   }
 
   /** True if the last action is swapParent and the thought is involved in the swap (cursor or parent). */
