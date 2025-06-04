@@ -6,7 +6,6 @@ import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import Key from '../@types/Key'
-import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
 import { gestureString, hashCommand, hashKeyDown } from '../commands'
@@ -28,15 +27,6 @@ import PopupBase from './PopupBase'
 
 /** The maximum number of recent commands to store for the command palette. */
 const MAX_RECENT_COMMANDS = 5
-
-/**********************************************************************
- * Helper Functions
- **********************************************************************/
-
-/** Returns true if the command can be executed. */
-const isExecutable = (state: State, command: Command) =>
-  (!command.canExecute || command.canExecute(state)) &&
-  (command.allowExecuteFromModal || !state.showModal || !state.showGestureCheatsheet)
 
 /**********************************************************************
  * Components
@@ -117,35 +107,6 @@ const CommandSearch: FC<{
         style={{ marginBlock, marginInline: marginBlock * 2 }}
       />
     </div>
-  )
-}
-
-/** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
-const CommandRow: FC<{
-  gestureInProgress: string
-  search: string
-  onClick: (e: React.MouseEvent, command: Command) => void
-  onHover: (e: MouseEvent, command: Command) => void
-  selected?: boolean
-  command: Command
-}> = ({ gestureInProgress, search, onClick, onHover, selected, command }) => {
-  const store = useStore()
-
-  const isActive = command.isActive?.(store.getState())
-  const disabled = useSelector(state => !isExecutable(state, command))
-
-  return (
-    <CommandItem
-      gestureInProgress={gestureInProgress}
-      search={search}
-      onClick={onClick}
-      selected={selected}
-      command={command}
-      isActive={isActive}
-      disabled={disabled}
-      onHover={onHover}
-      shouldScrollSelectionIntoView
-    />
   )
 }
 
@@ -312,7 +273,7 @@ const CommandPalette: FC<{
                     const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
 
                     return (
-                      <CommandRow
+                      <CommandItem
                         search={search}
                         gestureInProgress={gestureInProgress as string}
                         key={command.id}
@@ -324,6 +285,7 @@ const CommandPalette: FC<{
                             : isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch
                         }
                         command={command}
+                        shouldScrollSelectionIntoView
                       />
                     )
                   })

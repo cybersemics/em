@@ -8,6 +8,7 @@ import { CommandViewType } from '../@types/CommandViewType'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragCommandZone from '../@types/DragCommandZone'
 import DragToolbarItem from '../@types/DragToolbarItem'
+import State from '../@types/State'
 import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
@@ -16,6 +17,15 @@ import store from '../stores/app'
 import CommandKeyboardShortcut from './CommandKeyboardShortcut'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
+
+/**********************************************************************
+ * Helper Functions
+ **********************************************************************/
+
+/** Returns true if the command can be executed. */
+const isExecutable = (state: State, command: Command) =>
+  (!command.canExecute || command.canExecute(state)) &&
+  (command.allowExecuteFromModal || !state.showModal || !state.showGestureCheatsheet)
 
 /** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
 const CommandItem: FC<{
@@ -27,7 +37,6 @@ const CommandItem: FC<{
   command: Command
   gestureInProgress?: string
   style?: React.CSSProperties
-  disabled?: boolean
   isActive?: boolean
   isTable?: boolean
   /**
@@ -47,20 +56,12 @@ const CommandItem: FC<{
   command,
   gestureInProgress,
   style,
-  disabled,
-  isActive,
   isTable,
   alwaysShowDescription,
   onHover,
   customize,
   shouldScrollSelectionIntoView,
 }) => {
-  const label = command.labelInverse && isActive ? command.labelInverse : command.label
-  const Icon = command.svg
-  const ref = React.useRef<Pick<HTMLDivElement, 'scrollIntoView' | 'addEventListener' | 'removeEventListener'> | null>(
-    null,
-  )
-
   const [{ isDragging }, dragSource] = useDrag({
     type: DragAndDropType.ToolbarButton,
     item: (): DragToolbarItem => {
@@ -78,6 +79,15 @@ const CommandItem: FC<{
       }
     },
   })
+
+  const isActive = command.isActive?.(store.getState())
+  const disabled = useSelector(state => !isExecutable(state, command))
+
+  const label = command.labelInverse && isActive ? command.labelInverse : command.label
+  const Icon = command.svg
+  const ref = React.useRef<Pick<HTMLDivElement, 'scrollIntoView' | 'addEventListener' | 'removeEventListener'> | null>(
+    null,
+  )
 
   // convert the description to a string
   const description = useSelector(state => {
