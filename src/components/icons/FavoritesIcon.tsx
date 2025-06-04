@@ -3,7 +3,7 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/04-favorite_3.json'
 
 /** Favorites Icon with Conditional Lottie Animation. */
-const FavoritesIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const FavoritesIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete, active }: IconType & { active?: boolean }) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
@@ -21,7 +21,7 @@ const FavoritesIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animatio
                 stroke='currentColor'
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                fill='none'
+                fill={!animated && active ? style.fill : 'none'}
               />
             </g>
           </g>
