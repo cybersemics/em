@@ -127,6 +127,7 @@ const Editable = ({
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const editingOrOnCursor = useSelector(state => state.editing || equalPath(path, state.cursor))
+  const isPressingRef = useRef(false)
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -503,7 +504,7 @@ const Editable = ({
 
       dispatch((dispatch, getState) => {
         const { dragHold, dragInProgress } = getState()
-        if (!dragHold && !dragInProgress) {
+        if (!isPressingRef.current && !dragHold && !dragInProgress) {
           setCursorOnThought({ editing: true })
         }
       })
@@ -535,7 +536,7 @@ const Editable = ({
       // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
       // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
       else {
-        e.preventDefault()
+        if (!isPressingRef.current) e.preventDefault()
       }
     },
     [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection],
@@ -585,6 +586,8 @@ const Editable = ({
           }
         }
       })
+
+      isPressingRef.current = false
     },
     [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
@@ -610,6 +613,7 @@ const Editable = ({
       placeholder={placeholder}
       onMouseDown={onMouseDown}
       onClick={onTap}
+      onTouchStart={() => (isPressingRef.current = true)}
       onTouchEnd={onTap}
       onFocus={onFocus}
       onBlur={onBlur}
