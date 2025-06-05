@@ -224,20 +224,19 @@ export const compareThoughtByUpdated: ComparatorFunction<Thought> = (a: Thought,
 export const compareThoughtByUpdatedDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
   compare(b.lastUpdated, a.lastUpdated) || compareReasonable(a.value, b.value)
 
-/** Get note value or fallback for a Thought or string input. */
-const getNoteOrFallback = (state: State, input: Thought | string): string => {
-  if (typeof input === 'string') return input
-  return noteValue(state, input.id) || input.rank.toString()
+/** Get note value or fallback for a Thought value. */
+const getNoteOrFallback = (state: State, input: Thought): string => {
+  return noteValue(state, input.id) ?? input.value
 }
 
 /** Compare two thoughts by their note value in ascending order, falling back to their rank if notes are absent or equal. */
 export const compareThoughtByNote =
-  (state: State): ComparatorFunction<Thought | string> =>
-  (a: Thought | string, b: Thought | string) =>
+  (state: State): ComparatorFunction<Thought> =>
+  (a: Thought, b: Thought) =>
     compareReasonable(getNoteOrFallback(state, a), getNoteOrFallback(state, b))
 
 /** Compare two thoughts by their note value in descending order, falling back to their rank if notes are absent or equal. */
 export const compareThoughtByNoteDescending =
-  (state: State): ComparatorFunction<Thought | string> =>
-  (a: Thought | string, b: Thought | string) =>
+  (state: State): ComparatorFunction<Thought> =>
+  (a: Thought, b: Thought) =>
     compareReasonableDescending(getNoteOrFallback(state, a), getNoteOrFallback(state, b))
