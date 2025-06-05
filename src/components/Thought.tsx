@@ -163,15 +163,6 @@ const useCol1Alignment = ({
   const duration = durations.get('layoutNodeAnimation')
 
   /**
-   * AnnotationOffset is used to ensure that superscripts (or other annotations)
-   * in Table View column 1 remain visually aligned to the right edge, even if the
-   * thought’s text is too short to fill the minimum content width.
-   * This value is dynamically calculated based on the difference between the
-   * minimum required width and the actual rendered text width.
-   */
-  const [annotationOffset, setAnnotationOffset] = useState<number | null>(null)
-
-  /**
    * Animates transitioning text alignment from left to right (and back)
    * for the bullet and editable text when toggling Table View (`isTableCol1`).
    * Uses the maximum width of all cursor siblings to create a smooth shift
@@ -191,12 +182,7 @@ const useCol1Alignment = ({
     const minContentPx = 3 * fontSize - (paddingLeftPx + paddingRightPx)
     // └─ exactly the same as “1.667 × fontSize”
 
-    // If our text is narrower than that “minContentPx,” compute annotationOffset:
-    setAnnotationOffset(myWidth < minContentPx ? Math.round(minContentPx - myWidth) : null)
-
     if (!justFlipped || col1MaxWidth == null || !isSiblingOfCursor) {
-      // If we’re leaving table‐view or not a sibling of cursor, clear any leftover offset
-      if (!isTableCol1) setAnnotationOffset(null)
       return
     }
 
@@ -228,7 +214,7 @@ const useCol1Alignment = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTableCol1, col1MaxWidth, fontSize, value])
 
-  return { alignmentTransition, annotationOffset }
+  return { alignmentTransition }
 }
 
 /**********************************************************************
@@ -510,7 +496,7 @@ const ThoughtContainer = ({
   )
 
   // Use custom hook for col1 alignment
-  const { alignmentTransition, annotationOffset } = useCol1Alignment({
+  const { alignmentTransition } = useCol1Alignment({
     path,
     simplePath,
     value,
@@ -626,7 +612,6 @@ const ThoughtContainer = ({
             updateSize={updateSize}
             view={view}
             isPressed={dragHoldResult.isPressed}
-            annotationOffset={annotationOffset}
           />
         </div>
         <Note path={path} disabled={!isVisible} />

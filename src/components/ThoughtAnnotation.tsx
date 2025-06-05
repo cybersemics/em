@@ -110,7 +110,6 @@ const ThoughtAnnotation = React.memo(
     url,
     placeholder,
     value,
-    annotationOffset,
   }: {
     email?: string
     isEditing?: boolean
@@ -125,7 +124,6 @@ const ThoughtAnnotation = React.memo(
     url?: string | null
     placeholder?: string
     value: string
-    annotationOffset: number | null
   }) => {
     const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
       isEditing ? (editingValue ?? value) : null,
@@ -149,13 +147,6 @@ const ThoughtAnnotation = React.memo(
       const labelChild = anyChild(state, labelId || undefined)
       return isEditing ? (liveValueIfEditing ?? value) : labelChild ? labelChild.value : value
     })
-
-    const marginStyle = {
-      margin:
-        isTableCol1 && annotationOffset !== null
-          ? `-0.5px 0 0 calc(1em - 18px + ${annotationOffset}px)`
-          : `-0.5px 0 0 calc(1em - 18px)`,
-    }
 
     return (
       <div
@@ -202,7 +193,10 @@ const ThoughtAnnotation = React.memo(
                   Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
                   To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
                 */
+                margin: '-0.5px 0 0 calc(1em - 18px)',
                 paddingRight: multiline ? '1em' : '0.333em',
+                minWidth: '2.334em',
+                textAlign: isTableCol1 ? 'right' : 'left',
               }),
             )
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
@@ -211,7 +205,7 @@ const ThoughtAnnotation = React.memo(
             //   border-bottom: solid 1px;
             // }
           }
-          style={{ ...styleAnnotation, ...marginStyle }}
+          style={styleAnnotation}
         >
           <span
             className={css({
@@ -281,7 +275,6 @@ const ThoughtAnnotationContainer = React.memo(
     style,
     // only applied to the .subthought container
     styleAnnotation,
-    annotationOffset,
   }: {
     env?: LazyEnv
     focusOffset?: number
@@ -296,7 +289,6 @@ const ThoughtAnnotationContainer = React.memo(
     cssRaw?: SystemStyleObject
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
-    annotationOffset: number | null
   }) => {
     // delay calculation of contexts for performance
     // recalculate after the component has mounted
@@ -391,7 +383,6 @@ const ThoughtAnnotationContainer = React.memo(
           placeholder,
           url,
           value,
-          annotationOffset,
         }}
       />
     ) : null

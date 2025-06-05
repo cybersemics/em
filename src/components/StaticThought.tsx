@@ -58,7 +58,6 @@ export interface ThoughtProps {
   styleThought?: React.CSSProperties
   view?: string | null
   isPressed: boolean
-  annotationOffset: number | null
 }
 
 /** Returns true if a color is white, in rgb, rgba, hex, or color name. */
@@ -110,7 +109,6 @@ const StaticThought = ({
   styleAnnotation,
   updateSize,
   isPressed,
-  annotationOffset,
 }: ThoughtProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
@@ -170,7 +168,6 @@ const StaticThought = ({
         cssRaw={cssRawThought}
         style={styleThought}
         styleAnnotation={styleAnnotation || undefined}
-        annotationOffset={annotationOffset}
       />
       <div
         aria-label='thought'
