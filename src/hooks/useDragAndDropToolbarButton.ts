@@ -99,7 +99,7 @@ const useDragAndDropToolbarButton = ({ commandId, customize }: { commandId: Comm
   })
 
   useEffect(() => {
-    dragPreview(getEmptyImage(), { captureDraggingState: true })
+    dragPreview(getEmptyImage())
   }, [dragPreview])
 
   const [{ isHovering }, dropTarget] = useDrop({

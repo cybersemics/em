@@ -232,7 +232,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
   })
 
   useEffect(() => {
-    dragPreview(getEmptyImage(), { captureDraggingState: true })
+    dragPreview(getEmptyImage())
   }, [dragPreview])
 
   const [{ isHovering, isBeingHoveredOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({

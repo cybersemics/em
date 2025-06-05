@@ -157,7 +157,7 @@ const useDragAndDropFavorites = (props: Partial<DragAndDropFavoriteReturnType>) 
   })
 
   useEffect(() => {
-    dragPreview(getEmptyImage(), { captureDraggingState: true })
+    dragPreview(getEmptyImage())
   }, [dragPreview])
 
   const [{ isHovering }, dropTarget] = useDrop({
