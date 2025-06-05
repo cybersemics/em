@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import { DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
-import { NativeTypes } from 'react-dnd-html5-backend'
+import { NativeTypes, getEmptyImage } from 'react-dnd-html5-backend'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import DragAndDropType from '../@types/DragAndDropType'
@@ -96,6 +97,10 @@ const useDragAndDropToolbarButton = ({ commandId, customize }: { commandId: Comm
       isDragging: monitor.isDragging(),
     }),
   })
+
+  useEffect(() => {
+    dragPreview(getEmptyImage(), { captureDraggingState: true })
+  }, [dragPreview])
 
   const [{ isHovering }, dropTarget] = useDrop({
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],

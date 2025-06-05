@@ -1,10 +1,11 @@
 import { FC, PropsWithChildren } from 'react'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import { DndProvider, PointerTransition, TouchTransition } from 'react-dnd-multi-backend'
+import { DndProvider, MultiBackendOptions, PointerTransition, TouchTransition } from 'react-dnd-multi-backend'
 import { TouchBackend } from 'react-dnd-touch-backend'
+import { isSafari, isTouch } from '../browser'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 
-const options = {
+const options: MultiBackendOptions = {
   backends: [
     // HTML5 backend
     // https://react-dnd.github.io/react-dnd/docs/backends/html5
@@ -13,6 +14,11 @@ const options = {
       backend: HTML5Backend,
       transition: PointerTransition,
     },
+  ],
+}
+
+if (isTouch && !isSafari()) {
+  options.backends.push(
     // Touch backend
     // https://react-dnd.github.io/react-dnd/docs/backends/touch
     {
@@ -22,7 +28,7 @@ const options = {
       preview: true,
       transition: TouchTransition,
     },
-  ],
+  )
 }
 
 /** Drag and Drop Provider HOC. */

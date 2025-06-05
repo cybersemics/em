@@ -1,6 +1,7 @@
 import moize from 'moize'
+import { useEffect } from 'react'
 import { DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
-import { NativeTypes } from 'react-dnd-html5-backend'
+import { NativeTypes, getEmptyImage } from 'react-dnd-html5-backend'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
@@ -229,6 +230,10 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
     end: () => endDrag(),
     collect: dragCollect,
   })
+
+  useEffect(() => {
+    dragPreview(getEmptyImage(), { captureDraggingState: true })
+  }, [dragPreview])
 
   const [{ isHovering, isBeingHoveredOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],

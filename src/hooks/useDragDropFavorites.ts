@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import { DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
-import { NativeTypes } from 'react-dnd-html5-backend'
+import { NativeTypes, getEmptyImage } from 'react-dnd-html5-backend'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
@@ -154,6 +155,10 @@ const useDragAndDropFavorites = (props: Partial<DragAndDropFavoriteReturnType>) 
     end: () => endDrag(),
     collect: dragCollect,
   })
+
+  useEffect(() => {
+    dragPreview(getEmptyImage(), { captureDraggingState: true })
+  }, [dragPreview])
 
   const [{ isHovering }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
