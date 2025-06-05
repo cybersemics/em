@@ -16,20 +16,28 @@ import reducerFlow from '../util/reducerFlow'
 const toggleContextView = (state: State): State => {
   if (!state.cursor) return state
 
+  const HASHED_CURSOR_KEY = hashPath(state.cursor!)
+
   return reducerFlow([
-    // update contextViews
-    state => ({
-      ...state,
-      contextViews: produce(state.contextViews, draft => {
-        const key = hashPath(state.cursor)
-        if (key in state.contextViews) {
-          delete draft[key]
+    // update contextViews and set contextViewToggledOn
+    (state: State) => {
+      let outcomeTurningOn: boolean
+
+      const newContextViews = produce(state.contextViews, draft => {
+        if (HASHED_CURSOR_KEY in state.contextViews) {
+          delete draft[HASHED_CURSOR_KEY]
+          outcomeTurningOn = false
         } else {
-          draft[key] = true
+          draft[HASHED_CURSOR_KEY] = true
+          outcomeTurningOn = true
         }
-        return draft
-      }),
-    }),
+      })
+      return {
+        ...state,
+        contextViews: newContextViews,
+        contextViewToggledOn: outcomeTurningOn!,
+      }
+    },
 
     // update context views and expanded
     state => ({

@@ -9,6 +9,7 @@ import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
+import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
@@ -91,14 +92,39 @@ const TreeNode = ({
     return lastPatches?.some(patch => patch.actions[0] === 'toggleContextView')
   })
 
+  // Get the outcome of the last toggleContextView action.
+  const isLastContextViewOn = useSelector((state: State): boolean | null => {
+    if (isLastActionContextView) {
+      return typeof state.contextViewToggledOn === 'boolean' ? state.contextViewToggledOn : null
+    }
+    return null
+  })
+
+  // Check if the current thought node is a descendant of the cursor.
+  const isDescendantOfCursor = useSelector((state: State): boolean => {
+    if (!state.cursor) return false
+    return isDescendantPath(path, state.cursor)
+  })
+
   // Determine the animation direction for disappearing text
-  let contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight'
-  if (!equalPath(path, simplePath)) {
-    // This is a contextual thought (needs rightward symmetric animation)
-    contextAnimation = 'disappearingUpperRight'
-  } else {
-    // This is an original thought (needs leftward symmetric animation)
-    contextAnimation = 'disappearingLowerLeft'
+  let contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight' = 'disappearingLowerLeft'
+
+  if (isLastActionContextView && isLastContextViewOn !== null) {
+    const isAppearing = transitionGroupsProps.in
+
+    if (isDescendantOfCursor) {
+      if (isLastContextViewOn) {
+        // Context View ON
+        // New contextual child appearing (fade IN from RIGHT)
+        // Old original child disappearing (fade OUT to LEFT)
+        contextAnimation = isAppearing ? 'disappearingUpperRight' : 'disappearingLowerLeft'
+      } else {
+        // Context View OFF
+        // Original child re-appearing (fade IN from LEFT)
+        // Contextual child disappearing (fade OUT to RIGHT - This is the corrected logic)
+        contextAnimation = isAppearing ? 'disappearingLowerLeft' : 'disappearingUpperRight'
+      }
+    }
   }
 
   /** True if the last action is swapParent and the thought is involved in the swap (cursor or parent). */
