@@ -7,6 +7,7 @@ import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
 import isDescendantPath from '../util/isDescendantPath'
@@ -92,13 +93,11 @@ const TreeNode = ({
     return lastPatches?.some(patch => patch.actions[0] === 'toggleContextView')
   })
 
-  // Get the outcome of the last toggleContextView action.
-  const isLastContextViewOn = useSelector((state: State): boolean | null => {
-    if (isLastActionContextView) {
-      return typeof state.contextViewToggledOn === 'boolean' ? state.contextViewToggledOn : null
-    }
-    return null
-  })
+  // Check if the context view is active for the cursor.
+  // This tells us the outcome of a toggle action after the state has been updated.
+  const isCursorInContextView = useSelector(
+    (state: State): boolean => !!state.cursor && isContextViewActive(state, state.cursor),
+  )
 
   // Check if the current thought node is a descendant of the cursor.
   const isDescendantOfCursor = useSelector((state: State): boolean => {
@@ -107,13 +106,13 @@ const TreeNode = ({
   })
 
   // Determine the animation direction for disappearing text
+  // by checking if the context view is active for the cursor.
   let contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight' = 'disappearingLowerLeft'
-
-  if (isLastActionContextView && isLastContextViewOn !== null) {
+  if (isLastActionContextView) {
     const isAppearing = transitionGroupsProps.in
 
     if (isDescendantOfCursor) {
-      if (isLastContextViewOn) {
+      if (isCursorInContextView) {
         // Context View ON
         // New contextual child appearing (fade IN from RIGHT)
         // Old original child disappearing (fade OUT to LEFT)
@@ -121,7 +120,7 @@ const TreeNode = ({
       } else {
         // Context View OFF
         // Original child re-appearing (fade IN from LEFT)
-        // Contextual child disappearing (fade OUT to RIGHT - This is the corrected logic)
+        // Contextual child disappearing (fade OUT to RIGHT)
         contextAnimation = isAppearing ? 'disappearingLowerLeft' : 'disappearingUpperRight'
       }
     }
