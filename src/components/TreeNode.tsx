@@ -1,4 +1,3 @@
-import isEqual from 'lodash/isEqual'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
@@ -89,39 +88,36 @@ const TreeNode = ({
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
 
-  // Context view state
-  const isCursorDescendant = useSelector(state => (state.cursor ? isDescendantPath(path, state.cursor) : false))
-  const { isLastActionContextView, isCursorInContextView } = useSelector(state => {
+  /** The transition animation for descendants of the context view after toggleContextView. Returns null otherwise. */
+  const contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight' | null = useSelector(state => {
     const isLastActionContextView = state.undoPatches[state.undoPatches.length - 1]?.some(
       patch => patch.actions[0] === 'toggleContextView',
     )
-    return {
-      isLastActionContextView,
-      isCursorInContextView: isLastActionContextView
+    if (!isLastActionContextView) return null
+
+    // Determine the animation direction for disappearing text
+    let animation: 'disappearingLowerLeft' | 'disappearingUpperRight' = 'disappearingLowerLeft'
+
+    if (isDescendantPath(path, state.cursor)) {
+      const isAppearing = transitionGroupsProps.in
+      const isCursorInContextView = isLastActionContextView
         ? !!state.cursor && isContextViewActive(state, state.cursor)
-        : false,
-    }
-  }, isEqual)
-
-  // Determine the animation direction for disappearing text
-  let contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight' = 'disappearingLowerLeft'
-  if (isLastActionContextView) {
-    const isAppearing = transitionGroupsProps.in
-
-    if (isCursorDescendant) {
+        : false
       if (isCursorInContextView) {
         // Context View ON
         // New contextual child appearing (fade IN from RIGHT)
         // Old original child disappearing (fade OUT to LEFT)
-        contextAnimation = isAppearing ? 'disappearingUpperRight' : 'disappearingLowerLeft'
+        animation = isAppearing ? 'disappearingUpperRight' : 'disappearingLowerLeft'
       } else {
         // Context View OFF
         // Original child re-appearing (fade IN from LEFT)
         // Contextual child disappearing (fade OUT to RIGHT)
-        contextAnimation = isAppearing ? 'disappearingLowerLeft' : 'disappearingUpperRight'
+        animation = isAppearing ? 'disappearingLowerLeft' : 'disappearingUpperRight'
       }
     }
-  }
+
+    return animation
+  })
 
   /** True if the last action is swapParent and the thought is involved in the swap (cursor or parent). */
   const isSwap = useSelector(
@@ -198,15 +194,7 @@ const TreeNode = ({
       // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
       // Archive, delete, and uncategorize get a special dissolve animation.
       // Context view children get special disappearing text animations
-      duration={
-        isEmpty
-          ? 'nodeFadeIn'
-          : isLastActionDelete
-            ? 'nodeDissolve'
-            : isLastActionContextView
-              ? contextAnimation
-              : 'nodeFadeOut'
-      }
+      duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
       unmountOnExit
