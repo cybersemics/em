@@ -201,7 +201,7 @@ const useCol1Alignment = ({ path, simplePath, value, fontSize, cursor, isTableCo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTableCol1, col1MaxWidth, fontSize, value])
 
-  return { alignmentTransition }
+  return alignmentTransition
 }
 
 /**********************************************************************
@@ -476,7 +476,7 @@ const ThoughtContainer = ({
   )
 
   // Use custom hook for col1 alignment
-  const { alignmentTransition } = useCol1Alignment({
+  const alignmentTransition = useCol1Alignment({
     path,
     simplePath,
     value,
