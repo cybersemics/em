@@ -1,3 +1,4 @@
+import isEqual from 'lodash/isEqual'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
@@ -10,7 +11,6 @@ import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
-import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
@@ -54,6 +54,7 @@ const TreeNode = ({
   dragInProgress,
   autofocusDepth,
   editing,
+  isCursorDescendant,
   ...transitionGroupsProps
 }: TreeThoughtPositioned & {
   thoughtKey: string
@@ -67,6 +68,7 @@ const TreeNode = ({
   dragInProgress: boolean
   autofocusDepth: number
   editing: boolean
+  isCursorDescendant: boolean
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
@@ -88,30 +90,25 @@ const TreeNode = ({
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
   })
 
-  const isLastActionContextView = useSelector(state => {
-    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => patch.actions[0] === 'toggleContextView')
-  })
-
-  // Check if the context view is active for the cursor.
-  // This tells us the outcome of a toggle action after the state has been updated.
-  const isCursorInContextView = useSelector(
-    (state: State): boolean => !!state.cursor && isContextViewActive(state, state.cursor),
-  )
-
-  // Check if the current thought node is a descendant of the cursor.
-  const isDescendantOfCursor = useSelector((state: State): boolean => {
-    if (!state.cursor) return false
-    return isDescendantPath(path, state.cursor)
-  })
+  // Context view state
+  const { isLastActionContextView, isCursorInContextView } = useSelector(state => {
+    const isLastActionContextView = state.undoPatches[state.undoPatches.length - 1]?.some(
+      patch => patch.actions[0] === 'toggleContextView',
+    )
+    return {
+      isLastActionContextView,
+      isCursorInContextView: isLastActionContextView
+        ? !!state.cursor && isContextViewActive(state, state.cursor)
+        : false,
+    }
+  }, isEqual)
 
   // Determine the animation direction for disappearing text
-  // by checking if the context view is active for the cursor.
   let contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight' = 'disappearingLowerLeft'
   if (isLastActionContextView) {
     const isAppearing = transitionGroupsProps.in
 
-    if (isDescendantOfCursor) {
+    if (isCursorDescendant) {
       if (isCursorInContextView) {
         // Context View ON
         // New contextual child appearing (fade IN from RIGHT)
