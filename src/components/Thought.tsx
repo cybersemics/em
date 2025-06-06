@@ -114,19 +114,17 @@ interface UseCol1AlignParams {
   fontSize: number
   cursor: Path | null
   isTableCol1: boolean
-  siblingThoughts: Thought[]
 }
 
 /** Custom hook that handles animating text alignment for Table View. */
-const useCol1Alignment = ({
-  path,
-  simplePath,
-  value,
-  fontSize,
-  cursor,
-  isTableCol1,
-  siblingThoughts,
-}: UseCol1AlignParams) => {
+const useCol1Alignment = ({ path, simplePath, value, fontSize, cursor, isTableCol1 }: UseCol1AlignParams) => {
+  /** Sibling thoughts for the current cursor. */
+  const siblingThoughts = useSelector((state: State) => {
+    if (!cursor) return []
+    const parentId = head(rootedParentOf(state, cursor))
+    return parentId ? getChildren(state, parentId) : []
+  }, shallowEqual)
+
   const prevIsTableCol1 = useRef<boolean>(isTableCol1)
   const isCursor = equalPath(cursor, path)
 
@@ -380,13 +378,6 @@ const ThoughtContainer = ({
   const fontSize = useSelector(state => state.fontSize)
   const cursor = useSelector(state => state.cursor)
 
-  /** Sibling thoughts for the current cursor. */
-  const siblingThoughts = useSelector((state: State) => {
-    if (!cursor) return []
-    const parentId = head(rootedParentOf(state, cursor))
-    return parentId ? getChildren(state, parentId) : []
-  }, shallowEqual)
-
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
     // only hide when typing, not when deleting
@@ -492,7 +483,6 @@ const ThoughtContainer = ({
     fontSize,
     cursor,
     isTableCol1,
-    siblingThoughts,
   })
 
   // thought does not exist
