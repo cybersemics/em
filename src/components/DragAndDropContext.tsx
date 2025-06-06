@@ -14,21 +14,20 @@ const options: MultiBackendOptions = {
       backend: HTML5Backend,
       transition: PointerTransition,
     },
+    ...(isTouch && !isSafari()
+      ? [
+          // Touch backend
+          // https://react-dnd.github.io/react-dnd/docs/backends/touch
+          {
+            id: 'touch',
+            backend: TouchBackend,
+            options: { delayTouchStart: TIMEOUT_LONG_PRESS_THOUGHT },
+            preview: true,
+            transition: TouchTransition,
+          },
+        ]
+      : []),
   ],
-}
-
-if (isTouch && !isSafari()) {
-  options.backends.push(
-    // Touch backend
-    // https://react-dnd.github.io/react-dnd/docs/backends/touch
-    {
-      id: 'touch',
-      backend: TouchBackend,
-      options: { delayTouchStart: TIMEOUT_LONG_PRESS_THOUGHT },
-      preview: true,
-      transition: TouchTransition,
-    },
-  )
 }
 
 /** Drag and Drop Provider HOC. */
