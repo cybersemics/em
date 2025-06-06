@@ -128,6 +128,10 @@ const Editable = ({
   const contentRef = editableRef || nullRef
   const editingOrOnCursor = useSelector(state => state.editing || equalPath(path, state.cursor))
 
+  // During long press, mousedown and focus events will fire during the press, i.e. before touchend.
+  // All editable behavior should be ignored during a long press. #2931, #2953, #2964.
+  const isPressingRef = useRef(false)
+
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
   //   cursorOffset,
@@ -503,7 +507,7 @@ const Editable = ({
 
       dispatch((dispatch, getState) => {
         const { dragHold, dragInProgress } = getState()
-        if (!dragHold && !dragInProgress) {
+        if (!isPressingRef.current && !dragHold && !dragInProgress) {
           setCursorOnThought({ editing: true })
         }
       })
@@ -535,7 +539,7 @@ const Editable = ({
       // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
       // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
       else {
-        e.preventDefault()
+        if (!isPressingRef.current) e.preventDefault()
       }
     },
     [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection],
@@ -585,6 +589,8 @@ const Editable = ({
           }
         }
       })
+
+      isPressingRef.current = false
     },
     [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
@@ -610,6 +616,7 @@ const Editable = ({
       placeholder={placeholder}
       onMouseDown={onMouseDown}
       onClick={onTap}
+      onTouchStart={() => (isPressingRef.current = true)}
       onTouchEnd={onTap}
       onFocus={onFocus}
       onBlur={onBlur}

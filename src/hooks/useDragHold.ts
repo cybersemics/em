@@ -6,6 +6,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
+import { isSafari, isTouch } from '../browser'
 import hasMulticursor from '../selectors/hasMulticursor'
 import longPressStore from '../stores/longPressStore'
 import useLongPress from './useLongPress'
@@ -60,6 +61,10 @@ const useDragHold = ({
   // react-dnd stops propagation so onLongPressEnd sometimes doesn't get called.
   // Therefore, disable dragHold and isPressed as soon as we are dragging or if no longer dragging and dragHold never got cleared.
   useEffect(() => {
+    // iOS Safari is using HTML5Backend which handles drag-and-drop with dragstart and dragend events,
+    // rather than TouchBackend with uses touchstart and touchend events, so this conflict should no longer occur on that platform.
+    if (isTouch && isSafari()) return
+
     dispatch((dispatch, getState) => {
       const state = getState()
 
