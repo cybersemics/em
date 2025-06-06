@@ -548,5 +548,5 @@ it('home: Note Desc with mixed thoughts', async () => {
   await act(() => vi.runAllTimersAsync())
 
   const thoughts = screen.getAllByTestId(/thought/)
-  expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['b', 'd3', 'a2', 'c1'])
+  expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['d3', 'a2', 'c1', 'b'])
 })

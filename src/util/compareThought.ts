@@ -5,6 +5,8 @@ import ComparatorValue from '../@types/ComparatorValue'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import { ALLOWED_FORMATTING_TAGS, EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
+import thoughtToPath from '../selectors/thoughtToPath'
+import compareByRank from './compareByRank'
 import isAttribute from './isAttribute'
 import lower from './lower'
 import noteValue from './noteValue'
@@ -224,19 +226,32 @@ export const compareThoughtByUpdated: ComparatorFunction<Thought> = (a: Thought,
 export const compareThoughtByUpdatedDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
   compare(b.lastUpdated, a.lastUpdated) || compareReasonable(a.value, b.value)
 
-/** Get note value or fallback for a Thought value. */
-const getNoteOrFallback = (state: State, input: Thought): string => {
-  return noteValue(state, [input.id]) ?? input.value
-}
+/** Makes a comparator function that compares two thoughts by their note value. */
+const makeCompareThoughtByNote =
+  (state: State): ComparatorFunction<Thought> =>
+  (a: Thought, b: Thought) => {
+    const noteA = noteValue(state, thoughtToPath(state, a.id)) ?? '\0'
+    const noteB = noteValue(state, thoughtToPath(state, b.id)) ?? '\0'
+    return compareReasonable(noteA, noteB)
+  }
+
+/** Makes a comparator function that compares two thoughts by their note value. */
+const makeCompareThoughtNoteAndOther =
+  (state: State): ComparatorFunction<Thought> =>
+  (a: Thought, b: Thought) => {
+    const aHasNote = noteValue(state, thoughtToPath(state, a.id)) !== null
+    const bHasNote = noteValue(state, thoughtToPath(state, b.id)) !== null
+    return aHasNote && !bHasNote ? -1 : bHasNote && !aHasNote ? 1 : 0
+  }
 
 /** Compare two thoughts by their note value in ascending order, falling back to their rank if notes are absent or equal. */
-export const compareThoughtByNote =
-  (state: State): ComparatorFunction<Thought> =>
-  (a: Thought, b: Thought) =>
-    compareReasonable(getNoteOrFallback(state, a), getNoteOrFallback(state, b))
+export const compareThoughtByNoteAndRank = (state: State): ComparatorFunction<Thought> =>
+  makeOrderedComparator([makeCompareThoughtNoteAndOther(state), makeCompareThoughtByNote(state), compareByRank])
 
 /** Compare two thoughts by their note value in descending order, falling back to their rank if notes are absent or equal. */
-export const compareThoughtByNoteDescending =
-  (state: State): ComparatorFunction<Thought> =>
-  (a: Thought, b: Thought) =>
-    compareReasonableDescending(getNoteOrFallback(state, a), getNoteOrFallback(state, b))
+export const compareThoughtByNoteDescendingAndRank = (state: State): ComparatorFunction<Thought> =>
+  makeOrderedComparator([
+    makeCompareThoughtNoteAndOther(state),
+    reverse(makeCompareThoughtByNote(state)),
+    compareByRank,
+  ])

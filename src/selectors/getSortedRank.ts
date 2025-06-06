@@ -1,14 +1,10 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import {
-  compareReasonable,
-  compareReasonableDescending,
-  compareThoughtByNote,
-  compareThoughtByNoteDescending,
-} from '../util/compareThought'
-import findDescendant from './findDescendant'
-import { firstVisibleChild, getAllChildrenSorted } from './getChildren'
+import { compareReasonable, compareReasonableDescending } from '../util/compareThought'
+import noteValue from '../util/noteValue'
+import { getAllChildrenSorted, isVisible } from './getChildren'
 import getSortPreference from './getSortPreference'
+import thoughtToPath from './thoughtToPath'
 
 /** Calculates the rank for a given index in a sorted array of thoughts. */
 const calculateRank = (thoughts: { rank: number }[], index: number): number => {
@@ -38,11 +34,14 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
 
   // Handle Note sorting
   if (sortPreference.type === 'Note') {
-    const noteId = findDescendant(state, state.cursor![state.cursor!.length - 1], '=note')
-    const noteThought = firstVisibleChild(state, noteId!)!
-    const compareFn = isDescending ? compareThoughtByNoteDescending(state) : compareThoughtByNote(state)
-    const index = thoughts.findIndex(thought => compareFn({ ...noteThought, value }, thought) === -1)
-    return calculateRank(thoughts, index)
+    const compareFn = isDescending ? compareReasonableDescending : compareReasonable
+    // Only consider visible thoughts since attributes are always sorted to the beginning.
+    // Otherwise this can result in incorrectly in the wrong place, inserting after =sort.
+    const thoughtsVisible = children.filter(isVisible(state))
+    const index = thoughtsVisible.findIndex(
+      thought => compareFn(noteValue(state, thoughtToPath(state, thought.id)) ?? '', value) !== -1,
+    )
+    return calculateRank(thoughtsVisible, index)
   }
 
   // For alphabetical sorting
