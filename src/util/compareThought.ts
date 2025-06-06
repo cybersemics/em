@@ -226,7 +226,7 @@ export const compareThoughtByUpdatedDescending: ComparatorFunction<Thought> = (a
 
 /** Get note value or fallback for a Thought value. */
 const getNoteOrFallback = (state: State, input: Thought): string => {
-  return noteValue(state, input.id) ?? input.value
+  return noteValue(state, [input.id]) ?? input.value
 }
 
 /** Compare two thoughts by their note value in ascending order, falling back to their rank if notes are absent or equal. */
