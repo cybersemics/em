@@ -66,24 +66,24 @@ const useLongPress = (
       // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
       // This gives other components a chance to short circuit.
       // We can't stop propagation here without messing up other components like Bullet.
-      setTimeout(() => {
-        clearTimeout(timerIdRef.current)
-        timerIdRef.current = 0
-        longPressStore.unlock()
+      // setTimeout(() => {
+      clearTimeout(timerIdRef.current)
+      timerIdRef.current = 0
+      longPressStore.unlock()
 
-        // If not longpressing, it means that the long press was canceled by a move event.
-        // in this case, onLongPressEnd should not be called, since it was already called by the move event.
-        if (!globals.longpressing) return
+      // If not longpressing, it means that the long press was canceled by a move event.
+      // in this case, onLongPressEnd should not be called, since it was already called by the move event.
+      if (!globals.longpressing) return
 
-        globals.longpressing = false
+      globals.longpressing = false
 
-        // If a long press occurred, mark it as not canceled
-        onLongPressEnd?.({ canceled: false })
+      // If a long press occurred, mark it as not canceled
+      onLongPressEnd?.({ canceled: false })
 
-        if (!unmounted.current) {
-          setPressed(false)
-        }
-      }, 10)
+      if (!unmounted.current) {
+        setPressed(false)
+      }
+      // }, 10)
     },
     [onLongPressEnd],
   )
