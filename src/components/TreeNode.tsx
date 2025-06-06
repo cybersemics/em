@@ -11,6 +11,7 @@ import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
+import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
@@ -54,7 +55,6 @@ const TreeNode = ({
   dragInProgress,
   autofocusDepth,
   editing,
-  isCursorDescendant,
   ...transitionGroupsProps
 }: TreeThoughtPositioned & {
   thoughtKey: string
@@ -68,7 +68,6 @@ const TreeNode = ({
   dragInProgress: boolean
   autofocusDepth: number
   editing: boolean
-  isCursorDescendant: boolean
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
@@ -91,6 +90,7 @@ const TreeNode = ({
   })
 
   // Context view state
+  const isCursorDescendant = useSelector(state => (state.cursor ? isDescendantPath(path, state.cursor) : false))
   const { isLastActionContextView, isCursorInContextView } = useSelector(state => {
     const isLastActionContextView = state.undoPatches[state.undoPatches.length - 1]?.some(
       patch => patch.actions[0] === 'toggleContextView',

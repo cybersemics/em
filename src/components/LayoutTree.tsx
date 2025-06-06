@@ -17,7 +17,6 @@ import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import head from '../util/head'
-import isDescendantPath from '../util/isDescendantPath'
 import HoverArrow from './HoverArrow'
 import TreeNode from './TreeNode'
 
@@ -112,7 +111,6 @@ const useHideSpaceAbove = (spaceAbove: number) => {
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const editing = useSelector(state => state.editing)
-  const cursor = useSelector(state => state.cursor)
   const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
@@ -265,33 +263,27 @@ const LayoutTree = () => {
         }}
       >
         <TransitionGroup>
-          {treeThoughtsPositioned.map((thought, index) => {
-            // Calculate isCursorDescendant once here in the parent component loop
-            const isCursorDescendant = cursor ? isDescendantPath(thought.path, cursor) : false
-
-            return (
-              <TreeNode
-                {...thought}
-                index={index}
-                // Pass unique key for the component
-                key={thought.key}
-                // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
-                thoughtKey={thought.key}
-                isCursorDescendant={isCursorDescendant}
-                editing={editing || false}
-                {...{
-                  viewportBottom,
-                  treeThoughtsPositioned,
-                  bulletWidth,
-                  cursorUncleId,
-                  setSize,
-                  cliffPaddingStyle,
-                  dragInProgress,
-                  autofocusDepth,
-                }}
-              />
-            )
-          })}
+          {treeThoughtsPositioned.map((thought, index) => (
+            <TreeNode
+              {...thought}
+              index={index}
+              // Pass unique key for the component
+              key={thought.key}
+              // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
+              thoughtKey={thought.key}
+              editing={editing || false}
+              {...{
+                viewportBottom,
+                treeThoughtsPositioned,
+                bulletWidth,
+                cursorUncleId,
+                setSize,
+                cliffPaddingStyle,
+                dragInProgress,
+                autofocusDepth,
+              }}
+            />
+          ))}
         </TransitionGroup>
       </div>
     </div>
