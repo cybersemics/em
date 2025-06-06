@@ -128,11 +128,11 @@ const useCol1Alignment = ({
   siblingThoughts,
 }: UseCol1AlignParams) => {
   const prevIsTableCol1 = useRef<boolean>(isTableCol1)
-  const isCursorNode = cursor ? equalPath(cursor, path) : false
+  const isCursor = equalPath(cursor, path)
 
   // Recalculate and update col1MaxWidthStore.
   useEffect(() => {
-    if (isCursorNode) {
+    if (isCursor) {
       prevIsTableCol1.current = isTableCol1
 
       // Clear the old max so siblings know “we’re recalculating.”
