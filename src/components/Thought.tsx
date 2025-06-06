@@ -144,8 +144,7 @@ const useCol1Alignment = ({
         return getTextWidth(text, `${fontSize}px Helvetica`)
       })
 
-      const newMax = allWidths.length > 0 ? Math.max(...allWidths) : 0
-      col1MaxWidthStore.update(() => newMax)
+      col1MaxWidthStore.update(Math.max(...allWidths) || 0)
     }
 
     // Dependencies like path, and col1MaxWidthStore are intentionally excluded.
