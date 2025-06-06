@@ -135,9 +135,6 @@ const useCol1Alignment = ({
     if (isCursor) {
       prevIsTableCol1.current = isTableCol1
 
-      // Clear the old max so siblings know “we’re recalculating.”
-      col1MaxWidthStore.update(() => null)
-
       // Loop over all cursor‐siblings and measure their widths
       const allWidths = siblingThoughts.map(thought => getTextWidth(thought.value, `${fontSize}px Helvetica`))
 
