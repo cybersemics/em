@@ -139,10 +139,7 @@ const useCol1Alignment = ({
       col1MaxWidthStore.update(() => null)
 
       // Loop over all cursor‐siblings and measure their widths
-      const allWidths = siblingThoughts.map(thought => {
-        const text = thought.value || ''
-        return getTextWidth(text, `${fontSize}px Helvetica`)
-      })
+      const allWidths = siblingThoughts.map(thought => getTextWidth(thought.value, `${fontSize}px Helvetica`))
 
       col1MaxWidthStore.update(Math.max(...allWidths) || 0)
     }
