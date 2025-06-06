@@ -26,7 +26,6 @@ interface State {
   autologin: boolean
   /** Key: hashPath(path). */
   contextViews: Index<boolean>
-  contextViewToggledOn?: boolean | null
   cursor: Path | null
   /**
    * Set to true when clearThought is activated.

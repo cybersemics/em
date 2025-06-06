@@ -21,7 +21,7 @@ const toggleContextView = (state: State): State => {
     state => ({
       ...state,
       contextViews: produce(state.contextViews, draft => {
-        const key = hashPath(state.cursor!)
+        const key = hashPath(state.cursor)
         if (key in state.contextViews) {
           delete draft[key]
         } else {
@@ -34,7 +34,7 @@ const toggleContextView = (state: State): State => {
     // update context views and expanded
     state => ({
       ...state,
-      expanded: globals.suppressExpansion ? {} : expandThoughts(state, state.cursor!),
+      expanded: globals.suppressExpansion ? {} : expandThoughts(state, state.cursor),
     }),
 
     // advance tutorial from context view toggle step
