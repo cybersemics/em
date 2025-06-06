@@ -127,6 +127,9 @@ const Editable = ({
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const editingOrOnCursor = useSelector(state => state.editing || equalPath(path, state.cursor))
+
+  // During long press, mousedown and focus events will fire during the press, i.e. before touchend.
+  // All editable behavior should be ignored during a long press. #2931, #2953, #2964.
   const isPressingRef = useRef(false)
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
