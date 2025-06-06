@@ -140,11 +140,7 @@ const useCol1Alignment = ({
 
       col1MaxWidthStore.update(Math.max(...allWidths, 0))
     }
-
-    // Dependencies like path, and col1MaxWidthStore are intentionally excluded.
-    // They are either stable (e.g. store instance), or would cause unnecessary re-renders.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTableCol1, siblingThoughts, fontSize])
+  }, [isTableCol1, siblingThoughts, fontSize, isCursor])
 
   const col1MaxWidth = col1MaxWidthStore.useState()
   const isSiblingOfCursor = siblingThoughts.map(t => t.id).includes(simplePath[simplePath.length - 1])
