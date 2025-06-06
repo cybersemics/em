@@ -63,10 +63,6 @@ const useLongPress = (
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
-      // This gives other components a chance to short circuit.
-      // We can't stop propagation here without messing up other components like Bullet.
-      // setTimeout(() => {
       clearTimeout(timerIdRef.current)
       timerIdRef.current = 0
       longPressStore.unlock()
@@ -83,7 +79,6 @@ const useLongPress = (
       if (!unmounted.current) {
         setPressed(false)
       }
-      // }, 10)
     },
     [onLongPressEnd],
   )
