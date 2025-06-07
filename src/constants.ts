@@ -171,6 +171,9 @@ export const URL_MAX_CHARS = 40
 export const EXPAND_THOUGHT_CHAR = ':'
 export const MAX_EXPAND_DEPTH = 10
 
+/** The “3 em” minimum content width for a thought node. */
+export const MIN_CONTENT_WIDTH_EM = 3
+
 // command ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
 export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [

@@ -7,6 +7,7 @@ import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -176,11 +177,8 @@ const StaticThought = ({
             ellipsizedUrl,
             inverse: (dark && isBlack(styleAnnotation?.color)) || (!dark && isWhite(styleAnnotation?.color)),
           }),
-          css({
-            // do not set a min-width on table column 1 since there is no room for additional click area
-            minWidth: '3em',
-          }),
         )}
+        style={{ minWidth: `${MIN_CONTENT_WIDTH_EM}em` }}
       >
         {homeContext ? (
           // left, top are eyeballed for different font sizes

@@ -14,6 +14,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isTouch } from '../browser'
 import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
+import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
@@ -171,7 +172,7 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
     // Compute “minimum content” (3em minus left/right padding)
     const paddingLeftPx = fontSize * 0.333 // 0.333em
     const paddingRightPx = fontSize * 1.0 // 1em
-    const minContentPx = 3 * fontSize - (paddingLeftPx + paddingRightPx)
+    const minContentPx = MIN_CONTENT_WIDTH_EM * fontSize - (paddingLeftPx + paddingRightPx)
     // └─ exactly the same as “1.667 × fontSize”
 
     if (!justFlipped || col1MaxWidth == null || !isSiblingOfCursor) {
