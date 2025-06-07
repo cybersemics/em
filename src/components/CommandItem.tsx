@@ -30,14 +30,12 @@ const isExecutable = (state: State, command: Command) =>
 /** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
 const CommandItem: FC<{
   viewType?: CommandViewType
-  search: string | undefined
+  search?: string
   /** Click handler for the command. Applies pointer styles when defined. */
   onClick?: (e: React.MouseEvent, command: Command) => void
-  selected: boolean | undefined
+  selected?: boolean
   command: Command
   gestureInProgress?: string
-  style?: React.CSSProperties
-  isActive?: boolean
   isTable?: boolean
   /**
    * Controls when the command description is displayed.
@@ -48,6 +46,7 @@ const CommandItem: FC<{
   onHover?: (command: Command) => void
   customize?: boolean
   shouldScrollSelectionIntoView?: boolean
+  noInlinePadding?: boolean
 }> = ({
   viewType = 'table',
   search = '',
@@ -55,12 +54,12 @@ const CommandItem: FC<{
   selected,
   command,
   gestureInProgress,
-  style,
   isTable,
   alwaysShowDescription,
   onHover,
   customize,
   shouldScrollSelectionIntoView,
+  noInlinePadding,
 }) => {
   const [{ isDragging }, dragSource] = useDrag({
     type: DragAndDropType.ToolbarButton,
@@ -168,10 +167,9 @@ const CommandItem: FC<{
       style={{
         fontSize,
         // split padding into paddingInline and paddingBlock so either property can be overridden
-        paddingInline: viewType === 'grid' ? undefined : paddingSize,
+        paddingInline: viewType === 'grid' || noInlinePadding ? undefined : paddingSize,
         paddingBlock: viewType === 'grid' ? undefined : paddingSize,
         gap: paddingSize,
-        ...style,
       }}
     >
       <Cell

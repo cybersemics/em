@@ -46,12 +46,12 @@ const CommandTableOnly = ({
                     onSelect(selected ? null : command)
                   })
                 }
-                style={{ paddingInline: 0 }}
                 selected={selected}
                 command={command}
                 search={search}
                 alwaysShowDescription
                 isTable
+                noInlinePadding
               />
             )
           })}
