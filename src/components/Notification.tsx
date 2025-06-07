@@ -43,7 +43,6 @@ const Notification: FC<
             key={transitionKey}
             circledCloseButton
             border
-            center
             background={token('colors.panelBg')}
             // uses swipe to dismess from PopupBase on mobile
             onClose={isTouch ? undefined : handleClose}
