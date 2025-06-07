@@ -1,4 +1,4 @@
-import React, { CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -150,10 +150,15 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
     return cursorParentId !== undefined && cursorParentId === thisParentId
   })
 
+  interface TransitionStyle {
+    transform: string
+    transition: string
+  }
+
   const [alignmentTransition, setAlignmentTransition] = useState<{
-    bullet: CSSProperties
-    editable: CSSProperties
-  }>({ bullet: {}, editable: {} })
+    bullet: TransitionStyle
+    editable: TransitionStyle
+  }>({ bullet: { transform: '', transition: '' }, editable: { transform: '', transition: '' } })
 
   const duration = durations.get('layoutNodeAnimation')
 
