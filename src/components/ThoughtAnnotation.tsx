@@ -196,8 +196,6 @@ const ThoughtAnnotation = React.memo(
                 */
                 margin: '-0.5px 0 0 calc(1em - 18px)',
                 paddingRight: multiline ? '1em' : '0.333em',
-                minWidth: `${MIN_CONTENT_WIDTH_EM - 0.333 - 0.333}em`, // min width of thought (3em) - 0.333em left padding - 0.333em right padding
-                textAlign: isTableCol1 ? 'right' : 'left',
               }),
             )
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
@@ -206,7 +204,11 @@ const ThoughtAnnotation = React.memo(
             //   border-bottom: solid 1px;
             // }
           }
-          style={styleAnnotation}
+          style={{
+            ...styleAnnotation,
+            minWidth: `${MIN_CONTENT_WIDTH_EM - 0.333 - 0.333}em`, // min width of thought (3em) - 0.333em left padding - 0.333em right padding
+            textAlign: isTableCol1 ? 'right' : 'left',
+          }}
         >
           <span
             className={css({
