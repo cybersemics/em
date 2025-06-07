@@ -153,7 +153,7 @@ const CommandPalette: FC<{
   )
 
   /** Select commands on hover. */
-  const onHover = useCallback((e: MouseEvent, command: Command) => setSelectedCommand(command), [])
+  const onHover = useCallback((command: Command) => setSelectedCommand(command), [])
 
   // Select the first command when the input changes.
   useEffect(() => {

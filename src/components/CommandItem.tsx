@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react'
+import React, { FC, useEffect, useMemo } from 'react'
 import { DragSourceMonitor, useDrag } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
@@ -45,7 +45,7 @@ const CommandItem: FC<{
    * - If false: On non-touch devices, always show the description. On touch devices, show only when the command is selected.
    */
   alwaysShowDescription?: boolean
-  onHover?: (e: MouseEvent, command: Command) => void
+  onHover?: (command: Command) => void
   customize?: boolean
   shouldScrollSelectionIntoView?: boolean
 }> = ({
@@ -112,21 +112,8 @@ const CommandItem: FC<{
     }
   })
 
-  useEffect(() => {
-    if (!onHover) return
-    /** Hover handler. */
-    const onHoverCommand = (e: MouseEvent) => onHover(e, command)
-
-    // mouseover and mouseenter cause the command under the cursor to get selected on render, so we use mousemove to ensure that it only gets selected on an actual hover
-    ref.current?.addEventListener('mousemove', onHoverCommand)
-
-    return () => {
-      ref.current?.removeEventListener('mousemove', onHoverCommand)
-    }
-  }, [onHover, command])
-
   /** Returns the first n segments of the gesture diagram to highlight. */
-  const getGestureHighlight = () => {
+  const gestureHighlight = useMemo(() => {
     if (disabled || gestureInProgress === undefined) return undefined
     if (command.id === 'openGestureCheatsheet') {
       // For gesture cheatsheet command, find the longest matching end portion
@@ -143,7 +130,7 @@ const CommandItem: FC<{
       return selected ? 1 : undefined
     }
     return gestureInProgress.length
-  }
+  }, [disabled, gestureInProgress, command, selected])
 
   return (
     <Container
@@ -151,6 +138,7 @@ const CommandItem: FC<{
         ref.current = current
         dragSource(current)
       }}
+      onMouseMove={onHover?.bind(null, command)}
       className={css({
         cursor: onClick && !disabled ? 'pointer' : undefined,
         position: 'relative',
@@ -220,7 +208,7 @@ const CommandItem: FC<{
             <GestureDiagram
               color={disabled ? token('colors.gray') : undefined}
               styleCancelAsRegularGesture
-              highlight={getGestureHighlight()}
+              highlight={gestureHighlight}
               path={command.id === 'cancel' ? null : gestureString(command)}
               strokeWidth={4}
               width={32}
