@@ -338,7 +338,7 @@ const CommandPaletteWithTransition: FC = () => {
     >
       {showCommandPalette ? (
         <FadeTransition duration='fast' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
-          <PopupBase background={token('colors.bgOverlay50')} ref={popupRef} fullScreen leaveMarginFromEdge>
+          <PopupBase background={token('colors.bgOverlay50')} ref={popupRef} fullScreen leaveMarginFromEdge={!isTouch}>
             <div
               data-testid='popup-value'
               className={css({
