@@ -38,6 +38,7 @@ import containsURL from '../util/containsURL'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
+import getBulletWidth from '../util/getBulletWidth'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -180,7 +181,7 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
     }
 
     const offset = Math.max(minContentPx, col1MaxWidth) - width
-    const bulletOffset = 11 - (fontSize - 9) * 0.5
+    const bulletOffset = getBulletWidth(fontSize)
 
     // “Pop” elements into their initial offset positions
     setAlignmentTransition({

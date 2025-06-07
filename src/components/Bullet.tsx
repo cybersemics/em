@@ -24,6 +24,7 @@ import isTutorial from '../selectors/isTutorial'
 import rootedParentOf from '../selectors/rootedParentOf'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
+import getBulletWidth from '../util/getBulletWidth'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -464,7 +465,7 @@ const Bullet = ({
 
   // calculate position of bullet for different font sizes
   // Table column 1 needs more space between the bullet and thought for some reason
-  const width = 11 - (fontSize - 9) * 0.5 + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
+  const width = getBulletWidth(fontSize) + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
   const marginLeft = -width
 
   // expand or collapse on click
