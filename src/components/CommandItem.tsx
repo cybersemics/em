@@ -111,7 +111,7 @@ const CommandItem: FC<{
     }
   })
 
-  /** Returns the first n segments of the gesture diagram to highlight. */
+  /** The first n segments of the gesture diagram to highlight. */
   const gestureHighlight = useMemo(() => {
     if (disabled || gestureInProgress === undefined) return undefined
     if (command.id === 'openGestureCheatsheet') {

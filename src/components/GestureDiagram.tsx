@@ -30,6 +30,7 @@ interface GestureDiagramProps {
   cssRaw?: SystemStyleObject
   /** Whether to render the gesture with rounded corners. */
   rounded?: boolean
+  /** If true, the cancel gesture will have the same styling as the other gestures. Otherwise, there are additional sizing and margin styles applied. */
   styleCancelAsRegularGesture?: boolean
   /** Which kind of arrowhead to draw gesture diagrams with. By default, the arrowhead is filled. */
   arrowhead?: 'filled' | 'outlined'
