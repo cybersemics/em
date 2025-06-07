@@ -165,7 +165,7 @@ const ModalCustomizeToolbar: FC = () => {
               className={css({
                 backgroundColor: 'gray15',
                 marginTop: '0.5em',
-                padding: '1em 0 1em 1em',
+                padding: '1em',
                 position: 'relative',
               })}
             >
