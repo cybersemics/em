@@ -8,11 +8,21 @@ import { token } from '../../../styled-system/tokens'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../../actions/clearMulticursors'
 import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
 import { isTouch } from '../../browser'
+import categorize from '../../commands/categorize'
+import deleteCommand from '../../commands/delete'
+import favorite from '../../commands/favorite'
+import indent from '../../commands/indent'
+import note from '../../commands/note'
+import outdent from '../../commands/outdent'
+import swapParent from '../../commands/swapParent'
+import toggleDone from '../../commands/toggleDone'
+import uncategorize from '../../commands/uncategorize'
 import isTutorial from '../../selectors/isTutorial'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import CloseIcon from '../icons/CloseIcon'
-import PanelCommandGrid from './PanelCommandGrid'
+import PanelCommand from './PanelCommand'
+import PanelCommandGroup from './PanelCommandGroup'
 
 /**
  * A custom hook that returns the last non-zero number of multicursors.
@@ -137,7 +147,28 @@ const CommandMenu = () => {
                 </button>
               </div>
             </div>
-            <PanelCommandGrid />
+            <div
+              className={css({
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gridTemplateRows: 'auto',
+                gridAutoFlow: 'row',
+                gap: '0.7rem',
+                maxWidth: '100%',
+              })}
+            >
+              <PanelCommand command={{ ...toggleDone, label: 'Done' }} size='small' />
+              <PanelCommand command={note} size='small' />
+              <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
+              <PanelCommand command={deleteCommand} size='small' />
+              <PanelCommandGroup commandSize='small' commandCount={2}>
+                <PanelCommand command={{ ...outdent, label: '' }} size='small' />
+                <PanelCommand command={{ ...indent, label: '' }} size='small' />
+              </PanelCommandGroup>
+              <PanelCommand command={swapParent} size='medium' />
+              <PanelCommand command={categorize} size='medium' />
+              <PanelCommand command={uncategorize} size='medium' />
+            </div>
           </div>
         </div>
       </SwipeableDrawer>
