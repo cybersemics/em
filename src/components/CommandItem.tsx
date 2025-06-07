@@ -99,9 +99,7 @@ const CommandItem: FC<{
   const Container = isTable ? 'tr' : 'div'
   const Cell = isTable ? 'td' : 'div'
 
-  const fontSize = useSelector(state => state.fontSize)
-
-  const paddingSize = fontSize * (isTouch && !isTable ? 0.4 : 0.67)
+  const paddingSize = isTouch && !isTable ? '0.4em' : '0.67em'
 
   const isSelectedStyle = selected || isDragging
 
@@ -147,7 +145,7 @@ const CommandItem: FC<{
         borderRadius: '8px',
         display: 'flex',
         flexDirection: viewType === 'grid' ? 'column' : 'row',
-        gap: viewType === 'grid' ? '0.6rem' : undefined,
+        gap: viewType === 'grid' ? '0.6rem' : paddingSize,
         justifyContent: 'flex-start',
         alignItems: 'center',
         opacity: isDragging ? 0.5 : 1,
@@ -158,18 +156,14 @@ const CommandItem: FC<{
               },
             }
           : null),
+        // split padding into paddingInline and paddingBlock so either property can be overridden
+        paddingInline: viewType === 'grid' || noInlinePadding ? undefined : paddingSize,
+        paddingBlock: viewType === 'grid' ? undefined : paddingSize,
       })}
       onClick={e => {
         if (!disabled) {
           onClick?.(e, command)
         }
-      }}
-      style={{
-        fontSize,
-        // split padding into paddingInline and paddingBlock so either property can be overridden
-        paddingInline: viewType === 'grid' || noInlinePadding ? undefined : paddingSize,
-        paddingBlock: viewType === 'grid' ? undefined : paddingSize,
-        gap: paddingSize,
       }}
     >
       <Cell

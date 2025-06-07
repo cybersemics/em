@@ -231,6 +231,7 @@ const CommandPalette: FC<{
         flexDirection: 'column',
       })}
       onClick={e => e.stopPropagation()}
+      style={{ fontSize }}
     >
       {!isTouch || (gestureInProgress && commands.length > 0) ? (
         <>
@@ -257,7 +258,7 @@ const CommandPalette: FC<{
               ...(!isTouch ? { maxHeight: 'calc(100vh - 10em)' } : null),
               overflow: 'auto',
             })}
-            style={{ padding: fontSize * (2 / 3) }}
+            style={{ padding: '0.66em' }}
           >
             {commands.length > 0 ? (
               <>

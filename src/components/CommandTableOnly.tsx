@@ -1,3 +1,4 @@
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import { CommandViewType } from '../@types/CommandViewType'
@@ -20,6 +21,7 @@ const CommandTableOnly = ({
   /** Search text that will be highlighted within the matched command title. */
   search?: string
 }) => {
+  const fontSize = useSelector(state => state.fontSize)
   return (
     <table className={css({ fontSize: '14px', width: viewType === 'grid' ? undefined : '100%' })}>
       <tbody
@@ -30,6 +32,8 @@ const CommandTableOnly = ({
             gap: '1rem',
           }),
         })}
+        // anchor all `em` units used in children to `fontSize`
+        style={{ fontSize }}
       >
         {commands
           .filter(command => command !== null)
