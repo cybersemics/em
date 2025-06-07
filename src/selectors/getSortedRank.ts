@@ -8,12 +8,15 @@ import thoughtToPath from './thoughtToPath'
 
 /** Calculates the rank for a given index in a sorted array of thoughts. */
 const calculateRank = (thoughts: { rank: number }[], index: number): number => {
+  // if there is no such child, return the rank of the last child + 1
   if (index === -1) {
     return (thoughts[thoughts.length - 1]?.rank || 0) + 1
   }
+  // if the value is less than all children, return the rank of the first child - 1
   if (index === 0) {
     return thoughts[0].rank - 1
   }
+  // otherwise, return the rank at the halfway point between the previous child and the next child
   return (thoughts[index - 1].rank + thoughts[index].rank) / 2
 }
 

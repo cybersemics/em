@@ -444,7 +444,7 @@ it('home: Note Desc', async () => {
   expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['b3', 'a2', 'c1'])
 })
 
-it('home: Note Desc with edit', async () => {
+it('home: Note Asc with edit', async () => {
   act(() => {
     store.dispatch([
       importText({

@@ -135,7 +135,10 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     [newKey]: lexemeNew,
   }
   const isNote = parentOfEditedThought.value === '=note'
-  const sortPreference = getSortPreference(state, editedThought.parentId)
+  const parentThoughtId = isNote
+    ? (getThoughtById(state, parentOfEditedThought.parentId)?.parentId ?? editedThought.parentId)
+    : editedThought.parentId
+  const sortPreference = getSortPreference(state, parentThoughtId)
   const sortType = sortPreference.type
   const thoughtNew: Thought = {
     ...editedThought,
@@ -169,7 +172,7 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
   }
 
   // If we're editing a note, update the parent thought's rank
-  if (isNote) {
+  if (isNote && sortType === 'Note') {
     const parentThought = getThoughtById(state, parentOfEditedThought.parentId)
     if (parentThought) {
       const newParentRank = getSortedRank(state, parentThought.parentId, newValue)
