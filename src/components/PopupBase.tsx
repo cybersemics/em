@@ -3,15 +3,11 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator as alert } from '../actions/alert'
-import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
-import { deleteResumableFile } from '../actions/importFiles'
-import { isTouch } from '../browser'
+import { dismissTipActionCreator as dismissTip } from '../actions/dismissTip'
 import { AlertType } from '../constants'
 import useCombinedRefs from '../hooks/useCombinedRefs'
 import usePositionFixed from '../hooks/usePositionFixed'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
-import syncStatusStore from '../stores/syncStatus'
-import fastClick from '../util/fastClick'
 import CloseButton from './CloseButton'
 
 export type PopupBaseProps = PropsWithChildren<
@@ -28,13 +24,10 @@ export type PopupBaseProps = PropsWithChildren<
     circledCloseButton?: boolean
     /** If true, the popup will take up the full width of the screen. */
     fullWidth?: boolean
-    /** Used to cancel imports. */
-    importFileId?: string
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
     padding?: string
     showXOnHover?: boolean
-    swipeDownToDismiss?: boolean
     textAlign?: 'center' | 'left' | 'right'
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
 >
@@ -51,12 +44,12 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       children,
       circledCloseButton,
       fullWidth = false,
-      importFileId,
       onClose,
       padding,
       showXOnHover,
-      swipeDownToDismiss,
       textAlign,
+      onMouseOver,
+      onMouseLeave,
     },
     ref,
   ) => {
@@ -78,12 +71,10 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     const useSwipeToDismissProps = useSwipeToDismiss({
       // dismiss after animation is complete to avoid touch events going to the Toolbar
       onDismissEnd: () => {
-        dispatch(alert(null))
+        dispatch([alert(null), dismissTip()])
       },
-      swipeDown: swipeDownToDismiss,
+      swipeDown: true,
     })
-
-    const combinedRefs = useCombinedRefs(isTouch ? [useSwipeToDismissProps.ref, ref] : [ref])
 
     const borderStyles = border
       ? {
@@ -109,7 +100,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           width: '100%',
           overflowY: 'auto',
           maxHeight: '100%',
-          maxWidth: '100%',
         }
       : {}
 
@@ -119,6 +109,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           boxSizing: 'border-box',
           textAlign,
           zIndex: 'popup',
+          // leave space so the circledCloseButton doesn't get cut off from the screen
+          maxWidth: circledCloseButton ? 'calc(100% - 2em)' : '100%',
           ...borderStyles,
           ...centerStyles,
           ...fullWidthStyles,
@@ -128,39 +120,22 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
             },
           },
         })}
-        {...(isTouch ? useSwipeToDismissProps : null)}
-        ref={combinedRefs}
+        // disable swipe-to-dismiss when multicursor is active
+        {...(!multicursor && useSwipeToDismissProps)}
+        ref={useCombinedRefs([ref, useSwipeToDismissProps.ref])}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
           ...positionFixedStyles,
           background,
           fontSize,
           padding,
-          ...(isTouch ? useSwipeToDismissProps.style : null),
+          // disable swipe-to-dismiss when multicursor is active
+          ...(!multicursor && useSwipeToDismissProps.style),
         }}
+        onMouseOver={onMouseOver}
+        onMouseLeave={onMouseLeave}
       >
         {children}
-        {importFileId && (
-          <a
-            onClick={() => {
-              deleteResumableFile(importFileId!)
-              syncStatusStore.update({ importProgress: 1 })
-              onClose?.()
-            }}
-          >
-            cancel
-          </a>
-        )}
-        {multicursor && (
-          <a
-            {...fastClick(() => {
-              dispatch(clearMulticursors())
-              onClose?.()
-            })}
-          >
-            cancel
-          </a>
-        )}
         {onClose ? (
           <CloseButton
             circled={circledCloseButton}

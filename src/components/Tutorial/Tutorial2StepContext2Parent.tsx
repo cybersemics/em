@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
-import { commandById } from '../../commands'
+import newThoughtCommand from '../../commands/newThought'
 import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
@@ -50,7 +50,7 @@ const Tutorial2StepContext2Parent = () => {
               {TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".
             </>
           )}
-          {!readyToSelect && <TutorialGestureDiagram gesture={commandById('newThought').gesture} />}
+          {!readyToSelect && <TutorialGestureDiagram gesture={newThoughtCommand.gesture} />}
         </TutorialHint>
       </p>
     </>

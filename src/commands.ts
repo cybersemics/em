@@ -17,6 +17,7 @@ import { showLatestCommandsActionCreator as showLatestCommands } from './actions
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
+import openGestureCheatsheetCommand from './commands/openGestureCheatsheet'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, Settings } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'
@@ -54,15 +55,14 @@ const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
   [48 + i]: i.toString(),
 }))
 
-/** Hash all the properties of a command into a string that can be compared with the result of hashKeyDown. */
-export const hashCommand = (command: Command): string => {
-  const keyboard = typeof command.keyboard === 'string' ? { key: command.keyboard } : command.keyboard || ({} as Key)
-  return (
-    (keyboard.meta ? 'META_' : '') +
-    (keyboard.alt ? 'ALT_' : '') +
-    (keyboard.shift ? 'SHIFT_' : '') +
-    keyboard.key?.toUpperCase()
-  )
+/**
+ * Hash a keyboard shortcut into a string that can be compared with the result of hashKeyDown.
+ * This function only handles a single keyboard shortcut, not arrays.
+ */
+export const hashCommand = (keyboard: string | Key): string => {
+  const key = typeof keyboard === 'string' ? { key: keyboard } : keyboard
+
+  return (key.meta ? 'META_' : '') + (key.alt ? 'ALT_' : '') + (key.shift ? 'SHIFT_' : '') + key.key?.toUpperCase()
 }
 
 /** Hash all the properties of a keydown event into a string that can be compared with the result of hashCommand. */
@@ -87,7 +87,12 @@ const arrowTextToArrowCharacter = (s: string) =>
   )[s] || s
 
 /** Formats a keyboard shortcut to display to the user. */
-export const formatKeyboardShortcut = (keyboardOrString: Key | string): string => {
+export const formatKeyboardShortcut = (keyboardOrString: Key | Key[] | string): string => {
+  // If it's an array, format only the first shortcut for display
+  if (Array.isArray(keyboardOrString)) {
+    return formatKeyboardShortcut(keyboardOrString[0])
+  }
+
   const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString as string } : keyboardOrString
   return (
     (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
@@ -97,6 +102,7 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | string): string =
     arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
   )
 }
+
 /** Initializes command indices and logs keyboard shortcut conflicts. */
 const index = (): {
   commandKeyIndex: Index<Command>
@@ -104,22 +110,25 @@ const index = (): {
   commandGestureIndex: Index<Command>
 } => {
   // index commands for O(1) lookup by keyboard
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const commandKeyIndex: Index<Command & { conflicts?: any[] }> = keyValueBy(globalCommands, (command, i, accum) => {
+  const commandKeyIndex: Index<Command> = keyValueBy(globalCommands, (command, i, accum) => {
     if (!command.keyboard) return null
 
-    const hash = hashCommand(command)
+    // Handle both single keyboard shortcut and arrays of shortcuts
+    const keyboardShortcuts = Array.isArray(command.keyboard) ? command.keyboard : [command.keyboard]
 
-    // check if the shortcut is used by another command
-    if (accum[hash]) {
-      console.error(
-        `"${command.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(command.keyboard)}"`,
-      )
-    }
+    // Process each keyboard shortcut and create entries in the index
+    return keyboardShortcuts.reduce((result: Record<string, Command>, keyboardShortcut) => {
+      const hash = hashCommand(keyboardShortcut)
 
-    return {
-      [hash]: command,
-    }
+      // check if the same shortcut is used by multiple commands
+      if (accum[hash]) {
+        console.error(
+          `"${command.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(keyboardShortcut)}`,
+        )
+      }
+
+      return { ...result, [hash]: command }
+    }, {})
   })
 
   // index command for O(1) lookup by id
@@ -155,7 +164,7 @@ const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 export const gestureString = (command: Command): string =>
   (typeof command.gesture === 'string' ? command.gesture : command.gesture?.[0] || '') as string
 
-/** Get a command by its id. */
+/** Get a command by its id. Only use this for dynamic ids that are only known at runtime. If you know the id of the command at compile time, use a static import. */
 export const commandById = (id: CommandId): Command => commandIdIndex[id]
 
 /**
@@ -181,7 +190,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const state = store.getState()
     const experienceMode = getUserSetting(state, Settings.experienceMode)
 
-    if (state.showModal || state.dragInProgress) return
+    if (state.showModal || state.dragInProgress || state.showGestureCheatsheet) return
 
     // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
     // useFilteredCommands updates the possibleCommands in a back channel for efficiency.
@@ -238,20 +247,19 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // Get the command from the command gesture index.
     // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
 
-    const helpCommand = commandById('help')
-    const helpGesture = gestureString(helpCommand)
+    const openGestureCheatsheetGesture = gestureString(openGestureCheatsheetCommand)
 
     // If sequence ends with help gesture, use help command
     // Otherwise use the normal command lookup
-    const command = sequence?.toString().endsWith(helpGesture)
-      ? helpCommand
+    const command = sequence?.toString().endsWith(openGestureCheatsheetGesture)
+      ? openGestureCheatsheetCommand
       : !state.showCommandPalette || !commandGestureIndex[sequence as string]?.hideFromHelp
         ? commandGestureIndex[sequence as string]
         : null
 
     // execute command
     // do not execute when modal is displayed or a drag is in progress
-    if (command && !state.showModal && !state.dragInProgress) {
+    if (command && !state.showModal && !state.showGestureCheatsheet && !state.dragInProgress) {
       commandEmitter.trigger('command', command)
       executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
       if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
@@ -295,7 +303,11 @@ export const inputHandlers = (store: Store<State, any>) => ({
   handleGestureCancel: () => {
     clearTimeout(commandPaletteGesture)
     store.dispatch((dispatch, getState) => {
-      if (getState().alert?.alertType === AlertType.GestureHint || getState().showCommandPalette) {
+      const state = getState()
+      if (state.showCommandPalette) {
+        dispatch(commandPalette())
+      }
+      if (state.alert?.alertType === AlertType.GestureHint || state.showCommandPalette) {
         dispatch(alert(null))
       }
     })
@@ -332,7 +344,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const command = commandKeyIndex[hashKeyDown(e)]
 
     // disable if modal is shown, except for navigation commands
-    if (!command || (state.showModal && !command.allowExecuteFromModal)) return
+    if (!command || state.showGestureCheatsheet || (state.showModal && !command.allowExecuteFromModal)) return
 
     // execute the command
     commandEmitter.trigger('command', command)

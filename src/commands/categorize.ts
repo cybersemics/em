@@ -9,23 +9,13 @@ const categorizeCommand: Command = {
   label: 'Categorize',
   description: 'Move the current thought into a new, empty thought at the same level.',
   gesture: 'lu',
-  keyboard: { key: 'o', meta: true, alt: true },
+  keyboard: [
+    { key: 'o', meta: true, alt: true },
+    { key: ']', meta: true },
+  ],
   // multicursor functionality is handled in the categorize action
   multicursor: false,
   svg: CategorizeIcon,
-  canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
-  },
-  exec: dispatch => dispatch(categorize()),
-}
-
-export const categorizeCommandAlias: Command = {
-  id: 'categorizeAlias',
-  label: 'Categorize',
-  hideFromHelp: true,
-  keyboard: { key: ']', meta: true },
-  // multicursor functionality is handled in the categorize action
-  multicursor: false,
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },

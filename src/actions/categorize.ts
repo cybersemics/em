@@ -25,7 +25,7 @@ import moveThought from './moveThought'
 import setCursor from './setCursor'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
-const categorize = (state: State) => {
+const categorize = (state: State): State => {
   const { cursor } = state
 
   if (!cursor) return state

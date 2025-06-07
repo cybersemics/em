@@ -10,9 +10,8 @@ import emojiRegex from './emojiRegex'
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
-export const FADEOUT_DURATION = 400
 
-// number of ms to wait after thought hover to expand it's children
+// Number of ms to wait after hovering over a thought before expanding, during drag-and-drop. Overriden by testFlags.expandHoverDelay during drag-and-drop tests.
 export const EXPAND_HOVER_DELAY = 1000
 
 // threshold for keyboard visibility detection (percentage of height change)
@@ -433,23 +432,16 @@ export enum ViewMode {
 // There may also be dynamic alert text, which would defined as selectors, e.g. deleteThoughtAlertText.
 export const AlertText = {
   DragAndDrop: 'Drag and drop to move thought',
-  DragAndDropFile: 'Drop to import file',
   DragAndDropToolbar: 'Drag and drop to reorder toolbar',
   DragAndDropToolbarAdd: 'Drag and drop to add to toolbar',
   ReorderFavorites: 'Drag and drop to reorder favorites',
 }
 
 export enum AlertType {
-  // shown when a thought is copied to the clipboard or still loading in the export modal
-  Clipboard = 'Clipboard',
   // shown when a dragged thought is hovering over the CopyOneDrop component
   CopyOneDropHint = 'CopyOneDropHint',
   // shown when a dragged thought is hovering over the DeleteDrop component
   DeleteDropHint = 'DeleteDropHint',
-  // shown when a thought is deleted
-  DeleteThoughtComplete = 'DeleteThoughtComplete',
-  // shown when dragging a file
-  DragAndDropFile = 'DragAndDropFile',
   // shown when dragging a thought
   DragAndDropHint = 'DragAndDropHint',
   // shown when dragging a toolbar button
@@ -468,22 +460,8 @@ export enum AlertType {
   MulticursorError = 'MulticursorError',
   // shown when the user redoes an action
   Redo = 'Redo',
-  // shown the first time the user types space to indent
-  SpaceToIndentHint = 'SpaceToIndentHint',
-  // shown when the sort setting is changed
-  Sort = 'Sort',
-  // shown when a thought is archived
-  ThoughtArchived = 'ThoughtArchived',
-  // shown when a thought has been deleted
-  ThoughtDeleted = 'ThoughtDeleted',
-  // shown when a thought has been moved to a different context
-  ThoughtMoved = 'ThoughtMoved',
   // shown when a toolbar button is hovering over the area for removal in the CustomizeToolbar modal
   ToolbarButtonRemoveHint = 'ToolbarButtonRemoveHint',
-  // shown when a toolbar button has been removed from the toolbar in the CustomizeToolbar modal
-  ToolbarButtonRemoved = 'ToolbarButtonRemoved',
-  // shown when the user has exceeded the maximimum number of characters allowed in feedback
-  ModalFeedbackMaxChars = 'ModalFeedbackMaxChars',
   // shown when the user undoes an action
   Undo = 'Undo',
 }
@@ -519,6 +497,104 @@ export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 
 export const GESTURE_GLOW_BLUR = 10
 export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'
+
+// define the grouping and ordering of commands
+export const COMMAND_GROUPS: {
+  title: string
+  commands: CommandId[]
+}[] = [
+  {
+    title: 'Navigation',
+    commands: [
+      'cursorBack',
+      'cursorForward',
+      'cursorNext',
+      'cursorPrev',
+      'jumpBack',
+      'jumpForward',
+      'moveCursorBackward',
+      'moveCursorForward',
+      'commandPalette',
+      'home',
+      'search',
+      'selectAll',
+      'selectBetween',
+    ],
+  },
+  {
+    title: 'Creating thoughts',
+    commands: [
+      'categorize',
+      'newThought',
+      'newThoughtAbove',
+      'newSubthought',
+      'newSubthoughtTop',
+      'newUncle',
+      'newGrandChild',
+      'extractThought',
+      'generateThought',
+    ],
+  },
+  {
+    title: 'Deleting thoughts',
+    commands: ['delete', 'archive', 'uncategorize', 'clearThought'],
+  },
+  {
+    title: 'Moving thoughts',
+    commands: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp'],
+  },
+  {
+    title: 'Editing thoughts',
+    commands: [
+      'join',
+      'splitSentences',
+      'bold',
+      'italic',
+      'strikethrough',
+      'underline',
+      'code',
+      'copyCursor',
+      'removeFormat',
+    ],
+  },
+  {
+    title: 'Oops',
+    commands: ['undo', 'redo'],
+  },
+  {
+    title: 'Special Views',
+    commands: [
+      'note',
+      'swapNote',
+      'toggleContextView',
+      'proseView',
+      'toggleTableView',
+      'toggleSort',
+      'heading0',
+      'heading1',
+      'heading2',
+      'heading3',
+      'heading4',
+      'heading5',
+    ],
+  },
+  {
+    title: 'Visibility',
+    commands: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
+  },
+  {
+    title: 'Settings',
+    commands: ['customizeToolbar'],
+  },
+  {
+    title: 'Help',
+    commands: ['help', 'openGestureCheatsheet'],
+  },
+  {
+    title: 'Cancel',
+    commands: ['cancel'],
+  },
+]
 
 /** The duration of the haptics vibrate on delete or archive non-empty thought. */
 export const DELETE_VIBRATE_DURATION = 80

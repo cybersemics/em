@@ -7,6 +7,7 @@ import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import { isSafari, isTouch } from '../browser'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
@@ -135,6 +136,11 @@ const StaticThought = ({
     _.isEqual,
   )
 
+  // Disable contenteditable on Mobile Safari during drag-and-drop, otherwise thought text will become selected.
+  // This is restricted to Mobile Safari, because on Chrome it creates a small layout shift.
+  // https://github.com/cybersemics/em/pull/2960
+  const dragInProgressSafari = useSelector(state => isTouch && isSafari() && state.dragInProgress)
+
   const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
 
   // console.info('<StaticThought> ' + prettyPath(store.getState(), simplePath))
@@ -193,7 +199,7 @@ const StaticThought = ({
             multiline={multiline}
             placeholder={placeholder}
             path={path}
-            disabled={!isDocumentEditable()}
+            disabled={!isDocumentEditable() || dragInProgressSafari}
             isEditing={isEditing}
             isVisible={isVisible}
             rank={rank}

@@ -95,7 +95,7 @@ const VirtualThought = ({
   const cursorLeaf = useSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
   const cursorDepth = useSelector(state => (state.cursor ? state.cursor.length : 0))
   const fontSize = useSelector(state => state.fontSize)
-  const note = useSelector(state => noteValue(state, id))
+  const note = useSelector(state => noteValue(state, simplePath))
   const ref = useRef<HTMLDivElement>(null)
 
   /***************************

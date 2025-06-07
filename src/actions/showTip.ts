@@ -3,17 +3,20 @@ import Thunk from '../@types/Thunk'
 import TipId from '../@types/TipId'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
-/** Shows a popup with a tip. */
+/** Shows a popup with a tip and clears any existing alert. */
 const showTip = (state: State, { tip }: { tip: TipId }): State => ({
   ...state,
-  tips: state.tips.includes(tip) ? state.tips : [...state.tips, tip],
+  tip,
+  // clear any existing alert when showing a tip
+  alert: null,
 })
 
 /** Action-creator for showTip. */
 export const showTipActionCreator =
   (payload: Parameters<typeof showTip>[1]): Thunk =>
-  dispatch =>
+  dispatch => {
     dispatch({ type: 'showTip', ...payload })
+  }
 
 export default showTip
 

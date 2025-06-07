@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
-import { commandById } from '../../commands'
+import newSubthoughtCommand from '../../commands/newSubthought'
 import headValue from '../../util/headValue'
 import TutorialGestureDiagram from './TutorialGestureDiagram'
 
@@ -27,7 +27,7 @@ const TutorialStepSubThought = () => {
           .
         </p>
       )}
-      <TutorialGestureDiagram gesture={commandById('newSubthought').gesture} />
+      <TutorialGestureDiagram gesture={newSubthoughtCommand.gesture} />
     </>
   )
 }

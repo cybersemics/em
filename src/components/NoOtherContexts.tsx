@@ -4,10 +4,9 @@ import { token } from '../../styled-system/tokens'
 import GesturePath from '../@types/GesturePath'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
-import { commandById, formatKeyboardShortcut } from '../commands'
+import { formatKeyboardShortcut, gestureString } from '../commands'
+import toggleContextViewCommand from '../commands/toggleContextView'
 import GestureDiagram from '../components/GestureDiagram'
-
-const toggleContextViewCommand = commandById('toggleContextView')
 
 /** A message that explains that the thought is no other contexts and provides a hint for adding it to a context. */
 const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean; simplePath: SimplePath }) => {
@@ -45,7 +44,7 @@ const NoOtherContexts = ({ allowSingleContext }: { allowSingleContext?: boolean;
               Swipe{' '}
               <GestureDiagram
                 inGestureContainer
-                path={toggleContextViewCommand.gesture as GesturePath}
+                path={gestureString(toggleContextViewCommand) as GesturePath}
                 size={30}
                 color={token('colors.gray66')}
               />

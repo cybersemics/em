@@ -40,6 +40,21 @@ describe('copyCursor', () => {
     )
   })
 
+  it('omit the bullet "-" when copying a single thought', async () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+        `,
+      }),
+      setCursor(['a']),
+    ])
+
+    executeCommandWithMulticursor(copyCursorCommand, { store })
+
+    expect(copyModule.default).toHaveBeenCalledWith('a')
+  })
+
   describe('multicursor', () => {
     it('copies multiple thoughts and their descendants', async () => {
       store.dispatch([
@@ -71,6 +86,24 @@ describe('copyCursor', () => {
   - c1
   - c2`,
       )
+    })
+
+    it('omit the bullet "-" when copying a single thought', async () => {
+      store.dispatch([
+        importText({
+          text: `
+          - a
+          - b
+          - c
+        `,
+        }),
+        setCursor(['a']),
+        addMulticursor(['a']),
+      ])
+
+      executeCommandWithMulticursor(copyCursorCommand, { store })
+
+      expect(copyModule.default).toHaveBeenCalledWith('a')
     })
 
     it('only copies ancestors when both ancestor and descendant are selected', async () => {
