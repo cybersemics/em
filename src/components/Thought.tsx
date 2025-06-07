@@ -166,7 +166,7 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
     prevIsTableCol1.current = isTableCol1
 
     // Measure our own text width
-    const myWidth = getTextWidth(value || '', `${fontSize}px Helvetica`)
+    const width = getTextWidth(value || '', `${fontSize}px Helvetica`)
 
     // Compute “minimum content” (3em minus left/right padding)
     const paddingLeftPx = fontSize * 0.333 // 0.333em
@@ -178,7 +178,7 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
       return
     }
 
-    const offset = Math.max(minContentPx, col1MaxWidth) - myWidth
+    const offset = Math.max(minContentPx, col1MaxWidth) - width
     const bulletOffset = 11 - (fontSize - 9) * 0.5
 
     // “Pop” elements into their initial offset positions
