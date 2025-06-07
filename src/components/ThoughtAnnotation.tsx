@@ -11,6 +11,7 @@ import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
+import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -195,7 +196,7 @@ const ThoughtAnnotation = React.memo(
                 */
                 margin: '-0.5px 0 0 calc(1em - 18px)',
                 paddingRight: multiline ? '1em' : '0.333em',
-                minWidth: '2.334em', // min width of thought (3em) - 0.333em left padding - 0.333em right padding
+                minWidth: `${MIN_CONTENT_WIDTH_EM - 0.333 - 0.333}em`, // min width of thought (3em) - 0.333em left padding - 0.333em right padding
                 textAlign: isTableCol1 ? 'right' : 'left',
               }),
             )
