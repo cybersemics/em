@@ -16,6 +16,7 @@ const dragAndDropThought = async (
     position,
     showAlert,
     showQuickDropPanel,
+    skipMouseDown,
   }: {
     /** If true, the source thought is dropped as a sibling to the hidden uncle. */
     dropUncle?: boolean
@@ -32,6 +33,7 @@ const dragAndDropThought = async (
     showAlert?: boolean
     /** Show the QuickDropPanel. Hidden by default. */
     showQuickDropPanel?: boolean
+    skipMouseDown?: boolean
   },
 ) => {
   const sourceElement = await getEditable(sourceValue)
@@ -67,7 +69,10 @@ const dragAndDropThought = async (
 
   // move the mouse to the drag target, then press
   await page.mouse.move(dragPosition.x, dragPosition.y)
-  await page.mouse.down()
+
+  if (!skipMouseDown) {
+    await page.mouse.down()
+  }
 
   // move to the drop target, and release
   if (destValue) {

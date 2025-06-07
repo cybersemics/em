@@ -5,7 +5,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
 import { initUserToolbarActionCreator as initUserToolbar } from '../actions/initUserToolbar'
 import { commandById } from '../commands'
-import { AlertType, EM_TOKEN } from '../constants'
+import { EM_TOKEN } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
@@ -30,10 +30,7 @@ export const removeToolbarButtonActionCreator =
     const fromThoughtId = userCommandChildren[fromIndex].id
 
     dispatch([
-      alert(`Removed ${command.label} from toolbar`, {
-        alertType: AlertType.ToolbarButtonRemoved,
-        clearDelay: 5000,
-      }),
+      alert(`Removed ${command.label} from toolbar`, { clearDelay: 5000 }),
       deleteThought({
         thoughtId: fromThoughtId,
         pathParent: userCommandsPath,

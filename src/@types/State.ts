@@ -80,7 +80,7 @@ interface State {
   /** A map of all Paths that are expanded. Recalculated whenever the cursor moves or the thoughts change. Keyed by hashPath(path). */
   expanded: Index<Path>
   /** Expand thoughts during drag-and-drop by hovering over them. Tracked separately from state.expanded so they can be toggled on/off independently from autoexpansion. */
-  expandHoverDownPaths: Index<Path>
+  expandHoverDownPath?: Path | null
   /** Make hidden ancestors visible during drag-and-drop by hovering over them. This allows a thought to be dragged anywhere, even to thoughts that are initially hidden by autofocus. */
   expandHoverUpPath?: Path | null
   fontSize: number
@@ -172,7 +172,7 @@ interface State {
    */
   storageCache?: StorageCache
   thoughts: ThoughtIndices
-  tips: Tip[]
+  tip: Tip | null
   /** Command of a toolbar button that is being long pressed in the customize modal. */
   toolbarLongPress?: Command
   transientFocus?: boolean

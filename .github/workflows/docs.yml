@@ -9,6 +9,9 @@ on: workflow_dispatch
 #     branches:
 #       - main
 
+env:
+  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest

@@ -310,7 +310,11 @@ export const inputHandlers = (store: Store<State, any>) => ({
   handleGestureCancel: () => {
     clearTimeout(commandPaletteGesture)
     store.dispatch((dispatch, getState) => {
-      if (getState().alert?.alertType === AlertType.GestureHint || getState().showCommandPalette) {
+      const state = getState()
+      if (state.showCommandPalette) {
+        dispatch(commandPalette())
+      }
+      if (state.alert?.alertType === AlertType.GestureHint || state.showCommandPalette) {
         dispatch(alert(null))
       }
     })

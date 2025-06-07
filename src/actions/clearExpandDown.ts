@@ -7,7 +7,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 const clearExpandDown = (state: State): State => ({
   ...state,
   expanded: expandThoughts(state, state.cursor),
-  expandHoverDownPaths: {},
+  expandHoverDownPath: null,
 })
 
 /** Action-creator for clearExpandDown. */
