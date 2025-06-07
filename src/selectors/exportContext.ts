@@ -10,7 +10,6 @@ import { getChildrenRanked } from '../selectors/getChildren'
 import thoughtToContext from '../selectors/thoughtToContext'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
-import isRoot from '../util/isRoot'
 
 /** Replaces the root value with a given title. */
 const replaceTitle = (text: string, title: string, format: MimeType) => {
@@ -39,11 +38,8 @@ interface Options {
   excludeSrc?: boolean
   /** Exclude meta attributes, except archived thoughts unless excludeArchived is true. */
   excludeMeta?: boolean
-  depth?: number
   /** Exclude archived thoughts. */
   excludeArchived?: boolean
-  /** Force prefix even if root with no children. */
-  forceBullet?: boolean
 }
 
 /** Exports the navigable subtree of the given context. */
@@ -51,16 +47,7 @@ export const exportContext = (
   state: State,
   contextOrThoughtId: Context | ThoughtId,
   format: MimeType = 'text/html',
-  {
-    indent = 0,
-    title,
-    excludeMarkdownFormatting,
-    excludeMeta,
-    excludeSrc,
-    depth = 0,
-    forceBullet,
-    excludeArchived,
-  }: Options = {},
+  { indent = 0, title, excludeMarkdownFormatting, excludeMeta, excludeSrc, excludeArchived }: Options = {},
 ): string => {
   const linePostfix = format === 'text/html' ? (indent === 0 ? '  ' : '') + '</li>' : ''
   const tab0 = Array(indent).fill('').join('  ')
@@ -77,12 +64,7 @@ export const exportContext = (
   const childrenFiltered = children.filter(exportFilter({ excludeArchived, excludeMeta }))
 
   // Note: export single thought without bullet
-  const linePrefix =
-    format === 'text/html'
-      ? '<li>'
-      : depth === 0 && childrenFiltered.length === 0 && !forceBullet && !isRoot(context)
-        ? ''
-        : '- '
+  const linePrefix = format === 'text/html' ? '<li>' : '- '
 
   /** Outputs an exported child. */
   const exportChild = (child: Thought) =>
@@ -93,7 +75,6 @@ export const exportContext = (
       excludeArchived,
       excludeMarkdownFormatting,
       indent: indent + (isNoteAndMetaExcluded ? 0 : format === 'text/html' ? (indent === 0 ? 3 : 2) : 1),
-      depth: depth + 1,
     })
 
   // Export children of note as a thought when not lossless selected

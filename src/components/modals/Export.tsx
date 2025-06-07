@@ -45,6 +45,7 @@ import isRoot from '../../util/isRoot'
 import removeHome from '../../util/removeHome'
 import throttleConcat from '../../util/throttleConcat'
 import timestamp from '../../util/timestamp'
+import trimBullet from '../../util/trimBullet'
 import Checkbox from './../Checkbox'
 import ChevronImg from './../ChevronImg'
 import Dropdown from './../Dropdown'
@@ -330,7 +331,12 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         // Clear empty lines
         .replace(/\n+/g, '\n')
 
-      setExportContent(removeHome(exported).trimStart())
+      // - remove home token
+      // - trim leading "- " from single line text
+      // - trim leading whitespace from multiline text
+      const exportedTrimmed = removeHome(trimBullet(exported)).trimStart()
+
+      setExportContent(exportedTrimmed)
     }
   }
 
