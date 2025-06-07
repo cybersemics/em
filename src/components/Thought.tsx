@@ -166,8 +166,7 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
     prevIsTableCol1.current = isTableCol1
 
     // Measure our own text width
-    const myText = value || ''
-    const myWidth = getTextWidth(myText, `${fontSize}px Helvetica`)
+    const myWidth = getTextWidth(value || '', `${fontSize}px Helvetica`)
 
     // Compute “minimum content” (3em minus left/right padding)
     const paddingLeftPx = fontSize * 0.333 // 0.333em
