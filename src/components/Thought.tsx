@@ -109,7 +109,6 @@ const getTextWidth = (text: string, font: string): number => {
 
 interface UseCol1AlignParams {
   path: Path
-  simplePath: Path
   value: string | undefined
   fontSize: number
   cursor: Path | null
@@ -117,7 +116,7 @@ interface UseCol1AlignParams {
 }
 
 /** Custom hook that handles animating text alignment for Table View. */
-const useCol1Alignment = ({ path, simplePath, value, fontSize, cursor, isTableCol1 }: UseCol1AlignParams) => {
+const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol1AlignParams) => {
   /** Sibling thoughts for the current cursor. */
   const siblingThoughts = useSelector((state: State) => {
     if (!cursor) return []
@@ -141,7 +140,14 @@ const useCol1Alignment = ({ path, simplePath, value, fontSize, cursor, isTableCo
   }, [isTableCol1, siblingThoughts, fontSize, isCursor])
 
   const col1MaxWidth = col1MaxWidthStore.useState()
-  const isSiblingOfCursor = siblingThoughts.map(t => t.id).includes(simplePath[simplePath.length - 1])
+
+  const isSiblingOfCursor = useSelector((state: State) => {
+    if (!cursor) return false
+    const cursorParentId = head(rootedParentOf(state, cursor))
+    const thisParentId = head(rootedParentOf(state, path))
+    return cursorParentId !== undefined && cursorParentId === thisParentId
+  })
+
   const [alignmentTransition, setAlignmentTransition] = useState<{
     bullet: CSSProperties
     editable: CSSProperties
@@ -478,7 +484,6 @@ const ThoughtContainer = ({
   // Use custom hook for col1 alignment
   const alignmentTransition = useCol1Alignment({
     path,
-    simplePath,
     value,
     fontSize,
     cursor,
