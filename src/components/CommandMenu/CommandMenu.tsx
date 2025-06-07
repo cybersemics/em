@@ -9,13 +9,13 @@ import { clearMulticursorsActionCreator as clearMulticursors } from '../../actio
 import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
 import { isTouch } from '../../browser'
 import categorize from '../../commands/categorize'
+import copyCursorCommand from '../../commands/copyCursor'
 import deleteCommand from '../../commands/delete'
 import favorite from '../../commands/favorite'
 import indent from '../../commands/indent'
 import note from '../../commands/note'
 import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
-import toggleDone from '../../commands/toggleDone'
 import uncategorize from '../../commands/uncategorize'
 import isTutorial from '../../selectors/isTutorial'
 import durations from '../../util/durations'
@@ -157,7 +157,7 @@ const CommandMenu = () => {
                 maxWidth: '100%',
               })}
             >
-              <PanelCommand command={{ ...toggleDone, label: 'Done' }} size='small' />
+              <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
               <PanelCommand command={note} size='small' />
               <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
               <PanelCommand command={deleteCommand} size='small' />
