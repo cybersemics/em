@@ -103,7 +103,7 @@ const CommandSearch: FC<{
         onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
           onInput?.(e.target.value)
         }}
-        className={css({ padding: 0, border: 'none', background: 'transparent' })}
+        className={css({ padding: 0, border: 'none', background: 'transparent', fontSize: '0.78em' })}
         style={{ marginBlock, marginInline: marginBlock * 2 }}
       />
     </div>
