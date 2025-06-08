@@ -27,6 +27,8 @@ const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
   (command.allowExecuteFromModal || !state.showModal || !state.showGestureCheatsheet)
 
+const strokeWidth = 4
+
 /** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
 const CommandItem: FC<{
   viewType?: CommandViewType
@@ -171,7 +173,7 @@ const CommandItem: FC<{
           { boxSizing: 'border-box' },
           viewType === 'grid'
             ? { minWidth: { base: '10rem', _mobile: 'auto' }, width: '100%' }
-            : { display: 'flex', justifyContent: 'center', alignItems: 'center' },
+            : { display: 'flex', justifyContent: 'center', alignItems: 'center', width: 32, height: 32 },
         )}
       >
         {/* gesture diagram */}
@@ -202,15 +204,19 @@ const CommandItem: FC<{
               styleCancelAsRegularGesture
               highlight={gestureHighlight}
               path={command.id === 'cancel' ? null : gestureString(command)}
-              strokeWidth={4}
-              width={32}
-              height={32}
-              size={150}
+              size={70}
+              arrowSize={18 - strokeWidth * 0.3}
+              strokeWidth={strokeWidth}
               rounded={command.rounded}
             />
           )
         ) : Icon ? (
-          <Icon cssRaw={css.raw({ cursor: onClick ? 'pointer' : 'default' })} fill={token('colors.fg')} />
+          <Icon
+            cssRaw={css.raw({
+              cursor: !disabled && onClick ? 'pointer' : 'default',
+            })}
+            fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
+          />
         ) : (
           // placeholder for icon to keep spacing consistent
           <div className={css({ width: 24, height: 24 })} />
@@ -237,7 +243,7 @@ const CommandItem: FC<{
             whiteSpace: 'nowrap',
             fontSize: viewType === 'grid' ? '0.9rem' : '0.9em',
             color: disabled
-              ? 'gray'
+              ? 'gray50'
               : viewType === 'grid'
                 ? 'fg'
                 : isSelectedStyle || (isTouch && (gestureInProgress as string) === gestureString(command))
@@ -263,7 +269,7 @@ const CommandItem: FC<{
                     zIndex: 1,
                     lineHeight: '1em',
                     fontSize: '0.8em',
-                    color: isSelectedStyle ? 'gray75' : 'gray45',
+                    color: disabled ? 'gray33' : isSelectedStyle ? 'gray75' : 'gray45',
                     marginBlock: 0,
                     ...(isTouch
                       ? null
