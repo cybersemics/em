@@ -230,6 +230,11 @@ const CommandPalette: FC<{
         display: 'flex',
         flexDirection: 'column',
       })}
+      /**
+       * Clicking anywhere outside this element will close the command palette.
+       * `e.stopPropagation()` prevents the command palette from closing when clicked.
+       * See `onClick` on parent.
+       * */
       onClick={e => e.stopPropagation()}
       style={{ fontSize }}
     >
