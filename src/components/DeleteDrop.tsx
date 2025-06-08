@@ -14,7 +14,9 @@ import QuickDropIcon from './QuickDropIcon'
 import DeleteIcon from './icons/DeleteIcon'
 
 /** Delete the thought on drop. */
-const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
+const drop = (state: State, items: DragThoughtItem[]) => {
+  const { simplePath, path, zone } = items[0]
+
   const value = getThoughtById(state, head(simplePath))?.value
   if (value === undefined) {
     console.warn(`Missing thought for path ${simplePath}. Aborting deleteDrop.`)

@@ -11,7 +11,9 @@ import QuickDropIcon from './QuickDropIcon'
 import CopyClipboard from './icons/CopyClipboard'
 
 /** Copy the thought on drop. */
-const drop = (state: State, { simplePath }: DragThoughtItem) => {
+const drop = (state: State, items: DragThoughtItem[]) => {
+  const { simplePath } = items[0]
+
   const value = getThoughtById(state, head(simplePath))?.value
   if (value === undefined) {
     console.warn(`Missing thought for path ${simplePath}. Aborting copyOneDrop.`)

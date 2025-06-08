@@ -17,11 +17,11 @@ import haptics from '../util/haptics'
 
 /** Creates the props for drop. */
 const dropCollect = (monitor: DropTargetMonitor) => {
-  const item = monitor.getItem() as DragThoughtItem
+  const items = monitor.getItem() as DragThoughtItem[]
 
   return {
     isDragInProgress: !!monitor.getItem(),
-    zone: item?.zone || null,
+    zone: items?.[0]?.zone || null,
     isHovering: monitor.isOver({ shallow: true }),
   }
 }
@@ -35,7 +35,7 @@ const QuickDropIcon = ({
 }: {
   alertType: AlertType
   Icon: FC<IconType>
-  onDrop: (state: State, item: DragThoughtItem) => void
+  onDrop: (state: State, item: DragThoughtItem[]) => void
   onHoverMessage: (state: State, zone: DragThoughtZone) => string
 }) => {
   const dispatch = useDispatch()
@@ -45,7 +45,7 @@ const QuickDropIcon = ({
   const drop = (monitor: DropTargetMonitor) => {
     haptics.medium()
     dispatch(dragInProgress({ value: false }))
-    onDrop(store.getState(), monitor.getItem())
+    onDrop(store.getState(), monitor.getItem() as DragThoughtItem[])
   }
 
   const [{ isHovering, zone }, dropTarget] = useDrop({

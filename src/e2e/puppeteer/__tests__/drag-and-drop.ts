@@ -5,6 +5,7 @@ import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import hideHUD from '../helpers/hideHUD'
+import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
@@ -498,5 +499,124 @@ describe('hover expansion', () => {
 
     expect(a1Visible).toBe(false)
     expect(a2Visible).toBe(false)
+  })
+})
+
+describe('drag and drop multiple thoughts', () => {
+  beforeEach(async () => {
+    await hideHUD()
+
+    // inject MOCK_EXPAND_HOVER_DELAY
+    const em = window.em as WindowEm
+    await page.evaluate(value => {
+      em.testFlags.expandHoverDelay = value
+    }, MOCK_EXPAND_HOVER_DELAY)
+  })
+
+  it('drop as sibling after', async () => {
+    await paste(`
+      - x
+      - y
+      - z
+      - a
+      `)
+    await multiselectThoughts(['y', 'z'])
+
+    await dragAndDropThought('z', 'a', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+
+    // release mouse button
+    await page.mouse.up()
+
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
+
+  it('drop as sibling before', async () => {
+    await paste(`
+      - x
+      - y
+      - z
+      - a
+      `)
+    await multiselectThoughts(['y', 'z', 'a'])
+
+    await dragAndDropThought('a', 'x', { position: 'before' })
+
+    // release mouse button
+    await page.mouse.up()
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('drop as child', async () => {
+    await paste(`
+      - x
+      - y
+      - z
+      - a
+      `)
+    await multiselectThoughts(['y', 'z'])
+
+    await dragAndDropThought('z', 'a', { position: 'child' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+
+    // release mouse button
+    await page.mouse.up()
+
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
+
+  it('should preserve order of thoughts', async () => {
+    await paste(`
+      - x
+      - y
+      - z
+      - a
+      `)
+    await multiselectThoughts(['a', 'x', 'y'])
+
+    await dragAndDropThought('y', 'z', { position: 'child' })
+
+    await page.mouse.up()
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('drop within different contexts', async () => {
+    await paste(`
+      - x
+        - y
+        - z
+      - a
+        - c
+      - b
+        - d
+      `)
+    await clickThought('a')
+
+    await multiselectThoughts('c', { keepModifierHeld: true })
+    await clickThought('b')
+
+    await multiselectThoughts('d')
+
+    await dragAndDropThought('d', 'x', { position: 'child' })
+
+    // Wait for expansion to occur
+    await sleep(MOCK_EXPAND_HOVER_DELAY)
+
+    // Now move to y
+    await dragAndDropThought('d', 'y', { position: 'after', skipMouseDown: true })
+
+    await sleep(MOCK_EXPAND_HOVER_DELAY)
+
+    await page.mouse.up()
+
+    expect(await screenshot()).toMatchImageSnapshot()
   })
 })

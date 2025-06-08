@@ -34,6 +34,7 @@ import isDivider from '../util/isDivider'
 import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
+import { DropValidationResult } from './useDragAndDropThought'
 import useDragLeave from './useDragLeave'
 import useHoveringPath from './useHoveringPath'
 
@@ -102,36 +103,28 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
 
   // Handle multiselect drag operations
   const draggedItems = item as DragThoughtItem[]
-
   if (!props.path) {
     console.warn('props.path not defined', { item: draggedItems })
     return
   }
 
-  // Set isMulticursorExecuting for multiselect operations to group them as a single undo operation
-  const isMultiselectOperation = draggedItems.length > 1
-  if (isMultiselectOperation) {
-    store.dispatch(
-      setIsMulticursorExecuting({
-        value: true,
-        undoLabel: 'Move Thoughts',
-      }),
-    )
-  }
+  /** Get the path to drop the item to. */
+  const getPathTo = (state: State, itemPath: Path) =>
+    appendToPath(props.showContexts ? simplifyPath(state, props.path) : props.path, head(itemPath))
 
-  // Process each thought in document order
-  for (let i = 0; i < draggedItems.length; i++) {
-    // Recompute state for each move
-    const state = store.getState()
-    const thoughtItem = draggedItems[i]
-    const thoughtsFrom = thoughtItem.path
+  /** Validates that the dragged items can be dropped at the destination path. */
+  const validateDraggedItem = (
+    state: State,
+    draggedItem: DragThoughtItem,
+    thoughtsTo?: SimplePath,
+  ): DropValidationResult => {
+    const thoughtsFrom = draggedItem.path
 
     if (!thoughtsFrom) {
-      console.warn('item.path not defined', { item: thoughtItem })
-      return
+      return { isValid: false, errorMessage: 'item.path not defined', errorType: 'warning' }
     }
 
-    const pathTo = appendToPath(props.showContexts ? simplifyPath(state, props.path) : props.path, head(thoughtsFrom))
+    const pathTo = getPathTo(state, thoughtsFrom)
 
     const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
     const thoughtTo = getThoughtById(state, head(rootedParentOf(state, pathTo)))
@@ -139,60 +132,121 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     const parentIdFrom = head(rootedParentOf(state, thoughtsFrom))
     const parentIdTo = head(rootedParentOf(state, pathTo))
     const sameContext = parentIdFrom === parentIdTo
-    const isExpanded = isPathExpanded(state, rootedParentOf(state, pathTo))
-
-    const dropTop = !isExpanded && attributeEquals(state, parentIdTo, '=drop', 'top')
 
     // cannot drop on itself
-    if (!thoughtFrom || !thoughtTo || equalPath(thoughtsFrom, props.simplePath)) continue
+    if (!thoughtFrom || !thoughtTo || equalPath(thoughtsFrom, thoughtsTo)) return { isValid: false }
 
     // cannot move root or em context or target is divider
     if (isDivider(thoughtTo?.value) || (isRootOrEM && !sameContext)) {
-      store.dispatch(
-        error({ value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.` }),
-      )
-      continue
+      return {
+        isValid: false,
+        errorMessage: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.`,
+        errorType: 'error',
+      }
+    }
+
+    return { isValid: true }
+  }
+
+  const state = store.getState()
+
+  // If any drop is invalid, abort the drop early
+  if (
+    draggedItems.some(item => {
+      const { isValid, errorMessage, errorType } = validateDraggedItem(state, item, props.simplePath)
+
+      if (!isValid && errorMessage) {
+        if (errorType === 'warning') {
+          console.warn(errorMessage, { item })
+        } else if (errorType === 'error') {
+          store.dispatch(error({ value: errorMessage }))
+        }
+      }
+
+      return !isValid
+    })
+  )
+    return
+
+  /** Check if the context has changed for all dragged items. */
+  const hasContextChanged = draggedItems.every(item => {
+    const pathTo = getPathTo(state, item.path)
+    return head(rootedParentOf(state, item.path)) !== head(rootedParentOf(state, pathTo))
+  })
+
+  store.dispatch((dispatch, getState) => {
+    /** Returns the parent ID and drop top flag for a given path. */
+    const getDropParams = (pathTo: Path) => {
+      const parentPath = rootedParentOf(getState(), pathTo)
+      const parentId = head(parentPath)
+      const isExpanded = isPathExpanded(getState(), parentPath)
+      const dropTop = !isExpanded && attributeEquals(getState(), parentId, '=drop', 'top')
+
+      return { parentId, dropTop }
+    }
+
+    // Set multicursor executing to true if there are multiple thoughts being dragged
+    if (draggedItems.length > 1) {
+      dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' }))
     }
 
     haptics.medium()
 
-    store.dispatch(
-      moveThought({
-        oldPath: thoughtsFrom,
-        newPath: pathTo,
-        newRank: (dropTop ? getPrevRank : getNextRank)(state, thoughtTo.id),
-      }),
-    )
+    // move each dragged item to the destination path
+    draggedItems.forEach(item => {
+      const state = getState()
+      const pathTo = getPathTo(state, item.path)
+      const { parentId, dropTop } = getDropParams(pathTo)
 
-    // Alert for context move (only for first thought)
-    if (i === 0 && !sameContext) {
+      const thoughtTo = getThoughtById(state, parentId)
+
+      if (!thoughtTo) {
+        console.warn('Parent thought not found', { item })
+        return
+      }
+
+      dispatch(
+        moveThought({
+          oldPath: item.path,
+          newPath: pathTo,
+          newRank: (dropTop ? getPrevRank : getNextRank)(state, thoughtTo.id),
+        }),
+      )
+    })
+
+    // Clear isMulticursorExecuting after all operations are complete and isMulticursorExecuting is true
+    if (getState().isMulticursorExecuting) {
+      dispatch(setIsMulticursorExecuting({ value: false }))
+    }
+
+    // Alert user if context changed
+    if (hasContextChanged) {
       setTimeout(() => {
-        const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
-        const alertTo = parentIdTo === HOME_TOKEN ? 'home' : '"' + ellipsize(thoughtTo.value) + '"'
+        const state = getState()
+        const firstItem = draggedItems[0]
+        const pathTo = getPathTo(state, firstItem.path)
+
+        const { parentId, dropTop } = getDropParams(pathTo)
+        const thoughtFrom = getThoughtById(state, head(firstItem.path))
+        const thoughtTo = getThoughtById(state, parentId)
+
+        const alertFrom =
+          draggedItems.length === 1 ? `"${ellipsize(thoughtFrom?.value || '')}"` : `${draggedItems.length} thoughts`
+
+        const alertTo = parentId === HOME_TOKEN ? 'home' : `"${ellipsize(thoughtTo?.value || '')}"`
+
         const inContext = props.showContexts
-          ? ` in the context of ${ellipsize(headValue(state, props.simplePath ?? props.path) ?? 'MISSING_CONTEXT')}`
+          ? ` in the context of ${ellipsize(headValue(state, props.simplePath ?? props.path) || 'MISSING_CONTEXT')}`
           : ''
 
-        const numThoughts = draggedItems.length
-        const finalAlertFrom = numThoughts === 1 ? alertFrom : `${numThoughts} thoughts`
-
         store.dispatch(
-          alert(`${finalAlertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {
+          alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {
             clearDelay: 5000,
           }),
         )
       }, 100)
     }
-  }
-
-  // Clear isMulticursorExecuting after all operations are complete
-  if (isMultiselectOperation) {
-    store.dispatch(
-      setIsMulticursorExecuting({
-        value: false,
-      }),
-    )
-  }
+  })
 }
 
 /** Creates the props for drop. */
