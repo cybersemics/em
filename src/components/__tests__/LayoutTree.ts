@@ -12,7 +12,7 @@ vi.mock('../../components/LayoutTree', async () => {
   return {
     default: (...args: unknown[]) => {
       mockLayoutTreeRender(...args)
-      return (actual as unknown).default(...args)
+      return (actual as { default: (...args: unknown[]) => unknown }).default(...args)
     },
   }
 })
