@@ -1,5 +1,6 @@
 # See https://help.github.com/ignore-files/ for more about ignoring files.
 
+node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -13,18 +14,18 @@ local.log
 !.yarn/sdks
 !.yarn/versions
 
+.DS_Store
+.env*.local
 .eslintcache
 .firebase
 .firebaserc
 .history
 .idea
 
-/node_modules
 /coverage
 /build
 /docs
-.DS_Store
-.env*.local
+
 # diff images output from failed Puppeteer snapshot tests
 __diff_output__
 
