@@ -215,95 +215,106 @@ const CommandPalette: FC<{
   return (
     <div
       className={css({
-        marginBottom: isTouch ? 0 : fontSize,
-        textAlign: 'left',
-        border: '1px solid {colors.gray15}',
-        borderRadius: '12px',
-        backgroundColor: 'gray09',
-        maxWidth: '100%',
-        width: 826,
-        maxHeight: isTouch ? undefined : '500px',
-        cursor: 'default',
         display: 'flex',
         flexDirection: 'column',
+        maxHeight: '100%',
+        height: isTouch ? undefined : '500px',
       })}
-      /**
-       * Clicking anywhere outside this element will close the command palette.
-       * `e.stopPropagation()` prevents the command palette from closing when clicked.
-       * See `onClick` on parent.
-       * */
-      onClick={e => e.stopPropagation()}
-      style={{ fontSize }}
     >
-      {!isTouch || (gestureInProgress && commands.length > 0) ? (
-        <>
-          {!isTouch ? (
-            <h2
+      <div
+        className={css({
+          marginBottom: isTouch ? 0 : fontSize,
+          textAlign: 'left',
+          border: '1px solid {colors.gray15}',
+          borderRadius: '12px',
+          backgroundColor: 'gray09',
+          maxWidth: '100%',
+          maxHeight: '100%',
+          width: 826,
+          cursor: 'default',
+          display: 'flex',
+          flexDirection: 'column',
+        })}
+        /**
+         * Clicking anywhere outside this element will close the command palette.
+         * `e.stopPropagation()` prevents the command palette from closing when clicked.
+         * See `onClick` on parent.
+         * */
+        onClick={e => e.stopPropagation()}
+        style={{ fontSize }}
+      >
+        {!isTouch || (gestureInProgress && commands.length > 0) ? (
+          <>
+            {!isTouch ? (
+              <h2
+                className={css({
+                  margin: 0,
+                  borderBottom: 'solid 1px {colors.gray15}',
+                })}
+              >
+                <CommandSearch
+                  onExecute={onExecuteSelected}
+                  onInput={value => {
+                    /** Update `setSelectedCommand` here instead of in a `useEffect` to prevent jarring flash. */
+                    setSelectedCommand(getCommandsSorted(value)[0])
+                    setSearch(value)
+                  }}
+                  onSelectUp={onSelectUp}
+                  onSelectDown={onSelectDown}
+                  onSelectTop={onSelectTop}
+                  onSelectBottom={onSelectBottom}
+                />
+              </h2>
+            ) : null}
+
+            <div
               className={css({
-                margin: 0,
-                borderBottom: 'solid 1px {colors.gray15}',
+                ...(!isTouch ? { maxHeight: 'calc(100vh - 10em)' } : null),
+                overflow: 'auto',
               })}
+              style={{ padding: '0.66em' }}
             >
-              <CommandSearch
-                onExecute={onExecuteSelected}
-                onInput={value => {
-                  /** Update `setSelectedCommand` here instead of in a `useEffect` to prevent jarring flash. */
-                  setSelectedCommand(getCommandsSorted(value)[0])
-                  setSearch(value)
-                }}
-                onSelectUp={onSelectUp}
-                onSelectDown={onSelectDown}
-                onSelectTop={onSelectTop}
-                onSelectBottom={onSelectBottom}
-              />
-            </h2>
-          ) : null}
-
-          <div
-            className={css({
-              ...(!isTouch ? { maxHeight: 'calc(100vh - 10em)' } : null),
-              overflow: 'auto',
-            })}
-            style={{ padding: '0.66em' }}
-          >
-            {commands.length > 0 ? (
-              <>
-                {(() => {
-                  const hasMatchingCommand = commands.some(cmd => (gestureInProgress as string) === gestureString(cmd))
-
-                  return commands.map(command => {
-                    // Check if the current gesture sequence ends with help gesture
-                    const cheatsheetInProgress = gestureInProgress
-                      ?.toString()
-                      .endsWith(gestureString(openGestureCheatsheetCommand))
-                    const isCheatsheetMatch = command.id === 'openGestureCheatsheet' && cheatsheetInProgress
-                    const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
-
-                    return (
-                      <CommandItem
-                        search={search}
-                        gestureInProgress={gestureInProgress as string}
-                        key={command.id}
-                        onClick={onExecute}
-                        onHover={onHover}
-                        selected={
-                          !isTouch
-                            ? command === selectedCommand
-                            : isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch
-                        }
-                        command={command}
-                        shouldScrollSelectionIntoView
-                      />
+              {commands.length > 0 ? (
+                <>
+                  {(() => {
+                    const hasMatchingCommand = commands.some(
+                      cmd => (gestureInProgress as string) === gestureString(cmd),
                     )
-                  })
-                })()}
-              </>
-            ) : (
-              <span className={css({ marginLeft: '1em' })}>No matching commands</span>
-            )}
-          </div>
-        </>
-      ) : null}
+
+                    return commands.map(command => {
+                      // Check if the current gesture sequence ends with help gesture
+                      const cheatsheetInProgress = gestureInProgress
+                        ?.toString()
+                        .endsWith(gestureString(openGestureCheatsheetCommand))
+                      const isCheatsheetMatch = command.id === 'openGestureCheatsheet' && cheatsheetInProgress
+                      const isCancelMatch = command.id === 'cancel' && !hasMatchingCommand && !cheatsheetInProgress
+
+                      return (
+                        <CommandItem
+                          search={search}
+                          gestureInProgress={gestureInProgress as string}
+                          key={command.id}
+                          onClick={onExecute}
+                          onHover={onHover}
+                          selected={
+                            !isTouch
+                              ? command === selectedCommand
+                              : isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch
+                          }
+                          command={command}
+                          shouldScrollSelectionIntoView
+                        />
+                      )
+                    })
+                  })()}
+                </>
+              ) : (
+                <span className={css({ marginLeft: '1em' })}>No matching commands</span>
+              )}
+            </div>
+          </>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -343,7 +354,6 @@ const CommandPaletteWithTransition: FC = () => {
             <div
               data-testid='popup-value'
               className={css({
-                zIndex: 'commandPalette',
                 height: '100%',
                 boxSizing: 'border-box',
                 display: 'flex',
