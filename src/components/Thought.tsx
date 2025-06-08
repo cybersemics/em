@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -119,29 +119,17 @@ interface UseCol1AlignParams {
 
 /** Custom hook that handles animating text alignment for Table View. */
 const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol1AlignParams) => {
+  const prevIsTableCol1 = useRef<boolean>(isTableCol1)
+  const isCursor = equalPath(cursor, path)
+
+  const col1MaxWidth = col1MaxWidthStore.useState()
+
   /** Sibling thoughts for the current cursor. */
   const siblingThoughts = useSelector((state: State) => {
     if (!cursor) return []
     const parentId = head(rootedParentOf(state, cursor))
     return parentId ? getChildren(state, parentId) : []
   }, shallowEqual)
-
-  const prevIsTableCol1 = useRef<boolean>(isTableCol1)
-  const isCursor = equalPath(cursor, path)
-
-  // Recalculate and update col1MaxWidthStore.
-  useEffect(() => {
-    if (isCursor) {
-      prevIsTableCol1.current = isTableCol1
-
-      // Loop over all cursor‐siblings and measure their widths
-      const allWidths = siblingThoughts.map(thought => getTextWidth(thought.value, `${fontSize}px Helvetica`))
-
-      col1MaxWidthStore.update(Math.max(...allWidths, 0))
-    }
-  }, [isTableCol1, siblingThoughts, fontSize, isCursor])
-
-  const col1MaxWidth = col1MaxWidthStore.useState()
 
   const isSiblingOfCursor = useSelector((state: State) => {
     if (!cursor) return false
@@ -169,26 +157,30 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
    * between Tree and Table views.
    */
   useLayoutEffect(() => {
-    const justFlipped = prevIsTableCol1.current !== isTableCol1
+    if (!isSiblingOfCursor) return
+
+    // Recalculate and update col1MaxWidthStore
+    if (isCursor) {
+      const allWidths = siblingThoughts.map(t => getTextWidth(t.value, `${fontSize}px Helvetica`))
+      col1MaxWidthStore.update(Math.max(...allWidths, 0))
+    }
+
+    if (prevIsTableCol1.current == isTableCol1) return
+
     prevIsTableCol1.current = isTableCol1
 
     // Measure our own text width
     const width = getTextWidth(value || '', `${fontSize}px Helvetica`)
 
-    // Compute “minimum content” (3em minus left/right padding)
+    // Compute minimum content (3em minus left/right padding)
     const paddingLeftPx = fontSize * 0.333 // 0.333em
     const paddingRightPx = fontSize * 1.0 // 1em
     const minContentPx = MIN_CONTENT_WIDTH_EM * fontSize - (paddingLeftPx + paddingRightPx)
-    // └─ exactly the same as “1.667 × fontSize”
 
-    if (!justFlipped || col1MaxWidth == null || !isSiblingOfCursor) {
-      return
-    }
-
-    const offset = Math.max(minContentPx, col1MaxWidth) - width
+    const offset = Math.max(minContentPx, col1MaxWidth || 0) - width
     const bulletOffset = getBulletWidth(fontSize)
 
-    // “Pop” elements into their initial offset positions
+    // Move elements into their starting offset positions
     setAlignmentTransition({
       bullet: {
         transition: 'none',
@@ -207,11 +199,7 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
         editable: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
       })
     })
-
-    // Dependencies like `value`, `fontSize`, and `isSiblingOfCursor` are intentionally excluded
-    // to prevent unnecessary retriggers on unrelated state changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTableCol1, col1MaxWidth, fontSize, value])
+  }, [isTableCol1, col1MaxWidth, fontSize, value, siblingThoughts, isCursor, duration, isSiblingOfCursor])
 
   return alignmentTransition
 }
