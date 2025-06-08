@@ -172,12 +172,10 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
     // Measure our own text width
     const width = getTextWidth(value || '', `${fontSize}px Helvetica`)
 
-    // Compute minimum content (3em minus left/right padding)
-    const paddingLeftPx = fontSize * 0.333 // 0.333em
-    const paddingRightPx = fontSize * 1.0 // 1em
-    const minContentPx = MIN_CONTENT_WIDTH_EM * fontSize - (paddingLeftPx + paddingRightPx)
+    // Minimum width (3em minus left/right padding)
+    const minWidth = MIN_CONTENT_WIDTH_EM * fontSize - (fontSize * 0.333 + fontSize * 1.0)
 
-    const offset = Math.max(minContentPx, col1MaxWidth || 0) - width
+    const offset = Math.max(minWidth, col1MaxWidth || 0) - width
     const bulletOffset = getBulletWidth(fontSize)
 
     // Move elements into their starting offset positions
