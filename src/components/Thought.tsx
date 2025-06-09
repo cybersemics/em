@@ -112,14 +112,13 @@ const getTextWidth = (text: string, font: string): number => {
 interface UseCol1AlignParams {
   path: Path
   value: string | undefined
-  cursor: Path | null
   isTableCol1: boolean
 }
 
 /** Custom hook that handles animating text alignment for Table View. */
-const useCol1Alignment = ({ path, value, cursor, isTableCol1 }: UseCol1AlignParams) => {
+const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
   const prevIsTableCol1 = useRef<boolean>(isTableCol1)
-  const isCursor = equalPath(cursor, path)
+  const isCursor = useSelector(state => equalPath(state.cursor, path))
 
   const col1MaxWidth = col1MaxWidthStore.useState()
 
@@ -127,14 +126,14 @@ const useCol1Alignment = ({ path, value, cursor, isTableCol1 }: UseCol1AlignPara
 
   /** Sibling thoughts for the current cursor. */
   const siblingThoughts = useSelector((state: State) => {
-    if (!cursor) return []
-    const parentId = head(rootedParentOf(state, cursor))
+    if (!state.cursor) return []
+    const parentId = head(rootedParentOf(state, state.cursor))
     return parentId ? getChildren(state, parentId).map(t => t.value) : []
   }, shallowEqual)
 
   const isSiblingOfCursor = useSelector((state: State) => {
-    if (!cursor) return false
-    const cursorParentId = head(rootedParentOf(state, cursor))
+    if (!state.cursor) return false
+    const cursorParentId = head(rootedParentOf(state, state.cursor))
     const thisParentId = head(rootedParentOf(state, path))
     return cursorParentId === thisParentId
   })
@@ -378,8 +377,6 @@ const ThoughtContainer = ({
     return isSubthoughtsDropTarget || isThoughtDropTarget
   })
 
-  const cursor = useSelector(state => state.cursor)
-
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
     // only hide when typing, not when deleting
@@ -481,7 +478,6 @@ const ThoughtContainer = ({
   const alignmentTransition = useCol1Alignment({
     path,
     value,
-    cursor,
     isTableCol1,
   })
 
