@@ -135,7 +135,7 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
     if (!cursor) return false
     const cursorParentId = head(rootedParentOf(state, cursor))
     const thisParentId = head(rootedParentOf(state, path))
-    return cursorParentId !== undefined && cursorParentId === thisParentId
+    return cursorParentId === thisParentId
   })
 
   interface TransitionStyle {
