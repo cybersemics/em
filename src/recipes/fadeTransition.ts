@@ -72,7 +72,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
           textShadow: '0px 0px 0px {colors.fg}',
-          transition: `opacity {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
+          transition: `opacity {durations.disappearingUpperRight} {easings.easeInSmooth}, transform {durations.disappearingUpperRight} {easings.easeInSmooth}, text-shadow {durations.disappearingUpperRight} {easings.easeInSmooth}`,
         },
         exit: {
           textShadow: '0px 0px 0px {colors.fg}',
@@ -93,7 +93,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
           textShadow: '0px 0px 2em {colors.fg}',
-          transition: `opacity {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
+          transition: `opacity {durations.disappearingLowerLeft} {easings.easeInSmooth}, transform {durations.disappearingLowerLeft} {easings.easeInSmooth}, text-shadow {durations.disappearingLowerLeft} {easings.easeInSmooth}`,
         },
         exit: {
           textShadow: '0px 0px 0px {colors.fg}',

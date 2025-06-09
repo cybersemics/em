@@ -347,6 +347,9 @@ export default defineConfig({
           easeInSlow: {
             value: 'cubic-bezier(.84, 0, 1, 1)',
           },
+          easeInSmooth: {
+            value: 'cubic-bezier(0.5, 0.1, 0.4, 1)',
+          },
           nodeCurveXLayer: {
             value: 'cubic-bezier(0.8,0,0.2,0.2)',
           },
