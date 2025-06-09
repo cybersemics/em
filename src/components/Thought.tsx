@@ -513,7 +513,6 @@ const ThoughtContainer = ({
               backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
             }
           : null),
-        textAlign: isTableCol1 ? 'right' : undefined,
       }}
       className={cx(
         childRecipe(),
@@ -521,6 +520,7 @@ const ThoughtContainer = ({
         css({
           // so that .thought can be sized at 100% and BulletCursorOverlay bullet can be positioned correctly.
           position: 'relative',
+          textAlign: isTableCol1 ? 'right' : undefined,
         }),
       )}
     >
