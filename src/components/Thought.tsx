@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -151,6 +151,14 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
 
   const duration = durations.get('layoutNodeAnimation')
 
+  // Recalculate and update col1MaxWidthStore.
+  useEffect(() => {
+    if (isCursor) {
+      const allWidths = siblingThoughts.map(thought => getTextWidth(thought, `${fontSize}px Helvetica`))
+      col1MaxWidthStore.update(Math.max(...allWidths, 0))
+    }
+  }, [isTableCol1, siblingThoughts, fontSize, isCursor])
+
   /**
    * Animates transitioning text alignment from left to right (and back)
    * for the bullet and editable text when toggling Table View (`isTableCol1`).
@@ -159,12 +167,6 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
    */
   useLayoutEffect(() => {
     if (!isSiblingOfCursor) return
-
-    // Recalculate and update col1MaxWidthStore
-    if (isCursor) {
-      const allWidths = siblingThoughts.map(thought => getTextWidth(thought, `${fontSize}px Helvetica`))
-      col1MaxWidthStore.update(Math.max(...allWidths, 0))
-    }
 
     if (prevIsTableCol1.current == isTableCol1) return
 
@@ -198,7 +200,7 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
         editable: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
       })
     })
-  }, [isTableCol1, col1MaxWidth, fontSize, value, siblingThoughts, isCursor, duration, isSiblingOfCursor])
+  }, [isTableCol1, col1MaxWidth, fontSize, value, duration, isSiblingOfCursor])
 
   return alignmentTransition
 }
