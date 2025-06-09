@@ -34,6 +34,9 @@ const durationsConfig = {
   nodeDissolve: 80,
   /* TraceGesture needs to fade in medium-fast so that it does not appear for quickly entered gestures like → and ←, but is snappy otherwise. */
   traceGestureIn: 300,
+  /* Duration for context view disappearing text animations */
+  disappearingUpperRight: 500,
+  disappearingLowerLeft: 500,
 } as const
 
 export default durationsConfig

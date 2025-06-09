@@ -63,6 +63,48 @@ const fadeTransitionRecipe = defineSlotRecipe({
           transition: `opacity {durations.nodeDissolve} ease-out, transform {durations.nodeDissolve} ease-out, filter {durations.nodeDissolve} ease-out`,
         },
       },
+      // Context view fades in from upper right.
+      disappearingUpperRight: {
+        enter: {
+          transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
+          textShadow: '0px 0px 2em {colors.fg}',
+        },
+        enterActive: {
+          transform: 'skew(0) translateX(0) translateY(0)',
+          textShadow: '0px 0px 0px {colors.fg}',
+          transition: `opacity {durations.disappearingUpperRight} {easings.easeInSmooth}, transform {durations.disappearingUpperRight} {easings.easeInSmooth}, text-shadow {durations.disappearingUpperRight} {easings.easeInSmooth}`,
+        },
+        exit: {
+          textShadow: '0px 0px 0px {colors.fg}',
+        },
+        exitActive: {
+          transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
+          textShadow: '0px 0px 2em {colors.fg}',
+          color: 'transparent',
+          transition: `opacity {durations.disappearingUpperRight} ease, color {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
+        },
+      },
+      // Normal view fades out from lower left.
+      disappearingLowerLeft: {
+        enter: {
+          transform: 'skew(-100deg) translateY(100%)',
+          textShadow: '0px 0px 2em {colors.fg}',
+        },
+        enterActive: {
+          transform: 'skew(0) translateX(0) translateY(0)',
+          textShadow: '0px 0px 2em {colors.fg}',
+          transition: `opacity {durations.disappearingLowerLeft} {easings.easeInSmooth}, transform {durations.disappearingLowerLeft} {easings.easeInSmooth}, text-shadow {durations.disappearingLowerLeft} {easings.easeInSmooth}`,
+        },
+        exit: {
+          textShadow: '0px 0px 0px {colors.fg}',
+        },
+        exitActive: {
+          transform: 'skew(-100deg) translateY(100%)',
+          textShadow: '0px 0px 2em {colors.fg}',
+          color: 'transparent',
+          transition: `opacity {durations.disappearingLowerLeft} ease, color {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
+        },
+      },
     },
   },
   staticCss: ['*'],
