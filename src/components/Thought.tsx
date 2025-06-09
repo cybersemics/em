@@ -118,18 +118,12 @@ interface UseCol1AlignParams {
 /** Custom hook that handles animating text alignment for Table View. */
 const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
   const prevIsTableCol1 = useRef<boolean>(isTableCol1)
-  const isCursor = useSelector(state => equalPath(state.cursor, path))
 
   const col1MaxWidth = col1MaxWidthStore.useState()
 
   const fontSize = useSelector(state => state.fontSize)
 
-  /** Sibling thoughts for the current cursor. */
-  const siblingThoughts = useSelector((state: State) => {
-    if (!state.cursor) return []
-    const parentId = head(rootedParentOf(state, state.cursor))
-    return parentId ? getChildren(state, parentId).map(t => t.value) : []
-  }, shallowEqual)
+  const isCursor = useSelector(state => equalPath(state.cursor, path))
 
   const isSiblingOfCursor = useSelector((state: State) => {
     if (!state.cursor) return false
@@ -137,6 +131,13 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
     const thisParentId = head(rootedParentOf(state, path))
     return cursorParentId === thisParentId
   })
+
+  /** Sibling thoughts for the current cursor. */
+  const siblingThoughts = useSelector((state: State) => {
+    if (!state.cursor || !isCursor) return []
+    const cursorParentId = head(rootedParentOf(state, state.cursor))
+    return cursorParentId ? getChildren(state, cursorParentId).map(t => t.value) : []
+  }, shallowEqual)
 
   interface TransitionStyle {
     transform: string
