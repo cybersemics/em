@@ -10,6 +10,8 @@ import PopupBase from './PopupBase'
 const Notification: FC<
   {
     icon?: ReactNode
+    /** A flag specifying whether the notification has interactable elements, or whether it should be ignored by the pointer or mouse. */
+    interactable?: boolean
     /** The content rendered with padding in the center of the notification. */
     value: ReactNode | null
     /* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */

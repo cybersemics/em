@@ -68,6 +68,7 @@ const Alert: FC = () => {
       onClose={alert?.showCloseLink ? onClose : undefined}
       value={alert ? value : null}
       icon={Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
+      interactable={alert?.alertType !== AlertType.DragAndDropHint}
       onMouseLeave={startTimer}
       onMouseOver={clearTimer}
     >
