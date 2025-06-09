@@ -128,7 +128,7 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
   const siblingThoughts = useSelector((state: State) => {
     if (!cursor) return []
     const parentId = head(rootedParentOf(state, cursor))
-    return parentId ? getChildren(state, parentId) : []
+    return parentId ? getChildren(state, parentId).map(t => t.value) : []
   }, shallowEqual)
 
   const isSiblingOfCursor = useSelector((state: State) => {
@@ -161,7 +161,7 @@ const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol
 
     // Recalculate and update col1MaxWidthStore
     if (isCursor) {
-      const allWidths = siblingThoughts.map(t => getTextWidth(t.value, `${fontSize}px Helvetica`))
+      const allWidths = siblingThoughts.map(thought => getTextWidth(thought, `${fontSize}px Helvetica`))
       col1MaxWidthStore.update(Math.max(...allWidths, 0))
     }
 
