@@ -112,17 +112,18 @@ const getTextWidth = (text: string, font: string): number => {
 interface UseCol1AlignParams {
   path: Path
   value: string | undefined
-  fontSize: number
   cursor: Path | null
   isTableCol1: boolean
 }
 
 /** Custom hook that handles animating text alignment for Table View. */
-const useCol1Alignment = ({ path, value, fontSize, cursor, isTableCol1 }: UseCol1AlignParams) => {
+const useCol1Alignment = ({ path, value, cursor, isTableCol1 }: UseCol1AlignParams) => {
   const prevIsTableCol1 = useRef<boolean>(isTableCol1)
   const isCursor = equalPath(cursor, path)
 
   const col1MaxWidth = col1MaxWidthStore.useState()
+
+  const fontSize = useSelector(state => state.fontSize)
 
   /** Sibling thoughts for the current cursor. */
   const siblingThoughts = useSelector((state: State) => {
@@ -377,7 +378,6 @@ const ThoughtContainer = ({
     return isSubthoughtsDropTarget || isThoughtDropTarget
   })
 
-  const fontSize = useSelector(state => state.fontSize)
   const cursor = useSelector(state => state.cursor)
 
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
@@ -481,7 +481,6 @@ const ThoughtContainer = ({
   const alignmentTransition = useCol1Alignment({
     path,
     value,
-    fontSize,
     cursor,
     isTableCol1,
   })
