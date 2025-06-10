@@ -10,15 +10,16 @@ import PopupBase from './PopupBase'
 const Notification: FC<
   {
     icon?: ReactNode
-    /** A flag specifying whether the notification has interactable elements, or whether it should be ignored by the pointer or mouse. */
-    interactable?: boolean
     /** The content rendered with padding in the center of the notification. */
     value: ReactNode | null
     /* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */
     transitionKey: string | number
     /** Optional content rendered after the value without padding or alignment. Must be positioned independently. */
     children?: ReactNode
-  } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'textAlign' | 'onMouseOver' | 'onMouseLeave'>
+  } & Pick<
+    ComponentProps<typeof PopupBase>,
+    'onClose' | 'textAlign' | 'onMouseOver' | 'onMouseLeave' | 'pointerEventsEnabled'
+  >
 > = ({ icon, onClose, value, transitionKey, children, ...props }) => {
   const popupRef = useRef<HTMLDivElement>(null)
   const [isDismissed, setIsDismissed] = useState(false)
