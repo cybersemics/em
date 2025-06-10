@@ -100,13 +100,23 @@ const equalChildren = (a: Thought[], b: Thought[]) =>
   a === b ||
   (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
 
+/** Lightweight util: decodes basic HTML entities like &amp;, &lt;, &gt;, &quot;, and &#39;. */
+const decodeBasicEntities = (text: string): string =>
+  text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+
 /** Returns the width of a given text string using the specified font. */
 const getTextWidth = (text: string, font: string): number => {
+  const decodedText = decodeBasicEntities(text)
   const canvas = document.createElement('canvas')
   const context = canvas.getContext('2d')
   if (!context) return 0
   context.font = font
-  return context.measureText(text).width
+  return context.measureText(decodedText).width
 }
 
 interface UseCol1AlignParams {
