@@ -1,7 +1,7 @@
 import { isMac } from '../../../browser'
 import sleep from '../../../util/sleep'
 import { page } from '../setup'
-import waitForEditable from './waitForEditable'
+import clickThought from './clickThought'
 
 /** Multiselect thoughts by holding Cmd/Ctrl and clicking them.*/
 const multiselectThoughts = async (
@@ -9,11 +9,9 @@ const multiselectThoughts = async (
   options: {
     /** Keep modifier key held after multiselect (useful for chaining operations). */
     keepModifierHeld?: boolean
-    /** Timeout for waiting for each thought. */
-    timeout?: number
   } = {},
 ) => {
-  const { keepModifierHeld = false, timeout = 1000 } = options
+  const { keepModifierHeld = false } = options
   const thoughtValues = Array.isArray(values) ? values : [values]
 
   const modifierKey = isMac ? 'Meta' : 'Control'
@@ -24,12 +22,7 @@ const multiselectThoughts = async (
 
     // Click each thought while holding the modifier
     for (const value of thoughtValues) {
-      // Wait for the thought to be available
-      const editableNode = await waitForEditable(value, { timeout })
-
-      // Click the thought with modifier held
-      // @ts-expect-error - https://github.com/puppeteer/puppeteer/issues/8852
-      await editableNode.asElement()?.click()
+      await clickThought(value)
 
       // Small delay between clicks to ensure proper registration
       await sleep(50)
