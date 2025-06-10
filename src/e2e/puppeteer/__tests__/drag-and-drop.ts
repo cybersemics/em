@@ -5,7 +5,7 @@ import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import hideHUD from '../helpers/hideHUD'
-import multiselectThoughts from '../helpers/multiselectThoughts'
+import multiselectThoughts, { releaseModifierKey } from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
@@ -513,6 +513,16 @@ describe('drag and drop multiple thoughts', () => {
     }, MOCK_EXPAND_HOVER_DELAY)
   })
 
+  afterEach(async () => {
+    await page.mouse.up()
+
+    // Ensure modifier keys are released
+    await releaseModifierKey()
+
+    // take the final snapshot after the mouse is released
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
+
   it('drop as sibling after', async () => {
     await paste(`
       - x
@@ -523,9 +533,6 @@ describe('drag and drop multiple thoughts', () => {
     await multiselectThoughts(['y', 'z'])
 
     await dragAndDropThought('z', 'a', { position: 'after' })
-
-    // release mouse button
-    await page.mouse.up()
 
     expect(await screenshot()).toMatchImageSnapshot()
   })
@@ -541,11 +548,7 @@ describe('drag and drop multiple thoughts', () => {
 
     await dragAndDropThought('a', 'x', { position: 'before' })
 
-    // release mouse button
-    await page.mouse.up()
-
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
+    expect(await screenshot()).toMatchImageSnapshot()
   })
 
   it('drop as child', async () => {
@@ -558,9 +561,6 @@ describe('drag and drop multiple thoughts', () => {
     await multiselectThoughts(['y', 'z'])
 
     await dragAndDropThought('z', 'a', { position: 'child' })
-
-    // release mouse button
-    await page.mouse.up()
 
     expect(await screenshot()).toMatchImageSnapshot()
   })
@@ -576,10 +576,7 @@ describe('drag and drop multiple thoughts', () => {
 
     await dragAndDropThought('y', 'z', { position: 'child' })
 
-    await page.mouse.up()
-
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
+    expect(await screenshot()).toMatchImageSnapshot()
   })
 
   it('drop within different contexts', async () => {
@@ -592,24 +589,26 @@ describe('drag and drop multiple thoughts', () => {
       - b
         - d
       `)
-    await clickThought('a')
+
+    // First, expand the contexts to make child thoughts visible
+    await clickThought('a') // expand 'a' to show 'c'
 
     await multiselectThoughts('c', { keepModifierHeld: true })
-    await clickThought('b')
 
-    await multiselectThoughts('d')
+    await clickThought('b') // expand 'b' to show 'd'
 
+    // Now multiselect the child thoughts
+    await multiselectThoughts('d', { keepModifierHeld: true })
+
+    await releaseModifierKey()
+
+    // Drag to a different context
     await dragAndDropThought('d', 'x', { position: 'child' })
 
-    // Wait for expansion to occur
+    // Wait for any expansion that might occur
     await sleep(MOCK_EXPAND_HOVER_DELAY)
 
-    // Now move to y
     await dragAndDropThought('d', 'y', { position: 'after', skipMouseDown: true })
-
-    await sleep(MOCK_EXPAND_HOVER_DELAY)
-
-    await page.mouse.up()
 
     expect(await screenshot()).toMatchImageSnapshot()
   })
