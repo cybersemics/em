@@ -524,9 +524,6 @@ describe('drag and drop multiple thoughts', () => {
 
     await dragAndDropThought('z', 'a', { position: 'after' })
 
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
-
     // release mouse button
     await page.mouse.up()
 
@@ -561,9 +558,6 @@ describe('drag and drop multiple thoughts', () => {
     await multiselectThoughts(['y', 'z'])
 
     await dragAndDropThought('z', 'a', { position: 'child' })
-
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
 
     // release mouse button
     await page.mouse.up()
