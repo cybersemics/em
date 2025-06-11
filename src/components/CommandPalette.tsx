@@ -16,6 +16,7 @@ import useFilteredCommands from '../hooks/useFilteredCommands'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import { executeCommandWithMulticursor } from '../util/executeCommand'
+import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 import CommandItem from './CommandItem'
 import FadeTransition from './FadeTransition'
 import PopupBase from './PopupBase'
@@ -42,6 +43,7 @@ const CommandSearch: FC<{
 }> = ({ onExecute, onInput, onSelectDown, onSelectUp, onSelectTop, onSelectBottom }) => {
   const dispatch = useDispatch()
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const throttledOnKeyDownRef = useRef<((e: KeyboardEvent) => void) | null>(null)
   const marginBlock = useSelector(state => state.fontSize * (2 / 3))
   /** Handle command palette commands. */
   const onKeyDown = useCallback(
@@ -54,9 +56,6 @@ const CommandSearch: FC<{
         e.preventDefault()
         e.stopPropagation()
         dispatch(commandPalette())
-
-        // remove keydown listener now since unmount is not triggered until the animation ends
-        window.removeEventListener('keydown', onKeyDown)
       } else if (e.key === 'Enter') {
         onExecute?.(e, inputRef.current?.value || '')
       } else if (e.key === 'ArrowDown') {
@@ -87,9 +86,11 @@ const CommandSearch: FC<{
   // save selection and add event listeners on desktop
   // cleanup when command palette is hidden
   useEffect(() => {
-    window.addEventListener('keydown', onKeyDown)
+    const throttledOnKeyDown = throttleByAnimationFrame(onKeyDown)
+    throttledOnKeyDownRef.current = throttledOnKeyDown
+    window.addEventListener('keydown', throttledOnKeyDown)
     return () => {
-      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keydown', throttledOnKeyDown)
     }
   }, [onKeyDown])
 
