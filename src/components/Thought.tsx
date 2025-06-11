@@ -106,27 +106,38 @@ const getTextWidth = (text: string, baseFont: string): number => {
   // 1. Decode entities
   const decoded = unescape(text)
 
-  // 2. Detect tags with optional attributes
-  const isBold = /<b\b[^>]*>[\s\S]*?<\/b>/i.test(decoded)
-  const isItalic = /<i\b[^>]*>[\s\S]*?<\/i>/i.test(decoded)
-  // underline doesn’t affect width directly
+  // 2. Split into runs of plain vs. <b>…</b> or <i>…</i> segments
+  const parts = decoded.split(/(<(?:b|i)\b[^>]*>[\s\S]*?<\/(?:b|i)>)/gi)
 
-  // 3. Strip all tags
-  const stripped = decoded.replace(/<[^>]+>/g, '')
-
-  // 4. Build canvas font string
-  const styleParts: string[] = []
-  if (isItalic) styleParts.push('italic')
-  if (isBold) styleParts.push('bold')
-
-  const font = styleParts.length ? `${styleParts.join(' ')} ${baseFont}` : baseFont
-
-  // 5. Measure
+  // 3. Measure each part with appropriate font settings
+  let totalWidth = 0
   const canvas = document.createElement('canvas')
-  const context = canvas.getContext('2d')
-  if (!context) return 0
-  context.font = font
-  return context.measureText(stripped).width
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return 0
+
+  for (const part of parts) {
+    if (!part) continue
+
+    // 3a. Detect whether this segment is bold and/or italic
+    const isBold = /<b\b[^>]*>[\s\S]*?<\/b>/i.test(part)
+    const isItalic = /<i\b[^>]*>[\s\S]*?<\/i>/i.test(part)
+
+    // 3b. Strip all HTML tags to get plain text
+    const stripped = part.replace(/<[^>]+>/g, '')
+
+    // 4. Build canvas font string for this segment
+    const styleParts: string[] = []
+    if (isItalic) styleParts.push('italic')
+    if (isBold) styleParts.push('bold')
+    const font = styleParts.length ? `${styleParts.join(' ')} ${baseFont}` : baseFont
+
+    ctx.font = font
+
+    // 5. Measure and accumulate
+    totalWidth += ctx.measureText(stripped).width
+  }
+
+  return totalWidth
 }
 
 interface UseCol1AlignParams {
