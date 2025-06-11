@@ -514,9 +514,25 @@ describe('drag and drop multiple thoughts', () => {
   })
 
   afterEach(async () => {
-    await page.mouse.up()
+    try {
+      // Check if there's an active drag operation before releasing mouse
+      const isDragActive = await page.evaluate(() => {
+        return document.querySelector('[data-drag-in-progress="true"]') !== null
+      })
 
-    // take the final snapshot after the mouse is released
+      if (isDragActive) {
+        await page.mouse.up()
+        // Wait for drag to complete
+        await page.waitForFunction(() => !document.querySelector('[data-drag-in-progress="true"]'), {
+          timeout: 5000,
+        })
+      }
+    } catch (error) {
+      // Ignore errors from cleanup
+      console.warn('Mouse cleanup error:', (error as Error).message)
+    }
+
+    // take the final snapshot after cleanup
     expect(await screenshot()).toMatchImageSnapshot()
   })
 
