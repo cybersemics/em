@@ -1,3 +1,4 @@
+import { unescape } from 'html-escaper'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
@@ -100,23 +101,32 @@ const equalChildren = (a: Thought[], b: Thought[]) =>
   a === b ||
   (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
 
-/** Lightweight util: decodes basic HTML entities like &amp;, &lt;, &gt;, &quot;, and &#39;. */
-const decodeBasicEntities = (text: string): string =>
-  text
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-
 /** Returns the width of a given text string using the specified font. */
-const getTextWidth = (text: string, font: string): number => {
-  const decodedText = decodeBasicEntities(text)
+const getTextWidth = (text: string, baseFont: string): number => {
+  // 1. Decode entities
+  const decoded = unescape(text)
+
+  // 2. Detect tags with optional attributes
+  const isBold = /<b\b[^>]*>[\s\S]*?<\/b>/i.test(decoded)
+  const isItalic = /<i\b[^>]*>[\s\S]*?<\/i>/i.test(decoded)
+  // underline doesn’t affect width directly
+
+  // 3. Strip all tags
+  const stripped = decoded.replace(/<[^>]+>/g, '')
+
+  // 4. Build canvas font string
+  const styleParts: string[] = []
+  if (isItalic) styleParts.push('italic')
+  if (isBold) styleParts.push('bold')
+
+  const font = styleParts.length ? `${styleParts.join(' ')} ${baseFont}` : baseFont
+
+  // 5. Measure
   const canvas = document.createElement('canvas')
   const context = canvas.getContext('2d')
   if (!context) return 0
   context.font = font
-  return context.measureText(decodedText).width
+  return context.measureText(stripped).width
 }
 
 interface UseCol1AlignParams {
