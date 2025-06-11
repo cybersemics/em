@@ -271,8 +271,8 @@ const CommandPalette: FC<{
               className={css({
                 ...(!isTouch ? { maxHeight: 'calc(100vh - 10em)' } : null),
                 overflow: 'auto',
+                padding: '0.45em 0.66em',
               })}
-              style={{ padding: '0.66em' }}
             >
               {commands.length > 0 ? (
                 <>
