@@ -243,7 +243,7 @@ const CommandItem: FC<{
             whiteSpace: 'nowrap',
             fontSize: viewType === 'grid' ? '0.9rem' : '0.9em',
             color: disabled
-              ? 'gray50'
+              ? 'gray45'
               : viewType === 'grid'
                 ? 'fg'
                 : isSelectedStyle || (isTouch && (gestureInProgress as string) === gestureString(command))

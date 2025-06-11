@@ -219,6 +219,7 @@ const CommandPalette: FC<{
         display: 'flex',
         flexDirection: 'column',
         maxHeight: '100%',
+        maxWidth: '100%',
         height: isTouch ? undefined : '500px',
       })}
     >
