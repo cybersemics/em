@@ -102,7 +102,7 @@ const equalChildren = (a: Thought[], b: Thought[]) =>
   (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
 
 /** Returns the width of a given text string using the specified font. */
-const getTextWidth = (text: string, baseFont: string): number => {
+const getTextWidth = (text: string, font: string): number => {
   // 1. Decode entities
   const decoded = unescape(text)
 
@@ -110,10 +110,10 @@ const getTextWidth = (text: string, baseFont: string): number => {
   const parts = decoded.split(/(<(?:b|i)\b[^>]*>[\s\S]*?<\/(?:b|i)>)/gi)
 
   // 3. Measure each part with appropriate font settings
-  let totalWidth = 0
+  let width = 0
   const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return 0
+  const context = canvas.getContext('2d')
+  if (!context) return 0
 
   for (const part of parts) {
     if (!part) continue
@@ -126,18 +126,17 @@ const getTextWidth = (text: string, baseFont: string): number => {
     const stripped = part.replace(/<[^>]+>/g, '')
 
     // 4. Build canvas font string for this segment
-    const styleParts: string[] = []
-    if (isItalic) styleParts.push('italic')
-    if (isBold) styleParts.push('bold')
-    const font = styleParts.length ? `${styleParts.join(' ')} ${baseFont}` : baseFont
+    const styles: string[] = []
+    if (isItalic) styles.push('italic')
+    if (isBold) styles.push('bold')
 
-    ctx.font = font
+    context.font = styles.length ? `${styles.join(' ')} ${font}` : font
 
     // 5. Measure and accumulate
-    totalWidth += ctx.measureText(stripped).width
+    width += context.measureText(stripped).width
   }
 
-  return totalWidth
+  return width
 }
 
 interface UseCol1AlignParams {
