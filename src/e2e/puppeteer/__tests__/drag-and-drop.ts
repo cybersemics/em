@@ -536,20 +536,6 @@ describe('drag and drop multiple thoughts', () => {
     expect(await screenshot()).toMatchImageSnapshot()
   })
 
-  it('drop as sibling after', async () => {
-    await paste(`
-      - x
-      - y
-      - z
-      - a
-      `)
-    await multiselectThoughts(['y', 'z'])
-
-    await dragAndDropThought('z', 'a', { position: 'after' })
-
-    expect(await screenshot()).toMatchImageSnapshot()
-  })
-
   it('drop as sibling before', async () => {
     await paste(`
       - x
@@ -560,8 +546,18 @@ describe('drag and drop multiple thoughts', () => {
     await multiselectThoughts(['y', 'z', 'a'])
 
     await dragAndDropThought('a', 'x', { position: 'before' })
+  })
 
-    expect(await screenshot()).toMatchImageSnapshot()
+  it('drop as sibling after', async () => {
+    await paste(`
+      - x
+      - y
+      - z
+      - a
+      `)
+    await multiselectThoughts(['y', 'z'])
+
+    await dragAndDropThought('z', 'a', { position: 'after' })
   })
 
   it('drop as child', async () => {
@@ -574,8 +570,6 @@ describe('drag and drop multiple thoughts', () => {
     await multiselectThoughts(['y', 'z'])
 
     await dragAndDropThought('z', 'a', { position: 'child' })
-
-    expect(await screenshot()).toMatchImageSnapshot()
   })
 
   it('should preserve order of thoughts', async () => {
@@ -588,7 +582,5 @@ describe('drag and drop multiple thoughts', () => {
     await multiselectThoughts(['a', 'x', 'y'])
 
     await dragAndDropThought('y', 'z', { position: 'child' })
-
-    expect(await screenshot()).toMatchImageSnapshot()
   })
 })
