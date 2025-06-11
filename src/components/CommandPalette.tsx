@@ -43,7 +43,6 @@ const CommandSearch: FC<{
 }> = ({ onExecute, onInput, onSelectDown, onSelectUp, onSelectTop, onSelectBottom }) => {
   const dispatch = useDispatch()
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const throttledOnKeyDownRef = useRef<((e: KeyboardEvent) => void) | null>(null)
   const marginBlock = useSelector(state => state.fontSize * (2 / 3))
   /** Handle command palette commands. */
   const onKeyDown = useCallback(
@@ -87,7 +86,6 @@ const CommandSearch: FC<{
   // cleanup when command palette is hidden
   useEffect(() => {
     const throttledOnKeyDown = throttleByAnimationFrame(onKeyDown)
-    throttledOnKeyDownRef.current = throttledOnKeyDown
     window.addEventListener('keydown', throttledOnKeyDown)
     return () => {
       window.removeEventListener('keydown', throttledOnKeyDown)
