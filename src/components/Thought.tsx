@@ -196,11 +196,12 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
    * between Tree and Table views.
    */
   useLayoutEffect(() => {
-    if (!isSiblingOfCursor) return
+    if (!isSiblingOfCursor) {
+      prevIsTableCol1.current = isTableCol1
+      return
+    }
 
     if (prevIsTableCol1.current == isTableCol1) return
-
-    prevIsTableCol1.current = isTableCol1
 
     // Measure text width
     const width = getTextWidth(value || '', `${fontSize}px Helvetica`)
@@ -230,6 +231,8 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
         editable: { transition: `transform ${duration}ms ease-out`, transform: 'translateX(0)' },
       })
     })
+
+    prevIsTableCol1.current = isTableCol1
   }, [isTableCol1, col1MaxWidth, fontSize, value, duration, isSiblingOfCursor])
 
   return alignmentTransition
