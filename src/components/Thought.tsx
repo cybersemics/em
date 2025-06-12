@@ -202,11 +202,11 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
 
     prevIsTableCol1.current = isTableCol1
 
-    // Measure our own text width
+    // Measure text width
     const width = getTextWidth(value || '', `${fontSize}px Helvetica`)
 
     // Minimum width: 3em minus left (0.333em) and right (1.0em) padding
-    const minWidth = fontSize * (MIN_CONTENT_WIDTH_EM - 1.333)
+    const minWidth = fontSize * (MIN_CONTENT_WIDTH_EM - 1.333) - 1
 
     const offset = Math.max(minWidth, col1MaxWidth || 0) - width
     const bulletOffset = getBulletWidth(fontSize)
