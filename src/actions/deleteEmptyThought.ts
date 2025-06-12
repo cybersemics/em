@@ -56,6 +56,8 @@ const deleteEmptyThought = (state: State): State => {
   }
   // archive an empty thought with only hidden children
   else if (isEmpty && visibleChildren.length === 0) {
+    const prev = prevSibling(state, cursor)
+
     return reducerFlow([
       // archive all children
       // if a child is already archived, move it to the parent
@@ -81,10 +83,16 @@ const deleteEmptyThought = (state: State): State => {
         pathParent: parentOf(cursor),
         thoughtId: head(cursor),
       }),
-      // @MIGRATION-TODO: Set proper cursor here
-      setCursor({
-        path: null,
-      }),
+      ...(prev
+        ? [
+            // move the cursor to the new thought at the correct offset
+            setCursor({
+              path: appendToPath(parentOf(simplePath), prev.id),
+              offset: getTextContentFromHTML(prev.value).length,
+              editing,
+            }),
+          ]
+        : []),
     ])(state)
   }
   // delete from beginning and merge with previous sibling
