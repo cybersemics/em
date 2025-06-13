@@ -27,7 +27,6 @@ import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
-
 import Sidebar from './Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
