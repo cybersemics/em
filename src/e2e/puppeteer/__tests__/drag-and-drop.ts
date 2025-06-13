@@ -3,7 +3,7 @@ import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
-import dragAndDropThought from '../helpers/dragAndDropThought'
+import dragAndDropThought, { dragAndHoldThought } from '../helpers/dragAndDropThought'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
@@ -284,14 +284,12 @@ describe('drag', () => {
     // First, drag thought 'a' after thought 'b' (resulting in b followed by a)
     await dragAndDropThought('a', 'b', {
       position: 'after',
-      mouseUp: true,
       showAlert: true,
       showQuickDropPanel: true,
     })
 
-    await dragAndDropThought('a', null, {
+    await dragAndHoldThought('a', null, {
       position: 'none',
-      mouseUp: false,
       showAlert: true,
       showQuickDropPanel: true,
     })
@@ -316,7 +314,7 @@ describe('drop', () => {
       - d
     `)
 
-    await dragAndDropThought('a', 'd', { position: 'after', mouseUp: true })
+    await dragAndDropThought('a', 'd', { position: 'after' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()

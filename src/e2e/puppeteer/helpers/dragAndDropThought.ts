@@ -12,7 +12,7 @@ const dragAndDropThought = async (
   destValue: string | null,
   {
     dropUncle,
-    mouseUp,
+    hold,
     position,
     showAlert,
     showQuickDropPanel,
@@ -20,8 +20,8 @@ const dragAndDropThought = async (
   }: {
     /** If true, the source thought is dropped as a sibling to the hidden uncle. */
     dropUncle?: boolean
-    /** If true, the mouse button is released after the drop. */
-    mouseUp?: boolean
+    /** If true, the mouse button is held down after the drag (does not complete the drop). */
+    hold?: boolean
     /** Determines where the destination thought is dropped, relative to the source thought.
     - after: drop the source thought as a sibling after the destination thought.
     - before: drop the source thought as a sibling before the destination thought.
@@ -100,7 +100,7 @@ const dragAndDropThought = async (
   await page.locator('[data-testid="quick-drop-panel"]').wait()
   await page.locator('[data-testid="alert-content"]').wait()
 
-  if (mouseUp) {
+  if (!hold) {
     await page.mouse.up()
     await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
 
@@ -122,4 +122,30 @@ const dragAndDropThought = async (
   }
 }
 
+/** Performs Drag and Hold functionality on a thought in Puppeteer browser. The mouse button is held down after the drag. */
+const dragAndHoldThought = async (
+  sourceValue: string,
+  /** The value of the thought to drop at. Use the position absolute to control whether to drop before, after, etc. If null, only initiates the drag and move the mouse. */
+  destValue: string | null,
+  options: {
+    /** If true, the source thought is dropped as a sibling to the hidden uncle. */
+    dropUncle?: boolean
+    /** Determines where the destination thought is dropped, relative to the source thought.
+    - after: drop the source thought as a sibling after the destination thought.
+    - before: drop the source thought as a sibling before the destination thought.
+    - child: drop the source thought as a child of the destination thought.
+    - none: only valid when destValue is null and not dropping.
+     */
+    position: 'after' | 'before' | 'child' | 'none'
+    /** Show the drag-and-drop Alert. Hidden by default. */
+    showAlert?: boolean
+    /** Show the QuickDropPanel. Hidden by default. */
+    showQuickDropPanel?: boolean
+    skipMouseDown?: boolean
+  },
+) => {
+  return dragAndDropThought(sourceValue, destValue, { ...options, hold: true })
+}
+
 export default dragAndDropThought
+export { dragAndHoldThought }
