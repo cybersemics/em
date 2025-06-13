@@ -179,12 +179,6 @@ export const compareReasonable: ComparatorFunction<string> = makeOrderedComparat
   (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
 ])
 
-/** Get reverse of the given comparator. */
-const reverse =
-  <T>(comparator: ComparatorFunction<T>): ComparatorFunction<T> =>
-  (a: T, b: T) =>
-    comparator(b, a)
-
 /** A comparator that sorts anything in descending order. Not a strict reversal of compareReasonable, as empty strings, formatting, punctuation, and meta attributes are still sorted above plain text.
  * 1. Empty string.
  * 2. Punctuation (=, +, #hi, =test).
@@ -196,9 +190,9 @@ const reverse =
 export const compareReasonableDescending: ComparatorFunction<string> = makeOrderedComparator<string>([
   compareFormatting,
   compareEmpty,
-  reverse(comparePunctuationAndOther),
-  reverse(compareStringsWithMetaAttributes),
-  reverse(compareStringsWithEmoji),
+  _.flip(comparePunctuationAndOther),
+  _.flip(compareStringsWithMetaAttributes),
+  _.flip(compareStringsWithEmoji),
   (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
 ])
 
@@ -250,8 +244,4 @@ export const compareThoughtByNoteAndRank = (state: State): ComparatorFunction<Th
 
 /** Compare two thoughts by their note value in descending order, falling back to their rank if notes are absent or equal. */
 export const compareThoughtByNoteDescendingAndRank = (state: State): ComparatorFunction<Thought> =>
-  makeOrderedComparator([
-    makeCompareThoughtNoteAndOther(state),
-    reverse(makeCompareThoughtByNote(state)),
-    compareByRank,
-  ])
+  makeOrderedComparator([makeCompareThoughtNoteAndOther(state), _.flip(makeCompareThoughtByNote(state)), compareByRank])
