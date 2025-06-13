@@ -4,7 +4,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import { clearExpandDownActionCreator as clearExpandDown } from '../actions/clearExpandDown'
-import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
+import { EXPAND_HOVER_DELAY } from '../constants'
 import testFlags from '../e2e/testFlags'
 import expandThoughts from '../selectors/expandThoughts'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -26,10 +26,6 @@ const expandHoverDownDebounced =
   (dispatch, getState) => {
     clearTimer()
     expandDownTimer = setTimeout(() => {
-      const state = getState()
-      // abort if dragging over quick drop components
-      if (state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
-        return
       dispatch({ type: 'expandHoverDown', path })
       expandDownTimer = null
     }, testFlags.expandHoverDelay ?? EXPAND_HOVER_DELAY)

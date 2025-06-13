@@ -27,7 +27,7 @@ import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
-import QuickDropPanel from './QuickDropPanel'
+
 import Sidebar from './Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
@@ -184,7 +184,6 @@ const AppComponent: FC = () => {
         </>
       )}
       {!showModal && !tutorial && <Toolbar />}
-      <QuickDropPanel />
 
       <MultiGestureIfTouch>
         {showModal ? (

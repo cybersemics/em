@@ -3,7 +3,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
-import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
+import { EXPAND_HOVER_DELAY } from '../constants'
 import rootedParentOf from '../selectors/rootedParentOf'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -33,10 +33,6 @@ const expandHoverUpDebounced =
   (dispatch, getState) => {
     clearTimer()
     expandTopTimer = setTimeout(() => {
-      const state = getState()
-      // abort if dragging over quick drop components
-      if (state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
-        return
       dispatch({ type: 'expandHoverUp', path })
       expandTopTimer = null
     }, EXPAND_HOVER_DELAY)

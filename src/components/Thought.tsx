@@ -12,7 +12,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isTouch } from '../browser'
-import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
+import { MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
@@ -248,11 +248,6 @@ const ThoughtContainer = ({
 
     // Do not highlight in context view
     if (isContextViewActive(state, path)) {
-      return false
-    }
-
-    // Do not highlight during delete or copy alerts
-    if (state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint) {
       return false
     }
 

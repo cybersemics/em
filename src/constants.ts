@@ -435,18 +435,12 @@ export const AlertText = {
 }
 
 export enum AlertType {
-  // shown when a dragged thought is hovering over the CopyOneDrop component
-  CopyOneDropHint = 'CopyOneDropHint',
-  // shown when a dragged thought is hovering over the DeleteDrop component
-  DeleteDropHint = 'DeleteDropHint',
   // shown when dragging a thought
   DragAndDropHint = 'DragAndDropHint',
   // shown when dragging a toolbar button
   DragAndDropToolbarHint = 'DragAndDropToolbarHint',
   // shown when dragging a toolbar button from the command table
   DragAndDropToolbarAdd = 'DragAndDropToolbarAdd',
-  // shown when a dragged thought is hovering over the ExportDrop component
-  ExportDropHint = 'ExportDropHint',
   // shown during a MultiGesture
   GestureHint = 'GestureHint',
   // shown when importing one or more files via drag-and-drop or a large paste
