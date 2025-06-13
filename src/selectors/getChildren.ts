@@ -21,7 +21,6 @@ import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
-import reverse from '../util/reverse'
 import sort from '../util/sort'
 import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
@@ -77,7 +76,7 @@ const getChildrenSortedByDirection = (
   descComparator?: ComparatorFunction<Thought>,
 ): Thought[] => {
   const sortPreference = getSortPreference(state, id)
-  const comparator = sortPreference.direction === 'Desc' ? descComparator || reverse(ascComparator) : ascComparator
+  const comparator = sortPreference.direction === 'Desc' ? descComparator || _.flip(ascComparator) : ascComparator
   return getChildrenSortedBy(state, id, comparator)
 }
 

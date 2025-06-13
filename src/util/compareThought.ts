@@ -10,7 +10,6 @@ import compareByRank from './compareByRank'
 import isAttribute from './isAttribute'
 import lower from './lower'
 import noteValue from './noteValue'
-import reverse from './reverse'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
 const IGNORED_PREFIXES = ['the ']
@@ -191,9 +190,9 @@ export const compareReasonable: ComparatorFunction<string> = makeOrderedComparat
 export const compareReasonableDescending: ComparatorFunction<string> = makeOrderedComparator<string>([
   compareFormatting,
   compareEmpty,
-  reverse(comparePunctuationAndOther),
-  reverse(compareStringsWithMetaAttributes),
-  reverse(compareStringsWithEmoji),
+  _.flip(comparePunctuationAndOther),
+  _.flip(compareStringsWithMetaAttributes),
+  _.flip(compareStringsWithEmoji),
   (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
 ])
 
@@ -245,8 +244,4 @@ export const compareThoughtByNoteAndRank = (state: State): ComparatorFunction<Th
 
 /** Compare two thoughts by their note value in descending order, falling back to their rank if notes are absent or equal. */
 export const compareThoughtByNoteDescendingAndRank = (state: State): ComparatorFunction<Thought> =>
-  makeOrderedComparator([
-    makeCompareThoughtNoteAndOther(state),
-    reverse(makeCompareThoughtByNote(state)),
-    compareByRank,
-  ])
+  makeOrderedComparator([makeCompareThoughtNoteAndOther(state), _.flip(makeCompareThoughtByNote(state)), compareByRank])
