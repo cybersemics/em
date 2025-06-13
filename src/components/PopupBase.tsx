@@ -24,6 +24,8 @@ export type PopupBaseProps = PropsWithChildren<
     circledCloseButton?: boolean
     /** If true, the popup will take up the full width of the screen. */
     fullWidth?: boolean
+    /** A flag specifying whether the popup should respond to pointer events, or whether it should be possible to tap or drag elements through it without interference. */
+    pointerEventsEnabled?: boolean
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
     padding?: string
@@ -44,6 +46,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       children,
       circledCloseButton,
       fullWidth = false,
+      pointerEventsEnabled = true,
       onClose,
       padding,
       showXOnHover,
@@ -103,6 +106,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         }
       : {}
 
+    const pointerEventsStyles = pointerEventsEnabled ? {} : { pointerEvents: 'none' }
+
     return (
       <div
         className={css({
@@ -114,6 +119,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           ...borderStyles,
           ...centerStyles,
           ...fullWidthStyles,
+          ...pointerEventsStyles,
           '&:hover': {
             '& [data-close-button]': {
               opacity: showXOnHover ? 1 : undefined,

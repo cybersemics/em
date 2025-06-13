@@ -16,7 +16,10 @@ const Notification: FC<
     transitionKey: string | number
     /** Optional content rendered after the value without padding or alignment. Must be positioned independently. */
     children?: ReactNode
-  } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'textAlign' | 'onMouseOver' | 'onMouseLeave'>
+  } & Pick<
+    ComponentProps<typeof PopupBase>,
+    'onClose' | 'textAlign' | 'onMouseOver' | 'onMouseLeave' | 'pointerEventsEnabled'
+  >
 > = ({ icon, onClose, value, transitionKey, children, ...props }) => {
   const popupRef = useRef<HTMLDivElement>(null)
   const [isDismissed, setIsDismissed] = useState(false)
