@@ -14,7 +14,9 @@ import QuickDropIcon from './QuickDropIcon'
 import DeleteIcon from './icons/DeleteIcon'
 
 /** Delete the thought on drop. */
-const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
+const drop = (state: State, items: DragThoughtItem[]) => {
+  const { simplePath, path, zone } = items[0]
+
   const value = getThoughtById(state, head(simplePath))?.value
   if (value === undefined) {
     console.warn(`Missing thought for path ${simplePath}. Aborting deleteDrop.`)
@@ -40,7 +42,7 @@ const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
 
 /** Show an alert on hover that notifies the user the thought will be copied if dropped on the icon. */
 const hoverMessage = (state: State, zone: DragThoughtZone) => {
-  const value = state.draggingThought && getThoughtById(state, head(state.draggingThought))?.value
+  const value = state.draggingThought ? getThoughtById(state, head(state.draggingThought[0]))?.value : null
   return zone === DragThoughtZone.Thoughts
     ? `Drop to delete ${ellipsize(value!)}`
     : `Drop to remove ${ellipsize(value!)} from favorites`

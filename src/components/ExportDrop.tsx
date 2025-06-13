@@ -13,7 +13,8 @@ import QuickDropIcon from './QuickDropIcon'
 import ShareIcon from './icons/ShareIcon'
 
 /** Export the thought on drop. */
-const drop = (state: State, { simplePath }: DragThoughtItem) => {
+const drop = (state: State, items: DragThoughtItem[]) => {
+  const { simplePath } = items[0]
   const value = getThoughtById(state, head(simplePath))?.value
   if (value === undefined) {
     console.error(`Could not find thought at ${simplePath}. Aborting drop.`)
@@ -25,7 +26,7 @@ const drop = (state: State, { simplePath }: DragThoughtItem) => {
 
 /** Show an alert on hover that notifies the user the thought will be copied if dropped on the icon. */
 const hoverMessage = (state: State) => {
-  const value = state.draggingThought && getThoughtById(state, head(state.draggingThought))?.value
+  const value = state.draggingThought ? getThoughtById(state, head(state.draggingThought[0]))?.value : null
   return `Drop to export ${ellipsize(value!)}`
 }
 

@@ -53,7 +53,8 @@ interface State {
   /** Set to true when dragging a native file. */
   draggingFile?: boolean
   /** Set to the dragging thought during dragInProgress. */
-  draggingThought?: SimplePath
+  draggingThought?: SimplePath[]
+
   /** Dragging a command or toolbar button in the customizeToolbar modal. */
   dragCommand?: CommandId | null
   /** Type of toolbar-sbutton drop target being hovered over. */
