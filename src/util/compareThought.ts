@@ -10,6 +10,7 @@ import compareByRank from './compareByRank'
 import isAttribute from './isAttribute'
 import lower from './lower'
 import noteValue from './noteValue'
+import reverse from './reverse'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
 const IGNORED_PREFIXES = ['the ']
@@ -178,12 +179,6 @@ export const compareReasonable: ComparatorFunction<string> = makeOrderedComparat
   compareStringsWithEmoji,
   (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
 ])
-
-/** Get reverse of the given comparator. */
-const reverse =
-  <T>(comparator: ComparatorFunction<T>): ComparatorFunction<T> =>
-  (a: T, b: T) =>
-    comparator(b, a)
 
 /** A comparator that sorts anything in descending order. Not a strict reversal of compareReasonable, as empty strings, formatting, punctuation, and meta attributes are still sorted above plain text.
  * 1. Empty string.

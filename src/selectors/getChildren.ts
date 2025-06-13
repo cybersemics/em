@@ -21,6 +21,7 @@ import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
+import reverse from '../util/reverse'
 import sort from '../util/sort'
 import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
@@ -68,7 +69,7 @@ export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughts)
 const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFunction<Thought>): Thought[] =>
   sort(getAllChildrenAsThoughts(state, id), compare)
 
-/** Helper function to create children sorted by direction-aware comparator. */
+/** Creates children sorted by direction-aware comparator. When descComparator is omitted, the ascending comparator is reversed for descending order. */
 const getChildrenSortedByDirection = (
   state: State,
   id: ThoughtId,
@@ -76,17 +77,13 @@ const getChildrenSortedByDirection = (
   descComparator?: ComparatorFunction<Thought>,
 ): Thought[] => {
   const sortPreference = getSortPreference(state, id)
-  const comparator =
-    sortPreference.direction === 'Desc' ? descComparator || ((a, b) => ascComparator(b, a)) : ascComparator
+  const comparator = sortPreference.direction === 'Desc' ? descComparator || reverse(ascComparator) : ascComparator
   return getChildrenSortedBy(state, id, comparator)
 }
 
 /** Generates children sorted by their values. Sorts empty thoughts to their point of creation. */
-const getChildrenSortedAlphabetical = (state: State, id: ThoughtId): Thought[] => {
-  const comparatorFunction =
-    getSortPreference(state, id).direction === 'Desc' ? compareThoughtDescending : compareThought
-  return getChildrenSortedBy(state, id, comparatorFunction)
-}
+const getChildrenSortedAlphabetical = (state: State, id: ThoughtId): Thought[] =>
+  getChildrenSortedByDirection(state, id, compareThought, compareThoughtDescending)
 
 /** Generates children sorted by their creation date. */
 const getChildrenSortedCreated = (state: State, id: ThoughtId): Thought[] =>
