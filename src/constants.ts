@@ -178,8 +178,7 @@ export const MIN_CONTENT_WIDTH_EM = 3
 export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'undo',
   'redo',
-  'newThought',
-  'newSubthought',
+  'toggleUndoSlider',
   'favorite',
   'outdent',
   'indent',
