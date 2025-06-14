@@ -19,7 +19,7 @@ const UndoSlider: FC = () => {
     <FadeTransition in={showUndoSlider} duration='medium' unmountOnExit>
       <div
         className={css({
-          position: 'absolute',
+          position: 'fixed',
           width: `calc(100% - 6em)`,
           zIndex: 'toolbarContainer',
           margin: '3.5em 3em 0',
