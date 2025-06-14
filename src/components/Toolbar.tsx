@@ -126,7 +126,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   }, [latestPress])
 
   /** Selects the toolbar button that is pressed. */
-  const selectPressingToolbarId = useCallback((id: string) => {
+  const selectPressingToolbarId = useCallback((id: string | null) => {
     setPressingToolbarId(id)
     setLatestPress(Date.now())
   }, [])

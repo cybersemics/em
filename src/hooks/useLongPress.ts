@@ -18,6 +18,7 @@ const SCROLL_THRESHOLD = 10
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
   onLongPressEnd: ((options: { canceled: boolean }) => void) | null = noop,
+  delay: number = TIMEOUT_LONG_PRESS_THOUGHT,
 ) => {
   const [pressed, setPressed] = useState(false)
   // Track isLocked state from longPressStore in local state
@@ -53,9 +54,9 @@ const useLongPress = (
         if (!unmounted.current) {
           setPressed(true)
         }
-      }, TIMEOUT_LONG_PRESS_THOUGHT) as unknown as number
+      }, delay) as unknown as number
     },
-    [onLongPressStart, isLocked],
+    [delay, onLongPressStart, isLocked],
   )
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel

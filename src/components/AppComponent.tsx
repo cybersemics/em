@@ -32,6 +32,7 @@ import Sidebar from './Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
+import UndoSlider from './UndoSlider'
 import GestureCheatsheet from './dialog/GestureCheatsheet'
 import * as modals from './modals'
 
@@ -183,7 +184,12 @@ const AppComponent: FC = () => {
           <HamburgerMenu />
         </>
       )}
-      {!showModal && !tutorial && <Toolbar />}
+      {!showModal && !tutorial && (
+        <>
+          <Toolbar />
+          <UndoSlider />
+        </>
+      )}
       <QuickDropPanel />
 
       <MultiGestureIfTouch>
