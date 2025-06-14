@@ -101,13 +101,13 @@ const undoOneReducer = (state: State): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastUndoPatch[0].actions])
+  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastUndoPatch[0]?.actions])
   return {
     ...newState,
     redoPatches: [...redoPatches, correspondingRedoPatch],
     undoPatches: undoPatches.slice(0, -1),
     cursorCleared: false,
-    lastUndoableActionType: lastUndoPatch[0].actions[0],
+    lastUndoableActionType: lastUndoPatch[0]?.actions[0],
   }
 }
 
@@ -119,13 +119,13 @@ const redoOneReducer = (state: State): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch).newDocument)
-  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastRedoPatch[0].actions])
+  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastRedoPatch[0]?.actions])
   return {
     ...newState,
     redoPatches: redoPatches.slice(0, -1),
     undoPatches: [...undoPatches, correspondingUndoPatch],
     cursorCleared: false,
-    lastUndoableActionType: lastRedoPatch[0].actions[0],
+    lastUndoableActionType: lastRedoPatch[0]?.actions[0],
   }
 }
 
@@ -259,7 +259,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
           undoPatches: [
             ...newState.undoPatches.slice(0, -1),
             addActionsToPatch(combinedUndoPatch, [
-              ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0].actions : []),
+              ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
               actionType,
             ]),
           ],
