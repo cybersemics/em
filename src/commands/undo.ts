@@ -1,5 +1,6 @@
 import { startCase } from 'lodash'
 import Command from '../@types/Command'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { undoActionCreator as undo } from '../actions/undo'
 import UndoIcon from '../components/UndoIcon'
 import isUndoEnabled from '../selectors/isUndoEnabled'
@@ -25,6 +26,9 @@ const undoCommand: Command = {
     dispatch(undo())
   },
   canExecute: state => isUndoEnabled(state),
+  longPress: dispatch => {
+    dispatch(toggleDropdown({ dropDownType: 'undoSlider' }))
+  },
 }
 
 export default undoCommand
