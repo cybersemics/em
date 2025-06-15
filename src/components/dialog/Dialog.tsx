@@ -3,14 +3,14 @@ import { dialogRecipe } from '../../../styled-system/recipes'
 
 interface DialogProps {
   onClose: () => void
+  nodeRef: React.RefObject<HTMLDivElement>
 }
 
 /**
  * Dialog component.
  */
-const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose }) => {
+const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
-  const overlayRef = useRef<HTMLDivElement | null>(null)
   const dialogClasses = dialogRecipe()
 
   /**
@@ -40,7 +40,7 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose })
    * on the modal overlay by preventing touch events.
    */
   useEffect(() => {
-    const overlayElement = overlayRef.current
+    const overlayElement = nodeRef.current
     const dialogElement = dialogRef.current
 
     if (!overlayElement || !dialogElement) return
@@ -58,10 +58,10 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose })
     return () => {
       overlayElement.removeEventListener('touchmove', preventTouchMove)
     }
-  }, [])
+  }, [nodeRef])
 
   return (
-    <div ref={overlayRef} className={dialogClasses.overlay}>
+    <div ref={nodeRef} className={dialogClasses.overlay}>
       <div ref={dialogRef} className={dialogClasses.container}>
         {children}
         <div className={dialogClasses.gradient} />
