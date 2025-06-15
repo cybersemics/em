@@ -13,7 +13,6 @@ const LatestCommandsDiagram: FC<{ position?: 'middle' | 'bottom' }> = ({ positio
   const latestCommands = globalCommands.slice(0, 2)
 
   const latestCommandsRef = useRef(latestCommands)
-  const latestCommandsElRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     latestCommandsRef.current = latestCommands
@@ -24,9 +23,8 @@ const LatestCommandsDiagram: FC<{ position?: 'middle' | 'bottom' }> = ({ positio
 
   return (
     <div className={css({ position: 'absolute', height: '100vh', width: '100%' })}>
-      <FadeTransition nodeRef={latestCommandsElRef} in={latestCommands.length > 0} duration='medium' unmountOnExit>
+      <FadeTransition in={latestCommands.length > 0} duration='medium' unmountOnExit>
         <div
-          ref={latestCommandsElRef}
           className={css({
             position: 'absolute',
             width: '100%',
