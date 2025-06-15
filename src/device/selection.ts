@@ -361,6 +361,9 @@ export const set = (
       range.setStart(focusNode, end ? getEndOffset() : (nodeOffset?.offset ?? offset))
     } catch (e) {
       console.warn(e)
+
+      // better than nothing
+      range.setStart(focusNode, getEndOffset())
     }
   }
   range.collapse(true)
