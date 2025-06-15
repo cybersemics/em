@@ -1,13 +1,14 @@
 import { Operation, applyPatch, compare } from 'fast-json-patch'
 import { produce } from 'immer'
 import _ from 'lodash'
-import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
+import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator, UnknownAction } from 'redux'
 import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { editThoughtPayload } from '../actions/editThought'
 import editableRender from '../actions/editableRender'
 import updateThoughts from '../actions/updateThoughts'
 import getThoughtById from '../selectors/getThoughtById'
@@ -26,6 +27,10 @@ function isSetIsMulticursorExecutingAction(action: Action<string>): action is Se
   return action.type === 'setIsMulticursorExecuting'
 }
 
+/** Type guard for editThought action. */
+function isEditThoughtAction(action: UnknownAction): action is UnknownAction & editThoughtPayload {
+  return action.type === 'editThought'
+}
 /** Properties that are ignored when generating state patches. */
 const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'pushQueue']
 
@@ -182,6 +187,9 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
     let lastActionType: ActionType
 
+    /** True if the last edit was an addition of characters (vs a deletion of characters). Undo steps of contiguous edits in the same direction are combined (e.g. "one" -> "one two" -> "one two three"); Undo steps of continiguous edits in the opposite direction are not combined (e.g. "hello world" -> "hello" -> "hello universe"). */
+    let lastIsEditAddition = true
+
     /**
      * Reducer to handle undo/redo actions and add/merge inverse-redoPatches for other actions.
      */
@@ -225,14 +233,21 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
+      // Determine if an edit is an addition or a deletion
+      const isEditAddition =
+        lastActionType === 'editThought' &&
+        actionType === 'editThought' &&
+        isEditThoughtAction(action) &&
+        action.newValue.length > action.oldValue.length
+
       // Some actions are merged together into a single undo/redo patch.
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
-      // - Contiguous edits are merged into a single edit action. For example, if the user edits 'a' to 'b' and then 'b' to 'c', the undo will revert to 'a' in one step.
+      // - Contiguous edits are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step.
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       if (
         (isNavigation(actionType) && isNavigation(lastActionType)) ||
-        (lastActionType === 'editThought' && actionType === 'editThought') ||
+        (lastActionType === 'editThought' && actionType === 'editThought' && isEditAddition === lastIsEditAddition) ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting
       ) {
@@ -253,6 +268,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
           }
         }
         const combinedUndoPatch = diffState(newState as Index, lastState)
+
         return {
           ...newState,
           lastUndoableActionType: actionType,
@@ -267,6 +283,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       }
 
       lastActionType = actionType
+      lastIsEditAddition = isEditAddition
 
       // add a new undo patch
       const undoPatch = diffState(newState as Index, state)
