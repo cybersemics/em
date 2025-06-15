@@ -188,8 +188,8 @@ const usePositionedThoughts = (
 
       // if the current thought is in table col1, push its y and depth onto the stack so that the next node after it can be positioned below it instead of overlapping it
       // See: ycol1Ancestors
-      if (node.isTableCol1) {
-        ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
+      if (node.isTableCol1 && (node.visibleChildrenKeys?.length || 0) > 0) {
+        ycol1Ancestors.push({ y: yaccum, depth: node.depth })
       }
 
       const isLastVisible =
