@@ -63,7 +63,7 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
       >
         <SortIcon size={20} fill={isLightTheme ? '{colors.lightgray}' : '{colors.fg}'} />
       </div>
-      <FadeTransition in={isDropdownOpen} duration='fast' unmountOnExit>
+      <FadeTransition in={isDropdownOpen} type='fast' unmountOnExit>
         <div
           className={cx(
             css({

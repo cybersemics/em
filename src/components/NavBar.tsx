@@ -115,7 +115,7 @@ const NavBar = ({ position }: { position: string }) => {
                     />
                   ) : null}
                   <FadeTransition
-                    duration='fast'
+                    type='fast'
                     nodeRef={cursorBreadcrumbsWrapperRef}
                     in={!distractionFreeTyping}
                     unmountOnExit

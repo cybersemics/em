@@ -16,7 +16,7 @@ const ErrorMessage: FC = () => {
   return (
     <TransitionGroup>
       {value ? (
-        <FadeTransition duration='fast'>
+        <FadeTransition type='fast'>
           <div
             className={css({
               left: '0',

@@ -34,7 +34,7 @@ const Notification: FC<
       childFactory={(child: React.ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {value ? (
-        <FadeTransition duration='slow' onEntering={() => setIsDismissed(false)}>
+        <FadeTransition type='slow' onEntering={() => setIsDismissed(false)}>
           <PopupBase
             anchorFromBottom
             anchorOffset={36}

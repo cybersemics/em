@@ -143,7 +143,7 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
       </div>
 
       <SwitchTransition>
-        <FadeTransition key={`${sortOrder}-${search}`} in={true} duration='medium' unmountOnExit>
+        <FadeTransition key={`${sortOrder}-${search}`} in={true} type='medium' unmountOnExit>
           <CommandTableContent
             search={search}
             commands={commands}
