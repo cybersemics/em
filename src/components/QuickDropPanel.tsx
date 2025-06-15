@@ -13,7 +13,7 @@ const QuickDropPanel = () => {
     <SlideTransition duration='fast' nodeRef={quickDropPanelRef} in={isDragging} from='right' unmountOnExit>
       <div
         ref={quickDropPanelRef}
-        className={css({ position: 'fixed', right: 0, top: '20vh', zIndex: 'popup' })}
+        className={css({ position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 'popup' })}
         data-testid='quick-drop-panel'
       >
         <DeleteDrop />
