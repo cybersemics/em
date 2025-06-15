@@ -16,7 +16,7 @@ const UndoSlider: FC = () => {
   const maxSteps = useSelector(state => Math.min(10, state.undoPatches.length + state.redoPatches.length))
 
   return (
-    <FadeTransition in={showUndoSlider} duration='medium' unmountOnExit>
+    <FadeTransition in={showUndoSlider} type='medium' unmountOnExit>
       <div
         className={css({
           position: 'fixed',

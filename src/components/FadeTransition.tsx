@@ -13,7 +13,7 @@ type RemoveFields<Type> = {
  * This component uses `react-transition-group` to apply CSS transitions based on the provided type.
  */
 const FadeTransition = ({
-  duration,
+  type,
   id = 0,
   children,
   ...props
@@ -24,7 +24,8 @@ const FadeTransition = ({
      * Defaults to 0.
      */
     id?: string | number
-    duration: FadeTransitionRecipeVariant['duration']
+    /** The type of fade transition, which determines both duration and easing. Corresponds to variants in recipes/fadeTransition. Basic transitions such as "fast", "medium", or "slow" use ease-out or ease, while specialized transitions such as "disappearingUpperRight" use custom easing functions. */
+    type: FadeTransitionRecipeVariant['type']
     /*
       Optionally override the nodeRef that is passed to CSSTransition. If CSSTransition's nodeRef property is not explicitly provided, it will result in a findDOMNode deprecation warning. In order to avoid making the parent provide the ref every time, we wrap the children in a <span> and use that as the nodeRef by default.
 
@@ -35,14 +36,14 @@ const FadeTransition = ({
     unmountOnExit?: boolean
   } & RemoveFields<TransitionProps<HTMLElement>>
 >) => {
-  const fadeClasses = fadeTransitionRecipe({ duration })
+  const fadeClasses = fadeTransitionRecipe({ type })
   const ref = useRef<HTMLDivElement>(null)
 
   return (
     <CSSTransition
       key={id}
       classNames={fadeClasses}
-      timeout={durations.get(duration)}
+      timeout={durations.get(type)}
       // This would get overridden by {...props} anyway, but make it explicit for clarity.
       nodeRef={props.nodeRef ?? ref}
       {...props}

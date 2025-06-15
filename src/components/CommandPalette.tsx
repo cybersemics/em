@@ -529,7 +529,7 @@ const CommandPaletteWithTransition: FC = () => {
     >
       {showCommandPalette ? (
         <FadeTransition
-          duration='fast'
+          type='fast'
           // for some reason doesn't fade in correctly when default nodeRef is used
           nodeRef={popupRef}
           onEntering={() => setDismiss(false)}

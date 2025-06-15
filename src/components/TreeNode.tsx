@@ -188,7 +188,7 @@ const TreeNode = ({
       // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
       // Archive, delete, and uncategorize get a special dissolve animation.
       // Context view children get special disappearing text animations
-      duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')}
+      type={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
       unmountOnExit

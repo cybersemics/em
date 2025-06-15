@@ -23,7 +23,7 @@ const LatestCommandsDiagram: FC<{ position?: 'middle' | 'bottom' }> = ({ positio
 
   return (
     <div className={css({ position: 'absolute', height: '100vh', width: '100%' })}>
-      <FadeTransition in={latestCommands.length > 0} duration='medium' unmountOnExit>
+      <FadeTransition in={latestCommands.length > 0} type='medium' unmountOnExit>
         <div
           className={css({
             position: 'absolute',

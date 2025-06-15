@@ -64,7 +64,7 @@ const HamburgerMenu = () => {
   const paddingTop = 15 + fontSize * 0.1
 
   return (
-    <FadeTransition in={!distractionFreeTyping} duration='distractionFreeTyping' unmountOnExit>
+    <FadeTransition in={!distractionFreeTyping} type='distractionFreeTyping' unmountOnExit>
       <div
         aria-label='menu'
         className={css({

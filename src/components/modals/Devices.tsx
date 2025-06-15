@@ -229,7 +229,7 @@ const ShareList = React.forwardRef<
             {
               // form
               showDeviceForm ? (
-                <FadeTransition id='add-device-form' duration='medium' exit={false} unmountOnExit>
+                <FadeTransition id='add-device-form' type='medium' exit={false} unmountOnExit>
                   <div>
                     <AddDeviceForm
                       onCancel={() => setShowDeviceForm(false)}
@@ -252,7 +252,7 @@ const ShareList = React.forwardRef<
                 </FadeTransition>
               ) : (
                 // "+ Add a device" button
-                <FadeTransition id='add-a-device' exit={false} duration='medium' unmountOnExit>
+                <FadeTransition id='add-a-device' exit={false} type='medium' unmountOnExit>
                   <div className={css({ marginTop: '1em' })}>
                     <a
                       {...fastClick(() => setShowDeviceForm(true))}
@@ -531,7 +531,7 @@ const ModalDevices = () => {
       <div className={modalClasses.wrapper}>
         <TransitionGroup>
           {selected && permissions[selected] ? (
-            <FadeTransition key='share-detail' id='share-detail' duration='medium' exit={false} unmountOnExit>
+            <FadeTransition key='share-detail' id='share-detail' type='medium' exit={false} unmountOnExit>
               <ShareDetail
                 accessToken={selected}
                 isLastDevice={Object.keys(permissions).length === 1}
@@ -540,7 +540,7 @@ const ModalDevices = () => {
               />
             </FadeTransition>
           ) : (
-            <FadeTransition id='share-list' duration='medium' exit={false} unmountOnExit>
+            <FadeTransition id='share-list' type='medium' exit={false} unmountOnExit>
               <ShareList onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
             </FadeTransition>
           )}

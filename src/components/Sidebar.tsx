@@ -160,7 +160,7 @@ const Sidebar = () => {
           })}
           data-scroll-at-edge
         >
-          <FadeTransition duration='fast' in={showSidebar}>
+          <FadeTransition type='fast' in={showSidebar}>
             <div
               style={{
                 // match HamburgerMenu width + padding
