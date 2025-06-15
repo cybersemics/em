@@ -14,12 +14,10 @@ const UndoSlider: FC = () => {
   const valuePrevRef = useRef(0)
   const dispatch = useDispatch()
   const maxSteps = useSelector(state => Math.min(10, state.undoPatches.length + state.redoPatches.length))
-  const nodeRef = useRef<HTMLDivElement>(null)
 
   return (
-    <FadeTransition in={showUndoSlider} duration='medium' nodeRef={nodeRef} unmountOnExit>
+    <FadeTransition in={showUndoSlider} duration='medium' unmountOnExit>
       <div
-        ref={nodeRef}
         className={css({
           position: 'fixed',
           width: `calc(100% - 6em)`,

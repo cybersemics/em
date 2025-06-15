@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Index from '../@types/IndexType'
@@ -58,21 +58,14 @@ const HamburgerMenu = () => {
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
-  const hamburgerMenuRef = useRef<HTMLDivElement>(null)
   const positionFixedStyles = usePositionFixed()
 
   const width = fontSize * 1.3
   const paddingTop = 15 + fontSize * 0.1
 
   return (
-    <FadeTransition
-      nodeRef={hamburgerMenuRef}
-      in={!distractionFreeTyping}
-      duration='distractionFreeTyping'
-      unmountOnExit
-    >
+    <FadeTransition in={!distractionFreeTyping} duration='distractionFreeTyping' unmountOnExit>
       <div
-        ref={hamburgerMenuRef}
         aria-label='menu'
         className={css({
           zIndex: 'hamburgerMenu',

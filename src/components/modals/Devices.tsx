@@ -511,8 +511,6 @@ ShareDetail.displayName = 'ShareDetail'
 /** Modal for Sharing and Device Management. */
 const ModalDevices = () => {
   const permissions = usePermissions()
-  const shareDetailRef = useRef<HTMLDivElement>(null)
-  const shareListRef = useRef<HTMLDivElement>(null)
 
   // selected accessToken
   const [selected, setSelected] = useState<string | null>(null)
@@ -533,16 +531,8 @@ const ModalDevices = () => {
       <div className={modalClasses.wrapper}>
         <TransitionGroup>
           {selected && permissions[selected] ? (
-            <FadeTransition
-              key={'share-detail'}
-              id='share-detail'
-              nodeRef={shareDetailRef}
-              duration='medium'
-              exit={false}
-              unmountOnExit
-            >
+            <FadeTransition key='share-detail' id='share-detail' duration='medium' exit={false} unmountOnExit>
               <ShareDetail
-                ref={shareDetailRef}
                 accessToken={selected}
                 isLastDevice={Object.keys(permissions).length === 1}
                 onBack={onBack}
@@ -550,8 +540,8 @@ const ModalDevices = () => {
               />
             </FadeTransition>
           ) : (
-            <FadeTransition id='share-list' nodeRef={shareListRef} duration='medium' exit={false} unmountOnExit>
-              <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
+            <FadeTransition id='share-list' duration='medium' exit={false} unmountOnExit>
+              <ShareList onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
             </FadeTransition>
           )}
         </TransitionGroup>
