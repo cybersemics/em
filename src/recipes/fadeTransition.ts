@@ -68,6 +68,9 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enter: {
           transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
           textShadow: '0px 0px 2em {colors.fg}',
+          _safari: {
+            transform: 'skew(100deg) translateX(10%) translateY(-100%)',
+          },
         },
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
@@ -82,6 +85,9 @@ const fadeTransitionRecipe = defineSlotRecipe({
           textShadow: '0px 0px 2em {colors.fg}',
           color: 'transparent',
           transition: `opacity {durations.disappearingUpperRight} ease, color {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
+          _safari: {
+            transform: 'skew(100deg) translateX(10%) translateY(-100%)',
+          },
         },
       },
       // Normal view fades out from lower left.
@@ -89,6 +95,9 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enter: {
           transform: 'skew(-100deg) translateY(100%)',
           textShadow: '0px 0px 2em {colors.fg}',
+          _safari: {
+            transform: 'skew(100deg) translateY(100%)',
+          },
         },
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
@@ -103,6 +112,9 @@ const fadeTransitionRecipe = defineSlotRecipe({
           textShadow: '0px 0px 2em {colors.fg}',
           color: 'transparent',
           transition: `opacity {durations.disappearingLowerLeft} ease, color {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
+          _safari: {
+            transform: 'skew(100deg) translateY(100%)',
+          },
         },
       },
     },
