@@ -37,6 +37,8 @@ const durationsConfig = {
   /* Duration for context view disappearing text animations */
   disappearingUpperRight: 500,
   disappearingLowerLeft: 500,
+  disappearingLowerLeftSafari: 500,
+  disappearingUpperRightSafari: 500,
 } as const
 
 export default durationsConfig
