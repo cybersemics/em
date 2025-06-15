@@ -1,6 +1,7 @@
 import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
@@ -10,6 +11,8 @@ expect.extend({
 })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+
+beforeEach(hideHUD)
 
 describe('Divider', () => {
   it('highlight', async () => {
