@@ -413,6 +413,11 @@ const ThoughtContainer = ({
     return isSubthoughtsDropTarget || isThoughtDropTarget
   })
 
+  /** True if the the user is dragging the thought and hovering over the DeleteDrop QuickDrop icon. */
+  const isQuickDropDeleteHovering = useSelector(
+    state => isDragging && state.alert?.alertType === AlertType.DeleteDropHint,
+  )
+
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
     // only hide when typing, not when deleting
@@ -442,7 +447,14 @@ const ThoughtContainer = ({
           animation: `pulseLight {durations.slowPulse} linear infinite alternate`,
           color: 'highlight',
         }
-      : null),
+      : isQuickDropDeleteHovering
+        ? {
+            WebkitTextStrokeWidth: '0.05em',
+            animation: `pulseLight {durations.mediumPulse} linear infinite alternate`,
+            color: 'gray',
+            textDecoration: 'line-through',
+          }
+        : null),
   })
 
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {

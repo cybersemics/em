@@ -11,6 +11,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
+import { AlertType } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
@@ -258,6 +259,7 @@ const glyphFg = cva({
 
 /** A circle bullet for leaf thoughts. */
 const BulletLeaf = ({
+  dimmed,
   done,
   fill,
   isHighlighted,
@@ -266,6 +268,7 @@ const BulletLeaf = ({
   showContexts,
   isBulletExpanded,
 }: {
+  dimmed?: boolean
   done?: boolean
   fill?: string
   isHighlighted?: boolean
@@ -301,6 +304,7 @@ const BulletLeaf = ({
         // allow .graypulse to define fill when pending
         fill: !showContexts && !isHighlighted ? fill : undefined,
         stroke: !showContexts && !isHighlighted ? fill : undefined,
+        opacity: dimmed ? 0.5 : undefined,
       }}
       strokeWidth={showContexts ? 30 : undefined}
     />
@@ -420,6 +424,11 @@ const Bullet = ({
     return isHolding || isDragging || isMulticursor
   })
   const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
+
+  /** True if the the user is dragging the thought and hovering over the DeleteDrop QuickDrop icon. */
+  const isQuickDropDeleteHovering = useSelector(
+    state => isDragging && state.alert?.alertType === AlertType.DeleteDropHint,
+  )
 
   /** Returns true if the thought is pending. */
   const pending = useSelector(state => {
@@ -574,7 +583,7 @@ const Bullet = ({
         ref={svgElement}
       >
         <g>
-          {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && (
+          {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && !isQuickDropDeleteHovering && (
             <BulletCursorOverlay
               isEditing={isEditing}
               isHighlighted={isHighlighted}
@@ -588,6 +597,7 @@ const Bullet = ({
               done={isDone}
               fill={fill}
               isHighlighted={isHighlighted}
+              dimmed={isQuickDropDeleteHovering}
               missing={missing}
               pending={pending}
               showContexts={showContexts}
