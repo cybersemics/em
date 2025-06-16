@@ -104,6 +104,8 @@ const useEditMode = ({
       hasNoteFocus,
       dragInProgress,
       noteFocus,
+      // Must subscribe to editing and not edit mode for some reason.
+      // Otherwise it breaks selection offset persistence on refresh on desktop.
       editing,
       editableNonce,
       store,
