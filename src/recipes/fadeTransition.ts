@@ -64,6 +64,8 @@ const fadeTransitionRecipe = defineSlotRecipe({
         },
       },
       // Context view fades in from upper right.
+      // Safari requires inverted skew values (positive instead of negative) when exceeding 90deg
+      // Uses _safari condition to target Safari-specific styles via [data-browser=safari] selector
       disappearingUpperRight: {
         enter: {
           transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
@@ -94,6 +96,8 @@ const fadeTransitionRecipe = defineSlotRecipe({
         },
       },
       // Normal view fades out from lower left.
+      // Safari requires inverted skew values (positive instead of negative) when exceeding 90deg
+      // Uses _safari condition to target Safari-specific styles via [data-browser=safari] selector
       disappearingLowerLeft: {
         enter: {
           transform: 'skew(-100deg) translateY(100%)',
