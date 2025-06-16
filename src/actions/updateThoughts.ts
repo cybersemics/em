@@ -229,7 +229,7 @@ const updateThoughts = (
     // update recentlyEdited, pushQueue, and thoughts
     state => ({
       ...state,
-      ...(cursorOffset ? { cursorOffset } : null),
+      ...(cursorOffset != null ? { cursorOffset } : null),
       // disable loading screen as soon as the root is loaded
       // or isLoading can be forced by passing it directly to updateThoughts
       isLoading: state.isLoading && isStillLoading(),
