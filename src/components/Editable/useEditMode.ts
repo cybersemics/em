@@ -41,7 +41,7 @@ const useEditMode = ({
   const hadSidebar = usePrevious(showSidebar)
   const store = useStore()
 
-  // focus on the ContentEditable element if editing os on desktop
+  // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
 
   useEffect(
@@ -61,9 +61,6 @@ const useEditMode = ({
         }
       }
 
-      // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
-      const cursorWithoutSelection = cursorOffset !== null || !selection.isActive()
-
       // allow transient editable to have focus on render
       const shouldSetSelection =
         transient ||
@@ -71,29 +68,10 @@ const useEditMode = ({
           editMode &&
           !noteFocus &&
           contentRef.current &&
-          cursorWithoutSelection &&
+          (cursorOffset !== null || !selection.isActive()) &&
           !isMulticursor &&
           !dragHold &&
           !disabledRef.current)
-
-      /* DEBUGGING
-      There are many different values that determine if we set the selection.
-      Use this to help debug selection issues.
-    */
-      // if (isEditing) {
-      //   const value = headValue(store.getState(), path)
-      //   if (shouldSetSelection) {
-      //     console.info('Selection set on', value, editingCursorOffset)
-      //   } else {
-      //     console.info('These values are false, preventing the selection from being set on', value)
-      //     if (!editMode) console.info('  editMode')
-      //     if (!contentRef.current) console.info('  contentRef.current')
-      //     if (noteFocus) console.info('  - !noteFocus')
-      //     if (!(cursorWithoutSelection)) console.info('  cursorWithoutSelection')
-      //     if (dragHold) console.info('  !dragHold')
-      //     if (disabledRef.current) console.info('  !disabledRef.current')
-      //   }
-      // }
 
       if (shouldSetSelection) {
         preventAutoscroll(contentRef.current)
@@ -116,6 +94,7 @@ const useEditMode = ({
         }
       }
     },
+    // React Hook useEffect has missing dependencies: 'contentRef', 'dragHold', 'editMode', 'noteFocus', and 'style?.visibility'.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       isEditing,
@@ -125,6 +104,7 @@ const useEditMode = ({
       dragInProgress,
       editing,
       editableNonce,
+      store,
       transient,
     ],
   )
