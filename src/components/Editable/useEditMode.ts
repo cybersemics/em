@@ -94,7 +94,7 @@ const useEditMode = ({
         }
       }
     },
-    // React Hook useEffect has missing dependencies: 'contentRef', 'editMode', 'noteFocus', and 'style?.visibility'.
+    // React Hook useEffect has missing dependencies: 'contentRef', 'editMode', and 'style?.visibility'.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       dragHold,
@@ -103,6 +103,7 @@ const useEditMode = ({
       isMulticursor,
       hasNoteFocus,
       dragInProgress,
+      noteFocus,
       editing,
       editableNonce,
       store,
