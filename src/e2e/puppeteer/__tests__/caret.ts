@@ -144,27 +144,22 @@ describe('all platforms', () => {
     expect(textContext).toBe('b')
   })
 
-  // The following test fails intermittently on CI, but not locally, so skip it on CI.
-  // Tested 30+ times locally and it passed every time.
-  const testIfNotCI = process.env.CI ? it.skip : it
-
   // https://github.com/cybersemics/em/issues/1568
-  testIfNotCI('caret at the end of a thought should be preserved on indent and outdent', async () => {
+  it('caret at the end of a thought should be preserved on indent and outdent', async () => {
     const importText = `
     - a
     - chicago`
     await paste(importText)
     await clickThought('chicago')
 
-    // await press('Enter')
     await press('End')
     await press('Tab')
     await press('Tab', { shift: true })
 
+    // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
     const nodeType = await getSelection().focusNode?.nodeType
-    expect(nodeType).toBe(Node.ELEMENT_NODE)
     const offset = await getSelection().focusOffset
-    expect(offset).toBe(1)
+    expect(offset).toBe(nodeType === Node.TEXT_NODE ? 'chicago'.length : 1)
   })
 
   it('clicking backspace when the caret is at the beginning of a thought should merge it with the previous thought.', async () => {
