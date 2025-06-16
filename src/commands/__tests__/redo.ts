@@ -106,7 +106,7 @@ it('redo contiguous changes', () => {
   const exportedBeforeRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
   const expectedOutputBeforeRedo = `- ${HOME_TOKEN}
-  - A
+  - Atlantic
   - B`
 
   expect(exportedBeforeRedo).toEqual(expectedOutputBeforeRedo)
