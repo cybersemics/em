@@ -3,6 +3,7 @@ import Thought from '../@types/Thought'
 import LazyEnv from './LazyEnv'
 import Path from './Path'
 import SimplePath from './SimplePath'
+import ThoughtId from './ThoughtId'
 
 /** 1st Pass: A thought with rendering information after the tree has been linearized. */
 type TreeThought = {
@@ -29,7 +30,7 @@ type TreeThought = {
   simplePath: SimplePath
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
   style?: React.CSSProperties | null
-  thoughtId: string
+  thoughtId: ThoughtId
   isLastVisible?: boolean
   autofocus: Autofocus
   // keys of visible children
