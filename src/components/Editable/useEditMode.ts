@@ -94,9 +94,10 @@ const useEditMode = ({
         }
       }
     },
-    // React Hook useEffect has missing dependencies: 'contentRef', 'dragHold', 'editMode', 'noteFocus', and 'style?.visibility'.
+    // React Hook useEffect has missing dependencies: 'contentRef', 'editMode', 'noteFocus', and 'style?.visibility'.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
+      dragHold,
       isEditing,
       // update selection when multicursor changes, otherwise the selection will not be set when multicursor is cleared
       isMulticursor,
