@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useStore } from 'react-redux'
 import Path from '../../@types/Path'
 import { editingActionCreator as editingAction } from '../../actions/editing'
 import { isSafari, isTouch } from '../../browser'
@@ -32,19 +33,23 @@ const useEditMode = ({
   const isMulticursor = useSelector(hasMulticursor)
   const dispatch = useDispatch()
   const noteFocus = useSelector(state => state.noteFocus)
-  const editingCursorOffset = useSelector(state => isEditing && state.cursorOffset)
   const dragHold = useSelector(state => state.dragHold)
   const dragInProgress = useSelector(state => state.dragInProgress)
   const disabledRef = useRef(false)
   const editableNonce = useSelector(state => state.editableNonce)
   const showSidebar = useSelector(state => state.showSidebar)
   const hadSidebar = usePrevious(showSidebar)
+  const store = useStore()
 
   // focus on the ContentEditable element if editing os on desktop
   const editMode = !isTouch || editing
 
   useEffect(
     () => {
+      // Get the cursorOffset directly from the store rather than subscribing to it reactively with useSelector.
+      // Otherwise, it will try to set the selection while typing.
+      const cursorOffset = store.getState().cursorOffset
+
       /** Set the selection to the current Editable at the cursor offset. */
       const setSelectionToCursorOffset = () => {
         // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
@@ -52,12 +57,12 @@ const useEditMode = ({
         if (style?.visibility === 'hidden') {
           selection.clear()
         } else {
-          selection.set(contentRef.current, { offset: editingCursorOffset || 0 })
+          selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
         }
       }
 
       // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
-      const cursorWithoutSelection = editingCursorOffset !== null || !selection.isActive()
+      const cursorWithoutSelection = cursorOffset !== null || !selection.isActive()
 
       // allow transient editable to have focus on render
       const shouldSetSelection =
@@ -116,7 +121,6 @@ const useEditMode = ({
       isEditing,
       // update selection when multicursor changes, otherwise the selection will not be set when multicursor is cleared
       isMulticursor,
-      editingCursorOffset,
       hasNoteFocus,
       dragInProgress,
       editing,

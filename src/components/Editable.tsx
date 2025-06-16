@@ -250,6 +250,10 @@ const Editable = ({
         newValue,
         rankInContext: rank,
         path: simplePath,
+        // Set cursorOffset so that it is included in the undo patch.
+        // Otherwise, the selection offset will not be restored correctly on undo/redo.
+        // This will have no effect on useEditMode, which does not subscribe to state.cursorOffset reactively.
+        cursorOffset: selection.offsetThought() ?? undefined,
       }),
     )
 
