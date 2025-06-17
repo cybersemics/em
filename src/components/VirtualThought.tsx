@@ -146,13 +146,43 @@ const VirtualThought = ({
     const editable = ref.current.querySelector(`[data-editable]`)
     if (editable?.hasAttribute('data-prevent-autoscroll')) return
 
-    setHeight(heightNew)
-    onResize?.({
+    // Create resize event object with current dimensions
+    const resizeEvent = {
       height: heightNew,
       width: widthNew,
       id,
       isVisible: isVisibleNew,
       key: crossContextualKey,
+    }
+
+    // Update height immediately
+    setHeight(heightNew)
+    onResize?.(resizeEvent)
+
+    // Check dimensions again after a delay to catch any post-render changes
+    // Use requestAnimationFrame to wait for next paint, then check again after a frame to catch any post-render changes
+    requestAnimationFrame(() => {
+      if (!ref.current) return
+
+      // Get updated dimensions
+      const laterHeightNew = Math.max(
+        ref.current.getBoundingClientRect().height,
+        ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
+      )
+      const laterWidthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
+
+      // Only update if dimensions have changed
+      if (laterHeightNew !== heightNew) {
+        setHeight(heightNew)
+      }
+
+      if (laterHeightNew !== heightNew || laterWidthNew !== widthNew) {
+        onResize?.({
+          ...resizeEvent,
+          height: laterHeightNew,
+          width: laterWidthNew,
+        })
+      }
     })
   }, [crossContextualKey, onResize, id, autofocus])
 
