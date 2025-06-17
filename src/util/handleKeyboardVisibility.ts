@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { isKeyboardOpenActionCreator as isKeyboardOpenAction } from '../actions/isKeyboardOpen'
+import { keyboardOpenActionCreator as isKeyboardOpenAction } from '../actions/isKeyboardOpen'
 import { isTouch } from '../browser'
 import { KEYBOARD_VISIBILITY_THRESHOLD } from '../constants'
 import * as selection from '../device/selection'

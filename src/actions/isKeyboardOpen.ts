@@ -4,20 +4,20 @@ import Thunk from '../@types/Thunk'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Track keyboard visibility independently of cursor to allow navigation when keyboard is hidden. */
-const isKeyboardOpen = (state: State, { value }: { value: boolean }) => ({
+const keyboardOpen = (state: State, { value }: { value: boolean }) => ({
   ...state,
   isKeyboardOpen: value,
 })
 
-/** Action-creator for isKeyboardOpen. */
-export const isKeyboardOpenActionCreator =
-  (payload: Parameters<typeof isKeyboardOpen>[1]): Thunk =>
+/** Action-creator for keyboardOpen. */
+export const keyboardOpenActionCreator =
+  (payload: Parameters<typeof keyboardOpen>[1]): Thunk =>
   dispatch =>
-    dispatch({ type: 'isKeyboardOpen', ...payload })
+    dispatch({ type: 'keyboardOpen', ...payload })
 
-export default _.curryRight(isKeyboardOpen)
+export default _.curryRight(keyboardOpen)
 
 // Register this action's metadata
-registerActionMetadata('isKeyboardOpen', {
+registerActionMetadata('keyboardOpen', {
   undoable: false,
 })

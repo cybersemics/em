@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { isKeyboardOpenActionCreator as isKeyboardOpen } from '../actions/isKeyboardOpen'
+import { keyboardOpenActionCreator as isKeyboardOpen } from '../actions/isKeyboardOpen'
 import { isTouch } from '../browser'
 import { TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import * as selection from '../device/selection'
