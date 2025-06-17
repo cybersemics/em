@@ -32,7 +32,7 @@ const FauxCaret = ({
   wrapperElement,
 }: {
   caretType: FauxCaretType
-  /** The Path of the TreeNode used to detect table view and edit mode. Only used if caretType is 'positioned'. */
+  /** The Path of the TreeNode used to detect table view and keyboard input mode. Only used if caretType is 'positioned'. */
   path?: Path
   /** If a thought is deleted and re-created by undo or redo, its other properties will remain the same, and the element node itself will provide the only evidence of the change. Only used if caretType is 'positioned'. */
   wrapperElement?: HTMLDivElement | null
@@ -45,7 +45,7 @@ const FauxCaret = ({
     left?: Property.Left
   }>({})
 
-  const isEditingCursor = useSelector(state => state.editing && equalPath(path, state.cursor))
+  const isEditingCursor = useSelector(state => state.isKeyboardOpen && equalPath(path, state.cursor))
   const isTableCol1 = useSelector(state => path && attributeEquals(state, head(path), '=view', 'Table'))
 
   // Hide the positioned faux caret when typing occurs.
@@ -54,7 +54,7 @@ const FauxCaret = ({
     setStyles({ display: 'none' })
   })
 
-  // If the thought isCursor and edit mode is on, position the faux cursor at the point where the selection is created.
+  // If the thought isCursor and keyboard input mode is on, position the faux cursor at the point where the selection is created.
   useEffect(() => {
     if (!isTouch || !isSafari() || caretType !== 'positioned') return
 

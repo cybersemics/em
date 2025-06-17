@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { editingActionCreator as editingAction } from '../actions/editing'
+import { isKeyboardOpenActionCreator as isKeyboardOpenAction } from '../actions/isKeyboardOpen'
 import { isTouch } from '../browser'
 import { KEYBOARD_VISIBILITY_THRESHOLD } from '../constants'
 import * as selection from '../device/selection'
@@ -47,9 +47,9 @@ const handleKeyboardVisibility = _.throttle(() => {
     // Exit editing mode when keyboard is closed
     store.dispatch((dispatch, getState) => {
       const state = getState()
-      if (state.editing && state.cursor) {
+      if (state.isKeyboardOpen && state.cursor) {
         selection.clear()
-        dispatch(editingAction({ value: false }))
+        dispatch(isKeyboardOpenAction({ value: false }))
       }
     })
   }

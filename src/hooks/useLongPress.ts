@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { editingActionCreator as editing } from '../actions/editing'
+import { isKeyboardOpenActionCreator as isKeyboardOpen } from '../actions/isKeyboardOpen'
 import { isTouch } from '../browser'
 import { TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import * as selection from '../device/selection'
@@ -122,7 +122,7 @@ const useLongPress = (
         e.preventDefault()
         e.stopPropagation()
         selection.clear()
-        dispatch(editing({ value: false }))
+        dispatch(isKeyboardOpen({ value: false }))
       }
     },
     [dispatch],

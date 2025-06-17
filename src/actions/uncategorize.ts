@@ -51,7 +51,7 @@ const uncategorize = (state: State, { at }: Options): State => {
       state => uncategorize(state, { at: rootedParentOf(state, simplePath) }),
       setCursor({
         path: appendToPath(parentOf(path), head(parentOf(parentOf(simplePath)))),
-        editing: state.editing,
+        isKeyboardOpen: state.isKeyboardOpen,
         offset: 0,
       }),
     ])(state)
@@ -167,7 +167,7 @@ const uncategorize = (state: State, { at }: Options): State => {
     state =>
       setCursor(state, {
         path: getNewCursor(state),
-        editing: state.editing,
+        isKeyboardOpen: state.isKeyboardOpen,
         offset: 0,
       }),
   ])(state)

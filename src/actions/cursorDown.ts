@@ -12,7 +12,7 @@ const cursorDown = (state: State, { preserveMulticursor }: { preserveMulticursor
     ? setCursor(state, {
         path,
         cursorHistoryClear: true,
-        editing: true,
+        isKeyboardOpen: true,
         preserveMulticursor,
       })
     : state

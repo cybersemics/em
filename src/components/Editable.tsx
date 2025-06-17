@@ -8,11 +8,11 @@ import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
-import { editingActionCreator as editingAction } from '../actions/editing'
 import { errorActionCreator as error } from '../actions/error'
 import importData from '../actions/importData'
 import { importSpeechToTextActionCreator as importSpeechToText } from '../actions/importSpeechToText'
 import { setInvalidStateActionCreator as setInvalidState } from '../actions/invalidState'
+import { isKeyboardOpenActionCreator as isKeyboardOpenAction } from '../actions/isKeyboardOpen'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
@@ -126,7 +126,7 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
-  const editingOrOnCursor = useSelector(state => state.editing || equalPath(path, state.cursor))
+  const editingOrOnCursor = useSelector(state => state.isKeyboardOpen || equalPath(path, state.cursor))
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -185,12 +185,12 @@ const Editable = ({
 
   /** Set the cursor on the thought. */
   const setCursorOnThought = useCallback(
-    ({ editing }: { editing?: boolean } = {}) => {
+    ({ isKeyboardOpen }: { isKeyboardOpen?: boolean } = {}) => {
       dispatch((dispatch, getState) => {
         const state = getState()
 
-        // do not set cursor if it is unchanged and we are not entering edit mode
-        if ((!editing || state.editing) && equalPath(state.cursor, path)) return
+        // do not set cursor if it is unchanged and we are not entering keyboard input mode
+        if ((!isKeyboardOpen || state.isKeyboardOpen) && equalPath(state.cursor, path)) return
 
         // set offset to null to allow the browser to set the position of the selection
         let offset = null
@@ -210,7 +210,7 @@ const Editable = ({
           setCursor({
             cursorHistoryClear: true,
             preserveMulticursor: true,
-            editing,
+            isKeyboardOpen,
             offset,
             path,
           }),
@@ -460,7 +460,7 @@ const Editable = ({
       if (isRelatedTargetEditableOrNote) return
 
       // if related target is not editable wait until the next render to determine if we have really blurred
-      // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
+      // otherwise isKeyboardOpen may be incorrectly set to false when clicking on another thought from keyboard input mode (which results in a blur and focus in quick succession)
       setTimeout(() => {
         // detect speech-to-text
         // needs to be deferred to the next tick, otherwise causes store.getState() to be invoked in a reducer (???)
@@ -482,7 +482,7 @@ const Editable = ({
         if (isTouch) {
           // Set editing to false if user exits editing mode by tapping on a non-editable element.
           if (!selection.isThought()) {
-            dispatch(editingAction({ value: false }))
+            dispatch(isKeyboardOpenAction({ value: false }))
           }
         }
       })
@@ -508,7 +508,7 @@ const Editable = ({
       dispatch((dispatch, getState) => {
         const { dragHold, dragInProgress } = getState()
         if (!dragHold && !dragInProgress) {
-          setCursorOnThought({ editing: true })
+          setCursorOnThought({ isKeyboardOpen: true })
         }
       })
     },
@@ -535,7 +535,7 @@ const Editable = ({
         allowDefaultSelection()
       }
       // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
-      // In those cases, it is best to prevent onFocus or onClick, otherwise edit mode will be incorrectly activated.
+      // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard input mode will be incorrectly activated.
       // Steps to Reproduce: https://github.com/cybersemics/em/pull/2948#issuecomment-2887186117
       // Explanation and demo: https://github.com/cybersemics/em/pull/2948#issuecomment-2887803425
       else {

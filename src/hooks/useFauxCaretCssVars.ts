@@ -32,7 +32,7 @@ const useFauxCaretNodeProvider = ({
     }
   })
 
-  // If the thought isCursor and edit mode is on, position the faux cursor at the point where the
+  // If the thought isCursor and keyboard input mode is on, position the faux cursor at the point where the
   // selection is created.
   useEffect(
     () => {
