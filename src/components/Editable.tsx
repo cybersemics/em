@@ -493,7 +493,7 @@ const Editable = ({
    */
   const onFocus = useCallback(
     () => {
-      preventAutoscrollEnd(contentRef.current)
+      setTimeout(() => preventAutoscrollEnd(contentRef.current))
       if (suppressFocusStore.getState()) return
       // do not allow blur to setEditingValue when it is followed immediately by a focus
       blurring = false
