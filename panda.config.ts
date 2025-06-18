@@ -458,6 +458,7 @@ export default defineConfig({
     android: '[data-platform=android] &',
     mac: '[data-platform=mac] &',
     iphone: '[data-platform=iphone] &',
+    dragHold: '[data-drag-hold=true] &',
     dragInProgress: '[data-drag-in-progress=true] &',
   },
 

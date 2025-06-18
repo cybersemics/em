@@ -115,6 +115,7 @@ const AppComponent: FC = () => {
   const colors = useSelector(themeColors)
   const dark = useSelector(state => theme(state) !== 'Light')
   const dragInProgress = useSelector(state => state.dragInProgress)
+  const dragHold = useSelector(state => state.dragHold)
   const enableLatestCommandsDiagram = useSelector(state => state.enableLatestCommandsDiagram)
   const showTutorial = useSelector(state => isTutorial(state) && !state.isLoading)
   const fontSize = useSelector(state => state.fontSize)
@@ -135,6 +136,7 @@ const AppComponent: FC = () => {
     document.body.setAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
     document.body.setAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
     document.body.setAttribute('data-drag-in-progress', dragInProgress.toString())
+    document.body.setAttribute('data-drag-hold', dragHold ? dragHold.toString() : 'false')
 
     document.body.setAttribute(
       'data-browser',
@@ -156,7 +158,7 @@ const AppComponent: FC = () => {
         })
       }
     }
-  }, [colors, dark, dragInProgress])
+  }, [colors, dark, dragInProgress, dragHold])
 
   if (showModal && !modals[showModal]) {
     throw new Error(`Missing component for Modal type: ${showModal}`)
