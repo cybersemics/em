@@ -27,6 +27,7 @@ import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import archiveThought from './archiveThought'
 import { errorActionCreator as error } from './error'
+import updateCursorAfterDelete from './updateCursorAfterDelete'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
 const deleteEmptyThought = (state: State): State => {
@@ -56,7 +57,7 @@ const deleteEmptyThought = (state: State): State => {
   }
   // archive an empty thought with only hidden children
   else if (isEmpty && visibleChildren.length === 0) {
-    const prev = prevSibling(state, cursor)
+    const statePrev = state
 
     return reducerFlow([
       // archive all children
@@ -83,16 +84,7 @@ const deleteEmptyThought = (state: State): State => {
         pathParent: parentOf(cursor),
         thoughtId: head(cursor),
       }),
-      ...(prev
-        ? [
-            // move the cursor to the new thought at the correct offset
-            setCursor({
-              path: appendToPath(parentOf(simplePath), prev.id),
-              offset: getTextContentFromHTML(prev.value).length,
-              editing,
-            }),
-          ]
-        : []),
+      state => updateCursorAfterDelete(state, statePrev),
     ])(state)
   }
   // delete from beginning and merge with previous sibling
