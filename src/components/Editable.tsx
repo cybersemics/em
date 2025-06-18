@@ -64,7 +64,7 @@ interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement>
   path: Path
   disabled?: boolean
-  isEditing?: boolean
+  isEditing: boolean
   isVisible?: boolean
   multiline?: boolean
   placeholder?: string

@@ -113,7 +113,7 @@ const ThoughtAnnotation = React.memo(
     value,
   }: {
     email?: string
-    isEditing?: boolean
+    isEditing: boolean
     multiline?: boolean
     ellipsizedUrl?: boolean
     numContexts: number

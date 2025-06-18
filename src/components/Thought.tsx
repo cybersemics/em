@@ -75,8 +75,6 @@ export interface ThoughtContainerProps {
   isCursorParent?: boolean
   isDeepHovering?: boolean
   isDragging?: boolean
-  isEditing?: boolean
-  isEditingPath?: boolean
   isExpanded?: boolean
   isHeader?: boolean
   isHovering?: boolean
@@ -475,7 +473,6 @@ const ThoughtContainer = ({
   //   isCursorParent,
   //   isDeepHovering,
   //   isDragging,
-  //   isEditing,
   //   isExpanded,
   //   isHeader,
   //   isHovering,
