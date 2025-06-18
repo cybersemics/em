@@ -134,13 +134,13 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     [oldKey]: newOldLexeme,
     [newKey]: lexemeNew,
   }
-
+  const isNote = parentOfEditedThought.value === '=note'
   const sortPreference = getSortPreference(state, editedThought.parentId)
   const sortType = sortPreference.type
 
   const thoughtNew: Thought = {
     ...editedThought,
-    generating: false,
+    ...(editedThought.generating ? { generating: false } : null),
     rank:
       newValue !== '' && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
         ? getSortedRank(state, editedThought.parentId, newValue)
@@ -167,6 +167,24 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
         }
       : null),
     [editedThought.id]: thoughtNew,
+  }
+
+  // If we're editing a note, update the parent thought's rank
+  if (isNote) {
+    const parentThought = getThoughtById(state, parentOfEditedThought.parentId)
+    if (parentThought) {
+      const sortPreference = getSortPreference(state, parentThought.parentId)
+      const sortType = sortPreference.type
+      if (sortType === 'Note') {
+        const newParentRank = getSortedRank(state, parentThought.parentId, newValue)
+        thoughtIndexUpdates[parentThought.id] = {
+          ...parentThought,
+          rank: newParentRank,
+          lastUpdated: timestamp(),
+          updatedBy: clientId,
+        }
+      }
+    }
   }
 
   // preserve contextViews
