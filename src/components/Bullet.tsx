@@ -32,7 +32,7 @@ interface BulletProps {
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
   isDragging?: boolean
-  isEditing?: boolean
+  isEditing: boolean
   leaf?: boolean
   publish?: boolean
   showContexts?: boolean
@@ -369,7 +369,7 @@ const BulletParent = ({
 const BulletCursorOverlay = ({
   isHighlighted,
 }: {
-  isEditing?: boolean
+  isEditing: boolean
   isHighlighted?: boolean
   leaf?: boolean
   publish?: boolean
@@ -412,7 +412,7 @@ const Bullet = ({
   const dragHold = useSelector(state => state.dragHold)
   const showContexts = useSelector(state => isContextViewActive(state, path))
   // if being edited and meta validation error has occured
-  const invalid = useSelector(state => !!isEditing && state.invalidState)
+  const invalid = useSelector(state => isEditing && state.invalidState)
   const fontSize = useSelector(state => state.fontSize)
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),

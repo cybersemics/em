@@ -27,7 +27,7 @@ const transientChildPath = ['TRANSIENT_THOUGHT_ID'] as SimplePath
   However removing the transient editable should be handled by some business logic by parent components.
 */
 const TransientEditable = (
-  <Editable transient={true} path={transientChildPath} simplePath={transientChildPath} rank={0} />
+  <Editable isEditing={false} transient={true} path={transientChildPath} simplePath={transientChildPath} rank={0} />
 )
 
 /** The main content section of em. */
