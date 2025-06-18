@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
 import Path from '../../@types/Path'
-import { editingActionCreator as editingAction } from '../../actions/editing'
+import { keyboardOpenActionCreator } from '../../actions/keyboardOpen'
 import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
 import preventAutoscroll from '../../device/preventAutoscroll'
@@ -29,7 +29,7 @@ const useEditMode = ({
 }) => {
   // must re-render when noteFocus changes in order to set the selection
   const hasNoteFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
-  const editing = useSelector(state => state.editing)
+  const editing = useSelector(state => state.isKeyboardOpen)
   const isMulticursor = useSelector(hasMulticursor)
   const dispatch = useDispatch()
   const noteFocus = useSelector(state => state.noteFocus)
@@ -104,7 +104,7 @@ const useEditMode = ({
       hasNoteFocus,
       dragInProgress,
       noteFocus,
-      // Must subscribe to editing and not edit mode for some reason.
+      // Must subscribe to isKeyboardOpen and not when keyboard is open for some reason.
       // Otherwise it breaks selection offset persistence on refresh on desktop.
       editing,
       editableNonce,
@@ -118,9 +118,9 @@ const useEditMode = ({
       // Set editing to false after unmount
       return () => {
         dispatch((dispatch, getState) => {
-          const { cursor, editing } = getState()
-          if (editing && equalPath(cursor, path)) {
-            dispatch(editingAction({ value: false }))
+          const { cursor, isKeyboardOpen } = getState()
+          if (isKeyboardOpen && equalPath(cursor, path)) {
+            dispatch(keyboardOpenActionCreator({ value: false }))
           }
         })
       }
@@ -130,7 +130,7 @@ const useEditMode = ({
   )
 
   // Provide an escape hatch to allow the next default selection rather than setting it.
-  // This allows the user to set the selection in the middle of a non-cursor thought when in edit mode.
+  // This allows the user to set the selection in the middle of a non-cursor thought when keyboard is open.
   // Otherwise the caret is moved to the beginning of the thought.
   const allowDefaultSelection = useCallback(() => {
     disabledRef.current = true
