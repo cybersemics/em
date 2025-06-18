@@ -5,6 +5,7 @@ import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect }
 import { useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
+import State from '../@types/State'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { inputHandlers } from '../commands'
 import { Settings } from '../constants'
@@ -37,6 +38,19 @@ import GestureCheatsheet from './dialog/GestureCheatsheet'
 import * as modals from './modals'
 
 const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
+
+/** A hook that sets an attribute on the document.body element. */
+const useBodyAttribute = (name: string, value: string) => {
+  useLayoutEffect(() => {
+    document.body.setAttribute(name, value)
+  }, [name, value])
+}
+
+/** A hook that takes a Redux selector and calls useBodyAttribute to set an attribute on the body element to the value from the Redux state. */
+const useBodyAttributeSelector = <T,>(name: string, selector: (state: State) => T) => {
+  const value = useSelector(selector)
+  useBodyAttribute(name, String(value))
+}
 
 /** A gutter that toggles the sidebar. Positioned above the NavBar so that it doesn't block NavBar or Footer clicks. */
 // const SidebarGutter = () => {
@@ -114,8 +128,6 @@ const MultiGestureIfTouch: FC<PropsWithChildren> = ({ children }) => {
 const AppComponent: FC = () => {
   const colors = useSelector(themeColors)
   const dark = useSelector(state => theme(state) !== 'Light')
-  const dragInProgress = useSelector(state => state.dragInProgress)
-  const dragHold = useSelector(state => state.dragHold)
   const enableLatestCommandsDiagram = useSelector(state => state.enableLatestCommandsDiagram)
   const showTutorial = useSelector(state => isTutorial(state) && !state.isLoading)
   const fontSize = useSelector(state => state.fontSize)
@@ -130,18 +142,17 @@ const AppComponent: FC = () => {
 
   useDisableLongPressToSelect()
 
-  useLayoutEffect(() => {
-    document.body.setAttribute('data-color-mode', dark ? 'dark' : 'light')
-    document.body.setAttribute('data-device', isTouch ? 'mobile' : 'desktop')
-    document.body.setAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
-    document.body.setAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
-    document.body.setAttribute('data-drag-in-progress', dragInProgress.toString())
-    document.body.setAttribute('data-drag-hold', dragHold ? dragHold.toString() : 'false')
+  // Set body attributes using custom hooks
+  useBodyAttribute('data-device', isTouch ? 'mobile' : 'desktop')
+  useBodyAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
+  useBodyAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
+  useBodyAttribute('data-browser', /Chrome/.test(navigator.userAgent) ? 'chrome' : isSafari() ? 'safari' : 'other')
+  useBodyAttributeSelector('data-color-mode', state => (theme(state) !== 'Light' ? 'dark' : 'light'))
+  useBodyAttributeSelector('data-drag-in-progress', state => state.dragInProgress)
+  useBodyAttributeSelector('data-drag-hold', state => (state.dragHold ? state.dragHold : 'false'))
 
-    document.body.setAttribute(
-      'data-browser',
-      /Chrome/.test(navigator.userAgent) ? 'chrome' : isSafari() ? 'safari' : 'other',
-    )
+  // Handle other non-attribute logic
+  useLayoutEffect(() => {
     if (testFlags.simulateDrag) {
       document.body.classList.add('debug-simulate-drag')
     }
@@ -158,7 +169,7 @@ const AppComponent: FC = () => {
         })
       }
     }
-  }, [colors, dark, dragInProgress, dragHold])
+  }, [colors, dark])
 
   if (showModal && !modals[showModal]) {
     throw new Error(`Missing component for Modal type: ${showModal}`)
