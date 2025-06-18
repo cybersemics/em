@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { keyboardOpenActionCreator as isKeyboardOpenAction } from '../actions/isKeyboardOpen'
+import { keyboardOpenActionCreator } from '../actions/keyboardOpen'
 import { isTouch } from '../browser'
 import { KEYBOARD_VISIBILITY_THRESHOLD } from '../constants'
 import * as selection from '../device/selection'
@@ -49,7 +49,7 @@ const handleKeyboardVisibility = _.throttle(() => {
       const state = getState()
       if (state.isKeyboardOpen && state.cursor) {
         selection.clear()
-        dispatch(isKeyboardOpenAction({ value: false }))
+        dispatch(keyboardOpenActionCreator({ value: false }))
       }
     })
   }

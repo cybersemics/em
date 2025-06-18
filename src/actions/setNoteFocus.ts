@@ -15,7 +15,7 @@ const setNoteFocus = (state: State, { value, offset }: NoteFocusType): State => 
   noteFocus: value,
   // clear the offset when the caret leaves a note
   noteOffset: value ? offset : null,
-  // always enter keyboard input mode when there is note focus
+  // always open keyboard when there is note focus
   // it will be set in the Note's onFocus anyway, but set it here so that we are not as dependent on what happens there
   ...(value ? { isKeyboardOpen: true } : null),
 })

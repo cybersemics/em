@@ -14,7 +14,7 @@ const cursorCleared = (state: State, { value }: { value: boolean }): State => ({
   // Use editableNonce to force re-render
   // otherwise clearThought will not work after editing a thought
   editableNonce: state.editableNonce + 1,
-  // manually set keyboard input mode to true since the cursor is not changing and normally setCursor handles this
+  // manually set keyboard is open to true since the cursor is not changing and normally setCursor handles this
   isKeyboardOpen: value,
   // clearing the cursor should always move the caret into the empty thought
   noteFocus: false,

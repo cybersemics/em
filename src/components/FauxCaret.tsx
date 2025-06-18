@@ -32,7 +32,7 @@ const FauxCaret = ({
   wrapperElement,
 }: {
   caretType: FauxCaretType
-  /** The Path of the TreeNode used to detect table view and keyboard input mode. Only used if caretType is 'positioned'. */
+  /** The Path of the TreeNode used to detect table view and when keyboard is open. Only used if caretType is 'positioned'. */
   path?: Path
   /** If a thought is deleted and re-created by undo or redo, its other properties will remain the same, and the element node itself will provide the only evidence of the change. Only used if caretType is 'positioned'. */
   wrapperElement?: HTMLDivElement | null
@@ -54,7 +54,7 @@ const FauxCaret = ({
     setStyles({ display: 'none' })
   })
 
-  // If the thought isCursor and keyboard input mode is on, position the faux cursor at the point where the selection is created.
+  // If the thought isCursor and keyboard is open, position the faux cursor at the point where the selection is created.
   useEffect(() => {
     if (!isTouch || !isSafari() || caretType !== 'positioned') return
 

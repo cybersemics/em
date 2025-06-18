@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
 import Path from '../../@types/Path'
-import { keyboardOpenActionCreator as isKeyboardOpenAction } from '../../actions/isKeyboardOpen'
+import { keyboardOpenActionCreator } from '../../actions/keyboardOpen'
 import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
 import preventAutoscroll from '../../device/preventAutoscroll'
@@ -104,7 +104,7 @@ const useEditMode = ({
       hasNoteFocus,
       dragInProgress,
       noteFocus,
-      // Must subscribe to isKeyboardOpen and not keyboard input mode for some reason.
+      // Must subscribe to isKeyboardOpen and not when keyboard is open for some reason.
       // Otherwise it breaks selection offset persistence on refresh on desktop.
       editing,
       editableNonce,
@@ -120,7 +120,7 @@ const useEditMode = ({
         dispatch((dispatch, getState) => {
           const { cursor, isKeyboardOpen } = getState()
           if (isKeyboardOpen && equalPath(cursor, path)) {
-            dispatch(isKeyboardOpenAction({ value: false }))
+            dispatch(keyboardOpenActionCreator({ value: false }))
           }
         })
       }
@@ -130,7 +130,7 @@ const useEditMode = ({
   )
 
   // Provide an escape hatch to allow the next default selection rather than setting it.
-  // This allows the user to set the selection in the middle of a non-cursor thought when in keyboard input mode.
+  // This allows the user to set the selection in the middle of a non-cursor thought when keyboard is open.
   // Otherwise the caret is moved to the beginning of the thought.
   const allowDefaultSelection = useCallback(() => {
     disabledRef.current = true
