@@ -34,7 +34,7 @@ const setCursor = (
     contextChain = [],
     cursorHistoryClear,
     cursorHistoryPop,
-    editing,
+    isKeyboardOpen,
     noteFocus = false,
     noteOffset = null,
     offset,
@@ -45,7 +45,7 @@ const setCursor = (
     contextChain?: SimplePath[]
     cursorHistoryClear?: boolean
     cursorHistoryPop?: boolean
-    editing?: boolean | null
+    isKeyboardOpen?: boolean | null
     noteFocus?: boolean
     noteOffset?: number | null
     offset?: number | null
@@ -145,7 +145,7 @@ const setCursor = (
         }
       : null),
     // this is needed in particular for creating a new note, otherwise the cursor will disappear
-    editing: editing != null ? editing : state.editing,
+    isKeyboardOpen: isKeyboardOpen != null ? isKeyboardOpen : state.isKeyboardOpen,
     // reset cursorCleared on navigate
     cursorCleared: false,
     cursorOffset: updatedOffset,
@@ -160,7 +160,7 @@ const setCursor = (
       : null),
     ...(!thoughtsResolved ? { showColorPicker: false, showLetterCase: false, showSortPicker: false } : null),
     // Close command menu when editing is set to true, or if there is no cursor.
-    showCommandMenu: state.showCommandMenu && !editing && thoughtsResolved !== null,
+    showCommandMenu: state.showCommandMenu && !isKeyboardOpen && thoughtsResolved !== null,
   }
 
   return stateNew

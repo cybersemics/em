@@ -186,7 +186,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
       return !preventSetCursor
         ? setCursor(newState, {
-            editing: true,
+            isKeyboardOpen: true,
             path: unroot([...parentPath!, newThoughtId]),
             offset: offset != null ? offset : getTextContentFromHTML(value).length,
           })

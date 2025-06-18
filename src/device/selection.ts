@@ -74,7 +74,7 @@ export const isNote = () => {
 }
 
 /** Returns true if the selection is on a thought. */
-// We should see if it is possible to just use state.editing and selection.isActive()
+// We should see if it is possible to just use state.isKeyboardOpen and selection.isActive()
 export const isThought = (): boolean => {
   // type classList as optional
   const focusNode = window.getSelection()?.focusNode

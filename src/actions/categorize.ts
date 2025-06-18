@@ -104,7 +104,7 @@ const categorize = (state: State): State => {
     setCursor({
       path: appendToPath(cursorParent, newThoughtId),
       offset: 0,
-      editing: true,
+      isKeyboardOpen: true,
     }),
   ])(state)
 }

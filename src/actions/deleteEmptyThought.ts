@@ -30,7 +30,7 @@ import { errorActionCreator as error } from './error'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
 const deleteEmptyThought = (state: State): State => {
-  const { cursor, editing } = state
+  const { cursor, isKeyboardOpen } = state
 
   if (!cursor) return state
 
@@ -126,7 +126,7 @@ const deleteEmptyThought = (state: State): State => {
         setCursor({
           path: pathPrevNew,
           offset: getTextContentFromHTML(prev.value).length,
-          editing,
+          isKeyboardOpen,
         }),
       ])(state)
     }

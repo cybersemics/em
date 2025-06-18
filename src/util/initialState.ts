@@ -116,7 +116,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     cursorOffset: 0,
     dragInProgress: false,
     editableNonce: 0,
-    editing: null,
+    isKeyboardOpen: null,
     enableLatestCommandsDiagram: false,
     error: null,
     expanded: {},

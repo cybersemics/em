@@ -151,7 +151,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
     setCursor({
       path: cursorNew,
-      editing: state.editing,
+      isKeyboardOpen: state.isKeyboardOpen,
       offset,
     }),
   ])(state)

@@ -25,7 +25,7 @@ const undoArchive = (
     state =>
       setCursor(state, {
         path: originalPath,
-        editing: state.editing,
+        isKeyboardOpen: state.isKeyboardOpen,
         offset,
       }),
 
