@@ -524,7 +524,7 @@ const Editable = ({
       // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
       // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
       // See: #981
-      if (editingOrOnCursor) {
+      if (editingOrOnCursor && !hasMulticursor) {
         // Prevent the browser from autoscrolling to this editable element.
         // For some reason doesn't work on touchend.
         preventAutoscroll(contentRef.current, {
@@ -542,7 +542,7 @@ const Editable = ({
         e.preventDefault()
       }
     },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection],
+    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor],
   )
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
