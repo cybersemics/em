@@ -76,6 +76,10 @@ const Content: FC = () => {
           maxWidth: '60em',
           margin: '0 auto',
           minHeight: '100vh',
+          // Disallow text selection on the entire tree to prevent selection of scroll zone and other background elements when dragging.
+          // This is overriden by the editable recipe to enable text selection on editable thoughts.
+          // https://github.com/cybersemics/em/pull/2962
+          userSelect: 'none',
           zIndex: 'content',
           '@media (max-width: 960px)': {
             maxWidth: '80%',
