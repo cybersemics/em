@@ -251,7 +251,7 @@ const ContextBreadcrumbs = ({
             // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
             // This way it will only animate when the length of the cursor changes.
             return (
-              <FadeTransition duration='fast' key={i} id={i} nodeRef={nodeRef}>
+              <FadeTransition type='fast' key={i} id={i} nodeRef={nodeRef}>
                 <BreadCrumb
                   ref={nodeRef}
                   isOverflow={isOverflow}

@@ -6,7 +6,7 @@ import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
-import { editingActionCreator as editing } from '../actions/editing'
+import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
@@ -49,7 +49,7 @@ const Note = React.memo(
         setCursor({
           path,
           cursorHistoryClear: true,
-          editing: true,
+          isKeyboardOpen: true,
           noteOffset: null,
           noteFocus: true,
         }),
@@ -138,7 +138,7 @@ const Note = React.memo(
             ((e.relatedTarget as Element).hasAttribute?.('data-editable') ||
               !!(e.relatedTarget as Element).matches('[aria-label="note-editable"]'))
 
-          if (!isRelatedTargetEditableOrNote) setTimeout(() => dispatch(editing({ value: false })))
+          if (!isRelatedTargetEditableOrNote) setTimeout(() => dispatch(keyboardOpen({ value: false })))
         }
       },
       [dispatch],

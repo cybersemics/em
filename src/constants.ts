@@ -178,8 +178,7 @@ export const MIN_CONTENT_WIDTH_EM = 3
 export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'undo',
   'redo',
-  'newThought',
-  'newSubthought',
+  'toggleUndoSlider',
   'favorite',
   'outdent',
   'indent',
@@ -438,8 +437,6 @@ export const AlertText = {
 }
 
 export enum AlertType {
-  // shown when a dragged thought is hovering over the CopyOneDrop component
-  CopyOneDropHint = 'CopyOneDropHint',
   // shown when a dragged thought is hovering over the DeleteDrop component
   DeleteDropHint = 'DeleteDropHint',
   // shown when dragging a thought
@@ -448,8 +445,6 @@ export enum AlertType {
   DragAndDropToolbarHint = 'DragAndDropToolbarHint',
   // shown when dragging a toolbar button from the command table
   DragAndDropToolbarAdd = 'DragAndDropToolbarAdd',
-  // shown when a dragged thought is hovering over the ExportDrop component
-  ExportDropHint = 'ExportDropHint',
   // shown during a MultiGesture
   GestureHint = 'GestureHint',
   // shown when importing one or more files via drag-and-drop or a large paste

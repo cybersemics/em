@@ -14,6 +14,7 @@ import DialogTitle from './DialogTitle'
 const GestureCheatsheet: React.FC = () => {
   const dispatch = useDispatch()
   const isOpen = useSelector(state => state.showGestureCheatsheet)
+  const nodeRef = React.useRef<HTMLDivElement>(null)
 
   /**
    * Handles the closure of the gesture cheatsheet.
@@ -32,8 +33,8 @@ const GestureCheatsheet: React.FC = () => {
   }, [isOpen])
 
   return (
-    <FadeTransition in={isOpen} unmountOnExit duration='medium'>
-      <Dialog onClose={handleClose}>
+    <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
+      <Dialog onClose={handleClose} nodeRef={nodeRef}>
         <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
         <DialogContent>
           <CommandTable viewType='grid' />

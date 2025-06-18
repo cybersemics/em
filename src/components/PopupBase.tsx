@@ -119,6 +119,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
               opacity: showXOnHover ? 1 : undefined,
             },
           },
+          /** It should be possible to drag elements through a popup without interference. */
+          pointerEvents: { _dragHold: 'none' },
         })}
         // disable swipe-to-dismiss when multicursor is active
         {...(!multicursor && useSwipeToDismissProps)}

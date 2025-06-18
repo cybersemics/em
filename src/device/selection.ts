@@ -74,7 +74,7 @@ export const isNote = () => {
 }
 
 /** Returns true if the selection is on a thought. */
-// We should see if it is possible to just use state.editing and selection.isActive()
+// We should see if it is possible to just use state.isKeyboardOpen and selection.isActive()
 export const isThought = (): boolean => {
   // type classList as optional
   const focusNode = window.getSelection()?.focusNode
@@ -361,6 +361,9 @@ export const set = (
       range.setStart(focusNode, end ? getEndOffset() : (nodeOffset?.offset ?? offset))
     } catch (e) {
       console.warn(e)
+
+      // better than nothing
+      range.setStart(focusNode, getEndOffset())
     }
   }
   range.collapse(true)

@@ -93,7 +93,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
   const lastHapticScrollPosition = useRef<number>(0)
-  const toolbarContainerRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [leftArrowIsShown, setLeftArrowIsShown] = useState(false)
   const [rightArrowIsShown, setRightArrowIsShown] = useState(true)
@@ -126,7 +125,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   }, [latestPress])
 
   /** Selects the toolbar button that is pressed. */
-  const selectPressingToolbarId = useCallback((id: string) => {
+  const selectPressingToolbarId = useCallback((id: string | null) => {
     setPressingToolbarId(id)
     setLatestPress(Date.now())
   }, [])
@@ -208,14 +207,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   )
 
   return (
-    <FadeTransition
-      nodeRef={toolbarContainerRef}
-      in={!distractionFreeTyping}
-      duration='distractionFreeTyping'
-      unmountOnExit
-    >
+    <FadeTransition in={!distractionFreeTyping} type='distractionFreeTyping' unmountOnExit>
       <div
-        ref={toolbarContainerRef}
         aria-label='toolbar'
         className={cx(
           // When a dropdown like ColorPicker or LetterCase is open, set pointer-events: none, otherwise the toolbar will block the editor. This will be overridden by the toolbar buttons to allow interaction.

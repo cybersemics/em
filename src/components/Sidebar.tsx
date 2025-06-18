@@ -56,7 +56,6 @@ const SidebarLink = ({
 const Sidebar = () => {
   const [isSwiping, setIsSwiping] = useState(false)
   const containerRef = useRef<HTMLInputElement>(null)
-  const sidebarMenuRef = useRef<HTMLInputElement>(null)
   const showSidebar = useSelector(state => state.showSidebar)
   const fontSize = useSelector(state => state.fontSize)
   const dispatch = useDispatch()
@@ -161,9 +160,8 @@ const Sidebar = () => {
           })}
           data-scroll-at-edge
         >
-          <FadeTransition duration='fast' in={showSidebar} nodeRef={sidebarMenuRef}>
+          <FadeTransition type='fast' in={showSidebar}>
             <div
-              ref={sidebarMenuRef}
               style={{
                 // match HamburgerMenu width + padding
                 marginLeft: fontSize * 1.3 + 30,
