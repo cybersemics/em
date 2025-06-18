@@ -143,13 +143,13 @@ const AppComponent: FC = () => {
   useDisableLongPressToSelect()
 
   // Set body attributes using custom hooks
-  useBodyAttributeSelector('data-color-mode', state => (theme(state) !== 'Light' ? 'dark' : 'light'))
   useBodyAttribute('data-device', isTouch ? 'mobile' : 'desktop')
   useBodyAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
   useBodyAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
-  useBodyAttributeSelector('data-drag-in-progress', state => state.dragInProgress.toString())
-  useBodyAttributeSelector('data-drag-hold', state => (state.dragHold ? state.dragHold.toString() : 'false'))
   useBodyAttribute('data-browser', /Chrome/.test(navigator.userAgent) ? 'chrome' : isSafari() ? 'safari' : 'other')
+  useBodyAttributeSelector('data-color-mode', state => (theme(state) !== 'Light' ? 'dark' : 'light'))
+  useBodyAttributeSelector('data-drag-in-progress', state => state.dragInProgress)
+  useBodyAttributeSelector('data-drag-hold', state => (state.dragHold ? state.dragHold : 'false'))
 
   // Handle other non-attribute logic
   useLayoutEffect(() => {
