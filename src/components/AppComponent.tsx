@@ -5,14 +5,13 @@ import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect }
 import { useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
+import State from '../@types/State'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { inputHandlers } from '../commands'
 import { Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import globals from '../globals'
-import useBodyAttribute from '../hooks/useBodyAttribute'
-import useBodyAttributeSelector from '../hooks/useBodyAttributeSelector'
 import getUserSetting from '../selectors/getUserSetting'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
@@ -39,6 +38,19 @@ import GestureCheatsheet from './dialog/GestureCheatsheet'
 import * as modals from './modals'
 
 const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
+
+/** A hook that sets an attribute on the document.body element. */
+const useBodyAttribute = (name: string, value: string) => {
+  useLayoutEffect(() => {
+    document.body.setAttribute(name, value)
+  }, [name, value])
+}
+
+/** A hook that takes a Redux selector and calls useBodyAttribute to set an attribute on the body element to the value from the Redux state. */
+const useBodyAttributeSelector = <T,>(name: string, selector: (state: State) => T) => {
+  const value = useSelector(selector)
+  useBodyAttribute(name, String(value))
+}
 
 /** A gutter that toggles the sidebar. Positioned above the NavBar so that it doesn't block NavBar or Footer clicks. */
 // const SidebarGutter = () => {
