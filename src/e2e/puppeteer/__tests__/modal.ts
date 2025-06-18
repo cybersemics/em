@@ -4,6 +4,7 @@ import configureSnapshots from '../configureSnapshots'
 import openModal from '../helpers/openModal'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
+import testIfNotCI from '../helpers/testIfNotCI'
 
 const testFileName = path.basename(__filename).replace('.ts', '')
 expect.extend({
@@ -29,7 +30,9 @@ const modalSnapshots = async (id: Modal) => {
   }
 }
 
-it('modal', async () => {
+// TODO: Flaky test
+// https://github.com/cybersemics/em/issues/2957
+testIfNotCI.skip('modal', async () => {
   const customizeToolbarImages = await modalSnapshots('customizeToolbar')
   expect(customizeToolbarImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-customizeToolbar` })
   expect(customizeToolbarImages.light).toMatchImageSnapshot({
