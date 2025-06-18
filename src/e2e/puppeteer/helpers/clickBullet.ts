@@ -14,7 +14,7 @@ const clickBullet = async (value: string) => {
 
     if (!thoughtContainer) return
 
-    return thoughtContainer.querySelector(':scope > [aria-label="bullet"]')
+    return thoughtContainer.querySelector('[aria-label="bullet"]')
   }, editableNode)
 
   if (!bulletNode) throw new Error('Bullet node not found.')

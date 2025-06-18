@@ -46,7 +46,7 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
 const NavBar = ({ position }: { position: string }) => {
   const isTutorialOn = useSelector(isTutorial)
   const authenticated = useSelector(state => state.authenticated)
-  const editing = useSelector(state => state.editing)
+  const editing = useSelector(state => state.isKeyboardOpen)
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const scale = fontSize / BASE_FONT_SIZE
@@ -115,7 +115,7 @@ const NavBar = ({ position }: { position: string }) => {
                     />
                   ) : null}
                   <FadeTransition
-                    duration='fast'
+                    type='fast'
                     nodeRef={cursorBreadcrumbsWrapperRef}
                     in={!distractionFreeTyping}
                     unmountOnExit

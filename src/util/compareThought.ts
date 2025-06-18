@@ -2,10 +2,14 @@
 import _ from 'lodash'
 import ComparatorFunction from '../@types/ComparatorFunction'
 import ComparatorValue from '../@types/ComparatorValue'
+import State from '../@types/State'
 import Thought from '../@types/Thought'
 import { ALLOWED_FORMATTING_TAGS, EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
+import thoughtToPath from '../selectors/thoughtToPath'
+import compareByRank from './compareByRank'
 import isAttribute from './isAttribute'
 import lower from './lower'
+import noteValue from './noteValue'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
 const IGNORED_PREFIXES = ['the ']
@@ -175,12 +179,6 @@ export const compareReasonable: ComparatorFunction<string> = makeOrderedComparat
   (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
 ])
 
-/** Get reverse of the given comparator. */
-const reverse =
-  <T>(comparator: ComparatorFunction<T>): ComparatorFunction<T> =>
-  (a: T, b: T) =>
-    comparator(b, a)
-
 /** A comparator that sorts anything in descending order. Not a strict reversal of compareReasonable, as empty strings, formatting, punctuation, and meta attributes are still sorted above plain text.
  * 1. Empty string.
  * 2. Punctuation (=, +, #hi, =test).
@@ -192,9 +190,9 @@ const reverse =
 export const compareReasonableDescending: ComparatorFunction<string> = makeOrderedComparator<string>([
   compareFormatting,
   compareEmpty,
-  reverse(comparePunctuationAndOther),
-  reverse(compareStringsWithMetaAttributes),
-  reverse(compareStringsWithEmoji),
+  _.flip(comparePunctuationAndOther),
+  _.flip(compareStringsWithMetaAttributes),
+  _.flip(compareStringsWithEmoji),
   (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
 ])
 
@@ -221,3 +219,29 @@ export const compareThoughtByUpdated: ComparatorFunction<Thought> = (a: Thought,
 /** Compare two thoughts by their lastUpdated timestamp in descending order (newest first). Fall back to compareReasonable if created at the same time. */
 export const compareThoughtByUpdatedDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
   compare(b.lastUpdated, a.lastUpdated) || compareReasonable(a.value, b.value)
+
+/** Makes a comparator function that compares two thoughts by their note value. */
+const makeCompareThoughtByNote =
+  (state: State): ComparatorFunction<Thought> =>
+  (a: Thought, b: Thought) => {
+    const noteA = noteValue(state, thoughtToPath(state, a.id)) ?? '\0'
+    const noteB = noteValue(state, thoughtToPath(state, b.id)) ?? '\0'
+    return compareReasonable(noteA, noteB)
+  }
+
+/** Makes a comparator function that compares two thoughts by their note value. */
+const makeCompareThoughtNoteAndOther =
+  (state: State): ComparatorFunction<Thought> =>
+  (a: Thought, b: Thought) => {
+    const aHasNote = noteValue(state, thoughtToPath(state, a.id)) !== null
+    const bHasNote = noteValue(state, thoughtToPath(state, b.id)) !== null
+    return aHasNote && !bHasNote ? -1 : bHasNote && !aHasNote ? 1 : 0
+  }
+
+/** Compare two thoughts by their note value in ascending order, falling back to their rank if notes are absent or equal. */
+export const compareThoughtByNoteAndRank = (state: State): ComparatorFunction<Thought> =>
+  makeOrderedComparator([makeCompareThoughtNoteAndOther(state), makeCompareThoughtByNote(state), compareByRank])
+
+/** Compare two thoughts by their note value in descending order, falling back to their rank if notes are absent or equal. */
+export const compareThoughtByNoteDescendingAndRank = (state: State): ComparatorFunction<Thought> =>
+  makeOrderedComparator([makeCompareThoughtNoteAndOther(state), _.flip(makeCompareThoughtByNote(state)), compareByRank])

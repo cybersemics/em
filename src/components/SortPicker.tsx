@@ -15,7 +15,7 @@ import isRoot from '../util/isRoot'
 import Popover from './Popover'
 
 // Define the type for sort options
-type SortType = 'None' | 'Alphabetical' | 'Created' | 'Updated'
+type SortType = 'None' | 'Alphabetical' | 'Created' | 'Updated' | 'Note'
 
 /** Sort Option component for individual sort options. */
 interface SortOptionProps {
@@ -135,6 +135,13 @@ const SortPicker: FC<{ size?: number }> = memo(({ size }) => {
           type='Updated'
           supportsDirection={true}
           label='Updated'
+          sortPreference={sortPreference}
+          onClick={toggleSortOption}
+        />
+        <SortOption
+          type='Note'
+          supportsDirection={true}
+          label='Note'
           sortPreference={sortPreference}
           onClick={toggleSortOption}
         />

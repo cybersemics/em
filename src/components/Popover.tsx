@@ -19,7 +19,7 @@ const Popover: FC<PopoverProps> = ({ children, show, size = 18 }) => {
   const overflow = useWindowOverflow(ref)
 
   return (
-    <FadeTransition duration='fast' nodeRef={ref} in={show} exit={false} unmountOnExit>
+    <FadeTransition type='fast' in={show} exit={false} unmountOnExit>
       <div
         ref={ref}
         className={css({

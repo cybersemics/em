@@ -110,7 +110,7 @@ const useHideSpaceAbove = (spaceAbove: number) => {
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
-  const editing = useSelector(state => state.editing)
+  const editing = useSelector(state => state.isKeyboardOpen)
   const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
@@ -231,10 +231,6 @@ const LayoutTree = () => {
       className={cx(
         css({
           marginTop: '0.501em',
-          // Disallow text selection on the entire tree to prevent selection of scroll zone and other background elements when dragging.
-          // This is overriden by the editable recipe to enable text selection on editable thoughts.
-          // https://github.com/cybersemics/em/pull/2962
-          userSelect: 'none',
         }),
         fauxCaretTreeProvider(indent),
       )}

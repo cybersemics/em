@@ -1,4 +1,4 @@
-import React, { FC, MutableRefObject, useCallback, useMemo, useState } from 'react'
+import React, { FC, MutableRefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
@@ -10,7 +10,7 @@ import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut } from '../commands'
 import { TOOLBAR_BUTTON_PADDING } from '../constants'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
-import useToolbarLongPress from '../hooks/useToolbarLongPress'
+import useLongPress from '../hooks/useLongPress'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
 import { executeCommandWithMulticursor } from '../util/executeCommand'
@@ -48,6 +48,9 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
+  /** Tracks if long press was activated and the command has a longPress handler. Used to show the UndoSlider when the Undo or Redo toolbar buttons are long pressed. */
+  const isPressedRef = useRef(false)
+
   const command = commandById(commandId)
   if (!command) {
     console.error('Missing command: ' + commandId)
@@ -74,12 +77,20 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     customize,
   })
   const dropToRemove = isDragging && dragCommandZone === DragCommandZone.Remove
-  const longPress = useToolbarLongPress({
-    disabled: !customize,
-    isDragging,
-    command,
-    sourceZone: DragCommandZone.Toolbar,
-  })
+  const longPress = {
+    props: useLongPress(
+      () => {
+        if (command.longPress) {
+          isPressedRef.current = true
+          command.longPress?.(store.dispatch)
+        }
+      },
+      () => {
+        isPressedRef.current = false
+      },
+      800,
+    ),
+  }
   const longPressTapUp = longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']
   const longPressTapDown = longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown']
   const longPressTouchMove = longPress.props.onTouchMove
@@ -106,17 +117,19 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         haptics.light()
 
-        executeCommandWithMulticursor(command, { store, type: 'toolbar', event: e })
+        if (!isPressedRef.current) {
+          executeCommandWithMulticursor(command, { store, type: 'toolbar', event: e })
 
-        // only animate from inactive -> active
-        // only animate toggleSort from Manual -> Asc or Asc to Desc
-        setIsAnimated(
-          commandId === 'toggleSort'
-            ? direction === null || direction === 'Asc'
-            : isActive
-              ? !isButtonActive
-              : !commandState,
-        )
+          // only animate from inactive -> active
+          // only animate toggleSort from Manual -> Asc or Asc to Desc
+          setIsAnimated(
+            commandId === 'toggleSort'
+              ? direction === null || direction === 'Asc'
+              : isActive
+                ? !isButtonActive
+                : !commandState,
+          )
+        }
 
         // prevent Editable blur
         if (isTouch) {
@@ -176,7 +189,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     () => ({
       fill: buttonError
         ? token('colors.red')
-        : longPress.isPressed || isDragging
+        : isDragging
           ? undefined
           : isButtonExecutable && isButtonActive
             ? token('colors.fg')
@@ -184,7 +197,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       width: fontSize + 4,
       height: fontSize + 4,
     }),
-    [buttonError, fontSize, isButtonActive, isButtonExecutable, isDragging, longPress.isPressed],
+    [buttonError, fontSize, isButtonActive, isButtonExecutable, isDragging],
   )
   return (
     <div
@@ -214,10 +227,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
           // offset top to avoid changing container height
           // marginBottom: isPressing ? -10 : 0,
           // top: isButtonExecutable && isPressing ? 10 : 0,
-          transform:
-            isButtonExecutable && isPressing && !longPress.isPressed && !isDragging
-              ? `translateY(0.25em)`
-              : `translateY(0em)`,
+          transform: isButtonExecutable && isPressing && !isDragging ? `translateY(0.25em)` : `translateY(0em)`,
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition:
@@ -241,7 +251,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
 
       {
         // drag-and-drop circle overlay
-        (longPress.isPressed || isDragging) && !dropToRemove && (
+        isDragging && !dropToRemove && (
           <div
             className={css({
               borderRadius: 999,

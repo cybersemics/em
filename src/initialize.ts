@@ -5,6 +5,7 @@ import Lexeme from './@types/Lexeme'
 import PushBatch from './@types/PushBatch'
 import State from './@types/State'
 import Thought from './@types/Thought'
+import ThoughtId from './@types/ThoughtId'
 import Thunk from './@types/Thunk'
 import { errorActionCreator as error } from './actions/error'
 import { importFilesActionCreator as importFiles } from './actions/importFiles'
@@ -261,7 +262,7 @@ const windowEm = {
   // helper functions that will be used by puppeteer tests
   testFlags,
   testHelpers,
-  thoughtToContext: withState(thoughtToContext),
+  thoughtToContext: withState((state: State, thoughtId: ThoughtId) => thoughtToContext(state, thoughtId)),
 }
 
 window.em = windowEm

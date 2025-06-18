@@ -8,6 +8,7 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { isSafari, isTouch } from '../browser'
+import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -58,7 +59,6 @@ export interface ThoughtProps {
   styleContainer?: React.CSSProperties
   styleThought?: React.CSSProperties
   view?: string | null
-  marginRight: number
   isPressed: boolean
 }
 
@@ -109,7 +109,6 @@ const StaticThought = ({
   style,
   styleThought,
   styleAnnotation,
-  marginRight,
   updateSize,
   isPressed,
 }: ThoughtProps) => {
@@ -184,12 +183,8 @@ const StaticThought = ({
             ellipsizedUrl,
             inverse: (dark && isBlack(styleAnnotation?.color)) || (!dark && isWhite(styleAnnotation?.color)),
           }),
-          css({
-            // do not set a min-width on table column 1 since there is no room for additional click area
-            minWidth: !isTableCol1 ? '3em' : undefined,
-          }),
         )}
-        style={{ marginRight: `${marginRight}px` }}
+        style={{ minWidth: `${MIN_CONTENT_WIDTH_EM}em` }}
       >
         {homeContext ? (
           // left, top are eyeballed for different font sizes

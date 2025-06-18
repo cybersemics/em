@@ -528,7 +528,12 @@ const CommandPaletteWithTransition: FC = () => {
       childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {showCommandPalette ? (
-        <FadeTransition duration='fast' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
+        <FadeTransition
+          type='fast'
+          // for some reason doesn't fade in correctly when default nodeRef is used
+          nodeRef={popupRef}
+          onEntering={() => setDismiss(false)}
+        >
           <Popup
             ref={popupRef}
             // only show the close link on desktop

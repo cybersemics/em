@@ -15,12 +15,12 @@ const safariKeyboardStore = reactMinistore({
 
 /** Updates the safariKeyboardStore state based on the selection. */
 export const updateSafariKeyboardState = () => {
-  // A timeout is necessary to ensure the editing state is updated after the selection change.
+  // A timeout is necessary to ensure the isKeyboardOpen state is updated after the selection change.
   // This places the function call in the next event loop, after the state has been updated.
   setTimeout(() => {
     const { virtualKeyboardHeight } = viewportStore.getState()
-    const editing = store.getState().editing
-    const keyboardIsVisible = editing === true
+    const isKeyboardOpen = store.getState().isKeyboardOpen
+    const keyboardIsVisible = isKeyboardOpen === true
     if (keyboardIsVisible && !safariKeyboardStore.getState().open) {
       // Animate the keyboard opening
       const start = Date.now()

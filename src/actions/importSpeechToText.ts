@@ -8,7 +8,7 @@ import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import strip from '../util/strip'
 import editThought from './editThought'
-import editing from './editing'
+import keyboardOpen from './keyboardOpen'
 import newThought from './newThought'
 
 /** Atomically insert multiple new thoughts. Excludes empty lines. */
@@ -50,9 +50,9 @@ const importSpeechToText = _.curryRight(
       }),
       // insert remaining lines
       insertMultipleThoughts({ simplePath, lines: lines.slice(1) }),
-      // set editing to false again, since inserting thoughts enables edit mode
-      // TODO: There is a call to setCursor with editing: true that invalidates this line
-      editing({ value: false }),
+      // set isKeyboardOpen to false again, since inserting thoughts opens keyboard
+      // TODO: There is a call to setCursor with isKeyboardOpen: true that invalidates this line
+      keyboardOpen({ value: false }),
     ])(state)
   },
 )
