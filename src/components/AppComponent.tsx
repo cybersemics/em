@@ -11,6 +11,8 @@ import { Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import globals from '../globals'
+import useBodyAttribute from '../hooks/useBodyAttribute'
+import useBodyAttributeSelector from '../hooks/useBodyAttributeSelector'
 import getUserSetting from '../selectors/getUserSetting'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
@@ -114,8 +116,6 @@ const MultiGestureIfTouch: FC<PropsWithChildren> = ({ children }) => {
 const AppComponent: FC = () => {
   const colors = useSelector(themeColors)
   const dark = useSelector(state => theme(state) !== 'Light')
-  const dragInProgress = useSelector(state => state.dragInProgress)
-  const dragHold = useSelector(state => state.dragHold)
   const enableLatestCommandsDiagram = useSelector(state => state.enableLatestCommandsDiagram)
   const showTutorial = useSelector(state => isTutorial(state) && !state.isLoading)
   const fontSize = useSelector(state => state.fontSize)
@@ -130,18 +130,17 @@ const AppComponent: FC = () => {
 
   useDisableLongPressToSelect()
 
-  useLayoutEffect(() => {
-    document.body.setAttribute('data-color-mode', dark ? 'dark' : 'light')
-    document.body.setAttribute('data-device', isTouch ? 'mobile' : 'desktop')
-    document.body.setAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
-    document.body.setAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
-    document.body.setAttribute('data-drag-in-progress', dragInProgress.toString())
-    document.body.setAttribute('data-drag-hold', dragHold ? dragHold.toString() : 'false')
+  // Set body attributes using custom hooks
+  useBodyAttributeSelector('data-color-mode', state => (theme(state) !== 'Light' ? 'dark' : 'light'))
+  useBodyAttribute('data-device', isTouch ? 'mobile' : 'desktop')
+  useBodyAttribute('data-native', Capacitor.isNativePlatform() ? 'true' : 'false')
+  useBodyAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
+  useBodyAttributeSelector('data-drag-in-progress', state => state.dragInProgress.toString())
+  useBodyAttributeSelector('data-drag-hold', state => (state.dragHold ? state.dragHold.toString() : 'false'))
+  useBodyAttribute('data-browser', /Chrome/.test(navigator.userAgent) ? 'chrome' : isSafari() ? 'safari' : 'other')
 
-    document.body.setAttribute(
-      'data-browser',
-      /Chrome/.test(navigator.userAgent) ? 'chrome' : isSafari() ? 'safari' : 'other',
-    )
+  // Handle other non-attribute logic
+  useLayoutEffect(() => {
     if (testFlags.simulateDrag) {
       document.body.classList.add('debug-simulate-drag')
     }
@@ -158,7 +157,7 @@ const AppComponent: FC = () => {
         })
       }
     }
-  }, [colors, dark, dragInProgress, dragHold])
+  }, [colors, dark])
 
   if (showModal && !modals[showModal]) {
     throw new Error(`Missing component for Modal type: ${showModal}`)
