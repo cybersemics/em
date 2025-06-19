@@ -6,13 +6,9 @@ import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 
 const options = {
   backends: [
-    // HTML5 backend
-    // https://react-dnd.github.io/react-dnd/docs/backends/html5
-    {
-      id: 'html5',
-      backend: HTML5Backend,
-      transition: PointerTransition,
-    },
+    // If HTML5Backend is active, it will override a thought's draggable attribute and set it to false.
+    // On iOS Safari, this enables undesirable native long press behavior (#2953, #2931, #2964)
+
     // Touch backend
     // https://react-dnd.github.io/react-dnd/docs/backends/touch
     {
@@ -21,6 +17,13 @@ const options = {
       options: { delayTouchStart: TIMEOUT_LONG_PRESS_THOUGHT },
       preview: true,
       transition: TouchTransition,
+    },
+    // HTML5 backend
+    // https://react-dnd.github.io/react-dnd/docs/backends/html5
+    {
+      id: 'html5',
+      backend: HTML5Backend,
+      transition: PointerTransition,
     },
   ],
 }
