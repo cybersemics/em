@@ -6,7 +6,6 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
   html: string
   disabled?: boolean
   innerRef?: React.RefObject<HTMLDivElement>
-  isEditing?: boolean
   onChange: (originalEvt: ContentEditableEvent) => void
 }
 
