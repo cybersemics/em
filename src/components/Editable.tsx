@@ -64,7 +64,7 @@ interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement>
   path: Path
   disabled?: boolean
-  isEditing?: boolean
+  isEditing: boolean
   isVisible?: boolean
   multiline?: boolean
   placeholder?: string
@@ -157,8 +157,10 @@ const Editable = ({
   }
 
   /** Toggle invalid-option class using contentRef. */
-  const setContentInvalidState = (value: boolean) =>
-    contentRef.current && contentRef.current.classList[value ? 'add' : 'remove'](invalidOptionRecipe())
+  const setContentInvalidState = (value: boolean) => {
+    if (!contentRef.current) return
+    contentRef.current.classList[value ? 'add' : 'remove'](invalidOptionRecipe())
+  }
 
   // side effect to set old value ref to head value from updated simplePath. Also update editing value, if it is different from current value.
   useEffect(

@@ -38,7 +38,7 @@ export interface ThoughtProps {
   // getContexts will return ids that do not exist in the thoughtIndex
   // Subthoughts gets the special __PENDING__ value from getContexts and passes it through to Thought and Static Thought
   isContextPending?: boolean
-  isEditing?: boolean
+  isEditing: boolean
   ellipsizedUrl?: boolean
   isPublishChild?: boolean
   // true if the thought is not hidden by autofocus, i.e. actualDistance < 2

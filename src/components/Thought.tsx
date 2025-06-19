@@ -14,7 +14,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isTouch } from '../browser'
-import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
+import { AlertType, REGEX_TAGS } from '../constants'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
@@ -28,7 +28,7 @@ import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
-import getChildren, { getAllChildrenAsThoughts, getChildrenRanked, hasChildren } from '../selectors/getChildren'
+import getChildren, { getAllChildrenAsThoughts, getChildrenRanked } from '../selectors/getChildren'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -63,7 +63,6 @@ import StaticThought from './StaticThought'
 export interface ThoughtContainerProps {
   allowSingleContext?: boolean
   childrenForced?: ThoughtId[]
-  cursor?: Path | null
   // used by testFlags.simulateDrop
   debugIndex?: number
   depth?: number
@@ -75,8 +74,6 @@ export interface ThoughtContainerProps {
   isCursorParent?: boolean
   isDeepHovering?: boolean
   isDragging?: boolean
-  isEditing?: boolean
-  isEditingPath?: boolean
   isExpanded?: boolean
   isHeader?: boolean
   isHovering?: boolean
@@ -249,7 +246,6 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
 const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
-  cursor: propCursor,
   debugIndex,
   depth = 0,
   env,
@@ -285,15 +281,7 @@ const ThoughtContainer = ({
     if (isExpandedHoverTopPath) return true
     if (!state.cursor) return false
 
-    const distance = propCursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, propCursor.length - depth!)) : 0
-    const cursorParent = state.cursor && parentOf(state.cursor)
-    const cursorGrandparent = cursorParent && rootedParentOf(state, cursorParent)
-
-    return distance === 2
-      ? // grandparent
-        equalPath(cursorGrandparent, path) && !hasChildren(state, head(state.cursor))
-      : // parent
-        equalPath(cursorParent, path)
+    return equalPath(parentOf(state.cursor), path)
   })
 
   const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget, canDropThought, isDeepHovering } =
@@ -475,7 +463,6 @@ const ThoughtContainer = ({
   //   isCursorParent,
   //   isDeepHovering,
   //   isDragging,
-  //   isEditing,
   //   isExpanded,
   //   isHeader,
   //   isHovering,
