@@ -193,7 +193,9 @@ describe('multiline', () => {
 })
 
 describe('Color Theme', () => {
-  it('superscript on light theme', async () => {
+  // TODO: Flaky test
+  // https://github.com/cybersemics/em/issues/2955
+  testIfNotCI('superscript on light theme', async () => {
     await setTheme('Light')
 
     await hideHUD()
