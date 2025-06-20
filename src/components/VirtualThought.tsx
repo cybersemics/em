@@ -7,6 +7,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { isSafari, isTouch, isiPhone } from '../browser'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
@@ -41,6 +42,8 @@ const selectShowContexts = (path: SimplePath) => (state: State) => isContextView
 
 /** Selects the cursor from the state. */
 const selectCursor = (state: State) => state.cursor
+
+const isIOSSafari = isTouch && isiPhone && isSafari()
 
 /** Renders a thought if it is not hidden by autofocus, otherwise renders a fixed height shim. */
 const VirtualThought = ({
@@ -129,40 +132,55 @@ const VirtualThought = ({
   //   childPath,
   // })
 
-  const updateSize = useCallback(() => {
+  const updateSize = useCallback(async () => {
     // Check dimensions again after a delay to catch any post-render changes
     // Use requestAnimationFrame to wait for next paint, then check again after a frame to catch any post-render changes
-    requestAnimationFrame(() => {
-      // Get the updated autofocus, otherwise isVisible will be stale.
-      // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
-      const isVisibleNew = autofocus === 'show' || autofocus === 'dim'
-      if (!ref.current) return
+    // Wait for next frame
+    await new Promise(resolve => requestAnimationFrame(resolve))
 
-      // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
-      const heightNew = Math.max(
-        ref.current.getBoundingClientRect().height,
-        ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
-      )
-      const widthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
+    // For iOS Safari first render of element, wait one more frame
+    // When measure getBoundingClientRect().height in a single rAF callback
+    // iOS Safari returns stale layout values because
+    // The first requestAnimationFrame (above ↑) triggers a style/layout recalculation
+    if (isIOSSafari) {
+      // The second requestAnimationFrame callback (below ↓)executes after iOS Safari has:
+      //   - Applied pending style changes
+      //   - Completed layout calculations
+      //   - Processed any CSS transitions/animations
+      await new Promise(resolve => requestAnimationFrame(resolve))
+    }
 
-      // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
-      const editable = ref.current.querySelector(`[data-editable]`)
-      if (editable?.hasAttribute('data-prevent-autoscroll')) return
+    // Get the updated autofocus, otherwise isVisible will be stale.
+    // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
+    const isVisibleNew = autofocus === 'show' || autofocus === 'dim'
+    if (!ref.current) return
 
-      setHeight(heightNew)
-      onResize?.({
-        height: heightNew,
-        width: widthNew,
-        id,
-        isVisible: isVisibleNew,
-        key: crossContextualKey,
-      })
+    // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
+    const heightNew = Math.max(
+      ref.current.getBoundingClientRect().height,
+      ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
+    )
+    const widthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
+
+    // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
+    const editable = ref.current.querySelector(`[data-editable]`)
+    if (editable?.hasAttribute('data-prevent-autoscroll')) return
+
+    setHeight(heightNew)
+    onResize?.({
+      height: heightNew,
+      width: widthNew,
+      id,
+      isVisible: isVisibleNew,
+      key: crossContextualKey,
     })
   }, [crossContextualKey, onResize, id, autofocus])
 
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
-  useLayoutEffect(updateSize, [
+  useLayoutEffect(() => {
+    updateSize()
+  }, [
     cursorDepth,
     cursorLeaf,
     fontSize,
@@ -200,7 +218,9 @@ const VirtualThought = ({
     const thoughtId = head(simplePath)
     return thoughtId ? getThoughtById(state, thoughtId)?.value : null
   })
-  useEffect(updateSize, [updateSize, value])
+  useEffect(() => {
+    updateSize()
+  }, [updateSize, value])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(
