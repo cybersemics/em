@@ -223,6 +223,7 @@ const StaticThought = ({
                   verticalAlign: 'top',
                   userSelect: isPressed ? 'none' : undefined,
                 }),
+                marginTop: multiline ? '0' : undefined,
               },
               cssRaw,
             )}
