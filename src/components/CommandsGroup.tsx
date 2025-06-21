@@ -2,6 +2,7 @@ import { FC } from 'react'
 import { css, cx } from '../../styled-system/css'
 import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
+import { CommandViewType } from '../@types/CommandViewType'
 import CommandTableOnly from './CommandTableOnly'
 
 interface CommandsGroupProps {
@@ -11,7 +12,7 @@ interface CommandsGroupProps {
   title: string
   search?: string
   commands: (Command | null)[]
-  viewType: 'table' | 'grid'
+  viewType: CommandViewType
 }
 /**
  * A component that displays a group of commands for CommandTable or CommandGrid.
@@ -61,7 +62,6 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
         customize={customize}
         onSelect={onSelect}
         search={search}
-        applyIndexInToolbar
         viewType={viewType}
       />
     </div>
