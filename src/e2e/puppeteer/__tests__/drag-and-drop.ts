@@ -73,7 +73,7 @@ const isElementVisible = async (text: string, selector = '[data-editable]'): Pro
 describe('drag', () => {
   beforeEach(hideHUD)
 
-  it('Alert and QuickDropPanel', async () => {
+  it('Alert', async () => {
     await paste(`
       - a
       - b
@@ -81,7 +81,7 @@ describe('drag', () => {
       - d
     `)
 
-    await dragAndDropThought('a', null, { position: 'none', showAlert: true, showQuickDropPanel: true })
+    await dragAndDropThought('a', null, { position: 'none', showAlert: true })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -286,14 +286,12 @@ describe('drag', () => {
       position: 'after',
       mouseUp: true,
       showAlert: true,
-      showQuickDropPanel: true,
     })
 
     await dragAndDropThought('a', null, {
       position: 'none',
       mouseUp: false,
       showAlert: true,
-      showQuickDropPanel: true,
     })
 
     const image = await screenshot()

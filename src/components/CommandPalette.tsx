@@ -353,7 +353,12 @@ const CommandPaletteWithTransition: FC = () => {
       childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {showCommandPalette ? (
-        <FadeTransition duration='fast' nodeRef={popupRef} onEntering={() => setDismiss(false)}>
+        <FadeTransition
+          type='fast'
+          // for some reason doesn't fade in correctly when default nodeRef is used
+          nodeRef={popupRef}
+          onEntering={() => setDismiss(false)}
+        >
           <PopupBase background={token('colors.bgOverlay50')} ref={popupRef} fullScreen leaveMarginFromEdge={!isTouch}>
             <div
               data-testid='popup-value'

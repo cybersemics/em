@@ -7,8 +7,10 @@ import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
+import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
@@ -71,6 +73,7 @@ const TreeNode = ({
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+
   const fauxCaretNodeProvider = useFauxCaretNodeProvider({
     editing,
     fadeThoughtElement: fadeThoughtRef.current,
@@ -84,6 +87,37 @@ const TreeNode = ({
     const deleteActions: ActionType[] = ['archiveThought', 'uncategorize', 'deleteThought', 'deleteThoughtWithCursor']
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
+  })
+
+  /** The transition animation for descendants of the context view after toggleContextView. Returns null otherwise. */
+  const contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight' | null = useSelector(state => {
+    const isLastActionContextView = state.undoPatches[state.undoPatches.length - 1]?.some(
+      patch => patch.actions[0] === 'toggleContextView',
+    )
+    if (!isLastActionContextView) return null
+
+    // Determine the animation direction for disappearing text
+    let animation: 'disappearingLowerLeft' | 'disappearingUpperRight' = 'disappearingLowerLeft'
+
+    if (isDescendantPath(path, state.cursor)) {
+      const isAppearing = transitionGroupsProps.in
+      const isCursorInContextView = isLastActionContextView
+        ? !!state.cursor && isContextViewActive(state, state.cursor)
+        : false
+      if (isCursorInContextView) {
+        // Context View ON
+        // New contextual child appearing (fade IN from RIGHT)
+        // Old original child disappearing (fade OUT to LEFT)
+        animation = isAppearing ? 'disappearingUpperRight' : 'disappearingLowerLeft'
+      } else {
+        // Context View OFF
+        // Original child re-appearing (fade IN from LEFT)
+        // Contextual child disappearing (fade OUT to RIGHT)
+        animation = isAppearing ? 'disappearingLowerLeft' : 'disappearingUpperRight'
+      }
+    }
+
+    return animation
   })
 
   /** True if the last action is swapParent and the thought is involved in the swap (cursor or parent). */
@@ -123,15 +157,9 @@ const TreeNode = ({
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
   // Render virtualized thoughts with their estimated height so that document height is relatively stable.
   // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
-  if (belowCursor && !isCursor && y > viewportBottom + height) return null
-
-  const nextThought = isTableCol1 ? treeThoughtsPositioned[index + 1] : null
-  const previousThought = isTableCol1 ? treeThoughtsPositioned[index - 1] : null
-
-  // Adjust col1 width to remove dead zones between col1 and col2, increase the width by the difference between col1 and col2 minus bullet width
-  const xCol2 = isTableCol1 ? nextThought?.x || previousThought?.x || 0 : 0
-  // Increasing margin-right of thought for filling gaps and moving the thought to the left by adding negative margin from right.
-  const marginRight = isTableCol1 ? xCol2 - (width || 0) - x - (bulletWidth || 0) : 0
+  if (belowCursor && !isCursor && y > viewportBottom + height) {
+    return null
+  }
 
   const outerDivStyle = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
@@ -144,7 +172,6 @@ const TreeNode = ({
     // (Maybe the 10px is from .content padding-left?)
     width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
     ...(style || {}),
-    textAlign: isTableCol1 ? ('right' as const) : undefined,
     ...fauxCaretNodeProvider,
   }
 
@@ -160,7 +187,8 @@ const TreeNode = ({
       id={thoughtKey}
       // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
       // Archive, delete, and uncategorize get a special dissolve animation.
-      duration={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : 'nodeFadeOut'}
+      // Context view children get special disappearing text animations
+      type={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
       unmountOnExit
@@ -171,11 +199,14 @@ const TreeNode = ({
         aria-label='tree-node'
         className={css({
           position: 'absolute',
+
           transition: isSwap
             ? swapDirection === 'clockwise'
               ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
               : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
-            : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
+            : contextAnimation
+              ? 'left {durations.disappearingUpperRight} ease-out,top {durations.disappearingUpperRight} ease-out'
+              : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
         })}
         style={outerDivStyle}
       >
@@ -221,7 +252,6 @@ const TreeNode = ({
               prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
               isLastVisible={isLastVisible}
               autofocus={autofocus}
-              marginRight={isTableCol1 ? marginRight : 0}
             />
           </div>
           {dragInProgress &&

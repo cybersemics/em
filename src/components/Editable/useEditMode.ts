@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useStore } from 'react-redux'
 import Path from '../../@types/Path'
-import { editingActionCreator as editingAction } from '../../actions/editing'
+import { keyboardOpenActionCreator } from '../../actions/keyboardOpen'
 import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
 import preventAutoscroll from '../../device/preventAutoscroll'
@@ -21,30 +22,34 @@ const useEditMode = ({
   // expect all arguments to be passed, even if undefined
   // otherwise the hook will not be able to determine all conditions
   contentRef: React.RefObject<HTMLInputElement>
-  isEditing: boolean | undefined
+  isEditing: boolean
   path: Path
   style: React.CSSProperties | undefined
   transient: boolean | undefined
 }) => {
   // must re-render when noteFocus changes in order to set the selection
   const hasNoteFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
-  const editing = useSelector(state => state.editing)
+  const editing = useSelector(state => state.isKeyboardOpen)
   const isMulticursor = useSelector(hasMulticursor)
   const dispatch = useDispatch()
   const noteFocus = useSelector(state => state.noteFocus)
-  const editingCursorOffset = useSelector(state => isEditing && state.cursorOffset)
   const dragHold = useSelector(state => state.dragHold)
   const dragInProgress = useSelector(state => state.dragInProgress)
   const disabledRef = useRef(false)
   const editableNonce = useSelector(state => state.editableNonce)
   const showSidebar = useSelector(state => state.showSidebar)
   const hadSidebar = usePrevious(showSidebar)
+  const store = useStore()
 
-  // focus on the ContentEditable element if editing os on desktop
+  // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
 
   useEffect(
     () => {
+      // Get the cursorOffset directly from the store rather than subscribing to it reactively with useSelector.
+      // Otherwise, it will try to set the selection while typing.
+      const cursorOffset = store.getState().cursorOffset
+
       /** Set the selection to the current Editable at the cursor offset. */
       const setSelectionToCursorOffset = () => {
         // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
@@ -52,12 +57,9 @@ const useEditMode = ({
         if (style?.visibility === 'hidden') {
           selection.clear()
         } else {
-          selection.set(contentRef.current, { offset: editingCursorOffset || 0 })
+          selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
         }
       }
-
-      // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
-      const cursorWithoutSelection = editingCursorOffset !== null || !selection.isActive()
 
       // allow transient editable to have focus on render
       const shouldSetSelection =
@@ -66,29 +68,10 @@ const useEditMode = ({
           editMode &&
           !noteFocus &&
           contentRef.current &&
-          cursorWithoutSelection &&
+          (cursorOffset !== null || !selection.isActive()) &&
           !isMulticursor &&
           !dragHold &&
           !disabledRef.current)
-
-      /* DEBUGGING
-      There are many different values that determine if we set the selection.
-      Use this to help debug selection issues.
-    */
-      // if (isEditing) {
-      //   const value = headValue(store.getState(), path)
-      //   if (shouldSetSelection) {
-      //     console.info('Selection set on', value, editingCursorOffset)
-      //   } else {
-      //     console.info('These values are false, preventing the selection from being set on', value)
-      //     if (!editMode) console.info('  editMode')
-      //     if (!contentRef.current) console.info('  contentRef.current')
-      //     if (noteFocus) console.info('  - !noteFocus')
-      //     if (!(cursorWithoutSelection)) console.info('  cursorWithoutSelection')
-      //     if (dragHold) console.info('  !dragHold')
-      //     if (disabledRef.current) console.info('  !disabledRef.current')
-      //   }
-      // }
 
       if (shouldSetSelection) {
         preventAutoscroll(contentRef.current)
@@ -111,16 +94,21 @@ const useEditMode = ({
         }
       }
     },
+    // React Hook useEffect has missing dependencies: 'contentRef', 'editMode', and 'style?.visibility'.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
+      dragHold,
       isEditing,
       // update selection when multicursor changes, otherwise the selection will not be set when multicursor is cleared
       isMulticursor,
-      editingCursorOffset,
       hasNoteFocus,
       dragInProgress,
+      noteFocus,
+      // Must subscribe to isKeyboardOpen and not when keyboard is open for some reason.
+      // Otherwise it breaks selection offset persistence on refresh on desktop.
       editing,
       editableNonce,
+      store,
       transient,
     ],
   )
@@ -130,9 +118,9 @@ const useEditMode = ({
       // Set editing to false after unmount
       return () => {
         dispatch((dispatch, getState) => {
-          const { cursor, editing } = getState()
-          if (editing && equalPath(cursor, path)) {
-            dispatch(editingAction({ value: false }))
+          const { cursor, isKeyboardOpen } = getState()
+          if (isKeyboardOpen && equalPath(cursor, path)) {
+            dispatch(keyboardOpenActionCreator({ value: false }))
           }
         })
       }
@@ -142,7 +130,7 @@ const useEditMode = ({
   )
 
   // Provide an escape hatch to allow the next default selection rather than setting it.
-  // This allows the user to set the selection in the middle of a non-cursor thought when in edit mode.
+  // This allows the user to set the selection in the middle of a non-cursor thought when keyboard is open.
   // Otherwise the caret is moved to the beginning of the thought.
   const allowDefaultSelection = useCallback(() => {
     disabledRef.current = true

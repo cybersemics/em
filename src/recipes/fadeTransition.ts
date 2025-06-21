@@ -1,5 +1,9 @@
 import { defineSlotRecipe } from '@pandacss/dev'
 
+/*
+  Safari skew: Safari requires inverted skew values (positive instead of negative) when exceeding 90deg to have the same behavior as other browsers.
+*/
+
 const fadeTransitionRecipe = defineSlotRecipe({
   className: 'fade',
   slots: ['enter', 'exit', 'exitActive', 'enterActive', 'enterDone', 'exitDone'],
@@ -11,7 +15,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
     exitDone: { opacity: 0 },
   },
   variants: {
-    duration: {
+    type: {
       fast: {
         enterActive: { transition: `opacity {durations.fast} ease-out` },
         exitActive: { transition: `opacity {durations.fast} ease-out` },
@@ -61,6 +65,72 @@ const fadeTransitionRecipe = defineSlotRecipe({
           filter: 'blur(4px)',
           transformOrigin: 'left',
           transition: `opacity {durations.nodeDissolve} ease-out, transform {durations.nodeDissolve} ease-out, filter {durations.nodeDissolve} ease-out`,
+        },
+      },
+      // Context view fades in from upper right.
+      disappearingUpperRight: {
+        enter: {
+          transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
+          textShadow: '0px 0px 2em {colors.fg}',
+          // See: Safari skew note above
+          _safari: {
+            transform: 'skew(100deg) translateX(10%) translateY(-100%)',
+          },
+        },
+        enterActive: {
+          transform: 'skew(0) translateX(0) translateY(0)',
+          textShadow: '0px 0px 0px {colors.fg}',
+          transition: `opacity {durations.disappearingUpperRight} {easings.easeInSmooth}, transform {durations.disappearingUpperRight} {easings.easeInSmooth}, text-shadow {durations.disappearingUpperRight} {easings.easeInSmooth}`,
+          // See: Safari skew note above
+          _safari: {
+            transform: 'skew(0) translateX(0) translateY(0)',
+          },
+        },
+        exit: {
+          textShadow: '0px 0px 0px {colors.fg}',
+        },
+        exitActive: {
+          transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
+          textShadow: '0px 0px 2em {colors.fg}',
+          color: 'transparent',
+          transition: `opacity {durations.disappearingUpperRight} ease, color {durations.disappearingUpperRight} ease, transform {durations.disappearingUpperRight} ease, text-shadow {durations.disappearingUpperRight} ease`,
+          // See: Safari skew note above
+          _safari: {
+            transform: 'skew(100deg) translateX(10%) translateY(-100%)',
+          },
+        },
+      },
+      // Normal view fades out from lower left.
+      disappearingLowerLeft: {
+        enter: {
+          transform: 'skew(-100deg) translateY(100%)',
+          textShadow: '0px 0px 2em {colors.fg}',
+          // See: Safari skew note above
+          _safari: {
+            transform: 'skew(100deg) translateY(100%)',
+          },
+        },
+        enterActive: {
+          transform: 'skew(0) translateX(0) translateY(0)',
+          textShadow: '0px 0px 2em {colors.fg}',
+          transition: `opacity {durations.disappearingLowerLeft} {easings.easeInSmooth}, transform {durations.disappearingLowerLeft} {easings.easeInSmooth}, text-shadow {durations.disappearingLowerLeft} {easings.easeInSmooth}`,
+          // See: Safari skew note above
+          _safari: {
+            transform: 'skew(0) translateX(0) translateY(0)',
+          },
+        },
+        exit: {
+          textShadow: '0px 0px 0px {colors.fg}',
+        },
+        exitActive: {
+          transform: 'skew(-100deg) translateY(100%)',
+          textShadow: '0px 0px 2em {colors.fg}',
+          color: 'transparent',
+          transition: `opacity {durations.disappearingLowerLeft} ease, color {durations.disappearingLowerLeft} ease, transform {durations.disappearingLowerLeft} ease, text-shadow {durations.disappearingLowerLeft} ease`,
+          // See: Safari skew note above
+          _safari: {
+            transform: 'skew(100deg) translateY(100%)',
+          },
         },
       },
     },

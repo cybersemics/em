@@ -10,6 +10,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
+import testIfNotCI from '../helpers/testIfNotCI'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -68,7 +69,8 @@ const testSuite = () => {
     })
 
     // TODO: Test intermittently fails with small differences in 'b'.
-    it('superscript', async () => {
+    // https://github.com/cybersemics/em/issues/2955
+    testIfNotCI('superscript', async () => {
       await paste(`
     - a
       - m
@@ -191,7 +193,9 @@ describe('multiline', () => {
 })
 
 describe('Color Theme', () => {
-  it('superscript on light theme', async () => {
+  // TODO: Flaky test
+  // https://github.com/cybersemics/em/issues/2955
+  testIfNotCI('superscript on light theme', async () => {
     await setTheme('Light')
 
     await hideHUD()

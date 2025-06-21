@@ -259,10 +259,7 @@ const initEvents = (store: Store<State, any>) => {
       }
     }
     // do not scroll-at-edge when hovering over QuickDrop component
-    else if (
-      state.dragInProgress &&
-      !(state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
-    ) {
+    else if (state.dragInProgress && !(state.alert?.alertType === AlertType.DeleteDropHint)) {
       const y = e.touches[0].clientY
       scrollContainer = (target.closest('[data-scroll-at-edge]') as HTMLElement) || window
 
@@ -306,7 +303,7 @@ const initEvents = (store: Store<State, any>) => {
       }
       // we could also persist unsaved data here
     }
-    // If the app is backgounded while in edit mode, then the keyboard will not open when switching back to the app, even when focusNode, document.activeElement, and visualViewport.height all indicate that the keyboard is open. Strangely, the app enters the 'passive' state after hidden -> passive -> active completes. The invalid state can be detected with document.hasFocus(). Since there is no way to force the app to be active when it is passive, then we do not bother trying to re-open the keyboard, and instead disable edit mode so that at least it matches what the user sees. Use a timeout to ensure that this is called only when the device stays in the passive state, not when it is moving from hidden -> passive -> active.
+    // If the app is backgounded while keyboard is open, then the keyboard will not open when switching back to the app, even when focusNode, document.activeElement, and visualViewport.height all indicate that the keyboard is open. Strangely, the app enters the 'passive' state after hidden -> passive -> active completes. The invalid state can be detected with document.hasFocus(). Since there is no way to force the app to be active when it is passive, then we do not bother trying to re-open the keyboard, and instead disable keyboard is open so that at least it matches what the user sees. Use a timeout to ensure that this is called only when the device stays in the passive state, not when it is moving from hidden -> passive -> active.
     // https://github.com/cybersemics/em/issues/1468
     else if (
       isTouch &&

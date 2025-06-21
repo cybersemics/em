@@ -1,4 +1,4 @@
-import { FC, useRef } from 'react'
+import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
@@ -11,15 +11,13 @@ import FadeTransition from './FadeTransition'
 const ErrorMessage: FC = () => {
   const value = useSelector(state => state.error)
   const dispatch = useDispatch()
-  const errorMessageRef = useRef<HTMLDivElement>(null)
   const positionFixedStyles = usePositionFixed()
 
   return (
     <TransitionGroup>
       {value ? (
-        <FadeTransition duration='fast' nodeRef={errorMessageRef}>
+        <FadeTransition type='fast'>
           <div
-            ref={errorMessageRef}
             className={css({
               left: '0',
               right: '0',

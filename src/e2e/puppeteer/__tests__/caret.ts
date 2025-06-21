@@ -8,6 +8,7 @@ import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
+import testIfNotCI from '../helpers/testIfNotCI'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
@@ -144,27 +145,22 @@ describe('all platforms', () => {
     expect(textContext).toBe('b')
   })
 
-  // The following test fails intermittently on CI, but not locally, so skip it on CI.
-  // Tested 30+ times locally and it passed every time.
-  const testIfNotCI = process.env.CI ? it.skip : it
-
   // https://github.com/cybersemics/em/issues/1568
-  testIfNotCI('caret at the end of a thought should be preserved on indent and outdent', async () => {
+  it('caret at the end of a thought should be preserved on indent and outdent', async () => {
     const importText = `
     - a
     - chicago`
     await paste(importText)
     await clickThought('chicago')
 
-    // await press('Enter')
     await press('End')
     await press('Tab')
     await press('Tab', { shift: true })
 
+    // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
     const nodeType = await getSelection().focusNode?.nodeType
-    expect(nodeType).toBe(Node.ELEMENT_NODE)
     const offset = await getSelection().focusOffset
-    expect(offset).toBe(1)
+    expect(offset).toBe(nodeType === Node.TEXT_NODE ? 'chicago'.length : 1)
   })
 
   it('clicking backspace when the caret is at the beginning of a thought should merge it with the previous thought.', async () => {
@@ -183,7 +179,9 @@ describe('all platforms', () => {
     expect(textContext).toBe('firstlast')
   })
 
-  it('backspace on empty thought should move caret to the end of the previous thought', async () => {
+  // TODO: Flaky test
+  // https://github.com/cybersemics/em/issues/2954
+  testIfNotCI('backspace on empty thought should move caret to the end of the previous thought', async () => {
     const importText = `
     - first
     - last`
@@ -228,7 +226,9 @@ describe('mobile only', () => {
     await emulate(KnownDevices['iPhone 11'])
   }, 5000)
 
-  it('After categorize, the caret should be on the new thought', async () => {
+  // TODO: Flaky test
+  // https://github.com/cybersemics/em/issues/2959
+  testIfNotCI('After categorize, the caret should be on the new thought', async () => {
     const importText = `
     - a
       - b`

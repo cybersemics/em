@@ -1,4 +1,4 @@
-import React, { ComponentProps, FC, ReactNode, useCallback, useRef, useState } from 'react'
+import React, { ComponentProps, FC, ReactNode, useCallback, useState } from 'react'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -18,7 +18,6 @@ const Notification: FC<
     children?: ReactNode
   } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'textAlign' | 'onMouseOver' | 'onMouseLeave'>
 > = ({ icon, onClose, value, transitionKey, children, ...props }) => {
-  const popupRef = useRef<HTMLDivElement>(null)
   const [isDismissed, setIsDismissed] = useState(false)
 
   /** Dismiss the alert on close. */
@@ -35,11 +34,10 @@ const Notification: FC<
       childFactory={(child: React.ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {value ? (
-        <FadeTransition duration='slow' nodeRef={popupRef} onEntering={() => setIsDismissed(false)}>
+        <FadeTransition type='slow' onEntering={() => setIsDismissed(false)}>
           <PopupBase
             anchorFromBottom
             anchorOffset={36}
-            ref={popupRef}
             key={transitionKey}
             circledCloseButton
             border
