@@ -10,8 +10,8 @@ const multilineRecipe = defineRecipe({
     /* A small amount of margin-bottom may make multiline thoughts feel less crunched. However, this must be prevented or overridden when the thought has a note, otherwise there will be too much space in between the thought and the note. */
 
     paddingTop: {
-      base: '0.33em !important',
-      _safari: '0.3em !important',
+      base: '0.33em',
+      _safari: '0.3em',
       _mobile: {
         /* Hacky, nonlinear multiline padding-top that works across all font sizes on mobile Safari. Otherwise the thought goes out of alignment with the bullet when it becomes multiline. */
         /* 0.2em works at font size 13 */

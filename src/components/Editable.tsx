@@ -2,7 +2,7 @@ import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
-import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
+import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
@@ -66,6 +66,7 @@ interface EditableProps {
   disabled?: boolean
   isEditing: boolean
   isVisible?: boolean
+  multiline?: boolean
   placeholder?: string
   rank?: number
   style?: React.CSSProperties
@@ -96,6 +97,7 @@ const Editable = ({
   editableRef,
   isEditing,
   isVisible,
+  multiline,
   placeholder,
   onEdit,
   path,
@@ -599,7 +601,7 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
-      className={cx(editableRecipe(), className)}
+      className={cx(multiline ? multilineRecipe() : null, editableRecipe(), className)}
       html={
         value === EM_TOKEN
           ? '<b>em</b>'
