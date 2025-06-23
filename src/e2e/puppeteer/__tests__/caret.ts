@@ -310,7 +310,7 @@ describe('mobile only', () => {
     await press('Backspace')
     await press('Backspace')
 
-    const textContext = await getSelection().focusNode?.textContent
+    const textContext = await getEditingText()
     expect(textContext).toBe('a')
   })
 })
