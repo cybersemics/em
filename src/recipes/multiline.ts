@@ -11,6 +11,10 @@ const multilineRecipe = defineRecipe({
 
     paddingTop: {
       base: '0.33em',
+      // The base rule used to have !important on it to allow it to take precedence over editableRecipe's top padding.
+      // That was causing problems on iPhone, but adding a redundant _chrome rule fixes the precedence issue.
+      // https://github.com/cybersemics/em/pull/2969
+      _chrome: '0.33em',
       _safari: '0.3em',
       _mobile: {
         /* Hacky, nonlinear multiline padding-top that works across all font sizes on mobile Safari. Otherwise the thought goes out of alignment with the bullet when it becomes multiline. */
