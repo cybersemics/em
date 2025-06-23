@@ -308,6 +308,7 @@ describe('mobile only', () => {
 
     await click(editableNodeHandle, { edge: 'right' })
     await press('Backspace')
+    await waitUntil(() => window.getSelection()?.focusOffset === 0)
     await press('Backspace')
 
     const textContext = await getEditingText()
