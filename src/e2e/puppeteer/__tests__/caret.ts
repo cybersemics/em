@@ -295,4 +295,22 @@ describe('mobile only', () => {
     const focusNode = await getSelection().focusNode
     expect(focusNode).toBeUndefined()
   })
+
+  it('edit mode should be enabled after deleting an empty favorited thought', async () => {
+    const importText = `
+    - a
+    - b
+      - =favorite`
+
+    await paste(importText)
+
+    const editableNodeHandle = await waitForEditable('b')
+
+    await click(editableNodeHandle, { edge: 'right' })
+    await press('Backspace')
+    await press('Backspace')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('a')
+  })
 })
