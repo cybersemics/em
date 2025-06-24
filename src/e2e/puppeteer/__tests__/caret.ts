@@ -13,7 +13,6 @@ import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
-import waitForResize from '../helpers/waitForResize'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -191,9 +190,6 @@ describe('all platforms', () => {
     await click(first)
     await press('Enter')
     await press('Backspace')
-
-    // Wait for requestAnimationFrame to complete
-    await waitForResize()
 
     const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('first')
