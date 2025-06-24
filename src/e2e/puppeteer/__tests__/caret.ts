@@ -303,12 +303,12 @@ describe('mobile only', () => {
       - =favorite`
 
     await paste(importText)
+    await waitForEditable('b')
 
-    const editableNodeHandle = await waitForEditable('b')
-
-    await click(editableNodeHandle, { edge: 'right' })
+    await clickThought('b')
+    await press('ArrowRight')
+    await waitUntil(() => window.getSelection()?.focusOffset === 1)
     await press('Backspace')
-    await waitUntil(() => window.getSelection()?.focusOffset === 0)
     await press('Backspace')
 
     const textContext = await getEditingText()
