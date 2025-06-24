@@ -127,6 +127,7 @@ const Editable = ({
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const editingOrOnCursor = useSelector(state => state.isKeyboardOpen || equalPath(path, state.cursor))
+  const dragInProgress = useSelector(state => state.dragInProgress)
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -569,30 +570,31 @@ const Editable = ({
         e.preventDefault()
       }
 
-      dispatch((dispatch, getState) => {
-        const state = getState()
-        if (
-          // disable editing when multicursor is enabled
-          hasMulticursorSelector(state) ||
-          disabled ||
-          // do not set cursor on hidden thought
-          // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-          (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
-        ) {
-          e.preventDefault()
+      if (!dragInProgress)
+        dispatch((dispatch, getState) => {
+          const state = getState()
+          if (
+            // disable editing when multicursor is enabled
+            hasMulticursorSelector(state) ||
+            disabled ||
+            // do not set cursor on hidden thought
+            // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
+            (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
+          ) {
+            e.preventDefault()
 
-          if (!isVisible) {
-            selection.clear()
+            if (!isVisible) {
+              selection.clear()
 
-            // close all popups when clicking on a thought
-            dispatch(toggleDropdown())
-          } else {
-            setCursorOnThought()
+              // close all popups when clicking on a thought
+              dispatch(toggleDropdown())
+            } else {
+              setCursorOnThought()
+            }
           }
-        }
-      })
+        })
     },
-    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
+    [disabled, dispatch, dragInProgress, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
   return (
