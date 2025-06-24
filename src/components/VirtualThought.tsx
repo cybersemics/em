@@ -132,27 +132,7 @@ const VirtualThought = ({
   //   childPath,
   // })
 
-  const updateSize = useCallback(async () => {
-    // Check dimensions again after a delay to catch any post-render changes
-    // Use requestAnimationFrame to wait for next paint, then check again after a frame to catch any post-render changes
-    // Wait for next frame
-    await new Promise(resolve => requestAnimationFrame(resolve))
-
-    // For iOS Safari first render of element, wait one more frame
-    // When measure getBoundingClientRect().height in a single rAF callback
-    // iOS Safari returns stale layout values because
-    // The first requestAnimationFrame (above ↑) triggers a style/layout recalculation
-    if (isIOSSafari) {
-      // The second requestAnimationFrame callback (below ↓)executes after iOS Safari has:
-      //   - Applied pending style changes
-      //   - Completed layout calculations
-      //   - Processed any CSS transitions/animations
-      await new Promise(resolve => requestAnimationFrame(resolve))
-    }
-
-    // Get the updated autofocus, otherwise isVisible will be stale.
-    // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
-    const isVisibleNew = autofocus === 'show' || autofocus === 'dim'
+  const updateSize = useCallback(() => {
     if (!ref.current) return
 
     // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
@@ -166,6 +146,10 @@ const VirtualThought = ({
     const editable = ref.current.querySelector(`[data-editable]`)
     if (editable?.hasAttribute('data-prevent-autoscroll')) return
 
+    // Get the updated autofocus, otherwise isVisible will be stale.
+    // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
+    const isVisibleNew = autofocus === 'show' || autofocus === 'dim'
+
     setHeight(heightNew)
     onResize?.({
       height: heightNew,
@@ -176,10 +160,30 @@ const VirtualThought = ({
     })
   }, [crossContextualKey, onResize, id, autofocus])
 
+  // Separate function for layout effect cases where we need to wait for the next frame
+  const updateSizeAfterLayout = useCallback(async () => {
+    // Wait for next frame to ensure layout is complete
+    await new Promise(resolve => requestAnimationFrame(resolve))
+
+    // For iOS Safari first render of element, wait one more frame
+    if (isIOSSafari) {
+      await new Promise(resolve => requestAnimationFrame(resolve))
+    }
+
+    updateSize()
+  }, [updateSize])
+
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
+  // UseLayoutEffect + requestAnimationFrame provides the optimal balance for height recalculation:
+  // 1. UseLayoutEffect runs synchronously before browser paint, ensuring we catch layout changes early
+  // 2. While useEffect can be delayed multiple frames causing visible flicker
+  // 3. The requestAnimationFrame inside useLayoutEffect waits for the next frame after layout changes
+  // 4. This ensures we capture the final height after all style/layout updates are applied
+  // 5. On iOS Safari, we need an additional frame due to its unique rendering pipeline
+  // This approach minimizes flicker while still capturing accurate dimensions.
   useLayoutEffect(() => {
-    updateSize()
+    updateSizeAfterLayout()
   }, [
     cursorDepth,
     cursorLeaf,
@@ -191,7 +195,7 @@ const VirtualThought = ({
     style,
     isContextViewActive,
     editingValue,
-    updateSize,
+    updateSizeAfterLayout,
   ])
 
   // Recalculate height on cursor change since indentation can change line wrapping
@@ -265,7 +269,7 @@ const VirtualThought = ({
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
           leaf={leaf}
-          updateSize={updateSize}
+          updateSize={updateSizeAfterLayout}
           path={path}
           prevChildId={prevChildId}
           showContexts={showContexts}
