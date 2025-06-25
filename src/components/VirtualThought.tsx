@@ -7,6 +7,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { isSafari, isTouch } from '../browser'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
@@ -130,9 +131,6 @@ const VirtualThought = ({
   // })
 
   const updateSize = useCallback(() => {
-    // Get the updated autofocus, otherwise isVisible will be stale.
-    // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
-    const isVisibleNew = autofocus === 'show' || autofocus === 'dim'
     if (!ref.current) return
 
     // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
@@ -146,6 +144,10 @@ const VirtualThought = ({
     const editable = ref.current.querySelector(`[data-editable]`)
     if (editable?.hasAttribute('data-prevent-autoscroll')) return
 
+    // Get the updated autofocus, otherwise isVisible will be stale.
+    // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
+    const isVisibleNew = autofocus === 'show' || autofocus === 'dim'
+
     setHeight(heightNew)
     onResize?.({
       height: heightNew,
@@ -156,9 +158,31 @@ const VirtualThought = ({
     })
   }, [crossContextualKey, onResize, id, autofocus])
 
+  // Separate function for layout effect cases where we need to wait for the next frame
+  const updateSizeAfterLayout = useCallback(async () => {
+    // Wait for next frame to ensure layout is complete
+    await new Promise(resolve => requestAnimationFrame(resolve))
+
+    // For iOS Safari first render of element, wait one more frame
+    if (isTouch && isSafari()) {
+      await new Promise(resolve => requestAnimationFrame(resolve))
+    }
+
+    updateSize()
+  }, [updateSize])
+
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
-  useLayoutEffect(updateSize, [
+  // UseLayoutEffect + requestAnimationFrame provides the optimal balance for height recalculation:
+  // 1. UseLayoutEffect runs synchronously before browser paint, ensuring we catch layout changes early
+  // 2. While useEffect can be delayed multiple frames causing visible flicker
+  // 3. The requestAnimationFrame inside useLayoutEffect waits for the next frame after layout changes
+  // 4. This ensures we capture the final height after all style/layout updates are applied
+  // 5. On iOS Safari, we need an additional frame due to its unique rendering pipeline
+  // This approach minimizes flicker while still capturing accurate dimensions.
+  useLayoutEffect(() => {
+    updateSizeAfterLayout()
+  }, [
     cursorDepth,
     cursorLeaf,
     fontSize,
@@ -169,7 +193,7 @@ const VirtualThought = ({
     style,
     isContextViewActive,
     editingValue,
-    updateSize,
+    updateSizeAfterLayout,
   ])
 
   // Recalculate height on cursor change since indentation can change line wrapping
@@ -196,7 +220,9 @@ const VirtualThought = ({
     const thoughtId = head(simplePath)
     return thoughtId ? getThoughtById(state, thoughtId)?.value : null
   })
-  useEffect(updateSize, [updateSize, value])
+  useEffect(() => {
+    updateSize()
+  }, [updateSize, value])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(
@@ -241,7 +267,7 @@ const VirtualThought = ({
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
           leaf={leaf}
-          updateSize={updateSize}
+          updateSize={updateSizeAfterLayout}
           path={path}
           prevChildId={prevChildId}
           showContexts={showContexts}
