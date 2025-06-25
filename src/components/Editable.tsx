@@ -571,6 +571,8 @@ const Editable = ({
 
       dispatch((dispatch, getState) => {
         const state = getState()
+        if (state.dragInProgress) return
+
         if (
           // disable editing when multicursor is enabled
           hasMulticursorSelector(state) ||
