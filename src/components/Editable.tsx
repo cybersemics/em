@@ -127,6 +127,7 @@ const Editable = ({
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const editingOrOnCursor = useSelector(state => state.isKeyboardOpen || equalPath(path, state.cursor))
+  const dragHold = useSelector(state => state.dragHold)
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -555,9 +556,10 @@ const Editable = ({
         haptics.light()
       }
 
+      // If dragHold, don't allow the editable to receive focus or iOS Safari will scroll it.
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
+      if (dragHold || isMultiselectClick) {
         e.preventDefault()
         return
       }
@@ -592,7 +594,7 @@ const Editable = ({
         }
       })
     },
-    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
+    [disabled, dispatch, dragHold, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
   return (
