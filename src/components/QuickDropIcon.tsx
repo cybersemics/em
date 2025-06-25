@@ -1,9 +1,8 @@
 import { FC, useEffect } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
@@ -13,6 +12,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { AlertText, AlertType } from '../constants'
 import store from '../stores/app'
+import viewportStore from '../stores/viewport'
 import haptics from '../util/haptics'
 
 /** Creates the props for drop. */
@@ -39,7 +39,6 @@ const QuickDropIcon = ({
   onHoverMessage: (state: State, zone: DragThoughtZone) => string
 }) => {
   const dispatch = useDispatch()
-  const fontSize = useSelector(state => state.fontSize)
 
   /** Invokes onDrop with the DragThoughtItem. */
   const drop = (monitor: DropTargetMonitor) => {
@@ -87,25 +86,19 @@ const QuickDropIcon = ({
     [isHovering],
   )
 
+  const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
+
   return (
-    <div className={css({ marginBottom: 10 })}>
-      <div
-        ref={dropTarget}
-        className={css({
-          zIndex: 'stack',
-          padding: '1em',
-          borderRadius: '999px 0 0 999px',
-          backgroundColor: isHovering ? 'quickDropBgHover' : 'quickDropBg',
-        })}
-      >
-        <Icon
-          size={fontSize * 1.5}
-          fill={isHovering ? token('colors.highlight') : token('colors.fg')}
-          // disable default .icon transition so that highlight is immediate
-          cssRaw={css.raw({ cursor: 'move', transition: 'none', verticalAlign: 'middle' })}
-        />
-      </div>
-    </div>
+    <div
+      ref={dropTarget}
+      className={css({
+        zIndex: 'stack',
+        height: '100%',
+      })}
+      style={{
+        width: scrollZoneWidth,
+      }}
+    ></div>
   )
 }
 

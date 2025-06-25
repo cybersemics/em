@@ -50,6 +50,9 @@ const freeThoughts = (state: State): State => {
     ABSOLUTE_TOKEN,
     EM_TOKEN,
     HOME_TOKEN,
+    // drag-and-drop related thoughts
+    ...(state.draggedSimplePath ?? []),
+    ...(state.hoveringPath ?? []),
     // preserve the last few jump history points
     ...state.jumpHistory.slice(0, FREE_THOUGHT_JUMPS).flatMap(path => path || []),
     ...(state.importThoughtPath ?? []),

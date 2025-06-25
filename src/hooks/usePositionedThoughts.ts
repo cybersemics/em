@@ -151,8 +151,6 @@ const usePositionedThoughts = (
       const x =
         // indentation
         fontSize * node.depth +
-        // space between table columns
-        fontSize * (node.isTableCol1 ? -1.5 : 0) +
         // table col2
         ancestorTableWidths
 
@@ -183,12 +181,14 @@ const usePositionedThoughts = (
       // Capture the y position of the current thought before it is incremented by its own height for the next thought.
       const y = yaccum - (isNewCliff ? cliffPadding : 0)
 
-      // increase y by the height of the current thought
-      if (!node.isTableCol1 || node.leaf) {
+      // In the normal case, increase yaccum by the height of the current thought so that the next thought is positioned below it.
+      if (!node.isTableCol1) {
         yaccum += height
       }
 
-      // if the current thought is in table col1, push its y and depth onto the stack so that the next node after it can be positioned below it instead of overlapping it
+      // If the current thought is in table col1, do not increment yaccum since col2 is positioned at the same y value as col1.
+      // Push the col1 thought's y and depth onto the ycol1Ancestors stack so that its next sibling fully clears the height of the col1 thought in case col2 is shorter.
+      // This is used to position the next thought below the col1 thought if it has a greater height than col2.
       // See: ycol1Ancestors
       if (node.isTableCol1) {
         ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })

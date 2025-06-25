@@ -160,7 +160,7 @@ it('export as markdown', () => {
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [text], 'text/plain')
 
-  expect(exported).toBe(`Hello **wor*ld***`)
+  expect(exported).toBe(`- Hello **wor*ld***`)
 })
 
 it('export as markdown without escaping metaprogramming attributes', () => {

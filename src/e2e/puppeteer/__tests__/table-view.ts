@@ -54,4 +54,23 @@ describe('Table View', () => {
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
+
+  // TODO: Why does this not work in puppeteer? The y value of `d` is incorrect. It does not clear the height of `b`.
+  // This works fine in the actual app..
+  it.skip('col1 note', async () => {
+    await paste(`
+      - a
+        - =view
+          - Table
+        - b
+          - =note
+            - This is a long note that wraps onto multiple lines.
+          - c
+        - d
+          - e
+    `)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 })

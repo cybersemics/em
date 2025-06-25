@@ -15,7 +15,6 @@ const dragAndDropThought = async (
     mouseUp,
     position,
     showAlert,
-    showQuickDropPanel,
     skipMouseDown,
   }: {
     /** If true, the source thought is dropped as a sibling to the hidden uncle. */
@@ -31,8 +30,6 @@ const dragAndDropThought = async (
     position: 'after' | 'before' | 'child' | 'none'
     /** Show the drag-and-drop Alert. Hidden by default. */
     showAlert?: boolean
-    /** Show the QuickDropPanel. Hidden by default. */
-    showQuickDropPanel?: boolean
     skipMouseDown?: boolean
   },
 ) => {
@@ -105,14 +102,8 @@ const dragAndDropThought = async (
     await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
 
     // TODO: Why does drop/DragAndDropThought test fails intermittently without a small delay?
-    // QuickDropPanel and bullet highlight are visible.
+    // Bullet highlight is visible.
     await sleep(500)
-  }
-
-  // Hide QuickDropPanel by defafult.
-  // Otherwise wait for QuickDropPanel  to appear so that snapshots are consistent.
-  if (!showQuickDropPanel) {
-    await hide('[data-testid="quick-drop-panel"]')
   }
 
   // Hide Alert by default.

@@ -472,7 +472,7 @@ describe('grouping', () => {
     expect(exported).toEqual(expectedOutput)
   })
 
-  it('contiguous changes should be grouped', () => {
+  it('contiguous edits should be grouped', () => {
     store.dispatch([
       importText({
         text: `
@@ -491,6 +491,35 @@ describe('grouping', () => {
   - B`
 
     expect(exported).toEqual(expectedOutput)
+  })
+
+  it('contiguous edit additions should should not be grouped with deletions', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - hello`,
+      }),
+      editThought(['hello'], 'hello world'),
+      editThought(['hello world'], 'hello'),
+      editThought(['hello'], 'hello universe'),
+      undo(),
+    ])
+
+    const exportedThirdEdit = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedThirdEdit).toEqual(`- ${HOME_TOKEN}
+  - hello`)
+
+    store.dispatch(undo())
+
+    const exportedSecondEdit = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedSecondEdit).toEqual(`- ${HOME_TOKEN}
+  - hello world`)
+
+    store.dispatch(undo())
+
+    const exportedFirstEdit = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedFirstEdit).toEqual(`- ${HOME_TOKEN}
+  - hello`)
   })
 
   it('ignore dead actions and combine dispensible actions with the preceding patch', () => {

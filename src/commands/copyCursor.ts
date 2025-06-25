@@ -16,6 +16,7 @@ import exportPhrase from '../util/exportPhrase'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
+import trimBullet from '../util/trimBullet'
 
 const copyCursorCommand: Command = {
   id: 'copyCursor',
@@ -52,10 +53,10 @@ const copyCursorCommand: Command = {
 
       // Export and copy all selected thoughts
       const exported = filteredCursors
-        .map(cursor => exportContext(stateAfterPull, head(cursor), 'text/plain', { forceBullet: true }))
+        .map(cursor => exportContext(stateAfterPull, head(cursor), 'text/plain'))
         .join('\n')
 
-      copy(exported)
+      copy(trimBullet(exported))
 
       const numThoughts = filteredCursors.length
       const numDescendants = exported.split('\n').length - numThoughts
@@ -95,7 +96,7 @@ const copyCursorCommand: Command = {
 
     const exported = strip(exportContext(stateAfterPull, head(simplePath), 'text/plain'))
 
-    copy(exported)
+    copy(trimBullet(exported))
 
     const numDescendants = exported ? exported.split('\n').length - 1 : 0
     const phrase = exportPhrase(head(simplePath), numDescendants, {

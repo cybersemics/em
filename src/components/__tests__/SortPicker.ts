@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/dom'
+import { fireEvent } from '@testing-library/react'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
@@ -211,7 +212,7 @@ describe('Created', () => {
     // Click sort picker and select Created sort
     await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
     await click('[aria-label="sort options"] [aria-label="Created"]')
-    await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runAllTimersAsync)
 
     // Get all thoughts in order
     const thoughts = screen.getAllByTestId(/thought/)
@@ -379,4 +380,173 @@ describe('Created to Updated', () => {
     // d is last because it was edited most recently
     expect(thoughtValues).toMatchObject(['a', 'c', 'd'])
   })
+})
+
+it('home: Note Asc', async () => {
+  act(() => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =note
+              - 2
+          - b
+            - =note
+              - 3
+          - c
+            - =note
+              - 1
+        `,
+      }),
+      setCursor(['a']),
+    ])
+  })
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[aria-label="sort options"] [aria-label="Note"]')
+  await act(() => vi.runAllTimersAsync())
+
+  const thoughts = screen.getAllByTestId(/thought/)
+  expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c1', 'a2', 'b3'])
+})
+
+it('home: Note Desc', async () => {
+  act(() => {
+    store.dispatch([
+      importText({
+        text: `
+          - =sort
+            - Note
+          - a
+            - =note
+              - 2
+          - b
+            - =note
+              - 3
+          - c
+            - =note
+              - 1
+        `,
+      }),
+      setCursor(['a']),
+    ])
+  })
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[aria-label="sort options"] [aria-label="Note"]')
+  await act(() => vi.runAllTimersAsync())
+
+  const thoughts = screen.getAllByTestId(/thought/)
+  expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['b3', 'a2', 'c1'])
+})
+
+it('home: Note Asc with edit', async () => {
+  act(() => {
+    store.dispatch([
+      importText({
+        text: `
+          - =sort
+            - Note
+          - c
+            - =note
+              - 1
+          - a
+            - =note
+              - 2
+          - b
+            - =note
+              - 3
+        `,
+      }),
+      setCursor(['a']),
+    ])
+  })
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  // Edit the note value of 'a' from 2 to 4
+  await act(async () => {
+    // Find the note element
+    const noteElement = screen.getByText('2')
+    if (!noteElement) throw new Error('Note element not found')
+
+    // Focus the element first
+    fireEvent.focus(noteElement)
+
+    // Clear the content and type new text
+    fireEvent.input(noteElement, { target: { innerHTML: '4' } })
+  })
+
+  await act(vi.runAllTimersAsync)
+
+  const thoughts = screen.getAllByTestId(/thought/)
+  expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c1', 'b3', 'a4'])
+})
+
+it('home: Note Asc with mixed thoughts', async () => {
+  act(() => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =note
+              - 2
+          - b
+          - c
+            - =note
+              - 1
+          - d
+            - =note
+              - 3
+        `,
+      }),
+      setCursor(['a']),
+    ])
+  })
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[aria-label="sort options"] [aria-label="Note"]')
+  await act(() => vi.runAllTimersAsync())
+
+  const thoughts = screen.getAllByTestId(/thought/)
+  expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c1', 'a2', 'd3', 'b'])
+})
+
+it('home: Note Desc with mixed thoughts', async () => {
+  act(() => {
+    store.dispatch([
+      importText({
+        text: `
+          - =sort
+            - Note
+          - a
+            - =note
+              - 2
+          - b
+          - c
+            - =note
+              - 1
+          - d
+            - =note
+              - 3
+        `,
+      }),
+      setCursor(['a']),
+    ])
+  })
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await click('[data-testid="toolbar-icon"][aria-label="SortPicker"]')
+  await click('[aria-label="sort options"] [aria-label="Note"]')
+  await act(() => vi.runAllTimersAsync())
+
+  const thoughts = screen.getAllByTestId(/thought/)
+  expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['d3', 'a2', 'c1', 'b'])
 })

@@ -11,6 +11,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
+import { AlertType } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
@@ -21,6 +22,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import fastClick from '../util/fastClick'
+import getBulletWidth from '../util/getBulletWidth'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -30,7 +32,7 @@ interface BulletProps {
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
   isDragging?: boolean
-  isEditing?: boolean
+  isEditing: boolean
   leaf?: boolean
   publish?: boolean
   showContexts?: boolean
@@ -257,6 +259,7 @@ const glyphFg = cva({
 
 /** A circle bullet for leaf thoughts. */
 const BulletLeaf = ({
+  dimmed,
   done,
   fill,
   isHighlighted,
@@ -265,6 +268,7 @@ const BulletLeaf = ({
   showContexts,
   isBulletExpanded,
 }: {
+  dimmed?: boolean
   done?: boolean
   fill?: string
   isHighlighted?: boolean
@@ -300,6 +304,7 @@ const BulletLeaf = ({
         // allow .graypulse to define fill when pending
         fill: !showContexts && !isHighlighted ? fill : undefined,
         stroke: !showContexts && !isHighlighted ? fill : undefined,
+        opacity: dimmed ? 0.5 : undefined,
       }}
       strokeWidth={showContexts ? 30 : undefined}
     />
@@ -364,7 +369,7 @@ const BulletParent = ({
 const BulletCursorOverlay = ({
   isHighlighted,
 }: {
-  isEditing?: boolean
+  isEditing: boolean
   isHighlighted?: boolean
   leaf?: boolean
   publish?: boolean
@@ -407,7 +412,7 @@ const Bullet = ({
   const dragHold = useSelector(state => state.dragHold)
   const showContexts = useSelector(state => isContextViewActive(state, path))
   // if being edited and meta validation error has occured
-  const invalid = useSelector(state => !!isEditing && state.invalidState)
+  const invalid = useSelector(state => isEditing && state.invalidState)
   const fontSize = useSelector(state => state.fontSize)
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
@@ -419,6 +424,11 @@ const Bullet = ({
     return isHolding || isDragging || isMulticursor
   })
   const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
+
+  /** True if the the user is dragging the thought and hovering over the DeleteDrop QuickDrop icon. */
+  const isQuickDropDeleteHovering = useSelector(
+    state => isDragging && state.alert?.alertType === AlertType.DeleteDropHint,
+  )
 
   /** Returns true if the thought is pending. */
   const pending = useSelector(state => {
@@ -460,7 +470,7 @@ const Bullet = ({
 
   // calculate position of bullet for different font sizes
   // Table column 1 needs more space between the bullet and thought for some reason
-  const width = 11 - (fontSize - 9) * 0.5 + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
+  const width = getBulletWidth(fontSize) + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
   const marginLeft = -width
 
   // expand or collapse on click
@@ -573,7 +583,7 @@ const Bullet = ({
         ref={svgElement}
       >
         <g>
-          {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && (
+          {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && !isQuickDropDeleteHovering && (
             <BulletCursorOverlay
               isEditing={isEditing}
               isHighlighted={isHighlighted}
@@ -587,6 +597,7 @@ const Bullet = ({
               done={isDone}
               fill={fill}
               isHighlighted={isHighlighted}
+              dimmed={isQuickDropDeleteHovering}
               missing={missing}
               pending={pending}
               showContexts={showContexts}

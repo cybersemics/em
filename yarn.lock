@@ -1793,6 +1793,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.10.1":
+  version: 7.27.6
+  resolution: "@babel/runtime@npm:7.27.6"
+  checksum: 10c0/89726be83f356f511dcdb74d3ea4d873a5f0cf0017d4530cb53aa27380c01ca102d573eff8b8b77815e624b1f8c24e7f0311834ad4fb632c90a770fda00bd4c8
+  languageName: node
+  linkType: hard
+
 "@babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.18.6, @babel/runtime@npm:^7.25.0, @babel/runtime@npm:^7.26.0, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7, @babel/runtime@npm:^7.9.2":
   version: 7.26.0
   resolution: "@babel/runtime@npm:7.26.0"
@@ -7254,9 +7261,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001587, caniuse-lite@npm:^1.0.30001646, caniuse-lite@npm:^1.0.30001669, caniuse-lite@npm:^1.0.30001688":
-  version: 1.0.30001707
-  resolution: "caniuse-lite@npm:1.0.30001707"
-  checksum: 10c0/a1beaf84bad4f6617bbc5616d6bc0c9cab73e73f7e9e09b6466af5195b1bc393e0f6f19643d7a1c88bd3f4bfa122d7bea81cf6225ec3ade57d5b1dd3478c1a1b
+  version: 1.0.30001723
+  resolution: "caniuse-lite@npm:1.0.30001723"
+  checksum: 10c0/e019503061759b96017c4d27ddd7ca1b48533eabcd0431b51d2e3156f99f6b031075e46c279c0db63424cdfc874bba992caec2db51b922a0f945e686246886f6
   languageName: node
   linkType: hard
 
@@ -7500,6 +7507,13 @@ __metadata:
   version: 1.1.0
   resolution: "class-is@npm:1.1.0"
   checksum: 10c0/07241182c379a630c1841e99cd2301f0492d8f973f111f13b4487231f7cc28a1f1166670ce2dfcab91449155e6e107379eb9d15ba140e749a11d4fcba3883f52
+  languageName: node
+  linkType: hard
+
+"classnames@npm:^2.2.5":
+  version: 2.5.1
+  resolution: "classnames@npm:2.5.1"
+  checksum: 10c0/afff4f77e62cea2d79c39962980bf316bacb0d7c49e13a21adaadb9221e1c6b9d3cdb829d8bb1b23c406f4e740507f37e1dcf506f7e3b7113d17c5bab787aa69
   languageName: node
   linkType: hard
 
@@ -8772,6 +8786,7 @@ __metadata:
     prettier: "npm:^3.3.3"
     puppeteer: "npm:^23.9.0"
     qrcode.react: "npm:^4.1.0"
+    rc-slider: "npm:^11.1.8"
     react: "npm:18.3.1"
     react-contenteditable: "npm:^3.3.7"
     react-dnd: "npm:^16.0.1"
@@ -16505,6 +16520,33 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rc-slider@npm:^11.1.8":
+  version: 11.1.8
+  resolution: "rc-slider@npm:11.1.8"
+  dependencies:
+    "@babel/runtime": "npm:^7.10.1"
+    classnames: "npm:^2.2.5"
+    rc-util: "npm:^5.36.0"
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: 10c0/b202599abf85e21234c2cababe9c6f908aa7fcdde9eca413ef96b209838f3b1a33292d1a1bbe571b84bf46f8a5d28d5c1a070f331bddc0504101e9e2a75cf422
+  languageName: node
+  linkType: hard
+
+"rc-util@npm:^5.36.0":
+  version: 5.44.4
+  resolution: "rc-util@npm:5.44.4"
+  dependencies:
+    "@babel/runtime": "npm:^7.18.3"
+    react-is: "npm:^18.2.0"
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: 10c0/748b71a6280ddaaac93d1fb2c92f03818775468e7ccb6c221484687cc0b7e879d083e98e338f75ac0fe2e942dbb9c2405bd32d25e5a804bf1fb7a11f3f897127
+  languageName: node
+  linkType: hard
+
 "react-contenteditable@npm:^3.3.7":
   version: 3.3.7
   resolution: "react-contenteditable@npm:3.3.7"
@@ -16693,7 +16735,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-is@npm:^18.0.0":
+"react-is@npm:^18.0.0, react-is@npm:^18.2.0":
   version: 18.3.1
   resolution: "react-is@npm:18.3.1"
   checksum: 10c0/f2f1e60010c683479e74c63f96b09fb41603527cd131a9959e2aee1e5a8b0caf270b365e5ca77d4a6b18aae659b60a86150bb3979073528877029b35aecd2072

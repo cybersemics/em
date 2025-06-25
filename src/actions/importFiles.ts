@@ -361,7 +361,7 @@ export const importFilesActionCreator =
                     (!isAttribute(block.scope) && ancestors.every(ancestor => !isAttribute(ancestor.scope)))
 
                   if (isThoughtVisible) {
-                    dispatch(setCursor({ path: pathNew, editing: false }))
+                    dispatch(setCursor({ path: pathNew, isKeyboardOpen: false }))
                     didSetCursor = true
                   }
                 }

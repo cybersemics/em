@@ -1,6 +1,6 @@
 {
   "name": "em",
-  "version": "300.30.92",
+  "version": "303.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -112,6 +112,7 @@
     "page-lifecycle": "git+https://github.com/magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
     "qrcode.react": "^4.1.0",
+    "rc-slider": "^11.1.8",
     "react": "18.3.1",
     "react-contenteditable": "^3.3.7",
     "react-dnd": "^16.0.1",
