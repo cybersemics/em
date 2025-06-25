@@ -299,16 +299,14 @@ describe('mobile only', () => {
   it('edit mode should be enabled after deleting an empty favorited thought', async () => {
     const importText = `
     - a
-    - b
+    - 
       - =favorite`
 
     await paste(importText)
 
-    const editableNodeHandle = await waitForEditable('b')
+    await clickThought('')
+    await clickThought('')
 
-    await click(editableNodeHandle, { edge: 'right' })
-    await press('Backspace')
-    await waitUntil(() => window.getSelection()?.focusOffset === 0)
     await press('Backspace')
 
     const textContext = await getEditingText()
