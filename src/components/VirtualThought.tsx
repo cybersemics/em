@@ -7,7 +7,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { isSafari, isTouch, isiPhone } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
@@ -42,8 +42,6 @@ const selectShowContexts = (path: SimplePath) => (state: State) => isContextView
 
 /** Selects the cursor from the state. */
 const selectCursor = (state: State) => state.cursor
-
-const isIOSSafari = isTouch && isiPhone && isSafari()
 
 /** Renders a thought if it is not hidden by autofocus, otherwise renders a fixed height shim. */
 const VirtualThought = ({
@@ -166,7 +164,7 @@ const VirtualThought = ({
     await new Promise(resolve => requestAnimationFrame(resolve))
 
     // For iOS Safari first render of element, wait one more frame
-    if (isIOSSafari) {
+    if (isTouch && isSafari()) {
       await new Promise(resolve => requestAnimationFrame(resolve))
     }
 
