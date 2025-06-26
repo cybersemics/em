@@ -32,7 +32,7 @@ const beginDrag = ({ path, simplePath }: DragThoughtItem): DragThoughtItem => {
   store.dispatch(
     dragInProgress({
       value: true,
-      draggingThought: [simplePath],
+      draggingThoughts: [simplePath],
       sourceZone: DragThoughtZone.Favorites,
       ...(offset != null ? { offset } : null),
     }),

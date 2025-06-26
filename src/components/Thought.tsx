@@ -360,21 +360,23 @@ const ThoughtContainer = ({
   // TODO: It would be nice if we could reuse canDrop.
   const isChildHovering = useSelector(state => {
     // Early return if essential conditions are not met
-    if (!isVisible || !state.hoveringPath || !state.draggingThought || !state.draggingThought.length) {
+    if (!isVisible || !state.hoveringPath || !state.draggingThoughts || !state.draggingThoughts.length) {
       return false
     }
 
-    const wouldCauseHighlightingIssues = state.draggingThought.some(
+    // Check if this is a table view once
+    const isTableView = attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
+
+    const isNotHighlightable = state.draggingThoughts.some(
       draggingThought =>
         // Make sure we're not hovering over a thought that cannot be dropped on
-        isDescendantPath(state.hoveringPath!, draggingThought) ||
+        (state.hoveringPath && isDescendantPath(state.hoveringPath, draggingThought)) ||
         // Do not highlight parent of any dragging thought (i.e. when simply reordering but not moving to a new parent).
         // The only exception is table view col1, which needs highlighting as the first thought of row1 abuts the first thought in row2.
-        (equalPath(rootedParentOf(state, draggingThought), simplePath) &&
-          !attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')),
+        (equalPath(rootedParentOf(state, draggingThought), simplePath) && !isTableView),
     )
 
-    if (wouldCauseHighlightingIssues) {
+    if (isNotHighlightable) {
       return false
     }
 
@@ -396,7 +398,7 @@ const ThoughtContainer = ({
     const isThoughtDropTarget =
       state.hoverZone === DropThoughtZone.ThoughtDrop &&
       equalPath(rootedParentOf(state, state.hoveringPath), simplePath) &&
-      !state.draggingThought?.some(draggingThought => isDescendantPath(simplePath, draggingThought))
+      !state.draggingThoughts.some(draggingThought => isDescendantPath(simplePath, draggingThought))
 
     return isSubthoughtsDropTarget || isThoughtDropTarget
   })

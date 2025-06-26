@@ -92,7 +92,7 @@ const DropChildIfCollapsed = ({ depth, last, path, simplePath, isLastVisible }: 
 
   // Check if this thought is any of the dragging thoughts (single or multiple)
   const isDraggingThisThought = useSelector(state => {
-    return state.draggingThought?.some(draggingThought => equalPath(draggingThought, simplePath)) || false
+    return state.draggingThoughts.some(draggingThought => equalPath(draggingThought, simplePath)) || false
   })
 
   // Do not render DropChild on expanded thoughts or on any of the dragging thoughts.

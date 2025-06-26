@@ -19,8 +19,8 @@ import { expandOnHoverTopActionCreator as expandHoverUp } from './expandHoverUp'
 
 interface DragInProgressPayload {
   value: boolean
-  // Sets state.draggingThought. Either hoveringPath or file must be set if value is true.
-  draggingThought?: SimplePath[]
+  // Sets state.draggingThoughts. Either hoveringPath or file must be set if value is true.
+  draggingThoughts?: SimplePath[]
   hoveringPath?: Path
   hoverZone?: DropThoughtZone
   // Sets state.draggingFile. Either hoveringPath or file must be set if value is true.
@@ -32,7 +32,7 @@ interface DragInProgressPayload {
 /** Sets state.dragInProgress to true. */
 const dragInProgress = (
   state: State,
-  { value, draggingThought, draggingFile, hoveringPath, hoverZone, offset, sourceZone }: DragInProgressPayload,
+  { value, draggingThoughts, draggingFile, hoveringPath, hoverZone, offset, sourceZone }: DragInProgressPayload,
 ): State => ({
   ...(value
     ? alert(state, {
@@ -43,7 +43,7 @@ const dragInProgress = (
     : state),
   dragInProgress: value,
   draggingFile: value && draggingFile,
-  draggingThought,
+  draggingThoughts: draggingThoughts || [],
   hoveringPath,
   hoverZone,
   cursorOffset: offset || state.cursorOffset,

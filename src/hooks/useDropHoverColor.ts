@@ -7,7 +7,7 @@ import { token } from '../../styled-system/tokens'
  * */
 const useDropHoverColor = (depth: number) =>
   useSelector(state => {
-    return ((state.draggingThought || []).length - depth) % 2 ? token('colors.highlight2') : token('colors.highlight')
+    return ((state.draggingThoughts || []).length - depth) % 2 ? token('colors.highlight2') : token('colors.highlight')
   })
 
 export default useDropHoverColor

@@ -42,10 +42,18 @@ const drop = (state: State, items: DragThoughtItem[]) => {
 
 /** Show an alert on hover that notifies the user the thought will be copied if dropped on the icon. */
 const hoverMessage = (state: State, zone: DragThoughtZone) => {
-  const value = state.draggingThought ? getThoughtById(state, head(state.draggingThought[0]))?.value : null
+  if (!state.draggingThoughts.length) {
+    return zone === DragThoughtZone.Thoughts ? 'Drop to delete' : 'Drop to remove from favorites'
+  }
+
+  const alertFrom =
+    state.draggingThoughts.length === 1
+      ? ellipsize(getThoughtById(state, head(state.draggingThoughts[0]))?.value || '')
+      : `${state.draggingThoughts.length} thoughts`
+
   return zone === DragThoughtZone.Thoughts
-    ? `Drop to delete ${ellipsize(value!)}`
-    : `Drop to remove ${ellipsize(value!)} from favorites`
+    ? `Drop to delete ${alertFrom}`
+    : `Drop to remove ${alertFrom} from favorites`
 }
 
 /** An icon that a thought can be dropped on to delete. */

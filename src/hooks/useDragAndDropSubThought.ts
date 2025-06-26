@@ -175,14 +175,12 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   })
 
   store.dispatch((dispatch, getState) => {
-    /** Returns the parent ID and drop top flag for a given path. */
-    const getDropParams = (pathTo: Path) => {
+    /** Returns true if the thought should be dropped at the top of a collapsed parent. */
+    const shouldDropAtTop = (pathTo: Path) => {
       const parentPath = rootedParentOf(getState(), pathTo)
       const parentId = head(parentPath)
       const isExpanded = isPathExpanded(getState(), parentPath)
-      const dropTop = !isExpanded && attributeEquals(getState(), parentId, '=drop', 'top')
-
-      return { parentId, dropTop }
+      return !isExpanded && attributeEquals(getState(), parentId, '=drop', 'top')
     }
 
     // Set multicursor executing to true if there are multiple thoughts being dragged
@@ -196,7 +194,8 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     draggedItems.forEach(item => {
       const state = getState()
       const pathTo = getPathTo(state, item.path)
-      const { parentId, dropTop } = getDropParams(pathTo)
+      const parentId = head(rootedParentOf(state, pathTo))
+      const dropTop = shouldDropAtTop(pathTo)
 
       const thoughtTo = getThoughtById(state, parentId)
 
@@ -226,7 +225,8 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         const firstItem = draggedItems[0]
         const pathTo = getPathTo(state, firstItem.path)
 
-        const { parentId, dropTop } = getDropParams(pathTo)
+        const parentId = head(rootedParentOf(state, pathTo))
+        const dropTop = shouldDropAtTop(pathTo)
         const thoughtFrom = getThoughtById(state, head(firstItem.path))
         const thoughtTo = getThoughtById(state, parentId)
 

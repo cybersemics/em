@@ -32,7 +32,6 @@ import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
-import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import longPressStore from '../stores/longPressStore'
@@ -47,7 +46,6 @@ import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import unroot from '../util/unroot'
 
 export type DropValidationResult = {
   isValid: boolean
@@ -84,22 +82,18 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
     store.dispatch(addMulticursor({ path }))
   }
 
-  const activeMulticursors = isMulticursorActive ? Object.values(state.multicursors) : []
-  const multicursorPaths =
-    isMulticursorActive && !isCurrentThoughtSelected ? [...activeMulticursors, path] : activeMulticursors
+  const multicursorPaths = [...Object.values(state.multicursors), ...(!isCurrentThoughtSelected ? [path] : [])]
 
-  const draggingThoughts = isMulticursorActive
-    ? documentSort(state, multicursorPaths).map(path => ({
-        path,
-        simplePath: simplifyPath(state, path),
-        zone: DragThoughtZone.Thoughts,
-      }))
-    : [{ path, simplePath, zone: DragThoughtZone.Thoughts }]
+  const draggingThoughts = documentSort(state, multicursorPaths).map(path => ({
+    path,
+    simplePath: simplifyPath(state, path),
+    zone: DragThoughtZone.Thoughts,
+  }))
 
   store.dispatch(
     dragInProgress({
       value: true,
-      draggingThought: draggingThoughts.map(item => item.simplePath),
+      draggingThoughts: draggingThoughts.map(item => item.simplePath),
       sourceZone: DragThoughtZone.Thoughts,
       ...(offset != null ? { offset } : null),
     }),
@@ -232,7 +226,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
     // move each dragged item to the destination path
     draggedItems.forEach(item => {
       const state = getState()
-      const parent = unroot(rootedParentOf(state, props.simplePath))
+      const parent = parentOf(props.simplePath)
       const newPath = appendToPath(parent, head(item.simplePath))
       const toThought = pathToThought(state, props.simplePath)
       const thoughtFrom = item.simplePath
@@ -323,8 +317,8 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
 
   // Check if this thought is part of a multiselect drag operation
   const isDraggingMultiple = useSelector(state => {
-    if (!state.dragInProgress || !state.draggingThought) return false
-    return state.draggingThought.some(draggedPath => equalPath(draggedPath, propsTypes.simplePath))
+    if (!state.dragInProgress || !state.draggingThoughts) return false
+    return state.draggingThoughts.some(draggedPath => equalPath(draggedPath, propsTypes.simplePath))
   })
 
   return {
