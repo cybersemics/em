@@ -27,7 +27,7 @@ const transientChildPath = ['TRANSIENT_THOUGHT_ID'] as SimplePath
   However removing the transient editable should be handled by some business logic by parent components.
 */
 const TransientEditable = (
-  <Editable transient={true} path={transientChildPath} simplePath={transientChildPath} rank={0} />
+  <Editable isEditing={false} transient={true} path={transientChildPath} simplePath={transientChildPath} rank={0} />
 )
 
 /** The main content section of em. */
@@ -76,6 +76,10 @@ const Content: FC = () => {
           maxWidth: '60em',
           margin: '0 auto',
           minHeight: '100vh',
+          // Disallow text selection on the entire tree to prevent selection of scroll zone and other background elements when dragging.
+          // This is overriden by the editable recipe to enable text selection on editable thoughts.
+          // https://github.com/cybersemics/em/pull/2962
+          userSelect: 'none',
           zIndex: 'content',
           '@media (max-width: 960px)': {
             maxWidth: '80%',

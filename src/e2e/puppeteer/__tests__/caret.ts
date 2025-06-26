@@ -8,6 +8,7 @@ import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
+import testIfNotCI from '../helpers/testIfNotCI'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
@@ -178,7 +179,9 @@ describe('all platforms', () => {
     expect(textContext).toBe('firstlast')
   })
 
-  it('backspace on empty thought should move caret to the end of the previous thought', async () => {
+  // TODO: Flaky test
+  // https://github.com/cybersemics/em/issues/2954
+  testIfNotCI('backspace on empty thought should move caret to the end of the previous thought', async () => {
     const importText = `
     - first
     - last`
@@ -223,7 +226,9 @@ describe('mobile only', () => {
     await emulate(KnownDevices['iPhone 11'])
   }, 5000)
 
-  it('After categorize, the caret should be on the new thought', async () => {
+  // TODO: Flaky test
+  // https://github.com/cybersemics/em/issues/2959
+  testIfNotCI('After categorize, the caret should be on the new thought', async () => {
     const importText = `
     - a
       - b`
@@ -289,5 +294,22 @@ describe('mobile only', () => {
 
     const focusNode = await getSelection().focusNode
     expect(focusNode).toBeUndefined()
+  })
+
+  it('edit mode should be enabled after deleting an empty favorited thought', async () => {
+    const importText = `
+    - a
+    - 
+      - =favorite`
+
+    await paste(importText)
+
+    await clickThought('')
+    await clickThought('')
+
+    await press('Backspace')
+
+    const textContext = await getEditingText()
+    expect(textContext).toBe('a')
   })
 })

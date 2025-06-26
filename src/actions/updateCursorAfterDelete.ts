@@ -121,7 +121,7 @@ const updateCursorAfterDelete = (state: State, statePrev: State) => {
   return cursorNew
     ? setCursor(state, {
         path: cursorNew,
-        editing: state.editing,
+        isKeyboardOpen: state.isKeyboardOpen,
         // If there is no next thought, or when deleting an empty thought, set the offset to the end of the previous thought.
         // Otherwise, set the offset to the beginning of the thought.
         offset: !next() || (thought.value === '' && prev()) ? headValue(state, cursorNew)?.length : 0,

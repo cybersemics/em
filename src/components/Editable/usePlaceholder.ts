@@ -13,7 +13,7 @@ import strip from '../../util/strip'
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
 /** Generates the placeholder text for the thought. Automatically changes from 'Add a thought' to 'This is an empty thought' after a short delay. Handles the special case where the cursor is in a clear state due to the clearThought command. */
-const usePlaceholder = ({ isEditing, simplePath }: { isEditing: boolean | undefined; simplePath: SimplePath }) =>
+const usePlaceholder = ({ isEditing, simplePath }: { isEditing: boolean; simplePath: SimplePath }) =>
   useSelector(state => {
     const isCursorCleared = isEditing && state.cursorCleared
     const thought = getThoughtById(state, head(simplePath))

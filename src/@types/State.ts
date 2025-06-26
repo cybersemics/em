@@ -73,7 +73,7 @@ interface State {
    */
   editableNonce: number
   /** True if there is an active browser selection, or on mobile when the virtual keyboard is up. On mobile the first tap moves the cursor, and the second tap opens the keyboard. */
-  editing: boolean | null
+  isKeyboardOpen: boolean | null
   /** Show the latest activated commands at the bottom of the screen for webcasts. */
   enableLatestCommandsDiagram: boolean
   error?: string | null

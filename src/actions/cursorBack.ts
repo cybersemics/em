@@ -11,7 +11,7 @@ import toggleAbsoluteContext from './toggleAbsoluteContext'
 
 /** Moves the cursor up one level. */
 const cursorBack = (state: State): State => {
-  const { cursor: cursorOld, editing, search, rootContext } = state
+  const { cursor: cursorOld, isKeyboardOpen, search, rootContext } = state
 
   const isAbsoluteRoot = isAbsolute(rootContext)
 
@@ -26,7 +26,7 @@ const cursorBack = (state: State): State => {
             // offset shouldn't be null if we want useEditMode to set the selection to the new thought
             offset: 0,
             path: cursorNew!.length > 0 ? cursorNew : null,
-            editing,
+            isKeyboardOpen,
             preserveMulticursor: true,
           }),
 
@@ -43,7 +43,7 @@ const cursorBack = (state: State): State => {
               searchReducer({ value: null }),
 
               // restore the cursor
-              state.cursorBeforeSearch ? setCursor({ path: state.cursorBeforeSearch, editing }) : null,
+              state.cursorBeforeSearch ? setCursor({ path: state.cursorBeforeSearch, isKeyboardOpen }) : null,
             ]
           : [],
   )(state)
