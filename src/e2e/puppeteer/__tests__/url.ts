@@ -9,6 +9,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import testIfNotCI from '../helpers/testIfNotCI'
+import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -113,6 +114,8 @@ it('collapsed thought with url child', async () => {
   `)
 
   await press('Escape')
+
+  await waitForFrames()
 
   const image = await screenshot()
   expect(image).toMatchImageSnapshot()

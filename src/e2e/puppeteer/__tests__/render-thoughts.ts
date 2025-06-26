@@ -11,8 +11,7 @@ import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
 import testIfNotCI from '../helpers/testIfNotCI'
-
-// import { page } from '../setup'
+import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -88,13 +87,7 @@ const testSuite = () => {
       // - https://github.com/cybersemics/em/actions/runs/14236307211
       // - https://github.com/cybersemics/em/actions/runs/14783509675/job/41507408875?pr=2917
       // Waiting for requestAnimationFrame does not fix the issue.
-      // await page.evaluate(() => {
-      //   return new Promise(resolve => {
-      //     // Wait for 2 frames to ensure RAF completion
-      //     requestAnimationFrame(() => requestAnimationFrame(resolve))
-      //   })
-      // })
-      await sleep(200)
+      await waitForFrames()
 
       expect(await screenshot()).toMatchImageSnapshot()
     })
