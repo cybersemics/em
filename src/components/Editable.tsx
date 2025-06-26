@@ -127,6 +127,7 @@ const Editable = ({
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const editingOrOnCursor = useSelector(state => state.isKeyboardOpen || equalPath(path, state.cursor))
+  const dragHold = useSelector(state => state.dragHold)
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -526,7 +527,7 @@ const Editable = ({
       // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
       // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
       // See: #981
-      if (editingOrOnCursor) {
+      if (editingOrOnCursor && !hasMulticursor) {
         // Prevent the browser from autoscrolling to this editable element.
         // For some reason doesn't work on touchend.
         preventAutoscroll(contentRef.current, {
@@ -544,7 +545,7 @@ const Editable = ({
         e.preventDefault()
       }
     },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection],
+    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor],
   )
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
@@ -555,9 +556,10 @@ const Editable = ({
         haptics.light()
       }
 
+      // If dragHold, don't allow the editable to receive focus or iOS Safari will scroll it.
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
+      if (dragHold || isMultiselectClick) {
         e.preventDefault()
         return
       }
@@ -594,7 +596,7 @@ const Editable = ({
         }
       })
     },
-    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
+    [disabled, dispatch, dragHold, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
   return (
