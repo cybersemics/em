@@ -1,8 +1,9 @@
 import { head, isEqual } from 'lodash'
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
+import useLayoutAnimationFrameEffect from '../../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../../hooks/useSelectorEffect'
 import getStyle from '../../selectors/getStyle'
 import getThoughtById from '../../selectors/getThoughtById'
@@ -39,7 +40,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
 
   // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
   // cursor changes to or from the element.
-  useLayoutEffect(updateMultiline, [contentRef, fontSize, isEditing, simplePath, editingValue, updateMultiline])
+  useLayoutAnimationFrameEffect(updateMultiline, [contentRef, fontSize, isEditing, simplePath, editingValue])
 
   // Recalculate multiline when the cursor changes.
   // This is necessary because the width of thoughts change as the autofocus indent changes.
