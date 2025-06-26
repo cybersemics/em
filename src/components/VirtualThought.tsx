@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash'
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
@@ -7,8 +7,8 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { isSafari, isTouch } from '../browser'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
+import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
 import getStyle from '../selectors/getStyle'
@@ -158,31 +158,9 @@ const VirtualThought = ({
     })
   }, [crossContextualKey, onResize, id, autofocus])
 
-  // Separate function for layout effect cases where we need to wait for the next frame
-  const updateSizeAfterLayout = useCallback(async () => {
-    // Wait for next frame to ensure layout is complete
-    await new Promise(resolve => requestAnimationFrame(resolve))
-
-    // For iOS Safari first render of element, wait one more frame
-    if (isTouch && isSafari()) {
-      await new Promise(resolve => requestAnimationFrame(resolve))
-    }
-
-    updateSize()
-  }, [updateSize])
-
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
-  // UseLayoutEffect + requestAnimationFrame provides the optimal balance for height recalculation:
-  // 1. UseLayoutEffect runs synchronously before browser paint, ensuring we catch layout changes early
-  // 2. While useEffect can be delayed multiple frames causing visible flicker
-  // 3. The requestAnimationFrame inside useLayoutEffect waits for the next frame after layout changes
-  // 4. This ensures we capture the final height after all style/layout updates are applied
-  // 5. On iOS Safari, we need an additional frame due to its unique rendering pipeline
-  // This approach minimizes flicker while still capturing accurate dimensions.
-  useLayoutEffect(() => {
-    updateSizeAfterLayout()
-  }, [
+  useLayoutAnimationFrameEffect(updateSize, [
     cursorDepth,
     cursorLeaf,
     fontSize,
@@ -193,7 +171,6 @@ const VirtualThought = ({
     style,
     isContextViewActive,
     editingValue,
-    updateSizeAfterLayout,
   ])
 
   // Recalculate height on cursor change since indentation can change line wrapping
@@ -267,7 +244,7 @@ const VirtualThought = ({
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
           leaf={leaf}
-          updateSize={updateSizeAfterLayout}
+          updateSize={updateSize}
           path={path}
           prevChildId={prevChildId}
           showContexts={showContexts}

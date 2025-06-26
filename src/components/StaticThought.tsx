@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useLayoutEffect } from 'react'
+import React from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { thoughtRecipe } from '../../styled-system/recipes'
@@ -9,6 +9,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { isSafari, isTouch } from '../browser'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
+import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -122,9 +123,7 @@ const StaticThought = ({
   const multiline = useMultiline(editableRef, simplePath, isEditing)
   const placeholder = usePlaceholder({ isEditing, simplePath })
 
-  useLayoutEffect(() => {
-    updateSize?.()
-  }, [multiline, updateSize])
+  useLayoutAnimationFrameEffect(updateSize, [multiline])
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
   // use thoughtToPath to re-calculate the SimplePath as ancestors load
