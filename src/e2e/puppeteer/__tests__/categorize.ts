@@ -17,7 +17,7 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 describe('categorize', () => {
   it('should handle multiple categorizations/uncategorizations with long text and wide window', async () => {
     await page.setViewport({
-      width: 1200,
+      width: 1400,
       height: 800,
     })
 
