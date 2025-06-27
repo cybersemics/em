@@ -54,7 +54,6 @@ describe('categorize', () => {
     await press(']', { meta: true })
     await press('5')
 
-
     await sleep(300)
 
     const imageCategorized = await screenshot()
