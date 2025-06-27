@@ -139,51 +139,61 @@ describe('categorize', () => {
 
     // Perform 1st un-categorization
     await press('c', { meta: true, alt: true })
+    await sleep(300)
     const image15 = await screenshot()
     expect(image15).toMatchImageSnapshot()
 
     // Perform 2nd un-categorization
     await press('c', { meta: true, alt: true })
+    await sleep(300)
     const image16 = await screenshot()
     expect(image16).toMatchImageSnapshot()
 
     // Perform 3rd un-categorization
     await press('c', { meta: true, alt: true })
+    await sleep(300)
     const image17 = await screenshot()
     expect(image17).toMatchImageSnapshot()
 
     // Perform 4th un-categorization
     await press('c', { meta: true, alt: true })
+    await sleep(300)
     const image18 = await screenshot()
     expect(image18).toMatchImageSnapshot()
 
     // Perform 5th un-categorization
     await press('c', { meta: true, alt: true })
+    await sleep(300)
     const image19 = await screenshot()
     expect(image19).toMatchImageSnapshot()
 
     // Perform 6th un-categorization
     await press('c', { meta: true, alt: true })
+    await sleep(300)
     const image20 = await screenshot()
     expect(image20).toMatchImageSnapshot()
 
     // Perform 7th un-categorization
     await press('c', { meta: true, alt: true })
+    await sleep(300)
     const image21 = await screenshot()
     expect(image21).toMatchImageSnapshot()
 
     // Perform 8th un-categorization
     await press('c', { meta: true, alt: true })
+    await sleep(300)
     const image22 = await screenshot()
     expect(image22).toMatchImageSnapshot()
 
     // Perform 9th un-categorization
     await press('c', { meta: true, alt: true })
+    await sleep(300)
     const image23 = await screenshot()
     expect(image23).toMatchImageSnapshot()
 
     // Perform 10th un-categorization
     await press('c', { meta: true, alt: true })
+    await sleep(300)
     const image24 = await screenshot()
     expect(image24).toMatchImageSnapshot()
   })
