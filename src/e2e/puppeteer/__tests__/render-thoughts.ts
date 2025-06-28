@@ -140,12 +140,10 @@ describe('multiline', () => {
   beforeEach(hideHUD)
 
   it('multiline thought', async () => {
-    await paste(`
-        - a
-        - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
-        - b
-        - c
-      `)
+    await paste(`- a
+- External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
+- b
+- c`)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
