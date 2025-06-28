@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import _ from 'lodash'
-import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect } from 'react'
+import React, { FC, PropsWithChildren, useEffect, useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
@@ -11,7 +11,6 @@ import { inputHandlers } from '../commands'
 import { Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
-import globals from '../globals'
 import getUserSetting from '../selectors/getUserSetting'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
@@ -65,24 +64,6 @@ const useBodyAttributeSelector = <T,>(name: string, selector: (state: State) => 
 //     </div>
 //   )
 // }
-
-/** Disables long-press-to-select by clearing any selections that appear during long press. */
-const useDisableLongPressToSelect = () => {
-  const onSelectionChange = useCallback(() => {
-    // when isCollapsed is false, there is a selection with at least one character
-    // long-press-to-select only selects one or more characters
-    if (globals.longpressing && selection.isActive() && !selection.isCollapsed()) {
-      selection.set(document.body)
-    }
-  }, [])
-
-  useEffect(() => {
-    document.addEventListener('selectionchange', onSelectionChange)
-    return () => {
-      document.removeEventListener('selectionchange', onSelectionChange)
-    }
-  }, [onSelectionChange])
-}
 
 /** Cancel gesture if there is an active text selection, drag, modal, or sidebar. */
 const shouldCancelGesture = (
@@ -139,8 +120,6 @@ const AppComponent: FC = () => {
     document.documentElement.style.backgroundColor = colors.bg
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', colors.bg)
   }, [colors.bg])
-
-  useDisableLongPressToSelect()
 
   // Set body attributes using custom hooks
   useBodyAttribute('data-device', isTouch ? 'mobile' : 'desktop')
