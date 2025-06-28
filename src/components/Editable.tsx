@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -51,6 +51,7 @@ import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
+import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import trimHtml from '../util/trimHtml'
@@ -63,7 +64,6 @@ import useOnPaste from './Editable/useOnPaste'
 interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement>
   path: Path
-  disabled?: boolean
   isEditing: boolean
   isVisible?: boolean
   multiline?: boolean
@@ -93,7 +93,6 @@ let cursorOffsetInitialized = false
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
 const Editable = ({
-  disabled,
   editableRef,
   isEditing,
   isVisible,
@@ -128,6 +127,11 @@ const Editable = ({
   const contentRef = editableRef || nullRef
   const editingOrOnCursor = useSelector(state => state.isKeyboardOpen || equalPath(path, state.cursor))
   const dragHold = useSelector(state => state.dragHold)
+
+  // Disable contenteditable on Mobile Safari during drag-and-drop, otherwise thought text will become selected.
+  // This is restricted to Mobile Safari, because on Chrome it creates a small layout shift.
+  // https://github.com/cybersemics/em/pull/2960
+  const disabled = useSelector(state => !isDocumentEditable || (isTouch && isSafari() && state.dragInProgress))
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
