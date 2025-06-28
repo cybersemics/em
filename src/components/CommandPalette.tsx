@@ -288,7 +288,7 @@ const CommandPalette: FC<{
                       cmd => (gestureInProgress as string) === gestureString(cmd),
                     )
 
-                    return commands.map(command => {
+                    return commands.map((command, index) => {
                       // Check if the current gesture sequence ends with help gesture
                       const cheatsheetInProgress = gestureInProgress
                         ?.toString()
@@ -310,6 +310,8 @@ const CommandPalette: FC<{
                           }
                           command={command}
                           shouldScrollSelectedIntoView={selectedCommand.source === 'keyboard'}
+                          isFirstCommand={index === 0}
+                          isLastCommand={index === commands.length - 1}
                         />
                       )
                     })

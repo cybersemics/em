@@ -48,6 +48,8 @@ const CommandItem: FC<{
   onHover?: (command: Command) => void
   customize?: boolean
   shouldScrollSelectedIntoView?: boolean
+  isFirstCommand?: boolean
+  isLastCommand?: boolean
   noInlinePadding?: boolean
 }> = ({
   viewType = 'table',
@@ -61,6 +63,8 @@ const CommandItem: FC<{
   onHover,
   customize,
   shouldScrollSelectedIntoView,
+  isFirstCommand,
+  isLastCommand,
   noInlinePadding,
 }) => {
   const [{ isDragging }, dragSource] = useDrag({
@@ -86,9 +90,7 @@ const CommandItem: FC<{
 
   const label = command.labelInverse && isActive ? command.labelInverse : command.label
   const Icon = command.svg
-  const ref = React.useRef<Pick<HTMLDivElement, 'scrollIntoView' | 'addEventListener' | 'removeEventListener'> | null>(
-    null,
-  )
+  const ref = React.useRef<HTMLDivElement | null>(null)
 
   // convert the description to a string
   const description = useSelector(state => {
@@ -106,8 +108,16 @@ const CommandItem: FC<{
   const isSelectedStyle = selected || isDragging
 
   useEffect(() => {
-    if (selected && shouldScrollSelectedIntoView) {
+    if (!selected || !shouldScrollSelectedIntoView) return
+    if (!isFirstCommand && !isLastCommand) {
+      // For middle commands, use normal scrollIntoView
       ref.current?.scrollIntoView({ block: 'nearest' })
+      return
+    }
+    // For first command, scroll the container to the very top
+    const scrollContainer = ref.current?.parentElement
+    if (scrollContainer) {
+      scrollContainer.scrollTop = isFirstCommand ? 0 : scrollContainer.scrollHeight
     }
   })
 
