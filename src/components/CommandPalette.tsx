@@ -130,7 +130,10 @@ const CommandPalette: FC<{
     sortActiveCommandsFirst: true,
   })
 
-  const [selectedCommand, setSelectedCommand] = useState<Command>(commands[0])
+  const [selectedCommand, setSelectedCommand] = useState<{
+    command: Command
+    source: 'mouse' | 'keyboard' | 'search'
+  }>({ command: commands[0], source: 'search' })
 
   /** Execute a command. */
   const onExecute = useCallback(
@@ -154,12 +157,12 @@ const CommandPalette: FC<{
 
   /** Execute the selected command. */
   const onExecuteSelected = useCallback(
-    (e: KeyboardEvent) => onExecute(e, selectedCommand),
-    [onExecute, selectedCommand],
+    (e: KeyboardEvent) => onExecute(e, selectedCommand.command),
+    [onExecute, selectedCommand.command],
   )
 
   /** Select commands on hover. */
-  const onHover = useCallback((command: Command) => setSelectedCommand(command), [])
+  const onHover = useCallback((command: Command) => setSelectedCommand({ command, source: 'mouse' }), [])
 
   useEffect(() => {
     allowScroll(false)
@@ -175,12 +178,12 @@ const CommandPalette: FC<{
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      if (selectedCommand !== commands[0]) {
-        const i = commands.indexOf(selectedCommand)
-        setSelectedCommand(commands[i - 1])
+      if (selectedCommand.command !== commands[0]) {
+        const i = commands.indexOf(selectedCommand.command)
+        setSelectedCommand({ command: commands[i - 1], source: 'keyboard' })
       }
     },
-    [commands, selectedCommand],
+    [commands, selectedCommand.command],
   )
 
   /** Select the next command in the list. */
@@ -188,12 +191,12 @@ const CommandPalette: FC<{
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      if (selectedCommand !== commands[commands.length - 1]) {
-        const i = commands.indexOf(selectedCommand)
-        setSelectedCommand(commands[i + 1])
+      if (selectedCommand.command !== commands[commands.length - 1]) {
+        const i = commands.indexOf(selectedCommand.command)
+        setSelectedCommand({ command: commands[i + 1], source: 'keyboard' })
       }
     },
-    [commands, selectedCommand],
+    [commands, selectedCommand.command],
   )
 
   /** Select the first command in the list. */
@@ -201,7 +204,7 @@ const CommandPalette: FC<{
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      setSelectedCommand(commands[0])
+      setSelectedCommand({ command: commands[0], source: 'keyboard' })
     },
     [commands],
   )
@@ -211,7 +214,7 @@ const CommandPalette: FC<{
     (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      setSelectedCommand(commands[commands.length - 1])
+      setSelectedCommand({ command: commands[commands.length - 1], source: 'keyboard' })
     },
     [commands],
   )
@@ -261,7 +264,7 @@ const CommandPalette: FC<{
                   onExecute={onExecuteSelected}
                   onInput={value => {
                     /** Update `setSelectedCommand` here instead of in a `useEffect` to prevent jarring flash. */
-                    setSelectedCommand(getCommandsSorted(value)[0])
+                    setSelectedCommand({ command: getCommandsSorted(value)[0], source: 'search' })
                     setSearch(value)
                   }}
                   onSelectUp={onSelectUp}
@@ -302,11 +305,11 @@ const CommandPalette: FC<{
                           onHover={onHover}
                           selected={
                             !isTouch
-                              ? command === selectedCommand
+                              ? command === selectedCommand.command
                               : isCheatsheetMatch || gestureInProgress === gestureString(command) || isCancelMatch
                           }
                           command={command}
-                          shouldScrollSelectionIntoView
+                          shouldScrollSelectedIntoView={selectedCommand.source === 'keyboard'}
                         />
                       )
                     })

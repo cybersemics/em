@@ -47,7 +47,7 @@ const CommandItem: FC<{
   alwaysShowDescription?: boolean
   onHover?: (command: Command) => void
   customize?: boolean
-  shouldScrollSelectionIntoView?: boolean
+  shouldScrollSelectedIntoView?: boolean
   noInlinePadding?: boolean
 }> = ({
   viewType = 'table',
@@ -60,7 +60,7 @@ const CommandItem: FC<{
   alwaysShowDescription,
   onHover,
   customize,
-  shouldScrollSelectionIntoView,
+  shouldScrollSelectedIntoView,
   noInlinePadding,
 }) => {
   const [{ isDragging }, dragSource] = useDrag({
@@ -106,7 +106,7 @@ const CommandItem: FC<{
   const isSelectedStyle = selected || isDragging
 
   useEffect(() => {
-    if (selected && shouldScrollSelectionIntoView) {
+    if (selected && shouldScrollSelectedIntoView) {
       ref.current?.scrollIntoView({ block: 'nearest' })
     }
   })
