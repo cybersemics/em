@@ -11,8 +11,58 @@ import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
+import isURL from '../util/isURL'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
+
+/** Fetches the title of a webpage from its URL. */
+const fetchWebpageTitle = async (url: string): Promise<string | null> => {
+  try {
+    // Ensure the URL has a protocol
+    const fullUrl = url.startsWith('http') ? url : `https://${url}`
+    
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+    })
+    
+    if (!response.ok) {
+      return null
+    }
+    
+    const html = await response.text()
+    
+    // Extract title from HTML
+    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
+    if (titleMatch && titleMatch[1]) {
+      // Decode HTML entities in the title content
+      const rawTitle = titleMatch[1].trim()
+      // Decode HTML entities manually for the most common ones
+      const decodedTitle = rawTitle
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+      
+      // Replace < and > with ( and ) to avoid HTML tag conflicts in the thought system
+      const cleanTitle = decodedTitle
+        .replace(/</g, '(')
+        .replace(/>/g, ')')
+      
+      return cleanTitle
+    }
+    
+    return null
+  } catch (error) {
+    console.warn('Failed to fetch webpage title:', error)
+    return null
+  }
+}
 
 /** Generate a thought using AI. */
 const generateThought: Command = {
@@ -29,10 +79,6 @@ const generateThought: Command = {
   },
   canExecute: state => isDocumentEditable() && !!state.cursor,
   exec: async (dispatch, getState) => {
-    if (!import.meta.env.VITE_AI_URL) {
-      throw new Error('import.meta.env.VITE_AI_URL is not configured')
-    }
-
     const state = getState()
 
     // do nothing if generation is already in progress
@@ -41,12 +87,79 @@ const generateThought: Command = {
     const simplePath = simplifyPath(state, state.cursor!)
     const thought = getThoughtById(state, head(simplePath))
     if (!thought) return
+
+    // Check if current thought is empty and first child is a URL
+    const isCurrentThoughtEmpty = thought.value === ''
+    const children = getChildrenRanked(state, thought.id)
+    const firstChild = children[0]
+    const isFirstChildURL = firstChild && isURL(firstChild.value)
+
+    if (isCurrentThoughtEmpty && isFirstChildURL) {
+      // Try to fetch webpage title
+      const valuePending = '...'
+      
+      // Set to pending while title is being fetched
+      dispatch([
+        updateThoughts({
+          thoughtIndexUpdates: {
+            [thought.id]: {
+              ...thought,
+              value: valuePending,
+              generating: true,
+            },
+          },
+          lexemeIndexUpdates: {},
+          local: false,
+          remote: false,
+          overwritePending: true,
+        }),
+        cursorCleared({ value: true }),
+      ])
+
+      const title = await fetchWebpageTitle(firstChild.value)
+      
+      if (title) {
+        // Update thought with the fetched title
+        dispatch([
+          editThought({
+            force: true,
+            oldValue: valuePending,
+            newValue: title,
+            path: simplePath,
+          }),
+          setCursor({ path: state.cursor, offset: title.length }),
+          cursorCleared({ value: false }),
+        ])
+        return
+      } else {
+        // If title fetching failed, reset and fall through to AI generation
+        dispatch([
+          updateThoughts({
+            thoughtIndexUpdates: {
+              [thought.id]: {
+                ...thought,
+                generating: false,
+              },
+            },
+            lexemeIndexUpdates: {},
+            local: false,
+            remote: false,
+            overwritePending: true,
+          }),
+          cursorCleared({ value: false }),
+        ])
+      }
+    }
+
+    // Original AI generation logic
+    if (!import.meta.env.VITE_AI_URL) {
+      throw new Error('import.meta.env.VITE_AI_URL is not configured')
+    }
+
     const valuePending = `${thought.value}...`
 
     // prompt with ancestors and siblings
     const ancestors = pathToContext(state, parentOf(simplePath))
-    const children = getChildrenRanked(state, thought.parentId)
-    const ancestorsText = ancestors.join('/')
     const siblingsText = children.map(child => (child.id === thought.id ? `${child.value}_` : child.value)).join('\n')
 
     // if there is only one child, then insert the "blank" at the end of the ancestor chain:
@@ -56,6 +169,7 @@ const generateThought: Command = {
     //        Cate Blanchett
     //        Rooney Mara
     //        _
+    const ancestorsText = ancestors.join('/')
     const input = `${ancestorsText}${children.length > 1 ? '/\n' : ''}${siblingsText}`
 
     // set to pending while thought is being generated
@@ -87,7 +201,9 @@ const generateThought: Command = {
         dispatch(error({ value: err.message }))
       }
     } else {
-      valueNew = `${thought.value ? thought.value + ' ' : ''}${content}`
+      // Trim the AI content to avoid double spaces
+      const trimmedContent = content.trim()
+      valueNew = `${thought.value}${thought.value && trimmedContent ? ' ' : ''}${trimmedContent}`
     }
 
     // must reset cursorCleared before thought is updated for some reason, otherwise it is not updated in the DOM
