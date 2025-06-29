@@ -1,10 +1,11 @@
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import dispatch from '../../test-helpers/dispatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../test-helpers/setCursorFirstMatch'
-import executeCommand from '../../util/executeCommand'
 import generateThoughtCommand from '../generateThought'
 
 // Mock fetch for testing
@@ -29,12 +30,14 @@ describe('generateThought - webpage title fetching', () => {
       text: () => Promise.resolve('<html><head><title>Example Domain</title></head><body></body></html>'),
     })
 
-    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
+    await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    executeCommand(generateThoughtCommand, { store })
-
-    // Wait for async operation to complete
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Execute the command directly and await its async exec function
+    await act(async () => {
+      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
+        type: 'keyboard',
+      })
+    })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -57,12 +60,14 @@ describe('generateThought - webpage title fetching', () => {
         Promise.resolve('<html><head><title>Test &amp; Example &lt;Company&gt;</title></head><body></body></html>'),
     })
 
-    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
+    await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    executeCommand(generateThoughtCommand, { store })
-
-    // Wait for async operation to complete
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Execute the command directly and await its async exec function
+    await act(async () => {
+      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
+        type: 'keyboard',
+      })
+    })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -84,12 +89,14 @@ describe('generateThought - webpage title fetching', () => {
       text: () => Promise.resolve('<html><head><title>Example Site</title></head><body></body></html>'),
     })
 
-    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
+    await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    executeCommand(generateThoughtCommand, { store })
-
-    // Wait for async operation to complete
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Execute the command directly and await its async exec function
+    await act(async () => {
+      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
+        type: 'keyboard',
+      })
+    })
 
     // Verify fetch was called with https:// prefix
     expect(mockFetch).toHaveBeenCalledWith('https://example.com', expect.any(Object))
@@ -111,12 +118,14 @@ describe('generateThought - webpage title fetching', () => {
     // Mock fetch failure for webpage
     mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
-    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
+    await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    executeCommand(generateThoughtCommand, { store })
-
-    // Wait for async operation to complete
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Execute the command directly and await its async exec function
+    await act(async () => {
+      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
+        type: 'keyboard',
+      })
+    })
 
     // Verify only one fetch call was made (for webpage, no AI fallback)
     expect(mockFetch).toHaveBeenCalledTimes(1)
@@ -141,12 +150,14 @@ describe('generateThought - webpage title fetching', () => {
       text: () => Promise.resolve('<html><head></head><body><h1>No Title</h1></body></html>'),
     })
 
-    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
+    await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    executeCommand(generateThoughtCommand, { store })
-
-    // Wait for async operation to complete
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Execute the command directly and await its async exec function
+    await act(async () => {
+      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
+        type: 'keyboard',
+      })
+    })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -170,12 +181,14 @@ describe('generateThought - webpage title fetching', () => {
       json: () => Promise.resolve({ content: ' additional content', err: null }),
     })
 
-    store.dispatch([importText({ text }), setCursorFirstMatch(['Some existing text'])])
+    await dispatch([importText({ text }), setCursorFirstMatch(['Some existing text'])])
 
-    executeCommand(generateThoughtCommand, { store })
-
-    // Wait for async operation to complete
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Execute the command directly and await its async exec function
+    await act(async () => {
+      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
+        type: 'keyboard',
+      })
+    })
 
     // Verify fetch was called only once for AI, not for webpage
     expect(mockFetch).toHaveBeenCalledTimes(1)
@@ -205,12 +218,14 @@ describe('generateThought - webpage title fetching', () => {
       json: () => Promise.resolve({ content: 'AI generated text', err: null }),
     })
 
-    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
+    await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    executeCommand(generateThoughtCommand, { store })
-
-    // Wait for async operation to complete
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Execute the command directly and await its async exec function
+    await act(async () => {
+      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
+        type: 'keyboard',
+      })
+    })
 
     // Verify fetch was called only once for AI, not for webpage
     expect(mockFetch).toHaveBeenCalledTimes(1)
@@ -241,12 +256,14 @@ describe('generateThought - webpage title fetching', () => {
         ),
     })
 
-    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
+    await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    executeCommand(generateThoughtCommand, { store })
-
-    // Wait for async operation to complete
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Execute the command directly and await its async exec function
+    await act(async () => {
+      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
+        type: 'keyboard',
+      })
+    })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
