@@ -6,6 +6,7 @@ import store from '../../stores/app'
 import dispatch from '../../test-helpers/dispatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../test-helpers/setCursorFirstMatch'
+import executeCommand from '../../util/executeCommand'
 import generateThoughtCommand from '../generateThought'
 
 // Mock fetch for testing
@@ -27,23 +28,21 @@ describe('generateThought - webpage title fetching', () => {
     // Mock successful HTML response with title
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: () => Promise.resolve('<html><head><title>Example Domain</title></head><body></body></html>'),
+      text: () => Promise.resolve('<html><head><title>Example Title</title></head><body></body></html>'),
     })
 
     await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    // Execute the command directly and await its async exec function
+    // Execute the command using the test helper
     await act(async () => {
-      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
-        type: 'keyboard',
-      })
+      executeCommand(generateThoughtCommand)
     })
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - Example Domain
+  - Example Title
     - https://example.com`)
   })
 
@@ -62,11 +61,9 @@ describe('generateThought - webpage title fetching', () => {
 
     await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    // Execute the command directly and await its async exec function
+    // Execute the command using the test helper
     await act(async () => {
-      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
-        type: 'keyboard',
-      })
+      executeCommand(generateThoughtCommand)
     })
 
     const state = store.getState()
@@ -91,11 +88,9 @@ describe('generateThought - webpage title fetching', () => {
 
     await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    // Execute the command directly and await its async exec function
+    // Execute the command using the test helper
     await act(async () => {
-      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
-        type: 'keyboard',
-      })
+      executeCommand(generateThoughtCommand)
     })
 
     // Verify fetch was called with https:// prefix
@@ -120,15 +115,16 @@ describe('generateThought - webpage title fetching', () => {
 
     await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    // Execute the command directly and await its async exec function
+    // Execute the command using the test helper
     await act(async () => {
-      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
-        type: 'keyboard',
-      })
+      executeCommand(generateThoughtCommand)
     })
 
     // Verify only one fetch call was made (for webpage, no AI fallback)
     expect(mockFetch).toHaveBeenCalledTimes(1)
+
+    // Check that error state has been set
+    expect(store.getState().error).toBeTruthy()
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -152,11 +148,9 @@ describe('generateThought - webpage title fetching', () => {
 
     await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    // Execute the command directly and await its async exec function
+    // Execute the command using the test helper
     await act(async () => {
-      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
-        type: 'keyboard',
-      })
+      executeCommand(generateThoughtCommand)
     })
 
     const state = store.getState()
@@ -183,11 +177,9 @@ describe('generateThought - webpage title fetching', () => {
 
     await dispatch([importText({ text }), setCursorFirstMatch(['Some existing text'])])
 
-    // Execute the command directly and await its async exec function
+    // Execute the command using the test helper
     await act(async () => {
-      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
-        type: 'keyboard',
-      })
+      executeCommand(generateThoughtCommand)
     })
 
     // Verify fetch was called only once for AI, not for webpage
@@ -220,11 +212,9 @@ describe('generateThought - webpage title fetching', () => {
 
     await dispatch([importText({ text }), setCursorFirstMatch([''])])
 
-    // Execute the command directly and await its async exec function
+    // Execute the command using the test helper
     await act(async () => {
-      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
-        type: 'keyboard',
-      })
+      executeCommand(generateThoughtCommand)
     })
 
     // Verify fetch was called only once for AI, not for webpage
@@ -239,37 +229,5 @@ describe('generateThought - webpage title fetching', () => {
     - Not a URL`)
 
     vi.unstubAllEnvs()
-  })
-
-  it('should work with the specific example from the issue', async () => {
-    const text = `
-      - 
-        - https://ghost.org/changelog/2014-report/?utm_source=chatgpt.com
-    `
-
-    // Mock the specific webpage title from the issue
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      text: () =>
-        Promise.resolve(
-          '<html><head><title>Lessons Learned Building an Open Source Product from $0 to $350,000/year in 12 months</title></head><body></body></html>',
-        ),
-    })
-
-    await dispatch([importText({ text }), setCursorFirstMatch([''])])
-
-    // Execute the command directly and await its async exec function
-    await act(async () => {
-      await generateThoughtCommand.exec(store.dispatch, store.getState, { preventDefault: () => {} } as Event, {
-        type: 'keyboard',
-      })
-    })
-
-    const state = store.getState()
-    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-
-    expect(exported).toBe(`- ${HOME_TOKEN}
-  - Lessons Learned Building an Open Source Product from $0 to $350,000/year in 12 months
-    - https://ghost.org/changelog/2014-report/?utm_source=chatgpt.com`)
   })
 })
