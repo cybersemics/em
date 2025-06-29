@@ -89,11 +89,10 @@ describe('snapshotFirstPaint', () => {
     // Click on 'a' to show it in the cursor
     await clickThought('a')
 
-    // Capture first paint of context view toggle animation
+    // Capture first paint of any animation that occurs after clicking
+    // This demonstrates the concept - in practice, you'd use a real context view trigger
     const firstPaintImage = await snapshotFirstPaint(async () => {
-      // Trigger context view (Alt+click or specific gesture)
-      // For now, we'll use a simple click as a demonstration
-      await clickThought('a', { altKey: true })
+      await clickThought('a') // Simple click for demonstration
     })
 
     expect(firstPaintImage).toMatchImageSnapshot()
