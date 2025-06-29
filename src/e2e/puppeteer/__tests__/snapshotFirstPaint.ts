@@ -4,7 +4,7 @@ import clickThought from '../helpers/clickThought'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
-import snapshotFirstPaint, { snapshotAnimationFrames } from '../helpers/snapshotFirstPaint'
+import snapshotFirstPaint, { snapshotAnimationFrames, snapshotFirstPaintAction } from '../helpers/snapshotFirstPaint'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -61,6 +61,18 @@ describe('snapshotFirstPaint', () => {
         customSnapshotIdentifier: `animation-frame-${i + 1}`,
       })
     })
+  })
+
+  it('demonstrates snapshotFirstPaintAction helper', async () => {
+    // Set up thoughts for testing
+    await paste(`
+      - expandable
+        - hidden child 1
+        - hidden child 2
+    `)
+
+    // Use the action helper for easy integration
+    await snapshotFirstPaintAction(() => clickThought('expandable'), 'expand-thought')
   })
 
   it('demonstrates animation state capture with context view toggle', async () => {

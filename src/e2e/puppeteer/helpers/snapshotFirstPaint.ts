@@ -82,5 +82,40 @@ const snapshotAnimationFrames = async (
   return frames
 }
 
+/**
+ * A higher-order function that wraps an existing interaction and adds first-paint snapshot testing.
+ * This makes it easy to add animation testing to existing test cases with minimal changes.
+ *
+ * @param interactionFn - Function that performs the user interaction.
+ * @param snapshotName - Name for the snapshot (will be suffixed with '-first-paint').
+ * @param options - Optional screenshot options.
+ * @returns Promise<void> - Performs the interaction and snapshot testing.
+ *
+ * @example
+ * ```typescript
+ * // Instead of: await clickThought('expand')
+ * // Use: await snapshotFirstPaintAction(() => clickThought('expand'), 'expand-animation')
+ *
+ * it('expand thought with animation testing', async () => {
+ *   await paste('- parent\n  - child')
+ *   await snapshotFirstPaintAction(
+ *     () => clickThought('parent'),
+ *     'parent-expand'
+ *   )
+ * })
+ * ```
+ */
+const snapshotFirstPaintAction = async (
+  interactionFn: () => Promise<void>,
+  snapshotName: string,
+  options?: ScreenshotOptions,
+): Promise<void> => {
+  const firstFrame = await snapshotFirstPaint(interactionFn, options)
+
+  expect(firstFrame).toMatchImageSnapshot({
+    customSnapshotIdentifier: `${snapshotName}-first-paint`,
+  })
+}
+
 export default snapshotFirstPaint
-export { snapshotAnimationFrames }
+export { snapshotAnimationFrames, snapshotFirstPaintAction }
