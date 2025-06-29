@@ -2,9 +2,9 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
-import executeCommand from '../../util/executeCommand'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../test-helpers/setCursorFirstMatch'
+import executeCommand from '../../util/executeCommand'
 import generateThoughtCommand from '../generateThought'
 
 // Mock fetch for testing
@@ -29,10 +29,7 @@ describe('generateThought - webpage title fetching', () => {
       text: () => Promise.resolve('<html><head><title>Example Domain</title></head><body></body></html>'),
     })
 
-    store.dispatch([
-      importText({ text }),
-      setCursorFirstMatch([''])
-    ])
+    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
 
     executeCommand(generateThoughtCommand, { store })
 
@@ -56,13 +53,11 @@ describe('generateThought - webpage title fetching', () => {
     // Mock HTML response with HTML entities in title
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: () => Promise.resolve('<html><head><title>Test &amp; Example &lt;Company&gt;</title></head><body></body></html>'),
+      text: () =>
+        Promise.resolve('<html><head><title>Test &amp; Example &lt;Company&gt;</title></head><body></body></html>'),
     })
 
-    store.dispatch([
-      importText({ text }),
-      setCursorFirstMatch([''])
-    ])
+    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
 
     executeCommand(generateThoughtCommand, { store })
 
@@ -89,10 +84,7 @@ describe('generateThought - webpage title fetching', () => {
       text: () => Promise.resolve('<html><head><title>Example Site</title></head><body></body></html>'),
     })
 
-    store.dispatch([
-      importText({ text }),
-      setCursorFirstMatch([''])
-    ])
+    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
 
     executeCommand(generateThoughtCommand, { store })
 
@@ -110,7 +102,7 @@ describe('generateThought - webpage title fetching', () => {
     - example.com`)
   })
 
-  it('should handle fetch failure gracefully and fall back to AI generation', async () => {
+  it('should handle fetch failure gracefully and leave thought empty', async () => {
     const text = `
       - 
         - https://example.com
@@ -119,38 +111,25 @@ describe('generateThought - webpage title fetching', () => {
     // Mock fetch failure for webpage
     mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
-    // Mock AI URL environment variable
-    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
-
-    // Mock AI response
-    mockFetch.mockResolvedValueOnce({
-      json: () => Promise.resolve({ content: 'AI generated content', err: null }),
-    })
-
-    store.dispatch([
-      importText({ text }),
-      setCursorFirstMatch([''])
-    ])
+    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
 
     executeCommand(generateThoughtCommand, { store })
 
     // Wait for async operation to complete
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    // Verify AI fallback was used
-    expect(mockFetch).toHaveBeenCalledTimes(2) // Once for webpage, once for AI
+    // Verify only one fetch call was made (for webpage, no AI fallback)
+    expect(mockFetch).toHaveBeenCalledTimes(1)
 
     const state = store.getState()
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - AI generated content
+  - 
     - https://example.com`)
-
-    vi.unstubAllEnvs()
   })
 
-  it('should handle empty or missing title tags', async () => {
+  it('should handle empty or missing title tags and leave thought empty', async () => {
     const text = `
       - 
         - https://example.com
@@ -162,18 +141,7 @@ describe('generateThought - webpage title fetching', () => {
       text: () => Promise.resolve('<html><head></head><body><h1>No Title</h1></body></html>'),
     })
 
-    // Mock AI URL environment variable
-    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
-
-    // Mock AI response as fallback
-    mockFetch.mockResolvedValueOnce({
-      json: () => Promise.resolve({ content: 'AI fallback content', err: null }),
-    })
-
-    store.dispatch([
-      importText({ text }),
-      setCursorFirstMatch([''])
-    ])
+    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
 
     executeCommand(generateThoughtCommand, { store })
 
@@ -184,10 +152,8 @@ describe('generateThought - webpage title fetching', () => {
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - AI fallback content
+  - 
     - https://example.com`)
-
-    vi.unstubAllEnvs()
   })
 
   it('should not fetch title when thought is not empty', async () => {
@@ -204,10 +170,7 @@ describe('generateThought - webpage title fetching', () => {
       json: () => Promise.resolve({ content: ' additional content', err: null }),
     })
 
-    store.dispatch([
-      importText({ text }),
-      setCursorFirstMatch(['Some existing text'])
-    ])
+    store.dispatch([importText({ text }), setCursorFirstMatch(['Some existing text'])])
 
     executeCommand(generateThoughtCommand, { store })
 
@@ -242,10 +205,7 @@ describe('generateThought - webpage title fetching', () => {
       json: () => Promise.resolve({ content: 'AI generated text', err: null }),
     })
 
-    store.dispatch([
-      importText({ text }),
-      setCursorFirstMatch([''])
-    ])
+    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
 
     executeCommand(generateThoughtCommand, { store })
 
@@ -275,13 +235,13 @@ describe('generateThought - webpage title fetching', () => {
     // Mock the specific webpage title from the issue
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: () => Promise.resolve('<html><head><title>Lessons Learned Building an Open Source Product from $0 to $350,000/year in 12 months</title></head><body></body></html>'),
+      text: () =>
+        Promise.resolve(
+          '<html><head><title>Lessons Learned Building an Open Source Product from $0 to $350,000/year in 12 months</title></head><body></body></html>',
+        ),
     })
 
-    store.dispatch([
-      importText({ text }),
-      setCursorFirstMatch([''])
-    ])
+    store.dispatch([importText({ text }), setCursorFirstMatch([''])])
 
     executeCommand(generateThoughtCommand, { store })
 

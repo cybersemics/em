@@ -20,21 +20,21 @@ const fetchWebpageTitle = async (url: string): Promise<string | null> => {
   try {
     // Ensure the URL has a protocol
     const fullUrl = url.startsWith('http') ? url : `https://${url}`
-    
+
     const response = await fetch(fullUrl, {
       method: 'GET',
       mode: 'cors',
       headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
     })
-    
+
     if (!response.ok) {
       return null
     }
-    
+
     const html = await response.text()
-    
+
     // Extract title from HTML
     const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
     if (titleMatch && titleMatch[1]) {
@@ -48,18 +48,15 @@ const fetchWebpageTitle = async (url: string): Promise<string | null> => {
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'")
         .replace(/&nbsp;/g, ' ')
-      
+
       // Replace < and > with ( and ) to avoid HTML tag conflicts in the thought system
-      const cleanTitle = decodedTitle
-        .replace(/</g, '(')
-        .replace(/>/g, ')')
-      
+      const cleanTitle = decodedTitle.replace(/</g, '(').replace(/>/g, ')')
+
       return cleanTitle
     }
-    
+
     return null
-  } catch (error) {
-    console.warn('Failed to fetch webpage title:', error)
+  } catch (err) {
     return null
   }
 }
@@ -97,7 +94,7 @@ const generateThought: Command = {
     if (isCurrentThoughtEmpty && isFirstChildURL) {
       // Try to fetch webpage title
       const valuePending = '...'
-      
+
       // Set to pending while title is being fetched
       dispatch([
         updateThoughts({
@@ -117,7 +114,7 @@ const generateThought: Command = {
       ])
 
       const title = await fetchWebpageTitle(firstChild.value)
-      
+
       if (title) {
         // Update thought with the fetched title
         dispatch([
@@ -130,25 +127,19 @@ const generateThought: Command = {
           setCursor({ path: state.cursor, offset: title.length }),
           cursorCleared({ value: false }),
         ])
-        return
       } else {
-        // If title fetching failed, reset and fall through to AI generation
+        // If title fetching failed, clear the pending state and leave thought empty
         dispatch([
-          updateThoughts({
-            thoughtIndexUpdates: {
-              [thought.id]: {
-                ...thought,
-                generating: false,
-              },
-            },
-            lexemeIndexUpdates: {},
-            local: false,
-            remote: false,
-            overwritePending: true,
+          editThought({
+            force: true,
+            oldValue: valuePending,
+            newValue: '',
+            path: simplePath,
           }),
           cursorCleared({ value: false }),
         ])
       }
+      return
     }
 
     // Original AI generation logic
