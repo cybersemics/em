@@ -18,6 +18,7 @@ Background: https://github.com/cybersemics/em/wiki/Docs
 ### Functional Programming
 
 - Prefer pure functions.
+- Prefer ternary operators over if statements.
 - Avoid mutations and side effects when possible.
 - Use map, filter, reduce.
 
@@ -32,6 +33,10 @@ Background: https://github.com/cybersemics/em/wiki/Docs
 
 ### Testing
 
-Tests are located in `**/__tests__/*`. Run unit tests with `yarn test` and Puppeteer tests with `yarn test:puppeteer`.
-
-Testing guideslines are described in https://github.com/cybersemics/em/wiki/Testing
+- Tests are located in `**/__tests__/*`.
+- Testing guidelines are described in https://github.com/cybersemics/em/wiki/Testing.
+- Use existing test helpers and follow conventions in existing tests.
+- Run linter with `yarn lint`.
+- Run unit tests with `yarn test`.
+- Run Puppeteer tests with `yarn test:puppeteer`.
+- Ensure linter, unit tests, and puppeteer tests all pass before requesting a review.
