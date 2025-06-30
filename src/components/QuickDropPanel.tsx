@@ -64,13 +64,7 @@ const dropCollect = (monitor: DropTargetMonitor) => {
 }
 
 /** An invisible panel at the right edge of the screen during drag-and-drop that allows for quick delete. */
-const QuickDropPanel = ({
-  alertType,
-  onDrop,
-}: {
-  alertType: AlertType
-  onDrop: (state: State, item: DragThoughtItem) => void
-}) => {
+const QuickDropPanel = ({ onDrop }: { onDrop: (state: State, item: DragThoughtItem) => void }) => {
   const dispatch = useDispatch()
 
   /** Invokes onDrop with the DragThoughtItem. */
@@ -90,7 +84,7 @@ const QuickDropPanel = ({
   const hover = (isHovering: boolean, zone: DragThoughtZone) => {
     const state = store.getState()
 
-    if (isHovering || state.alert?.alertType === alertType) {
+    if (isHovering || state.alert?.alertType === AlertType.DeleteDropHint) {
       const message = isHovering
         ? hoverMessage(state, zone)
         : zone === DragThoughtZone.Thoughts
@@ -99,7 +93,7 @@ const QuickDropPanel = ({
 
       store.dispatch(
         alert(message, {
-          alertType: isHovering ? alertType : AlertType.DragAndDropHint,
+          alertType: isHovering ? AlertType.DeleteDropHint : AlertType.DragAndDropHint,
           showCloseLink: false,
         }),
       )
@@ -138,7 +132,7 @@ const QuickDropPanel = ({
 const QuickDropController = () => {
   const isDragging = useSelector(state => state.dragHold || state.dragInProgress)
 
-  return isDragging ? <QuickDropPanel alertType={AlertType.DeleteDropHint} onDrop={drop} /> : null
+  return isDragging ? <QuickDropPanel onDrop={drop} /> : null
 }
 
 export default QuickDropController
