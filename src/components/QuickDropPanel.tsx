@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { FC, useEffect } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useSelector } from 'react-redux'
@@ -20,7 +20,7 @@ import haptics from '../util/haptics'
 import head from '../util/head'
 
 /** Delete the thought on drop. */
-const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
+const onDrop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
   const value = getThoughtById(state, head(simplePath))?.value
   if (value === undefined) {
     console.warn(`Missing thought for path ${simplePath}. Aborting deleteDrop.`)
@@ -64,7 +64,7 @@ const dropCollect = (monitor: DropTargetMonitor) => {
 }
 
 /** An invisible panel at the right edge of the screen during drag-and-drop that allows for quick delete. */
-const QuickDropPanel = ({ onDrop }: { onDrop: (state: State, item: DragThoughtItem) => void }) => {
+const QuickDropPanel: FC = () => {
   const dispatch = useDispatch()
 
   /** Invokes onDrop with the DragThoughtItem. */
@@ -129,10 +129,10 @@ const QuickDropPanel = ({ onDrop }: { onDrop: (state: State, item: DragThoughtIt
 }
 
 /** An invisible panel at the right edge of the screen during drag-and-drop that allows for quick delete. */
-const QuickDropController = () => {
+const QuickDropController: FC = () => {
   const isDragging = useSelector(state => state.dragHold || state.dragInProgress)
 
-  return isDragging ? <QuickDropPanel onDrop={drop} /> : null
+  return isDragging ? <QuickDropPanel /> : null
 }
 
 export default QuickDropController
