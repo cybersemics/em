@@ -112,10 +112,7 @@ const QuickDropPanel: FC = () => {
   )
 
   return (
-    <div
-      className={css({ position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 'popup' })}
-      data-testid='quick-drop-panel'
-    >
+    <div className={css({ position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 'popup' })}>
       <div
         ref={dropTarget}
         className={css({
