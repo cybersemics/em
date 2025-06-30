@@ -120,11 +120,11 @@ const QuickDropPanel: FC = () => {
   )
 }
 
-/** An invisible panel at the right edge of the screen during drag-and-drop that allows for quick delete. */
+/** Shows the QuickDropPanel when dragging. */
 const QuickDropController: FC = () => {
-  const isDragging = useSelector(state => state.dragHold || state.dragInProgress)
+  const dragInProgress = useSelector(state => state.dragInProgress)
 
-  return isDragging ? <QuickDropPanel /> : null
+  return dragInProgress ? <QuickDropPanel /> : null
 }
 
 export default QuickDropController
