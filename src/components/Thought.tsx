@@ -360,7 +360,7 @@ const ThoughtContainer = ({
   // TODO: It would be nice if we could reuse canDrop.
   const isChildHovering = useSelector(state => {
     // Early return if essential conditions are not met
-    if (!isVisible || !state.hoveringPath || !state.draggingThoughts || !state.draggingThoughts.length) {
+    if (!isVisible || !state.hoveringPath) {
       return false
     }
 

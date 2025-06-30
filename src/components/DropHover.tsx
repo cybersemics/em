@@ -74,7 +74,8 @@ const DropHoverIfVisible = ({
     const isThisThoughtBeingDragged =
       state.draggingThoughts.slice(1).some(draggingPath => equalPath(draggingPath, simplePath)) || false
 
-    if (isThisThoughtBeingDragged) return false // Don't show hover lines on thoughts that are being dragged
+    // Don't show hover lines on thoughts that are being dragged
+    if (isThisThoughtBeingDragged) return false
 
     // Typically we show the drop hover if the thought is being directly hovered over.
     // However, when moving into a different context that is sorted, we need to show the drop hover on the sorted drop destination if the thought is hovered over any of the thoughts in the sorted context.
@@ -88,8 +89,6 @@ const DropHoverIfVisible = ({
 
     const draggingThoughtValues =
       state.draggingThoughts.map(draggingPath => getThoughtById(state, head(draggingPath))?.value).filter(Boolean) || []
-
-    if (draggingThoughtValues.length === 0) return false
 
     // render the drop-hover if hovering over any thought in a sorted list
     const isThoughtHovering =
@@ -116,7 +115,9 @@ const DropHoverIfVisible = ({
     // Check if any of the dragging thoughts would be inserted at this position
     return draggingThoughtValues.some(
       draggingValue =>
+        // check if it's alphabetically previous to current thought
         compareReasonable(draggingValue, value) <= 0 &&
+        // check if it's alphabetically next to previous thought if it exists
         (!prevChild || compareReasonable(draggingValue, prevChild.value) === 1),
     )
   })

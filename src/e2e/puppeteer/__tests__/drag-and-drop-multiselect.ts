@@ -1,3 +1,4 @@
+import { HOME_TOKEN } from '../../../constants'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
 import hideHUD from '../helpers/hideHUD'
@@ -21,7 +22,7 @@ describe('drag and drop multiple thoughts', () => {
     await dragAndDropThought('a', 'x', { position: 'before', mouseUp: true })
 
     const exported = await exportThoughts()
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - y
   - z
   - a
@@ -40,7 +41,7 @@ describe('drag and drop multiple thoughts', () => {
     await dragAndDropThought('z', 'a', { position: 'after', mouseUp: true })
 
     const exported = await exportThoughts()
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - x
   - a
   - y
@@ -59,7 +60,7 @@ describe('drag and drop multiple thoughts', () => {
     await dragAndDropThought('z', 'a', { position: 'child', mouseUp: true })
 
     const exported = await exportThoughts()
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - x
   - a
     - y
@@ -79,7 +80,7 @@ describe('drag and drop multiple thoughts', () => {
     await dragAndDropThought('y', 'z', { position: 'child', mouseUp: true })
 
     const exported = await exportThoughts()
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - z
     - x
     - y
@@ -104,7 +105,7 @@ describe('drag and drop multiple thoughts', () => {
     await dragAndDropThought('e', 'parent', { position: 'child', mouseUp: true })
 
     const exported = await exportThoughts()
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - parent
     - =sort
       - Alphabetical

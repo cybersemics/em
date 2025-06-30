@@ -64,15 +64,8 @@ const DropEnd = ({
     if (!isParentSorted) return false
 
     // only render drop-hover during drag-and-drop
-    // For multiple dragging thoughts, use the alphabetically last one to determine if they should go at the end
     const draggingThoughtValues =
       state.draggingThoughts.map(draggingPath => getThoughtById(state, head(draggingPath))?.value).filter(Boolean) || []
-
-    if (draggingThoughtValues.length === 0) return false
-
-    // Sort the dragging thought values to find the alphabetically last one for comparison
-    const sortedDraggingValues = draggingThoughtValues.sort(compareReasonable)
-    const lastDraggingValue = sortedDraggingValues[sortedDraggingValues.length - 1]
 
     // render the drop-hover if hovering over any thought in a sorted list
     const isThoughtHovering =
@@ -87,11 +80,13 @@ const DropEnd = ({
     // only rendner drop-hover if hovering over the appropriate ThoughtDrop or SubthoughtsDrop
     if (!isThoughtHovering && !isSubthoughtsHovering) return false
 
-    // check if the dragged thoughts would get dropped after the last thought in the list
-    // use the alphabetically last dragging thought for this comparison
+    // check if any of the dragged thoughts would get dropped after the last thought in the list
     const children = getChildrenSorted(state, thoughtId)
     const lastChildValue = children[children.length - 1]?.value
-    return (isThoughtHovering || isSubthoughtsHovering) && compareReasonable(lastDraggingValue, lastChildValue) > 0
+    return (
+      (isThoughtHovering || isSubthoughtsHovering) &&
+      draggingThoughtValues.some(draggingValue => compareReasonable(draggingValue, lastChildValue) > 0)
+    )
   })
 
   const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) : 0
