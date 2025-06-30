@@ -1,11 +1,10 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
-import waitForEditable from '../helpers/waitForEditable'
+import waitForFrames from '../helpers/waitForFrames'
 import { page } from '../setup'
 
 expect.extend({
@@ -31,7 +30,6 @@ describe('categorize', () => {
     `)
 
     // Perform multiple categorize operations
-    await waitForEditable(topParagraphText)
     await clickThought(topParagraphText)
 
     // Perform 1st categorization
@@ -54,7 +52,7 @@ describe('categorize', () => {
     await press(']', { meta: true })
     await press('5')
 
-    await sleep(300)
+    await waitForFrames()
 
     const imageCategorized = await screenshot()
     expect(imageCategorized).toMatchImageSnapshot()
