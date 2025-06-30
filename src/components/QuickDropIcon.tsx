@@ -12,7 +12,6 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { AlertText, AlertType } from '../constants'
 import store from '../stores/app'
-import viewportStore from '../stores/viewport'
 import haptics from '../util/haptics'
 
 /** Creates the props for drop. */
@@ -86,18 +85,14 @@ const QuickDropIcon = ({
     [isHovering],
   )
 
-  const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
-
   return (
     <div
       ref={dropTarget}
       className={css({
         zIndex: 'stack',
         height: '100%',
+        width: '2em',
       })}
-      style={{
-        width: scrollZoneWidth,
-      }}
     ></div>
   )
 }
