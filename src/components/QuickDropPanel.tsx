@@ -63,8 +63,8 @@ const dropCollect = (monitor: DropTargetMonitor) => {
   }
 }
 
-/** An icon that a thought can be dropped on to execute a command. */
-const QuickDropIcon = ({
+/** An invisible panel at the right edge of the screen during drag-and-drop that allows for quick delete. */
+const QuickDropPanel = ({
   alertType,
   onDrop,
   onHoverMessage,
@@ -123,30 +123,28 @@ const QuickDropIcon = ({
 
   return (
     <div
-      ref={dropTarget}
-      className={css({
-        zIndex: 'stack',
-        height: '100%',
-        width: '2em',
-      })}
-    ></div>
-  )
-}
-
-/** An invisible panel at the right edge of the screen during drag-and-drop that allows for quick delete. */
-const QuickDropPanel = () => {
-  const isDragging = useSelector(state => state.dragHold || state.dragInProgress)
-
-  if (!isDragging) return null
-
-  return (
-    <div
       className={css({ position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 'popup' })}
       data-testid='quick-drop-panel'
     >
-      <QuickDropIcon alertType={AlertType.DeleteDropHint} onDrop={drop} onHoverMessage={hoverMessage} />
+      <div
+        ref={dropTarget}
+        className={css({
+          zIndex: 'stack',
+          height: '100%',
+          width: '2em',
+        })}
+      ></div>
     </div>
   )
 }
 
-export default QuickDropPanel
+/** An invisible panel at the right edge of the screen during drag-and-drop that allows for quick delete. */
+const QuickDropController = () => {
+  const isDragging = useSelector(state => state.dragHold || state.dragInProgress)
+
+  return isDragging ? (
+    <QuickDropPanel alertType={AlertType.DeleteDropHint} onDrop={drop} onHoverMessage={hoverMessage} />
+  ) : null
+}
+
+export default QuickDropController
