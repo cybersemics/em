@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useSelector } from 'react-redux'
@@ -136,13 +136,11 @@ const QuickDropIcon = ({
 /** An invisible panel at the right edge of the screen during drag-and-drop that allows for quick delete. */
 const QuickDropPanel = () => {
   const isDragging = useSelector(state => state.dragHold || state.dragInProgress)
-  const quickDropPanelRef = useRef<HTMLDivElement>(null)
 
   return (
     <>
       {isDragging && (
         <div
-          ref={quickDropPanelRef}
           className={css({ position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 'popup' })}
           data-testid='quick-drop-panel'
         >
