@@ -3,7 +3,7 @@ import { isTouch } from '../browser'
 import reactMinistore from './react-ministore'
 
 /** Scroll zone as a percentage of the smaller size of the screen. */
-const SCROLL_ZONE_WIDTH = 0.333
+const SCROLL_ZONE_WIDTH = 0.25
 
 // take a guess at the height of the virtual keyboard until we can measure it directly
 let virtualKeyboardHeightPortrait = isTouch ? window.innerHeight / 2.275 : 0
