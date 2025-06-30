@@ -16,6 +16,7 @@ import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
 import editThought from './editThought'
+import editableRender from './editableRender'
 import moveThought from './moveThought'
 
 /** Trailing hyphen that should be removed when joining block formatted text from print or pdf. */
@@ -80,7 +81,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
     }),
   )
 
-  return reducerFlow([...moveThoughtReducers, editThoughtReducer, ...deleteThoughtReducers])(state)
+  return reducerFlow([...moveThoughtReducers, editThoughtReducer, ...deleteThoughtReducers, editableRender])(state)
 }
 
 /** Action-creator for join. */
