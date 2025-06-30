@@ -91,12 +91,6 @@ const DropHoverIfVisible = ({
 
     if (draggingThoughtValues.length === 0) return false
 
-    const sortedDraggingValues = [...draggingThoughtValues].sort(compareReasonable)
-    const firstDraggingValue = sortedDraggingValues[0]
-
-    const value = getThoughtById(state, head(simplePath))?.value
-    const prevChild = prevChildId && getThoughtById(state, prevChildId)
-
     // render the drop-hover if hovering over any thought in a sorted list
     const isThoughtHovering =
       state.hoveringPath &&
@@ -112,14 +106,18 @@ const DropHoverIfVisible = ({
     // TODO: Show the first drop-hover with distance === 2. How to determine?
     // const distance = state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0
 
-    return (
-      value !== undefined &&
-      (isThoughtHovering || isSubthoughtsHovering) &&
-      firstDraggingValue &&
-      // check if the first dragging thought is alphabetically previous to current thought
-      compareReasonable(firstDraggingValue, value) <= 0 &&
-      // check if the first dragging thought is alphabetically next to previous thought if it exists
-      (!prevChild || compareReasonable(firstDraggingValue, prevChild.value) === 1)
+    const value = getThoughtById(state, head(simplePath))?.value
+    const prevChild = prevChildId && getThoughtById(state, prevChildId)
+
+    if (value === undefined || !(isThoughtHovering || isSubthoughtsHovering)) {
+      return false
+    }
+
+    // Check if any of the dragging thoughts would be inserted at this position
+    return draggingThoughtValues.some(
+      draggingValue =>
+        compareReasonable(draggingValue, value) <= 0 &&
+        (!prevChild || compareReasonable(draggingValue, prevChild.value) === 1),
     )
   })
 

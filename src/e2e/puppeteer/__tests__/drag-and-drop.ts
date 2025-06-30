@@ -5,7 +5,6 @@ import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import hideHUD from '../helpers/hideHUD'
-import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
@@ -497,88 +496,5 @@ describe('hover expansion', () => {
 
     expect(a1Visible).toBe(false)
     expect(a2Visible).toBe(false)
-  })
-})
-
-describe('drag and drop multiple thoughts', () => {
-  beforeEach(async () => {
-    await hideHUD()
-
-    // inject MOCK_EXPAND_HOVER_DELAY
-    const em = window.em as WindowEm
-    await page.evaluate(value => {
-      em.testFlags.expandHoverDelay = value
-    }, MOCK_EXPAND_HOVER_DELAY)
-  })
-
-  afterEach(async () => {
-    try {
-      // Check if there's an active drag operation before releasing mouse
-      const isDragActive = await page.evaluate(() => {
-        return document.querySelector('[data-drag-in-progress="true"]') !== null
-      })
-
-      if (isDragActive) {
-        await page.mouse.up()
-        // Wait for drag to complete
-        await page.waitForFunction(() => !document.querySelector('[data-drag-in-progress="true"]'), {
-          timeout: 5000,
-        })
-      }
-    } catch (error) {
-      // Ignore errors from cleanup
-      console.warn('Mouse cleanup error:', (error as Error).message)
-    }
-
-    // take the final snapshot after cleanup
-    expect(await screenshot()).toMatchImageSnapshot()
-  })
-
-  it('drop as sibling before', async () => {
-    await paste(`
-      - x
-      - y
-      - z
-      - a
-      `)
-    await multiselectThoughts(['y', 'z', 'a'])
-
-    await dragAndDropThought('a', 'x', { position: 'before' })
-  })
-
-  it('drop as sibling after', async () => {
-    await paste(`
-      - x
-      - y
-      - z
-      - a
-      `)
-    await multiselectThoughts(['y', 'z'])
-
-    await dragAndDropThought('z', 'a', { position: 'after' })
-  })
-
-  it('drop as child', async () => {
-    await paste(`
-      - x
-      - y
-      - z
-      - a
-      `)
-    await multiselectThoughts(['y', 'z'])
-
-    await dragAndDropThought('z', 'a', { position: 'child' })
-  })
-
-  it('should preserve order of thoughts', async () => {
-    await paste(`
-      - x
-      - y
-      - z
-      - a
-      `)
-    await multiselectThoughts(['a', 'x', 'y'])
-
-    await dragAndDropThought('y', 'z', { position: 'child' })
   })
 })

@@ -71,7 +71,7 @@ const DropEnd = ({
     if (draggingThoughtValues.length === 0) return false
 
     // Sort the dragging thought values to find the alphabetically last one for comparison
-    const sortedDraggingValues = [...draggingThoughtValues].sort(compareReasonable)
+    const sortedDraggingValues = draggingThoughtValues.sort(compareReasonable)
     const lastDraggingValue = sortedDraggingValues[sortedDraggingValues.length - 1]
 
     // render the drop-hover if hovering over any thought in a sorted list
