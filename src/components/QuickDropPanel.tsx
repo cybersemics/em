@@ -67,11 +67,9 @@ const dropCollect = (monitor: DropTargetMonitor) => {
 const QuickDropPanel = ({
   alertType,
   onDrop,
-  onHoverMessage,
 }: {
   alertType: AlertType
   onDrop: (state: State, item: DragThoughtItem) => void
-  onHoverMessage: (state: State, zone: DragThoughtZone) => string
 }) => {
   const dispatch = useDispatch()
 
@@ -94,9 +92,7 @@ const QuickDropPanel = ({
 
     if (isHovering || state.alert?.alertType === alertType) {
       const message = isHovering
-        ? typeof onHoverMessage === 'function'
-          ? onHoverMessage(state, zone)
-          : onHoverMessage
+        ? hoverMessage(state, zone)
         : zone === DragThoughtZone.Thoughts
           ? AlertText.DragAndDrop
           : AlertText.ReorderFavorites
@@ -142,9 +138,7 @@ const QuickDropPanel = ({
 const QuickDropController = () => {
   const isDragging = useSelector(state => state.dragHold || state.dragInProgress)
 
-  return isDragging ? (
-    <QuickDropPanel alertType={AlertType.DeleteDropHint} onDrop={drop} onHoverMessage={hoverMessage} />
-  ) : null
+  return isDragging ? <QuickDropPanel alertType={AlertType.DeleteDropHint} onDrop={drop} /> : null
 }
 
 export default QuickDropController
