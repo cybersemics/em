@@ -137,17 +137,15 @@ const QuickDropIcon = ({
 const QuickDropPanel = () => {
   const isDragging = useSelector(state => state.dragHold || state.dragInProgress)
 
+  if (!isDragging) return null
+
   return (
-    <>
-      {isDragging && (
-        <div
-          className={css({ position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 'popup' })}
-          data-testid='quick-drop-panel'
-        >
-          <QuickDropIcon alertType={AlertType.DeleteDropHint} onDrop={drop} onHoverMessage={hoverMessage} />
-        </div>
-      )}
-    </>
+    <div
+      className={css({ position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 'popup' })}
+      data-testid='quick-drop-panel'
+    >
+      <QuickDropIcon alertType={AlertType.DeleteDropHint} onDrop={drop} onHoverMessage={hoverMessage} />
+    </div>
   )
 }
 
