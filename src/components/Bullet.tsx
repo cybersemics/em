@@ -21,7 +21,6 @@ import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
-import fastClick from '../util/fastClick'
 import getBulletWidth from '../util/getBulletWidth'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -476,9 +475,9 @@ const Bullet = ({
   // expand or collapse on click
   // has some additional logic to make it work intuitively with pin true/false
   const clickHandler = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.MouseEvent | React.TouchEvent) => {
+      console.info(`clickHandler=${dragHold}`)
       // short circuit if dragHold
-      // useLongPress stop is activated in onMouseUp but is delayed to ensure that dragHold is still true here
       // stopping propagation from useLongPress was not working either due to bubbling order or mismatched event type
       if (dragHold) return
 
@@ -508,9 +507,6 @@ const Bullet = ({
           setCursor({ path: shouldCollapse ? pathParent : path, preserveMulticursor: true }),
         ])
       })
-
-      e.stopPropagation()
-      // stop click event from bubbling up to Content.clickOnEmptySpace
     },
     [dispatch, dragHold, path, simplePath],
   )
@@ -551,7 +547,11 @@ const Bullet = ({
         paddingBottom: extendClickHeight + 2,
         width,
       }}
-      {...fastClick(clickHandler, { enableHaptics: false })}
+      onMouseUp={isTouch ? undefined : clickHandler}
+      onTouchEnd={isTouch ? clickHandler : undefined}
+      // stop click event from bubbling up to Content.clickOnEmptySpace
+      onClick={e => e.stopPropagation()}
+      role='button'
     >
       <svg
         className={cx(
