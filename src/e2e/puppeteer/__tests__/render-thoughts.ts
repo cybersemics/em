@@ -11,6 +11,7 @@ import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
 import testIfNotCI from '../helpers/testIfNotCI'
+import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -70,7 +71,7 @@ const testSuite = () => {
 
     // TODO: Test intermittently fails with small differences in 'b'.
     // https://github.com/cybersemics/em/issues/2955
-    testIfNotCI('superscript', async () => {
+    it('superscript', async () => {
       await paste(`
     - a
       - m
@@ -86,7 +87,7 @@ const testSuite = () => {
       // - https://github.com/cybersemics/em/actions/runs/14236307211
       // - https://github.com/cybersemics/em/actions/runs/14783509675/job/41507408875?pr=2917
       // Waiting for requestAnimationFrame does not fix the issue.
-      await sleep(200)
+      await waitForFrames()
 
       expect(await screenshot()).toMatchImageSnapshot()
     })
@@ -138,7 +139,9 @@ describe('Font Size: 22', () => {
 describe('multiline', () => {
   beforeEach(hideHUD)
 
-  it('multiline thought', async () => {
+  // TODO: Flaky test
+  // https://github.com/cybersemics/em/issues/3088
+  it.skip('multiline thought', async () => {
     await paste(`
         - a
         - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.

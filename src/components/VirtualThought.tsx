@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash'
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
@@ -8,6 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
+import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
 import getStyle from '../selectors/getStyle'
@@ -130,9 +131,6 @@ const VirtualThought = ({
   // })
 
   const updateSize = useCallback(() => {
-    // Get the updated autofocus, otherwise isVisible will be stale.
-    // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
-    const isVisibleNew = autofocus === 'show' || autofocus === 'dim'
     if (!ref.current) return
 
     // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
@@ -146,6 +144,10 @@ const VirtualThought = ({
     const editable = ref.current.querySelector(`[data-editable]`)
     if (editable?.hasAttribute('data-prevent-autoscroll')) return
 
+    // Get the updated autofocus, otherwise isVisible will be stale.
+    // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
+    const isVisibleNew = autofocus === 'show' || autofocus === 'dim'
+
     setHeight(heightNew)
     onResize?.({
       height: heightNew,
@@ -158,7 +160,7 @@ const VirtualThought = ({
 
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
-  useLayoutEffect(updateSize, [
+  useLayoutAnimationFrameEffect(updateSize, [
     cursorDepth,
     cursorLeaf,
     fontSize,
@@ -169,7 +171,6 @@ const VirtualThought = ({
     style,
     isContextViewActive,
     editingValue,
-    updateSize,
   ])
 
   // Recalculate height on cursor change since indentation can change line wrapping
@@ -196,7 +197,9 @@ const VirtualThought = ({
     const thoughtId = head(simplePath)
     return thoughtId ? getThoughtById(state, thoughtId)?.value : null
   })
-  useEffect(updateSize, [updateSize, value])
+  useEffect(() => {
+    updateSize()
+  }, [updateSize, value])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(

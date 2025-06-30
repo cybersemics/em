@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isMac, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
@@ -51,6 +51,7 @@ import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
+import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import trimHtml from '../util/trimHtml'
@@ -63,7 +64,6 @@ import useOnPaste from './Editable/useOnPaste'
 interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement>
   path: Path
-  disabled?: boolean
   isEditing: boolean
   isVisible?: boolean
   multiline?: boolean
@@ -93,7 +93,6 @@ let cursorOffsetInitialized = false
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
 const Editable = ({
-  disabled,
   editableRef,
   isEditing,
   isVisible,
@@ -127,6 +126,12 @@ const Editable = ({
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const editingOrOnCursor = useSelector(state => state.isKeyboardOpen || equalPath(path, state.cursor))
+  const dragHold = useSelector(state => state.dragHold)
+
+  // Disable contenteditable on Mobile Safari during drag-and-drop, otherwise thought text will become selected.
+  // This is restricted to Mobile Safari, because on Chrome it creates a small layout shift.
+  // https://github.com/cybersemics/em/pull/2960
+  const disabled = useSelector(state => !isDocumentEditable || (isTouch && isSafari() && state.dragInProgress))
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -526,7 +531,7 @@ const Editable = ({
       // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
       // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
       // See: #981
-      if (editingOrOnCursor) {
+      if (editingOrOnCursor && !hasMulticursor) {
         // Prevent the browser from autoscrolling to this editable element.
         // For some reason doesn't work on touchend.
         preventAutoscroll(contentRef.current, {
@@ -544,7 +549,7 @@ const Editable = ({
         e.preventDefault()
       }
     },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection],
+    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor],
   )
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
@@ -555,9 +560,10 @@ const Editable = ({
         haptics.light()
       }
 
+      // If dragHold, don't allow the editable to receive focus or iOS Safari will scroll it.
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
+      if (dragHold || isMultiselectClick) {
         e.preventDefault()
         return
       }
@@ -571,6 +577,8 @@ const Editable = ({
 
       dispatch((dispatch, getState) => {
         const state = getState()
+        if (state.dragInProgress) return
+
         if (
           // disable editing when multicursor is enabled
           hasMulticursorSelector(state) ||
@@ -592,7 +600,7 @@ const Editable = ({
         }
       })
     },
-    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
+    [disabled, dispatch, dragHold, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
   return (

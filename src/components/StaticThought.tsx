@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useLayoutEffect } from 'react'
+import React from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { thoughtRecipe } from '../../styled-system/recipes'
@@ -7,8 +7,8 @@ import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import { isSafari, isTouch } from '../browser'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
+import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -18,7 +18,6 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDivider from '../util/isDivider'
-import isDocumentEditable from '../util/isDocumentEditable'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import Divider from './Divider'
@@ -122,9 +121,7 @@ const StaticThought = ({
   const multiline = useMultiline(editableRef, simplePath, isEditing)
   const placeholder = usePlaceholder({ isEditing, simplePath })
 
-  useLayoutEffect(() => {
-    updateSize?.()
-  }, [multiline, updateSize])
+  useLayoutAnimationFrameEffect(updateSize, [multiline])
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
   // use thoughtToPath to re-calculate the SimplePath as ancestors load
@@ -135,11 +132,6 @@ const StaticThought = ({
     state => (showContexts ? thoughtToPath(state, head(simplePath)) : simplePath),
     _.isEqual,
   )
-
-  // Disable contenteditable on Mobile Safari during drag-and-drop, otherwise thought text will become selected.
-  // This is restricted to Mobile Safari, because on Chrome it creates a small layout shift.
-  // https://github.com/cybersemics/em/pull/2960
-  const dragInProgressSafari = useSelector(state => isTouch && isSafari() && state.dragInProgress)
 
   const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
 
@@ -199,7 +191,6 @@ const StaticThought = ({
             multiline={multiline}
             placeholder={placeholder}
             path={path}
-            disabled={!isDocumentEditable() || dragInProgressSafari}
             isEditing={isEditing}
             isVisible={isVisible}
             rank={rank}
