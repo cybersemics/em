@@ -2,7 +2,6 @@ import { FC, useEffect } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useSelector } from 'react-redux'
-import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
@@ -20,12 +19,14 @@ import haptics from '../util/haptics'
 import head from '../util/head'
 
 /** Delete the thought on drop. */
-const onDrop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
+const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
   const value = getThoughtById(state, head(simplePath))?.value
   if (value === undefined) {
     console.warn(`Missing thought for path ${simplePath}. Aborting deleteDrop.`)
     return
   }
+
+  store.dispatch(dragInProgress({ value: false }))
 
   if (zone === DragThoughtZone.Favorites) {
     haptics.light()
@@ -65,18 +66,9 @@ const dropCollect = (monitor: DropTargetMonitor) => {
 
 /** An invisible panel at the right edge of the screen during drag-and-drop that allows for quick delete. */
 const QuickDropPanel: FC = () => {
-  const dispatch = useDispatch()
-
-  /** Invokes onDrop with the DragThoughtItem. */
-  const drop = (monitor: DropTargetMonitor) => {
-    haptics.medium()
-    dispatch(dragInProgress({ value: false }))
-    onDrop(store.getState(), monitor.getItem())
-  }
-
   const [{ isHovering, zone }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
-    drop: (item, monitor) => drop(monitor),
+    drop: item => drop(store.getState(), item as DragThoughtItem),
     collect: dropCollect,
   })
 
