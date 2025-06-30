@@ -63,7 +63,7 @@ interface State {
   dragHold?: boolean
   /**
    * Set to true while the user is dragging a thought or file.
-   * DraggingFile or draggingThought must be set while dragInProgress is true.
+   * DraggingFile or draggingThoughts must be set while dragInProgress is true.
    * May be set to false to abort the drag even while react-dnd is still dragging (e.g. by shaking).
    */
   dragInProgress: boolean
