@@ -476,7 +476,6 @@ const Bullet = ({
   // has some additional logic to make it work intuitively with pin true/false
   const clickHandler = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      console.info(`clickHandler=${dragHold}`)
       // short circuit if dragHold
       // stopping propagation from useLongPress was not working either due to bubbling order or mismatched event type
       if (dragHold) return
