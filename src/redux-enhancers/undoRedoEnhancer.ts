@@ -168,11 +168,12 @@ const redoReducer = (state: State, redoPatches: Patch[]): State => {
 
   const redoTwice = lastAction && (isNavigation(lastAction) || lastAction === 'newThought')
 
-  const poppedPatches = redoTwice ? [nthLast(redoPatches, 2), lastRedoPatch] : [lastRedoPatch]
+  const poppedRedoPatches = redoTwice ? [nthLast(redoPatches, 2), lastRedoPatch] : [lastRedoPatch]
+
   return reducerFlow([
     redoTwice ? redoOneReducer : null,
     redoOneReducer,
-    newState => restorePushQueueFromPatches(newState, state, poppedPatches.flat()),
+    newState => restorePushQueueFromPatches(newState, state, poppedRedoPatches.flat()),
     editableRender,
   ])(state)
 }
