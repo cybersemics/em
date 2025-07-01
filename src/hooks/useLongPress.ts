@@ -51,6 +51,7 @@ const useLongPress = (
         haptics.light()
         onLongPressStart?.()
         longPressStore.lock()
+        timerIdRef.current = 0
         if (!unmounted.current) {
           setPressed(true)
         }
