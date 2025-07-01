@@ -275,7 +275,7 @@ const CommandPalette: FC<{
 
             <div
               className={css({
-                overflow: 'auto',
+                overflow: isTouch ? undefined : 'auto',
                 padding: '0.45em 0.66em',
               })}
             >
