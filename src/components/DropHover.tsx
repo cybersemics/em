@@ -13,6 +13,7 @@ import calculateAutofocus from '../selectors/calculateAutofocus'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
+import appendToPath from '../util/appendToPath'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -70,12 +71,19 @@ const DropHoverIfVisible = ({
 }) => {
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector(state => {
-    // Don't show drop hover between selected thoughts during multiselect
-    const isThisThoughtBeingDragged =
-      state.draggingThoughts.slice(1).some(draggingPath => equalPath(draggingPath, simplePath)) || false
+    // Don't show drop hover on thoughts that are being dragged
+    const isThisThoughtBeingDragged = state.draggingThoughts.some(draggingPath => equalPath(draggingPath, simplePath))
 
-    // Don't show hover lines on thoughts that are being dragged
     if (isThisThoughtBeingDragged) return false
+
+    // Don't show drop hover between contiguous selected thoughts
+    const isDropBetweenSelected =
+      prevChildId &&
+      state.draggingThoughts.some(draggingPath =>
+        equalPath(draggingPath, appendToPath(parentOf(simplePath), prevChildId)),
+      )
+
+    if (isDropBetweenSelected) return false
 
     // Typically we show the drop hover if the thought is being directly hovered over.
     // However, when moving into a different context that is sorted, we need to show the drop hover on the sorted drop destination if the thought is hovered over any of the thoughts in the sorted context.
