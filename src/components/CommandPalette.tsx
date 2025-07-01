@@ -1,9 +1,10 @@
-import React, { FC, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
+import React, { FC, ReactElement, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
+import CommandId from '../@types/CommandId'
 import Key from '../@types/Key'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
 import { isTouch } from '../browser'
@@ -115,20 +116,17 @@ const CommandSearch: FC<{
 
 /** Render a command palette with keyboard or gesture autocomplete. */
 const CommandPalette: FC<{
+  commands: Command[]
+  recentCommands: CommandId[]
+  setRecentCommands: (commandIds: CommandId[]) => void
   search: string
   setSearch: (search: string) => void
-}> = ({ search, setSearch }) => {
+}> = ({ commands, recentCommands, setRecentCommands, search, setSearch }) => {
   const store = useStore()
   const dispatch = useDispatch()
   const gestureInProgress = gestureStore.useSelector(state => state.gesture)
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
-
-  const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
-  const { commands, getCommandsSorted } = useFilteredCommands(search, {
-    recentCommands,
-    sortActiveCommandsFirst: true,
-  })
 
   const [selectedCommand, setSelectedCommand] = useState<{
     command: Command
@@ -163,6 +161,10 @@ const CommandPalette: FC<{
 
   /** Select commands on hover. */
   const onHover = useCallback((command: Command) => setSelectedCommand({ command, source: 'mouse' }), [])
+  // Select the first command when the input changes. useLayoutEffect is used to prevent a jarring flash from the auto scroll
+  useLayoutEffect(() => {
+    setSelectedCommand({ command: commands[0], source: 'search' })
+  }, [search, commands, setSelectedCommand])
 
   useEffect(() => {
     allowScroll(false)
@@ -262,11 +264,7 @@ const CommandPalette: FC<{
               >
                 <CommandSearch
                   onExecute={onExecuteSelected}
-                  onInput={value => {
-                    /** Update `setSelectedCommand` here instead of in a `useEffect` to prevent jarring flash. */
-                    setSelectedCommand({ command: getCommandsSorted(value)[0], source: 'search' })
-                    setSearch(value)
-                  }}
+                  onInput={setSearch}
                   onSelectUp={onSelectUp}
                   onSelectDown={onSelectDown}
                   onSelectTop={onSelectTop}
@@ -343,14 +341,12 @@ const CommandPaletteWithTransition: FC = () => {
   const showCommandPalette = useSelector(state => state.showCommandPalette)
 
   // Commands need to be calculated even if the command palette is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
+  const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
   const [search, setSearch] = useState('')
-
-  // clear search when command palette is closed
-  useEffect(() => {
-    if (!showCommandPalette) {
-      setSearch('')
-    }
-  }, [showCommandPalette])
+  const commands = useFilteredCommands(search, {
+    recentCommands,
+    sortActiveCommandsFirst: true,
+  })
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
@@ -378,7 +374,13 @@ const CommandPaletteWithTransition: FC = () => {
               })}
               onClick={!isTouch ? onClose : undefined}
             >
-              <CommandPalette search={search} setSearch={setSearch} />
+              <CommandPalette
+                search={search}
+                setSearch={setSearch}
+                commands={commands}
+                recentCommands={recentCommands}
+                setRecentCommands={setRecentCommands}
+              />
             </div>
           </PopupBase>
         </FadeTransition>
