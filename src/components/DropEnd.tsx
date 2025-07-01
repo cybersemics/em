@@ -104,7 +104,7 @@ const DropEnd = ({
       )}
       style={{
         backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
-        height: isRootPath ? '8em' : `${1.9 + dropTargetHeight}em`,
+        height: isRootPath ? '8em' : `${0.7 + dropTargetHeight}em`,
         // use transform to avoid conflicting with margin, which is currently spread out across multiple components
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
       }}

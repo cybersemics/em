@@ -24,7 +24,7 @@ const dropEndRecipe = defineRecipe({
 
     */
     zIndex: 0,
-    width: 'calc(100% - 38px)',
+    width: 'calc(100% - 36px)',
   },
   variants: {},
 })

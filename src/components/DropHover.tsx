@@ -43,8 +43,8 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
         css({
           /* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
           /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
-          marginLeft: isTableCol1 ? 'calc(0.9em - 12px)' : 'calc(-0.4em - 12px)',
-          marginTop: '-0.2em',
+          marginLeft: isTableCol1 ? 'calc(0.9em - 10px)' : 'calc(-0.4em - 10px)',
+          marginTop: '-0.1em',
           _mobile: {
             /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
             marginLeft: 'calc(-0.4em - 14px)',
