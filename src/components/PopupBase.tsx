@@ -20,8 +20,6 @@ export type PopupBaseProps = PropsWithChildren<
     /** If true, a border will be added to the popup. */
     border?: boolean
     circledCloseButton?: boolean
-    /** If true, applies small margin to keep popup from touching the edge of the screen. This margin will also be applied if `circledCloseButton` is true. */
-    leaveMarginFromEdge?: boolean
     /** If true, the popup will take up the full width of the screen. */
     fullScreen?: boolean
     /** If defined, will show a small x in the upper right corner. */
@@ -42,7 +40,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       border = false,
       children,
       circledCloseButton,
-      leaveMarginFromEdge,
       fullScreen = false,
       onClose,
       padding,
@@ -103,8 +100,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           textAlign,
           zIndex: 'popup',
           // leave space so the circledCloseButton doesn't get cut off from the screen
-          maxWidth: circledCloseButton || leaveMarginFromEdge ? 'calc(100% - 2em)' : '100%',
-          maxHeight: leaveMarginFromEdge ? 'calc(100% - 2em)' : '100%',
+          maxWidth: circledCloseButton ? 'calc(100% - 2em)' : '100%',
+          maxHeight: '100%',
           marginInline: 'auto',
           left: 0,
           right: 0,

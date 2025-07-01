@@ -364,7 +364,7 @@ const CommandPaletteWithTransition: FC = () => {
           nodeRef={popupRef}
           onEntering={() => setDismiss(false)}
         >
-          <PopupBase background={token('colors.bgOverlay50')} ref={popupRef} fullScreen leaveMarginFromEdge={!isTouch}>
+          <PopupBase background={token('colors.bgOverlay50')} ref={popupRef} fullScreen>
             <div
               data-testid='popup-value'
               className={css({
@@ -374,6 +374,7 @@ const CommandPaletteWithTransition: FC = () => {
                 flexDirection: 'column',
                 justifyContent: isTouch ? 'start' : 'center',
                 alignItems: 'center',
+                ...(!isTouch && { padding: '2em' }),
               })}
               onClick={!isTouch ? onClose : undefined}
             >
