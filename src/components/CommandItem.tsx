@@ -38,7 +38,6 @@ const CommandItem: FC<{
   selected?: boolean
   command: Command
   gestureInProgress?: string
-  isTable?: boolean
   /**
    * Controls when the command description is displayed.
    * - If true: Always show the description.
@@ -52,13 +51,12 @@ const CommandItem: FC<{
   isLastCommand?: boolean
   noInlinePadding?: boolean
 }> = ({
-  viewType = 'table',
+  viewType,
   search = '',
   onClick,
   selected,
   command,
   gestureInProgress,
-  isTable,
   alwaysShowDescription,
   onHover,
   customize,
@@ -100,10 +98,7 @@ const CommandItem: FC<{
       : descriptionStringOrFunction
   })
 
-  const Container = isTable ? 'tr' : 'div'
-  const Cell = isTable ? 'td' : 'div'
-
-  const paddingSize = isTouch && !isTable ? '0.4em' : '0.67em'
+  const paddingSize = isTouch && !viewType ? '0.4em' : '0.67em'
 
   const isSelectedStyle = selected || isDragging
 
@@ -142,7 +137,7 @@ const CommandItem: FC<{
   }, [disabled, gestureInProgress, command, selected])
 
   return (
-    <Container
+    <div
       ref={current => {
         ref.current = current
         dragSource(current)
@@ -178,7 +173,7 @@ const CommandItem: FC<{
         }
       }}
     >
-      <Cell
+      <div
         className={css(
           { boxSizing: 'border-box' },
           viewType === 'grid'
@@ -231,10 +226,10 @@ const CommandItem: FC<{
           // placeholder for icon to keep spacing consistent
           <div className={css({ width: 24, height: 24 })} />
         )}
-      </Cell>
+      </div>
 
       {/* label + description vertical styling*/}
-      <Cell
+      <div
         className={css({
           display: 'flex',
           flexDirection: 'column',
@@ -292,11 +287,11 @@ const CommandItem: FC<{
             {description}
           </p>
         )}
-      </Cell>
+      </div>
 
       {/* keyboard shortcut */}
       {command.keyboard && !isTouch && viewType !== 'grid' ? (
-        <Cell
+        <div
           className={css({
             fontSize: '80%',
             position: 'relative',
@@ -311,9 +306,9 @@ const CommandItem: FC<{
           <span className={css({ whiteSpace: 'nowrap' })}>
             {command.keyboard && <CommandKeyboardShortcut keyboardOrString={command.keyboard} />}
           </span>
-        </Cell>
+        </div>
       ) : null}
-    </Container>
+    </div>
   )
 }
 
