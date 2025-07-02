@@ -625,7 +625,6 @@ const ThoughtContainer = ({
             styleThought={styleThought}
             updateSize={updateSize}
             view={view}
-            isPressed={dragHoldResult.isPressed}
           />
         </div>
         <Note path={path} disabled={!isVisible} />
