@@ -236,7 +236,7 @@ const CommandPalette: FC<{
           marginBottom: isTouch ? 0 : fontSize,
           textAlign: 'left',
           border: '1px solid {colors.gray15}',
-          borderRadius: '12px',
+          borderRadius: isTouch ? undefined : '12px',
           backgroundColor: 'gray09',
           maxWidth: '100%',
           maxHeight: '100%',
