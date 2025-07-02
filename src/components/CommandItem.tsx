@@ -29,7 +29,7 @@ const isExecutable = (state: State, command: Command) =>
 
 const strokeWidth = 4
 
-/** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
+/** Renders a command in a variety of contexts, including the Command Palette, Gesture Menu, Gesture Cheatsheet, and Help modal. */
 const CommandItem: FC<{
   viewType?: CommandViewType
   search?: string
@@ -46,6 +46,7 @@ const CommandItem: FC<{
   alwaysShowDescription?: boolean
   onHover?: (command: Command) => void
   customize?: boolean
+  /** Controls whether the command item should scroll into view when selected. Used to automatically scroll when navigating with the keyboard, but not the mouse.  */
   shouldScrollSelectedIntoView?: boolean
   isFirstCommand?: boolean
   isLastCommand?: boolean
