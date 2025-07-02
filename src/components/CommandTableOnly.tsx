@@ -54,7 +54,7 @@ const CommandTableOnly = ({
                 command={command}
                 search={search}
                 alwaysShowDescription
-                noInlinePadding
+                tableMode
               />
             )
           })}

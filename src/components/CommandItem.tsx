@@ -49,7 +49,8 @@ const CommandItem: FC<{
   shouldScrollSelectedIntoView?: boolean
   isFirstCommand?: boolean
   isLastCommand?: boolean
-  noInlinePadding?: boolean
+  /** If the CommandItem is rendered within a <table>, then it needs to use <tr> and <td> and avoid inline padding. Confusingly, this is independent from viewType which determines whether the component is layed out in a 2-column 'grid' or a 'table' of rows. Perhaps this could be refactored to avoid using <table> and <tbody> at all while preserving the desired appearance in the Help modal. */
+  tableMode?: boolean
 }> = ({
   viewType,
   search = '',
@@ -63,7 +64,7 @@ const CommandItem: FC<{
   shouldScrollSelectedIntoView,
   isFirstCommand,
   isLastCommand,
-  noInlinePadding,
+  tableMode,
 }) => {
   const [{ isDragging }, dragSource] = useDrag({
     type: DragAndDropType.ToolbarButton,
@@ -136,8 +137,11 @@ const CommandItem: FC<{
     return gestureInProgress.length
   }, [disabled, gestureInProgress, command, selected])
 
+  const Container = tableMode ? 'tr' : 'div'
+  const Cell = tableMode ? 'td' : 'div'
+
   return (
-    <div
+    <Container
       ref={current => {
         ref.current = current
         dragSource(current)
@@ -164,7 +168,7 @@ const CommandItem: FC<{
             }
           : null),
         // split padding into paddingInline and paddingBlock so either property can be overridden
-        paddingInline: viewType === 'grid' || noInlinePadding ? undefined : paddingSize,
+        paddingInline: viewType === 'grid' || tableMode ? undefined : paddingSize,
         paddingBlock: viewType === 'grid' ? undefined : paddingSize,
       })}
       onClick={e => {
@@ -173,7 +177,7 @@ const CommandItem: FC<{
         }
       }}
     >
-      <div
+      <Cell
         className={css(
           { boxSizing: 'border-box' },
           viewType === 'grid'
@@ -226,10 +230,10 @@ const CommandItem: FC<{
           // placeholder for icon to keep spacing consistent
           <div className={css({ width: 24, height: 24 })} />
         )}
-      </div>
+      </Cell>
 
       {/* label + description vertical styling*/}
-      <div
+      <Cell
         className={css({
           display: 'flex',
           flexDirection: 'column',
@@ -287,11 +291,11 @@ const CommandItem: FC<{
             {description}
           </p>
         )}
-      </div>
+      </Cell>
 
       {/* keyboard shortcut */}
       {command.keyboard && !isTouch && viewType !== 'grid' ? (
-        <div
+        <Cell
           className={css({
             fontSize: '80%',
             position: 'relative',
@@ -306,9 +310,9 @@ const CommandItem: FC<{
           <span className={css({ whiteSpace: 'nowrap' })}>
             {command.keyboard && <CommandKeyboardShortcut keyboardOrString={command.keyboard} />}
           </span>
-        </div>
+        </Cell>
       ) : null}
-    </div>
+    </Container>
   )
 }
 
