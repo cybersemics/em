@@ -18,6 +18,7 @@ import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
+import nonNull from '../util/nonNull'
 import parentOf from '../util/parentOf'
 
 /** Renders a drop-hover element unconditionally. */
@@ -71,33 +72,6 @@ const DropHoverIfVisible = ({
 }) => {
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector(state => {
-    // Don't show drop hover on thoughts that are being dragged
-    const isThisThoughtBeingDragged = state.draggingThoughts.some(draggingPath => equalPath(draggingPath, simplePath))
-
-    if (isThisThoughtBeingDragged) return false
-
-    // Don't show drop hover between contiguous selected thoughts
-    const isDropBetweenSelected =
-      prevChildId &&
-      state.draggingThoughts.some(draggingPath =>
-        equalPath(draggingPath, appendToPath(parentOf(simplePath), prevChildId)),
-      )
-
-    if (isDropBetweenSelected) return false
-
-    // Typically we show the drop hover if the thought is being directly hovered over.
-    // However, when moving into a different context that is sorted, we need to show the drop hover on the sorted drop destination if the thought is hovered over any of the thoughts in the sorted context.
-    const parentId = getThoughtById(state, head(simplePath))?.parentId
-    const sameContext = state.draggingThoughts.every(draggingPath =>
-      equalPath(rootedParentOf(state, draggingPath), rootedParentOf(state, simplePath)),
-    )
-    const isParentSorted = parentId && getSortPreference(state, parentId).type === 'Alphabetical'
-    if (!isParentSorted || sameContext) return testFlags.simulateDrag || isHovering
-    else if (!state.dragInProgress) return false
-
-    const draggingThoughtValues =
-      state.draggingThoughts.map(draggingPath => getThoughtById(state, head(draggingPath))?.value).filter(Boolean) || []
-
     // render the drop-hover if hovering over any thought in a sorted list
     const isThoughtHovering =
       state.hoveringPath &&
@@ -109,16 +83,39 @@ const DropHoverIfVisible = ({
       state.hoveringPath &&
       equalPath(state.hoveringPath, rootedParentOf(state, simplePath)) &&
       state.hoverZone === DropThoughtZone.SubthoughtsDrop
-
-    // TODO: Show the first drop-hover with distance === 2. How to determine?
-    // const distance = state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0
-
     const value = getThoughtById(state, head(simplePath))?.value
     const prevChild = prevChildId && getThoughtById(state, prevChildId)
 
     if (value === undefined || !(isThoughtHovering || isSubthoughtsHovering)) {
       return false
     }
+
+    const prevThoughtPath = prevChildId ? appendToPath(parentOf(simplePath), prevChildId) : null
+
+    // Don't show drop hover on dragged thoughts or between contiguous selected thoughts
+    const shouldHideDropHover = state.draggingThoughts.some(
+      draggingPath =>
+        equalPath(draggingPath, simplePath) || (prevThoughtPath && equalPath(draggingPath, prevThoughtPath)),
+    )
+
+    if (shouldHideDropHover) return false
+
+    // Typically we show the drop hover if the thought is being directly hovered over.
+    // However, when moving into a different context that is sorted, we need to show the drop hover on the sorted drop destination if the thought is hovered over any of the thoughts in the sorted context.
+    const parentId = getThoughtById(state, head(simplePath))?.parentId
+    const sameContext = state.draggingThoughts.every(draggingPath =>
+      equalPath(rootedParentOf(state, draggingPath), rootedParentOf(state, simplePath)),
+    )
+    const isParentSorted = parentId && getSortPreference(state, parentId).type === 'Alphabetical'
+    if (!isParentSorted || sameContext) return testFlags.simulateDrag || isHovering
+    else if (!state.dragInProgress) return false
+
+    const draggingThoughtValues = state.draggingThoughts
+      .map(draggingPath => getThoughtById(state, head(draggingPath))?.value)
+      .filter(nonNull)
+
+    // TODO: Show the first drop-hover with distance === 2. How to determine?
+    // const distance = state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0
 
     // Check if any of the dragging thoughts would be inserted at this position
     return draggingThoughtValues.some(
