@@ -153,5 +153,5 @@ export default _.curryRight(setSortPreference, 2)
 
 // Register this action's metadata
 registerActionMetadata('setSortPreference', {
-  undoable: false,
+  undoable: true,
 })
