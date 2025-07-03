@@ -19,11 +19,9 @@ export type PopupBaseProps = PropsWithChildren<
     background?: string
     /** If true, a border will be added to the popup. */
     border?: boolean
-    /** If true, the popup will be centered horizontally. */
-    center?: boolean
     circledCloseButton?: boolean
     /** If true, the popup will take up the full width of the screen. */
-    fullWidth?: boolean
+    fullScreen?: boolean
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
     padding?: string
@@ -40,10 +38,9 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       anchorOffset,
       background = token('colors.bg'),
       border = false,
-      center = false,
       children,
       circledCloseButton,
-      fullWidth = false,
+      fullScreen = false,
       onClose,
       padding,
       showXOnHover,
@@ -83,23 +80,16 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         }
       : {}
 
-    const centerStyles = center
-      ? {
-          marginInline: 'auto',
-          left: 0,
-          right: 0,
-          width: 'max-content',
-        }
-      : {}
-
-    const fullWidthStyles = fullWidth
+    const fullWidthStyles = fullScreen
       ? {
           boxShadow: 'none',
           border: 'none',
           display: 'block',
           width: '100%',
-          overflowY: 'auto',
-          maxHeight: '100%',
+          height: '100%',
+          marginBlock: 'auto',
+          top: 0,
+          bottom: 0,
         }
       : {}
 
@@ -111,8 +101,12 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           zIndex: 'popup',
           // leave space so the circledCloseButton doesn't get cut off from the screen
           maxWidth: circledCloseButton ? 'calc(100% - 2em)' : '100%',
+          maxHeight: '100%',
+          marginInline: 'auto',
+          left: 0,
+          right: 0,
+          width: 'max-content',
           ...borderStyles,
-          ...centerStyles,
           ...fullWidthStyles,
           '&:hover': {
             '& [data-close-button]': {

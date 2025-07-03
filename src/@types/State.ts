@@ -52,8 +52,9 @@ interface State {
   draggedSimplePath?: SimplePath
   /** Set to true when dragging a native file. */
   draggingFile?: boolean
-  /** Set to the dragging thought during dragInProgress. */
-  draggingThought?: SimplePath
+  /** Set to the dragging thoughts during dragInProgress. Dragging Thoughts are always maintained in the document order. */
+  draggingThoughts: SimplePath[]
+
   /** Dragging a command or toolbar button in the customizeToolbar modal. */
   dragCommand?: CommandId | null
   /** Type of toolbar-sbutton drop target being hovered over. */
@@ -62,7 +63,7 @@ interface State {
   dragHold?: boolean
   /**
    * Set to true while the user is dragging a thought or file.
-   * DraggingFile or draggingThought must be set while dragInProgress is true.
+   * DraggingFile or draggingThoughts must be set while dragInProgress is true.
    * May be set to false to abort the drag even while react-dnd is still dragging (e.g. by shaking).
    */
   dragInProgress: boolean

@@ -500,7 +500,8 @@ const Bullet = ({
         dispatch([
           // set pin false on expanded only child
           ...(isExpanded &&
-          (parentChildren?.length === 1 ||
+          (!pathParent ||
+            parentChildren?.length === 1 ||
             findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']))
             ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
             : [deleteAttribute({ path: simplePath, value: '=pin' })]),

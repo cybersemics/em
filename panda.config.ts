@@ -294,6 +294,9 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'codeBg',
     fontFamily: 'monospace',
   },
+  kbd: {
+    fontFamily: 'inherit',
+  },
   'button[disabled]': {
     opacity: 0.25,
     pointerEvents: 'none',

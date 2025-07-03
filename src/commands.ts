@@ -4,6 +4,7 @@
 import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
+import { ArrowKey } from './@types/ArrowKey'
 import Command from './@types/Command'
 import CommandId from './@types/CommandId'
 import Direction from './@types/Direction'
@@ -75,16 +76,20 @@ export const hashKeyDown = (e: KeyboardEvent): string =>
   // use e.keyCode if available instead
   (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
 
+const ARROW_KEYS_TO_CHARACTER: Record<ArrowKey, string> = {
+  ArrowLeft: '←',
+  ArrowRight: '→',
+  ArrowUp: '↑',
+  ArrowDown: '↓',
+}
+
+/** Returns true if key is an arrow key. */
+export const isArrowKey = (key: string): key is ArrowKey => {
+  return key in ARROW_KEYS_TO_CHARACTER
+}
+
 /** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
-const arrowTextToArrowCharacter = (s: string) =>
-  (
-    ({
-      ArrowLeft: '←',
-      ArrowRight: '→',
-      ArrowUp: '↑',
-      ArrowDown: '↓',
-    }) as Index
-  )[s] || s
+export const arrowTextToArrowCharacter = (s: ArrowKey) => ARROW_KEYS_TO_CHARACTER[s]
 
 /** Formats a keyboard shortcut to display to the user. */
 export const formatKeyboardShortcut = (keyboardOrString: Key | Key[] | string): string => {
@@ -93,13 +98,15 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | Key[] | string): 
     return formatKeyboardShortcut(keyboardOrString[0])
   }
 
-  const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString as string } : keyboardOrString
+  const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString } : keyboardOrString
+
+  const text = keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key
   return (
     (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
     (keyboard.alt ? (isMac ? 'Option' : 'Alt') + ' + ' : '') +
     (keyboard.control ? 'Control + ' : '') +
     (keyboard.shift ? 'Shift + ' : '') +
-    arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
+    (isArrowKey(text) ? arrowTextToArrowCharacter(text) : text)
   )
 }
 
