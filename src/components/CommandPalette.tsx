@@ -102,12 +102,11 @@ const CommandSearch: FC<{
           onInput?.(e.target.value)
         }}
         className={css({
-          padding: 0,
+          lineHeight: '1.5',
           border: 'none',
           background: 'transparent',
-          fontSize: '0.78em',
-          marginBlock: '0.67em',
-          marginInline: '1.34em',
+          padding: '1em',
+          margin: 0,
           width: '100%',
         })}
       />
@@ -277,7 +276,7 @@ const CommandPalette: FC<{
             <div
               className={css({
                 overflow: isTouch ? undefined : 'auto',
-                padding: '0.45em 0.66em',
+                padding: '0.85em 0.66em',
               })}
             >
               {commands.length > 0 ? (
