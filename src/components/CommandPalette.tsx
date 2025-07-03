@@ -66,6 +66,7 @@ const CommandSearch: FC<{
         e.preventDefault()
         e.stopPropagation()
         dispatch(commandPalette())
+        selection.clear()
 
         // remove keydown listener now since unmount is not triggered until the animation ends
         window.removeEventListener('keydown', onKeyDown)
@@ -510,6 +511,7 @@ const CommandPaletteWithTransition: FC = () => {
   const onClose = useCallback(() => {
     setDismiss(true)
     dispatch(commandPalette())
+    selection.clear()
   }, [dispatch])
 
   const showCommandPalette = useSelector(state => state.showCommandPalette)
