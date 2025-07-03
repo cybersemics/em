@@ -4,6 +4,7 @@ const colors = {
     bg: '#000000',
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
     bgOverlay50: 'rgba(0, 0, 0, 0.5)',
+    bgOverlay57: 'rgba(0, 0, 0, 0.57)',
     bgOverlay30: 'rgba(0, 0, 0, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
@@ -13,14 +14,18 @@ const colors = {
     fg: 'rgba(255, 255, 255, 1)',
     fgOverlay10: 'rgba(255, 255, 255, 0.1)',
     fgOverlay20: 'rgba(255, 255, 255, 0.2)',
+    fgOverlay30: 'rgba(255, 255, 255, 0.3)',
     fgOverlay50: 'rgba(255, 255, 255, 0.5)',
     fgOverlay70: 'rgba(255, 255, 255, 0.7)',
     fgOverlay80: 'rgba(20, 20, 20, 0.8)',
     fgOverlay90: 'rgba(20, 20, 20, 0.9)',
+    gray09: 'rgba(23, 23, 23, 1)', // #171717
     gray15: 'rgba(38, 38, 38, 1)', // #262626
     gray33: 'rgba(85, 85, 85, 1)',
+    gray45: 'rgba(115, 115, 115, 1)', // #737373
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
     gray66: 'rgba(169, 169, 169, 1)', // #a9a9a9
+    gray75: 'rgba(191, 191, 191, 1)', // #bfbfbf
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9, this is used for disabled things + text color, unlike gray66 it is the same for both light and dark
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(173, 216, 230, 1)', // #add8e6 (lightblue)
@@ -31,7 +36,7 @@ const colors = {
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
-    vividHighlight: '#63c9ea',
+    vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
     inputBorder: 'rgba(153, 153, 153, 1)', // #999, also used in navBar
@@ -62,7 +67,7 @@ const colors = {
     bulletGray: 'rgba(102, 102, 102, 1)', // #666
     midPink: 'rgba(255, 123, 195, 1)', // #ff7bc3
     dropChildTarget: '#32305f', // purple-eggplant
-    commandSelected: 'rgba(33, 33, 33, 1)', // #212121
+    commandSelectedBg: 'rgba(100, 199, 234, 0.15)', // #64c7ea26
     eggplant: 'rgba(82, 48, 95, 1)',
     checkboxForm: 'rgba(62, 62, 62, 1)', // #3e3e3e
     error: 'rgba(204, 34, 51, 1)',
@@ -77,6 +82,7 @@ const colors = {
     bg: '#FFFFFF',
     bgOverlay80: 'rgba(255, 255, 255, 0.8)',
     bgOverlay50: 'rgba(255, 255, 255, 0.5)',
+    bgOverlay57: 'rgba(255, 255, 255, 0.57)',
     bgOverlay30: 'rgba(255, 255, 255, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
@@ -86,14 +92,18 @@ const colors = {
     fg: 'rgba(0, 0, 0, 1)',
     fgOverlay10: 'rgba(0, 0, 0, 0.1)',
     fgOverlay20: 'rgba(0, 0, 0, 0.2)',
+    fgOverlay30: 'rgba(0, 0, 0, 0.3)',
     fgOverlay50: 'rgba(0, 0, 0, 0.5)',
     fgOverlay70: 'rgba(0, 0, 0, 0.7)',
     fgOverlay80: 'rgba(235, 235, 235, 0.8)',
     fgOverlay90: 'rgba(235, 235, 235, 0.9)',
+    gray09: 'rgba(232, 232, 232, 1)', // #e8e8e8
     gray15: 'rgba(217, 217, 217, 1)', // #262626
     gray33: 'rgba(170, 170, 170, 1)',
+    gray45: 'rgba(140, 140, 140, 1)', // #8c8c8c
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
     gray66: 'rgba(86, 86, 86, 1)', // #a9a9a9 (darkgray)
+    gray75: 'rgba(64, 64, 64, 1)', // #404040
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue)
@@ -104,7 +114,7 @@ const colors = {
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
-    vividHighlight: '#63c9ea',
+    vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
     inputBorder: 'rgba(238, 238, 238, 1)', // #eeeeee
@@ -135,7 +145,7 @@ const colors = {
     bulletGray: 'rgba(153, 153, 153, 1)', // #999999
     midPink: 'rgba(255, 123, 195, 1)',
     dropChildTarget: '#a4a2cd',
-    commandSelected: 'rgba(222, 222, 222, 1)',
+    commandSelectedBg: 'rgba(100, 199, 234, 0.15)', // #64c7ea26
     eggplant: 'rgb(85, 51, 98)',
     checkboxForm: 'rgba(193, 193, 193, 1)',
     error: 'rgba(204, 34, 51, 1)',

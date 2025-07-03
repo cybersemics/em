@@ -1,11 +1,9 @@
-import { shallowEqual, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
-import { TOOLBAR_DEFAULT_COMMANDS } from '../constants'
-import getUserToolbar from '../selectors/getUserToolbar'
+import { CommandViewType } from '../@types/CommandViewType'
+import nonNull from '../util/nonNull'
 import CommandItem from './CommandItem'
-
-type ViewType = 'grid' | 'table'
 
 /** Renders a table of commands, with nothing else added. */
 const CommandTableOnly = ({
@@ -14,27 +12,19 @@ const CommandTableOnly = ({
   selectedCommand,
   customize,
   onSelect,
-  applyIndexInToolbar,
   search,
 }: {
-  viewType?: ViewType
-  commands: (Command | null)[]
+  viewType?: CommandViewType
+  commands: Command[]
   selectedCommand?: Command
   customize?: boolean
   onSelect?: (command: Command | null) => void
-  applyIndexInToolbar?: boolean
   /** Search text that will be highlighted within the matched command title. */
   search?: string
 }) => {
-  // custom user toolbar
-  // fall back to defaults if user does not have Settings defined
-  const commandIds = useSelector(state => {
-    const userCommandIds = getUserToolbar(state)
-    return userCommandIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_COMMANDS
-  }, shallowEqual)
-
+  const fontSize = useSelector(state => state.fontSize)
   return (
-    <table className={css({ fontSize: '14px' })}>
+    <table className={css({ fontSize: '14px', width: viewType === 'grid' ? undefined : '100%' })}>
       <tbody
         className={css({
           display: viewType === 'grid' ? 'grid' : 'table-row-group',
@@ -43,19 +33,27 @@ const CommandTableOnly = ({
             gap: '1rem',
           }),
         })}
+        // anchor all `em` units used in children to `fontSize`
+        style={{ fontSize }}
       >
-        {commands.map(command => {
-          const indexInToolbar = commandIds.findIndex(id => id === command?.id)
+        {commands.filter(nonNull).map(command => {
+          const selected = selectedCommand && command?.id === selectedCommand.id
           return (
             <CommandItem
               viewType={viewType}
               customize={customize}
-              key={command?.id}
-              indexInToolbar={indexInToolbar !== -1 && applyIndexInToolbar ? indexInToolbar + 1 : null}
-              onSelect={onSelect}
-              selected={selectedCommand && command?.id === selectedCommand.id}
+              key={command.id}
+              onClick={
+                onSelect &&
+                ((_, command) => {
+                  onSelect(selected ? null : command)
+                })
+              }
+              selected={selected}
               command={command}
               search={search}
+              alwaysShowDescription
+              tableMode
             />
           )
         })}
