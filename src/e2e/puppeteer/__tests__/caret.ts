@@ -312,4 +312,22 @@ describe('mobile only', () => {
     const textContext = await getEditingText()
     expect(textContext).toBe('a')
   })
+
+  it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
+    const importText = `
+      - a`
+
+    await paste(importText)
+
+    await press('p', { meta: true })
+    await waitForSelector('[data-testid=popup-value]')
+
+    await press('Escape')
+    await waitForSelector('[data-testid=popup-value]', { hidden: true })
+
+    await press('ArrowDown')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('a')
+  })
 })
