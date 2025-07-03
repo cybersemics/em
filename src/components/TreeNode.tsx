@@ -5,6 +5,7 @@ import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
 import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
+import durations from '../durations.config'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -70,9 +71,12 @@ const TreeNode = ({
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
+  const [sortOffset, setSortOffset] = useState(0)
+  const [isSortAnimating, setIsSortAnimating] = useState(false)
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const previousRankRef = useRef<number | null>(null)
 
   const fauxCaretNodeProvider = useFauxCaretNodeProvider({
     editing,
@@ -133,6 +137,45 @@ const TreeNode = ({
     !isSwap ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
   )
 
+  // Get current rank for this thought.
+  const currentRank = useSelector(state => {
+    const thoughtId = path[path.length - 1]
+    const currentThought = state.thoughts.thoughtIndex[thoughtId]
+    return currentThought?.rank ?? null
+  })
+
+  // Get previous rank using usePrevious pattern.
+  const previousRank = (() => {
+    const prev = previousRankRef.current
+    previousRankRef.current = currentRank
+    return prev
+  })()
+
+  /** Detect when this thought's rank has changed. */
+  const rankChanged = previousRank !== null && currentRank !== null && Math.abs(currentRank - previousRank) > 0.001
+
+  /*
+   * True while sort animation should be active. It must be true on the very first frame
+   * after a rank change so that both X and Y transitions are applied in sync.
+   */
+  const isSort = rankChanged || isSortAnimating
+
+  /** The direction of the curved animation in sort operations. If the thought's rank increased (moved down), curve right (ease-in).
+   * If the thought's rank decreased (moved up), curve left (ease-in). Returns null if the last action is not a sort operation. */
+  const sortDirection: 'clockwise' | 'counterclockwise' | null = (() => {
+    if (!isSort || previousRank === null || currentRank === null) return null
+
+    // If rank increased (moved down in list), curve right (clockwise)
+    // If rank decreased (moved up in list), curve left (counterclockwise)
+    return currentRank > previousRank ? 'clockwise' : 'counterclockwise'
+  })()
+
+  /**
+   * Initial horizontal offset for the first frame of a sort animation. This allows the X transition
+   * to start immediately, even before the useLayoutEffect that sets `sortOffset` has a chance to run.
+   */
+  const initialSortOffset = rankChanged && sortDirection ? (sortDirection === 'clockwise' ? -30 : 30) : 0
+
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
   // 2. Create L-shaped animation paths by controlling when each movement starts/ends
@@ -152,6 +195,42 @@ const TreeNode = ({
     setY(_y)
   }, [_y])
 
+  useLayoutEffect(() => {
+    // Start sort animation when rank changes, keep it active for the full duration.
+    if (!rankChanged) return
+
+    setIsSortAnimating(true)
+
+    // After the layout node animation duration:
+    // reset X offset (Y will update naturally when isSortAnimating becomes false)
+    const timer = setTimeout(() => {
+      setIsSortAnimating(false)
+    }, durations.layoutNodeAnimation)
+
+    return () => clearTimeout(timer)
+  }, [rankChanged, previousRank, currentRank])
+
+  useLayoutEffect(() => {
+    // Handle sort animation timing
+    // If rank didn't change or sort direction is not set, or the animation is not active, reset the offset
+    if ((!rankChanged || !sortDirection) && !isSortAnimating) {
+      setSortOffset(0)
+      return
+    }
+
+    // Start X animation from offset position, this is to simulate curve animation
+    const initialXOffset = sortDirection === 'clockwise' ? -30 : 30
+    setSortOffset(initialXOffset)
+
+    // After the layout node animation duration: reset X offset (Y will update naturally when isSortAnimating becomes false)
+    const timer = setTimeout(() => {
+      setSortOffset(0)
+      setIsSortAnimating(false)
+    }, durations.layoutNodeAnimation)
+
+    return () => clearTimeout(timer)
+  }, [rankChanged, sortDirection, isSortAnimating])
+
   // List Virtualization
   // Do not render thoughts that are below the viewport.
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
@@ -164,8 +243,8 @@ const TreeNode = ({
   const outerDivStyle = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
     // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
-    left: x,
-    top: isSwap ? 'auto' : y,
+    left: isSort ? x + (isSortAnimating ? sortOffset : initialSortOffset) : x, // Add effective sortOffset for sort animation
+    top: isSwap || isSort ? 'auto' : y,
     // Table col1 uses its exact width since cannot extend to the right edge of the screen.
     // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
     // 1em + 10px is an eyeball measurement at font sizes 14 and 18
@@ -175,12 +254,13 @@ const TreeNode = ({
     ...fauxCaretNodeProvider,
   }
 
-  const innerDivStyle = isSwap
-    ? {
-        top: y,
-        left: 0,
-      }
-    : undefined
+  const innerDivStyle =
+    isSwap || isSort
+      ? {
+          top: y,
+          left: 0,
+        }
+      : undefined
 
   return (
     <FadeTransition
@@ -204,9 +284,13 @@ const TreeNode = ({
             ? swapDirection === 'clockwise'
               ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
               : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
-            : contextAnimation
-              ? 'left {durations.disappearingUpperRight} ease-out,top {durations.disappearingUpperRight} ease-out'
-              : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
+            : isSort
+              ? sortDirection === 'clockwise'
+                ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
+                : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
+              : contextAnimation
+                ? 'left {durations.disappearingUpperRight} ease-out,top {durations.disappearingUpperRight} ease-out'
+                : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
         })}
         style={outerDivStyle}
       >
@@ -225,7 +309,11 @@ const TreeNode = ({
               ? swapDirection === 'clockwise'
                 ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
                 : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
-              : undefined,
+              : isSort
+                ? sortDirection === 'clockwise'
+                  ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
+                  : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
+                : undefined,
           })}
           style={innerDivStyle}
         >
