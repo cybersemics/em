@@ -2,6 +2,7 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import { CommandViewType } from '../@types/CommandViewType'
+import nonNull from '../util/nonNull'
 import CommandItem from './CommandItem'
 
 /** Renders a table of commands, with nothing else added. */
@@ -14,7 +15,7 @@ const CommandTableOnly = ({
   search,
 }: {
   viewType?: CommandViewType
-  commands: (Command | null)[]
+  commands: Command[]
   selectedCommand?: Command
   customize?: boolean
   onSelect?: (command: Command | null) => void
@@ -35,29 +36,27 @@ const CommandTableOnly = ({
         // anchor all `em` units used in children to `fontSize`
         style={{ fontSize }}
       >
-        {commands
-          .filter(command => command !== null)
-          .map(command => {
-            const selected = selectedCommand && command?.id === selectedCommand.id
-            return (
-              <CommandItem
-                viewType={viewType}
-                customize={customize}
-                key={command.id}
-                onClick={
-                  onSelect &&
-                  ((_, command) => {
-                    onSelect(selected ? null : command)
-                  })
-                }
-                selected={selected}
-                command={command}
-                search={search}
-                alwaysShowDescription
-                tableMode
-              />
-            )
-          })}
+        {commands.filter(nonNull).map(command => {
+          const selected = selectedCommand && command?.id === selectedCommand.id
+          return (
+            <CommandItem
+              viewType={viewType}
+              customize={customize}
+              key={command.id}
+              onClick={
+                onSelect &&
+                ((_, command) => {
+                  onSelect(selected ? null : command)
+                })
+              }
+              selected={selected}
+              command={command}
+              search={search}
+              alwaysShowDescription
+              tableMode
+            />
+          )
+        })}
       </tbody>
     </table>
   )

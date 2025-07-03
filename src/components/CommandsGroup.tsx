@@ -11,7 +11,7 @@ interface CommandsGroupProps {
   selectedCommand?: Command
   title: string
   search?: string
-  commands: (Command | null)[]
+  commands: Command[]
   viewType: CommandViewType
 }
 /**

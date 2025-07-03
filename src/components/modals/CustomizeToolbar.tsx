@@ -108,7 +108,7 @@ const ModalCustomizeToolbar: FC = () => {
   const dispatch = useDispatch()
 
   const commandsContainerRef = useRef<HTMLDivElement>(null)
-  const commands = useMemo(() => [selectedCommand], [selectedCommand])
+  const commands = useMemo(() => (selectedCommand ? [selectedCommand] : []), [selectedCommand])
 
   const id = 'customizeToolbar'
   const modalClasses = modalRecipe({ id })
