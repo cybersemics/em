@@ -1,11 +1,15 @@
 import moize from 'moize'
 import { DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
+import { useSelector } from 'react-redux'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { alertActionCreator as alert } from '../actions/alert'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
@@ -13,10 +17,12 @@ import { dragInProgressActionCreator as dragInProgress } from '../actions/dragIn
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
+import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankBefore from '../selectors/getRankBefore'
@@ -24,8 +30,8 @@ import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
-import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import longPressStore from '../stores/longPressStore'
@@ -40,7 +46,12 @@ import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import unroot from '../util/unroot'
+
+export type DropValidationResult = {
+  isValid: boolean
+  errorMessage?: string
+  errorType?: 'warning' | 'error'
+}
 
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ThoughtContainerProps) => {
@@ -48,12 +59,10 @@ const canDrag = (props: ThoughtContainerProps) => {
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))
   const isDraggable = props.isVisible || props.isCursorParent
-  const isMulticursorActive = hasMulticursor(state)
 
   return (
     isDocumentEditable() &&
     !!isDraggable &&
-    !isMulticursorActive &&
     !findDescendant(state, thoughtId, '=immovable') &&
     !findDescendant(state, thoughtId, '=readonly') &&
     !findDescendant(state, pathParentId, '=immovable') &&
@@ -62,18 +71,35 @@ const canDrag = (props: ThoughtContainerProps) => {
 }
 
 /** Handles drag start. */
-const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem => {
+const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem[] => {
+  const state = store.getState()
   const offset = selection.offset()
+  const isMulticursorActive = hasMulticursor(state)
+  const isCurrentThoughtSelected = isMulticursorPath(state, path)
+
+  // Add the current thought to the multicursor if it is not already selected
+  if (isMulticursorActive && !isCurrentThoughtSelected) {
+    store.dispatch(addMulticursor({ path }))
+  }
+
+  const multicursorPaths = [...Object.values(state.multicursors), ...(!isCurrentThoughtSelected ? [path] : [])]
+
+  const draggingThoughts = documentSort(state, multicursorPaths).map(path => ({
+    path,
+    simplePath: simplifyPath(state, path),
+    zone: DragThoughtZone.Thoughts,
+  }))
 
   store.dispatch(
     dragInProgress({
       value: true,
-      draggingThought: simplePath,
+      draggingThoughts: draggingThoughts.map(item => item.simplePath),
       sourceZone: DragThoughtZone.Thoughts,
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { path, simplePath, zone: DragThoughtZone.Thoughts }
+
+  return draggingThoughts
 }
 
 /** Handles drag end. */
@@ -113,14 +139,14 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   if (!state.dragInProgress) return false
 
   const item = monitor.getItem() as DragThoughtOrFiles
+  const draggedItems = item as DragThoughtItem[]
 
-  const thoughtsFrom = (item as DragThoughtItem).path
   const thoughtsTo = props.path
   const showContexts = thoughtsTo && isContextViewActive(state, parentOf(thoughtsTo))
 
   // Disallow dropping on context view.
   // This condition must be matched in isChildHovering to correctly highlight the hovering parent.
-  return !showContexts && canDropPath(thoughtsFrom, thoughtsTo)
+  return !showContexts && draggedItems.every(thoughtItem => canDropPath(thoughtItem.path, thoughtsTo))
 }
 
 /** Handles dropping a thought on a DropTarget. */
@@ -134,7 +160,10 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
     return
   }
 
-  if (!item.path) {
+  const draggedItems = item as DragThoughtItem[]
+
+  // Validation checks
+  if (draggedItems.some(item => !item.path)) {
     console.warn('item.path not defined')
     return
   } else if (!props.path) {
@@ -142,66 +171,115 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
     return
   }
 
+  /** Validates that the dragged items can be dropped at the destination path. */
+  const validateDraggedItem = (state: State, thoughtFrom: SimplePath, thoughtTo: SimplePath): DropValidationResult => {
+    const toThought = pathToThought(state, thoughtTo)
+    const fromThought = pathToThought(state, thoughtFrom)
+    const isRootOrEM = isRoot(thoughtFrom) || isEM(thoughtFrom)
+    const sameParent = equalPath(parentOf(thoughtFrom), parentOf(thoughtTo))
+
+    if (!toThought || !fromThought) {
+      return { isValid: false, errorMessage: 'toThought or fromThought not defined', errorType: 'warning' }
+    }
+
+    // cannot move root or em context
+    if (isRootOrEM && !sameParent) {
+      return {
+        isValid: false,
+        errorMessage: `Cannot move the ${isRoot(thoughtFrom) ? 'home' : 'em'} context to another context.`,
+        errorType: 'error',
+      }
+    }
+
+    // drop on itself or after itself is a noop
+    if (equalPath(thoughtFrom, thoughtTo) || isBefore(state, thoughtFrom, thoughtTo)) return { isValid: false }
+
+    return { isValid: true }
+  }
+
   const state = store.getState()
-  const thoughtsFrom = simplifyPath(state, item.path)
-  const thoughtsTo = props.simplePath
-  const toThought = pathToThought(state, thoughtsTo)
-  const fromThought = pathToThought(state, thoughtsFrom)
-  const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const sameParent = equalPath(parentOf(thoughtsFrom), parentOf(thoughtsTo))
 
-  if (!toThought || !fromThought) {
-    console.warn('toThought or fromThought not defined')
-    return
-  }
-  // cannot move root or em context
-  if (isRootOrEM && !sameParent) {
-    store.dispatch(
-      error({ value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.` }),
-    )
-    return
-  }
+  // If any drop is invalid, abort the drop early
+  if (
+    draggedItems.some(({ simplePath }) => {
+      const { isValid, errorMessage, errorType } = validateDraggedItem(state, simplePath, props.simplePath)
 
-  // drop on itself or after itself is a noop
-  if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
+      if (!isValid && errorMessage) {
+        if (errorType === 'warning') {
+          console.warn(errorMessage)
+        } else if (errorType === 'error') {
+          store.dispatch(error({ value: errorMessage }))
+        }
+      }
 
-  haptics.medium()
-
-  const parent = unroot(rootedParentOf(state, thoughtsTo))
-  const newPath = appendToPath(parent, head(thoughtsFrom))
-
-  store.dispatch(
-    props.showContexts
-      ? createThought({
-          value: toThought.value,
-          path: thoughtsFrom,
-          rank: getNextRank(state, head(thoughtsFrom)),
-        })
-      : moveThought({
-          oldPath: thoughtsFrom,
-          newPath,
-          newRank: getRankBefore(state, thoughtsTo),
-        }),
+      return !isValid
+    })
   )
+    return
 
-  // alert user of move to another context
-  if (!sameParent) {
-    // wait until after MultiGesture has cleared the error so this alert does not get cleared
-    setTimeout(() => {
-      store.dispatch((dispatch, getState) => {
+  store.dispatch((dispatch, getState) => {
+    // set multicursor executing to true if there are multiple thoughts being dragged
+    if (draggedItems.length > 1) {
+      dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' }))
+    }
+
+    // move each dragged item to the destination path
+    draggedItems.forEach(item => {
+      const state = getState()
+      const parent = parentOf(props.simplePath)
+      const newPath = appendToPath(parent, head(item.simplePath))
+      const toThought = pathToThought(state, props.simplePath)
+      const thoughtFrom = item.simplePath
+
+      dispatch(
+        props.showContexts
+          ? createThought({
+              value: toThought?.value ?? '',
+              path: thoughtFrom,
+              rank: getNextRank(state, head(thoughtFrom)),
+            })
+          : moveThought({
+              oldPath: thoughtFrom,
+              newPath,
+              newRank: getRankBefore(state, props.simplePath),
+            }),
+      )
+    })
+
+    // Clear isMulticursorExecuting after all operations are complete and isMulticursorExecuting is true
+    if (getState().isMulticursorExecuting) {
+      dispatch(setIsMulticursorExecuting({ value: false }))
+    }
+
+    haptics.medium()
+
+    // Alert user if context changed
+    const hasContextChanged = draggedItems.every(
+      item => !equalPath(parentOf(item.simplePath), parentOf(props.simplePath)),
+    )
+
+    if (hasContextChanged) {
+      // wait until after MultiGesture has cleared the error so this alert does not get cleared
+      setTimeout(() => {
         const state = getState()
-        const parentThought = getThoughtById(state, head(parentOf(thoughtsTo)))
+        const parentThought = getThoughtById(state, head(parentOf(props.simplePath)))
         if (!parentThought) return
-        const alertFrom = '"' + ellipsize(fromThought.value) + '"'
-        const alertTo = isRoot([parentThought.id]) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
+
+        const firstFromThought = pathToThought(state, draggedItems[0].simplePath)
+        if (!firstFromThought) return
+
+        const numThoughts = draggedItems.length
+        const alertFrom = numThoughts === 1 ? `"${ellipsize(firstFromThought.value)}"` : `${numThoughts} thoughts`
+        const alertTo = isRoot([parentThought.id]) ? 'home' : `"${ellipsize(parentThought.value)}"`
+
         dispatch(
           alert(`${alertFrom} moved to ${alertTo} context.`, {
             clearDelay: 5000,
           }),
         )
-      })
-    }, 100)
-  }
+      }, 100)
+    }
+  })
 }
 
 /** Collects props from the DragSource. */
@@ -237,8 +315,14 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
     collect: dropCollect,
   })
 
+  // Check if this thought is part of a multiselect drag operation
+  const isDraggingMultiple = useSelector(state => {
+    if (!state.dragInProgress || !state.draggingThoughts) return false
+    return state.draggingThoughts.some(draggedPath => equalPath(draggedPath, propsTypes.simplePath))
+  })
+
   return {
-    isDragging,
+    isDragging: isDragging || isDraggingMultiple, // Combine both drag states: either this is the primary drag source OR it's part of multiselect drag
     dragSource,
     dragPreview,
     isHovering,
