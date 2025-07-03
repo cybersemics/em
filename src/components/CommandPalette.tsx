@@ -108,6 +108,7 @@ const CommandSearch: FC<{
           fontSize: '0.78em',
           marginBlock: '0.67em',
           marginInline: '1.34em',
+          width: '100%',
         })}
       />
     </div>
