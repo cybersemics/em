@@ -2,6 +2,7 @@ import _ from 'lodash'
 import moize from 'moize'
 import Context from './@types/Context'
 import Lexeme from './@types/Lexeme'
+import MimeType from './@types/MimeType'
 import PushBatch from './@types/PushBatch'
 import State from './@types/State'
 import Thought from './@types/Thought'
@@ -24,6 +25,7 @@ import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
+import exportContext from './selectors/exportContext'
 import { getAllChildren, getAllChildrenAsThoughts, getChildrenRanked } from './selectors/getChildren'
 import getContexts from './selectors/getContexts'
 import getLexeme from './selectors/getLexeme'
@@ -207,6 +209,8 @@ const testHelpers = {
 // add useful functions to window.em for debugging
 const windowEm = {
   contextToThoughtId: withState((state: State, thoughts: Context) => contextToThoughtId(state, thoughts)),
+  exportContext: (contextOrThoughtId: Context | ThoughtId, format?: MimeType) =>
+    exportContext(store.getState(), contextOrThoughtId, format),
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
   getLexemeContexts: withState((state: State, value: string) => {
