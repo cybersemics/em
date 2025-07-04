@@ -75,6 +75,10 @@ const TreeNode = ({
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  // Track the previous on-screen position (array index) of this thought so that we can
+  // determine if it moved up or down after a sort operation. Using the visual index
+  // rather than the Thought rank ensures the animation direction matches the perceived
+  // top-to-bottom movement on the screen.
   const previousRankRef = useRef<number | null>(null)
 
   const fauxCaretNodeProvider = useFauxCaretNodeProvider({
@@ -136,25 +140,21 @@ const TreeNode = ({
     !isSwap ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
   )
 
-  // Get current rank for this thought.
-  const currentRank = useSelector(state => {
-    const thoughtId = path[path.length - 1]
-    const currentThought = state.thoughts.thoughtIndex[thoughtId]
-    return currentThought?.rank ?? null
-  })
+  // The current visual index of this thought in the rendered list.
+  const currentRank = index
 
-  // Get previous rank using usePrevious pattern.
+  // Get previous index using the usePrevious pattern.
   const previousRank = (() => {
     const prev = previousRankRef.current
     previousRankRef.current = currentRank
     return prev
   })()
 
-  // Hold the sort direction in a ref so it only updates when the rank actually changes.
+  // Hold the sort direction in a ref so it only updates when the index actually changes.
   const sortDirectionRef = useRef<'clockwise' | 'counterclockwise' | null>(null)
 
-  /** Detect when this thought's rank has changed. */
-  const rankChanged = previousRank !== null && currentRank !== null && Math.abs(currentRank - previousRank) > 0.001
+  /** Detect when this thought's perceived on-screen position (array index) has changed. */
+  const rankChanged = previousRank !== null && currentRank !== null && previousRank !== currentRank
 
   /** True if the last action is setSortPreference. */
   const isLastActionSort = useSelector(state => {
@@ -173,7 +173,7 @@ const TreeNode = ({
    * animation is in progress (e.g. position updates from virtualization).
    */
   const sortDirection: 'clockwise' | 'counterclockwise' | null = (() => {
-    // Update the direction only on the first render after the rank change.
+    // Update the direction only on the first render after the position (index) change.
     if (isLastActionSort && rankChanged && previousRank !== null && currentRank !== null) {
       const dir: 'clockwise' | 'counterclockwise' = currentRank > previousRank ? 'clockwise' : 'counterclockwise'
       sortDirectionRef.current = dir
@@ -187,7 +187,7 @@ const TreeNode = ({
    * Horizontal offset for the first frame of a sort animation. This allows the X transition
    * to start immediately from the correct position.
    */
-  const sortOffset = sortDirection === 'clockwise' ? -30 : 30
+  const sortOffset = sortDirection === 'clockwise' ? 30 : -30
 
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
@@ -209,7 +209,7 @@ const TreeNode = ({
   }, [_y])
 
   useLayoutEffect(() => {
-    // Start sort animation when rank changes, keep it active for the full duration.
+    // Start sort animation when the visual rank changes, keep it active for the full duration.
     if (rankChanged) {
       setIsSortAnimating(true)
     }
