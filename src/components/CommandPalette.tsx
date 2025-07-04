@@ -55,6 +55,7 @@ const CommandSearch: FC<{
         e.preventDefault()
         e.stopPropagation()
         dispatch(commandPalette())
+        selection.clear()
       } else if (e.key === 'Enter') {
         onExecute?.(e, inputRef.current?.value || '')
       } else if (e.key === 'ArrowDown') {
@@ -336,6 +337,7 @@ const CommandPaletteWithTransition: FC = () => {
   const onClose = useCallback(() => {
     setDismiss(true)
     dispatch(commandPalette())
+    selection.clear()
   }, [dispatch])
 
   const showCommandPalette = useSelector(state => state.showCommandPalette)
