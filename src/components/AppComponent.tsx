@@ -76,6 +76,7 @@ const shouldCancelGesture = (
   const distance = state.fontSize * 2
   return (
     (x && y && selection.isNear(x, y, distance)) ||
+    state.dragHold ||
     state.dragInProgress ||
     !!state.showModal ||
     state.showSidebar ||
