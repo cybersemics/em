@@ -22,7 +22,7 @@ const useHoveringPath = (path: Path, isHovering: boolean, hoverZone: DropThought
           dispatch(
             dragInProgress({
               value: true,
-              draggingThought: state.draggingThought,
+              draggingThoughts: state.draggingThoughts,
               hoveringPath: path,
               hoverZone,
               sourceZone: DragThoughtZone.Thoughts,
