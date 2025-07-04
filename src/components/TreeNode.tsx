@@ -184,10 +184,10 @@ const TreeNode = ({
   })()
 
   /**
-   * Initial horizontal offset for the first frame of a sort animation. This allows the X transition
-   * to start immediately, even before the useLayoutEffect that sets `sortOffset` has a chance to run.
+   * Horizontal offset for the first frame of a sort animation. This allows the X transition
+   * to start immediately from the correct position.
    */
-  const initialSortOffset = sortDirection === 'clockwise' ? -30 : 30
+  const sortOffset = sortDirection === 'clockwise' ? -30 : 30
 
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
@@ -236,7 +236,7 @@ const TreeNode = ({
   const outerDivStyle = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
     // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
-    left: isLastActionSort ? x + (isSortAnimating ? initialSortOffset : 0) : x, // Add effective sortOffset for sort animation
+    left: isLastActionSort ? x + (isSortAnimating ? sortOffset : 0) : x,
     top: isSwap || isLastActionSort ? 'auto' : y,
     // Table col1 uses its exact width since cannot extend to the right edge of the screen.
     // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
