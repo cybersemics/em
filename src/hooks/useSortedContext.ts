@@ -14,7 +14,7 @@ const useSortedContext = () => {
 
   return useSelector(state => {
     if (!state.hoveringPath) {
-      return { isSortedContext: false, hoveringOnDropEnd: false, newRank: -1 }
+      return { isHoveringSorted: false, newRank: -1 }
     }
 
     const contextParentPath = parentOf(state.hoveringPath)
