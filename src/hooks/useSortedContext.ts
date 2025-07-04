@@ -20,14 +20,17 @@ const useSortedContext = () => {
     const contextParentPath = parentOf(state.hoveringPath)
 
     // Check if the drop target is on sorted context children or on its parent.
-    const isContextChildren = attributeEquals(state, head(contextParentPath), '=sort', 'Alphabetical')
-    const thoughtDrop = state.hoverZone === DropThoughtZone.ThoughtDrop
-    const isSortedContext = isContextChildren && thoughtDrop
+    const isSortedContext =
+      state.hoverZone === DropThoughtZone.ThoughtDrop &&
+      attributeEquals(state, head(contextParentPath), '=sort', 'Alphabetical')
 
     // check if the hovering path is on a drop end of parent sorted context
-    const dropTargetId = head(state.hoveringPath || [])
-    const isContextParent = attributeEquals(state, dropTargetId, '=sort', 'Alphabetical')
-    const hoveringOnDropEnd = state.hoverZone === 'SubthoughtsDrop' && isContextParent
+    const hoveringOnDropEnd =
+      state.hoverZone === 'SubthoughtsDrop' && attributeEquals(state, head(state.hoveringPath), '=sort', 'Alphabetical')
+
+    if (!isSortedContext && !hoveringOnDropEnd) {
+      return { isHoveringSorted: false, newRank: -1 }
+    }
 
     const monitor = dragDropManager.getMonitor()
     const item = monitor.getItem() as DragThoughtItem
@@ -41,10 +44,7 @@ const useSortedContext = () => {
     const contextpath = hoveringOnDropEnd ? state.hoveringPath : contextParentPath
     const newRank = getSortedRank(state, head(contextpath), sourceThought?.value || '')
 
-    return {
-      isHoveringSorted: isSortedContext || hoveringOnDropEnd,
-      newRank,
-    }
+    return { isHoveringSorted: true, newRank }
   }, shallowEqual)
 }
 
