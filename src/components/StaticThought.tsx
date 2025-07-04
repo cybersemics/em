@@ -58,7 +58,6 @@ export interface ThoughtProps {
   styleContainer?: React.CSSProperties
   styleThought?: React.CSSProperties
   view?: string | null
-  isPressed: boolean
 }
 
 /** Returns true if a color is white, in rgb, rgba, hex, or color name. */
@@ -109,7 +108,6 @@ const StaticThought = ({
   styleThought,
   styleAnnotation,
   updateSize,
-  isPressed,
 }: ThoughtProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
@@ -212,7 +210,6 @@ const StaticThought = ({
                       https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
                     */
                   verticalAlign: 'top',
-                  userSelect: isPressed ? 'none' : undefined,
                 }),
               },
               cssRaw,
