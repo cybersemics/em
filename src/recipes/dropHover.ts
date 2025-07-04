@@ -20,7 +20,7 @@ const dropHoverRecipe = defineRecipe({
       /* Last drop-end in Subthoughts */
       true: {
         marginLeft: 'calc(0.6em - 13px)',
-        width: 'calc(100% - 3em)',
+        width: '100%',
       },
     },
   },
