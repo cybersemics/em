@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
@@ -138,9 +138,6 @@ const TreeNode = ({
     !isSwap ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
   )
 
-  // Hold the sort direction in a ref so it only updates when the index actually changes.
-  const sortDirectionRef = useRef<'clockwise' | 'counterclockwise' | null>(null)
-
   /** Detect when this thought's on-screen position (array index) has changed. */
   const indexChanged = previousIndex !== undefined && previousIndex !== index
 
@@ -155,21 +152,14 @@ const TreeNode = ({
    * The direction of the curved animation in sort operations.
    * - If the thought's rank increased (moved down), curve right (clockwise).
    * - If the thought's rank decreased (moved up), curve left (counterclockwise).
-   *
-   * We cache the value in a ref so that once determined for a given sort animation
-   * it remains stable across any additional renders that may occur while the
-   * animation is in progress (e.g. position updates from virtualization).
    */
-  const sortDirection: 'clockwise' | 'counterclockwise' | null = (() => {
-    // Determine direction only on the first render after the index change.
-    if (isLastActionSort && indexChanged && previousIndex !== null) {
-      const dir: 'clockwise' | 'counterclockwise' = index > previousIndex ? 'clockwise' : 'counterclockwise'
-      sortDirectionRef.current = dir
-      return dir
-    }
-    // Otherwise fall back to the previously determined direction.
-    return sortDirectionRef.current
-  })()
+  const sortDirection = useMemo(
+    () => (isLastActionSort && previousIndex !== undefined && index > previousIndex ? 'clockwise' : 'counterclockwise'),
+    // Only recalculate sortDirection when index changes and  last action is sort.
+    // Do not update when previousIndex changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [index, isLastActionSort],
+  )
 
   /**
    * Horizontal offset for the first frame of a sort animation. This allows the X transition
@@ -266,9 +256,7 @@ const TreeNode = ({
               ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
               : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
             : isLastActionSort
-              ? sortDirection === 'clockwise'
-                ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveSortXLayer}'
-                : 'left {durations.layoutNodeAnimation} {easings.nodeCurveSortXLayer}'
+              ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveSortXLayer}'
               : contextAnimation
                 ? 'left {durations.disappearingUpperRight} ease-out,top {durations.disappearingUpperRight} ease-out'
                 : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
@@ -291,9 +279,7 @@ const TreeNode = ({
                 ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
                 : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
               : isLastActionSort
-                ? sortDirection === 'clockwise'
-                  ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
-                  : 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
+                ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
                 : undefined,
           })}
           style={innerDivStyle}
