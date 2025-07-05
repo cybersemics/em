@@ -8,6 +8,7 @@ import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import durations from '../durations.config'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import usePrevious from '../hooks/usePrevious'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
@@ -75,11 +76,8 @@ const TreeNode = ({
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
-  // Track the previous on-screen position (array index) of this thought so that we can
-  // determine if it moved up or down after a sort operation. Using the visual index
-  // rather than the Thought rank ensures the animation direction matches the perceived
-  // top-to-bottom movement on the screen.
-  const previousRankRef = useRef<number | null>(null)
+  // Store the on-screen index from the previous render to determine movement direction.
+  const previousIndex = usePrevious<number>(index)
 
   const fauxCaretNodeProvider = useFauxCaretNodeProvider({
     editing,
@@ -140,25 +138,15 @@ const TreeNode = ({
     !isSwap ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
   )
 
-  // The current visual index of this thought in the rendered list.
-  const currentRank = index
-
-  // Get previous index using the usePrevious pattern.
-  const previousRank = (() => {
-    const prev = previousRankRef.current
-    previousRankRef.current = currentRank
-    return prev
-  })()
-
   // Hold the sort direction in a ref so it only updates when the index actually changes.
   const sortDirectionRef = useRef<'clockwise' | 'counterclockwise' | null>(null)
 
-  /** Detect when this thought's perceived on-screen position (array index) has changed. */
-  const rankChanged = previousRank !== null && currentRank !== null && previousRank !== currentRank
+  /** Detect when this thought's on-screen position (array index) has changed. */
+  const indexChanged = previousIndex !== undefined && previousIndex !== index
 
   /** True if the last action is setSortPreference. */
   const isLastActionSort = useSelector(state => {
-    const sortActions: ActionType[] = ['setSortPreference']
+    const sortActions: ActionType[] = ['setSortPreference', 'toggleSort']
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     return lastPatches?.some(patch => sortActions.includes(patch.actions[0]))
   })
@@ -173,9 +161,9 @@ const TreeNode = ({
    * animation is in progress (e.g. position updates from virtualization).
    */
   const sortDirection: 'clockwise' | 'counterclockwise' | null = (() => {
-    // Update the direction only on the first render after the position (index) change.
-    if (isLastActionSort && rankChanged && previousRank !== null && currentRank !== null) {
-      const dir: 'clockwise' | 'counterclockwise' = currentRank > previousRank ? 'clockwise' : 'counterclockwise'
+    // Determine direction only on the first render after the index change.
+    if (isLastActionSort && indexChanged && previousIndex !== null) {
+      const dir: 'clockwise' | 'counterclockwise' = index > previousIndex ? 'clockwise' : 'counterclockwise'
       sortDirectionRef.current = dir
       return dir
     }
@@ -209,8 +197,8 @@ const TreeNode = ({
   }, [_y])
 
   useLayoutEffect(() => {
-    // Start sort animation when the visual rank changes, keep it active for the full duration.
-    if (rankChanged) {
+    // Start sort animation only when the change originated from a sort action.
+    if (isLastActionSort && indexChanged) {
       setIsSortAnimating(true)
     }
 
@@ -222,7 +210,7 @@ const TreeNode = ({
     }, 0.5 * durations.layoutNodeAnimation)
 
     return () => clearTimeout(timer)
-  }, [rankChanged])
+  }, [isLastActionSort, indexChanged])
 
   // List Virtualization
   // Do not render thoughts that are below the viewport.
