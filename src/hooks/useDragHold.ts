@@ -2,10 +2,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
+import { longPress } from '../actions'
 import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
+import { LongPressState } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import longPressStore from '../stores/longPressStore'
 import useLongPress from './useLongPress'
@@ -33,7 +35,7 @@ const useDragHold = ({
   const onLongPressStart = useCallback(() => {
     if (disabled) return
     setIsPressed(true)
-    dispatch([dragHold({ value: true, simplePath, sourceZone })])
+    dispatch([dragHold({ value: true, simplePath, sourceZone }), longPress({ value: LongPressState.DragHold })])
   }, [disabled, dispatch, simplePath, sourceZone])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
@@ -49,8 +51,9 @@ const useDragHold = ({
           dispatch([dragHold({ value: false }), !hasMulticursor(state) ? alert(null) : null])
         }
 
-        if (!canceled && toggleMulticursorOnLongPress) {
-          dispatch(toggleMulticursor({ path: simplePath }))
+        if (!canceled) {
+          dispatch(longPress({ value: LongPressState.Inactive }))
+          if (toggleMulticursorOnLongPress) dispatch(toggleMulticursor({ path: simplePath }))
         }
       })
     },

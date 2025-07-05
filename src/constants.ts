@@ -461,6 +461,13 @@ export enum AlertType {
   Undo = 'Undo',
 }
 
+export enum LongPressState {
+  Inactive = 'Inactive',
+  DragHold = 'DragHold',
+  DragInProgress = 'DragInProgress',
+  DragCancelled = 'DragCancelled',
+}
+
 // User settings that can be saved to /EM/Settings/
 // See Settings modal for full descriptions.
 export enum Settings {
