@@ -5,8 +5,10 @@ import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
 import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
+import durations from '../durations.config'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import usePrevious from '../hooks/usePrevious'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
@@ -70,9 +72,12 @@ const TreeNode = ({
 } & Pick<CSSTransitionProps, 'in'>) => {
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
+  const [isSortAnimating, setIsSortAnimating] = useState(false)
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  // Store the on-screen index from the previous render to determine movement direction.
+  const previousIndex = usePrevious<number>(index)
 
   const fauxCaretNodeProvider = useFauxCaretNodeProvider({
     editing,
@@ -133,6 +138,45 @@ const TreeNode = ({
     !isSwap ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
   )
 
+  // Hold the sort direction in a ref so it only updates when the index actually changes.
+  const sortDirectionRef = useRef<'clockwise' | 'counterclockwise' | null>(null)
+
+  /** Detect when this thought's on-screen position (array index) has changed. */
+  const indexChanged = previousIndex !== undefined && previousIndex !== index
+
+  /** True if the last action is setSortPreference. */
+  const isLastActionSort = useSelector(state => {
+    const sortActions: ActionType[] = ['setSortPreference', 'toggleSort']
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    return lastPatches?.some(patch => sortActions.includes(patch.actions[0]))
+  })
+
+  /**
+   * The direction of the curved animation in sort operations.
+   * - If the thought's rank increased (moved down), curve right (clockwise).
+   * - If the thought's rank decreased (moved up), curve left (counterclockwise).
+   *
+   * We cache the value in a ref so that once determined for a given sort animation
+   * it remains stable across any additional renders that may occur while the
+   * animation is in progress (e.g. position updates from virtualization).
+   */
+  const sortDirection: 'clockwise' | 'counterclockwise' | null = (() => {
+    // Determine direction only on the first render after the index change.
+    if (isLastActionSort && indexChanged && previousIndex !== null) {
+      const dir: 'clockwise' | 'counterclockwise' = index > previousIndex ? 'clockwise' : 'counterclockwise'
+      sortDirectionRef.current = dir
+      return dir
+    }
+    // Otherwise fall back to the previously determined direction.
+    return sortDirectionRef.current
+  })()
+
+  /**
+   * Horizontal offset for the first frame of a sort animation. This allows the X transition
+   * to start immediately from the correct position.
+   */
+  const sortOffset = sortDirection === 'clockwise' ? 30 : -30
+
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
   // 2. Create L-shaped animation paths by controlling when each movement starts/ends
@@ -152,6 +196,22 @@ const TreeNode = ({
     setY(_y)
   }, [_y])
 
+  useLayoutEffect(() => {
+    // Start sort animation only when the change originated from a sort action.
+    if (isLastActionSort && indexChanged) {
+      setIsSortAnimating(true)
+    }
+
+    // After the layout node animation duration:
+    // reset X offset (Y will update naturally when isSortAnimating becomes false)
+    const timer = setTimeout(() => {
+      setIsSortAnimating(false)
+      // manual timeout adjustment to get the transition duration effectively applied
+    }, 0.5 * durations.layoutNodeAnimation)
+
+    return () => clearTimeout(timer)
+  }, [isLastActionSort, indexChanged])
+
   // List Virtualization
   // Do not render thoughts that are below the viewport.
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
@@ -164,8 +224,8 @@ const TreeNode = ({
   const outerDivStyle = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
     // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
-    left: x,
-    top: isSwap ? 'auto' : y,
+    left: isLastActionSort ? x + (isSortAnimating ? sortOffset : 0) : x,
+    top: isSwap || isLastActionSort ? 'auto' : y,
     // Table col1 uses its exact width since cannot extend to the right edge of the screen.
     // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
     // 1em + 10px is an eyeball measurement at font sizes 14 and 18
@@ -175,12 +235,13 @@ const TreeNode = ({
     ...fauxCaretNodeProvider,
   }
 
-  const innerDivStyle = isSwap
-    ? {
-        top: y,
-        left: 0,
-      }
-    : undefined
+  const innerDivStyle =
+    isSwap || isLastActionSort
+      ? {
+          top: y,
+          left: 0,
+        }
+      : undefined
 
   return (
     <FadeTransition
@@ -204,9 +265,13 @@ const TreeNode = ({
             ? swapDirection === 'clockwise'
               ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
               : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
-            : contextAnimation
-              ? 'left {durations.disappearingUpperRight} ease-out,top {durations.disappearingUpperRight} ease-out'
-              : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
+            : isLastActionSort
+              ? sortDirection === 'clockwise'
+                ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveSortXLayer}'
+                : 'left {durations.layoutNodeAnimation} {easings.nodeCurveSortXLayer}'
+              : contextAnimation
+                ? 'left {durations.disappearingUpperRight} ease-out,top {durations.disappearingUpperRight} ease-out'
+                : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
         })}
         style={outerDivStyle}
       >
@@ -225,7 +290,11 @@ const TreeNode = ({
               ? swapDirection === 'clockwise'
                 ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
                 : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
-              : undefined,
+              : isLastActionSort
+                ? sortDirection === 'clockwise'
+                  ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
+                  : 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
+                : undefined,
           })}
           style={innerDivStyle}
         >
