@@ -312,7 +312,24 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     if (!exportedState) return
 
     if (selected.type === 'application/json') {
-      setExportContent(JSON.stringify(exportedState.thoughts, null, 2))
+      // DEBUG: Export thoughts without created, lastUpdated, and updatedBy attributes in order to try to get around Android's clipboard limit.
+      const thoughtIndexCompact = Object.fromEntries<Partial<Thought>>(
+        Object.entries(exportedState.thoughts.thoughtIndex).map(([id, thought]) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { created, lastUpdated, updatedBy, ...partialThought } = thought
+          return [id, partialThought]
+        }),
+      )
+
+      // const lexemeIndexCompact = Object.fromEntries(
+      //   Object.entries(exportedState.thoughts.lexemeIndex).map(([id, lexeme]) => {
+      //     // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      //     const { created, lastUpdated, updatedBy, ...partialLexeme } = lexeme
+      //     return [id, partialLexeme]
+      //   }),
+      // )
+
+      setExportContent(JSON.stringify(thoughtIndexCompact))
     } else {
       // Sort in document order. At this point, all thoughts are pulled and in state.
       const sortedPaths = documentSort(exportedState, simplePaths)
