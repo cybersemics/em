@@ -1,4 +1,4 @@
-import React, { FC, useRef, useState } from 'react'
+import React, { FC, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Dispatch from '../@types/Dispatch'
@@ -11,6 +11,7 @@ import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
+import { updateSize } from '../stores/viewport'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
@@ -57,6 +58,11 @@ const Content: FC = () => {
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
   }
+
+  useEffect(() => {
+    // Initial update when document loaded - main purpose is to update the contentWidth value
+    updateSize()
+  }, [])
 
   return (
     <div

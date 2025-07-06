@@ -8,6 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
+import useDropHoverLength from '../hooks/useDropHoverLength'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import getSortPreference from '../selectors/getSortPreference'
@@ -28,6 +29,8 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
+
+  const dropHoverLength = useDropHoverLength({ isTableCol1 })
 
   const animateHover = useSelector(state => {
     const parent = parentOf(simplePath)
@@ -52,11 +55,10 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
             marginLeft: 'calc(-0.4em - 14px)',
           },
           display: 'inline',
-          width: isTableCol1 ? '50vw' : undefined,
           animation: animateHover ? `pulseLight {durations.mediumPulse} linear infinite alternate` : undefined,
         }),
       )}
-      style={{ backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColor }}
+      style={{ width: dropHoverLength, backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColor }}
     />
   )
 }

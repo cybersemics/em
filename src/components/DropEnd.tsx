@@ -8,6 +8,7 @@ import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
+import useDropHoverLength from '../hooks/useDropHoverLength'
 import { getChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
@@ -47,6 +48,7 @@ const DropEnd = ({
   const isRootPath = isRoot(path)
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value) ?? ''
   const dropHoverColor = useDropHoverColor(depth + 1)
+  const dropHoverLength = useDropHoverLength()
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
 
@@ -89,7 +91,7 @@ const DropEnd = ({
     )
   })
 
-  const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) : 0
+  const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) + 1.2 : 0
 
   return (
     <li
@@ -108,6 +110,7 @@ const DropEnd = ({
         height: isRootPath ? '8em' : `${0.7 + dropTargetHeight}em`,
         // use transform to avoid conflicting with margin, which is currently spread out across multiple components
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
+        width: dropHoverLength,
       }}
       ref={dropTarget}
     >
@@ -130,6 +133,7 @@ const DropEnd = ({
         <span
           className={dropHoverRecipe({ insideDropEnd: true })}
           style={{
+            width: dropHoverLength,
             backgroundColor: dropHoverColor,
             // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch
             marginLeft: `-${DROPEND_FINGERSHIFT}em`,
