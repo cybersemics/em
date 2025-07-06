@@ -9,6 +9,7 @@ import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useDropHoverLength from '../hooks/useDropHoverLength'
+import attributeEquals from '../selectors/attributeEquals'
 import { getChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
@@ -48,7 +49,12 @@ const DropEnd = ({
   const isRootPath = isRoot(path)
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value) ?? ''
   const dropHoverColor = useDropHoverColor(depth + 1)
-  const dropHoverLength = useDropHoverLength()
+
+  const isParentTableCol1 = useSelector(state =>
+    attributeEquals(state, head(rootedParentOf(state, path)), '=view', 'Table'),
+  )
+
+  const dropHoverLength = useDropHoverLength({ isTableCol2: isParentTableCol1 })
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
 
