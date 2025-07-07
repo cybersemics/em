@@ -16,10 +16,11 @@ import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
+import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { ThoughtContainerProps } from '../components/Thought'
-import { AlertType } from '../constants'
+import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import documentSort from '../selectors/documentSort'
@@ -90,14 +91,15 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
     zone: DragThoughtZone.Thoughts,
   }))
 
-  store.dispatch(
+  store.dispatch([
     dragInProgress({
       value: true,
       draggingThoughts: draggingThoughts.map(item => item.simplePath),
       sourceZone: DragThoughtZone.Thoughts,
       ...(offset != null ? { offset } : null),
     }),
-  )
+    longPress({ value: LongPressState.DragInProgress }),
+  ])
 
   return draggingThoughts
 }
@@ -120,6 +122,7 @@ const endDrag = () => {
           dispatch(alert(null))
         }
       },
+      longPress({ value: LongPressState.Inactive }),
     ])
   })
 }

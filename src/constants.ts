@@ -461,6 +461,18 @@ export enum AlertType {
   Undo = 'Undo',
 }
 
+/** A discrete state machine that tracks the state of long press and drag-and-drop. See the longPress reducer for valid transitions. */
+export enum LongPressState {
+  /** No long press or drag-and-drop action is in progress. */
+  Inactive = 'Inactive',
+  /** The user has pressed a thought for longer than TIMEOUT_LONG_PRESS_THOUGHT without moving more than SCROLL_THRESHOLD px in order to activate the long press state.  */
+  DragHold = 'DragHold',
+  /** The user is currently dragging a thought. */
+  DragInProgress = 'DragInProgress',
+  /** The drag has been cancelled, but the user has not released their finger from the screen. */
+  DragCancelled = 'DragCancelled',
+}
+
 // User settings that can be saved to /EM/Settings/
 // See Settings modal for full descriptions.
 export enum Settings {
