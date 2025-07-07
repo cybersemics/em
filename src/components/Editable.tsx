@@ -126,7 +126,6 @@ const Editable = ({
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const editingOrOnCursor = useSelector(state => state.isKeyboardOpen || equalPath(path, state.cursor))
-  const dragHold = useSelector(state => state.dragHold)
 
   // Disable contenteditable on Mobile Safari during drag-and-drop, otherwise thought text will become selected.
   // This is restricted to Mobile Safari, because on Chrome it creates a small layout shift.
@@ -560,10 +559,9 @@ const Editable = ({
         haptics.light()
       }
 
-      // If dragHold, don't allow the editable to receive focus or iOS Safari will scroll it.
       // If CMD/CTRL is pressed, don't focus the editable.
       const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (dragHold || isMultiselectClick) {
+      if (isMultiselectClick) {
         e.preventDefault()
         return
       }
@@ -577,7 +575,12 @@ const Editable = ({
 
       dispatch((dispatch, getState) => {
         const state = getState()
-        if (state.dragInProgress) return
+
+        // If dragHold, don't allow the editable to receive focus or iOS Safari will scroll it.
+        if (state.dragInProgress || state.dragHold) {
+          e.preventDefault()
+          return
+        }
 
         if (
           // disable editing when multicursor is enabled
@@ -585,7 +588,7 @@ const Editable = ({
           disabled ||
           // do not set cursor on hidden thought
           // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-          (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
+          (!globals.touching && (!editingOrOnCursor || !isVisible))
         ) {
           e.preventDefault()
 
@@ -600,7 +603,7 @@ const Editable = ({
         }
       })
     },
-    [disabled, dispatch, dragHold, editingOrOnCursor, isVisible, setCursorOnThought],
+    [disabled, dispatch, editingOrOnCursor, isVisible, setCursorOnThought],
   )
 
   return (
