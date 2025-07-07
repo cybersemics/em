@@ -117,7 +117,8 @@ const DropEnd = ({
         height: isRootPath ? '8em' : `${0.7 + dropTargetHeight}em`,
         // use transform to avoid conflicting with margin, which is currently spread out across multiple components
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
-        width: dropHoverLength,
+        // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
+        width: isParentTableCol1 ? undefined : dropHoverLength,
       }}
       ref={dropTarget}
     >
