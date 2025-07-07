@@ -37,6 +37,9 @@ const durationsConfig = {
   /* Duration for context view disappearing text animations */
   disappearingUpperRight: 500,
   disappearingLowerLeft: 500,
+  /** The animation duration for the moveThoughtUp/Down animations. */
+  moveThoughtCursor: 150,
+  moveThoughtSibling: 150,
 } as const
 
 export default durationsConfig
