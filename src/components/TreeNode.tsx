@@ -11,6 +11,8 @@ import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import usePrevious from '../hooks/usePrevious'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
+import nextSibling from '../selectors/nextSibling'
+import prevSibling from '../selectors/prevSibling'
 import equalPath from '../util/equalPath'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
@@ -167,6 +169,32 @@ const TreeNode = ({
    */
   const sortOffset = sortDirection === 'clockwise' ? 30 : -30
 
+  /** Determine if the last undo patch action was moveThoughtUp or moveThoughtDown, and its type. */
+  const lastMoveType = useSelector((state: State): 'moveThoughtUp' | 'moveThoughtDown' | null => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+    const movePatch = lastPatches?.find(patch =>
+      ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0] as ActionType),
+    )
+    return (movePatch?.actions[0] as 'moveThoughtUp' | 'moveThoughtDown') ?? null
+  })
+
+  const isMoveThought = lastMoveType !== null
+
+  // Id of thought displaced by cursor during moveThoughtUp/Down
+  const displacedThoughtId = useSelector((state: State) => {
+    if (!isMoveThought) return null
+    if (!state.cursor) return null
+    if (lastMoveType === 'moveThoughtUp') {
+      const next = nextSibling(state, state.cursor)
+      return next?.id ?? null
+    }
+    if (lastMoveType === 'moveThoughtDown') {
+      const prev = prevSibling(state, state.cursor, {})
+      return prev?.id ?? null
+    }
+    return null
+  })
+
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
   // 2. Create L-shaped animation paths by controlling when each movement starts/ends
@@ -223,6 +251,7 @@ const TreeNode = ({
     width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
     ...(style || {}),
     ...fauxCaretNodeProvider,
+    ...(isMoveThought && isCursor ? { zIndex: 2 } : {}),
   }
 
   const innerDivStyle =
@@ -233,13 +262,44 @@ const TreeNode = ({
         }
       : undefined
 
+  // Determine FadeTransition type for moveThought animations
+  const currentMoveFadeType: 'moveThoughtCursor' | 'moveThoughtSibling' | null = isMoveThought
+    ? isCursor
+      ? 'moveThoughtCursor'
+      : thoughtId === displacedThoughtId
+        ? 'moveThoughtSibling'
+        : null
+    : null
+
+  // Latch the moveFadeType for the lifetime of this component instance so that
+  // the animation is not overridden by subsequent non-move actions.
+  const moveFadeRef = useRef<'moveThoughtCursor' | 'moveThoughtSibling' | null>(null)
+  if (currentMoveFadeType && !moveFadeRef.current) {
+    moveFadeRef.current = currentMoveFadeType
+  }
+
+  const moveFadeType = moveFadeRef.current
+
+  // Unique id ensures CSSTransition replays the enter animation for each move action
+  const undoIndex = useSelector(state => state.undoPatches.length)
+  const fadeId = moveFadeType ? `${thoughtKey}-${undoIndex}` : thoughtKey
+
+  // Final fade transition variant
+  const fadeType = moveFadeType
+    ? moveFadeType
+    : isEmpty
+      ? 'nodeFadeIn'
+      : isLastActionDelete
+        ? 'nodeDissolve'
+        : (contextAnimation ?? 'nodeFadeOut')
+
   return (
     <FadeTransition
-      id={thoughtKey}
+      id={fadeId}
       // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
       // Archive, delete, and uncategorize get a special dissolve animation.
       // Context view children get special disappearing text animations
-      type={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')}
+      type={fadeType}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
       unmountOnExit
@@ -250,7 +310,6 @@ const TreeNode = ({
         aria-label='tree-node'
         className={css({
           position: 'absolute',
-
           transition: isSwap
             ? swapDirection === 'clockwise'
               ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
