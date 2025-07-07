@@ -68,7 +68,7 @@ const useEditMode = ({
           editMode &&
           !noteFocus &&
           contentRef.current &&
-          (cursorOffset !== null || !selection.isActive()) &&
+          (cursorOffset !== null || !selection.isThought()) &&
           !isMulticursor &&
           !dragHold &&
           !disabledRef.current)

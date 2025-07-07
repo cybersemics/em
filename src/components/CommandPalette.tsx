@@ -55,7 +55,6 @@ const CommandSearch: FC<{
         e.preventDefault()
         e.stopPropagation()
         dispatch(commandPalette())
-        selection.clear()
       } else if (e.key === 'Enter') {
         onExecute?.(e, inputRef.current?.value || '')
       } else if (e.key === 'ArrowDown') {
