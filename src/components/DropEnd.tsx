@@ -97,7 +97,8 @@ const DropEnd = ({
     )
   })
 
-  const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) + 1.2 : 0
+  // Allocate extra more space (1.4 em) to last drop target panel
+  const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) + 1.4 : 0
 
   return (
     <li
