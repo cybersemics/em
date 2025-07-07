@@ -9,9 +9,8 @@ interface Payload {
 }
 
 /** Reducer for managing the state of a long press. */
-const longPress = (state: State, { value = LongPressState.Inactive }: Payload) => ({
-  ...state,
-  longPress:
+const longPress = (state: State, { value = LongPressState.Inactive }: Payload) => {
+  if (
     // DragHold must be triggered by the beginning of a long press, don't go back from another state
     (value === LongPressState.DragHold && state.longPress === LongPressState.Inactive) ||
     // Drag can only begin after long press has begun, and should not return from DragCancelled
@@ -20,9 +19,13 @@ const longPress = (state: State, { value = LongPressState.Inactive }: Payload) =
     (value === LongPressState.DragCancelled && state.longPress === LongPressState.DragInProgress) ||
     // Can return to Inactive from any state
     value === LongPressState.Inactive
-      ? value
-      : state.longPress,
-})
+  )
+    return { ...state, longPress: value }
+
+  console.error(`Invalid longPress transition: ${state.longPress} to ${value}`)
+
+  return state
+}
 
 /** Action-creator for longPress. */
 export const longPressActionCreator =
