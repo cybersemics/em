@@ -34,7 +34,9 @@ const useLongPress = (
   const dragDropManager = useDragDropManager()
 
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const backend = dragDropManager.getBackend() as any
+    /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
     const onStart = (e: React.TouchEvent) => {
       if (isLocked || !pressing) return
 
@@ -43,7 +45,6 @@ const useLongPress = (
       }
 
       clearTimeout(timerIdRef.current)
-      /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
       // cast Timeout to number for compatibility with clearTimeout
       timerIdRef.current = setTimeout(() => {
         globals.longpressing = true
@@ -57,14 +58,14 @@ const useLongPress = (
     }
 
     /** Let the react-dnd 'start' event begin the timer so that there is no gap between the beginning of a long press
-     *  and the initialization of the drag functionality. (#3072, #3073) */
+     * and the initialization of the drag functionality (#3072, #3073). */
     backend.addEventListener(backend.options.rootElement, 'start', onStart)
 
     return () => {
       backend.removeEventListener(backend.options.rootElement, 'start', onStart)
       clearTimeout(timerIdRef.current)
     }
-  }, [dragDropManager, pressing])
+  }, [delay, dragDropManager, isLocked, onLongPressStart, pressing])
 
   /** On mouseDown or touchStart, mark that the press has begun so that when the 'start' event fires in react-dnd,
    * we will know which element is being long-pressed. */
