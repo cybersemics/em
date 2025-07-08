@@ -93,7 +93,7 @@ const CommandItem: FC<{
   const Icon = command.svg
   const ref = React.useRef<HTMLDivElement | null>(null)
 
-  const { isAnimated, onAnimationComplete } = useLottieOnFocus({ isFocused: !!selected, hasAnimation: !!Icon })
+  const { isAnimated, onAnimationComplete } = useLottieOnFocus({ hasAnimation: !!selected && !!Icon && !isTouch })
 
   // convert the description to a string
   const description = useSelector(state => {
