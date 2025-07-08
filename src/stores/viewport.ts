@@ -42,14 +42,9 @@ export const updateSize = _.throttle(
       }
     }
 
-    // Get content element width
-    const contentElement = document.getElementById('content')
-    const contentWidth = contentElement?.getBoundingClientRect().width || 0
-
     viewportStore.update({
       innerWidth: window.innerWidth,
       innerHeight: window.innerHeight,
-      contentWidth,
       virtualKeyboardHeight:
         // when the keyboard is invalid or closed, use the cached height
         isViewportValid
@@ -58,6 +53,16 @@ export const updateSize = _.throttle(
             ? virtualKeyboardHeightPortrait
             : virtualKeyboardHeightLandscape,
     })
+  },
+  // lock to 60 fps
+  16.666,
+  { leading: true },
+)
+
+/** Throttled update of viewport width. */
+export const updateContentWidth = _.throttle(
+  (contentWidth: number) => {
+    viewportStore.update({ contentWidth })
   },
   // lock to 60 fps
   16.666,

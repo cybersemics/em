@@ -11,7 +11,7 @@ import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
-import { updateSize } from '../stores/viewport'
+import { updateContentWidth } from '../stores/viewport'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
@@ -60,8 +60,15 @@ const Content: FC = () => {
   }
 
   useEffect(() => {
-    // Initial update when document loaded - main purpose is to update the contentWidth value
-    updateSize()
+    if (!contentRef.current) return
+
+    const resizeObserver = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width || 0
+      updateContentWidth(width)
+    })
+
+    resizeObserver.observe(contentRef.current)
+    return () => resizeObserver.disconnect()
   }, [])
 
   return (
