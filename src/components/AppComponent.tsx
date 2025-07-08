@@ -8,7 +8,7 @@ import { css } from '../../styled-system/css'
 import State from '../@types/State'
 import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { inputHandlers } from '../commands'
-import { Settings } from '../constants'
+import { LongPressState, Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import getUserSetting from '../selectors/getUserSetting'
@@ -76,7 +76,7 @@ const shouldCancelGesture = (
   const distance = state.fontSize * 2
   return (
     (x && y && selection.isNear(x, y, distance)) ||
-    state.dragInProgress ||
+    state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
     !!state.showGestureCheatsheet
