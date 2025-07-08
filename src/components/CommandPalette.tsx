@@ -336,6 +336,7 @@ const CommandPaletteWithTransition: FC = () => {
   const onClose = useCallback(() => {
     setDismiss(true)
     dispatch(commandPalette())
+    selection.clear()
   }, [dispatch])
 
   const showCommandPalette = useSelector(state => state.showCommandPalette)
