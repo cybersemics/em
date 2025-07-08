@@ -56,7 +56,7 @@ const DropUncle = ({
           opacity: 0.9,
         }),
       )}
-      style={{ height: `${1.9 + dropTargetHeight}em` }}
+      style={{ width: dropHoverLength, height: `${1.9 + dropTargetHeight}em` }}
       ref={dropTarget}
     >
       {testFlags.simulateDrop && (
