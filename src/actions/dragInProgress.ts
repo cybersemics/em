@@ -7,7 +7,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { isSafari } from '../browser'
-import { AlertText, AlertType } from '../constants'
+import { AlertText, AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -16,6 +16,7 @@ import head from '../util/head'
 import alert, { alertActionCreator } from './alert'
 import { expandHoverDownActionCreator as expandHoverDown } from './expandHoverDown'
 import { expandOnHoverTopActionCreator as expandHoverUp } from './expandHoverUp'
+import { longPressActionCreator } from './longPress'
 
 interface DragInProgressPayload {
   value: boolean
@@ -103,6 +104,7 @@ const shaker = Shaker((dispatch: Dispatch) => {
       type: 'dragInProgress',
       value: false,
     },
+    longPressActionCreator({ value: LongPressState.DragCancelled }),
     alertActionCreator('✗ Drag cancelled'),
   ])
 })
