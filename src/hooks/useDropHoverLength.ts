@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { CONTENT_BOX_PADDING } from '../constants'
 import viewportStore from '../stores/viewport'
 
 interface DropHoverLengthProps {
@@ -13,9 +14,8 @@ const useDropHoverLength = (props?: DropHoverLengthProps) => {
   const isTableCol1 = props?.isTableCol1
   const isTableCol2 = props?.isTableCol2
 
-  // 60 is the sum of left and right padding of main viewport <div>...</div>.
   return useMemo(
-    () => (isTableCol1 || isTableCol2 ? '50vw' : `${contentWidth - 60}px`),
+    () => (isTableCol1 || isTableCol2 ? '50vw' : `${contentWidth - CONTENT_BOX_PADDING}px`),
     [contentWidth, isTableCol1, isTableCol2],
   )
 }
