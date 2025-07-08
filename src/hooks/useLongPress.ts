@@ -37,10 +37,10 @@ const useLongPress = (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const backend = dragDropManager.getBackend() as any
     /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
-    const onStart = (e: React.TouchEvent) => {
+    const onStart = (e?: React.TouchEvent) => {
       if (isLocked || !pressing) return
 
-      if ('touches' in e) {
+      if (e && 'touches' in e) {
         clientCoords.current = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
       }
 
@@ -59,10 +59,13 @@ const useLongPress = (
 
     /** Let the react-dnd 'start' event begin the timer so that there is no gap between the beginning of a long press
      * and the initialization of the drag functionality (#3072, #3073). */
-    backend.addEventListener(backend.options.rootElement, 'start', onStart)
+    if (typeof backend.addEventListener === 'undefined') onStart()
+    else backend.addEventListener(backend.options.rootElement, 'start', onStart)
 
     return () => {
-      backend.removeEventListener(backend.options.rootElement, 'start', onStart)
+      // addEventListener and removeEventListener are specific to TouchBackend, so we don't want to use them on desktop
+      if (typeof backend.removeEventListener !== 'undefined')
+        backend.removeEventListener(backend.options.rootElement, 'start', onStart)
       clearTimeout(timerIdRef.current)
     }
   }, [delay, dragDropManager, isLocked, onLongPressStart, pressing])
