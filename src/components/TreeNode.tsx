@@ -75,6 +75,7 @@ const TreeNode = ({
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
   const [isSortAnimating, setIsSortAnimating] = useState(false)
+  const [isMoveThoughtAnimating, setIsMoveThoughtAnimating] = useState(false)
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
@@ -172,17 +173,15 @@ const TreeNode = ({
   /** Determine if the last undo patch action was moveThoughtUp or moveThoughtDown, and its type. */
   const lastMoveType = useSelector((state: State): 'moveThoughtUp' | 'moveThoughtDown' | null => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    const movePatch = lastPatches?.find(patch =>
-      ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0] as ActionType),
-    )
-    return (movePatch?.actions[0] as 'moveThoughtUp' | 'moveThoughtDown') ?? null
+    return lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
+      ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
+      : null
   })
 
-  const isMoveThought = lastMoveType !== null
-
   // Id of thought displaced by cursor during moveThoughtUp/Down
-  const displacedThoughtId = useSelector((state: State) => {
-    if (!isMoveThought) return null
+  // This is to isolate the animation to apply only to the moving thought.
+  const movingThoughtId = useSelector((state: State) => {
+    if (!lastMoveType) return null
     if (!state.cursor) return null
     if (lastMoveType === 'moveThoughtUp') {
       const next = nextSibling(state, state.cursor)
@@ -194,6 +193,15 @@ const TreeNode = ({
     }
     return null
   })
+
+  // Determine animation type for moveThought
+  const moveAnimation: 'moveThoughtCursor' | 'moveThoughtSibling' | null = lastMoveType
+    ? isCursor
+      ? 'moveThoughtCursor'
+      : thoughtId === movingThoughtId
+        ? 'moveThoughtSibling'
+        : null
+    : null
 
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
@@ -230,6 +238,21 @@ const TreeNode = ({
     return () => clearTimeout(timer)
   }, [isLastActionSort, indexChanged])
 
+  useLayoutEffect(() => {
+    // Start moveThought animation only when the change originated from a moveThought action.
+    if (lastMoveType && movingThoughtId) {
+      setIsMoveThoughtAnimating(true)
+    }
+
+    // After the layout node animation duration:
+    // reset X offset (Y will update naturally when isMoveThoughtAnimating becomes false)
+    const timer = setTimeout(() => {
+      setIsMoveThoughtAnimating(false)
+    }, durations.layoutNodeAnimation)
+
+    return () => clearTimeout(timer)
+  }, [lastMoveType, movingThoughtId])
+
   // List Virtualization
   // Do not render thoughts that are below the viewport.
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
@@ -251,7 +274,6 @@ const TreeNode = ({
     width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
     ...(style || {}),
     ...fauxCaretNodeProvider,
-    ...(isMoveThought && isCursor ? { zIndex: 2 } : {}),
   }
 
   const innerDivStyle =
@@ -260,46 +282,30 @@ const TreeNode = ({
           top: y,
           left: 0,
         }
-      : undefined
-
-  // Determine FadeTransition type for moveThought animations
-  const currentMoveFadeType: 'moveThoughtCursor' | 'moveThoughtSibling' | null = isMoveThought
-    ? isCursor
-      ? 'moveThoughtCursor'
-      : thoughtId === displacedThoughtId
-        ? 'moveThoughtSibling'
-        : null
-    : null
-
-  // Latch the moveFadeType for the lifetime of this component instance so that
-  // the animation is not overridden by subsequent non-move actions.
-  const moveFadeRef = useRef<'moveThoughtCursor' | 'moveThoughtSibling' | null>(null)
-  if (currentMoveFadeType && !moveFadeRef.current) {
-    moveFadeRef.current = currentMoveFadeType
-  }
-
-  const moveFadeType = moveFadeRef.current
-
-  // Unique id ensures CSSTransition replays the enter animation for each move action
-  const undoIndex = useSelector(state => state.undoPatches.length)
-  const fadeId = moveFadeType ? `${thoughtKey}-${undoIndex}` : thoughtKey
-
-  // Final fade transition variant
-  const fadeType = moveFadeType
-    ? moveFadeType
-    : isEmpty
-      ? 'nodeFadeIn'
-      : isLastActionDelete
-        ? 'nodeDissolve'
-        : (contextAnimation ?? 'nodeFadeOut')
+      : isMoveThoughtAnimating
+        ? moveAnimation === 'moveThoughtCursor'
+          ? {
+              transformOrigin: 'left',
+              transform: 'scale3d(1.5, 1.5, 1)',
+              transition: `transform {durations.layoutNodeAnimation} ease-out`,
+            }
+          : moveAnimation === 'moveThoughtSibling'
+            ? {
+                transformOrigin: 'left',
+                transform: 'scale3d(0.5, 0.5, 1)',
+                filter: 'blur(2px)',
+                opacity: 0,
+              }
+            : undefined
+        : undefined
 
   return (
     <FadeTransition
-      id={fadeId}
+      id={thoughtKey}
       // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
       // Archive, delete, and uncategorize get a special dissolve animation.
       // Context view children get special disappearing text animations
-      type={fadeType}
+      type={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
       unmountOnExit
@@ -339,7 +345,11 @@ const TreeNode = ({
                 : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
               : isLastActionSort
                 ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
-                : undefined,
+                : isMoveThoughtAnimating
+                  ? moveAnimation === 'moveThoughtSibling'
+                    ? 'transform {durations.layoutNodeAnimation} ease-out, filter {durations.layoutNodeAnimation} ease-out, opacity {durations.layoutNodeAnimation} ease-out'
+                    : 'transform {durations.layoutNodeAnimation} ease-out'
+                  : undefined,
           })}
           style={innerDivStyle}
         >

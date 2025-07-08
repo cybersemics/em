@@ -133,37 +133,6 @@ const fadeTransitionRecipe = defineSlotRecipe({
           },
         },
       },
-      /* Cursor thought enlarges briefly when a moveThoughtUp/Down action occurs. */
-      moveThoughtCursor: {
-        enter: {
-          transform: 'scale3d(1, 1, 1)',
-        },
-        enterActive: {
-          transform: 'scale3d(1.5, 1.5, 1)',
-          transformOrigin: 'left',
-          transition: `transform {durations.layoutNodeAnimation} ease-out`,
-        },
-        exitActive: {
-          transform: 'scale3d(1, 1, 1)',
-          transition: `opacity {durations.layoutNodeAnimation} ease-out, transform {durations.layoutNodeAnimation} ease-out`,
-        },
-      },
-      /* Displaced sibling shrinks, blurs, and fades beneath the cursor, then returns to normal. */
-      moveThoughtSibling: {
-        enter: {
-          transform: 'scale3d(1, 1, 1)',
-        },
-        enterActive: {
-          transform: 'scale3d(.5, .5, 1)',
-          transformOrigin: 'left',
-          filter: 'blur(2px)',
-          transition: `transform {durations.layoutNodeAnimation} ease-out, filter {durations.layoutNodeAnimation} ease-out, opacity {durations.layoutNodeAnimation} ease-out`,
-        },
-        exitActive: {
-          transform: 'scale3d(1, 1, 1)',
-          transition: `opacity {durations.layoutNodeAnimation} ease-out, transform {durations.layoutNodeAnimation} ease-out`,
-        },
-      },
     },
   },
   staticCss: ['*'],
