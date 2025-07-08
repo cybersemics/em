@@ -18,7 +18,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   const [multiline, setMultiline] = useState(false)
   const fontSize = useSelector(state => state.fontSize)
   // While editing, watch the current Value and trigger the layout effect
-  const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
+  const editingValue = editingValueStore.useSelector(state => state)
 
   /** Measure the contentRef to determine if it needs to be multiline. */
   const updateMultiline = () => {
