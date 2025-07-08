@@ -13,7 +13,7 @@ import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import { noop } from '../constants'
-import useLottieOnFocus from '../hooks/useLottieOnFocus'
+import useLottieIntervalAnimation from '../hooks/useLottieIntervalAnimation'
 import store from '../stores/app'
 import CommandKeyboardShortcut from './CommandKeyboardShortcut'
 import GestureDiagram from './GestureDiagram'
@@ -93,7 +93,7 @@ const CommandItem: FC<{
   const Icon = command.svg
   const ref = React.useRef<HTMLDivElement | null>(null)
 
-  const { isAnimated, onAnimationComplete } = useLottieOnFocus({ hasAnimation: !!selected && !!Icon && !isTouch })
+  const { isAnimated, onAnimationComplete } = useLottieIntervalAnimation({ enabled: !!selected && !!Icon && !isTouch })
 
   // convert the description to a string
   const description = useSelector(state => {

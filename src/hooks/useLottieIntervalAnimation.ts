@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 /**
- * A custom hook that triggers Lottie animations when a command is focused/highlighted.
+ * A custom hook that triggers Lottie animations when enabled.
  * The animation fires after 3 seconds of focus, then repeats every 5 seconds.
  */
-const useLottieOnFocus = ({ hasAnimation }: { hasAnimation: boolean }) => {
+const useLottieIntervalAnimation = ({ enabled }: { enabled: boolean }) => {
   const [isAnimated, setIsAnimated] = useState(false)
   const initialDelayRef = useRef<NodeJS.Timeout | null>(null)
   const repeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -27,7 +27,7 @@ const useLottieOnFocus = ({ hasAnimation }: { hasAnimation: boolean }) => {
       }
     }
 
-    if (hasAnimation) {
+    if (enabled) {
       // Clear any existing timers
       clearTimers()
 
@@ -49,7 +49,7 @@ const useLottieOnFocus = ({ hasAnimation }: { hasAnimation: boolean }) => {
     return () => {
       clearTimers()
     }
-  }, [hasAnimation])
+  }, [enabled])
 
   return {
     isAnimated,
@@ -57,4 +57,4 @@ const useLottieOnFocus = ({ hasAnimation }: { hasAnimation: boolean }) => {
   }
 }
 
-export default useLottieOnFocus
+export default useLottieIntervalAnimation
