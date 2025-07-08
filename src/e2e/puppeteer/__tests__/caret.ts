@@ -203,6 +203,20 @@ describe('all platforms', () => {
     const focusNodeType = await getSelection().focusNode?.nodeType
     expect(offset).toBe(focusNodeType === Node.TEXT_NODE ? 'first'.length : 1)
   })
+
+  it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
+    const importText = `
+      - a`
+
+    await paste(importText)
+
+    await press('p', { meta: true })
+    await press('Escape')
+    await press('ArrowDown')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('a')
+  })
 })
 
 it('clicking backspace when the caret is at the end of a thought should delete a character.', async () => {
@@ -310,24 +324,6 @@ describe('mobile only', () => {
     await press('Backspace')
 
     const textContext = await getEditingText()
-    expect(textContext).toBe('a')
-  })
-
-  it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
-    const importText = `
-      - a`
-
-    await paste(importText)
-
-    await press('p', { meta: true })
-    await waitForSelector('[data-testid=popup-value]')
-
-    await press('Escape')
-    await waitForSelector('[data-testid=popup-value]', { hidden: true })
-
-    await press('ArrowDown')
-
-    const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('a')
   })
 })
