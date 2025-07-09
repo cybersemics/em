@@ -13,6 +13,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import nextSibling from '../selectors/nextSibling'
 import prevSibling from '../selectors/prevSibling'
+import head from '../util/head'
 import equalPath from '../util/equalPath'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
@@ -178,19 +179,37 @@ const TreeNode = ({
       : null
   })
 
-  // Id of thought displaced by cursor during moveThoughtUp/Down
-  // This is to isolate the animation to apply only to the moving thought.
+  // Id of the thought that was displaced by the cursor during a moveThoughtUp/Down operation.
+  // Normally, this is the sibling that swaps places with the cursor.
+  // In cross-context moves (e.g., moving the only child of A into the next uncle B),
+  // there is no displaced sibling, so we animate the parent that just lost the cursor (now the cursor's new uncle).
   const movingThoughtId = useSelector((state: State) => {
-    if (!lastMoveType) return null
-    if (!state.cursor) return null
+    if (!lastMoveType || !state.cursor) return null
+
+    // Immediate siblings of the cursor at its NEW location
+    const next = nextSibling(state, state.cursor)
+    const prev = prevSibling(state, state.cursor, {})
+
     if (lastMoveType === 'moveThoughtUp') {
-      const next = nextSibling(state, state.cursor)
-      return next?.id ?? null
+      // Try displaced sibling first (next if available, otherwise prev)
+      const displaced = next ?? prev
+      if (displaced) return displaced.id
+
+      // No sibling means cross-context move. Animate the parent that just lost the cursor (now the cursor's new uncle).
+      const oldParent = nextSibling(state, parentOf(state.cursor!))
+      return oldParent?.id ?? null
     }
+
     if (lastMoveType === 'moveThoughtDown') {
-      const prev = prevSibling(state, state.cursor, {})
-      return prev?.id ?? null
+      // Try displaced sibling first (prev if available, otherwise next)
+      const displaced = prev ?? next
+      if (displaced) return displaced.id
+
+      // No sibling means cross-context move. Animate the uncle (new parent) that gained the cursor.
+      const newParentId = head(parentOf(state.cursor!))
+      return newParentId ?? null
     }
+
     return null
   })
 
@@ -240,7 +259,9 @@ const TreeNode = ({
 
   useLayoutEffect(() => {
     // Start moveThought animation only when the change originated from a moveThought action.
-    if (lastMoveType && movingThoughtId) {
+    // In moves that cross contexts (e.g. moving the only child of «A» below its next uncle «B»),
+    // there is no displaced sibling, so `movingThoughtId` is null. Still animate the cursor node.
+    if (lastMoveType && (isCursor || movingThoughtId)) {
       setIsMoveThoughtAnimating(true)
     }
 
@@ -251,7 +272,7 @@ const TreeNode = ({
     }, durations.layoutNodeAnimation)
 
     return () => clearTimeout(timer)
-  }, [lastMoveType, movingThoughtId])
+  }, [lastMoveType, movingThoughtId, isCursor])
 
   // List Virtualization
   // Do not render thoughts that are below the viewport.
