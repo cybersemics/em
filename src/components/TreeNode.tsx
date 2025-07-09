@@ -245,7 +245,7 @@ const TreeNode = ({
     }
 
     // After the layout node animation duration:
-    // reset X offset (Y will update naturally when isMoveThoughtAnimating becomes false)
+    // reset moveThought animation
     const timer = setTimeout(() => {
       setIsMoveThoughtAnimating(false)
     }, durations.layoutNodeAnimation)
