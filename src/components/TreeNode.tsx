@@ -13,8 +13,8 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import nextSibling from '../selectors/nextSibling'
 import prevSibling from '../selectors/prevSibling'
-import head from '../util/head'
 import equalPath from '../util/equalPath'
+import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
@@ -76,7 +76,7 @@ const TreeNode = ({
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
   const [isSortAnimating, setIsSortAnimating] = useState(false)
-  const [isMoveThoughtAnimating, setIsMoveThoughtAnimating] = useState(false)
+  const [isMoveAnimating, setIsMoveThoughtAnimating] = useState(false)
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
@@ -214,7 +214,7 @@ const TreeNode = ({
   })
 
   // Determine animation type for moveThought
-  const moveAnimation: 'moveThoughtCursor' | 'moveThoughtSibling' | null = lastMoveType
+  const moveType: 'moveThoughtCursor' | 'moveThoughtSibling' | null = lastMoveType
     ? isCursor
       ? 'moveThoughtCursor'
       : thoughtId === movingThoughtId
@@ -303,14 +303,14 @@ const TreeNode = ({
           top: y,
           left: 0,
         }
-      : isMoveThoughtAnimating
-        ? moveAnimation === 'moveThoughtCursor'
+      : isMoveAnimating
+        ? moveType === 'moveThoughtCursor'
           ? {
               transformOrigin: 'left',
               transform: 'scale3d(1.5, 1.5, 1)',
               transition: `transform {durations.layoutNodeAnimation} ease-out`,
             }
-          : moveAnimation === 'moveThoughtSibling'
+          : moveType === 'moveThoughtSibling'
             ? {
                 transformOrigin: 'left',
                 transform: 'scale3d(0.5, 0.5, 1)',
@@ -319,6 +319,15 @@ const TreeNode = ({
               }
             : undefined
         : undefined
+
+  const moveAnimation =
+    isMoveAnimating && moveType === 'moveThoughtSibling'
+      ? `transform {durations.layoutNodeAnimation} ease-out, filter {durations.layoutNodeAnimation} ease-out, opacity {durations.layoutNodeAnimation} ease-out`
+      : isMoveAnimating && moveType === 'moveThoughtCursor'
+        ? `transform {durations.layoutNodeAnimation} ease-out`
+        : moveType === 'moveThoughtSibling'
+          ? `opacity {durations.layoutNodeAnimation} ease-out`
+          : undefined
 
   return (
     <FadeTransition
@@ -366,11 +375,7 @@ const TreeNode = ({
                 : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
               : isLastActionSort
                 ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
-                : isMoveThoughtAnimating
-                  ? moveAnimation === 'moveThoughtSibling'
-                    ? 'transform {durations.layoutNodeAnimation} ease-out, filter {durations.layoutNodeAnimation} ease-out, opacity {durations.layoutNodeAnimation} ease-out'
-                    : 'transform {durations.layoutNodeAnimation} ease-out'
-                  : undefined,
+                : moveAnimation,
           })}
           style={innerDivStyle}
         >
