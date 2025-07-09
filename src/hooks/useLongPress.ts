@@ -33,6 +33,14 @@ const useLongPress = (
   const unmounted = useRef(false)
   const dragDropManager = useDragDropManager()
 
+  // The stop handler below does not run when drag-and-drop is active.
+  // Also, endDrag in useDragAndDropThought unlocks the longPressStore before it does anything else.
+  // Unless it is prevented from doing so, the main effect below this one will re-run when isLocked changes to false,
+  // but pressing is still true, triggering onStart again.
+  useEffect(() => {
+    if (!isLocked) setPressing(false)
+  }, [isLocked, setPressing])
+
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const backend = dragDropManager.getBackend() as any
@@ -107,7 +115,7 @@ const useLongPress = (
         }
       }, 10)
     },
-    [onLongPressEnd],
+    [onLongPressEnd, setPressing],
   )
 
   // If the user moves, end the press.
