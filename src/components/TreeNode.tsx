@@ -76,7 +76,7 @@ const TreeNode = ({
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
   const [isSortAnimating, setIsSortAnimating] = useState(false)
-  const [isMoveAnimating, setIsMoveThoughtAnimating] = useState(false)
+  const [isMoveAnimating, setIsMoveAnimating] = useState(false)
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
@@ -262,13 +262,13 @@ const TreeNode = ({
     // In moves that cross contexts (e.g. moving the only child of «A» below its next uncle «B»),
     // there is no displaced sibling, so `movingThoughtId` is null. Still animate the cursor node.
     if (lastMoveType && (isCursor || movingThoughtId)) {
-      setIsMoveThoughtAnimating(true)
+      setIsMoveAnimating(true)
     }
 
     // After the layout node animation duration:
     // reset moveThought animation
     const timer = setTimeout(() => {
-      setIsMoveThoughtAnimating(false)
+      setIsMoveAnimating(false)
     }, durations.layoutNodeAnimation)
 
     return () => clearTimeout(timer)
