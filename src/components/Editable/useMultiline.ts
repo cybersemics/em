@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
+import useIndentDepth from '../../hooks/useIndentDepth'
 import useLayoutAnimationFrameEffect from '../../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../../hooks/useSelectorEffect'
 import getStyle from '../../selectors/getStyle'
@@ -17,8 +18,10 @@ const selectCursor = (state: State) => state.cursor
 const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing: boolean) => {
   const [multiline, setMultiline] = useState(false)
   const fontSize = useSelector(state => state.fontSize)
+  // While cursor moving, watch the indent depth change
+  const indentDepth = useIndentDepth()
   // While editing, watch the current Value and trigger the layout effect
-  const editingValue = editingValueStore.useSelector(state => state)
+  const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
 
   /** Measure the contentRef to determine if it needs to be multiline. */
   const updateMultiline = () => {
@@ -40,7 +43,14 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
 
   // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
   // cursor changes to or from the element.
-  useLayoutAnimationFrameEffect(updateMultiline, [contentRef, fontSize, isEditing, simplePath, editingValue])
+  useLayoutAnimationFrameEffect(updateMultiline, [
+    contentRef,
+    fontSize,
+    isEditing,
+    simplePath,
+    editingValue,
+    indentDepth,
+  ])
 
   // Recalculate multiline when the cursor changes.
   // This is necessary because the width of thoughts change as the autofocus indent changes.
