@@ -13,6 +13,7 @@ import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import { noop } from '../constants'
+import useLottieIntervalAnimation from '../hooks/useLottieIntervalAnimation'
 import store from '../stores/app'
 import CommandKeyboardShortcut from './CommandKeyboardShortcut'
 import GestureDiagram from './GestureDiagram'
@@ -91,6 +92,8 @@ const CommandItem: FC<{
   const label = command.labelInverse && isActive ? command.labelInverse : command.label
   const Icon = command.svg
   const ref = React.useRef<HTMLDivElement | null>(null)
+
+  const { isAnimated, onAnimationComplete } = useLottieIntervalAnimation({ enabled: !!selected && !!Icon && !isTouch })
 
   // convert the description to a string
   const description = useSelector(state => {
@@ -226,6 +229,8 @@ const CommandItem: FC<{
               cursor: !disabled && onClick ? 'pointer' : 'default',
             })}
             fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
+            animated={isAnimated}
+            animationComplete={onAnimationComplete}
           />
         ) : (
           // placeholder for icon to keep spacing consistent
