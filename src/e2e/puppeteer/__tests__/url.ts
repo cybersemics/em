@@ -9,6 +9,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import testIfNotCI from '../helpers/testIfNotCI'
+import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -17,7 +18,7 @@ expect.extend({
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 /* From jest-image-snapshot README:
-    
+
   Jest supports automatic retries on test failures. This can be useful for browser screenshot tests which tend to have more frequent false positives. Note that when using jest.retryTimes you'll have to use a unique customSnapshotIdentifier as that's the only way to reliably identify snapshots.
 
 */
@@ -36,6 +37,7 @@ it('single line', async () => {
 
   await press('ArrowUp')
 
+  await waitForFrames()
   const image = await screenshot()
   expect(image).toMatchImageSnapshot({
     customDiffConfig: {
@@ -108,7 +110,7 @@ it('collapsed thought with url child', async () => {
   await paste(`
     - test
       - https://github.com/cybersemics/em
-    - 
+    -
       - https://github.com/cybersemics/em
   `)
 
