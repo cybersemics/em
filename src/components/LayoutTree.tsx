@@ -7,7 +7,6 @@ import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
-import useIndentDepth from '../hooks/useIndentDepth'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
@@ -117,7 +116,12 @@ const LayoutTree = () => {
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.dragInProgress)
   const ref = useRef<HTMLDivElement | null>(null)
-  const indentDepth = useIndentDepth()
+  const indentDepth = useSelector(state =>
+    state.cursor && state.cursor.length > 2
+      ? // when the cursor is on a leaf, the indention level should not change
+        state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
+      : 0,
+  )
 
   // Width of thought bullet
   const [bulletWidth, setBulletWidth] = useState(0)

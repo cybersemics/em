@@ -9,8 +9,15 @@ const SCROLL_ZONE_WIDTH = 0.25
 let virtualKeyboardHeightPortrait = isTouch ? window.innerHeight / 2.275 : 0
 let virtualKeyboardHeightLandscape = isTouch ? window.innerWidth / 1.7 : 0
 
+export interface ViewportState {
+  innerWidth: number
+  innerHeight: number
+  scrollZoneWidth: number
+  virtualKeyboardHeight: number
+}
+
 /** A store that tracks the viewport dimensions, including the nontrivial virtual keyboard height. */
-const viewportStore = reactMinistore({
+const viewportStore = reactMinistore<ViewportState>({
   innerWidth: window.innerWidth,
   /** Height of the viewport, including the virtual keyboard. */
   innerHeight: window.innerHeight,

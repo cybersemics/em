@@ -1,15 +1,14 @@
 import { head, isEqual } from 'lodash'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
-import useIndentDepth from '../../hooks/useIndentDepth'
 import useLayoutAnimationFrameEffect from '../../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../../hooks/useSelectorEffect'
 import getStyle from '../../selectors/getStyle'
 import getThoughtById from '../../selectors/getThoughtById'
 import editingValueStore from '../../stores/editingValue'
-import viewportStore from '../../stores/viewport'
+import viewportStore, { ViewportState } from '../../stores/viewport'
 
 /** Selects the cursor from the state. */
 const selectCursor = (state: State) => state.cursor
@@ -18,13 +17,11 @@ const selectCursor = (state: State) => state.cursor
 const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing: boolean) => {
   const [multiline, setMultiline] = useState(false)
   const fontSize = useSelector(state => state.fontSize)
-  // While cursor moving, watch the indent depth change
-  const indentDepth = useIndentDepth()
   // While editing, watch the current Value and trigger the layout effect
   const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
 
   /** Measure the contentRef to determine if it needs to be multiline. */
-  const updateMultiline = () => {
+  const updateMultiline = useCallback(() => {
     if (!contentRef.current) return
     const height = contentRef.current.getBoundingClientRect().height
     // must match line-height as defined in thought-container
@@ -39,33 +36,21 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
     // 1.5x can cause multiline to alternate in Safari for some reason. There may be a mistake in the height calculation or the inclusion of padding that is causing this. Padding was added to the calculation in commit 113c692. Further investigation is needed.
     // See: https://github.com/cybersemics/em/issues/2778#issuecomment-2605083798
     setMultiline(height - paddingTop - paddingBottom > singleLineHeight * 1.2)
-  }
+  }, [contentRef, fontSize])
 
   // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
   // cursor changes to or from the element.
-  useLayoutAnimationFrameEffect(updateMultiline, [
-    contentRef,
-    fontSize,
-    isEditing,
-    simplePath,
-    editingValue,
-    indentDepth,
-  ])
+  useLayoutAnimationFrameEffect(updateMultiline, [isEditing, simplePath, editingValue])
 
   // Recalculate multiline when the cursor changes.
   // This is necessary because the width of thoughts change as the autofocus indent changes.
   // (do not re-render component unless multiline changes)
   useSelectorEffect(updateMultiline, selectCursor, isEqual)
 
+  const selectStyle = useCallback((state: State) => getStyle(state, head(simplePath)), [simplePath])
   // Recalculate multiline on =style change, since styles such as font size can affect thought width.
   // Must wait one render since getStyle updates as soon as =style has loaded in the Redux store but before it has been applied to the DOM.
-  useSelectorEffect(
-    () => {
-      requestAnimationFrame(updateMultiline)
-    },
-    state => getStyle(state, head(simplePath)),
-    isEqual,
-  )
+  useSelectorEffect(updateMultiline, selectStyle, isEqual)
 
   // Recalculate height after thought value changes.
   // Otherwise, the hight is not recalculated after splitThought.
@@ -76,8 +61,9 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   })
   useEffect(updateMultiline, [splitThoughtValue, updateMultiline])
 
+  const selectInnerWidth = useCallback((state: ViewportState) => state.innerWidth, [])
   // re-measure when the screen is resized
-  viewportStore.useSelectorEffect(updateMultiline, state => state.innerWidth)
+  viewportStore.useSelectorEffect(updateMultiline, selectInnerWidth)
 
   return multiline
 }
