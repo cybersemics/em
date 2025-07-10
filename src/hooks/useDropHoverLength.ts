@@ -26,11 +26,6 @@ const useDropHoverLength = (props?: DropHoverLengthProps) => {
   const isTableCol1 = props?.isTableCol1
   const isTableCol2 = props?.isTableCol2
 
-  if (contentWidth < 0) {
-    console.error('Invalid content width')
-    return '100%' // Safe fallback
-  }
-
   return useMemo(
     () =>
       isTableCol1 || isTableCol2
