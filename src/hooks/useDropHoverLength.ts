@@ -21,7 +21,7 @@ interface DropHoverLengthProps {
  * @returns CSS width value as string.
  */
 const useDropHoverLength = (props?: DropHoverLengthProps) => {
-  const { contentWidth } = viewportStore.getState()
+  const contentWidth = viewportStore.useSelector(state => state.contentWidth)
   // TODO: Need to check about the use of isTableCol1 for 50vw property
   const isTableCol1 = props?.isTableCol1
   const isTableCol2 = props?.isTableCol2
