@@ -98,7 +98,7 @@ const useMoveThoughtAnimation = ({ thoughtId, isCursor }: Options): MoveThoughtA
     // updates can re-trigger the animation.
     const timer = setTimeout(() => {
       setIsMoveAnimating(false)
-    }, durations.layoutNodeAnimation)
+    }, 0.5 * durations.layoutNodeAnimation)
 
     return () => clearTimeout(timer)
   }, [lastMoveType, movingThoughtId, isCursor])
