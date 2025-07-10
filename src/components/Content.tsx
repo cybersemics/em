@@ -7,7 +7,13 @@ import { Thunk } from '../@types/Thunk'
 import { closeModalActionCreator as closeModal } from '../actions/closeModal'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
-import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import {
+  ABSOLUTE_PATH,
+  CONTENT_BOX_PADDING_LEFT,
+  CONTENT_BOX_PADDING_RIGHT,
+  HOME_PATH,
+  TUTORIAL2_STEP_SUCCESS,
+} from '../constants'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
@@ -81,7 +87,7 @@ const Content: FC = () => {
         id='content'
         ref={contentRef}
         className={css({
-          padding: '80px 10px 153px 50px',
+          padding: `80px ${CONTENT_BOX_PADDING_RIGHT}px 153px ${CONTENT_BOX_PADDING_LEFT}px`,
           position: 'relative',
           transition: 'transform 0 ease-out, margin 0 ease-out',
           boxSizing: 'border-box',

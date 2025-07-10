@@ -606,8 +606,6 @@ export const COMMAND_GROUPS: {
 /** The duration of the haptics vibrate on delete or archive non-empty thought. */
 export const DELETE_VIBRATE_DURATION = 80
 
-/**
- * Ref src/components/Content.tsx:84 (padding: '80px 10px 153px 50px')
- * 60 is the sum of left and right padding of main viewport - <div id='content'...>...</div>.
- **/
-export const CONTENT_BOX_PADDING = 60
+/** Right padding and Left padding of content box (<div id='content'...>...</div>). */
+export const CONTENT_BOX_PADDING_RIGHT = 10
+export const CONTENT_BOX_PADDING_LEFT = 50
