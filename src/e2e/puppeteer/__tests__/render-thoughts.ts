@@ -168,7 +168,8 @@ describe('multiline', () => {
     await press('ArrowUp')
     await press('ArrowUp')
 
-    await waitForFrames()
+    // TODO: Test intermittently fails if not given time to expand.
+    await sleep(100)
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -217,7 +218,7 @@ describe('Color Theme', () => {
     // - https://github.com/cybersemics/em/actions/runs/14236307211
     // - https://github.com/cybersemics/em/actions/runs/14783509675/job/41507408875?pr=2917
     // Waiting for requestAnimationFrame does not fix the issue.
-    await waitForFrames()
+    await sleep(200)
 
     expect(await screenshot()).toMatchImageSnapshot()
   })

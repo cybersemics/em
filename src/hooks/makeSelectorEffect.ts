@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import Store from '../@types/Store'
 import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
 
@@ -36,7 +36,7 @@ const makeSelectorEffect = <U extends Store<any>>(store: U) => {
     // Unlike useSelector, this doesn't cause a re-render of the component
     const [state, setState] = useState<T>(select(store.getState()))
 
-    useEffect(() => {
+    useLayoutEffect(() => {
       // Returns unsubscribe which is called on unmount.
       store.subscribe(() => {
         const current = select(store.getState())

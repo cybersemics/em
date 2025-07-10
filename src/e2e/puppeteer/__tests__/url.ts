@@ -9,7 +9,6 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import testIfNotCI from '../helpers/testIfNotCI'
-import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -37,7 +36,6 @@ it('single line', async () => {
 
   await press('ArrowUp')
 
-  await waitForFrames()
   const image = await screenshot()
   expect(image).toMatchImageSnapshot({
     customDiffConfig: {
