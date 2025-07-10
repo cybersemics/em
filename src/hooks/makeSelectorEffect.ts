@@ -22,6 +22,7 @@ import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
  * const effect = useCallback(newValue => updateDOM(newValue), [necessary dependencies here])
  * useSelectorEffect(effect, select, isEqual)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const makeSelectorEffect = <U extends Store<any>>(store: U) => {
   // Extract the state type from the store generic
   type S = U extends Store<infer V> ? V : never
