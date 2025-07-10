@@ -8,13 +8,11 @@ import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import durations from '../durations.config'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import useMoveThoughtAnimation from '../hooks/useMoveThoughtAnimation'
 import usePrevious from '../hooks/usePrevious'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
-import nextSibling from '../selectors/nextSibling'
-import prevSibling from '../selectors/prevSibling'
 import equalPath from '../util/equalPath'
-import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
@@ -76,7 +74,6 @@ const TreeNode = ({
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
   const [isSortAnimating, setIsSortAnimating] = useState(false)
-  const [isMoveAnimating, setIsMoveAnimating] = useState(false)
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
@@ -165,62 +162,13 @@ const TreeNode = ({
     [index, isLastActionSort],
   )
 
+  const { isMoveAnimating, moveType, moveDivStyle } = useMoveThoughtAnimation({ thoughtId, isCursor })
+
   /**
    * Horizontal offset for the first frame of a sort animation. This allows the X transition
    * to start immediately from the correct position.
    */
   const sortOffset = sortDirection === 'clockwise' ? 30 : -30
-
-  /** Determine if the last undo patch action was moveThoughtUp or moveThoughtDown, and its type. */
-  const lastMoveType = useSelector((state: State): 'moveThoughtUp' | 'moveThoughtDown' | null => {
-    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
-      ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
-      : null
-  })
-
-  // Id of the thought that was displaced by the cursor during a moveThoughtUp/Down operation.
-  // Normally, this is the sibling that swaps places with the cursor.
-  // In cross-context moves (e.g., moving the only child of A into the next uncle B),
-  // there is no displaced sibling, so we animate the parent that just lost the cursor (now the cursor's new uncle).
-  const movingThoughtId = useSelector((state: State) => {
-    if (!lastMoveType || !state.cursor) return null
-
-    // Immediate siblings of the cursor at its NEW location
-    const next = nextSibling(state, state.cursor)
-    const prev = prevSibling(state, state.cursor, {})
-
-    if (lastMoveType === 'moveThoughtUp') {
-      // Try displaced sibling first (next if available, otherwise prev)
-      const displaced = next ?? prev
-      if (displaced) return displaced.id
-
-      // No sibling means cross-context move. Animate the parent that just lost the cursor (now the cursor's new uncle).
-      const oldParent = nextSibling(state, parentOf(state.cursor!))
-      return oldParent?.id ?? null
-    }
-
-    if (lastMoveType === 'moveThoughtDown') {
-      // Try displaced sibling first (prev if available, otherwise next)
-      const displaced = prev ?? next
-      if (displaced) return displaced.id
-
-      // No sibling means cross-context move. Animate the uncle (new parent) that gained the cursor.
-      const newParentId = head(parentOf(state.cursor!))
-      return newParentId ?? null
-    }
-
-    return null
-  })
-
-  // Determine animation type for moveThought
-  const moveType: 'moveThoughtCursor' | 'moveThoughtSibling' | null = lastMoveType
-    ? isCursor
-      ? 'moveThoughtCursor'
-      : thoughtId === movingThoughtId
-        ? 'moveThoughtSibling'
-        : null
-    : null
 
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
@@ -257,23 +205,6 @@ const TreeNode = ({
     return () => clearTimeout(timer)
   }, [isLastActionSort, indexChanged])
 
-  useLayoutEffect(() => {
-    // Start moveThought animation only when the change originated from a moveThought action.
-    // In moves that cross contexts (e.g. moving the only child of «A» below its next uncle «B»),
-    // there is no displaced sibling, so `movingThoughtId` is null. Still animate the cursor node.
-    if (lastMoveType && (isCursor || movingThoughtId)) {
-      setIsMoveAnimating(true)
-    }
-
-    // After the layout node animation duration:
-    // reset moveThought animation
-    const timer = setTimeout(() => {
-      setIsMoveAnimating(false)
-    }, durations.layoutNodeAnimation)
-
-    return () => clearTimeout(timer)
-  }, [lastMoveType, movingThoughtId, isCursor])
-
   // List Virtualization
   // Do not render thoughts that are below the viewport.
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
@@ -303,22 +234,7 @@ const TreeNode = ({
           top: y,
           left: 0,
         }
-      : isMoveAnimating
-        ? moveType === 'moveThoughtCursor'
-          ? {
-              transformOrigin: 'left',
-              transform: 'scale3d(1.5, 1.5, 1)',
-              transition: `transform {durations.layoutNodeAnimation} ease-out`,
-            }
-          : moveType === 'moveThoughtSibling'
-            ? {
-                transformOrigin: 'left',
-                transform: 'scale3d(0.5, 0.5, 1)',
-                filter: 'blur(2px)',
-                opacity: 0,
-              }
-            : undefined
-        : undefined
+      : moveDivStyle
 
   const moveAnimation =
     isMoveAnimating && moveType === 'moveThoughtSibling'
