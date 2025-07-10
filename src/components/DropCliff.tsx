@@ -40,7 +40,7 @@ const DropCliff = ({
           key={'DropEnd-' + head(pathEnd)}
           className={css({
             position: 'relative',
-            top: '-0.2em',
+            top: '-0.4em',
             transition: `left {durations.fast} ease-out`,
             zIndex: 'subthoughtsDropEnd',
           })}

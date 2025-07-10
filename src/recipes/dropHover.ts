@@ -5,7 +5,6 @@ const dropHoverRecipe = defineRecipe({
   description: 'the bar that displays on hover when dragging thoughts',
   base: {
     position: 'absolute',
-    width: 'calc(100% - 2em)',
     height: '3px',
     borderRadius: '99px',
     zIndex: 'stack',
@@ -20,7 +19,6 @@ const dropHoverRecipe = defineRecipe({
       /* Last drop-end in Subthoughts */
       true: {
         marginLeft: 'calc(0.6em - 13px)',
-        width: 'calc(100% - 3em)',
       },
     },
   },
