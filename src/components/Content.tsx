@@ -7,7 +7,7 @@ import { Thunk } from '../@types/Thunk'
 import { closeModalActionCreator as closeModal } from '../actions/closeModal'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
-import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import { ABSOLUTE_PATH, HOME_PATH, LongPressState, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
@@ -44,6 +44,7 @@ const Content: FC = () => {
     return children.length
   })
   const isAbsoluteContext = useSelector(state => isAbsolute(state.rootContext))
+  const longPress = useSelector(state => state.longPress)
 
   /** Closes modals and dropdowns if the click goes all the way through to the content. */
   const clickOnEmptySpace: Thunk = (dispatch: Dispatch, getState) => {
@@ -62,7 +63,9 @@ const Content: FC = () => {
     <div
       id='content-wrapper'
       {...fastClick(() => dispatch(clickOnEmptySpace), { enableHaptics: false })}
-      onMouseDown={() => setIsPressed(true)}
+      onMouseDown={() => {
+        if (longPress === LongPressState.Inactive) setIsPressed(true)
+      }}
     >
       <div
         id='content'
