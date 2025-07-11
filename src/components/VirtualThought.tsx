@@ -15,7 +15,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import editingValueStore from '../stores/editingValue'
-import viewportStore from '../stores/viewport'
+import viewportStore, { ViewportState } from '../stores/viewport'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -177,18 +177,14 @@ const VirtualThought = ({
   // shimHiddenThought will re-render as needed.
   useSelectorEffect(updateSize, selectCursor, isEqual)
 
+  const selectStyle = useCallback((state: State) => getStyle(state, head(simplePath)), [simplePath])
   // Recalculate height on =style change, since styles such as font size can affect thought height.
   // Must wait one render since getStyle updates as soon as =style has loaded in the Redux store but before it has been applied to the DOM.
-  useSelectorEffect(
-    () => {
-      requestAnimationFrame(updateSize)
-    },
-    state => getStyle(state, head(simplePath)),
-    isEqual,
-  )
+  useSelectorEffect(updateSize, selectStyle, isEqual)
 
+  const selectInnerWidth = useCallback((state: ViewportState) => state.innerWidth, [])
   // Recalculate height when the screen is resized
-  viewportStore.useSelectorEffect(updateSize, state => state.innerWidth)
+  viewportStore.useSelectorEffect(updateSize, selectInnerWidth)
 
   // Recalculate height after thought value changes.
   // Otherwise, the hight is not recalculated after splitThought.
