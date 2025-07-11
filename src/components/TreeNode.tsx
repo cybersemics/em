@@ -8,6 +8,7 @@ import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import durations from '../durations.config'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import useMoveThoughtAnimation from '../hooks/useMoveThoughtAnimation'
 import usePrevious from '../hooks/usePrevious'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
@@ -161,6 +162,8 @@ const TreeNode = ({
     [index, isLastActionSort],
   )
 
+  const { isMoveAnimating, moveType, moveDivStyle } = useMoveThoughtAnimation({ indexChanged, isCursor, path })
+
   /**
    * Horizontal offset for the first frame of a sort animation. This allows the X transition
    * to start immediately from the correct position.
@@ -231,7 +234,16 @@ const TreeNode = ({
           top: y,
           left: 0,
         }
-      : undefined
+      : moveDivStyle
+
+  const moveAnimation =
+    isMoveAnimating && moveType === 'moveThoughtSibling'
+      ? `transform {durations.layoutNodeAnimation} ease-out, filter {durations.layoutNodeAnimation} ease-out, opacity {durations.layoutNodeAnimation} ease-out`
+      : isMoveAnimating && moveType === 'moveThoughtCursor'
+        ? `transform {durations.layoutNodeAnimation} ease-out`
+        : moveType === 'moveThoughtSibling'
+          ? `opacity {durations.layoutNodeAnimation} ease-out`
+          : undefined
 
   return (
     <FadeTransition
@@ -250,7 +262,6 @@ const TreeNode = ({
         aria-label='tree-node'
         className={css({
           position: 'absolute',
-
           transition: isSwap
             ? swapDirection === 'clockwise'
               ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
@@ -280,7 +291,7 @@ const TreeNode = ({
                 : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
               : isLastActionSort
                 ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
-                : undefined,
+                : moveAnimation,
           })}
           style={innerDivStyle}
         >
