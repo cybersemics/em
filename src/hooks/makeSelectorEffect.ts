@@ -3,7 +3,7 @@ import Store from '../@types/Store'
 import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
 
 /**
- * Creates a useEffect hook that invokes a callback when a slice of a given store's state changes.  Unlike useSelector, triggers the callback without re-rendering the component.  Useful when a DOM calculation needs to be performed after a state change, but does not always require a re-render.
+ * Creates a useLayoutEffect hook that invokes a callback when a slice of a given store's state changes.  Unlike useSelector, triggers the callback without re-rendering the component.  Useful when a DOM calculation needs to be performed after a state change, but does not always require a re-render.
  *
  * @template U - Store type with generic state.
  * @param store - The store instance to subscribe to.
@@ -36,18 +36,20 @@ const makeSelectorEffect = <U extends Store<any>>(store: U) => {
     // Unlike useSelector, this doesn't cause a re-render of the component
     const [state, setState] = useState<T>(select(store.getState()))
 
-    useLayoutEffect(() => {
-      // Returns unsubscribe which is called on unmount.
-      store.subscribe(() => {
-        const current = select(store.getState())
+    useLayoutEffect(
+      () =>
+        // Returns unsubscribe which is called on unmount.
+        store.subscribe(() => {
+          const current = select(store.getState())
 
-        // Only update state if value has changed according to equality function
-        if (equalityFn ? !equalityFn(current, prev.current) : current !== prev.current) {
-          setState(current)
-        }
-        prev.current = current
-      })
-    }, [equalityFn, select]) // These functions should be memoized to prevent unnecessary re-subscriptions
+          // Only update state if value has changed according to equality function
+          if (equalityFn ? !equalityFn(current, prev.current) : current !== prev.current) {
+            setState(current)
+          }
+          prev.current = current
+        }),
+      [equalityFn, select],
+    ) // These functions should be memoized to prevent unnecessary re-subscriptions
 
     useLayoutAnimationFrameEffect(() => {
       effect(state)
