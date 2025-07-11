@@ -1,24 +1,82 @@
 diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
-index 161095a0742bc11a0755b842a45d39ad337a15a4..5fccc4682fa17cd798f33fd21022026e62c1fa9d 100644
+index 161095a0742bc11a0755b842a45d39ad337a15a4..f3e2742459aed128da0ecba246e9f5ecd191f174 100644
 --- a/dist/TouchBackendImpl.js
 +++ b/dist/TouchBackendImpl.js
-@@ -242,6 +242,7 @@ export class TouchBackendImpl {
+@@ -254,18 +254,29 @@ export class TouchBackendImpl {
+             }
+         };
+         this.handleTopMove = (e1)=>{
+-            if (this.timeout) {
+-                clearTimeout(this.timeout);
++            const clientOffset = getEventClientOffset(e1, this.lastTargetTouchFallback)
++
++            if (clientOffset) {
++              if (!this._mouseClientOffset.hasOwnProperty('x') && !this._mouseClientOffset.hasOwnProperty('y')) {
++                this._mouseClientOffset = clientOffset
++              }
++            } else {
++              return
++            }
++
++            if (
++              this.timeout &&
++              distance(this._mouseClientOffset.x || 0, this._mouseClientOffset.y || 0, clientOffset.x, clientOffset.y) >
++              (this.options.touchSlop ? this.options.touchSlop : 0)
++            ) {
++              clearTimeout(this.timeout)
+             }
++
+             if (!this.document || this.waitingForDelay) {
                  return;
              }
-             const delay = e.type === eventNames.touch.start ? this.options.delayTouchStart : this.options.delayMouseStart;
-+            clearTimeout(this.timeout);
-             this.timeout = setTimeout(this.handleTopMoveStart.bind(this, e), delay);
-             this.waitingForDelay = true;
-         };
+             const { moveStartSourceIds , dragOverTargetIds  } = this;
+             const enableHoverOutsideTarget = this.options.enableHoverOutsideTarget;
+-            const clientOffset = getEventClientOffset(e1, this.lastTargetTouchFallback);
+-            if (!clientOffset) {
+-                return;
+-            }
+             // If the touch move started as a scroll, or is is between the scroll angles
+             if (this._isScrolling || !this.monitor.isDragging() && inAngleRanges(this._mouseClientOffset.x || 0, this._mouseClientOffset.y || 0, clientOffset.x, clientOffset.y, this.options.scrollAngleRanges)) {
+                 this._isScrolling = true;
 diff --git a/src/TouchBackendImpl.ts b/src/TouchBackendImpl.ts
-index f2c164b1157180b6234da5a3cf2f38ddd165929d..2543893aa4a83999d3fc583ea00cbdca22bbeb05 100644
+index f2c164b1157180b6234da5a3cf2f38ddd165929d..7cbc628a8cdc1010b4876893e81a9d1acaa1ae41 100644
 --- a/src/TouchBackendImpl.ts
 +++ b/src/TouchBackendImpl.ts
-@@ -388,6 +388,7 @@ export class TouchBackendImpl implements Backend {
- 			e.type === eventNames.touch.start
- 				? this.options.delayTouchStart
- 				: this.options.delayMouseStart
-+		clearTimeout(this.timeout)
- 		this.timeout = setTimeout(
- 			this.handleTopMoveStart.bind(this, e as any),
- 			delay,
+@@ -409,20 +409,29 @@ export class TouchBackendImpl implements Backend {
+ 	}
+ 
+ 	public handleTopMove = (e: TouchEvent | MouseEvent): void => {
+-		if (this.timeout) {
+-			clearTimeout(this.timeout)
+-		}
+-		if (!this.document || this.waitingForDelay) {
++		const clientOffset = getEventClientOffset(e, this.lastTargetTouchFallback)
++
++		if (clientOffset) {
++			if (!this._mouseClientOffset.hasOwnProperty('x') && !this._mouseClientOffset.hasOwnProperty('y')) {
++				this._mouseClientOffset = clientOffset
++			}
++		} else {
+ 			return
+ 		}
+-		const { moveStartSourceIds, dragOverTargetIds } = this
+-		const enableHoverOutsideTarget = this.options.enableHoverOutsideTarget
+ 
+-		const clientOffset = getEventClientOffset(e, this.lastTargetTouchFallback)
++    if (
++      this.timeout &&
++      distance(this._mouseClientOffset.x || 0, this._mouseClientOffset.y || 0, clientOffset.x, clientOffset.y) >
++      (this.options.touchSlop ? this.options.touchSlop : 0)
++    ) {
++      clearTimeout(this.timeout)
++    }
+ 
+-		if (!clientOffset) {
++		if (!this.document || this.waitingForDelay) {
+ 			return
+ 		}
++		const { moveStartSourceIds, dragOverTargetIds } = this
++		const enableHoverOutsideTarget = this.options.enableHoverOutsideTarget
+ 
+ 		// If the touch move started as a scroll, or is is between the scroll angles
+ 		if (

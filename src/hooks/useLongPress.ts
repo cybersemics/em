@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useDragDropManager } from 'react-dnd'
 import { useDispatch } from 'react-redux'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
 import { isTouch } from '../browser'
@@ -20,6 +21,7 @@ const useLongPress = (
   onLongPressEnd: ((options: { canceled: boolean }) => void) | null = noop,
   delay: number = TIMEOUT_LONG_PRESS_THOUGHT,
 ) => {
+  const [pressing, setPressing] = useState(false)
   const [pressed, setPressed] = useState(false)
   // Track isLocked state from longPressStore in local state
   const isLocked = longPressStore.useSelector(state => state.isLocked)
@@ -29,23 +31,29 @@ const useLongPress = (
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
   const unmounted = useRef(false)
+  const dragDropManager = useDragDropManager()
 
-  /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
-  // track that long press has started on mouseDown or touchStart
-  const start = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      // do not stop propagation, or it will break MultiGesture
+  // The stop handler below does not run when drag-and-drop is active.
+  // Also, endDrag in useDragAndDropThought unlocks the longPressStore before it does anything else.
+  // Unless it is prevented from doing so, the main effect below this one will re-run when isLocked changes to false,
+  // but pressing is still true, triggering onStart again.
+  useEffect(() => {
+    if (!isLocked) setPressing(false)
+  }, [isLocked, setPressing])
 
-      // do not long press if another component is already pressed
-      // do not long press if right-clicking, otherwise right-clicking on a bullet will cause it to get stuck in the pressed state
-      if (isLocked || (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2)) return
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const backend = dragDropManager.getBackend() as any
+    /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
+    const onStart = (e?: React.TouchEvent) => {
+      if (isLocked || !pressing) return
 
-      if ('touches' in e) {
+      if (e && 'touches' in e) {
         clientCoords.current = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
       }
 
-      // cast Timeout to number for compatibility with clearTimeout
       clearTimeout(timerIdRef.current)
+      // cast Timeout to number for compatibility with clearTimeout
       timerIdRef.current = setTimeout(() => {
         globals.longpressing = true
         haptics.light()
@@ -55,8 +63,28 @@ const useLongPress = (
           setPressed(true)
         }
       }, delay) as unknown as number
+    }
+
+    /** Let the react-dnd 'start' event begin the timer so that there is no gap between the beginning of a long press
+     * and the initialization of the drag functionality (#3072, #3073). */
+    if (typeof backend.addEventListener === 'undefined') onStart()
+    else backend.addEventListener(backend.options.rootElement, 'start', onStart)
+
+    return () => {
+      // addEventListener and removeEventListener are specific to TouchBackend, so we don't want to use them on desktop
+      if (typeof backend.removeEventListener !== 'undefined')
+        backend.removeEventListener(backend.options.rootElement, 'start', onStart)
+      clearTimeout(timerIdRef.current)
+    }
+  }, [delay, dragDropManager, isLocked, onLongPressStart, pressing])
+
+  /** On mouseDown or touchStart, mark that the press has begun so that when the 'start' event fires in react-dnd,
+   * we will know which element is being long-pressed. */
+  const start = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (e.nativeEvent instanceof TouchEvent || e.nativeEvent.button !== 2) setPressing(true)
     },
-    [delay, onLongPressStart, isLocked],
+    [setPressing],
   )
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
@@ -64,6 +92,7 @@ const useLongPress = (
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      setPressing(false)
       // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
       // This gives other components a chance to short circuit.
       // We can't stop propagation here without messing up other components like Bullet.
@@ -86,7 +115,7 @@ const useLongPress = (
         }
       }, 10)
     },
-    [onLongPressEnd],
+    [onLongPressEnd, setPressing],
   )
 
   // If the user moves, end the press.

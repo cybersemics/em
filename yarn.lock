@@ -16617,11 +16617,11 @@ __metadata:
 
 "react-dnd-touch-backend@patch:react-dnd-touch-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch":
   version: 16.0.1
-  resolution: "react-dnd-touch-backend@patch:react-dnd-touch-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch::version=16.0.1&hash=dacaf8"
+  resolution: "react-dnd-touch-backend@patch:react-dnd-touch-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch::version=16.0.1&hash=97ec20"
   dependencies:
     "@react-dnd/invariant": "npm:^4.0.1"
     dnd-core: "npm:^16.0.1"
-  checksum: 10c0/3d89d02400e668b72b272fb61931e13b4e0f335efe51e28324d435b6eda4eeef58ba70e413fba16cbc43b9024cbf238d0626998280a9f3c7070f87ddcf6ba586
+  checksum: 10c0/e56d4b03e1b120f6c0a0b28f51ad9080c192bffd49f302d2eccdd66f805e6710ca8cbf60ae42c0657de57f12c25f71fc9301076a224008c947c08546b86f0d7a
   languageName: node
   linkType: hard
 
