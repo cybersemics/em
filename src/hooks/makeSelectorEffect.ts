@@ -51,9 +51,7 @@ const makeSelectorEffect = <U extends Store<any>>(store: U) => {
       [equalityFn, select],
     ) // These functions should be memoized to prevent unnecessary re-subscriptions
 
-    useLayoutAnimationFrameEffect(() => {
-      effect(state)
-    }, [effect, state]) // effect should be memoized to prevent unnecessary effect runs
+    useLayoutAnimationFrameEffect(() => effect(state), [effect, state]) // effect should be memoized to prevent unnecessary effect runs
   }
 }
 
