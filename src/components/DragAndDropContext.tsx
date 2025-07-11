@@ -9,7 +9,7 @@ import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 const DragAndDropContext: FC<PropsWithChildren> = ({ children }) => (
   <DndProvider
     backend={isTouch ? TouchBackend : HTML5Backend}
-    options={{ delayTouchStart: TIMEOUT_LONG_PRESS_THOUGHT, preview: true }}
+    options={{ delayTouchStart: TIMEOUT_LONG_PRESS_THOUGHT, preview: true, touchSlop: 10 }}
   >
     {children}
   </DndProvider>
