@@ -1,7 +1,10 @@
 import { useLayoutEffect, useMemo, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import durations from '../durations.config'
+import equalPath from '../util/equalPath'
+import parentOf from '../util/parentOf'
 import usePrevious from './usePrevious'
 
 /**
@@ -18,6 +21,8 @@ interface Options {
   isCursor: boolean
   /** True if the index of the thought has changed. */
   indexChanged: boolean
+  /** The path of the thought. */
+  path: Path
 }
 
 /**
@@ -26,36 +31,53 @@ interface Options {
  * of the Redux selectors and timing needed so that the consuming component (TreeNode)
  * only has to deal with the resulting animation flags.
  */
-const useMoveThoughtAnimation = ({ isCursor, indexChanged }: Options): MoveThoughtAnimation => {
+const useMoveThoughtAnimation = ({ isCursor, indexChanged, path }: Options): MoveThoughtAnimation => {
   const [isMoveAnimating, setIsMoveAnimating] = useState(false)
 
-  /** Determine if the last undo patch action was moveThoughtUp or moveThoughtDown, and its type. */
-  const lastMoveType = useSelector((state: State): 'moveThoughtUp' | 'moveThoughtDown' | null => {
+  const { lastMoveType, isSiblingOfCursor } = useSelector((state: State) => {
+    // Determine if the last undo patch action was moveThoughtUp or moveThoughtDown, and its type.
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
+    const lastMoveType: 'moveThoughtUp' | 'moveThoughtDown' | null = lastPatches?.some(patch =>
+      ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]),
+    )
       ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
       : null
-  })
 
-  // Capture the previous value of indexChanged so we can detect the rising edge (changed -> unchanged)
+    // Determine if this node is a sibling of the cursor (i.e., shares the same parent path)
+    const isSiblingOfCursor = (() => {
+      if (isCursor || !state.cursor) return false
+      return equalPath(parentOf(state.cursor), parentOf(path))
+    })()
+
+    return {
+      lastMoveType,
+      isSiblingOfCursor,
+    }
+  }, shallowEqual)
+
+  // Capture the previous value of indexChanged
   const prevIndexChanged = usePrevious(indexChanged)
 
-  // Capture the proposed moveType on the rising edge so it can be locked for the duration of the animation
+  // Capture the proposed moveType
   const hasMoved = useMemo(() => {
     return !!(lastMoveType && indexChanged && !prevIndexChanged)
   }, [lastMoveType, indexChanged, prevIndexChanged])
 
-  // Lock the moveType after the first detection so that it does not reset
   const [moveType, setMoveType] = useState<'moveThoughtCursor' | 'moveThoughtSibling' | null>(null)
 
-  // Determine proposed moveType based on current render
-  const proposedMoveType: 'moveThoughtCursor' | 'moveThoughtSibling' | null = hasMoved
-    ? isCursor
-      ? 'moveThoughtCursor'
-      : 'moveThoughtSibling'
-    : null
+  let proposedMoveType: 'moveThoughtCursor' | 'moveThoughtSibling' | null = null
 
-  // Lock the move type on the rising edge
+  if (hasMoved) {
+    if (isCursor) {
+      // Animate the cursor node
+      proposedMoveType = 'moveThoughtCursor'
+    } else {
+      // Animate the sibling node
+      proposedMoveType = isSiblingOfCursor ? 'moveThoughtSibling' : null
+    }
+  }
+
+  // Implement the move type on the next render cycle
   useLayoutEffect(() => {
     if (proposedMoveType) {
       setMoveType(proposedMoveType)
@@ -76,6 +98,8 @@ const useMoveThoughtAnimation = ({ isCursor, indexChanged }: Options): MoveThoug
     const timer = setTimeout(() => {
       setIsMoveAnimating(false)
       setMoveType(null)
+      // Adjust timeout to apply before animation finishes
+      // to avoid race condition with the next render cycle
     }, 0.5 * durations.layoutNodeAnimation)
 
     return () => clearTimeout(timer)
