@@ -162,7 +162,7 @@ const TreeNode = ({
     [index, isLastActionSort],
   )
 
-  const { isMoveAnimating, moveType, moveDivStyle } = useMoveThoughtAnimation({ indexChanged, isCursor })
+  const { isMoveAnimating, moveType, moveDivStyle } = useMoveThoughtAnimation({ indexChanged, isCursor, path })
 
   /**
    * Horizontal offset for the first frame of a sort animation. This allows the X transition
