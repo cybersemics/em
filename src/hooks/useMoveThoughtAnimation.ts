@@ -1,11 +1,8 @@
-import { useLayoutEffect, useState } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import State from '../@types/State'
 import durations from '../durations.config'
-import nextSibling from '../selectors/nextSibling'
-import prevSibling from '../selectors/prevSibling'
-import head from '../util/head'
-import parentOf from '../util/parentOf'
+import usePrevious from './usePrevious'
 
 /**
  * Return type of useMoveThoughtAnimation.
@@ -17,10 +14,10 @@ export interface MoveThoughtAnimation {
 }
 
 interface Options {
-  /** The id of the current thought (its Lexeme id). */
-  thoughtId: string
   /** True if this TreeNode represents the current cursor. */
   isCursor: boolean
+  /** True if the index of the thought has changed. */
+  indexChanged: boolean
 }
 
 /**
@@ -29,7 +26,7 @@ interface Options {
  * of the Redux selectors and timing needed so that the consuming component (TreeNode)
  * only has to deal with the resulting animation flags.
  */
-const useMoveThoughtAnimation = ({ thoughtId, isCursor }: Options): MoveThoughtAnimation => {
+const useMoveThoughtAnimation = ({ isCursor, indexChanged }: Options): MoveThoughtAnimation => {
   const [isMoveAnimating, setIsMoveAnimating] = useState(false)
 
   /** Determine if the last undo patch action was moveThoughtUp or moveThoughtDown, and its type. */
@@ -40,57 +37,37 @@ const useMoveThoughtAnimation = ({ thoughtId, isCursor }: Options): MoveThoughtA
       : null
   })
 
-  /**
-   * Id of the thought that was displaced by the cursor during a moveThoughtUp/Down operation.
-   * Normally, this is the sibling that swaps places with the cursor.
-   * In cross-context moves (e.g., moving the only child of A into the next uncle B),
-   * there is no displaced sibling, so we animate the parent that just lost the cursor (now the cursor's new uncle).
-   */
-  const movingThoughtId = useSelector((state: State) => {
-    if (!lastMoveType || !state.cursor) return null
+  // Capture the previous value of indexChanged so we can detect the rising edge (changed -> unchanged)
+  const prevIndexChanged = usePrevious(indexChanged)
 
-    // Immediate siblings of the cursor at its NEW location
-    const next = nextSibling(state, state.cursor)
-    const prev = prevSibling(state, state.cursor, {})
+  // Capture the proposed moveType on the rising edge so it can be locked for the duration of the animation
+  const hasMoved = useMemo(() => {
+    return !!(lastMoveType && indexChanged && !prevIndexChanged)
+  }, [lastMoveType, indexChanged, prevIndexChanged])
 
-    if (lastMoveType === 'moveThoughtUp') {
-      // Try displaced sibling first (next if available, otherwise prev)
-      const displaced = next ?? prev
-      if (displaced) return displaced.id
+  // Lock the moveType after the first detection so that it does not reset
+  const [moveType, setMoveType] = useState<'moveThoughtCursor' | 'moveThoughtSibling' | null>(null)
 
-      // No sibling means cross-context move. Animate the parent that just lost the cursor (now the cursor's new uncle).
-      const oldParent = nextSibling(state, parentOf(state.cursor!))
-      return oldParent?.id ?? null
-    }
-
-    if (lastMoveType === 'moveThoughtDown') {
-      // Try displaced sibling first (prev if available, otherwise next)
-      const displaced = prev ?? next
-      if (displaced) return displaced.id
-
-      // No sibling means cross-context move. Animate the uncle (new parent) that gained the cursor.
-      const newParentId = head(parentOf(state.cursor!))
-      return newParentId ?? null
-    }
-
-    return null
-  })
-
-  // Determine animation type for moveThought
-  const moveType: 'moveThoughtCursor' | 'moveThoughtSibling' | null = lastMoveType
+  // Determine proposed moveType based on current render
+  const proposedMoveType: 'moveThoughtCursor' | 'moveThoughtSibling' | null = hasMoved
     ? isCursor
       ? 'moveThoughtCursor'
-      : thoughtId === movingThoughtId
-        ? 'moveThoughtSibling'
-        : null
+      : 'moveThoughtSibling'
     : null
+
+  // Lock the move type on the rising edge
+  useLayoutEffect(() => {
+    if (proposedMoveType) {
+      setMoveType(proposedMoveType)
+    }
+  }, [proposedMoveType])
 
   // Manage the move animation flag
   useLayoutEffect(() => {
     // Start moveThought animation only when the change originated from a moveThought action.
     // In moves that cross contexts (e.g. moving the only child of «A» below its next uncle «B»),
     // there is no displaced sibling, so `movingThoughtId` is null. Still animate the cursor node.
-    if (lastMoveType && (isCursor || movingThoughtId)) {
+    if (lastMoveType && (isCursor || moveType)) {
       setIsMoveAnimating(true)
     }
 
@@ -98,10 +75,11 @@ const useMoveThoughtAnimation = ({ thoughtId, isCursor }: Options): MoveThoughtA
     // updates can re-trigger the animation.
     const timer = setTimeout(() => {
       setIsMoveAnimating(false)
+      setMoveType(null)
     }, 0.5 * durations.layoutNodeAnimation)
 
     return () => clearTimeout(timer)
-  }, [lastMoveType, movingThoughtId, isCursor])
+  }, [lastMoveType, moveType, isCursor])
 
   const moveDivStyle = isMoveAnimating
     ? moveType === 'moveThoughtCursor'
