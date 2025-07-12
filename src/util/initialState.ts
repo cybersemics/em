@@ -4,7 +4,6 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
-import { isTouch } from '../browser'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, LongPressState, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
 import { clientId, tsidShared } from '../data-providers/yjs'
 import storageModel from '../stores/storageModel'
@@ -126,7 +125,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     importThoughtPath: null,
     invalidState: false,
     isLoading: true,
-    isMobileGestures: isTouch,
     isMulticursorExecuting: false,
     jumpHistory: storageModel.get('jumpHistory'),
     jumpIndex: 0,

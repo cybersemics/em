@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { SwitchTransition } from 'react-transition-group'
-import { css } from '../../styled-system/css'
+import { css, cva } from '../../styled-system/css'
 import Command from '../@types/Command'
 import CommandSortType from '../@types/CommandSortType'
 import { isTouch } from '../browser'
@@ -58,6 +58,7 @@ interface CommandTableContentProps extends CommandTableProps {
   search: string
   commands: Command[]
   sortOrder: CommandSortType
+  isMobileGestures: boolean
 }
 
 /** Renders the content of the command table.
@@ -74,6 +75,7 @@ const CommandTableContent = ({
   onSelect,
   viewType = 'table',
   sortOrder,
+  isMobileGestures,
 }: CommandTableContentProps) => {
   if (search) {
     /* Show command search results */
@@ -86,6 +88,7 @@ const CommandTableContent = ({
         onSelect={onSelect}
         search={search}
         viewType={viewType}
+        isMobileGestures={isMobileGestures}
       />
     )
   } else if (sortOrder === 'type') {
@@ -102,6 +105,7 @@ const CommandTableContent = ({
           onSelect={onSelect}
           selectedCommand={selectedCommand}
           viewType={viewType}
+          isMobileGestures={isMobileGestures}
         />
       )
     })
@@ -115,9 +119,46 @@ const CommandTableContent = ({
         customize={customize}
         onSelect={onSelect}
         viewType={viewType}
+        isMobileGestures={isMobileGestures}
       />
     )
   }
+}
+
+const toggleButton = cva({
+  base: {
+    all: 'unset',
+    cursor: 'pointer',
+    WebkitTextStrokeWidth: 0,
+  },
+  variants: {
+    active: {
+      true: {
+        WebkitTextStrokeWidth: '0.06em',
+      },
+    },
+  },
+})
+
+/** Renders a toggle button for switching viewing gesture and keyboard commands. */
+const MobileGestureToggle = ({
+  isMobileGestures,
+  setIsMobileGestures,
+}: {
+  isMobileGestures: boolean
+  setIsMobileGestures: (value: boolean) => void
+}) => {
+  return (
+    <div className={css({ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78em', paddingLeft: 5 })}>
+      <button className={toggleButton({ active: isMobileGestures })} onClick={() => setIsMobileGestures(true)}>
+        Gestures
+      </button>
+      |
+      <button className={toggleButton({ active: !isMobileGestures })} onClick={() => setIsMobileGestures(false)}>
+        Keyboard
+      </button>
+    </div>
+  )
 }
 
 /** Renders a table of commands with a fade-in animation when sorting changes. */
@@ -125,6 +166,7 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, { platformCommandsOnly: true })
   const [sortOrder, setSortOrder] = useState<CommandSortType>('type')
+  const [isMobileGestures, setIsMobileGestures] = useState(isTouch)
 
   return (
     <div>
@@ -140,6 +182,7 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
       >
         <SearchCommands onInput={setSearch} />
         <SortButton onSortChange={setSortOrder} />
+        <MobileGestureToggle isMobileGestures={isMobileGestures} setIsMobileGestures={setIsMobileGestures} />
       </div>
 
       <SwitchTransition>
@@ -152,6 +195,7 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
             onSelect={onSelect}
             viewType={viewType}
             sortOrder={sortOrder}
+            isMobileGestures={isMobileGestures}
           />
         </FadeTransition>
       </SwitchTransition>

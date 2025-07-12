@@ -13,6 +13,7 @@ interface CommandsGroupProps {
   search?: string
   commands: Command[]
   viewType: CommandViewType
+  isMobileGestures: boolean
 }
 /**
  * A component that displays a group of commands for CommandTable or CommandGrid.
@@ -25,6 +26,7 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
   title,
   search,
   viewType = 'table',
+  isMobileGestures,
 }) => {
   const modalClasses = modalTextRecipe()
 
@@ -63,6 +65,7 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
         onSelect={onSelect}
         search={search}
         viewType={viewType}
+        isMobileGestures={isMobileGestures}
       />
     </div>
   )

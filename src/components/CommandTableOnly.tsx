@@ -13,6 +13,7 @@ const CommandTableOnly = ({
   customize,
   onSelect,
   search,
+  isMobileGestures,
 }: {
   viewType?: CommandViewType
   commands: Command[]
@@ -21,6 +22,7 @@ const CommandTableOnly = ({
   onSelect?: (command: Command | null) => void
   /** Search text that will be highlighted within the matched command title. */
   search?: string
+  isMobileGestures?: boolean
 }) => {
   const fontSize = useSelector(state => state.fontSize)
   return (
@@ -54,6 +56,7 @@ const CommandTableOnly = ({
               search={search}
               alwaysShowDescription
               tableMode
+              isMobileGestures={isMobileGestures}
             />
           )
         })}

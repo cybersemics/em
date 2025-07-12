@@ -52,6 +52,7 @@ const CommandItem: FC<{
   isLastCommand?: boolean
   /** If the CommandItem is rendered within a <table>, then it needs to use <tr> and <td> and avoid inline padding. Confusingly, this is independent from viewType which determines whether the component is layed out in a 2-column 'grid' or a 'table' of rows. Perhaps this could be refactored to avoid using <table> and <tbody> at all while preserving the desired appearance in the Help modal. */
   tableMode?: boolean
+  isMobileGestures?: boolean
 }> = ({
   viewType,
   search = '',
@@ -66,6 +67,7 @@ const CommandItem: FC<{
   isFirstCommand,
   isLastCommand,
   tableMode,
+  isMobileGestures = isTouch,
 }) => {
   const [{ isDragging }, dragSource] = useDrag({
     type: DragAndDropType.ToolbarButton,
@@ -183,11 +185,18 @@ const CommandItem: FC<{
           { boxSizing: 'border-box' },
           viewType === 'grid'
             ? { minWidth: { base: '10rem', _mobile: 'auto' }, width: '100%' }
-            : { display: 'flex', justifyContent: 'center', alignItems: 'center', width: 32, height: 32 },
+            : {
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: 'max-content',
+                height: 32,
+                _desktop: { minWidth: 32, width: 32 },
+              },
         )}
       >
         {/* gesture diagram */}
-        {isTouch ? (
+        {isMobileGestures ? (
           viewType === 'grid' ? (
             <div
               className={css({
@@ -295,7 +304,7 @@ const CommandItem: FC<{
       </Cell>
 
       {/* keyboard shortcut */}
-      {command.keyboard && !isTouch && viewType !== 'grid' ? (
+      {command.keyboard && !isMobileGestures && viewType !== 'grid' ? (
         <Cell
           className={css({
             fontSize: '80%',

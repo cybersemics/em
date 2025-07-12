@@ -103,10 +103,6 @@ interface State {
    */
   isLoading: boolean
   /**
-   * If true, show mobile command gestures instead of command icons.
-   */
-  isMobileGestures: boolean
-  /**
    * Set to true when commands are being executed with multicursor.
    * Used by the undoRedoEnhancer to group undo patches for multicursor operations.
    */
