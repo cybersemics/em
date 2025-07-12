@@ -196,39 +196,26 @@ const CommandItem: FC<{
         )}
       >
         {/* gesture diagram */}
-        {isMobileGestures ? (
-          viewType === 'grid' ? (
-            <div
-              className={css({
-                border: '1px solid {colors.fgOverlay50}',
-                borderRadius: '8px',
-                textAlign: { _mobile: 'center' },
-              })}
-            >
-              <GestureDiagram
-                cssRaw={css.raw({
-                  width: { sm: '80px', md: '130px' },
-                  height: { sm: '80px', md: '130px' },
-                })}
-                path={gestureString(command)}
-                size={130}
-                arrowSize={25}
-                strokeWidth={7.5}
-                arrowhead={'outlined'}
-              />
-            </div>
-          ) : (
+        {isTouch && viewType === 'grid' ? (
+          <div
+            className={css({
+              border: '1px solid {colors.fgOverlay50}',
+              borderRadius: '8px',
+              textAlign: { _mobile: 'center' },
+            })}
+          >
             <GestureDiagram
-              color={disabled ? token('colors.gray') : undefined}
-              styleCancelAsRegularGesture
-              highlight={gestureHighlight}
-              path={command.id === 'cancel' ? null : gestureString(command)}
-              size={70}
-              arrowSize={18 - strokeWidth * 0.3}
-              strokeWidth={strokeWidth}
-              rounded={command.rounded}
+              cssRaw={css.raw({
+                width: { sm: '80px', md: '130px' },
+                height: { sm: '80px', md: '130px' },
+              })}
+              path={gestureString(command)}
+              size={130}
+              arrowSize={25}
+              strokeWidth={7.5}
+              arrowhead={'outlined'}
             />
-          )
+          </div>
         ) : Icon ? (
           <Icon
             cssRaw={css.raw({
@@ -304,24 +291,42 @@ const CommandItem: FC<{
       </Cell>
 
       {/* keyboard shortcut */}
-      {command.keyboard && !isMobileGestures && viewType !== 'grid' ? (
+      {viewType === 'grid' ? null : isMobileGestures ? (
         <Cell
-          className={css({
-            fontSize: '80%',
-            position: 'relative',
-            ...(isTouch
-              ? null
-              : {
-                  display: 'inline',
-                }),
-            marginLeft: 'auto',
-          })}
+          className={css({ height: 32, width: 32, display: 'flex', justifyContent: 'center', alignItems: 'center' })}
         >
-          <span className={css({ whiteSpace: 'nowrap' })}>
-            {command.keyboard && <CommandKeyboardShortcut keyboardOrString={command.keyboard} />}
-          </span>
+          <GestureDiagram
+            color={disabled ? token('colors.gray') : undefined}
+            styleCancelAsRegularGesture
+            highlight={gestureHighlight}
+            path={command.id === 'cancel' ? null : gestureString(command)}
+            size={70}
+            arrowSize={18 - strokeWidth * 0.3}
+            strokeWidth={strokeWidth}
+            rounded={command.rounded}
+            cssRaw={css.raw({ position: 'absolute' })}
+          />
         </Cell>
-      ) : null}
+      ) : (
+        command.keyboard && (
+          <Cell
+            className={css({
+              fontSize: '80%',
+              position: 'relative',
+              ...(isTouch
+                ? null
+                : {
+                    display: 'inline',
+                  }),
+              marginLeft: 'auto',
+            })}
+          >
+            <span className={css({ whiteSpace: 'nowrap' })}>
+              {command.keyboard && <CommandKeyboardShortcut keyboardOrString={command.keyboard} />}
+            </span>
+          </Cell>
+        )
+      )}
     </Container>
   )
 }
