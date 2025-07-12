@@ -93,12 +93,14 @@ const GestureDiagram = ({
   if (path === null) {
     return (
       <svg
-        width={styleCancelAsRegularGesture ? width : 20}
-        height={24}
+        width={styleCancelAsRegularGesture ? size / 2 : 20}
+        height={styleCancelAsRegularGesture ? size / 2 : 24}
         className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
         style={{
           ...style,
-          ...(!styleCancelAsRegularGesture && { marginTop: '12px', marginBottom: '20px', marginLeft: '20px' }),
+          ...(styleCancelAsRegularGesture
+            ? { paddingLeft: size / 10, paddingRight: size / 3 }
+            : { marginTop: '12px', marginBottom: '20px', marginLeft: '20px' }),
         }}
         viewBox='0 0 24 24'
       >
