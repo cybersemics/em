@@ -145,7 +145,9 @@ const MobileGestureToggle = ({
   isMobileGestures,
   setIsMobileGestures,
 }: {
+  /** The state of the toggle, managed externally. */
   isMobileGestures: boolean
+  /** Callback that is called when the toggle state changes. */
   setIsMobileGestures: (value: boolean) => void
 }) => {
   return (

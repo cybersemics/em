@@ -22,6 +22,7 @@ const CommandTableOnly = ({
   onSelect?: (command: Command | null) => void
   /** Search text that will be highlighted within the matched command title. */
   search?: string
+  /** See: CommandItem['isMobileGestures']. */
   isMobileGestures?: boolean
 }) => {
   const fontSize = useSelector(state => state.fontSize)

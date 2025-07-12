@@ -13,6 +13,7 @@ interface CommandsGroupProps {
   search?: string
   commands: Command[]
   viewType: CommandViewType
+  /** See: CommandItem['isMobileGestures']. */
   isMobileGestures: boolean
 }
 /**

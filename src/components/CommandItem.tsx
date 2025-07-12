@@ -52,6 +52,7 @@ const CommandItem: FC<{
   isLastCommand?: boolean
   /** If the CommandItem is rendered within a <table>, then it needs to use <tr> and <td> and avoid inline padding. Confusingly, this is independent from viewType which determines whether the component is layed out in a 2-column 'grid' or a 'table' of rows. Perhaps this could be refactored to avoid using <table> and <tbody> at all while preserving the desired appearance in the Help modal. */
   tableMode?: boolean
+  /** If true, renders the gesture diagram instead of the keyboard shortcut. Defaults to isTouch. Ignored if viewType is 'grid'. */
   isMobileGestures?: boolean
 }> = ({
   viewType,
@@ -289,7 +290,7 @@ const CommandItem: FC<{
         )}
       </Cell>
 
-      {/* keyboard shortcut */}
+      {/* gesture diagram or keyboard shortcut */}
       {viewType === 'grid' ? null : isMobileGestures ? (
         <Cell
           className={css({ height: 32, width: 32, display: 'flex', justifyContent: 'center', alignItems: 'center' })}
