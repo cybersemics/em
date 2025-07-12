@@ -182,7 +182,9 @@ const CommandTable = ({ customize, onSelect, selectedCommand, viewType = 'table'
       >
         <SearchCommands onInput={setSearch} />
         <SortButton onSortChange={setSortOrder} />
-        <MobileGestureToggle isMobileGestures={isMobileGestures} setIsMobileGestures={setIsMobileGestures} />
+        {viewType !== 'grid' && (
+          <MobileGestureToggle isMobileGestures={isMobileGestures} setIsMobileGestures={setIsMobileGestures} />
+        )}
       </div>
 
       <SwitchTransition>
