@@ -189,9 +189,8 @@ const CommandItem: FC<{
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                width: 'max-content',
+                width: 32,
                 height: 32,
-                _desktop: { minWidth: 32, width: 32 },
               },
         )}
       >
