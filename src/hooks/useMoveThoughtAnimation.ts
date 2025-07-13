@@ -89,7 +89,7 @@ const useMoveThoughtAnimation = ({ indexChanged, previousIndex, index }: Options
       setMoveType(null)
       // Adjust timeout to apply before animation finishes
       // to avoid race condition with the next render cycle
-    }, 0.5 * durations.layoutNodeAnimation)
+    }, 0.75 * durations.layoutNodeAnimation)
 
     return () => clearTimeout(timer)
   }, [lastMoveType, moveType])
@@ -100,13 +100,14 @@ const useMoveThoughtAnimation = ({ indexChanged, previousIndex, index }: Options
           transformOrigin: 'left',
           transform: 'scale3d(1.5, 1.5, 1)',
           transition: `transform {durations.layoutNodeAnimation} ease-out`,
+          zIndex: 2,
         }
       : moveType === 'moveThoughtDisplaced'
         ? {
             transformOrigin: 'left',
             transform: 'scale3d(0.5, 0.5, 1)',
             filter: 'blur(2px)',
-            opacity: 0,
+            opacity: 0.5,
           }
         : undefined
     : moveType === 'moveThoughtAction'
