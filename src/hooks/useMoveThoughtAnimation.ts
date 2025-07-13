@@ -1,10 +1,7 @@
 import { useLayoutEffect, useMemo, useState } from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
-import Path from '../@types/Path'
+import { useSelector } from 'react-redux'
 import State from '../@types/State'
 import durations from '../durations.config'
-import equalPath from '../util/equalPath'
-import parentOf from '../util/parentOf'
 import usePrevious from './usePrevious'
 
 /**
@@ -12,17 +9,21 @@ import usePrevious from './usePrevious'
  */
 export interface MoveThoughtAnimation {
   isMoveAnimating: boolean
-  moveType: 'moveThoughtCursor' | 'moveThoughtSibling' | null
+  /**
+   * Animation - moveThoughtAction: Node moved in the same direction as the action (primary).
+   * Animation - moveThoughtDisplaced: Node moved opposite to the action direction (secondary).
+   */
+  moveType: 'moveThoughtAction' | 'moveThoughtDisplaced' | null
   moveDivStyle: React.CSSProperties | undefined
 }
 
 interface Options {
-  /** True if this TreeNode represents the current cursor. */
-  isCursor: boolean
   /** True if the index of the thought has changed. */
   indexChanged: boolean
-  /** The path of the thought. */
-  path: Path
+  /** The previous on-screen index of the thought. */
+  previousIndex: number | undefined
+  /** The current on-screen index of the thought. */
+  index: number
 }
 
 /**
@@ -31,29 +32,16 @@ interface Options {
  * of the Redux selectors and timing needed so that the consuming component (TreeNode)
  * only has to deal with the resulting animation flags.
  */
-const useMoveThoughtAnimation = ({ isCursor, indexChanged, path }: Options): MoveThoughtAnimation => {
+const useMoveThoughtAnimation = ({ indexChanged, previousIndex, index }: Options): MoveThoughtAnimation => {
   const [isMoveAnimating, setIsMoveAnimating] = useState(false)
 
-  const { lastMoveType, isSiblingOfCursor } = useSelector((state: State) => {
-    // Determine if the last undo patch action was moveThoughtUp or moveThoughtDown, and its type.
+  const lastMoveType = useSelector((state: State) => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    const lastMoveType: 'moveThoughtUp' | 'moveThoughtDown' | null = lastPatches?.some(patch =>
-      ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]),
-    )
+    const moveType = lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
       ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
       : null
-
-    // Determine if this node is a sibling of the cursor (i.e., shares the same parent path)
-    const isSiblingOfCursor = (() => {
-      if (isCursor || !state.cursor) return false
-      return equalPath(parentOf(state.cursor), parentOf(path))
-    })()
-
-    return {
-      lastMoveType,
-      isSiblingOfCursor,
-    }
-  }, shallowEqual)
+    return moveType
+  })
 
   // Capture the previous value of indexChanged
   const prevIndexChanged = usePrevious(indexChanged)
@@ -63,18 +51,19 @@ const useMoveThoughtAnimation = ({ isCursor, indexChanged, path }: Options): Mov
     return !!(lastMoveType && indexChanged && !prevIndexChanged)
   }, [lastMoveType, indexChanged, prevIndexChanged])
 
-  const [moveType, setMoveType] = useState<'moveThoughtCursor' | 'moveThoughtSibling' | null>(null)
+  const [moveType, setMoveType] = useState<'moveThoughtAction' | 'moveThoughtDisplaced' | null>(null)
 
-  let proposedMoveType: 'moveThoughtCursor' | 'moveThoughtSibling' | null = null
+  let proposedMoveType: 'moveThoughtAction' | 'moveThoughtDisplaced' | null = null
 
-  if (hasMoved) {
-    if (isCursor) {
-      // Animate the cursor node
-      proposedMoveType = 'moveThoughtCursor'
-    } else {
-      // Animate the sibling node
-      proposedMoveType = isSiblingOfCursor ? 'moveThoughtSibling' : null
-    }
+  if (hasMoved && previousIndex !== undefined) {
+    // Determine actual movement direction of this node relative to its previous on-screen index.
+    const direction: 'up' | 'down' = index < previousIndex ? 'up' : 'down'
+
+    const isPrimary =
+      (lastMoveType === 'moveThoughtUp' && direction === 'up') ||
+      (lastMoveType === 'moveThoughtDown' && direction === 'down')
+
+    proposedMoveType = isPrimary ? 'moveThoughtAction' : 'moveThoughtDisplaced'
   }
 
   // Implement the move type on the next render cycle
@@ -89,7 +78,7 @@ const useMoveThoughtAnimation = ({ isCursor, indexChanged, path }: Options): Mov
     // Start moveThought animation only when the change originated from a moveThought action.
     // In moves that cross contexts (e.g. moving the only child of «A» below its next uncle «B»),
     // there is no displaced sibling, so `movingThoughtId` is null. Still animate the cursor node.
-    if (lastMoveType && (isCursor || moveType)) {
+    if (lastMoveType && moveType) {
       setIsMoveAnimating(true)
     }
 
@@ -103,16 +92,16 @@ const useMoveThoughtAnimation = ({ isCursor, indexChanged, path }: Options): Mov
     }, 0.5 * durations.layoutNodeAnimation)
 
     return () => clearTimeout(timer)
-  }, [lastMoveType, moveType, isCursor])
+  }, [lastMoveType, moveType])
 
   const moveDivStyle = isMoveAnimating
-    ? moveType === 'moveThoughtCursor'
+    ? moveType === 'moveThoughtAction'
       ? {
           transformOrigin: 'left',
           transform: 'scale3d(1.5, 1.5, 1)',
           transition: `transform {durations.layoutNodeAnimation} ease-out`,
         }
-      : moveType === 'moveThoughtSibling'
+      : moveType === 'moveThoughtDisplaced'
         ? {
             transformOrigin: 'left',
             transform: 'scale3d(0.5, 0.5, 1)',
@@ -120,7 +109,7 @@ const useMoveThoughtAnimation = ({ isCursor, indexChanged, path }: Options): Mov
             opacity: 0,
           }
         : undefined
-    : moveType === 'moveThoughtCursor'
+    : moveType === 'moveThoughtAction'
       ? {
           transformOrigin: 'left',
           transform: 'scale3d(1, 1, 1)',
