@@ -1,7 +1,7 @@
 import path from 'path'
 import { KnownDevices } from 'puppeteer'
 import configureSnapshots from '../configureSnapshots'
-import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
@@ -36,7 +36,7 @@ describe('mobile only', () => {
         - b
         `)
 
-    await click('[aria-label=home]')
+    await clickThought('b')
     await longPressThought('a')
     await longPressThought('b')
 
