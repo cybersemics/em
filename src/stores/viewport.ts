@@ -59,14 +59,4 @@ export const updateSize = _.throttle(
   { leading: true },
 )
 
-/** Throttled update of viewport width. */
-export const updateContentWidth = _.throttle(
-  (contentWidth: number) => {
-    viewportStore.update({ contentWidth })
-  },
-  // lock to 60 fps
-  16.666,
-  { leading: true },
-)
-
 export default viewportStore

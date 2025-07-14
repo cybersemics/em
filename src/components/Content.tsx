@@ -17,7 +17,7 @@ import {
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
-import { updateContentWidth } from '../stores/viewport'
+import viewportStore from '../stores/viewport'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
@@ -69,8 +69,7 @@ const Content: FC = () => {
     if (!contentRef.current) return
 
     const resizeObserver = new ResizeObserver(entries => {
-      const width = entries[0]?.contentRect.width || 0
-      updateContentWidth(width)
+      viewportStore.update({ contentWidth: entries[0]?.contentRect.width || 0 })
     })
 
     resizeObserver.observe(contentRef.current)
