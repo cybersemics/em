@@ -1,5 +1,5 @@
 diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
-index 161095a0742bc11a0755b842a45d39ad337a15a4..f3e2742459aed128da0ecba246e9f5ecd191f174 100644
+index 161095a0742bc11a0755b842a45d39ad337a15a4..492d600ea325ee9a5da75bc0779f86875853ccdd 100644
 --- a/dist/TouchBackendImpl.js
 +++ b/dist/TouchBackendImpl.js
 @@ -254,18 +254,29 @@ export class TouchBackendImpl {
@@ -16,7 +16,7 @@ index 161095a0742bc11a0755b842a45d39ad337a15a4..f3e2742459aed128da0ecba246e9f5ec
 +              }
 +            } else {
 +              return
-+            }
+             }
 +
 +            if (
 +              this.timeout &&
@@ -24,7 +24,7 @@ index 161095a0742bc11a0755b842a45d39ad337a15a4..f3e2742459aed128da0ecba246e9f5ec
 +              (this.options.touchSlop ? this.options.touchSlop : 0)
 +            ) {
 +              clearTimeout(this.timeout)
-             }
++            }
 +
              if (!this.document || this.waitingForDelay) {
                  return;
@@ -38,8 +38,24 @@ index 161095a0742bc11a0755b842a45d39ad337a15a4..f3e2742459aed128da0ecba246e9f5ec
              // If the touch move started as a scroll, or is is between the scroll angles
              if (this._isScrolling || !this.monitor.isDragging() && inAngleRanges(this._mouseClientOffset.x || 0, this._mouseClientOffset.y || 0, clientOffset.x, clientOffset.y, this.options.scrollAngleRanges)) {
                  this._isScrolling = true;
+@@ -355,6 +366,7 @@ export class TouchBackendImpl {
+         this.handleTopMoveEndCapture = (e)=>{
+             this._isScrolling = false;
+             this.lastTargetTouchFallback = undefined;
++            this._mouseClientOffset = {};
+             if (!eventShouldEndDrag(e)) {
+                 return;
+             }
+@@ -363,7 +375,6 @@ export class TouchBackendImpl {
+                 return;
+             }
+             if (e.cancelable) e.preventDefault();
+-            this._mouseClientOffset = {};
+             this.uninstallSourceNodeRemovalObserver();
+             this.actions.drop();
+             this.actions.endDrag();
 diff --git a/src/TouchBackendImpl.ts b/src/TouchBackendImpl.ts
-index f2c164b1157180b6234da5a3cf2f38ddd165929d..7cbc628a8cdc1010b4876893e81a9d1acaa1ae41 100644
+index f2c164b1157180b6234da5a3cf2f38ddd165929d..a375b3689c5afd2e2ad63f47dbc602bc525fb2b4 100644
 --- a/src/TouchBackendImpl.ts
 +++ b/src/TouchBackendImpl.ts
 @@ -409,20 +409,29 @@ export class TouchBackendImpl implements Backend {
@@ -80,3 +96,20 @@ index f2c164b1157180b6234da5a3cf2f38ddd165929d..7cbc628a8cdc1010b4876893e81a9d1a
  
  		// If the touch move started as a scroll, or is is between the scroll angles
  		if (
+@@ -562,6 +571,7 @@ export class TouchBackendImpl implements Backend {
+ 	public handleTopMoveEndCapture = (e: Event): void => {
+ 		this._isScrolling = false
+ 		this.lastTargetTouchFallback = undefined
++		this._mouseClientOffset = {}
+ 
+ 		if (!eventShouldEndDrag(e as MouseEvent)) {
+ 			return
+@@ -574,8 +584,6 @@ export class TouchBackendImpl implements Backend {
+ 
+ 		if (e.cancelable) e.preventDefault()
+ 
+-		this._mouseClientOffset = {}
+-
+ 		this.uninstallSourceNodeRemovalObserver()
+ 		this.actions.drop()
+ 		this.actions.endDrag()
