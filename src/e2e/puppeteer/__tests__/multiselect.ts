@@ -1,12 +1,12 @@
 import path from 'path'
 import { KnownDevices } from 'puppeteer'
 import configureSnapshots from '../configureSnapshots'
+import click from '../helpers/click'
 import emulate from '../helpers/emulate'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
-import click from '../helpers/click'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
