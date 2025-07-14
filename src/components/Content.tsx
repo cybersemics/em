@@ -44,7 +44,6 @@ const Content: FC = () => {
     return children.length
   })
   const isAbsoluteContext = useSelector(state => isAbsolute(state.rootContext))
-  const longPress = useSelector(state => state.longPress)
 
   /** Closes modals and dropdowns if the click goes all the way through to the content. */
   const clickOnEmptySpace: Thunk = (dispatch: Dispatch, getState) => {
@@ -52,7 +51,8 @@ const Content: FC = () => {
 
     // make sure the the actual Content element has been clicked
     // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
-    if (!isPressed) return
+    // also make sure that the click doesn't occur during a long press (#3120)
+    if (!isPressed || state.longPress !== LongPressState.Inactive) return
     setIsPressed(false)
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
@@ -63,9 +63,7 @@ const Content: FC = () => {
     <div
       id='content-wrapper'
       {...fastClick(() => dispatch(clickOnEmptySpace), { enableHaptics: false })}
-      onMouseDown={() => {
-        if (longPress === LongPressState.Inactive) setIsPressed(true)
-      }}
+      onMouseDown={() => setIsPressed(true)}
     >
       <div
         id='content'
