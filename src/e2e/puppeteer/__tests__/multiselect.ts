@@ -6,6 +6,7 @@ import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
+import click from '../helpers/click'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -35,6 +36,7 @@ describe('mobile only', () => {
         - b
         `)
 
+    await click('[aria-label=home]')
     await longPressThought('a')
     await longPressThought('b')
 
