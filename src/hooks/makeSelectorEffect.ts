@@ -1,9 +1,8 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import Store from '../@types/Store'
-import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
 
 /**
- * Creates a useLayoutEffect hook that invokes a callback when a slice of a given store's state changes.  Unlike useSelector, triggers the callback without re-rendering the component.  Useful when a DOM calculation needs to be performed after a state change, but does not always require a re-render.
+ * Creates a useLayoutEffect hook that invokes a callback when a slice of a given store's state changes. Unlike useSelector, this hook does NOT trigger re-renders - it calls the effect directly when the selected state changes. This is useful for DOM calculations that need to be performed after a state change but should not cause component re-renders.
  *
  * @template U - Store type with generic state.
  * @param store - The store instance to subscribe to.
@@ -18,8 +17,11 @@ import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
  * const useSelectorEffect = makeSelectorEffect(myStore)
  *
  * // Use in component - memoize functions to prevent recreation
- * const select = useCallback(state => state.someValue, [necessary dependencies here])
- * const effect = useCallback(newValue => updateDOM(newValue), [necessary dependencies here])
+ * const select = useCallback(state => state.someValue, [])
+ * const effect = useCallback(newValue => {
+ *   // This runs without causing a re-render
+ *   updateDOM(newValue)
+ * }, [])
  * useSelectorEffect(effect, select, isEqual)
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,9 +34,9 @@ const makeSelectorEffect = <U extends Store<any>>(store: U) => {
     // This ref persists between renders and is updated in the subscription
     const prev = useRef<T>(select(store.getState()))
 
-    // State is used to trigger the layout effect when value changes
-    // Unlike useSelector, this doesn't cause a re-render of the component
-    const [state, setState] = useState<T>(select(store.getState()))
+    // Keep a ref to the current effect to avoid stale closures
+    const effectRef = useRef(effect)
+    effectRef.current = effect
 
     useLayoutEffect(
       () =>
@@ -42,16 +44,16 @@ const makeSelectorEffect = <U extends Store<any>>(store: U) => {
         store.subscribe(() => {
           const current = select(store.getState())
 
-          // Only update state if value has changed according to equality function
+          // Only run effect if value has changed according to equality function
           if (equalityFn ? !equalityFn(current, prev.current) : current !== prev.current) {
-            setState(current)
+            // Call effect directly without setState to avoid re-renders
+            // Use requestAnimationFrame to ensure DOM updates are complete
+            requestAnimationFrame(() => effectRef.current(current))
           }
           prev.current = current
         }),
       [equalityFn, select],
     ) // These functions should be memoized to prevent unnecessary re-subscriptions
-
-    useLayoutAnimationFrameEffect(() => effect(state), [effect, state]) // effect should be memoized to prevent unnecessary effect runs
   }
 }
 
