@@ -8,7 +8,6 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
-import testIfNotCI from '../helpers/testIfNotCI'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -67,7 +66,7 @@ describe('multiline', () => {
     // TODO: Test intermittently fails
     // e.g. https://github.com/cybersemics/em/actions/runs/13817648331/job/38654935147?pr=2800
     // Fails with sleep(200): https://github.com/cybersemics/em/actions/runs/14812798110/job/41589583778
-    await sleep(400)
+    await sleep(1000)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot({
@@ -81,11 +80,11 @@ describe('multiline', () => {
 
   // TODO: Flaky test
   // https://github.com/cybersemics/em/issues/2956
-  testIfNotCI('Font Size: 18 (default)', multilineTest)
+  it('Font Size: 18 (default)', multilineTest)
 
   // TODO: Flaky test
   // https://github.com/cybersemics/em/issues/2956
-  testIfNotCI('Font Size: 13', async () => {
+  it('Font Size: 13', async () => {
     await click('[data-testid=decrease-font]') // 17
     await click('[data-testid=decrease-font]') // 16
     await click('[data-testid=decrease-font]') // 15
