@@ -469,8 +469,8 @@ export enum LongPressState {
   DragHold = 'DragHold',
   /** The user is currently dragging a thought. */
   DragInProgress = 'DragInProgress',
-  /** The drag has been cancelled, but the user has not released their finger from the screen. */
-  DragCancelled = 'DragCancelled',
+  /** The drag has been canceled, but the user has not released their finger from the screen. */
+  DragCanceled = 'DragCanceled',
 }
 
 // User settings that can be saved to /EM/Settings/
