@@ -86,7 +86,6 @@ const Content: FC = () => {
         id='content'
         ref={contentRef}
         className={css({
-          padding: `80px ${CONTENT_BOX_PADDING_RIGHT}px 153px ${CONTENT_BOX_PADDING_LEFT}px`,
           position: 'relative',
           transition: 'transform 0 ease-out, margin 0 ease-out',
           boxSizing: 'border-box',
@@ -114,6 +113,13 @@ const Content: FC = () => {
               paddingBottom: '20px',
             }),
         })}
+        style={{
+          // Moved from css({...}) because PandaCSS requires statically analyzable values at build time.
+          // Template literals with runtime variables like `80px ${CONTENT_BOX_PADDING_RIGHT}px 153px ${CONTENT_BOX_PADDING_LEFT}px`
+          // cannot be determined during static analysis, so PandaCSS doesn't generate the corresponding CSS.
+          // Using inline styles ensures these dynamic padding values work correctly at runtime.
+          padding: `80px ${CONTENT_BOX_PADDING_RIGHT}px 153px ${CONTENT_BOX_PADDING_LEFT}px`,
+        }}
       >
         {search != null ? (
           <Search />

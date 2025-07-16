@@ -8,6 +8,7 @@ import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
+import useDropHoverLength from '../hooks/useDropHoverLength'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
@@ -34,6 +35,7 @@ const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) =
 
   // Calculate the height for the child thought over cliff
   const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ depth }) : 0
+  const dropHoverLength = useDropHoverLength()
 
   return (
     <li className={css({ position: 'relative' })}>
@@ -79,7 +81,7 @@ const DropChild = ({ depth, path, simplePath, isLastVisible }: DropChildProps) =
                 width: '100%',
               }),
             )}
-            style={{ backgroundColor: dropHoverColor }}
+            style={{ width: dropHoverLength, backgroundColor: dropHoverColor }}
           />
         )}
       </span>
