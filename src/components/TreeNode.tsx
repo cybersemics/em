@@ -162,9 +162,7 @@ const TreeNode = ({
     [index, isLastActionSort],
   )
 
-  const { isMoveAnimating, moveType, moveDivStyle } = useMoveThoughtAnimation({
-    indexChanged,
-    previousIndex,
+  const { moveAnimation, moveDivStyle } = useMoveThoughtAnimation({
     index,
   })
 
@@ -173,6 +171,8 @@ const TreeNode = ({
    * to start immediately from the correct position.
    */
   const sortOffset = sortDirection === 'clockwise' ? 30 : -30
+
+  // moveAnimation is now provided by useMoveThoughtAnimation
 
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
@@ -239,15 +239,6 @@ const TreeNode = ({
           left: 0,
         }
       : moveDivStyle
-
-  const moveAnimation =
-    isMoveAnimating && moveType === 'moveThoughtDisplaced'
-      ? `transform {durations.layoutNodeAnimation} ease-out, filter {durations.layoutNodeAnimation} ease-out, opacity {durations.layoutNodeAnimation} ease-out`
-      : isMoveAnimating && moveType === 'moveThoughtAction'
-        ? `transform {durations.layoutNodeAnimation} ease-out`
-        : moveType === 'moveThoughtDisplaced'
-          ? `opacity {durations.layoutNodeAnimation} ease-out`
-          : undefined
 
   return (
     <FadeTransition

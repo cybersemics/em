@@ -8,20 +8,26 @@ import usePrevious from './usePrevious'
  * Return type of useMoveThoughtAnimation.
  */
 export interface MoveThoughtAnimation {
+  /**
+   * Whether the move animation is currently active.
+   */
   isMoveAnimating: boolean
   /**
    * Animation - moveThoughtAction: Node moved in the same direction as the action (primary).
    * Animation - moveThoughtDisplaced: Node moved opposite to the action direction (secondary).
    */
   moveType: 'moveThoughtAction' | 'moveThoughtDisplaced' | null
+  /**
+   * The style object to apply to the move div.
+   */
   moveDivStyle: React.CSSProperties | undefined
+  /**
+   * Transition string to apply to the move animation.
+   */
+  moveAnimation: string | undefined
 }
 
 interface Options {
-  /** True if the index of the thought has changed. */
-  indexChanged: boolean
-  /** The previous on-screen index of the thought. */
-  previousIndex: number | undefined
   /** The current on-screen index of the thought. */
   index: number
 }
@@ -32,7 +38,7 @@ interface Options {
  * of the Redux selectors and timing needed so that the consuming component (TreeNode)
  * only has to deal with the resulting animation flags.
  */
-const useMoveThoughtAnimation = ({ indexChanged, previousIndex, index }: Options): MoveThoughtAnimation => {
+const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
   const [isMoveAnimating, setIsMoveAnimating] = useState(false)
 
   const lastMoveType = useSelector((state: State) => {
@@ -43,10 +49,14 @@ const useMoveThoughtAnimation = ({ indexChanged, previousIndex, index }: Options
     return moveType
   })
 
-  // Capture the previous value of indexChanged
+  // Determine if the on-screen index has changed since the last render.
+  const previousIndex = usePrevious<number>(index)
+  const indexChanged = previousIndex !== undefined && previousIndex !== index
+
+  // Capture the previous value of indexChanged so we know when it changes between renders.
   const prevIndexChanged = usePrevious(indexChanged)
 
-  // Capture the proposed moveType
+  // Capture the proposed moveType. Only compute on the render where indexChanged flips to true.
   const hasMoved = useMemo(() => {
     return !!(lastMoveType && indexChanged && !prevIndexChanged)
   }, [lastMoveType, indexChanged, prevIndexChanged])
@@ -115,10 +125,21 @@ const useMoveThoughtAnimation = ({ indexChanged, previousIndex, index }: Options
         }
       : undefined
 
+  // Transition string to be applied to the element's "transition" CSS property.
+  const moveAnimation =
+    isMoveAnimating && moveType === 'moveThoughtDisplaced'
+      ? `transform {durations.layoutNodeAnimation} ease-out, filter {durations.layoutNodeAnimation} ease-out, opacity {durations.layoutNodeAnimation} ease-out`
+      : isMoveAnimating && moveType === 'moveThoughtAction'
+        ? `transform {durations.layoutNodeAnimation} ease-out`
+        : moveType === 'moveThoughtDisplaced'
+          ? `opacity {durations.layoutNodeAnimation} ease-out`
+          : undefined
+
   return {
     isMoveAnimating,
     moveType,
     moveDivStyle,
+    moveAnimation,
   }
 }
 
