@@ -10,11 +10,11 @@ import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import testIfNotCI from '../helpers/testIfNotCI'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForFrames from '../helpers/waitForFrames'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
-import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -214,28 +214,7 @@ describe('all platforms', () => {
     await press('p', { meta: true })
     await press('Escape')
 
-    await page.waitForSelector('[data-testid="popup-value"]', {
-      hidden: true,
-      timeout: 1000,
-    })
-
-    // Wait a small additional time for focus restoration to complete
-    // The command palette saves and restores selection, which can be asynchronous
-    await new Promise(resolve => setTimeout(resolve, 100))
-
-    // Optionally verify that selection is restored by checking if there's an active selection
-    await page
-      .waitForFunction(
-        () => {
-          const selection = window.getSelection()
-          return selection && selection.focusNode !== null
-        },
-        { timeout: 500 },
-      )
-      .catch(() => {
-        // If selection check fails, continue anyway as the command palette is closed
-        // Some tests might not have an active selection after closing
-      })
+    await waitForFrames()
 
     await press('ArrowDown')
 
