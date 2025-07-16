@@ -87,9 +87,7 @@ const useMoveThoughtAnimation = ({ indexChanged, previousIndex, index }: Options
     const timer = setTimeout(() => {
       setIsMoveAnimating(false)
       setMoveType(null)
-      // Adjust timeout to apply before animation finishes
-      // to avoid race condition with the next render cycle
-    }, 0.75 * durations.layoutNodeAnimation)
+    }, durations.layoutNodeAnimation)
 
     return () => clearTimeout(timer)
   }, [lastMoveType, moveType])
