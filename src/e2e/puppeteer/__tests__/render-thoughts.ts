@@ -139,8 +139,6 @@ describe('Font Size: 22', () => {
 describe('multiline', () => {
   beforeEach(hideHUD)
 
-  // TODO: Flaky test
-  // https://github.com/cybersemics/em/issues/3088
   it.skip('multiline thought', async () => {
     await paste(`
         - a
@@ -149,6 +147,7 @@ describe('multiline', () => {
         - c
       `)
 
+    await waitForFrames()
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
