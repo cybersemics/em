@@ -153,7 +153,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     thoughts: initialThoughts(created),
     undoPatches: [],
     showCommandMenu: false,
-    skipMoveThoughtAnimation: false,
+    skipMoveAnimation: false,
   }
 
   /**

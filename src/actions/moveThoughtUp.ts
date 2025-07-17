@@ -81,7 +81,7 @@ const moveThoughtUp = (state: State): State => {
 
   return {
     ...movedState,
-    skipMoveThoughtAnimation: skipMoveAnimation,
+    skipMoveAnimation: skipMoveAnimation,
   }
 }
 

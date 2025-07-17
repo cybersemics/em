@@ -53,15 +53,16 @@ injectKeyframes()
  */
 const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
   // Selectors
-  const lastMoveType = useSelector((state: State) => {
+  const { lastMoveType, skipMoveAnimation } = useSelector((state: State) => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    const moveType = lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
+    const lastMoveType = lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
       ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
       : null
-    return moveType
+    return {
+      lastMoveType,
+      skipMoveAnimation: state.skipMoveAnimation,
+    }
   })
-
-  const skipMoveThoughtAnimation = useSelector((state: State) => state.skipMoveThoughtAnimation)
 
   // Determine if the on-screen index has changed since the last render.
   const previousIndex = usePrevious<number>(index)
@@ -107,7 +108,7 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
   }, [lastMoveType, moveType])
 
   const moveDivStyle = useMemo<React.CSSProperties | undefined>(() => {
-    if (!moveType || skipMoveThoughtAnimation) return undefined
+    if (!moveType || skipMoveAnimation) return undefined
 
     // Common style props
     const base: React.CSSProperties = {
@@ -131,10 +132,10 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
       }
     }
     return undefined
-  }, [moveType, skipMoveThoughtAnimation])
+  }, [moveType, skipMoveAnimation])
 
   // Override animation output when skipping is requested.
-  if (skipMoveThoughtAnimation) {
+  if (skipMoveAnimation) {
     return {
       moveDivStyle: undefined,
     }

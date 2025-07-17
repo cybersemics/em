@@ -184,7 +184,7 @@ interface State {
   /** Undo history. Contains diffs that can be applied to State to revert actions. State.undoPatches[0] is the oldest. */
   undoPatches: Patch[]
   /** If true, the next moveThoughtUp/Down animation should be skipped (used for table view cross-context moves). */
-  skipMoveThoughtAnimation?: boolean
+  skipMoveAnimation?: boolean
 }
 
 export default State
