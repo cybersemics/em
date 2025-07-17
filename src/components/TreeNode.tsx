@@ -304,6 +304,7 @@ const TreeNode = ({
               // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
               style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
               crossContextualKey={thoughtKey}
+              cliff={cliff}
               prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
               isLastVisible={isLastVisible}
               autofocus={autofocus}
