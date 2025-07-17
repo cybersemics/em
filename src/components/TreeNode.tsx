@@ -162,17 +162,13 @@ const TreeNode = ({
     [index, isLastActionSort],
   )
 
-  const { moveAnimation, moveDivStyle } = useMoveThoughtAnimation({
-    index,
-  })
+  const { moveDivStyle } = useMoveThoughtAnimation({ index })
 
   /**
    * Horizontal offset for the first frame of a sort animation. This allows the X transition
    * to start immediately from the correct position.
    */
   const sortOffset = sortDirection === 'clockwise' ? 30 : -30
-
-  // moveAnimation is now provided by useMoveThoughtAnimation
 
   // We split x and y transitions into separate nodes to:
   // 1. Allow independent timing curves for horizontal and vertical movement
@@ -286,7 +282,7 @@ const TreeNode = ({
                 : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
               : isLastActionSort
                 ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
-                : moveAnimation,
+                : undefined,
           })}
           style={innerDivStyle}
         >
