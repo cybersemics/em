@@ -71,9 +71,7 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
   const prevIndexChanged = usePrevious(indexChanged)
 
   // Capture the proposed moveType. Only compute on the render where indexChanged flips to true.
-  const hasMoved = useMemo(() => {
-    return !!(lastMoveType && indexChanged && !prevIndexChanged)
-  }, [lastMoveType, indexChanged, prevIndexChanged])
+  const hasMoved = !!(lastMoveType && indexChanged && !prevIndexChanged)
 
   const [moveType, setMoveType] = useState<'moveThoughtAction' | 'moveThoughtDisplaced' | null>(null)
 
