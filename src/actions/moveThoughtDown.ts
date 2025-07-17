@@ -75,10 +75,10 @@ const moveThoughtDown = (state: State): State => {
     newRank: rankNew,
   })
 
-  // Inject the skipMoveThoughtAnimation flag so that UI hooks can skip animations when needed.
+  // Inject the skipMoveAnimation flag so that UI hooks can skip animations when needed.
   return {
     ...movedState,
-    skipMoveThoughtAnimation: skipMoveAnimation,
+    skipMoveAnimation: skipMoveAnimation,
   }
 }
 
