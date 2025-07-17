@@ -8,23 +8,7 @@ import usePrevious from './usePrevious'
  * Return type of useMoveThoughtAnimation.
  */
 export interface MoveThoughtAnimation {
-  /**
-   * Whether the move animation is currently active.
-   */
-  isMoveAnimating: boolean
-  /**
-   * Animation - moveThoughtAction: Node moved in the same direction as the action (primary).
-   * Animation - moveThoughtDisplaced: Node moved opposite to the action direction (secondary).
-   */
-  moveType: 'moveThoughtAction' | 'moveThoughtDisplaced' | null
-  /**
-   * The style object to apply to the move div.
-   */
   moveDivStyle: React.CSSProperties | undefined
-  /**
-   * Transition string to apply to the move animation.
-   */
-  moveAnimation: string | undefined
 }
 
 interface Options {
@@ -41,16 +25,16 @@ interface Options {
 const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
   const [isMoveAnimating, setIsMoveAnimating] = useState(false)
 
-  const { lastMoveType, skipMoveThoughtAnimation } = useSelector((state: State) => {
+  // Selectors
+  const lastMoveType = useSelector((state: State) => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-
-    return {
-      lastMoveType: lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
-        ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
-        : null,
-      skipMoveThoughtAnimation: state.skipMoveThoughtAnimation,
-    }
+    const moveType = lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
+      ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
+      : null
+    return moveType
   })
+
+  const skipMoveThoughtAnimation = useSelector((state: State) => state.skipMoveThoughtAnimation)
 
   // Determine if the on-screen index has changed since the last render.
   const previousIndex = usePrevious<number>(index)
@@ -105,54 +89,52 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
     return () => clearTimeout(timer)
   }, [lastMoveType, moveType])
 
-  const moveDivStyle = isMoveAnimating
-    ? moveType === 'moveThoughtAction'
-      ? {
+  const moveDivStyle = useMemo<React.CSSProperties | undefined>(() => {
+    if (isMoveAnimating) {
+      if (moveType === 'moveThoughtAction') {
+        return {
           transformOrigin: 'left',
           transform: 'scale3d(1.5, 1.5, 1)',
-          transition: `transform {durations.layoutNodeAnimation} ease-out`,
+          transition: `transform ${durations.layoutNodeAnimation}ms ease-out`,
           zIndex: 2,
         }
-      : moveType === 'moveThoughtDisplaced'
-        ? {
-            transformOrigin: 'left',
-            transform: 'scale3d(0.5, 0.5, 1)',
-            filter: 'blur(2px)',
-            opacity: 0.5,
-          }
-        : undefined
-    : moveType === 'moveThoughtAction'
-      ? {
+      }
+      if (moveType === 'moveThoughtDisplaced') {
+        return {
           transformOrigin: 'left',
-          transform: 'scale3d(1, 1, 1)',
+          transform: 'scale3d(0.5, 0.5, 1)',
+          transition: `transform ${durations.layoutNodeAnimation}ms ease-out, filter ${durations.layoutNodeAnimation}ms ease-out, opacity ${durations.layoutNodeAnimation}ms ease-out`,
+          filter: 'blur(2px)',
+          opacity: 0.5,
         }
-      : undefined
+      }
+      return undefined
+    }
 
-  // Transition string to be applied to the element's "transition" CSS property.
-  const moveAnimation =
-    isMoveAnimating && moveType === 'moveThoughtDisplaced'
-      ? `transform {durations.layoutNodeAnimation} ease-out, filter {durations.layoutNodeAnimation} ease-out, opacity {durations.layoutNodeAnimation} ease-out`
-      : isMoveAnimating && moveType === 'moveThoughtAction'
-        ? `transform {durations.layoutNodeAnimation} ease-out`
-        : moveType === 'moveThoughtDisplaced'
-          ? `opacity {durations.layoutNodeAnimation} ease-out`
-          : undefined
+    // Not animating but reset styles for primary node
+    if (moveType === 'moveThoughtAction') {
+      return {
+        transformOrigin: 'left',
+        transform: 'scale3d(1, 1, 1)',
+        transition: `transform ${durations.layoutNodeAnimation}ms ease-out`,
+      }
+    } else if (moveType === 'moveThoughtDisplaced') {
+      return {
+        transition: `opacity ${durations.layoutNodeAnimation}ms ease-out`,
+      }
+    }
+    return undefined
+  }, [isMoveAnimating, moveType])
 
   // Override animation output when skipping is requested.
   if (skipMoveThoughtAnimation) {
     return {
-      isMoveAnimating: false,
-      moveType: null,
       moveDivStyle: undefined,
-      moveAnimation: undefined,
     }
   }
 
   return {
-    isMoveAnimating,
-    moveType,
     moveDivStyle,
-    moveAnimation,
   }
 }
 
