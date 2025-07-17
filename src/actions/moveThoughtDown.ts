@@ -4,6 +4,7 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
+import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import getPrevRank from '../selectors/getPrevRank'
 import getRankAfter from '../selectors/getRankAfter'
@@ -27,7 +28,7 @@ const moveThoughtDown = (state: State): State => {
   const parentId = head(pathParent)
   const nextThought = nextSibling(state, cursor)
 
-  // if the cursor is the last child, move the thought to the beginning of its next uncle
+  // Determine if this move crosses contexts (no next sibling, moving to next uncle) and occurs within a Table View.
   const nextUncleThought = pathParent.length > 0 ? nextSibling(state, pathParent) : null
   const nextUnclePath = nextUncleThought ? appendToPath(parentOf(pathParent), nextUncleThought.id) : null
 
@@ -54,6 +55,10 @@ const moveThoughtDown = (state: State): State => {
   // store selection offset before moveThought is dispatched
   const offset = selection.offset()
 
+  const isCrossContext = !nextThought && !!nextUnclePath
+  const isTableView = attributeEquals(state, cursor[0], '=view', 'Table')
+  const skipMoveAnimation = isCrossContext && isTableView
+
   const rankNew = nextThought
     ? // next thought
       getRankAfter(state, simplifyPath(state, pathParent).concat(nextThought.id) as SimplePath)
@@ -63,12 +68,18 @@ const moveThoughtDown = (state: State): State => {
   const newPathParent = nextThought ? pathParent : nextUnclePath!
   const newPath = appendToPath(newPathParent, head(cursor))
 
-  return moveThought(state, {
+  const movedState = moveThought(state, {
     oldPath: cursor,
     newPath,
     ...(offset != null ? { offset } : null),
     newRank: rankNew,
   })
+
+  // Inject the skipMoveThoughtAnimation flag so that UI hooks can skip animations when needed.
+  return {
+    ...movedState,
+    skipMoveThoughtAnimation: skipMoveAnimation,
+  }
 }
 
 /** Action-creator for moveThoughtDown. */

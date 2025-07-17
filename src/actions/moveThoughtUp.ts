@@ -4,6 +4,7 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
+import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankBefore from '../selectors/getRankBefore'
@@ -29,9 +30,14 @@ const moveThoughtUp = (state: State): State => {
 
   const prevThought = prevSibling(state, cursor)
 
-  // if the cursor is on the first thought, move the thought to the end of its prev uncle
+  // Identify the previous uncle thought and its path (if any).
   const prevUncleThought = pathParent.length > 0 ? getThoughtBefore(state, simplifyPath(state, pathParent)) : null
   const prevUnclePath = prevUncleThought ? appendToPath(parentOf(pathParent), prevUncleThought.id) : null
+
+  // Determine if this move crosses contexts (no previous sibling, moving to previous uncle) and occurs within a Table View.
+  const isCrossContext = !prevThought && !!prevUncleThought
+  const isTableView = attributeEquals(state, cursor[0], '=view', 'Table')
+  const skipMoveAnimation = isCrossContext && isTableView
 
   if (!prevThought && !prevUnclePath) return state
 
@@ -66,12 +72,17 @@ const moveThoughtUp = (state: State): State => {
   const newPathParent = prevThought ? pathParent : prevUnclePath!
   const newPath = appendToPath(newPathParent, head(cursor))
 
-  return moveThought(state, {
+  const movedState = moveThought(state, {
     oldPath: cursor,
     newPath,
     ...(offset != null ? { offset } : null),
     newRank: rankNew,
   })
+
+  return {
+    ...movedState,
+    skipMoveThoughtAnimation: skipMoveAnimation,
+  }
 }
 
 /** Action-creator for moveThoughtUp. */

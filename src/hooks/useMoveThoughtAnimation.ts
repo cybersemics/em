@@ -41,12 +41,15 @@ interface Options {
 const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
   const [isMoveAnimating, setIsMoveAnimating] = useState(false)
 
-  const lastMoveType = useSelector((state: State) => {
+  const { lastMoveType, skipMoveThoughtAnimation } = useSelector((state: State) => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    const moveType = lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
-      ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
-      : null
-    return moveType
+
+    return {
+      lastMoveType: lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
+        ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
+        : null,
+      skipMoveThoughtAnimation: state.skipMoveThoughtAnimation,
+    }
   })
 
   // Determine if the on-screen index has changed since the last render.
@@ -134,6 +137,16 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
         : moveType === 'moveThoughtDisplaced'
           ? `opacity {durations.layoutNodeAnimation} ease-out`
           : undefined
+
+  // Override animation output when skipping is requested.
+  if (skipMoveThoughtAnimation) {
+    return {
+      isMoveAnimating: false,
+      moveType: null,
+      moveDivStyle: undefined,
+      moveAnimation: undefined,
+    }
+  }
 
   return {
     isMoveAnimating,
