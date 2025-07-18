@@ -18,34 +18,6 @@ interface Options {
   index: number
 }
 
-let keyframesInjected = false
-/**
- * Inject keyframes into the document head.
- * This is done here to ensure that the keyframes are available as soon as the module is evaluated.
- */
-const injectKeyframes = () => {
-  if (keyframesInjected || typeof document === 'undefined') return
-  const style = document.createElement('style')
-  style.id = 'move-thought-animation-keyframes'
-  style.textContent = `
-    @keyframes moveThoughtAction {
-      0% { transform: scale3d(1, 1, 1); }
-      50% { transform: scale3d(1.5, 1.5, 1); }
-      100% { transform: scale3d(1, 1, 1); }
-    }
-    @keyframes moveThoughtDisplaced {
-      0% { transform: scale3d(1, 1, 1); opacity: 1; filter: blur(0); }
-      50% { transform: scale3d(0.5, 0.5, 1); opacity: 0.5; filter: blur(2px); }
-      100% { transform: scale3d(1, 1, 1); opacity: 1; filter: blur(0); }
-    }
-  `
-  document.head.appendChild(style)
-  keyframesInjected = true
-}
-
-// Ensure keyframes are available as soon as the module is evaluated (client-side only)
-injectKeyframes()
-
 /**
  * Encapsulates the logic that determines the animation state when a thought is moved
  * up or down via the moveThoughtUp / moveThoughtDown reducers. This hook abstracts all

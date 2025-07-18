@@ -27,7 +27,7 @@ const moveThoughtDown = (state: State): State => {
   const parentId = head(pathParent)
   const nextThought = nextSibling(state, cursor)
 
-  // Determine if this move crosses contexts (no next sibling, moving to next uncle) and occurs within a Table View.
+  // if the cursor is the last child, move the thought to the beginning of its next uncle
   const nextUncleThought = pathParent.length > 0 ? nextSibling(state, pathParent) : null
   const nextUnclePath = nextUncleThought ? appendToPath(parentOf(pathParent), nextUncleThought.id) : null
 
@@ -54,8 +54,6 @@ const moveThoughtDown = (state: State): State => {
   // store selection offset before moveThought is dispatched
   const offset = selection.offset()
 
-  // The skipMoveAnimation flag has been removed from Redux state. Animation skipping is now computed locally in the UI.
-
   const rankNew = nextThought
     ? // next thought
       getRankAfter(state, simplifyPath(state, pathParent).concat(nextThought.id) as SimplePath)
@@ -65,14 +63,12 @@ const moveThoughtDown = (state: State): State => {
   const newPathParent = nextThought ? pathParent : nextUnclePath!
   const newPath = appendToPath(newPathParent, head(cursor))
 
-  const movedState = moveThought(state, {
+  return moveThought(state, {
     oldPath: cursor,
     newPath,
     ...(offset != null ? { offset } : null),
     newRank: rankNew,
   })
-
-  return movedState
 }
 
 /** Action-creator for moveThoughtDown. */

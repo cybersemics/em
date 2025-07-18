@@ -29,12 +29,9 @@ const moveThoughtUp = (state: State): State => {
 
   const prevThought = prevSibling(state, cursor)
 
-  // Identify the previous uncle thought and its path (if any).
+  // if the cursor is on the first thought, move the thought to the end of its prev uncle
   const prevUncleThought = pathParent.length > 0 ? getThoughtBefore(state, simplifyPath(state, pathParent)) : null
   const prevUnclePath = prevUncleThought ? appendToPath(parentOf(pathParent), prevUncleThought.id) : null
-
-  // Determine if this move crosses contexts (no previous sibling, moving to previous uncle) and occurs within a Table View.
-  // The skipMoveAnimation flag has been removed from Redux state. Animation skipping is now computed locally in the UI.
 
   if (!prevThought && !prevUnclePath) return state
 
@@ -69,14 +66,12 @@ const moveThoughtUp = (state: State): State => {
   const newPathParent = prevThought ? pathParent : prevUnclePath!
   const newPath = appendToPath(newPathParent, head(cursor))
 
-  const movedState = moveThought(state, {
+  return moveThought(state, {
     oldPath: cursor,
     newPath,
     ...(offset != null ? { offset } : null),
     newRank: rankNew,
   })
-
-  return movedState
 }
 
 /** Action-creator for moveThoughtUp. */
