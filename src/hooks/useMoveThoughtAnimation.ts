@@ -1,7 +1,8 @@
 import { useLayoutEffect, useMemo, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import State from '../@types/State'
 import durations from '../durations.config'
+import attributeEquals from '../selectors/attributeEquals'
 import usePrevious from './usePrevious'
 
 /**
@@ -52,17 +53,23 @@ injectKeyframes()
  * only has to deal with the resulting animation flags.
  */
 const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
-  // Selectors
-  const { lastMoveType, skipMoveAnimation } = useSelector((state: State) => {
+  const { lastMoveType, isTableView, isCrossContext } = useSelector((state: State) => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+
     const lastMoveType = lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
       ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
       : null
+
+    const cursor = state.cursor
+    const isTableView = cursor ? attributeEquals(state, cursor[0], '=view', 'Table') : false
+    const isCrossContext = (lastPatches ?? []).some(patch => patch.path?.endsWith('/parentId'))
+
     return {
       lastMoveType,
-      skipMoveAnimation: state.skipMoveAnimation,
+      isTableView,
+      isCrossContext,
     }
-  })
+  }, shallowEqual)
 
   // Determine if the on-screen index has changed since the last render.
   const previousIndex = usePrevious<number>(index)
@@ -75,6 +82,10 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
   const hasMoved = !!(lastMoveType && indexChanged && !prevIndexChanged)
 
   const [moveType, setMoveType] = useState<'moveThoughtAction' | 'moveThoughtDisplaced' | null>(null)
+
+  // skip move animation if the last move was a cross-context move in a table view
+  const skipMoveAnimation =
+    (lastMoveType === 'moveThoughtUp' || lastMoveType === 'moveThoughtDown') && isCrossContext && isTableView
 
   let proposedMoveType: 'moveThoughtAction' | 'moveThoughtDisplaced' | null = null
 

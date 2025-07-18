@@ -4,7 +4,6 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
-import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import getPrevRank from '../selectors/getPrevRank'
 import getRankAfter from '../selectors/getRankAfter'
@@ -55,9 +54,7 @@ const moveThoughtDown = (state: State): State => {
   // store selection offset before moveThought is dispatched
   const offset = selection.offset()
 
-  const isCrossContext = !nextThought && !!nextUnclePath
-  const isTableView = attributeEquals(state, cursor[0], '=view', 'Table')
-  const skipMoveAnimation = isCrossContext && isTableView
+  // The skipMoveAnimation flag has been removed from Redux state. Animation skipping is now computed locally in the UI.
 
   const rankNew = nextThought
     ? // next thought
@@ -75,11 +72,7 @@ const moveThoughtDown = (state: State): State => {
     newRank: rankNew,
   })
 
-  // Inject the skipMoveAnimation flag so that UI hooks can skip animations when needed.
-  return {
-    ...movedState,
-    skipMoveAnimation: skipMoveAnimation,
-  }
+  return movedState
 }
 
 /** Action-creator for moveThoughtDown. */
