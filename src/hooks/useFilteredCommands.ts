@@ -89,7 +89,11 @@ const useFilteredCommands = (
       else if (sortActiveCommandsFirst && !isExecutable(store.getState(), command)) return `\x98${label}`
       // sort gesture by length and then label
       // no padding of length needed since no gesture exceeds a single digit
-      else if (gestureInProgress) return `\x01${label}`
+      // Commands with fewer swipes appear first (e.g., "New Thought" with 'rd' before "New Subthought" with 'rdr') by adding length number before the label
+      else if (gestureInProgress) {
+        const gestureLength = gestureString(command).length
+        return `\x01${gestureLength}${label}`
+      }
 
       return (
         // prepend \x01 to sort after exact match and before inactive commands
