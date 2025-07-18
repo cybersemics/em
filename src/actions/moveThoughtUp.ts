@@ -4,7 +4,6 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
-import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankBefore from '../selectors/getRankBefore'
@@ -35,9 +34,7 @@ const moveThoughtUp = (state: State): State => {
   const prevUnclePath = prevUncleThought ? appendToPath(parentOf(pathParent), prevUncleThought.id) : null
 
   // Determine if this move crosses contexts (no previous sibling, moving to previous uncle) and occurs within a Table View.
-  const isCrossContext = !prevThought && !!prevUncleThought
-  const isTableView = attributeEquals(state, cursor[0], '=view', 'Table')
-  const skipMoveAnimation = isCrossContext && isTableView
+  // The skipMoveAnimation flag has been removed from Redux state. Animation skipping is now computed locally in the UI.
 
   if (!prevThought && !prevUnclePath) return state
 
@@ -79,10 +76,7 @@ const moveThoughtUp = (state: State): State => {
     newRank: rankNew,
   })
 
-  return {
-    ...movedState,
-    skipMoveAnimation: skipMoveAnimation,
-  }
+  return movedState
 }
 
 /** Action-creator for moveThoughtUp. */
