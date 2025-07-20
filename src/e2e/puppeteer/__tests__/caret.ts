@@ -212,9 +212,11 @@ describe('all platforms', () => {
 
     await press('p', { meta: true })
     await press('Escape')
-
     await press('ArrowDown')
 
+    // Wait for the caret to move to the editable
+    // because the closing of command palette is asynchronous and the caret may not be in the editable yet
+    // otherwise the test intermittently fails in CI.
     await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'a')
 
     const textContext = await getSelection().focusNode?.textContent
