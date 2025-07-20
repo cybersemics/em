@@ -33,6 +33,9 @@ it('single line', async () => {
     - This thought tests the line height of the above thought
   `)
 
+  // Wait for URL rendering and ellipsization to complete
+  // because URL text processing and layout calculations happen asynchronously
+  // otherwise screenshot may capture URLs before proper formatting is applied
   await waitForFrames()
   await press('ArrowUp')
 
@@ -56,6 +59,9 @@ describe('multiline', () => {
     - This thought tests the line height of the above thought
   `)
 
+    // Wait for complex multiline URL layout to complete (4 frames for extensive text wrapping)
+    // because very long URLs require multiple layout passes for proper line breaking and ellipsization
+    // otherwise screenshot may capture URLs with incorrect wrapping or incomplete ellipsis
     await waitForFrames(4)
 
     await press('ArrowUp')
@@ -93,6 +99,9 @@ it('collapsed thought with url child', async () => {
       - https://github.com/cybersemics/em
   `)
 
+  // Wait for collapsed thought rendering and URL child processing to complete
+  // because collapsed states with URL children need time for proper visibility calculations
+  // otherwise screenshot may capture inconsistent collapsed/expanded states
   await waitForFrames()
   await press('Escape')
 

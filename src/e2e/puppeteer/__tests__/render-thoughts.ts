@@ -81,12 +81,9 @@ const testSuite = () => {
 
       await press('ArrowUp')
 
-      // TODO: Test intermittently fails with small differences in 'b'.
-      // Tested manually with navigator.webdriver = true and 'b' renders at the correct opacity in the next frame, without any animation, so I do not know why this fails.
-      // Example failed test runs:
-      // - https://github.com/cybersemics/em/actions/runs/14236307211
-      // - https://github.com/cybersemics/em/actions/runs/14783509675/job/41507408875?pr=2917
-      // Waiting for requestAnimationFrame does not fix the issue.
+      // Wait for superscript calculation and opacity changes to complete
+      // because superscript rendering uses requestAnimationFrame for positioning calculations
+      // otherwise screenshot may capture intermediate rendering states causing test flakiness
       await waitForFrames()
 
       expect(await screenshot()).toMatchImageSnapshot()
@@ -139,7 +136,7 @@ describe('Font Size: 22', () => {
 describe('multiline', () => {
   beforeEach(hideHUD)
 
-  it.skip('multiline thought', async () => {
+  it('multiline thought', async () => {
     await paste(`
         - a
         - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
@@ -147,6 +144,9 @@ describe('multiline', () => {
         - c
       `)
 
+    // Wait for multiline text layout calculation to complete
+    // because complex text wrapping and line height calculations use multiple render cycles
+    // otherwise screenshot may capture text mid-layout with incorrect line breaks or spacing
     await waitForFrames()
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()

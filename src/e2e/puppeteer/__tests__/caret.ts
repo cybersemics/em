@@ -10,7 +10,6 @@ import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import testIfNotCI from '../helpers/testIfNotCI'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForFrames from '../helpers/waitForFrames'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
@@ -214,9 +213,9 @@ describe('all platforms', () => {
     await press('p', { meta: true })
     await press('Escape')
 
-    await waitForFrames()
-
     await press('ArrowDown')
+
+    await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'a')
 
     const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('a')
