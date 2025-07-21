@@ -29,9 +29,9 @@ describe('categorize', () => {
         - Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia.
     `)
 
-    // Wait for complex text layout with very long paragraphs to complete (4 frames for extensive content)
-    // because large text blocks require multiple render cycles for proper wrapping and positioning
-    // otherwise categorize operations may target thoughts that haven't finished rendering
+    // Wait 4 frames due to multiple rounds of requestAnimationFrame in useLayoutAnimationFrameEffect
+    // which requires several frame cycles to complete regardless of content complexity
+    // otherwise clickThought may not find the correct element or click position
     await waitForFrames(4)
 
     // Perform multiple categorize operations

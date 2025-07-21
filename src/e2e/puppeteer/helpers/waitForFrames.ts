@@ -13,7 +13,7 @@ import { page } from '../setup'
  * - CI environments have slower frame rates (20-30 FPS vs local 60 FPS).
  * - Fixed timeouts (e.g., `sleep(200)`) fail to capture final render.
  *
- * @param frames Number of animation frames to wait (default: 2). Use higher values for complex layouts like multiline text.
+ * @param frames Number of animation frames to wait (default: 2). Use higher values for components using multiple rounds of requestAnimationFrame (e.g., useLayoutAnimationFrameEffect).
  */
 const waitForFrames = (frames: number = 2) =>
   page.evaluate((frameCount: number) => {
