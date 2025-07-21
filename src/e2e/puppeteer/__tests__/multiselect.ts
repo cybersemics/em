@@ -46,7 +46,7 @@ describe('mobile only', () => {
 
     await longPressThought(a, { edge: 'right', x: 100 })
     await longPressThought(b, { edge: 'right', x: 100 })
-    await page.screenshot({ path: '/mnt/c/Users/ethan/OneDrive/Desktop/multiselect.png' })
+
     const highlightedBullets = await page.$$('.bullet[data-highlighted=true]')
     const commandMenuPanelTextContent = await page.$eval('[data-testid=command-menu-panel]', el => el.textContent)
 
