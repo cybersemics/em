@@ -1,13 +1,20 @@
 diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
-index 161095a0742bc11a0755b842a45d39ad337a15a4..492d600ea325ee9a5da75bc0779f86875853ccdd 100644
+index 161095a0742bc11a0755b842a45d39ad337a15a4..3a772e38ebb7021c52696394586c944fab88d546 100644
 --- a/dist/TouchBackendImpl.js
 +++ b/dist/TouchBackendImpl.js
-@@ -254,18 +254,29 @@ export class TouchBackendImpl {
+@@ -243,6 +243,7 @@ export class TouchBackendImpl {
+             }
+             const delay = e.type === eventNames.touch.start ? this.options.delayTouchStart : this.options.delayMouseStart;
+             this.timeout = setTimeout(this.handleTopMoveStart.bind(this, e), delay);
++            this._timeoutCutoff = Date.now() + delay
+             this.waitingForDelay = true;
+         };
+         this.handleTopMoveCapture = ()=>{
+@@ -254,18 +255,32 @@ export class TouchBackendImpl {
              }
          };
          this.handleTopMove = (e1)=>{
 -            if (this.timeout) {
--                clearTimeout(this.timeout);
 +            const clientOffset = getEventClientOffset(e1, this.lastTargetTouchFallback)
 +
 +            if (clientOffset) {
@@ -16,15 +23,17 @@ index 161095a0742bc11a0755b842a45d39ad337a15a4..492d600ea325ee9a5da75bc0779f8687
 +              }
 +            } else {
 +              return
-             }
++            }
 +
 +            if (
-+              this.timeout &&
-+              distance(this._mouseClientOffset.x || 0, this._mouseClientOffset.y || 0, clientOffset.x, clientOffset.y) >
-+              (this.options.touchSlop ? this.options.touchSlop : 0)
++                this.timeout &&
++                distance(this._mouseClientOffset.x || 0, this._mouseClientOffset.y || 0, clientOffset.x, clientOffset.y) >
++                (this.options.touchSlop ? this.options.touchSlop : 0) &&
++                // should not cancel timeout if it has elapsed, otherwise we can get out of sync with long press (#3119)
++                Date.now() < this._timeoutCutoff
 +            ) {
-+              clearTimeout(this.timeout)
-+            }
+                 clearTimeout(this.timeout);
+             }
 +
              if (!this.document || this.waitingForDelay) {
                  return;
@@ -35,10 +44,11 @@ index 161095a0742bc11a0755b842a45d39ad337a15a4..492d600ea325ee9a5da75bc0779f8687
 -            if (!clientOffset) {
 -                return;
 -            }
++
              // If the touch move started as a scroll, or is is between the scroll angles
              if (this._isScrolling || !this.monitor.isDragging() && inAngleRanges(this._mouseClientOffset.x || 0, this._mouseClientOffset.y || 0, clientOffset.x, clientOffset.y, this.options.scrollAngleRanges)) {
                  this._isScrolling = true;
-@@ -355,6 +366,7 @@ export class TouchBackendImpl {
+@@ -355,6 +370,7 @@ export class TouchBackendImpl {
          this.handleTopMoveEndCapture = (e)=>{
              this._isScrolling = false;
              this.lastTargetTouchFallback = undefined;
@@ -46,7 +56,7 @@ index 161095a0742bc11a0755b842a45d39ad337a15a4..492d600ea325ee9a5da75bc0779f8687
              if (!eventShouldEndDrag(e)) {
                  return;
              }
-@@ -363,7 +375,6 @@ export class TouchBackendImpl {
+@@ -363,7 +379,6 @@ export class TouchBackendImpl {
                  return;
              }
              if (e.cancelable) e.preventDefault();
@@ -55,17 +65,31 @@ index 161095a0742bc11a0755b842a45d39ad337a15a4..492d600ea325ee9a5da75bc0779f8687
              this.actions.drop();
              this.actions.endDrag();
 diff --git a/src/TouchBackendImpl.ts b/src/TouchBackendImpl.ts
-index f2c164b1157180b6234da5a3cf2f38ddd165929d..a375b3689c5afd2e2ad63f47dbc602bc525fb2b4 100644
+index f2c164b1157180b6234da5a3cf2f38ddd165929d..99e2f4c8f89bafa8c4f3b2a4a1c07ddbc388e959 100644
 --- a/src/TouchBackendImpl.ts
 +++ b/src/TouchBackendImpl.ts
-@@ -409,20 +409,29 @@ export class TouchBackendImpl implements Backend {
+@@ -65,6 +65,8 @@ export class TouchBackendImpl implements Backend {
+ 	private draggedSourceNode: HTMLElement | undefined
+ 	private draggedSourceNodeRemovalObserver: MutationObserver | undefined
+ 
++	private _timeoutCutoff: number = Infinity
++
+ 	// Patch for iOS 13, discussion over #1585
+ 	private lastTargetTouchFallback: Touch | undefined
+ 
+@@ -392,6 +394,7 @@ export class TouchBackendImpl implements Backend {
+ 			this.handleTopMoveStart.bind(this, e as any),
+ 			delay,
+ 		) as any as ReturnType<typeof setTimeout>
++		this._timeoutCutoff = Date.now() + delay
+ 		this.waitingForDelay = true
+ 	}
+ 
+@@ -409,21 +412,32 @@ export class TouchBackendImpl implements Backend {
  	}
  
  	public handleTopMove = (e: TouchEvent | MouseEvent): void => {
 -		if (this.timeout) {
--			clearTimeout(this.timeout)
--		}
--		if (!this.document || this.waitingForDelay) {
 +		const clientOffset = getEventClientOffset(e, this.lastTargetTouchFallback)
 +
 +		if (clientOffset) {
@@ -73,30 +97,35 @@ index f2c164b1157180b6234da5a3cf2f38ddd165929d..a375b3689c5afd2e2ad63f47dbc602bc
 +				this._mouseClientOffset = clientOffset
 +			}
 +		} else {
++			return
++		}
++
++		if (
++			this.timeout &&
++			distance(this._mouseClientOffset.x || 0, this._mouseClientOffset.y || 0, clientOffset.x, clientOffset.y) >
++			(this.options.touchSlop ? this.options.touchSlop : 0) &&
++			// should not cancel timeout if it has elapsed, otherwise we can get out of sync with long press (#3119)
++			Date.now() < this._timeoutCutoff
++		) {
+ 			clearTimeout(this.timeout)
+ 		}
++
+ 		if (!this.document || this.waitingForDelay) {
  			return
  		}
--		const { moveStartSourceIds, dragOverTargetIds } = this
--		const enableHoverOutsideTarget = this.options.enableHoverOutsideTarget
+ 		const { moveStartSourceIds, dragOverTargetIds } = this
+ 		const enableHoverOutsideTarget = this.options.enableHoverOutsideTarget
  
 -		const clientOffset = getEventClientOffset(e, this.lastTargetTouchFallback)
-+    if (
-+      this.timeout &&
-+      distance(this._mouseClientOffset.x || 0, this._mouseClientOffset.y || 0, clientOffset.x, clientOffset.y) >
-+      (this.options.touchSlop ? this.options.touchSlop : 0)
-+    ) {
-+      clearTimeout(this.timeout)
-+    }
- 
+-
 -		if (!clientOffset) {
-+		if (!this.document || this.waitingForDelay) {
- 			return
- 		}
-+		const { moveStartSourceIds, dragOverTargetIds } = this
-+		const enableHoverOutsideTarget = this.options.enableHoverOutsideTarget
- 
+-			return
+-		}
+-
  		// If the touch move started as a scroll, or is is between the scroll angles
  		if (
-@@ -562,6 +571,7 @@ export class TouchBackendImpl implements Backend {
+ 			this._isScrolling ||
+@@ -562,6 +576,7 @@ export class TouchBackendImpl implements Backend {
  	public handleTopMoveEndCapture = (e: Event): void => {
  		this._isScrolling = false
  		this.lastTargetTouchFallback = undefined
@@ -104,7 +133,7 @@ index f2c164b1157180b6234da5a3cf2f38ddd165929d..a375b3689c5afd2e2ad63f47dbc602bc
  
  		if (!eventShouldEndDrag(e as MouseEvent)) {
  			return
-@@ -574,8 +584,6 @@ export class TouchBackendImpl implements Backend {
+@@ -574,8 +589,6 @@ export class TouchBackendImpl implements Backend {
  
  		if (e.cancelable) e.preventDefault()
  

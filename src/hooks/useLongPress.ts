@@ -29,6 +29,7 @@ const useLongPress = (
   // scrollY variable is always 0 in onPressed
   const clientCoords = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const timerIdRef = useRef<number | undefined>()
+  const timerCutoffRef = useRef<number>(Infinity)
   const dispatch = useDispatch()
   const unmounted = useRef(false)
   const dragDropManager = useDragDropManager()
@@ -63,6 +64,7 @@ const useLongPress = (
           setPressed(true)
         }
       }, delay) as unknown as number
+      timerCutoffRef.current = Date.now() + delay
     }
 
     /** Let the react-dnd 'start' event begin the timer so that there is no gap between the beginning of a long press
@@ -122,7 +124,8 @@ const useLongPress = (
   // If timerIdRef is set to 0, abort to prevent unnecessary calculations.
   const move = useCallback(
     (e: React.TouchEvent) => {
-      if (!timerIdRef.current) return
+      // should not cancel timeout if it has elapsed, otherwise we can get out of sync with drag-and-drop (#3119)
+      if (!timerIdRef.current || timerCutoffRef.current <= Date.now()) return
       const moveCoords = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
       if (
         Math.abs(moveCoords.x - clientCoords.current.x) > SCROLL_THRESHOLD ||
