@@ -29,6 +29,7 @@ import {
 } from '../constants'
 import asyncFocus from '../device/asyncFocus'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
+import * as selection from '../device/selection'
 import { getChildrenSorted } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -241,7 +242,9 @@ export const newThoughtActionCreator =
     // cancel if tutorial has just started
     if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
-    if (!preventSetCursor && isTouch) {
+    // asyncFocus can cause disruptive autoscroll behavior, so it's important to avoid it when the selection is already on a thought.
+    // If the selection is already on a thought, then it follows that focus will not be blocked. (#2748, #3075)
+    if (!preventSetCursor && isTouch && !selection.isThought()) {
       asyncFocus()
     }
 
