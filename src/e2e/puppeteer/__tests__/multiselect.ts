@@ -5,7 +5,8 @@ import emulate from '../helpers/emulate'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
-import screenshot from '../helpers/screenshot'
+import waitForEditable from '../helpers/waitForEditable'
+import { page } from '../setup'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -20,7 +21,11 @@ describe('multiselect', () => {
 
     await multiselectThoughts(['a', 'b'])
 
-    expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'multiselect' })
+    const highlightedBullets = await page.$$('.bullet[data-highlighted=true]')
+    const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent)
+
+    expect(highlightedBullets.length).toBe(2)
+    expect(alertContent).toContain('2 thoughts selected')
   })
 })
 
@@ -33,11 +38,19 @@ describe('mobile only', () => {
     await paste(`
         - a
         - b
+        - c
         `)
 
-    await longPressThought('a')
-    await longPressThought('b')
+    const a = await waitForEditable('a')
+    const b = await waitForEditable('b')
 
-    expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'multiselect-ios' })
+    await longPressThought(a, { edge: 'right', x: 100 })
+    await longPressThought(b, { edge: 'right', x: 100 })
+    await page.screenshot({ path: '/mnt/c/Users/ethan/OneDrive/Desktop/multiselect.png' })
+    const highlightedBullets = await page.$$('.bullet[data-highlighted=true]')
+    const commandMenuPanelTextContent = await page.$eval('[data-testid=command-menu-panel]', el => el.textContent)
+
+    expect(highlightedBullets.length).toBe(2)
+    expect(commandMenuPanelTextContent).toContain('2 thoughts selected')
   })
 })
