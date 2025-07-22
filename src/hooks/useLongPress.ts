@@ -35,6 +35,7 @@ const useLongPress = (
   }, [isLocked, setPressing])
 
   useEffect(() => {
+    /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackned in react-dnd. */
     const onStart = (e?: React.TouchEvent) => {
       if (isLocked || !pressing) return
 
