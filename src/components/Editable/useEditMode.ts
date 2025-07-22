@@ -83,12 +83,15 @@ const useEditMode = ({
 
         setTimeout fixes it, however it introduces an infinite loop when a nested empty thought is created.
         Not calling asyncFocus when the selection is already on a thought prevents the infinite loop.
+        Also, setTimeout is frequently pushed into the next frame and the keyboard will intermittently close on iOS Safari.
+        Replacing setTimeout with requestAnimationFrame guarantees (hopefully?) that it will be processed before the next repaint,
+        keeping the keyboard open while rapidly deleting thoughts. (#3129)
       */
         if (isTouch && isSafari()) {
           if (!selection.isThought()) {
             asyncFocus()
           }
-          setTimeout(setSelectionToCursorOffset)
+          requestAnimationFrame(setSelectionToCursorOffset)
         } else {
           setSelectionToCursorOffset()
         }
