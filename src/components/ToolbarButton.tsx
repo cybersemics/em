@@ -108,7 +108,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
   const tapUp = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']?.(e)
+      longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']?.()
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
