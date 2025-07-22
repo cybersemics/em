@@ -39,8 +39,7 @@ const useDragHold = ({
   }, [disabled, dispatch, simplePath, sourceZone])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
-  const onLongPressEnd = useCallback(
-    ({ canceled }: { canceled: boolean }) => {
+  const onLongPressEnd = useCallback(() => {
       if (disabled) return
 
       setIsPressed(false)
@@ -51,10 +50,8 @@ const useDragHold = ({
           dispatch([dragHold({ value: false }), !hasMulticursor(state) ? alert(null) : null])
         }
 
-        if (!canceled) {
-          dispatch(longPress({ value: LongPressState.Inactive }))
-          if (toggleMulticursorOnLongPress) dispatch(toggleMulticursor({ path: simplePath }))
-        }
+        dispatch(longPress({ value: LongPressState.Inactive }))
+        if (toggleMulticursorOnLongPress) dispatch(toggleMulticursor({ path: simplePath }))
       })
     },
     [disabled, dispatch, simplePath, toggleMulticursorOnLongPress],

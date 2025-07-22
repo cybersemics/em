@@ -3,13 +3,13 @@ import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { TouchBackend } from 'react-dnd-touch-backend'
 import { isTouch } from '../browser'
-import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import { TIMEOUT_LONG_PRESS_THOUGHT, TOUCH_SLOP } from '../constants'
 
 /** Drag and Drop Provider HOC. */
 const DragAndDropContext: FC<PropsWithChildren> = ({ children }) => (
   <DndProvider
     backend={isTouch ? TouchBackend : HTML5Backend}
-    options={{ delayTouchStart: TIMEOUT_LONG_PRESS_THOUGHT, preview: true, touchSlop: 10 }}
+    options={{ delayTouchStart: TIMEOUT_LONG_PRESS_THOUGHT, preview: true, touchSlop: TOUCH_SLOP }}
   >
     {children}
   </DndProvider>

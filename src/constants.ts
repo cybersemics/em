@@ -264,6 +264,9 @@ export const IPFS_GATEWAY = 'ipfs.infura.io'
 // also used for react-dnd's delayTouchStart
 export const TIMEOUT_LONG_PRESS_THOUGHT = 400
 
+// number of pixels of scrolling to allow before abandoning the long tap
+export const TOUCH_SLOP = 10
+
 export const MODIFIER_KEYS = {
   Alt: 1,
   Ctrl: 1,
