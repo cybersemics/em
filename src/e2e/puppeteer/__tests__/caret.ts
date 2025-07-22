@@ -219,8 +219,8 @@ describe('all platforms', () => {
     // otherwise the test intermittently fails in CI.
     await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'a')
 
-    const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('a')
+    // no assertions needed, the test will fail if the caret is not in the editable
+    // If the waitUntil succeeds, the expect will always pass since we just confirmed that exact condition. If waitUntil times out, we never reach the expect anyway.
   })
 })
 
