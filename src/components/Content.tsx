@@ -37,10 +37,27 @@ const TransientEditable = (
   <Editable isEditing={false} transient={true} path={transientChildPath} simplePath={transientChildPath} rank={0} />
 )
 
+/** A hook that returns a ref to the content div and updates the viewport store's contentWidth property on resize. */
+const useContentWidth = () => {
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!contentRef.current) return
+
+    const resizeObserver = new ResizeObserver(entries => {
+      viewportStore.update({ contentWidth: entries[0]?.contentRect.width || 0 })
+    })
+
+    resizeObserver.observe(contentRef.current)
+    return () => resizeObserver.disconnect()
+  }, [])
+
+  return contentRef
+}
+
 /** The main content section of em. */
 const Content: FC = () => {
   const dispatch = useDispatch()
-  const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
   const tutorial = useSelector(isTutorial)
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
@@ -65,16 +82,7 @@ const Content: FC = () => {
     dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
   }
 
-  useEffect(() => {
-    if (!contentRef.current) return
-
-    const resizeObserver = new ResizeObserver(entries => {
-      viewportStore.update({ contentWidth: entries[0]?.contentRect.width || 0 })
-    })
-
-    resizeObserver.observe(contentRef.current)
-    return () => resizeObserver.disconnect()
-  }, [])
+  const contentRef = useContentWidth()
 
   return (
     <div
