@@ -10,7 +10,7 @@ import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/
 import { Settings } from '../constants'
 import useDragAndDropFavorites from '../hooks/useDragDropFavorites'
 import useDragHold from '../hooks/useDragHold'
-import useDropHoverLength from '../hooks/useDropHoverLength'
+import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
@@ -41,7 +41,7 @@ const DragAndDropFavorite = ({
     path: simplePath,
   })
   const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
-  const dropHoverLength = useDropHoverLength()
+  const dropHoverLength = useDropHoverWidth()
 
   return (
     // Set overflow:auto so the drop target fully wraps its contents.
@@ -82,7 +82,7 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
   const { dropTarget, isHovering } = useDragAndDropFavorites({
     disableDragAndDrop,
   })
-  const dropHoverLength = useDropHoverLength()
+  const dropHoverLength = useDropHoverWidth()
 
   return (
     <div className={css({ height: '4em' })} ref={dropTarget}>

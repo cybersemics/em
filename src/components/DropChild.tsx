@@ -8,7 +8,7 @@ import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
-import useDropHoverLength from '../hooks/useDropHoverLength'
+import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
@@ -41,7 +41,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
   // Should be added, because its thought has same logic to apply extra bonus height - so drop target panel height would be same as its thought
   const dropTargetHeight =
     (cliff !== undefined && cliff < 0) || isLastVisible ? calculateCliffDropTargetHeight({ depth }) : 0
-  const dropHoverLength = useDropHoverLength()
+  const dropHoverLength = useDropHoverWidth()
 
   // Calculate offset to compensate for cliff padding applied to the parent thought
   // When cliff < 0, cliff padding (fontSize / 4) is applied to the parent, so we need to move DropChild up by that amount

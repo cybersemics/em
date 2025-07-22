@@ -57,7 +57,7 @@ interface DropHoverLengthProps {
  * @param props.isTableCol2 - True when drop target is in table column 2 (grandchildren of =view:Table).
  * @returns CSS width value as string.
  */
-const useDropHoverLength = (props?: DropHoverLengthProps) => {
+const useDropHoverWidth = (props?: DropHoverLengthProps) => {
   const contentWidth = viewportStore.useSelector(state => state.contentWidth)
   const isTableCol1 = props?.isTableCol1
   const isTableCol2 = props?.isTableCol2
@@ -71,4 +71,4 @@ const useDropHoverLength = (props?: DropHoverLengthProps) => {
   )
 }
 
-export default useDropHoverLength
+export default useDropHoverWidth

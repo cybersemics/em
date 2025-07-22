@@ -8,7 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
-import useDropHoverLength from '../hooks/useDropHoverLength'
+import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import useHoveringPath from '../hooks/useHoveringPath'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
@@ -43,7 +43,7 @@ const DropUncle = ({
   const isTableCol2 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
-  const dropHoverLength = useDropHoverLength({ isTableCol2 })
+  const dropHoverLength = useDropHoverWidth({ isTableCol2 })
 
   if (!dropTarget) return null
 

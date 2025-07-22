@@ -8,7 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
-import useDropHoverLength from '../hooks/useDropHoverLength'
+import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import getSortPreference from '../selectors/getSortPreference'
@@ -34,7 +34,7 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
 
-  const dropHoverLength = useDropHoverLength({ isTableCol1, isTableCol2 })
+  const dropHoverLength = useDropHoverWidth({ isTableCol1, isTableCol2 })
 
   const animateHover = useSelector(state => {
     const parent = parentOf(simplePath)
