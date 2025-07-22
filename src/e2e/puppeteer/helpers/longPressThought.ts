@@ -5,14 +5,14 @@ import { page } from '../setup'
 interface Options {
   /** Click on the inside edge of the editable. Default: left. */
   edge?: 'left' | 'right'
-  /** Number of pixels of x offset to add to the click coordinates of width/2. */
+  /** Number of pixels of x offset to add to the touch coordinates, which defaults to width/2 but can be set to the left or right edge. */
   x?: number
-  /** Number of pixels of y offset to add to the click coordinates of height/2. */
+  /** Number of pixels of y offset to add to the touch coordinates of height/2. */
   y?: number
 }
 
 /**
- * Tap and hold a thought until a long press occurs. Times out after 1 second.
+ * Tap and hold a thought until a long press occurs.
  */
 const longPressThought = async (
   nodeHandle: ElementHandle<Element> | JSHandle<undefined>,
@@ -30,7 +30,7 @@ const longPressThought = async (
   if (!(thoughtContainer instanceof ElementHandle)) throw new Error('Thought container not found')
 
   const coordinate = {
-    x: boundingBox.x + (edge === 'left' ? 1 : boundingBox.width - 1) + x,
+    x: boundingBox.x + (edge ? (edge === 'left' ? 1 : boundingBox.width - 1) : boundingBox.width / 2) + x,
     y: boundingBox.y + boundingBox.height / 2 + y,
   }
 
