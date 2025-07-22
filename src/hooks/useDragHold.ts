@@ -40,22 +40,20 @@ const useDragHold = ({
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
   const onLongPressEnd = useCallback(() => {
-      if (disabled) return
+    if (disabled) return
 
-      setIsPressed(false)
-      dispatch((dispatch, getState) => {
-        const state = getState()
+    setIsPressed(false)
+    dispatch((dispatch, getState) => {
+      const state = getState()
 
-        if (state.dragHold) {
-          dispatch([dragHold({ value: false }), !hasMulticursor(state) ? alert(null) : null])
-        }
+      if (state.dragHold) {
+        dispatch([dragHold({ value: false }), !hasMulticursor(state) ? alert(null) : null])
+      }
 
-        dispatch(longPress({ value: LongPressState.Inactive }))
-        if (toggleMulticursorOnLongPress) dispatch(toggleMulticursor({ path: simplePath }))
-      })
-    },
-    [disabled, dispatch, simplePath, toggleMulticursorOnLongPress],
-  )
+      dispatch(longPress({ value: LongPressState.Inactive }))
+      if (toggleMulticursorOnLongPress) dispatch(toggleMulticursor({ path: simplePath }))
+    })
+  }, [disabled, dispatch, simplePath, toggleMulticursorOnLongPress])
 
   // react-dnd stops propagation so onLongPressEnd sometimes doesn't get called.
   // Therefore, disable dragHold and isPressed as soon as we are dragging or if no longer dragging and dragHold never got cleared.
