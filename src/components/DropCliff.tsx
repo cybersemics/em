@@ -40,7 +40,8 @@ const DropCliff = ({
           key={'DropEnd-' + head(pathEnd)}
           className={css({
             position: 'relative',
-            top: '-0.2em',
+            // The original value was -0.2em, and it is decreased by 0.1em to let drop hover blue line renders in correct places for better UX
+            top: '-0.3em',
             transition: `left {durations.fast} ease-out`,
             zIndex: 'subthoughtsDropEnd',
           })}

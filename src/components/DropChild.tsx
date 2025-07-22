@@ -8,6 +8,7 @@ import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
+import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
@@ -40,6 +41,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
   // Should be added, because its thought has same logic to apply extra bonus height - so drop target panel height would be same as its thought
   const dropTargetHeight =
     (cliff !== undefined && cliff < 0) || isLastVisible ? calculateCliffDropTargetHeight({ depth }) : 0
+  const dropHoverLength = useDropHoverWidth()
 
   // Calculate offset to compensate for cliff padding applied to the parent thought
   // When cliff < 0, cliff padding (fontSize / 4) is applied to the parent, so we need to move DropChild up by that amount
@@ -64,7 +66,9 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
         style={{
           height: `${0.5 + dropTargetHeight}em`,
           // Adjust position to compensate for cliff padding on parent thought
-          top: cliffPaddingOffset > 0 ? -cliffPaddingOffset : undefined,
+          // Give default top property value of -0.1em, since top property of DropCliff has default value of -0.3em, which is decreased by 0.1em
+          // If this -0.1em is not set, then top edge of child drop target panel will fall below top edge of parent drop target panel
+          top: `calc(-0.1em - ${cliffPaddingOffset}px)`,
         }}
       >
         {testFlags.simulateDrop && (
@@ -93,7 +97,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
                 width: '100%',
               }),
             )}
-            style={{ backgroundColor: dropHoverColor }}
+            style={{ width: dropHoverLength, backgroundColor: dropHoverColor }}
           />
         )}
       </span>

@@ -8,6 +8,8 @@ import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
+import useDropHoverWidth from '../hooks/useDropHoverWidth'
+import attributeEquals from '../selectors/attributeEquals'
 import { getChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
@@ -47,6 +49,12 @@ const DropEnd = ({
   const isRootPath = isRoot(path)
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value) ?? ''
   const dropHoverColor = useDropHoverColor(depth + 1)
+
+  const isParentTableCol1 = useSelector(state =>
+    attributeEquals(state, head(rootedParentOf(state, path)), '=view', 'Table'),
+  )
+
+  const dropHoverLength = useDropHoverWidth({ isTableCol2: isParentTableCol1 })
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
 
@@ -89,7 +97,8 @@ const DropEnd = ({
     )
   })
 
-  const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) : 0
+  // Allocate extra more space (1.4 em) to last drop target panel
+  const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) + 1.4 : 0
 
   return (
     <li
@@ -105,9 +114,11 @@ const DropEnd = ({
       )}
       style={{
         backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
-        height: isRootPath ? '8em' : `${1.9 + dropTargetHeight}em`,
+        height: isRootPath ? '8em' : `${0.7 + dropTargetHeight}em`,
         // use transform to avoid conflicting with margin, which is currently spread out across multiple components
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
+        // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
+        width: isParentTableCol1 ? undefined : dropHoverLength,
       }}
       ref={dropTarget}
     >
@@ -130,6 +141,7 @@ const DropEnd = ({
         <span
           className={dropHoverRecipe({ insideDropEnd: true })}
           style={{
+            width: dropHoverLength,
             backgroundColor: dropHoverColor,
             // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch
             marginLeft: `-${DROPEND_FINGERSHIFT}em`,
