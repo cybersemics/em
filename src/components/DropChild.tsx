@@ -66,7 +66,9 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
         style={{
           height: `${0.5 + dropTargetHeight}em`,
           // Adjust position to compensate for cliff padding on parent thought
-          top: cliffPaddingOffset > 0 ? -cliffPaddingOffset : undefined,
+          // Give default top property value of -0.1em, since top property of DropCliff has default value of -0.3em, which is decreased by 0.1em
+          // If this -0.1em is not set, then top edge of child drop target panel will fall below top edge of parent drop target panel
+          top: `calc(-0.1em - ${cliffPaddingOffset}px)`,
         }}
       >
         {testFlags.simulateDrop && (
