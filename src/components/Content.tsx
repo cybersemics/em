@@ -1,4 +1,4 @@
-import React, { FC, useRef, useState } from 'react'
+import React, { FC, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Dispatch from '../@types/Dispatch'
@@ -7,10 +7,18 @@ import { Thunk } from '../@types/Thunk'
 import { closeModalActionCreator as closeModal } from '../actions/closeModal'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
-import { ABSOLUTE_PATH, HOME_PATH, LongPressState, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import {
+  ABSOLUTE_PATH,
+  CONTENT_BOX_PADDING_LEFT,
+  CONTENT_BOX_PADDING_RIGHT,
+  HOME_PATH,
+  LongPressState,
+  TUTORIAL2_STEP_SUCCESS,
+} from '../constants'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
+import viewportStore from '../stores/viewport'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
@@ -30,10 +38,27 @@ const TransientEditable = (
   <Editable isEditing={false} transient={true} path={transientChildPath} simplePath={transientChildPath} rank={0} />
 )
 
+/** A hook that returns a ref to the content div and updates the viewport store's contentWidth property on resize. */
+const useContentWidth = () => {
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!contentRef.current) return
+
+    const resizeObserver = new ResizeObserver(entries => {
+      viewportStore.update({ contentWidth: entries[0]?.contentRect.width || 0 })
+    })
+
+    resizeObserver.observe(contentRef.current)
+    return () => resizeObserver.disconnect()
+  }, [])
+
+  return contentRef
+}
+
 /** The main content section of em. */
 const Content: FC = () => {
   const dispatch = useDispatch()
-  const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
   const tutorial = useSelector(isTutorial)
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
@@ -59,6 +84,8 @@ const Content: FC = () => {
     dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
   }
 
+  const contentRef = useContentWidth()
+
   return (
     <div
       id='content-wrapper'
@@ -69,7 +96,6 @@ const Content: FC = () => {
         id='content'
         ref={contentRef}
         className={css({
-          padding: '80px 10px 153px 50px',
           position: 'relative',
           transition: 'transform 0 ease-out, margin 0 ease-out',
           boxSizing: 'border-box',
@@ -97,6 +123,13 @@ const Content: FC = () => {
               paddingBottom: '20px',
             }),
         })}
+        style={{
+          // Moved from css({...}) because PandaCSS requires statically analyzable values at build time.
+          // Template literals with runtime variables like `80px ${CONTENT_BOX_PADDING_RIGHT}px 153px ${CONTENT_BOX_PADDING_LEFT}px`
+          // cannot be determined during static analysis, so PandaCSS doesn't generate the corresponding CSS.
+          // Using inline styles ensures these dynamic padding values work correctly at runtime.
+          padding: `80px ${CONTENT_BOX_PADDING_RIGHT}px 153px ${CONTENT_BOX_PADDING_LEFT}px`,
+        }}
       >
         {search != null ? (
           <Search />
