@@ -9,6 +9,7 @@ import getThoughtById from '../../selectors/getThoughtById'
 import thoughtToPath from '../../selectors/thoughtToPath'
 import hashPath from '../../util/hashPath'
 import hashThought from '../../util/hashThought'
+import isRoot from '../../util/isRoot'
 import head from '../../util/head'
 import isAttribute from '../../util/isAttribute'
 import keyValueBy from '../../util/keyValueBy'
@@ -209,7 +210,12 @@ async function* fetchDescendants(
           }
         } else {
           thoughtIdQueue.add(childrenIds)
-          return thought
+          return {
+            ...thought,
+            // Always mark parents as pending.
+            // updateThoughts will clear pending once all children are loaded.
+            pending: !isRoot([thought.id]) && hasChildren,
+          }
         }
       })
       .filter(nonNull)

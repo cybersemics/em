@@ -20,15 +20,24 @@ const mergeUpdates = <T>(
 
   Object.entries(mergee).forEach(([key, value]) => {
     if (value) {
-      // ignore pending objects that would overwrite non-pending objects by default
+      const incomingPending = (value as MaybePending).pending
+      const currentPending = (mergeInto[key] as MaybePending)?.pending
+
+      // Do not overwrite a pending object unless:
+      // - overwritePending flag is set
+      // - The new value explicitly sets pending to true or false (i.e. the property exists)
+      //   This prevents accidental clearing of pending when the property is simply omitted.
+      // - Or the old object is not pending.
+      const hasPendingProp = Object.prototype.hasOwnProperty.call(value as object, 'pending')
+
       if (
         overwritePending ||
-        !(value as MaybePending).pending ||
-        !mergeInto[key] ||
-        (mergeInto[key] as MaybePending).pending
+        !currentPending ||
+        (hasPendingProp && incomingPending !== undefined)
       ) {
         mergeResult[key] = value
       }
+      // else retain existing pending object
     } else {
       delete mergeResult[key]
     }
