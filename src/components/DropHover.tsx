@@ -8,6 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
+import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import getSortPreference from '../selectors/getSortPreference'
@@ -29,6 +30,12 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
 
+  const isTableCol2 = useSelector(state =>
+    attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
+  )
+
+  const dropHoverLength = useDropHoverWidth({ isTableCol1, isTableCol2 })
+
   const animateHover = useSelector(state => {
     const parent = parentOf(simplePath)
     const autofocus = calculateAutofocus(state, simplePath)
@@ -45,18 +52,17 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
         css({
           /* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
           /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
-          marginLeft: isTableCol1 ? 'calc(0.9em - 12px)' : 'calc(-0.4em - 12px)',
-          marginTop: '-0.2em',
+          marginLeft: isTableCol1 ? 'calc(0.9em - 0.55em)' : 'calc(-0.4em - 0.55em)',
+          marginTop: '-0.1em',
           _mobile: {
             /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
             marginLeft: 'calc(-0.4em - 14px)',
           },
           display: 'inline',
-          width: isTableCol1 ? '50vw' : undefined,
           animation: animateHover ? `pulseLight {durations.mediumPulse} linear infinite alternate` : undefined,
         }),
       )}
-      style={{ backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColor }}
+      style={{ width: dropHoverLength, backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColor }}
     />
   )
 }

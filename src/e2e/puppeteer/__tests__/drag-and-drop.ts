@@ -317,6 +317,26 @@ describe('drag', () => {
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
+
+  it('should allow dropping before first thought in table row', async () => {
+    await paste(`
+      - x
+      - a
+        - =view
+          - Table
+        - =pin
+          - true
+        - b
+          - c
+        - d
+          - e
+    `)
+
+    await dragAndDropThought('x', 'e', { position: 'before' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 })
 
 describe('drop', () => {
