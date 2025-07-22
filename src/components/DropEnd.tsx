@@ -7,9 +7,9 @@ import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
-import useDropHoverColor from '../hooks/useDropHoverColor'
 import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import attributeEquals from '../selectors/attributeEquals'
+import dropHoverColor from '../selectors/dropHoverColor'
 import { getChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
@@ -48,7 +48,7 @@ const DropEnd = ({
   const thoughtId = head(path)
   const isRootPath = isRoot(path)
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value) ?? ''
-  const dropHoverColor = useDropHoverColor(depth + 1)
+  const dropHoverColorValue = useSelector(state => dropHoverColor(state, depth + 1))
 
   const isParentTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, path)), '=view', 'Table'),
@@ -142,7 +142,7 @@ const DropEnd = ({
           className={dropHoverRecipe({ insideDropEnd: true })}
           style={{
             width: dropHoverLength,
-            backgroundColor: dropHoverColor,
+            backgroundColor: dropHoverColorValue,
             // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch
             marginLeft: `-${DROPEND_FINGERSHIFT}em`,
           }}
