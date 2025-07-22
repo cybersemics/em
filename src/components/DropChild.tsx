@@ -7,8 +7,8 @@ import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
-import useDropHoverColor from '../hooks/useDropHoverColor'
 import useDropHoverWidth from '../hooks/useDropHoverWidth'
+import dropHoverColor from '../selectors/dropHoverColor'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
@@ -30,7 +30,7 @@ interface DropChildProps {
 /** A drop target that allows dropping as a child of a thought. It is only shown when a thought has no children or is collapsed. Only renders if there is a valid dropTarget and a drag is in progress. */
 const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildProps) => {
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
-  const dropHoverColor = useDropHoverColor(depth || 0)
+  const dropHoverColorValue = useSelector(state => dropHoverColor(state, depth || 0))
   const fontSize = useSelector(state => state.fontSize)
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path, simplePath })
@@ -97,7 +97,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
                 width: '100%',
               }),
             )}
-            style={{ width: dropHoverLength, backgroundColor: dropHoverColor }}
+            style={{ width: dropHoverLength, backgroundColor: dropHoverColorValue }}
           />
         )}
       </span>

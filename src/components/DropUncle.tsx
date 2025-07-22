@@ -7,10 +7,10 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
-import useDropHoverColor from '../hooks/useDropHoverColor'
 import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import useHoveringPath from '../hooks/useHoveringPath'
 import attributeEquals from '../selectors/attributeEquals'
+import dropHoverColor from '../selectors/dropHoverColor'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
@@ -30,7 +30,7 @@ const DropUncle = ({
   simplePath: SimplePath
   cliff?: number
 }) => {
-  const dropHoverColor = useDropHoverColor(depth || 0)
+  const dropHoverColorValue = useSelector(state => dropHoverColor(state, depth || 0))
   const value = useSelector(state =>
     testFlags.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
   )
@@ -77,7 +77,7 @@ const DropUncle = ({
       {(testFlags.simulateDrag || isHovering) && (
         <span
           className={dropHoverRecipe({ insideDropEnd: true })}
-          style={{ width: dropHoverLength, backgroundColor: dropHoverColor }}
+          style={{ width: dropHoverLength, backgroundColor: dropHoverColorValue }}
         />
       )}
     </span>

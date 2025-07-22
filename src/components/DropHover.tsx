@@ -7,10 +7,10 @@ import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import testFlags from '../e2e/testFlags'
-import useDropHoverColor from '../hooks/useDropHoverColor'
 import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
+import dropHoverColor from '../selectors/dropHoverColor'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -24,7 +24,7 @@ import parentOf from '../util/parentOf'
 
 /** Renders a drop-hover element unconditionally. */
 const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
-  const dropHoverColor = useDropHoverColor(simplePath.length)
+  const dropHoverColorValue = useSelector(state => dropHoverColor(state, simplePath.length))
 
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
@@ -62,7 +62,10 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
           animation: animateHover ? `pulseLight {durations.mediumPulse} linear infinite alternate` : undefined,
         }),
       )}
-      style={{ width: dropHoverLength, backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColor }}
+      style={{
+        width: dropHoverLength,
+        backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColorValue,
+      }}
     />
   )
 }
