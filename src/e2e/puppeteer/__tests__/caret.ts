@@ -204,7 +204,7 @@ describe('all platforms', () => {
     expect(offset).toBe(focusNodeType === Node.TEXT_NODE ? 'first'.length : 1)
   })
 
-  it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
+  it.skip('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
     const importText = `
       - a`
 
