@@ -72,7 +72,10 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
       return undefined
     }
 
-    const indexChanged = prevIndexRef.current !== undefined && prevIndexRef.current !== index
+    // store previous index locally to avoid it being overwritten before we calculate direction
+    const prevIndex = prevIndexRef.current
+
+    const indexChanged = prevIndex !== undefined && prevIndex !== index
 
     // trigger the throttled flag setter when a move is detected
     if (lastMoveType && indexChanged) {
@@ -86,13 +89,14 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
       animateFlagRef.current = false
     }
 
-    // update previous index for the next render
-    prevIndexRef.current = index
+    // If we are not animating, update prevIndexRef and exit early.
+    if (!shouldAnimate) {
+      prevIndexRef.current = index
+      return undefined
+    }
 
-    if (!shouldAnimate) return undefined
-
-    // Determine actual movement direction relative to previous index.
-    const direction: 'up' | 'down' = index < (prevIndexRef.current ?? index) ? 'up' : 'down'
+    // Determine actual movement direction relative to previous index (before updating the ref).
+    const direction: 'up' | 'down' = index < (prevIndex ?? index) ? 'up' : 'down'
 
     const isPrimary =
       (lastMoveType === 'moveThoughtUp' && direction === 'up') ||
@@ -109,6 +113,9 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
       animationTimingFunction: 'ease-out',
       animationFillMode: 'none',
     }
+
+    // Update prevIndexRef after we've calculated the direction and moveType so that the next render has the correct reference point.
+    prevIndexRef.current = index
 
     if (moveType === 'moveThoughtAction') {
       return {
