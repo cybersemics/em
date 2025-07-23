@@ -13,10 +13,13 @@ const longPress = (state: State, { value = LongPressState.Inactive }: Payload) =
   if (
     // DragHold must be triggered by the beginning of a long press, don't go back from another state
     (value === LongPressState.DragHold && state.longPress === LongPressState.Inactive) ||
-    // Drag can only begin after long press has begun, and should not return from DragCancelled
-    (value === LongPressState.DragInProgress && state.longPress === LongPressState.DragHold) ||
+    // Drag should only begin after long press has begun, but the occasional race condition
+    // may allow react-dnd to initiate a drag before useLongPress sets this to DragHold.
+    // Drag should not re-start after DragCanceled.
+    (value === LongPressState.DragInProgress &&
+      (state.longPress === LongPressState.DragHold || state.longPress === LongPressState.Inactive)) ||
     // Drag can only be cancelled if it was in progress
-    (value === LongPressState.DragCancelled && state.longPress === LongPressState.DragInProgress) ||
+    (value === LongPressState.DragCanceled && state.longPress === LongPressState.DragInProgress) ||
     // Can return to Inactive from any state
     value === LongPressState.Inactive
   )
