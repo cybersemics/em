@@ -22,27 +22,26 @@ interface Options {
  * only has to deal with the resulting animation flags.
  */
 const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
-  const { lastMoveType, isTableView, isCrossContext } = useSelector((state: State) => {
+  // single selector returns tuple [lastMoveType, skipMoveAnimation]
+  const [lastMoveType, skipMoveAnimation] = useSelector((state: State) => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
 
+    // Determine last move type
     const lastMoveType = lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
       ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
       : null
 
+    // Determine if should skip animation
     const cursor = state.cursor
     const isTableView = cursor ? attributeEquals(state, cursor[0], '=view', 'Table') : false
     const isCrossContext = (lastPatches ?? []).some(patch => patch.path?.endsWith('/parentId'))
 
-    return {
-      lastMoveType,
-      isTableView,
-      isCrossContext,
-    }
-  }, shallowEqual)
+    const skipMoveAnimation =
+      (lastMoveType === 'moveThoughtUp' || lastMoveType === 'moveThoughtDown') && isCrossContext && isTableView
 
-  // skip move animation if the last move was a cross-context move in a table view
-  const skipMoveAnimation =
-    (lastMoveType === 'moveThoughtUp' || lastMoveType === 'moveThoughtDown') && isCrossContext && isTableView
+    // Return tuple. React-Redux will perform referential equality by default; use shallowEqual for element diff.
+    return [lastMoveType, skipMoveAnimation] as const
+  }, shallowEqual)
 
   // ref for previous index
   const prevIndexRef = useRef<number | undefined>(undefined)
