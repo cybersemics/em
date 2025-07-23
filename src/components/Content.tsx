@@ -12,6 +12,7 @@ import {
   CONTENT_BOX_PADDING_LEFT,
   CONTENT_BOX_PADDING_RIGHT,
   HOME_PATH,
+  LongPressState,
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
@@ -75,7 +76,8 @@ const Content: FC = () => {
 
     // make sure the the actual Content element has been clicked
     // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
-    if (!isPressed) return
+    // also make sure that the click doesn't occur during a long press (#3120)
+    if (!isPressed || state.longPress !== LongPressState.Inactive) return
     setIsPressed(false)
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
