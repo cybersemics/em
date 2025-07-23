@@ -1,0 +1,25 @@
+diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
+index 30900a8dd268827f2ed313b3cc3c68265151450b..725715a382d5ac19718cfbdca6732a0d1ddc5092 100644
+--- a/dist/TouchBackendImpl.js
++++ b/dist/TouchBackendImpl.js
+@@ -372,6 +372,7 @@ export class TouchBackendImpl {
+             if (!eventShouldEndDrag(e)) {
+                 return;
+             }
++            if (this.timeout) clearTimeout(this.timeout);
+             if (!this.monitor.isDragging() || this.monitor.didDrop()) {
+                 this.moveStartSourceIds = undefined;
+                 return;
+diff --git a/src/TouchBackendImpl.ts b/src/TouchBackendImpl.ts
+index a85cd1845fe02f7731cc1afaf67c97f573a4ccee..6650cf98fdb08bca5fa450853cb7907c380fe13e 100644
+--- a/src/TouchBackendImpl.ts
++++ b/src/TouchBackendImpl.ts
+@@ -578,6 +578,8 @@ export class TouchBackendImpl implements Backend {
+ 			return
+ 		}
+ 
++		if (this.timeout) clearTimeout(this.timeout);
++
+ 		if (!this.monitor.isDragging() || this.monitor.didDrop()) {
+ 			this.moveStartSourceIds = undefined
+ 			return
