@@ -7,7 +7,7 @@ const em = window.em as WindowEm
 
 /** Directly opens a Modal. */
 const openModal = async (id: ModalType): Promise<void> => {
-  await waitForFrames(4)
+  await waitForFrames()
 
   await page.evaluate(id => {
     em.store.dispatch({ type: 'showModal', id })
