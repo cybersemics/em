@@ -1,17 +1,14 @@
-import { useLayoutEffect, useMemo, useState } from 'react'
+import { throttle } from 'lodash'
+import { useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import State from '../@types/State'
 import durations from '../durations.config'
 import attributeEquals from '../selectors/attributeEquals'
-import usePrevious from './usePrevious'
 
 /**
- * Return type of useMoveThoughtAnimation.
+ * The style to apply to the move div.
  */
-export interface MoveThoughtAnimation {
-  /** The style to apply to the move div. */
-  moveDivStyle: React.CSSProperties | undefined
-}
+export type MoveThoughtAnimation = React.CSSProperties | undefined
 
 interface Options {
   /** The current on-screen index of the thought. */
@@ -43,57 +40,69 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
     }
   }, shallowEqual)
 
-  // Determine if the on-screen index has changed since the last render.
-  const previousIndex = usePrevious<number>(index)
-  const indexChanged = previousIndex !== undefined && previousIndex !== index
-
-  // Capture the previous value of indexChanged so we know when it changes between renders.
-  const prevIndexChanged = usePrevious(indexChanged)
-
-  // Capture the proposed moveType. Only compute on the render where indexChanged flips to true.
-  const hasMoved = !!(lastMoveType && indexChanged && !prevIndexChanged)
-
-  const [moveType, setMoveType] = useState<'moveThoughtAction' | 'moveThoughtDisplaced' | null>(null)
-
   // skip move animation if the last move was a cross-context move in a table view
   const skipMoveAnimation =
     (lastMoveType === 'moveThoughtUp' || lastMoveType === 'moveThoughtDown') && isCrossContext && isTableView
 
-  let proposedMoveType: 'moveThoughtAction' | 'moveThoughtDisplaced' | null = null
+  // ref for previous index
+  const prevIndexRef = useRef<number | undefined>(undefined)
 
-  if (hasMoved && previousIndex !== undefined) {
-    // Determine actual movement direction of this node relative to its previous on-screen index.
-    const direction: 'up' | 'down' = index < previousIndex ? 'up' : 'down'
+  // flag set by a throttled function to permit animation
+  const animateFlagRef = useRef(false)
+
+  // throttled function that toggles the animate flag. Leading = true, trailing = false means it will
+  // set the flag immediately and then suppress subsequent calls within the animation window.
+  const markAnimateRef = useRef(
+    throttle(
+      () => {
+        animateFlagRef.current = true
+      },
+      durations.layoutNodeAnimation,
+      { leading: true, trailing: false },
+    ),
+  )
+
+  // cancel the throttled function on unmount to avoid stray callbacks
+  useEffect(() => () => markAnimateRef.current.cancel(), [])
+
+  const moveDivStyle = useMemo<React.CSSProperties | undefined>(() => {
+    if (skipMoveAnimation) {
+      // keep ref in sync even when skipping
+      prevIndexRef.current = index
+      return undefined
+    }
+
+    const indexChanged = prevIndexRef.current !== undefined && prevIndexRef.current !== index
+
+    // trigger the throttled flag setter when a move is detected
+    if (lastMoveType && indexChanged) {
+      markAnimateRef.current()
+    }
+
+    const shouldAnimate = animateFlagRef.current
+
+    // reset flag so that subsequent renders within the same throttle window don't animate again
+    if (shouldAnimate) {
+      animateFlagRef.current = false
+    }
+
+    // update previous index for the next render
+    prevIndexRef.current = index
+
+    if (!shouldAnimate) return undefined
+
+    // Determine actual movement direction relative to previous index.
+    const direction: 'up' | 'down' = index < (prevIndexRef.current ?? index) ? 'up' : 'down'
 
     const isPrimary =
       (lastMoveType === 'moveThoughtUp' && direction === 'up') ||
       (lastMoveType === 'moveThoughtDown' && direction === 'down')
 
-    proposedMoveType = isPrimary ? 'moveThoughtAction' : 'moveThoughtDisplaced'
-  }
+    const moveType: 'moveThoughtAction' | 'moveThoughtDisplaced' = isPrimary
+      ? 'moveThoughtAction'
+      : 'moveThoughtDisplaced'
 
-  // Implement the move type on the next render cycle
-  useLayoutEffect(() => {
-    if (proposedMoveType) {
-      setMoveType(proposedMoveType)
-    }
-  }, [proposedMoveType])
-
-  // Manage the move animation flag
-  useLayoutEffect(() => {
-    // After the layout node animation duration reset the flag so that subsequent
-    // updates can re-trigger the animation.
-    const timer = setTimeout(() => {
-      setMoveType(null)
-    }, durations.layoutNodeAnimation)
-
-    return () => clearTimeout(timer)
-  }, [lastMoveType, moveType])
-
-  const moveDivStyle = useMemo<React.CSSProperties | undefined>(() => {
-    if (!moveType || skipMoveAnimation) return undefined
-
-    // Common style props
+    // common style props
     const base: React.CSSProperties = {
       transformOrigin: 'left',
       animationDuration: `${durations.layoutNodeAnimation}ms`,
@@ -108,25 +117,14 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
         zIndex: 2,
       }
     }
-    if (moveType === 'moveThoughtDisplaced') {
-      return {
-        ...base,
-        animationName: 'moveThoughtDisplaced',
-      }
-    }
-    return undefined
-  }, [moveType, skipMoveAnimation])
 
-  // Override animation output when skipping is requested.
-  if (skipMoveAnimation) {
     return {
-      moveDivStyle: undefined,
+      ...base,
+      animationName: 'moveThoughtDisplaced',
     }
-  }
+  }, [index, lastMoveType, skipMoveAnimation])
 
-  return {
-    moveDivStyle,
-  }
+  return moveDivStyle
 }
 
 export default useMoveThoughtAnimation
