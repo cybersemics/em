@@ -207,9 +207,9 @@ describe('useFilteredCommands', () => {
         // "Hide Hidden Thoughts" comes before "New Thought" alphabetically, so "Show Hidden Thoughts" should appear first
         expect(labels).toContain('Show Hidden Thoughts')
 
-        // Since command is active, inverse label is used: "Hide Hidden Thoughts"
+        // Since command is active, inverse label is used for sorting: "Hide Hidden Thoughts"
         const showHiddenIndex = labels.indexOf('Show Hidden Thoughts')
-        // Since command is not toggling command, regular label is used always: "New Thought"
+        // "New Thought" command uses its regular label for sorting (no labelInverse property)
         const newThoughtIndex = labels.indexOf('New Thought')
 
         // Since "Hide Hidden Thoughts" (inverse) < "New Thought" alphabetically,
@@ -282,7 +282,7 @@ describe('useFilteredCommands', () => {
 
       it('should sort selected command to top', () => {
         // Test that commands matching the exact search term are sorted to the top
-        const { result } = renderHook(() => useFilteredCommands('Context', {}), { wrapper })
+        const { result } = renderHook(() => useFilteredCommands('Context View', {}), { wrapper })
 
         // "Context View" should be first as it exactly matches the search term
         expect(result.current[0].id).toBe('contextView')
