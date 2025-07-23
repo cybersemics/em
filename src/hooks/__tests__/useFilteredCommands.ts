@@ -231,7 +231,6 @@ describe('useFilteredCommands', () => {
         const selectAllIndex = labels.indexOf('Select All')
         // Since command is not toggling command, regular label is used always: "New Thought"
         const newThoughtIndex = labels.indexOf('New Thought')
-        console.log('pinIndex =', selectAllIndex, 'newThoughtIndex =', newThoughtIndex)
 
         expect(newThoughtIndex).toBeLessThan(selectAllIndex)
       })
