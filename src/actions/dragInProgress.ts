@@ -104,7 +104,7 @@ const shaker = Shaker((dispatch: Dispatch) => {
       type: 'dragInProgress',
       value: false,
     },
-    longPressActionCreator({ value: LongPressState.DragCancelled }),
+    longPressActionCreator({ value: LongPressState.DragCanceled }),
     alertActionCreator('✗ Drag cancelled'),
   ])
 })

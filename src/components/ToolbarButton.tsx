@@ -93,7 +93,6 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   }
   const longPressTapUp = longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']
   const longPressTapDown = longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown']
-  const longPressTouchMove = longPress.props.onTouchMove
 
   if (!SVG) {
     console.error('Cannot render toolbar button without an SVG icon:', commandId)
@@ -109,7 +108,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
   const tapUp = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']?.(e)
+      longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']?.()
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('#toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
@@ -182,9 +181,6 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     [longPressTapDown, customize, disabled, isButtonActive, setIsAnimated, isActive],
   )
 
-  /** Handles the tapCancel. */
-  const touchMove = useCallback(longPressTouchMove, [longPressTouchMove])
-
   const style = useMemo(
     () => ({
       fill: buttonError
@@ -240,7 +236,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         padding: `14px ${TOOLBAR_BUTTON_PADDING}px ${isDraggingAny ? '7em' : 0}px ${TOOLBAR_BUTTON_PADDING}px`,
       }}
       onMouseLeave={onMouseLeave}
-      {...fastClick(tapUp, { enableHaptics: false, tapDown, touchMove })}
+      {...fastClick(tapUp, { enableHaptics: false, tapDown })}
     >
       {
         // selected top dash

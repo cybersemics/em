@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useDragDropManager } from 'react-dnd'
 import { useDispatch } from 'react-redux'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
 import { isTouch } from '../browser'
@@ -8,108 +9,91 @@ import globals from '../globals'
 import longPressStore from '../stores/longPressStore'
 import haptics from '../util/haptics'
 
-// number of pixels of scrolling to allow before abandoning the long tap
-const SCROLL_THRESHOLD = 10
-
 /** Custom hook to manage long press.
  * The onLongPressStart handler is called after the delay if the user is still pressing.
  * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove).
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
-  onLongPressEnd: ((options: { canceled: boolean }) => void) | null = noop,
+  onLongPressEnd: (() => void) | null = noop,
   delay: number = TIMEOUT_LONG_PRESS_THOUGHT,
 ) => {
-  const [pressed, setPressed] = useState(false)
+  const [pressing, setPressing] = useState(false)
   // Track isLocked state from longPressStore in local state
   const isLocked = longPressStore.useSelector(state => state.isLocked)
-  // useState doesn't work for some reason (???)
-  // scrollY variable is always 0 in onPressed
-  const clientCoords = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
   const unmounted = useRef(false)
+  const dragDropManager = useDragDropManager()
 
-  /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
-  // track that long press has started on mouseDown or touchStart
+  // The stop handler below does not run when drag-and-drop is active.
+  // Also, endDrag in useDragAndDropThought unlocks the longPressStore before it does anything else.
+  // Unless it is prevented from doing so, the main effect below this one will re-run when isLocked changes to false,
+  // but pressing is still true, triggering onStart again.
+  useEffect(() => {
+    if (!isLocked) setPressing(false)
+  }, [isLocked, setPressing])
+
+  useEffect(() => {
+    /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackned in react-dnd. */
+    const onStart = () => {
+      if (isLocked || !pressing) return
+
+      globals.longpressing = true
+      haptics.light()
+      onLongPressStart?.()
+      longPressStore.lock()
+    }
+
+    if (isTouch) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const backend = dragDropManager.getBackend() as any
+      /** On mobile devices, let TouchBackend manage the timer and wait for it to fire a dragStart event. */
+      backend.options.rootElement.addEventListener('dragStart', onStart)
+
+      return () => backend.options.rootElement.removeEventListener('dragStart', onStart)
+    } else {
+      clearTimeout(timerIdRef.current)
+      /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
+      // cast Timeout to number for compatibility with clearTimeout
+      timerIdRef.current = setTimeout(onStart, delay) as unknown as number
+
+      return () => clearTimeout(timerIdRef.current)
+    }
+  }, [delay, dragDropManager, isLocked, onLongPressStart, pressing])
+
+  /** On mouseDown or touchStart, mark that the press has begun so that when the 'start' event fires in react-dnd,
+   * we will know which element is being long-pressed. */
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      // do not stop propagation, or it will break MultiGesture
-
-      // do not long press if another component is already pressed
-      // do not long press if right-clicking, otherwise right-clicking on a bullet will cause it to get stuck in the pressed state
-      if (isLocked || (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2)) return
-
-      if ('touches' in e) {
-        clientCoords.current = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
-      }
-
-      // cast Timeout to number for compatibility with clearTimeout
-      clearTimeout(timerIdRef.current)
-      timerIdRef.current = setTimeout(() => {
-        globals.longpressing = true
-        haptics.light()
-        onLongPressStart?.()
-        longPressStore.lock()
-        if (!unmounted.current) {
-          setPressed(true)
-        }
-      }, delay) as unknown as number
+      if (e.nativeEvent instanceof TouchEvent || e.nativeEvent.button !== 2) setPressing(true)
     },
-    [delay, onLongPressStart, isLocked],
+    [setPressing],
   )
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.)
   // TODO: Maybe an unmount handler would be better?
-  const stop = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
-      // This gives other components a chance to short circuit.
-      // We can't stop propagation here without messing up other components like Bullet.
-      setTimeout(() => {
-        clearTimeout(timerIdRef.current)
-        timerIdRef.current = 0
-        longPressStore.unlock()
+  const stop = useCallback(() => {
+    setPressing(false)
+    // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
+    // This gives other components a chance to short circuit.
+    // We can't stop propagation here without messing up other components like Bullet.
+    setTimeout(() => {
+      clearTimeout(timerIdRef.current)
+      timerIdRef.current = 0
+      longPressStore.unlock()
 
-        // If not longpressing, it means that the long press was canceled by a move event.
-        // in this case, onLongPressEnd should not be called, since it was already called by the move event.
-        if (!globals.longpressing) return
+      // If not longpressing, it means that the long press was canceled by a move event.
+      // in this case, onLongPressEnd should not be called, since it was already called by the move event.
+      if (!globals.longpressing) return
 
-        globals.longpressing = false
+      globals.longpressing = false
 
-        // If a long press occurred, mark it as not canceled
-        onLongPressEnd?.({ canceled: false })
-
-        if (!unmounted.current) {
-          setPressed(false)
-        }
-      }, 10)
-    },
-    [onLongPressEnd],
-  )
-
-  // If the user moves, end the press.
-  // If timerIdRef is set to 0, abort to prevent unnecessary calculations.
-  const move = useCallback(
-    (e: React.TouchEvent) => {
-      if (!timerIdRef.current) return
-      const moveCoords = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
-      if (
-        Math.abs(moveCoords.x - clientCoords.current.x) > SCROLL_THRESHOLD ||
-        Math.abs(moveCoords.y - clientCoords.current.y) > SCROLL_THRESHOLD
-      ) {
-        clearTimeout(timerIdRef.current)
-        timerIdRef.current = 0
-        clientCoords.current = { x: 0, y: 0 }
-        if (pressed) {
-          globals.longpressing = false
-          onLongPressEnd?.({ canceled: true })
-        }
-      }
-    },
-    [onLongPressEnd, pressed],
-  )
+      // If a long press occurred, mark it as not canceled
+      onLongPressEnd?.()
+    }, 10)
+  }, [onLongPressEnd, setPressing])
 
   // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.
   // Allow double tap to open the context menu as usual.
@@ -147,10 +131,9 @@ const useLongPress = (
       onMouseUp: !isTouch ? stop : undefined,
       onTouchStart: start,
       onTouchEnd: stop,
-      onTouchMove: move,
       onTouchCancel: stop,
     }),
-    [move, onContextMenu, start, stop],
+    [onContextMenu, start, stop],
   )
 
   return props
