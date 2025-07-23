@@ -1,6 +1,6 @@
 import { throttle } from 'lodash'
 import { useEffect, useMemo, useRef } from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import State from '../@types/State'
 import durations from '../durations.config'
 import attributeEquals from '../selectors/attributeEquals'
@@ -22,16 +22,14 @@ interface Options {
  * only has to deal with the resulting animation flags.
  */
 const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
-  // single selector returns tuple [lastMoveType, skipMoveAnimation]
-  const [lastMoveType, skipMoveAnimation] = useSelector((state: State) => {
+  // Selects and computes whether animation should be skipped or allowed
+  const allowAnimate = useSelector((state: State) => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
 
-    // Determine last move type
     const lastMoveType = lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
       ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
       : null
 
-    // Determine if should skip animation
     const cursor = state.cursor
     const isTableView = cursor ? attributeEquals(state, cursor[0], '=view', 'Table') : false
     const isCrossContext = (lastPatches ?? []).some(patch => patch.path?.endsWith('/parentId'))
@@ -39,18 +37,16 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
     const skipMoveAnimation =
       (lastMoveType === 'moveThoughtUp' || lastMoveType === 'moveThoughtDown') && isCrossContext && isTableView
 
-    // Return tuple. React-Redux will perform referential equality by default; use shallowEqual for element diff.
-    return [lastMoveType, skipMoveAnimation] as const
-  }, shallowEqual)
+    return !skipMoveAnimation && !!lastMoveType
+  })
 
-  // ref for previous index
+  // Ref for previous index
   const prevIndexRef = useRef<number | undefined>(undefined)
 
-  // flag set by a throttled function to permit animation
+  // Flag set by throttled function to allow animation
   const animateFlagRef = useRef(false)
 
-  // throttled function that toggles the animate flag. Leading = true, trailing = false means it will
-  // set the flag immediately and then suppress subsequent calls within the animation window.
+  // Throttle to control when animation is allowed
   const markAnimateRef = useRef(
     throttle(
       () => {
@@ -61,51 +57,45 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
     ),
   )
 
-  // cancel the throttled function on unmount to avoid stray callbacks
+  // Cleanup throttle on unmount
   useEffect(() => () => markAnimateRef.current.cancel(), [])
 
   const moveDivStyle = useMemo<React.CSSProperties | undefined>(() => {
-    if (skipMoveAnimation) {
-      // keep ref in sync even when skipping
+    if (!allowAnimate) {
+      // Keep ref in sync even when skipping
       prevIndexRef.current = index
       return undefined
     }
 
-    // store previous index locally to avoid it being overwritten before we calculate direction
     const prevIndex = prevIndexRef.current
-
     const indexChanged = prevIndex !== undefined && prevIndex !== index
 
-    // trigger the throttled flag setter when a move is detected
-    if (lastMoveType && indexChanged) {
+    // Trigger the animation flag when index changes
+    if (indexChanged) {
       markAnimateRef.current()
     }
 
     const shouldAnimate = animateFlagRef.current
 
-    // reset flag so that subsequent renders within the same throttle window don't animate again
+    // Reset flag so that subsequent renders within the same throttle window don't animate again
     if (shouldAnimate) {
       animateFlagRef.current = false
     }
 
-    // If we are not animating, update prevIndexRef and exit early.
+    // If not animating, update previous index and exit
     if (!shouldAnimate) {
       prevIndexRef.current = index
       return undefined
     }
 
-    // Determine actual movement direction relative to previous index (before updating the ref).
     const direction: 'up' | 'down' = index < (prevIndex ?? index) ? 'up' : 'down'
 
-    const isPrimary =
-      (lastMoveType === 'moveThoughtUp' && direction === 'up') ||
-      (lastMoveType === 'moveThoughtDown' && direction === 'down')
-
+    // We infer moveType purely based on direction and index change, since we don't have lastMoveType
+    const isPrimary = direction === 'up' || direction === 'down'
     const moveType: 'moveThoughtAction' | 'moveThoughtDisplaced' = isPrimary
       ? 'moveThoughtAction'
       : 'moveThoughtDisplaced'
 
-    // common style props
     const base: React.CSSProperties = {
       transformOrigin: 'left',
       animationDuration: `${durations.layoutNodeAnimation}ms`,
@@ -113,7 +103,6 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
       animationFillMode: 'none',
     }
 
-    // Update prevIndexRef after we've calculated the direction and moveType so that the next render has the correct reference point.
     prevIndexRef.current = index
 
     if (moveType === 'moveThoughtAction') {
@@ -128,7 +117,7 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
       ...base,
       animationName: 'moveThoughtDisplaced',
     }
-  }, [index, lastMoveType, skipMoveAnimation])
+  }, [index, allowAnimate])
 
   return moveDivStyle
 }
