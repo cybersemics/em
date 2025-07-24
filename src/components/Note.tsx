@@ -12,6 +12,7 @@ import { setDescendantActionCreator as setDescendant } from '../actions/setDesce
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
+import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
 import getThoughtById from '../selectors/getThoughtById'
@@ -45,6 +46,7 @@ const Note = React.memo(
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
+      preventAutoscrollEnd(noteRef.current)
       dispatch(
         setCursor({
           path,
@@ -144,6 +146,8 @@ const Note = React.memo(
       [dispatch],
     )
 
+    const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
+
     if (note === null) return null
 
     return (
@@ -197,6 +201,7 @@ const Note = React.memo(
           }}
           onBlur={onBlur}
           onFocus={onFocus}
+          onMouseDown={onMouseDown}
           role='button'
         />
         <span className={css({ fontSize: '1.1em', position: 'absolute', margin: '-0.15em 0 0 -1.175em' })}>
