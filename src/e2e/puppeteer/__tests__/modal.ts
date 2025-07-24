@@ -4,7 +4,6 @@ import configureSnapshots from '../configureSnapshots'
 import openModal from '../helpers/openModal'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
-import testIfNotCI from '../helpers/testIfNotCI'
 
 const testFileName = path.basename(__filename).replace('.ts', '')
 expect.extend({
@@ -30,9 +29,7 @@ const modalSnapshots = async (id: Modal) => {
   }
 }
 
-// TODO: Flaky test
-// https://github.com/cybersemics/em/issues/2957
-testIfNotCI.skip('modal', async () => {
+it('modal', async () => {
   const customizeToolbarImages = await modalSnapshots('customizeToolbar')
   expect(customizeToolbarImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-customizeToolbar` })
   expect(customizeToolbarImages.light).toMatchImageSnapshot({
@@ -45,8 +42,6 @@ testIfNotCI.skip('modal', async () => {
     customSnapshotIdentifier: 'modal-devices-light',
   })
 
-  // TODO: Intermittently fails with exported content still loading when snapshot is taken
-  // https://github.com/cybersemics/em/actions/runs/15088412461/job/42416149446
   const exportImages = await modalSnapshots('export')
   expect(exportImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-export` })
   expect(exportImages.light).toMatchImageSnapshot({
