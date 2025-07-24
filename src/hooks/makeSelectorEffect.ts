@@ -41,6 +41,7 @@ const makeSelectorEffect = <U extends Store<any>>(store: U) => {
           const current = select(store.getState())
 
           // Only run effect if value has changed according to equality function
+          // Comparing new state with stored previous state
           if (equalityFn ? !equalityFn(current, prev.current) : current !== prev.current) {
             // Call effect directly without setState to avoid re-renders
             // Use requestAnimationFrame to ensure DOM updates are complete
