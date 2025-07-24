@@ -1,5 +1,5 @@
 import { throttle } from 'lodash'
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import State from '../@types/State'
 import durations from '../durations.config'
@@ -81,13 +81,14 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
 
   /**
    * Throttled reset of moveType to null after the layout node animation duration.
-   * Using throttle allows us to avoid manually managing timers.
    * The function will execute on the trailing edge only.
    */
-  const markAnimateRef = useMemo(
-    () => throttle(() => setMoveType(null), durations.layoutNodeAnimation, { leading: false }),
-    [setMoveType],
-  )
+  const clearMoveType = useCallback(() => {
+    const throttled = throttle(() => setMoveType(null), durations.layoutNodeAnimation, {
+      leading: false,
+    })
+    throttled()
+  }, [setMoveType])
 
   useLayoutEffect(() => {
     if (!hasMoved) return
@@ -95,13 +96,9 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
     const nextMoveType = getMoveType(lastMoveType, previousIndex, index)
     if (nextMoveType) {
       setMoveType(nextMoveType)
-      markAnimateRef.cancel()
-      markAnimateRef()
+      clearMoveType()
     }
-  }, [hasMoved, lastMoveType, index, markAnimateRef, previousIndex])
-
-  // Cancel the throttled reset on unmount to avoid setting state on an unmounted component.
-  useEffect(() => () => markAnimateRef.cancel(), [markAnimateRef])
+  }, [hasMoved, lastMoveType, previousIndex, index, clearMoveType])
 
   const moveDivStyle = useMemo<React.CSSProperties | undefined>(() => {
     if (!moveType) return undefined
