@@ -264,6 +264,9 @@ export const IPFS_GATEWAY = 'ipfs.infura.io'
 // also used for react-dnd's delayTouchStart
 export const TIMEOUT_LONG_PRESS_THOUGHT = 400
 
+// number of pixels of scrolling to allow before abandoning the long tap
+export const TOUCH_SLOP = 10
+
 export const MODIFIER_KEYS = {
   Alt: 1,
   Ctrl: 1,
@@ -469,8 +472,8 @@ export enum LongPressState {
   DragHold = 'DragHold',
   /** The user is currently dragging a thought. */
   DragInProgress = 'DragInProgress',
-  /** The drag has been cancelled, but the user has not released their finger from the screen. */
-  DragCancelled = 'DragCancelled',
+  /** The drag has been canceled, but the user has not released their finger from the screen. */
+  DragCanceled = 'DragCanceled',
 }
 
 // User settings that can be saved to /EM/Settings/
@@ -605,3 +608,7 @@ export const COMMAND_GROUPS: {
 
 /** The duration of the haptics vibrate on delete or archive non-empty thought. */
 export const DELETE_VIBRATE_DURATION = 80
+
+/** Right padding and Left padding of the Content component in px. */
+export const CONTENT_BOX_PADDING_RIGHT = 10
+export const CONTENT_BOX_PADDING_LEFT = 50

@@ -61,6 +61,7 @@ const VirtualThought = ({
   style,
   crossContextualKey,
   zoomCursor,
+  cliff,
   prevCliff,
   isLastVisible,
   autofocus,
@@ -83,6 +84,7 @@ const VirtualThought = ({
   /** A key that uniquely identifies the thought across context views. */
   crossContextualKey: string
   zoomCursor?: boolean
+  cliff?: number
   prevCliff?: number
   isLastVisible?: boolean
   autofocus: Autofocus
@@ -258,6 +260,7 @@ const VirtualThought = ({
           // TODO: DragAndDropSubthoughts should be able to handle this.
           path={path}
           simplePath={simplePath}
+          cliff={cliff}
           isLastVisible={isLastVisible}
         />
       )}
