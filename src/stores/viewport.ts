@@ -10,6 +10,7 @@ let virtualKeyboardHeightPortrait = isTouch ? window.innerHeight / 2.275 : 0
 let virtualKeyboardHeightLandscape = isTouch ? window.innerWidth / 1.7 : 0
 
 export interface ViewportState {
+  contentWidth: number
   innerWidth: number
   innerHeight: number
   scrollZoneWidth: number

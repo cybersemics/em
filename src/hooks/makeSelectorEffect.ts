@@ -19,8 +19,8 @@ import Store from '../@types/Store'
  * // Use in component - memoize functions to prevent recreation
  * const select = useCallback(state => state.someValue, [])
  * const effect = useCallback(newValue => {
- *   // This runs without causing a re-render
- *   updateDOM(newValue)
+ * // This runs without causing a re-render
+ * updateDOM(newValue)
  * }, [])
  * useSelectorEffect(effect, select, isEqual)
  */
@@ -34,10 +34,6 @@ const makeSelectorEffect = <U extends Store<any>>(store: U) => {
     // This ref persists between renders and is updated in the subscription
     const prev = useRef<T>(select(store.getState()))
 
-    // Keep a ref to the current effect to avoid stale closures
-    const effectRef = useRef(effect)
-    effectRef.current = effect
-
     useLayoutEffect(
       () =>
         // Returns unsubscribe which is called on unmount.
@@ -48,11 +44,11 @@ const makeSelectorEffect = <U extends Store<any>>(store: U) => {
           if (equalityFn ? !equalityFn(current, prev.current) : current !== prev.current) {
             // Call effect directly without setState to avoid re-renders
             // Use requestAnimationFrame to ensure DOM updates are complete
-            requestAnimationFrame(() => effectRef.current(current))
+            requestAnimationFrame(() => effect(current))
           }
           prev.current = current
         }),
-      [equalityFn, select],
+      [effect, equalityFn, select],
     ) // These functions should be memoized to prevent unnecessary re-subscriptions
   }
 }
