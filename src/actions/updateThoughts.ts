@@ -6,6 +6,7 @@ import PushBatch from '../@types/PushBatch'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { editThoughtPayload } from '../actions/editThought'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
@@ -19,9 +20,9 @@ import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
+import isRoot from '../util/isRoot'
 import keyValueBy from '../util/keyValueBy'
 import mergeUpdates from '../util/mergeUpdates'
-import isRoot from '../util/isRoot'
 import nonNull from '../util/nonNull'
 import reducerFlow from '../util/reducerFlow'
 
@@ -187,29 +188,35 @@ const updateThoughts = (
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
   const lexemeIndexUpdatesOld = keyValueBy(lexemeIndexUpdates, key => ({ [key]: lexemeIndexOld[key] }))
 
-  // TODO: Can we use { overwritePending: !local } and get rid of the overwritePending option to updateThoughts? i.e. Are there any false positives when local is false?
-  const thoughtIndex = mergeUpdates(
-    thoughtIndexOld,
-    keyValueBy(thoughtIndexUpdates, (id, thought) => ({
-      // Clear pending from parent that is set in fetchDescendants.
-      // If one child has loaded, we can assume that all children have loaded since children are stored in a single YJS Doc.
-      // Exclude root children, otherwise pending will be cleared prematurely from the root context. Not sure why that matters, but it causes decodeThoughtsUrl to fail.
-      ...(thought &&
-      !overwritePending &&
-      thoughtIndexOld[thought.parentId]?.pending &&
-      !isRoot([thought.parentId]) &&
-      // clear pending when all children are loaded
-      Object.values(thoughtIndexOld[thought.parentId].childrenMap).every(
-        childId => state.thoughts.thoughtIndex[childId] || thoughtIndexUpdates[childId],
-      )
-        ? {
-            [thought.parentId]: { ...thoughtIndexOld[thought.parentId], pending: false },
-          }
-        : null),
-      [id]: thought,
-    })),
-    { overwritePending },
-  )
+  // Collect parentIds that may be affected (i.e., a child update could clear their pending flag)
+  const affectedParentIds = new Set<ThoughtId>()
+
+  const mergedUpdatesMap = keyValueBy(thoughtIndexUpdates, (id, thought) => {
+    if (thought) affectedParentIds.add(thought.parentId)
+    return { [id]: thought }
+  })
+
+  let thoughtIndex = mergeUpdates(thoughtIndexOld, mergedUpdatesMap, { overwritePending })
+
+  // Single sweep: clear pending from affected parents whose children are all loaded
+  if (!overwritePending) {
+    affectedParentIds.forEach(parentId => {
+      const parent = thoughtIndex[parentId]
+      if (!parent || !parent.pending || isRoot([parentId])) return
+
+      const allChildrenLoaded = Object.values(parent.childrenMap).every(childId => {
+        const child = thoughtIndex[childId]
+        return !!child && !child.pending
+      })
+
+      if (allChildrenLoaded) {
+        thoughtIndex = {
+          ...thoughtIndex,
+          [parentId]: { ...parent, pending: false },
+        }
+      }
+    })
+  }
   const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending })
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited

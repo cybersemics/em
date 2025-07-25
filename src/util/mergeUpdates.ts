@@ -23,19 +23,29 @@ const mergeUpdates = <T>(
       const incomingPending = (value as MaybePending).pending
       const currentPending = (mergeInto[key] as MaybePending)?.pending
 
-      // Do not overwrite a pending object unless:
-      // - overwritePending flag is set
-      // - The new value explicitly sets pending to true or false (i.e. the property exists)
-      //   This prevents accidental clearing of pending when the property is simply omitted.
-      // - Or the old object is not pending.
+      // Do not overwrite an explicitly non-pending object with a pending object unless overwritePending is true.
+      // This prevents a thought that has finished loading (pending === false) from being set back to pending === true
+      // when the DataProvider returns the stale value that still has pending === true. See issue where pending thoughts
+      // remain pending indefinitely after navigating to them.
+
+      // Scenarios:
+      // 1. overwritePending is true: always allow overwrite (original behaviour).
+      // 2. currentPending === true: allow overwrite so that pending can be cleared.
+      // 3. currentPending === false && incomingPending === true: block overwrite to keep non-pending state.
+      // 4. currentPending === false && incomingPending === false/undefined: allow overwrite (other fields may update).
+
+      // Determine if the incoming object has its own pending property.
       const hasPendingProp = Object.prototype.hasOwnProperty.call(value as object, 'pending')
 
-      if (
-        overwritePending ||
-        !currentPending ||
-        (hasPendingProp && incomingPending !== undefined)
-      ) {
-        mergeResult[key] = value
+      const blockPending = !overwritePending && currentPending === false && incomingPending === true
+
+      if (!blockPending && (overwritePending || !currentPending || (hasPendingProp && incomingPending !== undefined))) {
+        // If we are allowing the overwrite, but want to preserve pending === false, explicitly set it.
+        mergeResult[key] = blockPending ? ({ ...(value as object), pending: false } as T) : value
+      } else if (blockPending) {
+        // Merge all properties *except* the pending flag so that we retain the non-pending state.
+        const { pending: _discard, ...rest } = value as MaybePending
+        mergeResult[key] = { ...(mergeInto[key] as object), ...rest } as T
       }
       // else retain existing pending object
     } else {
