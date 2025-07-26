@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
 import Path from '../../@types/Path'
-import { keyboardOpenActionCreator } from '../../actions/keyboardOpen'
 import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
 import preventAutoscroll from '../../device/preventAutoscroll'
@@ -31,7 +30,6 @@ const useEditMode = ({
   const hasNoteFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
   const editing = useSelector(state => state.isKeyboardOpen)
   const isMulticursor = useSelector(hasMulticursor)
-  const dispatch = useDispatch()
   const noteFocus = useSelector(state => state.noteFocus)
   const dragHold = useSelector(state => state.dragHold)
   const dragInProgress = useSelector(state => state.dragInProgress)
@@ -114,22 +112,6 @@ const useEditMode = ({
       store,
       transient,
     ],
-  )
-
-  useEffect(
-    () => {
-      // Set editing to false after unmount
-      return () => {
-        dispatch((dispatch, getState) => {
-          const { cursor, isKeyboardOpen } = getState()
-          if (isKeyboardOpen && equalPath(cursor, path)) {
-            dispatch(keyboardOpenActionCreator({ value: false }))
-          }
-        })
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
   )
 
   // Provide an escape hatch to allow the next default selection rather than setting it.
