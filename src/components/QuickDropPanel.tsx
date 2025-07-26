@@ -24,7 +24,8 @@ import head from '../util/head'
 const drop = (state: State, items: DragThoughtItem[]) => {
   // Set multicursor executing to true if there are multiple thoughts being dropped
   if (items.length > 1) {
-    store.dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'Quick Drop' }))
+    const undoLabel = `Removed ${pluralize('thought', items.length, true)}${items[0].zone === DragThoughtZone.Favorites ? ' from favorites' : ''}`
+    store.dispatch(setIsMulticursorExecuting({ value: true, undoLabel }))
   }
 
   items.forEach(({ simplePath, path, zone }) => {
