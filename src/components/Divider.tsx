@@ -11,7 +11,7 @@ import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
-import viewportStore from '../stores/viewport'
+import viewportStore, { ViewportState } from '../stores/viewport'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
@@ -86,7 +86,8 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
 
   useLayoutEffect(updateDividerWidth, [editingThoughtId, editingValueUntrimmed, fontSize, updateDividerWidth])
 
-  viewportStore.useSelectorEffect(updateDividerWidth, state => state.innerWidth)
+  const selectInnerWidth = useCallback((state: ViewportState) => state.innerWidth, [])
+  viewportStore.useSelectorEffect(updateDividerWidth, selectInnerWidth)
 
   return (
     <div
