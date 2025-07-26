@@ -1,3 +1,4 @@
+import pluralize from 'pluralize'
 import { FC, useEffect } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
@@ -19,30 +20,42 @@ import haptics from '../util/haptics'
 import head from '../util/head'
 
 /** Delete the thought on drop. */
-const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
-  const value = getThoughtById(state, head(simplePath))?.value
-  if (value === undefined) {
-    console.warn(`Missing thought for path ${simplePath}. Aborting deleteDrop.`)
-    return
-  }
+const drop = (state: State, items: DragThoughtItem[]) => {
+  items.forEach(({ simplePath, path, zone }) => {
+    const value = getThoughtById(state, head(simplePath))?.value
+    if (value === undefined) {
+      console.warn(`Missing thought for path ${simplePath}. Aborting deleteDrop.`)
+      return
+    }
 
-  store.dispatch(dragInProgress({ value: false }))
+    if (zone === DragThoughtZone.Favorites) {
+      haptics.light()
+      store.dispatch([
+        toggleAttribute({ path: simplePath, values: ['=favorite', 'true'] }),
+        alert(`Removed ${ellipsize(value)} from favorites`, {
+          clearDelay: 8000,
+          showCloseLink: true,
+        }),
+      ])
+    } else if (zone === DragThoughtZone.Thoughts) {
+      haptics.vibrate(DELETE_VIBRATE_DURATION)
+      store.dispatch(archiveThought({ path }))
+    } else {
+      console.error(`Unsupported DragThoughtZone: ${zone}`)
+    }
+  })
 
-  if (zone === DragThoughtZone.Favorites) {
-    haptics.light()
-    store.dispatch([
-      toggleAttribute({ path: simplePath, values: ['=favorite', 'true'] }),
-      alert(`Removed ${ellipsize(value)} from favorites`, {
+  store.dispatch([
+    dragInProgress({ value: false }),
+    // alert for multiple deleted thoughts will override the previous individual alert
+    alert(
+      `Removed ${pluralize('thought', items.length, true)}${items[0].zone === DragThoughtZone.Favorites ? ' from favorites' : ''}`,
+      {
         clearDelay: 8000,
         showCloseLink: true,
-      }),
-    ])
-  } else if (zone === DragThoughtZone.Thoughts) {
-    haptics.vibrate(DELETE_VIBRATE_DURATION)
-    store.dispatch(archiveThought({ path }))
-  } else {
-    console.error(`Unsupported DragThoughtZone: ${zone}`)
-  }
+      },
+    ),
+  ])
 }
 
 /** Show an alert on hover that notifies the user the thought will be copied if dropped on the icon. */
@@ -76,7 +89,11 @@ const dropCollect = (monitor: DropTargetMonitor) => {
 const QuickDropPanel: FC = () => {
   const [{ isHovering, zone }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
-    drop: item => drop(store.getState(), item as DragThoughtItem),
+    // item is undefined for some reason, so we need to get it from thn monitor
+    drop: (_, monitor) => {
+      const items = monitor.getItem() as DragThoughtItem[]
+      drop(store.getState(), items)
+    },
     collect: dropCollect,
   })
 
