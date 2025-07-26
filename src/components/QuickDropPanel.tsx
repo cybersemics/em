@@ -64,7 +64,7 @@ const hoverMessage = (state: State, zone: DragThoughtZone) => {
   if (length === 0) return ''
 
   const action = zone === DragThoughtZone.Thoughts ? 'delete' : 'remove'
-  const suffix = zone === DragThoughtZone.Thoughts ? '' : ' from favorites'
+  const suffix = zone === DragThoughtZone.Favorites ? ' from favorites' : ''
 
   if (length === 1) {
     const value = getThoughtById(state, head(state.draggingThoughts[0]))?.value
