@@ -10,20 +10,34 @@ import { isSafari, isTouch } from '../browser'
  * 5. On iOS Safari, we need an additional frame due to its unique rendering pipeline
  * This approach minimizes flicker while still capturing accurate dimensions.
  */
-const useLayoutAnimationFrameEffect = (callback: (() => void) | undefined, dependencies: React.DependencyList) => {
+const useLayoutAnimationFrameEffect = (
+  callback: (() => void | (() => void)) | undefined,
+  dependencies: React.DependencyList,
+) => {
   if (!callback) return
 
   useLayoutEffect(
     () => {
+      const destroyCallbackRef: { current: void | (() => void) } = { current: undefined }
+
       // Wait for next frame to ensure layout is complete
       requestAnimationFrame(() => {
         // For iOS Safari first render of element, wait one more frame
         if (isTouch && isSafari()) {
-          requestAnimationFrame(callback)
+          requestAnimationFrame(() => {
+            destroyCallbackRef.current = callback()
+          })
         } else {
-          callback()
+          destroyCallbackRef.current = callback()
         }
       })
+
+      return () => {
+        if (destroyCallbackRef.current) {
+          destroyCallbackRef.current()
+          destroyCallbackRef.current = undefined
+        }
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [callback, ...dependencies],
