@@ -11,6 +11,7 @@ import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
+import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import { AlertText, AlertType, DELETE_VIBRATE_DURATION } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
@@ -21,6 +22,12 @@ import head from '../util/head'
 
 /** Delete the thought on drop. */
 const drop = (state: State, items: DragThoughtItem[]) => {
+  // Set multicursor executing to true if there are multiple thoughts being dropped
+  if (items.length > 1) {
+    const undoLabel = `Removed ${pluralize('thought', items.length, true)}${items[0].zone === DragThoughtZone.Favorites ? ' from favorites' : ''}`
+    store.dispatch(setIsMulticursorExecuting({ value: true, undoLabel }))
+  }
+
   items.forEach(({ simplePath, path, zone }) => {
     const value = getThoughtById(state, head(simplePath))?.value
     if (value === undefined) {
@@ -44,6 +51,11 @@ const drop = (state: State, items: DragThoughtItem[]) => {
       console.error(`Unsupported DragThoughtZone: ${zone}`)
     }
   })
+
+  // Clear isMulticursorExecuting after all operations are complete if it was set
+  if (items.length > 1) {
+    store.dispatch(setIsMulticursorExecuting({ value: false }))
+  }
 
   store.dispatch([
     dragInProgress({ value: false }),
