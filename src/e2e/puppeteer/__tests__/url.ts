@@ -66,6 +66,9 @@ describe('multiline', () => {
 
     await press('ArrowUp')
 
+    // additional frames to ensure stabilization
+    await waitForFrames()
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   }
