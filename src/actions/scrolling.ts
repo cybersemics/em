@@ -3,7 +3,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
-/** Track scroll status on mobile in order to prevent scrolling during drag-and-drop. (#3141) */
+/** Track scroll status on mobile in order to prevent scrolling during drag-and-drop (#3141). */
 const scrolling = (state: State, { value }: { value: boolean }) => ({
   ...state,
   isScrolling: value,

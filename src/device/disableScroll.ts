@@ -1,4 +1,4 @@
-/** Prevent touchmove from allowing the page to scroll when a long press is active. (#3141) */
+/** Prevent touchmove from allowing the page to scroll when a long press is active (#3141). */
 
 /** Don't allow the page to scroll during touchmove. */
 const preventDefault = (e: TouchEvent) => e.preventDefault()
