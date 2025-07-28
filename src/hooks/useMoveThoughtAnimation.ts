@@ -1,5 +1,5 @@
 import { throttle } from 'lodash'
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import State from '../@types/State'
 import durations from '../durations.config'
@@ -67,31 +67,24 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
     return skipMoveAnimation ? null : moveType
   })
 
-  // Determine if the on-screen index has changed since the last render.
+  // Still call all hooks unconditionally
   const previousIndex = usePrevious<number>(index)
   const indexChanged = previousIndex !== undefined && previousIndex !== index
-
-  // Capture the previous value of indexChanged so we know when it changes between renders.
   const prevIndexChanged = usePrevious(indexChanged)
-
-  // Compute if this thought has moved this render cycle.
   const hasMoved = !!(lastMoveType && indexChanged && !prevIndexChanged)
 
   const [moveType, setMoveType] = useState<'moveThoughtAction' | 'moveThoughtDisplaced' | null>(null)
 
-  /**
-   * Throttled reset of moveType to null after the layout node animation duration.
-   * The function will execute on the trailing edge only.
-   */
-  const clearMoveType = useCallback(() => {
-    const throttled = throttle(() => setMoveType(null), durations.layoutNodeAnimation, {
+  // Throttle setMoveType(null)
+  const clearMoveType = useMemo(() => {
+    return throttle(() => setMoveType(null), durations.layoutNodeAnimation, {
       leading: false,
     })
-    throttled()
   }, [setMoveType])
 
   useLayoutEffect(() => {
-    if (!hasMoved) return
+    // skip effect logic safely if no moveType
+    if (!hasMoved || !lastMoveType) return
 
     const nextMoveType = getMoveType(lastMoveType, previousIndex, index)
     if (nextMoveType) {
