@@ -37,13 +37,15 @@ const mergeUpdates = <T>(
       // Determine if the incoming object has its own pending property.
       const hasPendingProp = Object.prototype.hasOwnProperty.call(value as object, 'pending')
 
-      const blockPending = !overwritePending && currentPending === false && incomingPending === true
+      // Determine if we should allow overwrite based on pending logic.
+      const shouldOverwrite =
+        overwritePending || currentPending !== false || (hasPendingProp && incomingPending !== true)
 
-      if (!blockPending && (overwritePending || !currentPending || (hasPendingProp && incomingPending !== undefined))) {
+      if (shouldOverwrite) {
         // If we are allowing the overwrite, but want to preserve pending === false, explicitly set it.
-        mergeResult[key] = blockPending ? ({ ...(value as object), pending: false } as T) : value
-      } else if (blockPending) {
-        // Merge all properties *except* the pending flag so that we retain the non-pending state.
+        mergeResult[key] = value
+      } else {
+        // Merge all properties except the pending flag so that we retain the non-pending state.
         const { pending: _discard, ...rest } = value as MaybePending
         mergeResult[key] = { ...(mergeInto[key] as object), ...rest } as T
       }
