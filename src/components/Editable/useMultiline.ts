@@ -36,11 +36,11 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
     // 1.5x can cause multiline to alternate in Safari for some reason. There may be a mistake in the height calculation or the inclusion of padding that is causing this. Padding was added to the calculation in commit 113c692. Further investigation is needed.
     // See: https://github.com/cybersemics/em/issues/2778#issuecomment-2605083798
     setMultiline(height - paddingTop - paddingBottom > singleLineHeight * 1.2)
-  }, [fontSize, contentRef])
+  }, [contentRef, fontSize])
 
   // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
   // cursor changes to or from the element.
-  useLayoutAnimationFrameEffect(updateMultiline, [fontSize, isEditing, simplePath, editingValue])
+  useLayoutAnimationFrameEffect(updateMultiline, [isEditing, simplePath, editingValue])
 
   // Recalculate multiline when the cursor changes.
   // This is necessary because the width of thoughts change as the autofocus indent changes.
