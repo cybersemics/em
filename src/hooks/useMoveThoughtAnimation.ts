@@ -67,7 +67,7 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
     return skipMoveAnimation ? null : moveType
   })
 
-  // Still call all hooks unconditionally
+  // Determine if the index has changed.
   const previousIndex = usePrevious<number>(index)
   const indexChanged = previousIndex !== undefined && previousIndex !== index
   const prevIndexChanged = usePrevious(indexChanged)
