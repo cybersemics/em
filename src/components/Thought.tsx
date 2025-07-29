@@ -546,9 +546,13 @@ const ThoughtContainer = ({
         ? {}
         : {
             // Single-line thoughts: add padding to maintain visual height equivalent to lineHeight: 2
-            // lineHeight (1.25) + padding (0.375em top/bottom) = total height equivalent to lineHeight: 2
-            paddingTop: '0.375em',
-            paddingBottom: '0.375em',
+            // lineHeight (1.25) + padding (0.4em top + 0.35em bottom) = total height equivalent to lineHeight: 2
+            // Asymmetric padding provides better visual balance:
+            // - More top padding (0.4em) accounts for text baseline and improves vertical centering
+            // - Less bottom padding (0.35em) balances the overall appearance
+            // - Total padding (0.75em) maintains the same visual height as the original lineHeight: 2
+            paddingTop: '0.4em',
+            paddingBottom: '0.35em',
           }),
     }),
     [alignmentTransition.editable, multiline],
