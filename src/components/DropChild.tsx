@@ -93,7 +93,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
               css({
                 // offset drop-end (above) and add 0.25em to slightly  exaggerate the indentation for better drop perception.
                 marginLeft: isTouch ? 'calc(-33% - 8px)' : 'calc(-2em - 10px)',
-                marginTop: '-0.4em',
+                marginTop: '-0.1em',
                 width: '100%',
               }),
             )}

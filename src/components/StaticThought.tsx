@@ -22,7 +22,6 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import Divider from './Divider'
 import Editable from './Editable'
-import useMultiline from './Editable/useMultiline'
 import usePlaceholder from './Editable/usePlaceholder'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
@@ -44,6 +43,7 @@ export interface ThoughtProps {
   // currently this does not control visibility, but merely tracks it
   isVisible?: boolean
   leaf?: boolean
+  multiline?: boolean
   onEdit?: (args: { newValue: string; oldValue: string }) => void
   updateSize?: () => void
   path: Path
@@ -58,6 +58,7 @@ export interface ThoughtProps {
   styleContainer?: React.CSSProperties
   styleThought?: React.CSSProperties
   view?: string | null
+  editableRef?: React.RefObject<HTMLInputElement>
 }
 
 /** Returns true if a color is white, in rgb, rgba, hex, or color name. */
@@ -97,6 +98,7 @@ const StaticThought = ({
   isEditing,
   ellipsizedUrl,
   isVisible,
+  multiline,
   onEdit,
   path,
   rank,
@@ -108,15 +110,16 @@ const StaticThought = ({
   styleThought,
   styleAnnotation,
   updateSize,
+  /* editableRef is passed from Thought component for useMultiline and Editable component */
+  /* This ensures the same DOM element is used for both multiline detection and editing */
+  /* Prevents conflicts between multiple refs pointing to the same element */
+  editableRef,
 }: ThoughtProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
   const dark = useSelector(state => theme(state) !== 'Light')
   const homeContext = isRoot(simplePath) && !isContextPending
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value) ?? ''
-  // store ContentEditable ref to update DOM without re-rendering the Editable during editing
-  const editableRef = React.useRef<HTMLInputElement>(null)
-  const multiline = useMultiline(editableRef, simplePath, isEditing)
   const placeholder = usePlaceholder({ isEditing, simplePath })
 
   useLayoutAnimationFrameEffect(updateSize, [multiline])

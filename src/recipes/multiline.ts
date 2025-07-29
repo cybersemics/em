@@ -4,7 +4,10 @@ const multilineRecipe = defineRecipe({
   className: 'multiline',
   description: 'multiline styles',
   base: {
-    lineHeight: 1.25,
+    /* Uses CSS custom property for consistent line-height across the app */
+    /* This ensures multiline thoughts use the same line-height as single-line thoughts */
+    /* The multiline recipe handles its own padding, so no additional padding needed here */
+    lineHeight: 'var(--thought-line-height)',
     marginTop: '-0.12em !important',
     paddingBottom: '0.5em !important',
     /* A small amount of margin-bottom may make multiline thoughts feel less crunched. However, this must be prevented or overridden when the thought has a note, otherwise there will be too much space in between the thought and the note. */

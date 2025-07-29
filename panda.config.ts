@@ -204,6 +204,12 @@ const keyframes = defineKeyframes({
 })
 
 const globalCss = defineGlobalStyles({
+  ':root': {
+    // CSS custom property for consistent line-height across thoughts.
+    // Used by multiline recipe and useThoughtLineHeight hook.
+    // This value is used throughout the app to ensure consistent line-height.
+    '--thought-line-height': '1.25',
+  },
   '*': {
     _mobile: {
       _dragInProgress: {
