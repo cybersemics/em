@@ -18,7 +18,7 @@ const onScroll = () => {
 
   const state = store.getState()
 
-  // Set isScrolling to true. This should never occur once disableScroll has activated because scroll events will be blocked. (#3141)
+  // Set isScrolling to true. This should never occur once allowTouchToScroll has activated because scroll events will be blocked. (#3141)
   // If the scroll event comes in out of order, though, we may need to cancel any in-progress long press or drag-and-drop behavior.
   // Hopefully we can fold dragHold and dragInProgress into longPress in the very near future to cut down on the number of moving parts.
   store.dispatch([

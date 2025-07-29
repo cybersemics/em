@@ -1,10 +1,11 @@
 /** Prevent touchmove from allowing the page to scroll when a long press is active (#3141). */
+import { isTouch } from '../browser'
 
 /** Don't allow the page to scroll during touchmove. */
 const preventDefault = (e: TouchEvent) => e.preventDefault()
 
 /** Disables scrolling on the body element by preventing default on touchmove. */
-const _disableScroll = () => {
+const disableScroll = () => {
   document.body.addEventListener('touchmove', preventDefault, { passive: false })
 }
 
@@ -14,9 +15,10 @@ const enableScroll = () => {
 }
 
 /** Enables or disables scrolling based on the parameter. */
-function disableScroll(disable: boolean) {
-  if (disable) _disableScroll()
-  else enableScroll()
+function allowTouchToScroll(disable: boolean) {
+  if (!isTouch) return
+  if (disable) enableScroll()
+  else disableScroll()
 }
 
-export default disableScroll
+export default allowTouchToScroll
