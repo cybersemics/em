@@ -43,7 +43,7 @@ const FauxCaret = ({
     fontSize?: Property.FontSize
     top?: Property.Top
     left?: Property.Left
-  }>({})
+  }>({ display: caretType === 'positioned' ? 'none' : undefined })
 
   const isEditingCursor = useSelector(state => state.isKeyboardOpen && equalPath(path, state.cursor))
   const isTableCol1 = useSelector(state => path && attributeEquals(state, head(path), '=view', 'Table'))
