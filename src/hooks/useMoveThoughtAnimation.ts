@@ -7,37 +7,27 @@ import attributeEquals from '../selectors/attributeEquals'
 import usePrevious from './usePrevious'
 
 /**
- * The style to apply to the move div.
- */
-export type MoveThoughtAnimation = React.CSSProperties | undefined
-
-interface Options {
-  /** The current on-screen index of the thought. */
-  index: number
-}
-
-/**
  * Determines the move animation type for a thought based on the previous and current indices and the last move action.
  * Returns:
- * - 'moveThoughtAction' when this thought is the one explicitly moved by the user.
- * - 'moveThoughtDisplaced' when this thought is displaced by another thought moving past it.
- * - null when the movement does not require an animation (e.g. indices unchanged or lastMoveType is null).
+ * - 'moveThoughtOver' when this thought is the one explicitly moved by the user (appears on top).
+ * - 'moveThoughtUnder' when this thought is displaced by another thought moving past it (appears underneath).
+ * - null when the movement does not require an animation (e.g. indices unchanged or lastMoveAction is null).
  */
 const getMoveType = (
-  lastMoveType: 'moveThoughtUp' | 'moveThoughtDown' | null,
+  lastMoveAction: 'moveThoughtUp' | 'moveThoughtDown' | null,
   previousIndex: number | undefined,
   currentIndex: number,
-): 'moveThoughtAction' | 'moveThoughtDisplaced' | null => {
-  if (!lastMoveType || previousIndex === undefined) return null
+): 'moveThoughtOver' | 'moveThoughtUnder' | null => {
+  if (!lastMoveAction || previousIndex === undefined) return null
 
   // Determine actual movement direction of this node relative to its previous on-screen index.
   const direction: 'up' | 'down' = currentIndex < previousIndex ? 'up' : 'down'
 
-  const isPrimary =
-    (lastMoveType === 'moveThoughtUp' && direction === 'up') ||
-    (lastMoveType === 'moveThoughtDown' && direction === 'down')
+  const isMovingWithCursor =
+    (lastMoveAction === 'moveThoughtUp' && direction === 'up') ||
+    (lastMoveAction === 'moveThoughtDown' && direction === 'down')
 
-  return isPrimary ? 'moveThoughtAction' : 'moveThoughtDisplaced'
+  return isMovingWithCursor ? 'moveThoughtOver' : 'moveThoughtUnder'
 }
 
 /**
@@ -46,8 +36,19 @@ const getMoveType = (
  * of the Redux selectors and timing needed so that the consuming component (TreeNode)
  * only has to deal with the resulting animation flags.
  */
-const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
-  const lastMoveType = useSelector((state: State) => {
+const useMoveThoughtAnimation = (
+  index: number,
+):
+  | {
+      transformOrigin?: React.CSSProperties['transformOrigin']
+      animationDuration?: React.CSSProperties['animationDuration']
+      animationTimingFunction?: React.CSSProperties['animationTimingFunction']
+      animationFillMode?: React.CSSProperties['animationFillMode']
+      animationName?: React.CSSProperties['animationName']
+      zIndex?: React.CSSProperties['zIndex']
+    }
+  | undefined => {
+  const lastMoveAction = useSelector((state: State) => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
 
     // Determine if the last action was a moveThoughtUp or moveThoughtDown.
@@ -57,7 +58,18 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
 
     if (!moveType) return null
 
-    // Determine if we should skip the animation (cross-context move inside a Table view).
+    // Determine if we should skip the animation for cross-context moves inside a Table view.
+    //
+    // When a thought is moved between different parent contexts (a cross-context move),
+    // the moveThought action updates the thought's parentId field.
+    // This creates a patch with a path ending in '/parentId'.
+    // For example: "thoughts/thoughtIndex/abc123/parentId" indicates that thought abc123
+    // is being assigned a new parent.
+    //
+    // We skip animation in these cases because:
+    // - Cross-context moves can cause thoughts to jump between table columns
+    // - The standard move animation assumes thoughts stay within the same context
+    // - Animating across column boundaries creates jarring visual transitions
     const cursor = state.cursor
     const isTableView = cursor ? cursor.some(id => attributeEquals(state, id, '=view', 'Table')) : false
     const isCrossContext = (lastPatches ?? []).some(patch => patch.path?.endsWith('/parentId'))
@@ -71,9 +83,9 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
   const previousIndex = usePrevious<number>(index)
   const indexChanged = previousIndex !== undefined && previousIndex !== index
   const prevIndexChanged = usePrevious(indexChanged)
-  const hasMoved = !!(lastMoveType && indexChanged && !prevIndexChanged)
+  const hasMoved = !!(lastMoveAction && indexChanged && !prevIndexChanged)
 
-  const [moveType, setMoveType] = useState<'moveThoughtAction' | 'moveThoughtDisplaced' | null>(null)
+  const [moveType, setMoveType] = useState<'moveThoughtOver' | 'moveThoughtUnder' | null>(null)
 
   // Throttle setMoveType(null)
   const clearMoveType = useMemo(() => {
@@ -84,14 +96,14 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
 
   useLayoutEffect(() => {
     // skip effect logic safely if no moveType
-    if (!hasMoved || !lastMoveType) return
+    if (!hasMoved || !lastMoveAction) return
 
-    const nextMoveType = getMoveType(lastMoveType, previousIndex, index)
-    if (nextMoveType) {
-      setMoveType(nextMoveType)
+    const moveAnimationName = getMoveType(lastMoveAction, previousIndex, index)
+    if (moveAnimationName) {
+      setMoveType(moveAnimationName)
       clearMoveType()
     }
-  }, [hasMoved, lastMoveType, previousIndex, index, clearMoveType])
+  }, [hasMoved, lastMoveAction, previousIndex, index, clearMoveType])
 
   const moveDivStyle = useMemo<React.CSSProperties | undefined>(() => {
     if (!moveType) return undefined
@@ -104,17 +116,17 @@ const useMoveThoughtAnimation = ({ index }: Options): MoveThoughtAnimation => {
       animationFillMode: 'none',
     }
 
-    if (moveType === 'moveThoughtAction') {
+    if (moveType === 'moveThoughtOver') {
       return {
         ...base,
-        animationName: 'moveThoughtAction',
+        animationName: 'moveThoughtOver',
         zIndex: 2,
       }
     }
-    if (moveType === 'moveThoughtDisplaced') {
+    if (moveType === 'moveThoughtUnder') {
       return {
         ...base,
-        animationName: 'moveThoughtDisplaced',
+        animationName: 'moveThoughtUnder',
       }
     }
     return undefined
