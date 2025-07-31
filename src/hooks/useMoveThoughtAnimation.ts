@@ -79,7 +79,13 @@ const useMoveThoughtAnimation = (
     return skipMoveAnimation ? null : moveType
   })
 
-  // Determine if the index has changed.
+  // hasMoved detects the first render where an index change occurs after a move action.
+  // indexChanged: true when current index differs from previous index
+  // !prevIndexChanged: true when the previous render did NOT have an index change
+  //
+  // Without !prevIndexChanged, the animation would trigger on multiple consecutive
+  // renders where indexChanged remains true, causing duplicate/overlapping animations.
+  // This ensures we only animate once per actual move operation.
   const previousIndex = usePrevious<number>(index)
   const indexChanged = previousIndex !== undefined && previousIndex !== index
   const prevIndexChanged = usePrevious(indexChanged)
