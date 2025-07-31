@@ -87,7 +87,13 @@ const useMoveThoughtAnimation = (
 
   const [moveType, setMoveType] = useState<'moveThoughtOver' | 'moveThoughtUnder' | null>(null)
 
-  // Throttle setMoveType(null)
+  // When a move animation starts, we automatically schedule it to be cleared after
+  // the animation duration. Throttling ensures that if multiple moves happen in quick
+  // succession (faster than the animation duration), we don't accumulate multiple
+  // pending clear operations that could interfere with subsequent animations.
+  //
+  // leading: false means the clear won't happen immediately - it waits for the full
+  // animation duration before clearing, allowing the CSS animation to complete.
   const clearMoveType = useMemo(() => {
     return throttle(() => setMoveType(null), durations.layoutNodeAnimation, {
       leading: false,
