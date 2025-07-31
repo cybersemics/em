@@ -66,7 +66,7 @@ const useLongPress = (
    * we will know which element is being long-pressed. */
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      if (e.nativeEvent instanceof TouchEvent || e.nativeEvent.button !== 2) setPressing(true)
+      if ('touches' in e.nativeEvent || e.nativeEvent.button !== 2) setPressing(true)
     },
     [setPressing],
   )
