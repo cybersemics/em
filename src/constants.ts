@@ -613,7 +613,7 @@ export const DELETE_VIBRATE_DURATION = 80
 export const CONTENT_BOX_PADDING_RIGHT = 10
 export const CONTENT_BOX_PADDING_LEFT = 50
 
-/** Padding Top anb Bottom compensation to make same as line height: 2
+/** Padding Top and Bottom compensation to make same as line height: 2
  * by applying combination (1.25 + 0.4 + 0.35 = 2) of
  * - lineHeight: 1.25
  * - paddingTop: 0.4em
