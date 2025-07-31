@@ -7,13 +7,13 @@ import attributeEquals from '../selectors/attributeEquals'
 import usePrevious from './usePrevious'
 
 /**
- * Determines the move animation type for a thought based on the previous and current indices and the last move action.
+ * Determines the move animation name for a thought based on the previous and current indices and the last move action.
  * Returns:
  * - 'moveThoughtOver' when this thought is the one explicitly moved by the user (appears on top).
  * - 'moveThoughtUnder' when this thought is displaced by another thought moving past it (appears underneath).
  * - null when the movement does not require an animation (e.g. indices unchanged or lastMoveAction is null).
  */
-const getMoveType = (
+const getMoveAnimation = (
   lastMoveAction: 'moveThoughtUp' | 'moveThoughtDown' | null,
   previousIndex: number | undefined,
   currentIndex: number,
@@ -113,7 +113,7 @@ const useMoveThoughtAnimation = (
     // skip effect logic safely if no moveAction
     if (!hasMoved || !lastMoveAction) return
 
-    const moveAnimationName = getMoveType(lastMoveAction, previousIndex, index)
+    const moveAnimationName = getMoveAnimation(lastMoveAction, previousIndex, index)
     if (moveAnimationName) {
       setMoveAnimation(moveAnimationName)
       clearMoveAnimation()
