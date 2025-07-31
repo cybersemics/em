@@ -22,6 +22,8 @@ import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
+  THOUGHT_HEIGHT_COMPENSATION_PADDING_BOTTOM,
+  THOUGHT_HEIGHT_COMPENSATION_PADDING_TOP,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
@@ -166,8 +168,8 @@ const Editable = ({
       ...(multiline
         ? {}
         : {
-            paddingTop: '0.4em',
-            paddingBottom: '0.35em',
+            paddingTop: THOUGHT_HEIGHT_COMPENSATION_PADDING_TOP,
+            paddingBottom: THOUGHT_HEIGHT_COMPENSATION_PADDING_BOTTOM,
           }),
     }
   }, [multiline, style])

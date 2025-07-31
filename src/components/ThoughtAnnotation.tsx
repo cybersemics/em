@@ -10,7 +10,13 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
-import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
+import {
+  REGEX_PUNCTUATIONS,
+  REGEX_TAGS,
+  Settings,
+  THOUGHT_HEIGHT_COMPENSATION_PADDING_BOTTOM,
+  THOUGHT_HEIGHT_COMPENSATION_PADDING_TOP,
+} from '../constants'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
@@ -158,8 +164,8 @@ const ThoughtAnnotation = React.memo(
         ...(multiline
           ? {}
           : {
-              paddingTop: '0.4em',
-              paddingBottom: '0.35em',
+              paddingTop: THOUGHT_HEIGHT_COMPENSATION_PADDING_TOP,
+              paddingBottom: THOUGHT_HEIGHT_COMPENSATION_PADDING_BOTTOM,
             }),
       }
     }, [multiline])

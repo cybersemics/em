@@ -612,3 +612,12 @@ export const DELETE_VIBRATE_DURATION = 80
 /** Right padding and Left padding of the Content component in px. */
 export const CONTENT_BOX_PADDING_RIGHT = 10
 export const CONTENT_BOX_PADDING_LEFT = 50
+
+/** Padding Top anb Bottom compensation to make same as line height: 2
+ * by applying combination (1.25 + 0.4 + 0.35 = 2) of
+ * - lineHeight: 1.25
+ * - paddingTop: 0.4em
+ * - paddingBottom: 0.35em.
+ */
+export const THOUGHT_HEIGHT_COMPENSATION_PADDING_TOP = '0.4em'
+export const THOUGHT_HEIGHT_COMPENSATION_PADDING_BOTTOM = '0.35em'
