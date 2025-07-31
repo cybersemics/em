@@ -149,6 +149,21 @@ const ThoughtAnnotation = React.memo(
       return isEditing ? (liveValueIfEditing ?? value) : labelChild ? labelChild.value : value
     })
 
+    const annotationStyle = useMemo(() => {
+      return {
+        // lineHeight (1.25) is applied to the Thought container (.thought-container)
+        // Single-line: lineHeight (1.25) + padding (0.4em for top/ 0.35em for bottom) = total height equivalent to lineHeight: 2
+        // Multiline: lineHeight (1.25) only, padding handled by multiline recipe
+        // This approach eliminates flickering when switching between single/multiline states
+        ...(multiline
+          ? {}
+          : {
+              paddingTop: '0.4em',
+              paddingBottom: '0.35em',
+            }),
+      }
+    }, [multiline])
+
     return (
       <div
         aria-label='thought-annotation'
@@ -175,6 +190,7 @@ const ThoughtAnnotation = React.memo(
             marginLeft: { _android: '0.5em' },
           },
         })}
+        style={annotationStyle}
       >
         <div
           className={

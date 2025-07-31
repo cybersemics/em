@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
+import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe, multilineRecipe } from '../../styled-system/recipes'
@@ -155,6 +155,22 @@ const Editable = ({
     const labelId = findDescendant(state, parentId, '=label')
     return anyChild(state, labelId)?.value
   })
+
+  const editableStyle = useMemo(() => {
+    return {
+      ...style,
+      /* lineHeight (1.25) is applied to the Thought container (.thought-container) */
+      /* Single-line: lineHeight (1.25) + padding (0.4em for top/ 0.35em for bottom) = total height equivalent to lineHeight: 2 */
+      /* Multiline: lineHeight (1.25) only, padding handled by multiline recipe */
+      /* This approach eliminates flickering when switching between single/multiline states */
+      ...(multiline
+        ? {}
+        : {
+            paddingTop: '0.4em',
+            paddingBottom: '0.35em',
+          }),
+    }
+  }, [multiline, style])
 
   if (contentRef.current) {
     contentRef.current.style.opacity = '1.0'
@@ -647,7 +663,7 @@ const Editable = ({
       // iOS Safari delays event handling in case the DOM is modified during setTimeout inside an event handler,
       // unless it is given a hint that the element is some sort of form control
       role='button'
-      style={style}
+      style={editableStyle}
     />
   )
 }

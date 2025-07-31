@@ -53,7 +53,6 @@ import Bullet from './Bullet'
 import Byline from './Byline'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DropHover from './DropHover'
-import useMultiline from './Editable/useMultiline'
 import Note from './Note'
 import StaticThought from './StaticThought'
 
@@ -526,38 +525,6 @@ const ThoughtContainer = ({
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: Subthoughts render
 
-  // store ContentEditable ref to update DOM without re-rendering the Editable during editing
-  // This ref is shared between useMultiline and StaticThought components
-  // useMultiline uses it to detect when content becomes multiline
-  // StaticThought passes it to the Editable component for DOM manipulation
-  const editableRef = React.useRef<HTMLInputElement>(null)
-  const multiline = useMultiline(editableRef, simplePath, isEditing)
-
-  // Memoize editable container styles to prevent unnecessary re-renders
-  // Only recalculates when alignmentTransition.editable or multiline state changes
-  const editableContainerStyle = useMemo(
-    () => ({
-      // Apply table alignment transitions (for table view)
-      ...alignmentTransition.editable,
-      // Use CSS custom property for consistent line-height across the app
-      lineHeight: 'var(--thought-line-height)',
-      // Conditional padding based on multiline state
-      ...(multiline
-        ? {}
-        : {
-            // Single-line thoughts: add padding to maintain visual height equivalent to lineHeight: 2
-            // lineHeight (1.25) + padding (0.4em top + 0.35em bottom) = total height equivalent to lineHeight: 2
-            // Asymmetric padding provides better visual balance:
-            // - More top padding (0.4em) accounts for text baseline and improves vertical centering
-            // - Less bottom padding (0.35em) balances the overall appearance
-            // - Total padding (0.75em) maintains the same visual height as the original lineHeight: 2
-            paddingTop: '0.4em',
-            paddingBottom: '0.35em',
-          }),
-    }),
-    [alignmentTransition.editable, multiline],
-  )
-
   return (
     <div
       {...dragHoldResult.props}
@@ -611,16 +578,18 @@ const ThoughtContainer = ({
         aria-label='thought-container'
         data-testid={'thought-' + hashPath(path)}
         className={css({
+          /* Line-height styling applied to editable container where text content is rendered */
+          /* This ensures line-height affects the actual text, not the outer container */
+          lineHeight: 'var(--thought-line-height)',
           // ensure that ThoughtAnnotation is positioned correctly
           position: 'relative',
           ...(hideBullet ? { marginLeft: -12 } : null),
         })}
       >
-        {/* Thought container - positioning and layout only, no line-height styling */}
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
           <div style={{ ...alignmentTransition.bullet, lineHeight: 2 }}>
             {/* Bullet container needs lineHeight: 2 to compensate for the editable container's line-height structure */}
-            {/* Editable container: lineHeight (1.25) + padding (0.375em top/bottom) = total height equivalent to lineHeight: 2 */}
+            {/* Editable container: lineHeight (1.25) + padding (0.4em for top/ 0.35em for bottom) = total height equivalent to lineHeight: 2 */}
             {/* Bullet container: lineHeight (2) to match the total height and maintain vertical alignment */}
             {/* This ensures the bullet stays vertically centered with the thought text regardless of multiline state */}
             <Bullet
@@ -641,12 +610,7 @@ const ThoughtContainer = ({
 
         <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
-        <div style={editableContainerStyle}>
-          {/* Line-height styling applied to editable container where text content is rendered */}
-          {/* This ensures line-height affects the actual text, not the outer container */}
-          {/* Single-line: lineHeight (1.25) + padding (0.375em top/bottom) = total height equivalent to lineHeight: 2 */}
-          {/* Multiline: lineHeight (1.25) only, padding handled by multiline recipe */}
-          {/* This approach eliminates flickering when switching between single/multiline states */}
+        <div style={alignmentTransition.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
             env={env}
@@ -655,7 +619,6 @@ const ThoughtContainer = ({
             ellipsizedUrl={!isEditing && containsURL(value)}
             isPublishChild={isPublishChild}
             isVisible={isVisible}
-            multiline={multiline}
             onEdit={!isTouch ? onEdit : undefined}
             path={path}
             rank={rank}
@@ -668,9 +631,7 @@ const ThoughtContainer = ({
             styleThought={styleThought}
             updateSize={updateSize}
             view={view}
-            editableRef={editableRef}
           />
-          {/* Pass editableRef down to StaticThought for useMultiline and Editable component */}
         </div>
         <Note path={path} disabled={!isVisible} />
       </div>

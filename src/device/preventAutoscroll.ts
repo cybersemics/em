@@ -15,7 +15,9 @@ export const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
   clearTimeout(timeoutId)
   timeoutId = undefined
 
-  if (!el) return
+  // preventAutoscrollEnd function is for preventAutoscroll function (which is for only mobile mode)
+  // So, "!isTouch" condition should be added here to detect if current device is not desktop - meaning check the app can be affected by virtual keyboard
+  if (!isTouch || !el) return
 
   el.style.transform = transformOld
   el.style.paddingBottom = paddingBottomOld
