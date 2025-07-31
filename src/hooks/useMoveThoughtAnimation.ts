@@ -39,24 +39,27 @@ const getMoveType = (
 const useMoveThoughtAnimation = (
   index: number,
 ):
-  | {
-      transformOrigin?: React.CSSProperties['transformOrigin']
-      animationDuration?: React.CSSProperties['animationDuration']
-      animationTimingFunction?: React.CSSProperties['animationTimingFunction']
-      animationFillMode?: React.CSSProperties['animationFillMode']
-      animationName?: React.CSSProperties['animationName']
-      zIndex?: React.CSSProperties['zIndex']
-    }
+  | Partial<
+      Pick<
+        React.CSSProperties,
+        | 'transformOrigin'
+        | 'animationDuration'
+        | 'animationTimingFunction'
+        | 'animationFillMode'
+        | 'animationName'
+        | 'zIndex'
+      >
+    >
   | undefined => {
   const lastMoveAction = useSelector((state: State) => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
 
     // Determine if the last action was a moveThoughtUp or moveThoughtDown.
-    const moveType = lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
+    const moveAction = lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
       ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
       : null
 
-    if (!moveType) return null
+    if (!moveAction) return null
 
     // Determine if we should skip the animation for cross-context moves inside a Table view.
     //
@@ -76,7 +79,7 @@ const useMoveThoughtAnimation = (
 
     const skipMoveAnimation = isCrossContext && isTableView
 
-    return skipMoveAnimation ? null : moveType
+    return skipMoveAnimation ? null : moveAction
   })
 
   // hasMoved detects the first render where an index change occurs after a move action.
@@ -91,7 +94,7 @@ const useMoveThoughtAnimation = (
   const prevIndexChanged = usePrevious(indexChanged)
   const hasMoved = !!(lastMoveAction && indexChanged && !prevIndexChanged)
 
-  const [moveType, setMoveType] = useState<'moveThoughtOver' | 'moveThoughtUnder' | null>(null)
+  const [moveAnimation, setMoveAnimation] = useState<'moveThoughtOver' | 'moveThoughtUnder' | null>(null)
 
   // When a move animation starts, we automatically schedule it to be cleared after
   // the animation duration. Throttling ensures that if multiple moves happen in quick
@@ -100,25 +103,25 @@ const useMoveThoughtAnimation = (
   //
   // leading: false means the clear won't happen immediately - it waits for the full
   // animation duration before clearing, allowing the CSS animation to complete.
-  const clearMoveType = useMemo(() => {
-    return throttle(() => setMoveType(null), durations.layoutNodeAnimation, {
+  const clearMoveAnimation = useMemo(() => {
+    return throttle(() => setMoveAnimation(null), durations.layoutNodeAnimation, {
       leading: false,
     })
-  }, [setMoveType])
+  }, [setMoveAnimation])
 
   useLayoutEffect(() => {
-    // skip effect logic safely if no moveType
+    // skip effect logic safely if no moveAction
     if (!hasMoved || !lastMoveAction) return
 
     const moveAnimationName = getMoveType(lastMoveAction, previousIndex, index)
     if (moveAnimationName) {
-      setMoveType(moveAnimationName)
-      clearMoveType()
+      setMoveAnimation(moveAnimationName)
+      clearMoveAnimation()
     }
-  }, [hasMoved, lastMoveAction, previousIndex, index, clearMoveType])
+  }, [hasMoved, lastMoveAction, previousIndex, index, clearMoveAnimation])
 
   const moveDivStyle = useMemo<React.CSSProperties | undefined>(() => {
-    if (!moveType) return undefined
+    if (!moveAnimation) return undefined
 
     // Common style props
     const base: React.CSSProperties = {
@@ -128,21 +131,21 @@ const useMoveThoughtAnimation = (
       animationFillMode: 'none',
     }
 
-    if (moveType === 'moveThoughtOver') {
+    if (moveAnimation === 'moveThoughtOver') {
       return {
         ...base,
         animationName: 'moveThoughtOver',
         zIndex: 2,
       }
     }
-    if (moveType === 'moveThoughtUnder') {
+    if (moveAnimation === 'moveThoughtUnder') {
       return {
         ...base,
         animationName: 'moveThoughtUnder',
       }
     }
     return undefined
-  }, [moveType])
+  }, [moveAnimation])
 
   return moveDivStyle
 }
