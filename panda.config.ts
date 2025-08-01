@@ -164,6 +164,16 @@ const keyframes = defineKeyframes({
       transform: 'translateX(-50%) translateY(0)',
     },
   },
+  moveThoughtOver: {
+    '0%': { transform: 'scale3d(1, 1, 1)' },
+    '50%': { transform: 'scale3d(1.5, 1.5, 1)' },
+    '100%': { transform: 'scale3d(1, 1, 1)' },
+  },
+  moveThoughtUnder: {
+    '0%': { transform: 'scale3d(1, 1, 1)', opacity: 1, filter: 'blur(0)' },
+    '50%': { transform: 'scale3d(0.5, 0.5, 1)', opacity: 0.5, filter: 'blur(2px)' },
+    '100%': { transform: 'scale3d(1, 1, 1)', opacity: 1, filter: 'blur(0)' },
+  },
   // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
   // See: recipes/hideCaret.ts
   // TODO: FauxCaret will break if hideCaretAnimationNames is imported from hideCaret.config.ts into hideCaret.ts, and vice versa into panda.config.ts, so we are stuck with duplicate definitions in two files.
