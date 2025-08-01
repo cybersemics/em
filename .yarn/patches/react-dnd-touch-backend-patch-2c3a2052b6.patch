@@ -1,8 +1,8 @@
 diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
-index 725715a382d5ac19718cfbdca6732a0d1ddc5092..58f120dd81b8369bd4e42e3fe86a83bdbb32d93a 100644
+index 725715a382d5ac19718cfbdca6732a0d1ddc5092..c68c2852ef396fad70e93844821b7c7aa2805728 100644
 --- a/dist/TouchBackendImpl.js
 +++ b/dist/TouchBackendImpl.js
-@@ -38,13 +38,27 @@ export class TouchBackendImpl {
+@@ -38,6 +38,18 @@ export class TouchBackendImpl {
      get document() {
          return this.options.document;
      }
@@ -21,32 +21,15 @@ index 725715a382d5ac19718cfbdca6732a0d1ddc5092..58f120dd81b8369bd4e42e3fe86a83bd
      setup() {
          const root = this.options.rootElement;
          if (!root) {
-             return;
-         }
-+        this.startTime = Date.now()
-         invariant(!TouchBackendImpl.isSetUp, 'Cannot have two Touch backends at the same time.');
-         TouchBackendImpl.isSetUp = true;
-+        window.addEventListener('scroll', this.handleScroll);
-         this.addEventListener(root, 'start', this.getTopMoveStartHandler());
-         this.addEventListener(root, 'start', this.handleTopMoveStartCapture, true);
-         this.addEventListener(root, 'move', this.handleTopMove);
-@@ -64,6 +78,7 @@ export class TouchBackendImpl {
-         }
-         TouchBackendImpl.isSetUp = false;
-         this._mouseClientOffset = {};
-+        window.removeEventListener('scroll', this.handleScroll);
-         this.removeEventListener(root, 'start', this.handleTopMoveStartCapture, true);
-         this.removeEventListener(root, 'start', this.handleTopMoveStart);
-         this.removeEventListener(root, 'move', this.handleTopMoveCapture, true);
-@@ -243,6 +258,7 @@ export class TouchBackendImpl {
+@@ -242,6 +254,7 @@ export class TouchBackendImpl {
+             if (!eventShouldStartDrag(e)) {
                  return;
              }
++            window.addEventListener('scroll', this.handleScroll);
              const delay = e.type === eventNames.touch.start ? this.options.delayTouchStart : this.options.delayMouseStart;
-+            this.cutoffTime = Date.now() + delay
              this.timeout = setTimeout(this.handleTopMoveStart.bind(this, e), delay);
              this.waitingForDelay = true;
-         };
-@@ -271,6 +287,7 @@ export class TouchBackendImpl {
+@@ -271,6 +284,7 @@ export class TouchBackendImpl {
                  (this.options.touchSlop ? this.options.touchSlop : 0)
              ) {
                  clearTimeout(this.timeout);
@@ -54,7 +37,7 @@ index 725715a382d5ac19718cfbdca6732a0d1ddc5092..58f120dd81b8369bd4e42e3fe86a83bd
              }
  
              if (!this.document || this.waitingForDelay) {
-@@ -284,6 +301,7 @@ export class TouchBackendImpl {
+@@ -284,10 +298,12 @@ export class TouchBackendImpl {
                  this._isScrolling = true;
                  return;
              }
@@ -62,7 +45,12 @@ index 725715a382d5ac19718cfbdca6732a0d1ddc5092..58f120dd81b8369bd4e42e3fe86a83bd
              // If we're not dragging and we've moved a little, that counts as a drag start
              if (!this.monitor.isDragging() && // eslint-disable-next-line no-prototype-builtins
              this._mouseClientOffset.hasOwnProperty('x') && moveStartSourceIds && distance(this._mouseClientOffset.x || 0, this._mouseClientOffset.y || 0, clientOffset.x, clientOffset.y) > (this.options.touchSlop ? this.options.touchSlop : 0)) {
-@@ -372,7 +390,10 @@ export class TouchBackendImpl {
+                 this.moveStartSourceIds = undefined;
++                window.removeEventListener('scroll', this.handleScroll);
+                 this.actions.beginDrag(moveStartSourceIds, {
+                     clientOffset: this._mouseClientOffset,
+                     getSourceClientOffset: this.getSourceClientOffset,
+@@ -372,7 +388,10 @@ export class TouchBackendImpl {
              if (!eventShouldEndDrag(e)) {
                  return;
              }
@@ -75,7 +63,7 @@ index 725715a382d5ac19718cfbdca6732a0d1ddc5092..58f120dd81b8369bd4e42e3fe86a83bd
                  this.moveStartSourceIds = undefined;
                  return;
 diff --git a/src/TouchBackendImpl.ts b/src/TouchBackendImpl.ts
-index 6650cf98fdb08bca5fa450853cb7907c380fe13e..4afc3cb776a7cbd126402d0a7635ed5b0f011b2b 100644
+index 6650cf98fdb08bca5fa450853cb7907c380fe13e..a2447e127ce651e54bc34ade047df98dc3dc72f8 100644
 --- a/src/TouchBackendImpl.ts
 +++ b/src/TouchBackendImpl.ts
 @@ -116,6 +116,17 @@ export class TouchBackendImpl implements Backend {
@@ -96,23 +84,15 @@ index 6650cf98fdb08bca5fa450853cb7907c380fe13e..4afc3cb776a7cbd126402d0a7635ed5b
  	public setup(): void {
  		const root = this.options.rootElement
  		if (!root) {
-@@ -128,6 +139,7 @@ export class TouchBackendImpl implements Backend {
- 		)
- 		TouchBackendImpl.isSetUp = true
+@@ -385,6 +396,7 @@ export class TouchBackendImpl implements Backend {
+ 			return
+ 		}
  
 +		window.addEventListener('scroll', this.handleScroll)
- 		this.addEventListener(root, 'start', this.getTopMoveStartHandler() as any)
- 		this.addEventListener(
- 			root,
-@@ -171,6 +183,7 @@ export class TouchBackendImpl implements Backend {
- 		TouchBackendImpl.isSetUp = false
- 		this._mouseClientOffset = {}
- 
-+		window.removeEventListener('scroll', this.handleScroll)
- 		this.removeEventListener(
- 			root,
- 			'start',
-@@ -426,6 +439,7 @@ export class TouchBackendImpl implements Backend {
+ 		const delay =
+ 			e.type === eventNames.touch.start
+ 				? this.options.delayTouchStart
+@@ -426,6 +438,7 @@ export class TouchBackendImpl implements Backend {
  			(this.options.touchSlop ? this.options.touchSlop : 0)
  		) {
  			clearTimeout(this.timeout)
@@ -120,6 +100,14 @@ index 6650cf98fdb08bca5fa450853cb7907c380fe13e..4afc3cb776a7cbd126402d0a7635ed5b
  		}
  
  		if (!this.document || this.waitingForDelay) {
+@@ -465,6 +478,7 @@ export class TouchBackendImpl implements Backend {
+ 		) {
+ 			this.moveStartSourceIds = undefined
+ 
++			window.removeEventListener('scroll', this.handleScroll)
+ 			this.actions.beginDrag(moveStartSourceIds, {
+ 				clientOffset: this._mouseClientOffset,
+ 				getSourceClientOffset: this.getSourceClientOffset,
 @@ -578,7 +592,10 @@ export class TouchBackendImpl implements Backend {
  			return
  		}
