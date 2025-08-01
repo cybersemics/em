@@ -11,7 +11,7 @@ import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
 import { inputHandlers } from '../commands'
-import { AlertType } from '../constants'
+import { AlertType, noop } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
@@ -28,6 +28,7 @@ import pathToContext from '../util/pathToContext'
 import durations from './durations'
 import equalPath from './equalPath'
 import handleKeyboardVisibility from './handleKeyboardVisibility'
+import handleScrollDetection from './handleScrollDetection'
 
 declare global {
   interface Window {
@@ -54,6 +55,9 @@ let passiveTimeout = 0
 // cache the scroll-at-edge container on start for performance
 // if the Sidebar is open on touch start, this is set to the .sidebar element
 let scrollContainer: Window | HTMLElement = window
+
+// store event handlers attached by handleScrollDetection for later removal
+let handleScrollDetectionCleanup = noop
 
 /** An scroll-at-edge function that will continue scrolling smoothly in a given direction until scroll-at-edge.stop is called. Takes a number of pixels to scroll each iteration. */
 const scrollAtEdge = (() => {
@@ -382,6 +386,9 @@ const initEvents = (store: Store<State, any>) => {
     handleKeyboardVisibility()
   }
 
+  // add event handlers to track scroll behavior
+  if (isTouch) handleScrollDetectionCleanup = handleScrollDetection()
+
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
@@ -410,6 +417,9 @@ const initEvents = (store: Store<State, any>) => {
     if (isTouch && isAndroidWebView() && window.visualViewport) {
       window.visualViewport.removeEventListener('resize', handleKeyboardVisibility)
     }
+
+    // clean up event handlers attached by handleScrollDetection
+    if (isTouch) handleScrollDetectionCleanup()
   }
 
   // return input handlers as another way to remove them on cleanup

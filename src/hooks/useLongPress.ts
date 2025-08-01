@@ -6,6 +6,7 @@ import { isTouch } from '../browser'
 import { TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import store from '../stores/app'
 import longPressStore from '../stores/longPressStore'
 import haptics from '../util/haptics'
 
@@ -37,7 +38,8 @@ const useLongPress = (
   useEffect(() => {
     /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackned in react-dnd. */
     const onStart = () => {
-      if (isLocked || !pressing) return
+      const { isScrolling } = store.getState()
+      if (isLocked || !pressing || isScrolling) return
 
       globals.longpressing = true
       haptics.light()

@@ -76,6 +76,8 @@ interface State {
   editableNonce: number
   /** True if there is an active browser selection, or on mobile when the virtual keyboard is up. On mobile the first tap moves the cursor, and the second tap opens the keyboard. */
   isKeyboardOpen: boolean | null
+  /** True if the user is scrolling, i.e. has received a scroll event but no touchend event. Only used for mobile. */
+  isScrolling: boolean
   /** Show the latest activated commands at the bottom of the screen for webcasts. */
   enableLatestCommandsDiagram: boolean
   error?: string | null
