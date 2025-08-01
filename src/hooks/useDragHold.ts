@@ -8,6 +8,7 @@ import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { LongPressState } from '../constants'
+import allowTouchToScroll from '../device/allowTouchToScroll'
 import hasMulticursor from '../selectors/hasMulticursor'
 import longPressStore from '../stores/longPressStore'
 import useLongPress from './useLongPress'
@@ -35,6 +36,7 @@ const useDragHold = ({
   const onLongPressStart = useCallback(() => {
     if (disabled) return
     setIsPressed(true)
+    allowTouchToScroll(false)
     dispatch([dragHold({ value: true, simplePath, sourceZone }), longPress({ value: LongPressState.DragHold })])
   }, [disabled, dispatch, simplePath, sourceZone])
 
@@ -43,6 +45,7 @@ const useDragHold = ({
     if (disabled) return
 
     setIsPressed(false)
+    allowTouchToScroll(true)
     dispatch((dispatch, getState) => {
       const state = getState()
 
