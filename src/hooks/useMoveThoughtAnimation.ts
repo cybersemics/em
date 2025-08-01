@@ -4,6 +4,8 @@ import { useSelector } from 'react-redux'
 import State from '../@types/State'
 import durations from '../durations.config'
 import attributeEquals from '../selectors/attributeEquals'
+import head from '../util/head'
+import parentOf from '../util/parentOf'
 import usePrevious from './usePrevious'
 
 /**
@@ -74,10 +76,10 @@ const useMoveThoughtAnimation = (
     // - The standard move animation assumes thoughts stay within the same context
     // - Animating across column boundaries creates jarring visual transitions
     const cursor = state.cursor
-    const isTableView = cursor ? cursor.some(id => attributeEquals(state, id, '=view', 'Table')) : false
+    const isCol2 = cursor && attributeEquals(state, head(parentOf(parentOf(cursor))), '=view', 'Table')
     const isCrossContext = (lastPatches ?? []).some(patch => patch.path?.endsWith('/parentId'))
 
-    const skipMoveAnimation = isCrossContext && isTableView
+    const skipMoveAnimation = isCrossContext && isCol2
 
     return skipMoveAnimation ? null : moveAction
   })
