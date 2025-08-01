@@ -1,5 +1,4 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
@@ -12,8 +11,13 @@ import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
 import waitForFrames from '../helpers/waitForFrames'
 
+// This test suite is very flaky, so we use ssim to compare images.
+// SSIM offers fewer false positives than pixelmatch, especially with slight font or rendering differences.
 expect.extend({
-  toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
+  toMatchImageSnapshot: configureSnapshots({
+    fileName: path.basename(__filename).replace('.ts', ''),
+    comparisonMethod: 'ssim',
+  }),
 })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
@@ -39,8 +43,7 @@ const testSuite = () => {
       expect(image).toMatchImageSnapshot()
     })
 
-    // TODO: intermitettently only renders up to a/b
-    it.skip('deeply nested', async () => {
+    it('deeply nested', async () => {
       await paste(`
         - a
           - b
@@ -68,10 +71,7 @@ const testSuite = () => {
       expect(image).toMatchImageSnapshot()
     })
 
-    // TODO: Test intermittently fails with small differences in 'b'.
-    // https://github.com/cybersemics/em/issues/2955
-    // temporarily disabled to fix flakiness
-    it.skip('superscript', async () => {
+    it('superscript', async () => {
       await paste(`
     - a
       - m
@@ -79,15 +79,11 @@ const testSuite = () => {
       - m
   `)
 
-      await press('ArrowUp')
-
-      // TODO: Test intermittently fails with small differences in 'b'.
-      // Tested manually with navigator.webdriver = true and 'b' renders at the correct opacity in the next frame, without any animation, so I do not know why this fails.
-      // Example failed test runs:
-      // - https://github.com/cybersemics/em/actions/runs/14236307211
-      // - https://github.com/cybersemics/em/actions/runs/14783509675/job/41507408875?pr=2917
-      // Waiting for requestAnimationFrame does not fix the issue.
+      // Wait for superscript calculation and opacity changes to complete
+      // because superscript rendering uses requestAnimationFrame for positioning calculations
+      // otherwise screenshot may capture intermediate rendering states causing test flakiness
       await waitForFrames()
+      await press('ArrowUp')
 
       expect(await screenshot()).toMatchImageSnapshot()
     })
@@ -139,9 +135,7 @@ describe('Font Size: 22', () => {
 describe('multiline', () => {
   beforeEach(hideHUD)
 
-  // TODO: Flaky test
-  // https://github.com/cybersemics/em/issues/3088
-  it.skip('multiline thought', async () => {
+  it('multiline thought', async () => {
     await paste(`
         - a
         - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
@@ -149,12 +143,14 @@ describe('multiline', () => {
         - c
       `)
 
+    // Wait for multiline thought rendering to complete
+    await waitForFrames()
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
 
-  // temporarily disabled to fix flakiness
-  it.skip('multiline thought expanded', async () => {
+  it('multiline thought expanded', async () => {
     await paste(`
         - a
         - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
@@ -165,18 +161,19 @@ describe('multiline', () => {
         - f
       `)
 
+    // Wait for multiline thought rendering to complete
     // move cursor to the multiline thought
-    await press('ArrowUp')
+    await waitForFrames()
     await press('ArrowUp')
 
-    // TODO: Test intermittently fails if not given time to expand.
-    await sleep(100)
+    await waitForFrames()
+    await press('ArrowUp')
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
 
-  // temporarily disabled to fix flakiness
-  it.skip('superscript on multiline thought', async () => {
+  it('superscript on multiline thought', async () => {
     await paste(`
         - a
           - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
@@ -184,13 +181,9 @@ describe('multiline', () => {
           - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
       `)
 
+    // Wait for multiline thought rendering to complete
+    await waitForFrames()
     await press('ArrowUp')
-
-    // TODO: Test intermittently fails with small differences in 'b'.
-    // Tested manually with navigator.webdriver = true and 'b' renders at the correct opacity in the next frame, without any animation, so I do not know why this fails.
-    // Example failed test run: https://github.com/cybersemics/em/actions/runs/14236307211
-    // Waiting for requestAnimationFrame does not fix the issue.
-    await sleep(200)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -198,10 +191,7 @@ describe('multiline', () => {
 })
 
 describe('Color Theme', () => {
-  // TODO: Flaky test
-  // https://github.com/cybersemics/em/issues/2955
-  // temporarily disabled to fix flakiness
-  it.skip('superscript on light theme', async () => {
+  it('superscript on light theme', async () => {
     await setTheme('Light')
 
     await hideHUD()
@@ -213,15 +203,11 @@ describe('Color Theme', () => {
       - m
   `)
 
+    // Wait for superscript calculation and opacity changes to complete
+    // because superscript rendering uses requestAnimationFrame for positioning calculations
+    // otherwise screenshot may capture intermediate rendering states causing test flakiness
+    await waitForFrames()
     await press('ArrowUp')
-
-    // TODO: Test intermittently fails with small differences in 'b'.
-    // Tested manually with navigator.webdriver = true and 'b' renders at the correct opacity in the next frame, without any animation, so I do not know why this fails.
-    // Example failed test runs:
-    // - https://github.com/cybersemics/em/actions/runs/14236307211
-    // - https://github.com/cybersemics/em/actions/runs/14783509675/job/41507408875?pr=2917
-    // Waiting for requestAnimationFrame does not fix the issue.
-    await sleep(200)
 
     expect(await screenshot()).toMatchImageSnapshot()
   })
