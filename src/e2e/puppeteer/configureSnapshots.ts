@@ -23,6 +23,7 @@ function configureSnapshots({
     },
     // full picture failure threshold pixels (default: 0)
     failureThreshold: 4,
+
     // custom identifier for snapshots based on the title of the test
     customSnapshotIdentifier: ({ defaultIdentifier }) => {
       return `${defaultIdentifier.replace(`${fileName}-ts-`, '').toLocaleLowerCase()}`
