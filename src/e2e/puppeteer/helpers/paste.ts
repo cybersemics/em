@@ -29,7 +29,7 @@ async function paste(pathUnranked: string | string[], text?: string): Promise<vo
   )
 
   // wait for the paste to complete
-  await sleep(50)
+  await sleep(100)
 }
 
 export default paste
