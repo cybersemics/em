@@ -16637,11 +16637,11 @@ __metadata:
 
 "react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch":
   version: 16.0.1
-  resolution: "react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch::version=16.0.1&hash=a99236"
+  resolution: "react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch::version=16.0.1&hash=6dbd48"
   dependencies:
     "@react-dnd/invariant": "npm:^4.0.1"
     dnd-core: "npm:^16.0.1"
-  checksum: 10c0/8e698a0c3a0d7f4e15cd8f79a557b0c0d1d037c134b3e26c25bbf227ea2f9b27c5161f31fd95a25d76432dda5a777cc26f9ac61e9896a15a0dd814e668497093
+  checksum: 10c0/e0b3064af764437c927043be8654347fcd27ea8a6f80a87ddabe59249ddf8e6a4a345726b9b1558e1fcd1c54699b8ddcce7bf120ae965a868e54df46f938c1c9
   languageName: node
   linkType: hard
 

@@ -266,6 +266,8 @@ const initEvents = (store: Store<State, any>) => {
       // start scrolling up when within 120px of the top edge of the screen
       if (y < WINDOW_SCROLLATEDGE_UP_SIZE) {
         const rate = 1 + ((WINDOW_SCROLLATEDGE_UP_SIZE - y) * WINDOW_SCROLLATEDGE_SPEED) / WINDOW_SCROLLATEDGE_UP_SIZE
+        // @ts-ignore
+        window['scrolling'] = true
         scrollAtEdge.start({ y: -rate })
       }
       // start scrolling down when within 100px of the bottom edge of the screen
@@ -274,10 +276,14 @@ const initEvents = (store: Store<State, any>) => {
           1 +
           ((y - window.innerHeight + WINDOW_SCROLLATEDGE_DOWN_SIZE) * WINDOW_SCROLLATEDGE_SPEED) /
             WINDOW_SCROLLATEDGE_DOWN_SIZE
+        // @ts-ignore
+        window['scrolling'] = true
         scrollAtEdge.start({ y: rate })
       }
       // stop scrolling when not near the edge of the screen
       else {
+        // @ts-ignore
+        window['scrolling'] = false
         scrollAtEdge.stop()
       }
     }
