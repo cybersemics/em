@@ -9,15 +9,9 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
-import waitForFrames from '../helpers/waitForFrames'
 
-// This test suite is very flaky, so we use ssim to compare images.
-// SSIM offers fewer false positives than pixelmatch, especially with slight font or rendering differences.
 expect.extend({
-  toMatchImageSnapshot: configureSnapshots({
-    fileName: path.basename(__filename).replace('.ts', ''),
-    comparisonMethod: 'ssim',
-  }),
+  toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
@@ -79,10 +73,6 @@ const testSuite = () => {
       - m
   `)
 
-      // Wait for superscript calculation and opacity changes to complete
-      // because superscript rendering uses requestAnimationFrame for positioning calculations
-      // otherwise screenshot may capture intermediate rendering states causing test flakiness
-      await waitForFrames()
       await press('ArrowUp')
 
       expect(await screenshot()).toMatchImageSnapshot()
@@ -143,9 +133,6 @@ describe('multiline', () => {
         - c
       `)
 
-    // Wait for multiline thought rendering to complete
-    await waitForFrames()
-
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -161,12 +148,9 @@ describe('multiline', () => {
         - f
       `)
 
-    // Wait for multiline thought rendering to complete
     // move cursor to the multiline thought
-    await waitForFrames()
-    await press('ArrowUp')
 
-    await waitForFrames()
+    await press('ArrowUp')
     await press('ArrowUp')
 
     const image = await screenshot()
@@ -181,8 +165,6 @@ describe('multiline', () => {
           - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
       `)
 
-    // Wait for multiline thought rendering to complete
-    await waitForFrames()
     await press('ArrowUp')
 
     const image = await screenshot()
@@ -203,10 +185,6 @@ describe('Color Theme', () => {
       - m
   `)
 
-    // Wait for superscript calculation and opacity changes to complete
-    // because superscript rendering uses requestAnimationFrame for positioning calculations
-    // otherwise screenshot may capture intermediate rendering states causing test flakiness
-    await waitForFrames()
     await press('ArrowUp')
 
     expect(await screenshot()).toMatchImageSnapshot()

@@ -1,5 +1,6 @@
 import { HOME_TOKEN } from '../../../constants'
 import { WindowEm } from '../../../initialize'
+import sleep from '../../../util/sleep'
 import { page } from '../setup'
 
 const em = window.em as WindowEm
@@ -27,6 +28,9 @@ async function paste(pathUnranked: string | string[], text?: string): Promise<vo
     _pathUnranked,
     _text,
   )
+
+  // wait for the paste to complete
+  await sleep(200)
 }
 
 export default paste
