@@ -118,6 +118,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     draggingThoughts: [],
     editableNonce: 0,
     isKeyboardOpen: null,
+    isScrolling: false,
     enableLatestCommandsDiagram: false,
     error: null,
     expanded: {},
