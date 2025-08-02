@@ -9,6 +9,7 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
+import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -149,8 +150,9 @@ describe('multiline', () => {
       `)
 
     // move cursor to the multiline thought
-
+    await waitForFrames()
     await press('ArrowUp')
+    await waitForFrames()
     await press('ArrowUp')
 
     const image = await screenshot()
@@ -164,6 +166,8 @@ describe('multiline', () => {
         - b
           - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
       `)
+
+    await waitForFrames()
 
     await press('ArrowUp')
 
