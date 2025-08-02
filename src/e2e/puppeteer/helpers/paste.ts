@@ -12,12 +12,11 @@ async function paste(pathUnranked: string[], text: string): Promise<void>
 async function paste(pathUnranked: string | string[], text?: string): Promise<void> {
   const _pathUnranked = typeof pathUnranked === 'string' ? [HOME_TOKEN] : (pathUnranked as string[])
   const _text = typeof pathUnranked === 'string' ? pathUnranked : text!
-  // await new Promise(resolve => setTimeout(resolve, 200))
 
   // for some reason, we need to delay here, otherwise it does not paste when it is the first command in a test
   // does not work if the delay is added to the puppeteer setup function
   // 10ms definitely fails, 100ms seems to be safe
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await sleep(100)
 
   // Note: This helper is exposed because copy paste doesn't seem to work in headless mode. With headless false copy paste with ctrl + v seems to work.
   await page.evaluate(
@@ -30,7 +29,7 @@ async function paste(pathUnranked: string | string[], text?: string): Promise<vo
   )
 
   // wait for the paste to complete
-  await sleep(200)
+  await sleep(50)
 }
 
 export default paste
