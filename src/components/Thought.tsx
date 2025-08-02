@@ -22,6 +22,7 @@ import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
 import useHoveringPath from '../hooks/useHoveringPath'
+import useThoughtMultiline from '../hooks/useThoughtMultiline'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
@@ -275,6 +276,9 @@ const ThoughtContainer = ({
   // const parentView = useSelector(state => attribute(state, head(parentOf(simplePath)), '=view'))
   const view = useSelector(state => attribute(state, head(simplePath), '=view'))
 
+  const thoughtWrapperRef = useRef<HTMLDivElement>(null)
+  const editableRef = useRef<HTMLInputElement>(null)
+
   // Note: If the thought is the active expand hover top path then it should be treated as a cursor parent. It is because the current implementation allows tree to unfold visually starting from cursor parent.
   const isCursorParent = useSelector(state => {
     const isExpandedHoverTopPath = state.expandHoverUpPath && equalPath(path, state.expandHoverUpPath)
@@ -322,6 +326,15 @@ const ThoughtContainer = ({
   )
   const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
+
+  // Determine if the thought contains a URL that should be ellipsized
+  // URLs should not be treated as multiline to prevent unwanted line breaks
+  const ellipsizedUrl = !isEditing && containsURL(value || '')
+
+  // Detect if the thought content spans multiple lines
+  // This hook handles timing issues and provides both immediate and delayed calculations
+  // to prevent layout flickering while ensuring accurate measurements
+  const isMultiline = useThoughtMultiline(editableRef, thoughtWrapperRef, value || '', ellipsizedUrl)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
 
@@ -606,13 +619,15 @@ const ThoughtContainer = ({
 
         <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
-        <div style={alignmentTransition.editable}>
+        <div ref={thoughtWrapperRef} style={alignmentTransition.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
+            multiline={isMultiline}
+            editableRef={editableRef}
             env={env}
             isContextPending={isContextPending}
             isEditing={isEditing}
-            ellipsizedUrl={!isEditing && containsURL(value)}
+            ellipsizedUrl={ellipsizedUrl}
             isPublishChild={isPublishChild}
             isVisible={isVisible}
             onEdit={!isTouch ? onEdit : undefined}
