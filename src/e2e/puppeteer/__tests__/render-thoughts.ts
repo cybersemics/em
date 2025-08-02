@@ -49,6 +49,8 @@ const testSuite = () => {
         - g
       `)
 
+      await waitForFrames()
+
       await press('ArrowUp')
 
       const image = await screenshot()
@@ -73,6 +75,8 @@ const testSuite = () => {
     - b
       - m
   `)
+
+      await waitForFrames()
 
       await press('ArrowUp')
 
@@ -134,6 +138,8 @@ describe('multiline', () => {
         - c
       `)
 
+    await waitForFrames()
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -150,9 +156,9 @@ describe('multiline', () => {
       `)
 
     // move cursor to the multiline thought
-    await waitForFrames()
+    await waitForFrames(4)
+
     await press('ArrowUp')
-    await waitForFrames()
     await press('ArrowUp')
 
     const image = await screenshot()
@@ -188,6 +194,8 @@ describe('Color Theme', () => {
     - b
       - m
   `)
+
+    await waitForFrames()
 
     await press('ArrowUp')
 
