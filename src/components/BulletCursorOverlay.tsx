@@ -39,8 +39,6 @@ const equalChildren = (a: Thought[], b: Thought[]) =>
 
 /**
  * CursorOverlay is a component that renders the cursor overlay for a thought bullet.
- * @param props - The props for the component.
- * @returns The rendered cursor overlay.
  */
 function CursorOverlay({
   simplePath,
@@ -101,8 +99,8 @@ function CursorOverlay({
           marginBottom: glyphBottomMargin,
           willChange: 'transform',
           position: 'relative',
-          // backgroundColor: 'red',
-          top: showContexts && leaf && isIOSSafari ? '-0.05em' : undefined,
+
+          top: showContexts && isIOSSafari ? '-0.05em' : undefined,
         }}
       >
         <g>
@@ -127,10 +125,8 @@ function CursorOverlay({
  * PlaceholderContextBreadcrumbs is a component that renders invisible breadcrumbs for context view.
  * Used to maintain layout consistency when context breadcrumbs are present.
  */
-function PlaceholderContextBreadcrumbs({ simplePath }: { simplePath: SimplePath; path: Path }) {
-  const ancestors = parentOf(simplePath)
-
-  const isHaveMultipleAncestors = ancestors.length > 1
+function PlaceholderContextBreadcrumbs({ simplePath }: { simplePath: SimplePath }) {
+  const isHaveMultipleAncestors = simplePath.length > 2
 
   return (
     <div
@@ -171,9 +167,8 @@ function PlaceholderContextBreadcrumbs({ simplePath }: { simplePath: SimplePath;
 }
 
 /**
- * PlaceholderSubThought is a component that renders a sub-thought in the thought tree.
- * @param param0 - The props for the component.
- * @returns The rendered component.
+ * PlaceholderSubThought is a component mimicking the behavior of SubThought.
+ * Needed to prevent the overlay from covering the bullet.
  */
 function PlaceholderSubThought({ children }: { children?: React.ReactNode }) {
   return (
@@ -212,7 +207,7 @@ function PlaceholderTreeNode({
     // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
     // 1em + 10px is an eyeball measurement at font sizes 14 and 18
     // (Maybe the 10px is from .content padding-left?)
-    width: isTableCol1 ? width : 'calc(100% - ${x}px + 1em + 10px)',
+    width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
     textAlign: isTableCol1 ? ('right' as const) : undefined,
   }
 
@@ -360,9 +355,7 @@ export default function BulletCursorOverlay({
   return (
     <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
       <PlaceholderSubThought>
-        {showContexts && simplePath?.length > 1 && (
-          <PlaceholderContextBreadcrumbs simplePath={simplePath} path={path} />
-        )}
+        {showContexts && simplePath?.length > 1 && <PlaceholderContextBreadcrumbs simplePath={simplePath} />}
 
         <div
           aria-label='placeholder-thought-container'
