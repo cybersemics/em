@@ -213,8 +213,17 @@ async function* fetchDescendants(
           return {
             ...thought,
             // Always mark parents as pending.
-            // updateThoughts will clear pending once all children are loaded.
-            pending: !isRoot([thought.id]) && hasChildren,
+            // Mark parents as pending ONLY if at least one direct child is not yet loaded.
+            // This prevents propagating the pending state up the entire ancestor chain.
+            // updateThoughts will still clear pending once the missing direct children are loaded.
+            pending:
+              !isRoot([thought.id]) &&
+              hasChildren &&
+              // If every child already exists in state (regardless of its own pending status),
+              // the parent itself should not be considered pending.
+              // This ensures that pending is applied only to the direct ancestor of the node(s)
+              // currently being fetched rather than all ancestors.
+              childrenIds.some(childId => !getThoughtById(updatedState, childId)),
           }
         }
       })

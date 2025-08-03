@@ -204,10 +204,9 @@ const updateThoughts = (
       const parent = thoughtIndex[parentId]
       if (!parent || !parent.pending || isRoot([parentId])) return
 
-      const allChildrenLoaded = Object.values(parent.childrenMap).every(childId => {
-        const child = thoughtIndex[childId]
-        return !!child && !child.pending
-      })
+      // Clear parent's pending flag as soon as all of its direct children exist in the thoughtIndex.
+      // A child may itself be pending while its own descendants load, but that should not keep the grand-parent pending.
+      const allChildrenLoaded = Object.values(parent.childrenMap).every(childId => !!thoughtIndex[childId])
 
       if (allChildrenLoaded) {
         thoughtIndex = {
