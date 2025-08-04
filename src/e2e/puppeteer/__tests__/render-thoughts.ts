@@ -8,6 +8,7 @@ import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
+import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -128,6 +129,7 @@ describe('multiline', () => {
         - c
       `)
 
+    await waitForFrames()
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -141,6 +143,8 @@ describe('multiline', () => {
           - c
           - d
       `)
+
+    await waitForFrames()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
