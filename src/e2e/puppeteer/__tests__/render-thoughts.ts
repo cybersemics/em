@@ -1,5 +1,4 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
@@ -9,7 +8,6 @@ import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
-import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -40,18 +38,14 @@ const testSuite = () => {
 
     it('deeply nested', async () => {
       await paste(`
+        - g
         - a
           - b
             - c
               - d
                 - e
                   - f
-        - g
       `)
-
-      await waitForFrames()
-
-      await clickThought('a')
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -75,9 +69,6 @@ const testSuite = () => {
     - b
       - m
   `)
-
-      await sleep(200)
-      await clickThought('a')
 
       expect(await screenshot()).toMatchImageSnapshot()
     })
@@ -137,8 +128,6 @@ describe('multiline', () => {
         - c
       `)
 
-    await waitForFrames()
-
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -151,13 +140,7 @@ describe('multiline', () => {
           - b
           - c
           - d
-        - e
-        - f
       `)
-
-    await waitForFrames(4)
-
-    await clickThought(multilineThought)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -171,9 +154,6 @@ describe('multiline', () => {
           - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
       `)
 
-    await waitForFrames(4)
-
-    await clickThought('a')
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -191,10 +171,6 @@ describe('Color Theme', () => {
     - b
       - m
   `)
-
-    await sleep(200)
-
-    await clickThought('a')
 
     expect(await screenshot()).toMatchImageSnapshot()
   })
