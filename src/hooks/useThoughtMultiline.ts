@@ -2,6 +2,8 @@ import { RefObject, useCallback, useState } from 'react'
 import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
 
 /**
+ * This hook handles timing issues and provides both immediate and delayed calculations
+ * to prevent layout flickering while ensuring accurate measurements
  * Detects if thought content spans multiple lines.
  * Handles timing issues between immediate calculation and DOM measurement.
  *
@@ -15,6 +17,8 @@ const useThoughtMultiline = (
   thoughtWrapperRef: RefObject<HTMLElement>,
   value: string,
   ellipsizedUrl: boolean,
+  fontSize: number,
+  isEditing?: boolean,
 ) => {
   // State for delayed DOM measurement results
   const [multilineDelayed, setMultilineDelayed] = useState(false)
@@ -40,7 +44,8 @@ const useThoughtMultiline = (
       editableRef.current.scrollWidth > editableRef.current.offsetWidth ||
       editableRef.current.clientWidth >= thoughtWrapperRef.current.clientWidth
     )
-  }, [ellipsizedUrl, editableRef, thoughtWrapperRef])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ellipsizedUrl, editableRef, thoughtWrapperRef, fontSize])
 
   // Immediate calculation for current render (prevents flickering)
   const multilineImmediate = calculateMultiline()
@@ -58,7 +63,7 @@ const useThoughtMultiline = (
    */
   useLayoutAnimationFrameEffect(() => {
     setMultilineDelayed(calculateMultiline())
-  }, [value, ellipsizedUrl, calculateMultiline])
+  }, [value, calculateMultiline, isEditing])
 
   /**
    * Return the combined result: either immediate calculation or delayed measurement.

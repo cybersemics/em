@@ -312,6 +312,8 @@ const ThoughtContainer = ({
   )
   const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
+  const fontSize = useSelector(state => state.fontSize)
+
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, isInContextView, thoughtId })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
   const styleAnnotation = useSelector(
@@ -332,9 +334,14 @@ const ThoughtContainer = ({
   const ellipsizedUrl = !isEditing && containsURL(value || '')
 
   // Detect if the thought content spans multiple lines
-  // This hook handles timing issues and provides both immediate and delayed calculations
-  // to prevent layout flickering while ensuring accurate measurements
-  const isMultiline = useThoughtMultiline(editableRef, thoughtWrapperRef, value || '', ellipsizedUrl)
+  const isMultiline = useThoughtMultiline(
+    editableRef,
+    thoughtWrapperRef,
+    value || '',
+    ellipsizedUrl,
+    fontSize,
+    isEditing,
+  )
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
 
@@ -622,6 +629,8 @@ const ThoughtContainer = ({
         <div ref={thoughtWrapperRef} style={alignmentTransition.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
+            // Pass multiline state to StaticThought for proper styling
+            // This determines whether to apply single-line or multiline CSS classes
             multiline={isMultiline}
             editableRef={editableRef}
             env={env}
