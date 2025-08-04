@@ -8784,7 +8784,7 @@ __metadata:
     react-dnd-html5-backend: "npm:^16.0.1"
     react-dnd-test-backend: "npm:^16.0.1"
     react-dnd-test-utils: "npm:^16.0.1"
-    react-dnd-touch-backend: "patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch"
+    react-dnd-touch-backend: "patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@patch%25253Areact-dnd-touch-backend@npm%2525253A16.0.1%252523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%25253A%25253Aversion=16.0.1&hash=77964d%2523~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%253A%253Aversion=16.0.1&hash=33fdd5%23~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch%3A%3Aversion=16.0.1&hash=6dbd48#~/.yarn/patches/react-dnd-touch-backend-patch-eb6b24281e.patch"
     react-dom: "npm:18.3.1"
     react-error-boundary: "npm:^4.1.2"
     react-gravatar: "npm:^2.6.3"
@@ -16635,13 +16635,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch":
+"react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch::version=16.0.1&hash=6dbd48":
   version: 16.0.1
   resolution: "react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch::version=16.0.1&hash=6dbd48"
   dependencies:
     "@react-dnd/invariant": "npm:^4.0.1"
     dnd-core: "npm:^16.0.1"
   checksum: 10c0/e0b3064af764437c927043be8654347fcd27ea8a6f80a87ddabe59249ddf8e6a4a345726b9b1558e1fcd1c54699b8ddcce7bf120ae965a868e54df46f938c1c9
+  languageName: node
+  linkType: hard
+
+"react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@patch%25253Areact-dnd-touch-backend@npm%2525253A16.0.1%252523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%25253A%25253Aversion=16.0.1&hash=77964d%2523~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%253A%253Aversion=16.0.1&hash=33fdd5%23~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch%3A%3Aversion=16.0.1&hash=6dbd48#~/.yarn/patches/react-dnd-touch-backend-patch-eb6b24281e.patch":
+  version: 16.0.1
+  resolution: "react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@patch%25253Areact-dnd-touch-backend@npm%2525253A16.0.1%252523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%25253A%25253Aversion=16.0.1&hash=77964d%2523~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%253A%253Aversion=16.0.1&hash=33fdd5%23~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch%3A%3Aversion=16.0.1&hash=6dbd48#~/.yarn/patches/react-dnd-touch-backend-patch-eb6b24281e.patch::version=16.0.1&hash=5f7d97"
+  dependencies:
+    "@react-dnd/invariant": "npm:^4.0.1"
+    dnd-core: "npm:^16.0.1"
+  checksum: 10c0/9f8d8684772f87e0072f02503c38c024415474c8246d2c6b82fd80e3233a7e2ee92aead72c9e854e8b9bf8d7e04a9ca7ed6b685fb947c3169514a7170b3e900c
   languageName: node
   linkType: hard
 
