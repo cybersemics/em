@@ -117,7 +117,6 @@ const StaticThought = ({
   const dark = useSelector(state => theme(state) !== 'Light')
   const homeContext = isRoot(simplePath) && !isContextPending
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value) ?? ''
-  // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const placeholder = usePlaceholder({ isEditing, simplePath })
 
   useLayoutAnimationFrameEffect(updateSize, [multiline])
