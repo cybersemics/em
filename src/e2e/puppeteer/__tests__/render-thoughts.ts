@@ -5,7 +5,6 @@ import clickThought from '../helpers/clickThought'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
-import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
@@ -51,7 +50,7 @@ const testSuite = () => {
 
       await waitForFrames()
 
-      await press('ArrowUp')
+      await clickThought('a')
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -78,7 +77,7 @@ const testSuite = () => {
 
       await waitForFrames()
 
-      await press('ArrowUp')
+      await clickThought('a')
 
       expect(await screenshot()).toMatchImageSnapshot()
     })
@@ -145,9 +144,10 @@ describe('multiline', () => {
   })
 
   it('multiline thought expanded', async () => {
+    const multilineThought = `External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.`
     await paste(`
         - a
-        - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
+        - ${multilineThought}
           - b
           - c
           - d
@@ -155,11 +155,9 @@ describe('multiline', () => {
         - f
       `)
 
-    // move cursor to the multiline thought
     await waitForFrames(4)
 
-    await press('ArrowUp')
-    await press('ArrowUp')
+    await clickThought(multilineThought)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -173,10 +171,9 @@ describe('multiline', () => {
           - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
       `)
 
-    await waitForFrames()
+    await waitForFrames(4)
 
-    await press('ArrowUp')
-
+    await clickThought('a')
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -197,7 +194,7 @@ describe('Color Theme', () => {
 
     await waitForFrames()
 
-    await press('ArrowUp')
+    await clickThought('a')
 
     expect(await screenshot()).toMatchImageSnapshot()
   })
