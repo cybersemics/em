@@ -40,10 +40,7 @@ const useThoughtMultiline = (
     }
 
     // Check if content overflows the available width
-    return (
-      editableRef.current.scrollWidth > editableRef.current.offsetWidth ||
-      editableRef.current.clientWidth >= thoughtWrapperRef.current.clientWidth
-    )
+    return editableRef.current.clientWidth >= thoughtWrapperRef.current.clientWidth
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ellipsizedUrl, editableRef, thoughtWrapperRef, fontSize])
 
