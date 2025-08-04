@@ -30,7 +30,6 @@ const useThoughtMultiline = (
    * 1. Early return if URL should be ellipsized (prevents multiline for URLs)
    * 2. Early return if DOM elements don't exist yet
    * 3. Check if content overflows by comparing:
-   * - scrollWidth vs offsetWidth (horizontal overflow)
    * - clientWidth vs wrapper clientWidth (container overflow).
    */
   const calculateMultiline = useCallback(() => {
