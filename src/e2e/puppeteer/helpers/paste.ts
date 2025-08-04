@@ -27,9 +27,6 @@ async function paste(pathUnranked: string | string[], text?: string): Promise<vo
     _pathUnranked,
     _text,
   )
-
-  // wait for the paste to complete
-  await sleep(100)
 }
 
 export default paste

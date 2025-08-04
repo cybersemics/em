@@ -1,4 +1,5 @@
 import path from 'path'
+import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
@@ -75,8 +76,7 @@ const testSuite = () => {
       - m
   `)
 
-      await waitForFrames()
-
+      await sleep(200)
       await clickThought('a')
 
       expect(await screenshot()).toMatchImageSnapshot()
@@ -192,7 +192,7 @@ describe('Color Theme', () => {
       - m
   `)
 
-    await waitForFrames()
+    await sleep(200)
 
     await clickThought('a')
 
