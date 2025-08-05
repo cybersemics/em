@@ -5,6 +5,7 @@ import clickThought from '../helpers/clickThought'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
+import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
@@ -39,14 +40,17 @@ const testSuite = () => {
 
     it('deeply nested', async () => {
       await paste(`
-        - g
         - a
           - b
             - c
               - d
                 - e
                   - f
+        - g
       `)
+
+      await waitForFrames(5)
+      await press('ArrowUp')
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -70,6 +74,10 @@ const testSuite = () => {
     - b
       - m
   `)
+
+      await waitForFrames(5)
+
+      await press('ArrowUp')
 
       expect(await screenshot()).toMatchImageSnapshot()
     })
@@ -130,6 +138,7 @@ describe('multiline', () => {
       `)
 
     await waitForFrames()
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -142,9 +151,15 @@ describe('multiline', () => {
           - b
           - c
           - d
+        - e
+        - f
       `)
 
-    await waitForFrames()
+    await waitForFrames(2)
+    await press('ArrowUp')
+
+    await waitForFrames(2)
+    await press('ArrowUp')
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -157,6 +172,10 @@ describe('multiline', () => {
         - b
           - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
       `)
+
+    await waitForFrames(5)
+
+    await press('ArrowUp')
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -175,6 +194,10 @@ describe('Color Theme', () => {
     - b
       - m
   `)
+
+    await waitForFrames(5)
+
+    await press('ArrowUp')
 
     expect(await screenshot()).toMatchImageSnapshot()
   })

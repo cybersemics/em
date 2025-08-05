@@ -1,7 +1,7 @@
 import { page } from '../setup'
 
 /**
- * Waits for two consecutive animation frames to ensure complete rendering.
+ * Waits for a given number of pairs of consecutive animation frames to ensure complete rendering.
  *
  * This technique guarantees:
  * 1. All pending `requestAnimationFrame` callbacks execute (first frame).
@@ -13,11 +13,16 @@ import { page } from '../setup'
  * - CI environments have slower frame rates (20-30 FPS vs local 60 FPS).
  * - Fixed timeouts (e.g., `sleep(200)`) fail to capture final render.
  */
-const waitForFrames = () =>
-  page.evaluate(() => {
-    return new Promise(resolve => {
-      requestAnimationFrame(() => requestAnimationFrame(resolve))
-    })
-  })
+const waitForFrames = (count: number = 1): Promise<void> => {
+  return page.evaluate(async (n: number) => {
+    for (let i = 0; i < n; i++) {
+      await new Promise<void>(resolve => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve())
+        })
+      })
+    }
+  }, count)
+}
 
 export default waitForFrames
