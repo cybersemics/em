@@ -3,6 +3,7 @@ import configureSnapshots from '../configureSnapshots'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
+import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -30,6 +31,8 @@ describe('Table View', () => {
           - Cincinnati, Ohio
     `)
 
+    await waitForFrames()
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -50,6 +53,8 @@ describe('Table View', () => {
         - May December
           - 2/5
     `)
+
+    await waitForFrames()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
