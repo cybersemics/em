@@ -329,19 +329,8 @@ const ThoughtContainer = ({
   const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
 
-  // Determine if the thought contains a URL that should be ellipsized
-  // URLs should not be treated as multiline to prevent unwanted line breaks
-  const ellipsizedUrl = !isEditing && containsURL(value || '')
-
   // Detect if the thought content spans multiple lines
-  const isMultiline = useThoughtMultiline(
-    editableRef,
-    thoughtWrapperRef,
-    value || '',
-    ellipsizedUrl,
-    fontSize,
-    isEditing,
-  )
+  const isMultiline = useThoughtMultiline(editableRef, thoughtWrapperRef, fontSize, isEditing)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
 
@@ -636,7 +625,7 @@ const ThoughtContainer = ({
             env={env}
             isContextPending={isContextPending}
             isEditing={isEditing}
-            ellipsizedUrl={ellipsizedUrl}
+            ellipsizedUrl={!isEditing && containsURL(value || '')}
             isPublishChild={isPublishChild}
             isVisible={isVisible}
             onEdit={!isTouch ? onEdit : undefined}
