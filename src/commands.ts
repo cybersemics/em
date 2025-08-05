@@ -266,7 +266,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
         }
 
         // Show alert for valid commands in training mode (except back/forward)
-        if (!experienceMode && command !== null && command?.id !== 'cursorForward' && command?.id !== 'cursorBack') {
+        if (!experienceMode && command && command?.id !== 'cursorForward' && command?.id !== 'cursorBack') {
           dispatch(
             alert(command.label, {
               alertType: AlertType.GestureHint,
@@ -274,8 +274,15 @@ export const inputHandlers = (store: Store<State, any>) => ({
               showCloseLink: false,
             }),
           )
-        } else if (experienceMode && alertType === AlertType.GestureHint) {
+        } else if (
+          // Clear alert if gesture is cancelled (no command)
+          !command ||
+          // Clear alert if back/forward
+          command?.id === 'cursorForward' ||
+          command?.id === 'cursorBack' ||
           // In experience mode, clear any existing gesture hint
+          (experienceMode && alertType === AlertType.GestureHint)
+        ) {
           dispatch(alert(null))
         }
       })
