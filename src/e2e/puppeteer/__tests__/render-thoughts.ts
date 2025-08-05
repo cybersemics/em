@@ -49,8 +49,9 @@ const testSuite = () => {
         - g
       `)
 
-      await waitForFrames(7)
+      await waitForFrames(4)
       await press('ArrowUp')
+      await waitForFrames(4)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -75,9 +76,9 @@ const testSuite = () => {
       - m
   `)
 
-      await waitForFrames(7)
-
+      await waitForFrames(4)
       await press('ArrowUp')
+      await waitForFrames(4)
 
       expect(await screenshot()).toMatchImageSnapshot()
     })
@@ -137,7 +138,7 @@ describe('multiline', () => {
         - c
       `)
 
-    await waitForFrames()
+    await waitForFrames(4)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -173,9 +174,9 @@ describe('multiline', () => {
           - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
       `)
 
-    await waitForFrames(7)
-
+    await waitForFrames(4)
     await press('ArrowUp')
+    await waitForFrames(4)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -195,9 +196,9 @@ describe('Color Theme', () => {
       - m
   `)
 
-    await waitForFrames(7)
-
+    await waitForFrames(4)
     await press('ArrowUp')
+    await waitForFrames(4)
 
     expect(await screenshot()).toMatchImageSnapshot()
   })
