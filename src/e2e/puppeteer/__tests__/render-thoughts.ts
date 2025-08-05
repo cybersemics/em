@@ -49,7 +49,7 @@ const testSuite = () => {
         - g
       `)
 
-      await waitForFrames(5)
+      await waitForFrames(7)
       await press('ArrowUp')
 
       const image = await screenshot()
@@ -75,7 +75,7 @@ const testSuite = () => {
       - m
   `)
 
-      await waitForFrames(5)
+      await waitForFrames(7)
 
       await press('ArrowUp')
 
@@ -155,10 +155,10 @@ describe('multiline', () => {
         - f
       `)
 
-    await waitForFrames(2)
+    await waitForFrames(4)
     await press('ArrowUp')
 
-    await waitForFrames(2)
+    await waitForFrames(4)
     await press('ArrowUp')
 
     const image = await screenshot()
@@ -173,7 +173,7 @@ describe('multiline', () => {
           - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
       `)
 
-    await waitForFrames(5)
+    await waitForFrames(7)
 
     await press('ArrowUp')
 
@@ -195,7 +195,7 @@ describe('Color Theme', () => {
       - m
   `)
 
-    await waitForFrames(5)
+    await waitForFrames(7)
 
     await press('ArrowUp')
 
