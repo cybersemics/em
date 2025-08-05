@@ -76,9 +76,9 @@ const testSuite = () => {
       - m
   `)
 
-      await waitForFrames(4)
+      await waitForFrames(6)
       await press('ArrowUp')
-      await waitForFrames(4)
+      await waitForFrames(6)
 
       expect(await screenshot()).toMatchImageSnapshot()
     })
