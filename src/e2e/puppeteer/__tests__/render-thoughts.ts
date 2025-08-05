@@ -5,11 +5,9 @@ import clickThought from '../helpers/clickThought'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
-import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
-import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -41,17 +39,13 @@ const testSuite = () => {
     it('deeply nested', async () => {
       await paste(`
         - a
-          - b
-            - c
-              - d
-                - e
-                  - f
-        - g
+        - b
+          - c
+            - d
+              - e
+                - f
+                  - g
       `)
-
-      await waitForFrames(4)
-      await press('ArrowUp')
-      await waitForFrames(4)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -75,10 +69,6 @@ const testSuite = () => {
     - b
       - m
   `)
-
-      await waitForFrames(6)
-      await press('ArrowUp')
-      await waitForFrames(6)
 
       expect(await screenshot()).toMatchImageSnapshot()
     })
@@ -138,8 +128,6 @@ describe('multiline', () => {
         - c
       `)
 
-    await waitForFrames(4)
-
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -152,31 +140,20 @@ describe('multiline', () => {
           - b
           - c
           - d
-        - e
-        - f
       `)
-
-    await waitForFrames(4)
-    await press('ArrowUp')
-
-    await waitForFrames(4)
-    await press('ArrowUp')
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
 
   it('superscript on multiline thought', async () => {
+    const multilineThought = `External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.`
     await paste(`
         - a
-          - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
+          - ${multilineThought}
         - b
-          - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
+          - ${multilineThought}
       `)
-
-    await waitForFrames(4)
-    await press('ArrowUp')
-    await waitForFrames(4)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -195,10 +172,6 @@ describe('Color Theme', () => {
     - b
       - m
   `)
-
-    await waitForFrames(6)
-    await press('ArrowUp')
-    await waitForFrames(6)
 
     expect(await screenshot()).toMatchImageSnapshot()
   })
