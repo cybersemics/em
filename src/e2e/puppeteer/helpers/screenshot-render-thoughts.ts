@@ -27,6 +27,21 @@ const screenshot = async (options?: ScreenshotOptions) => {
     return style && style.sheet && style.sheet.cssRules.length > 0
   })
 
+  // Additional waiting for CI environments to ensure stable rendering
+  if (process.env.CI === 'true') {
+    // Wait for multiple animation frames in CI to ensure complete rendering
+    await page.evaluate(() => {
+      return new Promise(resolve => {
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+        )
+      })
+    })
+
+    // Small delay to ensure any pending DOM updates are complete
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+
   const screenshotBuffer = Buffer.from(
     await page.screenshot({
       ...options,
