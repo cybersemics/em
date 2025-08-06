@@ -1,7 +1,7 @@
 import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import openModal from '../helpers/openModal'
-import screenshot from '../helpers/screenshot'
+import screenshot from '../helpers/screenshot-with-no-antialiasing'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),

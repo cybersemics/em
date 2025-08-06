@@ -2,7 +2,7 @@ import path from 'path'
 import Modal from '../../../@types/Modal'
 import configureSnapshots from '../configureSnapshots'
 import openModal from '../helpers/openModal'
-import screenshot from '../helpers/screenshot'
+import screenshot from '../helpers/screenshot-with-no-antialiasing'
 import setTheme from '../helpers/setTheme'
 
 const testFileName = path.basename(__filename).replace('.ts', '')

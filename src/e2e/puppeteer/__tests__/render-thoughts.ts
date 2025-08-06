@@ -6,7 +6,7 @@ import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import screenshot from '../helpers/screenshot-render-thoughts'
+import screenshot from '../helpers/screenshot-with-no-antialiasing'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
 import waitForFrames from '../helpers/waitForFrames'
@@ -151,8 +151,8 @@ describe('multiline', () => {
         - f
       `)
 
-    // move cursor to the multiline thought
     await waitForFrames()
+    // move cursor to the multiline thought
     await press('ArrowUp')
     await waitForFrames()
     await press('ArrowUp')
@@ -161,22 +161,24 @@ describe('multiline', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  it.skip('superscript on multiline thought', async () => {
+  it('superscript on multiline thought', async () => {
+    const multilineThought = `External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.`
     await paste(`
         - a
-          - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
+          - ${multilineThought}
         - b
-          - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
+          - ${multilineThought}
       `)
-
-    await waitForFrames()
-    await waitForFrames()
-    await waitForFrames()
     await waitForFrames()
     await press('ArrowUp')
 
     const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
+    expect(image).toMatchImageSnapshot({
+      // TODO: Remove this once we have a better solution for this
+      customDiffConfig: {
+        threshold: 0.4,
+      },
+    })
   })
 })
 

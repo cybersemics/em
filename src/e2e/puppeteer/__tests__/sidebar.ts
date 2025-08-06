@@ -4,7 +4,7 @@ import click from '../helpers/click'
 import hideVisibility from '../helpers/hideVisibility'
 import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
-import screenshot from '../helpers/screenshot'
+import screenshot from '../helpers/screenshot-with-no-antialiasing'
 import setTheme from '../helpers/setTheme'
 import { page } from '../setup'
 

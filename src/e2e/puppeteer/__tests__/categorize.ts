@@ -3,7 +3,7 @@ import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import screenshot from '../helpers/screenshot'
+import screenshot from '../helpers/screenshot-with-no-antialiasing'
 import waitForFrames from '../helpers/waitForFrames'
 import { page } from '../setup'
 
@@ -29,6 +29,7 @@ describe('categorize', () => {
         - Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia.
     `)
 
+    await waitForFrames(4)
     // Perform multiple categorize operations
     await clickThought(topParagraphText)
 
@@ -51,8 +52,6 @@ describe('categorize', () => {
     // Perform 5th categorization
     await press(']', { meta: true })
     await press('5')
-
-    await waitForFrames()
 
     const imageCategorized = await screenshot()
     expect(imageCategorized).toMatchImageSnapshot()
