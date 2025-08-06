@@ -9,7 +9,6 @@ import press from '../helpers/press'
 import screenshot from '../helpers/screenshot-with-no-antialiasing'
 import scroll from '../helpers/scroll'
 import setTheme from '../helpers/setTheme'
-import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -134,8 +133,6 @@ describe('multiline', () => {
         - c
       `)
 
-    await waitForFrames()
-
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -151,10 +148,8 @@ describe('multiline', () => {
         - f
       `)
 
-    await waitForFrames()
     // move cursor to the multiline thought
     await press('ArrowUp')
-    await waitForFrames()
     await press('ArrowUp')
 
     const image = await screenshot()
@@ -169,7 +164,6 @@ describe('multiline', () => {
         - b
           - ${multilineThought}
       `)
-    await waitForFrames()
     await press('ArrowUp')
 
     const image = await screenshot()

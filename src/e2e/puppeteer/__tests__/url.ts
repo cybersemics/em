@@ -7,7 +7,6 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot-with-no-antialiasing'
 import scroll from '../helpers/scroll'
-import waitForFrames from '../helpers/waitForFrames'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -56,7 +55,6 @@ describe('multiline', () => {
     - This thought tests the line height of the above thought
   `)
 
-    await waitForFrames(4)
     await press('ArrowUp')
 
     const image = await screenshot()

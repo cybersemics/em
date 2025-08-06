@@ -1,6 +1,5 @@
 import { ScreenshotOptions } from 'puppeteer'
 import { page } from '../setup'
-import waitForFrames from './waitForFrames'
 
 /** Takes a screenshot with antialiasing disabled. */
 const screenshot = async (options?: ScreenshotOptions) => {
@@ -47,11 +46,6 @@ const screenshot = async (options?: ScreenshotOptions) => {
     const style = document.getElementById('screenshot-antialiasing-disable') as HTMLStyleElement
     return style && style.sheet && style.sheet.cssRules.length > 0
   })
-
-  // Wait for multiple animation frames in CI to ensure complete rendering
-  await waitForFrames(6)
-  // Small delay to ensure any pending DOM updates are complete
-  await new Promise(resolve => setTimeout(resolve, 100))
 
   const screenshotBuffer = Buffer.from(
     await page.screenshot({
