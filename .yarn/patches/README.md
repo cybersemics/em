@@ -39,4 +39,4 @@ This patch is a result of https://github.com/cybersemics/em/pull/3138 and patche
 
 ### react-dnd-touch-backend-patch-2c3a2052b6.patch
 
-This patch is a result of https://github.com/cybersemics/em/pull/3160 and cancels drag-and-drop when a scroll event is detected during the initial long press.
+This patch is a result of https://github.com/cybersemics/em/pull/3161 and cancels drag-and-drop when a scroll event is detected during the initial long press.
