@@ -47,14 +47,7 @@ const screenshot = async (options?: ScreenshotOptions) => {
     return style && style.sheet && style.sheet.cssRules.length > 0
   })
 
-  const screenshotBuffer = Buffer.from(
-    await page.screenshot({
-      ...options,
-      // Additional options to ensure crisp rendering
-      type: 'png',
-      omitBackground: false,
-    }),
-  )
+  const screenshotBuffer = await Buffer.from(await page.screenshot(options))
 
   // Clean up the temporary style
   await page.evaluate(() => {

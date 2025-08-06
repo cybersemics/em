@@ -9,7 +9,7 @@ import { page } from '../setup'
  * 3. Browser reaches stable visual state for screenshots.
  *
  * Essential for eliminating flaky tests where:
- * - Components use rAF for state updates (e.g., Superscript calculations).
+ * - Components use rAF for state updates.
  * - CI environments have slower frame rates (20-30 FPS vs local 60 FPS).
  * - Fixed timeouts (e.g., `sleep(200)`) fail to capture final render.
  */
