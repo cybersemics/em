@@ -17,6 +17,26 @@ const screenshot = async (options?: ScreenshotOptions) => {
         image-rendering: pixelated !important;
         image-rendering: -moz-crisp-edges !important;
         image-rendering: crisp-edges !important;
+        backface-visibility: hidden !important;
+        perspective: 1000px !important;
+
+        /* Force hardware acceleration and disable subpixel rendering */
+        -webkit-backface-visibility: hidden !important;
+        -webkit-perspective: 1000px !important;
+
+        /* Disable any potential blur effects */
+        filter: none !important;
+        -webkit-filter: none !important;
+
+        /* Ensure consistent text rendering */
+        font-feature-settings: "liga" 0, "kern" 0 !important;
+        font-variant-ligatures: none !important;
+        
+        /* Disable any potential animations or transitions */
+        animation: none !important;
+        transition: none !important;
+        -webkit-animation: none !important;
+        -webkit-transition: none !important;
       }
     `
     document.head.appendChild(style)

@@ -31,6 +31,8 @@ const setup = async ({
 
   page = await context.newPage()
 
+  page.setViewport({ width: 800, height: 600, deviceScaleFactor: 1 })
+
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
   }

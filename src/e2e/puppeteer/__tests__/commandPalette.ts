@@ -1,12 +1,12 @@
 import path from 'path'
 import { KnownDevices } from 'puppeteer'
+import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import screenshot from '../helpers/screenshot-with-no-antialiasing'
+import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
 import swipe from '../helpers/swipe'
-import waitForFrames from '../helpers/waitForFrames'
 import { page } from '../setup'
 
 expect.extend({
@@ -18,7 +18,8 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 it('open with keyboard', async () => {
   await press('P', { meta: true })
 
-  await waitForFrames(2)
+  // TODO: Replace sleep with wait
+  await sleep(200)
 
   expect(await screenshot()).toMatchImageSnapshot({ customSnapshotIdentifier: 'commandPalette' })
   await setTheme('Light')
@@ -33,8 +34,6 @@ it('open with gesture', async () => {
   await paste(importText)
 
   await swipe('r')
-
-  await waitForFrames(2)
 
   // the command palette should open
   const popupValue = await page.locator('[data-testid=popup-value]').wait()

@@ -173,12 +173,7 @@ describe('multiline', () => {
     await press('ArrowUp')
 
     const image = await screenshot()
-    expect(image).toMatchImageSnapshot({
-      // TODO: Remove this once we have a better solution for this
-      customDiffConfig: {
-        threshold: 0.4,
-      },
-    })
+    expect(image).toMatchImageSnapshot()
   })
 })
 
