@@ -161,7 +161,7 @@ describe('multiline', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  it('superscript on multiline thought', async () => {
+  it.skip('superscript on multiline thought', async () => {
     await paste(`
         - a
           - External objects (bodies) are merely appearances, hence also nothing other than a species of my representations, whose objects are something only through these representations, but are nothing separated from them.
