@@ -196,26 +196,30 @@ const updateThoughts = (
     return { [id]: thought }
   })
 
-  let thoughtIndex = mergeUpdates(thoughtIndexOld, mergedUpdatesMap, { overwritePending })
-
-  // Single sweep: clear pending from affected parents whose children are all loaded
-  if (!overwritePending) {
-    affectedParentIds.forEach(parentId => {
-      const parent = thoughtIndex[parentId]
-      if (!parent || !parent.pending || isRoot([parentId])) return
-
-      // Clear parent's pending flag as soon as all of its direct children exist in the thoughtIndex.
-      // A child may itself be pending while its own descendants load, but that should not keep the grand-parent pending.
-      const allChildrenLoaded = Object.values(parent.childrenMap).every(childId => !!thoughtIndex[childId])
-
-      if (allChildrenLoaded) {
-        thoughtIndex = {
-          ...thoughtIndex,
-          [parentId]: { ...parent, pending: false },
-        }
-      }
-    })
+  /**
+   * Clears the pending flag if all of the parent's direct children are loaded.
+   *
+   * @param id - The parent's id.
+   * @param thought - The parent's thought.
+   * @param merged - The merged thought index.
+   * @returns True if the pending flag should be cleared, false otherwise.
+   */
+  const clearPending = (
+    id: string,
+    thought: Thought & { pending?: boolean },
+    merged: Index<Thought & { pending?: boolean }>,
+  ) => {
+    if (!affectedParentIds.has(id)) return false
+    if (!thought.pending) return false
+    if (isRoot([id])) return false
+    const allChildrenLoaded = Object.values(thought.childrenMap).every(childId => !!merged[childId])
+    return allChildrenLoaded
   }
+
+  const thoughtIndex = mergeUpdates(thoughtIndexOld, mergedUpdatesMap, {
+    overwritePending,
+    clearPending: !overwritePending ? clearPending : undefined,
+  })
   const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending })
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited

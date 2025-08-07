@@ -8,9 +8,16 @@ const mergeUpdates = <T>(
   mergee: Index<T | null>,
   {
     overwritePending,
+    clearPending,
   }: {
-    /** Allow set pending on non-pending thought. This is mainly used by freeThoughts. */
+    /** Allow setting pending on a non-pending thought. Mainly used by freeThoughts. */
     overwritePending?: boolean
+    /** Optional hook to clear the pending flag once an external condition is met. */
+    clearPending?: (
+      key: string,
+      item: T & { pending?: boolean },
+      mergedIndex: Index<T & { pending?: boolean }>,
+    ) => boolean
   } = {},
 ): Index<T> => {
   // assume an optional pending property
@@ -54,6 +61,16 @@ const mergeUpdates = <T>(
       delete mergeResult[key]
     }
   })
+
+  // If requested, clear pending based on external predicate.
+  if (clearPending) {
+    const entries = Object.entries(mergeResult) as [string, MaybePending][]
+    entries.forEach(([k, v]) => {
+      if (v && v.pending && clearPending(k, v, mergeResult as unknown as Index<MaybePending>)) {
+        mergeResult[k] = { ...(v as object), pending: false } as T
+      }
+    })
+  }
 
   // falsey values have been deleted
   return mergeResult as Index<T>
