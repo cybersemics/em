@@ -8,7 +8,10 @@ const enableScroll = () => {
   document.body.style.overflow = ''
 }
 
-/** Enables or disables scrolling based on the parameter. */
+/** Enables or disables scrolling based on the parameter.
+ * When using allowScroll, be mindful that any call to enableScroll will enable scroll globally.
+ * If there are multiple consumers that have disabled scrolling, conflicts may occur between them.
+ */
 function allowScroll(allow: boolean) {
   if (allow) enableScroll()
   else disableScroll()
