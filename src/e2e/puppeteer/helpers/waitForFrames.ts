@@ -1,11 +1,11 @@
 import { page } from '../setup'
 
 /**
- * Waits for a given number of pairs of consecutive animation frames to ensure complete rendering.
+ * Waits for a given number of animation frames to ensure complete rendering.
  *
  * This technique guarantees:
- * 1. All pending `requestAnimationFrame` callbacks execute (first frame).
- * 2. Resulting DOM updates process through style/layout/paint (second frame).
+ * 1. All pending `requestAnimationFrame` callbacks execute.
+ * 2. Resulting DOM updates process through style/layout/paint.
  * 3. Browser reaches stable visual state for screenshots.
  *
  * Essential for eliminating flaky tests where:
@@ -17,9 +17,7 @@ const waitForFrames = (count: number = 1): Promise<void> => {
   return page.evaluate(async (n: number) => {
     for (let i = 0; i < n; i++) {
       await new Promise<void>(resolve => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => resolve())
-        })
+        requestAnimationFrame(() => resolve())
       })
     }
   }, count)
