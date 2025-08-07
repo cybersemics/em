@@ -1,0 +1,156 @@
+diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
+index 725715a382d5ac19718cfbdca6732a0d1ddc5092..e3ce1651aa81c5c7620f9d054d5ccb9e45460760 100644
+--- a/dist/TouchBackendImpl.js
++++ b/dist/TouchBackendImpl.js
+@@ -38,6 +38,20 @@ export class TouchBackendImpl {
+     get document() {
+         return this.options.document;
+     }
++
++    // Cancel drag-and-drop if a scroll event is received so that scroll doesn't interfere with dragging.
++    // Use an arrow function to bind this event handler to the TouchBackendImpl object so that we can use `this`.
++    handleScroll = () => {
++        if (this.timeout) {
++            clearTimeout(this.timeout);
++            this.timeout = 0;
++        } else if (this.scrollHasBegun && this.monitor.isDragging()) {
++            this.actions.endDrag();
++        }
++
++        window.removeEventListener('scroll', this.handleScroll)
++    }
++
+     setup() {
+         const root = this.options.rootElement;
+         if (!root) {
+@@ -237,11 +251,13 @@ export class TouchBackendImpl {
+             }
+             this.waitingForDelay = false;
+             this.options.rootElement.dispatchEvent(new CustomEvent("dragStart"))
++            this.timeout = 0
+         };
+         this.handleTopMoveStartDelay = (e)=>{
+             if (!eventShouldStartDrag(e)) {
+                 return;
+             }
++            window.addEventListener('scroll', this.handleScroll);
+             const delay = e.type === eventNames.touch.start ? this.options.delayTouchStart : this.options.delayMouseStart;
+             this.timeout = setTimeout(this.handleTopMoveStart.bind(this, e), delay);
+             this.waitingForDelay = true;
+@@ -255,6 +271,8 @@ export class TouchBackendImpl {
+             }
+         };
+         this.handleTopMove = (e1)=>{
++            if (this.timeout) this.scrollHasBegun = true
++
+             const clientOffset = getEventClientOffset(e1, this.lastTargetTouchFallback)
+ 
+             if (clientOffset) {
+@@ -271,6 +289,7 @@ export class TouchBackendImpl {
+                 (this.options.touchSlop ? this.options.touchSlop : 0)
+             ) {
+                 clearTimeout(this.timeout);
++                this.timeout = 0;
+             }
+ 
+             if (!this.document || this.waitingForDelay) {
+@@ -366,13 +385,17 @@ export class TouchBackendImpl {
+             return undefined;
+         };
+         this.handleTopMoveEndCapture = (e)=>{
++            this.scrollHasBegun = false;
+             this._isScrolling = false;
+             this.lastTargetTouchFallback = undefined;
+             this._mouseClientOffset = {};
+             if (!eventShouldEndDrag(e)) {
+                 return;
+             }
+-            if (this.timeout) clearTimeout(this.timeout);
++            if (this.timeout) {
++                clearTimeout(this.timeout);
++                this.timeout = 0;
++            }
+             if (!this.monitor.isDragging() || this.monitor.didDrop()) {
+                 this.moveStartSourceIds = undefined;
+                 return;
+diff --git a/src/TouchBackendImpl.ts b/src/TouchBackendImpl.ts
+index 6650cf98fdb08bca5fa450853cb7907c380fe13e..b758701b7347803c654447be4d4404d1ef59bbbc 100644
+--- a/src/TouchBackendImpl.ts
++++ b/src/TouchBackendImpl.ts
+@@ -68,6 +68,9 @@ export class TouchBackendImpl implements Backend {
+ 	// Patch for iOS 13, discussion over #1585
+ 	private lastTargetTouchFallback: Touch | undefined
+ 
++	// Prevent scrolling during drag-and-drop, reported in #3141, fixed in #3161
++	private scrollHasBegun: boolean = false
++
+ 	public constructor(
+ 		manager: DragDropManager,
+ 		context: TouchBackendContext,
+@@ -116,6 +119,19 @@ export class TouchBackendImpl implements Backend {
+ 		return this.options.document
+ 	}
+ 
++	// Cancel drag-and-drop if a scroll event is received so that scroll doesn't interfere with dragging.
++	// Use an arrow function to bind this event handler to the TouchBackendImpl object so that we can use `this`.
++	handleScroll = () => {
++		if (this.timeout) {
++			clearTimeout(this.timeout)
++			this.timeout = 0
++		} else if (this.scrollHasBegun && this.monitor.isDragging()) {
++			this.actions.endDrag()
++		}
++
++		window.removeEventListener('scroll', this.handleScroll)
++	}
++
+ 	public setup(): void {
+ 		const root = this.options.rootElement
+ 		if (!root) {
+@@ -377,13 +393,16 @@ export class TouchBackendImpl implements Backend {
+ 			this._mouseClientOffset = clientOffset
+ 		}
+ 		this.waitingForDelay = false
+-    this.options.rootElement?.dispatchEvent(new CustomEvent("dragStart"))
++		this.options.rootElement?.dispatchEvent(new CustomEvent("dragStart"))
++		this.timeout = 0
+ 	}
+ 
+ 	public handleTopMoveStartDelay = (e: Event): void => {
+ 		if (!eventShouldStartDrag(e as MouseEvent)) {
+ 			return
+ 		}
++		
++		window.addEventListener('scroll', this.handleScroll)
+ 
+ 		const delay =
+ 			e.type === eventNames.touch.start
+@@ -410,6 +429,8 @@ export class TouchBackendImpl implements Backend {
+ 	}
+ 
+ 	public handleTopMove = (e: TouchEvent | MouseEvent): void => {
++		if (this.timeout) this.scrollHasBegun = true
++
+ 		const clientOffset = getEventClientOffset(e, this.lastTargetTouchFallback)
+ 
+ 		if (clientOffset) {
+@@ -570,6 +591,7 @@ export class TouchBackendImpl implements Backend {
+ 	}
+ 
+ 	public handleTopMoveEndCapture = (e: Event): void => {
++		this.scrollHasBegun = false
+ 		this._isScrolling = false
+ 		this.lastTargetTouchFallback = undefined
+ 		this._mouseClientOffset = {}
+@@ -578,7 +600,10 @@ export class TouchBackendImpl implements Backend {
+ 			return
+ 		}
+ 
+-		if (this.timeout) clearTimeout(this.timeout);
++		if (this.timeout) {
++			clearTimeout(this.timeout)
++			this.timeout = 0
++		}
+ 
+ 		if (!this.monitor.isDragging() || this.monitor.didDrop()) {
+ 			this.moveStartSourceIds = undefined
