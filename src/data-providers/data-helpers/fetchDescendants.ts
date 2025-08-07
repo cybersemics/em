@@ -218,7 +218,6 @@ async function* fetchDescendants(
             // updateThoughts will still clear pending once the missing direct children are loaded.
             pending:
               !isRoot([thought.id]) &&
-              hasChildren &&
               // If every child already exists in state (regardless of its own pending status),
               // the parent itself should not be considered pending.
               // This ensures that pending is applied only to the direct ancestor of the node(s)

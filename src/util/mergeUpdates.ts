@@ -34,12 +34,12 @@ const mergeUpdates = <T>(
       // 3. currentPending === false && incomingPending === true: block overwrite to keep non-pending state.
       // 4. currentPending === false && incomingPending === false/undefined: allow overwrite (other fields may update).
 
-      // Determine if the incoming object has its own pending property.
-      const hasPendingProp = Object.prototype.hasOwnProperty.call(value as object, 'pending')
+      // Consider the incoming object to be explicitly setting the pending flag only when the value is defined.
+      const hasIncomingPending = incomingPending !== undefined
 
       // Determine if we should allow overwrite based on pending logic.
       const shouldOverwrite =
-        overwritePending || currentPending !== false || (hasPendingProp && incomingPending !== true)
+        overwritePending || currentPending !== false || (hasIncomingPending && incomingPending !== true)
 
       if (shouldOverwrite) {
         // If we are allowing the overwrite, but want to preserve pending === false, explicitly set it.
