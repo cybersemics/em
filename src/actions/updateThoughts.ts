@@ -6,7 +6,6 @@ import PushBatch from '../@types/PushBatch'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { editThoughtPayload } from '../actions/editThought'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
@@ -188,35 +187,24 @@ const updateThoughts = (
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
   const lexemeIndexUpdatesOld = keyValueBy(lexemeIndexUpdates, key => ({ [key]: lexemeIndexOld[key] }))
 
-  // Collect parentIds that may be affected (i.e., a child update could clear their pending flag)
-  const affectedParentIds = new Set<ThoughtId>()
-
-  const mergedUpdatesMap = keyValueBy(thoughtIndexUpdates, (id, thought) => {
-    if (thought) affectedParentIds.add(thought.parentId)
-    return { [id]: thought }
-  })
-
   /**
    * Clears the pending flag if all of the parent's direct children are loaded.
-   *
-   * @param id - The parent's id.
-   * @param thought - The parent's thought.
-   * @param merged - The merged thought index.
-   * @returns True if the pending flag should be cleared, false otherwise.
+   * Only runs on parents whose children were touched in this batch to avoid prematurely clearing flags (e.g. __EM__).
    */
   const clearPending = (
     id: string,
     thought: Thought & { pending?: boolean },
     merged: Index<Thought & { pending?: boolean }>,
   ) => {
-    if (!affectedParentIds.has(id)) return false
     if (!thought.pending) return false
     if (isRoot([id])) return false
+    // ensure at least one child of this parent was updated in this batch
+    if (!Object.values(thoughtIndexUpdates).some(t => t && t.parentId === id)) return false
     const allChildrenLoaded = Object.values(thought.childrenMap).every(childId => !!merged[childId])
     return allChildrenLoaded
   }
 
-  const thoughtIndex = mergeUpdates(thoughtIndexOld, mergedUpdatesMap, {
+  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates, {
     overwritePending,
     clearPending: !overwritePending ? clearPending : undefined,
   })
