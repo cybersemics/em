@@ -8,7 +8,7 @@ const cursorPrevCommand: Command = {
   id: 'cursorPrev',
   label: 'Previous Thought',
   description: 'Move the cursor to the previous thought.',
-  gesture: 'lur',
+  gesture: 'u',
   multicursor: false,
   svg: PrevIcon,
   keyboard: { key: Key.ArrowUp, meta: true },
