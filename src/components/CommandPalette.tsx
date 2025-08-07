@@ -11,7 +11,6 @@ import { isTouch } from '../browser'
 import { gestureString, hashCommand, hashKeyDown } from '../commands'
 import commandPaletteCommand from '../commands/commandPalette'
 import openGestureCheatsheetCommand from '../commands/openGestureCheatsheet'
-import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import gestureStore from '../stores/gesture'
@@ -167,10 +166,7 @@ const CommandPalette: FC<{
   }, [search, commands, setSelectedCommand])
 
   useEffect(() => {
-    allowTouchToScroll(false)
-
     return () => {
-      allowTouchToScroll(true)
       unmounted.current = true
     }
   }, [])
