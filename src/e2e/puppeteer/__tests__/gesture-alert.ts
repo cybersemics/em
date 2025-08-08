@@ -6,27 +6,6 @@ import { page } from '../setup'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 /**
- * Helper function to perform an incomplete gesture - Create New Subthought (without touchEnd).
- * This simulates a gesture that is started but not completed, which should not trigger any alerts.
- * The gesture follows the pattern: right → down → right (likely matches a valid command).
- *
- * Note: No touchEnd() is called, so the gesture remains incomplete.
- */
-const performIncompleteGesture = async () => {
-  // Note: gesture is incomplete
-  await swipe('rdr', false)
-}
-
-/**
- * Helper function to perform a complete gesture.
- * This simulates a full gesture that should trigger an alert after completion.
- * Uses the same gesture pattern as performIncompleteGesture but adds touchEnd().
- */
-const performCompleteGesture = async () => {
-  await swipe('rdr', true)
-}
-
-/**
  * Test suite for gesture alert behavior.
  *
  * These tests verify that gesture alerts follow the correct timing:
@@ -49,8 +28,8 @@ describe('gesture alert behavior', () => {
    * appearing prematurely and interfering with the gesture interaction.
    */
   it('should not show alert during gesture progress', async () => {
-    // Perform an incomplete gesture (no touchEnd)
-    await performIncompleteGesture()
+    // Perform an incomplete gesture (no touchEnd) - create a new thought
+    await swipe('rdr', false)
 
     await waitForFrames()
 
@@ -67,8 +46,8 @@ describe('gesture alert behavior', () => {
    * This confirms that alerts are properly triggered after gesture completion.
    */
   it('should show alert after gesture completion', async () => {
-    // Perform a complete gesture
-    await performCompleteGesture()
+    // Perform a complete gesture - create a new thought
+    await swipe('rdr', true)
 
     await waitForFrames()
 
