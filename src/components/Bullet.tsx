@@ -297,8 +297,8 @@ const BulletLeaf = ({
       data-bullet='leaf'
       ry={radius}
       rx={radius}
-      cy='298'
-      cx='297'
+      cy='300'
+      cx='300'
       style={{
         // allow .gray to define fill when missing
         // allow .graypulse to define fill when pending
@@ -366,10 +366,9 @@ const BulletParent = ({
 }
 
 /** A larger circle that surrounds the bullet of the cursor thought. */
-const BulletCursorOverlay = ({
+const BulletHighlightOverlay = ({
   isHighlighted,
 }: {
-  isEditing: boolean
   isHighlighted?: boolean
   leaf?: boolean
   publish?: boolean
@@ -584,9 +583,8 @@ const Bullet = ({
         ref={svgElement}
       >
         <g>
-          {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && !isQuickDropDeleteHovering && (
-            <BulletCursorOverlay
-              isEditing={isEditing}
+          {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && !isQuickDropDeleteHovering && (
+            <BulletHighlightOverlay
               isHighlighted={isHighlighted}
               leaf={leaf}
               publish={publish}
