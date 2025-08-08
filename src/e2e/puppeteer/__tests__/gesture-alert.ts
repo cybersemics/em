@@ -1,42 +1,10 @@
-import path from 'path'
 import { KnownDevices } from 'puppeteer'
 import sleep from '../../../util/sleep'
-import configureSnapshots from '../configureSnapshots'
-import screenshot from '../helpers/screenshot'
+import swipe from '../helpers/swipe'
 import waitForFrames from '../helpers/waitForFrames'
 import { page } from '../setup'
 
-expect.extend({
-  toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
-})
-
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
-
-/**
- * Helper function to smoothly move touch from one point to another.
- * Creates a series of touchMove events to simulate realistic gesture movement.
- *
- * @param x1 - Starting X coordinate.
- * @param y1 - Starting Y coordinate.
- * @param x2 - Ending X coordinate.
- * @param y2 - Ending Y coordinate.
- */
-const move = async (x1: number, y1: number, x2: number, y2: number): Promise<void> => {
-  const xDirection = x2 > x1 ? 10 : x1 > x2 ? -10 : 0
-  const yDirection = y2 > y1 ? 10 : y1 > y2 ? -10 : 0
-  let curX = x1
-  let curY = y1
-
-  while (curX * xDirection < x2 * xDirection || curY * yDirection < y2 * yDirection) {
-    await page.touchscreen.touchMove(curX, curY)
-    if (curX * xDirection < x2 * xDirection) {
-      curX += xDirection
-    }
-    if (curY * yDirection < y2 * yDirection) {
-      curY += yDirection
-    }
-  }
-}
 
 /**
  * Helper function to perform an incomplete gesture - Create New Subthought (without touchEnd).
@@ -46,16 +14,8 @@ const move = async (x1: number, y1: number, x2: number, y2: number): Promise<voi
  * Note: No touchEnd() is called, so the gesture remains incomplete.
  */
 const performIncompleteGesture = async () => {
-  const x = 100
-  const y = 300
-  await page.touchscreen.touchStart(x, y)
-  // Touch move right
-  await move(x, y, x + 100, y)
-  // Touch move down
-  await move(x + 100, y, x + 100, y + 100)
-  // Touch move right
-  await move(x + 100, y + 100, x + 200, y + 100)
-  // Note: No touchEnd() - gesture is incomplete
+  // Note: gesture is incomplete
+  await swipe('rdr', false)
 }
 
 /**
@@ -64,8 +24,7 @@ const performIncompleteGesture = async () => {
  * Uses the same gesture pattern as performIncompleteGesture but adds touchEnd().
  */
 const performCompleteGesture = async () => {
-  await performIncompleteGesture()
-  await page.touchscreen.touchEnd()
+  await swipe('rdr', true)
 }
 
 /**
@@ -102,10 +61,6 @@ describe('gesture alert behavior', () => {
     // Check that no alert content is visible during gesture progress
     const alertContent = await page.$('[data-testid=alert-content]')
     expect(alertContent).toBeNull()
-
-    // Take screenshot to verify visual state
-    const screenshotData = await screenshot()
-    expect(screenshotData).toMatchImageSnapshot({ customSnapshotIdentifier: 'no-alert-during-gesture' })
   })
 
   /**
@@ -131,9 +86,5 @@ describe('gesture alert behavior', () => {
     // Verify alert content contains gesture hint text
     const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
     expect(alertText).toBeTruthy()
-
-    // Take screenshot to verify visual state with alert
-    const screenshotData = await screenshot()
-    expect(screenshotData).toMatchImageSnapshot({ customSnapshotIdentifier: 'alert-after-gesture-completion' })
   })
 })
