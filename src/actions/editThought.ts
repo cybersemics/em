@@ -38,11 +38,17 @@ export interface editThoughtPayload {
   newValue: string
   path: SimplePath
   rankInContext?: number
+  forceSorting?: boolean
 }
 
 /** Changes the text of an existing thought. */
-const editThought = (state: State, { cursorOffset, force, oldValue, newValue, path }: editThoughtPayload) => {
-  if (oldValue === newValue || isDivider(oldValue)) return state
+const editThought = (
+  state: State,
+  { cursorOffset, force, oldValue, newValue, path, forceSorting }: editThoughtPayload,
+) => {
+  // Skip early return if forceSorting is true, allowing re-sorting without value change
+  // This is used when a thought loses focus and needs to be re-sorted
+  if (!forceSorting && (oldValue === newValue || isDivider(oldValue))) return state
 
   // thoughts may exist for both the old value and the new value
   const lexemeIndex = { ...state.thoughts.lexemeIndex }
@@ -137,12 +143,16 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
   const isNote = parentOfEditedThought.value === '=note'
   const sortPreference = getSortPreference(state, editedThought.parentId)
   const sortType = sortPreference.type
+  const editingThoughtId = state.cursor && head(state.cursor)
 
   const thoughtNew: Thought = {
     ...editedThought,
     ...(editedThought.generating ? { generating: false } : null),
     rank:
-      newValue !== '' && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
+      newValue !== '' &&
+      (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated') &&
+      editingThoughtId !== editedThoughtId && // Only sort when cursor is not on this thought
+      forceSorting // Only sort when explicitly requested (e.g., after losing focus)
         ? getSortedRank(state, editedThought.parentId, newValue)
         : editedThought.rank,
     value: newValue,

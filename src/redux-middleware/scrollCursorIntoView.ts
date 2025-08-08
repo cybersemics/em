@@ -1,15 +1,19 @@
 import { isEqual, throttle } from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import State from '../@types/State'
+import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
 import getSortPreference from '../selectors/getSortPreference'
+import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
 import scrollTopStore from '../stores/scrollTop'
 import syncStatusStore from '../stores/syncStatus'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
+import equalPath from '../util/equalPath'
 import head from '../util/head'
 
 // Tracks whether the has scrolled since the last cursor navigation
@@ -155,7 +159,7 @@ scrollTopStore.subscribe(() => {
 })
 
 /** Runs a throttled session keepalive on every action. */
-const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) => {
+const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
   return next => action => {
     const stateOld = getState()
     const cursorOld = stateOld.cursor
@@ -172,6 +176,43 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) =>
 
     const cursorChanged = !isEqual(cursorNew, cursorOld)
     const sortChanged = !isEqual(sortPreferenceNew, sortPreferenceOld)
+
+    // Check if we need to re-sort thoughts when cursor changes
+    // This handles the case where a thought was being edited and the cursor moves away
+    // The re-sorting ensures thoughts are in their correct sorted position after editing
+    if (cursorChanged && cursorOld) {
+      const previousThoughtId = head(cursorOld)
+      const previousThought = getThoughtById(stateNew, previousThoughtId)
+
+      // Check if the previous thought was actually being edited (not just cursor on it)
+      const wasBeingEdited = stateOld.cursor && equalPath(stateOld.cursor, cursorOld)
+
+      // Check if the previous thought was in a sorted context and is no longer being edited
+      // This applies to any thought in an alphabetically sorted context, not just date patterns
+      if (previousThought && wasBeingEdited) {
+        const parentId = previousThought.parentId
+        const sortPreference = getSortPreference(stateNew, parentId)
+        const simplePath = simplifyPath(stateNew, cursorOld)
+
+        if (sortPreference.type === 'Alphabetical') {
+          // Re-sort the thought by calling editThought with forceSorting: true
+          // This triggers getSortedRank with the cursor no longer on the thought
+          // The thought will be sorted into its correct position based on its value
+          requestAnimationFrame(() => {
+            dispatch(
+              editThought({
+                oldValue: previousThought.value,
+                newValue: previousThought.value,
+                rankInContext: previousThought.rank,
+                path: simplePath,
+                forceSorting: true,
+              }),
+            )
+          })
+        }
+      }
+    }
+
     if (cursorChanged || sortChanged) {
       setTimeout(
         () => {
