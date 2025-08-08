@@ -1,5 +1,4 @@
 import { KnownDevices } from 'puppeteer'
-import sleep from '../../../util/sleep'
 import swipe from '../helpers/swipe'
 import waitForFrames from '../helpers/waitForFrames'
 import { page } from '../setup'
@@ -53,9 +52,6 @@ describe('gesture alert behavior', () => {
     // Perform an incomplete gesture (no touchEnd)
     await performIncompleteGesture()
 
-    // Wait a bit to ensure any potential alerts would have time to appear
-    await sleep(1000)
-
     await waitForFrames()
 
     // Check that no alert content is visible during gesture progress
@@ -73,9 +69,6 @@ describe('gesture alert behavior', () => {
   it('should show alert after gesture completion', async () => {
     // Perform a complete gesture
     await performCompleteGesture()
-
-    // Wait for the alert to appear
-    await sleep(1000)
 
     await waitForFrames()
 
