@@ -20,6 +20,7 @@ import createChildrenMap from '../util/createChildrenMap'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
+import isDatePattern from '../util/isDatePattern'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -151,8 +152,11 @@ const editThought = (
     rank:
       newValue !== '' &&
       (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated') &&
-      editingThoughtId !== editedThoughtId && // Only sort when cursor is not on this thought
-      forceSorting // Only sort when explicitly requested (e.g., after losing focus)
+      // For non-date thoughts: always sort normally
+      // For date thoughts: only sort when cursor is not on the thought AND forceSorting is true
+      (!isDatePattern(newValue) ||
+        (editingThoughtId !== editedThoughtId && // Only sort when cursor is not on this thought
+          forceSorting)) // Only sort when explicitly requested (e.g., after losing focus)
         ? getSortedRank(state, editedThought.parentId, newValue)
         : editedThought.rank,
     value: newValue,

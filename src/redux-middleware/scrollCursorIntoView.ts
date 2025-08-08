@@ -15,6 +15,7 @@ import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import isDatePattern from '../util/isDatePattern'
 
 // Tracks whether the has scrolled since the last cursor navigation
 let userInteractedAfterNavigation: boolean = false
@@ -177,9 +178,9 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState, disp
     const cursorChanged = !isEqual(cursorNew, cursorOld)
     const sortChanged = !isEqual(sortPreferenceNew, sortPreferenceOld)
 
-    // Check if we need to re-sort thoughts when cursor changes
-    // This handles the case where a thought was being edited and the cursor moves away
-    // The re-sorting ensures thoughts are in their correct sorted position after editing
+    // Check if we need to re-sort date thoughts when cursor changes
+    // This handles the case where a date thought was being edited and the cursor moves away
+    // Only date patterns (like "6/21", "12/1") get re-sorted after losing focus
     if (cursorChanged && cursorOld) {
       const previousThoughtId = head(cursorOld)
       const previousThought = getThoughtById(stateNew, previousThoughtId)
@@ -187,17 +188,17 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState, disp
       // Check if the previous thought was actually being edited (not just cursor on it)
       const wasBeingEdited = stateOld.cursor && equalPath(stateOld.cursor, cursorOld)
 
-      // Check if the previous thought was in a sorted context and is no longer being edited
-      // This applies to any thought in an alphabetically sorted context, not just date patterns
-      if (previousThought && wasBeingEdited) {
+      // Check if the previous thought was a date pattern in a sorted context and is no longer being edited
+      // This ensures only date thoughts get re-sorted, while other thoughts maintain their position
+      if (previousThought && isDatePattern(previousThought.value) && wasBeingEdited) {
         const parentId = previousThought.parentId
         const sortPreference = getSortPreference(stateNew, parentId)
         const simplePath = simplifyPath(stateNew, cursorOld)
 
         if (sortPreference.type === 'Alphabetical') {
-          // Re-sort the thought by calling editThought with forceSorting: true
+          // Re-sort the date thought by calling editThought with forceSorting: true
           // This triggers getSortedRank with the cursor no longer on the thought
-          // The thought will be sorted into its correct position based on its value
+          // The date thought will be sorted into its correct position based on its value
           requestAnimationFrame(() => {
             dispatch(
               editThought({
