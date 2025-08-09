@@ -6,8 +6,14 @@ const mergeUpdates = <T>(
   mergeInto: Index<T | null>,
   /** The object to merge which may have falsey values. */
   mergee: Index<T | null>,
-  { overwritePending }: { overwritePending?: boolean } = {},
+  {
+    overwritePending,
+  }: {
+    /** Allow set pending on non-pending thought. This is mainly used by freeThoughts. */
+    overwritePending?: boolean
+  } = {},
 ): Index<T> => {
+  // assume an optional pending property
   type MaybePending = T & { pending?: boolean }
 
   const mergeResult: Index<T | null> = { ...mergeInto }
