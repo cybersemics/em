@@ -81,6 +81,7 @@ const mergeUpdates = <T>(
     }
   }
 
+  // falsey values have been deleted
   return mergeResult as Index<T>
 }
 
