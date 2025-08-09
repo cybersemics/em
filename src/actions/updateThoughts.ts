@@ -186,10 +186,7 @@ const updateThoughts = (
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
   const lexemeIndexUpdatesOld = keyValueBy(lexemeIndexUpdates, key => ({ [key]: lexemeIndexOld[key] }))
 
-  /**
-   * Clears the pending flag if all of the parent's direct children are loaded.
-   * Only runs on parents whose children were touched in this batch to avoid prematurely clearing flags (e.g. __EM__).
-   */
+  // TODO: Can we use { overwritePending: !local } and get rid of the overwritePending option to updateThoughts? i.e. Are there any false positives when local is false?
   const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates, { overwritePending })
   const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending })
 
