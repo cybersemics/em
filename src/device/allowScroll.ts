@@ -1,11 +1,17 @@
-/** Disables scrolling on the body element with overflow:hidden. */
+let scrollY = 0
+
+/** Disables scrolling on the html and body elements with overflow:hidden, and offsets the content by the value of window.scrollY. */
 const disableScroll = () => {
-  document.body.style.overflow = 'hidden'
+  scrollY = window.scrollY
+  document.documentElement.style.setProperty('--scroll-offset', `-${scrollY}px`)
+  document.documentElement.setAttribute('data-dialog-open', 'true')
 }
 
-/** Re-enables scrolling on the body element by removing overflow:hidden. */
+/** Re-enables scrolling on the body element by removing overflow:hidden and restoring the scroll position. */
 const enableScroll = () => {
-  document.body.style.overflow = ''
+  document.documentElement.style.removeProperty('--scroll-offset')
+  document.documentElement.removeAttribute('data-dialog-open')
+  requestAnimationFrame(() => window.scrollTo(0, scrollY))
 }
 
 /** Enables or disables scrolling based on the parameter.

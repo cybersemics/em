@@ -226,6 +226,8 @@ const globalCss = defineGlobalStyles({
       caretColor: 'transparent',
     },
   },
+  '[data-dialog-open=true]': { overflow: 'hidden' },
+  '#root > :first-child': { _dialogOpen: { marginTop: 'var(--scroll-offset)' } },
   'html, body, #root, #app': { height: '100%', fontSize: '16px' },
   'body, textarea': {
     fontWeight: 300,
@@ -237,7 +239,7 @@ const globalCss = defineGlobalStyles({
     fontWeight: 600,
   },
   /* Disables pull-to-refresh but allows overscroll glow effects. */
-  body: { overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
+  body: { overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg', _dialogOpen: { overflow: 'hidden' } },
   button: { fontSize: '1.2em' },
   a: {
     cursor: 'pointer',
@@ -477,6 +479,7 @@ export default defineConfig({
     android: '[data-platform=android] &',
     mac: '[data-platform=mac] &',
     iphone: '[data-platform=iphone] &',
+    dialogOpen: '[data-dialog-open=true] &',
     dragHold: '[data-drag-hold=true] &',
     dragInProgress: '[data-drag-in-progress=true] &',
   },
