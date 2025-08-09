@@ -19,7 +19,6 @@ import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
-import isRoot from '../util/isRoot'
 import keyValueBy from '../util/keyValueBy'
 import mergeUpdates from '../util/mergeUpdates'
 import nonNull from '../util/nonNull'
@@ -191,23 +190,7 @@ const updateThoughts = (
    * Clears the pending flag if all of the parent's direct children are loaded.
    * Only runs on parents whose children were touched in this batch to avoid prematurely clearing flags (e.g. __EM__).
    */
-  const clearPending = (
-    id: string,
-    thought: Thought & { pending?: boolean },
-    merged: Index<Thought & { pending?: boolean }>,
-  ) => {
-    if (!thought.pending) return false
-    if (isRoot([id])) return false
-    // ensure at least one child of this parent was updated in this batch
-    if (!Object.values(thoughtIndexUpdates).some(t => t && t.parentId === id)) return false
-    const allChildrenLoaded = Object.values(thought.childrenMap).every(childId => !!merged[childId])
-    return allChildrenLoaded
-  }
-
-  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates, {
-    overwritePending,
-    clearPending: !overwritePending ? clearPending : undefined,
-  })
+  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates, { overwritePending })
   const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending })
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited

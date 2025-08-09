@@ -8,16 +8,9 @@ const mergeUpdates = <T>(
   mergee: Index<T | null>,
   {
     overwritePending,
-    clearPending,
   }: {
     /** Allow setting pending on a non-pending thought. Mainly used by freeThoughts. */
     overwritePending?: boolean
-    /** Optional hook to clear the pending flag once an external condition is met. */
-    clearPending?: (
-      key: string,
-      item: T & { pending?: boolean },
-      mergedIndex: Index<T & { pending?: boolean }>,
-    ) => boolean
   } = {},
 ): Index<T> => {
   // assume an optional pending property
@@ -62,15 +55,18 @@ const mergeUpdates = <T>(
     }
   })
 
-  // If requested, clear pending based on external predicate.
-  if (clearPending) {
-    const entries = Object.entries(mergeResult) as [string, MaybePending][]
-    entries.forEach(([k, v]) => {
-      if (v && v.pending && clearPending(k, v, mergeResult as unknown as Index<MaybePending>)) {
-        mergeResult[k] = { ...(v as object), pending: false } as T
+  // Thought-specific pending clearing: If a parent is pending and all its direct children
+  // now exist in the merged index, clear the flag.
+  const entries = Object.entries(mergeResult) as [string, MaybePending][]
+  entries.forEach(([key, val]) => {
+    if (val && val.pending === true && 'childrenMap' in val && typeof val.childrenMap === 'object') {
+      const childIds = Object.values(val.childrenMap as Record<string, string>)
+      if (childIds.length && childIds.every(cid => !!(mergeResult as Index<MaybePending>)[cid])) {
+        // replace with new object to avoid mutating frozen state
+        mergeResult[key] = { ...(val as object), pending: false } as T
       }
-    })
-  }
+    }
+  })
 
   // falsey values have been deleted
   return mergeResult as Index<T>
