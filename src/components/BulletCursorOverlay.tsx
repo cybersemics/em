@@ -8,11 +8,13 @@ import { isSafari, isTouch, isiPhone } from '../browser'
 import useHideBullet from '../hooks/useHideBullet'
 import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getChildrenRanked } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import getBulletWidth from '../util/getBulletWidth'
 import head from '../util/head'
+import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import FauxCaret from './FauxCaret'
@@ -59,6 +61,10 @@ function CursorOverlay({
   const showContexts = useSelector(state => isContextViewActive(state, path))
   const fontSize = useSelector(state => state.fontSize)
 
+  const thoughtId = head(simplePath)
+
+  const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
+
   const lineHeight = fontSize * 1.25
 
   const extendClickWidth = fontSize * 1.2
@@ -85,6 +91,7 @@ function CursorOverlay({
         width,
         position: 'absolute',
         verticalAlign: 'top',
+        display: bulletIsDivider ? 'none' : undefined,
         zIndex: isIOSSafari ? 4 : undefined, // fix misalignment of cursor on iOS
       }}
     >
