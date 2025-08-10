@@ -19,11 +19,11 @@ const waitForEditingState = async (value: string, offset?: number, timeout: numb
       if (!cursor) return false
 
       const thought = em.getThoughtById(em.head(cursor))
-      const domOk = el.textContent === value
-      const cursorOk = thought?.value === value
-      const offsetOk = offset == null ? true : state.cursorOffset === offset
+      const matchesDomValue = el.textContent === value
+      const matchesThoughtValue = thought?.value === value
+      const matchesOffset = offset == null ? true : state.cursorOffset === offset
 
-      return domOk && cursorOk && offsetOk
+      return matchesDomValue && matchesThoughtValue && matchesOffset
     },
     { timeout },
     value,
