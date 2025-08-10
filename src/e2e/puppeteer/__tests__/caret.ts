@@ -12,6 +12,7 @@ import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForEditingState from '../helpers/waitForEditingState'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 
@@ -252,8 +253,8 @@ describe('mobile only', () => {
 
     await clickThought('b')
 
-    // perform categorize via keyboard shortcut
-    await press(']', { meta: true })
+    await waitForSelector('[aria-label="Categorize"]')
+    await click('[aria-label="Categorize"]')
 
     // assert caret is on the new thought which is empty
     await waitForEditingState('', 0)
