@@ -11,7 +11,7 @@ const disableScroll = () => {
 const enableScroll = () => {
   document.documentElement.style.removeProperty('--scroll-offset')
   document.documentElement.removeAttribute('data-dialog-open')
-  requestAnimationFrame(() => window.scrollTo(0, scrollY))
+  queueMicrotask(() => window.scrollTo(0, scrollY))
 }
 
 /** Enables or disables scrolling based on the parameter.
