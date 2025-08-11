@@ -1,4 +1,5 @@
 import { RefObject, useCallback, useState } from 'react'
+import { useSelector } from 'react-redux'
 import editingValueStore from '../stores/editingValue'
 import viewportStore from '../stores/viewport'
 import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
@@ -14,19 +15,20 @@ import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
  * - Handles cases where DOM elements don't exist yet (e.g., collapsed thoughts)
  * - Provides immediate feedback to prevent layout flickering
  * - Uses layout effects for accurate DOM measurements.
+ * - Encapsulates fontSize selector to reduce prop drilling.
  *
  * @param editableRef - Reference to the editable element containing the thought text.
  * @param thoughtWrapperRef - Reference to the thought wrapper element for width comparison.
- * @param fontSize - The current font size, affects text width.
  * @param isEditing - Whether the thought is currently being edited, affects rendering.
  * @returns Boolean indicating if the thought content spans multiple lines.
  */
 const useThoughtMultiline = (
   editableRef: RefObject<HTMLElement>,
   thoughtWrapperRef: RefObject<HTMLElement>,
-  fontSize: number,
   isEditing?: boolean,
 ) => {
+  // Get fontSize from Redux store to avoid prop drilling
+  const fontSize = useSelector(state => state.fontSize)
   // To Detect immediate editing value change
   const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
   // To Detect device width change
@@ -49,7 +51,6 @@ const useThoughtMultiline = (
 
     // Check if content overflows the available width
     return editableRef.current.clientWidth >= thoughtWrapperRef.current.clientWidth
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editableRef, thoughtWrapperRef, contentWidth, fontSize, editingValue])
 
   // Immediate calculation for current render (prevents flickering)
