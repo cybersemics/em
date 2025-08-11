@@ -1,21 +1,21 @@
-import { RefObject, useCallback, useState } from 'react'
+import { RefObject, useCallback, useLayoutEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import editingValueStore from '../stores/editingValue'
 import viewportStore from '../stores/viewport'
-import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
 
 /**
  * Custom hook for detecting if a thought is multiline.
  *
- * This hook handles the complex timing issues involved in determining if a thought
- * spans multiple lines. It provides both immediate calculation (for current render)
- * and delayed DOM measurement (for when DOM is ready).
+ * This hook handles the timing issues involved in determining if a thought
+ * spans multiple lines. It uses useLayoutEffect to update state before the browser
+ * paints, preventing flickering while following React best practices.
  *
  * Key Features:
  * - Handles cases where DOM elements don't exist yet (e.g., collapsed thoughts)
- * - Provides immediate feedback to prevent layout flickering
- * - Uses layout effects for accurate DOM measurements.
- * - Encapsulates fontSize selector to reduce prop drilling.
+ * - Prevents layout flickering by updating before browser paints
+ * - Uses layout effects for accurate DOM measurements when DOM is ready
+ * - Encapsulates fontSize selector to reduce prop drilling
+ * - Follows React best practices (no DOM access during render)
  *
  * @param editableRef - Reference to the editable element containing the thought text.
  * @param thoughtWrapperRef - Reference to the thought wrapper element for width comparison.
@@ -52,34 +52,28 @@ const useThoughtMultiline = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editableRef, thoughtWrapperRef, contentWidth, fontSize, editingValue])
 
-  // State for delayed DOM measurement results
-  const [multilineDelayed, setMultilineDelayed] = useState(false)
-
-  // Immediate calculation for current render (prevents flickering)
-  const multilineImmediate = calculateMultiline()
+  // State for multiline detection
+  const [isMultiline, setIsMultiline] = useState(false)
 
   /**
-   * Delayed calculation using layout effects for when DOM is fully ready.
+   * Update multiline state before browser paints to prevent flickering.
    *
-   * This handles edge cases like:
-   * - Collapsed thoughts being expanded
+   * useLayoutEffect runs synchronously after all DOM mutations but before
+   * the browser paints, ensuring the line-height change happens immediately
+   * without visual flickering.
+   *
+   * This handles all cases including:
+   * - Initial render when DOM elements are created
+   * - Content changes that affect text width
+   * - Window resize events
    * - Dynamic content loading
-   * - DOM elements not yet created.
-   *
-   * The layout effect ensures we get accurate measurements after the DOM
-   * has been updated but before the browser paints.
    */
-  useLayoutAnimationFrameEffect(() => {
-    setMultilineDelayed(calculateMultiline())
-  }, [calculateMultiline, isEditing])
+  useLayoutEffect(() => {
+    const result = calculateMultiline()
+    setIsMultiline(result)
+  }, [calculateMultiline])
 
-  /**
-   * Return the combined result: either immediate calculation or delayed measurement.
-   *
-   * This ensures we have a value for the current render (preventing flicker)
-   * while also getting accurate measurements when the DOM is ready.
-   */
-  return multilineDelayed || multilineImmediate
+  return isMultiline
 }
 
 export default useThoughtMultiline
