@@ -1,14 +1,12 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import screenshot from '../helpers/screenshot'
+import screenshot from '../helpers/screenshot-with-no-antialiasing'
 import scroll from '../helpers/scroll'
-import testIfNotCI from '../helpers/testIfNotCI'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -25,9 +23,8 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 // Tests the following cases:
 // - Single line url
 // - Single line url with cursor
-// TODO: Flaky test
-// https://github.com/cybersemics/em/actions/runs/16544102796/attempts/2?pr=3147
-it.skip('single line', async () => {
+
+it('single line', async () => {
   await hideHUD()
 
   await paste(`
@@ -39,13 +36,7 @@ it.skip('single line', async () => {
   await press('ArrowUp')
 
   const image = await screenshot()
-  expect(image).toMatchImageSnapshot({
-    customDiffConfig: {
-      // Fails intermittently in the CI with default threshold of 0.18.
-      // See: https://github.com/cybersemics/em/actions/runs/12318388366/job/34418086296?pr=2700
-      threshold: 0.4,
-    },
-  })
+  expect(image).toMatchImageSnapshot()
 })
 
 describe('multiline', () => {
@@ -66,28 +57,13 @@ describe('multiline', () => {
 
     await press('ArrowUp')
 
-    // TODO: Test intermittently fails
-    // e.g. https://github.com/cybersemics/em/actions/runs/13817648331/job/38654935147?pr=2800
-    // Fails with sleep(200): https://github.com/cybersemics/em/actions/runs/14812798110/job/41589583778
-    await sleep(400)
-
     const image = await screenshot()
-    expect(image).toMatchImageSnapshot({
-      customDiffConfig: {
-        // Fails intermittently in the CI with default threshold of 0.18.
-        // See: https://github.com/cybersemics/em/actions/runs/12318388366/job/34418086296?pr=2700
-        threshold: 0.4,
-      },
-    })
+    expect(image).toMatchImageSnapshot()
   }
 
-  // TODO: Flaky test
-  // https://github.com/cybersemics/em/issues/2956
-  testIfNotCI('Font Size: 18 (default)', multilineTest)
+  it('Font Size: 18 (default)', multilineTest)
 
-  // TODO: Flaky test
-  // https://github.com/cybersemics/em/issues/2956
-  testIfNotCI('Font Size: 13', async () => {
+  it('Font Size: 13', async () => {
     await click('[data-testid=decrease-font]') // 17
     await click('[data-testid=decrease-font]') // 16
     await click('[data-testid=decrease-font]') // 15

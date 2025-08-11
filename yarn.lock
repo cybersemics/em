@@ -7261,9 +7261,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001587, caniuse-lite@npm:^1.0.30001646, caniuse-lite@npm:^1.0.30001669, caniuse-lite@npm:^1.0.30001688":
-  version: 1.0.30001726
-  resolution: "caniuse-lite@npm:1.0.30001726"
-  checksum: 10c0/2c5f91da7fd9ebf8c6b432818b1498ea28aca8de22b30dafabe2a2a6da1e014f10e67e14f8e68e872a0867b6b4cd6001558dde04e3ab9770c9252ca5c8849d0e
+  version: 1.0.30001731
+  resolution: "caniuse-lite@npm:1.0.30001731"
+  checksum: 10c0/d8cddf817d5bec8e7c2106affdbf1bfc3923463ca16697c992b2efeb043e6a5d9dcb70cda913bc6acf9112fd66f9e80279316c08e7800359116925066a63fdfa
   languageName: node
   linkType: hard
 
@@ -8784,7 +8784,7 @@ __metadata:
     react-dnd-html5-backend: "npm:^16.0.1"
     react-dnd-test-backend: "npm:^16.0.1"
     react-dnd-test-utils: "npm:^16.0.1"
-    react-dnd-touch-backend: "patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@npm%253A16.0.1%23~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%3A%3Aversion=16.0.1&hash=77964d#~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch"
+    react-dnd-touch-backend: "patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch"
     react-dom: "npm:18.3.1"
     react-error-boundary: "npm:^4.1.2"
     react-gravatar: "npm:^2.6.3"
@@ -16625,13 +16625,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@npm%253A16.0.1%23~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%3A%3Aversion=16.0.1&hash=77964d#~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch":
+"react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@npm%253A16.0.1%23~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%3A%3Aversion=16.0.1&hash=77964d#~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch::version=16.0.1&hash=33fdd5":
   version: 16.0.1
   resolution: "react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@npm%253A16.0.1%23~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%3A%3Aversion=16.0.1&hash=77964d#~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch::version=16.0.1&hash=33fdd5"
   dependencies:
     "@react-dnd/invariant": "npm:^4.0.1"
     dnd-core: "npm:^16.0.1"
   checksum: 10c0/79a25736ac8e21c94169b5e7c5cc9c50ee9552adf598e411a8cf39f5164d5a2fed7a55bf57f53e8f8ceb6d591f051b2720a34f991bcc56ffe8dbe90598323b71
+  languageName: node
+  linkType: hard
+
+"react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch":
+  version: 16.0.1
+  resolution: "react-dnd-touch-backend@patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch::version=16.0.1&hash=40a9c2"
+  dependencies:
+    "@react-dnd/invariant": "npm:^4.0.1"
+    dnd-core: "npm:^16.0.1"
+  checksum: 10c0/52c45144eb5ee47478203b37afe35b77ae38efef69b820ab8764571cfeecfde236bbe1d6be1811c5e9583f1479534277efbecd6f2b4169c67421ec5aec670937
   languageName: node
   linkType: hard
 
