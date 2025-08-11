@@ -31,6 +31,8 @@ describe('Table View', () => {
           - Cincinnati, Ohio
     `)
 
+    // Wait for table layout calculations to complete and DOM to stabilize
+    // This ensures the column widths are properly calculated and rendered
     await waitForFrames()
 
     const image = await screenshot()
@@ -54,6 +56,8 @@ describe('Table View', () => {
           - 2/5
     `)
 
+    // Wait for table layout calculations to complete and DOM to stabilize
+    // This ensures the column widths are properly calculated and rendered
     await waitForFrames()
 
     const image = await screenshot()

@@ -33,9 +33,6 @@ const useThoughtMultiline = (
   const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
   // To Detect device width change
   const contentWidth = viewportStore.useSelector(state => state.contentWidth)
-  // State for delayed DOM measurement results
-  const [multilineDelayed, setMultilineDelayed] = useState(false)
-
   /**
    * Calculates whether the thought content is multiline based on DOM measurements.
    *
@@ -51,7 +48,12 @@ const useThoughtMultiline = (
 
     // Check if content overflows the available width
     return editableRef.current.clientWidth >= thoughtWrapperRef.current.clientWidth
+    // calculateMultiline function should be recreated for changes of contentWidth, fontSize and editingValue
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editableRef, thoughtWrapperRef, contentWidth, fontSize, editingValue])
+
+  // State for delayed DOM measurement results
+  const [multilineDelayed, setMultilineDelayed] = useState(false)
 
   // Immediate calculation for current render (prevents flickering)
   const multilineImmediate = calculateMultiline()
