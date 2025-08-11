@@ -15,7 +15,7 @@ import viewportStore from '../stores/viewport'
  * - Prevents layout flickering by updating before browser paints
  * - Uses layout effects for accurate DOM measurements when DOM is ready
  * - Encapsulates fontSize selector to reduce prop drilling
- * - Follows React best practices (no DOM access during render)
+ * - Follows React best practices (no DOM access during render).
  *
  * @param editableRef - Reference to the editable element containing the thought text.
  * @param thoughtWrapperRef - Reference to the thought wrapper element for width comparison.
@@ -58,7 +58,7 @@ const useThoughtMultiline = (
   /**
    * Update multiline state before browser paints to prevent flickering.
    *
-   * useLayoutEffect runs synchronously after all DOM mutations but before
+   * UseLayoutEffect runs synchronously after all DOM mutations but before
    * the browser paints, ensuring the line-height change happens immediately
    * without visual flickering.
    *
@@ -66,7 +66,7 @@ const useThoughtMultiline = (
    * - Initial render when DOM elements are created
    * - Content changes that affect text width
    * - Window resize events
-   * - Dynamic content loading
+   * - Dynamic content loading.
    */
   useLayoutEffect(() => {
     const result = calculateMultiline()
