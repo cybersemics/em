@@ -51,15 +51,26 @@ const removeIgnoredPrefixes = (s: string) => s.replace(REGEX_IGNORED_PREFIXES, '
 /** Removes emojis, spaces, and prefix 'the' to make a string comparable.  */
 const normalizeCharacters = _.flow(removeEmojisAndSpaces, removeIgnoredPrefixes, removeDiacritics)
 
-/** Parse a date string and handle M/d (e.g. "2/1") for Safari. */
-const parseDate = (s: string): number =>
-  Date.parse(
-    REGEX_SHORT_DATE_WITH_DASH.test(s)
-      ? `${s}-${CURRENT_YEAR}`
-      : REGEX_SHORT_DATE_WITH_SLASH.test(s)
-        ? `${s}/${CURRENT_YEAR}`
-        : s,
-  )
+/** Parse a date string and handle M/d (e.g. "2/1") and written formats (e.g. "March 3") for Safari. */
+const parseDate = (s: string): number => {
+  // Handle numeric short dates (M/d or M-d)
+  if (REGEX_SHORT_DATE_WITH_DASH.test(s)) {
+    return Date.parse(`${s}-${CURRENT_YEAR}`)
+  }
+  if (REGEX_SHORT_DATE_WITH_SLASH.test(s)) {
+    return Date.parse(`${s}/${CURRENT_YEAR}`)
+  }
+
+  // Handle written short dates (Month Day without year)
+  const writtenShortPattern =
+    /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}$/i
+  if (writtenShortPattern.test(s)) {
+    return Date.parse(`${s}, ${CURRENT_YEAR}`)
+  }
+
+  // Handle full dates (with year) - let Date.parse handle them
+  return Date.parse(s)
+}
 /** Converts a string to a number. If given a number, returns it as-is. If given a string with a prefixe such as "#" or "$", strips it and returns the actual number. If given a number range, returns the start of the range. If the input cannot be converted to a number, returns NaN. */
 const toNumber = (x: number | string): number =>
   // match hyphen, em-dash, and em-dash
@@ -67,6 +78,28 @@ const toNumber = (x: number | string): number =>
 
 /** Returns trure if the given string is an integer or decimal number. Recognizes prefixed number strings like "#1" and "$1" as numbers. */
 const isNumber = (x: number | string): boolean => !isNaN(toNumber(x))
+
+/** Checks if a string matches a date pattern like "M/d", "M-d", "M/d/yyyy", "M-d-yyyy", or written formats.
+ * Accepts 1-2 digits for month and day, optionally followed by year
+ * Also accepts written month names like "March 3, 2020" or "December 3, 2020"
+ * Requires consistent separators (all slashes or all dashes)
+ * Examples: "6/21", "6-21", "12/1", "12-1", "6/21/2025", "6-21-2025", "March 3, 2020", "December 3, 2020".
+ */
+export const isDatePattern = (value: string): boolean => {
+  const trimmed = value.trim()
+
+  // Match numeric patterns with consistent separators
+  // Either all slashes: "6/21" or "6/21/2025"
+  const slashPattern = /^\d{1,2}\/\d{1,2}(\/\d{4})?$/
+  // Or all dashes: "6-21" or "6-21-2025"
+  const dashPattern = /^\d{1,2}-\d{1,2}(-\d{4})?$/
+
+  // Match written month patterns: "Month Day, Year" or "Month Day"
+  const writtenPattern =
+    /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(,\s*\d{4})?$/i
+
+  return slashPattern.test(trimmed) || dashPattern.test(trimmed) || writtenPattern.test(trimmed)
+}
 
 /** The default comparator that uses the ">" operator. Can be passed to Array.prototype.sort. */
 export const compare = <T>(a: T, b: T) => (a > b ? 1 : a < b ? -1 : 0)
@@ -126,14 +159,24 @@ export const compareFormatting = <T, U>(a: T, b: U): ComparatorValue => {
   return aIsHtml && !bIsHtml ? -1 : bIsHtml && !aIsHtml ? 1 : 0
 }
 
-/** A comparison function that sorts date strings. */
-export const compareDateStrings: ComparatorFunction<string> = (a: string, b: string) =>
-  compare(parseDate(a), parseDate(b))
+/** A comparison function that sorts date strings. Only handles date vs date comparisons. */
+export const compareDateStrings: ComparatorFunction<string> = (a: string, b: string) => {
+  const aIsDate = isDatePattern(a)
+  const bIsDate = isDatePattern(b)
+
+  // Only compare if both are valid dates
+  if (aIsDate && bIsDate) {
+    return compare(parseDate(a), parseDate(b))
+  }
+
+  // Let other comparators handle non-date comparisons
+  return 0
+}
 
 /** A comparator function that sorts date strings above others. */
 const compareDateAndOther: ComparatorFunction<string> = (a: string, b: string) => {
-  const aIsDate = !isNaN(parseDate(a))
-  const bIsDate = !isNaN(parseDate(b))
+  const aIsDate = isDatePattern(a)
+  const bIsDate = isDatePattern(b)
   return aIsDate && !bIsDate ? -1 : bIsDate && !aIsDate ? 1 : 0
 }
 
@@ -155,11 +198,11 @@ export const makeOrderedComparator =
  * 3. Lexicographic (default).
  */
 const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<string>([
+  compareDateAndOther,
+  compareDateStrings,
   compareNumberAndOther,
   compareNumbers,
-  compareDateStrings,
   compareLowercase,
-  compareDateAndOther,
 ])
 
 /** A comparator that sorts nearly anything in ascending order.
