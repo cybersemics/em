@@ -4,7 +4,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import { clearExpandDownActionCreator as clearExpandDown } from '../actions/clearExpandDown'
-import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
+import { AlertType, EXPAND_HOVER_DELAY, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import expandThoughts from '../selectors/expandThoughts'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -50,12 +50,12 @@ const expandDown = (state: State, { path }: { path: Path }): State => ({
 export const expandHoverDownActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
-  const { hoveringPath, hoverZone, dragInProgress } = state
+  const { hoveringPath, hoverZone, longPress } = state
 
   clearTimer()
 
   // clear expandHoverDown immediately if drag-and-drop ends
-  if (!dragInProgress) {
+  if (longPress !== LongPressState.DragInProgress) {
     dispatch(clearExpandDown())
   }
   // otherwise, expand the hoveringPath

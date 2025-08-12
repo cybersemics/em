@@ -6,6 +6,7 @@ import { token } from '../../styled-system/tokens'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
+import { LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import attributeEquals from '../selectors/attributeEquals'
@@ -117,7 +118,7 @@ const DropHoverIfVisible = ({
     )
     const isParentSorted = parentId && getSortPreference(state, parentId).type === 'Alphabetical'
     if (!isParentSorted || sameContext) return testFlags.simulateDrag || isHovering
-    else if (!state.dragInProgress) return false
+    else if (state.longPress !== LongPressState.DragInProgress) return false
 
     const draggingThoughtValues = state.draggingThoughts
       .map(draggingPath => getThoughtById(state, head(draggingPath))?.value)

@@ -19,7 +19,7 @@ import { suppressExpansionActionCreator as suppressExpansion } from './actions/s
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openGestureCheatsheetCommand from './commands/openGestureCheatsheet'
-import { AlertType, COMMAND_PALETTE_TIMEOUT, Settings } from './constants'
+import { AlertType, COMMAND_PALETTE_TIMEOUT, LongPressState, Settings } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
@@ -197,7 +197,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const state = store.getState()
     const experienceMode = getUserSetting(state, Settings.experienceMode)
 
-    if (state.showModal || state.dragInProgress || state.showGestureCheatsheet) return
+    if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showGestureCheatsheet) return
 
     // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
     // useFilteredCommands updates the possibleCommands in a back channel for efficiency.
@@ -266,7 +266,12 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     // execute command
     // do not execute when modal is displayed or a drag is in progress
-    if (command && !state.showModal && !state.showGestureCheatsheet && !state.dragInProgress) {
+    if (
+      command &&
+      !state.showModal &&
+      !state.showGestureCheatsheet &&
+      state.longPress !== LongPressState.DragInProgress
+    ) {
       commandEmitter.trigger('command', command)
       executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
       if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))

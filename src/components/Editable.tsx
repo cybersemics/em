@@ -22,6 +22,7 @@ import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
+  LongPressState,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
@@ -130,7 +131,9 @@ const Editable = ({
   // Disable contenteditable on Mobile Safari during drag-and-drop, otherwise thought text will become selected.
   // This is restricted to Mobile Safari, because on Chrome it creates a small layout shift.
   // https://github.com/cybersemics/em/pull/2960
-  const disabled = useSelector(state => !isDocumentEditable || (isTouch && isSafari() && state.dragInProgress))
+  const disabled = useSelector(
+    state => !isDocumentEditable || (isTouch && isSafari() && state.longPress === LongPressState.DragInProgress),
+  )
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -512,8 +515,8 @@ const Editable = ({
       editingValueUntrimmedStore.update(value)
 
       dispatch((dispatch, getState) => {
-        const { dragHold, dragInProgress } = getState()
-        if (!dragHold && !dragInProgress) {
+        const { longPress } = getState()
+        if (longPress === LongPressState.Inactive) {
           setCursorOnThought({ isKeyboardOpen: true })
         }
       })
@@ -576,8 +579,8 @@ const Editable = ({
       dispatch((dispatch, getState) => {
         const state = getState()
 
-        // If dragHold, don't allow the editable to receive focus or iOS Safari will scroll it.
-        if (state.dragInProgress || state.dragHold) {
+        // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.
+        if (state.longPress !== LongPressState.Inactive) {
           e.preventDefault()
           return
         }

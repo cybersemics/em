@@ -11,7 +11,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
-import { AlertType } from '../constants'
+import { AlertType, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
@@ -409,7 +409,7 @@ const Bullet = ({
 }: BulletProps) => {
   const svgElement = useRef<SVGSVGElement>(null)
   const dispatch = useDispatch()
-  const dragHold = useSelector(state => state.dragHold)
+  const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
   const showContexts = useSelector(state => isContextViewActive(state, path))
   // if being edited and meta validation error has occured
   const invalid = useSelector(state => isEditing && state.invalidState)

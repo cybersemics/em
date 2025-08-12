@@ -6,6 +6,7 @@ import { css, cx } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
+import { LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
@@ -114,7 +115,7 @@ const LayoutTree = () => {
   const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
-  const dragInProgress = useSelector(state => state.dragInProgress)
+  const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
   const ref = useRef<HTMLDivElement | null>(null)
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
@@ -143,7 +144,11 @@ const LayoutTree = () => {
   // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
   const autofocusDepth = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return 0
+    if (
+      (state.longPress !== LongPressState.DragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) ||
+      !state.cursor
+    )
+      return 0
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
     return state.cursor.length + (isCursorLeaf ? -1 : 0)
   })
@@ -151,7 +156,11 @@ const LayoutTree = () => {
   // first uncle of the cursor used for DropUncle
   const cursorUncleId = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return null
+    if (
+      (state.longPress !== LongPressState.DragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) ||
+      !state.cursor
+    )
+      return null
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
     const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
     return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
