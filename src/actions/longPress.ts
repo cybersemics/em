@@ -7,7 +7,6 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { isSafari } from '../browser'
 import { AlertText, AlertType, LongPressState } from '../constants'
-import * as selection from '../device/selection'
 import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -137,11 +136,7 @@ export const longPressActionCreator =
         break
       case LongPressState.Inactive:
         globals.touching = false
-
-        // clear selection after drag ends just in case browser made a selection
-        // Mobile Safari long-press-to-select is difficult to stop
-        // See: https://github.com/cybersemics/em/issues/1704
-        setTimeout(selection.clear)
+        break
     }
 
     dispatch({ type: 'longPress', ...payload })
