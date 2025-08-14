@@ -22,7 +22,6 @@ import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
 import useHoveringPath from '../hooks/useHoveringPath'
-import useThoughtMultiline from '../hooks/useThoughtMultiline'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
@@ -149,7 +148,6 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
 
   const col1MaxWidth = col1MaxWidthStore.useState()
 
-  // Get fontSize from Redux store to avoid prop drilling
   const fontSize = useSelector(state => state.fontSize)
 
   const isCursor = useSelector(state => equalPath(state.cursor, path))
@@ -277,9 +275,6 @@ const ThoughtContainer = ({
   // const parentView = useSelector(state => attribute(state, head(parentOf(simplePath)), '=view'))
   const view = useSelector(state => attribute(state, head(simplePath), '=view'))
 
-  const thoughtWrapperRef = useRef<HTMLDivElement>(null)
-  const editableRef = useRef<HTMLInputElement>(null)
-
   // Note: If the thought is the active expand hover top path then it should be treated as a cursor parent. It is because the current implementation allows tree to unfold visually starting from cursor parent.
   const isCursorParent = useSelector(state => {
     const isExpandedHoverTopPath = state.expandHoverUpPath && equalPath(path, state.expandHoverUpPath)
@@ -327,9 +322,6 @@ const ThoughtContainer = ({
   )
   const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
-
-  // Detect if the thought content spans multiple lines
-  const isMultiline = useThoughtMultiline(editableRef, thoughtWrapperRef, isEditing)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
 
@@ -614,13 +606,9 @@ const ThoughtContainer = ({
 
         <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
-        <div ref={thoughtWrapperRef} style={alignmentTransition.editable}>
+        <div style={alignmentTransition.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
-            // Pass multiline state to StaticThought for proper styling
-            // This determines whether to apply single-line or multiline CSS classes
-            multiline={isMultiline}
-            editableRef={editableRef}
             env={env}
             isContextPending={isContextPending}
             isEditing={isEditing}

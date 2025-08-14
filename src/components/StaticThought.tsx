@@ -9,6 +9,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
+import useThoughtMultiline from '../hooks/useThoughtMultiline'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -29,7 +30,6 @@ import HomeIcon from './icons/HomeIcon'
 export interface ThoughtProps {
   allowSingleContext?: boolean
   debugIndex?: number
-  editableRef: React.RefObject<HTMLInputElement>
   editing?: boolean | null
   env?: LazyEnv
   // When context view is activated, some contexts may be pending
@@ -44,7 +44,6 @@ export interface ThoughtProps {
   // currently this does not control visibility, but merely tracks it
   isVisible?: boolean
   leaf?: boolean
-  multiline: boolean
   onEdit?: (args: { newValue: string; oldValue: string }) => void
   updateSize?: () => void
   path: Path
@@ -93,13 +92,11 @@ const isBlack = (color: string | undefined) => {
 const StaticThought = ({
   allowSingleContext,
   // See: ThoughtProps['isContextPending']
-  editableRef,
   env,
   isContextPending,
   isEditing,
   ellipsizedUrl,
   isVisible,
-  multiline,
   onEdit,
   path,
   rank,
@@ -117,6 +114,11 @@ const StaticThought = ({
   const dark = useSelector(state => theme(state) !== 'Light')
   const homeContext = isRoot(simplePath) && !isContextPending
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value) ?? ''
+  // store ContentEditable ref to update DOM without re-rendering the Editable during editing
+  const editableRef = React.useRef<HTMLInputElement>(null)
+  // Detect if the thought content spans multiple lines
+  const multiline = useThoughtMultiline(editableRef)
+
   const placeholder = usePlaceholder({ isEditing, simplePath })
 
   useLayoutAnimationFrameEffect(updateSize, [multiline])
