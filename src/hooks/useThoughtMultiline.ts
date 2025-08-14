@@ -53,7 +53,6 @@ const useThoughtMultiline = (editableRef: RefObject<HTMLElement>) => {
 
     // Single line height threshold with buffer for padding and line-height differences
     const singleLineThreshold = fontSize * 2 + 4 // 4px buffer for padding and line-height variations
-    console.log(editableRef.current.clientHeight, singleLineThreshold, editingValue, editableRef.current)
 
     // Check if content height is greater than the threshold
     // This is the definitive indicator of multiline content
