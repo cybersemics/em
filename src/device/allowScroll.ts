@@ -7,7 +7,7 @@ const disableScroll = () => {
   scrollY = window.scrollY
   document.documentElement.style.overflow = 'hidden'
   document.body.style.overflow = 'hidden'
-  scrollContentPane.style.marginTop = `-${scrollY}px`
+  if (scrollContentPane) scrollContentPane.style.marginTop = `-${scrollY}px`
 }
 
 /** Re-enables scrolling on the body element by removing overflow:hidden and restoring the scroll position. */
@@ -16,7 +16,7 @@ const enableScroll = () => {
 
   document.documentElement.style.overflow = ''
   document.body.style.overflow = ''
-  scrollContentPane.style.marginTop = ''
+  if (scrollContentPane) scrollContentPane.style.marginTop = ''
   queueMicrotask(() => window.scrollTo(0, scrollY))
 }
 
