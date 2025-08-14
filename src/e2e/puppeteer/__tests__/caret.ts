@@ -257,7 +257,7 @@ describe('mobile only', () => {
     await click('[aria-label="Categorize"]')
 
     // assert caret is on the new thought which is empty
-    await waitForEditingState('', 0)
+    await waitForEditingState('')
   })
 
   // TODO: waitForHiddenEditable is broken after virtualizing thoughts
