@@ -22,17 +22,24 @@ const REGEX_FORMATTING = new RegExp(
 )
 
 // Date pattern regex constants for performance optimization
-// Full date patterns (with optional year)
-const REGEX_DATE_SLASH_PATTERN = /^\d{1,2}\/\d{1,2}(\/\d{4})?$/
-const REGEX_DATE_DASH_PATTERN = /^\d{1,2}-\d{1,2}(-\d{4})?$/
-const REGEX_DATE_WRITTEN_PATTERN =
-  /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(,\s*\d{4})?$/i
+// Month names for reuse across date patterns (pipe-separated for regex)
+const MONTH_NAMES = 'January|February|March|April|May|June|July|August|September|October|November|December'
 
-// Short date patterns (without year) for parsing
-const REGEX_SHORT_DATE_SLASH = /^\d{1,2}\/\d{1,2}$/
-const REGEX_SHORT_DATE_DASH = /^\d{1,2}-\d{1,2}$/
-const REGEX_SHORT_DATE_WRITTEN =
-  /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}$/i
+// Combined regex for detecting all valid date formats:
+// - M/d or M/d/yyyy (slash format with optional year)
+// - M-d or M-d-yyyy (dash format with optional year)
+// - Month Day or Month Day, yyyy (written format with optional year)
+// Uses separate patterns to ensure consistent separators (no mixed slashes/dashes)
+const REGEX_DATE_COMBINED = new RegExp(
+  `^(\\d{1,2}\\/\\d{1,2}(\\/\\d{4})?|\\d{1,2}-\\d{1,2}(-\\d{4})?|(${MONTH_NAMES})\\s+\\d{1,2}(,\\s*\\d{4})?)$`,
+  'i',
+)
+
+// Pre-compiled regex for parsing short dates (without year) to avoid runtime compilation:
+// - M/d or M-d (numeric format without year)
+// - Month Day (written format without year)
+// Allows mixed separators since it's only for parsing, not validation
+const REGEX_SHORT_DATE_PARSE = new RegExp(`^(\\d{1,2}[\\/-]\\d{1,2}|(${MONTH_NAMES})\\s+\\d{1,2})$`, 'i')
 
 // removeDiacritics borrowed from modern-diacritics package
 // modern-diacritics does not currently import so it is copied here
@@ -64,19 +71,24 @@ const normalizeCharacters = _.flow(removeEmojisAndSpaces, removeIgnoredPrefixes,
 
 /** Parse a date string and handle M/d (e.g. "2/1") and written formats (e.g. "March 3") for Safari. */
 const parseDate = (s: string): number => {
+  // Use pre-compiled regex for optimal performance
+  const shortDateMatch = s.match(REGEX_SHORT_DATE_PARSE)
+
   let dateString = s
 
-  // Handle numeric short dates (M/d or M-d) without year
-  if (REGEX_SHORT_DATE_DASH.test(s)) {
-    dateString = `${s}-${CURRENT_YEAR}`
-  } else if (REGEX_SHORT_DATE_SLASH.test(s)) {
-    dateString = `${s}/${CURRENT_YEAR}`
-  } else if (REGEX_SHORT_DATE_WRITTEN.test(s)) {
-    // Handle written short dates (Month Day without year)
-    dateString = `${s}, ${CURRENT_YEAR}`
+  if (shortDateMatch) {
+    // Handle short dates by adding current year
+    if (s.includes('/')) {
+      dateString = `${s}/${CURRENT_YEAR}`
+    } else if (s.includes('-')) {
+      dateString = `${s}-${CURRENT_YEAR}`
+    } else {
+      // Written format
+      dateString = `${s}, ${CURRENT_YEAR}`
+    }
   }
-  // For full dates (with year), use the original string as-is
 
+  // Single Date.parse call for optimal performance
   return Date.parse(dateString)
 }
 /** Converts a string to a number. If given a number, returns it as-is. If given a string with a prefixe such as "#" or "$", strips it and returns the actual number. If given a number range, returns the start of the range. If the input cannot be converted to a number, returns NaN. */
@@ -94,12 +106,8 @@ const isNumber = (x: number | string): boolean => !isNaN(toNumber(x))
  * Examples: "6/21", "6-21", "12/1", "12-1", "6/21/2025", "6-21-2025", "March 3, 2020", "December 3, 2020".
  */
 export const isDatePattern = (value: string): boolean => {
-  // Use pre-compiled regex constants for better performance
-  return (
-    REGEX_DATE_SLASH_PATTERN.test(value) ||
-    REGEX_DATE_DASH_PATTERN.test(value) ||
-    REGEX_DATE_WRITTEN_PATTERN.test(value)
-  )
+  // Use single combined pattern for optimal performance
+  return REGEX_DATE_COMBINED.test(value)
 }
 
 /** The default comparator that uses the ">" operator. Can be passed to Array.prototype.sort. */
