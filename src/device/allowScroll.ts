@@ -2,15 +2,21 @@ let scrollY = 0
 
 /** Disables scrolling on the html and body elements with overflow:hidden, and offsets the content by the value of window.scrollY. */
 const disableScroll = () => {
+  const scrollContentPane = document.querySelector('#root > :first-child') as HTMLElement
+
   scrollY = window.scrollY
-  document.documentElement.style.setProperty('--scroll-offset', `-${scrollY}px`)
-  document.documentElement.setAttribute('data-dialog-open', 'true')
+  document.documentElement.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden'
+  scrollContentPane.style.marginTop = `-${scrollY}px`
 }
 
 /** Re-enables scrolling on the body element by removing overflow:hidden and restoring the scroll position. */
 const enableScroll = () => {
-  document.documentElement.style.removeProperty('--scroll-offset')
-  document.documentElement.removeAttribute('data-dialog-open')
+  const scrollContentPane = document.querySelector('#root > :first-child') as HTMLElement
+
+  document.documentElement.style.overflow = ''
+  document.body.style.overflow = ''
+  scrollContentPane.style.marginTop = ''
   queueMicrotask(() => window.scrollTo(0, scrollY))
 }
 
