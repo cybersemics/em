@@ -46,6 +46,7 @@ const swipePoints = async (points: { x: number; y: number }[], complete: boolean
 /**
  * Swipe gesture helper for testing.
  * Creates a series of touch events to simulate realistic gesture movement.
+ * Uses fixed step sizes for simplicity and reliability.
  *
  * @param gesture - String of directions (e.g., "rd" for right-down).
  * @param completeGesture - Whether to complete the gesture with touchEnd
@@ -54,31 +55,9 @@ const swipePoints = async (points: { x: number; y: number }[], complete: boolean
  */
 const swipe = async (gesture: string, completeGesture = false) => {
   const directions = gesture.split('') as Direction[]
-  const screenWidth = await page.evaluate(() => window.screen.width)
 
-  // Calculate total movement in each direction
-  let horizontalNodes = 0
-  let verticalNodes = 0
-  for (const direction of directions) {
-    switch (direction) {
-      case 'r':
-        horizontalNodes++
-        break
-      case 'l':
-        horizontalNodes--
-        break
-      case 'd':
-        verticalNodes++
-        break
-      case 'u':
-        verticalNodes--
-        break
-    }
-  }
-
-  // Calculate step sizes based on screen dimensions and movement distance
-  const xStepSize = Math.min((screenWidth - 200) / Math.abs(horizontalNodes || 1), 100)
-  const yStepSize = Math.min(300 / Math.abs(verticalNodes || 1), 100)
+  // Fixed step sizes for consistent gesture behavior
+  const stepSize = 80
 
   // Starting position for the gesture
   let y = 300
@@ -89,16 +68,16 @@ const swipe = async (gesture: string, completeGesture = false) => {
   for (const direction of directions) {
     switch (direction) {
       case 'r':
-        x += xStepSize
+        x += stepSize
         break
       case 'l':
-        x -= xStepSize
+        x -= stepSize
         break
       case 'd':
-        y += yStepSize
+        y += stepSize
         break
       case 'u':
-        y -= yStepSize
+        y -= stepSize
         break
     }
     points.push({ x, y })
