@@ -10,7 +10,6 @@ import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { commandById } from '../commands'
 import { EM_TOKEN } from '../constants'
-import globals from '../globals'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
@@ -89,7 +88,6 @@ const useDragAndDropToolbarButton = ({ commandId, customize }: { commandId: Comm
     end: () => {
       // Reset the lock to allow immediate long press after drag ends
       longPressStore.unlock()
-      globals.longpressing = false
       store.dispatch(dragCommand(null))
     },
     collect: monitor => ({

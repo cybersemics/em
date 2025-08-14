@@ -11,7 +11,6 @@ import { dragInProgressActionCreator as dragInProgress } from '../actions/dragIn
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { AlertType } from '../constants'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
@@ -43,7 +42,6 @@ const beginDrag = ({ path, simplePath }: DragThoughtItem): DragThoughtItem => {
 /** Handles drag end. */
 const endDrag = () => {
   longPressStore.unlock()
-  globals.longpressing = false
   store.dispatch([
     dragInProgress({ value: false }),
     dragHold({ value: false }),

@@ -5,7 +5,6 @@ import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOp
 import { isTouch } from '../browser'
 import { TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import longPressStore from '../stores/longPressStore'
 import haptics from '../util/haptics'
 
@@ -35,11 +34,10 @@ const useLongPress = (
   }, [isLocked, setPressing])
 
   useEffect(() => {
-    /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackned in react-dnd. */
+    /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackend in react-dnd. */
     const onStart = () => {
       if (isLocked || !pressing) return
 
-      globals.longpressing = true
       haptics.light()
       onLongPressStart?.()
       longPressStore.lock()
@@ -83,12 +81,6 @@ const useLongPress = (
       clearTimeout(timerIdRef.current)
       timerIdRef.current = 0
       longPressStore.unlock()
-
-      // If not longpressing, it means that the long press was canceled by a move event.
-      // in this case, onLongPressEnd should not be called, since it was already called by the move event.
-      if (!globals.longpressing) return
-
-      globals.longpressing = false
 
       // If a long press occurred, mark it as not canceled
       onLongPressEnd?.()
