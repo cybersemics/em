@@ -3,7 +3,7 @@ import { page } from '../setup'
 /**
  * Waits until the currently editing thought in the DOM matches the given value and, if provided, the selection offset matches.
  */
-const waitForEditingState = async (value: string, offset?: number, timeout: number = 6000) => {
+const waitForSelectionNode = async (value: string, offset?: number, timeout: number = 6000) => {
   await page.waitForFunction(
     (value: string, offset?: number) => {
       const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement | null
@@ -31,4 +31,4 @@ const waitForEditingState = async (value: string, offset?: number, timeout: numb
   )
 }
 
-export default waitForEditingState
+export default waitForSelectionNode

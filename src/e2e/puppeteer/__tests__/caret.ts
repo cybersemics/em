@@ -11,8 +11,8 @@ import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import retry from '../helpers/retry'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForEditingState from '../helpers/waitForEditingState'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
+import waitForSelectionNode from '../helpers/waitForSelectionNode'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
@@ -194,8 +194,8 @@ describe('all platforms', () => {
 
     await press('Backspace')
 
-    // Wait for Redux to update the caret to the previous thought with offset at end
-    await waitForEditingState('first', 'first'.length)
+    // Wait for selection node to be the previous thought with offset at end
+    await waitForSelectionNode('first', 'first'.length)
 
     // assert caret is at the end of the previous thought by typing a character
     await keyboard.type('x')
@@ -256,17 +256,16 @@ describe('mobile only', () => {
 
     await waitForSelector('[aria-label="Categorize"]')
 
-    // Functional retry: perform action, then assert within a short window
+    // The tap on the Categorize button sometimes doesn’t register under mobile emulation
+    // When that happens, the action never fires, no new empty thought is created, and waitForSelectionNode('',0) times out.
     await retry(
       async () => {
         await click('[aria-label="Categorize"]')
-        await waitForEditingState('', 0, 400)
+        // if the action was successful, the selection node will be the new empty thought with offset 0
+        await waitForSelectionNode('', 0, 400)
       },
-      { attempts: 2, delayMs: 120 },
+      { attempts: 2, delayMs: 100 },
     )
-
-    // assert caret is on the new thought which is empty
-    await waitForEditingState('', 0)
   })
 
   // TODO: waitForHiddenEditable is broken after virtualizing thoughts
