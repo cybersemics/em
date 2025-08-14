@@ -174,23 +174,6 @@ function PlaceholderContextBreadcrumbs({ simplePath }: { simplePath: SimplePath 
 }
 
 /**
- * PlaceholderSubThought is a component mimicking the behavior of SubThought.
- * Needed to prevent the overlay from covering the bullet.
- */
-function PlaceholderSubThought({ children }: { children?: React.ReactNode }) {
-  return (
-    <div
-      aria-label='placeholder-subthought'
-      className={css({
-        willChange: 'opacity',
-      })}
-    >
-      {children}
-    </div>
-  )
-}
-
-/**
  * PlaceholderTreeNode is a component used to mimic behavior of TreeNode.
  * Any position changes from one Thought to another will be animated within this component.
  */
@@ -361,25 +344,23 @@ export default function BulletCursorOverlay({
 
   return (
     <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
-      <PlaceholderSubThought>
-        {showContexts && simplePath?.length > 1 && <PlaceholderContextBreadcrumbs simplePath={simplePath} />}
+      {showContexts && simplePath?.length > 1 && <PlaceholderContextBreadcrumbs simplePath={simplePath} />}
 
-        <div
-          aria-label='placeholder-thought-container'
-          className={css({
-            /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
-            /* must match value used in Editable useMultiline */
-            lineHeight: '2',
-            // ensure that ThoughtAnnotation is positioned correctly
-            position: 'relative',
-            ...(hideBullet ? { marginLeft: -12 } : null),
-          })}
-        >
-          <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
+      <div
+        aria-label='placeholder-thought-container'
+        className={css({
+          /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
+          /* must match value used in Editable useMultiline */
+          lineHeight: '2',
+          // ensure that ThoughtAnnotation is positioned correctly
+          position: 'relative',
+          ...(hideBullet ? { marginLeft: -12 } : null),
+        })}
+      >
+        <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
 
-          <PlaceholderThoughtAnnotation />
-        </div>
-      </PlaceholderSubThought>
+        <PlaceholderThoughtAnnotation />
+      </div>
     </PlaceholderTreeNode>
   )
 }
