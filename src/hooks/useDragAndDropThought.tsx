@@ -23,7 +23,6 @@ import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType, LongPressState } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
@@ -109,7 +108,6 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
 const endDrag = () => {
   // Reset the lock variable to allow immediate long press after drag
   longPressStore.unlock()
-  globals.longpressing = false
 
   // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
   // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
