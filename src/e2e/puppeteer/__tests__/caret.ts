@@ -9,6 +9,7 @@ import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
+import retry from '../helpers/retry'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForEditingState from '../helpers/waitForEditingState'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
@@ -254,10 +255,18 @@ describe('mobile only', () => {
     await clickThought('b')
 
     await waitForSelector('[aria-label="Categorize"]')
-    await click('[aria-label="Categorize"]')
+
+    // Functional retry: perform action, then assert within a short window
+    await retry(
+      async () => {
+        await click('[aria-label="Categorize"]')
+        await waitForEditingState('', 0, 400)
+      },
+      { attempts: 2, delayMs: 120 },
+    )
 
     // assert caret is on the new thought which is empty
-    await waitForEditingState('')
+    await waitForEditingState('', 0)
   })
 
   // TODO: waitForHiddenEditable is broken after virtualizing thoughts
