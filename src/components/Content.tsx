@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef, useState } from 'react'
+import React, { FC, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Dispatch from '../@types/Dispatch'
@@ -15,6 +15,7 @@ import {
   LongPressState,
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
+import * as selection from '../device/selection'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
@@ -59,7 +60,6 @@ const useContentWidth = () => {
 /** The main content section of em. */
 const Content: FC = () => {
   const dispatch = useDispatch()
-  const [isPressed, setIsPressed] = useState<boolean>(false)
   const tutorial = useSelector(isTutorial)
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
   const search = useSelector(state => state.search)
@@ -74,11 +74,8 @@ const Content: FC = () => {
   const clickOnEmptySpace: Thunk = (dispatch: Dispatch, getState) => {
     const state = getState()
 
-    // make sure the the actual Content element has been clicked
-    // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
-    // also make sure that the click doesn't occur during a long press (#3120)
-    if (!isPressed || state.longPress !== LongPressState.Inactive) return
-    setIsPressed(false)
+    // make sure that the click doesn't occur during a long press (#3120)
+    if (state.longPress !== LongPressState.Inactive) return
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
@@ -89,8 +86,14 @@ const Content: FC = () => {
   return (
     <div
       id='content-wrapper'
-      {...fastClick(() => dispatch(clickOnEmptySpace), { enableHaptics: false })}
-      onMouseDown={() => setIsPressed(true)}
+      {...fastClick(
+        e => {
+          // make sure the the actual Content element has been clicked
+          // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
+          if (!selection.isEditable(e.target)) dispatch(clickOnEmptySpace)
+        },
+        { enableHaptics: false },
+      )}
     >
       <div
         id='content'
