@@ -16,12 +16,23 @@ const IGNORED_PREFIXES = ['the ']
 const CURRENT_YEAR = new Date().getFullYear()
 
 const REGEX_PUNCTUATION = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
-const REGEX_SHORT_DATE_WITH_DASH = /\d{1,2}-\d{1,2}/
-const REGEX_SHORT_DATE_WITH_SLASH = /\d{1,2}\/\d{1,2}/
 const REGEX_IGNORED_PREFIXES = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gmi')
 const REGEX_FORMATTING = new RegExp(
   `^<(${ALLOWED_FORMATTING_TAGS.join('|')})[^>]*>(.*?)<\\s*/\\s*(${ALLOWED_FORMATTING_TAGS.join('|')})>`,
 )
+
+// Date pattern regex constants for performance optimization
+// Full date patterns (with optional year)
+const REGEX_DATE_SLASH_PATTERN = /^\d{1,2}\/\d{1,2}(\/\d{4})?$/
+const REGEX_DATE_DASH_PATTERN = /^\d{1,2}-\d{1,2}(-\d{4})?$/
+const REGEX_DATE_WRITTEN_PATTERN =
+  /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(,\s*\d{4})?$/i
+
+// Short date patterns (without year) for parsing
+const REGEX_SHORT_DATE_SLASH = /^\d{1,2}\/\d{1,2}$/
+const REGEX_SHORT_DATE_DASH = /^\d{1,2}-\d{1,2}$/
+const REGEX_SHORT_DATE_WRITTEN =
+  /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}$/i
 
 // removeDiacritics borrowed from modern-diacritics package
 // modern-diacritics does not currently import so it is copied here
@@ -53,23 +64,20 @@ const normalizeCharacters = _.flow(removeEmojisAndSpaces, removeIgnoredPrefixes,
 
 /** Parse a date string and handle M/d (e.g. "2/1") and written formats (e.g. "March 3") for Safari. */
 const parseDate = (s: string): number => {
-  // Handle numeric short dates (M/d or M-d)
-  if (REGEX_SHORT_DATE_WITH_DASH.test(s)) {
-    return Date.parse(`${s}-${CURRENT_YEAR}`)
-  }
-  if (REGEX_SHORT_DATE_WITH_SLASH.test(s)) {
-    return Date.parse(`${s}/${CURRENT_YEAR}`)
-  }
+  let dateString = s
 
-  // Handle written short dates (Month Day without year)
-  const writtenShortPattern =
-    /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}$/i
-  if (writtenShortPattern.test(s)) {
-    return Date.parse(`${s}, ${CURRENT_YEAR}`)
+  // Handle numeric short dates (M/d or M-d) without year
+  if (REGEX_SHORT_DATE_DASH.test(s)) {
+    dateString = `${s}-${CURRENT_YEAR}`
+  } else if (REGEX_SHORT_DATE_SLASH.test(s)) {
+    dateString = `${s}/${CURRENT_YEAR}`
+  } else if (REGEX_SHORT_DATE_WRITTEN.test(s)) {
+    // Handle written short dates (Month Day without year)
+    dateString = `${s}, ${CURRENT_YEAR}`
   }
+  // For full dates (with year), use the original string as-is
 
-  // Handle full dates (with year) - let Date.parse handle them
-  return Date.parse(s)
+  return Date.parse(dateString)
 }
 /** Converts a string to a number. If given a number, returns it as-is. If given a string with a prefixe such as "#" or "$", strips it and returns the actual number. If given a number range, returns the start of the range. If the input cannot be converted to a number, returns NaN. */
 const toNumber = (x: number | string): number =>
@@ -86,19 +94,12 @@ const isNumber = (x: number | string): boolean => !isNaN(toNumber(x))
  * Examples: "6/21", "6-21", "12/1", "12-1", "6/21/2025", "6-21-2025", "March 3, 2020", "December 3, 2020".
  */
 export const isDatePattern = (value: string): boolean => {
-  const trimmed = value.trim()
-
-  // Match numeric patterns with consistent separators
-  // Either all slashes: "6/21" or "6/21/2025"
-  const slashPattern = /^\d{1,2}\/\d{1,2}(\/\d{4})?$/
-  // Or all dashes: "6-21" or "6-21-2025"
-  const dashPattern = /^\d{1,2}-\d{1,2}(-\d{4})?$/
-
-  // Match written month patterns: "Month Day, Year" or "Month Day"
-  const writtenPattern =
-    /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(,\s*\d{4})?$/i
-
-  return slashPattern.test(trimmed) || dashPattern.test(trimmed) || writtenPattern.test(trimmed)
+  // Use pre-compiled regex constants for better performance
+  return (
+    REGEX_DATE_SLASH_PATTERN.test(value) ||
+    REGEX_DATE_DASH_PATTERN.test(value) ||
+    REGEX_DATE_WRITTEN_PATTERN.test(value)
+  )
 }
 
 /** The default comparator that uses the ">" operator. Can be passed to Array.prototype.sort. */
@@ -161,12 +162,15 @@ export const compareFormatting = <T, U>(a: T, b: U): ComparatorValue => {
 
 /** A comparison function that sorts date strings. Only handles date vs date comparisons. */
 export const compareDateStrings: ComparatorFunction<string> = (a: string, b: string) => {
-  const aIsDate = isDatePattern(a)
-  const bIsDate = isDatePattern(b)
+  const aTrimmed = a.trim()
+  const bTrimmed = b.trim()
+
+  const aIsDate = isDatePattern(aTrimmed)
+  const bIsDate = isDatePattern(bTrimmed)
 
   // Only compare if both are valid dates
   if (aIsDate && bIsDate) {
-    return compare(parseDate(a), parseDate(b))
+    return compare(parseDate(aTrimmed), parseDate(bTrimmed))
   }
 
   // Let other comparators handle non-date comparisons
@@ -175,8 +179,8 @@ export const compareDateStrings: ComparatorFunction<string> = (a: string, b: str
 
 /** A comparator function that sorts date strings above others. */
 const compareDateAndOther: ComparatorFunction<string> = (a: string, b: string) => {
-  const aIsDate = isDatePattern(a)
-  const bIsDate = isDatePattern(b)
+  const aIsDate = isDatePattern(a.trim())
+  const bIsDate = isDatePattern(b.trim())
   return aIsDate && !bIsDate ? -1 : bIsDate && !aIsDate ? 1 : 0
 }
 

@@ -242,7 +242,7 @@ describe('isDatePattern', () => {
     expect(isDatePattern('12/1')).toBe(true)
     expect(isDatePattern('1/31')).toBe(true)
     expect(isDatePattern('12/31')).toBe(true)
-    expect(isDatePattern(' 6/21 ')).toBe(true) // Should trim spaces
+    expect(isDatePattern(' 6/21 ')).toBe(false) // Trimming is now handled at call site
 
     // Valid full date patterns with year
     expect(isDatePattern('6/21/2025')).toBe(true)
@@ -250,14 +250,14 @@ describe('isDatePattern', () => {
     expect(isDatePattern('12/1/2024')).toBe(true)
     expect(isDatePattern('1/31/2023')).toBe(true)
     expect(isDatePattern('12/31/2026')).toBe(true)
-    expect(isDatePattern(' 6/21/2025 ')).toBe(true) // Should trim spaces
+    expect(isDatePattern(' 6/21/2025 ')).toBe(false) // Trimming is now handled at call site
 
     // Valid written date patterns
     expect(isDatePattern('March 3, 2020')).toBe(true)
     expect(isDatePattern('December 3, 2020')).toBe(true)
     expect(isDatePattern('March 3')).toBe(true)
     expect(isDatePattern('December 3')).toBe(true)
-    expect(isDatePattern(' March 3, 2020 ')).toBe(true) // Should trim spaces
+    expect(isDatePattern(' March 3, 2020 ')).toBe(false) // Trimming is now handled at call site
     expect(isDatePattern('march 3, 2020')).toBe(true) // Case-insensitive
     expect(isDatePattern('MARCH 3, 2020')).toBe(true) // Case-insensitive
   })
