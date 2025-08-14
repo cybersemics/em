@@ -11,6 +11,7 @@ import hashPath from '../../util/hashPath'
 import hashThought from '../../util/hashThought'
 import head from '../../util/head'
 import isAttribute from '../../util/isAttribute'
+import isRoot from '../../util/isRoot'
 import keyValueBy from '../../util/keyValueBy'
 import never from '../../util/never'
 import nonNull from '../../util/nonNull'
@@ -209,7 +210,20 @@ async function* fetchDescendants(
           }
         } else {
           thoughtIdQueue.add(childrenIds)
-          return thought
+          return {
+            ...thought,
+            // Always mark parents as pending.
+            // Mark parents as pending ONLY if at least one direct child is not yet loaded.
+            // This prevents propagating the pending state up the entire ancestor chain.
+            // updateThoughts will still clear pending once the missing direct children are loaded.
+            pending:
+              !isRoot([thought.id]) &&
+              // If every child already exists in state (regardless of its own pending status),
+              // the parent itself should not be considered pending.
+              // This ensures that pending is applied only to the direct ancestor of the node(s)
+              // currently being fetched rather than all ancestors.
+              childrenIds.some(childId => !getThoughtById(updatedState, childId)),
+          }
         }
       })
       .filter(nonNull)
