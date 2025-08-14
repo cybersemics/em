@@ -16,8 +16,6 @@ const mergeUpdates = <T>(
   // assume an optional pending property
   type MaybePending = T & { pending?: boolean }
 
-  const mergeResult: Index<T | null> = { ...mergeInto }
-
   /** Determine if we should allow overwrite based on pending logic. */
   const shouldOverwrite = (currentPending: boolean | undefined, incomingPending: boolean | undefined) => {
     const hasIncomingPending = incomingPending !== undefined
@@ -44,45 +42,53 @@ const mergeUpdates = <T>(
     return false
   }
 
-  let mayClearPending = false
-
-  // Merge the incoming updates into the existing state.
-  for (const [key, value] of Object.entries(mergee)) {
-    if (!value) {
-      delete mergeResult[key]
-      continue
-    }
-
-    const incomingPending = (value as MaybePending).pending
-    const currentPending = (mergeInto[key] as MaybePending)?.pending
-
-    if (shouldOverwrite(currentPending, incomingPending)) {
-      mergeResult[key] = value
-    } else {
-      // Merge all properties except the pending flag so that we retain the non-pending state.
-      const { pending: _discard, ...rest } = value as MaybePending
-      mergeResult[key] = { ...(mergeInto[key] as object), ...rest } as T
-    }
-
-    // If any mergee entry is a pending parent, we might need to run the second loop
-    if ((value as MaybePending)?.pending && 'childrenMap' in (value as object)) {
-      mayClearPending = true
-    }
+  /** Remove pending property from an object. */
+  const stripPending = (val: MaybePending): T => {
+    const { pending: _discard, ...rest } = val
+    return rest as T
   }
 
-  // Only scan for pending clearing if needed
-  if (mayClearPending) {
-    const typedResult = mergeResult as unknown as Index<MaybePending | null>
-    for (const [key, val] of Object.entries(typedResult)) {
-      if (shouldClearPending(val, typedResult)) {
-        // replace with new object to avoid mutating frozen state
-        mergeResult[key] = { ...(val as object), pending: false } as T
+  /** True if object has a childrenMap and is pending. */
+  const isPending = (val: T | null) =>
+    !!(val as MaybePending)?.pending && typeof val === 'object' && 'childrenMap' in (val as object)
+
+  // Track parents that might be eligible for pending clearing
+  const maybePending = new Set<string>()
+
+  // merge updates and collect pending parents
+  const merged: Index<T | null> = (Object.entries(mergee) as [string, T | null][]).reduce<Index<T | null>>(
+    (state, [key, value]) => {
+      // Delete falsey values
+      if (!value) {
+        const { [key]: _removed, ...rest } = state
+        return rest
       }
-    }
-  }
 
-  // falsey values have been deleted
-  return mergeResult as Index<T>
+      const incomingPending = (value as MaybePending).pending
+      const currentPending = (state[key] as MaybePending | undefined)?.pending
+
+      const nextValue: T | null = shouldOverwrite(currentPending, incomingPending)
+        ? (value as T)
+        : ({ ...(state[key] as object), ...stripPending(value as MaybePending) } as T)
+
+      if (isPending(nextValue)) {
+        maybePending.add(key)
+      }
+
+      return { ...state, [key]: nextValue }
+    },
+    { ...mergeInto } as Index<T | null>,
+  )
+
+  // Check only tracked parents for pending clearing
+  maybePending.forEach(key => {
+    const val = merged[key] as MaybePending | null
+    if (shouldClearPending(val, merged as Index<MaybePending | null>)) {
+      merged[key] = { ...(val as object), pending: false } as T
+    }
+  })
+
+  return merged as Index<T>
 }
 
 export default mergeUpdates
