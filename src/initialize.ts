@@ -37,7 +37,6 @@ import syncStatusStore from './stores/syncStatus'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
 import hashThought from './util/hashThought'
-import head from './util/head'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import mergeBatch from './util/mergeBatch'
@@ -268,7 +267,6 @@ const windowEm = {
   testFlags,
   testHelpers,
   thoughtToContext: withState((state: State, thoughtId: ThoughtId) => thoughtToContext(state, thoughtId)),
-  head,
 }
 
 window.em = windowEm
