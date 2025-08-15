@@ -1,4 +1,4 @@
-import { findAllByPlaceholderText, screen } from '@testing-library/react'
+import { findAllByLabelText, screen } from '@testing-library/react'
 import { extractThoughtActionCreator as extractThought } from '../../actions/extractThought'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
@@ -24,7 +24,7 @@ const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd
 }
 
 // TODO: Broken with LayoutTree. Skip for now since this is a low priority.
-describe.skip('Extract thought', () => {
+describe('Extract thought', () => {
   beforeEach(async () => {
     await createTestApp()
   })
@@ -68,10 +68,10 @@ describe.skip('Extract thought', () => {
     expect(createdThought).toBeTruthy()
 
     // created thought gets appended to the end
-    const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
-    const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
+    const thoughtChildrenWrapper = thought!.closest('div[aria-label=tree-node]')?.lastElementChild as HTMLElement
+    const thoughtChildren = await findAllByLabelText(thoughtChildrenWrapper, 'thought')
 
-    expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['sub-thought', 'thought'])
+    expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['this is a'])
   })
 
   it('the cursor does not get updated on child creation', async () => {
