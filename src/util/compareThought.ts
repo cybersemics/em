@@ -87,6 +87,7 @@ const toNumber = (x: number | string): number =>
 
 /** Returns trure if the given string is an integer or decimal number. Recognizes prefixed number strings like "#1" and "$1" as numbers. */
 const isNumber = (x: number | string): boolean => !isNaN(toNumber(x))
+
 /** Checks if a string matches a date pattern like "M/d", "M-d", "M/d/yyyy", "M-d-yyyy", or written formats.
  * Accepts 1-2 digits for month and day, optionally followed by year
  * Also accepts written month names like "March 3, 2020" or "December 3, 2020"
