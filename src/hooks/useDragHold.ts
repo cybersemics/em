@@ -55,8 +55,8 @@ const useDragHold = ({
     dispatch((dispatch, getState) => {
       const state = getState()
 
-      if (state.longPress === LongPressState.DragHold && !hasMulticursor(state)) {
-        dispatch(alert(null))
+      if (state.longPress === LongPressState.DragHold) {
+        if (!hasMulticursor(state)) dispatch(alert(null))
         if (toggleMulticursorOnLongPress) dispatch(toggleMulticursor({ path: simplePath }))
       }
 
