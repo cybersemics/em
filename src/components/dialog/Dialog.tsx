@@ -33,33 +33,6 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
     }
   }, [onClose])
 
-  /**
-   * Disable scroll while the dialog is open.
-   * On iOS, there was a bug where the user could scroll the page via the modal overlay.
-   * It's difficult to disable scrolling entirely on iOS, so this effect prevents scrolling
-   * on the modal overlay by preventing touch events.
-   */
-  useEffect(() => {
-    const overlayElement = nodeRef.current
-    const dialogElement = dialogRef.current
-
-    if (!overlayElement || !dialogElement) return
-
-    /** This event handler prevents touch events from propagating to the page. */
-    const preventTouchMove = (e: TouchEvent) => {
-      if (!dialogElement.contains(e.target as Node)) {
-        // Only prevent scrolling if NOT inside dialog content
-        e.preventDefault()
-      }
-    }
-
-    overlayElement.addEventListener('touchmove', preventTouchMove, { passive: false })
-
-    return () => {
-      overlayElement.removeEventListener('touchmove', preventTouchMove)
-    }
-  }, [nodeRef])
-
   return (
     <div ref={nodeRef} className={dialogClasses.overlay}>
       <div ref={dialogRef} className={dialogClasses.container}>
