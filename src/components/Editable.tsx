@@ -527,9 +527,6 @@ const Editable = ({
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      // stop propagation to prevent the event from propagating down to the Content component and triggering clickOnEmptySpace
-      e.stopPropagation()
-
       // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
       // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
       // See: #981

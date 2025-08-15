@@ -19,7 +19,7 @@ import { suppressExpansionActionCreator as suppressExpansion } from './actions/s
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openGestureCheatsheetCommand from './commands/openGestureCheatsheet'
-import { AlertType, COMMAND_PALETTE_TIMEOUT, LongPressState, Settings } from './constants'
+import { AlertType, COMMAND_PALETTE_TIMEOUT, GESTURE_HINT_TIMEOUT, LongPressState, Settings } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
@@ -195,7 +195,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
   /** Handles gesture hints when a valid segment is entered. */
   handleGestureSegment: ({ sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
     const state = store.getState()
-    const experienceMode = getUserSetting(state, Settings.experienceMode)
 
     if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showGestureCheatsheet) return
 
@@ -204,30 +203,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // Always allow haptics for the first swipe, as possibleCommands may not be populated yet.
     if (sequence.length === 1 || gestureStore.getState().possibleCommands.length > 2) {
       haptics.light()
-    }
-
-    const command = commandGestureIndex[sequence as string]
-
-    // basic gesture hint (training mode only)
-    if (
-      !experienceMode &&
-      // only show basic gesture hint if the command palette is not already being shown
-      !state.showCommandPalette &&
-      // ignore back
-      command?.id !== 'cursorBack' &&
-      // ignore forward
-      command?.id !== 'cursorForward' &&
-      // only show
-      (command || state.alert?.alertType === AlertType.GestureHint)
-    ) {
-      store.dispatch(
-        // alert the command label if it is a valid gesture
-        alert(command && command?.label, {
-          alertType: AlertType.GestureHint,
-          clearDelay: 5000,
-          showCloseLink: false,
-        }),
-      )
     }
 
     // command palette
@@ -283,29 +258,37 @@ export const inputHandlers = (store: Store<State, any>) => ({
     clearTimeout(commandPaletteGesture)
     commandPaletteGesture = undefined // clear the timer to track when it is running for handleGestureSegment
 
-    // In experienced mode, close the alert.
-    // In training mode, convert CommandPaletteGesture back to GestureHint on gesture end.
-    // This needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
+    // In training mode, show alert for any valid command (except forward/back)
+    // In experience mode, clear any existing gesture hint
     setTimeout(() => {
       store.dispatch((dispatch, getState) => {
         const state = getState()
         const alertType = state.alert?.alertType
-        const experienceMode = getUserSetting(Settings.experienceMode)
-        if (alertType === AlertType.GestureHint || state.showCommandPalette) {
-          if (state.showCommandPalette) {
-            dispatch(commandPalette())
-          } else {
-            dispatch(
-              alert(
-                // clear alert if gesture is cancelled (no command)
-                // clear alert if back/forward
-                !experienceMode && command && command?.id !== 'cursorForward' && command?.id !== 'cursorBack'
-                  ? command.label
-                  : null,
-                { alertType: AlertType.GestureHint, clearDelay: 5000 },
-              ),
-            )
-          }
+        const experienceMode = getUserSetting(state, Settings.experienceMode)
+
+        if (state.showCommandPalette) {
+          dispatch(commandPalette())
+        }
+
+        // Show alert for valid commands in training mode (except back/forward)
+        if (!experienceMode && command && command?.id !== 'cursorForward' && command?.id !== 'cursorBack') {
+          dispatch(
+            alert(command.label, {
+              alertType: AlertType.GestureHint,
+              clearDelay: GESTURE_HINT_TIMEOUT,
+              showCloseLink: false,
+            }),
+          )
+        } else if (
+          // Clear alert if gesture is cancelled (no command)
+          !command ||
+          // Clear alert if back/forward
+          command?.id === 'cursorForward' ||
+          command?.id === 'cursorBack' ||
+          // In experience mode, clear any existing gesture hint
+          (experienceMode && alertType === AlertType.GestureHint)
+        ) {
+          dispatch(alert(null))
         }
       })
     })

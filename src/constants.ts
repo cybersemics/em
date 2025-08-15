@@ -160,6 +160,9 @@ export const THOUGHT_ELLIPSIZED_CHARS = 16
 // delay after gesture hint is activated before command palette appears
 export const COMMAND_PALETTE_TIMEOUT = 400
 
+// delay to show executed command after gesture is completed
+export const GESTURE_HINT_TIMEOUT = 5000
+
 // number of recently edited thoughts to store
 export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
 
