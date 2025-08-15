@@ -74,19 +74,10 @@ const parseDate = (s: string): number => {
   // Use pre-compiled regex for optimal performance
   const shortDateMatch = s.match(REGEX_SHORT_DATE_PARSE)
 
-  let dateString = s
-
-  if (shortDateMatch) {
-    // Handle short dates by adding current year
-    if (s.includes('/')) {
-      dateString = `${s}/${CURRENT_YEAR}`
-    } else if (s.includes('-')) {
-      dateString = `${s}-${CURRENT_YEAR}`
-    } else {
-      // Written format
-      dateString = `${s}, ${CURRENT_YEAR}`
-    }
-  }
+  // Build the complete date string
+  const dateString = shortDateMatch
+    ? `${s}${s.includes('/') ? '/' : s.includes('-') ? '-' : ', '}${CURRENT_YEAR}`
+    : s
 
   // Single Date.parse call for optimal performance
   return Date.parse(dateString)
