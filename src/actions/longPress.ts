@@ -127,7 +127,8 @@ const longPress = (state: State, payload: Payload) => {
 /** Action-creator for longPress. */
 export const longPressActionCreator =
   (payload: Parameters<typeof longPress>[1]): Thunk =>
-  dispatch => {
+  (dispatch, getState) => {
+    const { longPress: previousValue } = getState()
     const { value } = payload
 
     switch (value) {
@@ -147,7 +148,9 @@ export const longPressActionCreator =
       // abort drag-and-drop on shake
       // must go after dispatching dragInProgress, otherwise aborted dragInProgress: false will get overwritten by the payload
       shaker(dispatch, hoveringPath ? head(hoveringPath) : undefined)
+    }
 
+    if (value === LongPressState.DragInProgress || previousValue === LongPressState.DragInProgress) {
       // when at the top of the viewport, bump the scroll bar to prevent gitching in Safari mobile
       // TODO: It still glitches out if you scroll back to the top during a drag
       if (isSafari() && document.documentElement.scrollTop === 0) {
