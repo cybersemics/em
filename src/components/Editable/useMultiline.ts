@@ -1,8 +1,8 @@
 import { RefObject, useCallback, useLayoutEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
-import editingValueStore from '../stores/editingValue'
-import viewportStore from '../stores/viewport'
-import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
+import useLayoutAnimationFrameEffect from '../../hooks/useLayoutAnimationFrameEffect'
+import editingValueStore from '../../stores/editingValue'
+import viewportStore from '../../stores/viewport'
 
 /**
  * Custom hook for detecting if a thought is multiline.
@@ -26,7 +26,7 @@ import useLayoutAnimationFrameEffect from './useLayoutAnimationFrameEffect'
  * @param editableRef - Reference to the editable element containing the thought text.
  * @returns Boolean indicating if the thought content spans multiple lines.
  */
-const useThoughtMultiline = (editableRef: RefObject<HTMLElement>) => {
+const useMultiline = (editableRef: RefObject<HTMLElement>) => {
   // Get fontSize from Redux store to avoid prop drilling
   const fontSize = useSelector(state => state.fontSize)
   // To Detect immediate editing value change
@@ -93,4 +93,4 @@ const useThoughtMultiline = (editableRef: RefObject<HTMLElement>) => {
   return isMultiline
 }
 
-export default useThoughtMultiline
+export default useMultiline

@@ -9,7 +9,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
-import useThoughtMultiline from '../hooks/useThoughtMultiline'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -23,6 +22,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import Divider from './Divider'
 import Editable from './Editable'
+import useMultiline from './Editable/useMultiline'
 import usePlaceholder from './Editable/usePlaceholder'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
@@ -117,7 +117,7 @@ const StaticThought = ({
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
   // Detect if the thought content spans multiple lines
-  const multiline = useThoughtMultiline(editableRef)
+  const multiline = useMultiline(editableRef)
 
   const placeholder = usePlaceholder({ isEditing, simplePath })
 
