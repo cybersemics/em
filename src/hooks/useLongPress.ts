@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDragDropManager } from 'react-dnd'
 import { useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
 import { isTouch } from '../browser'
-import { TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
+import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import * as selection from '../device/selection'
 import longPressStore from '../stores/longPressStore'
 import haptics from '../util/haptics'
@@ -20,6 +21,7 @@ const useLongPress = (
   const [pressing, setPressing] = useState(false)
   // Track isLocked state from longPressStore in local state
   const isLocked = longPressStore.useSelector(state => state.isLocked)
+  const longPressState = useSelector(state => state.longPress)
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
   const unmounted = useRef(false)
@@ -59,6 +61,13 @@ const useLongPress = (
       return () => clearTimeout(timerIdRef.current)
     }
   }, [delay, dragDropManager, isLocked, onLongPressStart, pressing])
+
+  // Desktop can initiate drag-and-drop without waiting for a long press, so the timer does generate an
+  // 'Invalid longPress transition' error unless it cleans up the timer. This error doesn't have any effect
+  // because no state transition occurs. (#3173)
+  useEffect(() => {
+    if (timerIdRef.current && longPressState === LongPressState.DragInProgress) clearTimeout(timerIdRef.current)
+  }, [longPressState])
 
   /** On mouseDown or touchStart, mark that the press has begun so that when the 'start' event fires in react-dnd,
    * we will know which element is being long-pressed. */

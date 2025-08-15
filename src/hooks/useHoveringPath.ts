@@ -3,7 +3,8 @@ import { useDispatch } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
-import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
+import { longPressActionCreator as longPress } from '../actions/longPress'
+import { LongPressState } from '../constants'
 
 /** Updates state.hoveringPath when isHovering becomes true. Used to determine the parent of state.hoveringPath to be highlighted (via isChildHovering in the Thought components), expandHoverDown/Top, and the visibility of drop-hover elements. */
 const useHoveringPath = (path: Path, isHovering: boolean, hoverZone: DropThoughtZone) => {
@@ -16,12 +17,9 @@ const useHoveringPath = (path: Path, isHovering: boolean, hoverZone: DropThought
         dispatch((dispatch, getState) => {
           const state = getState()
 
-          // check dragInProgress to ensure the drag has not been aborted (e.g. by shaking)
-          if (!state.dragInProgress) return
-
           dispatch(
-            dragInProgress({
-              value: true,
+            longPress({
+              value: LongPressState.DragInProgress,
               draggingThoughts: state.draggingThoughts,
               hoveringPath: path,
               hoverZone,

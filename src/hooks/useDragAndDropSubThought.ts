@@ -12,7 +12,7 @@ import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
-import { HOME_TOKEN } from '../constants'
+import { HOME_TOKEN, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -78,7 +78,7 @@ const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTarget
 
   return (
     // dragInProgress can be set to false to abort the drag (e.g. by shaking)
-    state.dragInProgress &&
+    state.longPress === LongPressState.DragInProgress &&
     // do not drop on thoughts hidden by autofocus
     (!isHidden() || isClosestHiddenParent()) &&
     // do not drop on descendants
