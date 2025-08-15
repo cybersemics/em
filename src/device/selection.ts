@@ -57,7 +57,7 @@ export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
 /** Returns true if the Node is an editable. */
-const isEditable = (node?: Node | null) => {
+export const isEditable = (node?: Node | EventTarget | null) => {
   const element = node as HTMLElement
   return (
     !!element &&

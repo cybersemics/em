@@ -8,7 +8,6 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { isSafari } from '../browser'
 import { AlertText, AlertType, LongPressState } from '../constants'
-import * as selection from '../device/selection'
 import globals from '../globals'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import haptics from '../util/haptics'
@@ -121,11 +120,6 @@ export const dragInProgressActionCreator =
     // react-dnd stops propagation of the TouchMonitor's touchend event, so we need to turn off globals.touching here
     else {
       globals.touching = false
-
-      // clear selection after drag ends just in case browser made a selection
-      // Mobile Safari long-press-to-select is difficult to stop
-      // See: https://github.com/cybersemics/em/issues/1704
-      setTimeout(selection.clear)
     }
 
     dispatch({ type: 'dragInProgress', ...payload })
