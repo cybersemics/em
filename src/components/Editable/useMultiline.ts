@@ -1,71 +1,94 @@
-import { head, isEqual } from 'lodash'
-import { useCallback, useEffect, useState } from 'react'
+import { RefObject, useCallback, useLayoutEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
-import SimplePath from '../../@types/SimplePath'
-import State from '../../@types/State'
 import useLayoutAnimationFrameEffect from '../../hooks/useLayoutAnimationFrameEffect'
-import useSelectorEffect from '../../hooks/useSelectorEffect'
-import getStyle from '../../selectors/getStyle'
-import getThoughtById from '../../selectors/getThoughtById'
 import editingValueStore from '../../stores/editingValue'
-import viewportStore, { ViewportState } from '../../stores/viewport'
+import viewportStore from '../../stores/viewport'
 
-/** Selects the cursor from the state. */
-const selectCursor = (state: State) => state.cursor
-
-/** Returns true if the element has more than one line of text. */
-const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing: boolean) => {
-  const [multiline, setMultiline] = useState(false)
+/**
+ * Custom hook for detecting if a thought is multiline.
+ *
+ * Uses two effects to detect multiline content.
+ * - Height-based detection with threshold to account for padding and line-height differences
+ * - Immediate synchronous updates to prevent flickering.
+ *
+ * Threshold calculation: fontSize * 2 + 4px buffer
+ * - fontSize * 2: Accounts for line-height of 2 for single-line thoughts
+ * - +4px buffer: Accounts for padding and subtle line-height variations.
+ *
+ * Features:
+ * - Handles cases where DOM elements don't exist yet (e.g., collapsed thoughts)
+ * - Prevents layout flickering by updating before browser paints
+ * - Uses dual effects for reliability and edge case handling - calculating height for the case of delay of DOM update
+ * - Encapsulates fontSize selector to reduce prop drilling
+ * - Follows React best practices (no DOM access during render).
+ *
+ * @param editableRef - Reference to the editable element containing the thought text.
+ * @returns Boolean indicating if the thought content spans multiple lines.
+ */
+const useMultiline = (editableRef: RefObject<HTMLElement>) => {
+  // Get current fontSize
   const fontSize = useSelector(state => state.fontSize)
-  // While editing, watch the current Value and trigger the layout effect
-  const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
+  // To Detect immediate editing value change
+  const editingValue = editingValueStore.useSelector(state => state)
+  // To Detect device width change
+  const contentWidth = viewportStore.useSelector(state => state.contentWidth)
+  /**
+   * Calculates whether the thought content is multiline based on DOM measurements.
+   *
+   * Detection Logic:
+   * 1. Early return if DOM elements don't exist yet
+   * 2. Calculate single line threshold: fontSize * 2 + 4px buffer
+   * - fontSize * 2: Accounts for line-height of 2 for single-line thoughts
+   * - +4px buffer: Accounts for padding and subtle line-height variations
+   * 3. Check if content height exceeds the threshold.
+   *
+   * This approach ensures accurate detection while accounting for CSS differences
+   * between single-line (line-height: 2) and multiline (line-height: 1.25) modes.
+   */
+  const calculateMultiline = useCallback(() => {
+    if (!editableRef.current) {
+      return false
+    }
 
-  /** Measure the contentRef to determine if it needs to be multiline. */
-  const updateMultiline = useCallback(() => {
-    if (!contentRef.current) return
-    const height = contentRef.current.getBoundingClientRect().height
-    // must match line-height as defined in thought-container
-    const singleLineHeight = fontSize * 2
-    // .editable.multiline gets 5px of padding-top to offset the collapsed line-height
-    // we need to account for padding-top, otherwise it can cause a false positive
-    const style = window.getComputedStyle(contentRef.current)
-    const paddingTop = parseInt(style.paddingTop)
-    const paddingBottom = parseInt(style.paddingBottom)
-    // 2x the single line height would indicate that the thought was multiline if it weren't for the change in line-height and padding.
-    // 1.2x is used for a more forgiving condition.
-    // 1.5x can cause multiline to alternate in Safari for some reason. There may be a mistake in the height calculation or the inclusion of padding that is causing this. Padding was added to the calculation in commit 113c692. Further investigation is needed.
-    // See: https://github.com/cybersemics/em/issues/2778#issuecomment-2605083798
-    setMultiline(height - paddingTop - paddingBottom > singleLineHeight * 1.2)
-  }, [contentRef, fontSize])
+    // Single line height threshold with buffer for padding and line-height differences
+    const singleLineThreshold = fontSize * 2 + 4 // 4px buffer for padding and line-height variations
 
-  // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
-  // cursor changes to or from the element.
-  useLayoutAnimationFrameEffect(updateMultiline, [isEditing, simplePath, editingValue])
+    // Check if content height is greater than the threshold
+    return editableRef.current.clientHeight > singleLineThreshold
+    // calculateMultiline function should be recreated for changes of contentWidth, fontSize and editingValue
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editableRef, contentWidth, fontSize, editingValue])
 
-  // Recalculate multiline when the cursor changes.
-  // This is necessary because the width of thoughts change as the autofocus indent changes.
-  // (do not re-render component unless multiline changes)
-  useSelectorEffect(updateMultiline, selectCursor, isEqual)
+  // State for multiline detection
+  const [isMultiline, setIsMultiline] = useState(false)
 
-  const selectStyle = useCallback((state: State) => getStyle(state, head(simplePath)), [simplePath])
-  // Recalculate multiline on =style change, since styles such as font size can affect thought width.
-  // Must wait one render since getStyle updates as soon as =style has loaded in the Redux store but before it has been applied to the DOM.
-  useSelectorEffect(updateMultiline, selectStyle, isEqual)
+  /**
+   * Two effects for multiline detection:
+   *
+   * 1. UseLayoutEffect: Immediate synchronous update to prevent flickering
+   * - Runs synchronously after DOM mutations but before browser paints
+   * - Ensures line-height changes happen immediately without visual glitches
+   * - Handles most common cases: initial render, content changes, window resize.
+   *
+   * 2. UseLayoutAnimationFrameEffect: Asynchronous fallback for edge cases
+   * - Runs on next animation frame to catch any missed changes
+   * - Handles edge cases where DOM updates are delayed or batched
+   * - Provides backup detection for maximum reliability.
+   *
+   * This approach ensures:
+   * - No flickering during rapid content changes
+   * - No missed updates due to browser timing issues
+   * - Reliable handling of edge cases.
+   */
+  useLayoutEffect(() => {
+    setIsMultiline(calculateMultiline())
+  }, [calculateMultiline])
 
-  // Recalculate height after thought value changes.
-  // Otherwise, the hight is not recalculated after splitThought.
-  // TODO: useLayoutEffect does not work for some reason, causing the thought to briefly render at the incorrect height.
-  const splitThoughtValue = useSelector(state => {
-    const thoughtId = head(simplePath)
-    return thoughtId ? getThoughtById(state, thoughtId)?.value : null
-  })
-  useEffect(updateMultiline, [splitThoughtValue, updateMultiline])
+  useLayoutAnimationFrameEffect(() => {
+    setIsMultiline(calculateMultiline())
+  }, [calculateMultiline])
 
-  const selectInnerWidth = useCallback((state: ViewportState) => state.innerWidth, [])
-  // re-measure when the screen is resized
-  viewportStore.useSelectorEffect(updateMultiline, selectInnerWidth)
-
-  return multiline
+  return isMultiline
 }
 
 export default useMultiline
