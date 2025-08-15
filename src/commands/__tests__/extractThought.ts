@@ -24,7 +24,7 @@ const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd
 }
 
 // TODO: Broken with LayoutTree. Skip for now since this is a low priority.
-describe.skip('Extract thought', () => {
+describe('Extract thought', () => {
   beforeEach(async () => {
     await createTestApp()
   })
