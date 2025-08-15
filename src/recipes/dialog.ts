@@ -21,6 +21,7 @@ const dialogRecipe = defineSlotRecipe({
       backgroundColor: 'bgOverlay50',
       zIndex: 'dialogContainer',
       overflow: 'hidden',
+      touchAction: 'none',
     },
     container: {
       backgroundColor: 'bg',
