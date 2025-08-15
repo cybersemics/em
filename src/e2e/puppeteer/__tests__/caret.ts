@@ -5,17 +5,19 @@ import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
+import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
-import testIfNotCI from '../helpers/testIfNotCI'
+import retry from '../helpers/retry'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
+import waitForSelectionNode from '../helpers/waitForSelectionNode'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 
-vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 describe('all platforms', () => {
   // TODO: Why is this failing?
@@ -179,32 +181,30 @@ describe('all platforms', () => {
     expect(textContext).toBe('firstlast')
   })
 
-  // TODO: Flaky test
-  // https://github.com/cybersemics/em/issues/2954
-  testIfNotCI('backspace on empty thought should move caret to the end of the previous thought', async () => {
+  it('backspace on empty thought should move caret to the end of the previous thought', async () => {
     const importText = `
     - first
     - last`
 
     await paste(importText)
 
-    const first = await waitForEditable('first')
+    await press('ArrowUp')
 
-    await click(first)
     await press('Enter')
+
     await press('Backspace')
 
-    const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('first')
+    // Wait for selection node to be the previous thought with offset at end
+    await waitForSelectionNode('first', 'first'.length)
 
-    const offset = await getSelection().focusOffset
+    // assert caret is at the end of the previous thought by typing a character
+    await keyboard.type('x')
 
-    // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
-    const focusNodeType = await getSelection().focusNode?.nodeType
-    expect(offset).toBe(focusNodeType === Node.TEXT_NODE ? 'first'.length : 1)
+    // asserting "firstx" proves that the caret is at the end of the previous thought
+    expect(await getEditingText()).toBe('firstx')
   })
 
-  it.skip('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
+  it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
     const importText = `
       - a`
 
@@ -245,9 +245,7 @@ describe('mobile only', () => {
     await emulate(KnownDevices['iPhone 11'])
   }, 5000)
 
-  // TODO: Flaky test
-  // https://github.com/cybersemics/em/issues/2959
-  testIfNotCI('After categorize, the caret should be on the new thought', async () => {
+  it('After categorize, the caret should be on the new thought', async () => {
     const importText = `
     - a
       - b`
@@ -255,19 +253,19 @@ describe('mobile only', () => {
     await paste(importText)
 
     await clickThought('b')
-    await clickThought('b')
-
-    // close keyboard
-    await clickBullet('b')
 
     await waitForSelector('[aria-label="Categorize"]')
-    await click('[aria-label="Categorize"]')
 
-    const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('')
-
-    const offset = await getSelection().focusOffset
-    expect(offset).toBe(0)
+    // The tap on the Categorize button sometimes doesn’t register under mobile emulation
+    // When that happens, the action never fires, no new empty thought is created, and waitForSelectionNode('',0) times out.
+    await retry(
+      async () => {
+        await click('[aria-label="Categorize"]')
+        // if the action was successful, the selection node will be the new empty thought with offset 0
+        await waitForSelectionNode('', 0, 400)
+      },
+      { attempts: 2, delayMs: 100 },
+    )
   })
 
   // TODO: waitForHiddenEditable is broken after virtualizing thoughts
