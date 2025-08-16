@@ -27,14 +27,6 @@ const useLongPress = (
   const unmounted = useRef(false)
   const dragDropManager = useDragDropManager()
 
-  // The stop handler below does not run when drag-and-drop is active.
-  // Also, endDrag in useDragAndDropThought unlocks the longPressStore before it does anything else.
-  // Unless it is prevented from doing so, the main effect below this one will re-run when isLocked changes to false,
-  // but pressing is still true, triggering onStart again.
-  useEffect(() => {
-    if (!isLocked) setPressing(false)
-  }, [isLocked, setPressing])
-
   useEffect(() => {
     /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackend in react-dnd. */
     const onStart = () => {
@@ -52,7 +44,7 @@ const useLongPress = (
       backend.options.rootElement.addEventListener('dragStart', onStart)
 
       return () => backend.options.rootElement.removeEventListener('dragStart', onStart)
-    } else {
+    } else if (pressing) {
       clearTimeout(timerIdRef.current)
       /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
       // cast Timeout to number for compatibility with clearTimeout
@@ -66,8 +58,10 @@ const useLongPress = (
   // 'Invalid longPress transition' error unless it cleans up the timer. This error doesn't have any effect
   // because no state transition occurs. (#3173)
   useEffect(() => {
-    if (timerIdRef.current && longPressState === LongPressState.DragInProgress) clearTimeout(timerIdRef.current)
-  }, [longPressState])
+    if (pressing && timerIdRef.current && longPressState === LongPressState.DragInProgress) {
+      clearTimeout(timerIdRef.current)
+    }
+  }, [longPressState, pressing])
 
   /** On mouseDown or touchStart, mark that the press has begun so that when the 'start' event fires in react-dnd,
    * we will know which element is being long-pressed. */
@@ -127,6 +121,8 @@ const useLongPress = (
       // disable Android context menu
       // does not work to prevent iOS long press to select behavior
       onContextMenu,
+      // onMouseUp is not called at the end of a drag (#3173)
+      onDragEnd: stop,
       // mousedown and mouseup can trigger on mobile when long tapping on the thought outside the editable, so make sure to only register touch handlers
       onMouseDown: !isTouch ? start : undefined,
       onMouseUp: !isTouch ? stop : undefined,
