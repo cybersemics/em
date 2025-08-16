@@ -121,8 +121,8 @@ const useLongPress = (
       // disable Android context menu
       // does not work to prevent iOS long press to select behavior
       onContextMenu,
-      // onMouseUp is not called at the end of a drag (#3173)
-      onDragEnd: stop,
+      // onMouseUp is not called at the end of a drag, but onDragEnd is called while the long press is still ongoing on mobile (#3173)
+      onDragEnd: !isTouch ? stop : undefined,
       // mousedown and mouseup can trigger on mobile when long tapping on the thought outside the editable, so make sure to only register touch handlers
       onMouseDown: !isTouch ? start : undefined,
       onMouseUp: !isTouch ? stop : undefined,
