@@ -1,6 +1,7 @@
 import sleep from '../../../util/sleep'
 import { page } from '../setup'
 import getFavoriteElement from './getFavoriteElement'
+import hide from './hide'
 import waitUntil from './waitUntil'
 
 /** Performs Drag and Drop functionality on a favorite thought in the sidebar. */
@@ -10,9 +11,11 @@ const dragAndDropFavorite = async (
   {
     position = 'before',
     mouseUp = true,
+    showAlert = false,
   }: {
     position?: 'before' | 'after'
     mouseUp?: boolean
+    showAlert?: boolean
   } = {},
 ) => {
   try {
@@ -48,6 +51,12 @@ const dragAndDropFavorite = async (
       await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
       // sleep to ensure the drop is complete
       await sleep(500)
+    }
+
+    // Hide Alert by default.
+    // Otherwise wait for Alert value to appear so that snapshots are consistent.
+    if (!showAlert) {
+      await hide('[data-testid="alert"]')
     }
   } catch (error) {
     console.error('Drag and drop error:', error)

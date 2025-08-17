@@ -5,7 +5,6 @@ import { page } from '../setup'
  * Gets the text from the main thought link (not the home icon).
  */
 export const extractFavoriteText = (el: Element): string => {
-  // Look for the main thought link - it should be the a tag with text content (not the home icon)
   const links = Array.from(el.querySelectorAll('a'))
   return links.find(link => link.textContent?.trim() !== '')?.textContent ?? ''
 }
