@@ -119,7 +119,6 @@ const FavoritesOptions = ({
       {/* Show Options toggle */}
       <div className={css({ marginLeft: '1em' })}>
         <span
-          data-testid='favorites-options-toggle'
           {...fastClick(() => setShowOptions(!showOptions))}
           className={css({
             color: 'modalExportUnused',

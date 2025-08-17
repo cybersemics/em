@@ -1,20 +1,15 @@
 import { page } from '../setup'
 
-/**
- * Extract the thought text from a favorite element.
- * Gets the text from the main thought link (not the home icon).
- */
+/** Extract the thought text from a favorite element.*/
 export const extractFavoriteText = (el: Element): string => {
-  const links = Array.from(el.querySelectorAll('a'))
+  const links = Array.from(el.querySelectorAll('div>a'))
   return links.find(link => link.textContent?.trim() !== '')?.textContent ?? ''
 }
 
 /**
  * Get all favorite elements from the sidebar.
  */
-export const getFavoriteElements = async () => {
-  return await page.$$('.favorites div[draggable="true"]')
-}
+export const getFavoriteElements = () => page.$$('.favorites div[draggable="true"]')
 
 /**
  * Get favorite element handle for the given thought value.

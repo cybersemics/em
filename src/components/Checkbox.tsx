@@ -16,7 +16,6 @@ const CheckboxInput = ({ checked }: { checked?: boolean }) => {
         className={css({ position: 'absolute', opacity: 0, cursor: 'pointer', height: '0', width: '0' })}
       />
       <span
-        data-testid='checkbox-input'
         className={css({
           position: 'absolute',
           top: '0.1em',
