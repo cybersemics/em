@@ -1,4 +1,3 @@
-import sleep from '../../../util/sleep'
 import { page } from '../setup'
 import getFavoriteElement from './getFavoriteElement'
 import hide from './hide'
@@ -20,6 +19,11 @@ const dragAndDropFavorite = async (
 ) => {
   try {
     const sourceElement = await getFavoriteElement(sourceValue)
+    if (!sourceElement.boundingBox) {
+      console.error({ sourceElement, sourceValue, destValue })
+      throw new Error('Source element has no bounding box')
+    }
+
     const dragStart = await sourceElement.boundingBox()
     if (!dragStart) throw new Error('Drag source element not found')
 
@@ -34,6 +38,11 @@ const dragAndDropFavorite = async (
 
     if (destValue) {
       const destElement = await getFavoriteElement(destValue)
+      if (!destElement.boundingBox) {
+        console.error({ destElement, destValue })
+        throw new Error('Destination element has no bounding box')
+      }
+
       const dragEnd = await destElement.boundingBox()
       if (!dragEnd) throw new Error('Drag destination element not found')
 
@@ -46,11 +55,11 @@ const dragAndDropFavorite = async (
       await page.mouse.move(dropPosition.x, dropPosition.y)
     }
 
+    await page.locator('[data-drag-in-progress="true"]').wait()
+
     if (mouseUp) {
       await page.mouse.up()
       await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
-      // sleep to ensure the drop is complete
-      await sleep(500)
     }
 
     // Hide Alert by default.

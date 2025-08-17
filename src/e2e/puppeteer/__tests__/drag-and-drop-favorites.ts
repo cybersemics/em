@@ -20,12 +20,6 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 const openFavorites = async () => {
   await click('[aria-label=menu]')
   await page.locator('[data-testid="sidebar"]').wait()
-
-  // Click options toggle
-  await click('[data-testid="favorites-options-toggle"]')
-
-  // Click options checkbox
-  await click('[data-testid="checkbox-input"]')
 }
 
 /** Screenshot without the toolbar. */
