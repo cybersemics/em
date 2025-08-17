@@ -35,9 +35,8 @@ const longPressThought = async (
   }
 
   await page.touchscreen.touchStart(coordinate.x, coordinate.y)
-  await thoughtContainer.waitForSelector('.bullet[data-highlighted="true"]')
+  await thoughtContainer.waitForSelector('[aria-label="bullet"][data-highlighted=true]')
   await page.touchscreen.touchEnd()
-  await thoughtContainer.waitForSelector('.bullet[data-highlighted="true"]')
 }
 
 export default longPressThought
