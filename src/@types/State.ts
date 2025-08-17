@@ -60,14 +60,6 @@ interface State {
   dragCommand?: CommandId | null
   /** Type of toolbar-sbutton drop target being hovered over. */
   dragCommandZone?: DragCommandZone
-  /** Set to true while the user is long pressing a thought in preparation for a drag. */
-  dragHold?: boolean
-  /**
-   * Set to true while the user is dragging a thought or file.
-   * DraggingFile or draggingThoughts must be set while dragInProgress is true.
-   * May be set to false to abort the drag even while react-dnd is still dragging (e.g. by shaking).
-   */
-  dragInProgress: boolean
   /**
    * Forces content editable to update inner html if html has not changed.
    * TODO: Do we really need to re-render all ContentEditables?

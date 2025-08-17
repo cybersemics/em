@@ -12,8 +12,6 @@ import State from '../@types/State'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { alertActionCreator as alert } from '../actions/alert'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
-import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
-import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { longPressActionCreator as longPress } from '../actions/longPress'
@@ -91,15 +89,14 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
     zone: DragThoughtZone.Thoughts,
   }))
 
-  store.dispatch([
-    dragInProgress({
-      value: true,
+  store.dispatch(
+    longPress({
+      value: LongPressState.DragInProgress,
       draggingThoughts: draggingThoughts.map(item => item.simplePath),
       sourceZone: DragThoughtZone.Thoughts,
       ...(offset != null ? { offset } : null),
     }),
-    longPress({ value: LongPressState.DragInProgress }),
-  ])
+  )
 
   return draggingThoughts
 }
@@ -119,8 +116,6 @@ const endDrag = () => {
   // If this delay causes a regression, then we will need to find a different way to prevent the cursor from moving at the end of a drag.
   setTimeout(() => {
     store.dispatch([
-      dragInProgress({ value: false }),
-      dragHold({ value: false }),
       (dispatch, getState) => {
         if (getState().alert?.alertType === AlertType.DragAndDropHint) {
           dispatch(alert(null))
@@ -143,7 +138,7 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
-  if (!state.dragInProgress) return false
+  if (state.longPress !== LongPressState.DragInProgress) return false
 
   const item = monitor.getItem() as DragThoughtOrFiles
   const draggedItems = item as DragThoughtItem[]
@@ -324,7 +319,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
 
   // Check if this thought is part of a multiselect drag operation
   const isDraggingMultiple = useSelector(state => {
-    if (!state.dragInProgress || !state.draggingThoughts) return false
+    if (state.longPress !== LongPressState.DragInProgress || !state.draggingThoughts) return false
     return state.draggingThoughts.some(draggedPath => equalPath(draggedPath, propsTypes.simplePath))
   })
 

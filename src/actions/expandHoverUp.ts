@@ -3,7 +3,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
-import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
+import { AlertType, EXPAND_HOVER_DELAY, LongPressState } from '../constants'
 import rootedParentOf from '../selectors/rootedParentOf'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -87,11 +87,11 @@ const shouldAllowActiveHoverTop = (state: State): boolean => {
 export const expandOnHoverTopActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
-  const { hoveringPath, expandHoverUpPath, dragInProgress } = state
+  const { hoveringPath, expandHoverUpPath, longPress } = state
   const shouldExpand = shouldAllowActiveHoverTop(state)
 
   // Cancel only when drag is not in progress and there is no active expandHoverUpPath
-  if (!dragInProgress && expandHoverUpPath) {
+  if (longPress !== LongPressState.DragInProgress && expandHoverUpPath) {
     clearTimer()
     dispatch({ type: 'expandHoverUp', path: null })
     return

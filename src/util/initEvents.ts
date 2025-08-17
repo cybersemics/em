@@ -6,12 +6,12 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
-import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { errorActionCreator as error } from '../actions/error'
+import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
 import { inputHandlers } from '../commands'
-import { AlertType } from '../constants'
+import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
@@ -259,7 +259,10 @@ const initEvents = (store: Store<State, any>) => {
       }
     }
     // do not scroll-at-edge when hovering over QuickDrop component
-    else if (state.dragInProgress && !(state.alert?.alertType === AlertType.DeleteDropHint)) {
+    else if (
+      state.longPress === LongPressState.DragInProgress &&
+      !(state.alert?.alertType === AlertType.DeleteDropHint)
+    ) {
       const y = e.touches[0].clientY
       scrollContainer = (target.closest('[data-scroll-at-edge]') as HTMLElement) || window
 
@@ -322,12 +325,12 @@ const initEvents = (store: Store<State, any>) => {
       // e.dataTransfer.types is not available in dragLeave for some reason, so we check state.draggingFile
       const state = getState()
       if (state.draggingFile) {
-        dispatch([alert(null), dragInProgress({ value: false })])
+        dispatch([alert(null), longPress({ value: LongPressState.Inactive })])
       }
     })
   }, 100)
 
-  /** Drag enter handler for file drag-and-drop. Sets state.dragInProgress and state.draggingFile to true. */
+  /** Drag enter handler for file drag-and-drop. Sets state.longPress to DragInProgress and state.draggingFile to true. */
   const dragEnter = (e: DragEvent) => {
     // dragEnter and dragLeave are called in alternating pairs as the user drags over nested elements: ENTER, LEAVE, ENTER, LEAVE, ENTER
     // In order to detect the end of dragging a file, we need to debounce the dragLeave event and cancel it if dragEnter occurs.
@@ -336,7 +339,10 @@ const initEvents = (store: Store<State, any>) => {
       dragLeave.cancel()
     })
     if (e.dataTransfer?.types.includes('Files')) {
-      store.dispatch([alert('Drop to import file'), dragInProgress({ value: true, draggingFile: true })])
+      store.dispatch([
+        alert('Drop to import file'),
+        longPress({ value: LongPressState.DragInProgress, draggingFile: true }),
+      ])
     }
   }
 
@@ -346,7 +352,7 @@ const initEvents = (store: Store<State, any>) => {
       // wait until the next tick so that the thought/subthought drop handler has a chance to be called before draggingFile is reset
       // See: DragAndDropThought and DragAndDropSubthoughts
       setTimeout(() => {
-        store.dispatch([alert(null), dragInProgress({ value: false })])
+        store.dispatch([alert(null), longPress({ value: LongPressState.Inactive })])
       })
     }
   }

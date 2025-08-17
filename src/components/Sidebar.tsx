@@ -3,10 +3,10 @@ import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
-import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
+import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isTouch } from '../browser'
+import { LongPressState } from '../constants'
 import durations from '../util/durations'
 import fastClick from '../util/fastClick'
 import FadeTransition from './FadeTransition'
@@ -124,7 +124,7 @@ const Sidebar = () => {
             // set isSwiping if translateX is not parseable (NaN) or explicitly set to 0
             if (translateX) {
               setIsSwiping(true)
-              dispatch([dragHold({ value: false }), dragInProgress({ value: false })])
+              dispatch(longPress({ value: LongPressState.Inactive }))
             }
           },
           10,
