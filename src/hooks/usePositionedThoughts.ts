@@ -4,6 +4,7 @@ import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import TreeThought from '../@types/TreeThought'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
+import { LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import scrollTopStore from '../stores/scrollTop'
 import head from '../util/head'
@@ -29,7 +30,7 @@ const usePositionedThoughts = (
 } => {
   // Height of toolbar element
   const [toolbarHeight, setToolbarHeight] = useState(0)
-  const dragInProgress = useSelector(state => state.dragInProgress)
+  const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
 
   const fontSize = useSelector(state => state.fontSize)
   const cliffPadding = fontSize / 4

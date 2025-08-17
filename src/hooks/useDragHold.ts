@@ -4,7 +4,6 @@ import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
-import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { LongPressState } from '../constants'
@@ -41,7 +40,7 @@ const useDragHold = ({
     // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
     // Calling preventDefault on all touchmove events blocks scrolling entirely, but calling it once long press begins can prevent buggy behavior.
     allowTouchToScroll(false)
-    dispatch([dragHold({ value: true, simplePath, sourceZone }), longPress({ value: LongPressState.DragHold })])
+    dispatch(longPress({ value: LongPressState.DragHold, simplePath, sourceZone }))
   }, [disabled, dispatch, simplePath, sourceZone])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
@@ -56,8 +55,8 @@ const useDragHold = ({
     dispatch((dispatch, getState) => {
       const state = getState()
 
-      if (state.dragHold) {
-        dispatch([dragHold({ value: false }), !hasMulticursor(state) ? alert(null) : null])
+      if (state.longPress === LongPressState.DragHold) {
+        if (!hasMulticursor(state)) dispatch(alert(null))
         if (toggleMulticursorOnLongPress) dispatch(toggleMulticursor({ path: simplePath }))
       }
 
@@ -66,21 +65,21 @@ const useDragHold = ({
   }, [disabled, dispatch, simplePath, toggleMulticursorOnLongPress])
 
   // react-dnd stops propagation so onLongPressEnd sometimes doesn't get called.
-  // Therefore, disable dragHold and isPressed as soon as we are dragging or if no longer dragging and dragHold never got cleared.
+  // Therefore, disable isPressed as soon as we are dragging.
   useEffect(() => {
     dispatch((dispatch, getState) => {
       const state = getState()
 
-      if (isDragging || state.dragHold) {
+      if (isDragging || state.longPress === LongPressState.DragHold) {
         setIsPressed(false)
-        dispatch([dragHold({ value: false }), alert(null)])
+        dispatch([alert(null)])
 
         if (hasMulticursor(state)) {
           dispatch(clearMulticursors())
         }
       }
       // If we were dragging but now we're not, make sure to reset the lock
-      if (!isDragging && state.dragHold) {
+      if (!isDragging && state.longPress === LongPressState.DragHold) {
         // Reset the lock to allow immediate long press after drag ends
         longPressStore.unlock()
       }
