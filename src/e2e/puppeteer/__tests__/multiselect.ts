@@ -31,7 +31,7 @@ describe('multiselect', () => {
 
 describe('mobile only', () => {
   beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 11'])
+    await emulate(KnownDevices['iPhone 15 Pro'])
   }, 10000)
 
   it('should multiselect two thoughts at once', async () => {
@@ -42,9 +42,9 @@ describe('mobile only', () => {
         `)
 
     const a = await waitForEditable('a')
-    const b = await waitForEditable('b')
-
     await longPressThought(a, { edge: 'right', x: 100 })
+
+    const b = await waitForEditable('b')
     await longPressThought(b, { edge: 'right', x: 100 })
 
     const highlightedBullets = await page.$$('.bullet[data-highlighted=true]')
