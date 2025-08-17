@@ -25,7 +25,7 @@ type DragAndDropFavoriteReturnType = DragThoughtItem & {
 }
 
 /** Handles drag start. */
-const beginDrag = ({ path, simplePath }: DragThoughtItem): DragThoughtItem => {
+const beginDrag = ({ path, simplePath }: DragThoughtItem): DragThoughtItem[] => {
   const offset = selection.offset()
 
   store.dispatch(
@@ -36,7 +36,7 @@ const beginDrag = ({ path, simplePath }: DragThoughtItem): DragThoughtItem => {
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { path, simplePath, zone: DragThoughtZone.Favorites }
+  return [{ path, simplePath, zone: DragThoughtZone.Favorites }]
 }
 
 /** Handles drag end. */
@@ -71,7 +71,10 @@ const drop = (
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { simplePath: thoughtsFrom, zone } = monitor.getItem() as DragThoughtItem
+  const item = monitor.getItem() as DragThoughtItem[]
+  // For favorites, we expect only a single item in the array
+  const draggedItem = item[0]
+  const { simplePath: thoughtsFrom, zone } = draggedItem
   if (zone === DragThoughtZone.Thoughts) {
     console.error('TODO: Add support for other thought drag sources', monitor.getItem())
     return
