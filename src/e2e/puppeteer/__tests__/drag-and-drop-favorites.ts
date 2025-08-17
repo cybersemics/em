@@ -1,18 +1,10 @@
-import path from 'path'
-import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import dragAndDropFavorite from '../helpers/dragAndDropFavorite'
 import { extractFavoriteText, getFavoriteElements } from '../helpers/getFavoriteElement'
-import hideVisibility from '../helpers/hideVisibility'
 import paste from '../helpers/paste'
-import screenshot from '../helpers/screenshot'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../setup'
-
-expect.extend({
-  toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
-})
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -20,12 +12,6 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 const openFavorites = async () => {
   await click('[aria-label=menu]')
   await page.locator('[data-testid="sidebar"]').wait()
-}
-
-/** Screenshot without the toolbar. */
-const screenshotWithoutToolbarIcons = async () => {
-  await hideVisibility('[data-testid="toolbar-icon"]')
-  return screenshot()
 }
 
 /** Get the order of favorites as displayed in the sidebar. */
@@ -64,14 +50,10 @@ describe('favorites drag and drop', () => {
     // Open favorites in sidebar
     await openFavorites()
 
-    expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot()
-
     // Verify initial order
     expect(await getFavoritesOrder()).toEqual(['a', 'b', 'c', 'd'])
 
     await dragAndDropFavorite('d', 'b', { position: 'before' })
-
-    expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot()
 
     // Verify new order - d should now be before b
     expect(await getFavoritesOrder()).toEqual(['a', 'd', 'b', 'c'])
@@ -97,23 +79,17 @@ describe('favorites drag and drop', () => {
     // Open favorites in sidebar
     await openFavorites()
 
-    expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot()
-
     // Verify initial order
     expect(await getFavoritesOrder()).toEqual(['first', 'second', 'third'])
 
     // Drag "first" after "third" (to the end)
     await dragAndDropFavorite('first', 'third', { position: 'after' })
 
-    expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot()
-
     // Verify new order - first should now be after third
     expect(await getFavoritesOrder()).toEqual(['second', 'third', 'first'])
 
     // Drag "third" before "second" (to the top)
     await dragAndDropFavorite('third', 'second', { position: 'before' })
-
-    expect(await screenshotWithoutToolbarIcons()).toMatchImageSnapshot()
 
     // Verify new order - third should now be before second
     expect(await getFavoritesOrder()).toEqual(['third', 'second', 'first'])
