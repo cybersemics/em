@@ -13,6 +13,7 @@ export interface ViewportState {
   contentWidth: number
   innerWidth: number
   innerHeight: number
+  scrollOffset: number
   scrollZoneWidth: number
   virtualKeyboardHeight: number
 }
@@ -22,6 +23,11 @@ const viewportStore = reactMinistore<ViewportState>({
   innerWidth: window.innerWidth,
   /** Height of the viewport, including the virtual keyboard. */
   innerHeight: window.innerHeight,
+  /** While a modal is open, iOS Safari will still permit the document body to scroll.
+   * In order to prevent this, the documentElement and body must be "frozen" with "overflow": "hidden".
+   * LayoutTree can use scrollOffset to render the thoughtspace correctly despite the lack of a scrollable viewport (#3165).
+   */
+  scrollOffset: 0,
   scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * SCROLL_ZONE_WIDTH,
   /** Height of the virtual keyboard regardless of whether it is open or closed. Defaults to estimated height of portrait or landscape mode when window.visualViewport.width is not valid (see below; questionable). */
   virtualKeyboardHeight:

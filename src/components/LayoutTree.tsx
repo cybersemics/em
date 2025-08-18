@@ -25,7 +25,7 @@ const CONTENT_PADDING_BOTTOM = 153
 
 /** A computed store that tracks the bottom of the viewport. Used for list virtualization. Does not include overscroll, i.e. if the user scrolls past the top of the document viewportBottom will not change. */
 const viewportBottomStore = reactMinistore.compose(
-  (viewport, scrollTop) => Math.max(scrollTop, 0) + viewport.innerHeight,
+  (viewport, scrollTop) => Math.max(scrollTop, 0) + viewport.innerHeight + viewport.scrollOffset,
   [viewportStore, scrollTopStore],
 )
 

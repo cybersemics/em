@@ -1,3 +1,5 @@
+import viewportStore from '../stores/viewport'
+
 let scrollY = 0
 
 /** Disables scrolling on the html and body elements with overflow:hidden, and offsets the content by the value of window.scrollY. */
@@ -7,6 +9,7 @@ const disableScroll = () => {
   scrollY = window.scrollY
   document.documentElement.style.overflow = 'hidden'
   document.body.style.overflow = 'hidden'
+  viewportStore.update(state => ({ ...state, scrollOffset: scrollY }))
   if (scrollContentPane) scrollContentPane.style.marginTop = `-${scrollY}px`
 }
 
@@ -16,6 +19,7 @@ const enableScroll = () => {
 
   document.documentElement.style.overflow = ''
   document.body.style.overflow = ''
+  viewportStore.update(state => ({ ...state, scrollOffset: 0 }))
   if (scrollContentPane) scrollContentPane.style.marginTop = ''
   queueMicrotask(() => window.scrollTo(0, scrollY))
 }
