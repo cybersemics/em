@@ -1,7 +1,6 @@
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import dragAndDropFavorite from '../helpers/dragAndDropFavorite'
-// favor stable data-testid selectors over helper indirection
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import waitForSelector from '../helpers/waitForSelector'
@@ -14,7 +13,7 @@ const getFavoritesOrder = async () => {
   const result = await page.evaluate(() => {
     try {
       // XPath to find all thought-links that are NOT in breadcrumbs, within favorite-items
-      const xpath = `//*[@data-testid='favorite-item']//*[@data-testid='thought-link' and not(ancestor::*[@aria-label='context-breadcrumbs'])]`
+      const xpath = `//*[@data-testid='favorite-item']//*[@data-thought-link and not(ancestor::*[@aria-label='context-breadcrumbs'])]`
 
       const result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
 

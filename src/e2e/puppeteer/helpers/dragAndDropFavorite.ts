@@ -8,7 +8,7 @@ import waitUntil from './waitUntil'
 const findFavoriteItem = async (value: string) => {
   return await page.evaluateHandle(value => {
     // XPath to find thought-link with exact text value which is not in breadcrumbs but just within favorite-item
-    const xpath = `//*[@data-testid='favorite-item']//*[@data-testid='thought-link' and not(ancestor::*[@aria-label='context-breadcrumbs']) and normalize-space()='${value.toLowerCase()}']/ancestor::*[@data-testid='favorite-item']`
+    const xpath = `//*[@data-testid='favorite-item']//*[@data-thought-link and not(ancestor::*[@aria-label='context-breadcrumbs']) and normalize-space()='${value.toLowerCase()}']/ancestor::*[@data-testid='favorite-item']`
 
     return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null)
       .singleNodeValue as HTMLElement
