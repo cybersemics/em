@@ -90,7 +90,7 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
   const dropHoverLength = useDropHoverWidth()
 
   return (
-    <div className={css({ height: '4em' })} data-testid='favorite-drop-end' ref={dropTarget}>
+    <div className={css({ height: '4em' })} ref={dropTarget}>
       <span
         className={cx(
           dropHoverRecipe(),
