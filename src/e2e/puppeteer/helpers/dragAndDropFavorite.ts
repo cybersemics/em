@@ -1,6 +1,19 @@
 import { page } from '../setup'
-import getFavoriteElement from './getFavoriteElement'
 import waitUntil from './waitUntil'
+
+/**
+ * Helper to find favorite item by text value.
+ * Uses XPath to find the thought-link with exact text, not in breadcrumbs, within favorite-item.
+ */
+const findFavoriteItem = async (value: string) => {
+  return await page.evaluateHandle(value => {
+    // XPath to find thought-link with exact text value which is not in breadcrumbs but just within favorite-item
+    const xpath = `//*[@data-testid='favorite-item']//*[@data-testid='thought-link' and not(ancestor::*[@aria-label='context-breadcrumbs']) and normalize-space()='${value.toLowerCase()}']/ancestor::*[@data-testid='favorite-item']`
+
+    return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null)
+      .singleNodeValue as HTMLElement
+  }, value)
+}
 
 /** Performs Drag and Drop functionality on a favorite thought in the sidebar. */
 const dragAndDropFavorite = async (
@@ -15,7 +28,7 @@ const dragAndDropFavorite = async (
   } = {},
 ) => {
   try {
-    const sourceElement = await getFavoriteElement(sourceValue)
+    const sourceElement = await findFavoriteItem(sourceValue)
     if (!sourceElement.boundingBox) {
       console.error({ sourceElement, sourceValue, destValue })
       throw new Error('Source element has no bounding box')
@@ -34,7 +47,7 @@ const dragAndDropFavorite = async (
     await page.mouse.down()
 
     if (destValue) {
-      const destElement = await getFavoriteElement(destValue)
+      const destElement = await findFavoriteItem(destValue)
       if (!destElement.boundingBox) {
         console.error({ destElement, destValue })
         throw new Error('Destination element has no bounding box')
