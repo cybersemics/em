@@ -22,14 +22,10 @@ const getFavoritesOrder = async () => {
         return null
       }
 
-      const links = []
-      for (let i = 0; i < result.snapshotLength; i++) {
+      const links = Array.from({ length: result.snapshotLength }, (_, i) => {
         const link = result.snapshotItem(i) as HTMLElement
-        const text = link.textContent?.trim()?.toLowerCase() || ''
-        if (text) {
-          links.push(text)
-        }
-      }
+        return link.textContent?.trim()?.toLowerCase() || ''
+      }).filter(text => text !== '')
 
       return links
     } catch (error) {
