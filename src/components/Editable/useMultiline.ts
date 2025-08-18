@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { RefObject, useCallback, useLayoutEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import useLayoutAnimationFrameEffect from '../../hooks/useLayoutAnimationFrameEffect'
 import editingValueStore from '../../stores/editingValue'
@@ -14,8 +14,6 @@ import viewportStore from '../../stores/viewport'
  * @returns Boolean indicating if content spans multiple lines.
  */
 const useMultiline = (editableRef: RefObject<HTMLElement>) => {
-  // Ref to prevent setting the same multiline state multiple times
-  const isMultilineRef = useRef(false)
   // State for multiline detection
   const [isMultiline, setIsMultiline] = useState(false)
   // Get current fontSize
@@ -33,16 +31,10 @@ const useMultiline = (editableRef: RefObject<HTMLElement>) => {
     return editableRef.current!.clientHeight > singleLineThreshold
   }, [editableRef, fontSize])
 
-  /**
-   * Update multiline state only when it actually changes to prevent calling of setState.
-   * Uses ref to track previous state and avoid redundant setState calls.
-   */
+  // Update multiline state
   const updateMultiline = useCallback(() => {
     const multilineState = calculateMultiline()
-    if (isMultilineRef.current !== multilineState) {
-      isMultilineRef.current = multilineState
-      setIsMultiline(multilineState)
-    }
+    setIsMultiline(multilineState)
   }, [calculateMultiline])
 
   // Two effects for immediate and fallback detection
