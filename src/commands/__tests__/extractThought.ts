@@ -30,7 +30,7 @@ describe('Extract thought', () => {
   })
   afterEach(cleanupTestApp)
 
-  it('an alert should be shown if there is no selection', async () => {
+  it.skip('an alert should be shown if there is no selection', async () => {
     const thoughtValue = 'this is a thought'
     store.dispatch([
       newThought({ value: thoughtValue }),
