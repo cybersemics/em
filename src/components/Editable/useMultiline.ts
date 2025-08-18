@@ -1,92 +1,61 @@
-import { RefObject, useCallback, useLayoutEffect, useState } from 'react'
+import { RefObject, useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import useLayoutAnimationFrameEffect from '../../hooks/useLayoutAnimationFrameEffect'
 import editingValueStore from '../../stores/editingValue'
 import viewportStore from '../../stores/viewport'
 
 /**
- * Custom hook for detecting if a thought is multiline.
+ * Detects if a thought is multiline using height measurement.
  *
- * Uses two effects to detect multiline content.
- * - Height-based detection with threshold to account for padding and line-height differences
- * - Immediate synchronous updates to prevent flickering.
+ * Threshold: fontSize * 2 + 4px buffer
+ * Performance optimized to avoid re-renders during typing.
  *
- * Threshold calculation: fontSize * 2 + 4px buffer
- * - fontSize * 2: Accounts for line-height of 2 for single-line thoughts
- * - +4px buffer: Accounts for padding and subtle line-height variations.
- *
- * Features:
- * - Handles cases where DOM elements don't exist yet (e.g., collapsed thoughts)
- * - Prevents layout flickering by updating before browser paints
- * - Uses dual effects for reliability and edge case handling - calculating height for the case of delay of DOM update
- * - Encapsulates fontSize selector to reduce prop drilling
- * - Follows React best practices (no DOM access during render).
- *
- * @param editableRef - Reference to the editable element containing the thought text.
- * @returns Boolean indicating if the thought content spans multiple lines.
+ * @param editableRef - Reference to the editable element.
+ * @returns Boolean indicating if content spans multiple lines.
  */
 const useMultiline = (editableRef: RefObject<HTMLElement>) => {
+  // Ref to prevent setting the same multiline state multiple times
+  const isMultilineRef = useRef(false)
+  // State for multiline detection
+  const [isMultiline, setIsMultiline] = useState(false)
   // Get current fontSize
   const fontSize = useSelector(state => state.fontSize)
-  // To Detect immediate editing value change
-  const editingValue = editingValueStore.useSelector(state => state)
-  // To Detect device width change
-  const contentWidth = viewportStore.useSelector(state => state.contentWidth)
   /**
-   * Calculates whether the thought content is multiline based on DOM measurements.
-   *
-   * Detection Logic:
-   * 1. Early return if DOM elements don't exist yet
-   * 2. Calculate single line threshold: fontSize * 2 + 4px buffer
-   * - fontSize * 2: Accounts for line-height of 2 for single-line thoughts
-   * - +4px buffer: Accounts for padding and subtle line-height variations
-   * 3. Check if content height exceeds the threshold.
-   *
-   * This approach ensures accurate detection while accounting for CSS differences
-   * between single-line (line-height: 2) and multiline (line-height: 1.25) modes.
+   * Calculate if content is multiline by comparing element height to threshold.
+   * Threshold: fontSize * 2 + 4px buffer for padding and line-height variations.
    */
   const calculateMultiline = useCallback(() => {
     if (!editableRef.current) {
       return false
     }
 
-    // Single line height threshold with buffer for padding and line-height differences
-    const singleLineThreshold = fontSize * 2 + 4 // 4px buffer for padding and line-height variations
-
-    // Check if content height is greater than the threshold
-    return editableRef.current.clientHeight > singleLineThreshold
-    // calculateMultiline function should be recreated for changes of contentWidth, fontSize and editingValue
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editableRef, contentWidth, fontSize, editingValue])
-
-  // State for multiline detection
-  const [isMultiline, setIsMultiline] = useState(false)
+    const singleLineThreshold = fontSize * 2 + 4
+    return editableRef.current!.clientHeight > singleLineThreshold
+  }, [editableRef, fontSize])
 
   /**
-   * Two effects for multiline detection:
-   *
-   * 1. UseLayoutEffect: Immediate synchronous update to prevent flickering
-   * - Runs synchronously after DOM mutations but before browser paints
-   * - Ensures line-height changes happen immediately without visual glitches
-   * - Handles most common cases: initial render, content changes, window resize.
-   *
-   * 2. UseLayoutAnimationFrameEffect: Asynchronous fallback for edge cases
-   * - Runs on next animation frame to catch any missed changes
-   * - Handles edge cases where DOM updates are delayed or batched
-   * - Provides backup detection for maximum reliability.
-   *
-   * This approach ensures:
-   * - No flickering during rapid content changes
-   * - No missed updates due to browser timing issues
-   * - Reliable handling of edge cases.
+   * Update multiline state only when it actually changes to prevent calling of setState.
+   * Uses ref to track previous state and avoid redundant setState calls.
    */
-  useLayoutEffect(() => {
-    setIsMultiline(calculateMultiline())
+  const updateMultiline = useCallback(() => {
+    const multilineState = calculateMultiline()
+    if (isMultilineRef.current !== multilineState) {
+      isMultilineRef.current = multilineState
+      setIsMultiline(multilineState)
+    }
   }, [calculateMultiline])
 
-  useLayoutAnimationFrameEffect(() => {
-    setIsMultiline(calculateMultiline())
-  }, [calculateMultiline])
+  // Two effects for immediate and fallback detection
+  useLayoutEffect(updateMultiline, [updateMultiline])
+  useLayoutAnimationFrameEffect(updateMultiline, [updateMultiline])
+
+  // Detect editing value changes
+  editingValueStore.useLayoutEffect(updateMultiline)
+  editingValueStore.useLayoutAnimationFrameEffect(updateMultiline)
+
+  // Detect viewport changes
+  viewportStore.useLayoutEffect(updateMultiline)
+  viewportStore.useLayoutAnimationFrameEffect(updateMultiline)
 
   return isMultiline
 }
