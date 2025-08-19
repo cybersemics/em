@@ -6,6 +6,7 @@ import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
+import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
@@ -206,10 +207,9 @@ describe('all platforms', () => {
       return selection && selection.rangeCount > 0 && selection.focusNode?.textContent === 'first'
     })
 
-    const offset = await getSelection().focusOffset
-    // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
-    const focusNodeType = await getSelection().focusNode?.nodeType
-    expect(offset).toBe(focusNodeType === Node.TEXT_NODE ? 'first'.length : 1)
+    // type x to verify that the caret is at the end of the previous thought
+    await keyboard.type('x')
+    expect(await getEditingText()).toBe('firstx')
   })
 
   it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
