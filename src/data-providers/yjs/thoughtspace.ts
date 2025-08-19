@@ -567,7 +567,7 @@ export const replicateThought = async (
 ): Promise<Thought | undefined> => {
   const docKey = docKeys.get(id)
   if (!docKey) {
-    throw new Error(`replicateThought: Missing docKey for thought ${id}`)
+    console.warn(`replicateThought: Missing docKey for thought ${id}`);
   }
   const children = await replicateChildren(docKey, { background, onDoc, remote })
   const child = children?.find(child => child.id === id)

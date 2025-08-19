@@ -1,3 +1,4 @@
+import { act } from 'react'
 import { findAllByLabelText, screen } from '@testing-library/react'
 import { extractThoughtActionCreator as extractThought } from '../../actions/extractThought'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
@@ -6,6 +7,10 @@ import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import testTimer from '../../test-helpers/testTimer'
+
+
+const timer = testTimer()
 
 /**
  * Set range selection.
@@ -23,7 +28,6 @@ const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd
   return range.toString()
 }
 
-// TODO: Broken with LayoutTree. Skip for now since this is a low priority.
 describe('Extract thought', () => {
   beforeEach(async () => {
     await createTestApp()
@@ -38,7 +42,10 @@ describe('Extract thought', () => {
       setCursor([thoughtValue]),
     ])
 
-    store.dispatch([extractThought()])
+    await act(vi.runOnlyPendingTimersAsync)
+
+    store.dispatch(extractThought())
+    await timer.runAllAsync()
 
     const alert = await screen.findByText('No text selected to extract')
     expect(alert).toBeTruthy()
@@ -55,39 +62,51 @@ describe('Extract thought', () => {
       setCursor([thoughtValue]),
     ])
 
+    await act(vi.runOnlyPendingTimersAsync)
+
     const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()
 
     const selectedText = setSelection(thought!, 10, 17)
     store.dispatch([extractThought()])
+    await timer.runAllAsync()
 
     const updatedThought = await findThoughtByText(thoughtValue.slice(0, 9))
     expect(updatedThought?.textContent).toBeTruthy()
+    await timer.runAllAsync()
 
     const createdThought = await findThoughtByText(selectedText)
     expect(createdThought).toBeTruthy()
+    await timer.runAllAsync()
 
     // created thought gets appended to the end
     const thoughtChildrenWrapper = thought!.closest('div[aria-label=tree-node]')?.lastElementChild as HTMLElement
     const thoughtChildren = await findAllByLabelText(thoughtChildrenWrapper, 'thought')
+    await timer.runAllAsync()
 
     expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['this is a'])
   })
 
   it('the cursor does not get updated on child creation', async () => {
+    await timer.runAllAsync()
     const thoughtValue = 'this is a test thought'
     store.dispatch([newThought({ value: thoughtValue }), setCursor([thoughtValue])])
+    await timer.runAllAsync()
 
     const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()
+    await timer.runAllAsync()
 
     const selectedText = setSelection(thought!, 10, 22)
     store.dispatch([extractThought()])
+    await timer.runAllAsync()
 
     const createdThought = await findThoughtByText(selectedText)
     expect(createdThought).toBeTruthy()
+    await timer.runAllAsync()
 
     const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
+    await timer.runAllAsync()
 
     expect(cursorThoughts).toMatchObject([{ value: thoughtValue.slice(0, 9) }])
   })
