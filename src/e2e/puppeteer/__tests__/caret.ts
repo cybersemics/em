@@ -1,23 +1,21 @@
 import { KnownDevices } from 'puppeteer'
+import gestures from '../../../test-helpers/gestures'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
-import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
-import retry from '../helpers/retry'
+import swipe from '../helpers/swipe'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
-import waitForSelectionNode from '../helpers/waitForSelectionNode'
-import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 
-vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('all platforms', () => {
   // TODO: Why is this failing?
@@ -188,20 +186,27 @@ describe('all platforms', () => {
 
     await paste(importText)
 
-    await press('ArrowUp')
+    const editableNodeHandle = await waitForEditable('first')
+    // click on the editable at the end of the thought
+    await click(editableNodeHandle, { offset: 5 })
 
+    // press enter to create a new empty thought
     await press('Enter')
 
+    // verify that the new thought is empty
+    expect(await getEditingText()).toBe('')
+
+    // press backspace to delete the empty thought
     await press('Backspace')
 
-    // Wait for selection node to be the previous thought with offset at end
-    await waitForSelectionNode('first', 'first'.length)
+    // Verify that the caret moved to the end of the previous thought "first"
+    const currentThoughtText = await getEditingText()
+    expect(currentThoughtText).toBe('first')
 
-    // assert caret is at the end of the previous thought by typing a character
-    await keyboard.type('x')
-
-    // asserting "firstx" proves that the caret is at the end of the previous thought
-    expect(await getEditingText()).toBe('firstx')
+    const offset = await getSelection().focusOffset
+    // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
+    const focusNodeType = await getSelection().focusNode?.nodeType
+    expect(offset).toBe(focusNodeType === Node.TEXT_NODE ? 'first'.length : 1)
   })
 
   it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
@@ -242,8 +247,8 @@ it('clicking backspace when the caret is at the end of a thought should delete a
 
 describe('mobile only', () => {
   beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 11'])
-  }, 5000)
+    await emulate(KnownDevices['iPhone 15 Pro'])
+  })
 
   it('After categorize, the caret should be on the new thought', async () => {
     const importText = `
@@ -252,20 +257,17 @@ describe('mobile only', () => {
 
     await paste(importText)
 
-    await clickThought('b')
+    const editableHandle = await waitForEditable('b')
+    await click(editableHandle, { edge: 'right' })
 
-    await waitForSelector('[aria-label="Categorize"]')
+    // perform a categorize gesture at thought b
+    await swipe(gestures.categorizeThought, true)
 
-    // The tap on the Categorize button sometimes doesn’t register under mobile emulation
-    // When that happens, the action never fires, no new empty thought is created, and waitForSelectionNode('',0) times out.
-    await retry(
-      async () => {
-        await click('[aria-label="Categorize"]')
-        // if the action was successful, the selection node will be the new empty thought with offset 0
-        await waitForSelectionNode('', 0, 400)
-      },
-      { attempts: 2, delayMs: 100 },
-    )
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('')
+
+    const offset = await getSelection().focusOffset
+    expect(offset).toBe(0)
   })
 
   // TODO: waitForHiddenEditable is broken after virtualizing thoughts
