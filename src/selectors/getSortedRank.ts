@@ -1,5 +1,4 @@
 import State from '../@types/State'
-import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { compareReasonable, compareReasonableDescending } from '../util/compareThought'
 import noteValue from '../util/noteValue'
@@ -8,7 +7,7 @@ import getSortPreference from './getSortPreference'
 import thoughtToPath from './thoughtToPath'
 
 /** Calculates the rank for a given index in a sorted array of thoughts. */
-const calculateRank = (thoughts: Thought[], index: number, id?: string): number => {
+const calculateRank = (thoughts: { rank: number }[], index: number): number => {
   // if there is no such child, return the rank of the last child + 1
   if (index === -1) {
     return (thoughts[thoughts.length - 1]?.rank || 0) + 1
@@ -18,17 +17,7 @@ const calculateRank = (thoughts: Thought[], index: number, id?: string): number 
     return thoughts[0].rank - 1
   }
   // otherwise, return the rank at the halfway point between the previous child and the next child
-  // When calculating rank for a thought that's currently being sorted, we need to exclude it from the comparison
-  // to avoid it interfering with its own position calculation
-  let prevThought = thoughts[index - 1]
-  // If the previous thought is the same as the one being sorted, use the one before it
-  if (prevThought.id === id && thoughts[index - 2]) prevThought = thoughts[index - 2]
-
-  let nextThought = thoughts[index]
-  // If the next thought is the same as the one being sorted, use the one after it
-  if (nextThought.id === id && thoughts[index + 1]) nextThought = thoughts[index + 1]
-
-  return (prevThought.rank + nextThought.rank) / 2
+  return (thoughts[index - 1].rank + thoughts[index].rank) / 2
 }
 
 /** Gets the new rank of a value to be inserted into a sorted context. */
@@ -40,16 +29,6 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
   const sortPreference = getSortPreference(state, id)
   const isDescending = sortPreference.direction === 'Desc'
   const thoughts = children.filter(thought => !state.cursor || thought.id !== state.cursor[state.cursor.length - 1])
-
-  let editedThought: Thought | undefined = undefined
-  // Find the thought that matches the value being sorted
-  // If multiple thoughts have the same value, use the most recently updated one
-  // This handles edge cases where duplicate values might exist
-  for (const thought of thoughts) {
-    if (thought.value === value) {
-      editedThought = (editedThought ? editedThought.lastUpdated : 0) > thought.lastUpdated ? editedThought : thought
-    }
-  }
 
   // Handle Created/Updated sorting
   if (sortPreference.type === 'Created' || sortPreference.type === 'Updated') {
@@ -68,20 +47,16 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
     return calculateRank(thoughtsVisible, index)
   }
 
+  // Extract thoughts which are not same as sorting value
+  const filteredThoughts = children.filter(thought => thought.value !== value)
   // For alphabetical sorting
-  const index = children.findIndex(child => {
-    const compareFn = isDescending ? compareReasonableDescending : compareReasonable
-    const compareResult = compareFn(child.value, value)
-    // If values are equal, use creation timestamp as a tie-breaker for consistent ordering
-    // This ensures stable sorting when multiple thoughts have the same value
-    return compareResult === 0
-      ? compareReasonable(`${child.created}`, `${editedThought?.created}`) !== -1
-      : compareResult !== -1
-  })
+  const index = filteredThoughts.findIndex(child =>
+    isDescending
+      ? compareReasonableDescending(child.value, value) !== -1
+      : compareReasonable(child.value, value) !== -1,
+  )
 
-  // Pass the edited thought's ID to exclude it from rank calculations
-  // This prevents the thought from interfering with its own sorting position
-  return calculateRank(children, index, editedThought?.id)
+  return calculateRank(filteredThoughts, index)
 }
 
 export default getSortedRank

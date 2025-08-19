@@ -298,7 +298,7 @@ const ThoughtContainer = ({
 
   // check if the cursor is editing a thought directly
   const isEditing = useSelector(state => equalPath(state.cursor, path))
-  const isEditingRef = useRef(isEditing)
+  const prevEditingRef = useRef(isEditing)
 
   const isPublishChild = useSelector(state => !state.search && publishMode() && simplePath.length === 2)
   const publish = useSelector(state => !state.search && publishMode())
@@ -324,7 +324,7 @@ const ThoughtContainer = ({
   )
   const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
-  const previousValueRef = useRef(value)
+  const prevValueRef = useRef(value)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
 
@@ -522,9 +522,9 @@ const ThoughtContainer = ({
   })
 
   useEffect(() => {
-    const prevValue = previousValueRef.current || ''
-    const isFocusLostAndUpdated = !isEditing && isEditing !== isEditingRef.current && prevValue !== value
-    if (!isEditing) previousValueRef.current = value
+    const prevValue = prevValueRef.current || ''
+    const isFocusLostAndUpdated = !isEditing && isEditing !== prevEditingRef.current && prevValue !== value
+    if (!isEditing) prevValueRef.current = value
 
     if (isFocusLostAndUpdated && value) {
       // Dispatch editThought when other thought gets focus
@@ -539,7 +539,7 @@ const ThoughtContainer = ({
     }
 
     return () => {
-      isEditingRef.current = isEditing
+      prevEditingRef.current = isEditing
     }
   }, [isEditing, simplePath, rank, dispatch, value])
 
