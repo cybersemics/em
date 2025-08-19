@@ -1,5 +1,5 @@
-import { act } from 'react'
 import { findAllByLabelText, screen } from '@testing-library/react'
+import { act } from 'react'
 import { extractThoughtActionCreator as extractThought } from '../../actions/extractThought'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
@@ -8,7 +8,6 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
-
 
 const timer = testTimer()
 
