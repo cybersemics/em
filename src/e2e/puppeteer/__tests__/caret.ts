@@ -206,10 +206,7 @@ describe('all platforms', () => {
       return selection && selection.rangeCount > 0 && selection.focusNode?.textContent === 'first'
     })
 
-    const selection = window.getSelection()
-    if (!selection || selection.rangeCount === 0) return
-
-    const offset = selection.getRangeAt(0).endOffset
+    const offset = await getSelection().focusOffset
     // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
     const focusNodeType = await getSelection().focusNode?.nodeType
     expect(offset).toBe(focusNodeType === Node.TEXT_NODE ? 'first'.length : 1)
