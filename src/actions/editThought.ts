@@ -151,7 +151,6 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     ((((isDateInvolved && editingThoughtId !== editedThoughtId) || !isDateInvolved) && sortType === 'Alphabetical') ||
       sortType === 'Created' ||
       sortType === 'Updated')
-  console.log('isSortable', isSortable, newValue)
 
   const thoughtNew: Thought = {
     ...editedThought,
