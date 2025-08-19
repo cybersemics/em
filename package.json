@@ -1,6 +1,6 @@
 {
   "name": "em",
-  "version": "312.0.0",
+  "version": "313.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -117,7 +117,7 @@
     "react-contenteditable": "^3.3.7",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
-    "react-dnd-touch-backend": "patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@npm%253A16.0.1%23~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%3A%3Aversion=16.0.1&hash=77964d#~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch",
+    "react-dnd-touch-backend": "patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@npm%25253A16.0.1%2523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%253A%253Aversion=16.0.1&hash=77964d%23~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%3A%3Aversion=16.0.1&hash=33fdd5#~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch",
     "react-dom": "18.3.1",
     "react-error-boundary": "^4.1.2",
     "react-gravatar": "^2.6.3",

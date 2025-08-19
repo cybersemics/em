@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDragDropManager } from 'react-dnd'
 import { useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
 import { isTouch } from '../browser'
-import { TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
+import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import longPressStore from '../stores/longPressStore'
 import haptics from '../util/haptics'
 
@@ -21,25 +21,17 @@ const useLongPress = (
   const [pressing, setPressing] = useState(false)
   // Track isLocked state from longPressStore in local state
   const isLocked = longPressStore.useSelector(state => state.isLocked)
+  const longPressState = useSelector(state => state.longPress)
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
   const unmounted = useRef(false)
   const dragDropManager = useDragDropManager()
 
-  // The stop handler below does not run when drag-and-drop is active.
-  // Also, endDrag in useDragAndDropThought unlocks the longPressStore before it does anything else.
-  // Unless it is prevented from doing so, the main effect below this one will re-run when isLocked changes to false,
-  // but pressing is still true, triggering onStart again.
   useEffect(() => {
-    if (!isLocked) setPressing(false)
-  }, [isLocked, setPressing])
-
-  useEffect(() => {
-    /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackned in react-dnd. */
+    /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackend in react-dnd. */
     const onStart = () => {
       if (isLocked || !pressing) return
 
-      globals.longpressing = true
       haptics.light()
       onLongPressStart?.()
       longPressStore.lock()
@@ -52,7 +44,7 @@ const useLongPress = (
       backend.options.rootElement.addEventListener('dragStart', onStart)
 
       return () => backend.options.rootElement.removeEventListener('dragStart', onStart)
-    } else {
+    } else if (pressing) {
       clearTimeout(timerIdRef.current)
       /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
       // cast Timeout to number for compatibility with clearTimeout
@@ -61,6 +53,15 @@ const useLongPress = (
       return () => clearTimeout(timerIdRef.current)
     }
   }, [delay, dragDropManager, isLocked, onLongPressStart, pressing])
+
+  // Desktop can initiate drag-and-drop without waiting for a long press, so the timer does generate an
+  // 'Invalid longPress transition' error unless it cleans up the timer. This error doesn't have any effect
+  // because no state transition occurs. (#3173)
+  useEffect(() => {
+    if (pressing && timerIdRef.current && longPressState === LongPressState.DragInProgress) {
+      clearTimeout(timerIdRef.current)
+    }
+  }, [longPressState, pressing])
 
   /** On mouseDown or touchStart, mark that the press has begun so that when the 'start' event fires in react-dnd,
    * we will know which element is being long-pressed. */
@@ -83,12 +84,6 @@ const useLongPress = (
       clearTimeout(timerIdRef.current)
       timerIdRef.current = 0
       longPressStore.unlock()
-
-      // If not longpressing, it means that the long press was canceled by a move event.
-      // in this case, onLongPressEnd should not be called, since it was already called by the move event.
-      if (!globals.longpressing) return
-
-      globals.longpressing = false
 
       // If a long press occurred, mark it as not canceled
       onLongPressEnd?.()
@@ -126,6 +121,8 @@ const useLongPress = (
       // disable Android context menu
       // does not work to prevent iOS long press to select behavior
       onContextMenu,
+      // onMouseUp is not called at the end of a drag, but onDragEnd is called while the long press is still ongoing on mobile (#3173)
+      onDragEnd: !isTouch ? stop : undefined,
       // mousedown and mouseup can trigger on mobile when long tapping on the thought outside the editable, so make sure to only register touch handlers
       onMouseDown: !isTouch ? start : undefined,
       onMouseUp: !isTouch ? stop : undefined,

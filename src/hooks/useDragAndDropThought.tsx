@@ -12,8 +12,6 @@ import State from '../@types/State'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { alertActionCreator as alert } from '../actions/alert'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
-import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
-import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { longPressActionCreator as longPress } from '../actions/longPress'
@@ -21,8 +19,8 @@ import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType, LongPressState } from '../constants'
+import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
@@ -91,15 +89,14 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
     zone: DragThoughtZone.Thoughts,
   }))
 
-  store.dispatch([
-    dragInProgress({
-      value: true,
+  store.dispatch(
+    longPress({
+      value: LongPressState.DragInProgress,
       draggingThoughts: draggingThoughts.map(item => item.simplePath),
       sourceZone: DragThoughtZone.Thoughts,
       ...(offset != null ? { offset } : null),
     }),
-    longPress({ value: LongPressState.DragInProgress }),
-  ])
+  )
 
   return draggingThoughts
 }
@@ -108,15 +105,17 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
 const endDrag = () => {
   // Reset the lock variable to allow immediate long press after drag
   longPressStore.unlock()
-  globals.longpressing = false
+
+  // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
+  // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
+  // This event blocking is initiated by onLongPressStart in useDragHold, and when the drag ends, we want to allow scrolling again.
+  allowTouchToScroll(true)
 
   // Wait till the next tick before ending dragInProgress.
   // This allows onTap to be aborted in Editable to prevent the cursor from moving at the end of a drag.
   // If this delay causes a regression, then we will need to find a different way to prevent the cursor from moving at the end of a drag.
   setTimeout(() => {
     store.dispatch([
-      dragInProgress({ value: false }),
-      dragHold({ value: false }),
       (dispatch, getState) => {
         if (getState().alert?.alertType === AlertType.DragAndDropHint) {
           dispatch(alert(null))
@@ -139,7 +138,7 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
-  if (!state.dragInProgress) return false
+  if (state.longPress !== LongPressState.DragInProgress) return false
 
   const item = monitor.getItem() as DragThoughtOrFiles
   const draggedItems = item as DragThoughtItem[]
@@ -320,7 +319,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
 
   // Check if this thought is part of a multiselect drag operation
   const isDraggingMultiple = useSelector(state => {
-    if (!state.dragInProgress || !state.draggingThoughts) return false
+    if (state.longPress !== LongPressState.DragInProgress || !state.draggingThoughts) return false
     return state.draggingThoughts.some(draggedPath => equalPath(draggedPath, propsTypes.simplePath))
   })
 
