@@ -199,6 +199,8 @@ describe('all platforms', () => {
     // press backspace to delete the empty thought
     await press('Backspace')
 
+    // this is necessary because sometimes in CI, the caret is not immediately moved to the end of the previous thought
+    // without this, the test will intermittently fail in CI
     await waitUntil(() => {
       const selection = window.getSelection()
       return selection && selection.rangeCount > 0 && selection.focusNode?.textContent === 'first'
