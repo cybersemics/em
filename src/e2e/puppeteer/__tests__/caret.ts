@@ -264,6 +264,8 @@ describe('mobile only', () => {
     await click(editableHandle, { edge: 'right' })
 
     // perform a categorize gesture at thought b
+    // previously this was done by waiting for categorize selector and clicking it from the toolbar
+    // in CI and especially in mobile emulation sometimes the click was not registered due to which categorize operation was never performed, hence assertions were failing intermittently
     await swipe(gestures.categorizeThought, true)
 
     const textContext = await getSelection().focusNode?.textContent
