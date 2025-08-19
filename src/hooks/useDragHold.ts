@@ -7,7 +7,6 @@ import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { LongPressState } from '../constants'
-import allowTouchToScroll from '../device/allowTouchToScroll'
 import hasMulticursor from '../selectors/hasMulticursor'
 import longPressStore from '../stores/longPressStore'
 import useLongPress from './useLongPress'
@@ -35,11 +34,6 @@ const useDragHold = ({
   const onLongPressStart = useCallback(() => {
     if (disabled) return
     setIsPressed(true)
-
-    // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
-    // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
-    // Calling preventDefault on all touchmove events blocks scrolling entirely, but calling it once long press begins can prevent buggy behavior.
-    allowTouchToScroll(false)
     dispatch(longPress({ value: LongPressState.DragHold, simplePath, sourceZone }))
   }, [disabled, dispatch, simplePath, sourceZone])
 
@@ -49,9 +43,6 @@ const useDragHold = ({
 
     setIsPressed(false)
 
-    // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
-    // but endDrag in useDragAndDropThought will happen instead.
-    allowTouchToScroll(true)
     dispatch((dispatch, getState) => {
       const state = getState()
 
