@@ -83,7 +83,6 @@ const useLongPress = (
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(() => {
     setPressing(false)
-    longPressStore.unlock()
 
     // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
     // but endDrag in useDragAndDropThought will happen instead.
@@ -93,6 +92,7 @@ const useLongPress = (
     // This gives other components a chance to short circuit.
     // We can't stop propagation here without messing up other components like Bullet.
     setTimeout(() => {
+      longPressStore.unlock()
       clearTimeout(timerIdRef.current)
       timerIdRef.current = 0
 
