@@ -1,5 +1,6 @@
 import Direction from '../../../@types/Direction'
 import GesturePath from '../../../@types/GesturePath'
+import sleep from '../../../util/sleep'
 import { page } from '../setup'
 
 /**
@@ -39,8 +40,13 @@ const swipePoints = async (points: { x: number; y: number }[], complete: boolean
 
   await page.touchscreen.touchStart(start.x, start.y)
 
+  // Small delay to ensure touchStart is processed
+  await sleep(10)
+
   for (let i = 1; i < points.length; i++) {
     await move(points[i - 1].x, points[i - 1].y, points[i].x, points[i].y)
+    // Small delay between segments to help gesture recognition
+    await sleep(10)
   }
 
   if (complete) {
