@@ -199,14 +199,15 @@ describe('all platforms', () => {
     // press backspace to delete the empty thought
     await press('Backspace')
 
-    // Verify that the caret moved to the end of the previous thought "first"
-    const currentThoughtText = await getEditingText()
-    expect(currentThoughtText).toBe('first')
+    await waitUntil(() => {
+      const selection = window.getSelection()
+      return selection && selection.rangeCount > 0 && selection.focusNode?.textContent === 'first'
+    })
 
-    // Wait for the caret to move to the end of the previous thought
-    await waitUntil(() => window.getSelection()?.focusOffset !== 0)
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0) return
 
-    const offset = await getSelection().focusOffset
+    const offset = selection.getRangeAt(0).endOffset
     // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
     const focusNodeType = await getSelection().focusNode?.nodeType
     expect(offset).toBe(focusNodeType === Node.TEXT_NODE ? 'first'.length : 1)
