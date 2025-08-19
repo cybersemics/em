@@ -8,7 +8,7 @@ import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { clientId } from '../data-providers/yjs'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildren } from '../selectors/getChildren'
+import { getAllChildren, getAllChildrenSorted } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
@@ -16,11 +16,11 @@ import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import addContext from '../util/addContext'
+import { isDatePattern } from '../util/compareThought'
 import createChildrenMap from '../util/createChildrenMap'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
-import isDatePattern from '../util/isDatePattern'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -39,27 +39,26 @@ export interface editThoughtPayload {
   newValue: string
   path: SimplePath
   rankInContext?: number
-  forceSorting?: boolean
 }
 
 /** Changes the text of an existing thought. */
-const editThought = (
-  state: State,
-  { cursorOffset, force, oldValue, newValue, path, forceSorting }: editThoughtPayload,
-) => {
-  // Skip early return if forceSorting is true, allowing re-sorting without value change
-  // This is used when a thought loses focus and needs to be re-sorted
-  if (!forceSorting && (oldValue === newValue || isDivider(oldValue))) return state
+const editThought = (state: State, { cursorOffset, force, oldValue, newValue, path }: editThoughtPayload) => {
+  const editingThoughtId = state.cursor && head(state.cursor)
+  const editedThoughtId = head(path)
+  const editedThought = getThoughtById(state, editedThoughtId)
+  const siblings = editedThought?.parentId ? getAllChildrenSorted(state, editedThought.parentId) : []
+  const isDateInvolved = siblings.some(thought => isDatePattern(thought.value))
+
+  // If thought list contains a date, then should not quit early
+  // When updating a thought of date-involved thought list, oldValue and newValue are coming same as same value
+  if (!isDateInvolved && (oldValue === newValue || isDivider(oldValue))) return state
 
   // thoughts may exist for both the old value and the new value
   const lexemeIndex = { ...state.thoughts.lexemeIndex }
-  const editedThoughtId = head(path)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
   const lexemeOld = getLexeme(state, oldValue)
   const thoughtCollision = getLexeme(state, newValue)
-
-  const editedThought = getThoughtById(state, editedThoughtId)
 
   if (!editedThought) {
     console.error('editThought: Edited thought not found!')
@@ -144,21 +143,19 @@ const editThought = (
   const isNote = parentOfEditedThought.value === '=note'
   const sortPreference = getSortPreference(state, editedThought.parentId)
   const sortType = sortPreference.type
-  const editingThoughtId = state.cursor && head(state.cursor)
+  const isSortable =
+    newValue !== '' &&
+    // When sortType is Alphabetical, the thought list should be sorted for below cases:
+    // - the cursor is on a different thought AND list involves a date
+    // - thought list doesn't involve any date
+    ((((isDateInvolved && editingThoughtId !== editedThoughtId) || !isDateInvolved) && sortType === 'Alphabetical') ||
+      sortType === 'Created' ||
+      sortType === 'Updated')
 
   const thoughtNew: Thought = {
     ...editedThought,
     ...(editedThought.generating ? { generating: false } : null),
-    rank:
-      newValue !== '' &&
-      (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated') &&
-      // For non-date thoughts: always sort normally
-      // For date thoughts: only sort when cursor is not on the thought AND forceSorting is true
-      (!isDatePattern(newValue) ||
-        (editingThoughtId !== editedThoughtId && // Only sort when cursor is not on this thought
-          forceSorting)) // Only sort when explicitly requested (e.g., after losing focus)
-        ? getSortedRank(state, editedThought.parentId, newValue)
-        : editedThought.rank,
+    rank: isSortable ? getSortedRank(state, editedThought.parentId, newValue) : editedThought.rank,
     value: newValue,
     lastUpdated: timestamp(),
     updatedBy: clientId,

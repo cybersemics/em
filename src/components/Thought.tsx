@@ -12,6 +12,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
@@ -297,6 +298,7 @@ const ThoughtContainer = ({
 
   // check if the cursor is editing a thought directly
   const isEditing = useSelector(state => equalPath(state.cursor, path))
+  const isEditingRef = useRef(isEditing)
 
   const isPublishChild = useSelector(state => !state.search && publishMode() && simplePath.length === 2)
   const publish = useSelector(state => !state.search && publishMode())
@@ -322,6 +324,7 @@ const ThoughtContainer = ({
   )
   const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
+  const previousValueRef = useRef(value)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
 
@@ -517,6 +520,28 @@ const ThoughtContainer = ({
     value,
     isTableCol1,
   })
+
+  useEffect(() => {
+    const prevValue = previousValueRef.current || ''
+    const isFocusLostAndUpdated = !isEditing && isEditing !== isEditingRef.current && prevValue !== value
+    if (!isEditing) previousValueRef.current = value
+
+    if (isFocusLostAndUpdated && value) {
+      // Dispatch editThought when other thought gets focus
+      dispatch(
+        editThought({
+          oldValue: value,
+          newValue: value,
+          rankInContext: rank,
+          path: simplePath,
+        }),
+      )
+    }
+
+    return () => {
+      isEditingRef.current = isEditing
+    }
+  }, [isEditing, simplePath, rank, dispatch, value])
 
   // thought does not exist
   if (value == null) return null
