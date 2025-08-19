@@ -49,7 +49,7 @@ const DragAndDropFavorite = ({
     <div
       {...dragHoldResult.props}
       className={css({ overflow: 'auto' })}
-      data-testid='favorite-item'
+      data-testid='drag-and-drop-favorite'
       ref={node => dragSource(dropTarget(node))}
     >
       {!disableDragAndDrop && isHovering && (

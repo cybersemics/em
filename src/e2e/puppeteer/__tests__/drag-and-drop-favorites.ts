@@ -3,51 +3,37 @@ import clickThought from '../helpers/clickThought'
 import dragAndDropFavorite from '../helpers/dragAndDropFavorite'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 /** Get the order of favorites as displayed in the sidebar. */
-const getFavoritesOrder = async () => {
+const selectFavoritesText = async () => {
   const result = await page.evaluate(() => {
-    try {
-      // XPath to find all thought-links that are NOT in breadcrumbs, within favorite-items
-      const xpath = `//*[@data-testid='favorite-item']//*[@data-thought-link and not(ancestor::*[@aria-label='context-breadcrumbs'])]`
+    // XPath to find all thought-links that are NOT in breadcrumbs, within drag-and-drop-favorite
+    const xpath = `//*[@data-testid='drag-and-drop-favorite']//*[@data-thought-link and not(ancestor::*[@aria-label='context-breadcrumbs'])]`
 
-      const result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
+    const result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
 
-      if (result.snapshotLength === 0) {
-        console.warn('No favorite items found with XPath:', xpath)
-        return null
-      }
+    const links = Array.from({ length: result.snapshotLength }, (_, i) => {
+      const link = result.snapshotItem(i) as HTMLElement
+      return link.textContent?.trim() || ''
+    }).filter(text => text !== '')
 
-      const links = Array.from({ length: result.snapshotLength }, (_, i) => {
-        const link = result.snapshotItem(i) as HTMLElement
-        return link.textContent?.trim()?.toLowerCase() || ''
-      }).filter(text => text !== '')
-
-      return links
-    } catch (error) {
-      console.error('Error in XPath approach:', error)
-      return null
-    }
+    return links
   })
 
-  return result || []
+  return result
 }
 
 describe('favorites drag and drop', () => {
-  beforeEach(async () => {
-    await waitForSelector('[aria-label="Add to Favorites"]')
-  })
-
   it('should reorder favorites by dragging and dropping', async () => {
     await paste(`
       - a
       - b
       - c
       - d
+      - e
     `)
 
     // Add thoughts to favorites
@@ -68,12 +54,12 @@ describe('favorites drag and drop', () => {
     await page.locator('[data-testid="sidebar"]').wait()
 
     // Verify initial order
-    expect(await getFavoritesOrder()).toEqual(['a', 'b', 'c', 'd'])
+    expect(await selectFavoritesText()).toEqual(['a', 'b', 'c', 'd'])
 
     await dragAndDropFavorite('d', 'b', { position: 'before' })
 
     // Verify new order - d should now be before b
-    expect(await getFavoritesOrder()).toEqual(['a', 'd', 'b', 'c'])
+    expect(await selectFavoritesText()).toEqual(['a', 'd', 'b', 'c'])
   })
 
   it('should reorder favorites by dragging to the end or top of the list', async () => {
@@ -104,18 +90,18 @@ describe('favorites drag and drop', () => {
     await page.locator('[data-testid="sidebar"]').wait()
 
     // Verify initial order
-    expect(await getFavoritesOrder()).toEqual(['a', 'b', 'c', 'e'])
+    expect(await selectFavoritesText()).toEqual(['a', 'b', 'c', 'e'])
 
     // Drag "a" after "c"
     await dragAndDropFavorite('a', 'c', { position: 'after' })
 
     // Verify new order - a should now be after c
-    expect(await getFavoritesOrder()).toEqual(['b', 'c', 'a', 'e'])
+    expect(await selectFavoritesText()).toEqual(['b', 'c', 'a', 'e'])
 
     // Drag "e" before "b" (to the top)
     await dragAndDropFavorite('e', 'b', { position: 'before' })
 
     // Verify new order - c should now be before b
-    expect(await getFavoritesOrder()).toEqual(['e', 'b', 'c', 'a'])
+    expect(await selectFavoritesText()).toEqual(['e', 'b', 'c', 'a'])
   })
 })
