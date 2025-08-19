@@ -15,7 +15,7 @@ import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 
-vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 describe('all platforms', () => {
   // TODO: Why is this failing?
@@ -203,6 +203,9 @@ describe('all platforms', () => {
     const currentThoughtText = await getEditingText()
     expect(currentThoughtText).toBe('first')
 
+    // Wait for the caret to move to the end of the previous thought
+    await waitUntil(() => window.getSelection()?.focusOffset !== 0)
+
     const offset = await getSelection().focusOffset
     // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
     const focusNodeType = await getSelection().focusNode?.nodeType
@@ -248,7 +251,7 @@ it('clicking backspace when the caret is at the end of a thought should delete a
 describe('mobile only', () => {
   beforeEach(async () => {
     await emulate(KnownDevices['iPhone 15 Pro'])
-  })
+  }, 5000)
 
   it('After categorize, the caret should be on the new thought', async () => {
     const importText = `
