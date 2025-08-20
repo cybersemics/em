@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
 import Path from '../../@types/Path'
 import { isSafari, isTouch } from '../../browser'
+import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
 import preventAutoscroll from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
@@ -31,8 +32,8 @@ const useEditMode = ({
   const editing = useSelector(state => state.isKeyboardOpen)
   const isMulticursor = useSelector(hasMulticursor)
   const noteFocus = useSelector(state => state.noteFocus)
-  const dragHold = useSelector(state => state.dragHold)
-  const dragInProgress = useSelector(state => state.dragInProgress)
+  const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
+  const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
   const disabledRef = useRef(false)
   const editableNonce = useSelector(state => state.editableNonce)
   const showSidebar = useSelector(state => state.showSidebar)
@@ -84,15 +85,15 @@ const useEditMode = ({
         Also, setTimeout is frequently pushed into the next frame and the keyboard will intermittently close on iOS Safari.
         Replacing setTimeout with requestAnimationFrame guarantees (hopefully?) that it will be processed before the next repaint,
         keeping the keyboard open while rapidly deleting thoughts. (#3129)
-        
-        Using requestAnimationFrame for all platforms to prevent race conditions where the DOM hasn't fully updated
-        when selection.set() is called, particularly after cursor changes like backspace on empty thought.
-        This ensures the DOM is ready before positioning the caret.
-        */
-        if (isTouch && isSafari() && !selection.isThought()) {
-          asyncFocus()
+      */
+        if (isTouch && isSafari()) {
+          if (!selection.isThought()) {
+            asyncFocus()
+          }
+          requestAnimationFrame(setSelectionToCursorOffset)
+        } else {
+          setSelectionToCursorOffset()
         }
-        requestAnimationFrame(setSelectionToCursorOffset)
       }
     },
     // React Hook useEffect has missing dependencies: 'contentRef', 'editMode', and 'style?.visibility'.
