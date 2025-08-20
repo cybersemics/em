@@ -204,7 +204,7 @@ describe('all platforms', () => {
     // without this, the test will intermittently fail in CI
     await waitUntil(() => {
       const selection = window.getSelection()
-      return selection && selection.rangeCount > 0 && selection.focusNode?.textContent === 'first'
+      return selection && selection.focusOffset > 0 && selection.focusNode?.textContent === 'first'
     })
 
     // type x to verify that the caret is at the end of the previous thought

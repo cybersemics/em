@@ -84,29 +84,14 @@ const useEditMode = ({
         Also, setTimeout is frequently pushed into the next frame and the keyboard will intermittently close on iOS Safari.
         Replacing setTimeout with requestAnimationFrame guarantees (hopefully?) that it will be processed before the next repaint,
         keeping the keyboard open while rapidly deleting thoughts. (#3129)
-        
-        For non-Safari platforms, we only delay selection when there's a significant cursor change
-        (like after backspace on empty thought) to prevent race conditions without affecting
-        normal navigation like ArrowUp/Down which need immediate response.
-        */
+      */
         if (isTouch && isSafari()) {
           if (!selection.isThought()) {
             asyncFocus()
           }
           requestAnimationFrame(setSelectionToCursorOffset)
         } else {
-          // Check if this is a significant cursor change that might cause race conditions
-          const isSignificantCursorChange =
-            !selection.isThought() || (cursorOffset !== null && selection.offset() !== cursorOffset)
-
-          if (isSignificantCursorChange) {
-            // Use requestAnimationFrame for significant cursor changes to prevent race conditions
-            // This includes cases like backspace on empty thought, but not normal navigation
-            requestAnimationFrame(setSelectionToCursorOffset)
-          } else {
-            // Immediate selection for normal operations like ArrowUp/Down
-            setSelectionToCursorOffset()
-          }
+          setSelectionToCursorOffset()
         }
       }
     },
