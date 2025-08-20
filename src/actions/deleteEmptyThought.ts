@@ -97,7 +97,6 @@ const deleteEmptyThought = (state: State): State => {
       // if splitSource equals prev sibling thought id, then add an intervening space to preserve the original space while splitting from the source thought
       const valueNew = splitSource === prev.id ? prev.value + ' ' + value : prev.value + value
       const pathPrevNew = appendToPath(parentOf(simplePath), prev.id)
-      console.info('getTextContentFromHTML(prev.value) :', getTextContentFromHTML(prev.value))
 
       return reducerFlow([
         // change first thought value to concatenated value
@@ -129,11 +128,6 @@ const deleteEmptyThought = (state: State): State => {
           offset: getTextContentFromHTML(prev.value).length,
           isKeyboardOpen,
         }),
-
-        state => {
-          console.info('state :', state.cursorOffset)
-          return state
-        },
       ])(state)
     }
   }
