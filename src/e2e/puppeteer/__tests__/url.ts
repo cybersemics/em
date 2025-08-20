@@ -90,7 +90,6 @@ it('collapsed thought with url child', async () => {
       - https://github.com/cybersemics/em
   `)
 
-  await press('ArrowUp')
   await press('Escape')
 
   const image = await screenshot()
