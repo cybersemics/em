@@ -84,15 +84,15 @@ const useEditMode = ({
         Also, setTimeout is frequently pushed into the next frame and the keyboard will intermittently close on iOS Safari.
         Replacing setTimeout with requestAnimationFrame guarantees (hopefully?) that it will be processed before the next repaint,
         keeping the keyboard open while rapidly deleting thoughts. (#3129)
-      */
-        if (isTouch && isSafari()) {
-          if (!selection.isThought()) {
-            asyncFocus()
-          }
-          requestAnimationFrame(setSelectionToCursorOffset)
-        } else {
-          setSelectionToCursorOffset()
+        
+        Using requestAnimationFrame for all platforms to prevent race conditions where the DOM hasn't fully updated
+        when selection.set() is called, particularly after cursor changes like backspace on empty thought.
+        This ensures the DOM is ready before positioning the caret.
+        */
+        if (isTouch && isSafari() && !selection.isThought()) {
+          asyncFocus()
         }
+        requestAnimationFrame(setSelectionToCursorOffset)
       }
     },
     // React Hook useEffect has missing dependencies: 'contentRef', 'editMode', and 'style?.visibility'.
