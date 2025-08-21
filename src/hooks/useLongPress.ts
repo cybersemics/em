@@ -21,6 +21,7 @@ const useLongPress = (
 ) => {
   const [pressing, setPressing] = useState(false)
   // Track isLocked state from longPressStore in local state
+  const isLocked = longPressStore.useSelector(state => state.isLocked)
   const longPressState = useSelector(state => state.longPress)
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
@@ -30,7 +31,7 @@ const useLongPress = (
   useEffect(() => {
     /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackend in react-dnd. */
     const onStart = () => {
-      if (!pressing) return
+      if (isLocked || !pressing) return
 
       // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
       // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
@@ -57,7 +58,7 @@ const useLongPress = (
 
       return () => clearTimeout(timerIdRef.current)
     }
-  }, [delay, dragDropManager, onLongPressStart, pressing])
+  }, [delay, dragDropManager, isLocked, onLongPressStart, pressing])
 
   // Desktop can initiate drag-and-drop without waiting for a long press, so the timer does generate an
   // 'Invalid longPress transition' error unless it cleans up the timer. This error doesn't have any effect
@@ -86,12 +87,12 @@ const useLongPress = (
     // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
     // but endDrag in useDragAndDropThought will happen instead.
     allowTouchToScroll(true)
-    longPressStore.unlock()
 
     // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
     // This gives other components a chance to short circuit.
     // We can't stop propagation here without messing up other components like Bullet.
     setTimeout(() => {
+      longPressStore.unlock()
       clearTimeout(timerIdRef.current)
       timerIdRef.current = 0
 
