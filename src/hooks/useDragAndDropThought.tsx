@@ -70,7 +70,7 @@ const canDrag = (props: ThoughtContainerProps) => {
 }
 
 /** Handles drag start. */
-const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem[] => {
+const beginDrag = ({ path }: ThoughtContainerProps): DragThoughtItem[] => {
   const state = store.getState()
   const offset = selection.offset()
   const isMulticursorActive = hasMulticursor(state)
