@@ -6,7 +6,6 @@ import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
-import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
@@ -256,7 +255,6 @@ describe('mobile only', () => {
   }, 5000)
 
   it('After categorize, the caret should be on the new thought', async () => {
-    await hideHUD()
     const importText = `
     - a
       - b`
