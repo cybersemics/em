@@ -251,6 +251,8 @@ describe('isDatePattern', () => {
     expect(isDatePattern('1/31/2023')).toBe(true)
     expect(isDatePattern('12/31/2026')).toBe(true)
     expect(isDatePattern(' 6/21/2025 ')).toBe(false) // Trimming is now handled at call site
+    expect(isDatePattern('6/21/25')).toBe(true) // 6/21/2025
+    expect(isDatePattern('6/21/202')).toBe(true) // 6/21/0202
 
     // Valid written date patterns
     expect(isDatePattern('March 3, 2020')).toBe(true)
@@ -260,6 +262,7 @@ describe('isDatePattern', () => {
     expect(isDatePattern(' March 3, 2020 ')).toBe(false) // Trimming is now handled at call site
     expect(isDatePattern('march 3, 2020')).toBe(true) // Case-insensitive
     expect(isDatePattern('MARCH 3, 2020')).toBe(true) // Case-insensitive
+    expect(isDatePattern('March 3, 25')).toBe(true) // March 3, 2025
   })
 
   it('rejects invalid date patterns', () => {
@@ -275,8 +278,6 @@ describe('isDatePattern', () => {
     expect(isDatePattern('')).toBe(false)
 
     // Invalid year formats
-    expect(isDatePattern('6/21/25')).toBe(false) // 2-digit year
-    expect(isDatePattern('6/21/202')).toBe(false) // 3-digit year
     expect(isDatePattern('6/21/20255')).toBe(false) // 5-digit year
     expect(isDatePattern('6/21/abc')).toBe(false) // Non-numeric year
     expect(isDatePattern('6/21/2025/')).toBe(false) // Extra separator
@@ -293,7 +294,6 @@ describe('isDatePattern', () => {
     expect(isDatePattern('March 3rd')).toBe(false) // Ordinal not supported
     expect(isDatePattern('March 3, 2020,')).toBe(false) // Extra comma
     expect(isDatePattern('March 3 2020')).toBe(false) // Missing comma
-    expect(isDatePattern('March 3, 25')).toBe(false) // 2-digit year not supported
     expect(isDatePattern('Mar 3, 2020')).toBe(false) // Abbreviated month not supported
   })
 })
