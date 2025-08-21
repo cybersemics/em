@@ -11,6 +11,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { alertActionCreator as alert } from '../actions/alert'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
@@ -87,14 +88,15 @@ const beginDrag = ({ path }: ThoughtContainerProps): DragThoughtItem[] => {
     zone: DragThoughtZone.Thoughts,
   }))
 
-  store.dispatch(
+  store.dispatch([
     longPress({
       value: LongPressState.DragInProgress,
       draggingThoughts: draggingThoughts.map(item => item.simplePath),
       sourceZone: DragThoughtZone.Thoughts,
       ...(offset != null ? { offset } : null),
     }),
-  )
+    ...(hasMulticursor(state) ? [clearMulticursors()] : []),
+  ])
 
   return draggingThoughts
 }
