@@ -117,7 +117,7 @@ const StaticThought = ({
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
   // Detect if the thought content spans multiple lines
-  const multiline = useMultiline(editableRef)
+  const multiline = useMultiline(editableRef, isEditing)
 
   const placeholder = usePlaceholder({ isEditing, simplePath })
 

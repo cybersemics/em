@@ -1,7 +1,6 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import Store from '../@types/Store'
 import makeSelectorEffect from '../hooks/makeSelectorEffect'
-import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import ministore, { Ministore } from './ministore'
 
 /** Enhances a generic store with React hooks. */
@@ -19,18 +18,6 @@ const makeReactStore = <U extends Store<any>>(store: U) => {
       [cb],
     )
 
-  /** UseLayoutEffect hook that invokes a callback with current state synchronously after DOM mutations. */
-  const useChangeLayoutEffect = (cb: (state: T) => void) => {
-    const value = useSyncExternalStore(store.subscribe, () => store.getState())
-    useLayoutEffect(() => cb(value), [cb, value])
-  }
-
-  /** UseLayoutAnimationFrameEffect hook that invokes a callback with current state on next animation frame. */
-  const useChangeLayoutAnimationFrameEffect = (cb: (state: T) => void) => {
-    const value = useSyncExternalStore(store.subscribe, () => store.getState())
-    useLayoutAnimationFrameEffect(() => cb(value), [cb, value])
-  }
-
   function useSelector<U>(selector: (state: T) => U): U
   function useSelector(): T
   /** A hook that subscribes to a slice of the state. If no selector is given, subscribes to the whole state. */
@@ -46,8 +33,6 @@ const makeReactStore = <U extends Store<any>>(store: U) => {
   return {
     ...store,
     useEffect: useChangeEffect,
-    useLayoutEffect: useChangeLayoutEffect,
-    useLayoutAnimationFrameEffect: useChangeLayoutAnimationFrameEffect,
     useSelector: useSelector as <U>(selector: (state: T) => U) => U,
     useSelectorEffect: makeSelectorEffect(store),
     useState: useSelector as () => T,
