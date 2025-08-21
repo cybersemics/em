@@ -1,14 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
-import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { AlertType, LongPressState } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
-import longPressStore from '../stores/longPressStore'
 import useLongPress from './useLongPress'
 
 /** Adds event handlers to detect long press and set state.dragHold while the user is long pressing a thought in preparation for a drag. */
@@ -57,28 +55,6 @@ const useDragHold = ({
       ])
     })
   }, [disabled, dispatch, simplePath, toggleMulticursorOnLongPress])
-
-  // react-dnd stops propagation so onLongPressEnd sometimes doesn't get called.
-  // Therefore, disable isPressed as soon as we are dragging.
-  useEffect(() => {
-    dispatch((dispatch, getState) => {
-      const state = getState()
-
-      if (isDragging || state.longPress === LongPressState.DragHold) {
-        setIsPressed(false)
-        dispatch([alert(null)])
-
-        if (hasMulticursor(state)) {
-          dispatch(clearMulticursors())
-        }
-      }
-      // If we were dragging but now we're not, make sure to reset the lock
-      if (!isDragging && state.longPress === LongPressState.DragHold) {
-        // Reset the lock to allow immediate long press after drag ends
-        longPressStore.unlock()
-      }
-    })
-  }, [dispatch, isDragging])
 
   const props = useLongPress(onLongPressStart, onLongPressEnd)
 
