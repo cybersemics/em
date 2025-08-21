@@ -6,7 +6,7 @@ import clickThought from '../helpers/clickThought'
 import emulate from '../helpers/emulate'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
-import keyboard from '../helpers/keyboard'
+import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
@@ -16,7 +16,7 @@ import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 
-vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('all platforms', () => {
   // TODO: Why is this failing?
@@ -204,12 +204,14 @@ describe('all platforms', () => {
     // without this, the test will intermittently fail in CI
     await waitUntil(() => {
       const selection = window.getSelection()
-      return selection && selection.focusOffset > 0 && selection.focusNode?.textContent === 'first'
+      // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
+      const focusNodeType = selection?.focusNode?.nodeType
+      return (
+        selection &&
+        selection.focusNode?.textContent === 'first' &&
+        (Node.TEXT_NODE === focusNodeType ? selection.focusOffset === 'first'.length : selection.focusOffset === 1)
+      )
     })
-
-    // type x to verify that the caret is at the end of the previous thought
-    await keyboard.type('x')
-    expect(await getEditingText()).toBe('firstx')
   })
 
   it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
@@ -254,6 +256,7 @@ describe('mobile only', () => {
   }, 5000)
 
   it('After categorize, the caret should be on the new thought', async () => {
+    await hideHUD()
     const importText = `
     - a
       - b`
@@ -262,6 +265,9 @@ describe('mobile only', () => {
 
     const editableHandle = await waitForEditable('b')
     await click(editableHandle, { edge: 'right' })
+
+    // close keyboard
+    await clickBullet('b')
 
     // perform a categorize gesture at thought b
     // previously this was done by waiting for categorize selector and clicking it from the toolbar
