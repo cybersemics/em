@@ -6,7 +6,6 @@ import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOp
 import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import * as selection from '../device/selection'
-import longPressStore from '../stores/longPressStore'
 import haptics from '../util/haptics'
 
 /** Custom hook to manage long press.
@@ -19,8 +18,6 @@ const useLongPress = (
   delay: number = TIMEOUT_LONG_PRESS_THOUGHT,
 ) => {
   const [pressing, setPressing] = useState(false)
-  // Track isLocked state from longPressStore in local state
-  const isLocked = longPressStore.useSelector(state => state.isLocked)
   const longPressState = useSelector(state => state.longPress)
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
@@ -30,11 +27,10 @@ const useLongPress = (
   useEffect(() => {
     /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackend in react-dnd. */
     const onStart = () => {
-      if (isLocked || !pressing) return
+      if (!pressing) return
 
       haptics.light()
       onLongPressStart?.()
-      longPressStore.lock()
     }
 
     if (isTouch) {
@@ -52,7 +48,7 @@ const useLongPress = (
 
       return () => clearTimeout(timerIdRef.current)
     }
-  }, [delay, dragDropManager, isLocked, onLongPressStart, pressing])
+  }, [delay, dragDropManager, onLongPressStart, pressing])
 
   // Desktop can initiate drag-and-drop without waiting for a long press, so the timer does generate an
   // 'Invalid longPress transition' error unless it cleans up the timer. This error doesn't have any effect
@@ -83,9 +79,6 @@ const useLongPress = (
     setTimeout(() => {
       clearTimeout(timerIdRef.current)
       timerIdRef.current = 0
-      longPressStore.unlock()
-
-      // If a long press occurred, mark it as not canceled
       onLongPressEnd?.()
     }, 10)
   }, [onLongPressEnd, setPressing])
@@ -112,7 +105,6 @@ const useLongPress = (
   useEffect(() => {
     return () => {
       unmounted.current = true
-      longPressStore.unlock()
     }
   }, [])
 

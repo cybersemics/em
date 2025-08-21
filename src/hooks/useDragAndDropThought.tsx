@@ -33,7 +33,6 @@ import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
-import longPressStore from '../stores/longPressStore'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -103,9 +102,6 @@ const beginDrag = ({ path }: ThoughtContainerProps): DragThoughtItem[] => {
 
 /** Handles drag end. */
 const endDrag = () => {
-  // Reset the lock variable to allow immediate long press after drag
-  longPressStore.unlock()
-
   // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
   // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
   // This event blocking is initiated by onLongPressStart in useDragHold, and when the drag ends, we want to allow scrolling again.
