@@ -5,7 +5,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import { isSafari } from '../browser'
 import { AlertText, AlertType, LongPressState } from '../constants'
 import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -151,12 +150,6 @@ export const longPressActionCreator =
     }
 
     if (value === LongPressState.DragInProgress || previousValue === LongPressState.DragInProgress) {
-      // when at the top of the viewport, bump the scroll bar to prevent gitching in Safari mobile
-      // TODO: It still glitches out if you scroll back to the top during a drag
-      if (isSafari() && document.documentElement.scrollTop === 0) {
-        window.scrollTo(0, 1)
-      }
-
       dispatch(expandHoverUp())
       dispatch(expandHoverDown())
     }
