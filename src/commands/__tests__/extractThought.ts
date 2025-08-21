@@ -2,9 +2,10 @@ import { findAllByLabelText, screen } from '@testing-library/react'
 import { act } from 'react'
 import { extractThoughtActionCreator as extractThought } from '../../actions/extractThought'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import store from '../../stores/app'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import createTestApp from '../../test-helpers/createTestApp'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
@@ -31,7 +32,6 @@ describe('Extract thought', () => {
   beforeEach(async () => {
     await createTestApp()
   })
-  afterEach(cleanupTestApp)
 
   it('an alert should be shown if there is no selection', async () => {
     const thoughtValue = 'this is a thought'
@@ -54,6 +54,9 @@ describe('Extract thought', () => {
   })
 
   it('the selected part of a thought is extracted as a child thought', async () => {
+    initialize()
+    await timer.runAllAsync()
+
     const thoughtValue = 'this is a thought'
     store.dispatch([
       newThought({ value: thoughtValue }),
@@ -72,29 +75,26 @@ describe('Extract thought', () => {
 
     const updatedThought = await findThoughtByText(thoughtValue.slice(0, 9))
     expect(updatedThought?.textContent).toBeTruthy()
-    await timer.runAllAsync()
 
     const createdThought = await findThoughtByText(selectedText)
     expect(createdThought).toBeTruthy()
-    await timer.runAllAsync()
 
     // created thought gets appended to the end
     const thoughtChildrenWrapper = thought!.closest('div[aria-label=tree-node]')?.lastElementChild as HTMLElement
     const thoughtChildren = await findAllByLabelText(thoughtChildrenWrapper, 'thought')
     await timer.runAllAsync()
 
-    expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['this is a'])
+    expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['this is a thought'])
   })
 
   it('the cursor does not get updated on child creation', async () => {
-    await timer.runAllAsync()
     const thoughtValue = 'this is a test thought'
     store.dispatch([newThought({ value: thoughtValue }), setCursor([thoughtValue])])
-    await timer.runAllAsync()
+
+    await act(vi.runOnlyPendingTimersAsync)
 
     const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()
-    await timer.runAllAsync()
 
     const selectedText = setSelection(thought!, 10, 22)
     store.dispatch([extractThought()])
@@ -102,7 +102,6 @@ describe('Extract thought', () => {
 
     const createdThought = await findThoughtByText(selectedText)
     expect(createdThought).toBeTruthy()
-    await timer.runAllAsync()
 
     const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
 
