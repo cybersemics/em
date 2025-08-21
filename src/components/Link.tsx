@@ -34,6 +34,7 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
   return (
     <a
       tabIndex={-1}
+      data-thought-link
       className={cx(
         css(
           {

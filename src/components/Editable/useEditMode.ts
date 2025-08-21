@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
 import Path from '../../@types/Path'
 import { isSafari, isTouch } from '../../browser'
+import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
 import preventAutoscroll from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
@@ -31,8 +32,8 @@ const useEditMode = ({
   const editing = useSelector(state => state.isKeyboardOpen)
   const isMulticursor = useSelector(hasMulticursor)
   const noteFocus = useSelector(state => state.noteFocus)
-  const dragHold = useSelector(state => state.dragHold)
-  const dragInProgress = useSelector(state => state.dragInProgress)
+  const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
+  const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
   const disabledRef = useRef(false)
   const editableNonce = useSelector(state => state.editableNonce)
   const showSidebar = useSelector(state => state.showSidebar)

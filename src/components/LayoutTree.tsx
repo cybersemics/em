@@ -6,6 +6,7 @@ import { css, cx } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
+import { LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
@@ -17,6 +18,8 @@ import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import head from '../util/head'
+import parentOf from '../util/parentOf'
+import BulletCursorOverlay from './BulletCursorOverlay'
 import HoverArrow from './HoverArrow'
 import TreeNode from './TreeNode'
 
@@ -114,7 +117,7 @@ const LayoutTree = () => {
   const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
-  const dragInProgress = useSelector(state => state.dragInProgress)
+  const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
   const ref = useRef<HTMLDivElement | null>(null)
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
@@ -143,7 +146,11 @@ const LayoutTree = () => {
   // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
   const autofocusDepth = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return 0
+    if (
+      (state.longPress !== LongPressState.DragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) ||
+      !state.cursor
+    )
+      return 0
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
     return state.cursor.length + (isCursorLeaf ? -1 : 0)
   })
@@ -151,7 +158,11 @@ const LayoutTree = () => {
   // first uncle of the cursor used for DropUncle
   const cursorUncleId = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return null
+    if (
+      (state.longPress !== LongPressState.DragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) ||
+      !state.cursor
+    )
+      return null
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
     const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
     return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
@@ -215,6 +226,9 @@ const LayoutTree = () => {
     },
   )
 
+  // compare between state.cursor and the position of the thought
+  const cursorThoughtPositioned = treeThoughtsPositioned.find(thought => thought.isCursor)
+
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
@@ -258,6 +272,18 @@ const LayoutTree = () => {
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
       >
+        {cursorThoughtPositioned && (
+          <BulletCursorOverlay
+            isTableCol1={cursorThoughtPositioned.isTableCol1}
+            path={cursorThoughtPositioned.path}
+            simplePath={cursorThoughtPositioned.simplePath}
+            x={cursorThoughtPositioned.x}
+            y={cursorThoughtPositioned.y}
+            showContexts={cursorThoughtPositioned.showContexts}
+            width={cursorThoughtPositioned.width}
+            parentId={head(parentOf(cursorThoughtPositioned.path))}
+          />
+        )}
         <TransitionGroup>
           {treeThoughtsPositioned.map((thought, index) => (
             <TreeNode

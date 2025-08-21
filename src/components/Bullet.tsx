@@ -11,7 +11,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
-import { AlertType } from '../constants'
+import { AlertType, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
@@ -297,8 +297,8 @@ const BulletLeaf = ({
       data-bullet='leaf'
       ry={radius}
       rx={radius}
-      cy='298'
-      cx='297'
+      cy='300'
+      cx='300'
       style={{
         // allow .gray to define fill when missing
         // allow .graypulse to define fill when pending
@@ -366,10 +366,9 @@ const BulletParent = ({
 }
 
 /** A larger circle that surrounds the bullet of the cursor thought. */
-const BulletCursorOverlay = ({
+const BulletHighlightOverlay = ({
   isHighlighted,
 }: {
-  isEditing: boolean
   isHighlighted?: boolean
   leaf?: boolean
   publish?: boolean
@@ -409,7 +408,7 @@ const Bullet = ({
 }: BulletProps) => {
   const svgElement = useRef<SVGSVGElement>(null)
   const dispatch = useDispatch()
-  const dragHold = useSelector(state => state.dragHold)
+  const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
   const showContexts = useSelector(state => isContextViewActive(state, path))
   // if being edited and meta validation error has occured
   const invalid = useSelector(state => isEditing && state.invalidState)
@@ -584,9 +583,8 @@ const Bullet = ({
         ref={svgElement}
       >
         <g>
-          {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && !isQuickDropDeleteHovering && (
-            <BulletCursorOverlay
-              isEditing={isEditing}
+          {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && !isQuickDropDeleteHovering && (
+            <BulletHighlightOverlay
               isHighlighted={isHighlighted}
               leaf={leaf}
               publish={publish}

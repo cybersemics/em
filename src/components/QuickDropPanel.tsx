@@ -10,10 +10,10 @@ import DragThoughtZone from '../@types/DragThoughtZone'
 import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
-import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
+import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
-import { AlertText, AlertType, DELETE_VIBRATE_DURATION } from '../constants'
+import { AlertText, AlertType, DELETE_VIBRATE_DURATION, LongPressState } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
 import ellipsize from '../util/ellipsize'
@@ -58,7 +58,7 @@ const drop = (state: State, items: DragThoughtItem[]) => {
   }
 
   store.dispatch([
-    dragInProgress({ value: false }),
+    longPress({ value: LongPressState.Inactive }),
     // alert for multiple deleted thoughts will override the previous individual alert
     alert(
       `Removed ${pluralize('thought', items.length, true)}${items[0].zone === DragThoughtZone.Favorites ? ' from favorites' : ''}`,
@@ -156,7 +156,7 @@ const QuickDropPanel: FC = () => {
 
 /** Shows the QuickDropPanel when dragging. */
 const QuickDropController: FC = () => {
-  const dragInProgress = useSelector(state => state.dragInProgress)
+  const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
 
   return dragInProgress ? <QuickDropPanel /> : null
 }
