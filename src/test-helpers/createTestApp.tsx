@@ -5,7 +5,6 @@ import { TestBackend } from 'react-dnd-test-backend'
 import Await from '../@types/Await'
 import { clearActionCreator as clear } from '../actions/clear'
 import App from '../components/App'
-import * as db from '../data-providers/yjs/thoughtspace'
 import { initialize } from '../initialize'
 import store from '../stores/app'
 import storage from '../util/storage'
@@ -59,10 +58,6 @@ export const cleanupTestApp = async () => {
 
     store.dispatch(clear({ full: true }))
 
-    // run out timers before db.clear, otherwise pending calls to replicateThought may resolve after thoughts have been deleted, triggering the "Missing docKey for thought" error
-    await vi.runAllTimersAsync()
-
-    db.clear()
     await vi.runAllTimersAsync()
 
     // set url back to home

@@ -33,7 +33,7 @@ describe('Extract thought', () => {
   })
   afterEach(cleanupTestApp)
 
-  it.skip('an alert should be shown if there is no selection', async () => {
+  it('an alert should be shown if there is no selection', async () => {
     const thoughtValue = 'this is a thought'
     store.dispatch([
       newThought({ value: thoughtValue }),
@@ -105,7 +105,6 @@ describe('Extract thought', () => {
     await timer.runAllAsync()
 
     const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
-    await timer.runAllAsync()
 
     expect(cursorThoughts).toMatchObject([{ value: thoughtValue.slice(0, 9) }])
   })
