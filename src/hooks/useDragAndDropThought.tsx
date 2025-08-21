@@ -18,8 +18,7 @@ import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { ThoughtContainerProps } from '../components/Thought'
-import { AlertType, LongPressState } from '../constants'
-import allowTouchToScroll from '../device/allowTouchToScroll'
+import { LongPressState } from '../constants'
 import * as selection from '../device/selection'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
@@ -33,7 +32,6 @@ import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
-import longPressStore from '../stores/longPressStore'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -101,30 +99,6 @@ const beginDrag = ({ path }: ThoughtContainerProps): DragThoughtItem[] => {
   return draggingThoughts
 }
 
-/** Handles drag end. */
-const endDrag = () => {
-  // Reset the lock variable to allow immediate long press after drag
-  longPressStore.unlock()
-
-  // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
-  // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
-  // This event blocking is initiated by onLongPressStart in useDragHold, and when the drag ends, we want to allow scrolling again.
-  allowTouchToScroll(true)
-
-  // Wait till the next tick before ending dragInProgress.
-  // This allows onTap to be aborted in Editable to prevent the cursor from moving at the end of a drag.
-  // If this delay causes a regression, then we will need to find a different way to prevent the cursor from moving at the end of a drag.
-  setTimeout(() => {
-    store.dispatch([
-      (dispatch, getState) => {
-        if (getState().alert?.alertType === AlertType.DragAndDropHint) {
-          dispatch(alert(null))
-        }
-      },
-      longPress({ value: LongPressState.Inactive }),
-    ])
-  })
-}
 /** Memoized function that returns true if the thought can be dropped at the destination path. This does not need to account for hidden thoughts since they have pointer-events:none. This function will be called in a continuous loop by react-dnd so it needs to be fast. */
 const canDropPath = moize((from: Path, to: Path) => !isDescendantPath(to, from, { exclusive: true }), {
   // only needs to be big enough to cache the calls within a single drag
@@ -306,7 +280,6 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
-    end: () => endDrag(),
     collect: dragCollect,
   })
 

@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
 import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
+import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
 import longPressStore from '../stores/longPressStore'
 import haptics from '../util/haptics'
@@ -31,6 +32,11 @@ const useLongPress = (
     /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackend in react-dnd. */
     const onStart = () => {
       if (isLocked || !pressing) return
+
+      // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
+      // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
+      // Calling preventDefault on all touchmove events blocks scrolling entirely, but calling it once long press begins can prevent buggy behavior.
+      allowTouchToScroll(false)
 
       haptics.light()
       onLongPressStart?.()
@@ -77,13 +83,18 @@ const useLongPress = (
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(() => {
     setPressing(false)
+
+    // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
+    // but endDrag in useDragAndDropThought will happen instead.
+    allowTouchToScroll(true)
+
     // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
     // This gives other components a chance to short circuit.
     // We can't stop propagation here without messing up other components like Bullet.
     setTimeout(() => {
+      longPressStore.unlock()
       clearTimeout(timerIdRef.current)
       timerIdRef.current = 0
-      longPressStore.unlock()
 
       // If a long press occurred, mark it as not canceled
       onLongPressEnd?.()
