@@ -15,14 +15,12 @@ import viewportStore, { ViewportState } from '../../stores/viewport'
  * @returns Boolean indicating if content spans multiple lines.
  */
 const useMultiline = (editableRef: RefObject<HTMLElement>, isEditing?: boolean) => {
-  // State for multiline detection
-  const [isMultiline, setIsMultiline] = useState(false)
-  // To Detect immediate editing value change
+  const [multiline, setMultiline] = useState(false)
+  const fontSize = useSelector(state => state.fontSize)
+  // While editing, watch the current Value and trigger the layout effect
   const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
   // To Detect new thought is focused
   const editingCursor = useSelector(state => state.cursor)
-  // Get current fontSize
-  const fontSize = useSelector(state => state.fontSize)
 
   /**
    * Calculate if content is multiline by comparing element height to threshold.
@@ -33,7 +31,7 @@ const useMultiline = (editableRef: RefObject<HTMLElement>, isEditing?: boolean) 
 
     const singleLineThreshold = fontSize * 2 + 4
     // Update multiline state
-    setIsMultiline(editableRef.current!.clientHeight > singleLineThreshold)
+    setMultiline(editableRef.current!.clientHeight > singleLineThreshold)
   }, [editableRef, fontSize])
 
   // Two effects for immediate and fallback detection
@@ -44,7 +42,7 @@ const useMultiline = (editableRef: RefObject<HTMLElement>, isEditing?: boolean) 
   // re-measure when the screen is resized
   viewportStore.useSelectorEffect(calculateMultiline, selectInnerWidth)
 
-  return isMultiline
+  return multiline
 }
 
 export default useMultiline
