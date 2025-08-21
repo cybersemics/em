@@ -26,7 +26,7 @@ const useMultiline = (editableRef: RefObject<HTMLElement>, isEditing?: boolean) 
    * Calculate if content is multiline by comparing element height to threshold.
    * Threshold: fontSize * 2 + 4px buffer for padding and line-height variations.
    */
-  const calculateMultiline = useCallback(() => {
+  const updateMultiline = useCallback(() => {
     if (!editableRef.current) return
 
     const singleLineThreshold = fontSize * 2 + 4
@@ -35,12 +35,12 @@ const useMultiline = (editableRef: RefObject<HTMLElement>, isEditing?: boolean) 
   }, [editableRef, fontSize])
 
   // Two effects for immediate and fallback detection
-  useLayoutEffect(calculateMultiline, [calculateMultiline, editingValue, editingCursor])
-  useLayoutAnimationFrameEffect(calculateMultiline, [calculateMultiline, editingValue, editingCursor])
+  useLayoutEffect(updateMultiline, [updateMultiline, editingValue, editingCursor])
+  useLayoutAnimationFrameEffect(updateMultiline, [updateMultiline, editingValue, editingCursor])
 
   const selectInnerWidth = useCallback((state: ViewportState) => state.innerWidth, [])
   // re-measure when the screen is resized
-  viewportStore.useSelectorEffect(calculateMultiline, selectInnerWidth)
+  viewportStore.useSelectorEffect(updateMultiline, selectInnerWidth)
 
   return multiline
 }
