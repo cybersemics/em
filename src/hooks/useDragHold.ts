@@ -1,13 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
-import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { LongPressState } from '../constants'
-import allowTouchToScroll from '../device/allowTouchToScroll'
+import { AlertType, LongPressState } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
 import useLongPress from './useLongPress'
 
@@ -34,11 +32,6 @@ const useDragHold = ({
   const onLongPressStart = useCallback(() => {
     if (disabled) return
     setIsPressed(true)
-
-    // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
-    // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
-    // Calling preventDefault on all touchmove events blocks scrolling entirely, but calling it once long press begins can prevent buggy behavior.
-    allowTouchToScroll(false)
     dispatch(longPress({ value: LongPressState.DragHold, simplePath, sourceZone }))
   }, [disabled, dispatch, simplePath, sourceZone])
 
@@ -48,9 +41,6 @@ const useDragHold = ({
 
     setIsPressed(false)
 
-    // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
-    // but endDrag in useDragAndDropThought will happen instead.
-    allowTouchToScroll(true)
     dispatch((dispatch, getState) => {
       const state = getState()
 
@@ -59,26 +49,12 @@ const useDragHold = ({
         if (toggleMulticursorOnLongPress) dispatch(toggleMulticursor({ path: simplePath }))
       }
 
-      dispatch(longPress({ value: LongPressState.Inactive }))
+      dispatch([
+        state.alert?.alertType === AlertType.DragAndDropHint ? alert(null) : null,
+        longPress({ value: LongPressState.Inactive }),
+      ])
     })
   }, [disabled, dispatch, simplePath, toggleMulticursorOnLongPress])
-
-  // react-dnd stops propagation so onLongPressEnd sometimes doesn't get called.
-  // Therefore, disable isPressed as soon as we are dragging.
-  useEffect(() => {
-    dispatch((dispatch, getState) => {
-      const state = getState()
-
-      if (isDragging || state.longPress === LongPressState.DragHold) {
-        setIsPressed(false)
-        dispatch([alert(null)])
-
-        if (hasMulticursor(state)) {
-          dispatch(clearMulticursors())
-        }
-      }
-    })
-  }, [dispatch, isDragging])
 
   const props = useLongPress(onLongPressStart, onLongPressEnd)
 
