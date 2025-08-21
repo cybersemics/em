@@ -46,7 +46,12 @@ const DragAndDropFavorite = ({
   return (
     // Set overflow:auto so the drop target fully wraps its contents.
     // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
-    <div {...dragHoldResult.props} className={css({ overflow: 'auto' })} ref={node => dragSource(dropTarget(node))}>
+    <div
+      {...dragHoldResult.props}
+      className={css({ overflow: 'auto' })}
+      data-testid='drag-and-drop-favorite'
+      ref={node => dragSource(dropTarget(node))}
+    >
       {!disableDragAndDrop && isHovering && (
         <span
           className={cx(
@@ -181,7 +186,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
   const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
 
   return (
-    <div className='favorites'>
+    <div className='favorites' data-testid='favorites'>
       <div>
         {simplePaths.length > 0 ? (
           <div>

@@ -127,8 +127,8 @@ const AppComponent: FC = () => {
   useBodyAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
   useBodyAttribute('data-browser', /Chrome/.test(navigator.userAgent) ? 'chrome' : isSafari() ? 'safari' : 'other')
   useBodyAttributeSelector('data-color-mode', state => (theme(state) !== 'Light' ? 'dark' : 'light'))
-  useBodyAttributeSelector('data-drag-in-progress', state => state.dragInProgress)
-  useBodyAttributeSelector('data-drag-hold', state => (state.dragHold ? state.dragHold : 'false'))
+  useBodyAttributeSelector('data-drag-in-progress', state => state.longPress === LongPressState.DragInProgress)
+  useBodyAttributeSelector('data-drag-hold', state => state.longPress === LongPressState.DragHold)
 
   // Handle other non-attribute logic
   useLayoutEffect(() => {
