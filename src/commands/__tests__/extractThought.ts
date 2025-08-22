@@ -49,7 +49,6 @@ describe('Extract thought', () => {
   })
 
   it('the selected part of a thought is extracted as a child thought', async () => {
-
     const thoughtValue = 'this is a thought'
     store.dispatch([
       newThought({ value: thoughtValue }),
