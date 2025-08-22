@@ -54,8 +54,6 @@ describe('Extract thought', () => {
   })
 
   it('the selected part of a thought is extracted as a child thought', async () => {
-    initialize()
-    await timer.runAllAsync()
 
     const thoughtValue = 'this is a thought'
     store.dispatch([
@@ -84,7 +82,7 @@ describe('Extract thought', () => {
     const thoughtChildren = await findAllByLabelText(thoughtChildrenWrapper, 'thought')
     await timer.runAllAsync()
 
-    expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['this is a thought'])
+    expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['this is a'])
   })
 
   it('the cursor does not get updated on child creation', async () => {
