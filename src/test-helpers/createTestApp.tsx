@@ -63,7 +63,6 @@ export const cleanupTestApp = async () => {
     await vi.runAllTimersAsync()
 
     db.clear()
-
     await vi.runAllTimersAsync()
 
     // set url back to home
