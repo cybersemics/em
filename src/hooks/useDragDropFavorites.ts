@@ -13,7 +13,6 @@ import * as selection from '../device/selection'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
-import longPressStore from '../stores/longPressStore'
 import haptics from '../util/haptics'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -39,8 +38,7 @@ const beginDrag = ({ path, simplePath }: DragThoughtItem): DragThoughtItem[] => 
 }
 
 /** Handles drag end. */
-const endDrag = () => {
-  longPressStore.unlock()
+const endDrag = () =>
   store.dispatch([
     longPress({ value: LongPressState.Inactive }),
     (dispatch, getState) => {
@@ -49,7 +47,6 @@ const endDrag = () => {
       }
     },
   ])
-}
 
 /** Returns true if the Favorite can be dropped at the given DropTarget. */
 //eslint disable rule because monitor use in canDrop function

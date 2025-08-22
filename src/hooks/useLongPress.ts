@@ -7,7 +7,6 @@ import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
-import longPressStore from '../stores/longPressStore'
 import haptics from '../util/haptics'
 
 /** Custom hook to manage long press.
@@ -20,8 +19,6 @@ const useLongPress = (
   delay: number = TIMEOUT_LONG_PRESS_THOUGHT,
 ) => {
   const [pressing, setPressing] = useState(false)
-  // Track isLocked state from longPressStore in local state
-  const isLocked = longPressStore.useSelector(state => state.isLocked)
   const longPressState = useSelector(state => state.longPress)
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
@@ -31,7 +28,7 @@ const useLongPress = (
   useEffect(() => {
     /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackend in react-dnd. */
     const onStart = () => {
-      if (isLocked || !pressing) return
+      if (!pressing) return
 
       // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
       // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
@@ -40,7 +37,6 @@ const useLongPress = (
 
       haptics.light()
       onLongPressStart?.()
-      longPressStore.lock()
     }
 
     if (isTouch) {
@@ -58,7 +54,7 @@ const useLongPress = (
 
       return () => clearTimeout(timerIdRef.current)
     }
-  }, [delay, dragDropManager, isLocked, onLongPressStart, pressing])
+  }, [delay, dragDropManager, onLongPressStart, pressing])
 
   // Desktop can initiate drag-and-drop without waiting for a long press, so the timer does generate an
   // 'Invalid longPress transition' error unless it cleans up the timer. This error doesn't have any effect
@@ -92,11 +88,8 @@ const useLongPress = (
     // This gives other components a chance to short circuit.
     // We can't stop propagation here without messing up other components like Bullet.
     setTimeout(() => {
-      longPressStore.unlock()
       clearTimeout(timerIdRef.current)
       timerIdRef.current = 0
-
-      // If a long press occurred, mark it as not canceled
       onLongPressEnd?.()
     }, 10)
   }, [onLongPressEnd, setPressing])
@@ -123,7 +116,6 @@ const useLongPress = (
   useEffect(() => {
     return () => {
       unmounted.current = true
-      longPressStore.unlock()
     }
   }, [])
 
