@@ -1,4 +1,5 @@
 import { KnownDevices } from 'puppeteer'
+import gestures from '../../../test-helpers/gestures'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
@@ -8,10 +9,9 @@ import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
-import testIfNotCI from '../helpers/testIfNotCI'
+import swipe from '../helpers/swipe'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
-import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 
@@ -179,32 +179,41 @@ describe('all platforms', () => {
     expect(textContext).toBe('firstlast')
   })
 
-  // TODO: Flaky test
-  // https://github.com/cybersemics/em/issues/2954
-  testIfNotCI('backspace on empty thought should move caret to the end of the previous thought', async () => {
+  it('backspace on empty thought should move caret to the end of the previous thought', async () => {
     const importText = `
     - first
     - last`
 
     await paste(importText)
 
-    const first = await waitForEditable('first')
+    const editableNodeHandle = await waitForEditable('first')
+    // click on the editable at the end of the thought
+    await click(editableNodeHandle, { offset: 5 })
 
-    await click(first)
+    // press enter to create a new empty thought
     await press('Enter')
+
+    // verify that the new thought is empty
+    expect(await getEditingText()).toBe('')
+
+    // press backspace to delete the empty thought
     await press('Backspace')
 
-    const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('first')
-
-    const offset = await getSelection().focusOffset
-
-    // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
-    const focusNodeType = await getSelection().focusNode?.nodeType
-    expect(offset).toBe(focusNodeType === Node.TEXT_NODE ? 'first'.length : 1)
+    // this is necessary because sometimes in CI, the caret is not immediately moved to the end of the previous thought
+    // without this, the test will intermittently fail in CI
+    await waitUntil(() => {
+      const selection = window.getSelection()
+      // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
+      const focusNodeType = selection?.focusNode?.nodeType
+      return (
+        selection &&
+        selection.focusNode?.textContent === 'first' &&
+        (Node.TEXT_NODE === focusNodeType ? selection.focusOffset === 'first'.length : selection.focusOffset === 1)
+      )
+    })
   })
 
-  it.skip('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
+  it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
     const importText = `
       - a`
 
@@ -242,26 +251,26 @@ it('clicking backspace when the caret is at the end of a thought should delete a
 
 describe('mobile only', () => {
   beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 11'])
+    await emulate(KnownDevices['iPhone 15 Pro'])
   }, 5000)
 
-  // TODO: Flaky test
-  // https://github.com/cybersemics/em/issues/2959
-  testIfNotCI('After categorize, the caret should be on the new thought', async () => {
+  it('After categorize, the caret should be on the new thought', async () => {
     const importText = `
     - a
       - b`
 
     await paste(importText)
 
-    await clickThought('b')
-    await clickThought('b')
+    const editableHandle = await waitForEditable('b')
+    await click(editableHandle, { edge: 'right' })
 
     // close keyboard
     await clickBullet('b')
 
-    await waitForSelector('[aria-label="Categorize"]')
-    await click('[aria-label="Categorize"]')
+    // perform a categorize gesture at thought b
+    // previously this was done by waiting for categorize selector and clicking it from the toolbar
+    // in CI and especially in mobile emulation sometimes the click was not registered due to which categorize operation was never performed, hence assertions were failing intermittently
+    await swipe(gestures.categorizeThought, true)
 
     const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('')
