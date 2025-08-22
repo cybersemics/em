@@ -18,6 +18,7 @@ import multi from '../redux-middleware/multi'
 import multicursorAlertMiddleware from '../redux-middleware/multicursorAlertMiddleware'
 import pullQueue from '../redux-middleware/pullQueue'
 import scrollCursorIntoView from '../redux-middleware/scrollCursorIntoView'
+import syncCursorStore from '../redux-middleware/syncCursorStore'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 import validateActionRegistrations from '../util/actionMetadata.registry'
@@ -42,6 +43,7 @@ const middlewareEnhancer = applyMiddleware(
   scrollCursorIntoView,
   clearSelection,
   updateEditingValue,
+  syncCursorStore,
   updateUrlHistory,
   freeThoughts,
   multicursorAlertMiddleware,
