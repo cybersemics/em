@@ -4,7 +4,7 @@ import { extractThoughtActionCreator as extractThought } from '../../actions/ext
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import store from '../../stores/app'
-import createTestApp from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
@@ -25,9 +25,8 @@ const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd
 }
 
 describe('Extract thought', () => {
-  beforeEach(async () => {
-    await createTestApp()
-  })
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
 
   it('an alert should be shown if there is no selection', async () => {
     const thoughtValue = 'this is a thought'
