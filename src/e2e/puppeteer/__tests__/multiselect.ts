@@ -45,15 +45,17 @@ describe('mobile only', () => {
     const b = await waitForEditable('b')
 
     await longPressThought(a, { edge: 'right', x: 100 })
+
     // Wait for first bullet to be highlighted before proceeding
     await page.waitForFunction(() => document.querySelectorAll('.bullet[data-highlighted=true]').length === 1)
 
     await longPressThought(b, { edge: 'right', x: 100 })
-    // Wait for both bullets to be highlighted
-    await page.waitForFunction(() => document.querySelectorAll('.bullet[data-highlighted=true]').length === 2)
 
-    const commandMenuPanelTextContent = await page.$eval('[data-testid=command-menu-panel]', el => el.textContent)
-
-    expect(commandMenuPanelTextContent).toContain('2 thoughts selected')
+    // Wait for both bullets to be highlighted and command menu to update
+    await page.waitForFunction(() => {
+      const highlightedBullets = document.querySelectorAll('.bullet[data-highlighted=true]').length
+      const commandMenuText = document.querySelector('[data-testid=command-menu-panel]')?.textContent || ''
+      return highlightedBullets === 2 && commandMenuText.includes('2 thoughts selected')
+    })
   })
 })
