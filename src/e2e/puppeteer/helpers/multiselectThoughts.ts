@@ -1,5 +1,4 @@
 import { isMac } from '../../../browser'
-import sleep from '../../../util/sleep'
 import { page } from '../setup'
 import clickThought from './clickThought'
 
@@ -23,9 +22,6 @@ const multiselectThoughts = async (
     // Click each thought while holding the modifier
     for (const value of thoughtValues) {
       await clickThought(value)
-
-      // Small delay between clicks to ensure proper registration
-      await sleep(50)
     }
   } catch (error) {
     // Always release modifier key on error

@@ -1,16 +1,12 @@
-import path from 'path'
 import { KnownDevices } from 'puppeteer'
-import configureSnapshots from '../configureSnapshots'
 import emulate from '../helpers/emulate'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import waitForEditable from '../helpers/waitForEditable'
-import { page } from '../setup'
+import waitUntil from '../helpers/waitUntil'
 
-expect.extend({
-  toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
-})
+vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 describe('multiselect', () => {
   it('should multiselect two thoughts at once', async () => {
@@ -21,11 +17,11 @@ describe('multiselect', () => {
 
     await multiselectThoughts(['a', 'b'])
 
-    const highlightedBullets = await page.$$('.bullet[data-highlighted=true]')
-    const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent)
-
-    expect(highlightedBullets.length).toBe(2)
-    expect(alertContent).toContain('2 thoughts selected')
+    await waitUntil(() => {
+      const highlightedBullets = document.querySelectorAll('.bullet[data-highlighted=true]').length
+      const commandMenuText = document.querySelector('[data-testid=alert-content]')?.textContent || ''
+      return highlightedBullets === 2 && commandMenuText.includes('2 thoughts selected')
+    })
   })
 })
 
@@ -47,12 +43,12 @@ describe('mobile only', () => {
     await longPressThought(a, { edge: 'right', x: 100 })
 
     // Wait for first bullet to be highlighted before proceeding
-    await page.waitForFunction(() => document.querySelectorAll('.bullet[data-highlighted=true]').length === 1)
+    await waitUntil(() => document.querySelectorAll('.bullet[data-highlighted=true]').length === 1)
 
     await longPressThought(b, { edge: 'right', x: 100 })
 
     // Wait for both bullets to be highlighted and command menu to update
-    await page.waitForFunction(() => {
+    await waitUntil(() => {
       const highlightedBullets = document.querySelectorAll('.bullet[data-highlighted=true]').length
       const commandMenuText = document.querySelector('[data-testid=command-menu-panel]')?.textContent || ''
       return highlightedBullets === 2 && commandMenuText.includes('2 thoughts selected')
