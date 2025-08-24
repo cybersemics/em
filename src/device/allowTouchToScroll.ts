@@ -2,6 +2,8 @@
  * This is different from allowScroll, which set overflow: hidden on the body in order to prevent
  * scrolling in a fixed environment such as a modal. The other allowScroll does not block scrolling,
  * but it does indicate to the browser that there is nowhere to scroll.
+ * When using allowTouchToScroll, be mindful that any call to enableScroll will enable scroll globally.
+ * If there are multiple consumers that have disabled scrolling, conflicts may occur between them.
  */
 import { isTouch } from '../browser'
 
