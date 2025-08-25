@@ -22,6 +22,7 @@ import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
 import useHoveringPath from '../hooks/useHoveringPath'
+import useThoughtFocus from '../hooks/useThoughtFocus'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
@@ -322,6 +323,8 @@ const ThoughtContainer = ({
   )
   const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
+
+  useThoughtFocus(isEditing, simplePath, rank, value)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
 

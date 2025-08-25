@@ -26,12 +26,12 @@ const REGEX_FORMATTING = new RegExp(
 const MONTH_NAMES = 'January|February|March|April|May|June|July|August|September|October|November|December'
 
 // Combined regex for detecting all valid date formats:
-// - M/d or M/d/yyyy (slash format with optional year)
-// - M-d or M-d-yyyy (dash format with optional year)
-// - Month Day or Month Day, yyyy (written format with optional year)
+// - M/d or M/d/yy or M/d/yyyy (slash format with optional year)
+// - M-d or M-d-yy or M-d-yyyy (dash format with optional year)
+// - Month Day or Month Day, yy or Month Day, yyyy (written format with optional year)
 // Uses separate patterns to ensure consistent separators (no mixed slashes/dashes)
 const REGEX_DATE_COMBINED = new RegExp(
-  `^(\\d{1,2}\\/\\d{1,2}(\\/\\d{4})?|\\d{1,2}-\\d{1,2}(-\\d{4})?|(${MONTH_NAMES})\\s+\\d{1,2}(,\\s*\\d{4})?)$`,
+  `^(\\d{1,2}\\/\\d{1,2}(\\/\\d{2,4})?|\\d{1,2}-\\d{1,2}(-\\d{2,4})?|(${MONTH_NAMES})\\s+\\d{1,2}(,\\s*\\d{2,4})?)$`,
   'i',
 )
 
@@ -88,11 +88,11 @@ const toNumber = (x: number | string): number =>
 /** Returns trure if the given string is an integer or decimal number. Recognizes prefixed number strings like "#1" and "$1" as numbers. */
 const isNumber = (x: number | string): boolean => !isNaN(toNumber(x))
 
-/** Checks if a string matches a date pattern like "M/d", "M-d", "M/d/yyyy", "M-d-yyyy", or written formats.
- * Accepts 1-2 digits for month and day, optionally followed by year
- * Also accepts written month names like "March 3, 2020" or "December 3, 2020"
+/** Checks if a string matches a date pattern like "M/d", "M-d", "M/d/yy", "M/d/yyyy", "M-d-yy", "M-d-yyyy", or written formats.
+ * Accepts 1-2 digits for month and day, optionally followed by 2-4 digit year
+ * Also accepts written month names like "March 3, 20" or "December 3, 2020"
  * Requires consistent separators (all slashes or all dashes)
- * Examples: "6/21", "6-21", "12/1", "12-1", "6/21/2025", "6-21-2025", "March 3, 2020", "December 3, 2020".
+ * Examples: "6/21", "6-21", "12/1", "12-1", "6/21/25", "6/21/2025", "6-21-25", "6-21-2025", "March 3, 20", "December 3, 2020".
  */
 export const isDatePattern = (value: string): boolean => {
   // Use single combined pattern for optimal performance

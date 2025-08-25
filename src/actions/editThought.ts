@@ -8,7 +8,7 @@ import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { clientId } from '../data-providers/yjs'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildren } from '../selectors/getChildren'
+import { getAllChildren, getAllChildrenSorted } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
@@ -16,6 +16,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import addContext from '../util/addContext'
+import { isDatePattern } from '../util/compareThought'
 import createChildrenMap from '../util/createChildrenMap'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -135,16 +136,19 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     [newKey]: lexemeNew,
   }
   const isNote = parentOfEditedThought.value === '=note'
-  const sortPreference = getSortPreference(state, editedThought.parentId)
-  const sortType = sortPreference.type
+  const sortType = getSortPreference(state, editedThought.parentId).type
+  const siblings = editedThought?.parentId ? getAllChildrenSorted(state, editedThought.parentId) : []
+  const isDateInvolved = siblings.some(thought => isDatePattern(thought.value))
+
+  const isSortable =
+    newValue !== '' &&
+    // When sortType is Alphabetical, the thought list should be sorted if it doesn't involve any date
+    ((!isDateInvolved && sortType === 'Alphabetical') || sortType === 'Created' || sortType === 'Updated')
 
   const thoughtNew: Thought = {
     ...editedThought,
     ...(editedThought.generating ? { generating: false } : null),
-    rank:
-      newValue !== '' && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
-        ? getSortedRank(state, editedThought.parentId, newValue)
-        : editedThought.rank,
+    rank: isSortable ? getSortedRank(state, editedThought.parentId, newValue) : editedThought.rank,
     value: newValue,
     lastUpdated: timestamp(),
     updatedBy: clientId,
