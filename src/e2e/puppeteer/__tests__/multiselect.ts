@@ -27,7 +27,7 @@ describe('multiselect', () => {
 
 describe('mobile only', () => {
   beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 11'])
+    await emulate(KnownDevices['iPhone 15 Pro'])
   }, 10000)
 
   it('should multiselect two thoughts at once', async () => {
@@ -41,6 +41,9 @@ describe('mobile only', () => {
     const b = await waitForEditable('b')
 
     await longPressThought(a, { edge: 'right', x: 100 })
+
+    // Wait for the first bullet to be highlighted
+    await waitUntil(() => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 1)
     await longPressThought(b, { edge: 'right', x: 100 })
 
     // Wait for both bullets to be highlighted and command menu to update
