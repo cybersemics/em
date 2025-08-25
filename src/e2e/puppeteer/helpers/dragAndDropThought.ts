@@ -97,7 +97,22 @@ const dragAndDropThought = async (
 
   if (mouseUp) {
     await page.mouse.up()
-    await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
+
+    // Wait for drag operation to fully complete by checking:
+    // 1. data-drag-in-progress attribute is removed (longPress !== DragInProgress)
+    // 2. data-drag-hold attribute is removed (longPress !== DragHold)
+    // 3. DragAndDropHint alert is dismissed (happens in endDrag after setTimeout)
+    await waitUntil(() => {
+      const dragInProgress = document.querySelector('[data-drag-in-progress="true"]')
+      const dragHold = document.querySelector('[data-drag-hold="true"]')
+
+      // Check if drag-and-drop alert is still showing
+      const alertElement = document.querySelector('[data-testid="alert-content"]')
+      const isDragAlert = alertElement?.textContent?.includes('Drag and drop')
+
+      // Drag is complete when all drag-related states are cleared
+      return !dragInProgress && !dragHold && !isDragAlert
+    })
   }
 
   // Hide Alert by default.
