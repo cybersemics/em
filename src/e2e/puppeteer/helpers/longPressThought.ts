@@ -1,5 +1,6 @@
 import { ElementHandle } from 'puppeteer'
 import { JSHandle } from 'puppeteer'
+import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../../constants'
 import { page } from '../setup'
 
 interface Options {
@@ -35,7 +36,19 @@ const longPressThought = async (
   }
 
   await page.touchscreen.touchStart(coordinate.x, coordinate.y)
-  await thoughtContainer.waitForSelector('[aria-label="bullet"][data-highlighted="true"]')
+
+  // Wait for the long press duration to elapse before checking for highlight
+  await new Promise(resolve => setTimeout(resolve, TIMEOUT_LONG_PRESS_THOUGHT + 100))
+
+  // Then check if the bullet was highlighted
+  try {
+    await thoughtContainer.waitForSelector('[aria-label="bullet"][data-highlighted="true"]', { timeout: 2000 })
+  } catch (error) {
+    // If the bullet wasn't highlighted, end the touch and throw a more helpful error
+    await page.touchscreen.touchEnd()
+    throw new Error(`Long press did not trigger bullet highlighting. Original error: ${error}`)
+  }
+
   await page.touchscreen.touchEnd()
 }
 
