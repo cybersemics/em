@@ -33,6 +33,32 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
     }
   }, [onClose])
 
+  /**
+   * Disable touch events on the dialog overlay.
+   * On iOS, it is possible to swipe to a different window by swiping near the edge of the screen.
+   * Blocking touch events on the overlay prevents this behavior.
+   */
+  useEffect(() => {
+    const overlayElement = nodeRef.current
+    const dialogElement = dialogRef.current
+
+    if (!overlayElement || !dialogElement) return
+
+    /** This event handler prevents touch events from propagating to the page. */
+    const preventTouchMove = (e: TouchEvent) => {
+      if (!dialogElement.contains(e.target as Node)) {
+        // Only prevent scrolling if NOT inside dialog content
+        e.preventDefault()
+      }
+    }
+
+    overlayElement.addEventListener('touchmove', preventTouchMove, { passive: false })
+
+    return () => {
+      overlayElement.removeEventListener('touchmove', preventTouchMove)
+    }
+  }, [nodeRef])
+
   return (
     <div ref={nodeRef} className={dialogClasses.overlay}>
       <div ref={dialogRef} className={dialogClasses.container}>
