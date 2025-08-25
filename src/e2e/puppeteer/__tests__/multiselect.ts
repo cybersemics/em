@@ -6,7 +6,7 @@ import paste from '../helpers/paste'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 
-vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('multiselect', () => {
   it('should multiselect two thoughts at once', async () => {
@@ -19,7 +19,7 @@ describe('multiselect', () => {
 
     await waitUntil(() => {
       const highlightedBullets = document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length
-      const commandMenuText = document.querySelector('[data-testid=alert-content]')?.textContent || ''
+      const commandMenuText = document.querySelector('[data-testid="alert-content"]')?.textContent || ''
       return highlightedBullets === 2 && commandMenuText.includes('2 thoughts selected')
     })
   })
@@ -41,16 +41,12 @@ describe('mobile only', () => {
     const b = await waitForEditable('b')
 
     await longPressThought(a, { edge: 'right', x: 100 })
-
-    // Wait for first bullet to be highlighted before proceeding
-    await waitUntil(() => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 1)
-
     await longPressThought(b, { edge: 'right', x: 100 })
 
     // Wait for both bullets to be highlighted and command menu to update
     await waitUntil(() => {
       const highlightedBullets = document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length
-      const commandMenuText = document.querySelector('[data-testid=command-menu-panel]')?.textContent || ''
+      const commandMenuText = document.querySelector('[data-testid="command-menu-panel"]')?.textContent || ''
       return highlightedBullets === 2 && commandMenuText.includes('2 thoughts selected')
     })
   })
