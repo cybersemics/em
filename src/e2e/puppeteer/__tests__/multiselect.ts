@@ -18,7 +18,7 @@ describe('multiselect', () => {
     await multiselectThoughts(['a', 'b'])
 
     await waitUntil(() => {
-      const highlightedBullets = document.querySelectorAll('.bullet[data-highlighted=true]').length
+      const highlightedBullets = document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length
       const commandMenuText = document.querySelector('[data-testid=alert-content]')?.textContent || ''
       return highlightedBullets === 2 && commandMenuText.includes('2 thoughts selected')
     })
@@ -43,13 +43,13 @@ describe('mobile only', () => {
     await longPressThought(a, { edge: 'right', x: 100 })
 
     // Wait for first bullet to be highlighted before proceeding
-    await waitUntil(() => document.querySelectorAll('.bullet[data-highlighted=true]').length === 1)
+    await waitUntil(() => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === 1)
 
     await longPressThought(b, { edge: 'right', x: 100 })
 
     // Wait for both bullets to be highlighted and command menu to update
     await waitUntil(() => {
-      const highlightedBullets = document.querySelectorAll('.bullet[data-highlighted=true]').length
+      const highlightedBullets = document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length
       const commandMenuText = document.querySelector('[data-testid=command-menu-panel]')?.textContent || ''
       return highlightedBullets === 2 && commandMenuText.includes('2 thoughts selected')
     })
