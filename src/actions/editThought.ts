@@ -43,22 +43,17 @@ export interface editThoughtPayload {
 
 /** Changes the text of an existing thought. */
 const editThought = (state: State, { cursorOffset, force, oldValue, newValue, path }: editThoughtPayload) => {
-  const editingThoughtId = state.cursor && head(state.cursor)
-  const editedThoughtId = head(path)
-  const editedThought = getThoughtById(state, editedThoughtId)
-  const siblings = editedThought?.parentId ? getAllChildrenSorted(state, editedThought.parentId) : []
-  const isDateInvolved = siblings.some(thought => isDatePattern(thought.value))
-
-  // If thought list contains a date, then should not quit early
-  // When updating a thought of date-involved thought list, oldValue and newValue are coming same as same value
-  if (!isDateInvolved && (oldValue === newValue || isDivider(oldValue))) return state
+  if (oldValue === newValue || isDivider(oldValue)) return state
 
   // thoughts may exist for both the old value and the new value
   const lexemeIndex = { ...state.thoughts.lexemeIndex }
+  const editedThoughtId = head(path)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
   const lexemeOld = getLexeme(state, oldValue)
   const thoughtCollision = getLexeme(state, newValue)
+
+  const editedThought = getThoughtById(state, editedThoughtId)
 
   if (!editedThought) {
     console.error('editThought: Edited thought not found!')
@@ -141,16 +136,14 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
     [newKey]: lexemeNew,
   }
   const isNote = parentOfEditedThought.value === '=note'
-  const sortPreference = getSortPreference(state, editedThought.parentId)
-  const sortType = sortPreference.type
+  const sortType = getSortPreference(state, editedThought.parentId).type
+  const siblings = editedThought?.parentId ? getAllChildrenSorted(state, editedThought.parentId) : []
+  const isDateInvolved = siblings.some(thought => isDatePattern(thought.value))
+
   const isSortable =
     newValue !== '' &&
-    // When sortType is Alphabetical, the thought list should be sorted for below cases:
-    // - the cursor is on a different thought AND list involves a date
-    // - thought list doesn't involve any date
-    ((((isDateInvolved && editingThoughtId !== editedThoughtId) || !isDateInvolved) && sortType === 'Alphabetical') ||
-      sortType === 'Created' ||
-      sortType === 'Updated')
+    // When sortType is Alphabetical, the thought list should be sorted if it doesn't involve any date
+    ((!isDateInvolved && sortType === 'Alphabetical') || sortType === 'Created' || sortType === 'Updated')
 
   const thoughtNew: Thought = {
     ...editedThought,

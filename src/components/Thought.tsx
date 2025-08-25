@@ -12,7 +12,6 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
@@ -23,6 +22,7 @@ import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
 import useHoveringPath from '../hooks/useHoveringPath'
+import useThoughtFocus from '../hooks/useThoughtFocus'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
@@ -298,7 +298,6 @@ const ThoughtContainer = ({
 
   // check if the cursor is editing a thought directly
   const isEditing = useSelector(state => equalPath(state.cursor, path))
-  const prevEditingRef = useRef(isEditing)
 
   const isPublishChild = useSelector(state => !state.search && publishMode() && simplePath.length === 2)
   const publish = useSelector(state => !state.search && publishMode())
@@ -324,7 +323,8 @@ const ThoughtContainer = ({
   )
   const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
-  const prevValueRef = useRef(value)
+
+  useThoughtFocus(isEditing, simplePath, rank, value)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
 
@@ -520,28 +520,6 @@ const ThoughtContainer = ({
     value,
     isTableCol1,
   })
-
-  useEffect(() => {
-    const prevValue = prevValueRef.current || ''
-    const isFocusLostAndUpdated = !isEditing && isEditing !== prevEditingRef.current && prevValue !== value
-    if (!isEditing) prevValueRef.current = value
-
-    if (isFocusLostAndUpdated && value) {
-      // Dispatch editThought when other thought gets focus
-      dispatch(
-        editThought({
-          oldValue: value,
-          newValue: value,
-          rankInContext: rank,
-          path: simplePath,
-        }),
-      )
-    }
-
-    return () => {
-      prevEditingRef.current = isEditing
-    }
-  }, [isEditing, simplePath, rank, dispatch, value])
 
   // thought does not exist
   if (value == null) return null

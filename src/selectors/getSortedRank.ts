@@ -47,8 +47,20 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
     return calculateRank(thoughtsVisible, index)
   }
 
-  // Extract thoughts which are not same as sorting value
-  const filteredThoughts = children.filter(thought => thought.value !== value)
+  // Keep children thoughts which:
+  // is not same value or
+  // is in correct rank order
+  // Main purpose of this is to remove just edited thought - original works but doesn
+  const filteredThoughts = children.filter(
+    (child, idx) =>
+      child.value !== value ||
+      (idx === 0
+        ? child.rank < children[1]?.rank
+        : idx === children.length - 1
+          ? children[idx - 1]?.rank < child.rank
+          : children[idx - 1]?.rank <= child.rank && child.rank <= children[idx + 1]?.rank),
+  )
+
   // For alphabetical sorting
   const index = filteredThoughts.findIndex(child =>
     isDescending
