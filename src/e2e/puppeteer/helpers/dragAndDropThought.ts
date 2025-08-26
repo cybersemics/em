@@ -106,12 +106,8 @@ const dragAndDropThought = async (
       const dragInProgress = document.querySelector('[data-drag-in-progress="true"]')
       const dragHold = document.querySelector('[data-drag-hold="true"]')
 
-      // Check if drag-and-drop alert is still showing
-      const alertElement = document.querySelector('[data-testid="alert-content"]')
-      const isDragAlert = alertElement?.textContent?.includes('Drag and drop')
-
       // Drag is complete when all drag-related states are cleared
-      return !dragInProgress && !dragHold && !isDragAlert
+      return !dragInProgress && !dragHold
     })
   }
 
