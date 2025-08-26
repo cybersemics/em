@@ -138,12 +138,12 @@ const editThought = (state: State, { cursorOffset, force, oldValue, newValue, pa
   const isNote = parentOfEditedThought.value === '=note'
   const sortType = getSortPreference(state, editedThought.parentId).type
   const siblings = editedThought?.parentId ? getAllChildrenSorted(state, editedThought.parentId) : []
-  const isDateInvolved = siblings.some(thought => isDatePattern(thought.value))
+  const isDateList = siblings.every(thought => isDatePattern(thought.value))
 
   const isSortable =
     newValue !== '' &&
     // When sortType is Alphabetical, the thought list should be sorted if it doesn't involve any date
-    ((!isDateInvolved && sortType === 'Alphabetical') || sortType === 'Created' || sortType === 'Updated')
+    ((!isDateList && sortType === 'Alphabetical') || sortType === 'Created' || sortType === 'Updated')
 
   const thoughtNew: Thought = {
     ...editedThought,
