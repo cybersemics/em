@@ -5,6 +5,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { AlertText, AlertType, LongPressState } from '../constants'
 import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -127,7 +128,8 @@ const longPress = (state: State, payload: Payload) => {
 export const longPressActionCreator =
   (payload: Parameters<typeof longPress>[1]): Thunk =>
   (dispatch, getState) => {
-    const { longPress: previousValue } = getState()
+    const state = getState()
+    const { longPress: previousValue } = state
     const { value } = payload
 
     switch (value) {
@@ -152,6 +154,14 @@ export const longPressActionCreator =
     if (value === LongPressState.DragInProgress || previousValue === LongPressState.DragInProgress) {
       dispatch(expandHoverUp())
       dispatch(expandHoverDown())
+    }
+
+    if (
+      previousValue === LongPressState.DragInProgress &&
+      value !== LongPressState.DragInProgress &&
+      hasMulticursor(state)
+    ) {
+      dispatch(clearMulticursors())
     }
   }
 
