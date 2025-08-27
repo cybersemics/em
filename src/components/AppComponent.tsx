@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import _ from 'lodash'
-import React, { FC, PropsWithChildren, useEffect, useLayoutEffect } from 'react'
+import React, { FC, PropsWithChildren, useEffect, useLayoutEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
@@ -16,6 +16,7 @@ import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
+import viewportStore from '../stores/viewport'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
 import CommandMenu from './CommandMenu/CommandMenu'
@@ -103,10 +104,29 @@ const MultiGestureIfTouch: FC<PropsWithChildren> = ({ children }) => {
   )
 }
 
+/** A hook that returns a ref to the content div and updates the viewport store's contentWidth property on resize. */
+const useAppComponentHeight = () => {
+  const appComponentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!appComponentRef.current) return
+
+    const resizeObserver = new ResizeObserver(entries => {
+      viewportStore.update({ appComponentHeight: entries[0]?.contentRect.height || 0 })
+    })
+
+    resizeObserver.observe(appComponentRef.current)
+    return () => resizeObserver.disconnect()
+  }, [])
+
+  return appComponentRef
+}
+
 /**
  * The main app component.
  */
 const AppComponent: FC = () => {
+  const appComponentRef = useAppComponentHeight()
   const colors = useSelector(themeColors)
   const dark = useSelector(state => theme(state) !== 'Light')
   const enableLatestCommandsDiagram = useSelector(state => state.enableLatestCommandsDiagram)
@@ -162,6 +182,7 @@ const AppComponent: FC = () => {
         /* safeAreaTop applies for rounded screens */
         paddingTop: 'safeAreaTop',
       })}
+      ref={appComponentRef}
     >
       <Alert />
       <Tips />
