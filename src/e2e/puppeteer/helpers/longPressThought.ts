@@ -39,7 +39,7 @@ const longPressThought = async (
   await page.touchscreen.touchStart(coordinate.x, coordinate.y)
 
   // Wait for the long press duration to elapse before checking for highlight
-  await sleep(TIMEOUT_LONG_PRESS_THOUGHT)
+  await sleep(TIMEOUT_LONG_PRESS_THOUGHT + 100)
 
   await thoughtContainer.waitForSelector('[aria-label="bullet"][data-highlighted="true"]')
 
