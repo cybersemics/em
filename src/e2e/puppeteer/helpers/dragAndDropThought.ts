@@ -101,7 +101,6 @@ const dragAndDropThought = async (
     // Wait for drag operation to fully complete by checking:
     // 1. data-drag-in-progress attribute is removed (longPress !== DragInProgress)
     // 2. data-drag-hold attribute is removed (longPress !== DragHold)
-    // 3. DragAndDropHint alert is dismissed (happens in endDrag after setTimeout)
     await waitUntil(() => {
       const dragInProgress = document.querySelector('[data-drag-in-progress="true"]')
       const dragHold = document.querySelector('[data-drag-hold="true"]')
