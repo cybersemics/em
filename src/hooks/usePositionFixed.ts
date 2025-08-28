@@ -22,12 +22,12 @@ const usePositionFixed = ({
   const safariKeyboard = safariKeyboardStore.useState()
   const position = safariKeyboard.open ? 'absolute' : 'fixed'
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
-  const { appComponentHeight, innerHeight } = viewportStore.useState()
+  const { innerHeight } = viewportStore.useState()
 
   let top, bottom
   if (position === 'absolute') {
     top = fromBottom
-      ? `${Math.min(appComponentHeight, scrollTop + innerHeight - safariKeyboard.height) - (height ?? 0) - offset}px`
+      ? `${Math.min(document.body.scrollHeight, scrollTop + innerHeight - safariKeyboard.height) - (height ?? 0) - offset}px`
       : `${scrollTop + offset}px`
   } else if (fromBottom) {
     // spacing.safeAreaBottom applies to rounded screens

@@ -10,7 +10,7 @@ let virtualKeyboardHeightPortrait = isTouch ? window.innerHeight / 2.275 : 0
 let virtualKeyboardHeightLandscape = isTouch ? window.innerWidth / 1.7 : 0
 
 export interface ViewportState {
-  appComponentHeight: number
+  scrollHeight: number
   contentWidth: number
   innerWidth: number
   innerHeight: number
@@ -29,8 +29,8 @@ const viewportStore = reactMinistore<ViewportState>({
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
   /** Width of the content element. */
   contentWidth: 0,
-  /** Height of the app component element. */
-  appComponentHeight: 0,
+  /** Height of the body scroll area. */
+  scrollHeight: 0,
 })
 
 /** Throttled update of viewport height. Invoked on window resize. */
