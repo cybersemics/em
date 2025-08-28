@@ -1,4 +1,3 @@
-import sleep from '../../../util/sleep'
 import { page } from '../setup'
 import getEditable from './getEditable'
 import hide from './hide'
@@ -98,11 +97,17 @@ const dragAndDropThought = async (
 
   if (mouseUp) {
     await page.mouse.up()
-    await waitUntil(() => !document.querySelector('[data-drag-in-progress="true"]'))
 
-    // TODO: Why does drop/DragAndDropThought test fails intermittently without a small delay?
-    // Bullet highlight is visible.
-    await sleep(500)
+    // Wait for drag operation to fully complete by checking:
+    // 1. data-drag-in-progress attribute is removed (longPress !== DragInProgress)
+    // 2. data-drag-hold attribute is removed (longPress !== DragHold)
+    await waitUntil(() => {
+      const dragInProgress = document.querySelector('[data-drag-in-progress="true"]')
+      const dragHold = document.querySelector('[data-drag-hold="true"]')
+
+      // Drag is complete when all drag-related states are cleared
+      return !dragInProgress && !dragHold
+    })
   }
 
   // Hide Alert by default.
