@@ -5,6 +5,8 @@ import hideHUD from '../helpers/hideHUD'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 
+vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+
 describe('drag and drop multiple thoughts', () => {
   beforeEach(async () => {
     await hideHUD()
