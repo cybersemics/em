@@ -9,4 +9,22 @@ updates:
     directory: '/' # Location of package file
     schedule:
       interval: 'weekly'
+    target: 'patch' # Only suggest patch updates to avoid peer dependency conflicts
     open-pull-requests-limit: 10
+    ignore:
+      # Ignore all major updates
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+      # Also ignore minor updates for problematic packages
+      - dependency-name: 'eslint'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
+      - dependency-name: 'eslint-config-react-app'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
+      - dependency-name: 'redux'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
+      - dependency-name: 'redux-devtools-extension'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
+      - dependency-name: '@stylistic/eslint-plugin'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
+      - dependency-name: '@typescript-eslint/*'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
