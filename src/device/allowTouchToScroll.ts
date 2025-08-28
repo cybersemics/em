@@ -1,8 +1,4 @@
-/** Prevent touchmove from allowing the page to scroll when a long press is active (#3141).
- * This is different from allowScroll, which set overflow: hidden on the body in order to prevent
- * scrolling in a fixed environment such as a modal. The other allowScroll does not block scrolling,
- * but it does indicate to the browser that there is nowhere to scroll.
- */
+/** Prevent touchmove from allowing the page to scroll when a long press is active (#3141). */
 import { isTouch } from '../browser'
 
 /** Don't allow the page to scroll during touchmove. */
