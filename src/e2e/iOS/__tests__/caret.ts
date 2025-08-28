@@ -1,6 +1,7 @@
 /**
  * @jest-environment ./src/e2e/webdriverio-environment.js
  */
+import { Element } from 'webdriverio'
 import gestures from '../../../test-helpers/gestures'
 import helpers from '../helpers'
 
@@ -221,7 +222,7 @@ it.skip('Swipe over hidden thought', async () => {
   const newThoughtEditable = await waitForEditable('this-is-new-thought')
 
   // get first child of parent thought
-  const previousSibling = await ref().execute((newThoughtEditable: HTMLElement) => {
+  const previousSibling = await ref().execute((newThoughtEditable: Element) => {
     const editable = (newThoughtEditable as unknown as HTMLElement)
       .closest('ul.children')
       ?.firstElementChild?.querySelector('[data-editable]') as HTMLElement
@@ -243,7 +244,7 @@ it.skip('Bump Thought Down on a thought that has children', async () => {
   const newThoughtEditable = await editThought('new')
   const selectionTextContent = await getSelection().focusNode?.textContent
 
-  const childrenTexts = await ref().execute((newThoughtEditable: HTMLElement) => {
+  const childrenTexts = await ref().execute((newThoughtEditable: Element) => {
     const children = (newThoughtEditable as unknown as HTMLElement)
       .closest('ul.children')
       ?.firstElementChild?.getElementsByTagName('ul')[0]
