@@ -21,6 +21,7 @@ const dialogRecipe = defineSlotRecipe({
       backgroundColor: 'bgOverlay50',
       zIndex: 'dialogContainer',
       overflow: 'hidden',
+      touchAction: 'none',
     },
     container: {
       backgroundColor: 'bg',
@@ -66,6 +67,7 @@ const dialogRecipe = defineSlotRecipe({
       '@media (min-width: 1200px)': {
         fontSize: '1.7rem',
       },
+      overscrollBehavior: 'contain',
     },
     gradient: {
       position: 'absolute',
