@@ -5,7 +5,6 @@ import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
 import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
-import { LongPressState } from '../constants'
 import durations from '../durations.config'
 import testFlags from '../e2e/testFlags'
 import useDragThoughtAnimation from '../hooks/useDragThoughtAnimation'
@@ -15,7 +14,6 @@ import usePrevious from '../hooks/usePrevious'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
-import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
@@ -166,14 +164,8 @@ const TreeNode = ({
   )
 
   const moveDivStyle = useMoveThoughtAnimation(index)
-  // True if this TreeNode represents a thought in the current drag selection
-  const isDragged = useSelector(
-    state =>
-      state.longPress === LongPressState.DragInProgress &&
-      (state.draggingThoughts || []).some(p => head(p) === thoughtId),
-  )
   // Compose drag thought animation
-  const dragMoveDivStyle = useDragThoughtAnimation(index, isDragged)
+  const dragMoveDivStyle = useDragThoughtAnimation(index, thoughtId)
 
   /**
    * Horizontal offset for the first frame of a sort animation. This allows the X transition
