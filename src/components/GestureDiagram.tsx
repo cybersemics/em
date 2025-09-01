@@ -258,6 +258,8 @@ const GestureDiagram = ({
     return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
   }
 
+  const scale = Math.max(1, Math.max(sumWidth, sumHeight) / 100)
+
   return (
     <svg
       width={width || '100'}
@@ -273,8 +275,8 @@ const GestureDiagram = ({
           viewBox='0 0 10 10'
           refX={rounded ? '0' : '5'}
           refY='5'
-          markerWidth={arrowSize! * (arrowhead === 'outlined' ? 2 : 1)}
-          markerHeight={arrowSize! * (arrowhead === 'outlined' ? 3 : 1)}
+          markerWidth={arrowSize! * (arrowhead === 'outlined' ? 2 : 1) * scale}
+          markerHeight={arrowSize! * (arrowhead === 'outlined' ? 3 : 1) * scale}
           markerUnits='userSpaceOnUse'
           orient='auto-start-reverse'
         >
@@ -294,7 +296,7 @@ const GestureDiagram = ({
                   : color || token('colors.fg')
             }
             stroke={arrowhead === 'outlined' ? color || token('colors.fg') : 'none'}
-            strokeWidth={arrowhead === 'outlined' ? strokeWidth / 3 : 0}
+            strokeWidth={arrowhead === 'outlined' ? (strokeWidth * scale) / 3 : 0}
             style={{ filter: dropShadow }}
           />
         </marker>
@@ -328,7 +330,7 @@ const GestureDiagram = ({
                 ? token('colors.vividHighlight')
                 : color || token('colors.fg')
             }
-            strokeWidth={strokeWidth * 1.5}
+            strokeWidth={strokeWidth * 1.5 * scale}
             strokeLinecap='round'
             strokeLinejoin='round'
             fill='none'
