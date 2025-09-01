@@ -59,13 +59,13 @@ const dirToRad = {
     SE: Math.PI / 4,
     SW: Math.PI * (3 / 4),
   },
-  LongitudinalBias: {
+  VerticalBias: {
     NW: -Math.PI * (31 / 36),
     NE: -Math.PI * (5 / 36),
     SE: Math.PI * (5 / 36),
     SW: Math.PI * (31 / 36),
   },
-  LatitudinalBias: {
+  HorizontalBias: {
     NW: -Math.PI * (23 / 36),
     NE: -Math.PI * (13 / 36),
     SE: Math.PI * (13 / 36),
@@ -215,8 +215,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           // The new sequence will be appended as soon as it is detected, so we need to base the bias on the second-to-last letter in the sequence
           this.sequence.length > 1
             ? ['u', 'd'].includes(this.sequence[this.sequence.length - 2])
-              ? 'LatitudinalBias'
-              : 'LongitudinalBias'
+              ? 'HorizontalBias'
+              : 'VerticalBias'
             : 'NoBias',
         )
 
