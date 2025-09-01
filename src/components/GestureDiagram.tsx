@@ -36,6 +36,11 @@ interface GestureDiagramProps {
   arrowhead?: 'filled' | 'outlined'
 }
 
+/** Determines if the new segment is perpendicular to the previous segment */
+const isPerpendicular = (dir: Direction, prev: Direction) => {
+  return dir === 'r' || dir === 'l' ? prev === 'u' || prev === 'd' : prev === 'r' || prev === 'l'
+}
+
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
 const rotateClockwise = (dir: Direction) =>
   ({
@@ -123,6 +128,43 @@ const GestureDiagram = ({
     const next = pathDirs[i + 1]
     const afterNext = pathDirs[i + 2]
     const horizontal = dir === 'l' || dir === 'r'
+
+    // Don't skew a line segment that comes immediately after a skewed segment.
+    // In the case of multiple perpendicular segments in a row, only skew every other segment.
+    // Also don't skew 'rddl'.
+    const skew =
+      pathDirs.join('') !== 'rddl' &&
+      isPerpendicular(dir, prev) &&
+      (!isPerpendicular(prev, beforePrev) || isPerpendicular(beforePrev, pathDirs[i - 3]))
+
+    // If the new segment is perpendicular to the previous segment, then special cases like reversals don't apply.
+    // Draw the new segment 20 degrees more acute than an otherwise perpendicular line. (#1983)
+    if (skew) {
+      return horizontal
+        ? // horizontal, skewed upward
+          prev === 'u'
+          ? {
+              dx: Math.cos(Math.PI / 9) * size * (dir === 'l' ? -1 : 1),
+              dy: Math.sin(Math.PI / 9) * size,
+            }
+          : // horizontal, skewed downward
+            {
+              dx: Math.cos(Math.PI / 9) * size * (dir === 'l' ? -1 : 1),
+              dy: Math.sin(Math.PI / -9) * size,
+            }
+        : // vertical, skewed left
+          prev === 'r'
+          ? {
+              dx: Math.sin(Math.PI / -9) * size,
+              dy: Math.cos(Math.PI / 9) * size * (dir === 'u' ? -1 : 1),
+            }
+          : // vertical, skewed right
+            {
+              dx: Math.sin(Math.PI / 9) * size,
+              dy: Math.cos(Math.PI / 9) * size * (dir === 'u' ? -1 : 1),
+            }
+    }
+
     const negative = dir === 'l' || dir === 'd' // negative movement along the respective axis
 
     const clockwisePrev = rotateClockwise(prev) === dir
