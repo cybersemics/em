@@ -36,7 +36,7 @@ interface GestureDiagramProps {
   arrowhead?: 'filled' | 'outlined'
 }
 
-/** Determines if the new segment is perpendicular to the previous segment */
+/** Determines if the new segment is perpendicular to the previous segment. */
 const isPerpendicular = (dir: Direction, prev: Direction) => {
   return dir === 'r' || dir === 'l' ? prev === 'u' || prev === 'd' : prev === 'r' || prev === 'l'
 }
