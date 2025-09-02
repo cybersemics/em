@@ -215,8 +215,9 @@ const GestureDiagram = ({
     // use size if sumWidth is ~0, eg. for the path 'rl'
     // sumWidth will not be exactly 0 due to the reversal offset
     if (!width) {
-      el.setAttribute('width', (flexibleSize ? Math.max(sumWidth, size) : size) + 'px')
-      el.setAttribute('height', (flexibleSize ? Math.max(sumHeight, size) : size) + 'px')
+      const elementSize = sumHeight > size && sumHeight > sumWidth ? size * 0.75 : size
+      el.setAttribute('width', (flexibleSize ? Math.max(sumWidth, size) : elementSize) + 'px')
+      el.setAttribute('height', (flexibleSize ? Math.max(sumHeight, size) : elementSize) + 'px')
     }
   }
 
