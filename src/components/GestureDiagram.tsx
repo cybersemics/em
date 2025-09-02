@@ -30,6 +30,9 @@ interface GestureDiagramProps {
   cssRaw?: SystemStyleObject
   /** Whether to render the gesture with rounded corners. */
   rounded?: boolean
+  /** The command palette doesn't have enough room for tall gestures at their natural height, but Customize Toolbar does.
+   * Allow the implementation to specify whether tall gestures should be scaled (#3210). */
+  scaleTallGestures?: boolean
   /** If true, the cancel gesture will have the same styling as the other gestures. Otherwise, there are additional sizing and margin styles applied. */
   styleCancelAsRegularGesture?: boolean
   /** Which kind of arrowhead to draw gesture diagrams with. By default, the arrowhead is filled. */
@@ -77,6 +80,7 @@ const GestureDiagram = ({
   inGestureContainer,
   cssRaw,
   rounded,
+  scaleTallGestures,
   styleCancelAsRegularGesture,
   arrowhead = 'filled',
 }: GestureDiagramProps) => {
@@ -215,7 +219,7 @@ const GestureDiagram = ({
     // use size if sumWidth is ~0, eg. for the path 'rl'
     // sumWidth will not be exactly 0 due to the reversal offset
     if (!width) {
-      const elementSize = sumHeight > size && sumHeight > sumWidth ? size * 0.75 : size
+      const elementSize = scaleTallGestures && sumHeight > sumWidth ? size * 0.75 : size
       el.setAttribute('width', (flexibleSize ? Math.max(sumWidth, size) : elementSize) + 'px')
       el.setAttribute('height', (flexibleSize ? Math.max(sumHeight, size) : elementSize) + 'px')
     }

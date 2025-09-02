@@ -302,6 +302,7 @@ const CommandItem: FC<{
         >
           <GestureDiagram
             color={disabled ? token('colors.gray') : undefined}
+            scaleTallGestures
             styleCancelAsRegularGesture
             highlight={gestureHighlight}
             path={command.id === 'cancel' ? null : gestureString(command)}
