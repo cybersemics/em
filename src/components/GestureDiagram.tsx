@@ -139,34 +139,6 @@ const GestureDiagram = ({
       isPerpendicular(dir, prev) &&
       (!isPerpendicular(prev, beforePrev) || isPerpendicular(beforePrev, pathDirs[i - 3]))
 
-    // If the new segment is perpendicular to the previous segment, then special cases like reversals don't apply.
-    // Draw the new segment 20 degrees more acute than an otherwise perpendicular line. (#1983)
-    if (skew) {
-      return horizontal
-        ? // horizontal, skewed upward
-          prev === 'u'
-          ? {
-              dx: Math.cos(Math.PI / 9) * size * (dir === 'l' ? -1 : 1),
-              dy: Math.sin(Math.PI / 9) * size,
-            }
-          : // horizontal, skewed downward
-            {
-              dx: Math.cos(Math.PI / 9) * size * (dir === 'l' ? -1 : 1),
-              dy: Math.sin(Math.PI / -9) * size,
-            }
-        : // vertical, skewed left
-          prev === 'r'
-          ? {
-              dx: Math.sin(Math.PI / -9) * size,
-              dy: Math.cos(Math.PI / 9) * size * (dir === 'u' ? -1 : 1),
-            }
-          : // vertical, skewed right
-            {
-              dx: Math.sin(Math.PI / 9) * size,
-              dy: Math.cos(Math.PI / 9) * size * (dir === 'u' ? -1 : 1),
-            }
-    }
-
     const negative = dir === 'l' || dir === 'd' // negative movement along the respective axis
 
     const clockwisePrev = rotateClockwise(prev) === dir
@@ -186,10 +158,10 @@ const GestureDiagram = ({
     // when there is a reversal of direction, instead of moving 0 on the orthogonal plane, offset the vertex to avoid segment overlap
     const dx = horizontal
       ? (size - shorten) * (negative ? -1 : 1)
-      : (reversal ? reversalOffset! : 0) * (flipOffset ? -1 : 1) // the negative multiplier here ensures the offset is moving away from the previous segment so it doesn't trace backwards
+      : (reversal ? reversalOffset! : skew ? Math.sin(Math.PI / -9) * size : 0) * (flipOffset ? -1 : 1) // the negative multiplier here ensures the offset is moving away from the previous segment so it doesn't trace backwards
     const dy = !horizontal
       ? (size - shorten) * (!negative ? -1 : 1)
-      : (reversal ? reversalOffset! : 0) * (flipOffset ? -1 : 1)
+      : (reversal ? reversalOffset! : skew ? Math.sin(Math.PI / -9) * size : 0) * (flipOffset ? -1 : 1)
 
     return { dx, dy }
   }
