@@ -36,11 +36,6 @@ interface GestureDiagramProps {
   arrowhead?: 'filled' | 'outlined'
 }
 
-/** Determines if the new segment is perpendicular to the previous segment. */
-const isPerpendicular = (dir: Direction, prev: Direction) => {
-  return dir === 'r' || dir === 'l' ? prev === 'u' || prev === 'd' : prev === 'r' || prev === 'l'
-}
-
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
 const rotateClockwise = (dir: Direction) =>
   ({
@@ -130,12 +125,6 @@ const GestureDiagram = ({
     const horizontal = dir === 'l' || dir === 'r'
     const path = pathDirs.join('')
 
-    // Only skew line segments if they are perpendicular to both the previous and next segments, e.g. `rdr`.
-    const skew =
-      isPerpendicular(dir, prev) &&
-      (!isPerpendicular(prev, beforePrev) || isPerpendicular(beforePrev, pathDirs[i - 3])) &&
-      prev === next
-
     const negative = dir === 'l' || dir === 'd' // negative movement along the respective axis
 
     const clockwisePrev = rotateClockwise(prev) === dir
@@ -155,10 +144,10 @@ const GestureDiagram = ({
     // when there is a reversal of direction, instead of moving 0 on the orthogonal plane, offset the vertex to avoid segment overlap
     const dx = horizontal
       ? (size - shorten) * (negative ? -1 : 1)
-      : (reversal ? reversalOffset! : skew ? Math.sin(Math.PI / -9) * size : 0) * (flipOffset ? -1 : 1) // the negative multiplier here ensures the offset is moving away from the previous segment so it doesn't trace backwards
+      : (reversal ? reversalOffset! : 0) * (flipOffset ? -1 : 1) // the negative multiplier here ensures the offset is moving away from the previous segment so it doesn't trace backwards
     const dy = !horizontal
       ? (size - shorten) * (!negative ? -1 : 1)
-      : (reversal ? reversalOffset! : skew ? Math.sin(Math.PI / -9) * size : 0) * (flipOffset ? -1 : 1)
+      : (reversal ? reversalOffset! : 0) * (flipOffset ? -1 : 1)
 
     return { dx, dy }
   }
