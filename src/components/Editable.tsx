@@ -527,6 +527,13 @@ const Editable = ({
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      // If CMD/CTRL is pressed, don't focus the editable.
+      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
+      if (isMultiselectClick) {
+        e.preventDefault()
+        return
+      }
+
       // If editing or the cursor is on the thought, allow the default browser selection so the offset is correct.
       // Otherwise useEditMode will programmatically set the selection to the beginning of the thought.
       // See: #981
