@@ -258,7 +258,7 @@ const GestureDiagram = ({
     return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
   }
 
-  const scale = Math.max(1, Math.max(sumWidth, sumHeight) / 100)
+  const scale = Math.max(1, (sumWidth * 2) / (size * 3))
 
   return (
     <svg
