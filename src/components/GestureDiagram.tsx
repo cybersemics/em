@@ -130,14 +130,11 @@ const GestureDiagram = ({
     const horizontal = dir === 'l' || dir === 'r'
     const path = pathDirs.join('')
 
-    // Don't skew a line segment that comes immediately after a skewed segment.
-    // In the case of multiple perpendicular segments in a row, only skew every other segment.
-    // Also don't skew 'rddl'.
+    // Only skew line segments if they are perpendicular to both the previous and next segments, e.g. `rdr`.
     const skew =
-      path !== 'rddl' &&
-      path !== 'lddr' &&
       isPerpendicular(dir, prev) &&
-      (!isPerpendicular(prev, beforePrev) || isPerpendicular(beforePrev, pathDirs[i - 3]))
+      (!isPerpendicular(prev, beforePrev) || isPerpendicular(beforePrev, pathDirs[i - 3])) &&
+      prev === next
 
     const negative = dir === 'l' || dir === 'd' // negative movement along the respective axis
 
