@@ -18,7 +18,6 @@ import reactMinistore from '../stores/react-ministore'
 import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import head from '../util/head'
-import parentOf from '../util/parentOf'
 import BulletCursorOverlay from './BulletCursorOverlay'
 import HoverArrow from './HoverArrow'
 import TreeNode from './TreeNode'
@@ -272,18 +271,7 @@ const LayoutTree = () => {
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
       >
-        {cursorThoughtPositioned && (
-          <BulletCursorOverlay
-            isTableCol1={cursorThoughtPositioned.isTableCol1}
-            path={cursorThoughtPositioned.path}
-            simplePath={cursorThoughtPositioned.simplePath}
-            x={cursorThoughtPositioned.x}
-            y={cursorThoughtPositioned.y}
-            showContexts={cursorThoughtPositioned.showContexts}
-            width={cursorThoughtPositioned.width}
-            parentId={head(parentOf(cursorThoughtPositioned.path))}
-          />
-        )}
+        {cursorThoughtPositioned && <BulletCursorOverlay />}
         <TransitionGroup>
           {treeThoughtsPositioned.map((thought, index) => (
             <TreeNode
