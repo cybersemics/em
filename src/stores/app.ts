@@ -1,9 +1,9 @@
 /**
  * Defines the Redux app reducer, loads middleware and enhancers, and exports a global store.
  */
+import { composeWithDevTools } from '@redux-devtools/extension'
 import _ from 'lodash'
 import { applyMiddleware, createStore } from 'redux'
-import { composeWithDevTools } from 'redux-devtools-extension'
 import { thunk } from 'redux-thunk'
 import appReducer from '../actions/app'
 import pushQueue from '../redux-enhancers/pushQueue'
