@@ -7,6 +7,7 @@ import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import durations from '../durations.config'
 import testFlags from '../e2e/testFlags'
+import useDragThoughtAnimation from '../hooks/useDragThoughtAnimation'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import useMoveThoughtAnimation from '../hooks/useMoveThoughtAnimation'
 import usePrevious from '../hooks/usePrevious'
@@ -163,6 +164,8 @@ const TreeNode = ({
   )
 
   const moveDivStyle = useMoveThoughtAnimation(index)
+  // Compose drag thought animation
+  const dragMoveDivStyle = useDragThoughtAnimation(index, thoughtId)
 
   /**
    * Horizontal offset for the first frame of a sort animation. This allows the X transition
@@ -234,7 +237,7 @@ const TreeNode = ({
           top: y,
           left: 0,
         }
-      : moveDivStyle
+      : dragMoveDivStyle || moveDivStyle
 
   return (
     <FadeTransition
