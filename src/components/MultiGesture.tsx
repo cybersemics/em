@@ -53,14 +53,30 @@ type MultiGestureProps = PropsWithChildren<{
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
 const dirToRad = {
-  NW: -Math.PI * (3 / 4),
-  NE: -Math.PI / 4,
-  SE: Math.PI / 4,
-  SW: Math.PI * (3 / 4),
+  NoBias: {
+    NW: -Math.PI * (3 / 4),
+    NE: -Math.PI / 4,
+    SE: Math.PI / 4,
+    SW: Math.PI * (3 / 4),
+  },
+  VerticalBias: {
+    NW: -Math.PI * (31 / 36),
+    NE: -Math.PI * (5 / 36),
+    SE: Math.PI * (5 / 36),
+    SW: Math.PI * (31 / 36),
+  },
+  HorizontalBias: {
+    NW: -Math.PI * (23 / 36),
+    NE: -Math.PI * (13 / 36),
+    SE: Math.PI * (13 / 36),
+    SW: Math.PI * (23 / 36),
+  },
 }
 
+type BiasType = keyof typeof dirToRad
+
 /** Return the closest gesture based on the angle between two points. See: https://github.com/cybersemics/em/issues/1379. */
-const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | null => {
+const gesture = (p1: Point, p2: Point, minDistanceSquared: number, bias: BiasType = 'NoBias'): Direction | null => {
   // Instead of calculating the actual distance, calculate distance squared.
   // Then we can compare it directly to minDistanceSquared and avoid the Math.sqrt call completely.
   const distanceSquared = Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)
@@ -68,11 +84,11 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
 
   // Math.atan2 returns 0 to 180deg as 0 to π, and 180 to 360deg as -π to 0 (clockwise starting due right)
   const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x)
-  return angle >= dirToRad.NW && angle < dirToRad.NE
+  return angle >= dirToRad[bias].NW && angle < dirToRad[bias].NE
     ? 'u'
-    : angle >= dirToRad.NE && angle < dirToRad.SE
+    : angle >= dirToRad[bias].NE && angle < dirToRad[bias].SE
       ? 'r'
-      : angle >= dirToRad.SE && angle < dirToRad.SW
+      : angle >= dirToRad[bias].SE && angle < dirToRad[bias].SW
         ? 'd'
         : 'l'
 }
@@ -196,6 +212,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             y: gestureState.moveY,
           },
           this.minDistanceSquared,
+          // The new sequence will be appended as soon as it is detected, so we need to base the bias on the second-to-last letter in the sequence
+          this.sequence.length > 1
+            ? ['u', 'd'].includes(this.sequence[this.sequence.length - 2])
+              ? 'HorizontalBias'
+              : 'VerticalBias'
+            : 'NoBias',
         )
 
         if (g) {
