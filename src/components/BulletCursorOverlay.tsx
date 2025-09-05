@@ -9,11 +9,11 @@ const isIOSSafari = isTouch && isiPhone && isSafari()
 /**
  * CursorOverlay is a component that renders the cursor overlay for a thought bullet.
  */
-function CursorOverlay() {
+export function CursorOverlay() {
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
 
   return (
-    <g key='placeholder-bullet-g'>
+    <g key='placeholder-bullet-g' style={{ visibility: 'visible' }}>
       <ellipse
         ry={bulletOverlayRadius}
         rx={bulletOverlayRadius}
@@ -55,23 +55,8 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
     container.innerHTML = ''
     if (treenodeElement.firstElementChild) {
       const nestedChild = treenodeElement.firstElementChild.cloneNode(true) as HTMLElement
+
       container.appendChild(nestedChild)
-
-      // Find and hide the thought-annotation element
-      const thoughtAnnotation = nestedChild.querySelector('div[aria-label="thought-annotation"]') as HTMLElement
-      if (thoughtAnnotation) {
-        thoughtAnnotation.style.visibility = 'hidden'
-      }
-
-      const staticThought = nestedChild.querySelector('div[aria-label="static-thought"]') as HTMLElement
-      if (staticThought) {
-        staticThought.style.visibility = 'hidden'
-      }
-
-      const contextBreadcrumbs = nestedChild.querySelector('div[aria-label="context-breadcrumbs"]') as HTMLElement
-      if (contextBreadcrumbs) {
-        contextBreadcrumbs.style.visibility = 'hidden'
-      }
 
       const svg = nestedChild.querySelector('span[aria-label="bullet"] svg') as SVGSVGElement | null
       setTargetSvg(svg)

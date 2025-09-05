@@ -222,10 +222,14 @@ const TreeNode = ({
       // Clone both divs individually and combine them into one component
       const clonedOuterDiv = outerDivRef.current.cloneNode(true) as HTMLElement
 
+      clonedOuterDiv.style.visibility = 'hidden'
+
       const bulletSpan = clonedOuterDiv.querySelector('span[aria-label="bullet"]')
       if (bulletSpan) {
         const svgElement = bulletSpan.querySelector('svg')
+
         if (svgElement) {
+          svgElement.style.visibility = 'visible'
           // Remove all children of the SVG (this removes the <g> element and its contents)
           svgElement.innerHTML = ''
         }
