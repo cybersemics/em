@@ -3,10 +3,12 @@ import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import disableAnimations from '../helpers/disableAnimations'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
+import screenshotWithNoAntialiasing from '../helpers/screenshot-with-no-antialiasing'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
@@ -71,7 +73,10 @@ const isElementVisible = async (text: string, selector = '[data-editable]'): Pro
 */
 
 describe('drag', () => {
-  beforeEach(hideHUD)
+  beforeEach(async () => {
+    await hideHUD()
+    await disableAnimations()
+  })
 
   it('Alert', async () => {
     await paste(`
@@ -145,7 +150,7 @@ describe('drag', () => {
     await clickThought('c')
     await dragAndDropThought('c', 'e', { position: 'before', dropUncle: true })
 
-    const image = await screenshot()
+    const image = await screenshotWithNoAntialiasing()
     expect(image).toMatchImageSnapshot({
       customDiffConfig: {
         threshold: UNCLE_DIFF_THRESHOLD,
@@ -340,7 +345,10 @@ describe('drag', () => {
 })
 
 describe('drop', () => {
-  beforeEach(hideHUD)
+  beforeEach(async () => {
+    await hideHUD()
+    await disableAnimations()
+  })
 
   // TODO: Fails intermittently due to mouseup: true.
   // See previous attempts to fix: https://github.com/cybersemics/em/pull/2701
@@ -415,6 +423,7 @@ describe('drop', () => {
 describe('hover expansion', () => {
   beforeEach(async () => {
     await hideHUD()
+    await disableAnimations()
 
     // inject MOCK_EXPAND_HOVER_DELAY
     const em = window.em as WindowEm
