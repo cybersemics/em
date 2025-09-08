@@ -8,7 +8,6 @@ import dragAndDropThought from '../helpers/dragAndDropThought'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
-import screenshotWithNoAntialiasing from '../helpers/screenshot-with-no-antialiasing'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
@@ -150,7 +149,7 @@ describe('drag', () => {
     await clickThought('c')
     await dragAndDropThought('c', 'e', { position: 'before', dropUncle: true })
 
-    const image = await screenshotWithNoAntialiasing()
+    const image = await screenshot()
     expect(image).toMatchImageSnapshot({
       customDiffConfig: {
         threshold: UNCLE_DIFF_THRESHOLD,
