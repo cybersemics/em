@@ -13,28 +13,29 @@ const dropOnQuickDropPanel = async () => {
   const viewport = await page.viewport()
   if (!viewport) throw new Error('Viewport not available')
 
-  // Move mouse to QuickDropPanel area (right edge, 2em width ≈ 32px)
-  const quickDropX = viewport.width - 16 // Center of the 2em (32px) drop zone
-  const quickDropY = viewport.height / 2 // Middle of the screen vertically
+  const position = {
+    x: viewport.width - 16, // Center of the 2em (32px) drop zone
+    y: viewport.height / 2, // Middle of the screen vertically
+  }
 
-  await page.mouse.move(quickDropX, quickDropY)
+  await page.mouse.move(position.x, position.y)
 }
 
 describe('Quick Drop Panel', () => {
   it('should remove favorite thought when dropped on QuickDropPanel', async () => {
     await paste(`
-      - My favorite
+      - a
     `)
 
-    await clickThought('My favorite')
+    await clickThought('a')
     await click('[aria-label="Add to Favorites"]')
 
     // Verify the favorite alert appears
     const favoriteAlertContent = await page.$eval('[data-testid="alert-content"]', el => el.textContent)
-    expect(favoriteAlertContent).toContain('Added My favorite to favorites')
+    expect(favoriteAlertContent).toContain('Added a to favorites')
 
-    // Start dragging the thought (this will trigger long press and show QuickDropPanel)
-    await dragAndDropThought('My favorite', null, {
+    // trigger long press and show invisible QuickDropPanel
+    await dragAndDropThought('a', null, {
       position: 'none',
       mouseUp: false,
       showAlert: true,
@@ -44,7 +45,7 @@ describe('Quick Drop Panel', () => {
 
     await waitUntil(() => {
       const alertElement = document.querySelector('[data-testid="alert-content"]')
-      return alertElement?.textContent?.includes('Drop to remove My favorite')
+      return alertElement?.textContent?.includes('Drop to remove a')
     })
 
     // Complete the drop
@@ -56,18 +57,18 @@ describe('Quick Drop Panel', () => {
     })
 
     // Verify the thought has been deleted (should no longer be in the DOM)
-    const deletedThought = await page.$('[data-editable*="My favorite"]')
+    const deletedThought = await page.$('[data-editable="a"]')
     expect(deletedThought).toBeNull()
   })
 
   it('should delete regular thought when dropped on QuickDropPanel', async () => {
     // Start with empty thoughtspace and create a new thought (keep it short to avoid ellipsize)
     await paste(`
-      - Delete me
+      - a
     `)
 
     // Start dragging the thought (this will trigger long press and show QuickDropPanel)
-    await dragAndDropThought('Delete me', null, {
+    await dragAndDropThought('a', null, {
       position: 'none',
       mouseUp: false,
       showAlert: true,
@@ -77,7 +78,7 @@ describe('Quick Drop Panel', () => {
 
     await waitUntil(() => {
       const alertElement = document.querySelector('[data-testid="alert-content"]')
-      return alertElement?.textContent?.includes('Drop to remove Delete me')
+      return alertElement?.textContent?.includes('Drop to remove a')
     })
 
     // Complete the drop
@@ -89,7 +90,7 @@ describe('Quick Drop Panel', () => {
     })
 
     // Verify the thought has been deleted (should no longer be in the DOM)
-    const deletedThought = await page.$('[data-editable*="Delete me"]')
+    const deletedThought = await page.$('[data-editable="a"]')
     expect(deletedThought).toBeNull()
   })
 })
