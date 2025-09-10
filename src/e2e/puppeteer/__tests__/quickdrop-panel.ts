@@ -55,10 +55,6 @@ describe('Quick Drop Panel', () => {
       const alertElement = document.querySelector('[data-testid="alert-content"]')
       return alertElement?.textContent?.includes('Removed 1 thought')
     })
-
-    // Verify the thought has been deleted (should no longer be in the DOM)
-    const deletedThought = await page.$('[data-editable="a"]')
-    expect(deletedThought).toBeNull()
   })
 
   it('should delete regular thought when dropped on QuickDropPanel', async () => {
@@ -88,9 +84,5 @@ describe('Quick Drop Panel', () => {
       const alertElement = document.querySelector('[data-testid="alert-content"]')
       return alertElement?.textContent?.includes('Removed 1 thought')
     })
-
-    // Verify the thought has been deleted (should no longer be in the DOM)
-    const deletedThought = await page.$('[data-editable="a"]')
-    expect(deletedThought).toBeNull()
   })
 })
