@@ -10,7 +10,6 @@ import createId from '../util/createId'
 interface GestureDiagramProps {
   arrowSize?: number
   color?: string
-  flexibleSize?: number
   // override auto height
   height?: number
   // highlight the first n segments of the gesture diagram
@@ -64,7 +63,6 @@ const oppositeDirection = (dir: Direction) =>
 const GestureDiagram = ({
   arrowSize,
   color,
-  flexibleSize,
   height,
   highlight,
   path,
