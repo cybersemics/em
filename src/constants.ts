@@ -1,5 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-
 /** Defines app-wide constants. */
 import CommandId from './@types/CommandId'
 import SimplePath from './@types/SimplePath'
