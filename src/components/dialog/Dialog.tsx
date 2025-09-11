@@ -34,10 +34,9 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
   }, [onClose])
 
   /**
-   * Disable scroll while the dialog is open.
-   * On iOS, there was a bug where the user could scroll the page via the modal overlay.
-   * It's difficult to disable scrolling entirely on iOS, so this effect prevents scrolling
-   * on the modal overlay by preventing touch events.
+   * Disable swipe-to-go-back.
+   * On iOS Safari, swiping from the left edge of the page functions similarly to hitting the back button.
+   * This is disabled in the main app, probably by MultiGesture, and needs to be disabled while a dialog is open.
    */
   useEffect(() => {
     const overlayElement = nodeRef.current

@@ -29,7 +29,7 @@ export const accessToken = accessTokenShared || accessTokenLocal
 export let clientId = ''
 
 /** Encodes binary data in base64. */
-async function bufferToBase64(buffer: ArrayBuffer | Uint8Array) {
+async function bufferToBase64(buffer: ArrayBuffer) {
   // use a FileReader to generate a base64 data URI:
   const base64url = await new Promise<string>(resolve => {
     const reader = new FileReader()

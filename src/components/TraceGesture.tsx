@@ -51,6 +51,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const show = gestureStore.useSelector(state => state.gesture.length > 0)
   const cancelled = useGestureCancelled()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
+  const innerWidth = viewportStore.useSelector(state => state.innerWidth)
   const signaturePadRef = useRef<SignaturePad | null>(null)
 
   // Clear the signature pad when the stroke starts.
@@ -69,6 +70,16 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad._ctx.shadowOffsetY = 0
     signaturePad._ctx.shadowBlur = GESTURE_GLOW_BLUR
   }, [colors])
+
+  // Resize the signature pad when the screen orientation changes.
+  useEffect(() => {
+    if (!signaturePadRef.current) return
+
+    const signaturePad = signaturePadRef.current['signaturePad'] as SignaturePadOverride
+
+    signaturePad.canvas.width = innerWidth
+    signaturePad.canvas.height = innerHeight
+  }, [innerHeight, innerWidth])
 
   useEffect(() => {
     if (!signaturePadRef.current) return

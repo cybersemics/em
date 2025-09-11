@@ -9,7 +9,6 @@ import ThoughtId from '../@types/ThoughtId'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
-import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { AlertType, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
@@ -483,7 +482,6 @@ const Bullet = ({
 
       // short circuit if toggling multiselect
       if (!isTouch && (isMac ? e.metaKey : e.ctrlKey)) {
-        dispatch(toggleMulticursor({ path }))
         return
       }
 
@@ -508,9 +506,6 @@ const Bullet = ({
           setCursor({ path: shouldCollapse ? pathParent : path, preserveMulticursor: true }),
         ])
       })
-
-      e.stopPropagation()
-      // stop click event from bubbling up to Content.clickOnEmptySpace
     },
     [dispatch, dragHold, path, simplePath],
   )
