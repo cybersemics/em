@@ -20,7 +20,7 @@ export type PopupBaseProps = PropsWithChildren<
     /** If true, a border will be added to the popup. */
     border?: boolean
     circledCloseButton?: boolean
-    /** If true, the popup will take up the full width of the screen. */
+    /** If true, the popup will take up the full width and height of the screen. */
     fullScreen?: boolean
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
@@ -80,7 +80,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         }
       : {}
 
-    const fullWidthStyles = fullScreen
+    const fullScreenStyles = fullScreen
       ? {
           boxShadow: 'none',
           border: 'none',
@@ -108,7 +108,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           right: 0,
           width: 'max-content',
           ...borderStyles,
-          ...fullWidthStyles,
+          ...fullScreenStyles,
           '&:hover': {
             '& [data-close-button]': {
               opacity: showXOnHover ? 1 : undefined,
