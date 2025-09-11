@@ -87,7 +87,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           display: 'block',
           width: '100%',
           height: '100%',
-          marginBlock: 'auto',
+          // when absolutely-positioned, the top position is calculated in usePositionFixed (#3222)
+          marginBlock: positionFixedStyles.position === 'fixed' ? 'auto' : undefined,
           top: 0,
           bottom: 0,
         }
