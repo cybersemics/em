@@ -156,15 +156,19 @@ const GestureDiagram = ({
   const extendedIndex = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
   const pathSegments = (Array.from(extendedPath) as Direction[]).map(pathSegmentDelta)
 
+  const sumWidth = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dx, 0))
+  const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))
+  const scale = size / Math.max(size, sumWidth, sumHeight)
+
   // Compute the positions of all points
   const positions = pathSegments.reduce(
     (accum, segment) => {
       const prevPos = accum[accum.length - 1]
-      const x = prevPos.x + segment.dx
-      const y = prevPos.y + segment.dy
+      const x = prevPos.x + segment.dx * scale
+      const y = prevPos.y + segment.dy * scale
       return [...accum, { x, y }]
     },
-    [{ x: 50, y: 50 }],
+    [{ x: 0, y: 0 }],
   )
 
   // Detect if the last position overlaps with any previous position
@@ -306,7 +310,7 @@ const GestureDiagram = ({
                         : 'M 45,58.5 L 45,72'
                   : rounded
                     ? generateArcPath(i, path as Direction[])
-                    : `M ${x} ${y} l ${segment.dx} ${segment.dy}`
+                    : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
               }
               // segments do not change independently, so we can use index as the key
               key={i}
