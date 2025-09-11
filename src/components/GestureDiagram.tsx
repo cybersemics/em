@@ -11,7 +11,7 @@ interface GestureDiagramProps {
   arrowSize?: number
   color?: string
   // override auto height
-  height?: number
+  maxHeight?: number
   // highlight the first n segments of the gesture diagram
   highlight?: number
   path: GesturePath | null
@@ -24,7 +24,7 @@ interface GestureDiagramProps {
   // TODO: improve auto cropping so there is no excess space
   viewBox?: `${number} ${number} ${number} ${number}`
   // override auto width
-  width?: number
+  maxWidth?: number
   inGestureContainer?: boolean
   cssRaw?: SystemStyleObject
   /** Whether to render the gesture with rounded corners. */
@@ -63,7 +63,7 @@ const oppositeDirection = (dir: Direction) =>
 const GestureDiagram = ({
   arrowSize,
   color,
-  height,
+  maxHeight,
   highlight,
   path,
   reversalOffset,
@@ -71,7 +71,7 @@ const GestureDiagram = ({
   strokeWidth = 1.5,
   style,
   viewBox,
-  width,
+  maxWidth,
   inGestureContainer,
   cssRaw,
   rounded,
@@ -249,7 +249,7 @@ const GestureDiagram = ({
   return (
     <span
       className={css({ display: 'inline-block' }, cssRaw)}
-      style={{ width: `${width ?? size}px`, height: `${height ?? size}px` }}
+      style={{ width: `${maxWidth ?? size}px`, height: `${maxHeight ?? size}px` }}
     >
       <svg
         className={css(inGestureContainer && { position: 'relative', top: '10px' }, { width: '100%', height: '100%' })}
