@@ -19,6 +19,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
 import fastClick from '../util/fastClick'
 import getBulletWidth from '../util/getBulletWidth'
@@ -423,6 +424,9 @@ const Bullet = ({
   })
   const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
+  // check if the thought is pinned
+  const isThoughtPinned = useSelector(state => !!isPinned(state, thoughtId))
+
   /** True if the the user is dragging the thought and hovering over the DeleteDrop QuickDrop icon. */
   const isQuickDropDeleteHovering = useSelector(
     state => isDragging && state.alert?.alertType === AlertType.DeleteDropHint,
@@ -557,6 +561,8 @@ const Bullet = ({
             // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
             // allowing the browser to optimize the animation.
             willChange: 'transform',
+            // run grow animation on pin activation
+            animation: isThoughtPinned ? 'bulletGrow {durations.fast} ease-out' : undefined,
             ...(isHighlighted
               ? {
                   fillOpacity: 1,
