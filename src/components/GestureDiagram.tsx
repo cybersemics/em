@@ -155,8 +155,9 @@ const GestureDiagram = ({
   // - Extend the last segment of →↓← so that the New Uncle gesture is more intuitive
   // - Extend the middle segment of ←↓→ so that the Select All gesture is more intuitive
   const extendedPath = path === 'rdl' ? 'rddl' : path === 'ldr' ? 'lddr' : path
+  const extendedPathArray = Array.from(extendedPath) as Direction[]
   const extendedIndex = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
-  const pathSegments = (Array.from(extendedPath) as Direction[]).map(pathSegmentDelta)
+  const pathSegments = extendedPathArray.map(pathSegmentDelta)
 
   // Compute the positions of all points
   const positions = pathSegments.reduce(
@@ -298,7 +299,45 @@ const GestureDiagram = ({
             style={{ filter: dropShadow }}
           />
         </marker>
+        {extendedPathArray.map((segment, i) => {
+          const forward = segment === 'r' || segment === 'd'
+
+          return (
+            <linearGradient
+              id={`${extendedPath}-gradient-${i}`}
+              key={`${extendedPath}-gradient-${i}`}
+              gradientUnits='userSpaceOnUse'
+              x1={segment === 'l' ? '100%' : '0'}
+              x2={segment === 'r' ? '100%' : '0'}
+              y1={segment === 'u' ? '100%' : '0'}
+              y2={segment === 'd' ? '100%' : '0'}
+            >
+              <stop offset='0%' className={`${extendedPath}-gradient-${i}-${forward ? 'start' : 'stop'}`} />
+              <stop offset='100%' className={`${extendedPath}-gradient-${i}-${forward ? 'stop' : 'start'}`} />
+            </linearGradient>
+          )
+        })}
       </defs>
+
+      <style>
+        {pathSegments.map((_, i) => {
+          const startPercent = Math.round((i / pathSegments.length) * 100)
+          const stopPercent = Math.round(((i + 1) / pathSegments.length) * 100)
+
+          // Highlight the segment if its index is less than the highlight index.
+          // Special Case: Highlight the extended segment and all segments after it.
+          const stopColor =
+            highlight != null &&
+            (i < highlight || highlight === path.length || (highlight === extendedIndex && i === extendedIndex))
+              ? token('colors.vividHighlight')
+              : color || token('colors.fg')
+
+          return `
+            .${extendedPath}-gradient-${i}-start { stop-color: color-mix(in srgb, ${stopColor} ${startPercent}%, transparent) }
+            .${extendedPath}-gradient-${i}-stop { stop-color: color-mix(in srgb, ${stopColor} ${stopPercent}%, transparent) }
+          `
+        })}
+      </style>
 
       {pathSegments.map((segment, i) => {
         const { x, y } = positions[i]
@@ -320,14 +359,7 @@ const GestureDiagram = ({
             }
             // segments do not change independently, so we can use index as the key
             key={i}
-            stroke={
-              // Highlight the segment if its index is less than the highlight index.
-              // Special Case: Highlight the extended segment and all segments after it.
-              highlight != null &&
-              (i < highlight || highlight === path.length || (highlight === extendedIndex && i === extendedIndex))
-                ? token('colors.vividHighlight')
-                : color || token('colors.fg')
-            }
+            stroke={`url(#${extendedPath}-gradient-${i})`}
             strokeWidth={strokeWidth * 1.5}
             strokeLinecap='round'
             strokeLinejoin='round'
