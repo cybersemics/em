@@ -426,7 +426,7 @@ const ThoughtContainer = ({
   )
 
   // true when this thought is the parent of a recently dropped child, to continue a slower pulse briefly
-  const isRecentlyDropped = useSelector(state => !!state.droppedPath && equalPath(state.droppedPath, simplePath))
+  const isRecentlyDropped = useSelector(state => equalPath(state.droppedPath, simplePath))
 
   // Styles applied to the .thought-annotation and .editable
   // See: https://stackoverflow.com/a/46452396/480608
