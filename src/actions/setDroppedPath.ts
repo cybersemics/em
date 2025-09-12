@@ -11,13 +11,13 @@ const setDroppedPath = (state: State, { path }: { path: Path | null }) => ({
   droppedPath: path,
 })
 
-/** Action-creator to set a parent to highlight, and auto-clear after slowPulse duration. */
+/** Action-creator to set a parent to highlight, and auto-clear after verySlowPulse duration. */
 export const setDroppedPathActionCreator =
   ({ path }: { path: Path }): Thunk =>
   dispatch => {
     dispatch({ type: 'setDroppedPath', path })
 
-    const clearDelay = durations.get('slowPulse')
+    const clearDelay = durations.get('verySlowPulse')
 
     // clear after delay
     setTimeout(() => {

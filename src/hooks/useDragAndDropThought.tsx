@@ -232,9 +232,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
     // set post-drop highlight on destination parent so the pulse continues briefly at a slower rate
     const destinationParent = parentOf(props.simplePath)
-    if (destinationParent) {
-      dispatch(setDroppedPath({ path: destinationParent }))
-    }
+    dispatch(setDroppedPath({ path: destinationParent }))
 
     // Alert user if context changed
     const hasContextChanged = draggedItems.every(

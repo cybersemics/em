@@ -216,9 +216,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
 
     // set post-drop highlight on destination parent so the pulse continues briefly at a slower rate
     const destinationParent = rootedParentOf(getState(), getPathTo(getState(), draggedItems[0].path))
-    if (destinationParent) {
-      dispatch(setDroppedPath({ path: destinationParent }))
-    }
+    dispatch(setDroppedPath({ path: destinationParent }))
 
     // Clear isMulticursorExecuting after all operations are complete and isMulticursorExecuting is true
     if (getState().isMulticursorExecuting) {
