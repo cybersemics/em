@@ -3,7 +3,7 @@ import { useLayoutEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import State from '../@types/State'
 import { LongPressState } from '../constants'
-import durations from '../durations.config'
+import durations from '../util/durations'
 import head from '../util/head'
 import usePrevious from './usePrevious'
 
@@ -39,7 +39,7 @@ const useDragThoughtAnimation = (index: number, thoughtId: string): React.CSSPro
 
   // Throttle clearing the animation to avoid stacking timeouts during rapid moves.
   const clearMoveAnimation = useMemo(() => {
-    return throttle(() => setMoveAnimation(null), durations.layoutNodeAnimation, { leading: false })
+    return throttle(() => setMoveAnimation(null), durations.get('layoutNodeAnimation'), { leading: false })
   }, [setMoveAnimation])
 
   useLayoutEffect(() => {
@@ -55,7 +55,7 @@ const useDragThoughtAnimation = (index: number, thoughtId: string): React.CSSPro
 
     return {
       transformOrigin: 'left',
-      animationDuration: `${durations.layoutNodeAnimation}ms`,
+      animationDuration: `${durations.get('layoutNodeAnimation')}ms`,
       animationTimingFunction: 'ease-out',
       animationFillMode: 'none',
       animationName: 'moveThoughtOver',
