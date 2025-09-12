@@ -1,11 +1,19 @@
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
+import getEditable from '../helpers/getEditable'
 import paste from '../helpers/paste'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+
+/** Check if a thought is in the DOM. */
+const isThoughtInDOM = async (value: string) => {
+  const thoughtElement = await getEditable(value)
+  const thoughtElementExists = await thoughtElement.evaluate(element => element !== null)
+  return thoughtElementExists
+}
 
 /** Move mouse to QuickDropPanel area (right edge, 2em width ≈ 32px). */
 const dropOnQuickDropPanel = async () => {
@@ -26,6 +34,9 @@ describe('Quick Drop Panel', () => {
     await paste(`
       - a
     `)
+
+    // Assert that the thought element exists
+    expect(await isThoughtInDOM('a')).toBe(true)
 
     await clickThought('a')
     await click('[aria-label="Add to Favorites"]')
@@ -55,15 +66,20 @@ describe('Quick Drop Panel', () => {
       const alertElement = document.querySelector('[data-testid="alert-content"]')
       return alertElement?.textContent?.includes('Removed 1 thought')
     })
+
+    // Assert that the thought element no longer exists
+    expect(await isThoughtInDOM('a')).toBe(false)
   })
 
   it('should delete regular thought when dropped on QuickDropPanel', async () => {
-    // Start with empty thoughtspace and create a new thought (keep it short to avoid ellipsize)
     await paste(`
       - a
     `)
 
-    // Start dragging the thought (this will trigger long press and show QuickDropPanel)
+    // Assert that the thought element exists
+    expect(await isThoughtInDOM('a')).toBe(true)
+
+    // trigger long press and show invisible QuickDropPanel
     await dragAndDropThought('a', null, {
       position: 'none',
       mouseUp: false,
@@ -84,5 +100,8 @@ describe('Quick Drop Panel', () => {
       const alertElement = document.querySelector('[data-testid="alert-content"]')
       return alertElement?.textContent?.includes('Removed 1 thought')
     })
+
+    // Assert that the thought element no longer exists
+    expect(await isThoughtInDOM('a')).toBe(false)
   })
 })
