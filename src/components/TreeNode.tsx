@@ -12,7 +12,6 @@ import useMoveThoughtAnimation from '../hooks/useMoveThoughtAnimation'
 import usePrevious from '../hooks/usePrevious'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
-import cursorStore from '../stores/cursor'
 import equalPath from '../util/equalPath'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
@@ -235,9 +234,11 @@ const TreeNode = ({
         }
       }
 
-      cursorStore.onChange({
-        treeNode: clonedOuterDiv,
-      })
+      // attach to placeholder-treenode
+
+      // cursorStore.onChange({
+      //   treeNode: clonedOuterDiv,
+      // })
     }
   }, [isCursor, x, y])
 
@@ -278,6 +279,7 @@ const TreeNode = ({
         // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
         // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
         ref={outerDivRef}
+        data-cursor={isCursor ? 'true' : undefined}
         aria-label='tree-node'
         className={css({
           position: 'absolute',

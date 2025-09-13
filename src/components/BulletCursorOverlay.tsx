@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 import { css } from '../../styled-system/css'
 import { isSafari, isTouch, isiPhone } from '../browser'
-import cursorStore from '../stores/cursor'
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
 
@@ -35,36 +34,83 @@ export function CursorOverlay() {
  */
 function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
-  const { treeNode } = cursorStore.useState()
 
   const [targetSvg, setTargetSvg] = useState<SVGSVGElement | null>(null)
 
   React.useEffect(() => {
-    if (!treeNode) return
-    if (!containerRef.current) return
+    const updateCursorNode = () => {
+      if (!containerRef.current) return
+      // Find the cursor TreeNode using the data-cursor attribute
+      const cursorTreeNode = document.querySelector('div[data-cursor="true"]') as HTMLElement | null
+      if (!cursorTreeNode) return
+      
+      console.log('>>>',cursorTreeNode)
+      const container = containerRef.current
 
-    const treenodeElement = treeNode as HTMLElement
-    const container = containerRef.current
+      // Copy all attributes from the cursor TreeNode to the container (except data-cursor)
+      Array.from(cursorTreeNode.attributes).forEach(attr => {
+        if (attr.name !== 'data-cursor' ) {
+          container.setAttribute(attr.name, attr.value)
+        }
+      })
 
-    // Copy all attributes from the first element (treeNode) to the container
-    Array.from(treenodeElement.attributes).forEach(attr => {
-      container.setAttribute(attr.name, attr.value)
+      // Clear existing content and copy the nested child from cursor TreeNode
+      container.innerHTML = ''
+      container.style.visibility='hidden'
+      if (cursorTreeNode.firstElementChild) {
+        const nestedChild = cursorTreeNode.firstElementChild.cloneNode(true) as HTMLElement
+
+        container.appendChild(nestedChild)
+
+        const svg = nestedChild.querySelector('span[aria-label="bullet"] svg') as SVGSVGElement | null
+        if (svg) {
+          // Clear the SVG contents
+          svg.innerHTML = ''
+          svg.style.visibility='visible'
+        }
+        console.log('svg',svg)
+        setTargetSvg(svg)
+      }
+    }
+
+    // Initial update
+    updateCursorNode()
+
+    // Set up MutationObserver to watch for data-cursor attribute changes
+    const observer = new MutationObserver((mutations) => {
+      let shouldUpdate = false
+      
+      mutations.forEach(mutation => {
+        if (mutation.type === 'attributes') {
+       
+          // Update if data-cursor attribute changed
+          if (mutation.attributeName === 'data-cursor') {
+            shouldUpdate = true
+            console.log('a ',  mutation.attributeName)
+          }
+          
+        }
+      })
+      
+      if (shouldUpdate) {
+        setTimeout(() => {
+          updateCursorNode()
+        }, 100)
+      }
     })
 
-    // Clear existing content and copy the nested child from treeNode
-    container.innerHTML = ''
-    if (treenodeElement.firstElementChild) {
-      const nestedChild = treenodeElement.firstElementChild.cloneNode(true) as HTMLElement
+    // Observe the entire document for attribute changes to data-cursor and style
+    observer.observe(document, {
+      attributes: true,
+      attributeFilter: ['data-cursor'],
+      subtree: true
+    })
 
-      container.appendChild(nestedChild)
-
-      const svg = nestedChild.querySelector('span[aria-label="bullet"] svg') as SVGSVGElement | null
-      setTargetSvg(svg)
-    }
-  }, [treeNode])
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <div key='placeholder-tree-node' ref={containerRef}>
+    <div data-id='placeholder-tree-node' ref={containerRef}>
       {targetSvg && ReactDOM.createPortal(children, targetSvg)}
     </div>
   )
