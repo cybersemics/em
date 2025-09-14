@@ -8,8 +8,7 @@ import 'vitest-canvas-mock'
 
 // Ensure libraries that expect a Jest global (e.g., jest-canvas-mock via vitest-canvas-mock)
 // can operate under Vitest by aliasing jest to vi in unit tests.
-// This avoids intermittent "jest is not defined" errors in CI.
-// Note: vi is available globally since vitest.globals is enabled.
+// This must run BEFORE importing 'vitest-canvas-mock' to avoid race conditions in CI.
 globalThis.jest = vi
 
 expect.extend(matchers)
