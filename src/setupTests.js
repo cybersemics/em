@@ -7,8 +7,8 @@ import { TextDecoder, TextEncoder } from 'util'
 
 vi.stubGlobal('jest', vi)
 
-// import vitest-canvas-mock after stubbing jest to avoid race condition in CI.
-import('vitest-canvas-mock')
+// dynamically import vitest-canvas-mock after stubbing jest to avoid race condition in CI.
+await import('vitest-canvas-mock')
 
 expect.extend(matchers)
 
