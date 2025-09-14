@@ -5,6 +5,8 @@ import * as matchers from 'jest-extended'
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 
+global.jest = vi
+
 expect.extend(matchers)
 
 // define missing global built-ins for jest
@@ -27,7 +29,6 @@ const ResizeObserverMock = vi.fn(() => ({
 }))
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock)
-vi.stubGlobal('jest', vi)
 
 // dynamically import vitest-canvas-mock after stubbing jest to avoid race condition in CI.
 await import('vitest-canvas-mock')
