@@ -6,21 +6,7 @@ import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 import 'vitest-canvas-mock'
 
-// Ensure libraries that expect a Jest global (e.g., jest-canvas-mock via vitest-canvas-mock)
-// can operate under Vitest by aliasing jest to vi in unit tests.
-// Must be set before importing vitest-canvas-mock to avoid CI races.
-globalThis.jest = vi
-
-// Ensure libraries that expect a Jest global (e.g., jest-canvas-mock via vitest-canvas-mock)
-// can operate under Vitest by aliasing jest to vi in unit tests.
-// This must run BEFORE importing 'vitest-canvas-mock' to avoid race conditions in CI.
-// Some libraries lazily import parts of jest-canvas-mock later (e.g., createImageBitmap),
-// and vitest-canvas-mock removes global.jest in its own afterAll. To keep things stable
-// across files/workers, always re-assert the alias.
-// Ensure alias remains if other setup manipulates it
-afterAll(() => {
-  if (!globalThis.jest) globalThis.jest = vi
-})
+vi.stubGlobal('jest', vi)
 
 expect.extend(matchers)
 
