@@ -6,6 +6,12 @@ import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 import 'vitest-canvas-mock'
 
+// Ensure libraries that expect a Jest global (e.g., jest-canvas-mock via vitest-canvas-mock)
+// can operate under Vitest by aliasing jest to vi in unit tests.
+// This avoids intermittent "jest is not defined" errors in CI.
+// Note: vi is available globally since vitest.globals is enabled.
+globalThis.jest = vi
+
 expect.extend(matchers)
 
 // define missing global built-ins for jest
