@@ -5,7 +5,17 @@ import * as matchers from 'jest-extended'
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 
-global.jest = vi
+// Set alias before canvas mock to avoid races
+globalThis.jest = vi
+vi.stubGlobal('jest', vi)
+
+await import('vitest-canvas-mock')
+
+// Keep alias around if something deleted it during cleanup
+afterAll(() => {
+  if (!globalThis.jest) globalThis.jest = vi
+  vi.stubGlobal('jest', vi)
+})
 
 expect.extend(matchers)
 
@@ -29,6 +39,3 @@ const ResizeObserverMock = vi.fn(() => ({
 }))
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock)
-
-// dynamically import vitest-canvas-mock after stubbing jest to avoid race condition in CI.
-await import('vitest-canvas-mock')
