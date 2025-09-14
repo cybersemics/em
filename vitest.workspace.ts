@@ -19,6 +19,11 @@ export default defineWorkspace([
           },
         },
       },
+      poolOptions: {
+        threads: {
+          singleThread: true,
+        },
+      },
     },
   },
   {
