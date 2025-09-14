@@ -1,5 +1,6 @@
 import all from 'it-all'
 import _ from 'lodash'
+import type { Assertion } from 'vitest'
 import Context from '../@types/Context'
 import Lexeme from '../@types/Lexeme'
 import Thought from '../@types/Thought'
@@ -21,13 +22,14 @@ import nonNull from '../util/nonNull'
 import reducerFlow from '../util/reducerFlow'
 import timestamp from '../util/timestamp'
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace jest {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    interface Matchers<R> {
-      toHaveOrderedContexts(provider: DataProvider, context1: Context, context2: Context): CustomMatcherResult
-    }
+declare module 'vitest' {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  interface Assertion<T = any> {
+    toHaveOrderedContexts(provider: DataProvider, context1: Context, context2: Context): T
+  }
+  interface AsymmetricMatchersContaining {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    toHaveOrderedContexts(provider: DataProvider, context1: Context, context2: Context): any
   }
 }
 
@@ -491,9 +493,13 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughts = thoughtChunks.map(({ thoughtIndex }) => Object.values(thoughtIndex)).flat()
 
       // siblings may be unordered
-      await expect(thoughts).toHaveOrderedContexts(provider, ['x'], ['x', 'y'])
-      await expect(thoughts).toHaveOrderedContexts(provider, ['t'], ['x', 'y'])
-      await expect(thoughts).toHaveOrderedContexts(provider, ['t', 'u'], ['x', 'y', 'z'])
+      await (expect(thoughts) as unknown as Assertion<Thought[]>).toHaveOrderedContexts(provider, ['x'], ['x', 'y'])
+      await (expect(thoughts) as unknown as Assertion<Thought[]>).toHaveOrderedContexts(provider, ['t'], ['x', 'y'])
+      await (expect(thoughts) as unknown as Assertion<Thought[]>).toHaveOrderedContexts(
+        provider,
+        ['t', 'u'],
+        ['x', 'y', 'z'],
+      )
     })
   })
 
