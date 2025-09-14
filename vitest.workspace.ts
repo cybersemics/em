@@ -12,6 +12,13 @@ export default defineWorkspace([
       environment: 'jsdom',
       mockReset: false,
       setupFiles: ['src/setupTests.js'],
+      deps: {
+        optimizer: {
+          web: {
+            include: ['vitest-canvas-mock'],
+          },
+        },
+      },
     },
   },
   {
