@@ -1,3 +1,4 @@
+import { expect as chaiExpect } from 'chai'
 import Context from '../../@types/Context'
 import State from '../../@types/State'
 import importText from '../../actions/importText'
@@ -122,7 +123,8 @@ describe('normal view', () => {
     const expandedPathMap = expandThoughts(stateNew, stateNew.cursor)
     const expandedContexts = Object.values(expandedPathMap).map(path => pathToContext(stateNew, path))
 
-    expect(expandedContexts).toIncludeSameMembers([[HOME_TOKEN], ['To Do'], ['To Do', '::'], ['To Do', '✓']])
+    // Using Chai's deep.members to assert the same members regardless of order
+    chaiExpect(expandedContexts).to.have.deep.members([[HOME_TOKEN], ['To Do'], ['To Do', '::'], ['To Do', '✓']])
   })
 
   // Related issue: https://github.com/cybersemics/em/issues/1238

@@ -1,6 +1,5 @@
 import '@testing-library/jest-dom'
 import 'fake-indexeddb/auto'
-import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
@@ -22,7 +21,33 @@ afterAll(() => {
   if (!globalThis.jest) globalThis.jest = vi
 })
 
-expect.extend(matchers)
+// Minimal replacements for assertions previously provided by jest-extended
+expect.extend({
+  toBeFalse(received) {
+    const pass = received === false
+    return {
+      pass,
+      message: () => `expected ${received} to strictly equal false`,
+    }
+  },
+  toBeEmpty(received) {
+    const isObj = v => v != null && typeof v === 'object'
+    const size = v =>
+      Array.isArray(v) || typeof v === 'string'
+        ? v.length
+        : v instanceof Map || v instanceof Set
+          ? v.size
+          : isObj(v)
+            ? Object.keys(v).length
+            : undefined
+    const n = size(received)
+    const pass = n === 0
+    return {
+      pass,
+      message: () => `expected ${JSON.stringify(received)} to be empty`,
+    }
+  },
+})
 
 // define missing global built-ins for jest
 global.TextEncoder = TextEncoder
