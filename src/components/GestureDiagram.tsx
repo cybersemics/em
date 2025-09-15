@@ -299,21 +299,19 @@ const GestureDiagram = ({
             style={{ filter: dropShadow }}
           />
         </marker>
-        {extendedPathArray.map((segment, i) => {
-          const forward = segment === 'r' || segment === 'd'
-
+        {pathSegments.map((segment, i) => {
           return (
             <linearGradient
               id={`${extendedPath}-gradient-${i}`}
               key={`${extendedPath}-gradient-${i}`}
               gradientUnits='userSpaceOnUse'
-              x1={segment === 'l' ? '100%' : '0'}
-              x2={segment === 'r' ? '100%' : '0'}
-              y1={segment === 'u' ? '100%' : '0'}
-              y2={segment === 'd' ? '100%' : '0'}
+              x1={positions[i].x}
+              x2={positions[i].x + segment.dx}
+              y1={positions[i].y}
+              y2={positions[i].y + segment.dy}
             >
-              <stop offset='0%' className={`${extendedPath}-gradient-${i}-${forward ? 'start' : 'stop'}`} />
-              <stop offset='100%' className={`${extendedPath}-gradient-${i}-${forward ? 'stop' : 'start'}`} />
+              <stop offset='0%' className={`${extendedPath}-gradient-${i}-start`} />
+              <stop offset='100%' className={`${extendedPath}-gradient-${i}-stop`} />
             </linearGradient>
           )
         })}
@@ -321,8 +319,8 @@ const GestureDiagram = ({
 
       <style>
         {pathSegments.map((_, i) => {
-          const startPercent = Math.round((i / pathSegments.length) * 100)
-          const stopPercent = Math.round(((i + 1) / pathSegments.length) * 100)
+          const startPercent = i === 0 ? 25 : 50
+          const stopPercent = i === pathSegments.length - 1 ? 100 : 50
 
           // Highlight the segment if its index is less than the highlight index.
           // Special Case: Highlight the extended segment and all segments after it.
@@ -333,8 +331,8 @@ const GestureDiagram = ({
               : color || token('colors.fg')
 
           return `
-            .${extendedPath}-gradient-${i}-start { stop-color: color-mix(in srgb, ${stopColor} ${startPercent}%, transparent) }
-            .${extendedPath}-gradient-${i}-stop { stop-color: color-mix(in srgb, ${stopColor} ${stopPercent}%, transparent) }
+            .${extendedPath}-gradient-${i}-start { stop-color: color-mix(in srgb, ${stopColor} ${startPercent}%, ${token('colors.bg')}) }
+            .${extendedPath}-gradient-${i}-stop { stop-color: color-mix(in srgb, ${stopColor} ${stopPercent}%, ${token('colors.bg')}) }
           `
         })}
       </style>
