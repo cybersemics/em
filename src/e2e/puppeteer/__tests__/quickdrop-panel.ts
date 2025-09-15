@@ -45,9 +45,11 @@ describe('Quick Drop Panel', () => {
     await clickThought('a')
     await click('[aria-label="Add to Favorites"]')
 
-    // Verify the favorite alert appears
-    const favoriteAlertContent = await page.$eval('[data-testid="alert-content"]', el => el.textContent)
-    expect(favoriteAlertContent).toContain('Added a to favorites')
+    // wait until the favorite alert appears
+    await waitUntil(() => {
+      const favoriteAlertContent = document.querySelector('[data-testid="alert-content"]')
+      return favoriteAlertContent?.textContent?.includes('Added a to favorites')
+    })
 
     // trigger long press and show invisible QuickDropPanel
     await dragAndDropThought('a', null, {
@@ -124,6 +126,12 @@ describe('mobile only', () => {
 
     await clickThought('a')
     await click('[aria-label="Add to Favorites"]')
+
+    // wait until the favorite alert appears
+    await waitUntil(() => {
+      const favoriteAlertContent = document.querySelector('[data-testid="alert-content"]')
+      return favoriteAlertContent?.textContent?.includes('Added a to favorites')
+    })
 
     await longPressThought(await waitForEditable('a'), { quickDrop: true })
 
