@@ -1,6 +1,7 @@
 import { ElementHandle } from 'puppeteer'
 import { JSHandle } from 'puppeteer'
 import { page } from '../setup'
+import waitUntil from './waitUntil'
 
 interface Options {
   /** Click on the inside edge of the editable. Default: left. */
@@ -9,6 +10,8 @@ interface Options {
   x?: number
   /** Number of pixels of y offset to add to the touch coordinates of height/2. */
   y?: number
+  /** Whether to long press thought and drag to the quick drop panel. */
+  quickDrop?: boolean
 }
 
 /**
@@ -16,7 +19,7 @@ interface Options {
  */
 const longPressThought = async (
   nodeHandle: ElementHandle<Element> | JSHandle<undefined>,
-  { edge = 'left', x = 0, y = 0 }: Options = {},
+  { edge = 'left', x = 0, y = 0, quickDrop = false }: Options = {},
 ) => {
   const boundingBox = await nodeHandle.asElement()?.boundingBox()
 
@@ -52,6 +55,31 @@ const longPressThought = async (
     { timeout: 5000 },
     bulletElement,
   )
+
+  if (quickDrop) {
+    const viewport = await page.viewport()
+    if (!viewport) throw new Error('Viewport not available')
+
+    const quickDropPosition = {
+      x: viewport.width - 16, // Center of the 2em (32px) drop zone
+      y: viewport.height / 2, // Middle of the screen vertically
+    }
+
+    // Number of intermediate steps
+    const steps = 10
+
+    const deltaX = (quickDropPosition.x - coordinate.x) / steps
+    const deltaY = (quickDropPosition.y - coordinate.y) / steps
+
+    for (let i = 1; i <= steps; i++) {
+      await page.touchscreen.touchMove(coordinate.x + deltaX * i, coordinate.y + deltaY * i)
+    }
+
+    await waitUntil(() => {
+      const alertElement = document.querySelector('[data-testid="alert-content"]')
+      return alertElement?.textContent?.includes('Drop to remove')
+    })
+  }
 
   await page.touchscreen.touchEnd()
 }

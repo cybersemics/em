@@ -1,8 +1,12 @@
+import { KnownDevices } from 'puppeteer'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
+import emulate from '../helpers/emulate'
 import getEditable from '../helpers/getEditable'
+import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
+import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../setup'
 
@@ -103,5 +107,36 @@ describe('Quick Drop Panel', () => {
 
     // Assert that the thought element no longer exists
     expect(await isThoughtInDOM('a')).toBe(false)
+  })
+})
+
+describe('mobile only', () => {
+  beforeEach(async () => {
+    await emulate(KnownDevices['iPhone 15 Pro'])
+  }, 10000)
+
+  it('should remove favorite thought when dropped on QuickDropPanel', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickThought('a')
+    await click('[aria-label="Add to Favorites"]')
+
+    await longPressThought(await waitForEditable('a'), { quickDrop: true })
+
+    await waitUntil(() => {
+      const alertElement = document.querySelector('[data-testid="alert-content"]')
+      return alertElement?.textContent?.includes('Removed 1 thought')
+    })
+
+    // Assert that the thought element no longer exists
+    expect(await isThoughtInDOM('a')).toBe(false)
+
+    // Assert that other thoughts still exist
+    expect(await isThoughtInDOM('b')).toBe(true)
+    expect(await isThoughtInDOM('c')).toBe(true)
   })
 })
