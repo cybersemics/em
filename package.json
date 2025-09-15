@@ -1,6 +1,6 @@
 {
   "name": "em",
-  "version": "314.0.0",
+  "version": "315.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -77,13 +77,13 @@
     "packages/*"
   ],
   "dependencies": {
-    "@capacitor/android": "^6.2.1",
-    "@capacitor/clipboard": "^6.0.2",
-    "@capacitor/core": "^6.2.1",
-    "@capacitor/haptics": "^6.0.2",
-    "@capacitor/ios": "^6.2.1",
-    "@capacitor/keyboard": "^6.0.3",
-    "@capacitor/status-bar": "^6.0.2",
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/clipboard": "^7.0.2",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/haptics": "^7.0.2",
+    "@capacitor/ios": "^7.4.3",
+    "@capacitor/keyboard": "^7.0.2",
+    "@capacitor/status-bar": "^7.0.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.3.2",
@@ -152,7 +152,7 @@
   "devDependencies": {
     "@babel/core": "^7.28.4",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@capacitor/cli": "^6.2.1",
+    "@capacitor/cli": "^7.4.3",
     "@pandacss/dev": "^1.2.0",
     "@pandacss/eslint-plugin": "^0.2.12",
     "@sinonjs/fake-timers": "^14.0.0",

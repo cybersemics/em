@@ -10,6 +10,7 @@ import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import getBulletWidth from '../util/getBulletWidth'
@@ -65,6 +66,9 @@ function CursorOverlay({
 
   const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
+  // animate overlay when the thought is pinned
+  const isThoughtPinned = useSelector(state => !!isPinned(state, thoughtId))
+
   const lineHeight = fontSize * 1.25
 
   const extendClickWidth = fontSize * 1.2
@@ -96,6 +100,12 @@ function CursorOverlay({
       }}
     >
       <svg
+        className={css({
+          willChange: 'transform',
+          transformBox: 'fill-box',
+          transformOrigin: 'center',
+          animation: isThoughtPinned ? 'bulletGrow {durations.fast} ease-out' : undefined,
+        })}
         viewBox='0 0 600 600'
         style={{
           height: lineHeight,
@@ -104,7 +114,6 @@ function CursorOverlay({
           // required to make the distance between bullet and thought scale properly at all font sizes.
           left: lineHeight * 0.317,
           marginBottom: glyphBottomMargin,
-          willChange: 'transform',
           position: 'relative',
 
           top: showContexts && isIOSSafari ? '-0.05em' : undefined,
