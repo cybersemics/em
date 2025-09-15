@@ -4,16 +4,17 @@ import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
+import { vi } from 'vitest'
 
 // Set alias before canvas mock to avoid races
-globalThis.jest = vi
+global.jest = vi
 vi.stubGlobal('jest', vi)
 
 await import('vitest-canvas-mock')
 
 // Keep alias around if something deleted it during cleanup
 afterAll(() => {
-  if (!globalThis.jest) globalThis.jest = vi
+  if (!global.jest) global.jest = vi
   vi.stubGlobal('jest', vi)
 })
 
