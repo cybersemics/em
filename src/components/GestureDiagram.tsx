@@ -221,7 +221,7 @@ const GestureDiagram = ({
     }
   }
 
-  /** Generates an SVG path string for a curved segment of the gesture.*/
+  /** Calculates the coordinates for a curved segment that can be consumed by other functions. */
   const generateArcCoordinates = (index: number, pathDirs: Direction[]) => {
     const radius = size * 0.4
     const center = { x: 50, y: 50 }
@@ -259,11 +259,13 @@ const GestureDiagram = ({
     return { startX, startY, radius, sweepFlag, endX, endY }
   }
 
+  /** Generates an SVG path string for a curved segment of the gesture.*/
   const generateArcPath = (index: number, pathDirs: Direction[]) => {
     const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(index, pathDirs)
     return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
   }
 
+  /** Generates radial gradients for curved segments of the gesture. */
   const generateArcGradient = (index: number, extendedPath: GesturePath) => {
     const { startX, startY, radius } = generateArcCoordinates(index, Array.from(extendedPath) as Direction[])
     return (
