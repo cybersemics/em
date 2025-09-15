@@ -222,7 +222,7 @@ const GestureDiagram = ({
   }
 
   /** Generates an SVG path string for a curved segment of the gesture.*/
-  const generateArcPath = (index: number, pathDirs: Direction[]): string => {
+  const generateArcCoordinates = (index: number, pathDirs: Direction[]) => {
     const radius = size * 0.4
     const center = { x: 50, y: 50 }
 
@@ -256,7 +256,29 @@ const GestureDiagram = ({
     const endX = center.x + radius * Math.cos(endRad)
     const endY = center.y + radius * Math.sin(endRad)
 
+    return { startX, startY, radius, sweepFlag, endX, endY }
+  }
+
+  const generateArcPath = (index: number, pathDirs: Direction[]) => {
+    const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(index, pathDirs)
     return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
+  }
+
+  const generateArcGradient = (index: number, extendedPath: GesturePath) => {
+    const { startX, startY, radius } = generateArcCoordinates(index, Array.from(extendedPath) as Direction[])
+    return (
+      <radialGradient
+        cx={startX}
+        cy={startY}
+        r={radius}
+        id={`${extendedPath}-gradient-${index}`}
+        key={`${extendedPath}-gradient-${index}`}
+        gradientUnits='userSpaceOnUse'
+      >
+        <stop offset='0%' className={`${extendedPath}-gradient-${index}-start`} />
+        <stop offset='100%' className={`${extendedPath}-gradient-${index}-stop`} />
+      </radialGradient>
+    )
   }
 
   return (
@@ -299,22 +321,59 @@ const GestureDiagram = ({
             style={{ filter: dropShadow }}
           />
         </marker>
-        {pathSegments.map((segment, i) => {
-          return (
-            <linearGradient
-              id={`${extendedPath}-gradient-${i}`}
-              key={`${extendedPath}-gradient-${i}`}
+        {extendedPath === 'rdld' ? (
+          <>
+            <radialGradient
+              cx={29.7}
+              cy={13.5}
+              r={size * 0.4}
+              id={`rdld-gradient-0`}
+              key={`rdld-gradient-0`}
               gradientUnits='userSpaceOnUse'
-              x1={positions[i].x}
-              x2={positions[i].x + segment.dx}
-              y1={positions[i].y}
-              y2={positions[i].y + segment.dy}
             >
-              <stop offset='0%' className={`${extendedPath}-gradient-${i}-start`} />
-              <stop offset='100%' className={`${extendedPath}-gradient-${i}-stop`} />
+              <stop offset='0%' className={`rdld-gradient-0-start`} />
+              <stop offset='100%' className={`rdld-gradient-0-stop`} />
+            </radialGradient>
+            <linearGradient id={`rdld-gradient-1`} key={`rdld-gradient-1`} gradientUnits='userSpaceOnUse'>
+              <stop offset='0%' className={`rdld-gradient-1-start`} />
+              <stop offset='100%' className={`rdld-gradient-1-stop`} />
             </linearGradient>
-          )
-        })}
+            <linearGradient id={`rdld-gradient-2`} key={`rdld-gradient-2`} gradientUnits='userSpaceOnUse'>
+              <stop offset='0%' className={`rdld-gradient-2-start`} />
+              <stop offset='100%' className={`rdld-gradient-2-stop`} />
+            </linearGradient>
+            <radialGradient
+              cx={45}
+              cy={58.5}
+              r={size * 0.4}
+              id={`rdld-gradient-3`}
+              key={`rdld-gradient-3`}
+              gradientUnits='userSpaceOnUse'
+            >
+              <stop offset='0%' className={`rdld-gradient-3-start`} />
+              <stop offset='100%' className={`rdld-gradient-3-stop`} />
+            </radialGradient>
+          </>
+        ) : (
+          pathSegments.map((segment, i) => {
+            return rounded ? (
+              generateArcGradient(i, extendedPath)
+            ) : (
+              <linearGradient
+                id={`${extendedPath}-gradient-${i}`}
+                key={`${extendedPath}-gradient-${i}`}
+                gradientUnits='userSpaceOnUse'
+                x1={positions[i].x}
+                x2={positions[i].x + segment.dx}
+                y1={positions[i].y}
+                y2={positions[i].y + segment.dy}
+              >
+                <stop offset='0%' className={`${extendedPath}-gradient-${i}-start`} />
+                <stop offset='100%' className={`${extendedPath}-gradient-${i}-stop`} />
+              </linearGradient>
+            )
+          })
+        )}
       </defs>
 
       <style>
