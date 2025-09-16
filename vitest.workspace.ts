@@ -12,18 +12,6 @@ export default defineWorkspace([
       environment: 'jsdom',
       mockReset: false,
       setupFiles: ['src/jest-global-setup.js', 'src/setupTests.js'],
-      deps: {
-        optimizer: {
-          web: {
-            include: ['vitest-canvas-mock'],
-          },
-        },
-      },
-      poolOptions: {
-        threads: {
-          singleThread: true,
-        },
-      },
     },
   },
   {
