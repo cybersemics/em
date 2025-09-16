@@ -11,7 +11,7 @@ export default defineWorkspace([
       exclude: ['node_modules/**', '**/e2e/**', 'packages/**'],
       environment: 'jsdom',
       mockReset: false,
-      setupFiles: ['src/jest-global-setup.js', 'src/setupTests.js'],
+      setupFiles: ['src/setupTests.js'],
     },
   },
   {

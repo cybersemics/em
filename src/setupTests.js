@@ -28,3 +28,6 @@ const ResizeObserverMock = vi.fn(() => ({
 }))
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock)
+
+// stub jest globally. This is needed incase jest is being directly refe
+vi.stubGlobal('jest', vi)

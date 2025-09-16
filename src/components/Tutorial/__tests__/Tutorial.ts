@@ -4,8 +4,8 @@ import { act } from 'react'
 import createTestApp, { cleanupTestApp, cleanupTestEventHandlers } from '../../../test-helpers/createTestApp'
 
 // as per https://testing-library.com/docs/user-event/options/#advancetimers
-// we should avoid using { delay: null }, and use vi.advanceTimersByTime instead
-const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+// we should avoid using { delay: null }, and use jest.advanceTimersByTime instead
+const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 
 /** Gets the last empty thought in the document. Mostly used after `user.keyboard('{Enter}')` to get the new thought. */
 const lastEmptyThought = () =>
