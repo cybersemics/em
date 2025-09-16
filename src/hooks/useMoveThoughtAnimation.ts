@@ -40,6 +40,7 @@ const getMoveAnimation = (
  */
 const useMoveThoughtAnimation = (
   index: number,
+  thoughtId?: string,
 ):
   | Partial<
       Pick<
@@ -56,15 +57,26 @@ const useMoveThoughtAnimation = (
   const lastMoveAction = useSelector((state: State) => {
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
 
+    /** Utility function to check if a given action type appears in any op.actions in the last patch. */
+    const hasAction = (type: string) =>
+      (lastPatches ?? []).some(op => (op as unknown as { actions?: string[] }).actions?.some(a => a === type))
+
+    // For drag-and-drop moveThought, animate only dragged thoughts
+    const isMoveThought = hasAction('moveThought')
+    const isDragged = !!thoughtId && (state.draggingThoughts || []).some(p => head(p) === thoughtId)
+    if (isMoveThought && isDragged) return 'dnd' as const
+
     // Determine if the last action was a moveThoughtUp or moveThoughtDown.
-    const moveAction = lastPatches?.some(patch => ['moveThoughtUp', 'moveThoughtDown'].includes(patch.actions[0]))
-      ? (lastPatches[0].actions[0] as 'moveThoughtUp' | 'moveThoughtDown')
-      : null
+    const moveAction = hasAction('moveThoughtUp')
+      ? ('moveThoughtUp' as const)
+      : hasAction('moveThoughtDown')
+        ? ('moveThoughtDown' as const)
+        : null
 
     if (!moveAction) return null
 
     // Determine if we should skip the animation for cross-context moves inside a Table view.
-    //
+
     // When a thought is moved between different parent contexts (a cross-context move),
     // the moveThought action updates the thought's parentId field.
     // This creates a patch with a path ending in '/parentId'.
@@ -95,6 +107,7 @@ const useMoveThoughtAnimation = (
   const indexChanged = previousIndex !== undefined && previousIndex !== index
   const prevIndexChanged = usePrevious(indexChanged)
   const hasMoved = !!(lastMoveAction && indexChanged && !prevIndexChanged)
+  const hasMovedDnD = lastMoveAction === 'dnd' && hasMoved
 
   const [moveAnimation, setMoveAnimation] = useState<'moveThoughtOver' | 'moveThoughtUnder' | null>(null)
 
@@ -112,15 +125,25 @@ const useMoveThoughtAnimation = (
   }, [setMoveAnimation])
 
   useLayoutEffect(() => {
+    // For drag-and-drop moveThought, animate only dragged thoughts with the "over" animation
+    if (hasMovedDnD) {
+      setMoveAnimation('moveThoughtOver')
+      clearMoveAnimation()
+      return
+    }
+
     // skip effect logic safely if no moveAction
     if (!hasMoved || !lastMoveAction) return
+
+    // Guard against 'dnd' which is handled above; only proceed for up/down
+    if (lastMoveAction !== 'moveThoughtUp' && lastMoveAction !== 'moveThoughtDown') return
 
     const moveAnimationName = getMoveAnimation(lastMoveAction, previousIndex, index)
     if (moveAnimationName) {
       setMoveAnimation(moveAnimationName)
       clearMoveAnimation()
     }
-  }, [hasMoved, lastMoveAction, previousIndex, index, clearMoveAnimation])
+  }, [hasMoved, hasMovedDnD, lastMoveAction, previousIndex, index, clearMoveAnimation])
 
   const moveDivStyle = useMemo<React.CSSProperties | undefined>(() => {
     if (!moveAnimation) return undefined
