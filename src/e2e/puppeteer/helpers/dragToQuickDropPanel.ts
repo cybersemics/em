@@ -1,23 +1,12 @@
 import { ElementHandle } from 'puppeteer'
 import { JSHandle } from 'puppeteer'
 import { page } from '../setup'
-
-interface Options {
-  /** Click on the inside edge of the editable. Default: left. */
-  edge?: 'left' | 'right'
-  /** Number of pixels of x offset to add to the touch coordinates, which defaults to width/2 but can be set to the left or right edge. */
-  x?: number
-  /** Number of pixels of y offset to add to the touch coordinates of height/2. */
-  y?: number
-}
+import waitForAlertContent from './waitForAlertContent'
 
 /**
- * Tap and hold a thought until a long press occurs.
+ * Long press a thought and drag it to the QuickDropPanel to remove it.
  */
-const longPressThought = async (
-  nodeHandle: ElementHandle<Element> | JSHandle<undefined>,
-  { edge = 'left', x = 0, y = 0 }: Options = {},
-) => {
+const dragToQuickDropPanel = async (nodeHandle: ElementHandle<Element> | JSHandle<undefined>) => {
   const boundingBox = await nodeHandle.asElement()?.boundingBox()
 
   if (!boundingBox) throw new Error('Bounding box of element not found.')
@@ -40,8 +29,8 @@ const longPressThought = async (
   if (!(bulletElement instanceof ElementHandle)) throw new Error('Bullet element not found')
 
   const coordinate = {
-    x: boundingBox.x + (edge ? (edge === 'left' ? 1 : boundingBox.width - 1) : boundingBox.width / 2) + x,
-    y: boundingBox.y + boundingBox.height / 2 + y,
+    x: boundingBox.x + 1,
+    y: boundingBox.y + boundingBox.height / 2,
   }
 
   await page.touchscreen.touchStart(coordinate.x, coordinate.y)
@@ -53,7 +42,29 @@ const longPressThought = async (
     bulletElement,
   )
 
+  // Drag to QuickDropPanel
+  const viewport = await page.viewport()
+  if (!viewport) throw new Error('Viewport not available')
+
+  const quickDropPosition = {
+    x: viewport.width - 16, // Center of the 2em (32px) drop zone
+    y: viewport.height / 2, // Middle of the screen vertically
+  }
+
+  // Number of intermediate steps
+  const steps = 10
+
+  const deltaX = (quickDropPosition.x - coordinate.x) / steps
+  const deltaY = (quickDropPosition.y - coordinate.y) / steps
+
+  for (let i = 1; i <= steps; i++) {
+    await page.touchscreen.touchMove(coordinate.x + deltaX * i, coordinate.y + deltaY * i)
+  }
+
+  // Wait for the "Drop to remove" alert
+  await waitForAlertContent('Drop to remove')
+
   await page.touchscreen.touchEnd()
 }
 
-export default longPressThought
+export default dragToQuickDropPanel
