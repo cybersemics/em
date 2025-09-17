@@ -322,7 +322,7 @@ const GestureDiagram = ({
               <radialGradient
                 cx={29.7}
                 cy={13.5}
-                r={size * 0.4}
+                r={33.3}
                 id={`rdld-gradient-0`}
                 key={`rdld-gradient-0`}
                 gradientUnits='userSpaceOnUse'
@@ -338,17 +338,18 @@ const GestureDiagram = ({
                 <stop offset='0%' className={`rdld-gradient-2-start`} />
                 <stop offset='100%' className={`rdld-gradient-2-stop`} />
               </linearGradient>
-              <radialGradient
-                cx={45}
-                cy={58.5}
-                r={size * 0.4}
+              <linearGradient
+                x1={45}
+                y1={58.5}
+                x2={45}
+                y2={72}
                 id={`rdld-gradient-3`}
                 key={`rdld-gradient-3`}
                 gradientUnits='userSpaceOnUse'
               >
                 <stop offset='0%' className={`rdld-gradient-3-start`} />
                 <stop offset='100%' className={`rdld-gradient-3-stop`} />
-              </radialGradient>
+              </linearGradient>
             </>
           ) : (
             pathSegments.map((segment, i) => {
