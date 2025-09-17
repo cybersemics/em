@@ -27,7 +27,7 @@ const usePositionFixed = ({
   let top, bottom
   if (position === 'absolute') {
     top = fromBottom
-      ? `${scrollTop + innerHeight - safariKeyboard.height - (height ?? 0) - offset}px`
+      ? `${Math.min(document.body.scrollHeight, scrollTop + innerHeight - safariKeyboard.height) - (height ?? 0) - offset}px`
       : `${scrollTop + offset}px`
   } else if (fromBottom) {
     // spacing.safeAreaBottom applies to rounded screens
