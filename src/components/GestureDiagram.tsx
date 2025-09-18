@@ -71,10 +71,17 @@ const GestureCheatsheetGradients = () => (
       <stop offset='0%' className={`rdld-gradient-1-start`} />
       <stop offset='100%' className={`rdld-gradient-1-stop`} />
     </linearGradient>
-    <linearGradient id={`rdld-gradient-2`} key={`rdld-gradient-2`} gradientUnits='userSpaceOnUse'>
+    <radialGradient
+      cx={54}
+      cy={40.5}
+      r={18.5}
+      id={`rdld-gradient-2`}
+      key={`rdld-gradient-2`}
+      gradientUnits='userSpaceOnUse'
+    >
       <stop offset='0%' className={`rdld-gradient-2-start`} />
       <stop offset='100%' className={`rdld-gradient-2-stop`} />
-    </linearGradient>
+    </radialGradient>
     <linearGradient
       x1={45}
       y1={58.5}
