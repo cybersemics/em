@@ -53,6 +53,125 @@ const oppositeDirection = (dir: Direction) =>
     d: 'u',
   })[dir]
 
+/** Generate a list of pre-computed gradients for the special case of the gesture cheatsheet question mark diagram. */
+const GestureCheatsheetGradients = () => (
+  <>
+    <radialGradient
+      cx={29.7}
+      cy={13.5}
+      r={33.3}
+      id={`rdld-gradient-0`}
+      key={`rdld-gradient-0`}
+      gradientUnits='userSpaceOnUse'
+    >
+      <stop offset='0%' className={`rdld-gradient-0-start`} />
+      <stop offset='100%' className={`rdld-gradient-0-stop`} />
+    </radialGradient>
+    <linearGradient id={`rdld-gradient-1`} key={`rdld-gradient-1`} gradientUnits='userSpaceOnUse'>
+      <stop offset='0%' className={`rdld-gradient-1-start`} />
+      <stop offset='100%' className={`rdld-gradient-1-stop`} />
+    </linearGradient>
+    <linearGradient id={`rdld-gradient-2`} key={`rdld-gradient-2`} gradientUnits='userSpaceOnUse'>
+      <stop offset='0%' className={`rdld-gradient-2-start`} />
+      <stop offset='100%' className={`rdld-gradient-2-stop`} />
+    </linearGradient>
+    <linearGradient
+      x1={45}
+      y1={58.5}
+      x2={45}
+      y2={72}
+      id={`rdld-gradient-3`}
+      key={`rdld-gradient-3`}
+      gradientUnits='userSpaceOnUse'
+    >
+      <stop offset='0%' className={`rdld-gradient-3-start`} />
+      <stop offset='100%' className={`rdld-gradient-3-stop`} />
+    </linearGradient>
+  </>
+)
+
+/** Calculates the coordinates for a curved segment that can be consumed by other functions. */
+const generateArcCoordinates = (index: number, pathDirs: Direction[], size: number) => {
+  const radius = size * 0.4
+  const center = { x: 50, y: 50 }
+
+  /** Determine base angle based on first direction and second direction. */
+  const getBaseAngle = (first: Direction, second: Direction): number => {
+    if (first === 'l' || first === 'r') {
+      return second === 'u' ? 90 : -90
+    } else {
+      return second === 'r' ? 0 : 180
+    }
+  }
+
+  const clockwise = rotateClockwise(pathDirs[0]) === pathDirs[1]
+  const sweepFlag = clockwise ? 1 : 0
+  const baseAngle = getBaseAngle(pathDirs[0], pathDirs[1])
+
+  // Calculate total angle and segment angle based on path length
+  const totalAngle = (pathDirs.length - 1) * (clockwise ? 90 : -90)
+  const segmentAngle = totalAngle / pathDirs.length
+
+  // Calculate angles for this segment
+  const [startAngle, endAngle] = [baseAngle + index * segmentAngle, baseAngle + (index + 1) * segmentAngle]
+
+  // Convert angles to radians
+  const startRad = (startAngle * Math.PI) / 180
+  const endRad = (endAngle * Math.PI) / 180
+
+  // Calculate points
+  const startX = center.x + radius * Math.cos(startRad)
+  const startY = center.y + radius * Math.sin(startRad)
+  const endX = center.x + radius * Math.cos(endRad)
+  const endY = center.y + radius * Math.sin(endRad)
+
+  return { startX, startY, radius, sweepFlag, endX, endY }
+}
+
+/** Generates radial gradients for curved segments of the gesture. */
+const ArcGradient = ({ index, extendedPath, size }: { index: number; extendedPath: GesturePath; size: number }) => {
+  const { startX, startY, radius } = generateArcCoordinates(index, Array.from(extendedPath) as Direction[], size)
+  return (
+    <radialGradient
+      cx={startX}
+      cy={startY}
+      r={radius}
+      id={`${extendedPath}-gradient-${index}`}
+      key={`${extendedPath}-gradient-${index}`}
+      gradientUnits='userSpaceOnUse'
+    >
+      <stop offset='0%' className={`${extendedPath}-gradient-${index}-start`} />
+      <stop offset='100%' className={`${extendedPath}-gradient-${index}-stop`} />
+    </radialGradient>
+  )
+}
+
+/** Generate CSS rules defining the colors for the gradients that are applied to gesture diagram path segments. */
+const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highlight?: number; path: GesturePath }) => {
+  const index = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
+
+  return (
+    <style>
+      {Array.from(path).map((_, i) => {
+        const startPercent = i === 0 ? 25 : 50
+        const stopPercent = i === path.length - 1 ? 100 : 50
+
+        // Highlight the segment if its index is less than the highlight index.
+        // Special Case: Highlight the extended segment and all segments after it.
+        const stopColor =
+          highlight != null && (i < highlight || highlight === path.length || (highlight === index && i === index))
+            ? token('colors.vividHighlight')
+            : color || token('colors.fg')
+
+        return `
+            .${path}-gradient-${i}-start { stop-color: color-mix(in srgb, ${stopColor} ${startPercent}%, ${token('colors.bg')}) }
+            .${path}-gradient-${i}-stop { stop-color: color-mix(in srgb, ${stopColor} ${stopPercent}%, ${token('colors.bg')}) }
+          `
+      })}
+    </style>
+  )
+}
+
 /** Renders an SVG representation of a gesture.
  *
  * @param path Any combination of l/r/u/d,or null for a cancel gesture (X).
@@ -328,122 +447,3 @@ const GestureDiagramMemo = React.memo(GestureDiagram)
 GestureDiagramMemo.displayName = 'GestureDiagram'
 
 export default GestureDiagramMemo
-
-/** Generate a list of pre-computed gradients for the special case of the gesture cheatsheet question mark diagram. */
-const GestureCheatsheetGradients = () => (
-  <>
-    <radialGradient
-      cx={29.7}
-      cy={13.5}
-      r={33.3}
-      id={`rdld-gradient-0`}
-      key={`rdld-gradient-0`}
-      gradientUnits='userSpaceOnUse'
-    >
-      <stop offset='0%' className={`rdld-gradient-0-start`} />
-      <stop offset='100%' className={`rdld-gradient-0-stop`} />
-    </radialGradient>
-    <linearGradient id={`rdld-gradient-1`} key={`rdld-gradient-1`} gradientUnits='userSpaceOnUse'>
-      <stop offset='0%' className={`rdld-gradient-1-start`} />
-      <stop offset='100%' className={`rdld-gradient-1-stop`} />
-    </linearGradient>
-    <linearGradient id={`rdld-gradient-2`} key={`rdld-gradient-2`} gradientUnits='userSpaceOnUse'>
-      <stop offset='0%' className={`rdld-gradient-2-start`} />
-      <stop offset='100%' className={`rdld-gradient-2-stop`} />
-    </linearGradient>
-    <linearGradient
-      x1={45}
-      y1={58.5}
-      x2={45}
-      y2={72}
-      id={`rdld-gradient-3`}
-      key={`rdld-gradient-3`}
-      gradientUnits='userSpaceOnUse'
-    >
-      <stop offset='0%' className={`rdld-gradient-3-start`} />
-      <stop offset='100%' className={`rdld-gradient-3-stop`} />
-    </linearGradient>
-  </>
-)
-
-/** Calculates the coordinates for a curved segment that can be consumed by other functions. */
-const generateArcCoordinates = (index: number, pathDirs: Direction[], size: number) => {
-  const radius = size * 0.4
-  const center = { x: 50, y: 50 }
-
-  /** Determine base angle based on first direction and second direction. */
-  const getBaseAngle = (first: Direction, second: Direction): number => {
-    if (first === 'l' || first === 'r') {
-      return second === 'u' ? 90 : -90
-    } else {
-      return second === 'r' ? 0 : 180
-    }
-  }
-
-  const clockwise = rotateClockwise(pathDirs[0]) === pathDirs[1]
-  const sweepFlag = clockwise ? 1 : 0
-  const baseAngle = getBaseAngle(pathDirs[0], pathDirs[1])
-
-  // Calculate total angle and segment angle based on path length
-  const totalAngle = (pathDirs.length - 1) * (clockwise ? 90 : -90)
-  const segmentAngle = totalAngle / pathDirs.length
-
-  // Calculate angles for this segment
-  const [startAngle, endAngle] = [baseAngle + index * segmentAngle, baseAngle + (index + 1) * segmentAngle]
-
-  // Convert angles to radians
-  const startRad = (startAngle * Math.PI) / 180
-  const endRad = (endAngle * Math.PI) / 180
-
-  // Calculate points
-  const startX = center.x + radius * Math.cos(startRad)
-  const startY = center.y + radius * Math.sin(startRad)
-  const endX = center.x + radius * Math.cos(endRad)
-  const endY = center.y + radius * Math.sin(endRad)
-
-  return { startX, startY, radius, sweepFlag, endX, endY }
-}
-
-/** Generates radial gradients for curved segments of the gesture. */
-const ArcGradient = ({ index, extendedPath, size }: { index: number; extendedPath: GesturePath; size: number }) => {
-  const { startX, startY, radius } = generateArcCoordinates(index, Array.from(extendedPath) as Direction[], size)
-  return (
-    <radialGradient
-      cx={startX}
-      cy={startY}
-      r={radius}
-      id={`${extendedPath}-gradient-${index}`}
-      key={`${extendedPath}-gradient-${index}`}
-      gradientUnits='userSpaceOnUse'
-    >
-      <stop offset='0%' className={`${extendedPath}-gradient-${index}-start`} />
-      <stop offset='100%' className={`${extendedPath}-gradient-${index}-stop`} />
-    </radialGradient>
-  )
-}
-
-/** Generate CSS rules defining the colors for the gradients that are applied to gesture diagram path segments. */
-const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highlight?: number; path: GesturePath }) => {
-  const index = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
-
-  return (
-    <style>
-      {Array.from(path).map((_, i) => {
-        const startPercent = i === 0 ? 25 : 50
-        const stopPercent = i === path.length - 1 ? 100 : 50
-
-        // Highlight the segment if its index is less than the highlight index.
-        // Special Case: Highlight the extended segment and all segments after it.
-        const stopColor =
-          highlight != null && (i < highlight || highlight === path.length || (highlight === index && i === index))
-            ? token('colors.vividHighlight')
-            : color || token('colors.fg')
-
-        return `
-            .${path}-gradient-${i}-start { stop-color: color-mix(in srgb, ${stopColor} ${startPercent}%, ${token('colors.bg')}) }
-            .${path}-gradient-${i}-stop { stop-color: color-mix(in srgb, ${stopColor} ${stopPercent}%, ${token('colors.bg')}) }
-          `
-      })}
-    </style>
-  )
-}
