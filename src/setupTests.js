@@ -4,7 +4,7 @@ import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
-import 'vitest-canvas-mock'
+import 'vi-canvas-mock'
 
 expect.extend(matchers)
 
@@ -28,3 +28,6 @@ const ResizeObserverMock = vi.fn(() => ({
 }))
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock)
+
+// stub jest globally. This is needed incase jest is being directly referenced in the code.
+vi.stubGlobal('jest', vi)
