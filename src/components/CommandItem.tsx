@@ -305,7 +305,8 @@ const CommandItem: FC<{
             styleCancelAsRegularGesture
             highlight={gestureHighlight}
             path={command.id === 'cancel' ? null : gestureString(command)}
-            size={70}
+            maxWidth={70}
+            maxHeight={50}
             arrowSize={18 - strokeWidth * 0.3}
             strokeWidth={strokeWidth}
             rounded={command.rounded}
