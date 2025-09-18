@@ -576,7 +576,7 @@ const Editable = ({
       // when the MultiGesture is below the gesture threshold it is possible that onTap and onTouchEnd are both triggered
       // in this case, we need to prevent onTap from being called a second time via onTouchEnd
       // https://github.com/cybersemics/em/issues/1268
-      else if (globals.touching && e.cancelable) {
+      else if (globals.touchState.moving && e.cancelable) {
         e.preventDefault()
       }
 
@@ -595,7 +595,7 @@ const Editable = ({
           disabled ||
           // do not set cursor on hidden thought
           // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-          (!globals.touching && (!editingOrOnCursor || !isVisible))
+          (!globals.touchState.moving && (!editingOrOnCursor || !isVisible))
         ) {
           e.preventDefault()
 

@@ -3,8 +3,9 @@
 /** THE BAD PLACE where mutable globals are defined. */
 
 // track whether the user is touchmoving so that we can distinguish touchend events from tap or drag
+// canLongPress is true if the touch did not begin in the scroll zone (#3085)
 // not related to react-dnd
-let touching = false
+let touchState = { moving: false, canLongPress: true }
 
 // track whether the page has rendered yet to simulate onload event
 let rendered = false
@@ -37,7 +38,7 @@ const globals = {
   offlineTimer,
   rendered,
   suppressExpansion,
-  touching,
+  touchState,
 }
 
 export default globals

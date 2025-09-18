@@ -7,6 +7,7 @@ import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import haptics from '../util/haptics'
 
 /** Custom hook to manage long press.
@@ -69,7 +70,8 @@ const useLongPress = (
    * we will know which element is being long-pressed. */
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      if ('touches' in e.nativeEvent || e.nativeEvent.button !== 2) setPressing(true)
+      if (globals.touchState.canLongPress && ('touches' in e.nativeEvent || e.nativeEvent.button !== 2))
+        setPressing(true)
     },
     [setPressing],
   )

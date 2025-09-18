@@ -20,6 +20,7 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import { ThoughtContainerProps } from '../components/Thought'
 import { LongPressState } from '../constants'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
@@ -58,6 +59,7 @@ const canDrag = (props: ThoughtContainerProps) => {
   const isDraggable = props.isVisible || props.isCursorParent
 
   return (
+    globals.touchState.canLongPress &&
     isDocumentEditable() &&
     !!isDraggable &&
     !findDescendant(state, thoughtId, '=immovable') &&

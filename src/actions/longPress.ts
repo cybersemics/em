@@ -137,7 +137,7 @@ export const longPressActionCreator =
         haptics.light()
         break
       case LongPressState.Inactive:
-        globals.touching = false
+        globals.touchState.moving = false
         break
     }
 
