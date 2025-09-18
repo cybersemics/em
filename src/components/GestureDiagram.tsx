@@ -149,12 +149,14 @@ const ArcGradient = ({ index, extendedPath, size }: { index: number; extendedPat
 /** Generate CSS rules defining the colors for the gradients that are applied to gesture diagram path segments. */
 const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highlight?: number; path: GesturePath }) => {
   const index = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
+  // The initial path segment should start at 25% opacity. Subsequent path segmenets should start at 50% opacity.
+  // The final path segment should start at 75% opacity.
+  const stopColors = Array.from(path).map((_, i) => (i === 0 ? 25 : path.length > 2 && i === path.length - 1 ? 75 : 50))
 
   return (
     <style>
-      {Array.from(path).map((_, i) => {
-        const startPercent = i === 0 ? 25 : 50
-        const stopPercent = i === path.length - 1 ? 100 : 50
+      {stopColors.map((startPercent, i) => {
+        const stopPercent = i === path.length - 1 ? 100 : stopColors[i + 1]
 
         // Highlight the segment if its index is less than the highlight index.
         // Special Case: Highlight the extended segment and all segments after it.
