@@ -1,6 +1,9 @@
+import { after } from 'lodash'
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import Path from '../@types/Path'
 import { isSafari, isTouch, isiPhone } from '../browser'
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
@@ -32,6 +35,13 @@ export function CursorOverlay() {
  * PlaceholderTreeNode is a component used to mimic behavior of TreeNode.
  * Any position changes from one Thought to another will be animated within this component.
  */
+
+function afterNextPaint(cb) {
+  // Fallback: two rAFs -> runs in the frame after the paint
+  requestAnimationFrame(() => {
+    setTimeout(cb, 0)
+  })
+}
 function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
 
@@ -39,12 +49,27 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
 
   const prevDomElementRef = React.useRef<HTMLElement | null>(null)
 
+  const cursor = useSelector(state => state.cursor)
+
+  console.log('>>  cursor', cursor)
+
+  const prevCursorRef = React.useRef<Path | null>(null)
+
   React.useEffect(() => {
     const updateCursorNode = () => {
       if (!containerRef.current) return
       // Find the cursor TreeNode using the data-cursor attribute
       const cursorTreeNodes = document.querySelectorAll('div[data-cursor="true"]') as NodeListOf<HTMLElement>
-      const cursorTreeNode = Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
+      // const cursorTreeNode =
+      //   cursorTreeNodes.length !== 1
+      //     ? Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
+      //     : cursorTreeNodes.length === 1 && cursor?.length !== prevCursorRef.current?.length
+      //       ? cursorTreeNodes[0]
+      //       : null
+
+      // const cursorTreeNode = Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
+      const cursorTreeNode =
+        cursorTreeNodes.length === 1 && cursor?.length !== prevCursorRef.current?.length ? cursorTreeNodes[0] : null
       if (!cursorTreeNode) return
 
       console.log('>>>', cursorTreeNode)
@@ -74,11 +99,12 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
         // console.log('svg', svg)
         setTargetSvg(svg)
         prevDomElementRef.current = cursorTreeNode
+        prevCursorRef.current = cursor
       }
     }
 
     // Initial update
-    updateCursorNode()
+    // updateCursorNode()
 
     // Set up MutationObserver to watch for data-cursor attribute changes
     const observer = new MutationObserver(mutations => {
@@ -91,12 +117,22 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
             shouldUpdate = true
             console.log('a ', mutation.attributeName)
           }
+          // if style attribute changed and has attribute data-cursor="true"
+          if (mutation.attributeName === 'style') {
+            const target = mutation.target as HTMLElement
+            if (target.getAttribute('data-cursor') === 'true') {
+              shouldUpdate = true
+              console.log('b ', mutation.attributeName)
+            }
+          }
         }
       })
 
       if (shouldUpdate) {
         // setTimeout(() => {
-        updateCursorNode()
+        afterNextPaint(() => {
+          updateCursorNode()
+        })
         // }, 100)
       }
     })
@@ -104,12 +140,12 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
     // Observe the entire document for attribute changes to data-cursor and style
     observer.observe(document, {
       attributes: true,
-      attributeFilter: ['data-cursor'],
+      attributeFilter: ['data-cursor', 'style'],
       subtree: true,
     })
 
     return () => observer.disconnect()
-  }, [])
+  }, [cursor])
 
   return (
     <div data-id='placeholder-tree-node' ref={containerRef}>
