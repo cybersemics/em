@@ -37,26 +37,29 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
 
   const [targetSvg, setTargetSvg] = useState<SVGSVGElement | null>(null)
 
+  const prevDomElementRef = React.useRef<HTMLElement | null>(null)
+
   React.useEffect(() => {
     const updateCursorNode = () => {
       if (!containerRef.current) return
       // Find the cursor TreeNode using the data-cursor attribute
-      const cursorTreeNode = document.querySelector('div[data-cursor="true"]') as HTMLElement | null
+      const cursorTreeNodes = document.querySelectorAll('div[data-cursor="true"]') as NodeListOf<HTMLElement>
+      const cursorTreeNode = Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
       if (!cursorTreeNode) return
-      
-      console.log('>>>',cursorTreeNode)
+
+      console.log('>>>', cursorTreeNode)
       const container = containerRef.current
 
       // Copy all attributes from the cursor TreeNode to the container (except data-cursor)
       Array.from(cursorTreeNode.attributes).forEach(attr => {
-        if (attr.name !== 'data-cursor' ) {
+        if (attr.name !== 'data-cursor') {
           container.setAttribute(attr.name, attr.value)
         }
       })
 
       // Clear existing content and copy the nested child from cursor TreeNode
       container.innerHTML = ''
-      container.style.visibility='hidden'
+      container.style.visibility = 'hidden'
       if (cursorTreeNode.firstElementChild) {
         const nestedChild = cursorTreeNode.firstElementChild.cloneNode(true) as HTMLElement
 
@@ -66,10 +69,11 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
         if (svg) {
           // Clear the SVG contents
           svg.innerHTML = ''
-          svg.style.visibility='visible'
+          svg.style.visibility = 'visible'
         }
-        console.log('svg',svg)
+        // console.log('svg', svg)
         setTargetSvg(svg)
+        prevDomElementRef.current = cursorTreeNode
       }
     }
 
@@ -77,25 +81,23 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
     updateCursorNode()
 
     // Set up MutationObserver to watch for data-cursor attribute changes
-    const observer = new MutationObserver((mutations) => {
+    const observer = new MutationObserver(mutations => {
       let shouldUpdate = false
-      
+
       mutations.forEach(mutation => {
         if (mutation.type === 'attributes') {
-       
           // Update if data-cursor attribute changed
           if (mutation.attributeName === 'data-cursor') {
             shouldUpdate = true
-            console.log('a ',  mutation.attributeName)
+            console.log('a ', mutation.attributeName)
           }
-          
         }
       })
-      
+
       if (shouldUpdate) {
-        setTimeout(() => {
-          updateCursorNode()
-        }, 100)
+        // setTimeout(() => {
+        updateCursorNode()
+        // }, 100)
       }
     })
 
@@ -103,7 +105,7 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
     observer.observe(document, {
       attributes: true,
       attributeFilter: ['data-cursor'],
-      subtree: true
+      subtree: true,
     })
 
     return () => observer.disconnect()
