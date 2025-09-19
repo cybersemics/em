@@ -61,15 +61,16 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
       // Find the cursor TreeNode using the data-cursor attribute
       const cursorTreeNodes = document.querySelectorAll('div[data-cursor="true"]') as NodeListOf<HTMLElement>
       // const cursorTreeNode =
-      //   cursorTreeNodes.length !== 1
-      //     ? Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
-      //     : cursorTreeNodes.length === 1 && cursor?.length !== prevCursorRef.current?.length
-      //       ? cursorTreeNodes[0]
-      //       : null
+      // cursorTreeNodes.length !== 1
+      //   ? Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
+      //   : cursorTreeNodes.length === 1 && cursor?.length !== prevCursorRef.current?.length
+      //     ? cursorTreeNodes[0]
+      //     : null
 
+      const cursorTreeNode = cursorTreeNodes[0] || null
       // const cursorTreeNode = Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
-      const cursorTreeNode =
-        cursorTreeNodes.length === 1 && cursor?.length !== prevCursorRef.current?.length ? cursorTreeNodes[0] : null
+      // const cursorTreeNode =
+      // cursorTreeNodes.length === 1 && cursor?.length !== prevCursorRef.current?.length ? cursorTreeNodes[0] : null
       if (!cursorTreeNode) return
 
       console.log('>>>', cursorTreeNode)
@@ -107,44 +108,47 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
     // updateCursorNode()
 
     // Set up MutationObserver to watch for data-cursor attribute changes
-    const observer = new MutationObserver(mutations => {
-      let shouldUpdate = false
+    // const observer = new MutationObserver(mutations => {
+    //   let shouldUpdate = false
 
-      mutations.forEach(mutation => {
-        if (mutation.type === 'attributes') {
-          // Update if data-cursor attribute changed
-          if (mutation.attributeName === 'data-cursor') {
-            shouldUpdate = true
-            console.log('a ', mutation.attributeName)
-          }
-          // if style attribute changed and has attribute data-cursor="true"
-          if (mutation.attributeName === 'style') {
-            const target = mutation.target as HTMLElement
-            if (target.getAttribute('data-cursor') === 'true') {
-              shouldUpdate = true
-              console.log('b ', mutation.attributeName)
-            }
-          }
-        }
-      })
+    //   mutations.forEach(mutation => {
+    //     if (mutation.type === 'attributes') {
+    //       // Update if data-cursor attribute changed
+    //       if (mutation.attributeName === 'data-cursor') {
+    //         shouldUpdate = true
+    //         console.log('a ', mutation.attributeName)
+    //       }
+    //       // if style attribute changed and has attribute data-cursor="true"
+    //       if (mutation.attributeName === 'style') {
+    //         const target = mutation.target as HTMLElement
+    //         if (target.getAttribute('data-cursor') === 'true') {
+    //           shouldUpdate = true
+    //           console.log('b ', mutation.attributeName)
+    //         }
+    //       }
+    //     }
+    //   })
 
-      if (shouldUpdate) {
-        // setTimeout(() => {
-        afterNextPaint(() => {
-          updateCursorNode()
-        })
-        // }, 100)
-      }
+    //   if (shouldUpdate) {
+    //     // setTimeout(() => {
+    //     afterNextPaint(() => {
+    //       updateCursorNode()
+    //     })
+    //     // }, 100)
+    //   }
+    // })
+    afterNextPaint(() => {
+      updateCursorNode()
     })
 
-    // Observe the entire document for attribute changes to data-cursor and style
-    observer.observe(document, {
-      attributes: true,
-      attributeFilter: ['data-cursor', 'style'],
-      subtree: true,
-    })
+    // // Observe the entire document for attribute changes to data-cursor and style
+    // observer.observe(document, {
+    //   attributes: true,
+    //   attributeFilter: ['data-cursor', 'style'],
+    //   subtree: true,
+    // })
 
-    return () => observer.disconnect()
+    // return () => observer.disconnect()
   }, [cursor])
 
   return (
