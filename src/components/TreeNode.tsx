@@ -295,7 +295,7 @@ const TreeNode = ({
               indexDescendant={indexDescendant}
               isMultiColumnTable={false}
               leaf={leaf}
-              onResize={setSize}
+              onResize={props => setSize({ ...props, cliff })}
               path={path}
               prevChildId={prevChild?.id}
               showContexts={showContexts}

@@ -33,6 +33,8 @@ export type OnResize = (args: {
   id: ThoughtId
   /** Used by the LayoutTree to crop hidden thoughts below the cursor without disrupting the autofocus animation when parents fade in. */
   isVisible: boolean
+  /** Trying to store the cliff in the size object so that it can be referenced in treeThoughtsPositioned in subsequent passes. */
+  cliff?: number
   /** A key that uniquely identifies the thought across context views. */
   key: string
 }) => void
