@@ -2,8 +2,8 @@ import { throttle } from 'lodash'
 import { useLayoutEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import State from '../@types/State'
-import durations from '../durations.config'
 import attributeEquals from '../selectors/attributeEquals'
+import durations from '../util/durations'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import usePrevious from './usePrevious'
@@ -119,26 +119,21 @@ const useMoveThoughtAnimation = (
   // leading: false means the clear won't happen immediately - it waits for the full
   // animation duration before clearing, allowing the CSS animation to complete.
   const clearMoveAnimation = useMemo(() => {
-    return throttle(() => setMoveAnimation(null), durations.layoutNodeAnimation, {
+    return throttle(() => setMoveAnimation(null), durations.get('layoutNodeAnimation'), {
       leading: false,
     })
   }, [setMoveAnimation])
 
   useLayoutEffect(() => {
-    // For drag-and-drop moveThought, animate only dragged thoughts with the "over" animation
-    if (hasMovedDnD) {
-      setMoveAnimation('moveThoughtOver')
-      clearMoveAnimation()
-      return
-    }
+    const moveAnimationName =
+      // For drag-and-drop moveThought, animate only dragged thoughts with the "over" animation
+      hasMovedDnD
+        ? 'moveThoughtOver'
+        : // Only proceed for up/down moves
+          hasMoved && (lastMoveAction === 'moveThoughtUp' || lastMoveAction === 'moveThoughtDown')
+          ? getMoveAnimation(lastMoveAction, previousIndex, index)
+          : null
 
-    // skip effect logic safely if no moveAction
-    if (!hasMoved || !lastMoveAction) return
-
-    // Only proceed for up/down
-    if (lastMoveAction !== 'moveThoughtUp' && lastMoveAction !== 'moveThoughtDown') return
-
-    const moveAnimationName = getMoveAnimation(lastMoveAction, previousIndex, index)
     if (moveAnimationName) {
       setMoveAnimation(moveAnimationName)
       clearMoveAnimation()
@@ -151,7 +146,7 @@ const useMoveThoughtAnimation = (
     // Common style props
     const base: React.CSSProperties = {
       transformOrigin: 'left',
-      animationDuration: `${durations.layoutNodeAnimation}ms`,
+      animationDuration: `${durations.get('layoutNodeAnimation')}ms`,
       animationTimingFunction: 'ease-out',
       animationFillMode: 'none',
     }
