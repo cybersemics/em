@@ -100,7 +100,7 @@ const usePositionedThoughts = (
 
     const treeThoughtsPositioned = treeThoughts.map((node, i) => {
       const prev = treeThoughts[i - 1] as TreeThought | undefined
-      const prevCliff = prev ? sizes[prev.key].cliff || 0 : 0
+      const prevCliff = prev ? sizes[prev.key]?.cliff || 0 : 0
       const next = treeThoughts[i + 1] as TreeThought | undefined
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
