@@ -2,8 +2,8 @@ import { throttle } from 'lodash'
 import { useLayoutEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import State from '../@types/State'
-import durations from '../durations.config'
 import attributeEquals from '../selectors/attributeEquals'
+import durations from '../util/durations'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import usePrevious from './usePrevious'
@@ -40,6 +40,7 @@ const getMoveAnimation = (
  */
 const useMoveThoughtAnimation = (
   index: number,
+  thoughtId?: string,
 ):
   | Partial<
       Pick<
@@ -64,7 +65,7 @@ const useMoveThoughtAnimation = (
     if (!moveAction) return null
 
     // Determine if we should skip the animation for cross-context moves inside a Table view.
-    //
+
     // When a thought is moved between different parent contexts (a cross-context move),
     // the moveThought action updates the thought's parentId field.
     // This creates a patch with a path ending in '/parentId'.
@@ -96,6 +97,18 @@ const useMoveThoughtAnimation = (
   const prevIndexChanged = usePrevious(indexChanged)
   const hasMoved = !!(lastMoveAction && indexChanged && !prevIndexChanged)
 
+  // Drag-and-drop moveThought: animate only dragged thoughts with the "over" animation.
+  // Aggregate actions across the patch to handle merged operations, and gate by whether this node was dragged.
+  const isDraggedDnD = useSelector((state: State): boolean => {
+    const lastPatches = state.undoPatches[state.undoPatches.length - 1] ?? []
+    const isMoveThought = lastPatches.some(op =>
+      (op as unknown as { actions?: string[] }).actions?.some(action => action === 'moveThought'),
+    )
+    const isDragged = !!thoughtId && (state.draggingThoughts || []).some(path => head(path) === thoughtId)
+    return !!(isMoveThought && isDragged)
+  })
+  const hasMovedDnD = !!(isDraggedDnD && indexChanged && !prevIndexChanged)
+
   const [moveAnimation, setMoveAnimation] = useState<'moveThoughtOver' | 'moveThoughtUnder' | null>(null)
 
   // When a move animation starts, we automatically schedule it to be cleared after
@@ -106,21 +119,26 @@ const useMoveThoughtAnimation = (
   // leading: false means the clear won't happen immediately - it waits for the full
   // animation duration before clearing, allowing the CSS animation to complete.
   const clearMoveAnimation = useMemo(() => {
-    return throttle(() => setMoveAnimation(null), durations.layoutNodeAnimation, {
+    return throttle(() => setMoveAnimation(null), durations.get('layoutNodeAnimation'), {
       leading: false,
     })
   }, [setMoveAnimation])
 
   useLayoutEffect(() => {
-    // skip effect logic safely if no moveAction
-    if (!hasMoved || !lastMoveAction) return
+    const moveAnimationName =
+      // For drag-and-drop moveThought, animate only dragged thoughts with the "over" animation
+      hasMovedDnD
+        ? 'moveThoughtOver'
+        : // Only proceed for up/down moves
+          hasMoved && (lastMoveAction === 'moveThoughtUp' || lastMoveAction === 'moveThoughtDown')
+          ? getMoveAnimation(lastMoveAction, previousIndex, index)
+          : null
 
-    const moveAnimationName = getMoveAnimation(lastMoveAction, previousIndex, index)
     if (moveAnimationName) {
       setMoveAnimation(moveAnimationName)
       clearMoveAnimation()
     }
-  }, [hasMoved, lastMoveAction, previousIndex, index, clearMoveAnimation])
+  }, [hasMoved, hasMovedDnD, lastMoveAction, previousIndex, index, clearMoveAnimation])
 
   const moveDivStyle = useMemo<React.CSSProperties | undefined>(() => {
     if (!moveAnimation) return undefined
@@ -128,7 +146,7 @@ const useMoveThoughtAnimation = (
     // Common style props
     const base: React.CSSProperties = {
       transformOrigin: 'left',
-      animationDuration: `${durations.layoutNodeAnimation}ms`,
+      animationDuration: `${durations.get('layoutNodeAnimation')}ms`,
       animationTimingFunction: 'ease-out',
       animationFillMode: 'none',
     }
