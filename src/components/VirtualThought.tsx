@@ -100,6 +100,7 @@ const VirtualThought = ({
   const fontSize = useSelector(state => state.fontSize)
   const note = useSelector(state => noteValue(state, simplePath))
   const ref = useRef<HTMLDivElement>(null)
+  const moveAnimTimeoutRef = useRef<number | null>(null)
 
   /***************************
    * VirtualThought properties
@@ -134,6 +135,20 @@ const VirtualThought = ({
 
   const updateSize = useCallback(() => {
     if (!ref.current) return
+
+    // If a moveThought animation is active on an ancestor, skip measuring since
+    // transform: scale will distort getBoundingClientRect and yield incorrect heights.
+    // Re-measure after the animation completes.
+    const isMoveAnimating = !!ref.current.closest('[data-move-animating="true"]')
+    if (isMoveAnimating) {
+      if (moveAnimTimeoutRef.current) return
+      moveAnimTimeoutRef.current = setTimeout(() => {
+        moveAnimTimeoutRef.current = null
+        // re-check and measure
+        updateSize()
+      }, durations.get('layoutNodeAnimation')) as unknown as number
+      return
+    }
 
     // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
     const heightNew = Math.max(
@@ -203,6 +218,10 @@ const VirtualThought = ({
   useEffect(
     () => {
       return () => {
+        if (moveAnimTimeoutRef.current) {
+          clearTimeout(moveAnimTimeoutRef.current)
+          moveAnimTimeoutRef.current = null
+        }
         onResize?.({ height: null, width: null, id: id, isVisible: true, key: crossContextualKey })
       }
     },

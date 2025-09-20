@@ -236,6 +236,9 @@ const TreeNode = ({
         }
       : moveDivStyle
 
+  // Flag when moveThought animation is active so children (e.g., size measurement) can adjust behavior.
+  const isMoveAnimating = !!moveDivStyle && !isSwap && !isLastActionSort
+
   return (
     <FadeTransition
       id={thoughtKey}
@@ -266,6 +269,7 @@ const TreeNode = ({
         style={outerDivStyle}
       >
         <div
+          data-move-animating={isMoveAnimating ? 'true' : undefined}
           className={css({
             ...(isTableCol1
               ? {
