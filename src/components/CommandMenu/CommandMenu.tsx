@@ -102,21 +102,29 @@ const CommandMenu = () => {
         // Use PaperProps to directly target the Paper component
         PaperProps={{
           style: {
-            backgroundColor: token('colors.darkgray'),
+            backgroundColor: 'transparent',
             // Make sure it overrides any inline styles
             display: 'flex',
             flexDirection: 'column',
             width: '100%',
-            overflow: 'hidden',
+            overflow: 'visible',
             maxHeight: '70%',
             pointerEvents: 'auto',
+            boxShadow: 'none',
           },
         }}
         ModalProps={{
           disableAutoFocus: true,
           disableEnforceFocus: true,
           disableRestoreFocus: true,
-          style: { pointerEvents: 'none', zIndex: token('zIndex.modal') },
+          style: {
+            pointerEvents: 'none',
+            zIndex: token('zIndex.modal'),
+            backgroundImage: 'url(/img/command-center/command-center.webp)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center bottom',
+            mixBlendMode: 'screen',
+          },
         }}
       >
         <div>
