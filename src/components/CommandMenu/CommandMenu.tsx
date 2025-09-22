@@ -87,7 +87,7 @@ const CommandMenu = () => {
       <>
         {showCommandMenu && (
           <div
-            /** Blur doesn't affect thoughts unless outside of SwipeableDrawer */
+            /** Blur doesn't affect thoughts unless outside of SwipeableDrawer. */
             style={{
               height: ref.current ? ref.current.clientHeight + 110 : undefined,
             }}
