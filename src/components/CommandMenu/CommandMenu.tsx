@@ -43,6 +43,7 @@ const useNonzeroNumMulticursors = () => {
 /** Shows a message with the number of thoughts selected, and a cancel button to deselect all. */
 const MultiselectMessage: FC = () => {
   const displayNumMulticursors = useNonzeroNumMulticursors()
+  const fontSize = useSelector(state => state.fontSize)
   return (
     <div>
       <span
@@ -50,7 +51,7 @@ const MultiselectMessage: FC = () => {
           marginRight: '1em',
           color: 'fg',
           fontWeight: 700,
-          fontSize: 20,
+          fontSize: fontSize * 1.4,
           letterSpacing: '-0.011em',
           mixBlendMode: 'screen',
           opacity: 0.6,
@@ -146,21 +147,8 @@ const CommandMenu = () => {
         >
           <div
             ref={ref}
-            className={css({ background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)' })}
+            className={css({ background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)', paddingTop: '0.8rem' })}
           >
-            {/* <div
-              className={css({
-                position: 'absolute',
-                background: 'linear-gradient(180deg, {colors.bgTransparent} -3.32%, {colors.bg} 16.55%)',
-                mask: 'linear-gradient(180deg, {colors.bgTransparent} -3.32%, {colors.bg} 16.55%)',
-                backdropFilter: 'blur(12px)',
-                pointerEvents: 'none',
-                height: '120%',
-                width: '100%',
-                bottom: 0,
-                zIndex: -1,
-              })}
-            /> */}
             <div
               className={css({
                 position: 'absolute',
