@@ -42,7 +42,7 @@ const useSizeTracking = () => {
       isVisible,
       key,
     }: {
-      cliff?: number
+      cliff: number
       height: number | null
       width?: number | null
       id: ThoughtId

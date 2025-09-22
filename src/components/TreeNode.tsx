@@ -18,7 +18,7 @@ import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
-import VirtualThought, { OnResize } from './VirtualThought'
+import VirtualThought, { SetSize } from './VirtualThought'
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
 const TreeNode = ({
@@ -65,7 +65,7 @@ const TreeNode = ({
   treeThoughtsPositioned: TreeThoughtPositioned[]
   bulletWidth: number
   cursorUncleId: string | null
-  setSize: OnResize
+  setSize: SetSize
   cliffPaddingStyle: { paddingBottom: number }
   dragInProgress: boolean
   autofocusDepth: number
