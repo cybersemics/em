@@ -47,9 +47,13 @@ const MultiselectMessage: FC = () => {
     <div>
       <span
         className={css({
-          fontStyle: 'italic',
           marginRight: '1em',
           color: 'fg',
+          fontWeight: 700,
+          fontSize: 20,
+          letterSpacing: '-0.011em',
+          mixBlendMode: 'screen',
+          opacity: 0.6,
         })}
       >
         <span
@@ -72,6 +76,7 @@ const MultiselectMessage: FC = () => {
  */
 const CommandMenu = () => {
   const dispatch = useDispatch()
+  const ref = useRef<HTMLDivElement>(null)
   const showCommandMenu = useSelector(state => state.showCommandMenu)
   const isTutorialOn = useSelector(isTutorial)
 
@@ -86,6 +91,21 @@ const CommandMenu = () => {
   if (isTouch && !isTutorialOn) {
     return (
       <>
+        {showCommandMenu && (
+          <div
+            style={{
+              height: ref.current ? ref.current.clientHeight + 110 : undefined,
+            }}
+            className={css({
+              position: 'fixed',
+              backdropFilter: 'blur(2px)',
+              mask: 'linear-gradient(180deg, var(--colors-bg-transparent) 0%, black 110px, black 100%)',
+              pointerEvents: 'none',
+              width: '100%',
+              bottom: 0,
+            })}
+          />
+        )}
         <SwipeableDrawer
           data-testid='command-menu-panel'
           // Disable swipe to open - this removes the swipe-up-to-open functionality
@@ -124,8 +144,11 @@ const CommandMenu = () => {
             },
           }}
         >
-          <div>
-            <div
+          <div
+            ref={ref}
+            className={css({ background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)' })}
+          >
+            {/* <div
               className={css({
                 position: 'absolute',
                 background: 'linear-gradient(180deg, {colors.bgTransparent} -3.32%, {colors.bg} 16.55%)',
@@ -137,7 +160,7 @@ const CommandMenu = () => {
                 bottom: 0,
                 zIndex: -1,
               })}
-            />
+            /> */}
             <div
               className={css({
                 position: 'absolute',
