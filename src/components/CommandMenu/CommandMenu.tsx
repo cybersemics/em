@@ -126,14 +126,14 @@ const CommandMenu = () => {
         >
           <div>
             <div
-              data-testid='command-menu-falloff-gradient'
               className={css({
                 position: 'absolute',
-                background: 'linear-gradient(180deg, rgba(0, 0, 0, 0) -3.32%, {colors.bg} 16.55%)',
+                background: 'linear-gradient(180deg, {colors.bgTransparent} -3.32%, {colors.bg} 16.55%)',
+                mask: 'linear-gradient(180deg, {colors.bgTransparent} -3.32%, {colors.bg} 16.55%)',
+                backdropFilter: 'blur(12px)',
                 pointerEvents: 'none',
-                height: 'calc(100% + 50px)',
+                height: '120%',
                 width: '100%',
-                marginTop: 'auto',
                 bottom: 0,
                 zIndex: -1,
               })}
