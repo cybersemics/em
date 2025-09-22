@@ -20,7 +20,7 @@ import uncategorize from '../../commands/uncategorize'
 import isTutorial from '../../selectors/isTutorial'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
-import CloseIcon from '../icons/CloseIcon'
+import CloseIconV2 from '../icons/CloseIconV2'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
 
@@ -48,25 +48,17 @@ const MultiselectMessage: FC = () => {
     <div>
       <span
         className={css({
-          marginRight: '1em',
           color: 'fg',
           fontWeight: 700,
-          fontSize: fontSize * 1.4,
           letterSpacing: '-0.011em',
           mixBlendMode: 'screen',
           opacity: 0.6,
         })}
+        style={{
+          fontSize: fontSize * 1.3,
+        }}
       >
-        <span
-          style={{
-            display: 'inline-block',
-            minWidth: '1em',
-            textAlign: 'right',
-          }}
-        >
-          {displayNumMulticursors}
-        </span>{' '}
-        {pluralize('thought', displayNumMulticursors, false)} selected
+        {displayNumMulticursors} {pluralize('thought', displayNumMulticursors, false)} selected
       </span>
     </div>
   )
@@ -80,6 +72,7 @@ const CommandMenu = () => {
   const ref = useRef<HTMLDivElement>(null)
   const showCommandMenu = useSelector(state => state.showCommandMenu)
   const isTutorialOn = useSelector(isTutorial)
+  const fontSize = useSelector(state => state.fontSize)
 
   const onOpen = useCallback(() => {
     dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: true }))
@@ -94,6 +87,7 @@ const CommandMenu = () => {
       <>
         {showCommandMenu && (
           <div
+            /** Blur doesn't affect thoughts unless outside of SwipeableDrawer */
             style={{
               height: ref.current ? ref.current.clientHeight + 110 : undefined,
             }}
@@ -147,7 +141,10 @@ const CommandMenu = () => {
         >
           <div
             ref={ref}
-            className={css({ background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)', paddingTop: '0.8rem' })}
+            className={css({
+              background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
+              paddingTop: '0.8rem',
+            })}
           >
             <div
               className={css({
@@ -180,16 +177,20 @@ const CommandMenu = () => {
                   <button
                     {...fastClick(onClose)}
                     className={css({
-                      backgroundColor: 'transparent',
                       border: 'none',
-                      cursor: 'pointer',
-                      padding: 0,
-                      marginLeft: '1rem',
-                      display: 'flex',
-                      alignItems: 'center',
+                      opacity: 0.88,
+                      color: 'fg',
+                      background: 'rgba(255, 255, 255, 0.39)',
+                      borderRadius: 46.6,
+                      fontWeight: 500,
+                      letterSpacing: '-0.011em',
+                      padding: '5px 15px',
                     })}
+                    style={{
+                      fontSize: fontSize * 0.85,
+                    }}
                   >
-                    <CloseIcon size={20} fill={token('colors.fg')} />
+                    <CloseIconV2 /> Cancel
                   </button>
                 </div>
               </div>
