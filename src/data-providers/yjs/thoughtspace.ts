@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // there are multiple function callling it self (recursive) so we just disable the lint error
-
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import { IndexeddbPersistence, clearDocument } from 'y-indexeddb'
 import * as Y from 'yjs'
