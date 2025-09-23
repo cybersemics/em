@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import useWindowOverflow from '../hooks/useWindowOverflow'
+import assertRef from '../util/typeUtils'
 import FadeTransition from './FadeTransition'
 import TriangleDown from './TriangleDown'
 
@@ -16,7 +17,7 @@ interface PopoverProps {
 const Popover: FC<PopoverProps> = ({ children, show, size = 18 }) => {
   const ref = useRef<HTMLDivElement>(null)
   const fontSize = useSelector(state => state.fontSize)
-  const overflow = useWindowOverflow(ref)
+  const overflow = useWindowOverflow(assertRef(ref))
 
   return (
     <FadeTransition type='fast' in={show} exit={false} unmountOnExit>

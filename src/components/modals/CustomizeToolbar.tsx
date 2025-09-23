@@ -18,6 +18,7 @@ import { isTouch } from '../../browser'
 import { commandById } from '../../commands'
 import { AlertText, AlertType } from '../../constants'
 import fastClick from '../../util/fastClick'
+import { dndRef } from '../../util/typeUtils'
 import CommandTableOnly from '../CommandTableOnly'
 import FadeTransition from '../FadeTransition'
 import CommandTable from './../CommandTable'
@@ -90,7 +91,7 @@ const DropToRemoveFromToolbar: FC<PropsWithChildren> = ({ children }) => {
   }, [dispatch, dragCommand, isHovering, sourceZone])
 
   return (
-    <div data-drop-to-remove-from-toolbar-hovering={isHovering ? '' : undefined} ref={dropTarget}>
+    <div data-drop-to-remove-from-toolbar-hovering={isHovering ? '' : undefined} ref={dndRef(dropTarget)}>
       {children}
     </div>
   )

@@ -56,6 +56,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import trimHtml from '../util/trimHtml'
+import assertRef from '../util/typeUtils'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
@@ -299,7 +300,7 @@ const Editable = ({
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(_.throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  const allowDefaultSelection = useEditMode({ contentRef, isEditing, path, style, transient })
+  const allowDefaultSelection = useEditMode({ contentRef: assertRef(contentRef), isEditing, path, style, transient })
 
   useEffect(() => {
     /** Flushes pending edits. */
@@ -435,7 +436,7 @@ const Editable = ({
   )
 
   /** Imports text that is pasted onto the thought. */
-  const onPaste = useOnPaste({ contentRef, simplePath, transient })
+  const onPaste = useOnPaste({ contentRef: assertRef(contentRef), simplePath, transient })
   const onCopy = useOnCopy({ thoughtId })
   const onCut = useOnCut()
   /** Flushes edits and updates certain state variables on blur. */
@@ -616,7 +617,7 @@ const Editable = ({
   return (
     <ContentEditable
       disabled={disabled}
-      innerRef={contentRef}
+      innerRef={assertRef(contentRef)}
       aria-label={'editable-' + head(path)}
       data-editable
       className={cx(multiline ? multilineRecipe() : null, editableRecipe(), className)}

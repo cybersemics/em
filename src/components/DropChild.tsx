@@ -17,6 +17,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
+import { dndRef } from '../util/typeUtils'
 import DragOnly from './DragOnly'
 
 interface DropChildProps {
@@ -62,7 +63,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
             paddingBottom: '1em',
           }),
         )}
-        ref={dropTarget}
+        ref={dndRef(dropTarget)}
         style={{
           height: `${0.5 + dropTargetHeight}em`,
           // Adjust position to compensate for cliff padding on parent thought

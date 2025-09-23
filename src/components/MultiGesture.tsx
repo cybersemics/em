@@ -5,6 +5,7 @@ import GesturePath from '../@types/GesturePath'
 import { noop } from '../constants'
 import gestureStore from '../stores/gesture'
 import isInGestureZone from '../util/isInGestureZone'
+import assertRef from '../util/typeUtils'
 import ScrollZone from './ScrollZone'
 import TraceGesture from './TraceGesture'
 
@@ -249,7 +250,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     const ref = React.createRef<HTMLDivElement>()
     return (
       <View {...this.panResponder.panHandlers}>
-        <TraceGesture eventNodeRef={ref} />
+        <TraceGesture eventNodeRef={assertRef(ref)} />
         <ScrollZone leftHanded={this.leftHanded} />
         <div ref={ref}>{this.props.children}</div>
       </View>

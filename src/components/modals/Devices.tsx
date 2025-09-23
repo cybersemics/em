@@ -19,6 +19,7 @@ import useStatus from '../../hooks/useStatus'
 import modalDescriptionClass from '../../recipes/modalDescriptionClass'
 import fastClick from '../../util/fastClick'
 import strip from '../../util/strip'
+import assertRef from '../../util/typeUtils'
 import FadeTransition from '../FadeTransition'
 import ActionButton from './../ActionButton'
 import ContentEditable, { ContentEditableEvent } from './../ContentEditable'
@@ -292,7 +293,7 @@ const EditableName = React.memo(
       <div className={css({ position: 'relative' })}>
         <ContentEditable
           className={css({ '&:focus': { borderBottom: 'solid 1px' }, display: 'inline', marginBottom: '0.5em' })}
-          innerRef={ref}
+          innerRef={assertRef(ref)}
           html={value}
           onChange={onChange}
           placeholder='Untitled'

@@ -30,7 +30,11 @@ const Kbd: FC<PropsWithChildren<{ isText?: boolean }>> = ({ children, isText }) 
 }
 
 /** Displays keyboard shortcuts. Replaces formatKeyboardShortcut in commands.ts. */
-const CommandKeyboardShortcut = ({ keyboardOrString }: { keyboardOrString: Key | Key[] | string }): JSX.Element => {
+const CommandKeyboardShortcut = ({
+  keyboardOrString,
+}: {
+  keyboardOrString: Key | Key[] | string
+}): React.JSX.Element => {
   const fontSize = useSelector(state => state.fontSize)
 
   if (Array.isArray(keyboardOrString)) {

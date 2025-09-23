@@ -20,6 +20,7 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import strip from '../util/strip'
+import { dndRef } from '../util/typeUtils'
 import DragOnly from './DragOnly'
 
 /** The amount of space to shift the drop target to the right so the user's finger is not in the way on mobile (em). */
@@ -120,7 +121,7 @@ const DropEnd = ({
         // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
         width: isParentTableCol1 ? undefined : dropHoverLength,
       }}
-      ref={dropTarget}
+      ref={dndRef(dropTarget)}
     >
       {testFlags.simulateDrop && (
         <span

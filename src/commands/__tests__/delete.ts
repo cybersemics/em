@@ -35,8 +35,6 @@ describe('delete', () => {
 
       act(() => executeCommand(deleteCommand, { store }))
 
-      await act(vi.runAllTimersAsync)
-
       const popupValue = await screen.findByTestId('alert-content')!
       expect(popupValue.textContent).toBe('Permanently deleted test')
     })

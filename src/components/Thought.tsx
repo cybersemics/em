@@ -49,6 +49,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
+import { dndRefCallback } from '../util/typeUtils'
 import Bullet from './Bullet'
 import Byline from './Byline'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
@@ -528,7 +529,7 @@ const ThoughtContainer = ({
   return (
     <div
       {...dragHoldResult.props}
-      ref={node => dragSource(dropTarget(node))}
+      ref={dndRefCallback(node => dragSource(dropTarget(node)))}
       aria-label='child'
       data-divider={isDivider(value)}
       data-editing={isEditing}

@@ -18,6 +18,7 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import nonNull from '../util/nonNull'
+import { dndRef, dndRefCallback } from '../util/typeUtils'
 import Checkbox from './Checkbox'
 import SlideTransition from './SlideTransition'
 import ThoughtLink from './ThoughtLink'
@@ -50,7 +51,7 @@ const DragAndDropFavorite = ({
       {...dragHoldResult.props}
       className={css({ overflow: 'auto' })}
       data-testid='drag-and-drop-favorite'
-      ref={node => dragSource(dropTarget(node))}
+      ref={dndRefCallback(node => dragSource(dropTarget(node)))}
     >
       {!disableDragAndDrop && isHovering && (
         <span
@@ -90,7 +91,7 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
   const dropHoverLength = useDropHoverWidth()
 
   return (
-    <div className={css({ height: '4em' })} ref={dropTarget}>
+    <div className={css({ height: '4em' })} ref={dndRef(dropTarget)}>
       <span
         className={cx(
           dropHoverRecipe(),

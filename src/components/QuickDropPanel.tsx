@@ -19,6 +19,7 @@ import store from '../stores/app'
 import ellipsize from '../util/ellipsize'
 import haptics from '../util/haptics'
 import head from '../util/head'
+import { dndRef } from '../util/typeUtils'
 
 /** Delete the thought on drop. */
 const drop = (state: State, items: DragThoughtItem[]) => {
@@ -143,7 +144,7 @@ const QuickDropPanel: FC = () => {
   return (
     <div className={css({ position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 'popup' })}>
       <div
-        ref={dropTarget}
+        ref={dndRef(dropTarget)}
         className={css({
           zIndex: 'stack',
           height: '100%',

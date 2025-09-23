@@ -17,6 +17,7 @@ import { executeCommandWithMulticursor } from '../util/executeCommand'
 import fastClick from '../util/fastClick'
 import getCursorSortDirection from '../util/getCursorSortDirection'
 import haptics from '../util/haptics'
+import { dndRefCallback } from '../util/typeUtils'
 
 export interface ToolbarButtonProps {
   // see ToolbarProps.customize
@@ -200,7 +201,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       {...longPress.props}
       aria-label={command.label}
       data-testid='toolbar-icon'
-      ref={node => dragSource(dropTarget(node))}
+      ref={dndRefCallback(node => dragSource(dropTarget(node)))}
       key={commandId}
       title={`${command.label}${(command.keyboard ?? command.overlay?.keyboard) ? ` (${formatKeyboardShortcut((command.keyboard ?? command.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
       className={cx(

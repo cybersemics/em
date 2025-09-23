@@ -19,6 +19,7 @@ import store from '../stores/app'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
+import assertRef from '../util/typeUtils'
 import NoOtherContexts from './NoOtherContexts'
 import Thought from './Thought'
 
@@ -59,7 +60,7 @@ const Subthought = ({
   const ref = useRef<HTMLDivElement>(null)
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
   // Cache the thought HTML before it is deleted so that we can animate on unmount
-  const cachedThoughtHtmlRef = useCachedThoughtHtml({ thought, elementRef: ref })
+  const cachedThoughtHtmlRef = useCachedThoughtHtml({ thought, elementRef: assertRef(ref) })
   const noOtherContexts = useSelector(
     state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
   )
