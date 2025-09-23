@@ -189,6 +189,8 @@ const CommandMenu = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '1ch',
+                      /** Button won't show without z-index. */
+                      zIndex: 'modal',
                     })}
                     style={{
                       fontSize: fontSize * 0.85,
