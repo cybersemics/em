@@ -150,7 +150,7 @@ const CommandMenu = () => {
               className={css({
                 position: 'absolute',
                 pointerEvents: 'none',
-                zIndex: token('zIndex.modal'),
+                zIndex: 'modal',
                 backgroundImage: 'url(/img/command-center/command-center.webp)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center bottom',
