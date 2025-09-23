@@ -100,7 +100,7 @@ const usePositionedThoughts = (
 
     const treeThoughtsPositioned = treeThoughts.map((node, i) => {
       const prev = treeThoughts[i - 1] as TreeThought | undefined
-      const prevCliff = prev ? sizes[prev.key]?.cliff || 0 : 0
+      const prevCliff = prev ? sizes[prev.key]?.cliff : 0
       const next = treeThoughts[i + 1] as TreeThought | undefined
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
@@ -178,7 +178,8 @@ const usePositionedThoughts = (
           - a
           - [empty]
       */
-      const isNewCliff = !sizes[node.key] && cliff < 0 && prev && node.depth >= prev.depth && prevCliff < 0
+      const isNewCliff =
+        !sizes[node.key] && cliff < 0 && prev && node.depth >= prev.depth && (prevCliff === undefined || prevCliff < 0)
 
       // Capture the y position of the current thought before it is incremented by its own height for the next thought.
       const y = yaccum - (isNewCliff ? cliffPadding : 0)
