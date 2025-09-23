@@ -179,9 +179,8 @@ const CommandMenu = () => {
                     className={css({
                       cursor: 'pointer',
                       border: 'none',
-                      opacity: 0.88,
                       color: 'fg',
-                      background: 'fgOverlay40',
+                      background: 'fgOverlay20',
                       borderRadius: 46.6,
                       fontWeight: 500,
                       letterSpacing: '-0.011em',
