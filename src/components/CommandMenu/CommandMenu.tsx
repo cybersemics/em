@@ -151,7 +151,7 @@ const CommandMenu = () => {
                 position: 'absolute',
                 pointerEvents: 'none',
                 zIndex: 'modal',
-                backgroundImage: 'url(/img/command-center/command-center.webp)',
+                backgroundImage: 'url(/img/command-center/overlay.webp)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center bottom',
                 mixBlendMode: 'screen',
@@ -177,6 +177,7 @@ const CommandMenu = () => {
                   <button
                     {...fastClick(onClose)}
                     className={css({
+                      cursor: 'pointer',
                       border: 'none',
                       opacity: 0.88,
                       color: 'fg',
