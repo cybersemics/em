@@ -178,19 +178,23 @@ const CommandMenu = () => {
                     {...fastClick(onClose)}
                     className={css({
                       border: 'none',
-                      opacity: 0.4,
+                      opacity: 0.88,
                       color: 'fg',
-                      background: 'fgOverlay20',
+                      background: 'fgOverlay40',
                       borderRadius: 46.6,
                       fontWeight: 500,
                       letterSpacing: '-0.011em',
-                      padding: '5px 15px',
+                      padding: '8px 16px',
+                      mixBlendMode: 'soft-light',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1ch',
                     })}
                     style={{
                       fontSize: fontSize * 0.85,
                     }}
                   >
-                    <CloseIconV2 /> Cancel
+                    <CloseIconV2 /> Done
                   </button>
                 </div>
               </div>
