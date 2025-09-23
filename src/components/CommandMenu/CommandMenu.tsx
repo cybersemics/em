@@ -94,7 +94,7 @@ const CommandMenu = () => {
             className={css({
               position: 'fixed',
               backdropFilter: 'blur(2px)',
-              mask: 'linear-gradient(180deg, var(--colors-bg-transparent) 0%, black 110px, black 100%)',
+              mask: 'linear-gradient(180deg, {colors.bgTransparent} 0%, black 110px, black 100%)',
               pointerEvents: 'none',
               width: '100%',
               bottom: 0,
