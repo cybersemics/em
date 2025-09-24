@@ -153,6 +153,7 @@ const LayoutTree = () => {
 
       setLayoutTop(ref.current?.getBoundingClientRect().top ?? 0)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragInProgress])
 
   const singleLineHeight = useSingleLineHeight(sizes)
