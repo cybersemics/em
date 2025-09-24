@@ -58,10 +58,8 @@ export const dndRef = (refCallback: ConnectDropTarget) => {
  * const [dragSource, dropTarget] = useDragAndDrop(...)
  * // Create type-safe ref callback
  * const refCallback = dndRefCallback(node => {
- *   if (node) {
- *     return dragSource(dropTarget(node))
- *   }
- *   return null
+ * if (node) return dragSource(dropTarget(node))
+ * return null
  * })
  * // Use with React ref
  * <div ref={refCallback}>Drag and drop target</div>
