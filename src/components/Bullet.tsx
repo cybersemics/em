@@ -9,7 +9,6 @@ import ThoughtId from '../@types/ThoughtId'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
-import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { AlertType, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
@@ -20,6 +19,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
 import fastClick from '../util/fastClick'
 import getBulletWidth from '../util/getBulletWidth'
@@ -424,6 +424,9 @@ const Bullet = ({
   })
   const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
+  // check if the thought is pinned
+  const isThoughtPinned = useSelector(state => !!isPinned(state, thoughtId))
+
   /** True if the the user is dragging the thought and hovering over the DeleteDrop QuickDrop icon. */
   const isQuickDropDeleteHovering = useSelector(
     state => isDragging && state.alert?.alertType === AlertType.DeleteDropHint,
@@ -483,7 +486,6 @@ const Bullet = ({
 
       // short circuit if toggling multiselect
       if (!isTouch && (isMac ? e.metaKey : e.ctrlKey)) {
-        dispatch(toggleMulticursor({ path }))
         return
       }
 
@@ -508,9 +510,6 @@ const Bullet = ({
           setCursor({ path: shouldCollapse ? pathParent : path, preserveMulticursor: true }),
         ])
       })
-
-      e.stopPropagation()
-      // stop click event from bubbling up to Content.clickOnEmptySpace
     },
     [dispatch, dragHold, path, simplePath],
   )
@@ -562,6 +561,8 @@ const Bullet = ({
             // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
             // allowing the browser to optimize the animation.
             willChange: 'transform',
+            // run grow animation on pin activation
+            animation: isThoughtPinned ? 'bulletGrow {durations.fast} ease-out' : undefined,
             ...(isHighlighted
               ? {
                   fillOpacity: 1,
