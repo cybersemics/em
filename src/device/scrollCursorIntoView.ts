@@ -48,8 +48,8 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
   const navbarRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
   const viewport = viewportStore.getState()
-  const isAboveViewport = y < toolbarBottom
-  const isBelowViewport = y > viewport.innerHeight - viewport.virtualKeyboardHeight
+  const isAboveViewport = y + viewport.layoutTreeTop < toolbarBottom
+  const isBelowViewport = y + viewport.layoutTreeTop > viewport.innerHeight - viewport.virtualKeyboardHeight
 
   if (!isAboveViewport && !isBelowViewport) return
 
