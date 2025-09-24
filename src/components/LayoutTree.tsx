@@ -111,6 +111,20 @@ const useHideSpaceAbove = (spaceAbove: number) => {
   )
 }
 
+/** A hook that returns a ref to the content div and updates the viewport store's contentWidth property on resize. */
+const useLayoutTreeTop = () => {
+  const layoutTreeRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!layoutTreeRef.current) return
+
+    const rect = layoutTreeRef.current.getBoundingClientRect()
+    viewportStore.update({ layoutTreeTop: rect?.top || 0 })
+  }, [])
+
+  return layoutTreeRef
+}
+
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const editing = useSelector(state => state.isKeyboardOpen)
@@ -118,7 +132,7 @@ const LayoutTree = () => {
   const treeThoughts = useSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
-  const ref = useRef<HTMLDivElement | null>(null)
+  const ref = useLayoutTreeTop()
   const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
