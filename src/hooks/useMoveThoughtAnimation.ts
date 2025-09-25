@@ -119,7 +119,7 @@ const useMoveThoughtAnimation = (
   // leading: false means the clear won't happen immediately - it waits for the full
   // animation duration before clearing, allowing the CSS animation to complete.
   const clearMoveAnimation = useMemo(() => {
-    return throttle(() => setMoveAnimation(null), durations.get('layoutNodeAnimation'), {
+    return throttle(() => setMoveAnimation(null), durations.get('moveThoughtAnimation'), {
       leading: false,
     })
   }, [setMoveAnimation])
@@ -146,7 +146,7 @@ const useMoveThoughtAnimation = (
     // Common style props
     const base: React.CSSProperties = {
       transformOrigin: 'left',
-      animationDuration: `${durations.get('layoutNodeAnimation')}ms`,
+      animationDuration: `${durations.get('moveThoughtAnimation')}ms`,
       animationTimingFunction: 'ease-out',
       animationFillMode: 'none',
     }

@@ -140,8 +140,10 @@ const VirtualThought = ({
 
     // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
     // Use offsetHeight to avoid transform-induced fractional measurements (Safari mobile) and ensure layout height is used.
-    const annotationEl = ref.current.querySelector('[aria-label="thought-annotation"]') as HTMLElement | null
-    const heightNew = Math.max(ref.current.offsetHeight, annotationEl?.offsetHeight || 0)
+    const heightNew = Math.max(
+      ref.current.getBoundingClientRect().height,
+      ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
+    )
     const widthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
 
     // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
