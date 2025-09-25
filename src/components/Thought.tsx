@@ -527,7 +527,6 @@ const ThoughtContainer = ({
 
   return (
     <div
-      {...dragHoldResult.props}
       ref={node => dropTarget(node)}
       aria-label='child'
       data-divider={isDivider(value)}
@@ -576,6 +575,7 @@ const ThoughtContainer = ({
       )}
 
       <div
+        {...dragHoldResult.props}
         aria-label='thought-container'
         data-testid={'thought-' + hashPath(path)}
         ref={node => dragSource(node)}
