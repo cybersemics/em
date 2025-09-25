@@ -65,6 +65,7 @@ const VirtualThought = ({
   prevCliff,
   isLastVisible,
   autofocus,
+  moveStyle,
 }: {
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
@@ -88,6 +89,8 @@ const VirtualThought = ({
   prevCliff?: number
   isLastVisible?: boolean
   autofocus: Autofocus
+  /** Optional animation styles for moveThought animations. Applied to a child wrapper so height measurement is unaffected. */
+  moveStyle?: React.CSSProperties
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
@@ -100,7 +103,6 @@ const VirtualThought = ({
   const fontSize = useSelector(state => state.fontSize)
   const note = useSelector(state => noteValue(state, simplePath))
   const ref = useRef<HTMLDivElement>(null)
-  const moveAnimTimeoutRef = useRef<number | null>(null)
 
   /***************************
    * VirtualThought properties
@@ -136,25 +138,10 @@ const VirtualThought = ({
   const updateSize = useCallback(() => {
     if (!ref.current) return
 
-    // If a moveThought animation is active on an ancestor, skip measuring since
-    // transform: scale will distort getBoundingClientRect and yield incorrect heights.
-    // Re-measure after the animation completes.
-    const isMoveAnimating = !!ref.current.closest('[data-move-animating="true"]')
-    if (isMoveAnimating) {
-      if (moveAnimTimeoutRef.current) return
-      moveAnimTimeoutRef.current = setTimeout(() => {
-        moveAnimTimeoutRef.current = null
-        // re-check and measure
-        updateSize()
-      }, durations.get('layoutNodeAnimation')) as unknown as number
-      return
-    }
-
     // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
-    const heightNew = Math.max(
-      ref.current.getBoundingClientRect().height,
-      ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
-    )
+    // Use offsetHeight to avoid transform-induced fractional measurements (Safari mobile) and ensure layout height is used.
+    const annotationEl = ref.current.querySelector('[aria-label="thought-annotation"]') as HTMLElement | null
+    const heightNew = Math.max(ref.current.offsetHeight, annotationEl?.offsetHeight || 0)
     const widthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
 
     // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
@@ -218,10 +205,6 @@ const VirtualThought = ({
   useEffect(
     () => {
       return () => {
-        if (moveAnimTimeoutRef.current) {
-          clearTimeout(moveAnimTimeoutRef.current)
-          moveAnimTimeoutRef.current = null
-        }
         onResize?.({ height: null, width: null, id: id, isVisible: true, key: crossContextualKey })
       }
     },
@@ -238,51 +221,53 @@ const VirtualThought = ({
         height: shimHiddenThought && height != null ? height : undefined,
       }}
     >
-      {
-        /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target after a hidden parent.
-             e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we must insert DropUncle when e would not be rendered.
-               - a
-                - b
-                  - c [cursor]
-                    - x
-                  - d
-                - e
-           */
-        !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
-      }
+      <div style={moveStyle}>
+        {
+          /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target after a hidden parent.
+               e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we must insert DropUncle when e would not be rendered.
+                 - a
+                  - b
+                    - c [cursor]
+                      - x
+                    - d
+                  - e
+             */
+          !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
+        }
 
-      {!shimHiddenThought && (
-        <Subthought
-          autofocus={autofocus}
-          debugIndex={debugIndex}
-          depth={depth + 1}
-          dropUncle={dropUncle}
-          env={env}
-          indexDescendant={indexDescendant}
-          isMultiColumnTable={isMultiColumnTable}
-          leaf={leaf}
-          updateSize={updateSize}
-          path={path}
-          prevChildId={prevChildId}
-          showContexts={showContexts}
-          simplePath={simplePath}
-          style={style}
-          zoomCursor={zoomCursor}
-        />
-      )}
+        {!shimHiddenThought && (
+          <Subthought
+            autofocus={autofocus}
+            debugIndex={debugIndex}
+            depth={depth + 1}
+            dropUncle={dropUncle}
+            env={env}
+            indexDescendant={indexDescendant}
+            isMultiColumnTable={isMultiColumnTable}
+            leaf={leaf}
+            updateSize={updateSize}
+            path={path}
+            prevChildId={prevChildId}
+            showContexts={showContexts}
+            simplePath={simplePath}
+            style={style}
+            zoomCursor={zoomCursor}
+          />
+        )}
 
-      {isVisible && (
-        <DropChild
-          depth={depth}
-          // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
-          // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
-          // TODO: DragAndDropSubthoughts should be able to handle this.
-          path={path}
-          simplePath={simplePath}
-          cliff={cliff}
-          isLastVisible={isLastVisible}
-        />
-      )}
+        {isVisible && (
+          <DropChild
+            depth={depth}
+            // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
+            // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
+            // TODO: DragAndDropSubthoughts should be able to handle this.
+            path={path}
+            simplePath={simplePath}
+            cliff={cliff}
+            isLastVisible={isLastVisible}
+          />
+        )}
+      </div>
     </div>
   )
 }

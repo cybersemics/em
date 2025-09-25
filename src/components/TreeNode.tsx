@@ -234,10 +234,7 @@ const TreeNode = ({
           top: y,
           left: 0,
         }
-      : moveDivStyle
-
-  // Flag when moveThought animation is active so children (e.g., size measurement) can adjust behavior.
-  const isMoveAnimating = !!moveDivStyle && !isSwap && !isLastActionSort
+      : {}
 
   return (
     <FadeTransition
@@ -269,7 +266,6 @@ const TreeNode = ({
         style={outerDivStyle}
       >
         <div
-          data-move-animating={isMoveAnimating ? 'true' : undefined}
           className={css({
             ...(isTableCol1
               ? {
@@ -314,6 +310,7 @@ const TreeNode = ({
               prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
               isLastVisible={isLastVisible}
               autofocus={autofocus}
+              moveStyle={moveDivStyle}
             />
           </div>
           {dragInProgress &&
