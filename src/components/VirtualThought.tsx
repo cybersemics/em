@@ -7,6 +7,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { isTouch } from '../browser'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
@@ -139,11 +140,16 @@ const VirtualThought = ({
     if (!ref.current) return
 
     // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
-    // Use offsetHeight to avoid transform-induced fractional measurements (Safari mobile) and ensure layout height is used.
-    const heightNew = Math.max(
-      ref.current.getBoundingClientRect().height,
-      ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
-    )
+    // On touch devices, use offsetHeight to avoid transform-induced fractional measurements and ensure layout height is used.
+    const heightNew = isTouch
+      ? Math.max(
+          ref.current.offsetHeight,
+          (ref.current.querySelector('[aria-label="thought-annotation"]') as HTMLElement | null)?.offsetHeight || 0,
+        )
+      : Math.max(
+          ref.current.getBoundingClientRect().height,
+          ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
+        )
     const widthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
 
     // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
