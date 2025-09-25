@@ -8886,7 +8886,7 @@ __metadata:
     nanoid: "npm:^5.1.5"
     npm-run-all2: "npm:^8.0.4"
     openai: "npm:^5.20.3"
-    page-lifecycle: "git+https://github.com/magic-akari/page-lifecycle#feat/add-types"
+    page-lifecycle: "npm:^0.1.2"
     pluralize: "npm:^8.0.0"
     postinstall-postinstall: "npm:^2.1.0"
     prettier: "npm:^3.6.2"
@@ -8935,7 +8935,7 @@ __metadata:
     workbox-strategies: "npm:^7.3.0"
     workbox-window: "npm:^7.3.0"
     xhtml-purifier: "npm:^0.4.1"
-    y-indexeddb: "https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex"
+    y-indexeddb: "npm:^9.0.11"
     y-protocols: "npm:^1.0.6"
     yallist: "npm:^5.0.0"
     yjs: "npm:^13.6.27"
@@ -15423,10 +15423,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"page-lifecycle@git+https://github.com/magic-akari/page-lifecycle#feat/add-types":
+"page-lifecycle@npm:^0.1.2":
   version: 0.1.2
-  resolution: "page-lifecycle@https://github.com/magic-akari/page-lifecycle.git#commit=50b50421bdeab3d211a57e81a277f699638373b0"
-  checksum: 10c0/e949c425e0da95197890f80f9163e882e482005f6ed1d67a1f257869f413e3e1b814fd8af1dd092d8957190f869734f8e760d3088ffbd993379a0f5af375016b
+  resolution: "page-lifecycle@npm:0.1.2"
+  checksum: 10c0/509dbbc2ad2000dffcf591f66ab13d80fb1dba9337d85c76269173f7a5c3959b5a876e3bfb1e4494f6b932c1dc02a0b5824ebd452ab1a7204d4abdf498cb27c5
   languageName: node
   linkType: hard
 
@@ -20808,14 +20808,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"y-indexeddb@https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex":
-  version: 9.0.11-multiplex.0
-  resolution: "y-indexeddb@https://github.com/raineorshine/y-indexeddb.git#commit=60b960009085b1a988b5064ee35703229231531f"
+"y-indexeddb@npm:^9.0.11":
+  version: 9.0.12
+  resolution: "y-indexeddb@npm:9.0.12"
   dependencies:
     lib0: "npm:^0.2.74"
   peerDependencies:
     yjs: ^13.0.0
-  checksum: 10c0/fce364bd0c537726703a5febc47f5a0866876335b65397e5dcc4f3c3bcd71fe0f85eb89520aeaef2ba92afa3a3ea4c94898225b2d2a96de4fb1fd6be4a7cc3ac
+  checksum: 10c0/b31fbc12ef4a7d71f09212db02570af07c6a17b02537ce4cbb29f0549137adcbebf613cb2af63fa1d13e0932645be0293a4e7189cb5bf5dc6263cf2f72b65004
   languageName: node
   linkType: hard
 
