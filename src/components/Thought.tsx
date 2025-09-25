@@ -528,7 +528,7 @@ const ThoughtContainer = ({
   return (
     <div
       {...dragHoldResult.props}
-      ref={node => dragSource(dropTarget(node))}
+      ref={node => dropTarget(node)}
       aria-label='child'
       data-divider={isDivider(value)}
       data-editing={isEditing}
@@ -538,6 +538,7 @@ const ThoughtContainer = ({
       draggable={isTouch && isSafari()}
       onClick={isTouch ? undefined : handleMultiselect}
       style={{
+        display: 'flex',
         transition: `transform ${token('durations.layoutSlowShift')} ease-out, opacity ${token('durations.layoutSlowShift')} ease-out`,
         ...style,
         ...styleContainer,
@@ -577,6 +578,7 @@ const ThoughtContainer = ({
       <div
         aria-label='thought-container'
         data-testid={'thought-' + hashPath(path)}
+        ref={node => dragSource(node)}
         className={css({
           /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
           /* must match value used in Editable useMultiline */
