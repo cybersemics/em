@@ -393,7 +393,7 @@ const GestureDiagram = ({
           ) : (
             pathSegments.map((segment, i) => {
               return rounded ? (
-                <ArcGradient index={i} extendedPath={extendedPath} size={size} />
+                <ArcGradient key={`${extendedPath}-gradient-${i}`} index={i} extendedPath={extendedPath} size={size} />
               ) : (
                 <linearGradient
                   id={`${extendedPath}-gradient-${i}`}
