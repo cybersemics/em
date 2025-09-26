@@ -537,7 +537,6 @@ const ThoughtContainer = ({
       draggable={isTouch && isSafari()}
       onClick={isTouch ? undefined : handleMultiselect}
       style={{
-        display: 'flex',
         transition: `transform ${token('durations.layoutSlowShift')} ease-out, opacity ${token('durations.layoutSlowShift')} ease-out`,
         ...style,
         ...styleContainer,
@@ -554,6 +553,7 @@ const ThoughtContainer = ({
         childRecipe(),
         invalidOption && invalidOptionRecipe(),
         css({
+          display: isTableCol1 ? undefined : 'flex',
           // so that .thought can be sized at 100% and BulletCursorOverlay bullet can be positioned correctly.
           position: 'relative',
           textAlign: isTableCol1 ? 'right' : undefined,
