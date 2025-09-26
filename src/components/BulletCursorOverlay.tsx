@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
@@ -5,6 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { isSafari, isTouch, isiPhone } from '../browser'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import useHideBullet from '../hooks/useHideBullet'
 import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getChildrenRanked } from '../selectors/getChildren'
@@ -350,6 +352,8 @@ export default function BulletCursorOverlay({
     isInContextView,
     thoughtId: head(simplePath),
   })
+
+  useEffect(() => scrollCursorIntoView(y, 36), [y])
 
   return (
     <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
