@@ -21,9 +21,7 @@ const thoughtRecipe = defineRecipe({
   variants: {
     /** Assign annotation height on single line truncated url. */
     ellipsizedUrl: {
-      true: {
-        maxWidth: 'calc(100% - 1em)',
-      },
+      true: {},
     },
     inverse: {
       true: {
