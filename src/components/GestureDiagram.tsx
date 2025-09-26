@@ -249,6 +249,8 @@ const GestureDiagram = ({
     const next = pathDirs[i + 1]
     const afterNext = pathDirs[i + 2]
     const horizontal = dir === 'l' || dir === 'r'
+    const path = pathDirs.join('')
+
     const negative = dir === 'l' || dir === 'd' // negative movement along the respective axis
 
     const clockwisePrev = rotateClockwise(prev) === dir
