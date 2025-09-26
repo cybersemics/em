@@ -527,8 +527,7 @@ const ThoughtContainer = ({
 
   return (
     <div
-      {...dragHoldResult.props}
-      ref={node => dragSource(dropTarget(node))}
+      ref={node => dropTarget(node)}
       aria-label='child'
       data-divider={isDivider(value)}
       data-editing={isEditing}
@@ -554,6 +553,7 @@ const ThoughtContainer = ({
         childRecipe(),
         invalidOption && invalidOptionRecipe(),
         css({
+          display: isTableCol1 ? undefined : 'flex',
           // so that .thought can be sized at 100% and BulletCursorOverlay bullet can be positioned correctly.
           position: 'relative',
           textAlign: isTableCol1 ? 'right' : undefined,
@@ -575,15 +575,17 @@ const ThoughtContainer = ({
       )}
 
       <div
+        {...dragHoldResult.props}
         aria-label='thought-container'
         data-testid={'thought-' + hashPath(path)}
+        ref={node => dragSource(node)}
         className={css({
+          flexGrow: isTableCol1 ? undefined : '1',
           /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
           /* must match value used in Editable useMultiline */
           lineHeight: '2',
-          // ensure that ThoughtAnnotation is positioned correctly
-          position: 'relative',
           ...(hideBullet ? { marginLeft: -12 } : null),
+          maxWidth: isTableCol1 ? undefined : '100%',
         })}
       >
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
