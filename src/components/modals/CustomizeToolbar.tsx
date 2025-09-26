@@ -17,6 +17,7 @@ import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
 import { commandById } from '../../commands'
 import { AlertText, AlertType } from '../../constants'
+import dndRef from '../../util/dndRef'
 import fastClick from '../../util/fastClick'
 import CommandTableOnly from '../CommandTableOnly'
 import FadeTransition from '../FadeTransition'
@@ -90,7 +91,7 @@ const DropToRemoveFromToolbar: FC<PropsWithChildren> = ({ children }) => {
   }, [dispatch, dragCommand, isHovering, sourceZone])
 
   return (
-    <div data-drop-to-remove-from-toolbar-hovering={isHovering ? '' : undefined} ref={dropTarget}>
+    <div data-drop-to-remove-from-toolbar-hovering={isHovering ? '' : undefined} ref={dndRef(dropTarget)}>
       {children}
     </div>
   )

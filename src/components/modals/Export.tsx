@@ -243,7 +243,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   }, [])
 
   const dropDownRef = React.useRef<HTMLDivElement>(null)
-  useOnClickOutside(dropDownRef, closeDropdown)
+  useOnClickOutside(dropDownRef as React.RefObject<HTMLDivElement>, closeDropdown)
 
   return (
     <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>

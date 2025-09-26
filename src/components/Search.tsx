@@ -29,7 +29,7 @@ const onKeyDown = (e: React.KeyboardEvent) => {
 
 /** Searches all thoughts. */
 const Search: FC = () => {
-  const ref = useRef<HTMLElement>()
+  const ref = useRef<HTMLElement>(null)
   const dispatch = useDispatch()
   const state = store.getState()
 
