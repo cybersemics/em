@@ -566,6 +566,8 @@ export const COMMAND_GROUPS: {
       'underline',
       'code',
       'copyCursor',
+      'closeCommandCenter',
+      'openCommandCenter',
       'removeFormat',
     ],
   },
