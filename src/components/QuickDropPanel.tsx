@@ -16,10 +16,10 @@ import { toggleAttributeActionCreator as toggleAttribute } from '../actions/togg
 import { AlertText, AlertType, DELETE_VIBRATE_DURATION, LongPressState } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
+import dndRef from '../util/dndRef'
 import ellipsize from '../util/ellipsize'
 import haptics from '../util/haptics'
 import head from '../util/head'
-import { dndRef } from '../util/typeUtils'
 
 /** Delete the thought on drop. */
 const drop = (state: State, items: DragThoughtItem[]) => {

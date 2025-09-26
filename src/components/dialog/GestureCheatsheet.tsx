@@ -1,7 +1,6 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toggleGestureCheatsheetActionCreator } from '../../actions/toggleGestureCheatsheet'
-import assertRef from '../../util/typeUtils'
 import CommandTable from '../CommandTable'
 import FadeTransition from '../FadeTransition'
 import Dialog from './Dialog'
@@ -25,7 +24,7 @@ const GestureCheatsheet: React.FC = () => {
 
   return (
     <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
-      <Dialog onClose={handleClose} nodeRef={assertRef(nodeRef)}>
+      <Dialog onClose={handleClose} nodeRef={nodeRef}>
         <DialogTitle onClose={handleClose}>Gesture Cheatsheet</DialogTitle>
         <DialogContent>
           <CommandTable viewType='grid' />

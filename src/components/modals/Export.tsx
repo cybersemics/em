@@ -46,7 +46,6 @@ import removeHome from '../../util/removeHome'
 import throttleConcat from '../../util/throttleConcat'
 import timestamp from '../../util/timestamp'
 import trimBullet from '../../util/trimBullet'
-import assertRef from '../../util/typeUtils'
 import Checkbox from './../Checkbox'
 import ChevronImg from './../ChevronImg'
 import Dropdown from './../Dropdown'
@@ -244,7 +243,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   }, [])
 
   const dropDownRef = React.useRef<HTMLDivElement>(null)
-  useOnClickOutside(assertRef(dropDownRef), closeDropdown)
+  useOnClickOutside(dropDownRef as React.RefObject<HTMLDivElement>, closeDropdown)
 
   return (
     <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>

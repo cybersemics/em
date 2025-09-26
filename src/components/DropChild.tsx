@@ -12,12 +12,12 @@ import dropHoverColor from '../selectors/dropHoverColor'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
+import dndRef from '../util/dndRef'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
-import { dndRef } from '../util/typeUtils'
 import DragOnly from './DragOnly'
 
 interface DropChildProps {

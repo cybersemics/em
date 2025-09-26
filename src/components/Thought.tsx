@@ -36,6 +36,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import col1MaxWidthStore from '../stores/col1MaxWidthStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import containsURL from '../util/containsURL'
+import dndRef from '../util/dndRef'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
@@ -49,7 +50,6 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
-import { dndRefCallback } from '../util/typeUtils'
 import Bullet from './Bullet'
 import Byline from './Byline'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
@@ -529,7 +529,7 @@ const ThoughtContainer = ({
   return (
     <div
       {...dragHoldResult.props}
-      ref={dndRefCallback(node => dragSource(dropTarget(node)))}
+      ref={dndRef(node => dragSource(dropTarget(node)))}
       aria-label='child'
       data-divider={isDivider(value)}
       data-editing={isEditing}

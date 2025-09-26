@@ -20,7 +20,6 @@ import isAttribute from '../util/isAttribute'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import assertRef from '../util/typeUtils'
 import Divider from './Divider'
 import Editable from './Editable'
 import useMultiline from './Editable/useMultiline'
@@ -117,7 +116,7 @@ const StaticThought = ({
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value) ?? ''
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
-  const multiline = useMultiline(assertRef(editableRef), simplePath, isEditing)
+  const multiline = useMultiline(editableRef, simplePath, isEditing)
   const placeholder = usePlaceholder({ isEditing, simplePath })
 
   useLayoutAnimationFrameEffect(updateSize, [multiline])
@@ -186,7 +185,7 @@ const StaticThought = ({
           <div className={css({ paddingTop: '2.8em' })}></div>
         ) : (
           <Editable
-            editableRef={assertRef(editableRef)}
+            editableRef={editableRef}
             multiline={multiline}
             placeholder={placeholder}
             path={path}

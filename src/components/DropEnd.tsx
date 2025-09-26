@@ -16,11 +16,11 @@ import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
 import { compareReasonable } from '../util/compareThought'
+import dndRef from '../util/dndRef'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import strip from '../util/strip'
-import { dndRef } from '../util/typeUtils'
 import DragOnly from './DragOnly'
 
 /** The amount of space to shift the drop target to the right so the user's finger is not in the way on mobile (em). */

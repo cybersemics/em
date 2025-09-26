@@ -15,10 +15,10 @@ import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import thoughtToPath from '../selectors/thoughtToPath'
+import dndRef from '../util/dndRef'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import nonNull from '../util/nonNull'
-import { dndRef, dndRefCallback } from '../util/typeUtils'
 import Checkbox from './Checkbox'
 import SlideTransition from './SlideTransition'
 import ThoughtLink from './ThoughtLink'
@@ -51,7 +51,7 @@ const DragAndDropFavorite = ({
       {...dragHoldResult.props}
       className={css({ overflow: 'auto' })}
       data-testid='drag-and-drop-favorite'
-      ref={dndRefCallback(node => dragSource(dropTarget(node)))}
+      ref={dndRef(node => dragSource(dropTarget(node)))}
     >
       {!disableDragAndDrop && isHovering && (
         <span

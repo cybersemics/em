@@ -22,7 +22,6 @@ import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import strip from '../util/strip'
-import assertRef from '../util/typeUtils'
 import FauxCaret from './FauxCaret'
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
@@ -183,7 +182,7 @@ const Note = React.memo(
         </span>
         <ContentEditable
           html={note || ''}
-          innerRef={assertRef(noteRef)}
+          innerRef={noteRef as React.RefObject<HTMLElement>}
           aria-label='note-editable'
           placeholder='Enter a note'
           className={css({
