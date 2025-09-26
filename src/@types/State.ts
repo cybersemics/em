@@ -60,6 +60,8 @@ interface State {
   dragCommand?: CommandId | null
   /** Type of toolbar-sbutton drop target being hovered over. */
   dragCommandZone?: DragCommandZone
+  /** Path of a parent that should remain highlighted briefly after a drop. */
+  droppedPath?: Path | null
   /**
    * Forces content editable to update inner html if html has not changed.
    * TODO: Do we really need to re-render all ContentEditables?
