@@ -71,7 +71,7 @@ async function testClickBetweenThoughts(thought1: string, thought2: string) {
 
   // Test 2: Click just below the overlap zone (should be in second thought)
   console.info('Test 2: Clicking just below overlap zone')
-  await page.mouse.click(clickX, firstThoughtBottom + overlapHeight + 1)
+  await page.mouse.click(clickX, secondThoughtTop - overlapHeight + 1)
 
   expect(await isSelectionLost()).toBe(false)
   expect(await isCursorInMiddle(thought2)).toBe(true)
