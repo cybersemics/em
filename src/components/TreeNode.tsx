@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
@@ -77,9 +77,6 @@ const TreeNode = ({
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
-  // Ref for cloning the entire TreeNode component (outer div containing inner div)
-  const outerDivRef = useRef<HTMLDivElement>(null)
-
   // Store the on-screen index from the previous render to determine movement direction.
   const previousIndex = usePrevious<number>(index)
 
@@ -213,34 +210,9 @@ const TreeNode = ({
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
   // Render virtualized thoughts with their estimated height so that document height is relatively stable.
   // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
-  // if (belowCursor && !isCursor && y > viewportBottom + height) {
-  //   return null
-  // }
-  useEffect(() => {
-    if (isCursor && outerDivRef.current) {
-      // Clone both divs individually and combine them into one component
-      const clonedOuterDiv = outerDivRef.current.cloneNode(true) as HTMLElement
-
-      clonedOuterDiv.style.visibility = 'hidden'
-
-      const bulletSpan = clonedOuterDiv.querySelector('span[aria-label="bullet"]')
-      if (bulletSpan) {
-        const svgElement = bulletSpan.querySelector('svg')
-
-        if (svgElement) {
-          svgElement.style.visibility = 'visible'
-          // Remove all children of the SVG (this removes the <g> element and its contents)
-          svgElement.innerHTML = ''
-        }
-      }
-
-      // attach to placeholder-treenode
-
-      // cursorStore.onChange({
-      //   treeNode: clonedOuterDiv,
-      // })
-    }
-  }, [isCursor, x, y])
+  if (belowCursor && !isCursor && y > viewportBottom + height) {
+    return null
+  }
 
   const outerDivStyle = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
@@ -278,7 +250,6 @@ const TreeNode = ({
       <div
         // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
         // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
-        ref={outerDivRef}
         data-cursor={isCursor ? 'true' : undefined}
         aria-label='tree-node'
         className={css({
