@@ -1,10 +1,21 @@
-import { after } from 'lodash'
+import _ from 'lodash'
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import Path from '../@types/Path'
+import LazyEnv from '../@types/LazyEnv'
+import type Thought from '../@types/Thought'
 import { isSafari, isTouch, isiPhone } from '../browser'
+import useHideBullet from '../hooks/useHideBullet'
+import attributeEquals from '../selectors/attributeEquals'
+import { findAnyChild, getAllChildren } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
+import head from '../util/head'
+import isDivider from '../util/isDivider'
+import parentOf from '../util/parentOf'
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
 
@@ -32,48 +43,143 @@ export function CursorOverlay() {
 }
 
 /**
+ * Use 2 requestAnimationFrame to delay DOM queries until browser paint is complete.
+ */
+function afterNextPaint(cb: () => void) {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // add extra rAF for android and ios devices to get the actual cursor node position
+      if (isTouch) {
+        requestAnimationFrame(() => {
+          cb()
+        })
+      } else {
+        cb()
+      }
+    })
+  })
+}
+/**
  * PlaceholderTreeNode is a component used to mimic behavior of TreeNode.
  * Any position changes from one Thought to another will be animated within this component.
  */
-
-function afterNextPaint(cb) {
-  // Fallback: two rAFs -> runs in the frame after the paint
-  requestAnimationFrame(() => {
-    setTimeout(cb, 0)
-  })
-}
-function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
+function PlaceholderTreeNode({
+  children,
+  x,
+  y,
+  env,
+}: {
+  children?: React.ReactNode
+  x: number
+  y: number
+  env?: LazyEnv
+}) {
   const containerRef = React.useRef<HTMLDivElement>(null)
 
   const [targetSvg, setTargetSvg] = useState<SVGSVGElement | null>(null)
 
-  const prevDomElementRef = React.useRef<HTMLElement | null>(null)
-
   const cursor = useSelector(state => state.cursor)
 
-  console.log('>>  cursor', cursor)
+  // Get required data for useHideBullet hook
+  const { simplePath, thoughtId, childrenThoughts, isInContextView } = useSelector(state => {
+    if (!state.cursor) {
+      return {
+        simplePath: null,
+        thoughtId: null,
+        childrenThoughts: null,
+        isInContextView: false,
+      }
+    }
 
-  const prevCursorRef = React.useRef<Path | null>(null)
+    const path = simplifyPath(state, state.cursor)
+    const id = head(state.cursor)
+    const children = getAllChildren(state, id)
+      .map(childId => getThoughtById(state, childId))
+      .filter(Boolean)
+    const contextView = isContextViewActive(state, parentOf(state.cursor))
+
+    return {
+      simplePath: path,
+      thoughtId: id,
+      childrenThoughts: children,
+      isInContextView: contextView,
+    }
+  })
+
+  // current thought and grandparent id (used for attribute-based bullet hiding like in Subthought)
+  const thought = useSelector(state => (thoughtId ? getThoughtById(state, thoughtId) : undefined))
+  const grandparentId = simplePath ? simplePath[simplePath.length - 3] : null
+
+  const bulletIsDivider = useSelector(state =>
+    state.cursor ? isDivider(getThoughtById(state, head(state.cursor))?.value) : false,
+  )
+  // Table view detection selectors
+  const isTableView = useSelector(state => {
+    if (!state.cursor) return false
+    const parentPath = rootedParentOf(state, state.cursor)
+    const parentId = head(parentPath)
+    return attributeEquals(state, parentId, '=view', 'Table')
+  })
+
+  const isTableCol1 = useSelector(state => {
+    if (!state.cursor) return false
+    const parentPath = rootedParentOf(state, state.cursor)
+    return attributeEquals(state, head(parentPath), '=view', 'Table')
+  })
+
+  const isTableCol2 = useSelector(state => {
+    if (!state.cursor) return false
+    const parentPath = rootedParentOf(state, state.cursor)
+    const grandParentPath = rootedParentOf(state, parentPath)
+    return attributeEquals(state, head(grandParentPath), '=view', 'Table')
+  })
+
+  // compute attribute-based hide like in Subthought
+  const childrenAttributeId = useSelector(
+    state =>
+      (thought &&
+        thought.value !== '=children' &&
+        findAnyChild(state, thought.parentId, (child: Thought) => child.value === '=children')?.id) ||
+      null,
+  )
+  const grandchildrenAttributeId = useSelector(state => {
+    if (!thought || thought.value === '=style' || !grandparentId) return null
+    return findAnyChild(state, grandparentId, (child: Thought) => child.value === '=grandchildren')?.id || null
+  })
+
+  const hideBulletAttr = useSelector(state => {
+    const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
+    if (hideBulletsChildren) return true
+    const hideBulletsGrandchildren =
+      thought && thought.value !== '=bullet' && attributeEquals(state, grandchildrenAttributeId, '=bullet', 'None')
+    if (hideBulletsGrandchildren) return true
+    return false
+  })
+
+  // Implement useHideBullet hook - only when we have valid cursor data
+  const shouldHideBullet =
+    cursor && thoughtId && simplePath
+      ? useHideBullet({
+          children: childrenThoughts,
+          env,
+          hideBulletProp: hideBulletAttr,
+          isEditing: true, // keep this as true since cursor overlay only works when editing is true
+          simplePath,
+          isInContextView,
+          thoughtId,
+        })
+      : false
 
   React.useEffect(() => {
+    /** Updates the placeholder node to mirror the current cursor node and target its bullet svg. */
     const updateCursorNode = () => {
-      if (!containerRef.current) return
-      // Find the cursor TreeNode using the data-cursor attribute
-      const cursorTreeNodes = document.querySelectorAll('div[data-cursor="true"]') as NodeListOf<HTMLElement>
-      // const cursorTreeNode =
-      // cursorTreeNodes.length !== 1
-      //   ? Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
-      //   : cursorTreeNodes.length === 1 && cursor?.length !== prevCursorRef.current?.length
-      //     ? cursorTreeNodes[0]
-      //     : null
+      if (!containerRef.current || !cursor) return
 
-      const cursorTreeNode = cursorTreeNodes[0] || null
-      // const cursorTreeNode = Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
-      // const cursorTreeNode =
-      // cursorTreeNodes.length === 1 && cursor?.length !== prevCursorRef.current?.length ? cursorTreeNodes[0] : null
+      // Find the cursor TreeNode using the data-cursor attribute
+      const cursorTreeNode = document.querySelector('div[data-cursor="true"]') as HTMLElement
+
       if (!cursorTreeNode) return
 
-      console.log('>>>', cursorTreeNode)
       const container = containerRef.current
 
       // Copy all attributes from the cursor TreeNode to the container (except data-cursor)
@@ -97,59 +203,16 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
           svg.innerHTML = ''
           svg.style.visibility = 'visible'
         }
-        // console.log('svg', svg)
         setTargetSvg(svg)
-        prevDomElementRef.current = cursorTreeNode
-        prevCursorRef.current = cursor
       }
     }
 
-    // Initial update
-    // updateCursorNode()
+    afterNextPaint(updateCursorNode)
+  }, [cursor, isTableView, isTableCol1, isTableCol2, x, y])
 
-    // Set up MutationObserver to watch for data-cursor attribute changes
-    // const observer = new MutationObserver(mutations => {
-    //   let shouldUpdate = false
-
-    //   mutations.forEach(mutation => {
-    //     if (mutation.type === 'attributes') {
-    //       // Update if data-cursor attribute changed
-    //       if (mutation.attributeName === 'data-cursor') {
-    //         shouldUpdate = true
-    //         console.log('a ', mutation.attributeName)
-    //       }
-    //       // if style attribute changed and has attribute data-cursor="true"
-    //       if (mutation.attributeName === 'style') {
-    //         const target = mutation.target as HTMLElement
-    //         if (target.getAttribute('data-cursor') === 'true') {
-    //           shouldUpdate = true
-    //           console.log('b ', mutation.attributeName)
-    //         }
-    //       }
-    //     }
-    //   })
-
-    //   if (shouldUpdate) {
-    //     // setTimeout(() => {
-    //     afterNextPaint(() => {
-    //       updateCursorNode()
-    //     })
-    //     // }, 100)
-    //   }
-    // })
-    afterNextPaint(() => {
-      updateCursorNode()
-    })
-
-    // // Observe the entire document for attribute changes to data-cursor and style
-    // observer.observe(document, {
-    //   attributes: true,
-    //   attributeFilter: ['data-cursor', 'style'],
-    //   subtree: true,
-    // })
-
-    // return () => observer.disconnect()
-  }, [cursor])
+  if (bulletIsDivider || shouldHideBullet) {
+    return null
+  }
 
   return (
     <div data-id='placeholder-tree-node' ref={containerRef}>
@@ -162,9 +225,9 @@ function PlaceholderTreeNode({ children }: { children?: React.ReactNode }) {
  * BulletCursorOverlay is a component used to animate the cursor overlay from the bullet.
  * This component also contains placeholders for other components to maintain consistency of cursor overlay position.
  **/
-export default function BulletCursorOverlay() {
+export default function BulletCursorOverlay({ x, y, env }: { x: number; y: number; env?: LazyEnv }) {
   return (
-    <PlaceholderTreeNode>
+    <PlaceholderTreeNode x={x} y={y} env={env}>
       <CursorOverlay />
     </PlaceholderTreeNode>
   )
