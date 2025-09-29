@@ -6,39 +6,31 @@ import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import { page } from '../setup'
 
-// Intentional overlap between thoughts to fix selection behavior
-// See: useSizeTracking.ts lineHeightOverlap calculation
-// const EXPECTED_OVERLAP = DEFAULT_FONT_SIZE / 8
-
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
-/** Helper function to check if cursor is positioned in the middle of a thought. */
-async function isCursorInMiddle(expectedThought: string): Promise<boolean> {
-  const editingText = await getEditingText()
-  if (editingText !== expectedThought) return false
-
+/** Helper function to check if caret is positioned in the middle of a thought (not at beginning or end). */
+async function isCaretInMiddle() {
   const selection = await getSelection()
   const focusOffset = await selection.focusOffset
   const textContent = await selection.focusNode?.textContent
 
   if (!textContent || focusOffset === undefined) return false
 
-  // Check if cursor is not at the very beginning (0) or end (textContent.length)
-  // This guards against padding clicks that set cursor to edges
+  // Check if caret is not at the very beginning (0) or end (textContent.length)
+  // This guards against padding clicks that set caret to edges
   return focusOffset > 0 && focusOffset < textContent.length
 }
 
 /** Helper function to check if selection is lost (dead zone detection). */
 const isSelectionLost = async () => {
-  const selection = await getSelection()
-  const focusNode = await selection.focusNode
-  return !focusNode || focusNode === null
+  const focusNode = await getSelection().focusNode
+  return !focusNode
 }
 
 /**
  * Helper function to test clicking between two thoughts with proper overlap handling.
  * Validates that clicking in overlapping areas behaves correctly and tests for dead zones.
- * Tests cursor positioning to ensure clicks don't set cursor to beginning/end of thoughts.
+ * Tests caret positioning to ensure clicks don't set caret to beginning/end of thoughts.
  */
 async function testClickBetweenThoughts(thought1: string, thought2: string) {
   const el1 = await getEditable(thought1)
@@ -62,23 +54,20 @@ async function testClickBetweenThoughts(thought1: string, thought2: string) {
   const clickX = rect1.x + rect1.width / 2
 
   // Test 1: Click in top edge of the overlap zone (should be in first thought)
-  console.info('Test 1: Clicking in top edge of the overlap zone')
   await page.mouse.click(clickX, firstThoughtBottom + overlapHeight)
 
   expect(await isSelectionLost()).toBe(false)
-  expect(await isCursorInMiddle(thought1)).toBe(true)
   expect(await getEditingText()).toBe(thought1)
+  expect(await isCaretInMiddle()).toBe(true)
 
   // Test 2: Click just below the overlap zone (should be in second thought)
-  console.info('Test 2: Clicking just below overlap zone')
   await page.mouse.click(clickX, secondThoughtTop - overlapHeight + 1)
 
   expect(await isSelectionLost()).toBe(false)
-  expect(await isCursorInMiddle(thought2)).toBe(true)
   expect(await getEditingText()).toBe(thought2)
+  expect(await isCaretInMiddle()).toBe(true)
 
   // Test 3: Click in the overlap zone (should work on one of the thoughts, not create dead zone)
-  console.info('Test 3: Clicking in exact middle of overlap zone')
   await page.mouse.click(clickX, firstThoughtBottom + overlapHeight / 2)
 
   const cursorThought3 = await getEditingText()
@@ -90,10 +79,8 @@ async function testClickBetweenThoughts(thought1: string, thought2: string) {
   expect([thought1, thought2]).toContain(cursorThought3)
 
   if (cursorThought3) {
-    expect(await isCursorInMiddle(cursorThought3)).toBe(true)
+    expect(await isCaretInMiddle()).toBe(true)
   }
-
-  console.info('All gap tests completed successfully!')
 }
 
 describe('Dead zone detection', () => {
