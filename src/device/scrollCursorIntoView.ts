@@ -3,7 +3,6 @@ import { isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
 import editingValueStore from '../stores/editingValue'
 import scrollTopStore from '../stores/scrollTop'
-// import syncStatusStore from '../stores/syncStatus'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
 
