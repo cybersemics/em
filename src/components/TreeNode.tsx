@@ -77,7 +77,7 @@ const TreeNode = ({
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
-  const [isMounted, setIsMounted] = useState(false)
+  const [isMounted, setIsMounted] = useState(true)
   // Store the on-screen index from the previous render to determine movement direction.
   const previousIndex = usePrevious<number>(index)
 
