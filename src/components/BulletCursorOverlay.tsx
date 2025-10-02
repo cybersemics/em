@@ -26,6 +26,7 @@ type BulletCursorOverlayProps = {
   x: number
   y: number
   simplePath: SimplePath
+  singleLineHeight: number
   path: Path
   isTableCol1: boolean
   width?: number
@@ -308,6 +309,7 @@ export default function BulletCursorOverlay({
   x,
   y,
   simplePath,
+  singleLineHeight,
   path,
   isTableCol1,
   width = 0,
@@ -353,7 +355,7 @@ export default function BulletCursorOverlay({
     thoughtId: head(simplePath),
   })
 
-  useEffect(() => scrollCursorIntoView(y, 36), [y])
+  useEffect(() => scrollCursorIntoView(y, singleLineHeight), [y])
 
   return (
     <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>

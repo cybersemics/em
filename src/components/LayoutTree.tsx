@@ -291,6 +291,7 @@ const LayoutTree = () => {
             isTableCol1={cursorThoughtPositioned.isTableCol1}
             path={cursorThoughtPositioned.path}
             simplePath={cursorThoughtPositioned.simplePath}
+            singleLineHeight={singleLineHeight}
             x={cursorThoughtPositioned.x}
             y={cursorThoughtPositioned.y}
             showContexts={cursorThoughtPositioned.showContexts}
