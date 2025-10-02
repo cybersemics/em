@@ -27,10 +27,5 @@ module.exports = {
     // Error running image diff: Unknown Error
     // https://github.com/vitest-dev/vitest/releases/tag/v2.0.0
     'puppeteer',
-
-    // Git-based dependencies that cause Dependabot issues
-    // These packages use Git URLs instead of npm registry, causing CI/CD failures
-    'page-lifecycle',
-    'y-indexeddb',
   ],
 }
