@@ -92,7 +92,6 @@ Runs off the local Vite development server. Ideal for rapid prototyping, debuggi
    ```
 
    **Notes**:
-
    - Make sure to run these commands again any time you change `CAPACITOR_SERVER_URL`.
    - If you see a blank screen when the app starts, then either `CAPACITOR_SERVER_URL` is wrong or you need to disable your VPN/firewall.
 
