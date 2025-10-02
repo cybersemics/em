@@ -1,6 +1,4 @@
-import _ from 'lodash'
-import React, { useState } from 'react'
-import ReactDOM from 'react-dom'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import LazyEnv from '../@types/LazyEnv'
@@ -18,25 +16,28 @@ import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
-
+const bulletOverlayRadius = isIOSSafari ? 300 : 245
 /**
  * CursorOverlay is a component that renders the cursor overlay for a thought bullet.
  */
 export function CursorOverlay() {
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
 
+  useEffect(() => {
+    console.log('CursorOverlay mounted')
+
+    return () => {
+      console.log('CursorOverlay unmounted')
+    }
+  }, [])
   return (
-    <g key='placeholder-bullet-g' style={{ visibility: 'visible' }}>
+    <g key='placeholder-bullet-g' style={{ visibility: 'visible', willChange: 'transform' }}>
       <ellipse
         ry={bulletOverlayRadius}
         rx={bulletOverlayRadius}
         cy='300'
         cx='300'
-        className={css({
-          stroke: 'highlight',
-          fillOpacity: 0.25,
-          fill: 'fg',
-        })}
+        className={css({ stroke: 'highlight', fillOpacity: 0.25, fill: 'fg' })}
       />
     </g>
   )
@@ -63,32 +64,15 @@ function afterNextPaint(cb: () => void) {
  * PlaceholderTreeNode is a component used to mimic behavior of TreeNode.
  * Any position changes from one Thought to another will be animated within this component.
  */
-function PlaceholderTreeNode({
-  children,
-  x,
-  y,
-  env,
-}: {
-  children?: React.ReactNode
-  x: number
-  y: number
-  env?: LazyEnv
-}) {
+function PlaceholderTreeNode({ x, y, env }: { x: number; y: number; env?: LazyEnv }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
-
-  const [targetSvg, setTargetSvg] = useState<SVGSVGElement | null>(null)
 
   const cursor = useSelector(state => state.cursor)
 
   // Get required data for useHideBullet hook
   const { simplePath, thoughtId, childrenThoughts, isInContextView } = useSelector(state => {
     if (!state.cursor) {
-      return {
-        simplePath: null,
-        thoughtId: null,
-        childrenThoughts: null,
-        isInContextView: false,
-      }
+      return { simplePath: null, thoughtId: null, childrenThoughts: null, isInContextView: false }
     }
 
     const path = simplifyPath(state, state.cursor)
@@ -98,12 +82,7 @@ function PlaceholderTreeNode({
       .filter(Boolean)
     const contextView = isContextViewActive(state, parentOf(state.cursor))
 
-    return {
-      simplePath: path,
-      thoughtId: id,
-      childrenThoughts: children,
-      isInContextView: contextView,
-    }
+    return { simplePath: path, thoughtId: id, childrenThoughts: children, isInContextView: contextView }
   })
 
   // current thought and grandparent id (used for attribute-based bullet hiding like in Subthought)
@@ -170,13 +149,25 @@ function PlaceholderTreeNode({
         })
       : false
 
+  const prevDomElementRef = React.useRef<HTMLElement | null>(null)
+
+  React.useEffect(() => {
+    return () => {
+      console.log('PlaceholderTreeNode unmounted')
+    }
+  }, [])
   React.useEffect(() => {
     /** Updates the placeholder node to mirror the current cursor node and target its bullet svg. */
     const updateCursorNode = () => {
       if (!containerRef.current || !cursor) return
 
       // Find the cursor TreeNode using the data-cursor attribute
-      const cursorTreeNode = document.querySelector('div[data-cursor="true"]') as HTMLElement
+      const cursorTreeNodes = document.querySelectorAll('div[data-cursor="true"]') as NodeListOf<HTMLElement>
+
+      const cursorTreeNode =
+        cursorTreeNodes.length > 1
+          ? Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
+          : cursorTreeNodes[0]
 
       if (!cursorTreeNode) return
 
@@ -199,36 +190,31 @@ function PlaceholderTreeNode({
 
         const svg = nestedChild.querySelector('span[aria-label="bullet"] svg') as SVGSVGElement | null
         if (svg) {
-          // Clear the SVG contents
-          svg.innerHTML = ''
+          // Replace the SVG contents
+
+          const svgInnerHTML = `<g style="visibility: visible; will-change: transform;"><ellipse ry="${bulletOverlayRadius}" rx="${bulletOverlayRadius}" cy="300" cx="300" class="stk_highlight fill-opacity_0.25 fill_fg"></ellipse></g>`
+          svg.innerHTML = svgInnerHTML
           svg.style.visibility = 'visible'
         }
-        setTargetSvg(svg)
+        prevDomElementRef.current = cursorTreeNode
       }
     }
 
     afterNextPaint(updateCursorNode)
-  }, [cursor, isTableView, isTableCol1, isTableCol2, x, y])
+  }, [cursor, isTableView, isTableCol1, isTableCol2, x, y, thoughtId])
+  // }, [cursor])
 
   if (bulletIsDivider || shouldHideBullet) {
     return null
   }
 
-  return (
-    <div data-id='placeholder-tree-node' ref={containerRef}>
-      {targetSvg && ReactDOM.createPortal(children, targetSvg)}
-    </div>
-  )
+  return <div data-id='placeholder-tree-node' ref={containerRef} />
 }
 
 /**
- * BulletCursorOverlay is a component used to animate the cursor overlay from the bullet.
+ * BulletCursorOverlway is a component used to animate the cursor overlay from the bullet.
  * This component also contains placeholders for other components to maintain consistency of cursor overlay position.
  **/
 export default function BulletCursorOverlay({ x, y, env }: { x: number; y: number; env?: LazyEnv }) {
-  return (
-    <PlaceholderTreeNode x={x} y={y} env={env}>
-      <CursorOverlay />
-    </PlaceholderTreeNode>
-  )
+  return <PlaceholderTreeNode x={x} y={y} env={env} />
 }
