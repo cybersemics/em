@@ -271,13 +271,7 @@ const LayoutTree = () => {
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
       >
-        {cursorThoughtPositioned && (
-          <BulletCursorOverlay
-            x={cursorThoughtPositioned.x}
-            y={cursorThoughtPositioned.y}
-            env={cursorThoughtPositioned.env}
-          />
-        )}
+        {cursorThoughtPositioned && <BulletCursorOverlay env={cursorThoughtPositioned.env} />}
         <TransitionGroup>
           {treeThoughtsPositioned.map((thought, index) => (
             <TreeNode

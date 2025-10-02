@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
 import LazyEnv from '../@types/LazyEnv'
 import type Thought from '../@types/Thought'
 import { isSafari, isTouch, isiPhone } from '../browser'
@@ -17,36 +16,14 @@ import parentOf from '../util/parentOf'
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
 const bulletOverlayRadius = isIOSSafari ? 300 : 245
-/**
- * CursorOverlay is a component that renders the cursor overlay for a thought bullet.
- */
-export function CursorOverlay() {
-  const bulletOverlayRadius = isIOSSafari ? 300 : 245
 
-  useEffect(() => {
-    console.log('CursorOverlay mounted')
-
-    return () => {
-      console.log('CursorOverlay unmounted')
-    }
-  }, [])
-  return (
-    <g key='placeholder-bullet-g' style={{ visibility: 'visible', willChange: 'transform' }}>
-      <ellipse
-        ry={bulletOverlayRadius}
-        rx={bulletOverlayRadius}
-        cy='300'
-        cx='300'
-        className={css({ stroke: 'highlight', fillOpacity: 0.25, fill: 'fg' })}
-      />
-    </g>
-  )
-}
+// debounce delay for syncing the placeholder to the live cursor node
+const CURSOR_NODE_UPDATE_DEBOUNCE = 80
 
 /**
  * Use 2 requestAnimationFrame to delay DOM queries until browser paint is complete.
  */
-function afterNextPaint(cb: () => void) {
+export function afterNextPaint(cb: () => void) {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       // add extra rAF for android and ios devices to get the actual cursor node position
@@ -60,17 +37,15 @@ function afterNextPaint(cb: () => void) {
     })
   })
 }
+
 /**
- * PlaceholderTreeNode is a component used to mimic behavior of TreeNode.
- * Any position changes from one Thought to another will be animated within this component.
- */
-function PlaceholderTreeNode({ x, y, env }: { x: number; y: number; env?: LazyEnv }) {
+ * BulletCursorOverlway is a component used to animate the cursor overlay from the bullet.
+ * This component also contains placeholders for other components to maintain consistency of cursor overlay position.
+ **/
+export default function BulletCursorOverlay({ env }: { env?: LazyEnv }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
 
   const cursor = useSelector(state => state.cursor)
-
-  // debounce delay for syncing the placeholder to the live cursor node
-  const CURSOR_NODE_UPDATE_DEBOUNCE = 40
 
   // Get required data for useHideBullet hook
   const { simplePath, thoughtId, childrenThoughts, isInContextView } = useSelector(state => {
@@ -179,9 +154,7 @@ function PlaceholderTreeNode({ x, y, env }: { x: number; y: number; env?: LazyEn
   }, [cursor])
 
   // debounced caller that runs afterNextPaint
-  const debouncedUpdate = useDebouncedLatest(updateCursorNode, CURSOR_NODE_UPDATE_DEBOUNCE, {
-    scheduler: afterNextPaint,
-  })
+  const debouncedUpdate = useDebouncedLatest(updateCursorNode, CURSOR_NODE_UPDATE_DEBOUNCE)
 
   // trigger debounced update on dependencies change
   React.useEffect(() => {
@@ -193,12 +166,4 @@ function PlaceholderTreeNode({ x, y, env }: { x: number; y: number; env?: LazyEn
   }
 
   return <div data-id='placeholder-tree-node' ref={containerRef} />
-}
-
-/**
- * BulletCursorOverlway is a component used to animate the cursor overlay from the bullet.
- * This component also contains placeholders for other components to maintain consistency of cursor overlay position.
- **/
-export default function BulletCursorOverlay({ x, y, env }: { x: number; y: number; env?: LazyEnv }) {
-  return <PlaceholderTreeNode x={x} y={y} env={env} />
 }
