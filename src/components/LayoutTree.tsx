@@ -111,7 +111,7 @@ const useHideSpaceAbove = (spaceAbove: number) => {
   )
 }
 
-/** A hook that returns a ref to the content div and updates the viewport store's contentWidth property on resize. */
+/** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
 const useLayoutTreeTop = () => {
   const layoutTreeRef = useRef<HTMLDivElement>(null)
 
@@ -153,8 +153,7 @@ const LayoutTree = () => {
 
       setLayoutTop(ref.current?.getBoundingClientRect().top ?? 0)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dragInProgress])
+  }, [dragInProgress, ref])
 
   const singleLineHeight = useSingleLineHeight(sizes)
 
