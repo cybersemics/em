@@ -18,25 +18,7 @@ const isIOSSafari = isTouch && isiPhone && isSafari()
 const bulletOverlayRadius = isIOSSafari ? 300 : 245
 
 // debounce delay for syncing the placeholder to the live cursor node
-const CURSOR_NODE_UPDATE_DEBOUNCE = 80
-
-/**
- * Use 2 requestAnimationFrame to delay DOM queries until browser paint is complete.
- */
-export function afterNextPaint(cb: () => void) {
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      // add extra rAF for android and ios devices to get the actual cursor node position
-      if (isTouch) {
-        requestAnimationFrame(() => {
-          cb()
-        })
-      } else {
-        cb()
-      }
-    })
-  })
-}
+const CURSOR_NODE_UPDATE_DEBOUNCE = 40
 
 /**
  * BulletCursorOverlway is a component used to animate the cursor overlay from the bullet.
