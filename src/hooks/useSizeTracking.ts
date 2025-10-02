@@ -36,11 +36,13 @@ const useSizeTracking = () => {
   /** Update the size record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
   const setSize = useCallback(
     ({
+      cliff,
       height,
       width,
       isVisible,
       key,
     }: {
+      cliff: number
       height: number | null
       width?: number | null
       id: ThoughtId
@@ -67,6 +69,7 @@ const useSizeTracking = () => {
                 [key]: {
                   height: heightClipped,
                   width: width || undefined,
+                  cliff,
                   isVisible,
                 },
               },
