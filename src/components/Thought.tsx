@@ -36,6 +36,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import col1MaxWidthStore from '../stores/col1MaxWidthStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import containsURL from '../util/containsURL'
+import dndRef from '../util/dndRef'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
@@ -538,7 +539,7 @@ const ThoughtContainer = ({
   return (
     <div
       {...dragHoldResult.props}
-      ref={node => dragSource(dropTarget(node))}
+      ref={dndRef(node => dragSource(dropTarget(node)))}
       aria-label='child'
       data-divider={isDivider(value)}
       data-editing={isEditing}

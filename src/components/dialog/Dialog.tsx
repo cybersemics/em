@@ -3,7 +3,7 @@ import { dialogRecipe } from '../../../styled-system/recipes'
 
 interface DialogProps {
   onClose: () => void
-  nodeRef: React.RefObject<HTMLDivElement>
+  nodeRef: React.RefObject<HTMLDivElement | null>
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useRef, useState } from 'react'
 import scrollTopStore from '../stores/scrollTop'
 
 /**
@@ -37,7 +37,7 @@ const useIsVisible = <T extends HTMLElement>(
     }
   }, [])
 
-  return [isVisible, elementRef]
+  return [isVisible, elementRef as RefObject<T>]
 }
 
 export default useIsVisible

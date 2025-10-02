@@ -13,7 +13,7 @@ const useOnPaste = ({
   simplePath,
   transient,
 }: {
-  contentRef: React.RefObject<HTMLInputElement>
+  contentRef: React.RefObject<HTMLInputElement | null>
   simplePath: SimplePath
   transient?: boolean
 }) => {

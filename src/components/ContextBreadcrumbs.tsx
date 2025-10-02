@@ -27,7 +27,7 @@ import Superscript from './Superscript'
 type OverflowChild = {
   id: ThoughtId
   value: string
-  nodeRef: React.RefObject<HTMLElement>
+  nodeRef: React.RefObject<HTMLElement | null>
   label?: string
   isOverflow?: boolean
 }
@@ -186,7 +186,8 @@ const ContextBreadcrumbs = ({
   const ellipsizedThoughts = useEllipsizedThoughts(pathFiltered, { charLimit, disabled, thoughtsLimit })
 
   /** Clones the direct breadcrumb children to inject isDeleting animation state. */
-  const factoryManager = (child: React.ReactElement) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const factoryManager = (child: React.ReactElement<any>) => {
     const updatedGrandChild = React.cloneElement(child.props.children, {
       ...child.props.children.props,
       isDeleting: !child.props.in,
