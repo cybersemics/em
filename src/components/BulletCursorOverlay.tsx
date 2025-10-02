@@ -1,15 +1,15 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import LazyEnv from '../@types/LazyEnv'
 import type Thought from '../@types/Thought'
 import { isSafari, isTouch, isiPhone } from '../browser'
+import useDebouncedLatest from '../hooks/useDebouncedLatest'
 import useHideBullet from '../hooks/useHideBullet'
 import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getAllChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -69,6 +69,9 @@ function PlaceholderTreeNode({ x, y, env }: { x: number; y: number; env?: LazyEn
 
   const cursor = useSelector(state => state.cursor)
 
+  // debounce delay for syncing the placeholder to the live cursor node
+  const CURSOR_NODE_UPDATE_DEBOUNCE = 40
+
   // Get required data for useHideBullet hook
   const { simplePath, thoughtId, childrenThoughts, isInContextView } = useSelector(state => {
     if (!state.cursor) {
@@ -92,26 +95,6 @@ function PlaceholderTreeNode({ x, y, env }: { x: number; y: number; env?: LazyEn
   const bulletIsDivider = useSelector(state =>
     state.cursor ? isDivider(getThoughtById(state, head(state.cursor))?.value) : false,
   )
-  // Table view detection selectors
-  const isTableView = useSelector(state => {
-    if (!state.cursor) return false
-    const parentPath = rootedParentOf(state, state.cursor)
-    const parentId = head(parentPath)
-    return attributeEquals(state, parentId, '=view', 'Table')
-  })
-
-  const isTableCol1 = useSelector(state => {
-    if (!state.cursor) return false
-    const parentPath = rootedParentOf(state, state.cursor)
-    return attributeEquals(state, head(parentPath), '=view', 'Table')
-  })
-
-  const isTableCol2 = useSelector(state => {
-    if (!state.cursor) return false
-    const parentPath = rootedParentOf(state, state.cursor)
-    const grandParentPath = rootedParentOf(state, parentPath)
-    return attributeEquals(state, head(grandParentPath), '=view', 'Table')
-  })
 
   // compute attribute-based hide like in Subthought
   const childrenAttributeId = useSelector(
@@ -151,58 +134,59 @@ function PlaceholderTreeNode({ x, y, env }: { x: number; y: number; env?: LazyEn
 
   const prevDomElementRef = React.useRef<HTMLElement | null>(null)
 
-  React.useEffect(() => {
-    return () => {
-      console.log('PlaceholderTreeNode unmounted')
-    }
-  }, [])
-  React.useEffect(() => {
-    /** Updates the placeholder node to mirror the current cursor node and target its bullet svg. */
-    const updateCursorNode = () => {
-      if (!containerRef.current || !cursor) return
+  /** Updates the placeholder node to mirror the current cursor node and target its bullet svg. */
+  const updateCursorNode = useCallback(() => {
+    if (!containerRef.current || !cursor) return
 
-      // Find the cursor TreeNode using the data-cursor attribute
-      const cursorTreeNodes = document.querySelectorAll('div[data-cursor="true"]') as NodeListOf<HTMLElement>
+    // Find the cursor TreeNode using the data-cursor attribute
+    const cursorTreeNodes = document.querySelectorAll('div[data-cursor="true"]') as NodeListOf<HTMLElement>
 
-      const cursorTreeNode =
-        cursorTreeNodes.length > 1
-          ? Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
-          : cursorTreeNodes[0]
+    const cursorTreeNode =
+      cursorTreeNodes.length > 1
+        ? Array.from(cursorTreeNodes).find(node => node !== prevDomElementRef.current)
+        : cursorTreeNodes[0]
 
-      if (!cursorTreeNode) return
+    if (!cursorTreeNode) return
 
-      const container = containerRef.current
+    const container = containerRef.current
 
-      // Copy all attributes from the cursor TreeNode to the container (except data-cursor)
-      Array.from(cursorTreeNode.attributes).forEach(attr => {
-        if (attr.name !== 'data-cursor') {
-          container.setAttribute(attr.name, attr.value)
-        }
-      })
-
-      // Clear existing content and copy the nested child from cursor TreeNode
-      container.innerHTML = ''
-      container.style.visibility = 'hidden'
-      if (cursorTreeNode.firstElementChild) {
-        const nestedChild = cursorTreeNode.firstElementChild.cloneNode(true) as HTMLElement
-
-        container.appendChild(nestedChild)
-
-        const svg = nestedChild.querySelector('span[aria-label="bullet"] svg') as SVGSVGElement | null
-        if (svg) {
-          // Replace the SVG contents
-
-          const svgInnerHTML = `<g style="visibility: visible; will-change: transform;"><ellipse ry="${bulletOverlayRadius}" rx="${bulletOverlayRadius}" cy="300" cx="300" class="stk_highlight fill-opacity_0.25 fill_fg"></ellipse></g>`
-          svg.innerHTML = svgInnerHTML
-          svg.style.visibility = 'visible'
-        }
-        prevDomElementRef.current = cursorTreeNode
+    // Copy all attributes from the cursor TreeNode to the container (except data-cursor)
+    Array.from(cursorTreeNode.attributes).forEach(attr => {
+      if (attr.name !== 'data-cursor') {
+        container.setAttribute(attr.name, attr.value)
       }
-    }
+    })
 
-    afterNextPaint(updateCursorNode)
-  }, [cursor, isTableView, isTableCol1, isTableCol2, x, y, thoughtId])
-  // }, [cursor])
+    // Clear existing content and copy the nested child from cursor TreeNode
+    container.innerHTML = ''
+    container.style.visibility = 'hidden'
+    if (cursorTreeNode.firstElementChild) {
+      const nestedChild = cursorTreeNode.firstElementChild.cloneNode(true) as HTMLElement
+
+      container.appendChild(nestedChild)
+
+      const svg = nestedChild.querySelector('span[aria-label="bullet"] svg') as SVGSVGElement | null
+      if (svg) {
+        // Replace the SVG contents
+
+        const svgInnerHTML = `<g style="visibility: visible; will-change: transform;"><ellipse ry="${bulletOverlayRadius}" rx="${bulletOverlayRadius}" cy="300" cx="300" class="stk_highlight fill-opacity_0.25 fill_fg"></ellipse></g>`
+        svg.innerHTML = svgInnerHTML
+
+        svg.style.visibility = 'visible'
+      }
+      prevDomElementRef.current = cursorTreeNode
+    }
+  }, [cursor])
+
+  // debounced caller that runs afterNextPaint
+  const debouncedUpdate = useDebouncedLatest(updateCursorNode, CURSOR_NODE_UPDATE_DEBOUNCE, {
+    scheduler: afterNextPaint,
+  })
+
+  // trigger debounced update on dependencies change
+  React.useEffect(() => {
+    debouncedUpdate()
+  }, [debouncedUpdate, cursor])
 
   if (bulletIsDivider || shouldHideBullet) {
     return null
