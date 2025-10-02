@@ -9,6 +9,7 @@ import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getAllChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -18,7 +19,7 @@ const isIOSSafari = isTouch && isiPhone && isSafari()
 const bulletOverlayRadius = isIOSSafari ? 300 : 245
 
 // debounce delay for syncing the placeholder to the live cursor node
-const CURSOR_NODE_UPDATE_DEBOUNCE = 40
+const CURSOR_NODE_UPDATE_DEBOUNCE = 80
 
 /**
  * BulletCursorOverlway is a component used to animate the cursor overlay from the bullet.
@@ -28,6 +29,11 @@ export default function BulletCursorOverlay({ env }: { env?: LazyEnv }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
 
   const cursor = useSelector(state => state.cursor)
+
+  // Check if this is a table view once
+  const isTableView = useSelector(state =>
+    cursor ? attributeEquals(state, head(rootedParentOf(state, cursor)), '=view', 'Table') : false,
+  )
 
   // Get required data for useHideBullet hook
   const { simplePath, thoughtId, childrenThoughts, isInContextView } = useSelector(state => {
@@ -141,7 +147,7 @@ export default function BulletCursorOverlay({ env }: { env?: LazyEnv }) {
   // trigger debounced update on dependencies change
   React.useEffect(() => {
     debouncedUpdate()
-  }, [debouncedUpdate, cursor])
+  }, [debouncedUpdate, cursor, isTableView])
 
   if (bulletIsDivider || shouldHideBullet) {
     return null
