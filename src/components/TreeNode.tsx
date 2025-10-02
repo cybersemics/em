@@ -234,7 +234,7 @@ const TreeNode = ({
           top: y,
           left: 0,
         }
-      : moveDivStyle
+      : {}
 
   return (
     <FadeTransition
@@ -310,6 +310,7 @@ const TreeNode = ({
               prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
               isLastVisible={isLastVisible}
               autofocus={autofocus}
+              moveStyle={moveDivStyle}
             />
           </div>
           {dragInProgress &&
