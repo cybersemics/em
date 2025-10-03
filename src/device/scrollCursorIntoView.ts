@@ -2,32 +2,8 @@ import { throttle } from 'lodash'
 import { isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
 import editingValueStore from '../stores/editingValue'
-import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import durations from '../util/durations'
-
-// Tracks whether the has scrolled since the last cursor navigation
-let userInteractedAfterNavigation: boolean = false
-
-// Keep track of whether a programmatic scroll will occur in order to ignore events.
-let forcedScrolling = false
-let forcedScrollingTimeout: NodeJS.Timeout | undefined
-
-/**
- * Registers a forced scroll to ignore scroll events that are triggered programmatically.
- */
-const startForcedScrolling = () => {
-  // Clear pending timeouts
-  if (forcedScrollingTimeout) {
-    clearTimeout(forcedScrollingTimeout)
-  }
-
-  forcedScrolling = true
-
-  forcedScrollingTimeout = setTimeout(() => {
-    forcedScrolling = false
-  }, 50)
-}
 
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
 const scrollIntoViewIfNeeded = (y: number, height: number) => {
@@ -73,7 +49,6 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const viewportHeight = viewport.innerHeight
   const behavior = scrollDistance < viewportHeight ? 'smooth' : 'auto'
 
-  startForcedScrolling()
   window.scrollTo({
     top,
     behavior,
@@ -86,15 +61,10 @@ const scrollCursorIntoView = (y: number, height: number) => {
   // otherwise Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
   if (window.scrollY === 0 && isTouch && isSafari()) {
-    startForcedScrolling()
     window.scrollBy(0, 1)
   }
 
-  setTimeout(
-    () => scrollIntoViewIfNeeded(y, height),
-    // If this is the result of a navigation, wait for the layout animation to complete to not get false bounding rect values
-    userInteractedAfterNavigation ? 0 : durations.get('layoutNodeAnimation'),
-  )
+  scrollIntoViewIfNeeded(y, height)
 }
 
 // Scroll the cursor into view after it is edited, e.g. toggling bold in a long, sorted context.
@@ -106,16 +76,5 @@ editingValueStore.subscribe(
     setTimeout(scrollCursorIntoView, durations.get('layoutNodeAnimation'))
   }, 400),
 )
-
-/**
- * Whenever the user scrolls, we set `userInteractedAfterNavigation` to true. This prevents `scrollCursorIntoView` from being called
- * after loading new thoughts.
- */
-scrollTopStore.subscribe(() => {
-  // Ignore scroll events that are triggered programmatically.
-  if (forcedScrolling) return
-
-  userInteractedAfterNavigation = true
-})
 
 export default scrollCursorIntoView
