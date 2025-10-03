@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
@@ -5,6 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { isSafari, isTouch, isiPhone } from '../browser'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import useHideBullet from '../hooks/useHideBullet'
 import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getChildrenRanked } from '../selectors/getChildren'
@@ -12,6 +14,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
+import editingValueStore from '../stores/editingValue'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import getBulletWidth from '../util/getBulletWidth'
 import head from '../util/head'
@@ -24,6 +27,7 @@ type BulletCursorOverlayProps = {
   x: number
   y: number
   simplePath: SimplePath
+  singleLineHeight: number
   path: Path
   isTableCol1: boolean
   width?: number
@@ -306,6 +310,7 @@ export default function BulletCursorOverlay({
   x,
   y,
   simplePath,
+  singleLineHeight,
   path,
   isTableCol1,
   width = 0,
@@ -350,6 +355,12 @@ export default function BulletCursorOverlay({
     isInContextView,
     thoughtId: head(simplePath),
   })
+
+  // Scroll the cursor into view after it is edited, e.g. toggling bold in a long, sorted context.
+  // The cursor typically changes rank most dramatically on the first edit, and then less as its rank stabilizes.
+  const editingValue = editingValueStore.useSelector(value => value)
+
+  useEffect(() => scrollCursorIntoView(y, singleLineHeight), [editingValue, singleLineHeight, y])
 
   return (
     <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
