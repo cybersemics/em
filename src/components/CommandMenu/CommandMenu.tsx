@@ -72,7 +72,7 @@ const Overlay = () => {
   return (
     <FadeTransition nodeRef={ref} in={showCommandMenu} type='commandMenuDrawer' unmountOnExit>
       <div
-        // Passing the ref in is required, due to position fixed child.
+        // Passing the ref in is required, due to position absolute child.
         ref={ref}
         className={css({
           position: 'absolute',
