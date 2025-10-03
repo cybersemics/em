@@ -249,6 +249,8 @@ const GestureDiagram = ({
     const next = pathDirs[i + 1]
     const afterNext = pathDirs[i + 2]
     const horizontal = dir === 'l' || dir === 'r'
+    const path = pathDirs.join('')
+
     const negative = dir === 'l' || dir === 'd' // negative movement along the respective axis
 
     const clockwisePrev = rotateClockwise(prev) === dir
@@ -393,7 +395,7 @@ const GestureDiagram = ({
           ) : (
             pathSegments.map((segment, i) => {
               return rounded ? (
-                <ArcGradient index={i} extendedPath={extendedPath} size={size} />
+                <ArcGradient key={`${extendedPath}-gradient-${i}`} index={i} extendedPath={extendedPath} size={size} />
               ) : (
                 <linearGradient
                   id={`${extendedPath}-gradient-${i}`}

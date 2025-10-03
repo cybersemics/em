@@ -425,6 +425,9 @@ const ThoughtContainer = ({
     [style?.textDecoration],
   )
 
+  // true when this thought is the parent of a recently dropped child, to continue a slower pulse briefly
+  const isRecentlyDropped = useSelector(state => equalPath(state.droppedPath, simplePath))
+
   // Styles applied to the .thought-annotation and .editable
   // See: https://stackoverflow.com/a/46452396/480608
   // Use -webkit-text-stroke-width instead of font-weight:bold, as bold changes the width of the text and can cause the thought to become multiline during a drag. This can even create an oscillation effect as the increased Thought height triggers a different hoveringPath ad infinitum (often resulting in a Shaker cancel false positive).
@@ -437,14 +440,21 @@ const ThoughtContainer = ({
           animation: `pulseLight {durations.slowPulse} linear infinite alternate`,
           color: 'highlight',
         }
-      : isQuickDropDeleteHovering
+      : /** Continue a slower pulse on the parent briefly after a drop completes. */
+        isRecentlyDropped
         ? {
             WebkitTextStrokeWidth: '0.05em',
-            animation: `pulseLight {durations.mediumPulse} linear infinite alternate`,
-            color: 'gray',
-            textDecoration: 'line-through',
+            animation: `pulseLight {durations.verySlowPulse} linear infinite alternate`,
+            color: 'highlight',
           }
-        : null),
+        : isQuickDropDeleteHovering
+          ? {
+              WebkitTextStrokeWidth: '0.05em',
+              animation: `pulseLight {durations.mediumPulse} linear infinite alternate`,
+              color: 'gray',
+              textDecoration: 'line-through',
+            }
+          : null),
   })
 
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {
