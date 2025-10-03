@@ -20,6 +20,7 @@ import uncategorize from '../../commands/uncategorize'
 import isTutorial from '../../selectors/isTutorial'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
+import FadeTransition from '../FadeTransition'
 import CloseIconV2 from '../icons/CloseIconV2'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
@@ -64,15 +65,41 @@ const MultiselectMessage: FC = () => {
   )
 }
 
+/** Command menu gradient overlay. Fades in when the Command Menu opens. */
+const Overlay = () => {
+  const showCommandMenu = useSelector(state => state.showCommandMenu)
+  const ref = useRef<HTMLDivElement>(null)
+  return (
+    <FadeTransition nodeRef={ref} in={showCommandMenu} type='matchSwipeableDrawer' unmountOnExit>
+      <div
+        // Passing the ref in is required, due to position fixed child.
+        ref={ref}
+        className={css({
+          position: 'absolute',
+          pointerEvents: 'none',
+          zIndex: 'modal',
+          backgroundImage: 'url(/img/command-center/overlay.webp)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center bottom',
+          mixBlendMode: 'screen',
+          height: '100vh',
+          width: '100%',
+          bottom: 0,
+        })}
+      />
+    </FadeTransition>
+  )
+}
+
 /**
  * A panel that displays the command menu.
  */
 const CommandMenu = () => {
   const dispatch = useDispatch()
-  const ref = useRef<HTMLDivElement>(null)
   const showCommandMenu = useSelector(state => state.showCommandMenu)
   const isTutorialOn = useSelector(isTutorial)
   const fontSize = useSelector(state => state.fontSize)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const onOpen = useCallback(() => {
     dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: true }))
@@ -85,23 +112,9 @@ const CommandMenu = () => {
   if (isTouch && !isTutorialOn) {
     return (
       <>
-        {showCommandMenu && (
-          <div
-            /** Blur doesn't affect thoughts unless outside of SwipeableDrawer. */
-            style={{
-              height: ref.current ? ref.current.clientHeight + 110 : undefined,
-            }}
-            className={css({
-              position: 'fixed',
-              backdropFilter: 'blur(2px)',
-              mask: 'linear-gradient(180deg, {colors.bgTransparent} 0%, black 110px, black 100%)',
-              pointerEvents: 'none',
-              width: '100%',
-              bottom: 0,
-            })}
-          />
-        )}
+        <div ref={containerRef} />
         <SwipeableDrawer
+          container={containerRef.current}
           data-testid='command-menu-panel'
           // Disable swipe to open - this removes the swipe-up-to-open functionality
           disableSwipeToOpen={true}
@@ -115,7 +128,6 @@ const CommandMenu = () => {
           open={showCommandMenu}
           hideBackdrop={true}
           disableScrollLock={true}
-          // Use PaperProps to directly target the Paper component
           PaperProps={{
             style: {
               backgroundColor: 'transparent',
@@ -136,33 +148,49 @@ const CommandMenu = () => {
             style: {
               pointerEvents: 'none',
               zIndex: token('zIndex.modal'),
+              backgroundColor: 'transparent',
             },
           }}
         >
           <div
-            ref={ref}
+            /** Progressive Blur. */
             className={css({
-              background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
-              paddingTop: '0.8rem',
+              pointerEvents: 'none',
+              position: 'absolute',
+              backdropFilter: 'blur(2px)',
+              mask: 'linear-gradient(180deg, {colors.bgTransparent} 0%, black 110px, black 100%)',
+              // zIndex: -1,
+              bottom: 0,
+              width: '100%',
+              height: 'calc(100% + 110px)',
+            })}
+          />
+          <div
+            className={css({
+              position: 'relative',
+              // prevent mix-blend-mode and backdrop-filter from affecting each other
+              isolation: 'isolate',
             })}
           >
+            <Overlay />
             <div
+              /** Falloff. */
               className={css({
-                position: 'absolute',
                 pointerEvents: 'none',
-                zIndex: 'modal',
-                backgroundImage: 'url(/img/command-center/overlay.webp)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center bottom',
-                mixBlendMode: 'screen',
-                height: '100vh',
-                width: '100%',
+                position: 'absolute',
+                background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
+                paddingTop: '0.8rem',
                 bottom: 0,
-                transition: 'opacity 0.3s ease-in-out',
+                width: '100%',
+                height: '100%',
               })}
             />
             <div
-              className={css({ zIndex: 1, margin: '1.2rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom)) 1.2rem' })}
+              className={css({
+                position: 'relative',
+                zIndex: 1,
+                margin: '1.2rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom)) 1.2rem',
+              })}
             >
               <div className={css({ marginBottom: '1rem' })}>
                 <div
