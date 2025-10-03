@@ -1,9 +1,6 @@
-import { throttle } from 'lodash'
 import { isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
-import editingValueStore from '../stores/editingValue'
 import viewportStore from '../stores/viewport'
-import durations from '../util/durations'
 
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
 const scrollIntoViewIfNeeded = (y: number, height: number) => {
@@ -66,15 +63,5 @@ const scrollCursorIntoView = (y: number, height: number) => {
 
   scrollIntoViewIfNeeded(y, height)
 }
-
-// Scroll the cursor into view after it is edited, e.g. toggling bold in a long, sorted context.
-editingValueStore.subscribe(
-  // The cursor typically changes rank most dramatically on the first edit, and then less as its rank stabilizes.
-  // Throttle aggressively since scrollCursorIntoView reads from the DOM and this is called on all edits.
-  throttle(() => {
-    // we need to wait for the cursor to animate into its final position before scrollCursorIntoView can accurately determine if it is in the viewport
-    setTimeout(scrollCursorIntoView, durations.get('layoutNodeAnimation'))
-  }, 400),
-)
 
 export default scrollCursorIntoView

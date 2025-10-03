@@ -14,6 +14,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
+import editingValueStore from '../stores/editingValue'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import getBulletWidth from '../util/getBulletWidth'
 import head from '../util/head'
@@ -355,7 +356,11 @@ export default function BulletCursorOverlay({
     thoughtId: head(simplePath),
   })
 
-  useEffect(() => scrollCursorIntoView(y, singleLineHeight), [singleLineHeight, y])
+  // Scroll the cursor into view after it is edited, e.g. toggling bold in a long, sorted context.
+  // The cursor typically changes rank most dramatically on the first edit, and then less as its rank stabilizes.
+  const editingValue = editingValueStore.useSelector(value => value)
+
+  useEffect(() => scrollCursorIntoView(y, singleLineHeight), [editingValue, singleLineHeight, y])
 
   return (
     <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
