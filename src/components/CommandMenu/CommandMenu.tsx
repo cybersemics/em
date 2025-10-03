@@ -70,7 +70,7 @@ const Overlay = () => {
   const showCommandMenu = useSelector(state => state.showCommandMenu)
   const ref = useRef<HTMLDivElement>(null)
   return (
-    <FadeTransition nodeRef={ref} in={showCommandMenu} type='matchSwipeableDrawer' unmountOnExit>
+    <FadeTransition nodeRef={ref} in={showCommandMenu} type='commandMenuDrawer' unmountOnExit>
       <div
         // Passing the ref in is required, due to position fixed child.
         ref={ref}
@@ -118,7 +118,7 @@ const CommandMenu = () => {
           data-testid='command-menu-panel'
           // Disable swipe to open - this removes the swipe-up-to-open functionality
           disableSwipeToOpen={true}
-          transitionDuration={durations.get('medium')}
+          transitionDuration={durations.get('commandMenuDrawer')}
           // Remove the SwipeAreaProps since we don't want to enable swipe to open
           anchor='bottom'
           // Keep onOpen for programmatic opening

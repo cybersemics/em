@@ -28,9 +28,10 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enterActive: { transition: `opacity {durations.medium} ease 0ms` },
         exitActive: { transition: `opacity {durations.medium} ease 0ms` },
       },
-      matchSwipeableDrawer: {
-        enterActive: { transition: `opacity {durations.medium} cubic-bezier(0, 0, 0.2, 1) 0ms` },
-        exitActive: { transition: `opacity {durations.medium} cubic-bezier(0, 0, 0.2, 1) 0ms` },
+      commandMenuDrawer: {
+        // Easing follows that of Material UI SwipeableDrawer.
+        enterActive: { transition: `opacity {durations.commandMenuDrawer} cubic-bezier(0, 0, 0.2, 1) 0ms` },
+        exitActive: { transition: `opacity {durations.commandMenuDrawer} cubic-bezier(0, 0, 0.2, 1) 0ms` },
       },
       distractionFreeTyping: {
         enterActive: { transition: `opacity {durations.distractionFreeTyping} ease 0ms` },

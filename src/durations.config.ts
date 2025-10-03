@@ -37,6 +37,8 @@ const durationsConfig = {
   /* Duration for context view disappearing text animations */
   disappearingUpperRight: 500,
   disappearingLowerLeft: 500,
+  /* Duration for command menu swipable drawer animation. */
+  commandMenuDrawer: 400,
 } as const
 
 export default durationsConfig
