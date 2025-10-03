@@ -99,7 +99,6 @@ const CommandMenu = () => {
   const showCommandMenu = useSelector(state => state.showCommandMenu)
   const isTutorialOn = useSelector(isTutorial)
   const fontSize = useSelector(state => state.fontSize)
-  const containerRef = useRef<HTMLDivElement>(null)
 
   const onOpen = useCallback(() => {
     dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: true }))
@@ -112,9 +111,7 @@ const CommandMenu = () => {
   if (isTouch && !isTutorialOn) {
     return (
       <>
-        <div ref={containerRef} />
         <SwipeableDrawer
-          container={containerRef.current}
           data-testid='command-menu-panel'
           // Disable swipe to open - this removes the swipe-up-to-open functionality
           disableSwipeToOpen={true}
