@@ -1,3 +1,4 @@
+import { DEFAULT_FONT_SIZE } from '../../../constants'
 import clickThought from '../helpers/clickThought'
 import getEditable from '../helpers/getEditable'
 import getEditingText from '../helpers/getEditingText'
@@ -5,6 +6,9 @@ import getSelection from '../helpers/getSelection'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import { page } from '../setup'
+
+// 0.1em of the default font size
+const clipHeight = 0.1 * DEFAULT_FONT_SIZE
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -44,7 +48,8 @@ async function testClickBetweenThoughts(thought1: string, thought2: string) {
   }
 
   // Calculate overlap (expected to be negative due to intentional overlap)
-  const firstThoughtBottom = rect1.y + rect1.height
+  // Account for clipPath which clips 0.1em from the bottom of the first thought
+  const firstThoughtBottom = rect1.y + rect1.height - clipHeight
   const secondThoughtTop = rect2.y
 
   // Note: negative = overlap
