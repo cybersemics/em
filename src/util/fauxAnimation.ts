@@ -1,6 +1,6 @@
 import ThoughtId from '../@types/ThoughtId'
 
-/** Options for the ghost drop animation. */
+/** Options for the faux drop animation. */
 type DropFauxOptions = {
   /** The thought id of the dragged item to clone. */
   fromThoughtId: ThoughtId
@@ -8,7 +8,7 @@ type DropFauxOptions = {
   toRect: DOMRect
   /** Duration in ms. */
   duration?: number
-  /** Optional z-index for the ghost. */
+  /** Optional z-index for the faux clone. */
   zIndex?: number
 }
 
@@ -38,7 +38,16 @@ const startDropFauxAnimation = ({ fromThoughtId, toRect, duration = 200, zIndex 
   clone.style.width = `${fromRect.width}px`
   clone.style.height = `${fromRect.height}px`
   clone.style.zIndex = String(zIndex)
-  clone.style.transition = `left ${duration}ms ease-out, top ${duration}ms ease-out, width ${duration}ms ease-out`
+  // drive translate distances with CSS variables to use keyframes
+  const dx = toRect.left - fromRect.left
+  const dy = toRect.top - fromRect.top
+  clone.style.setProperty('--faux-dx', `${dx}px`)
+  clone.style.setProperty('--faux-dy', `${dy}px`)
+  // compose keyframes: translate + subtle fade/scale
+  clone.style.animationName = 'fauxTranslate, fauxFadeScale'
+  clone.style.animationDuration = `${duration}ms, ${duration}ms`
+  clone.style.animationTimingFunction = 'ease-out, ease-in'
+  clone.style.animationFillMode = 'forwards, none'
 
   // place in a top-level overlay container to avoid clipping
   const container = document.body
@@ -46,19 +55,17 @@ const startDropFauxAnimation = ({ fromThoughtId, toRect, duration = 200, zIndex 
 
   // next frame to ensure initial styles are applied
   requestAnimationFrame(() => {
-    clone.style.left = `${toRect.left}px`
-    clone.style.top = `${toRect.top}px`
-    // maintain width; destination may be narrower, but adjusting width slightly improves perceived continuity
+    // width adjustment to better match destination width
     clone.style.width = `${toRect.width}px`
 
     /** Remove the clone after the animation completes. */
     const remove = () => {
-      clone.removeEventListener('transitionend', remove)
+      clone.removeEventListener('animationend', remove)
       if (clone.parentNode) clone.parentNode.removeChild(clone)
     }
-    clone.addEventListener('transitionend', remove)
+    clone.addEventListener('animationend', remove)
 
-    // fallback cleanup in case transitionend doesn't fire
+    // fallback cleanup in case animationend doesn't fire
     window.setTimeout(remove, duration + 50)
   })
 }

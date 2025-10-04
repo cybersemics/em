@@ -177,26 +177,33 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   })
 
   // If the destination is collapsed, animate a faux clone of the dragged thought to the destination thought's position.
-  // Capture DOM positions BEFORE dispatching the move to avoid layout shifts during animation.
-  try {
-    // only animate a single thought for now
-    if (draggedItems.length === 1) {
-      const isDestinationExpanded = isPathExpanded(state, props.path)
-      if (!isDestinationExpanded) {
-        const destinationThoughtId = head(props.path)
-        const destinationEl = document.querySelector(
-          `[aria-label="tree-node"][data-thought-id="${destinationThoughtId}"]`,
-        ) as HTMLElement | null
+  // Capture DOM positions before dispatching the move to avoid layout shifts during animation.
+  if (draggedItems.length === 1) {
+    const isDestinationExpanded = isPathExpanded(state, props.path)
+    if (!isDestinationExpanded) {
+      const destinationThoughtId = head(props.path)
+      if (destinationThoughtId) {
+        // select by aria-label, then filter by data attribute to avoid selector injection and errors
+        const nodes = document.querySelectorAll('[aria-label="tree-node"]') as NodeListOf<HTMLElement>
+        let destinationEl: HTMLElement | null = null
+        for (let i = 0; i < nodes.length; i++) {
+          const el = nodes[i]
+          if (el.getAttribute('data-thought-id') === String(destinationThoughtId)) {
+            destinationEl = el
+            break
+          }
+        }
+
         if (destinationEl) {
           const toRect = destinationEl.getBoundingClientRect()
           const fromThoughtId = head(draggedItems[0].path)
-          // kick off ghost animation before DOM updates
-          fauxAnimation({ fromThoughtId, toRect })
+          if (fromThoughtId) {
+            // kick off faux animation before DOM updates
+            fauxAnimation({ fromThoughtId, toRect })
+          }
         }
       }
     }
-  } catch {
-    // non-fatal: if any DOM operation fails, just skip the faux animation
   }
 
   store.dispatch((dispatch, getState) => {
