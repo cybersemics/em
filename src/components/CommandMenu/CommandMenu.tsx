@@ -21,7 +21,6 @@ import isTutorial from '../../selectors/isTutorial'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import FadeTransition from '../FadeTransition'
-import CloseIconV2 from '../icons/CloseIconV2'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
 
@@ -221,7 +220,7 @@ const CommandMenu = () => {
                       fontSize: fontSize * 0.85,
                     }}
                   >
-                    <CloseIconV2 /> Done
+                    Done
                   </button>
                 </div>
               </div>
