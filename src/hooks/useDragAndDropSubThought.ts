@@ -26,6 +26,7 @@ import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import fauxAnimation from '../util/fauxAnimation'
 import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -174,6 +175,29 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     const pathTo = getPathTo(state, item.path)
     return head(rootedParentOf(state, item.path)) !== head(rootedParentOf(state, pathTo))
   })
+
+  // If the destination is collapsed, animate a faux clone of the dragged thought to the destination thought's position.
+  // Capture DOM positions BEFORE dispatching the move to avoid layout shifts during animation.
+  try {
+    // only animate a single thought for now
+    if (draggedItems.length === 1) {
+      const isDestinationExpanded = isPathExpanded(state, props.path)
+      if (!isDestinationExpanded) {
+        const destinationThoughtId = head(props.path)
+        const destinationEl = document.querySelector(
+          `[aria-label="tree-node"][data-thought-id="${destinationThoughtId}"]`,
+        ) as HTMLElement | null
+        if (destinationEl) {
+          const toRect = destinationEl.getBoundingClientRect()
+          const fromThoughtId = head(draggedItems[0].path)
+          // kick off ghost animation before DOM updates
+          fauxAnimation({ fromThoughtId, toRect })
+        }
+      }
+    }
+  } catch {
+    // non-fatal: if any DOM operation fails, just skip the faux animation
+  }
 
   store.dispatch((dispatch, getState) => {
     /** Returns true if the thought should be dropped at the top of a collapsed parent. */

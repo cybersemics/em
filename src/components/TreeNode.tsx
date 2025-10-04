@@ -264,6 +264,7 @@ const TreeNode = ({
                 : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
         })}
         style={outerDivStyle}
+        data-thought-id={thoughtId}
       >
         <div
           className={css({
