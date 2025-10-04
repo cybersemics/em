@@ -43,7 +43,6 @@ const useNonzeroNumMulticursors = () => {
 /** Shows a message with the number of thoughts selected, and a cancel button to deselect all. */
 const MultiselectMessage: FC = () => {
   const displayNumMulticursors = useNonzeroNumMulticursors()
-  const fontSize = useSelector(state => state.fontSize)
   return (
     <div>
       <span
@@ -53,10 +52,8 @@ const MultiselectMessage: FC = () => {
           letterSpacing: '-0.011em',
           mixBlendMode: 'screen',
           opacity: 0.6,
+          fontSize: '1.3em',
         })}
-        style={{
-          fontSize: fontSize * 1.3,
-        }}
       >
         {displayNumMulticursors} {pluralize('thought', displayNumMulticursors, false)} selected
       </span>
@@ -97,7 +94,6 @@ const CommandMenu = () => {
   const dispatch = useDispatch()
   const showCommandMenu = useSelector(state => state.showCommandMenu)
   const isTutorialOn = useSelector(isTutorial)
-  const fontSize = useSelector(state => state.fontSize)
 
   const onOpen = useCallback(() => {
     dispatch(toggleDropdown({ dropDownType: 'commandMenu', value: true }))
@@ -215,10 +211,8 @@ const CommandMenu = () => {
                       gap: '1ch',
                       /** Button won't show without z-index. */
                       zIndex: 'modal',
+                      fontSize: '0.85em',
                     })}
-                    style={{
-                      fontSize: fontSize * 0.85,
-                    }}
                   >
                     Done
                   </button>
