@@ -1,4 +1,4 @@
-import { DEFAULT_FONT_SIZE } from '../../../constants'
+import { ElementHandle } from 'puppeteer'
 import clickThought from '../helpers/clickThought'
 import getEditable from '../helpers/getEditable'
 import getEditingText from '../helpers/getEditingText'
@@ -7,10 +7,22 @@ import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import { page } from '../setup'
 
-// 0.1em of the default font size
-const clipHeight = 0.1 * DEFAULT_FONT_SIZE
-
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+
+/**
+ * Gets the clip height from the PandaCSS CSS custom property.
+ * This ensures the test stays in sync with the {spacing.editableClipBottom} token in panda.config.ts.
+ */
+async function getClipHeight(element: ElementHandle<HTMLElement>) {
+  return await element.evaluate(el => {
+    // Get the CSS custom property value
+    const clipBottomValue = window.getComputedStyle(el).getPropertyValue('--spacing-editable-clip-bottom')
+    // Parse the em value and convert to pixels based on the element's font size
+    const fontSize = parseFloat(window.getComputedStyle(el).fontSize)
+    const clipHeightInEm = parseFloat(clipBottomValue)
+    return clipHeightInEm * fontSize
+  })
+}
 
 /** Helper function to check if caret is positioned in the middle of a thought (not at beginning or end). */
 async function isCaretInMiddle() {
@@ -47,8 +59,11 @@ async function testClickBetweenThoughts(thought1: string, thought2: string) {
     throw new Error(`Could not get bounding boxes for "${thought1}" and "${thought2}"`)
   }
 
+  // Get the actual clip height from the PandaCSS token to ensure we stay in sync with editable.ts
+  const clipHeight = await getClipHeight(el1)
+
   // Calculate overlap (expected to be negative due to intentional overlap)
-  // Account for clipPath which clips 0.1em from the bottom of the first thought
+  // Account for clipPath which clips from the bottom of the first thought
   const firstThoughtBottom = rect1.y + rect1.height - clipHeight
   const secondThoughtTop = rect2.y
 
