@@ -22,7 +22,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const viewport = viewportStore.getState()
   const isAboveViewport = y + viewport.layoutTreeTop - window.scrollY < toolbarBottom
   const isBelowViewport =
-    y + viewport.layoutTreeTop - window.scrollY > viewport.innerHeight - viewport.virtualKeyboardHeight
+    y + height + viewport.layoutTreeTop - window.scrollY > viewport.innerHeight - viewport.virtualKeyboardHeight
 
   if (!isAboveViewport && !isBelowViewport) return
 
