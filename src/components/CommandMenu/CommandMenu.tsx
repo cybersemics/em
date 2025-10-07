@@ -151,7 +151,6 @@ const CommandMenu = () => {
               position: 'absolute',
               backdropFilter: 'blur(2px)',
               mask: 'linear-gradient(180deg, {colors.bgTransparent} 0%, black 110px, black 100%)',
-              // zIndex: -1,
               bottom: 0,
               width: '100%',
               height: 'calc(100% + 110px)',
