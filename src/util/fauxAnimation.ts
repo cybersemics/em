@@ -43,11 +43,11 @@ const startDropFauxAnimation = ({ fromThoughtId, toRect, duration = 200, zIndex 
   const dy = toRect.top - fromRect.top
   clone.style.setProperty('--faux-dx', `${dx}px`)
   clone.style.setProperty('--faux-dy', `${dy}px`)
-  // compose keyframes: translate + subtle fade/scale
-  clone.style.animationName = 'fauxTranslate, fauxFadeScale'
-  clone.style.animationDuration = `${duration}ms, ${duration}ms`
-  clone.style.animationTimingFunction = 'ease-out, ease-in'
-  clone.style.animationFillMode = 'forwards, none'
+  // apply combined translate + fade/scale animation
+  clone.style.animationName = 'fauxDragToCollapsed'
+  clone.style.animationDuration = `${duration}ms`
+  clone.style.animationTimingFunction = 'ease-out'
+  clone.style.animationFillMode = 'forwards'
 
   // place in a top-level overlay container to avoid clipping
   const container = document.body
