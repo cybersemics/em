@@ -8,6 +8,9 @@ import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import { page } from '../setup'
 
+// Calculate the clip height from the PandaCSS token to ensure we stay in sync with editable.ts
+const CLIP_HEIGHT = parseFloat(token('spacing.editableClipBottom')) * DEFAULT_FONT_SIZE
+
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 /** Helper function to check if caret is positioned in the middle of a thought (not at beginning or end). */
@@ -45,15 +48,9 @@ async function testClickBetweenThoughts(thought1: string, thought2: string) {
     throw new Error(`Could not get bounding boxes for "${thought1}" and "${thought2}"`)
   }
 
-  // Get the clip bottom value from the PandaCSS token to ensure we stay in sync with editable.ts
-  const clipBottomValue = parseFloat(token('spacing.editableClipBottom'))
-
-  // calculate the clip height in pixels
-  const clipHeight = clipBottomValue * DEFAULT_FONT_SIZE
-
   // Calculate overlap (expected to be negative due to intentional overlap)
   // Account for clipHeight which clips from the bottom of the first thought
-  const firstThoughtBottom = rect1.y + rect1.height - clipHeight
+  const firstThoughtBottom = rect1.y + rect1.height - CLIP_HEIGHT
   const secondThoughtTop = rect2.y
 
   // Note: negative = overlap
