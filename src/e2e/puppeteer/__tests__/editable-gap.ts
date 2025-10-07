@@ -8,7 +8,7 @@ import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import { page } from '../setup'
 
-// Calculate the clip height from the PandaCSS token to ensure we stay in sync with editable.ts
+// Calculate the clip height from the PandaCSS token to ensure we stay in sync with editable.ts and convert it to pixels
 const CLIP_HEIGHT = parseFloat(token('spacing.editableClipBottom')) * DEFAULT_FONT_SIZE
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
