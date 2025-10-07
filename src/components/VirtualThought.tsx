@@ -25,8 +25,7 @@ import DropChild from './DropChild'
 import DropUncle from './DropUncle'
 import Subthought from './Subthought'
 
-/** A resize handler that should be called whenever a thought's height has changed. */
-export type OnResize = (args: {
+export type OnResizeParams = {
   /** The real, measured height of the thought after a render. Set to null on unmount. */
   height: number | null
   // width may not be defined since it is measured from the ref's .editable
@@ -36,7 +35,14 @@ export type OnResize = (args: {
   isVisible: boolean
   /** A key that uniquely identifies the thought across context views. */
   key: string
-}) => void
+}
+
+/** A resize handler that should be called whenever a thought's height has changed. */
+export type OnResize = (args: OnResizeParams) => void
+
+/** Store the cliff in the size object so that it can be referenced in treeThoughtsPositioned in subsequent passes
+ * to determine whether the reported size is stable or whether it includes a cliff that will be removed imminently (#3243). */
+export type SetSize = (args: OnResizeParams & { cliff: number }) => void
 
 /** Selects whether the context view is active for this thought. */
 const selectShowContexts = (path: SimplePath) => (state: State) => isContextViewActive(state, path)
