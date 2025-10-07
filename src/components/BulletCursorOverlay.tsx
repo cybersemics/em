@@ -1,3 +1,4 @@
+import { throttle } from 'lodash'
 import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
@@ -358,9 +359,9 @@ export default function BulletCursorOverlay({
 
   // Scroll the cursor into view after it is edited, e.g. toggling bold in a long, sorted context.
   // The cursor typically changes rank most dramatically on the first edit, and then less as its rank stabilizes.
-  const editingValue = editingValueStore.useSelector(value => value)
+  editingValueStore.useEffect(throttle(() => scrollCursorIntoView(y, height), 400))
 
-  useEffect(() => scrollCursorIntoView(y, height), [editingValue, height, y])
+  useEffect(() => scrollCursorIntoView(y, height), [height, y])
 
   return (
     <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
