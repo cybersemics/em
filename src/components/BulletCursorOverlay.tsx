@@ -27,7 +27,7 @@ type BulletCursorOverlayProps = {
   x: number
   y: number
   simplePath: SimplePath
-  singleLineHeight: number
+  height: number
   path: Path
   isTableCol1: boolean
   width?: number
@@ -310,7 +310,7 @@ export default function BulletCursorOverlay({
   x,
   y,
   simplePath,
-  singleLineHeight,
+  height,
   path,
   isTableCol1,
   width = 0,
@@ -360,7 +360,7 @@ export default function BulletCursorOverlay({
   // The cursor typically changes rank most dramatically on the first edit, and then less as its rank stabilizes.
   const editingValue = editingValueStore.useSelector(value => value)
 
-  useEffect(() => scrollCursorIntoView(y, singleLineHeight), [editingValue, singleLineHeight, y])
+  useEffect(() => scrollCursorIntoView(y, height), [editingValue, height, y])
 
   return (
     <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
