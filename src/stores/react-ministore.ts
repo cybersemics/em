@@ -9,13 +9,13 @@ const makeReactStore = <U extends Store<any>>(store: U) => {
   type T = U extends Store<infer V> ? V : never
 
   /** A hook that invokes a callback when the state changes. */
-  const useChangeEffect = (cb: (state: T) => void) =>
+  const useChangeEffect = (cb: (state: T) => void, deps: any[] = []) =>
     useEffect(
       () =>
         store.subscribe(() => {
           cb(store.getState())
         }),
-      [cb],
+      [cb, ...deps],
     )
 
   function useSelector<U>(selector: (state: T) => U): U
