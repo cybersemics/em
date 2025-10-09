@@ -174,6 +174,21 @@ const keyframes = defineKeyframes({
     '50%': { transform: 'scale3d(0.5, 0.5, 1)', opacity: 0.5, filter: 'blur(2px)' },
     '100%': { transform: 'scale3d(1, 1, 1)', opacity: 1, filter: 'blur(0)' },
   },
+  /**
+   * Faux drop animation: translate to destination and apply subtle fade/scale.
+   * Combines translate and scale in a single transform to avoid property conflicts.
+   * Uses CSS vars (--faux-dx, --faux-dy) set per-instance for dynamic positioning.
+   */
+  fauxDragToCollapsed: {
+    from: {
+      transform: 'translate(0, 0) scale(1)',
+      opacity: 1,
+    },
+    to: {
+      transform: 'translate(var(--faux-dx, 0px), var(--faux-dy, 0px)) scale(0.985)',
+      opacity: 0.98,
+    },
+  },
   bulletGrow: {
     '0%': { transform: 'scale3d(1, 1, 1)' },
     '70%': { transform: 'scale3d(1.2, 1.2, 1)' },
