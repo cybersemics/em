@@ -17,6 +17,9 @@ const useHoveringPath = (path: Path, isHovering: boolean, hoverZone: DropThought
         dispatch((dispatch, getState) => {
           const state = getState()
 
+          // If the drag has been canceled, ignore hoveringPath behavior
+          if (state.longPress === LongPressState.DragCanceled) return
+
           dispatch(
             longPress({
               value: LongPressState.DragInProgress,
