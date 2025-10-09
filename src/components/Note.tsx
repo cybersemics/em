@@ -182,7 +182,7 @@ const Note = React.memo(
         </span>
         <ContentEditable
           html={note || ''}
-          innerRef={noteRef}
+          innerRef={noteRef as React.RefObject<HTMLElement>}
           aria-label='note-editable'
           placeholder='Enter a note'
           className={css({

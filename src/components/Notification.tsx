@@ -31,7 +31,9 @@ const Notification: FC<
   return (
     <TransitionGroup
       data-testid='alert'
-      childFactory={(child: React.ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
+      childFactory={(child: React.ReactElement<{ timeout: number }>) =>
+        !isDismissed ? child : React.cloneElement(child, { timeout: 0 })
+      }
     >
       {value ? (
         <FadeTransition type='slow' onEntering={() => setIsDismissed(false)}>

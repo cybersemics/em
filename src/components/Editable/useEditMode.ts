@@ -21,7 +21,7 @@ const useEditMode = ({
 }: {
   // expect all arguments to be passed, even if undefined
   // otherwise the hook will not be able to determine all conditions
-  contentRef: React.RefObject<HTMLInputElement>
+  contentRef: React.RefObject<HTMLInputElement | null>
   isEditing: boolean
   path: Path
   style: React.CSSProperties | undefined

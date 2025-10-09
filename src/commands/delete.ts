@@ -45,7 +45,7 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
 
     // Alert which thought was deleted.
     // Only show alert for empty thought in training mode.
-    const experienceMode = getUserSetting(Settings.experienceMode)
+    const experienceMode = getUserSetting(state, Settings.experienceMode)
     if (value || !experienceMode) {
       dispatch(
         alert(deleteThoughtAlertText(state, cursor), {

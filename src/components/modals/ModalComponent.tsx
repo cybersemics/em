@@ -29,7 +29,7 @@ export type ModalProps = PropsWithChildren<{
 class ModalComponent extends React.Component<ModalProps> {
   animateAndClose: (() => void) | null = null
   onKeyDown: ((e: KeyboardEvent) => void) | null = null
-  ref: React.RefObject<HTMLDivElement>
+  ref: React.RefObject<HTMLDivElement | null>
 
   constructor(props: ModalProps) {
     super(props)

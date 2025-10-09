@@ -14,7 +14,7 @@ import viewportStore, { ViewportState } from '../../stores/viewport'
 const selectCursor = (state: State) => state.cursor
 
 /** Returns true if the element has more than one line of text. */
-const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing: boolean) => {
+const useMultiline = (contentRef: React.RefObject<HTMLElement | null>, simplePath: SimplePath, isEditing: boolean) => {
   const [multiline, setMultiline] = useState(false)
   const fontSize = useSelector(state => state.fontSize)
   // While editing, watch the current Value and trigger the layout effect
