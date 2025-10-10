@@ -65,18 +65,14 @@ const setup = async ({
   await page.goto(url)
 
   if (skipTutorial) {
-    try {
-      // wait for welcome modal to appear
-      await page.waitForSelector('#skip-tutorial')
+    // wait for welcome modal to appear
+    await page.waitForSelector('#skip-tutorial')
 
-      // click the skip tutorial link
-      await page.click('#skip-tutorial')
+    // click the skip tutorial link
+    await page.click('#skip-tutorial')
 
-      // wait for welcome modal to disappear
-      await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
-    } catch (e) {
-      console.error(e)
-    }
+    // wait for welcome modal to disappear
+    await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
   }
 }
 
