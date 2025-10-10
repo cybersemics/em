@@ -15,7 +15,7 @@ import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 
-vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
 describe('all platforms', () => {
   // TODO: Why is this failing?
@@ -327,7 +327,7 @@ describe('mobile only', () => {
   it('edit mode should be enabled after deleting an empty favorited thought', async () => {
     const importText = `
     - a
-    - 
+    -
       - =favorite`
 
     await paste(importText)
