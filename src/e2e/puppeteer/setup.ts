@@ -51,7 +51,6 @@ const setup = async ({
         break
       case 'info':
       case 'log':
-        // eslint-disable-next-line no-console
         console[messageType](text)
         break
       // ConsoleMessage 'warning needs to be converted to native console 'warn'
@@ -66,23 +65,18 @@ const setup = async ({
   await page.goto(url)
 
   if (skipTutorial) {
-    // Clear localStorage to ensure welcome modal is shown
-    await page.evaluate(() => {
-      localStorage.removeItem('welcomeComplete')
-      localStorage.removeItem('modal-to-show')
-    })
+    try {
+      // wait for welcome modal to appear
+      await page.waitForSelector('#skip-tutorial')
 
-    // Reload the page to trigger the welcome modal
-    await page.reload()
+      // click the skip tutorial link
+      await page.click('#skip-tutorial')
 
-    // wait for welcome modal to appear
-    await page.waitForSelector('#skip-tutorial')
-
-    // click the skip tutorial link
-    await page.click('#skip-tutorial')
-
-    // wait for welcome modal to disappear
-    await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
+      // wait for welcome modal to disappear
+      await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
+    } catch (e) {
+      console.error(e)
+    }
   }
 }
 
