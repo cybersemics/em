@@ -227,3 +227,19 @@ describe('all platforms', () => {
     // If the waitUntil succeeds, the expect will always pass since we just confirmed that exact condition. If waitUntil times out, we never reach the expect anyway.
   })
 })
+
+it('clicking backspace when the caret is at the end of a thought should delete a character.', async () => {
+  const importText = `
+  - first
+  - last`
+
+  await paste(importText)
+
+  const editableNodeHandle = await waitForEditable('last')
+
+  await click(editableNodeHandle, { edge: 'right' })
+  await press('Backspace')
+
+  const textContext = await getSelection().focusNode?.textContent
+  expect(textContext).toBe('las')
+})
