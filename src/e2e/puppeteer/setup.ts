@@ -66,6 +66,15 @@ const setup = async ({
   await page.goto(url)
 
   if (skipTutorial) {
+    // Clear localStorage to ensure welcome modal is shown
+    await page.evaluate(() => {
+      localStorage.removeItem('welcomeComplete')
+      localStorage.removeItem('modal-to-show')
+    })
+
+    // Reload the page to trigger the welcome modal
+    await page.reload()
+
     // wait for welcome modal to appear
     await page.waitForSelector('#skip-tutorial')
 
