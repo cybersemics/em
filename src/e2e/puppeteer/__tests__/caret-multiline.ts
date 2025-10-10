@@ -8,7 +8,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('all platforms', () => {
   // test case 1
-  it.skip('on cursorDown, the caret should move from the beginning of a cursor to the beginning of the new cursor.', async () => {
+  it('on cursorDown, the caret should move from the beginning of a cursor to the beginning of the new cursor.', async () => {
     const importText = `
     - a
       - b
