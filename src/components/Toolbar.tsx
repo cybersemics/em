@@ -270,6 +270,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           </span>
           <div
             id='toolbar'
+            data-testid='toolbar'
             ref={toolbarRef}
             className={css({
               maxWidth: '100%',
