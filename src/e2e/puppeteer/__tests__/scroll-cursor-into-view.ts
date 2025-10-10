@@ -1,3 +1,4 @@
+import { WindowEm } from '../../../initialize'
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
@@ -7,10 +8,13 @@ import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../setup'
 
+const em = window.em as WindowEm
+const MOCK_IDB_DELAY = 100
+
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('scrollCursorIntoView', () => {
-  it('should scroll cursor into view after page refresh when cursor thought is outside viewport', async () => {
+  it('should scroll cursor into view after page refresh with delayed replicateChildren', async () => {
     const importText = `
 - a
   - =pin
@@ -45,7 +49,17 @@ describe('scrollCursorIntoView', () => {
     await clickThought('t')
 
     await waitForThoughtExistInDb('t')
+
     await refresh()
+
+    // Wait for page to be ready after refresh
+    await page.waitForFunction(() => document.readyState === 'complete')
+
+    // Set test delay for IDB replication after refresh
+    // This simulates the  regression case where thoughts are loaded slowly from the database
+    await page.evaluate(value => {
+      em.testFlags.idbDelay = value
+    }, MOCK_IDB_DELAY)
 
     // Wait for the cursor to be restored to thought 't'
     await waitForEditable('t')
@@ -60,7 +74,7 @@ describe('scrollCursorIntoView', () => {
       if (!el) return false
 
       const rect = el.getBoundingClientRect()
-      const toolbarRect = document.getElementById('toolbar')?.getBoundingClientRect()
+      const toolbarRect = document.querySelector('[data-testid="toolbar"]')?.getBoundingClientRect()
       const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
 
       const viewport = {
