@@ -77,6 +77,7 @@ const TreeNode = ({
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const [isMounted, setIsMounted] = useState(true)
   // Store the on-screen index from the previous render to determine movement direction.
   const previousIndex = usePrevious<number>(index)
 
@@ -217,8 +218,8 @@ const TreeNode = ({
   const outerDivStyle = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
     // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
-    left: isLastActionSort ? x + (isSortAnimating ? sortOffset : 0) : x,
-    top: isSwap || isLastActionSort ? 'auto' : y,
+    left: isMounted ? (isLastActionSort ? x + (isSortAnimating ? sortOffset : 0) : x) : _x,
+    top: isMounted ? (isSwap || isLastActionSort ? 'auto' : y) : _y,
     // Table col1 uses its exact width since cannot extend to the right edge of the screen.
     // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
     // 1em + 10px is an eyeball measurement at font sizes 14 and 18
@@ -236,15 +237,19 @@ const TreeNode = ({
         }
       : {}
 
+  const type = isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')
+
   return (
     <FadeTransition
       id={thoughtKey}
       // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
       // Archive, delete, and uncategorize get a special dissolve animation.
       // Context view children get special disappearing text animations
-      type={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')}
+      type={type}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
+      onEnter={() => setIsMounted(true)}
+      onExit={() => setIsMounted(false)}
       unmountOnExit
     >
       <div
