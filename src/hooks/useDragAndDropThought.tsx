@@ -1,11 +1,12 @@
 import moize from 'moize'
 import { DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
 import DragThoughtZone from '../@types/DragThoughtZone'
+import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -271,15 +272,14 @@ const dragCollect = (monitor: DragSourceMonitor) => ({
 /** Collects props from the DropTarget. */
 const dropCollect = (monitor: DropTargetMonitor) => ({
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
-  // is being hovered over current thought irrespective of whether the given item is droppable
-  isBeingHoveredOver: monitor.isOver({ shallow: true }),
   isDeepHovering: monitor.isOver(),
   canDropThought: monitor.canDrop(),
 })
 
 /** A draggable and droppable Thought hook. */
-const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
+const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZone: DropThoughtZone }) => {
   const propsTypes = props as ThoughtContainerProps
+  const dispatch = useDispatch()
 
   const [{ isDragging }, dragSource, dragPreview] = useDrag({
     type: DragAndDropType.Thought,
@@ -288,11 +288,36 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
     collect: dragCollect,
   })
 
-  const [{ isHovering, isBeingHoveredOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({
+  const [{ isHovering, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
+    hover: (_, monitor) => {
+      // is being hovered over current thought irrespective of whether the given item is
+      if (!monitor.isOver({ shallow: true })) return
+
+      dispatch((dispatch, getState) => {
+        const state = getState()
+
+        // If the drag has been canceled, ignore hoveringPath behavior
+        if (
+          state.longPress === LongPressState.DragCanceled ||
+          (state.hoveringPath === props.path && state.hoverZone === props.hoverZone)
+        )
+          return
+
+        dispatch(
+          longPress({
+            value: state.longPress,
+            draggingThoughts: state.draggingThoughts,
+            hoveringPath: props.path,
+            hoverZone: props.hoverZone,
+            sourceZone: DragThoughtZone.Thoughts,
+          }),
+        )
+      })
+    },
   })
 
   // Check if this thought is part of a multiselect drag operation
@@ -306,7 +331,6 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
     dragSource,
     dragPreview,
     isHovering,
-    isBeingHoveredOver,
     isDeepHovering,
     canDropThought,
     dropTarget,

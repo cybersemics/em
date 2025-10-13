@@ -1,8 +1,10 @@
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
+import { useDispatch } from 'react-redux'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
+import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -10,6 +12,7 @@ import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
+import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setDroppedPathActionCreator as setDroppedPath } from '../actions/setDroppedPath'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
@@ -37,12 +40,12 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import { DropValidationResult } from './useDragAndDropThought'
 import useDragLeave from './useDragLeave'
-import useHoveringPath from './useHoveringPath'
 
 interface DroppableSubthoughts {
   path: Path
   simplePath?: SimplePath
   showContexts?: boolean
+  hoverZone?: DropThoughtZone
 }
 
 /** Returns true if the path is expanded. */
@@ -265,17 +268,43 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
 
 /** A draggable and droppable SubThought hook. */
 const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
-  const [{ isHovering, isBeingHoveredOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({
+  const dispatch = useDispatch()
+
+  const [{ isHovering, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(props, monitor),
     drop: (item, monitor) => drop(props, monitor),
     collect: dropCollect,
+    hover: (_, monitor) => {
+      dispatch((dispatch, getState) => {
+        // is being hovered over current thought irrespective of whether the given item is droppable
+        if (!monitor.isOver({ shallow: true })) return
+
+        const state = getState()
+
+        // If the drag has been canceled, ignore hoveringPath behavior
+        if (
+          state.longPress === LongPressState.DragCanceled ||
+          (state.hoveringPath === props.path && state.hoverZone === props.hoverZone)
+        )
+          return
+
+        dispatch(
+          longPress({
+            value: state.longPress,
+            draggingThoughts: state.draggingThoughts,
+            hoveringPath: props.path,
+            hoverZone: props.hoverZone,
+            sourceZone: DragThoughtZone.Thoughts,
+          }),
+        )
+      })
+    },
   })
 
-  useHoveringPath(props.path, isHovering, DropThoughtZone.SubthoughtsDrop)
   useDragLeave({ isDeepHovering, canDropThought })
 
-  return { isHovering, isBeingHoveredOver, isDeepHovering, dropTarget }
+  return { isHovering, isDeepHovering, dropTarget }
 }
 
 export default useDragAndDropSubThought
