@@ -73,7 +73,6 @@
   },
   "resolutions": {
     "@pandacss/node@npm:0.47.0": "patch:@pandacss/node@npm%3A0.47.0#~/.yarn/patches/@pandacss-node-npm-0.47.0.patch",
-    "page-lifecycle": "https://codeload.github.com/magic-akari/page-lifecycle/tar.gz/50b50421bdeab3d211a57e81a277f699638373b0",
     "y-indexeddb": "https://codeload.github.com/raineorshine/y-indexeddb/tar.gz/60b960009085b1a988b5064ee35703229231531f"
   },
   "workspaces": [
@@ -113,7 +112,7 @@
     "murmurhash3js": "^3.0.1",
     "nanoid": "^5.1.5",
     "openai": "^5.20.3",
-    "page-lifecycle": "^0.1.2",
+    "page-lifecycle": "git+https://github.com/magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
     "qrcode.react": "^4.2.0",
     "rc-slider": "^11.1.9",
