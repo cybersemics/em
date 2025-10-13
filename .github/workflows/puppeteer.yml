@@ -63,3 +63,10 @@ jobs:
           name: __diff_output__
           path: src/e2e/puppeteer/__tests__/__image_snapshots__/**/__diff_output__/
           if-no-files-found: ignore
+
+      - name: Upload node_modules for debugging
+        uses: actions/upload-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules/
+          if-no-files-found: ignore
