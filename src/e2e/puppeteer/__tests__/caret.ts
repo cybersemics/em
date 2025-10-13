@@ -327,7 +327,7 @@ describe('mobile only', () => {
   it('edit mode should be enabled after deleting an empty favorited thought', async () => {
     const importText = `
     - a
-    -
+    - 
       - =favorite`
 
     await paste(importText)
