@@ -44,6 +44,13 @@ jobs:
       - name: Install npm dependencies
         run: yarn
 
+      - name: Upload node_modules for debugging
+        uses: actions/upload-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules/
+          if-no-files-found: ignore
+
       - name: Start SSL proxy
         run: docker run -d --rm --add-host=host.docker.internal:host-gateway -e "PORT=3000" -p 2552:443 esplo/docker-local-ssl-termination-proxy
 
@@ -62,12 +69,4 @@ jobs:
         with:
           name: __diff_output__
           path: src/e2e/puppeteer/__tests__/__image_snapshots__/**/__diff_output__/
-          if-no-files-found: ignore
-
-      - name: Upload node_modules for debugging
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: node_modules
-          path: node_modules/
           if-no-files-found: ignore
