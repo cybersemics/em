@@ -65,6 +65,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload node_modules for debugging
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: node_modules
