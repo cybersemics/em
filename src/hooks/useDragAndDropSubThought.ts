@@ -45,7 +45,6 @@ interface DroppableSubthoughts {
   path: Path
   simplePath?: SimplePath
   showContexts?: boolean
-  hoverZone?: DropThoughtZone
 }
 
 /** Returns true if the path is expanded. */
@@ -285,7 +284,7 @@ const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
         // If the drag has been canceled, ignore hoveringPath behavior
         if (
           state.longPress === LongPressState.DragCanceled ||
-          (state.hoveringPath === props.path && state.hoverZone === props.hoverZone)
+          (state.hoveringPath === props.path && state.hoverZone === DropThoughtZone.SubthoughtsDrop)
         )
           return
 
@@ -294,7 +293,7 @@ const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
             value: state.longPress,
             draggingThoughts: state.draggingThoughts,
             hoveringPath: props.path,
-            hoverZone: props.hoverZone,
+            hoverZone: DropThoughtZone.SubthoughtsDrop,
             sourceZone: DragThoughtZone.Thoughts,
           }),
         )
