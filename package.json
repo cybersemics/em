@@ -112,7 +112,7 @@
     "murmurhash3js": "^3.0.1",
     "nanoid": "^5.1.5",
     "openai": "^5.20.3",
-    "page-lifecycle": "git+https://github.com/magic-akari/page-lifecycle#feat/add-types",
+    "page-lifecycle": "https://codeload.github.com/codebuild-ro/page-lifecycle-fork/tar.gz/d407c14451b366fa156f53053bb42ab05d60719a",
     "pluralize": "^8.0.0",
     "qrcode.react": "^4.2.0",
     "rc-slider": "^11.1.9",
