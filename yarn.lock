@@ -8887,7 +8887,7 @@ __metadata:
     nanoid: "npm:^5.1.5"
     npm-run-all2: "npm:^8.0.4"
     openai: "npm:^5.20.3"
-    page-lifecycle: "https://codeload.github.com/codebuild-ro/page-lifecycle-fork/tar.gz/d407c14451b366fa156f53053bb42ab05d60719a"
+    page-lifecycle: "npm:^0.1.2"
     pluralize: "npm:^8.0.0"
     postinstall-postinstall: "npm:^2.1.0"
     prettier: "npm:^3.6.2"
