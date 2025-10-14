@@ -53,12 +53,6 @@ jobs:
       - name: Serve
         run: yarn servebuild &
 
-      - name: Wait for server to be ready
-        run: |
-          echo "Waiting for server to start..."
-          timeout 30 bash -c 'until curl -k https://localhost:2552 >/dev/null 2>&1; do sleep 1; done'
-          echo "Server is ready!"
-
       - name: Test
         run: yarn test:puppeteer
 
