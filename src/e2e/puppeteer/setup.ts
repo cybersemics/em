@@ -65,11 +65,6 @@ const setup = async ({
 
   await page.goto(url)
 
-  // Wait for app to fully initialize
-  await page.waitForFunction(() => {
-    return typeof (window as any).em !== 'undefined' || document.querySelector('#skip-tutorial') !== null
-  }, { timeout: 30000 })
-
   if (skipTutorial) {
     // wait for welcome modal to appear
     await page.waitForSelector('#skip-tutorial')
@@ -80,9 +75,6 @@ const setup = async ({
     // wait for welcome modal to disappear
     await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
   }
-
-  // Ensure app is fully loaded before tests start
-  await page.waitForFunction(() => typeof (window as any).em !== 'undefined', { timeout: 10000 })
 }
 
 beforeEach(setup, 60000)
