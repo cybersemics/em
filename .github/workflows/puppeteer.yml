@@ -52,7 +52,6 @@ jobs:
 
       - name: Serve
         run: |
-          echo "Starting server..."
           yarn servebuild &
           SERVER_PID=$!
           echo "Server PID: $SERVER_PID"
@@ -62,12 +61,6 @@ jobs:
             exit 1
           fi
           echo "Server started successfully"
-
-      - name: Wait for server to be ready
-        run: |
-          echo "Waiting for server to respond..."
-          timeout 60 bash -c 'until curl -k https://localhost:2552 >/dev/null 2>&1; do sleep 2; done'
-          echo "Server is responding!"
 
       - name: Test
         run: yarn test:puppeteer
