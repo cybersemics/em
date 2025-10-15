@@ -9,11 +9,9 @@ import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import dropHoverColor from '../selectors/dropHoverColor'
-import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
 import equalPath from '../util/equalPath'
-import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
@@ -106,8 +104,6 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
 }
 /** Render the DropChild component if the thought is collapsed, and does not match the dragging thought. This component is an optimization to avoid calculating DropChild hooks when unnecessary. */
 const DropChildIfCollapsed = ({ depth, last, path, simplePath, cliff, isLastVisible }: DropChildProps) => {
-  const isExpanded = useSelector(state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(path)])
-
   // Check if this thought is any of the dragging thoughts (single or multiple)
   const isDraggingThisThought = useSelector(state => {
     return state.draggingThoughts.some(draggingThought => equalPath(draggingThought, simplePath))
@@ -116,7 +112,7 @@ const DropChildIfCollapsed = ({ depth, last, path, simplePath, cliff, isLastVisi
   // Do not render DropChild on expanded thoughts or on any of the dragging thoughts.
   // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
   // However, we should still allow dropping ON other thoughts when dragging multiple thoughts.
-  if (isExpanded || isDraggingThisThought) return null
+  if (isDraggingThisThought) return null
 
   return (
     <DropChild
