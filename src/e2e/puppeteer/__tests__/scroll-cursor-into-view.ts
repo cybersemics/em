@@ -9,7 +9,7 @@ import waitUntil from '../helpers/waitUntil'
 import { page } from '../setup'
 
 const em = window.em as WindowEm
-const MOCK_IDB_DELAY = 100
+const MOCK_REPLICATION_DELAY = 100
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -55,11 +55,11 @@ describe('scrollCursorIntoView', () => {
     // Wait for page to be ready after refresh
     await page.waitForFunction(() => document.readyState === 'complete')
 
-    // Set test delay for IDB replication after refresh
-    // This simulates the  regression case where thoughts are loaded slowly from the database
+    // Set test delay for data replication after refresh
+    // This simulates the regression case where thoughts are loaded slowly from the database
     await page.evaluate(value => {
-      em.testFlags.idbDelay = value
-    }, MOCK_IDB_DELAY)
+      em.testFlags.replicationDelay = value
+    }, MOCK_REPLICATION_DELAY)
 
     // Wait for the cursor to be restored to thought 't'
     await waitForEditable('t')

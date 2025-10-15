@@ -592,9 +592,9 @@ export const replicateChildren = async (
     remote?: boolean
   } = {},
 ): Promise<Thought[] | undefined> => {
-  // Inject test delay if configured (for e2e testing slow IDB loading)
-  if (!!testFlags.idbDelay) {
-    await sleep(testFlags.idbDelay)
+  // Inject test delay if configured (for e2e testing slow data loading)
+  if (!!testFlags.replicationDelay) {
+    await sleep(testFlags.replicationDelay)
   }
 
   // Only await the config promise once. Otherwise the initial call to replicateChildren for a given docKey will not set thoughtDocs synchronously, and we will lose memoization of concurrent calls.
