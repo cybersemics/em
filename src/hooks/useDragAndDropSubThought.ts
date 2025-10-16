@@ -199,7 +199,8 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
           const fromThoughtId = head(draggedItems[0].path)
           if (fromThoughtId) {
             // kick off faux animation before DOM updates
-            fauxAnimation({ fromThoughtId, toRect })
+            // pass destination thought ID so animation can track it during layout shifts
+            fauxAnimation({ fromThoughtId, toRect, toThoughtId: destinationThoughtId })
           }
         }
       }
