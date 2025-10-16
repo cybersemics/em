@@ -71,6 +71,7 @@ const startDropFauxAnimation = ({ fromPath, toRect, toPath, duration = 200, zInd
   let lastDx = dx
   let lastDy = dy
 
+  /** Update the clone's position during animation to follow the destination as it moves. */
   const updateTarget = () => {
     if (!animationActive || !destinationEl) return
 

@@ -183,7 +183,9 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     if (!isDestinationExpanded) {
       // Use hashPath for unique identification (handles context view where same thought renders multiple times)
       const destinationPath = hashPath(props.path)
-      const destinationEl = document.querySelector<HTMLElement>(`[aria-label="tree-node"][data-path="${destinationPath}"]`)
+      const destinationEl = document.querySelector<HTMLElement>(
+        `[aria-label="tree-node"][data-path="${destinationPath}"]`
+      )
 
       if (destinationEl) {
         const toRect = destinationEl.getBoundingClientRect()
