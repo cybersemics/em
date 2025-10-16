@@ -55,12 +55,35 @@ jobs:
           yarn servebuild &
           SERVER_PID=$!
           echo "Server PID: $SERVER_PID"
-          sleep 10
-          if ! kill -0 $SERVER_PID 2>/dev/null; then
-            echo "Server failed to start!"
-            exit 1
-          fi
-          echo "Server started successfully"
+
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            if ! kill -0 $SERVER_PID 2>/dev/null; then
+              echo "Server process died!"
+              exit 1
+            fi
+
+            # Test the full request path and check for 502 errors
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k https://localhost:2552 2>/dev/null || echo "000")
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Server is ready and responding with 200!"
+              break
+            elif [ "$HTTP_STATUS" = "502" ]; then
+              echo "Attempt $i/30: Server running but returning 502 (Bad Gateway) - proxy not ready"
+            elif [ "$HTTP_STATUS" = "000" ]; then
+              echo "Attempt $i/30: Server not responding yet"
+            else
+              echo "Attempt $i/30: Server responding with status $HTTP_STATUS"
+            fi
+
+            if [ $i -eq 30 ]; then
+              echo "Server failed to respond properly after 30 attempts (last status: $HTTP_STATUS)"
+              exit 1
+            fi
+
+            sleep 1
+          done
 
       - name: Test
         run: yarn test:puppeteer
