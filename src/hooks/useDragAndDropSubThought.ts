@@ -181,28 +181,17 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   if (draggedItems.length === 1) {
     const isDestinationExpanded = isPathExpanded(state, props.path)
     if (!isDestinationExpanded) {
-      const destinationThoughtId = head(props.path)
-      if (destinationThoughtId) {
-        // select by aria-label, then filter by data attribute to avoid selector injection and errors
-        const nodes = document.querySelectorAll('[aria-label="tree-node"]') as NodeListOf<HTMLElement>
-        let destinationEl: HTMLElement | null = null
-        for (let i = 0; i < nodes.length; i++) {
-          const el = nodes[i]
-          if (el.getAttribute('data-thought-id') === String(destinationThoughtId)) {
-            destinationEl = el
-            break
-          }
-        }
+      // Use hashPath for unique identification (handles context view where same thought renders multiple times)
+      const destinationPath = hashPath(props.path)
+      const destinationEl = document.querySelector<HTMLElement>(`[aria-label="tree-node"][data-path="${destinationPath}"]`)
 
-        if (destinationEl) {
-          const toRect = destinationEl.getBoundingClientRect()
-          const fromThoughtId = head(draggedItems[0].path)
-          if (fromThoughtId) {
-            // kick off faux animation before DOM updates
-            // pass destination thought ID so animation can track it during layout shifts
-            fauxAnimation({ fromThoughtId, toRect, toThoughtId: destinationThoughtId })
-          }
-        }
+      if (destinationEl) {
+        const toRect = destinationEl.getBoundingClientRect()
+        const fromPath = hashPath(draggedItems[0].path)
+
+        // kick off faux animation before DOM updates
+        // pass destination path so animation can track it during layout shifts
+        fauxAnimation({ fromPath, toRect, toPath: destinationPath })
       }
     }
   }

@@ -1,13 +1,11 @@
-import ThoughtId from '../@types/ThoughtId'
-
 /** Options for the faux drop animation. */
 type DropFauxOptions = {
-  /** The thought id of the dragged item to clone. */
-  fromThoughtId: ThoughtId
+  /** Hashed path of the dragged item to clone (from hashPath). */
+  fromPath: string
   /** Destination rectangle (in viewport coordinates) to animate to. */
   toRect: DOMRect
-  /** The thought id of the destination to track during animation (for handling layout shifts). */
-  toThoughtId?: ThoughtId
+  /** Hashed path of the destination to track during animation (for handling layout shifts). */
+  toPath?: string
   /** Duration in ms. */
   duration?: number
   /** Optional z-index for the faux clone. */
@@ -24,22 +22,15 @@ type DropFauxOptions = {
  *
  * Best-effort; silently aborts if DOM nodes cannot be found.
  */
-const startDropFauxAnimation = ({ fromThoughtId, toRect, toThoughtId, duration = 200, zIndex = 3 }: DropFauxOptions) => {
-  // find the source element rendered by TreeNode
-  const source = document.querySelector<HTMLElement>(`[aria-label="tree-node"][data-thought-id="${fromThoughtId}"]`)
+const startDropFauxAnimation = ({ fromPath, toRect, toPath, duration = 200, zIndex = 3 }: DropFauxOptions) => {
+  // find the source element rendered by TreeNode using unique path
+  const source = document.querySelector<HTMLElement>(`[aria-label="tree-node"][data-path="${fromPath}"]`)
   if (!source) return
 
-  // find the destination element to track during animation
+  // find the destination element to track during animation using unique path
   let destinationEl: HTMLElement | null = null
-  if (toThoughtId) {
-    const nodes = document.querySelectorAll('[aria-label="tree-node"]') as NodeListOf<HTMLElement>
-    for (let i = 0; i < nodes.length; i++) {
-      const el = nodes[i]
-      if (el.getAttribute('data-thought-id') === String(toThoughtId)) {
-        destinationEl = el
-        break
-      }
-    }
+  if (toPath) {
+    destinationEl = document.querySelector<HTMLElement>(`[aria-label="tree-node"][data-path="${toPath}"]`)
   }
 
   // clone the rendered element for a visual-only animation
@@ -108,16 +99,15 @@ const startDropFauxAnimation = ({ fromThoughtId, toRect, toThoughtId, duration =
       requestAnimationFrame(updateTarget)
     }
 
-    /** Remove the clone after the animation completes. */
+    /** Remove the clone after the animation completes or is cancelled. */
     const remove = () => {
       animationActive = false
       clone.removeEventListener('animationend', remove)
+      clone.removeEventListener('animationcancel', remove)
       if (clone.parentNode) clone.parentNode.removeChild(clone)
     }
     clone.addEventListener('animationend', remove)
-
-    // fallback cleanup in case animationend doesn't fire
-    window.setTimeout(remove, duration + 50)
+    clone.addEventListener('animationcancel', remove)
   })
 }
 

@@ -13,6 +13,7 @@ import usePrevious from '../hooks/usePrevious'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
@@ -265,6 +266,7 @@ const TreeNode = ({
         })}
         style={outerDivStyle}
         data-thought-id={thoughtId}
+        data-path={hashPath(path)}
       >
         <div
           className={css({
