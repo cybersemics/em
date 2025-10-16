@@ -25,11 +25,11 @@ const animateDroppedThought = ({ fromPath, toPath }: AnimateDroppedThoughtOption
   if (!zIndex) return
 
   // find the source element rendered by TreeNode using unique path
-  const source = document.querySelector<HTMLElement>(`[aria-label="tree-node"][data-path="${fromPath}"]`)
+  const source = document.querySelector<HTMLElement>(`[data-path="${fromPath}"]`)
   if (!source) return
 
   // find the destination element to animate to and track during animation
-  const destinationEl = document.querySelector<HTMLElement>(`[aria-label="tree-node"][data-path="${toPath}"]`)
+  const destinationEl = document.querySelector<HTMLElement>(`[data-path="${toPath}"]`)
   if (!destinationEl) return
 
   // get destination position
