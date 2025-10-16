@@ -23,10 +23,10 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import store from '../stores/app'
+import animateDroppedThought from '../util/animateDroppedThought'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
-import fauxAnimation from '../util/fauxAnimation'
 import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -184,16 +184,16 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
       // Use hashPath for unique identification (handles context view where same thought renders multiple times)
       const destinationPath = hashPath(props.path)
       const destinationEl = document.querySelector<HTMLElement>(
-        `[aria-label="tree-node"][data-path="${destinationPath}"]`
+        `[aria-label="tree-node"][data-path="${destinationPath}"]`,
       )
 
       if (destinationEl) {
         const toRect = destinationEl.getBoundingClientRect()
         const fromPath = hashPath(draggedItems[0].path)
 
-        // kick off faux animation before DOM updates
+        // kick off animation before DOM updates
         // pass destination path so animation can track it during layout shifts
-        fauxAnimation({ fromPath, toRect, toPath: destinationPath })
+        animateDroppedThought({ fromPath, toRect, toPath: destinationPath })
       }
     }
   }

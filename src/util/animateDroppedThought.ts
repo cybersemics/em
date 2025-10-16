@@ -1,15 +1,14 @@
-/** Options for the faux drop animation. */
-type DropFauxOptions = {
+import { token } from '../../styled-system/tokens'
+import durations from '../util/durations'
+
+/** Options for the dropped thought clone animation. */
+type AnimateDroppedThoughtOptions = {
   /** Hashed path of the dragged item to clone (from hashPath). */
   fromPath: string
   /** Destination rectangle (in viewport coordinates) to animate to. */
   toRect: DOMRect
   /** Hashed path of the destination to track during animation (for handling layout shifts). */
   toPath?: string
-  /** Duration in ms. */
-  duration?: number
-  /** Optional z-index for the faux clone. */
-  zIndex?: number
 }
 
 /**
@@ -22,7 +21,11 @@ type DropFauxOptions = {
  *
  * Best-effort; silently aborts if DOM nodes cannot be found.
  */
-const startDropFauxAnimation = ({ fromPath, toRect, toPath, duration = 200, zIndex = 3 }: DropFauxOptions) => {
+const animateDroppedThought = ({ fromPath, toRect, toPath }: AnimateDroppedThoughtOptions) => {
+  const duration = durations.get('fast')
+  const zIndex = token('zIndex.cloneDroppedThought')
+  if (!zIndex) return
+
   // find the source element rendered by TreeNode using unique path
   const source = document.querySelector<HTMLElement>(`[aria-label="tree-node"][data-path="${fromPath}"]`)
   if (!source) return
@@ -50,13 +53,18 @@ const startDropFauxAnimation = ({ fromPath, toRect, toPath, duration = 200, zInd
   clone.style.zIndex = String(zIndex)
 
   // drive translate distances with CSS variables to use keyframes
-  const dx = toRect.left - fromRect.left
+  // add 1em indent to make it clear the thought is becoming a subthought
+  const computedStyle = window.getComputedStyle(source)
+  const fontSize = parseFloat(computedStyle.fontSize)
+  const indentOffset = fontSize // 1em
+
+  const dx = toRect.left - fromRect.left + indentOffset
   const dy = toRect.top - fromRect.top
-  clone.style.setProperty('--faux-dx', `${dx}px`)
-  clone.style.setProperty('--faux-dy', `${dy}px`)
+  clone.style.setProperty('--clone-dx', `${dx}px`)
+  clone.style.setProperty('--clone-dy', `${dy}px`)
 
   // apply combined translate + fade/scale animation
-  clone.style.animationName = 'fauxDragToCollapsed'
+  clone.style.animationName = 'cloneDragToCollapsed'
   clone.style.animationDuration = `${duration}ms`
   clone.style.animationTimingFunction = 'ease-out'
   clone.style.animationFillMode = 'forwards'
@@ -81,8 +89,8 @@ const startDropFauxAnimation = ({ fromPath, toRect, toPath, duration = 200, zInd
 
     // Only update if position actually changed to avoid unnecessary style recalcs
     if (newDx !== lastDx || newDy !== lastDy) {
-      clone.style.setProperty('--faux-dx', `${newDx}px`)
-      clone.style.setProperty('--faux-dy', `${newDy}px`)
+      clone.style.setProperty('--clone-dx', `${newDx}px`)
+      clone.style.setProperty('--clone-dy', `${newDy}px`)
       lastDx = newDx
       lastDy = newDy
     }
@@ -112,4 +120,4 @@ const startDropFauxAnimation = ({ fromPath, toRect, toPath, duration = 200, zInd
   })
 }
 
-export default startDropFauxAnimation
+export default animateDroppedThought
