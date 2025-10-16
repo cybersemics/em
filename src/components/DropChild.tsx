@@ -8,8 +8,10 @@ import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import useDropHoverWidth from '../hooks/useDropHoverWidth'
+import attributeEquals from '../selectors/attributeEquals'
 import dropHoverColor from '../selectors/dropHoverColor'
 import getThoughtById from '../selectors/getThoughtById'
+import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -108,11 +110,14 @@ const DropChildIfCollapsed = ({ depth, last, path, simplePath, cliff, isLastVisi
   const isDraggingThisThought = useSelector(state => {
     return state.draggingThoughts.some(draggingThought => equalPath(draggingThought, simplePath))
   })
+  const isTableCol1 = useSelector(state =>
+    attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
+  )
 
   // Do not render DropChild on expanded thoughts or on any of the dragging thoughts.
   // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
   // However, we should still allow dropping ON other thoughts when dragging multiple thoughts.
-  if (isDraggingThisThought) return null
+  if (isDraggingThisThought || isTableCol1) return null
 
   return (
     <DropChild
