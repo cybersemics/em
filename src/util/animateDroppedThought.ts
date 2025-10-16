@@ -5,14 +5,12 @@ import durations from '../util/durations'
 type AnimateDroppedThoughtOptions = {
   /** Hashed path of the dragged item to clone (from hashPath). */
   fromPath: string
-  /** Destination rectangle (in viewport coordinates) to animate to. */
-  toRect: DOMRect
-  /** Hashed path of the destination to track during animation (for handling layout shifts). */
-  toPath?: string
+  /** Hashed path of the destination to animate to and track during animation (for handling layout shifts). */
+  toPath: string
 }
 
 /**
- * Clones the dragged thought DOM node and animates it to the destination rect.
+ * Clones the dragged thought DOM node and animates it to the destination thought.
  * Used when dropping into a collapsed destination where the original node unmounts immediately.
  *
  * Tracks the destination element's position during animation to handle layout shifts smoothly.
@@ -21,7 +19,7 @@ type AnimateDroppedThoughtOptions = {
  *
  * Best-effort; silently aborts if DOM nodes cannot be found.
  */
-const animateDroppedThought = ({ fromPath, toRect, toPath }: AnimateDroppedThoughtOptions) => {
+const animateDroppedThought = ({ fromPath, toPath }: AnimateDroppedThoughtOptions) => {
   const duration = durations.get('fast')
   const zIndex = token('zIndex.cloneDroppedThought')
   if (!zIndex) return
@@ -30,11 +28,12 @@ const animateDroppedThought = ({ fromPath, toRect, toPath }: AnimateDroppedThoug
   const source = document.querySelector<HTMLElement>(`[aria-label="tree-node"][data-path="${fromPath}"]`)
   if (!source) return
 
-  // find the destination element to track during animation using unique path
-  let destinationEl: HTMLElement | null = null
-  if (toPath) {
-    destinationEl = document.querySelector<HTMLElement>(`[aria-label="tree-node"][data-path="${toPath}"]`)
-  }
+  // find the destination element to animate to and track during animation
+  const destinationEl = document.querySelector<HTMLElement>(`[aria-label="tree-node"][data-path="${toPath}"]`)
+  if (!destinationEl) return
+
+  // get destination position
+  const toRect = destinationEl.getBoundingClientRect()
 
   // clone the rendered element for a visual-only animation
   const clone = source.cloneNode(true) as HTMLElement
@@ -81,7 +80,7 @@ const animateDroppedThought = ({ fromPath, toRect, toPath }: AnimateDroppedThoug
 
   /** Update the clone's position during animation to follow the destination as it moves. */
   const updateTarget = () => {
-    if (!animationActive || !destinationEl) return
+    if (!animationActive) return
 
     const currentDestRect = destinationEl.getBoundingClientRect()
     const newDx = currentDestRect.left - fromRect.left
@@ -104,9 +103,7 @@ const animateDroppedThought = ({ fromPath, toRect, toPath }: AnimateDroppedThoug
     clone.style.width = `${toRect.width}px`
 
     // start tracking destination position
-    if (destinationEl) {
-      requestAnimationFrame(updateTarget)
-    }
+    requestAnimationFrame(updateTarget)
 
     /** Remove the clone after the animation completes or is cancelled. */
     const remove = () => {

@@ -176,25 +176,15 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     return head(rootedParentOf(state, item.path)) !== head(rootedParentOf(state, pathTo))
   })
 
-  // If the destination is collapsed, animate a faux clone of the dragged thought to the destination thought's position.
-  // Capture DOM positions before dispatching the move to avoid layout shifts during animation.
+  // If the destination is collapsed, animate a clone of the dragged thought to the destination thought's position.
+  // Trigger animation before dispatching the move to capture positions before layout shifts.
   if (draggedItems.length === 1) {
     const isDestinationExpanded = isPathExpanded(state, props.path)
     if (!isDestinationExpanded) {
-      // Use hashPath for unique identification (handles context view where same thought renders multiple times)
-      const destinationPath = hashPath(props.path)
-      const destinationEl = document.querySelector<HTMLElement>(
-        `[aria-label="tree-node"][data-path="${destinationPath}"]`,
-      )
-
-      if (destinationEl) {
-        const toRect = destinationEl.getBoundingClientRect()
-        const fromPath = hashPath(draggedItems[0].path)
-
-        // kick off animation before DOM updates
-        // pass destination path so animation can track it during layout shifts
-        animateDroppedThought({ fromPath, toRect, toPath: destinationPath })
-      }
+      const fromPath = hashPath(draggedItems[0].path)
+      const toPath = hashPath(props.path)
+      // kick off animation before DOM updates - it will query DOM elements and handle layout shifts
+      animateDroppedThought({ fromPath, toPath })
     }
   }
 
