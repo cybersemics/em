@@ -32,6 +32,3 @@ __diff_output__
 ## PandaCSS
 styled-system
 styled-system-studio
-
-# build files from webview package
-packages/webview/.build
