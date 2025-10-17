@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import Store from '../@types/Store'
 import makeSelectorEffect from '../hooks/makeSelectorEffect'
 import ministore, { Ministore } from './ministore'
@@ -9,9 +9,14 @@ const makeReactStore = <U extends Store<any>>(store: U) => {
   type T = U extends Store<infer V> ? V : never
 
   /** A hook that invokes a callback when the state changes. */
-  const useChangeEffect = (cb: (state: T) => void) => {
-    useSyncExternalStore(store.subscribe, () => cb(store.getState()))
-  }
+  const useChangeEffect = (cb: (state: T) => void) =>
+    useEffect(
+      () =>
+        store.subscribe(() => {
+          cb(store.getState())
+        }),
+      [cb],
+    )
 
   function useSelector<U>(selector: (state: T) => U): U
   function useSelector(): T
