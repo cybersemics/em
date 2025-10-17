@@ -17,7 +17,12 @@ const useScrollCursorIntoView = (y: number, height: number) => {
   // Scroll the cursor into view after it is edited, e.g. toggling bold in a long, sorted context.
   // The cursor typically changes rank most dramatically on the first edit, and then less as its rank stabilizes.
   editingValueStore.useEffect(() => {
-    // sizeRef doesn't seem to update quickly enough to run this in the same render cycle
+    /** The hazard here is that editingValueStore.useEffect creates a closure around the provided values.
+     * Since ministore runs synchronously, it is not possible to update dependencies before the subscribers run,
+     * and it is not possible to unsubscribe/resubscribe based on new dependencies for the same reason.
+     * Since sizeRef is an object, it is possible to mutate its properties within the existing closure after
+     * React's render cycle runs and processes the effect above. That's why setTimeout is necessary here (#3083).
+     */
     setTimeout(() => throttledScrollCursorIntoView(sizeRef.current.y, sizeRef.current.height))
   })
 
