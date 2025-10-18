@@ -19,12 +19,17 @@ interface PanelCommandProps {
 
 interface ActiveButtonGlowImageProps {
   cssRaw: SystemStyleObject
+  size?: 'small' | 'medium'
 }
 
 /** Glow image for active button state. */
-const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
+const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw, size }) => (
   <img
-    src='/img/command-center/active-button-glow.webp'
+    src={
+      size === 'medium'
+        ? '/img/command-center/active-button-glow-medium.webp'
+        : '/img/command-center/active-button-glow.webp'
+    }
     className={css(
       {
         position: 'absolute',
@@ -38,7 +43,7 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
         objectPosition: 'center',
 
         background: 'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
-        filter: 'blur(23.375px)',
+        filter: 'blur(36px)',
         borderRadius: '0px',
         pointerEvents: 'none',
         scale: 0.65,
@@ -55,7 +60,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const { svg, isActive, canExecute } = command
   const isButtonExecutable = useSelector(state => !canExecute || canExecute(state))
   const commandState = useSelector(state => isActive?.(state))
-  const isButtonActive = commandState || command.id === 'favorite'
+  const isButtonActive = commandState || command.id === 'favorite' || command.id === 'swapParent'
 
   /** Handles the onClick event. Executes the command when tapped. */
   const handleTap = useCallback(
