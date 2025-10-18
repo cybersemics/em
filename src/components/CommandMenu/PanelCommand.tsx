@@ -13,7 +13,7 @@ interface PanelCommandProps {
   /** The command to execute when the button is tapped. */
   command: Command
   /** The size of the button. */
-  size?: 'small' | 'medium' | 'large' | 'xlarge'
+  size?: 'small' | 'medium'
 }
 
 /** A single button in the Panel Command Grid. */
@@ -50,25 +50,25 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       className={panelCommandRecipe({
         size,
         isButtonExecutable,
-        isButtonActive,
       })}
       {...fastClick(handleTap)}
     >
+      {isButtonActive && <div />}
       {SVG && (
         <SVG
-          style={{ justifySelf: size === 'small' ? 'center' : 'center' }}
+          style={{ justifySelf: size === 'small' ? 'center' : 'center', flex: '0 1 auto' }}
           size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
           animated={isAnimated}
           animationComplete={() => setIsAnimated(false)}
         />
       )}
-      {!command.hideTitleInPanels && (
+      {!command.hideTitleInPanels && size === 'medium' && (
         <div
           className={css({
-            fontSize: 'sm',
-            marginTop: size === 'small' ? '0.5rem' : '0',
+            fontSize: '14px',
             color: 'fg',
-            textAlign: size === 'medium' ? 'left' : 'center',
+            textAlign: 'left',
+            letterSpacing: '-2%',
           })}
         >
           {command.label}
