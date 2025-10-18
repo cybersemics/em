@@ -71,45 +71,23 @@ export default defineRecipe({
       maskComposite: 'exclude',
     },
     // Add pseudo-selector styling
-    '.panelCommandGroupRecipe > &:first-of-type': {
+    '.panelCommandGroupRecipe > div:first-of-type &, .panelCommandGroupRecipe > div:first-of-type &::after': {
       borderTopLeftRadius: 48,
       borderTopRightRadius: 24,
       borderBottomRightRadius: 24,
       borderBottomLeftRadius: 48,
-      _after: {
-        borderTopLeftRadius: 48,
-        borderTopRightRadius: 24,
-        borderBottomRightRadius: 24,
-        borderBottomLeftRadius: 48,
-      },
     },
-    '.panelCommandGroupRecipe > &:last-of-type': {
+    '.panelCommandGroupRecipe > div:last-of-type &, .panelCommandGroupRecipe > div:last-of-type &::after': {
       borderTopRightRadius: 48,
       borderTopLeftRadius: 24,
       borderBottomLeftRadius: 24,
       borderBottomRightRadius: 48,
-      _after: {
-        borderTopRightRadius: 48,
-        borderTopLeftRadius: 24,
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 48,
-      },
     },
-    '.panelCommandGroupRecipe > &:not(:first-of-type):not(:last-of-type)': {
+    '.panelCommandGroupRecipe > div:not(:first-of-type):not(:last-of-type) &': {
       borderRadius: '0',
     },
   },
   variants: {
-    size: {
-      small: {
-        gridTemplateColumns: 'auto',
-        gridColumn: 'span 1',
-      },
-      medium: {
-        gridTemplateColumns: '1fr 2fr',
-        gridColumn: 'span 2',
-      },
-    },
     isButtonExecutable: {
       true: {
         opacity: 1,
@@ -121,12 +99,10 @@ export default defineRecipe({
     },
   },
   defaultVariants: {
-    size: 'small',
     isButtonExecutable: true,
   },
   staticCss: [
     {
-      size: ['small', 'medium'],
       isButtonExecutable: ['true', 'false'],
     },
   ],

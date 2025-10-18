@@ -78,6 +78,8 @@ const colors = {
     exportTextareaColor: 'rgba(170, 170, 170, 1)', // #aaa, also used in anchorButton
     panelBorder: 'rgba(36, 36, 36, 1)',
     panelBg: 'rgba(23, 23, 23, 1)', // #171717
+    commandCenterBlue: 'rgba(106, 154, 181, 1)',
+    commandCenterPurple: 'rgba(45, 8, 126, 1)', // #2d087e
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -158,6 +160,8 @@ const colors = {
     exportTextareaColor: 'rgba(85, 85, 85, 1)',
     panelBorder: 'rgba(219, 219, 219, 1)',
     panelBg: 'rgba(232, 232, 232, 1)', // #171717
+    commandCenterBlue: 'rgba(106, 154, 181, 1)',
+    commandCenterPurple: 'rgba(45, 8, 126, 1)', // #2d087e
   },
 } as const
 

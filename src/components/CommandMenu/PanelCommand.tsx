@@ -2,6 +2,7 @@ import React, { FC, useCallback, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { panelCommandRecipe } from '../../../styled-system/recipes'
+import { SystemStyleObject } from '../../../styled-system/types'
 import Command from '../../@types/Command'
 import Icon from '../../@types/IconType'
 import { isTouch } from '../../browser'
@@ -16,6 +17,37 @@ interface PanelCommandProps {
   size?: 'small' | 'medium'
 }
 
+interface ActiveButtonGlowImageProps {
+  cssRaw: SystemStyleObject
+}
+
+/** Glow image for active button state. */
+const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
+  <img
+    src='/img/command-center/active-button-glow.webp'
+    className={css(
+      {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        right: '0',
+        bottom: '0',
+        height: '100%',
+        width: '100%',
+        objectFit: 'contain',
+        objectPosition: 'center',
+
+        background: 'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
+        filter: 'blur(23.375px)',
+        borderRadius: '0px',
+        pointerEvents: 'none',
+        scale: 0.65,
+      },
+      cssRaw,
+    )}
+  />
+)
+
 /** A single button in the Panel Command Grid. */
 const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const [isAnimated, setIsAnimated] = useState(false)
@@ -23,7 +55,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const { svg, isActive, canExecute } = command
   const isButtonExecutable = useSelector(state => !canExecute || canExecute(state))
   const commandState = useSelector(state => isActive?.(state))
-  const isButtonActive = commandState
+  const isButtonActive = commandState || command.id === 'favorite'
 
   /** Handles the onClick event. Executes the command when tapped. */
   const handleTap = useCallback(
@@ -47,33 +79,58 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
 
   return (
     <div
-      className={panelCommandRecipe({
-        size,
-        isButtonExecutable,
+      className={css({
+        position: 'relative',
+        height: '100%',
+        width: '100%',
+        ...(size === 'medium'
+          ? { gridColumn: 'span 2', gridTemplateColumns: '1fr 2fr' }
+          : { gridColumn: 'span 1', gridTemplateColumns: 'auto' }),
       })}
-      {...fastClick(handleTap)}
     >
-      {isButtonActive && <div />}
-      {SVG && (
-        <SVG
-          style={{ justifySelf: size === 'small' ? 'center' : 'center', flex: '0 1 auto' }}
-          size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
-          animated={isAnimated}
-          animationComplete={() => setIsAnimated(false)}
-        />
-      )}
-      {!command.hideTitleInPanels && size === 'medium' && (
-        <div
-          className={css({
-            fontSize: '14px',
-            color: 'fg',
-            textAlign: 'left',
-            letterSpacing: '-2%',
-          })}
-        >
-          {command.label}
+      {isButtonActive && (
+        <div>
+          <ActiveButtonGlowImage
+            cssRaw={css.raw({
+              mixBlendMode: 'luminosity',
+              opacity: 0.75,
+            })}
+          />
+          <ActiveButtonGlowImage
+            cssRaw={css.raw({
+              mixBlendMode: 'saturation',
+              opacity: 0.45,
+            })}
+          />
         </div>
       )}
+      <div
+        className={panelCommandRecipe({
+          isButtonExecutable,
+        })}
+        {...fastClick(handleTap)}
+      >
+        {SVG && (
+          <SVG
+            style={{ justifySelf: size === 'small' ? 'center' : 'center', flex: '0 1 auto' }}
+            size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
+            animated={isAnimated}
+            animationComplete={() => setIsAnimated(false)}
+          />
+        )}
+        {!command.hideTitleInPanels && size === 'medium' && (
+          <div
+            className={css({
+              fontSize: '14px',
+              color: 'fg',
+              textAlign: 'left',
+              letterSpacing: '-2%',
+            })}
+          >
+            {command.label}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
