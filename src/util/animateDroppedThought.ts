@@ -45,12 +45,7 @@ const animateDroppedThought = ({ fromPath, toPath }: AnimateDroppedThoughtOption
     const destTop = parseFloat(destinationEl.style.top) || 0
 
     // calculate translation distances
-    // add 1em indent to make it clear the thought is becoming a subthought
-    const computedStyle = window.getComputedStyle(source)
-    const fontSize = parseFloat(computedStyle.fontSize)
-    const indentOffset = fontSize // 1em
-
-    const dx = destLeft - sourceLeft + indentOffset
+    const dx = destLeft - sourceLeft
     const dy = destTop - sourceTop
 
     // position clone at source location (inherits absolute positioning)
@@ -61,7 +56,8 @@ const animateDroppedThought = ({ fromPath, toPath }: AnimateDroppedThoughtOption
     clone.style.zIndex = String(zIndex)
 
     // set CSS variables for keyframe animation
-    clone.style.setProperty('--clone-dx', `${dx}px`)
+    // add 1em indent using calc() to make it clear the thought is becoming a subthought
+    clone.style.setProperty('--clone-dx', `calc(${dx}px + 1em)`)
     clone.style.setProperty('--clone-dy', `${dy}px`)
 
     // apply animation
