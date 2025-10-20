@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
@@ -18,7 +18,7 @@ import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
-import VirtualThought, { OnResize } from './VirtualThought'
+import VirtualThought, { OnResize, SetSize } from './VirtualThought'
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
 const TreeNode = ({
@@ -65,7 +65,7 @@ const TreeNode = ({
   treeThoughtsPositioned: TreeThoughtPositioned[]
   bulletWidth: number
   cursorUncleId: string | null
-  setSize: OnResize
+  setSize: SetSize
   cliffPaddingStyle: { paddingBottom: number }
   dragInProgress: boolean
   autofocusDepth: number
@@ -206,6 +206,8 @@ const TreeNode = ({
     return () => clearTimeout(timer)
   }, [isLastActionSort, indexChanged])
 
+  const onResize: OnResize = useCallback(props => setSize({ ...props, cliff }), [cliff, setSize])
+
   // List Virtualization
   // Do not render thoughts that are below the viewport.
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
@@ -300,7 +302,7 @@ const TreeNode = ({
               indexDescendant={indexDescendant}
               isMultiColumnTable={false}
               leaf={leaf}
-              onResize={setSize}
+              onResize={onResize}
               path={path}
               prevChildId={prevChild?.id}
               showContexts={showContexts}
