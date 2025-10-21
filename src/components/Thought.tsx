@@ -239,6 +239,40 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
  * Components
  **********************************************************************/
 
+/**
+ * Thought wrapper used inside the Thought component and BulletCursorOverlay.
+ */
+export const ThoughtWrapper = ({
+  children,
+  path,
+  ariaLabel,
+  asPlaceholder = false,
+  hideBullet,
+}: {
+  children: React.ReactNode
+  path: Path
+  ariaLabel?: string
+  asPlaceholder?: boolean
+  hideBullet?: boolean
+}) => {
+  return (
+    <div
+      aria-label={ariaLabel || 'thought-container'}
+      data-testid={`${asPlaceholder ? 'placeholder-' : ''}thought-${hashPath(path)}`}
+      className={css({
+        /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
+        /* must match value used in Editable useMultiline */
+        lineHeight: '2',
+        // ensure that ThoughtAnnotation is positioned correctly
+        position: 'relative',
+        ...(hideBullet ? { marginLeft: -12 } : null),
+      })}
+    >
+      {children}
+    </div>
+  )
+}
+
 /** A thought container with bullet, thought annotation, thought, and subthoughts.
  *
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
@@ -584,18 +618,7 @@ const ThoughtContainer = ({
         />
       )}
 
-      <div
-        aria-label='thought-container'
-        data-testid={'thought-' + hashPath(path)}
-        className={css({
-          /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
-          /* must match value used in Editable useMultiline */
-          lineHeight: '2',
-          // ensure that ThoughtAnnotation is positioned correctly
-          position: 'relative',
-          ...(hideBullet ? { marginLeft: -12 } : null),
-        })}
-      >
+      <ThoughtWrapper path={path} hideBullet={hideBullet} asPlaceholder={false}>
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
           <div style={alignmentTransition.bullet}>
             <Bullet
@@ -640,7 +663,7 @@ const ThoughtContainer = ({
           />
         </div>
         <Note path={path} disabled={!isVisible} />
-      </div>
+      </ThoughtWrapper>
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
 
