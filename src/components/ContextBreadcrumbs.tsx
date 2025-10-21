@@ -160,6 +160,8 @@ const ContextBreadcrumbs = ({
   staticText,
   thoughtsLimit,
   linkCssRaw,
+  asPlaceholder = false,
+  ariaLabel,
 }: {
   charLimit?: number
   cssRaw?: SystemStyleObject
@@ -176,6 +178,8 @@ const ContextBreadcrumbs = ({
   staticText?: boolean
   thoughtsLimit?: number
   linkCssRaw?: SystemStyleObject
+  asPlaceholder?: boolean
+  ariaLabel?: string
 }) => {
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
@@ -202,17 +206,19 @@ const ContextBreadcrumbs = ({
 
   const homeIconStyle: React.CSSProperties = { position: 'relative', left: -1, top: 2 }
 
+  const label = hidden ? undefined : (ariaLabel ?? 'context-breadcrumbs')
+
   return (
     <div
-      aria-label={hidden ? undefined : 'context-breadcrumbs'}
+      aria-label={label}
       className={css(
         {
           fontSize: '0.867em',
-          color: 'gray66',
+          ...(!asPlaceholder ? { color: 'gray66' } : {}),
           marginLeft: 'calc(1.3em - 14.5px)',
           marginTop: '0.533em',
           minHeight: '1em',
-          visibility: hidden ? 'hidden' : undefined,
+          visibility: hidden || asPlaceholder ? 'hidden' : undefined,
         },
         cssRaw,
       )}

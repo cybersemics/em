@@ -1,8 +1,7 @@
 import moize from 'moize'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css, cx } from '../../styled-system/css'
-import { multilineRecipe } from '../../styled-system/recipes'
+import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -11,7 +10,6 @@ import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
-import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -26,7 +24,6 @@ import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
-import isAttribute from '../util/isAttribute'
 import isEmail from '../util/isEmail'
 import isVisibleContext from '../util/isVisibleContext'
 import parentOf from '../util/parentOf'
@@ -35,6 +32,7 @@ import resolveArray from '../util/resolveArray'
 import stripTags from '../util/stripTags'
 import FauxCaret from './FauxCaret'
 import StaticSuperscript from './StaticSuperscript'
+import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
 
@@ -150,118 +148,147 @@ const ThoughtAnnotation = React.memo(
     })
 
     return (
-      <div
-        aria-label='thought-annotation'
-        className={css({
-          position: 'absolute',
-          pointerEvents: 'none',
-          userSelect: 'none',
-          boxSizing: 'border-box',
-          width: '100%',
-          // maxWidth: '100%',
-          marginTop: '0',
-          display: 'inline-block',
-          textAlign: 'left',
-          verticalAlign: 'top',
-          whiteSpace: 'pre-wrap',
-          /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
-          maxWidth: ellipsizedUrl ? 'calc(100% - 2em)' : '100%',
-          '@media (max-width: 500px)': {
-            marginTop: { _android: '-2.1px' },
-            marginLeft: { _android: '0.5em' },
-          },
-          '@media (min-width: 560px) and (max-width: 1024px)': {
-            marginTop: { _android: '-0.1px' },
-            marginLeft: { _android: '0.5em' },
-          },
-        })}
+      <ThoughtAnnotationWrapper
+        value={value}
+        isTableCol1={isTableCol1}
+        textMarkup={textMarkup}
+        placeholder={placeholder}
+        ellipsizedUrl={ellipsizedUrl}
+        multiline={multiline}
+        cssRaw={cssRaw}
+        style={style}
+        styleAnnotation={styleAnnotation}
       >
-        <div
-          className={
-            cx(
-              multiline ? multilineRecipe() : null,
-              css({
-                ...(isAttribute(value) && {
-                  backgroundColor: 'thoughtAnnotation',
-                  fontFamily: 'monospace',
-                }),
-                display: 'inline-block',
-                maxWidth: '100%',
-                padding: '0 0.333em',
-                boxSizing: 'border-box',
-                whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
-                /*
-                  Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
-                  To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
-                */
-                margin: '-0.5px 0 0 calc(1em - 18px)',
-                paddingRight: multiline ? '1em' : '0.333em',
-                textAlign: isTableCol1 ? 'right' : 'left',
-              }),
-            )
-            // disable intrathought linking until add, edit, delete, and expansion can be implemented
-            // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
-            // .subthought-highlight {
-            //   border-bottom: solid 1px;
-            // }
-          }
-          style={{
-            ...styleAnnotation,
-            minWidth: `${MIN_CONTENT_WIDTH_EM - 0.333 - 0.333}em`, // min width of thought (3em) - 0.333em left padding - 0.333em right padding
-          }}
-        >
-          <span
-            className={css({
-              fontSize: '1.25em',
-              margin: '-0.375em 0 0 -0.05em',
-              position: 'absolute',
-            })}
-          >
-            <FauxCaret caretType='thoughtStart' />
-          </span>
-          <span
-            className={css(
-              {
-                visibility: 'hidden',
-                position: 'relative',
-                clipPath: 'inset(0.001px 0 0.1em 0)',
-                wordBreak: 'break-word',
-                ...(ellipsizedUrl && {
-                  display: 'inline-block',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  maxWidth: '100%',
-                  /*
-                    vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
-                    Here is the reference to the reason.
-                    https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
-                */
-                  verticalAlign: 'top',
-                }),
-              },
-              cssRaw,
-            )}
-            style={style}
-            dangerouslySetInnerHTML={{ __html: textMarkup || placeholder || '&ZeroWidthSpace;' }}
-          />
-          {
-            // do not render url icon on root thoughts in publish mode
-            url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
-          }
-          {email && <EmailIconLink email={email} />}
-          {
-            // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-            showSuperscript ? (
-              <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
-            ) : null
-          }
-          <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
-            <FauxCaret caretType='thoughtEnd' />
-          </span>
-        </div>
-      </div>
+        {
+          // do not render url icon on root thoughts in publish mode
+          url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
+        }
+        {email && <EmailIconLink email={email} />}
+        {
+          // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
+          showSuperscript ? (
+            <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
+          ) : null
+        }
+        <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
+          <FauxCaret caretType='thoughtEnd' />
+        </span>
+      </ThoughtAnnotationWrapper>
     )
+
+    // return (
+    //   <div
+    //     aria-label='thought-annotation'
+    //     className={css({
+    //       position: 'absolute',
+    //       pointerEvents: 'none',
+    //       userSelect: 'none',
+    //       boxSizing: 'border-box',
+    //       width: '100%',
+    //       // maxWidth: '100%',
+    //       marginTop: '0',
+    //       display: 'inline-block',
+    //       textAlign: 'left',
+    //       verticalAlign: 'top',
+    //       whiteSpace: 'pre-wrap',
+    //       /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
+    //       maxWidth: ellipsizedUrl ? 'calc(100% - 2em)' : '100%',
+    //       '@media (max-width: 500px)': {
+    //         marginTop: { _android: '-2.1px' },
+    //         marginLeft: { _android: '0.5em' },
+    //       },
+    //       '@media (min-width: 560px) and (max-width: 1024px)': {
+    //         marginTop: { _android: '-0.1px' },
+    //         marginLeft: { _android: '0.5em' },
+    //       },
+    //     })}
+    //   >
+    //     <div
+    //       className={
+    //         cx(
+    //           multiline ? multilineRecipe() : null,
+    //           css({
+    //             ...(isAttribute(value) && {
+    //               backgroundColor: 'thoughtAnnotation',
+    //               fontFamily: 'monospace',
+    //             }),
+    //             display: 'inline-block',
+    //             maxWidth: '100%',
+    //             padding: '0 0.333em',
+    //             boxSizing: 'border-box',
+    //             whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
+    //             /*
+    //               Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
+    //               To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
+    //             */
+    //             margin: '-0.5px 0 0 calc(1em - 18px)',
+    //             paddingRight: multiline ? '1em' : '0.333em',
+    //             textAlign: isTableCol1 ? 'right' : 'left',
+    //           }),
+    //         )
+    //         // disable intrathought linking until add, edit, delete, and expansion can be implemented
+    //         // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
+    //         // .subthought-highlight {
+    //         //   border-bottom: solid 1px;
+    //         // }
+    //       }
+    //       style={{
+    //         ...styleAnnotation,
+    //         minWidth: `${MIN_CONTENT_WIDTH_EM - 0.333 - 0.333}em`, // min width of thought (3em) - 0.333em left padding - 0.333em right padding
+    //       }}
+    //     >
+    //       <span
+    //         className={css({
+    //           fontSize: '1.25em',
+    //           margin: '-0.375em 0 0 -0.05em',
+    //           position: 'absolute',
+    //         })}
+    //       >
+    //         <FauxCaret caretType='thoughtStart' />
+    //       </span>
+    //       <span
+    //         className={css(
+    //           {
+    //             visibility: 'hidden',
+    //             position: 'relative',
+    //             clipPath: 'inset(0.001px 0 0.1em 0)',
+    //             wordBreak: 'break-word',
+    //             ...(ellipsizedUrl && {
+    //               display: 'inline-block',
+    //               textOverflow: 'ellipsis',
+    //               overflow: 'hidden',
+    //               whiteSpace: 'nowrap',
+    //               maxWidth: '100%',
+    //               /*
+    //                 vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
+    //                 Here is the reference to the reason.
+    //                 https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
+    //             */
+    //               verticalAlign: 'top',
+    //             }),
+    //           },
+    //           cssRaw,
+    //         )}
+    //         style={style}
+    //         dangerouslySetInnerHTML={{ __html: textMarkup || placeholder || '&ZeroWidthSpace;' }}
+    //       />
+    //       {
+    //         // do not render url icon on root thoughts in publish mode
+    //         url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
+    //       }
+    //       {email && <EmailIconLink email={email} />}
+    //       {
+    //         // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
+    //         showSuperscript ? (
+    //           <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
+    //         ) : null
+    //       }
+    //       <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
+    //         <FauxCaret caretType='thoughtEnd' />
+    //       </span>
+    //     </div>
+    //   </div>
+    // )
   },
 )
 /** Container for ThoughtAnnotation. */
