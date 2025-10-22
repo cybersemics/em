@@ -14,7 +14,6 @@ import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
-import { setDroppedPathActionCreator as setDroppedPath } from '../actions/setDroppedPath'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { HOME_TOKEN, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
@@ -229,10 +228,6 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         }),
       )
     })
-
-    // set post-drop highlight on destination parent so the pulse continues briefly at a slower rate
-    const destinationParent = rootedParentOf(getState(), getPathTo(getState(), draggedItems[0].path))
-    dispatch(setDroppedPath({ path: destinationParent }))
 
     // Clear isMulticursorExecuting after all operations are complete and isMulticursorExecuting is true
     if (getState().isMulticursorExecuting) {
