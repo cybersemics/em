@@ -1,4 +1,5 @@
 /* eslint-disable prefer-const */
+import { XYCoord } from 'react-dnd'
 
 /** THE BAD PLACE where mutable globals are defined. */
 
@@ -29,11 +30,26 @@ let freeThoughtsThreshold = 500
 /** Escape hatch to abandon imports when frozen. This is a workaround for a bug that has not been resolved. */
 let abandonImport = false
 
+/** Store the position where the last expandHoverDown action occurred in order to prevent it from firing again
+ * until the pointer position changes (#3278).
+ */
+let lastHoverDownPosition: XYCoord | null = null
+
 // check duplicate ranks within the same context for debugging
-const globals = {
+const globals: {
+  abandonImport: boolean
+  freeThoughtsThreshold: number
+  errorTimer: number
+  lastHoverDownPosition: XYCoord | null
+  offlineTimer: number
+  rendered: boolean
+  suppressExpansion: boolean
+  touching: boolean
+} = {
   abandonImport,
   freeThoughtsThreshold,
   errorTimer,
+  lastHoverDownPosition,
   offlineTimer,
   rendered,
   suppressExpansion,

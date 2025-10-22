@@ -4,6 +4,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import { AlertType, EXPAND_HOVER_DELAY, LongPressState } from '../constants'
+import globals from '../globals'
 import rootedParentOf from '../selectors/rootedParentOf'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -38,6 +39,7 @@ const expandHoverUpDebounced =
       if (state.alert?.alertType === AlertType.DeleteDropHint) return
       dispatch({ type: 'expandHoverUp', path })
       expandTopTimer = null
+      globals.lastHoverDownPosition = null
     }, EXPAND_HOVER_DELAY)
   }
 

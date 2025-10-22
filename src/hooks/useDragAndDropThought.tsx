@@ -22,6 +22,7 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import { ThoughtContainerProps } from '../components/Thought'
 import { LongPressState } from '../constants'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
@@ -39,6 +40,7 @@ import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import head from '../util/head'
+import hoverPositionHasMoved from '../util/hoverPositionHasMoved'
 import isDescendantPath from '../util/isDescendantPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isDraggedFile from '../util/isDraggedFile'
@@ -306,6 +308,12 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
           (state.hoveringPath === props.path && state.hoverZone === props.hoverZone)
         )
           return
+
+        const newHoverPosition = monitor.getClientOffset()
+        // Ignore a hover if the pointer position has not moved since the last time expandHoverDown occurred
+        if (!hoverPositionHasMoved(newHoverPosition)) return
+
+        if (newHoverPosition) globals.lastHoverDownPosition = newHoverPosition
 
         dispatch(
           longPress({
