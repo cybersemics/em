@@ -164,3 +164,27 @@ This project uses [PandaCSS](https://panda-css.com/) for styling. Styles are aut
 - If the styles get out of sync, restart the dev server or run `panda codegen`.
 
 See: https://panda-css.com/docs/concepts/writing-styles
+
+## Custom Dependencies
+
+This project uses some custom dependencies that are overridden via `resolutions` in `package.json`. The actual versions used are specified in the `resolutions` section.
+
+### Tarball URL Format
+
+GitHub tarball URLs follow this format:
+```
+https://codeload.github.com/[owner]/[repo]/tar.gz/[commit-hash]
+```
+
+Example:
+- Repository: `https://github.com/magic-akari/page-lifecycle`
+- Commit hash: `50b50421bdeab3d211a57e81a277f699638373b0`
+- Tarball URL: `https://codeload.github.com/magic-akari/page-lifecycle/tar.gz/50b50421bdeab3d211a57e81a277f699638373b0`
+
+### Updating Dependencies
+
+To update these custom dependencies:
+1. Check the source repository for new commits
+2. Get the new commit hash
+3. Update the tarball URL in the `resolutions` section of `package.json`
+4. Test thoroughly as these are custom forks
