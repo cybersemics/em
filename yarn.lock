@@ -3389,6 +3389,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@opentelemetry/api@npm:^1.4.0":
+  version: 1.9.0
+  resolution: "@opentelemetry/api@npm:1.9.0"
+  checksum: 10c0/9aae2fe6e8a3a3eeb6c1fdef78e1939cf05a0f37f8a4fae4d6bf2e09eb1e06f966ece85805626e01ba5fab48072b94f19b835449e58b6d26720ee19a58298add
+  languageName: node
+  linkType: hard
+
 "@pandacss/config@npm:0.53.7, @pandacss/config@npm:^0.53.2, @pandacss/config@npm:^0.53.7":
   version: 0.53.7
   resolution: "@pandacss/config@npm:0.53.7"
@@ -6156,7 +6163,7 @@ __metadata:
     node-fetch: "npm:2"
     openai: "npm:^4.68.4"
     pm2: "npm:^5.3.0"
-    prom-client: "npm:^14.2.0"
+    prom-client: "npm:^15.1.3"
     typescript: "npm:^4.9.4"
   languageName: unknown
   linkType: soft
@@ -16197,12 +16204,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prom-client@npm:^14.2.0":
-  version: 14.2.0
-  resolution: "prom-client@npm:14.2.0"
+"prom-client@npm:^15.1.3":
+  version: 15.1.3
+  resolution: "prom-client@npm:15.1.3"
   dependencies:
+    "@opentelemetry/api": "npm:^1.4.0"
     tdigest: "npm:^0.1.1"
-  checksum: 10c0/6d14b8700fd6e5bde0ad3b3fbc77ad8bb7031948e5990b60a7ca85ec268bc6448a4e4cda9c2669576d3ba43d58bf09ee08134f2a3d22df07e277377fbb14faeb
+  checksum: 10c0/816525572e5799a2d1d45af78512fb47d073c842dc899c446e94d17cfc343d04282a1627c488c7ca1bcd47f766446d3e49365ab7249f6d9c22c7664a5bce7021
   languageName: node
   linkType: hard
 
