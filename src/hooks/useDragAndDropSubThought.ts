@@ -17,7 +17,6 @@ import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setDroppedPathActionCreator as setDroppedPath } from '../actions/setDroppedPath'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { HOME_TOKEN, LongPressState } from '../constants'
-import globals from '../globals'
 import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -34,7 +33,6 @@ import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
-import hoverPositionHasMoved from '../util/hoverPositionHasMoved'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isDraggedFile from '../util/isDraggedFile'
@@ -290,16 +288,11 @@ const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
         )
           return
 
-        const newHoverPosition = monitor.getClientOffset()
-        // Ignore a hover if the pointer position has not moved since the last time expandHoverDown occurred
-        if (!hoverPositionHasMoved(newHoverPosition)) return
-
-        if (newHoverPosition) globals.lastHoverDownPosition = newHoverPosition
-
         dispatch(
           longPress({
             value: state.longPress,
             draggingThoughts: state.draggingThoughts,
+            hoverPosition: monitor.getClientOffset(),
             hoveringPath: props.path,
             hoverZone: DropThoughtZone.SubthoughtsDrop,
             sourceZone: DragThoughtZone.Thoughts,
