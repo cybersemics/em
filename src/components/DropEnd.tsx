@@ -16,6 +16,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
 import { compareReasonable } from '../util/compareThought'
+import dndRef from '../util/dndRef'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
@@ -120,7 +121,7 @@ const DropEnd = ({
         // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
         width: isParentTableCol1 ? undefined : dropHoverLength,
       }}
-      ref={dropTarget}
+      ref={dndRef(dropTarget)}
     >
       {testFlags.simulateDrop && (
         <span

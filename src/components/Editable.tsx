@@ -63,7 +63,7 @@ import useOnCut from './Editable/useOnCut'
 import useOnPaste from './Editable/useOnPaste'
 
 interface EditableProps {
-  editableRef?: React.RefObject<HTMLInputElement>
+  editableRef?: React.RefObject<HTMLInputElement | null>
   path: Path
   isEditing: boolean
   isVisible?: boolean

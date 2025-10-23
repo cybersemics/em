@@ -20,7 +20,7 @@ const useLongPress = (
 ) => {
   const [pressing, setPressing] = useState(false)
   const longPressState = useSelector(state => state.longPress)
-  const timerIdRef = useRef<number | undefined>()
+  const timerIdRef = useRef<number | undefined>(undefined)
   const dispatch = useDispatch()
   const dragDropManager = useDragDropManager()
 
