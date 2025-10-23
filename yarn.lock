@@ -9307,7 +9307,7 @@ __metadata:
     dompurify: "npm:^3.2.6"
     dotenv: "npm:17.2.3"
     emitter20: "npm:^2.0.0"
-    emoji-regex: "npm:^10.5.0"
+    emoji-regex: "npm:^10.6.0"
     eslint: "npm:^9.35.0"
     eslint-config-prettier: "npm:^10.1.8"
     eslint-plugin-export-default-identifier: "npm:0.3.0"
@@ -9415,10 +9415,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"emoji-regex@npm:^10.5.0":
-  version: 10.5.0
-  resolution: "emoji-regex@npm:10.5.0"
-  checksum: 10c0/17cf84335a461fc23bf90575122ace2902630dc760e53299474cd3b0b5e4cfbc6c0223a389a766817538e5d20bf0f36c67b753f27c9e705056af510b8777e312
+"emoji-regex@npm:^10.6.0":
+  version: 10.6.0
+  resolution: "emoji-regex@npm:10.6.0"
+  checksum: 10c0/1e4aa097bb007301c3b4b1913879ae27327fdc48e93eeefefe3b87e495eb33c5af155300be951b4349ff6ac084f4403dc9eff970acba7c1c572d89396a9a32d7
   languageName: node
   linkType: hard
 

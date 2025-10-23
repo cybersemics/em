@@ -98,7 +98,7 @@
     "dnd-core": "^16.0.1",
     "dompurify": "^3.2.6",
     "emitter20": "^2.0.0",
-    "emoji-regex": "^10.5.0",
+    "emoji-regex": "^10.6.0",
     "fast-json-patch": "^3.1.1",
     "fp-and-or": "^1.0.2",
     "himalaya": "^1.1.1",
