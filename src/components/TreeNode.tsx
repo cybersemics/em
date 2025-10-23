@@ -18,6 +18,7 @@ import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
+import TreeNodeWrapper from './TreeNodeWrapper'
 import VirtualThought, { OnResize, SetSize } from './VirtualThought'
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
@@ -240,6 +241,23 @@ const TreeNode = ({
       : {}
 
   const type = isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')
+  const outerTransition = isSwap
+    ? swapDirection === 'clockwise'
+      ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
+      : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
+    : isLastActionSort
+      ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveSortXLayer}'
+      : contextAnimation
+        ? 'left {durations.disappearingUpperRight} ease-out,top {durations.disappearingUpperRight} ease-out'
+        : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out'
+
+  const innerTransition = isSwap
+    ? swapDirection === 'clockwise'
+      ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
+      : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
+    : isLastActionSort
+      ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
+      : undefined
 
   return (
     <FadeTransition
@@ -254,90 +272,61 @@ const TreeNode = ({
       onExit={() => setIsMounted(false)}
       unmountOnExit
     >
-      <div
-        // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
-        // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
-        aria-label='tree-node'
-        className={css({
-          position: 'absolute',
-          transition: isSwap
-            ? swapDirection === 'clockwise'
-              ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayerClockwise}'
-              : 'left {durations.layoutNodeAnimation} {easings.nodeCurveXLayer}'
-            : isLastActionSort
-              ? 'left {durations.layoutNodeAnimation} {easings.nodeCurveSortXLayer}'
-              : contextAnimation
-                ? 'left {durations.disappearingUpperRight} ease-out,top {durations.disappearingUpperRight} ease-out'
-                : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
-        })}
-        style={outerDivStyle}
+      <TreeNodeWrapper
+        ariaLabel='tree-node'
+        isTableCol1={isTableCol1}
+        x={x}
+        y={y}
+        width={width ?? 0}
+        outerTransition={outerTransition}
+        innerTransition={innerTransition}
+        outerStyle={outerDivStyle}
+        innerStyle={innerDivStyle}
       >
-        <div
-          className={css({
-            ...(isTableCol1
-              ? {
-                  position: 'relative',
-                  width: 'auto',
-                }
-              : {
-                  position: 'absolute',
-                  width: '100%',
-                }),
-            transition: isSwap
-              ? swapDirection === 'clockwise'
-                ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
-                : 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayer}'
-              : isLastActionSort
-                ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveSortYLayer}'
-                : undefined,
-          })}
-          style={innerDivStyle}
-        >
-          <div ref={fadeThoughtRef}>
-            <VirtualThought
-              debugIndex={testFlags.simulateDrop ? indexChild : undefined}
-              depth={depth}
-              dropUncle={thoughtId === cursorUncleId}
-              env={env}
-              indexDescendant={indexDescendant}
-              isMultiColumnTable={false}
-              leaf={leaf}
-              onResize={onResize}
-              path={path}
-              prevChildId={prevChild?.id}
-              showContexts={showContexts}
-              simplePath={simplePath}
-              singleLineHeight={singleLineHeightWithCliff}
-              // Add a bit of space after a cliff to give nested lists some breathing room.
-              // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-              // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
-              style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
-              crossContextualKey={thoughtKey}
-              cliff={cliff}
-              prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
-              isLastVisible={isLastVisible}
-              autofocus={autofocus}
-              moveStyle={moveDivStyle}
-            />
-          </div>
-          {dragInProgress &&
-            // do not render hidden cliffs
-            // rough autofocus estimate
-            autofocusDepth - depth < 2 && (
-              <DropCliff
-                cliff={cliff}
-                depth={depth}
-                path={path}
-                isTableCol2={isTableCol2}
-                isLastVisible={isLastVisible}
-                prevWidth={treeThoughtsPositioned[index - 1]?.width}
-              />
-            )}
-          <span className={css({ position: 'absolute', margin: '-0.1875em 0 0 -0.05em', top: 0, left: 0 })}>
-            <FauxCaret caretType='positioned' path={path} wrapperElement={fadeThoughtRef.current} />
-          </span>
+        <div ref={fadeThoughtRef}>
+          <VirtualThought
+            debugIndex={testFlags.simulateDrop ? indexChild : undefined}
+            depth={depth}
+            dropUncle={thoughtId === cursorUncleId}
+            env={env}
+            indexDescendant={indexDescendant}
+            isMultiColumnTable={false}
+            leaf={leaf}
+            onResize={onResize}
+            path={path}
+            prevChildId={prevChild?.id}
+            showContexts={showContexts}
+            simplePath={simplePath}
+            singleLineHeight={singleLineHeightWithCliff}
+            // Add a bit of space after a cliff to give nested lists some breathing room.
+            // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+            // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
+            style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
+            crossContextualKey={thoughtKey}
+            cliff={cliff}
+            prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
+            isLastVisible={isLastVisible}
+            autofocus={autofocus}
+            moveStyle={moveDivStyle}
+          />
         </div>
-      </div>
+        {dragInProgress &&
+          // do not render hidden cliffs
+          // rough autofocus estimate
+          autofocusDepth - depth < 2 && (
+            <DropCliff
+              cliff={cliff}
+              depth={depth}
+              path={path}
+              isTableCol2={isTableCol2}
+              isLastVisible={isLastVisible}
+              prevWidth={treeThoughtsPositioned[index - 1]?.width}
+            />
+          )}
+        <span className={css({ position: 'absolute', margin: '-0.1875em 0 0 -0.05em', top: 0, left: 0 })}>
+          <FauxCaret caretType='positioned' path={path} wrapperElement={fadeThoughtRef.current} />
+        </span>
+      </TreeNodeWrapper>
     </FadeTransition>
   )
 }

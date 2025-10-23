@@ -19,7 +19,10 @@ import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import FauxCaret from './FauxCaret'
+import ContextBreadcrumbs from './ContextBreadcrumbs'
+import { ThoughtWrapper } from './Thought'
+import ThoughtAnnotation from './ThoughtAnnotationWrapper'
+import TreeNode from './TreeNodeWrapper'
 
 type BulletCursorOverlayProps = {
   x: number
@@ -140,167 +143,6 @@ function CursorOverlay({
 }
 
 /**
- * PlaceholderContextBreadcrumbs is a component that renders invisible breadcrumbs for context view.
- * Used to maintain layout consistency when context breadcrumbs are present.
- */
-function PlaceholderContextBreadcrumbs({ simplePath }: { simplePath: SimplePath }) {
-  const isHaveMultipleAncestors = simplePath.length > 2
-
-  return (
-    <div
-      aria-label='placeholder-ctx-breadcrumbs-outer-container'
-      className={css({
-        marginLeft: 'calc(1.3em - 14.5px)',
-        minHeight: '1em',
-        visibility: 'hidden',
-        marginBottom: '-0.25em', // Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note).
-        paddingTop: '0.5em', // Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought. Otherwise the accumulated y value will not be correct.
-      })}
-      style={{
-        fontSize: '0.867em',
-        marginTop: '0.533em',
-      }}
-    >
-      {isRoot(simplePath) ? null : (
-        <span
-          style={{
-            wordBreak: 'break-word',
-            textDecoration: 'none',
-            WebkitTextStrokeWidth: '0.05em',
-
-            height: '1em',
-            margin: '-0.5em',
-            padding: '0.5em',
-            ...(isHaveMultipleAncestors
-              ? {
-                  lineHeight: '16px',
-                }
-              : {}),
-          }}
-          dangerouslySetInnerHTML={{ __html: '&ZeroWidthSpace;' }}
-        ></span>
-      )}
-    </div>
-  )
-}
-
-/**
- * PlaceholderTreeNode is a component used to mimic behavior of TreeNode.
- * Any position changes from one Thought to another will be animated within this component.
- */
-function PlaceholderTreeNode({
-  children,
-  isTableCol1 = false,
-  x,
-  y,
-  width,
-}: {
-  children?: React.ReactNode
-  isTableCol1?: boolean
-  x: number
-  y: number
-  width: number
-}) {
-  const outerDivStyle = {
-    left: x,
-    top: y,
-    // Table col1 uses its exact width since cannot extend to the right edge of the screen.
-    // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
-    // 1em + 10px is an eyeball measurement at font sizes 14 and 18
-    // (Maybe the 10px is from .content padding-left?)
-    width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
-    textAlign: isTableCol1 ? ('right' as const) : undefined,
-  }
-
-  return (
-    <div
-      aria-label='placeholder-tree-node'
-      className={css({
-        transition: 'left {durations.layoutNodeAnimation} linear,top {durations.layoutNodeAnimation} ease-in-out',
-        ...(isTableCol1
-          ? {
-              position: 'relative',
-              width: 'auto',
-            }
-          : {
-              position: 'absolute',
-              width: '100%',
-            }),
-      })}
-      style={{
-        ...outerDivStyle,
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-/**
- * A placeholder component for the ThoughtAnnotation component.
- * Used to maintain consistent positioning of the cursor and bullet in normal view on iOS.
- */
-function PlaceholderThoughtAnnotation() {
-  return (
-    <div
-      aria-label='placeholder-thought-annotation-outer-container'
-      className={css({
-        opacity: 0,
-        position: 'absolute',
-        boxSizing: 'border-box',
-        width: '100%',
-        marginTop: '0',
-        display: 'inline-block',
-        verticalAlign: 'top',
-        whiteSpace: 'pre-wrap',
-        maxWidth: '100%',
-        '@media (max-width: 500px)': {
-          marginTop: { _android: '-2.1px' },
-          marginLeft: { _android: '0.5em' },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          marginTop: { _android: '-0.1px' },
-          marginLeft: { _android: '0.5em' },
-        },
-      })}
-    >
-      <div
-        aria-label='placeholder-thought-annotation-inner-container'
-        className={css({
-          display: 'inline-block',
-          maxWidth: '100%',
-          boxSizing: 'border-box',
-          paddingRight: '0.333em',
-        })}
-        style={{
-          padding: '0 0.333em',
-          margin: '-0.5px 0 0 calc(1em - 18px)',
-        }}
-      >
-        <span
-          className={css({
-            fontSize: '1.25em',
-            margin: '-0.375em 0 0 -0.05em',
-            position: 'absolute',
-          })}
-        >
-          <FauxCaret caretType='thoughtStart' />
-        </span>
-        <span
-          className={css({
-            visibility: 'hidden',
-            position: 'relative',
-            clipPath: 'inset(0.001px 0 0.1em 0)',
-            wordBreak: 'break-word',
-          })}
-          dangerouslySetInnerHTML={{ __html: '&ZeroWidthSpace;' }}
-        />
-      </div>
-    </div>
-  )
-}
-
-/**
  * BulletCursorOverlay is a component used to animate the cursor overlay from the bullet.
  * This component also contains placeholders for other components to maintain consistency of cursor overlay position.
  **/
@@ -356,25 +198,36 @@ export default function BulletCursorOverlay({
 
   useScrollCursorIntoView(y, height)
 
+  const homeContext = useSelector(state => {
+    const pathParent = rootedParentOf(state, path)
+    const showContexts = isContextViewActive(state, path)
+    return showContexts && isRoot(pathParent)
+  })
+
   return (
-    <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
-      {showContexts && simplePath?.length > 1 && <PlaceholderContextBreadcrumbs simplePath={simplePath} />}
-
-      <div
-        aria-label='placeholder-thought-container'
-        className={css({
-          /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
-          /* must match value used in Editable useMultiline */
-          lineHeight: '2',
-          // ensure that ThoughtAnnotation is positioned correctly
-          position: 'relative',
-          ...(hideBullet ? { marginLeft: -12 } : null),
-        })}
-      >
-        <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
-
-        <PlaceholderThoughtAnnotation />
-      </div>
-    </PlaceholderTreeNode>
+    <TreeNode ariaLabel='placeholder-tree-node' width={width} x={x} y={y} isTableCol1={isTableCol1} asPlaceholder>
+      {/* {showContexts && simplePath?.length > 1 && <PlaceholderContextBreadcrumbs simplePath={simplePath} />} */}
+      {showContexts && simplePath?.length > 1 && (
+        <ContextBreadcrumbs
+          ariaLabel='placeholder-ctx-breadcrumbs'
+          asPlaceholder
+          cssRaw={css.raw({
+            /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
+            marginBottom: '-0.25em',
+            /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
+            Otherwise the accumulated y value will not be correct. */
+            paddingTop: '0.5em',
+          })}
+          path={parentOf(simplePath)}
+          homeContext={homeContext}
+        />
+      )}
+      <ThoughtWrapper aria-label='placeholder-thought-container' path={path} asPlaceholder hideBullet={hideBullet}>
+        {!hideBullet && (
+          <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
+        )}
+        <ThoughtAnnotation asPlaceholder isTableCol1={isTableCol1} />
+      </ThoughtWrapper>
+    </TreeNode>
   )
 }
