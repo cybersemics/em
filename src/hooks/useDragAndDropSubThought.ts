@@ -23,6 +23,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import store from '../stores/app'
+import animateDroppedThought from '../util/animateDroppedThought'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -174,6 +175,18 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     const pathTo = getPathTo(state, item.path)
     return head(rootedParentOf(state, item.path)) !== head(rootedParentOf(state, pathTo))
   })
+
+  // If the destination is collapsed, animate a clone of the dragged thought to the destination thought's position.
+  // Trigger animation before dispatching the move to capture positions before layout shifts.
+  if (draggedItems.length === 1) {
+    const isDestinationExpanded = isPathExpanded(state, props.path)
+    if (!isDestinationExpanded) {
+      const fromPath = hashPath(draggedItems[0].path)
+      const toPath = hashPath(props.path)
+      // kick off animation before DOM updates - it will query DOM elements and handle layout shifts
+      animateDroppedThought({ fromPath, toPath })
+    }
+  }
 
   store.dispatch((dispatch, getState) => {
     /** Returns true if the thought should be dropped at the top of a collapsed parent. */
