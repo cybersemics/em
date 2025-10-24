@@ -121,7 +121,7 @@ const VirtualThought = ({
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
     delay: durations.get('layoutSlowShift'),
-    selector: autofocusNew => autofocus === 'hide' && autofocusNew === 'hide' && !!height,
+    selector: autofocusNew => autofocus.startsWith('hide') && autofocusNew.startsWith('hide') && !!height,
   })
 
   // console.info('<VirtualThought>', prettyPath(childPath))
