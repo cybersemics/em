@@ -203,9 +203,8 @@ const CommandMenu = () => {
                   <div
                     className={css({
                       position: 'absolute',
-                      border: 'none',
                       background: 'fgOverlay20',
-                      borderRadius: 46.6,
+                      borderRadius: 46,
                       mixBlendMode: 'soft-light',
                       height: '100%',
                       width: '100%',
