@@ -41,11 +41,9 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw, size })
         //     ? 'url(/img/command-center/active-button-glow-medium.webp)'
         //     : 'url(/img/command-center/active-button-glow.webp)',
         background: 'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
-        filter: 'blur(36px)',
-        // 46.75px
+        filter: 'blur(23px)',
         borderRadius: '0px',
         pointerEvents: 'none',
-        scale: 0.65,
       },
       cssRaw,
     )}
