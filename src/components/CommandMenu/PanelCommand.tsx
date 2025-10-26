@@ -24,12 +24,7 @@ interface ActiveButtonGlowImageProps {
 
 /** Glow image for active button state. */
 const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw, size }) => (
-  <img
-    src={
-      size === 'medium'
-        ? '/img/command-center/active-button-glow-medium.webp'
-        : '/img/command-center/active-button-glow.webp'
-    }
+  <div
     className={css(
       {
         position: 'absolute',
@@ -41,9 +36,13 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw, size })
         width: '100%',
         objectFit: 'contain',
         objectPosition: 'center',
-
+        // backgroundImage:
+        //   size === 'medium'
+        //     ? 'url(/img/command-center/active-button-glow-medium.webp)'
+        //     : 'url(/img/command-center/active-button-glow.webp)',
         background: 'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
         filter: 'blur(36px)',
+        // 46.75px
         borderRadius: '0px',
         pointerEvents: 'none',
         scale: 0.65,

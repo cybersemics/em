@@ -73,7 +73,6 @@ const Overlay = () => {
         className={css({
           position: 'absolute',
           pointerEvents: 'none',
-          zIndex: 'modal',
           backgroundImage: 'url(/img/command-center/overlay.webp)',
           backgroundSize: 'cover',
           backgroundPosition: 'center bottom',
@@ -105,144 +104,154 @@ const CommandMenu = () => {
 
   if (isTouch && !isTutorialOn) {
     return (
-      <>
-        <SwipeableDrawer
-          data-testid='command-menu-panel'
-          // Disable swipe to open - this removes the swipe-up-to-open functionality
-          disableSwipeToOpen={true}
-          transitionDuration={durations.get('commandMenuDrawer')}
-          // Remove the SwipeAreaProps since we don't want to enable swipe to open
-          anchor='bottom'
-          // Keep onOpen for programmatic opening
-          onOpen={onOpen}
-          // Keep onClose for swipe to dismiss
-          onClose={onClose}
-          open={showCommandMenu}
-          hideBackdrop={true}
-          disableScrollLock={true}
-          PaperProps={{
-            style: {
-              backgroundColor: 'transparent',
-              // Make sure it overrides any inline styles
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              overflow: 'visible',
-              maxHeight: '70%',
-              pointerEvents: 'auto',
-              boxShadow: 'none',
-            },
-          }}
-          ModalProps={{
-            disableAutoFocus: true,
-            disableEnforceFocus: true,
-            disableRestoreFocus: true,
-            style: {
-              pointerEvents: 'none',
-              zIndex: token('zIndex.modal'),
-              backgroundColor: 'transparent',
-            },
-          }}
+      <SwipeableDrawer
+        data-testid='command-menu-panel'
+        // Disable swipe to open - this removes the swipe-up-to-open functionality
+        disableSwipeToOpen={true}
+        transitionDuration={durations.get('commandMenuDrawer')}
+        // Remove the SwipeAreaProps since we don't want to enable swipe to open
+        anchor='bottom'
+        // Keep onOpen for programmatic opening
+        onOpen={onOpen}
+        // Keep onClose for swipe to dismiss
+        onClose={onClose}
+        open={showCommandMenu}
+        hideBackdrop={true}
+        disableScrollLock={true}
+        PaperProps={{
+          style: {
+            backgroundColor: 'transparent',
+            // Make sure it overrides any inline styles
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            overflow: 'visible',
+            maxHeight: '70%',
+            pointerEvents: 'auto',
+            boxShadow: 'none',
+          },
+        }}
+        ModalProps={{
+          disableAutoFocus: true,
+          disableEnforceFocus: true,
+          disableRestoreFocus: true,
+          style: {
+            pointerEvents: 'none',
+            zIndex: token('zIndex.modal'),
+            backgroundColor: 'transparent',
+          },
+        }}
+      >
+        <div
+          /** Progressive Blur. */
+          className={css({
+            pointerEvents: 'none',
+            position: 'absolute',
+            backdropFilter: 'blur(2px)',
+            mask: 'linear-gradient(180deg, {colors.bgTransparent} 0%, black 110px, black 100%)',
+            bottom: 0,
+            width: '100%',
+            height: 'calc(100% + 110px)',
+          })}
+        />
+        <div
+          className={css({
+            position: 'relative',
+            // prevent mix-blend-mode and backdrop-filter from affecting each other
+            isolation: 'isolate',
+          })}
         >
           <div
-            /** Progressive Blur. */
+            /** Falloff. */
             className={css({
               pointerEvents: 'none',
               position: 'absolute',
-              backdropFilter: 'blur(2px)',
-              mask: 'linear-gradient(180deg, {colors.bgTransparent} 0%, black 110px, black 100%)',
+              background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
+              paddingTop: '0.8rem',
               bottom: 0,
               width: '100%',
-              height: 'calc(100% + 110px)',
+              height: '100%',
             })}
           />
+          <Overlay />
+
           <div
             className={css({
               position: 'relative',
-              // prevent mix-blend-mode and backdrop-filter from affecting each other
-              isolation: 'isolate',
+              margin: '0 1.2rem calc(1.2rem + env(safe-area-inset-bottom)) 1.2rem',
             })}
           >
-            <Overlay />
-            <div
-              /** Falloff. */
-              className={css({
-                pointerEvents: 'none',
-                position: 'absolute',
-                background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
-                paddingTop: '0.8rem',
-                bottom: 0,
-                width: '100%',
-                height: '100%',
-              })}
-            />
-            <div
-              className={css({
-                position: 'relative',
-                zIndex: 1,
-                margin: '0 1.2rem calc(1.2rem + env(safe-area-inset-bottom)) 1.2rem',
-              })}
-            >
-              <div className={css({ marginBottom: '1rem' })}>
+            <div className={css({ marginBottom: '1rem' })}>
+              <div
+                className={css({
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                })}
+              >
+                <MultiselectMessage />
                 <div
                   className={css({
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    justifyContent: 'space-between',
-                    width: '100%',
+                    position: 'relative',
+                    fontSize: '0.85em',
+                    fontWeight: 500,
+                    letterSpacing: '-0.011em',
+                    color: 'fg',
                   })}
                 >
-                  <MultiselectMessage />
+                  <div
+                    className={css({
+                      position: 'absolute',
+                      border: 'none',
+                      background: 'fgOverlay20',
+                      borderRadius: 46.6,
+                      mixBlendMode: 'soft-light',
+                      height: '100%',
+                      width: '100%',
+                    })}
+                  />
                   <button
                     {...fastClick(onClose)}
                     className={css({
-                      cursor: 'pointer',
-                      border: 'none',
-                      color: 'fg',
-                      background: 'fgOverlay20',
-                      borderRadius: 46.6,
+                      all: 'unset',
+                      mixBlendMode: 'lighten',
+                      opacity: 0.5,
                       fontWeight: 500,
-                      letterSpacing: '-0.011em',
+                      cursor: 'pointer',
                       padding: '8px 16px',
-                      mixBlendMode: 'soft-light',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1ch',
-                      /** Button won't show without z-index. */
-                      zIndex: 'modal',
-                      fontSize: '0.85em',
                     })}
                   >
                     Done
                   </button>
                 </div>
               </div>
-              <div
-                className={css({
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gridTemplateRows: 'auto',
-                  gridAutoFlow: 'row',
-                  gap: '0.7rem',
-                  maxWidth: '100%',
-                })}
-              >
-                <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
-                <PanelCommand command={note} size='small' />
-                <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
-                <PanelCommand command={deleteCommand} size='small' />
-                <PanelCommandGroup commandSize='small' commandCount={2}>
-                  <PanelCommand command={{ ...outdent, label: '' }} size='small' />
-                  <PanelCommand command={{ ...indent, label: '' }} size='small' />
-                </PanelCommandGroup>
-                <PanelCommand command={swapParent} size='medium' />
-                <PanelCommand command={categorize} size='medium' />
-                <PanelCommand command={uncategorize} size='medium' />
-              </div>
+            </div>
+            <div
+              className={css({
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gridTemplateRows: 'auto',
+                gridAutoFlow: 'row',
+                gap: '0.7rem',
+                maxWidth: '100%',
+              })}
+            >
+              <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
+              <PanelCommand command={note} size='small' />
+              <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
+              <PanelCommand command={deleteCommand} size='small' />
+              <PanelCommandGroup commandSize='small' commandCount={2}>
+                <PanelCommand command={{ ...outdent, label: '' }} size='small' />
+                <PanelCommand command={{ ...indent, label: '' }} size='small' />
+              </PanelCommandGroup>
+              <PanelCommand command={swapParent} size='medium' />
+              <PanelCommand command={categorize} size='medium' />
+              <PanelCommand command={uncategorize} size='medium' />
             </div>
           </div>
-        </SwipeableDrawer>
-      </>
+        </div>
+      </SwipeableDrawer>
     )
   }
 }
