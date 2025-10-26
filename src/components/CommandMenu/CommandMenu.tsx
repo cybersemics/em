@@ -178,7 +178,7 @@ const CommandMenu = () => {
           <div
             className={css({
               position: 'relative',
-              margin: '0 1.2rem calc(1.2rem + env(safe-area-inset-bottom)) 1.2rem',
+              margin: '0 1.9rem calc(1.9rem + env(safe-area-inset-bottom)) 1.9rem',
             })}
           >
             <div className={css({ marginBottom: '1rem' })}>
