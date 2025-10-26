@@ -3,10 +3,10 @@ import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
-import screenshot from '../helpers/drag-and-drop-screenshot'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
+import screenshot from '../helpers/screenshot-with-no-antialiasing'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../setup'
@@ -83,7 +83,7 @@ describe('drag', () => {
 
     await dragAndDropThought('a', null, { position: 'none', showAlert: true })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -97,7 +97,7 @@ describe('drag', () => {
 
     await dragAndDropThought('a', 'd', { position: 'after' })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -111,7 +111,7 @@ describe('drag', () => {
 
     await dragAndDropThought('a', 'b', { position: 'child' })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -127,7 +127,7 @@ describe('drag', () => {
 
     await dragAndDropThought('x', 'c', { position: 'after' })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -145,7 +145,7 @@ describe('drag', () => {
     await clickThought('c')
     await dragAndDropThought('c', 'e', { position: 'before', dropUncle: true })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot({
       customDiffConfig: {
         threshold: UNCLE_DIFF_THRESHOLD,
@@ -170,7 +170,7 @@ describe('drag', () => {
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'after', dropUncle: true })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -191,7 +191,7 @@ describe('drag', () => {
     await clickThought('x')
     await dragAndDropThought('x', 'c', { position: 'after' })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -212,7 +212,7 @@ describe('drag', () => {
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'after' })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -235,7 +235,7 @@ describe('drag', () => {
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'before' })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -255,7 +255,7 @@ describe('drag', () => {
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'before' })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -276,7 +276,7 @@ describe('drag', () => {
     await clickThought('b')
     await dragAndDropThought('e', 'f', { position: 'after' })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -291,7 +291,7 @@ describe('drag', () => {
 
     await dragAndDropThought('b', 'c', { position: 'after' })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -314,7 +314,7 @@ describe('drag', () => {
       showAlert: true,
     })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -334,7 +334,7 @@ describe('drag', () => {
 
     await dragAndDropThought('x', 'e', { position: 'before' })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 })
@@ -356,7 +356,7 @@ describe('drop', () => {
 
     await dragAndDropThought('a', 'd', { position: 'after', mouseUp: true })
 
-    const image = await screenshot()
+    const image = await screenshot({ hardwareAcceleration: false })
     expect(image).toMatchImageSnapshot()
   })
 
@@ -370,7 +370,7 @@ describe('drop', () => {
         - d
       `)
 
-      const image = await screenshot()
+      const image = await screenshot({ hardwareAcceleration: false })
       expect(image).toMatchImageSnapshot()
     })
 
@@ -384,7 +384,7 @@ describe('drop', () => {
 
       await dragAndDropThought('c', 'c', { position: 'after' })
 
-      const image = await screenshot()
+      const image = await screenshot({ hardwareAcceleration: false })
       expect(image).toMatchImageSnapshot()
     })
 
@@ -402,7 +402,7 @@ describe('drop', () => {
       await clickThought('b')
       await clickThought('c')
 
-      const image = await screenshot()
+      const image = await screenshot({ hardwareAcceleration: false })
       expect(image).toMatchImageSnapshot({
         customDiffConfig: {
           threshold: UNCLE_DIFF_THRESHOLD,
