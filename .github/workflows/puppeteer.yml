@@ -42,7 +42,7 @@ jobs:
           node-version: 20
 
       - name: Install npm dependencies
-        run: rm -rf node_modules && yarn
+        run: yarn
 
       - name: Start SSL proxy
         run: docker run -d --rm --add-host=host.docker.internal:host-gateway -e "PORT=3000" -p 2552:443 esplo/docker-local-ssl-termination-proxy
