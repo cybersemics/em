@@ -2,7 +2,6 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
-import { isSafari } from '../browser'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -13,7 +12,6 @@ import head from '../util/head'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
-import { keyboardOpenActionCreator as keyboardOpen } from './keyboardOpen'
 import setCursor from './setCursor'
 
 /** Swaps the current cursor's thought with its parent by moving nodes. */
@@ -97,13 +95,7 @@ const swapParent = (state: State): State => {
 }
 
 /** Action-creator for swapParent. */
-export const swapParentActionCreator = (): Thunk => (dispatch, getState) => {
-  const isKeyboardOpen = getState().isKeyboardOpen
-  if (isSafari() && isKeyboardOpen) {
-    // Temporarily hide the keyboard/caret during swap to avoid Safari animation interruption
-    dispatch(keyboardOpen({ value: false }))
-  }
-
+export const swapParentActionCreator = (): Thunk => dispatch => {
   dispatch({ type: 'swapParent' })
 }
 
