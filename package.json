@@ -173,7 +173,7 @@
     "@types/jest-image-snapshot": "^6.4.0",
     "@types/lodash": "^4.17.20",
     "@types/murmurhash3js": "^3.0.7",
-    "@types/node": "^22.18.0",
+    "@types/node": "^24.9.1",
     "@types/pluralize": "0.0.33",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
