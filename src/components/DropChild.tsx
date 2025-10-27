@@ -12,6 +12,7 @@ import dropHoverColor from '../selectors/dropHoverColor'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
+import dndRef from '../util/dndRef'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -62,7 +63,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
             paddingBottom: '1em',
           }),
         )}
-        ref={dropTarget}
+        ref={dndRef(dropTarget)}
         style={{
           height: `${0.5 + dropTargetHeight}em`,
           // Adjust position to compensate for cliff padding on parent thought

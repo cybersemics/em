@@ -13,7 +13,7 @@ const useCachedThoughtHtml = ({
   elementRef,
 }: {
   thought: Thought | undefined
-  elementRef: React.RefObject<HTMLDivElement>
+  elementRef: React.RefObject<HTMLDivElement | null>
 }) => {
   // Cache the DOM before it is deleted
   const cachedHTMLRef = useRef<string | null>(null)
