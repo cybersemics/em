@@ -9,6 +9,7 @@ import preventAutoscroll from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
+import durations from '../../util/durations'
 import equalPath from '../../util/equalPath'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
@@ -90,7 +91,13 @@ const useEditMode = ({
           if (!selection.isThought()) {
             asyncFocus()
           }
-          requestAnimationFrame(setSelectionToCursorOffset)
+          if (store.getState().lastUndoableActionType === 'swapParent') {
+            setTimeout(() => {
+              setSelectionToCursorOffset()
+            }, durations.get('layoutNodeAnimation'))
+          } else {
+            requestAnimationFrame(setSelectionToCursorOffset)
+          }
         } else {
           setSelectionToCursorOffset()
         }
