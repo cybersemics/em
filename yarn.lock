@@ -3720,7 +3720,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pandacss/eslint-plugin@npm:latest":
+"@pandacss/eslint-plugin@npm:^0.2.14":
   version: 0.2.14
   resolution: "@pandacss/eslint-plugin@npm:0.2.14"
   dependencies:
@@ -9287,7 +9287,7 @@ __metadata:
     "@emotion/styled": "npm:^11.14.1"
     "@mui/material": "npm:^7.3.2"
     "@pandacss/dev": "npm:^1.3.0"
-    "@pandacss/eslint-plugin": "npm:latest"
+    "@pandacss/eslint-plugin": "npm:^0.2.14"
     "@redux-devtools/extension": "npm:^3.3.0"
     "@sinonjs/fake-timers": "npm:^15.0.0"
     "@stylistic/eslint-plugin": "npm:^5.5.0"
@@ -9341,8 +9341,8 @@ __metadata:
     eslint-plugin-prettier: "npm:^5.5.4"
     eslint-plugin-promise: "npm:^7.2.1"
     eslint-plugin-react: "npm:^7.37.5"
-    eslint-plugin-react-hooks: "npm:latest"
-    eslint-plugin-react-refresh: "npm:latest"
+    eslint-plugin-react-hooks: "npm:^7.0.1"
+    eslint-plugin-react-refresh: "npm:^0.4.24"
     fake-indexeddb: "npm:^6.2.4"
     fast-json-patch: "npm:^3.1.1"
     fp-and-or: "npm:^1.0.2"
@@ -9384,7 +9384,7 @@ __metadata:
     react-dom: "npm:^19.1.1"
     react-error-boundary: "npm:^6.0.0"
     react-gravatar: "npm:^2.6.3"
-    react-native-web: "npm:latest"
+    react-native-web: "npm:^0.21.2"
     react-redux: "npm:^9.2.0"
     react-signature-pad-wrapper: "npm:^4.2.0"
     react-transition-group: "npm:^4.4.5"
@@ -10246,7 +10246,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react-hooks@npm:latest":
+"eslint-plugin-react-hooks@npm:^7.0.1":
   version: 7.0.1
   resolution: "eslint-plugin-react-hooks@npm:7.0.1"
   dependencies:
@@ -10261,7 +10261,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react-refresh@npm:latest":
+"eslint-plugin-react-refresh@npm:^0.4.24":
   version: 0.4.24
   resolution: "eslint-plugin-react-refresh@npm:0.4.24"
   peerDependencies:
@@ -17464,7 +17464,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-web@npm:latest":
+"react-native-web@npm:^0.21.2":
   version: 0.21.2
   resolution: "react-native-web@npm:0.21.2"
   dependencies:
