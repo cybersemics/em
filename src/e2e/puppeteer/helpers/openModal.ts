@@ -11,20 +11,15 @@ const openModal = async (id: ModalType): Promise<void> => {
     em.store.dispatch({ type: 'showModal', id })
   }, id)
 
-  // Wait for modal content to be visible
-  await page.waitForSelector('[aria-label="modal-content"]', { visible: true })
-
   // Wait for any loading indicators to disappear
   // This checks if a "Loading" text is present within the modal and waits for it to be removed
   await waitUntil(() => {
     const modalContent = document.querySelector('[aria-label="modal-content"]')
     if (!modalContent) return false
 
-    // Check if there's any element within the modal containing "Loading" text
-    const textContent = modalContent.textContent || ''
+    const textContent = modalContent.textContent
     const hasLoading = textContent.includes('Loading')
 
-    // Return true when loading is gone (modal is ready)
     return !hasLoading
   })
 }
