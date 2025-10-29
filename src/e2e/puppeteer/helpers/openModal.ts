@@ -12,15 +12,14 @@ const openModal = async (id: ModalType): Promise<void> => {
   }, id)
 
   // Wait for any loading indicators to disappear
-  // This checks if a "Loading" text is present within the modal and waits for it to be removed
+  // Check for elements with data-loading-indicator attribute (LoadingEllipsis component)
   await waitUntil(() => {
     const modalContent = document.querySelector('[aria-label="modal-content"]')
     if (!modalContent) return false
 
-    const textContent = modalContent.textContent
-    const hasLoading = textContent.includes('Loading')
+    const hasLoadingIndicator = modalContent.querySelector('[data-loading-indicator]') !== null
 
-    return !hasLoading
+    return !hasLoadingIndicator
   })
 }
 
