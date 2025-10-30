@@ -13,6 +13,7 @@ import dropHoverColor from '../selectors/dropHoverColor'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
+import dndRef from '../util/dndRef'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import strip from '../util/strip'
@@ -59,7 +60,7 @@ const DropUncle = ({
         }),
       )}
       style={{ width: dropHoverLength, height: `${1.9 + dropTargetHeight}em` }}
-      ref={dropTarget}
+      ref={dndRef(dropTarget)}
     >
       {testFlags.simulateDrop && (
         <span

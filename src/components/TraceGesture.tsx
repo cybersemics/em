@@ -13,7 +13,7 @@ import isInGestureZone from '../util/isInGestureZone'
 interface TraceGestureProps {
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
   // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
-  eventNodeRef?: React.RefObject<HTMLElement>
+  eventNodeRef?: React.RefObject<HTMLElement | null>
 }
 
 type SignaturePadEventType = 'beginStroke' | 'endStroke' | 'beforeUpdateStroke' | 'afterUpdateStroke'
