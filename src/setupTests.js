@@ -22,6 +22,7 @@ document.execCommand = () => {
 }
 
 const ResizeObserverMock = vi.fn(
+  // eslint-disable-next-line jsdoc/require-jsdoc
   class {
     observe = vi.fn()
     unobserve = vi.fn()
