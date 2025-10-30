@@ -17,6 +17,8 @@ interface Params {
  * Initializes the store. Defaults to clearing the store and skipping the tutorial.
  */
 const initStore = ({ persist, allowTutorial }: Params = {}) => {
+  vi.useFakeTimers()
+
   if (!persist) store.dispatch(clear())
 
   if (!allowTutorial) {
