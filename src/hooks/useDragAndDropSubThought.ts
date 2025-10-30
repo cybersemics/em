@@ -289,9 +289,6 @@ const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
     collect: dropCollect,
     hover: (_, monitor) => {
       dispatch((dispatch, getState) => {
-        // is being hovered over current thought irrespective of whether the given item is droppable
-        if (!monitor.isOver({ shallow: true })) return
-
         const state = getState()
 
         // If the drag has been canceled, ignore hoveringPath behavior
