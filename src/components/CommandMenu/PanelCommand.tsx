@@ -23,7 +23,7 @@ interface ActiveButtonGlowImageProps {
 }
 
 /** Glow image for active button state. */
-const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw, size }) => (
+const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
   <div
     className={css(
       {
@@ -36,10 +36,6 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw, size })
         width: '100%',
         objectFit: 'contain',
         objectPosition: 'center',
-        // backgroundImage:
-        //   size === 'medium'
-        //     ? 'url(/img/command-center/active-button-glow-medium.webp)'
-        //     : 'url(/img/command-center/active-button-glow.webp)',
         background:
           'linear-gradient(180deg in oklch, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
         filter: 'blur(23px)',
@@ -57,8 +53,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
 
   const { svg, isActive, canExecute } = command
   const isButtonExecutable = useSelector(state => !canExecute || canExecute(state))
-  const commandState = useSelector(state => isActive?.(state))
-  const isButtonActive = commandState || command.id === 'favorite' || command.id === 'swapParent'
+  const isButtonActive = useSelector(state => isActive?.(state))
 
   /** Handles the onClick event. Executes the command when tapped. */
   const handleTap = useCallback(
