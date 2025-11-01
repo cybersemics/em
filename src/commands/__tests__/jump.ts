@@ -12,12 +12,9 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import head from '../../util/head'
 
 /**
- * Use fake timers to ensure that cursor scrolling helpers complete.
+ * Use fake timers inside initStore function to ensure that cursor scrolling helpers complete.
  */
-beforeEach(() => {
-  vi.useFakeTimers()
-  initStore()
-})
+beforeEach(initStore)
 afterEach(vi.useRealTimers)
 
 describe('jump history', () => {

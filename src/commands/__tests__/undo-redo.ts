@@ -51,8 +51,6 @@ describe('undo persistence', () => {
     // clear and call initialize again to reload from local db (simulating page refresh)
     store.dispatch(clear())
 
-    // Use fake timers here to ensure that the store operations run after loading into the db
-    vi.useFakeTimers()
     await initialize()
     await vi.runAllTimersAsync()
 

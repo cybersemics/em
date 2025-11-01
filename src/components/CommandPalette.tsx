@@ -354,7 +354,9 @@ const CommandPaletteWithTransition: FC = () => {
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
     <TransitionGroup
-      childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
+      childFactory={(child: ReactElement<{ timeout: number }>) =>
+        !isDismissed ? child : React.cloneElement(child, { timeout: 0 })
+      }
     >
       {showCommandPalette ? (
         <FadeTransition
