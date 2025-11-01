@@ -36,10 +36,7 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
         width: '100%',
         objectFit: 'contain',
         objectPosition: 'center',
-        background: [
-          'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
-          'linear-gradient(180deg in oklch, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
-        ],
+        backgroundGradient: 'activeGlow',
         filter: 'blur(23px)',
         borderRadius: '0px',
         pointerEvents: 'none',

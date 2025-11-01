@@ -330,6 +330,16 @@ const globalCss = defineGlobalStyles({
     content: 'attr(placeholder)',
     cursor: 'text',
   },
+  ':root': {
+    '--active-glow-gradient':
+      'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
+  },
+  '@supports (background-image: linear-gradient(180deg in oklch, #000))': {
+    ':root': {
+      '--active-glow-gradient':
+        'linear-gradient(180deg in oklch, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
+    },
+  },
 })
 
 export default defineConfig({
@@ -465,6 +475,11 @@ export default defineConfig({
           },
         },
         durations,
+        gradients: {
+          activeGlow: {
+            value: 'var(--active-glow-gradient)',
+          },
+        },
       },
     },
   },
