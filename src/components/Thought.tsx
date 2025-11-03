@@ -258,7 +258,7 @@ export const ThoughtWrapper = ({
 }) => {
   return (
     <div
-      aria-label={'thought-container'}
+      aria-label={cursorOverlay ? 'cursor-overlay-thought-wrapper' : 'thought-container'}
       data-testid={cursorOverlay ? 'cursor-overlay-thought-wrapper' : 'thought-' + hashPath(path)}
       className={css({
         /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
