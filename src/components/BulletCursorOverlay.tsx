@@ -20,7 +20,7 @@ import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import FauxCaret from './FauxCaret'
-import { ThoughtWrapper } from './Thought'
+import ThoughtWrapper from './ThoughtWrapper'
 
 type BulletCursorOverlayProps = {
   x: number

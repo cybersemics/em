@@ -41,7 +41,6 @@ import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import getBulletWidth from '../util/getBulletWidth'
-import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
@@ -56,6 +55,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DropHover from './DropHover'
 import Note from './Note'
 import StaticThought from './StaticThought'
+import ThoughtWrapper from './ThoughtWrapper'
 
 /**********************************************************************
  * Redux
@@ -239,40 +239,6 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
 /**********************************************************************
  * Components
  **********************************************************************/
-
-/**
- * A wrapper used inside the Thought component and BulletCursorOverlay.
- * In BulletCursorOverlay, it’s used to maintain the height of the thought,
- * which helps determine the cursor overlay’s position.
- */
-export const ThoughtWrapper = ({
-  children,
-  path,
-  hideBullet,
-  cursorOverlay,
-}: {
-  children: React.ReactNode
-  path: Path
-  hideBullet?: boolean
-  cursorOverlay?: boolean
-}) => {
-  return (
-    <div
-      aria-label={cursorOverlay ? 'cursor-overlay-thought-wrapper' : 'thought-container'}
-      data-testid={cursorOverlay ? 'cursor-overlay-thought-wrapper' : 'thought-' + hashPath(path)}
-      className={css({
-        /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
-        /* must match value used in Editable useMultiline */
-        lineHeight: '2',
-        // ensure that ThoughtAnnotation is positioned correctly
-        position: 'relative',
-        ...(hideBullet ? { marginLeft: -12 } : null),
-      })}
-    >
-      {children}
-    </div>
-  )
-}
 
 /** A thought container with bullet, thought annotation, thought, and subthoughts.
  *
