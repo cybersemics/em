@@ -29,6 +29,7 @@ import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
 import validateRoam from '../util/validateRoam'
+import editableRender from './editableRender'
 import newThought from './newThought'
 import uncategorize from './uncategorize'
 
@@ -118,6 +119,10 @@ const importText = (
     const offset = caretPosition + getTextContentFromHTML(text).length
 
     return reducerFlow([
+      // Force the editable to re-render in order to trigger setSelectionToCursorOffset in useEditMode and restore the caret.
+      // Otherwise on paste, innerHTML will be modified directly and the caret will move to the beginning of the thought due to default browser behavior.
+      // See: https://github.com/cybersemics/em/issues/3277#issuecomment-3470718557
+      editableRender,
       editThought({
         oldValue: destValue,
         newValue,
