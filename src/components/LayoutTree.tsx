@@ -43,7 +43,7 @@ const useSingleLineHeight = (sizes: Index<{ height: number; width?: number; isVi
   const singleLineHeight = useMemo(() => {
     // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
     // If estimatedHeight is off, then totalHeight will fluctuate as actual sizes are saved (due to estimatedHeight differing from the actual single-line height).
-    const estimatedHeight = fontSize * 2 - 2
+    const estimatedHeight = fontSize * 2
 
     const singleLineHeightMeasured = Object.values(sizes).find(
       // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different sizes.
