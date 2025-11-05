@@ -45,6 +45,7 @@ import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
+import throttleByMousePosition from '../util/throttleByMousePosition'
 
 export type DropValidationResult = {
   isValid: boolean
@@ -293,32 +294,32 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     canDrop: (item, monitor) => canDrop(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
-    hover: (_, monitor) => {
-      // is being hovered over current thought irrespective of whether the given item is
-      if (!monitor.isOver({ shallow: true })) return
+    hover: (_, monitor) =>
+      throttleByMousePosition(() => {
+        // is being hovered over current thought irrespective of whether the given item is
+        if (!monitor.isOver({ shallow: true })) return
 
-      dispatch((dispatch, getState) => {
-        const state = getState()
+        dispatch((dispatch, getState) => {
+          const state = getState()
 
-        // If the drag has been canceled, ignore hoveringPath behavior
-        if (
-          state.longPress === LongPressState.DragCanceled ||
-          (state.hoveringPath === props.path && state.hoverZone === props.hoverZone)
-        )
-          return
+          // If the drag has been canceled, ignore hoveringPath behavior
+          if (
+            state.longPress === LongPressState.DragCanceled ||
+            (state.hoveringPath === props.path && state.hoverZone === props.hoverZone)
+          )
+            return
 
-        dispatch(
-          longPress({
-            value: state.longPress,
-            draggingThoughts: state.draggingThoughts,
-            hoverPosition: monitor.getClientOffset(),
-            hoveringPath: props.path,
-            hoverZone: props.hoverZone,
-            sourceZone: DragThoughtZone.Thoughts,
-          }),
-        )
-      })
-    },
+          dispatch(
+            longPress({
+              value: state.longPress,
+              draggingThoughts: state.draggingThoughts,
+              hoveringPath: props.path,
+              hoverZone: props.hoverZone,
+              sourceZone: DragThoughtZone.Thoughts,
+            }),
+          )
+        })
+      }, monitor.getClientOffset()),
   })
 
   // Check if this thought is part of a multiselect drag operation

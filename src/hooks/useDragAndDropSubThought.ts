@@ -39,6 +39,7 @@ import isDivider from '../util/isDivider'
 import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
+import throttleByMousePosition from '../util/throttleByMousePosition'
 import { DropValidationResult } from './useDragAndDropThought'
 import useDragLeave from './useDragLeave'
 
@@ -287,29 +288,29 @@ const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
     canDrop: (item, monitor) => canDrop(props, monitor),
     drop: (item, monitor) => drop(props, monitor),
     collect: dropCollect,
-    hover: (_, monitor) => {
-      dispatch((dispatch, getState) => {
-        const state = getState()
+    hover: (_, monitor) =>
+      throttleByMousePosition(() => {
+        dispatch((dispatch, getState) => {
+          const state = getState()
 
-        // If the drag has been canceled, ignore hoveringPath behavior
-        if (
-          state.longPress === LongPressState.DragCanceled ||
-          (state.hoveringPath === props.path && state.hoverZone === DropThoughtZone.SubthoughtsDrop)
-        )
-          return
+          // If the drag has been canceled, ignore hoveringPath behavior
+          if (
+            state.longPress === LongPressState.DragCanceled ||
+            (state.hoveringPath === props.path && state.hoverZone === DropThoughtZone.SubthoughtsDrop)
+          )
+            return
 
-        dispatch(
-          longPress({
-            value: state.longPress,
-            draggingThoughts: state.draggingThoughts,
-            hoverPosition: monitor.getClientOffset(),
-            hoveringPath: props.path,
-            hoverZone: DropThoughtZone.SubthoughtsDrop,
-            sourceZone: DragThoughtZone.Thoughts,
-          }),
-        )
-      })
-    },
+          dispatch(
+            longPress({
+              value: state.longPress,
+              draggingThoughts: state.draggingThoughts,
+              hoveringPath: props.path,
+              hoverZone: DropThoughtZone.SubthoughtsDrop,
+              sourceZone: DragThoughtZone.Thoughts,
+            }),
+          )
+        })
+      }, monitor.getClientOffset()),
   })
 
   useDragLeave({ isDeepHovering, canDropThought })

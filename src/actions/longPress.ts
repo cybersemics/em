@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { XYCoord } from 'react-dnd'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
@@ -32,8 +31,6 @@ interface DragInProgressPayload {
   value: LongPressState.DragInProgress
   // Sets state.draggingThoughts. Either hoveringPath or file must be set if value is true.
   draggingThoughts?: SimplePath[]
-  // Get the pointer position so that subsequent dispatches can be ignored unless the pointer has moved.
-  hoverPosition?: XYCoord | null
   hoveringPath?: Path
   hoverZone?: DropThoughtZone
   // Sets state.draggingFile. Either hoveringPath or file must be set if value is true.
@@ -56,19 +53,6 @@ const longPressInactiveState = {
   hoverZone: undefined,
   simplePath: undefined,
 }
-
-/** Store the position where the last expandHoverDown action occurred in order to prevent it from firing again
- * until the pointer position changes (#3278).
- */
-let lastHoverDownPosition: XYCoord | null = null
-
-/** Compare the new hover position against the global lastHoverDownPosition to determine if the pointer has moved. */
-const hoverPositionHasMoved = (newHoverPosition: { x: number; y: number } | null) =>
-  !newHoverPosition ||
-  !lastHoverDownPosition ||
-  // There does seem to be a little bit of slop in the coordinates returned by monitor.getClientOffset()
-  Math.abs(newHoverPosition.x - lastHoverDownPosition.x) > 5 ||
-  Math.abs(newHoverPosition.y - lastHoverDownPosition.y) > 5
 
 /** Reducer for managing the state of a long press. */
 const longPress = (state: State, payload: Payload) => {
@@ -150,11 +134,6 @@ export const longPressActionCreator =
 
     switch (value) {
       case LongPressState.DragInProgress:
-        // Ignore a hover if the pointer position has not moved since the last time longPress was dispatched
-        if (!hoverPositionHasMoved(payload.hoverPosition || null)) return
-
-        if (payload.hoverPosition !== undefined) lastHoverDownPosition = payload.hoverPosition
-
         haptics.light()
         break
       case LongPressState.Inactive:
