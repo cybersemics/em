@@ -22,6 +22,7 @@ import parentOf from '../util/parentOf'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
 import ThoughtWrapper from './ThoughtWrapper'
+import TreeNodeWrapper from './TreeNodeWrapper'
 
 type BulletCursorOverlayProps = {
   x: number
@@ -34,6 +35,7 @@ type BulletCursorOverlayProps = {
   parentId: ThoughtId
   showContexts?: boolean
   leaf?: boolean
+  index: number
 }
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
@@ -207,6 +209,7 @@ export default function BulletCursorOverlay({
   parentId,
   showContexts,
   leaf,
+  index,
 }: BulletCursorOverlayProps) {
   const value: string | undefined = useSelector(state => {
     const thought = getThoughtById(state, head(path))
@@ -259,7 +262,19 @@ export default function BulletCursorOverlay({
   useScrollCursorIntoView(y, height)
 
   return (
-    <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
+    <TreeNodeWrapper
+      cursorOverlay
+      contextAnimation={null}
+      isTableCol1={isTableCol1}
+      x={x}
+      y={y}
+      thoughtId={head(simplePath)}
+      width={width}
+      path={path}
+      index={index}
+      isMounted
+    >
+      {/* <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}> */}
       {showContexts && simplePath?.length > 1 && (
         <ContextBreadcrumbs
           hidden
@@ -274,12 +289,11 @@ export default function BulletCursorOverlay({
           homeContext={homeContext}
         />
       )}
-
       <ThoughtWrapper path={path} hideBullet={hideBullet} cursorOverlay>
         <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
 
         <ThoughtAnnotationWrapper cursorOverlay />
       </ThoughtWrapper>
-    </PlaceholderTreeNode>
+    </TreeNodeWrapper>
   )
 }

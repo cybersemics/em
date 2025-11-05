@@ -8,6 +8,7 @@ import durations from '../durations.config'
 import usePrevious from '../hooks/usePrevious'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
 import parentOf from '../util/parentOf'
 
 type ContextAnimation = 'disappearingLowerLeft' | 'disappearingUpperRight' | null
@@ -15,8 +16,7 @@ type ContextAnimation = 'disappearingLowerLeft' | 'disappearingUpperRight' | nul
 interface TreeNodeWrapperProps {
   children: ReactNode
   contextAnimation: ContextAnimation
-  dataPath: string
-  dataThoughtId: string
+  thoughtId: string
   isTableCol1: boolean
   style?: CSSProperties
   cursorOverlay?: boolean
@@ -24,17 +24,18 @@ interface TreeNodeWrapperProps {
   x: number
   y: number
   width?: string | number
-  isSortAnimating?: boolean
   fauxCaretNodeProvider?: CSSProperties
   index: number
   path: Path
 }
-
+/**
+ * Wrapper component for TreeNode and BulletCursorOverlay that sets x/y coordinates and handles animation from a given TreeNode.
+ * Handles sort and swap animations by splitting X and Y transitions for smoother motion and direction control.
+ */
 const TreeNodeWrapper = ({
   children,
   contextAnimation,
-  dataPath,
-  dataThoughtId,
+  thoughtId,
   isTableCol1,
   style,
   x: _x,
@@ -171,8 +172,8 @@ const TreeNodeWrapper = ({
                 : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
       })}
       style={outerDivStyle}
-      data-thought-id={dataThoughtId}
-      data-path={dataPath}
+      data-thought-id={thoughtId}
+      data-path={hashPath(path)}
     >
       <div
         className={css({

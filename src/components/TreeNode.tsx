@@ -8,7 +8,6 @@ import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import useMoveThoughtAnimation from '../hooks/useMoveThoughtAnimation'
 import isContextViewActive from '../selectors/isContextViewActive'
-import hashPath from '../util/hashPath'
 import isDescendantPath from '../util/isDescendantPath'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
@@ -152,8 +151,7 @@ const TreeNode = ({
         index={index}
         path={path}
         isTableCol1={isTableCol1}
-        dataPath={hashPath(path)}
-        dataThoughtId={thoughtId}
+        thoughtId={thoughtId}
         contextAnimation={contextAnimation}
         isMounted={isMounted}
         style={{
