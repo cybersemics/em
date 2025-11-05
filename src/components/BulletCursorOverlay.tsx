@@ -290,7 +290,9 @@ export default function BulletCursorOverlay({
         />
       )}
       <ThoughtWrapper path={path} hideBullet={hideBullet} cursorOverlay>
-        <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
+        {!hideBullet && (
+          <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
+        )}
 
         <ThoughtAnnotationWrapper cursorOverlay />
       </ThoughtWrapper>
