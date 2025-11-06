@@ -74,8 +74,8 @@ it('Superscript should not render on thoughts that match EM descendants', async 
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  expect(() => screen.getByRole('superscript')).toThrow('Unable to find an accessible element')
-}, 10000 /* increase timeout for failure in CI flow */)
+  expect(screen.queryByRole('superscript')).not.toBeInTheDocument() // Unable to find an accessible element
+})
 
 it('Superscript should not render on punctuation-only thoughts', async () => {
   await dispatch([
