@@ -539,7 +539,7 @@ const ThoughtContainer = ({
   return (
     <div
       {...dragHoldResult.props}
-      ref={dndRef(node => dropTarget(node))}
+      ref={dndRef(node => dragSource(dropTarget(node)))}
       aria-label='child'
       data-divider={isDivider(value)}
       data-editing={isEditing}
