@@ -425,6 +425,7 @@ export default defineConfig({
             'hamburgerMenu',
             'sidebar',
             'modal',
+            'footer',
             'toolbarContainer',
             'toolbarOverlay',
             'toolbarArrow',
