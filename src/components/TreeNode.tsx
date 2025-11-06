@@ -150,6 +150,7 @@ const TreeNode = ({
         y={y}
         index={index}
         path={path}
+        width={width}
         isTableCol1={isTableCol1}
         thoughtId={thoughtId}
         contextAnimation={contextAnimation}
