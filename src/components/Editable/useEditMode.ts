@@ -100,9 +100,9 @@ const useEditMode = ({
           }
           if (store.getState().lastUndoableActionType === 'swapParent') {
             restoreFocus()
-          } else {
-            requestAnimationFrame(setSelectionToCursorOffset)
           }
+
+          requestAnimationFrame(setSelectionToCursorOffset)
         } else {
           setSelectionToCursorOffset()
         }
