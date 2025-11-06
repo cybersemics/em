@@ -39,7 +39,7 @@ describe('Alphabetical', () => {
       const thoughtC = getThoughtByContext(['c'])
       expect(thoughtC).toBeTruthy()
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['a', 'b', 'c'])
     })
@@ -95,7 +95,7 @@ describe('Alphabetical', () => {
       const thought = getThoughtByContext(['c'])
       expect(thought).toBeTruthy()
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c', 'b', 'a'])
     })
@@ -171,7 +171,7 @@ describe('Created', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     // Get all thoughts in order
-    const thoughts = screen.getAllByTestId(/thought/)
+    const thoughts = screen.getAllByLabelText('thought-container')
     const thoughtValues = thoughts.map(t => t.textContent)
 
     // Verify thoughts are sorted by creation time ascending (a, b, c)
@@ -215,7 +215,7 @@ describe('Created', () => {
     await act(vi.runAllTimersAsync)
 
     // Get all thoughts in order
-    const thoughts = screen.getAllByTestId(/thought/)
+    const thoughts = screen.getAllByLabelText('thought-container')
     const thoughtValues = thoughts.map(t => t.textContent)
 
     // Verify thoughts are sorted by creation time descending (c, b, a)
@@ -266,7 +266,7 @@ describe('Updated', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     // Get all thoughts in order
-    const thoughts = screen.getAllByTestId(/thought/)
+    const thoughts = screen.getAllByLabelText('thought-container')
     const thoughtValues = thoughts.map(t => t.textContent)
 
     // Verify thoughts are sorted by update time ascending (a, c, d)
@@ -318,7 +318,7 @@ describe('Updated', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     // Get all thoughts in order
-    const thoughts = screen.getAllByTestId(/thought/)
+    const thoughts = screen.getAllByLabelText('thought-container')
     const thoughtValues = thoughts.map(t => t.textContent)
 
     // Verify thoughts are sorted by update time ascending (d, c, a)
@@ -373,7 +373,7 @@ describe('Created to Updated', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     // Get all thoughts in order
-    const thoughts = screen.getAllByTestId(/thought/)
+    const thoughts = screen.getAllByLabelText('thought-container')
     const thoughtValues = thoughts.map(t => t.textContent)
 
     // Verify thoughts are sorted by update time ascending (a, c, d)
@@ -408,7 +408,7 @@ it('home: Note Asc', async () => {
   await click('[aria-label="sort options"] [aria-label="Note"]')
   await act(() => vi.runAllTimersAsync())
 
-  const thoughts = screen.getAllByTestId(/thought/)
+  const thoughts = screen.getAllByLabelText('thought-container')
   expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c1', 'a2', 'b3'])
 })
 
@@ -440,7 +440,7 @@ it('home: Note Desc', async () => {
   await click('[aria-label="sort options"] [aria-label="Note"]')
   await act(() => vi.runAllTimersAsync())
 
-  const thoughts = screen.getAllByTestId(/thought/)
+  const thoughts = screen.getAllByLabelText('thought-container')
   expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['b3', 'a2', 'c1'])
 })
 
@@ -483,7 +483,7 @@ it('home: Note Asc with edit', async () => {
 
   await act(vi.runAllTimersAsync)
 
-  const thoughts = screen.getAllByTestId(/thought/)
+  const thoughts = screen.getAllByLabelText('thought-container')
   expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c1', 'b3', 'a4'])
 })
 
@@ -514,7 +514,7 @@ it('home: Note Asc with mixed thoughts', async () => {
   await click('[aria-label="sort options"] [aria-label="Note"]')
   await act(() => vi.runAllTimersAsync())
 
-  const thoughts = screen.getAllByTestId(/thought/)
+  const thoughts = screen.getAllByLabelText('thought-container')
   expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c1', 'a2', 'd3', 'b'])
 })
 
@@ -547,6 +547,6 @@ it('home: Note Desc with mixed thoughts', async () => {
   await click('[aria-label="sort options"] [aria-label="Note"]')
   await act(() => vi.runAllTimersAsync())
 
-  const thoughts = screen.getAllByTestId(/thought/)
+  const thoughts = screen.getAllByLabelText('thought-container')
   expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['d3', 'a2', 'c1', 'b'])
 })
