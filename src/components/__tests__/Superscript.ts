@@ -5,13 +5,14 @@ import { toggleHiddenThoughtsActionCreator } from '../../actions/toggleHiddenTho
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 
-beforeEach(createTestApp)
-afterEach(cleanupTestApp)
+describe('Superscript', () => {
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
 
-it('Superscript should count all the contexts in which it is defined.', async () => {
-  await dispatch([
-    importText({
-      text: `
+  it('Superscript should count all the contexts in which it is defined.', async () => {
+    await dispatch([
+      importText({
+        text: `
         - a
         - b
           - c
@@ -21,66 +22,66 @@ it('Superscript should count all the contexts in which it is defined.', async ()
           - f
             - c
       `,
-    }),
-  ])
+      }),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  const element = screen.getByText('3')
-  expect(element.nodeName).toBe('SUP')
-})
+    const element = screen.getByText('3')
+    expect(element.nodeName).toBe('SUP')
+  })
 
-it('Superscript should not render on thoughts in a single context', async () => {
-  await dispatch([
-    importText({
-      text: `
+  it('Superscript should not render on thoughts in a single context', async () => {
+    await dispatch([
+      importText({
+        text: `
         - a
         - b
         - c
       `,
-    }),
-  ])
+      }),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  expect(() => screen.getByText('1')).toThrow('Unable to find an element')
-})
+    expect(() => screen.getByText('1')).toThrow('Unable to find an element')
+  })
 
-it('Superscript should not render on empty thoughts', async () => {
-  await dispatch([
-    importText({
-      text: `
+  it('Superscript should not render on empty thoughts', async () => {
+    await dispatch([
+      importText({
+        text: `
         - a
           - ${''}
         - b
           - ${''}
       `,
-    }),
-  ])
+      }),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  expect(() => screen.getByText('2')).toThrow('Unable to find an element')
-})
+    expect(() => screen.getByText('2')).toThrow('Unable to find an element')
+  })
 
-it('Superscript should not render on thoughts that match EM descendants', async () => {
-  await dispatch([
-    importText({
-      text: `
+  it('Superscript should not render on thoughts that match EM descendants', async () => {
+    await dispatch([
+      importText({
+        text: `
         - on
       `,
-    }),
-  ])
+      }),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  expect(() => screen.getByRole('superscript')).toThrow('Unable to find an accessible element')
-})
+    expect(() => screen.getByRole('superscript')).toThrow('Unable to find an accessible element')
+  })
 
-it('Superscript should not render on punctuation-only thoughts', async () => {
-  await dispatch([
-    importText({
-      text: `
+  it('Superscript should not render on punctuation-only thoughts', async () => {
+    await dispatch([
+      importText({
+        text: `
         - a
           - .
           - ..
@@ -105,47 +106,48 @@ it('Superscript should not render on punctuation-only thoughts', async () => {
           - –
           - —
       `,
-    }),
-  ])
+      }),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  expect(() => screen.getByText('2')).toThrow('Unable to find an element')
-  expect(() => screen.getByText('3')).toThrow('Unable to find an element')
-  expect(() => screen.getByText('4')).toThrow('Unable to find an element')
-  expect(() => screen.getByText('5')).toThrow('Unable to find an element')
-})
+    expect(() => screen.getByText('2')).toThrow('Unable to find an element')
+    expect(() => screen.getByText('3')).toThrow('Unable to find an element')
+    expect(() => screen.getByText('4')).toThrow('Unable to find an element')
+    expect(() => screen.getByText('5')).toThrow('Unable to find an element')
+  })
 
-it('Superscript should not render on punctuation-only thoughts with HTML', async () => {
-  await dispatch([
-    importText({
-      text: `
+  it('Superscript should not render on punctuation-only thoughts with HTML', async () => {
+    await dispatch([
+      importText({
+        text: `
         - a
           - <i>...</i>
         - b
           - <i>...</i>
       `,
-    }),
-  ])
+      }),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  expect(() => screen.getByText('2')).toThrow('Unable to find an element')
-})
+    expect(() => screen.getByText('2')).toThrow('Unable to find an element')
+  })
 
-it('Superscript should not count for hashed version of metaprogramming attributes like =archive | archive', async () => {
-  await dispatch([
-    importText({
-      text: `
+  it('Superscript should not count for hashed version of metaprogramming attributes like =archive | archive', async () => {
+    await dispatch([
+      importText({
+        text: `
       - a
         - =archive
       - b
         - Archive`,
-    }),
-    toggleHiddenThoughtsActionCreator(),
-  ])
+      }),
+      toggleHiddenThoughtsActionCreator(),
+    ])
 
-  await act(vi.runOnlyPendingTimersAsync)
+    await act(vi.runOnlyPendingTimersAsync)
 
-  expect(() => screen.getByText('2')).toThrow('Unable to find an element')
+    expect(() => screen.getByText('2')).toThrow('Unable to find an element')
+  })
 })
