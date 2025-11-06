@@ -160,7 +160,7 @@ const Footer = () => {
         backgroundColor: 'footerBg',
         boxSizing: 'border-box',
         width: '100%',
-        zIndex: 'modal',
+        zIndex: 'footer',
         color: 'fg',
       })}
     >

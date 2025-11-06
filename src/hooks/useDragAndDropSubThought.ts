@@ -11,6 +11,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
+import { setDroppedPathActionCreator as setDroppedPath } from '../actions/setDroppedPath'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { HOME_TOKEN, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
@@ -22,6 +23,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import store from '../stores/app'
+import animateDroppedThought from '../util/animateDroppedThought'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -174,6 +176,18 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     return head(rootedParentOf(state, item.path)) !== head(rootedParentOf(state, pathTo))
   })
 
+  // If the destination is collapsed, animate a clone of the dragged thought to the destination thought's position.
+  // Trigger animation before dispatching the move to capture positions before layout shifts.
+  if (draggedItems.length === 1) {
+    const isDestinationExpanded = isPathExpanded(state, props.path)
+    if (!isDestinationExpanded) {
+      const fromPath = hashPath(draggedItems[0].path)
+      const toPath = hashPath(props.path)
+      // kick off animation before DOM updates - it will query DOM elements and handle layout shifts
+      animateDroppedThought({ fromPath, toPath })
+    }
+  }
+
   store.dispatch((dispatch, getState) => {
     /** Returns true if the thought should be dropped at the top of a collapsed parent. */
     const shouldDropAtTop = (pathTo: Path) => {
@@ -212,6 +226,10 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         }),
       )
     })
+
+    // set post-drop highlight on destination parent so the pulse continues briefly at a slower rate
+    const destinationParent = rootedParentOf(getState(), getPathTo(getState(), draggedItems[0].path))
+    dispatch(setDroppedPath({ path: destinationParent }))
 
     // Clear isMulticursorExecuting after all operations are complete and isMulticursorExecuting is true
     if (getState().isMulticursorExecuting) {

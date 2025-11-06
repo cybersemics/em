@@ -13,6 +13,7 @@ export interface ViewportState {
   contentWidth: number
   innerWidth: number
   innerHeight: number
+  layoutTreeTop: number
   scrollZoneWidth: number
   virtualKeyboardHeight: number
 }
@@ -28,6 +29,8 @@ const viewportStore = reactMinistore<ViewportState>({
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
   /** Width of the content element. */
   contentWidth: 0,
+  /** The y offset of the layout tree element. */
+  layoutTreeTop: 0,
 })
 
 /** Throttled update of viewport height. Invoked on window resize. */

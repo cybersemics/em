@@ -6,6 +6,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { isSafari, isTouch, isiPhone } from '../browser'
 import useHideBullet from '../hooks/useHideBullet'
+import useScrollCursorIntoView from '../hooks/useScrollCursorIntoView'
 import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -19,11 +20,13 @@ import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import FauxCaret from './FauxCaret'
+import ThoughtWrapper from './ThoughtWrapper'
 
 type BulletCursorOverlayProps = {
   x: number
   y: number
   simplePath: SimplePath
+  height: number
   path: Path
   isTableCol1: boolean
   width?: number
@@ -306,6 +309,7 @@ export default function BulletCursorOverlay({
   x,
   y,
   simplePath,
+  height,
   path,
   isTableCol1,
   width = 0,
@@ -351,25 +355,17 @@ export default function BulletCursorOverlay({
     thoughtId: head(simplePath),
   })
 
+  useScrollCursorIntoView(y, height)
+
   return (
     <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
       {showContexts && simplePath?.length > 1 && <PlaceholderContextBreadcrumbs simplePath={simplePath} />}
 
-      <div
-        aria-label='placeholder-thought-container'
-        className={css({
-          /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
-          /* must match value used in Editable useMultiline */
-          lineHeight: '2',
-          // ensure that ThoughtAnnotation is positioned correctly
-          position: 'relative',
-          ...(hideBullet ? { marginLeft: -12 } : null),
-        })}
-      >
+      <ThoughtWrapper path={path} hideBullet={hideBullet} cursorOverlay>
         <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
 
         <PlaceholderThoughtAnnotation />
-      </div>
+      </ThoughtWrapper>
     </PlaceholderTreeNode>
   )
 }

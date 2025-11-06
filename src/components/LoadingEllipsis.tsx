@@ -14,6 +14,7 @@ const LoadingEllipsis = ({
   text?: string
 }) => (
   <span
+    data-loading-indicator
     className={
       center
         ? css({
