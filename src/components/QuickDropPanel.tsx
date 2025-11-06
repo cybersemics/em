@@ -16,6 +16,7 @@ import { toggleAttributeActionCreator as toggleAttribute } from '../actions/togg
 import { AlertText, AlertType, DELETE_VIBRATE_DURATION, LongPressState } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
+import dndRef from '../util/dndRef'
 import ellipsize from '../util/ellipsize'
 import haptics from '../util/haptics'
 import head from '../util/head'
@@ -143,7 +144,7 @@ const QuickDropPanel: FC = () => {
   return (
     <div className={css({ position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 'popup' })}>
       <div
-        ref={dropTarget}
+        ref={dndRef(dropTarget)}
         className={css({
           zIndex: 'stack',
           height: '100%',

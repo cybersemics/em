@@ -17,7 +17,7 @@ function getTargetConfig(target: string) {
   switch (target) {
     case Target.APPIUM:
       return appiumConfig()
-    
+
     case Target.BROWSERSTACK:
       const localIdentifier = 'local-' + nanoid()
       return browserStackConfig(localIdentifier)
@@ -69,7 +69,7 @@ export default <Environment>{
     return {
       async teardown() {
         console.info(chalk.yellow('Teardown Test Environment for webdriverio.'))
-        
+
         keys.forEach(key => delete global[key])
         originals.forEach((v, k) => (global[k] = v))
 

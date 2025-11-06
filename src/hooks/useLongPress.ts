@@ -20,9 +20,8 @@ const useLongPress = (
 ) => {
   const [pressing, setPressing] = useState(false)
   const longPressState = useSelector(state => state.longPress)
-  const timerIdRef = useRef<number | undefined>()
+  const timerIdRef = useRef<number | undefined>(undefined)
   const dispatch = useDispatch()
-  const unmounted = useRef(false)
   const dragDropManager = useDragDropManager()
 
   useEffect(() => {
@@ -84,7 +83,6 @@ const useLongPress = (
     // but endDrag in useDragAndDropThought will happen instead.
     allowTouchToScroll(true)
 
-    // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
     // This gives other components a chance to short circuit.
     // We can't stop propagation here without messing up other components like Bullet.
     setTimeout(() => {
@@ -110,14 +108,6 @@ const useLongPress = (
     },
     [dispatch],
   )
-
-  // unlock on unmount
-  // this may have a race condition if start is activated on another component right before this is unmounting, but it seems unlikely
-  useEffect(() => {
-    return () => {
-      unmounted.current = true
-    }
-  }, [])
 
   const props = useMemo(
     () => ({

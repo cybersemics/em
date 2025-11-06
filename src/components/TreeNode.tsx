@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
@@ -13,12 +13,13 @@ import usePrevious from '../hooks/usePrevious'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
-import VirtualThought, { OnResize } from './VirtualThought'
+import VirtualThought, { OnResize, SetSize } from './VirtualThought'
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
 const TreeNode = ({
@@ -65,7 +66,7 @@ const TreeNode = ({
   treeThoughtsPositioned: TreeThoughtPositioned[]
   bulletWidth: number
   cursorUncleId: string | null
-  setSize: OnResize
+  setSize: SetSize
   cliffPaddingStyle: { paddingBottom: number }
   dragInProgress: boolean
   autofocusDepth: number
@@ -77,6 +78,7 @@ const TreeNode = ({
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
+  const [isMounted, setIsMounted] = useState(true)
   // Store the on-screen index from the previous render to determine movement direction.
   const previousIndex = usePrevious<number>(index)
 
@@ -205,6 +207,8 @@ const TreeNode = ({
     return () => clearTimeout(timer)
   }, [isLastActionSort, indexChanged])
 
+  const onResize: OnResize = useCallback(props => setSize({ ...props, cliff }), [cliff, setSize])
+
   // List Virtualization
   // Do not render thoughts that are below the viewport.
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
@@ -217,8 +221,8 @@ const TreeNode = ({
   const outerDivStyle = {
     // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
     // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
-    left: isLastActionSort ? x + (isSortAnimating ? sortOffset : 0) : x,
-    top: isSwap || isLastActionSort ? 'auto' : y,
+    left: isMounted ? (isLastActionSort ? x + (isSortAnimating ? sortOffset : 0) : x) : _x,
+    top: isMounted ? (isSwap || isLastActionSort ? 'auto' : y) : _y,
     // Table col1 uses its exact width since cannot extend to the right edge of the screen.
     // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
     // 1em + 10px is an eyeball measurement at font sizes 14 and 18
@@ -234,7 +238,9 @@ const TreeNode = ({
           top: y,
           left: 0,
         }
-      : moveDivStyle
+      : {}
+
+  const type = isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')
 
   return (
     <FadeTransition
@@ -242,9 +248,11 @@ const TreeNode = ({
       // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
       // Archive, delete, and uncategorize get a special dissolve animation.
       // Context view children get special disappearing text animations
-      type={isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')}
+      type={type}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
+      onEnter={() => setIsMounted(true)}
+      onExit={() => setIsMounted(false)}
       unmountOnExit
     >
       <div
@@ -264,6 +272,8 @@ const TreeNode = ({
                 : 'left {durations.layoutNodeAnimation} ease-out,top {durations.layoutNodeAnimation} ease-out',
         })}
         style={outerDivStyle}
+        data-thought-id={thoughtId}
+        data-path={hashPath(path)}
       >
         <div
           className={css({
@@ -295,7 +305,7 @@ const TreeNode = ({
               indexDescendant={indexDescendant}
               isMultiColumnTable={false}
               leaf={leaf}
-              onResize={setSize}
+              onResize={onResize}
               path={path}
               prevChildId={prevChild?.id}
               showContexts={showContexts}
@@ -310,6 +320,7 @@ const TreeNode = ({
               prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
               isLastVisible={isLastVisible}
               autofocus={autofocus}
+              moveStyle={moveDivStyle}
             />
           </div>
           {dragInProgress &&
