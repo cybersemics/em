@@ -27,11 +27,5 @@ module.exports = {
     // Error running image diff: Unknown Error
     // https://github.com/vitest-dev/vitest/releases/tag/v2.0.0
     'puppeteer',
-
-    // vitest 4.0.6 still uses jsdom v26.1.0
-    // Testing doesn't work with jsdom v27.1.0
-    // Keep at v26.x until vitest supports jsdom v27.x
-    // https://github.com/vitest-dev/vitest/blob/main/packages/vitest/package.json#L217
-    'jsdom',
   ],
 }
