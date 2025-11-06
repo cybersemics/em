@@ -183,7 +183,7 @@
     "@types/react-transition-group": "^4.4.12",
     "@types/redux-mock-store": "^1.5.0",
     "@types/sanitize-html": "^2.16.0",
-    "@types/sinonjs__fake-timers": "^8.1.5",
+    "@types/sinonjs__fake-timers": "^15.0.1",
     "@types/tcp-port-used": "^1.0.4",
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.46.2",
