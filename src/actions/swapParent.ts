@@ -95,9 +95,7 @@ const swapParent = (state: State): State => {
 }
 
 /** Action-creator for swapParent. */
-export const swapParentActionCreator = (): Thunk => dispatch => {
-  dispatch({ type: 'swapParent' })
-}
+export const swapParentActionCreator = (): Thunk => dispatch => dispatch({ type: 'swapParent' })
 
 export default _.curryRight(swapParent)
 
