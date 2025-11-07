@@ -49,7 +49,7 @@ const longPressThought = async (
   // Wait for this specific bullet to be highlighted
   await page.waitForFunction(
     (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
-    { timeout: 5000 },
+    { timeout: 2000 },
     bulletElement,
   )
 
