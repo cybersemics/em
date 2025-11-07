@@ -43,19 +43,11 @@ const useEditMode = ({
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
 
-  /** Restore focus to the current cursor thought. */
-  const restoreFocus = () => {
-    const target = contentRef.current as HTMLElement | null
-
-    if (!target) return
-    target.focus()
-  }
-
   useEffect(
     () => {
       // Get the cursorOffset directly from the store rather than subscribing to it reactively with useSelector.
       // Otherwise, it will try to set the selection while typing.
-      const cursorOffset = store.getState().cursorOffset
+      const { cursorOffset, lastUndoableActionType } = store.getState()
 
       /** Set the selection to the current Editable at the cursor offset. */
       const setSelectionToCursorOffset = () => {
@@ -95,14 +87,15 @@ const useEditMode = ({
         keeping the keyboard open while rapidly deleting thoughts. (#3129)
       */
         if (isTouch && isSafari()) {
-          if (!selection.isThought()) {
-            asyncFocus()
+          if (lastUndoableActionType === 'swapParent') {
+            // set selection synchronously to keep the focus stable after swap parent action
+            setSelectionToCursorOffset()
+          } else {
+            if (!selection.isThought()) {
+              asyncFocus()
+            }
+            requestAnimationFrame(setSelectionToCursorOffset)
           }
-          if (store.getState().lastUndoableActionType === 'swapParent') {
-            restoreFocus()
-          }
-
-          requestAnimationFrame(setSelectionToCursorOffset)
         } else {
           setSelectionToCursorOffset()
         }
