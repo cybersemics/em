@@ -1,4 +1,5 @@
 import React, { useCallback, useRef } from 'react'
+import { ConnectDragSource } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { bulletRecipe } from '../../styled-system/recipes'
@@ -21,6 +22,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
+import dndRef from '../util/dndRef'
 import fastClick from '../util/fastClick'
 import getBulletWidth from '../util/getBulletWidth'
 import hashPath from '../util/hashPath'
@@ -29,6 +31,7 @@ import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 
 interface BulletProps {
+  dragSource: ConnectDragSource
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
   isDragging?: boolean
@@ -392,6 +395,7 @@ const BulletHighlightOverlay = ({
 
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
+  dragSource,
   isContextPending,
   isDragging,
   isEditing,
@@ -542,6 +546,11 @@ const Bullet = ({
           cursor: 'pointer',
         }),
       )}
+      // HTML5Backend will override this to be "true" on platforms that use it.
+      // iOS Safari needs it to be true to disable native long press behavior. (#2953, #2931, #2964)
+      // Android works better if draggable is false.
+      draggable={isTouch && isSafari()}
+      ref={dndRef(ref => dragSource(ref))}
       style={{
         top: -extendClickHeight,
         left: -extendClickWidth + marginLeft,

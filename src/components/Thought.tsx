@@ -13,7 +13,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { isMac, isSafari, isTouch } from '../browser'
+import { isMac, isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import testFlags from '../e2e/testFlags'
@@ -285,13 +285,22 @@ const ThoughtContainer = ({
     return equalPath(parentOf(state.cursor), path)
   })
 
-  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget, canDropThought, isDeepHovering } =
-    useDragAndDropThought({
-      path,
-      simplePath,
-      isVisible,
-      isCursorParent,
-    })
+  const {
+    isDragging,
+    dragPreview,
+    dragSourceBullet,
+    dragSourceEditable,
+    isHovering,
+    isBeingHoveredOver,
+    dropTarget,
+    canDropThought,
+    isDeepHovering,
+  } = useDragAndDropThought({
+    path,
+    simplePath,
+    isVisible,
+    isCursorParent,
+  })
 
   useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
   useDragLeave({ isDeepHovering, canDropThought })
@@ -539,14 +548,10 @@ const ThoughtContainer = ({
   return (
     <div
       {...dragHoldResult.props}
-      ref={dndRef(node => dragSource(dropTarget(node)))}
+      ref={dndRef(node => dragPreview(dropTarget(node)))}
       aria-label='child'
       data-divider={isDivider(value)}
       data-editing={isEditing}
-      // HTML5Backend will override this to be "true" on platforms that use it.
-      // iOS Safari needs it to be true to disable native long press behavior. (#2953, #2931, #2964)
-      // Android works better if draggable is false.
-      draggable={isTouch && isSafari()}
       onClick={isTouch ? undefined : handleMultiselect}
       style={{
         transition: `transform ${token('durations.layoutSlowShift')} ease-out, opacity ${token('durations.layoutSlowShift')} ease-out`,
@@ -589,6 +594,7 @@ const ThoughtContainer = ({
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
           <div style={alignmentTransition.bullet}>
             <Bullet
+              dragSource={dragSourceBullet}
               isContextPending={isContextPending}
               isDragging={isDragging}
               isEditing={isEditing}
@@ -609,6 +615,7 @@ const ThoughtContainer = ({
         <div style={alignmentTransition.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
+            dragSource={dragSourceEditable}
             env={env}
             isContextPending={isContextPending}
             isEditing={isEditing}
