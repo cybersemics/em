@@ -160,7 +160,6 @@ const ContextBreadcrumbs = ({
   staticText,
   thoughtsLimit,
   linkCssRaw,
-  cursorOverlay,
 }: {
   charLimit?: number
   cssRaw?: SystemStyleObject
@@ -177,8 +176,6 @@ const ContextBreadcrumbs = ({
   staticText?: boolean
   thoughtsLimit?: number
   linkCssRaw?: SystemStyleObject
-  /* Controls the visibility of this component inside BulletCursorOverlay. */
-  cursorOverlay?: boolean
 }) => {
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
@@ -216,7 +213,7 @@ const ContextBreadcrumbs = ({
           marginLeft: 'calc(1.3em - 14.5px)',
           marginTop: '0.533em',
           minHeight: '1em',
-          visibility: hidden || cursorOverlay ? 'hidden' : undefined,
+          visibility: hidden ? 'hidden' : undefined,
         },
         cssRaw,
       )}

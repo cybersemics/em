@@ -323,7 +323,7 @@ export default function BulletCursorOverlay({
     <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
       {showContexts && simplePath?.length > 1 && (
         <ContextBreadcrumbs
-          cursorOverlay
+          hidden
           cssRaw={css.raw({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
             marginBottom: '-0.25em',
