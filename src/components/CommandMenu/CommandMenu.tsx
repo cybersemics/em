@@ -232,7 +232,7 @@ const CommandMenu = () => {
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 gridTemplateRows: 'auto',
                 gridAutoFlow: 'row',
-                gap: '0.7rem',
+                gap: '0.75rem',
                 maxWidth: '100%',
               })}
             >
