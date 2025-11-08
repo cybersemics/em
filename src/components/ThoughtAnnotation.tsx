@@ -346,7 +346,7 @@ const ThoughtAnnotationContainer = React.memo(
           annotationRef.current.style.top = `${rect.top - offset.top}px`
         }
       })
-    }, [email, numContexts, showSuperscript, styleAnnotation, url])
+    }, [editableRef, email, numContexts, showSuperscript, styleAnnotation, url])
 
     // In order to render a faux caret while hideCaret animations are playing, ThoughtAnnotation always needs
     // to exist on mobile Safari. The line end faux caret must be placed inline-block at the end of the
