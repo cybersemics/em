@@ -85,17 +85,14 @@ const useEditMode = ({
         Also, setTimeout is frequently pushed into the next frame and the keyboard will intermittently close on iOS Safari.
         Replacing setTimeout with requestAnimationFrame guarantees (hopefully?) that it will be processed before the next repaint,
         keeping the keyboard open while rapidly deleting thoughts. (#3129)
+
+        If the last action is swapParent, set the selection synchronously to keep the focus stable after the swap.
       */
-        if (isTouch && isSafari()) {
-          if (lastUndoableActionType === 'swapParent') {
-            // set selection synchronously to keep the focus stable after swap parent action
-            setSelectionToCursorOffset()
-          } else {
-            if (!selection.isThought()) {
-              asyncFocus()
-            }
-            requestAnimationFrame(setSelectionToCursorOffset)
+        if (isTouch && isSafari() && lastUndoableActionType !== 'swapParent') {
+          if (!selection.isThought()) {
+            asyncFocus()
           }
+          requestAnimationFrame(setSelectionToCursorOffset)
         } else {
           setSelectionToCursorOffset()
         }
