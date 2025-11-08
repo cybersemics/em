@@ -1,3 +1,4 @@
+import { FC, PropsWithChildren } from 'react'
 import { css, cx } from '../../styled-system/css'
 import { multilineRecipe } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
@@ -5,26 +6,25 @@ import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import isAttribute from '../util/isAttribute'
 import FauxCaret from './FauxCaret'
 
-type ThoughtAnnotationWrapperProps = {
-  cursorOverlay?: boolean
-  ellipsizedUrl?: boolean
-  multiline?: boolean
-  value: string
-  styleAnnotation?: React.CSSProperties
-  cssRaw?: SystemStyleObject
-  style?: React.CSSProperties
-  children?: React.ReactNode
-  isTableCol1: boolean
-  textMarkup?: string
-  placeholder?: string
-}
-
 /**
  * Shared component used by ThoughtAnnotation and BulletCursorOverlay.
  * In BulletCursorOverlay, we’re using it to fix a misalignment between the cursor overlay and the bullet position that only appears for certain thoughts (and not consistently).
  * The root cause is that one child inside ThoughtAnnotation is “leaking” its height into the parent and causing some inconsistencies that affecting the other components as well. Because of that, we’ve had to mimic ThoughtAnnotation to keep the cursor overlay’s position accurate.
  */
-export default function ThoughtAnnotationWrapper({
+const ThoughtAnnotationWrapper: FC<
+  PropsWithChildren<{
+    cursorOverlay?: boolean
+    ellipsizedUrl?: boolean
+    multiline?: boolean
+    value?: string
+    styleAnnotation?: React.CSSProperties
+    cssRaw?: SystemStyleObject
+    style?: React.CSSProperties
+    isTableCol1?: boolean
+    textMarkup?: string
+    placeholder?: string
+  }>
+> = ({
   cursorOverlay,
   ellipsizedUrl,
   multiline,
@@ -36,7 +36,7 @@ export default function ThoughtAnnotationWrapper({
   isTableCol1,
   textMarkup,
   placeholder,
-}: ThoughtAnnotationWrapperProps) {
+}) => {
   return (
     <div
       aria-label='thought-annotation'
@@ -63,23 +63,17 @@ export default function ThoughtAnnotationWrapper({
           marginLeft: { _android: '0.5em' },
         },
       })}
-      style={{
-        ...(cursorOverlay
-          ? {
-              visibility: 'hidden',
-            }
-          : {}),
-      }}
     >
       <div
         className={
           cx(
             multiline ? multilineRecipe() : null,
             css({
-              ...(isAttribute(value) && {
-                backgroundColor: 'thoughtAnnotation',
-                fontFamily: 'monospace',
-              }),
+              ...(value &&
+                isAttribute(value) && {
+                  backgroundColor: 'thoughtAnnotation',
+                  fontFamily: 'monospace',
+                }),
               display: 'inline-block',
               maxWidth: '100%',
               padding: '0 0.333em',
@@ -112,7 +106,8 @@ export default function ThoughtAnnotationWrapper({
             position: 'absolute',
           })}
         >
-          <FauxCaret caretType='thoughtStart' />
+          {/* only render FauxCaret for original component */}
+          {!cursorOverlay && <FauxCaret caretType='thoughtStart' />}
         </span>
         <span
           className={css(
@@ -145,3 +140,5 @@ export default function ThoughtAnnotationWrapper({
     </div>
   )
 }
+
+export default ThoughtAnnotationWrapper

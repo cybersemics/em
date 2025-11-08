@@ -279,7 +279,7 @@ export default function BulletCursorOverlay({
         {!hideBullet && (
           <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
         )}
-        <ThoughtAnnotationWrapper isTableCol1={isTableCol1} cursorOverlay value={value} />
+        <ThoughtAnnotationWrapper cursorOverlay />
       </ThoughtWrapper>
     </PlaceholderTreeNode>
   )
