@@ -17,7 +17,7 @@ describe('multiselect', () => {
 
     await multiselectThoughts(['a', 'b'])
 
-    const highlightedBullets = await page.$$('.bullet[data-highlighted=true]')
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
     const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent)
 
     expect(highlightedBullets.length).toBe(2)
@@ -43,7 +43,7 @@ describe('mobile only', () => {
     await longPressThought(a, { edge: 'right', x: 100 })
     await longPressThought(b, { edge: 'right', x: 100 })
 
-    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted=true]')
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
     const commandMenuPanelTextContent = await page.$eval('[data-testid=command-menu-panel]', el => el.textContent)
 
     expect(highlightedBullets.length).toBe(2)

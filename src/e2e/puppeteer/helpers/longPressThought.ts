@@ -46,14 +46,23 @@ const longPressThought = async (
 
   await page.touchscreen.touchStart(coordinate.x, coordinate.y)
 
-  // Wait for this specific bullet to be highlighted
   await page.waitForFunction(
     (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
-    { timeout: 2000 },
+    { timeout: 6000 },
     bulletElement,
   )
 
   await page.touchscreen.touchEnd()
+
+  // Wait for the bullet to be highlighted, confirming the multicursor state has been
+  // updated and the thought is now in the multicursor selection. This is critical for
+  // multiselect scenarios to ensure the first selection is committed before starting
+  // the second long press.
+  await page.waitForFunction(
+    (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
+    { timeout: 6000 },
+    bulletElement,
+  )
 }
 
 export default longPressThought
