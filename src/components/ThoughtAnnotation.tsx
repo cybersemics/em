@@ -136,7 +136,8 @@ const ThoughtAnnotation = React.memo(
           pointerEvents: 'none',
           userSelect: 'none',
           boxSizing: 'border-box',
-          marginTop: '0',
+          marginLeft: '-6px',
+          marginTop: '-7px',
           display: 'inline-block',
           textAlign: 'left',
           verticalAlign: 'top',
@@ -162,7 +163,6 @@ const ThoughtAnnotation = React.memo(
                   backgroundColor: 'thoughtAnnotation',
                   fontFamily: 'monospace',
                 }),
-                display: 'inline-block',
                 maxWidth: '100%',
                 padding: '0 0.333em',
                 boxSizing: 'border-box',
@@ -204,7 +204,7 @@ const ThoughtAnnotation = React.memo(
           {
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
             showSuperscript ? (
-              <StaticSuperscript n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
+              <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
             ) : null
           }
           <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
