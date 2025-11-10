@@ -39,22 +39,15 @@ const longPressThought = async (
 
   if (!(bulletElement instanceof ElementHandle)) throw new Error('Bullet element not found')
 
-  console.info('bulletElement :', JSON.stringify(bulletElement, null, 2))
-
   const coordinate = {
     x: boundingBox.x + (edge ? (edge === 'left' ? 1 : boundingBox.width - 1) : boundingBox.width / 2) + x,
     y: boundingBox.y + boundingBox.height / 2 + y,
   }
 
-  console.info('coordinate :', coordinate)
-
   await page.touchscreen.touchStart(coordinate.x, coordinate.y)
 
   await page.waitForFunction(
-    (bulletEl: Element) => {
-      console.info('bulletEl :', bulletEl.getAttribute('data-highlighted'))
-      return bulletEl.getAttribute('data-highlighted') === 'true'
-    },
+    (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
     { timeout: 6000 },
     bulletElement,
   )

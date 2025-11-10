@@ -49,7 +49,6 @@ describe('mobile only', () => {
     await page.waitForFunction(
       () => {
         const panel = document.querySelector('[data-testid=command-menu-panel]')
-        console.info('panel :', panel?.textContent)
         return panel?.textContent?.includes('2 thoughts selected') ?? false
       },
       { timeout: 6000 },
