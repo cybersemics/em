@@ -227,7 +227,7 @@
     "vite-plugin-checker": "^0.11.0",
     "vite-plugin-pwa": "^1.1.0",
     "vite-plugin-terminal": "^1.3.0",
-    "vitest": "^4.0.5",
+    "vitest": "^4.0.8",
     "vitest-browser-react": "^2.0.2",
     "webdriverio": "^9.19.2"
   },
