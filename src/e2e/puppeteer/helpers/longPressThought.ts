@@ -1,7 +1,6 @@
 import { ElementHandle } from 'puppeteer'
 import { JSHandle } from 'puppeteer'
 import { page } from '../setup'
-import waitForFrames from './waitForFrames'
 
 interface Options {
   /** Click on the inside edge of the editable. Default: left. */
@@ -40,58 +39,27 @@ const longPressThought = async (
 
   if (!(bulletElement instanceof ElementHandle)) throw new Error('Bullet element not found')
 
+  console.info('bulletElement :', JSON.stringify(bulletElement, null, 2))
+
   const coordinate = {
     x: boundingBox.x + (edge ? (edge === 'left' ? 1 : boundingBox.width - 1) : boundingBox.width / 2) + x,
     y: boundingBox.y + boundingBox.height / 2 + y,
   }
 
+  console.info('coordinate :', coordinate)
+
   await page.touchscreen.touchStart(coordinate.x, coordinate.y)
 
   await page.waitForFunction(
-    (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
+    (bulletEl: Element) => {
+      console.info('bulletEl :', bulletEl.getAttribute('data-highlighted'))
+      return bulletEl.getAttribute('data-highlighted') === 'true'
+    },
     { timeout: 6000 },
     bulletElement,
   )
 
   await page.touchscreen.touchEnd()
-
-  // After touchEnd, toggleMulticursor is dispatched. The bullet may briefly become
-  // unhighlighted (when isDragging becomes false) before the multicursor state updates.
-  // Wait for animation frames to allow Redux state updates and React re-renders to complete.
-  await waitForFrames(2)
-
-  // Wait for the bullet to be highlighted, confirming the multicursor state has been
-  // updated and the thought is now in the multicursor selection. This is critical for
-  // multiselect scenarios to ensure the first selection is committed before starting
-  // the second long press.
-  //
-  // The bullet might transition: highlighted (long press) -> unhighlighted -> highlighted (multicursor)
-  // Or it might stay highlighted if the multicursor state updates quickly.
-  // We use frequent polling (100ms) and a longer timeout (6000ms) to handle slower CI environments.
-  await page.waitForFunction(
-    (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
-    { timeout: 6000, polling: 100 },
-    bulletElement,
-  )
-
-  // Wait for one more frame to ensure the highlight is stable and not a brief flash
-  await waitForFrames(1)
-
-  // Final verification: ensure the bullet is still highlighted after the frame delay
-  // This confirms the multicursor state is active, not just a transient highlight
-  const isStillHighlighted = await page.evaluate(
-    (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
-    bulletElement,
-  )
-
-  if (!isStillHighlighted) {
-    // If not highlighted, wait for it to become highlighted (multicursor state update)
-    await page.waitForFunction(
-      (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
-      { timeout: 2000, polling: 100 },
-      bulletElement,
-    )
-  }
 }
 
 export default longPressThought
