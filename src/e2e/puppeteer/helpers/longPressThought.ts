@@ -46,6 +46,7 @@ const longPressThought = async (
 
   await page.touchscreen.touchStart(coordinate.x, coordinate.y)
 
+  // Wait for this specific bullet to be highlighted
   await page.waitForFunction(
     (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
     { timeout: 5000 },
