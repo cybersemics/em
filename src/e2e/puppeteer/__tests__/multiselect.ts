@@ -43,10 +43,20 @@ describe('mobile only', () => {
     await longPressThought(a, { edge: 'right', x: 100 })
     await longPressThought(b, { edge: 'right', x: 100 })
 
+    // Wait for the command menu panel to show "2 thoughts selected"
+    // This ensures the multicursor state has been updated and React has re-rendered
+    // before we query for highlighted bullets, preventing race conditions in CI
+    await page.waitForFunction(
+      () => {
+        const panel = document.querySelector('[data-testid=command-menu-panel]')
+        console.info('panel :', panel?.textContent)
+        return panel?.textContent?.includes('2 thoughts selected') ?? false
+      },
+      { timeout: 6000 },
+    )
+
     const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
-    const commandMenuPanelTextContent = await page.$eval('[data-testid=command-menu-panel]', el => el.textContent)
 
     expect(highlightedBullets.length).toBe(2)
-    expect(commandMenuPanelTextContent).toContain('2 thoughts selected')
   })
 })
