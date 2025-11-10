@@ -43,9 +43,7 @@ describe('mobile only', () => {
     await longPressThought(a, { edge: 'right', x: 100 })
     await longPressThought(b, { edge: 'right', x: 100 })
 
-    // Wait for the command menu panel to show "2 thoughts selected"
-    // This ensures the multicursor state has been updated and React has re-rendered
-    // before we query for highlighted bullets, preventing race conditions in CI
+    // Wait for the command menu panel to show "2 thoughts selected before we query for highlighted bullets, preventing race conditions in CI
     await page.waitForFunction(
       () => {
         const panel = document.querySelector('[data-testid=command-menu-panel]')
