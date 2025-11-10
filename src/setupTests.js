@@ -5,6 +5,7 @@ import * as matchers from 'jest-extended'
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 import 'vi-canvas-mock'
+// Import vitest-localstorage-mock FIRST to ensure localStorage is available before other imports
 import 'vitest-localstorage-mock'
 
 expect.extend(matchers)
@@ -12,6 +13,18 @@ expect.extend(matchers)
 // define missing global built-ins for jest
 global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder
+
+// Ensure localStorage is available in all contexts (global, globalThis, window)
+// vitest-localstorage-mock sets globalThis.localStorage, but we need to ensure
+// it's also available on global and window for compatibility
+if (typeof globalThis.localStorage !== 'undefined' && globalThis.localStorage !== null) {
+  if (typeof global !== 'undefined' && typeof global.localStorage === 'undefined') {
+    global.localStorage = globalThis.localStorage
+  }
+  if (typeof window !== 'undefined' && typeof window.localStorage === 'undefined') {
+    window.localStorage = globalThis.localStorage
+  }
+}
 
 // add noop functions to prevent implementation error during test
 window.blur = noop
