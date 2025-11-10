@@ -9414,7 +9414,7 @@ __metadata:
     lockfile-lint: "npm:^4.14.1"
     lodash: "npm:^4.17.21"
     lottie-react: "npm:^2.4.1"
-    marked: "npm:^16.3.0"
+    marked: "npm:^17.0.0"
     moize: "npm:^6.1.6"
     murmurhash3js: "npm:^3.0.1"
     nanoid: "npm:^5.1.5"
@@ -14705,12 +14705,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:^16.3.0":
-  version: 16.3.0
-  resolution: "marked@npm:16.3.0"
+"marked@npm:^17.0.0":
+  version: 17.0.0
+  resolution: "marked@npm:17.0.0"
   bin:
     marked: bin/marked.js
-  checksum: 10c0/5a3d7da93d7692014c8764c31dc741fa6ee16d8573788a3b28d041c440e79177c46d786ad7c1fc2b3f5e301d6db32e22da45efd4c00ddbc31caf87bd8e9a673b
+  checksum: 10c0/e7f02b59356e50d751f57e9715ca29c5da580459450ae2ba2e0cfb286dd972d57fdb7ad9945c742ceb91a0bf65d2ff9e2f2fdc4094ae2a8621173c9e4a00b4f8
   languageName: node
   linkType: hard
 
