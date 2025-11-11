@@ -48,12 +48,14 @@ const useContentWidth = () => {
 
     /** Update viewportStore's contentWidth when the window resizes. */
     const resizeObserver = () => {
-      if (!contentRef.current) return
-      const rect = contentRef.current?.getBoundingClientRect()
+      if (!(contentRef.current?.firstChild instanceof HTMLElement)) return
+      const rect = contentRef.current.firstChild.getBoundingClientRect()
       if (!rect) return
+      console.log(rect.width)
       viewportStore.update({ contentWidth: rect.width })
     }
 
+    resizeObserver()
     window.addEventListener('resize', resizeObserver)
     return () => window.removeEventListener('resize', resizeObserver)
   }, [])
