@@ -46,6 +46,7 @@ const useContentWidth = () => {
   useEffect(() => {
     if (!contentRef.current) return
 
+    /** Update viewportStore's contentWidth when the window resizes. */
     const resizeObserver = () => {
       if (!contentRef.current) return
       const rect = contentRef.current?.getBoundingClientRect()
