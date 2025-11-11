@@ -27,6 +27,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
+import BulletWrapper from './BulletWrapper'
 
 interface BulletProps {
   // See: ThoughtProps['isContextPending']
@@ -407,12 +408,8 @@ const Bullet = ({
   // debugIndex,
 }: BulletProps) => {
   const svgElement = useRef<SVGSVGElement>(null)
-  const dispatch = useDispatch()
-  const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
   const showContexts = useSelector(state => isContextViewActive(state, path))
-  // if being edited and meta validation error has occured
-  const invalid = useSelector(state => isEditing && state.invalidState)
-  const fontSize = useSelector(state => state.fontSize)
+
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
@@ -422,10 +419,6 @@ const Bullet = ({
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging || isMulticursor
   })
-  const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
-
-  // check if the thought is pinned
-  const isThoughtPinned = useSelector(state => !!isPinned(state, thoughtId))
 
   /** True if the the user is dragging the thought and hovering over the DeleteDrop QuickDrop icon. */
   const isQuickDropDeleteHovering = useSelector(
@@ -461,163 +454,51 @@ const Bullet = ({
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
   const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded
 
-  // offset margin with padding by equal amounts proportional to the font size to extend the click area
-  const extendClickWidth = fontSize * 1.2
-  const extendClickHeight = fontSize / 3
-  const lineHeight = fontSize * 1.25
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
-  // Bottom margin for bullet to align with thought text
-  const glyphBottomMargin = isIOSSafari ? '-0.2em' : '-0.3em'
-
-  // calculate position of bullet for different font sizes
-  // Table column 1 needs more space between the bullet and thought for some reason
-  const width = getBulletWidth(fontSize) + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
-  const marginLeft = -width
-
-  // expand or collapse on click
-  // has some additional logic to make it work intuitively with pin true/false
-  const clickHandler = useCallback(
-    (e: React.MouseEvent) => {
-      // short circuit if dragHold
-      // useLongPress stop is activated in onMouseUp but is delayed to ensure that dragHold is still true here
-      // stopping propagation from useLongPress was not working either due to bubbling order or mismatched event type
-      if (dragHold) return
-
-      // short circuit if toggling multiselect
-      if (!isTouch && (isMac ? e.metaKey : e.ctrlKey)) {
-        return
-      }
-
-      dispatch((dispatch, getState) => {
-        const state = getState()
-        const isExpanded = state.expanded[hashPath(path)]
-        const children = getChildren(state, head(path))
-        const shouldCollapse = isExpanded && children.length > 0
-        const pathParent = path.length > 1 ? parentOf(path) : null
-        const parentChildren = pathParent ? getChildren(state, head(pathParent)) : null
-        // if thought is not expanded, set the cursor on the thought
-        // if thought is expanded, collapse it by moving the cursor to its parent
-        dispatch([
-          // set pin false on expanded only child
-          ...(isExpanded &&
-          (!pathParent ||
-            parentChildren?.length === 1 ||
-            findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']))
-            ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
-            : [deleteAttribute({ path: simplePath, value: '=pin' })]),
-          // move cursor
-          setCursor({ path: shouldCollapse ? pathParent : path, preserveMulticursor: true }),
-        ])
-      })
-    },
-    [dispatch, dragHold, path, simplePath],
-  )
 
   return (
-    <span
-      data-testid={'bullet-' + hashPath(path)}
-      aria-label='bullet'
-      data-highlighted={isHighlighted}
-      className={cx(
-        bulletRecipe({ invalid }),
-        css({
-          _mobile: {
-            marginRight: showContexts ? '-1.5px' : undefined,
-          },
-          '@media (min-width: 560px) and (max-width: 1024px)': {
-            _android: {
-              transition: `transform {durations.veryFast} ease-in-out`,
-              marginLeft: '-3px',
-            },
-          },
-          '@media (max-width: 500px)': {
-            _android: {
-              marginLeft: '-3px',
-            },
-          },
-          display: bulletIsDivider ? 'none' : undefined,
-          position: 'absolute',
-          verticalAlign: 'top',
-          cursor: 'pointer',
-        }),
-      )}
-      style={{
-        top: -extendClickHeight,
-        left: -extendClickWidth + marginLeft,
-        paddingTop: extendClickHeight,
-        paddingLeft: extendClickWidth,
-        paddingBottom: extendClickHeight + 2,
-        width,
-      }}
-      {...fastClick(clickHandler, { enableHaptics: false })}
+    <BulletWrapper
+      isEditing={isEditing}
+      leaf={leaf}
+      path={path}
+      simplePath={simplePath}
+      isCursorGrandparent={isCursorGrandparent}
+      isCursorParent={isCursorParent}
+      isInContextView={isInContextView}
+      isHighlighted={isHighlighted}
+      isTableCol1={isTableCol1}
+      ref={svgElement}
     >
-      <svg
-        className={cx(
-          glyph({ isBulletExpanded, showContexts, leaf }),
-          css({
-            // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
-            // This caused the bullet slide animation to end with a jerky movement.
-            // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
-            // allowing the browser to optimize the animation.
-            willChange: 'transform',
-            // run grow animation on pin activation
-            animation: isThoughtPinned ? 'bulletGrow {durations.fast} ease-out' : undefined,
-            ...(isHighlighted
-              ? {
-                  fillOpacity: 1,
-                  fill: 'highlight',
-                  stroke: 'highlight',
-                }
-              : null),
-          }),
+      <g>
+        {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && !isQuickDropDeleteHovering && (
+          <BulletHighlightOverlay isHighlighted={isHighlighted} leaf={leaf} publish={publish} simplePath={simplePath} />
         )}
-        viewBox='0 0 600 600'
-        style={{
-          height: lineHeight,
-          width: lineHeight,
-          marginLeft: -lineHeight,
-          // required to make the distance between bullet and thought scale properly at all font sizes.
-          left: lineHeight * 0.317,
-          marginBottom: glyphBottomMargin,
-        }}
-        ref={svgElement}
-      >
-        <g>
-          {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && !isQuickDropDeleteHovering && (
-            <BulletHighlightOverlay
-              isHighlighted={isHighlighted}
-              leaf={leaf}
-              publish={publish}
-              simplePath={simplePath}
-            />
-          )}
-          {leaf && !showContexts ? (
-            <BulletLeaf
-              done={isDone}
-              fill={fill}
-              isHighlighted={isHighlighted}
-              dimmed={isQuickDropDeleteHovering}
-              missing={missing}
-              pending={pending}
-              showContexts={showContexts}
-              isBulletExpanded={isBulletExpanded}
-            />
-          ) : (
-            <BulletParent
-              currentScale={svgElement.current?.currentScale || 1}
-              done={isDone}
-              fill={fill}
-              isHighlighted={isHighlighted}
-              childrenMissing={childrenMissing}
-              pending={pending}
-              showContexts={showContexts}
-              isBulletExpanded={isBulletExpanded}
-            />
-          )}
-        </g>
-      </svg>
-    </span>
+        {leaf && !showContexts ? (
+          <BulletLeaf
+            done={isDone}
+            fill={fill}
+            isHighlighted={isHighlighted}
+            dimmed={isQuickDropDeleteHovering}
+            missing={missing}
+            pending={pending}
+            showContexts={showContexts}
+            isBulletExpanded={isBulletExpanded}
+          />
+        ) : (
+          <BulletParent
+            currentScale={svgElement.current?.currentScale || 1}
+            done={isDone}
+            fill={fill}
+            isHighlighted={isHighlighted}
+            childrenMissing={childrenMissing}
+            pending={pending}
+            showContexts={showContexts}
+            isBulletExpanded={isBulletExpanded}
+          />
+        )}
+      </g>
+    </BulletWrapper>
   )
 }
 

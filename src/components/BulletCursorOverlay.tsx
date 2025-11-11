@@ -19,6 +19,7 @@ import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
+import BulletWrapper from './BulletWrapper'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
 import ThoughtWrapper from './ThoughtWrapper'
@@ -89,56 +90,28 @@ function CursorOverlay({
   const marginLeft = -width
 
   return (
-    <span
-      aria-label='placeholder-bullet'
-      style={{
-        top: -extendClickHeight,
-        left: -extendClickWidth + marginLeft,
-        paddingTop: extendClickHeight,
-        paddingLeft: extendClickWidth,
-        paddingBottom: extendClickHeight + 2,
-        width,
-        position: 'absolute',
-        verticalAlign: 'top',
-        display: bulletIsDivider ? 'none' : undefined,
-        zIndex: isIOSSafari ? 4 : undefined, // fix misalignment of cursor on iOS
-      }}
+    <BulletWrapper
+      isEditing
+      leaf={leaf}
+      path={path}
+      simplePath={simplePath}
+      isInContextView={isInContextView}
+      isTableCol1={isTableCol1}
     >
-      <svg
-        className={css({
-          willChange: 'transform',
-          transformBox: 'fill-box',
-          transformOrigin: 'center',
-          animation: isThoughtPinned ? 'bulletGrow {durations.fast} ease-out' : undefined,
-        })}
-        viewBox='0 0 600 600'
-        style={{
-          height: lineHeight,
-          width: lineHeight,
-          marginLeft: -lineHeight,
-          // required to make the distance between bullet and thought scale properly at all font sizes.
-          left: lineHeight * 0.317,
-          marginBottom: glyphBottomMargin,
-          position: 'relative',
-
-          top: showContexts && isIOSSafari ? '-0.05em' : undefined,
-        }}
-      >
-        <g>
-          <ellipse
-            ry={bulletOverlayRadius}
-            rx={bulletOverlayRadius}
-            cy='300'
-            cx='300'
-            className={css({
-              stroke: 'highlight',
-              fillOpacity: 0.25,
-              fill: 'fg',
-            })}
-          />
-        </g>
-      </svg>
-    </span>
+      <g>
+        <ellipse
+          ry={bulletOverlayRadius}
+          rx={bulletOverlayRadius}
+          cy='300'
+          cx='300'
+          className={css({
+            stroke: 'highlight',
+            fillOpacity: 0.25,
+            fill: 'fg',
+          })}
+        />
+      </g>
+    </BulletWrapper>
   )
 }
 
