@@ -9,14 +9,10 @@ import useHideBullet from '../hooks/useHideBullet'
 import useScrollCursorIntoView from '../hooks/useScrollCursorIntoView'
 import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getChildrenRanked } from '../selectors/getChildren'
-import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
 import equalThoughtRanked from '../util/equalThoughtRanked'
-import getBulletWidth from '../util/getBulletWidth'
 import head from '../util/head'
-import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import BulletWrapper from './BulletWrapper'
@@ -54,40 +50,15 @@ function CursorOverlay({
   path,
   leaf,
   isInContextView,
+  isTableCol1,
 }: {
   simplePath: SimplePath
   path: Path
   leaf?: boolean
   isInContextView?: boolean
+  isTableCol1?: boolean
 }) {
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
-
-  // Bottom margin for bullet to align with thought text
-  const glyphBottomMargin = isIOSSafari ? '-0.2em' : '-0.3em'
-
-  const showContexts = useSelector(state => isContextViewActive(state, path))
-  const fontSize = useSelector(state => state.fontSize)
-
-  const thoughtId = head(simplePath)
-
-  const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
-
-  // animate overlay when the thought is pinned
-  const isThoughtPinned = useSelector(state => !!isPinned(state, thoughtId))
-
-  const lineHeight = fontSize * 1.25
-
-  const extendClickWidth = fontSize * 1.2
-  const extendClickHeight = fontSize / 3
-
-  const isTableCol1 = useSelector(state =>
-    attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
-  )
-
-  // calculate position of bullet for different font sizes
-  // Table column 1 needs more space between the bullet and thought for some reason
-  const width = getBulletWidth(fontSize) + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
-  const marginLeft = -width
 
   return (
     <BulletWrapper
@@ -97,6 +68,7 @@ function CursorOverlay({
       simplePath={simplePath}
       isInContextView={isInContextView}
       isTableCol1={isTableCol1}
+      cursorOverlay
     >
       <g>
         <ellipse
@@ -210,8 +182,13 @@ export default function BulletCursorOverlay({
         />
       )}
       <ThoughtWrapper path={path} hideBullet={hideBullet} cursorOverlay>
-        <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
-
+        <CursorOverlay
+          simplePath={simplePath}
+          path={path}
+          leaf={leaf}
+          isInContextView={isInContextView}
+          isTableCol1={isTableCol1}
+        />
         <ThoughtAnnotationWrapper cursorOverlay />
       </ThoughtWrapper>
     </TreeNodeWrapper>

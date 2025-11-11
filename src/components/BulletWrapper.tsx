@@ -190,8 +190,12 @@ type BulletWrapperProps = {
   isCursorParent?: boolean
   isCursorGrandparent?: boolean
   leaf: boolean | undefined
+  cursorOverlay?: boolean
 }
 
+/**
+ * BulletWrapper is a reusable component that being used to render the actual Bullet and BulletCursorOverlay.
+ */
 const BulletWrapper = forwardRef<SVGSVGElement, PropsWithChildren<BulletWrapperProps>>(
   (
     {
@@ -205,6 +209,7 @@ const BulletWrapper = forwardRef<SVGSVGElement, PropsWithChildren<BulletWrapperP
       isCursorParent,
       isCursorGrandparent,
       leaf,
+      cursorOverlay,
     },
     ref,
   ) => {
@@ -280,9 +285,9 @@ const BulletWrapper = forwardRef<SVGSVGElement, PropsWithChildren<BulletWrapperP
 
     return (
       <span
-        data-testid={'bullet-' + hashPath(path)}
-        aria-label='bullet'
-        data-highlighted={isHighlighted}
+        data-testid={cursorOverlay ? 'cursor-overlay-bullet' : 'bullet-' + hashPath(path)}
+        aria-label={cursorOverlay ? 'cursor-overlay-bullet' : 'bullet'}
+        data-highlighted={cursorOverlay ? undefined : isHighlighted}
         className={cx(
           bulletRecipe({ invalid }),
           css({

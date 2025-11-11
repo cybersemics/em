@@ -1,31 +1,23 @@
-import React, { useCallback, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useRef } from 'react'
+import { useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
-import { bulletRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
-import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
-import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
-import { AlertType, LongPressState } from '../constants'
+import { AlertType } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
-import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
-import fastClick from '../util/fastClick'
-import getBulletWidth from '../util/getBulletWidth'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
-import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 import BulletWrapper from './BulletWrapper'
 
@@ -48,163 +40,6 @@ interface BulletProps {
 }
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
-
-const glyph = cva({
-  base: {
-    fill: 'bullet',
-    position: 'relative',
-    '@media (max-width: 500px)': {
-      _android: {
-        position: 'relative',
-        marginLeft: '-16.8px',
-        marginRight: '-5px',
-        left: '3px',
-        fontSize: '16px',
-      },
-    },
-    '@media (min-width: 560px) and (max-width: 1024px)': {
-      _android: {
-        position: 'relative',
-        marginLeft: '-16.8px',
-        marginRight: '-5px',
-        left: '4px',
-        fontSize: '28px',
-      },
-    },
-  },
-  variants: {
-    leaf: { true: {} },
-    showContexts: {
-      true: {
-        _mobile: {
-          fontSize: '80%',
-          left: '-0.08em',
-          top: '0.05em',
-        },
-        '@media (max-width: 500px)': {
-          _android: {
-            fontSize: '149%',
-            left: '2px',
-            top: '-5.1px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            fontSize: '149%',
-            left: '2px',
-            top: '-5.1px',
-          },
-        },
-      },
-    },
-    isBulletExpanded: { true: {} },
-    // childrenNew currently unused as NewThought is not importing Bullet
-    childrenNew: {
-      true: {
-        content: "'+'",
-        left: '-0.15em',
-        top: '-0.05em',
-        marginRight: '-0.3em',
-        _mobile: {
-          left: '0.05em',
-          top: '-0.1em',
-          marginRight: '-0.1em',
-        },
-        '@media (max-width: 500px)': {
-          _android: {
-            content: "'+'",
-            left: '0.05em',
-            top: '-0.1em',
-            marginRight: '-0.1em',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            content: "'+'",
-            left: '0.05em',
-            top: '-0.1em',
-            marginRight: '-0.1em',
-          },
-        },
-      },
-    },
-  },
-  compoundVariants: [
-    {
-      leaf: true,
-      showContexts: true,
-      css: {
-        fontSize: '90%',
-        top: '-0.05em',
-        _mobile: {
-          top: '0',
-          left: '-0.3em',
-          marginRight: 'calc(-0.48em - 5px)',
-        },
-        '@media (max-width: 500px)': {
-          _android: {
-            position: 'relative',
-            fontSize: '160%',
-            left: '1px',
-            top: '-8.1px',
-            marginRight: '-5px',
-            paddingRight: '10px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            position: 'relative',
-            fontSize: '171%',
-            left: '2px',
-            top: '-7.1px',
-            marginRight: '-5px',
-            paddingRight: '10px',
-          },
-        },
-      },
-    },
-    {
-      leaf: false,
-      isBulletExpanded: true,
-      css: {
-        '@media (max-width: 500px)': {
-          _android: {
-            left: '2px',
-            top: '-1.6px',
-            fontSize: '19px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {},
-        },
-      },
-    },
-    {
-      leaf: false,
-      showContexts: true,
-      isBulletExpanded: true,
-      css: {
-        '@media (max-width: 500px)': {
-          _android: {
-            left: '2px',
-            fontSize: '20px',
-            top: '-2.5px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            left: '3px',
-            top: '-5.1px',
-          },
-        },
-      },
-    },
-  ],
-  defaultVariants: {
-    leaf: false,
-    showContexts: false,
-  },
-})
 
 const glyphFg = cva({
   base: {
