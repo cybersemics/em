@@ -143,58 +143,6 @@ function CursorOverlay({
 }
 
 /**
- * PlaceholderTreeNode is a component used to mimic behavior of TreeNode.
- * Any position changes from one Thought to another will be animated within this component.
- */
-function PlaceholderTreeNode({
-  children,
-  isTableCol1 = false,
-  x,
-  y,
-  width,
-}: {
-  children?: React.ReactNode
-  isTableCol1?: boolean
-  x: number
-  y: number
-  width: number
-}) {
-  const outerDivStyle = {
-    left: x,
-    top: y,
-    // Table col1 uses its exact width since cannot extend to the right edge of the screen.
-    // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
-    // 1em + 10px is an eyeball measurement at font sizes 14 and 18
-    // (Maybe the 10px is from .content padding-left?)
-    width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
-    textAlign: isTableCol1 ? ('right' as const) : undefined,
-  }
-
-  return (
-    <div
-      aria-label='placeholder-tree-node'
-      className={css({
-        transition: 'left {durations.layoutNodeAnimation} linear,top {durations.layoutNodeAnimation} ease-in-out',
-        ...(isTableCol1
-          ? {
-              position: 'relative',
-              width: 'auto',
-            }
-          : {
-              position: 'absolute',
-              width: '100%',
-            }),
-      })}
-      style={{
-        ...outerDivStyle,
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-/**
  * BulletCursorOverlay is a component used to animate the cursor overlay from the bullet.
  * This component also contains placeholders for other components to maintain consistency of cursor overlay position.
  **/
@@ -274,7 +222,6 @@ export default function BulletCursorOverlay({
       index={index}
       isMounted
     >
-      {/* <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}> */}
       {showContexts && simplePath?.length > 1 && (
         <ContextBreadcrumbs
           hidden
@@ -290,9 +237,7 @@ export default function BulletCursorOverlay({
         />
       )}
       <ThoughtWrapper path={path} hideBullet={hideBullet} cursorOverlay>
-        {!hideBullet && (
-          <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
-        )}
+        <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
 
         <ThoughtAnnotationWrapper cursorOverlay />
       </ThoughtWrapper>
