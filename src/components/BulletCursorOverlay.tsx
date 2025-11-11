@@ -19,6 +19,7 @@ import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
+import ContextBreadcrumbs from './ContextBreadcrumbs'
 import FauxCaret from './FauxCaret'
 import ThoughtWrapper from './ThoughtWrapper'
 
@@ -137,51 +138,6 @@ function CursorOverlay({
         </g>
       </svg>
     </span>
-  )
-}
-
-/**
- * PlaceholderContextBreadcrumbs is a component that renders invisible breadcrumbs for context view.
- * Used to maintain layout consistency when context breadcrumbs are present.
- */
-function PlaceholderContextBreadcrumbs({ simplePath }: { simplePath: SimplePath }) {
-  const isHaveMultipleAncestors = simplePath.length > 2
-
-  return (
-    <div
-      aria-label='placeholder-ctx-breadcrumbs-outer-container'
-      className={css({
-        marginLeft: 'calc(1.3em - 14.5px)',
-        minHeight: '1em',
-        visibility: 'hidden',
-        marginBottom: '-0.25em', // Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note).
-        paddingTop: '0.5em', // Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought. Otherwise the accumulated y value will not be correct.
-      })}
-      style={{
-        fontSize: '0.867em',
-        marginTop: '0.533em',
-      }}
-    >
-      {isRoot(simplePath) ? null : (
-        <span
-          style={{
-            wordBreak: 'break-word',
-            textDecoration: 'none',
-            WebkitTextStrokeWidth: '0.05em',
-
-            height: '1em',
-            margin: '-0.5em',
-            padding: '0.5em',
-            ...(isHaveMultipleAncestors
-              ? {
-                  lineHeight: '16px',
-                }
-              : {}),
-          }}
-          dangerouslySetInnerHTML={{ __html: '&ZeroWidthSpace;' }}
-        ></span>
-      )}
-    </div>
   )
 }
 
@@ -355,11 +311,30 @@ export default function BulletCursorOverlay({
     thoughtId: head(simplePath),
   })
 
+  const homeContext = useSelector(state => {
+    const pathParent = rootedParentOf(state, path)
+    const showContexts = isContextViewActive(state, path)
+    return showContexts && isRoot(pathParent)
+  })
+
   useScrollCursorIntoView(y, height)
 
   return (
     <PlaceholderTreeNode width={width} x={x} y={y} isTableCol1={isTableCol1}>
-      {showContexts && simplePath?.length > 1 && <PlaceholderContextBreadcrumbs simplePath={simplePath} />}
+      {showContexts && simplePath?.length > 1 && (
+        <ContextBreadcrumbs
+          hidden
+          cssRaw={css.raw({
+            /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
+            marginBottom: '-0.25em',
+            /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
+            Otherwise the accumulated y value will not be correct. */
+            paddingTop: '0.5em',
+          })}
+          path={parentOf(simplePath)}
+          homeContext={homeContext}
+        />
+      )}
 
       <ThoughtWrapper path={path} hideBullet={hideBullet} cursorOverlay>
         <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
