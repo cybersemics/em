@@ -14,18 +14,6 @@ expect.extend(matchers)
 global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder
 
-// Ensure localStorage is available in all contexts (global, globalThis, window)
-// vitest-localstorage-mock sets globalThis.localStorage, but we need to ensure
-// it's also available on global and window for compatibility
-if (typeof globalThis.localStorage !== 'undefined' && globalThis.localStorage !== null) {
-  if (typeof global !== 'undefined' && typeof global.localStorage === 'undefined') {
-    global.localStorage = globalThis.localStorage
-  }
-  if (typeof window !== 'undefined' && typeof window.localStorage === 'undefined') {
-    window.localStorage = globalThis.localStorage
-  }
-}
-
 // add noop functions to prevent implementation error during test
 window.blur = noop
 window.scrollTo = noop
@@ -48,3 +36,7 @@ vi.stubGlobal('ResizeObserver', ResizeObserverMock)
 
 // stub jest globally. This is needed incase jest is being directly referenced in the code.
 vi.stubGlobal('jest', vi)
+
+// Use vi.stubGlobal to ensure localStorage is available as a bare global identifier
+// This is critical because modules like storage.ts reference localStorage directly
+vi.stubGlobal('localStorage', globalThis.localStorage)
