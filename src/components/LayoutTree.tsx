@@ -140,8 +140,8 @@ const LayoutTree = () => {
       : 0,
   )
 
-  // Width of thought bullet
-  const [bulletWidth, setBulletWidth] = useState(0)
+  // Width of thought bullet, using the default from Bullet.tsx
+  const [bulletWidth, setBulletWidth] = useState(fontSize * 1.25)
   // Distance from toolbar to the first visible thought
   const [layoutTop, setLayoutTop] = useState(0)
 

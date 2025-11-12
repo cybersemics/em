@@ -5,6 +5,7 @@ import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
 import State from '../@types/State'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
+import { CONTENT_BOX_PADDING_LEFT } from '../constants'
 import durations from '../durations.config'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
@@ -227,6 +228,7 @@ const TreeNode = ({
     // 1em + 10px is an eyeball measurement at font sizes 14 and 18
     // (Maybe the 10px is from .content padding-left?)
     width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
+    maxWidth: isTableCol1 ? undefined : `calc(100vw - ${CONTENT_BOX_PADDING_LEFT + bulletWidth}px)`,
     ...(style || {}),
     ...fauxCaretNodeProvider,
   }
