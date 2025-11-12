@@ -20,7 +20,7 @@ import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
-import FauxCaret from './FauxCaret'
+import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
 import ThoughtWrapper from './ThoughtWrapper'
 
 type BulletCursorOverlayProps = {
@@ -31,7 +31,6 @@ type BulletCursorOverlayProps = {
   path: Path
   isTableCol1: boolean
   width?: number
-  value?: string
   parentId: ThoughtId
   showContexts?: boolean
   leaf?: boolean
@@ -194,70 +193,6 @@ function PlaceholderTreeNode({
 }
 
 /**
- * A placeholder component for the ThoughtAnnotation component.
- * Used to maintain consistent positioning of the cursor and bullet in normal view on iOS.
- */
-function PlaceholderThoughtAnnotation() {
-  return (
-    <div
-      aria-label='placeholder-thought-annotation-outer-container'
-      className={css({
-        opacity: 0,
-        position: 'absolute',
-        boxSizing: 'border-box',
-        width: '100%',
-        marginTop: '0',
-        display: 'inline-block',
-        verticalAlign: 'top',
-        whiteSpace: 'pre-wrap',
-        maxWidth: '100%',
-        '@media (max-width: 500px)': {
-          marginTop: { _android: '-2.1px' },
-          marginLeft: { _android: '0.5em' },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          marginTop: { _android: '-0.1px' },
-          marginLeft: { _android: '0.5em' },
-        },
-      })}
-    >
-      <div
-        aria-label='placeholder-thought-annotation-inner-container'
-        className={css({
-          display: 'inline-block',
-          maxWidth: '100%',
-          boxSizing: 'border-box',
-          paddingRight: '0.333em',
-        })}
-        style={{
-          padding: '0 0.333em',
-          margin: '-0.5px 0 0 calc(1em - 18px)',
-        }}
-      >
-        <span
-          className={css({
-            fontSize: '1.25em',
-            margin: '-0.375em 0 0 -0.05em',
-            position: 'absolute',
-          })}
-        >
-          <FauxCaret caretType='thoughtStart' />
-        </span>
-        <span
-          className={css({
-            visibility: 'hidden',
-            position: 'relative',
-            clipPath: 'inset(0.001px 0 0.1em 0)',
-            wordBreak: 'break-word',
-          })}
-          dangerouslySetInnerHTML={{ __html: '&ZeroWidthSpace;' }}
-        />
-      </div>
-    </div>
-  )
-}
-
-/**
  * BulletCursorOverlay is a component used to animate the cursor overlay from the bullet.
  * This component also contains placeholders for other components to maintain consistency of cursor overlay position.
  **/
@@ -269,11 +204,15 @@ export default function BulletCursorOverlay({
   path,
   isTableCol1,
   width = 0,
-  value,
   parentId,
   showContexts,
   leaf,
 }: BulletCursorOverlayProps) {
+  const value: string | undefined = useSelector(state => {
+    const thought = getThoughtById(state, head(path))
+    return thought?.value || ''
+  })
+
   const childrenAttributeId = useSelector(
     state => (value !== '=children' && findAnyChild(state, parentId, child => child.value === '=children')?.id) || null,
   )
@@ -339,7 +278,7 @@ export default function BulletCursorOverlay({
       <ThoughtWrapper path={path} hideBullet={hideBullet} cursorOverlay>
         <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
 
-        <PlaceholderThoughtAnnotation />
+        <ThoughtAnnotationWrapper cursorOverlay />
       </ThoughtWrapper>
     </PlaceholderTreeNode>
   )
