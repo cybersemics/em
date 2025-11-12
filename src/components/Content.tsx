@@ -46,12 +46,17 @@ const useContentWidth = () => {
   useEffect(() => {
     if (!contentRef.current) return
 
-    const resizeObserver = new ResizeObserver(entries => {
-      viewportStore.update({ contentWidth: entries[0]?.contentRect.width || 0 })
-    })
+    /** Update viewportStore's contentWidth when the window resizes. */
+    const resizeObserver = () => {
+      if (!(contentRef.current?.firstChild instanceof HTMLElement)) return
+      const rect = contentRef.current.firstChild.getBoundingClientRect()
+      if (!rect) return
+      viewportStore.update({ contentWidth: rect.width })
+    }
 
-    resizeObserver.observe(contentRef.current)
-    return () => resizeObserver.disconnect()
+    resizeObserver()
+    window.addEventListener('resize', resizeObserver)
+    return () => window.removeEventListener('resize', resizeObserver)
   }, [])
 
   return contentRef
