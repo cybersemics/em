@@ -144,11 +144,10 @@ const TreeNode = ({
   /** Detect when this thought's on-screen position (array index) has changed. */
   const indexChanged = previousIndex !== undefined && previousIndex !== index
 
-  /** True if the last action is setSortPreference. */
+  /** True if the last undoable action is a sort change. */
   const isLastActionSort = useSelector(state => {
     const sortActions: ActionType[] = ['setSortPreference', 'toggleSort']
-    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => sortActions.includes(patch.actions[0]))
+    return sortActions.includes(state.lastUndoableActionType as ActionType)
   })
 
   /**
