@@ -9522,6 +9522,7 @@ __metadata:
     vite-plugin-terminal: "npm:^1.3.0"
     vitest: "npm:^4.0.8"
     vitest-browser-react: "npm:^2.0.2"
+    vitest-localstorage-mock: "npm:^0.1.2"
     webdriverio: "npm:^9.19.2"
     webview-background: "workspace:*"
     workbox-build: "npm:^7.3.0"
@@ -20973,6 +20974,15 @@ __metadata:
     "@types/react-dom":
       optional: true
   checksum: 10c0/95941efb09fa26533974029c70f5bc295b35de0ddef36e8852ce2e97221e10c660d4251af837f875a264a5b08ced965145a2d90a67d11dc595e91b16adbf3808
+  languageName: node
+  linkType: hard
+
+"vitest-localstorage-mock@npm:^0.1.2":
+  version: 0.1.2
+  resolution: "vitest-localstorage-mock@npm:0.1.2"
+  peerDependencies:
+    vitest: "*"
+  checksum: 10c0/c3991bfa908124c3ccc5614d016d9d35de56445de4e7a4634fe18c0c4ee53b8cebac352eeb73ee2321af3805db62c9353900952c0bb119915b5225d37482f2f9
   languageName: node
   linkType: hard
 
