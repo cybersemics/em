@@ -281,7 +281,14 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
 const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
   const propsTypes = props as ThoughtContainerProps
 
-  const [{ isDragging }, dragSource, dragPreview] = useDrag({
+  const [{ isDragging: isDraggingBullet }, dragSourceBullet, dragPreview] = useDrag({
+    type: DragAndDropType.Thought,
+    item: () => beginDrag(propsTypes),
+    canDrag: () => canDrag(propsTypes),
+    collect: dragCollect,
+  })
+
+  const [{ isDragging: isDraggingEditable }, dragSourceEditable] = useDrag({
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
@@ -302,8 +309,9 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
   })
 
   return {
-    isDragging: isDragging || isDraggingMultiple, // Combine both drag states: either this is the primary drag source OR it's part of multiselect drag
-    dragSource,
+    isDragging: isDraggingBullet || isDraggingEditable || isDraggingMultiple, // Combine both drag states: either this is the primary drag source OR it's part of multiselect drag
+    dragSourceBullet,
+    dragSourceEditable,
     dragPreview,
     isHovering,
     isBeingHoveredOver,
