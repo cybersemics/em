@@ -73,7 +73,6 @@ const Overlay = () => {
         className={css({
           position: 'absolute',
           pointerEvents: 'none',
-          zIndex: 'modal',
           backgroundImage: 'url(/img/command-center/overlay.webp)',
           backgroundSize: 'cover',
           backgroundPosition: 'center bottom',
@@ -162,7 +161,6 @@ const CommandMenu = () => {
             isolation: 'isolate',
           })}
         >
-          <Overlay />
           <div
             /** Falloff. */
             className={css({
@@ -175,11 +173,12 @@ const CommandMenu = () => {
               height: '100%',
             })}
           />
+          <Overlay />
+
           <div
             className={css({
               position: 'relative',
-              zIndex: 1,
-              margin: '0 1.2rem calc(1.2rem + env(safe-area-inset-bottom)) 1.2rem',
+              margin: '0 1.9rem calc(1.9rem + env(safe-area-inset-bottom)) 1.9rem',
             })}
           >
             <div className={css({ marginBottom: '1rem' })}>
@@ -192,28 +191,39 @@ const CommandMenu = () => {
                 })}
               >
                 <MultiselectMessage />
-                <button
-                  {...fastClick(onClose)}
+                <div
                   className={css({
-                    cursor: 'pointer',
-                    border: 'none',
-                    color: 'fg',
-                    background: 'fgOverlay20',
-                    borderRadius: 46.6,
+                    position: 'relative',
+                    fontSize: '0.85em',
                     fontWeight: 500,
                     letterSpacing: '-0.011em',
-                    padding: '8px 16px',
-                    mixBlendMode: 'soft-light',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1ch',
-                    /** Button won't show without z-index. */
-                    zIndex: 'modal',
-                    fontSize: '0.85em',
+                    color: 'fg',
                   })}
                 >
-                  Done
-                </button>
+                  <div
+                    className={css({
+                      position: 'absolute',
+                      background: 'fgOverlay20',
+                      borderRadius: 46,
+                      mixBlendMode: 'soft-light',
+                      height: '100%',
+                      width: '100%',
+                    })}
+                  />
+                  <button
+                    {...fastClick(onClose)}
+                    className={css({
+                      all: 'unset',
+                      mixBlendMode: 'lighten',
+                      opacity: 0.5,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      padding: '8px 16px',
+                    })}
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
             </div>
             <div
@@ -222,7 +232,7 @@ const CommandMenu = () => {
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 gridTemplateRows: 'auto',
                 gridAutoFlow: 'row',
-                gap: '0.7rem',
+                gap: '0.75rem',
                 maxWidth: '100%',
               })}
             >
