@@ -301,7 +301,7 @@ const Bullet = ({
       isCursorGrandparent={isCursorGrandparent}
       isCursorParent={isCursorParent}
       isInContextView={isInContextView}
-      isHighlighted={isHighlighted}
+      isDragging={isDragging}
       isTableCol1={isTableCol1}
       ref={svgElement}
     >

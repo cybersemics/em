@@ -13,6 +13,7 @@ import findDescendant from '../selectors/findDescendant'
 import getChildren from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import isPinned from '../selectors/isPinned'
 import fastClick from '../util/fastClick'
 import getBulletWidth from '../util/getBulletWidth'
@@ -183,7 +184,6 @@ const glyph = cva({
 type BulletWrapperProps = {
   path: Path
   simplePath: SimplePath
-  isHighlighted?: boolean
   isEditing: boolean
   isInContextView?: boolean
   isTableCol1?: boolean
@@ -191,6 +191,7 @@ type BulletWrapperProps = {
   isCursorGrandparent?: boolean
   leaf: boolean | undefined
   cursorOverlay?: boolean
+  isDragging?: boolean
 }
 
 /**
@@ -200,7 +201,6 @@ const BulletWrapper = forwardRef<SVGSVGElement, PropsWithChildren<BulletWrapperP
   (
     {
       children,
-      isHighlighted,
       path,
       isEditing,
       isInContextView,
@@ -209,6 +209,7 @@ const BulletWrapper = forwardRef<SVGSVGElement, PropsWithChildren<BulletWrapperP
       isCursorParent,
       isCursorGrandparent,
       leaf,
+      isDragging,
       cursorOverlay,
     },
     ref,
@@ -226,7 +227,12 @@ const BulletWrapper = forwardRef<SVGSVGElement, PropsWithChildren<BulletWrapperP
     const fontSize = useSelector(state => state.fontSize)
 
     const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
+    const isMulticursor = useSelector(state => isMulticursorPath(state, path))
 
+    const isHighlighted = useSelector(state => {
+      const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
+      return isHolding || isDragging || isMulticursor
+    })
     // expand or collapse on click
     // has some additional logic to make it work intuitively with pin true/false
     const clickHandler = useCallback(
@@ -285,8 +291,8 @@ const BulletWrapper = forwardRef<SVGSVGElement, PropsWithChildren<BulletWrapperP
 
     return (
       <span
-        data-testid={cursorOverlay ? 'cursor-overlay-bullet' : 'bullet-' + hashPath(path)}
-        aria-label={cursorOverlay ? 'cursor-overlay-bullet' : 'bullet'}
+        data-testid={cursorOverlay ? undefined : 'bullet-' + hashPath(path)}
+        aria-label={cursorOverlay ? undefined : 'bullet'}
         data-highlighted={cursorOverlay ? undefined : isHighlighted}
         className={cx(
           bulletRecipe({ invalid }),
