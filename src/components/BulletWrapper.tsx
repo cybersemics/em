@@ -324,6 +324,9 @@ const BulletWrapper = forwardRef<SVGSVGElement, PropsWithChildren<BulletWrapperP
           paddingLeft: extendClickWidth,
           paddingBottom: extendClickHeight + 2,
           width,
+          /* Ensuring the cursor overlay will always show behind the original bullet component.
+          We want to avoid a situation where the active thought can’t be dragged and dropped */
+          zIndex: cursorOverlay ? 0 : 1,
         }}
         {...(!cursorOverlay && fastClick(clickHandler, { enableHaptics: false }))}
       >
