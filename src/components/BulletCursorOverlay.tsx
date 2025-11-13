@@ -11,14 +11,12 @@ import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
 import equalThoughtRanked from '../util/equalThoughtRanked'
-import getBulletWidth from '../util/getBulletWidth'
 import head from '../util/head'
-import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
+import BulletWrapper from './BulletWrapper'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
 import ThoughtWrapper from './ThoughtWrapper'
@@ -53,92 +51,40 @@ function CursorOverlay({
   path,
   leaf,
   isInContextView,
+  isTableCol1,
 }: {
   simplePath: SimplePath
   path: Path
   leaf?: boolean
   isInContextView?: boolean
+  isTableCol1?: boolean
 }) {
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
 
-  // Bottom margin for bullet to align with thought text
-  const glyphBottomMargin = isIOSSafari ? '-0.2em' : '-0.3em'
-
-  const showContexts = useSelector(state => isContextViewActive(state, path))
-  const fontSize = useSelector(state => state.fontSize)
-
-  const thoughtId = head(simplePath)
-
-  const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
-
-  // animate overlay when the thought is pinned
-  const isThoughtPinned = useSelector(state => !!isPinned(state, thoughtId))
-
-  const lineHeight = fontSize * 1.25
-
-  const extendClickWidth = fontSize * 1.2
-  const extendClickHeight = fontSize / 3
-
-  const isTableCol1 = useSelector(state =>
-    attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
-  )
-
-  // calculate position of bullet for different font sizes
-  // Table column 1 needs more space between the bullet and thought for some reason
-  const width = getBulletWidth(fontSize) + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
-  const marginLeft = -width
-
   return (
-    <span
-      aria-label='placeholder-bullet'
-      style={{
-        top: -extendClickHeight,
-        left: -extendClickWidth + marginLeft,
-        paddingTop: extendClickHeight,
-        paddingLeft: extendClickWidth,
-        paddingBottom: extendClickHeight + 2,
-        width,
-        position: 'absolute',
-        verticalAlign: 'top',
-        display: bulletIsDivider ? 'none' : undefined,
-        zIndex: isIOSSafari ? 4 : undefined, // fix misalignment of cursor on iOS
-      }}
+    <BulletWrapper
+      isEditing
+      leaf={leaf}
+      path={path}
+      simplePath={simplePath}
+      isInContextView={isInContextView}
+      isTableCol1={isTableCol1}
+      cursorOverlay
     >
-      <svg
-        className={css({
-          willChange: 'transform',
-          transformBox: 'fill-box',
-          transformOrigin: 'center',
-          animation: isThoughtPinned ? 'bulletGrow {durations.fast} ease-out' : undefined,
-        })}
-        viewBox='0 0 600 600'
-        style={{
-          height: lineHeight,
-          width: lineHeight,
-          marginLeft: -lineHeight,
-          // required to make the distance between bullet and thought scale properly at all font sizes.
-          left: lineHeight * 0.317,
-          marginBottom: glyphBottomMargin,
-          position: 'relative',
-
-          top: showContexts && isIOSSafari ? '-0.05em' : undefined,
-        }}
-      >
-        <g>
-          <ellipse
-            ry={bulletOverlayRadius}
-            rx={bulletOverlayRadius}
-            cy='300'
-            cx='300'
-            className={css({
-              stroke: 'highlight',
-              fillOpacity: 0.25,
-              fill: 'fg',
-            })}
-          />
-        </g>
-      </svg>
-    </span>
+      <g>
+        <ellipse
+          ry={bulletOverlayRadius}
+          rx={bulletOverlayRadius}
+          cy='300'
+          cx='300'
+          className={css({
+            stroke: 'highlight',
+            fillOpacity: 0.25,
+            fill: 'fg',
+          })}
+        />
+      </g>
+    </BulletWrapper>
   )
 }
 
@@ -237,8 +183,13 @@ export default function BulletCursorOverlay({
         />
       )}
       <ThoughtWrapper path={path} hideBullet={hideBullet} cursorOverlay>
-        <CursorOverlay simplePath={simplePath} path={path} leaf={leaf} isInContextView={isInContextView} />
-
+        <CursorOverlay
+          simplePath={simplePath}
+          path={path}
+          leaf={leaf}
+          isInContextView={isInContextView}
+          isTableCol1={isTableCol1}
+        />
         <ThoughtAnnotationWrapper cursorOverlay />
       </ThoughtWrapper>
     </TreeNodeWrapper>
