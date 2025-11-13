@@ -287,11 +287,6 @@ const LayoutTree = () => {
           transform: `translateX(${1.5 - indent}em`,
           // Not animated for a more stable visual experience.
           marginRight,
-          // Ensure that transforming the thought's position by its indent level cannot push it off-screen.
-          // The extra 17px is to make sure it doesn't get cut off under the scrollbar
-          maxWidth: cursorThoughtPositioned?.isTableCol1
-            ? undefined
-            : `calc(100vw - ${CONTENT_BOX_PADDING_LEFT + bulletWidth + (isTouch ? 0 : 17)}px + ${marginRight})`,
         }}
       >
         {cursorThoughtPositioned && (
@@ -311,6 +306,12 @@ const LayoutTree = () => {
           {treeThoughtsPositioned.map((thought, index) => (
             <TreeNode
               {...thought}
+              style={{
+                ...thought.style,
+                // Ensure that transforming the thought's position by its indent level cannot push it off-screen.
+                // The extra 17px is to make sure it doesn't get cut off under the scrollbar
+                maxWidth: `calc(${window.innerWidth > 560 ? '90' : '100'}vw - ${CONTENT_BOX_PADDING_LEFT + thought.x}px - ${1.5 - indent}em)`,
+              }}
               index={index}
               // Pass unique key for the component
               key={thought.key}
