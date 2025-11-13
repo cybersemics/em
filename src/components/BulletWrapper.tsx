@@ -319,7 +319,7 @@ const BulletWrapper = forwardRef<SVGSVGElement, PropsWithChildren<BulletWrapperP
           paddingBottom: extendClickHeight + 2,
           width,
         }}
-        {...fastClick(clickHandler, { enableHaptics: false })}
+        {...(!cursorOverlay && fastClick(clickHandler, { enableHaptics: false }))}
       >
         <svg
           className={cx(
