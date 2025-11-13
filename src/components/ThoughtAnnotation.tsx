@@ -127,6 +127,7 @@ const ThoughtAnnotation = React.memo(
 
     return (
       <ThoughtAnnotationWrapper
+        annotationRef={annotationRef}
         isTableCol1={isTableCol1}
         ellipsizedUrl={ellipsizedUrl}
         multiline={multiline}
