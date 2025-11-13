@@ -1,5 +1,5 @@
 import moize from 'moize'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
@@ -12,8 +12,7 @@ import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
-import findDescendant from '../selectors/findDescendant'
-import { anyChild, filterAllChildren } from '../selectors/getChildren'
+import { filterAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
@@ -95,8 +94,8 @@ EmailIconLink.displayName = 'EmailIconLink'
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = React.memo(
   ({
+    annotationRef,
     email,
-    isEditing,
     multiline,
     ellipsizedUrl,
     numContexts,
@@ -107,11 +106,10 @@ const ThoughtAnnotation = React.memo(
     // only applied to the .subthought container
     styleAnnotation,
     url,
-    placeholder,
     value,
   }: {
+    annotationRef: RefObject<HTMLDivElement | null>
     email?: string
-    isEditing: boolean
     multiline?: boolean
     ellipsizedUrl?: boolean
     numContexts: number
@@ -121,34 +119,15 @@ const ThoughtAnnotation = React.memo(
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
     url?: string | null
-    placeholder?: string
     value: string
   }) => {
-    const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
-      isEditing ? (editingValue ?? value) : null,
-    )
-
     const isTableCol1 = useSelector((state: State) =>
       attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
     )
 
-    /**
-     * Adding dependency on lexemeIndex as the fetch for thought is async await.
-     * ThoughtAnnotation wasn't waiting for all the lexemeIndex to be set before it was rendered.
-     * And hence the superscript wasn't rendering properly on load.
-     * So now subscribing to get context so that StaticSuperscript is not re-rendered for all lexemeIndex change.
-     * It will re-render only when respective Lexeme is changed.
-     * Changed as part of fix for issue 1419 (https://github.com/cybersemics/em/issues/1419).
-     */
-
-    const textMarkup = useSelector(state => {
-      const labelId = findDescendant(state, head(simplePath), '=label')
-      const labelChild = anyChild(state, labelId || undefined)
-      return isEditing ? (liveValueIfEditing ?? value) : labelChild ? labelChild.value : value
-    })
-
     return (
       <ThoughtAnnotationWrapper
+        annotationRef={annotationRef}
         isTableCol1={isTableCol1}
         ellipsizedUrl={ellipsizedUrl}
         multiline={multiline}
@@ -156,8 +135,6 @@ const ThoughtAnnotation = React.memo(
         styleAnnotation={styleAnnotation}
         cssRaw={cssRaw}
         style={style}
-        textMarkup={textMarkup}
-        placeholder={placeholder}
       >
         {
           // do not render url icon on root thoughts in publish mode
@@ -180,6 +157,7 @@ const ThoughtAnnotation = React.memo(
 /** Container for ThoughtAnnotation. */
 const ThoughtAnnotationContainer = React.memo(
   ({
+    editableRef,
     path,
     simplePath,
     minContexts = 2,
@@ -192,6 +170,7 @@ const ThoughtAnnotationContainer = React.memo(
     // only applied to the .subthought container
     styleAnnotation,
   }: {
+    editableRef: RefObject<HTMLInputElement | null>
     env?: LazyEnv
     focusOffset?: number
     invalidState?: boolean
@@ -206,6 +185,7 @@ const ThoughtAnnotationContainer = React.memo(
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
   }) => {
+    const annotationRef = useRef<HTMLDivElement>(null)
     // delay calculation of contexts for performance
     // recalculate after the component has mounted
     // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
@@ -279,6 +259,34 @@ const ThoughtAnnotationContainer = React.memo(
       setCalculateContexts(true)
     }, [])
 
+    // useSelector would be a cleaner way to get the annotationRef's new position
+    // but, on load, the refs are null until setTimeout runs
+    useEffect(() => {
+      setTimeout(() => {
+        if (editableRef.current && annotationRef.current) {
+          const range = document.createRange()
+          const textNode = editableRef.current.lastChild
+          if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return
+
+          const length = textNode.textContent?.length
+          const offset = editableRef.current.getBoundingClientRect()
+
+          if (!length) return
+
+          // Select the last character
+          range.setStart(textNode, length - 1)
+          range.setEnd(textNode, length)
+
+          // Get bounding box
+          const rect = range.getBoundingClientRect()
+
+          // rect.right gives you the x position (relative to viewport)
+          annotationRef.current.style.left = `${rect.right - offset.left}px`
+          annotationRef.current.style.top = `${rect.top - offset.top}px`
+        }
+      })
+    }, [editableRef, email, numContexts, showSuperscript, styleAnnotation, url])
+
     // In order to render a faux caret while hideCaret animations are playing, ThoughtAnnotation always needs
     // to exist on mobile Safari. The line end faux caret must be placed inline-block at the end of the
     // thought text in order to cover cases where the selection is an ELEMENT_NODE and its bounding box
@@ -286,6 +294,7 @@ const ThoughtAnnotationContainer = React.memo(
     return showSuperscript || url || email || styleAnnotation || (isTouch && isSafari()) ? (
       <ThoughtAnnotation
         {...{
+          annotationRef,
           simplePath,
           isEditing,
           multiline,

@@ -1,4 +1,4 @@
-import { FC, PropsWithChildren } from 'react'
+import { FC, PropsWithChildren, RefObject } from 'react'
 import { css, cx } from '../../styled-system/css'
 import { multilineRecipe } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
@@ -13,6 +13,7 @@ import FauxCaret from './FauxCaret'
  */
 const ThoughtAnnotationWrapper: FC<
   PropsWithChildren<{
+    annotationRef?: RefObject<HTMLDivElement | null>
     cursorOverlay?: boolean
     ellipsizedUrl?: boolean
     multiline?: boolean
@@ -25,6 +26,7 @@ const ThoughtAnnotationWrapper: FC<
     placeholder?: string
   }>
 > = ({
+  annotationRef,
   cursorOverlay,
   ellipsizedUrl,
   multiline,
@@ -40,6 +42,7 @@ const ThoughtAnnotationWrapper: FC<
   return (
     <div
       aria-label='thought-annotation'
+      ref={annotationRef}
       className={css({
         position: 'absolute',
         pointerEvents: 'none',
@@ -47,7 +50,8 @@ const ThoughtAnnotationWrapper: FC<
         boxSizing: 'border-box',
         width: '100%',
         // maxWidth: '100%',
-        marginTop: '0',
+        marginLeft: '-0.333em',
+        marginTop: '-0.41em',
         display: 'inline-block',
         textAlign: 'left',
         verticalAlign: 'top',

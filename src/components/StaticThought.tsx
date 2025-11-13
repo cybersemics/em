@@ -154,6 +154,7 @@ const StaticThought = ({
   return (
     <>
       <ThoughtAnnotation
+        editableRef={editableRef}
         env={env}
         minContexts={allowSingleContext ? 0 : 2}
         multiline={multiline}
