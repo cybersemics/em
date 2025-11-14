@@ -47,7 +47,7 @@ const useEditMode = ({
     () => {
       // Get the cursorOffset directly from the store rather than subscribing to it reactively with useSelector.
       // Otherwise, it will try to set the selection while typing.
-      const cursorOffset = store.getState().cursorOffset
+      const { cursorOffset, lastUndoableActionType } = store.getState()
 
       /** Set the selection to the current Editable at the cursor offset. */
       const setSelectionToCursorOffset = () => {
@@ -85,8 +85,10 @@ const useEditMode = ({
         Also, setTimeout is frequently pushed into the next frame and the keyboard will intermittently close on iOS Safari.
         Replacing setTimeout with requestAnimationFrame guarantees (hopefully?) that it will be processed before the next repaint,
         keeping the keyboard open while rapidly deleting thoughts. (#3129)
+
+        If the last action is swapParent, set the selection synchronously to keep the focus stable after the swap.
       */
-        if (isTouch && isSafari()) {
+        if (isTouch && isSafari() && lastUndoableActionType !== 'swapParent') {
           if (!selection.isThought()) {
             asyncFocus()
           }
