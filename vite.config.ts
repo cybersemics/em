@@ -56,8 +56,11 @@ export default defineConfig({
             key: fs.readFileSync('./src/e2e/puppeteer/puppeteer-key.pem'),
             cert: fs.readFileSync('./src/e2e/puppeteer/puppeteer.pem'),
           },
-          // Disable HMR in puppeteer tests to not interrupt running tests
-          hmr: false,
+          // protocol `wss` is required to resolve websocket connection failure
+          hmr: {
+            host: 'host.docker.internal',
+            protocol: 'wss',
+          },
         },
       }
     : {}),
