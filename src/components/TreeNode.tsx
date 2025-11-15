@@ -22,6 +22,7 @@ const TreeNode = ({
   depth,
   env,
   height,
+  hoverTargetEndMargin,
   indexChild,
   indexDescendant,
   isCursor,
@@ -166,6 +167,7 @@ const TreeNode = ({
             depth={depth}
             dropUncle={thoughtId === cursorUncleId}
             env={env}
+            hoverTargetEndMargin={hoverTargetEndMargin}
             indexDescendant={indexDescendant}
             isMultiColumnTable={false}
             leaf={leaf}
@@ -194,6 +196,7 @@ const TreeNode = ({
             <DropCliff
               cliff={cliff}
               depth={depth}
+              hoverTargetEndMargin={hoverTargetEndMargin + Math.max(-2, (1 - depth) * 2)}
               path={path}
               isTableCol2={isTableCol2}
               isLastVisible={isLastVisible}

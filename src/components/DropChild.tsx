@@ -22,6 +22,7 @@ import DragOnly from './DragOnly'
 
 interface DropChildProps {
   depth?: number
+  hoverTargetEndMargin: number
   last?: boolean
   path: Path
   simplePath: SimplePath
@@ -29,7 +30,7 @@ interface DropChildProps {
   isLastVisible?: boolean
 }
 /** A drop target that allows dropping as a child of a thought. It is only shown when a thought has no children or is collapsed. Only renders if there is a valid dropTarget and a drag is in progress. */
-const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildProps) => {
+const DropChild = ({ depth, hoverTargetEndMargin, path, simplePath, cliff, isLastVisible }: DropChildProps) => {
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const dropHoverColorValue = useSelector(state => dropHoverColor(state, depth || 0))
   const fontSize = useSelector(state => state.fontSize)
@@ -42,7 +43,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
   // Should be added, because its thought has same logic to apply extra bonus height - so drop target panel height would be same as its thought
   const dropTargetHeight =
     (cliff !== undefined && cliff < 0) || isLastVisible ? calculateCliffDropTargetHeight({ depth }) : 0
-  const dropHoverLength = useDropHoverWidth()
+  const dropHoverLength = useDropHoverWidth({ hoverTargetEndMargin })
 
   // Calculate offset to compensate for cliff padding applied to the parent thought
   // When cliff < 0, cliff padding (fontSize / 4) is applied to the parent, so we need to move DropChild up by that amount
@@ -106,7 +107,15 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
   )
 }
 /** Render the DropChild component if the thought is collapsed, and does not match the dragging thought. This component is an optimization to avoid calculating DropChild hooks when unnecessary. */
-const DropChildIfCollapsed = ({ depth, last, path, simplePath, cliff, isLastVisible }: DropChildProps) => {
+const DropChildIfCollapsed = ({
+  depth,
+  hoverTargetEndMargin,
+  last,
+  path,
+  simplePath,
+  cliff,
+  isLastVisible,
+}: DropChildProps) => {
   const isExpanded = useSelector(state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(path)])
 
   // Check if this thought is any of the dragging thoughts (single or multiple)
@@ -122,6 +131,7 @@ const DropChildIfCollapsed = ({ depth, last, path, simplePath, cliff, isLastVisi
   return (
     <DropChild
       depth={depth}
+      hoverTargetEndMargin={hoverTargetEndMargin}
       last={last}
       path={path}
       simplePath={simplePath}
@@ -131,11 +141,20 @@ const DropChildIfCollapsed = ({ depth, last, path, simplePath, cliff, isLastVisi
   )
 }
 /** Renders the DropChildInnerContainer component if the user is dragging and the dropTarget exists. This component is an optimization to avoid calculating DropChildIfCollapsed and DropChild hooks when unnecessary. */
-const DropChildIfDragging = ({ depth, last, path, simplePath, cliff, isLastVisible }: DropChildProps) => {
+const DropChildIfDragging = ({
+  depth,
+  hoverTargetEndMargin,
+  last,
+  path,
+  simplePath,
+  cliff,
+  isLastVisible,
+}: DropChildProps) => {
   return (
     <DragOnly>
       <DropChildIfCollapsed
         depth={depth}
+        hoverTargetEndMargin={hoverTargetEndMargin}
         last={last}
         path={path}
         simplePath={simplePath}

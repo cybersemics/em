@@ -56,6 +56,7 @@ const VirtualThought = ({
   depth,
   dropUncle,
   env,
+  hoverTargetEndMargin,
   indexDescendant,
   isMultiColumnTable,
   leaf,
@@ -79,6 +80,7 @@ const VirtualThought = ({
   depth: number
   dropUncle?: boolean
   env?: LazyEnv
+  hoverTargetEndMargin: number
   indexDescendant: number
   isMultiColumnTable?: boolean
   leaf: boolean
@@ -246,7 +248,15 @@ const VirtualThought = ({
                     - d
                   - e
              */
-          !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} cliff={prevCliff} />
+          !isVisible && dropUncle && (
+            <DropUncle
+              depth={depth}
+              hoverTargetEndMargin={hoverTargetEndMargin}
+              path={path}
+              simplePath={simplePath}
+              cliff={prevCliff}
+            />
+          )
         }
 
         {!shimHiddenThought && (
@@ -256,6 +266,7 @@ const VirtualThought = ({
             depth={depth + 1}
             dropUncle={dropUncle}
             env={env}
+            hoverTargetEndMargin={hoverTargetEndMargin}
             indexDescendant={indexDescendant}
             isMultiColumnTable={isMultiColumnTable}
             leaf={leaf}
@@ -272,6 +283,7 @@ const VirtualThought = ({
         {isVisible && (
           <DropChild
             depth={depth}
+            hoverTargetEndMargin={hoverTargetEndMargin + 1}
             // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
             // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
             // TODO: DragAndDropSubthoughts should be able to handle this.

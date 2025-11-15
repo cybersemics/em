@@ -34,6 +34,7 @@ const usePositionedThoughts = (
 
   const fontSize = useSelector(state => state.fontSize)
   const cliffPadding = fontSize / 4
+  const maxDepth = treeThoughts.reduce((current, thought) => (thought.depth > current ? thought.depth : current), 0)
 
   // set the bullet width only during drag or when simulateDrop is true
   useLayoutEffect(() => {
@@ -222,6 +223,7 @@ const usePositionedThoughts = (
         ...node,
         cliff,
         height,
+        hoverTargetEndMargin: maxDepth - node.depth,
         singleLineHeightWithCliff,
         width: tableCol1Widths.get(head(parentOf(node.path))),
         isLastVisible,
@@ -246,6 +248,7 @@ const usePositionedThoughts = (
     cliffPadding,
     fontSize,
     isHoveringSorted,
+    maxDepth,
     maxVisibleY,
     newRank,
     scrollTopIfDragging,

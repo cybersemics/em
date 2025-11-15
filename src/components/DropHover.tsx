@@ -24,7 +24,7 @@ import nonNull from '../util/nonNull'
 import parentOf from '../util/parentOf'
 
 /** Renders a drop-hover element unconditionally. */
-const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
+const DropHover = ({ hoverTargetEndMargin, simplePath }: { hoverTargetEndMargin: number; simplePath: SimplePath }) => {
   const dropHoverColorValue = useSelector(state => dropHoverColor(state, simplePath.length))
 
   const isTableCol1 = useSelector(state =>
@@ -35,7 +35,7 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
 
-  const dropHoverLength = useDropHoverWidth({ isTableCol1, isTableCol2 })
+  const dropHoverLength = useDropHoverWidth({ hoverTargetEndMargin, isTableCol1, isTableCol2 })
 
   const animateHover = useSelector(state => {
     const parent = parentOf(simplePath)
@@ -72,10 +72,12 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
 }
 /** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts. */
 const DropHoverIfVisible = ({
+  hoverTargetEndMargin,
   isHovering,
   prevChildId,
   simplePath,
 }: {
+  hoverTargetEndMargin: number
   isHovering: boolean
   prevChildId?: ThoughtId
   simplePath: SimplePath
@@ -137,7 +139,7 @@ const DropHoverIfVisible = ({
     )
   })
 
-  return showDropHover ? <DropHover simplePath={simplePath} /> : null
+  return showDropHover ? <DropHover hoverTargetEndMargin={hoverTargetEndMargin} simplePath={simplePath} /> : null
 }
 
 const DropHoverMemo = React.memo(DropHoverIfVisible)

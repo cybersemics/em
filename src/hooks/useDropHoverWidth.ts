@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { CONTENT_BOX_PADDING_LEFT, CONTENT_BOX_PADDING_RIGHT } from '../constants'
-import viewportStore from '../stores/viewport'
+import { useSelector } from 'react-redux'
 
 interface DropHoverLengthProps {
+  hoverTargetEndMargin: number
   isTableCol1?: boolean // For dropping into place as a first column in table view
   isTableCol2?: boolean // For dropping into place as a second column in table view
 }
@@ -58,16 +58,17 @@ interface DropHoverLengthProps {
  * @returns CSS width value as string.
  */
 const useDropHoverWidth = (props?: DropHoverLengthProps) => {
-  const contentWidth = viewportStore.useSelector(state => state.contentWidth)
+  const fontSize = useSelector(state => state.fontSize)
   const isTableCol1 = props?.isTableCol1
   const isTableCol2 = props?.isTableCol2
+  const hoverTargetEndMargin = props?.hoverTargetEndMargin
 
   return useMemo(
     () =>
       isTableCol1 || isTableCol2
         ? '50vw' // Table view mode: 50% of viewport width for two-column layout
-        : `${contentWidth - CONTENT_BOX_PADDING_RIGHT - CONTENT_BOX_PADDING_LEFT}px`, // Normal mode: Content width minus padding
-    [contentWidth, isTableCol1, isTableCol2],
+        : `calc(100% - ${hoverTargetEndMargin}em - 2em - ${fontSize}px + 10px)`,
+    [hoverTargetEndMargin, isTableCol1, isTableCol2],
   )
 }
 
