@@ -15,7 +15,7 @@ export default defineRecipe({
     cursor: 'pointer',
     transition: 'opacity {durations.medium} ease, background-color {durations.medium} ease',
     opacity: 1,
-    height: 58,
+    height: 60,
 
     display: 'flex',
     alignItems: 'center',

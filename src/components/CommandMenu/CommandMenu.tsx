@@ -178,7 +178,7 @@ const CommandMenu = () => {
           <div
             className={css({
               position: 'relative',
-              margin: '0 1.9rem calc(1.9rem + env(safe-area-inset-bottom)) 1.9rem',
+              margin: '0 1.5rem calc(1.5rem + env(safe-area-inset-bottom)) 1.5rem',
             })}
           >
             <div className={css({ marginBottom: '1rem' })}>
@@ -232,7 +232,8 @@ const CommandMenu = () => {
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 gridTemplateRows: 'auto',
                 gridAutoFlow: 'row',
-                gap: '0.75rem',
+                gap: '0.7rem',
+                gridRowGap: '1rem',
                 maxWidth: '100%',
               })}
             >
