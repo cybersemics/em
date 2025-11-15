@@ -10,6 +10,7 @@ import useScrollCursorIntoView from '../hooks/useScrollCursorIntoView'
 import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import equalThoughtRanked from '../util/equalThoughtRanked'
@@ -110,6 +111,8 @@ export default function BulletCursorOverlay({
     return thought?.value || ''
   })
 
+  const isMulticursorActive = useSelector(hasMulticursor)
+
   const childrenAttributeId = useSelector(
     state => (value !== '=children' && findAnyChild(state, parentId, child => child.value === '=children')?.id) || null,
   )
@@ -183,13 +186,15 @@ export default function BulletCursorOverlay({
         />
       )}
       <ThoughtWrapper path={path} hideBullet={hideBullet} cursorOverlay>
-        <CursorOverlay
-          simplePath={simplePath}
-          path={path}
-          leaf={leaf}
-          isInContextView={isInContextView}
-          isTableCol1={isTableCol1}
-        />
+        {!isMulticursorActive && (
+          <CursorOverlay
+            simplePath={simplePath}
+            path={path}
+            leaf={leaf}
+            isInContextView={isInContextView}
+            isTableCol1={isTableCol1}
+          />
+        )}
         <ThoughtAnnotationWrapper cursorOverlay />
       </ThoughtWrapper>
     </TreeNodeWrapper>
