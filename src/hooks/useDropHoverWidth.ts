@@ -68,7 +68,7 @@ const useDropHoverWidth = (props?: DropHoverLengthProps) => {
       isTableCol1 || isTableCol2
         ? '50vw' // Table view mode: 50% of viewport width for two-column layout
         : `calc(100% - ${hoverTargetEndMargin}em - 2em - ${fontSize}px + 10px)`,
-    [hoverTargetEndMargin, isTableCol1, isTableCol2],
+    [fontSize, hoverTargetEndMargin, isTableCol1, isTableCol2],
   )
 }
 
