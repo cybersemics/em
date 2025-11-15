@@ -12,7 +12,7 @@ import isDescendantPath from '../util/isDescendantPath'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
-import TreeNodeWrapper from './TreeNodeWrapper'
+import TreeNodePositioner from './TreeNodePositioner'
 import VirtualThought, { OnResize, SetSize } from './VirtualThought'
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
@@ -145,7 +145,7 @@ const TreeNode = ({
       onExit={() => setIsMounted(false)}
       unmountOnExit
     >
-      <TreeNodeWrapper
+      <TreeNodePositioner
         x={x}
         y={y}
         index={index}
@@ -203,7 +203,7 @@ const TreeNode = ({
         <span className={css({ position: 'absolute', margin: '-0.1875em 0 0 -0.05em', top: 0, left: 0 })}>
           <FauxCaret caretType='positioned' path={path} wrapperElement={fadeThoughtRef.current} />
         </span>
-      </TreeNodeWrapper>
+      </TreeNodePositioner>
     </FadeTransition>
   )
 }

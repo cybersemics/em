@@ -21,7 +21,7 @@ import BulletWrapper from './BulletWrapper'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
 import ThoughtPositioner from './ThoughtPositioner'
-import TreeNodeWrapper from './TreeNodeWrapper'
+import TreeNodePositioner from './TreeNodePositioner'
 
 type BulletCursorOverlayProps = {
   x: number
@@ -159,7 +159,7 @@ export default function BulletCursorOverlay({
   useScrollCursorIntoView(y, height)
 
   return (
-    <TreeNodeWrapper
+    <TreeNodePositioner
       cursorOverlay
       contextAnimation={null}
       isTableCol1={isTableCol1}
@@ -197,6 +197,6 @@ export default function BulletCursorOverlay({
         )}
         <ThoughtAnnotationWrapper cursorOverlay />
       </ThoughtPositioner>
-    </TreeNodeWrapper>
+    </TreeNodePositioner>
   )
 }

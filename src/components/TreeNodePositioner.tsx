@@ -13,7 +13,7 @@ import parentOf from '../util/parentOf'
 
 type ContextAnimation = 'disappearingLowerLeft' | 'disappearingUpperRight' | null
 
-interface TreeNodeWrapperProps {
+interface TreeNodePositionerProps {
   children: ReactNode
   contextAnimation: ContextAnimation
   thoughtId: string
@@ -32,7 +32,7 @@ interface TreeNodeWrapperProps {
  * Wrapper component for TreeNode and BulletCursorOverlay that sets x/y coordinates and handles animation from a given TreeNode.
  * Handles sort and swap animations by splitting X and Y transitions for smoother motion and direction control.
  */
-const TreeNodeWrapper = ({
+const TreeNodePositioner = ({
   children,
   contextAnimation,
   thoughtId,
@@ -45,7 +45,7 @@ const TreeNodeWrapper = ({
   index,
   path,
   cursorOverlay,
-}: TreeNodeWrapperProps) => {
+}: TreeNodePositionerProps) => {
   const [y, setY] = useState(_y)
   const [x, setX] = useState(_x)
 
@@ -201,4 +201,4 @@ const TreeNodeWrapper = ({
     </div>
   )
 }
-export default TreeNodeWrapper
+export default TreeNodePositioner
