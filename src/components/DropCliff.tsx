@@ -10,6 +10,7 @@ import DropEnd from './DropEnd'
 const DropCliff = ({
   cliff,
   depth,
+  hoverTargetEndMargin,
   path,
   isTableCol2,
   prevWidth = 0,
@@ -17,6 +18,7 @@ const DropCliff = ({
 }: {
   cliff: number
   depth: number
+  hoverTargetEndMargin: number
   path: Path
   isTableCol2: boolean
   prevWidth?: number
@@ -51,6 +53,7 @@ const DropCliff = ({
         >
           <DropEnd
             depth={pathEnd.length}
+            hoverTargetEndMargin={hoverTargetEndMargin}
             path={pathEnd}
             cliff={cliff}
             isLastVisible={isLastVisible}

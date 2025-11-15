@@ -34,6 +34,7 @@ const DropEnd = ({
   last,
   path,
   cliff,
+  hoverTargetEndMargin,
   isLastVisible,
 }: {
   depth: number
@@ -41,6 +42,7 @@ const DropEnd = ({
   last?: boolean
   path?: Path
   cliff?: number
+  hoverTargetEndMargin: number
   isLastVisible?: boolean
 }) => {
   if (!path) {
@@ -55,7 +57,10 @@ const DropEnd = ({
     attributeEquals(state, head(rootedParentOf(state, path)), '=view', 'Table'),
   )
 
-  const dropHoverLength = useDropHoverWidth({ isTableCol2: isParentTableCol1 })
+  const dropHoverLength = useDropHoverWidth({
+    hoverTargetEndMargin,
+    isTableCol2: isParentTableCol1,
+  })
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
 

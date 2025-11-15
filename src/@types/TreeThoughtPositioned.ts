@@ -4,6 +4,7 @@ import TreeThought from './TreeThought'
 type TreeThoughtPositioned = TreeThought & {
   cliff: number
   height: number
+  hoverTargetEndMargin: number
   singleLineHeightWithCliff: number
   width?: number
   x: number
