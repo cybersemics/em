@@ -55,7 +55,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DropHover from './DropHover'
 import Note from './Note'
 import StaticThought from './StaticThought'
-import ThoughtWrapper from './ThoughtWrapper'
+import ThoughtPositioner from './ThoughtPositioner'
 
 /**********************************************************************
  * Redux
@@ -585,7 +585,7 @@ const ThoughtContainer = ({
         />
       )}
 
-      <ThoughtWrapper path={path} hideBullet={hideBullet}>
+      <ThoughtPositioner path={path} hideBullet={hideBullet}>
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
           <div style={alignmentTransition.bullet}>
             <Bullet
@@ -630,7 +630,7 @@ const ThoughtContainer = ({
           />
         </div>
         <Note path={path} disabled={!isVisible} />
-      </ThoughtWrapper>
+      </ThoughtPositioner>
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
 

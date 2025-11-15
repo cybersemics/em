@@ -20,7 +20,7 @@ import parentOf from '../util/parentOf'
 import BulletWrapper from './BulletWrapper'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
-import ThoughtWrapper from './ThoughtWrapper'
+import ThoughtPositioner from './ThoughtPositioner'
 import TreeNodeWrapper from './TreeNodeWrapper'
 
 type BulletCursorOverlayProps = {
@@ -185,7 +185,7 @@ export default function BulletCursorOverlay({
           homeContext={homeContext}
         />
       )}
-      <ThoughtWrapper path={path} hideBullet={hideBullet} cursorOverlay>
+      <ThoughtPositioner path={path} hideBullet={hideBullet} cursorOverlay>
         {!isMulticursorActive && (
           <CursorOverlay
             simplePath={simplePath}
@@ -196,7 +196,7 @@ export default function BulletCursorOverlay({
           />
         )}
         <ThoughtAnnotationWrapper cursorOverlay />
-      </ThoughtWrapper>
+      </ThoughtPositioner>
     </TreeNodeWrapper>
   )
 }
