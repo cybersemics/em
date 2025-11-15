@@ -17,7 +17,7 @@ import equalThoughtRanked from '../util/equalThoughtRanked'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import BulletWrapper from './BulletWrapper'
+import BulletPositioner from './BulletPositioner'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
 import ThoughtPositioner from './ThoughtPositioner'
@@ -63,7 +63,7 @@ function CursorOverlay({
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
 
   return (
-    <BulletWrapper
+    <BulletPositioner
       isEditing
       leaf={leaf}
       path={path}
@@ -85,7 +85,7 @@ function CursorOverlay({
           })}
         />
       </g>
-    </BulletWrapper>
+    </BulletPositioner>
   )
 }
 
