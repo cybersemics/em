@@ -84,7 +84,7 @@
   "dependencies": {
     "@capacitor/android": "^7.4.3",
     "@capacitor/clipboard": "^7.0.2",
-    "@capacitor/core": "^7.4.3",
+    "@capacitor/core": "^7.4.4",
     "@capacitor/haptics": "^7.0.2",
     "@capacitor/ios": "^7.4.3",
     "@capacitor/keyboard": "^7.0.3",
