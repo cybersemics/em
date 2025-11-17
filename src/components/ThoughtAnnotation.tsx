@@ -18,6 +18,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
+import viewportStore from '../stores/viewport'
 import containsURL from '../util/containsURL'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
@@ -39,8 +40,8 @@ const urlLinkStyle = css({
   /* set height of this a tag to 1em to make sure the a tag doesn't affect .thought annotation's line height */
   height: '1em',
   display: 'inline-block',
-  overflow: 'hidden',
   position: 'relative',
+  bottom: '1px',
   zIndex: 'thoughtAnnotationLink',
   marginLeft: 3,
   textDecoration: 'none',
@@ -203,6 +204,11 @@ const ThoughtAnnotationContainer = React.memo(
       isEditing ? editingValue : null,
     )
 
+    // We're trying to get rid of contentWidth as part of #3369, but currently it's the easiest reactive proxy for a viewport resize event.
+    const contentWidth = viewportStore.useSelector(state => state.contentWidth)
+    const cursor = useSelector(state => state.cursor)
+    const fontSize = useSelector(state => state.fontSize)
+
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
     editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
 
@@ -270,22 +276,28 @@ const ThoughtAnnotationContainer = React.memo(
 
           const length = textNode.textContent?.length
           const offset = editableRef.current.getBoundingClientRect()
+          let right = offset.width - fontSize - 6
+          let top = 0
 
-          if (!length) return
+          if (length) {
+            // Select the last character
+            range.setStart(textNode, length - 1)
+            range.setEnd(textNode, length)
 
-          // Select the last character
-          range.setStart(textNode, length - 1)
-          range.setEnd(textNode, length)
+            // Get bounding box
+            const rect = range.getBoundingClientRect()
+            const isAtEdge = rect.right - offset.left > offset.width
 
-          // Get bounding box
-          const rect = range.getBoundingClientRect()
+            top = rect.top - offset.top
+            if (!isAtEdge) right = rect.right - offset.left
+          }
 
           // rect.right gives you the x position (relative to viewport)
-          annotationRef.current.style.left = `${rect.right - offset.left}px`
-          annotationRef.current.style.top = `${rect.top - offset.top}px`
+          annotationRef.current.style.left = `${right}px`
+          annotationRef.current.style.top = `${top}px`
         }
       })
-    }, [editableRef, email, numContexts, showSuperscript, styleAnnotation, url])
+    }, [contentWidth, cursor, editableRef, email, fontSize, numContexts, showSuperscript, styleAnnotation, url])
 
     // In order to render a faux caret while hideCaret animations are playing, ThoughtAnnotation always needs
     // to exist on mobile Safari. The line end faux caret must be placed inline-block at the end of the
