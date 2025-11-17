@@ -9465,7 +9465,7 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^7.0.1"
     eslint-plugin-react-refresh: "npm:^0.4.24"
-    fake-indexeddb: "npm:^6.2.4"
+    fake-indexeddb: "npm:^6.2.5"
     fast-json-patch: "npm:^3.1.1"
     fp-and-or: "npm:^1.0.2"
     happy-dom: "npm:^20.0.10"
@@ -10809,10 +10809,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fake-indexeddb@npm:^6.2.4":
-  version: 6.2.4
-  resolution: "fake-indexeddb@npm:6.2.4"
-  checksum: 10c0/53b7e9e8f7e413c1a45a4f80f6deda00ef02676cc3a4457e73abff06720ec6b4f4f63fd65c1ef6b03298a1e7e4684d4bf65137a8b9ac166dcfade4b2acf229b4
+"fake-indexeddb@npm:^6.2.5":
+  version: 6.2.5
+  resolution: "fake-indexeddb@npm:6.2.5"
+  checksum: 10c0/6c5e2fe84a61daa06d7ad63699d1041fe61847f15f92db12415634b3db94f363a64be9e08a3c3c4434af9c3c0132086b85c4d5dc5e8e06edae1e7daf70ce1f3c
   languageName: node
   linkType: hard
 
