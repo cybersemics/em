@@ -272,11 +272,11 @@ const ThoughtAnnotationContainer = React.memo(
         if (editableRef.current && annotationRef.current) {
           const range = document.createRange()
           const textNode = editableRef.current.lastChild
-          if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return
 
-          const length = textNode.textContent?.length
+          const length = textNode && textNode.nodeType === Node.TEXT_NODE && textNode.textContent?.length
           const offset = editableRef.current.getBoundingClientRect()
-          let right = offset.width - fontSize - 6
+
+          let right = offset.width - fontSize - (length ? fontSize / 3 : 0)
           let top = 0
 
           if (length) {
@@ -288,7 +288,7 @@ const ThoughtAnnotationContainer = React.memo(
             const rect = range.getBoundingClientRect()
             const isAtEdge = rect.right - offset.left > offset.width
 
-            top = rect.top - offset.top
+            top = rect.top - offset.top - 7.5 / fontSize
             if (!isAtEdge) right = rect.right - offset.left
           }
 
