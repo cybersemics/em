@@ -677,7 +677,7 @@ describe('parenthetical content', () => {
 })
 
 describe('dash splitting', () => {
-  it('splits thought with dash into main thought and subthought (Case 1)', () => {
+  it('splits thought with dash into main thought and subthought', () => {
     const value = 'one - 1'
     const exported = splitThought(value)
 
@@ -738,7 +738,7 @@ describe('dash splitting', () => {
   - one -`)
   })
 
-  it('splits by sentences when both dash and multiple sentences are present (Case 2)', () => {
+  it('splits by sentences when both dash and multiple sentences are present', () => {
     const value = 'one - 1. two. three.'
     const exported = splitThought(value)
 
