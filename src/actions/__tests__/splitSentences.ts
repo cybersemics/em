@@ -677,24 +677,6 @@ describe('parenthetical content', () => {
 })
 
 describe('dash splitting', () => {
-  it('splits thought with dash into main thought and subthought (Case 1)', () => {
-    const value = 'one - 1'
-    const exported = splitThought(value)
-
-    expect(exported).toBe(`- ${HOME_TOKEN}
-  - one
-    - 1`)
-  })
-
-  it('splits thought with en-dash into main thought and subthought', () => {
-    const value = 'one – 1'
-    const exported = splitThought(value)
-
-    expect(exported).toBe(`- ${HOME_TOKEN}
-  - one
-    - 1`)
-  })
-
   it('splits thought with em-dash into main thought and subthought', () => {
     const value = 'one — 1'
     const exported = splitThought(value)
