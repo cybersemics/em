@@ -41,7 +41,6 @@ const urlLinkStyle = css({
   height: '1em',
   display: 'inline-block',
   position: 'relative',
-  bottom: '1px',
   zIndex: 'thoughtAnnotationLink',
   marginLeft: 3,
   textDecoration: 'none',
@@ -288,7 +287,7 @@ const ThoughtAnnotationContainer = React.memo(
             const rect = range.getBoundingClientRect()
             const isAtEdge = rect.right - offset.left > offset.width
 
-            top = rect.top - offset.top - 7.5 / fontSize
+            top = rect.top - offset.top
             if (!isAtEdge) right = rect.right - offset.left
           }
 

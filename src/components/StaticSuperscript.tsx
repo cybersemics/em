@@ -52,7 +52,7 @@ const StaticSuperscript = React.forwardRef<
               className={css({
                 position: 'relative',
                 zIndex: 'stack',
-                top: '-1px',
+                top: '-0.13em',
                 left: '1px',
               })}
               style={{ color: fill }}

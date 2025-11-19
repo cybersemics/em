@@ -47,8 +47,9 @@ const ThoughtAnnotationWrapper: FC<
         pointerEvents: 'none',
         userSelect: 'none',
         boxSizing: 'border-box',
-        marginLeft: '-0.333em',
-        marginTop: '-0.41em',
+        lineHeight: multiline ? 1.25 : undefined,
+        marginTop: multiline ? 'calc(-0.12em - 0.5px) !important' : value ? '-0.425em' : undefined,
+        marginLeft: 'calc(0.666em - 18px)',
         display: 'inline-block',
         textAlign: 'left',
         verticalAlign: 'top',
@@ -74,17 +75,10 @@ const ThoughtAnnotationWrapper: FC<
                 fontFamily: 'monospace',
               }),
             display: 'inline-block',
-            lineHeight: multiline ? 1.25 : undefined,
-            marginTop: multiline ? '-0.12em !important' : undefined,
             maxWidth: '100%',
             padding: '0 0.333em',
             boxSizing: 'border-box',
             whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
-            /*
-                  Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
-                  To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
-                */
-            margin: '-0.5px 0 0 calc(1em - 18px)',
             paddingRight: multiline ? '1em' : '0.333em',
             textAlign: isTableCol1 ? 'right' : 'left',
           }) // disable intrathought linking until add, edit, delete, and expansion can be implemented
