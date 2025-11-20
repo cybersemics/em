@@ -108,7 +108,7 @@ describe('splitSentences', () => {
   - me`)
   })
 
-  it('splits thought with dash into main thought and child (Case 1)', () => {
+  it('splits thought with dash into main thought and child', () => {
     store.dispatch([
       importText({
         text: `
@@ -126,7 +126,7 @@ describe('splitSentences', () => {
     - 1`)
   })
 
-  it('splits by sentences when both dash and multiple sentences are present (Case 2)', () => {
+  it('splits by sentences when both dash and multiple sentences are present', () => {
     store.dispatch([
       importText({
         text: `
