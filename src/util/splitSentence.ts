@@ -79,14 +79,31 @@ const splitSentence = (value: string): SplitResult[] => {
    */
   const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(value.trim()))
 
-  // if we're sub-sentence or in one sentence territory, split by comma and "and"
-  // e.g. "john, johnson, and john doe" -> "- john - johnson - john doe"
-  if (!sentenceSplitters || hasOnlyPeriodAtEnd())
+  // if we're sub-sentence or in one sentence territory, check for dash splitting first
+  // e.g. "one - 1" -> "- one   - 1" (as child)
+  if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
+    // Check for dash (-, –, or —) and split into child if found
+    // This handles Case 1: Split into child when there's only one sentence
+    // Match the first dash that has content on both sides
+    const dashMatch = value.match(/^(.+?)\s*([-–—])\s*(.+)$/)
+    if (dashMatch) {
+      const [_, leftPart, __, rightPart] = dashMatch
+      const trimmedLeft = leftPart.trim()
+      const trimmedRight = rightPart.trim()
+      // Only split if both parts have content
+      if (trimmedLeft && trimmedRight) {
+        return [{ value: trimmedLeft }, { value: trimmedRight, insertNewSubThought: true }]
+      }
+    }
+
+    // if we're sub-sentence or in one sentence territory, split by comma and "and"
+    // e.g. "john, johnson, and john doe" -> "- john - johnson - john doe"
     return value
       .split(/,|and/i)
       .map(s => s.trim())
       .filter(s => s !== '')
       .map(value => ({ value }))
+  }
 
   /**
    * When the setences can be split, it has multiple situations.

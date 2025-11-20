@@ -108,6 +108,43 @@ describe('splitSentences', () => {
   - me`)
   })
 
+  it('splits thought with dash into main thought and child', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - one - 1
+        `,
+      }),
+      setCursor(['one - 1']),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - one
+    - 1`)
+  })
+
+  it('splits by sentences when both dash and multiple sentences are present', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - one - 1. two. three.
+        `,
+      }),
+      setCursor(['one - 1. two. three.']),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - one - 1.
+  - two.
+  - three.`)
+  })
+
   describe('multicursor', () => {
     it('splits sentences in multiple thoughts', async () => {
       store.dispatch([

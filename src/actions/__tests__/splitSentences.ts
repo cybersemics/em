@@ -675,3 +675,95 @@ describe('parenthetical content', () => {
   - This (has parentheses) in the middle`)
   })
 })
+
+describe('dash splitting', () => {
+  it('splits thought with dash into main thought and subthought', () => {
+    const value = 'one - 1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - 1`)
+  })
+
+  it('splits thought with en-dash into main thought and subthought', () => {
+    const value = 'one – 1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - 1`)
+  })
+
+  it('splits thought with em-dash into main thought and subthought', () => {
+    const value = 'one — 1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - 1`)
+  })
+
+  it('splits thought with dash and extra spaces', () => {
+    const value = 'one   -   1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - 1`)
+  })
+
+  it('splits on first dash when multiple dashes are present', () => {
+    const value = 'one - two - three'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two - three`)
+  })
+
+  it('does not split when dash is at the beginning', () => {
+    const value = '- one'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - - one`)
+  })
+
+  it('does not split when dash is at the end', () => {
+    const value = 'one -'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one -`)
+  })
+
+  it('splits by sentences when both dash and multiple sentences are present', () => {
+    const value = 'one - 1. two. three.'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one - 1.
+  - two.
+  - three.`)
+  })
+
+  it('splits by sentences when dash and multiple sentences with different punctuation', () => {
+    const value = 'one - 1! two? three.'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one - 1!
+  - two?
+  - three.`)
+  })
+
+  it('splits by dash when there is only one sentence ending with period', () => {
+    const value = 'one - 1.'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - 1.`)
+  })
+})
