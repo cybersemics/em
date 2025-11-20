@@ -159,6 +159,7 @@ const TreeNodePositioner = ({
       aria-label={cursorOverlay ? 'cursor-overlay-tree-node' : 'tree-node'}
       className={css({
         position: 'absolute',
+        willChange: isSwap ? 'left' : undefined,
         transition: cursorOverlay
           ? 'left {durations.layoutNodeAnimation} linear,top {durations.layoutNodeAnimation} ease-in-out'
           : isSwap
@@ -186,6 +187,7 @@ const TreeNodePositioner = ({
                 position: 'absolute',
                 width: '100%',
               }),
+          willChange: isSwap ? 'top' : undefined,
           transition: isSwap
             ? swapDirection === 'clockwise'
               ? 'top {durations.layoutNodeAnimation} {easings.nodeCurveYLayerClockwise}'
