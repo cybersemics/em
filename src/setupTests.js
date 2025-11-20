@@ -21,6 +21,12 @@ document.execCommand = () => {
   console.warn('document.execCommand is not implemented in JSDOM')
 }
 
+document.createRange = () => {
+  const range = new Range()
+  range.getBoundingClientRect = vi.fn(() => ({ left: 0, right: 0, width: 0, height: 0 }))
+  return range
+}
+
 const ResizeObserverMock = vi.fn(
   // eslint-disable-next-line jsdoc/require-jsdoc
   class {
