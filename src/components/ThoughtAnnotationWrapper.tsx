@@ -3,7 +3,6 @@ import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import isAttribute from '../util/isAttribute'
-import FauxCaret from './FauxCaret'
 
 /**
  * Shared component used by ThoughtAnnotation and BulletCursorOverlay.
@@ -13,7 +12,6 @@ import FauxCaret from './FauxCaret'
 const ThoughtAnnotationWrapper: FC<
   PropsWithChildren<{
     annotationRef?: RefObject<HTMLDivElement | null>
-    cursorOverlay?: boolean
     ellipsizedUrl?: boolean
     multiline?: boolean
     value?: string
@@ -26,7 +24,6 @@ const ThoughtAnnotationWrapper: FC<
   }>
 > = ({
   annotationRef,
-  cursorOverlay,
   ellipsizedUrl,
   multiline,
   value,
@@ -92,16 +89,6 @@ const ThoughtAnnotationWrapper: FC<
           minWidth: `${MIN_CONTENT_WIDTH_EM - 0.333 - 0.333}em`, // min width of thought (3em) - 0.333em left padding - 0.333em right padding
         }}
       >
-        <span
-          className={css({
-            fontSize: '1.25em',
-            margin: '-0.375em 0 0 -0.05em',
-            position: 'absolute',
-          })}
-        >
-          {/* only render FauxCaret for original component */}
-          {!cursorOverlay && <FauxCaret caretType='thoughtStart' />}
-        </span>
         <span
           className={css(
             {

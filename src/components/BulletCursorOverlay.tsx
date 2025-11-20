@@ -195,7 +195,7 @@ export default function BulletCursorOverlay({
             isTableCol1={isTableCol1}
           />
         )}
-        <ThoughtAnnotationWrapper cursorOverlay />
+        <ThoughtAnnotationWrapper />
       </ThoughtPositioner>
     </TreeNodePositioner>
   )

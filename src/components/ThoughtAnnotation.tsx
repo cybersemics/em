@@ -126,31 +126,42 @@ const ThoughtAnnotation = React.memo(
     )
 
     return (
-      <ThoughtAnnotationWrapper
-        annotationRef={annotationRef}
-        isTableCol1={isTableCol1}
-        ellipsizedUrl={ellipsizedUrl}
-        multiline={multiline}
-        value={value}
-        styleAnnotation={styleAnnotation}
-        cssRaw={cssRaw}
-        style={style}
-      >
-        {
-          // do not render url icon on root thoughts in publish mode
-          url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
-        }
-        {email && <EmailIconLink email={email} />}
-        {
-          // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-          showSuperscript ? (
-            <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
-          ) : null
-        }
-        <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
-          <FauxCaret caretType='thoughtEnd' />
+      <>
+        <span
+          className={css({
+            fontSize: '1.25em',
+            margin: '-0.375em 0 0 0.1375em',
+            position: 'absolute',
+          })}
+        >
+          <FauxCaret caretType='thoughtStart' />
         </span>
-      </ThoughtAnnotationWrapper>
+        <ThoughtAnnotationWrapper
+          annotationRef={annotationRef}
+          isTableCol1={isTableCol1}
+          ellipsizedUrl={ellipsizedUrl}
+          multiline={multiline}
+          value={value}
+          styleAnnotation={styleAnnotation}
+          cssRaw={cssRaw}
+          style={style}
+        >
+          {
+            // do not render url icon on root thoughts in publish mode
+            url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
+          }
+          {email && <EmailIconLink email={email} />}
+          {
+            // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
+            showSuperscript ? (
+              <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
+            ) : null
+          }
+          <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
+            <FauxCaret caretType='thoughtEnd' />
+          </span>
+        </ThoughtAnnotationWrapper>
+      </>
     )
   },
 )
