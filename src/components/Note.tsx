@@ -22,7 +22,6 @@ import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import strip from '../util/strip'
-import FauxCaret from './FauxCaret'
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = React.memo(
@@ -177,9 +176,6 @@ const Note = React.memo(
           marginLeft: fontSize - 14,
         }}
       >
-        <span className={css({ fontSize: '1.2em', position: 'absolute', margin: '-0.175em 0 0 0.0875em' })}>
-          <FauxCaret caretType='noteStart' />
-        </span>
         <ContentEditable
           html={note || ''}
           innerRef={noteRef as React.RefObject<HTMLElement>}
@@ -204,9 +200,6 @@ const Note = React.memo(
           onMouseDown={onMouseDown}
           role='button'
         />
-        <span className={css({ fontSize: '1.1em', position: 'absolute', margin: '-0.15em 0 0 -1.175em' })}>
-          <FauxCaret caretType='noteEnd' />
-        </span>
       </div>
     )
   },

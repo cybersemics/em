@@ -1,17 +1,14 @@
 import { useCallback, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
-import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
-import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import useMoveThoughtAnimation from '../hooks/useMoveThoughtAnimation'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isDescendantPath from '../util/isDescendantPath'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
-import FauxCaret from './FauxCaret'
 import TreeNodeWrapper from './TreeNodeWrapper'
 import VirtualThought, { OnResize, SetSize } from './VirtualThought'
 
@@ -70,14 +67,6 @@ const TreeNode = ({
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
   const [isMounted, setIsMounted] = useState(true)
-
-  const fauxCaretNodeProvider = useFauxCaretNodeProvider({
-    editing,
-    fadeThoughtElement: fadeThoughtRef.current,
-    isCursor,
-    isTableCol1,
-    path,
-  })
 
   // true if the last action is any of archive/delete/collapse
   const isLastActionDelete = useSelector(state => {
@@ -157,7 +146,6 @@ const TreeNode = ({
         isMounted={isMounted}
         style={{
           ...style,
-          ...fauxCaretNodeProvider,
         }}
       >
         <div ref={fadeThoughtRef}>
@@ -200,9 +188,6 @@ const TreeNode = ({
               prevWidth={treeThoughtsPositioned[index - 1]?.width}
             />
           )}
-        <span className={css({ position: 'absolute', margin: '-0.1875em 0 0 -0.05em', top: 0, left: 0 })}>
-          <FauxCaret caretType='positioned' path={path} wrapperElement={fadeThoughtRef.current} />
-        </span>
       </TreeNodeWrapper>
     </FadeTransition>
   )
