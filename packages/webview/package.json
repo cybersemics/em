@@ -41,17 +41,17 @@
   },
   "devDependencies": {
     "@capacitor/android": "^7.4.3",
-    "@capacitor/core": "^7.4.3",
+    "@capacitor/core": "^7.4.4",
     "@capacitor/docgen": "^0.3.0",
     "@capacitor/ios": "^7.4.3",
     "@ionic/swiftlint-config": "^2.0.0",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.0",
     "rollup": "^4.52.5",
     "swiftlint": "^2.0.0",
     "typescript": "5.7.2"
   },
   "peerDependencies": {
-    "@capacitor/core": "^7.4.3"
+    "@capacitor/core": "^7.4.4"
   },
   "capacitor": {
     "ios": {
