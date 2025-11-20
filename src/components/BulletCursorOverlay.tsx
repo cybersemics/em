@@ -4,7 +4,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { isSafari, isTouch, isiPhone } from '../browser'
 import useHideBullet from '../hooks/useHideBullet'
 import useScrollCursorIntoView from '../hooks/useScrollCursorIntoView'
 import attributeEquals from '../selectors/attributeEquals'
@@ -13,6 +12,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
@@ -37,8 +37,6 @@ type BulletCursorOverlayProps = {
   index: number
 }
 
-const isIOSSafari = isTouch && isiPhone && isSafari()
-
 /** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
 const equalChildren = (a: Thought[], b: Thought[]) =>
   a === b ||
@@ -60,7 +58,7 @@ function CursorOverlay({
   isInContextView?: boolean
   isTableCol1?: boolean
 }) {
-  const bulletOverlayRadius = isIOSSafari ? 300 : 245
+  const bulletOverlayRadius = calculateCursorOverlayRadius()
 
   return (
     <BulletPositioner
