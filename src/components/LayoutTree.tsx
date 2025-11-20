@@ -2,7 +2,7 @@ import { isEqual, throttle } from 'lodash'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
-import { css, cx } from '../../styled-system/css'
+import { css } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
@@ -10,7 +10,6 @@ import { LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
-import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
 import { hasChildren } from '../selectors/getChildren'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
@@ -257,12 +256,9 @@ const LayoutTree = () => {
 
   return (
     <div
-      className={cx(
-        css({
-          marginTop: '0.501em',
-        }),
-        fauxCaretTreeProvider(indent),
-      )}
+      className={css({
+        marginTop: '0.501em',
+      })}
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
         transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
