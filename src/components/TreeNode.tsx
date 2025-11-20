@@ -9,7 +9,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import isDescendantPath from '../util/isDescendantPath'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
-import TreeNodeWrapper from './TreeNodeWrapper'
+import TreeNodePositioner from './TreeNodePositioner'
 import VirtualThought, { OnResize, SetSize } from './VirtualThought'
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
@@ -134,7 +134,7 @@ const TreeNode = ({
       onExit={() => setIsMounted(false)}
       unmountOnExit
     >
-      <TreeNodeWrapper
+      <TreeNodePositioner
         x={x}
         y={y}
         index={index}
@@ -188,7 +188,7 @@ const TreeNode = ({
               prevWidth={treeThoughtsPositioned[index - 1]?.width}
             />
           )}
-      </TreeNodeWrapper>
+      </TreeNodePositioner>
     </FadeTransition>
   )
 }

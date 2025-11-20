@@ -22,10 +22,5 @@ module.exports = {
     // Currently v2 appears to be published to the latest tag, but keep this locked in case v3 is published to latest in the future. Minor and patch versions are safe to upgrade to.
     // https://gitlab.com/nfriend/ts-key-enum#which-version-should-i-use
     'ts-key-enum',
-
-    // customSnapshotIdentifier breaks in puppeteer snapshot tests on puppeteer v23.
-    // Error running image diff: Unknown Error
-    // https://github.com/vitest-dev/vitest/releases/tag/v2.0.0
-    'puppeteer',
   ],
 }
