@@ -8,7 +8,6 @@ import SimplePath from '../@types/SimplePath'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDropHoverWidth from '../hooks/useDropHoverWidth'
-import useHoveringPath from '../hooks/useHoveringPath'
 import attributeEquals from '../selectors/attributeEquals'
 import dropHoverColor from '../selectors/dropHoverColor'
 import getThoughtById from '../selectors/getThoughtById'
@@ -38,8 +37,11 @@ const DropUncle = ({
     testFlags.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
   )
 
-  const { isHovering, dropTarget } = useDragAndDropThought({ path, simplePath })
-  useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
+  const { isHovering, dropTarget } = useDragAndDropThought({
+    path,
+    simplePath,
+    hoverZone: DropThoughtZone.SubthoughtsDrop,
+  })
 
   // Calculate the height for the uncle thought over cliff
   const dropTargetHeight = calculateCliffDropTargetHeight({ cliff, depth })

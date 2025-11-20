@@ -181,7 +181,7 @@ const glyph = cva({
   },
 })
 
-type BulletWrapperProps = {
+type BulletPositionerProps = {
   path: Path
   simplePath: SimplePath
   isEditing: boolean
@@ -195,9 +195,9 @@ type BulletWrapperProps = {
 }
 
 /**
- * BulletWrapper is a reusable component that being used to render the actual Bullet and BulletCursorOverlay.
+ * A component that positions the Bullet and BulletCursorOverlay.
  */
-const BulletWrapper = forwardRef<SVGSVGElement, PropsWithChildren<BulletWrapperProps>>(
+const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPositionerProps>>(
   (
     {
       children,
@@ -368,6 +368,6 @@ const BulletWrapper = forwardRef<SVGSVGElement, PropsWithChildren<BulletWrapperP
   },
 )
 
-BulletWrapper.displayName = 'BulletWrapper'
+BulletPositioner.displayName = 'BulletWrapper'
 
-export default BulletWrapper
+export default BulletPositioner

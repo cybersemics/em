@@ -10,17 +10,18 @@ import useScrollCursorIntoView from '../hooks/useScrollCursorIntoView'
 import attributeEquals from '../selectors/attributeEquals'
 import { findAnyChild, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import BulletWrapper from './BulletWrapper'
+import BulletPositioner from './BulletPositioner'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
-import ThoughtWrapper from './ThoughtWrapper'
-import TreeNodeWrapper from './TreeNodeWrapper'
+import ThoughtPositioner from './ThoughtPositioner'
+import TreeNodePositioner from './TreeNodePositioner'
 
 type BulletCursorOverlayProps = {
   x: number
@@ -62,7 +63,7 @@ function CursorOverlay({
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
 
   return (
-    <BulletWrapper
+    <BulletPositioner
       isEditing
       leaf={leaf}
       path={path}
@@ -84,7 +85,7 @@ function CursorOverlay({
           })}
         />
       </g>
-    </BulletWrapper>
+    </BulletPositioner>
   )
 }
 
@@ -109,6 +110,8 @@ export default function BulletCursorOverlay({
     const thought = getThoughtById(state, head(path))
     return thought?.value || ''
   })
+
+  const isMulticursorActive = useSelector(hasMulticursor)
 
   const childrenAttributeId = useSelector(
     state => (value !== '=children' && findAnyChild(state, parentId, child => child.value === '=children')?.id) || null,
@@ -156,7 +159,7 @@ export default function BulletCursorOverlay({
   useScrollCursorIntoView(y, height)
 
   return (
-    <TreeNodeWrapper
+    <TreeNodePositioner
       cursorOverlay
       contextAnimation={null}
       isTableCol1={isTableCol1}
@@ -182,16 +185,18 @@ export default function BulletCursorOverlay({
           homeContext={homeContext}
         />
       )}
-      <ThoughtWrapper path={path} hideBullet={hideBullet} cursorOverlay>
-        <CursorOverlay
-          simplePath={simplePath}
-          path={path}
-          leaf={leaf}
-          isInContextView={isInContextView}
-          isTableCol1={isTableCol1}
-        />
+      <ThoughtPositioner path={path} hideBullet={hideBullet} cursorOverlay>
+        {!isMulticursorActive && (
+          <CursorOverlay
+            simplePath={simplePath}
+            path={path}
+            leaf={leaf}
+            isInContextView={isInContextView}
+            isTableCol1={isTableCol1}
+          />
+        )}
         <ThoughtAnnotationWrapper cursorOverlay />
-      </ThoughtWrapper>
-    </TreeNodeWrapper>
+      </ThoughtPositioner>
+    </TreeNodePositioner>
   )
 }

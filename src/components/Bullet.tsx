@@ -19,7 +19,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
-import BulletWrapper from './BulletWrapper'
+import BulletPositioner from './BulletPositioner'
 
 interface BulletProps {
   // See: ThoughtProps['isContextPending']
@@ -293,7 +293,7 @@ const Bullet = ({
   const isRootChildLeaf = simplePath.length === 2 && leaf
 
   return (
-    <BulletWrapper
+    <BulletPositioner
       isEditing={isEditing}
       leaf={leaf}
       path={path}
@@ -333,7 +333,7 @@ const Bullet = ({
           />
         )}
       </g>
-    </BulletWrapper>
+    </BulletPositioner>
   )
 }
 

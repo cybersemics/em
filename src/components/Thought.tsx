@@ -21,7 +21,6 @@ import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
-import useHoveringPath from '../hooks/useHoveringPath'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
@@ -55,7 +54,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DropHover from './DropHover'
 import Note from './Note'
 import StaticThought from './StaticThought'
-import ThoughtWrapper from './ThoughtWrapper'
+import ThoughtPositioner from './ThoughtPositioner'
 
 /**********************************************************************
  * Redux
@@ -287,15 +286,14 @@ const ThoughtContainer = ({
     return equalPath(parentOf(state.cursor), path)
   })
 
-  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget, canDropThought, isDeepHovering } =
-    useDragAndDropThought({
-      path,
-      simplePath,
-      isVisible,
-      isCursorParent,
-    })
+  const { isDragging, dragSource, isHovering, dropTarget, canDropThought, isDeepHovering } = useDragAndDropThought({
+    path,
+    simplePath,
+    isVisible,
+    isCursorParent,
+    hoverZone: DropThoughtZone.ThoughtDrop,
+  })
 
-  useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
   useDragLeave({ isDeepHovering, canDropThought })
 
   // check if the cursor is editing a thought directly
@@ -587,7 +585,7 @@ const ThoughtContainer = ({
         />
       )}
 
-      <ThoughtWrapper path={path} hideBullet={hideBullet}>
+      <ThoughtPositioner path={path} hideBullet={hideBullet}>
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
           <div style={alignmentTransition.bullet}>
             <Bullet
@@ -637,7 +635,7 @@ const ThoughtContainer = ({
           />
         </div>
         <Note path={path} disabled={!isVisible} />
-      </ThoughtWrapper>
+      </ThoughtPositioner>
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
 
