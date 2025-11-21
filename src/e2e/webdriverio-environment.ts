@@ -38,7 +38,7 @@ async function initializeBrowserStackLocal(config:  BrowserStackConfig) {
 export default <Environment>{
   // eslint-disable-next-line prettier/prettier
   name: 'ios',
-  transformMode: 'web',
+  viteEnvironment: 'client',
   async setup(global, options) {
     builtinEnvironments['happy-dom'].setup(global, options)
 

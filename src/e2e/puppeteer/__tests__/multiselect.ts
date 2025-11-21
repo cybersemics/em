@@ -17,7 +17,7 @@ describe('multiselect', () => {
 
     await multiselectThoughts(['a', 'b'])
 
-    const highlightedBullets = await page.$$('.bullet[data-highlighted=true]')
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
     const alertContent = await page.$eval('[data-testid=alert-content]', el => el.textContent)
 
     expect(highlightedBullets.length).toBe(2)
@@ -43,10 +43,18 @@ describe('mobile only', () => {
     await longPressThought(a, { edge: 'right', x: 100 })
     await longPressThought(b, { edge: 'right', x: 100 })
 
-    const highlightedBullets = await page.$$('.bullet[data-highlighted=true]')
-    const commandMenuPanelTextContent = await page.$eval('[data-testid=command-menu-panel]', el => el.textContent)
+    // In CI, sometimes the count of highlighted bullets are incorrect. The selector query runs immediately after both long presses, but react might not have finished re-rendering all bullet components.
+    // Wait for the command menu panel to show "2 thoughts selected" before we query for highlighted bullets.
+    await page.waitForFunction(
+      () => {
+        const panel = document.querySelector('[data-testid=command-menu-panel]')
+        return panel?.textContent?.includes('2 thoughts selected') ?? false
+      },
+      { timeout: 6000 },
+    )
+
+    const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
 
     expect(highlightedBullets.length).toBe(2)
-    expect(commandMenuPanelTextContent).toContain('2 thoughts selected')
   })
 })

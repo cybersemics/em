@@ -241,7 +241,8 @@ const LayoutTree = () => {
   )
 
   // compare between state.cursor and the position of the thought
-  const cursorThoughtPositioned = treeThoughtsPositioned.find(thought => thought.isCursor)
+  const cursorThoughtPositionedIndex = treeThoughtsPositioned.findIndex(thought => thought.isCursor)
+  const cursorThoughtPositioned = treeThoughtsPositioned[cursorThoughtPositionedIndex]
 
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
@@ -297,6 +298,7 @@ const LayoutTree = () => {
             showContexts={cursorThoughtPositioned.showContexts}
             width={cursorThoughtPositioned.width}
             parentId={head(parentOf(cursorThoughtPositioned.path))}
+            index={cursorThoughtPositionedIndex}
           />
         )}
         <TransitionGroup>
