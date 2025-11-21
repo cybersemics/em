@@ -1,4 +1,5 @@
 import React, { useRef } from 'react'
+import { ConnectDragSource } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -22,6 +23,7 @@ import parentOf from '../util/parentOf'
 import BulletPositioner from './BulletPositioner'
 
 interface BulletProps {
+  dragSource: ConnectDragSource
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
   isDragging?: boolean
@@ -228,6 +230,7 @@ const BulletHighlightOverlay = ({
 
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
+  dragSource,
   isContextPending,
   isDragging,
   isEditing,
@@ -294,6 +297,7 @@ const Bullet = ({
 
   return (
     <BulletPositioner
+      dragSource={dragSource}
       isEditing={isEditing}
       leaf={leaf}
       path={path}
