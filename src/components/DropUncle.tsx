@@ -45,10 +45,13 @@ const DropUncle = ({
 
   // Calculate the height for the uncle thought over cliff
   const dropTargetHeight = calculateCliffDropTargetHeight({ cliff, depth })
+  const fontSize = useSelector(state => state.fontSize)
   const isTableCol2 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
-  const dropHoverLength = useDropHoverWidth({ hoverTargetEndMargin, isTableCol2 })
+  const dropHoverLength = isTableCol2
+    ? '50vw' // Table view mode: 50% of viewport width for two-column layout
+    : `calc(100% - 2.6em - ${fontSize - 13}px)`
 
   if (!dropTarget) return null
 

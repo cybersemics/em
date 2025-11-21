@@ -7,7 +7,6 @@ import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
-import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import dropHoverColor from '../selectors/dropHoverColor'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -43,7 +42,6 @@ const DropChild = ({ depth, hoverTargetEndMargin, path, simplePath, cliff, isLas
   // Should be added, because its thought has same logic to apply extra bonus height - so drop target panel height would be same as its thought
   const dropTargetHeight =
     (cliff !== undefined && cliff < 0) || isLastVisible ? calculateCliffDropTargetHeight({ depth }) : 0
-  const dropHoverLength = useDropHoverWidth({ hoverTargetEndMargin })
 
   // Calculate offset to compensate for cliff padding applied to the parent thought
   // When cliff < 0, cliff padding (fontSize / 4) is applied to the parent, so we need to move DropChild up by that amount
@@ -99,7 +97,10 @@ const DropChild = ({ depth, hoverTargetEndMargin, path, simplePath, cliff, isLas
                 width: '100%',
               }),
             )}
-            style={{ width: dropHoverLength, backgroundColor: dropHoverColorValue }}
+            style={{
+              width: `calc(100% - ${hoverTargetEndMargin}em - 4em)`,
+              backgroundColor: dropHoverColorValue,
+            }}
           />
         )}
       </span>
