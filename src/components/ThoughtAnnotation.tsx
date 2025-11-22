@@ -216,7 +216,6 @@ const ThoughtAnnotationContainer = React.memo(
 
     // We're trying to get rid of contentWidth as part of #3369, but currently it's the easiest reactive proxy for a viewport resize event.
     const contentWidth = viewportStore.useSelector(state => state.contentWidth)
-    const cursor = useSelector(state => state.cursor)
     const fontSize = useSelector(state => state.fontSize)
 
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
@@ -307,7 +306,7 @@ const ThoughtAnnotationContainer = React.memo(
           annotationRef.current.style.top = `${top}px`
         }
       })
-    }, [contentWidth, cursor, editableRef, email, fontSize, numContexts, showSuperscript, styleAnnotation, url])
+    }, [contentWidth, editableRef, email, fontSize, isEditing, numContexts, showSuperscript, styleAnnotation, url])
 
     // In order to render a faux caret while hideCaret animations are playing, ThoughtAnnotation always needs
     // to exist on mobile Safari. The line end faux caret must be placed inline-block at the end of the
