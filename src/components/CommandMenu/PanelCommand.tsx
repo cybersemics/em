@@ -41,6 +41,9 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
         filter: 'blur(23px)',
         borderRadius: '0px',
         pointerEvents: 'none',
+        transition: 'opacity {durations.medium} ease-in-out',
+        /** Fixes flicker on ios when transitioning opacity. */
+        willChange: 'opacity',
       },
       cssRaw,
     )}
@@ -91,14 +94,12 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           cssRaw={css.raw({
             mixBlendMode: 'luminosity',
             opacity: isButtonActive ? 0.75 : 0,
-            transition: 'opacity {durations.medium} ease-in-out',
           })}
         />
         <ActiveButtonGlowImage
           cssRaw={css.raw({
             mixBlendMode: 'saturation',
             opacity: isButtonActive ? 0.45 : 0,
-            transition: 'opacity {durations.medium} ease-in-out',
           })}
         />
       </div>
