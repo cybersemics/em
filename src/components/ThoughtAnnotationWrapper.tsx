@@ -19,22 +19,8 @@ const ThoughtAnnotationWrapper: FC<
     cssRaw?: SystemStyleObject
     style?: React.CSSProperties
     isTableCol1?: boolean
-    textMarkup?: string
-    placeholder?: string
   }>
-> = ({
-  annotationRef,
-  ellipsizedUrl,
-  multiline,
-  value,
-  styleAnnotation,
-  cssRaw,
-  style,
-  children,
-  isTableCol1,
-  textMarkup,
-  placeholder,
-}) => {
+> = ({ annotationRef, ellipsizedUrl, multiline, value, styleAnnotation, cssRaw, style, children, isTableCol1 }) => {
   return (
     <div
       aria-label='thought-annotation'
@@ -113,7 +99,7 @@ const ThoughtAnnotationWrapper: FC<
             cssRaw,
           )}
           style={style}
-          dangerouslySetInnerHTML={{ __html: textMarkup || placeholder || '&ZeroWidthSpace;' }}
+          dangerouslySetInnerHTML={{ __html: '&ZeroWidthSpace;' }}
         />
         {children}
       </div>

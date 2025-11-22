@@ -326,7 +326,6 @@ const ThoughtAnnotationContainer = React.memo(
           style,
           styleAnnotation,
           email,
-          placeholder,
           url,
           value,
         }}
