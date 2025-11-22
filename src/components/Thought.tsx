@@ -21,7 +21,6 @@ import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
-import useHoveringPath from '../hooks/useHoveringPath'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
@@ -41,7 +40,6 @@ import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import getBulletWidth from '../util/getBulletWidth'
-import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
@@ -56,6 +54,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DropHover from './DropHover'
 import Note from './Note'
 import StaticThought from './StaticThought'
+import ThoughtPositioner from './ThoughtPositioner'
 
 /**********************************************************************
  * Redux
@@ -285,15 +284,14 @@ const ThoughtContainer = ({
     return equalPath(parentOf(state.cursor), path)
   })
 
-  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget, canDropThought, isDeepHovering } =
-    useDragAndDropThought({
-      path,
-      simplePath,
-      isVisible,
-      isCursorParent,
-    })
+  const { isDragging, dragSource, isHovering, dropTarget, canDropThought, isDeepHovering } = useDragAndDropThought({
+    path,
+    simplePath,
+    isVisible,
+    isCursorParent,
+    hoverZone: DropThoughtZone.ThoughtDrop,
+  })
 
-  useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
   useDragLeave({ isDeepHovering, canDropThought })
 
   // check if the cursor is editing a thought directly
@@ -585,18 +583,7 @@ const ThoughtContainer = ({
         />
       )}
 
-      <div
-        aria-label='thought-container'
-        data-testid={'thought-' + hashPath(path)}
-        className={css({
-          /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
-          /* must match value used in Editable useMultiline */
-          lineHeight: '2',
-          // ensure that ThoughtAnnotation is positioned correctly
-          position: 'relative',
-          ...(hideBullet ? { marginLeft: -12 } : null),
-        })}
-      >
+      <ThoughtPositioner path={path} hideBullet={hideBullet}>
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
           <div style={alignmentTransition.bullet}>
             <Bullet
@@ -641,7 +628,7 @@ const ThoughtContainer = ({
           />
         </div>
         <Note path={path} disabled={!isVisible} />
-      </div>
+      </ThoughtPositioner>
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
 

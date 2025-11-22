@@ -57,7 +57,7 @@ describe('DOM', () => {
       const thoughtC = getThoughtByContext(['c'])
       expect(thoughtC).toBeTruthy()
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['a', 'b', 'c'])
     })
@@ -112,7 +112,7 @@ describe('DOM', () => {
       const thought = getThoughtByContext(['c'])
       expect(thought).toBeTruthy()
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c', 'b', 'a'])
     })
@@ -259,7 +259,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -289,7 +289,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -320,7 +320,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -351,7 +351,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -382,7 +382,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -413,7 +413,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -450,7 +450,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -481,7 +481,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -513,7 +513,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -544,7 +544,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -575,7 +575,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
@@ -612,7 +612,7 @@ describe('DOM', () => {
 
       await act(() => vi.runAllTimersAsync())
 
-      const thoughts = screen.getAllByTestId(/thought/)
+      const thoughts = screen.getAllByLabelText('thought-container')
 
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
