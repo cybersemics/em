@@ -37,7 +37,6 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
         objectFit: 'contain',
         objectPosition: 'center',
         backgroundGradient: 'activeGlow',
-        '--webkit-backdrop-filter': 'blur(0.1px)',
         filter: 'blur(23px)',
         borderRadius: '0px',
         pointerEvents: 'none',
