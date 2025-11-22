@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { panelCommandRecipe } from '../../../styled-system/recipes'
 import { SystemStyleObject } from '../../../styled-system/types'
 import Command from '../../@types/Command'
@@ -27,13 +27,7 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
   <div
     className={css(
       {
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        right: '0',
-        bottom: '0',
-        height: '100%',
-        width: '100%',
+        gridArea: 'command',
         objectFit: 'contain',
         objectPosition: 'center',
         backgroundGradient: 'activeGlow',
@@ -41,8 +35,6 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
         borderRadius: '0px',
         pointerEvents: 'none',
         transition: 'opacity {durations.medium} ease-in-out',
-        /** Fixes flicker on ios when transitioning opacity. */
-        transform: 'translateZ(0)',
       },
       cssRaw,
     )}
@@ -80,32 +72,33 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   return (
     <div
       className={css({
-        position: 'relative',
+        display: 'grid',
         height: '100%',
         width: '100%',
         ...(size === 'medium'
-          ? { gridColumn: 'span 2', gridTemplateColumns: '1fr 2fr' }
-          : { gridColumn: 'span 1', gridTemplateColumns: 'auto' }),
+          ? { gridColumn: 'span 2', gridTemplateColumns: '1fr 2fr', gridTemplateAreas: `"command command"` }
+          : { gridColumn: 'span 1', gridTemplateColumns: 'auto', gridTemplateAreas: `"command"` }),
       })}
     >
-      <div>
-        <ActiveButtonGlowImage
-          cssRaw={css.raw({
-            mixBlendMode: 'luminosity',
-            opacity: isButtonActive ? 0.75 : 0,
-          })}
-        />
-        <ActiveButtonGlowImage
-          cssRaw={css.raw({
-            mixBlendMode: 'saturation',
-            opacity: isButtonActive ? 0.45 : 0,
-          })}
-        />
-      </div>
-      <div
-        className={panelCommandRecipe({
-          isButtonExecutable,
+      <ActiveButtonGlowImage
+        cssRaw={css.raw({
+          mixBlendMode: 'luminosity',
+          opacity: isButtonActive ? 0.75 : 0,
         })}
+      />
+      <ActiveButtonGlowImage
+        cssRaw={css.raw({
+          mixBlendMode: 'saturation',
+          opacity: isButtonActive ? 0.45 : 0,
+        })}
+      />
+      <div
+        className={cx(
+          panelCommandRecipe({
+            isButtonExecutable,
+          }),
+          css({ gridArea: 'command' }),
+        )}
         {...fastClick(handleTap)}
       >
         {SVG && (

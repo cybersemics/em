@@ -209,8 +209,6 @@ const CommandMenu = () => {
                     background: 'fgOverlay20',
                     borderRadius: 46,
                     mixBlendMode: 'soft-light',
-                    /** Fixes mix-blend-mode not being applied for ios. */
-                    transform: 'translateZ(0)',
                   })}
                 />
                 <button
@@ -223,8 +221,6 @@ const CommandMenu = () => {
                     fontWeight: 500,
                     cursor: 'pointer',
                     padding: '8px 16px',
-                    /** Fixes mix-blend-mode not being applied for ios. */
-                    transform: 'translateZ(0)',
                   })}
                 >
                   Done
