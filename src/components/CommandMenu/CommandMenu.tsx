@@ -80,8 +80,6 @@ const Overlay = () => {
           height: '100vh',
           width: '100%',
           bottom: 0,
-          // Fixes ios not applying mix-blend-mode during opacity transition.
-          willChange: 'opacity',
         })}
       />
     </FadeTransition>
@@ -179,61 +177,58 @@ const CommandMenu = () => {
 
           <div
             className={css({
-              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
               margin: '0 1.5rem calc(1.5rem + env(safe-area-inset-bottom)) 1.5rem',
+              gap: '1rem',
             })}
           >
-            <div className={css({ marginBottom: '1rem' })}>
+            <div
+              className={css({
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+              })}
+            >
+              <MultiselectMessage />
               <div
                 className={css({
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
-                  width: '100%',
+                  display: 'grid',
+                  // Define a single area for stacking. Cannot use position relative,
+                  // since that will create a new stacking context and break mix-blend-mode.
+                  gridTemplateAreas: '"button"',
+                  fontSize: '0.85em',
+                  fontWeight: 500,
+                  letterSpacing: '-0.011em',
+                  color: 'fg',
                 })}
               >
-                <MultiselectMessage />
                 <div
                   className={css({
-                    display: 'grid',
-                    // Define a single area for stacking. Cannot use position relative,
-                    // since that will create a new stacking context and break mix-blend-mode.
-                    gridTemplateAreas: '"overlay"',
-                    fontSize: '0.85em',
+                    gridArea: 'button',
+                    background: 'fgOverlay20',
+                    borderRadius: 46,
+                    mixBlendMode: 'soft-light',
+                    /** Fixes mix-blend-mode not being applied for ios. */
+                    transform: 'translateZ(0)',
+                  })}
+                />
+                <button
+                  {...fastClick(onClose)}
+                  className={css({
+                    all: 'unset',
+                    gridArea: 'button',
+                    mixBlendMode: 'lighten',
+                    opacity: 0.5,
                     fontWeight: 500,
-                    letterSpacing: '-0.011em',
-                    color: 'fg',
+                    cursor: 'pointer',
+                    padding: '8px 16px',
+                    /** Fixes mix-blend-mode not being applied for ios. */
+                    transform: 'translateZ(0)',
                   })}
                 >
-                  <div
-                    className={css({
-                      gridArea: 'overlay',
-                      background: 'fgOverlay20',
-                      borderRadius: 46,
-                      mixBlendMode: 'soft-light',
-                      height: '100%',
-                      width: '100%',
-                      /** Fixes mix-blend-mode not being applied for ios. */
-                      transform: 'translateZ(0)',
-                    })}
-                  />
-                  <button
-                    {...fastClick(onClose)}
-                    className={css({
-                      all: 'unset',
-                      gridArea: 'overlay',
-                      mixBlendMode: 'lighten',
-                      opacity: 0.5,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      padding: '8px 16px',
-                      /** Fixes mix-blend-mode not being applied for ios. */
-                      transform: 'translateZ(0)',
-                    })}
-                  >
-                    Done
-                  </button>
-                </div>
+                  Done
+                </button>
               </div>
             </div>
             <div
@@ -244,7 +239,6 @@ const CommandMenu = () => {
                 gridAutoFlow: 'row',
                 gap: '0.7rem',
                 gridRowGap: '1rem',
-                maxWidth: '100%',
               })}
             >
               <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />

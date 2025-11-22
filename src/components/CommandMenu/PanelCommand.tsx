@@ -42,7 +42,7 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
         pointerEvents: 'none',
         transition: 'opacity {durations.medium} ease-in-out',
         /** Fixes flicker on ios when transitioning opacity. */
-        willChange: 'opacity',
+        transform: 'translateZ(0)',
       },
       cssRaw,
     )}
