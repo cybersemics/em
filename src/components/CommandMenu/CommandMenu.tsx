@@ -80,6 +80,8 @@ const Overlay = () => {
           height: '100vh',
           width: '100%',
           bottom: 0,
+          // Fixes ios not applying mix-blend-mode during opacity transition.
+          willChange: 'opacity',
         })}
       />
     </FadeTransition>
@@ -193,7 +195,10 @@ const CommandMenu = () => {
                 <MultiselectMessage />
                 <div
                   className={css({
-                    position: 'relative',
+                    display: 'grid',
+                    // Define a single area for stacking. Cannot use position relative,
+                    // since that will create a new stacking context and break mix-blend-mode.
+                    gridTemplateAreas: '"overlay"',
                     fontSize: '0.85em',
                     fontWeight: 500,
                     letterSpacing: '-0.011em',
@@ -202,23 +207,28 @@ const CommandMenu = () => {
                 >
                   <div
                     className={css({
-                      position: 'absolute',
+                      gridArea: 'overlay',
                       background: 'fgOverlay20',
                       borderRadius: 46,
                       mixBlendMode: 'soft-light',
                       height: '100%',
                       width: '100%',
+                      /** Fixes mix-blend-mode not being applied for ios. */
+                      transform: 'translateZ(0)',
                     })}
                   />
                   <button
                     {...fastClick(onClose)}
                     className={css({
                       all: 'unset',
+                      gridArea: 'overlay',
                       mixBlendMode: 'lighten',
                       opacity: 0.5,
                       fontWeight: 500,
                       cursor: 'pointer',
                       padding: '8px 16px',
+                      /** Fixes mix-blend-mode not being applied for ios. */
+                      transform: 'translateZ(0)',
                     })}
                   >
                     Done
