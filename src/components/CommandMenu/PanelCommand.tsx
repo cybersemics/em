@@ -86,22 +86,22 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           : { gridColumn: 'span 1', gridTemplateColumns: 'auto' }),
       })}
     >
-      {isButtonActive && (
-        <div>
-          <ActiveButtonGlowImage
-            cssRaw={css.raw({
-              mixBlendMode: 'luminosity',
-              opacity: 0.75,
-            })}
-          />
-          <ActiveButtonGlowImage
-            cssRaw={css.raw({
-              mixBlendMode: 'saturation',
-              opacity: 0.45,
-            })}
-          />
-        </div>
-      )}
+      <div>
+        <ActiveButtonGlowImage
+          cssRaw={css.raw({
+            mixBlendMode: 'luminosity',
+            opacity: isButtonActive ? 0.75 : 0,
+            transition: 'opacity {durations.medium} ease-in-out',
+          })}
+        />
+        <ActiveButtonGlowImage
+          cssRaw={css.raw({
+            mixBlendMode: 'saturation',
+            opacity: isButtonActive ? 0.45 : 0,
+            transition: 'opacity {durations.medium} ease-in-out',
+          })}
+        />
+      </div>
       <div
         className={panelCommandRecipe({
           isButtonExecutable,
