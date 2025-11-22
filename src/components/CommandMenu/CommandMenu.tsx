@@ -73,7 +73,6 @@ const Overlay = () => {
         className={css({
           position: 'absolute',
           pointerEvents: 'none',
-          zIndex: 'modal',
           backgroundImage: 'url(/img/command-center/overlay.webp)',
           backgroundSize: 'cover',
           backgroundPosition: 'center bottom',
@@ -81,6 +80,8 @@ const Overlay = () => {
           height: '100vh',
           width: '100%',
           bottom: 0,
+          // Fixes ios not applying mix-blend-mode during opacity transition.
+          willChange: 'opacity',
         })}
       />
     </FadeTransition>
@@ -162,7 +163,6 @@ const CommandMenu = () => {
             isolation: 'isolate',
           })}
         >
-          <Overlay />
           <div
             /** Falloff. */
             className={css({
@@ -175,11 +175,12 @@ const CommandMenu = () => {
               height: '100%',
             })}
           />
+          <Overlay />
+
           <div
             className={css({
               position: 'relative',
-              zIndex: 1,
-              margin: '0 1.2rem calc(1.2rem + env(safe-area-inset-bottom)) 1.2rem',
+              margin: '0 1.5rem calc(1.5rem + env(safe-area-inset-bottom)) 1.5rem',
             })}
           >
             <div className={css({ marginBottom: '1rem' })}>
@@ -192,28 +193,47 @@ const CommandMenu = () => {
                 })}
               >
                 <MultiselectMessage />
-                <button
-                  {...fastClick(onClose)}
+                <div
                   className={css({
-                    cursor: 'pointer',
-                    border: 'none',
-                    color: 'fg',
-                    background: 'fgOverlay20',
-                    borderRadius: 46.6,
+                    display: 'grid',
+                    // Define a single area for stacking. Cannot use position relative,
+                    // since that will create a new stacking context and break mix-blend-mode.
+                    gridTemplateAreas: '"overlay"',
+                    fontSize: '0.85em',
                     fontWeight: 500,
                     letterSpacing: '-0.011em',
-                    padding: '8px 16px',
-                    mixBlendMode: 'soft-light',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1ch',
-                    /** Button won't show without z-index. */
-                    zIndex: 'modal',
-                    fontSize: '0.85em',
+                    color: 'fg',
                   })}
                 >
-                  Done
-                </button>
+                  <div
+                    className={css({
+                      gridArea: 'overlay',
+                      background: 'fgOverlay20',
+                      borderRadius: 46,
+                      mixBlendMode: 'soft-light',
+                      height: '100%',
+                      width: '100%',
+                      /** Fixes mix-blend-mode not being applied for ios. */
+                      transform: 'translateZ(0)',
+                    })}
+                  />
+                  <button
+                    {...fastClick(onClose)}
+                    className={css({
+                      all: 'unset',
+                      gridArea: 'overlay',
+                      mixBlendMode: 'lighten',
+                      opacity: 0.5,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      padding: '8px 16px',
+                      /** Fixes mix-blend-mode not being applied for ios. */
+                      transform: 'translateZ(0)',
+                    })}
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
             </div>
             <div
@@ -223,6 +243,7 @@ const CommandMenu = () => {
                 gridTemplateRows: 'auto',
                 gridAutoFlow: 'row',
                 gap: '0.7rem',
+                gridRowGap: '1rem',
                 maxWidth: '100%',
               })}
             >
