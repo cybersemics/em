@@ -69,6 +69,7 @@ export interface ThoughtContainerProps {
   env?: LazyEnv
   expandedContextThought?: Path
   hideBullet?: boolean
+  hoverTargetEndMargin: number
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
   isCursorParent?: boolean
@@ -250,6 +251,7 @@ const ThoughtContainer = ({
   depth = 0,
   env,
   hideBullet: hideBulletProp,
+  hoverTargetEndMargin,
   isContextPending,
   isVisible,
   leaf,
@@ -602,7 +604,12 @@ const ThoughtContainer = ({
           </div>
         )}
 
-        <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
+        <DropHover
+          hoverTargetEndMargin={hoverTargetEndMargin}
+          isHovering={isHovering}
+          prevChildId={prevChildId}
+          simplePath={simplePath}
+        />
 
         <div style={alignmentTransition.editable}>
           <StaticThought

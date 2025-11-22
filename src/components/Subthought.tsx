@@ -29,6 +29,7 @@ const Subthought = ({
   debugIndex,
   depth,
   env,
+  hoverTargetEndMargin,
   isMultiColumnTable,
   leaf,
   updateSize,
@@ -44,6 +45,7 @@ const Subthought = ({
   depth: number
   dropUncle?: boolean
   env?: LazyEnv
+  hoverTargetEndMargin: number
   indexDescendant: number
   isMultiColumnTable?: boolean
   leaf?: boolean
@@ -153,6 +155,7 @@ const Subthought = ({
           depth={depth + 1}
           env={env}
           hideBullet={hideBullet}
+          hoverTargetEndMargin={hoverTargetEndMargin}
           isContextPending={thought.value === '__PENDING__'}
           leaf={leaf}
           // isHeader={isHeader}
