@@ -7,7 +7,6 @@ import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
-import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import attributeEquals from '../selectors/attributeEquals'
 import dropHoverColor from '../selectors/dropHoverColor'
 import { getChildrenSorted } from '../selectors/getChildren'
@@ -57,11 +56,6 @@ const DropEnd = ({
     attributeEquals(state, head(rootedParentOf(state, path)), '=view', 'Table'),
   )
 
-  const dropHoverLength = useDropHoverWidth({
-    hoverTargetEndMargin,
-    isTableCol2: isParentTableCol1,
-  })
-
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
 
   // a boolean indicating if the drop-hover component is shown
@@ -105,17 +99,18 @@ const DropEnd = ({
 
   // Allocate extra more space (1.4 em) to last drop target panel
   const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) + 1.4 : 0
-
+  const marginLeft = isRootPath ? -4 : last ? -2 : 0
+  const paddingLeft = isRootPath ? 3 : last ? (isTouch ? 6 : 1) : 0
   return (
     <li
       className={cx(
         dropEndRecipe(),
         css({
           display: 'list-item',
-          marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
+          marginLeft: `${marginLeft}em`,
           // offset marginLeft, minus 1em for bullet
           // otherwise drop-hover will be too far left
-          paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
+          paddingLeft: `${paddingLeft}em`,
         }),
       )}
       style={{
@@ -124,7 +119,8 @@ const DropEnd = ({
         // use transform to avoid conflicting with margin, which is currently spread out across multiple components
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
         // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
-        width: isParentTableCol1 ? undefined : dropHoverLength,
+        // width: isParentTableCol1 ? undefined : `calc(100% - 4.6em + 13px)`,
+        width: isParentTableCol1 ? undefined : `calc(100% - 2em + ${marginLeft}em)`,
       }}
       ref={dndRef(dropTarget)}
     >
@@ -147,7 +143,7 @@ const DropEnd = ({
         <span
           className={dropHoverRecipe({ insideDropEnd: true })}
           style={{
-            width: dropHoverLength,
+            width: isParentTableCol1 ? '50vw' : `100%`,
             backgroundColor: dropHoverColorValue,
             // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch
             marginLeft: `-${DROPEND_FINGERSHIFT}em`,

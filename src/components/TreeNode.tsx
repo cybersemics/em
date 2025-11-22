@@ -196,7 +196,7 @@ const TreeNode = ({
             <DropCliff
               cliff={cliff}
               depth={depth}
-              hoverTargetEndMargin={hoverTargetEndMargin + Math.max(-2, (1 - depth) * 2)}
+              hoverTargetEndMargin={hoverTargetEndMargin}
               path={path}
               isTableCol2={isTableCol2}
               isLastVisible={isLastVisible}
