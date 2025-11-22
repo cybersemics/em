@@ -11,6 +11,7 @@ import SimplePath from '../@types/SimplePath'
 import { isSafari, isTouch } from '../browser'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
+import { LongPressProps } from '../hooks/useLongPress'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -34,6 +35,7 @@ export interface ThoughtProps {
   allowSingleContext?: boolean
   debugIndex?: number
   dragSource: ConnectDragSource
+  longPressProps: LongPressProps
   editing?: boolean | null
   env?: LazyEnv
   // When context view is activated, some contexts may be pending
@@ -96,6 +98,7 @@ const isBlack = (color: string | undefined) => {
 const StaticThought = ({
   allowSingleContext,
   dragSource,
+  longPressProps,
   // See: ThoughtProps['isContextPending']
   env,
   isContextPending,
@@ -173,6 +176,7 @@ const StaticThought = ({
       />
       <div
         aria-label='thought'
+        {...longPressProps}
         className={cx(
           thoughtRecipe({
             ellipsizedUrl,

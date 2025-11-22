@@ -10,6 +10,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { LongPressState } from '../constants'
+import { LongPressProps } from '../hooks/useLongPress'
 import findDescendant from '../selectors/findDescendant'
 import getChildren from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -185,6 +186,7 @@ const glyph = cva({
 
 type BulletPositionerProps = {
   dragSource?: ConnectDragSource
+  longPressProps?: LongPressProps
   path: Path
   simplePath: SimplePath
   isEditing: boolean
@@ -205,6 +207,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
     {
       children,
       dragSource,
+      longPressProps,
       path,
       isEditing,
       isInContextView,
@@ -334,6 +337,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
           zIndex: cursorOverlay ? 0 : 1,
         }}
         {...(!cursorOverlay && fastClick(clickHandler, { enableHaptics: false }))}
+        {...longPressProps}
       >
         <svg
           className={cx(

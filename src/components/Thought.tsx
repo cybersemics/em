@@ -545,7 +545,6 @@ const ThoughtContainer = ({
 
   return (
     <div
-      {...dragHoldResult.props}
       ref={dndRef(node => dragPreview(dropTarget(node)))}
       aria-label='child'
       data-divider={isDivider(value)}
@@ -593,6 +592,7 @@ const ThoughtContainer = ({
           <div style={alignmentTransition.bullet}>
             <Bullet
               dragSource={dragSourceBullet}
+              longPressProps={dragHoldResult.props}
               isContextPending={isContextPending}
               isDragging={isDragging}
               isEditing={isEditing}
@@ -614,6 +614,7 @@ const ThoughtContainer = ({
           <StaticThought
             allowSingleContext={allowSingleContext}
             dragSource={dragSourceEditable}
+            longPressProps={dragHoldResult.props}
             env={env}
             isContextPending={isContextPending}
             isEditing={isEditing}

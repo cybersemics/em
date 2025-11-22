@@ -8,6 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { AlertType } from '../constants'
+import { LongPressProps } from '../hooks/useLongPress'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -24,6 +25,7 @@ import BulletPositioner from './BulletPositioner'
 
 interface BulletProps {
   dragSource: ConnectDragSource
+  longPressProps: LongPressProps
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
   isDragging?: boolean
@@ -231,6 +233,7 @@ const BulletHighlightOverlay = ({
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
   dragSource,
+  longPressProps,
   isContextPending,
   isDragging,
   isEditing,
@@ -298,6 +301,7 @@ const Bullet = ({
   return (
     <BulletPositioner
       dragSource={dragSource}
+      longPressProps={longPressProps}
       isEditing={isEditing}
       leaf={leaf}
       path={path}
