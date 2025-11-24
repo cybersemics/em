@@ -223,7 +223,7 @@
     "react-dnd-test-utils": "^16.0.1",
     "redux-mock-store": "^1.5.5",
     "tcp-port-used": "^1.0.2",
-    "typescript": "5.9.2",
+    "typescript": "5.9.3",
     "vi-canvas-mock": "^1.0.0",
     "vite": "^7.2.4",
     "vite-plugin-checker": "^0.11.0",
