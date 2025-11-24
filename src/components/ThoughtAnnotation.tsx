@@ -177,9 +177,9 @@ const ThoughtAnnotationContainer = React.memo(
     path,
     simplePath,
     minContexts = 2,
+    isTableCol1,
     multiline,
     ellipsizedUrl,
-    placeholder,
     invalidState,
     cssRaw,
     style,
@@ -190,11 +190,11 @@ const ThoughtAnnotationContainer = React.memo(
     env?: LazyEnv
     focusOffset?: number
     invalidState?: boolean
+    isTableCol1?: boolean
     minContexts?: number
     multiline?: boolean
     ellipsizedUrl?: boolean
     path: Path
-    placeholder?: string
     showContextBreadcrumbs?: boolean
     simplePath: SimplePath
     cssRaw?: SystemStyleObject
@@ -303,7 +303,8 @@ const ThoughtAnnotationContainer = React.memo(
             const isAtEdge = rect.right - offset.left > offset.width
 
             top = rect.top - offset.top
-            if (!isAtEdge) right = rect.right - offset.left
+            // offset annotation container to account for -12px left margin in ThoughtPositioner #3352
+            if (!isAtEdge) right = rect.right - offset.left + (isTableCol1 ? 12 : 0)
           }
 
           // rect.right gives you the x position (relative to viewport)
@@ -311,7 +312,18 @@ const ThoughtAnnotationContainer = React.memo(
           annotationRef.current.style.top = `${top}px`
         }
       })
-    }, [contentWidth, editableRef, email, fontSize, isEditing, numContexts, showSuperscript, styleAnnotation, url])
+    }, [
+      contentWidth,
+      editableRef,
+      email,
+      fontSize,
+      isEditing,
+      isTableCol1,
+      numContexts,
+      showSuperscript,
+      styleAnnotation,
+      url,
+    ])
 
     // In order to render a faux caret while hideCaret animations are playing, ThoughtAnnotation always needs
     // to exist on mobile Safari. The line end faux caret must be placed inline-block at the end of the

@@ -60,7 +60,6 @@ const ThoughtAnnotationWrapper: FC<
             boxSizing: 'border-box',
             whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
             paddingRight: multiline ? '1em' : '0.333em',
-            textAlign: isTableCol1 ? 'right' : 'left',
           }) // disable intrathought linking until add, edit, delete, and expansion can be implemented
           // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           // .subthought-highlight {
