@@ -143,8 +143,6 @@ const ThoughtAnnotation = React.memo(
           multiline={multiline}
           value={value}
           styleAnnotation={styleAnnotation}
-          cssRaw={cssRaw}
-          style={style}
         >
           {
             // do not render url icon on root thoughts in publish mode
@@ -154,7 +152,14 @@ const ThoughtAnnotation = React.memo(
           {
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
             showSuperscript ? (
-              <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
+              <StaticSuperscript
+                absolute
+                n={numContexts}
+                style={style}
+                cssRaw={cssRaw}
+                multiline={multiline}
+                thoughtId={head(simplePath)}
+              />
             ) : null
           }
           <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>

@@ -15,9 +15,10 @@ const StaticSuperscript = React.forwardRef<
     show?: boolean
     hideZero?: boolean
     absolute?: boolean
+    multiline?: boolean
     thoughtId?: ThoughtId
   }
->(({ n, style, show = true, hideZero, absolute, cssRaw, thoughtId }, forwardRef) => {
+>(({ n, style, show = true, hideZero, absolute, cssRaw, multiline, thoughtId }, forwardRef) => {
   const fill = useSelector(state =>
     // make sure fill is only calculated if the superscript is shown, since getThoughtFill is expensive
     show && (n || !hideZero) && thoughtId ? getThoughtFill(state, thoughtId) : undefined,
@@ -52,7 +53,7 @@ const StaticSuperscript = React.forwardRef<
               className={css({
                 position: 'relative',
                 zIndex: 'stack',
-                top: '-0.13em',
+                top: multiline ? '-2em' : '-2.745em',
                 left: '1px',
               })}
               style={{ color: fill }}

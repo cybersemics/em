@@ -1,6 +1,5 @@
 import { FC, PropsWithChildren, RefObject } from 'react'
 import { css } from '../../styled-system/css'
-import { SystemStyleObject } from '../../styled-system/types'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import isAttribute from '../util/isAttribute'
 
@@ -16,11 +15,9 @@ const ThoughtAnnotationWrapper: FC<
     multiline?: boolean
     value?: string
     styleAnnotation?: React.CSSProperties
-    cssRaw?: SystemStyleObject
-    style?: React.CSSProperties
     isTableCol1?: boolean
   }>
-> = ({ annotationRef, ellipsizedUrl, multiline, value, styleAnnotation, cssRaw, style, children, isTableCol1 }) => {
+> = ({ annotationRef, ellipsizedUrl, multiline, value, styleAnnotation, children, isTableCol1 }) => {
   return (
     <div
       aria-label='thought-annotation'
@@ -75,32 +72,6 @@ const ThoughtAnnotationWrapper: FC<
           minWidth: `${MIN_CONTENT_WIDTH_EM - 0.333 - 0.333}em`, // min width of thought (3em) - 0.333em left padding - 0.333em right padding
         }}
       >
-        <span
-          className={css(
-            {
-              visibility: 'hidden',
-              position: 'relative',
-              clipPath: 'inset(0.001px 0 0.1em 0)',
-              wordBreak: 'break-word',
-              ...(ellipsizedUrl && {
-                display: 'inline-block',
-                textOverflow: 'ellipsis',
-                overflow: 'hidden',
-                whiteSpace: 'nowrap',
-                maxWidth: '100%',
-                /*
-                    vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
-                    Here is the reference to the reason.
-                    https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
-                */
-                verticalAlign: 'top',
-              }),
-            },
-            cssRaw,
-          )}
-          style={style}
-          dangerouslySetInnerHTML={{ __html: '&ZeroWidthSpace;' }}
-        />
         {children}
       </div>
     </div>
