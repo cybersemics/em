@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import moize from 'moize'
+import CommandId from './@types/CommandId'
 import Context from './@types/Context'
 import Lexeme from './@types/Lexeme'
 import MimeType from './@types/MimeType'
@@ -17,6 +18,7 @@ import { pullActionCreator as pull } from './actions/pull'
 import { repairThoughtActionCreator as repairThought } from './actions/repairThought'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
+import { commandById } from './commands'
 import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { accessToken, clientIdReady, tsid, tsidShared } from './data-providers/yjs'
@@ -36,6 +38,7 @@ import offlineStatusStore, { init as initOfflineStatusStore } from './stores/off
 import syncStatusStore from './stores/syncStatus'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
+import executeCommand from './util/executeCommand'
 import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
@@ -199,6 +202,9 @@ const withDispatch =
     store.dispatch(f(...args))
 
 const testHelpers = {
+  executeCommandById: (id: CommandId) => {
+    executeCommand(commandById(id))
+  },
   setSelection: selection.set,
   importToContext: withDispatch(importToContext),
   getLexemeFromIndexedDB: (value: string) => getLexemeHelper(db, value),
