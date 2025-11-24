@@ -2182,12 +2182,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/ios@npm:^7.4.3":
-  version: 7.4.3
-  resolution: "@capacitor/ios@npm:7.4.3"
+"@capacitor/ios@npm:^7.4.4":
+  version: 7.4.4
+  resolution: "@capacitor/ios@npm:7.4.4"
   peerDependencies:
     "@capacitor/core": ^7.4.0
-  checksum: 10c0/35143a7523ee923c37e1ea83e81bb3b4ca2b898253e4d77ceedd22eb9b7b9c2b5b590c526a2e42fd434961cab06f3a5e9ed47e072f62f8fbb7dca255d4735620
+  checksum: 10c0/99f424fc8195f7a96a589c7f087ed6e46a6d00c8b23c2b127361ff235a8b13f18b29b04ef5def48e1c016910f812ab1a31b46b8c1df2961302b103fd406d2b79
   languageName: node
   linkType: hard
 
@@ -9401,7 +9401,7 @@ __metadata:
     "@capacitor/clipboard": "npm:^7.0.2"
     "@capacitor/core": "npm:^7.4.4"
     "@capacitor/haptics": "npm:^7.0.2"
-    "@capacitor/ios": "npm:^7.4.3"
+    "@capacitor/ios": "npm:^7.4.4"
     "@capacitor/keyboard": "npm:^7.0.3"
     "@capacitor/status-bar": "npm:^7.0.3"
     "@emotion/react": "npm:^11.14.0"
@@ -21241,7 +21241,7 @@ __metadata:
     "@capacitor/android": "npm:^7.4.3"
     "@capacitor/core": "npm:^7.4.4"
     "@capacitor/docgen": "npm:^0.3.0"
-    "@capacitor/ios": "npm:^7.4.3"
+    "@capacitor/ios": "npm:^7.4.4"
     "@ionic/swiftlint-config": "npm:^2.0.0"
     rimraf: "npm:^6.1.0"
     rollup: "npm:^4.52.5"
