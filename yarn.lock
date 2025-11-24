@@ -9532,7 +9532,7 @@ __metadata:
     webdriverio: "npm:^9.19.2"
     webview-background: "workspace:*"
     workbox-build: "npm:^7.3.0"
-    workbox-core: "npm:^7.3.0"
+    workbox-core: "npm:^7.4.0"
     workbox-expiration: "npm:^7.3.0"
     workbox-precaching: "npm:^7.3.0"
     workbox-routing: "npm:^7.3.0"
@@ -21553,10 +21553,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-core@npm:7.3.0, workbox-core@npm:^7.3.0":
+"workbox-core@npm:7.3.0":
   version: 7.3.0
   resolution: "workbox-core@npm:7.3.0"
   checksum: 10c0/b7dce640cd9665ed207f65f5b08a50e2e24e5599790c6ea4fec987539b9d2ef81765d8c5f94acfee3a8a45d5ade8e1a4ebd0b8847a1471302ef75a5b93c7bd04
+  languageName: node
+  linkType: hard
+
+"workbox-core@npm:^7.4.0":
+  version: 7.4.0
+  resolution: "workbox-core@npm:7.4.0"
+  checksum: 10c0/ae7c762df084b57d3d10f42b83a508a5c0bec5663de4c9cefc2b5c2893922a816f451cf8ec45ee76d204a3a6e90ee52b6c550a6cba9109d9bb644da9e98fb9e8
   languageName: node
   linkType: hard
 
