@@ -2,6 +2,7 @@ import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
@@ -205,6 +206,43 @@ describe('Color Theme', () => {
 
     await hideHUD()
 
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
+})
+
+describe('Superscripts', () => {
+  it('table', async () => {
+    await paste(`
+      - a
+        - =view
+          - Table
+        - b
+          - b
+    `)
+
+    await hideHUD()
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
+
+  it('context view', async () => {
+    await paste(`
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+      - c
+        - a
+        - b
+    `)
+
+    await clickThought('a')
+    await clickThought('m')
+
+    await command('toggleContextView')
+
+    await hideHUD()
     expect(await screenshot()).toMatchImageSnapshot()
   })
 })
