@@ -173,7 +173,7 @@
     "@types/html-escaper": "^3.0.4",
     "@types/jest": "^30.0.0",
     "@types/jest-image-snapshot": "^6.4.0",
-    "@types/lodash": "^4.17.20",
+    "@types/lodash": "^4.17.21",
     "@types/murmurhash3js": "^3.0.7",
     "@types/node": "^24.9.2",
     "@types/pluralize": "0.0.33",
