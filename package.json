@@ -98,7 +98,7 @@
     "axios": "^1.13.2",
     "clipboard": "^2.0.11",
     "dnd-core": "^16.0.1",
-    "dompurify": "^3.2.6",
+    "dompurify": "^3.3.0",
     "emitter20": "^2.0.0",
     "emoji-regex": "^10.6.0",
     "fast-json-patch": "^3.1.1",
