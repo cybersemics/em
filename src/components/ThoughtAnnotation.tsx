@@ -30,7 +30,6 @@ import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import resolveArray from '../util/resolveArray'
 import stripTags from '../util/stripTags'
-import FauxCaret from './FauxCaret'
 import StaticSuperscript from './StaticSuperscript'
 import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
 import EmailIcon from './icons/EmailIcon'
@@ -170,9 +169,6 @@ const ThoughtAnnotation = React.memo(
             <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
           ) : null
         }
-        <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
-          <FauxCaret caretType='thoughtEnd' />
-        </span>
       </ThoughtAnnotationWrapper>
     )
   },
