@@ -16,10 +16,12 @@ import { filterAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
+import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import viewportStore from '../stores/viewport'
 import containsURL from '../util/containsURL'
+import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
@@ -229,6 +231,7 @@ const ThoughtAnnotationContainer = React.memo(
     const hideSuperscriptsSetting = useSelector(getUserSetting(Settings.hideSuperscripts))
 
     const isExpanded = useSelector(state => !!state.expanded[hashPath(simplePath)])
+    const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
     const numContexts = useSelector(
       moize(
@@ -282,42 +285,51 @@ const ThoughtAnnotationContainer = React.memo(
     // useSelector would be a cleaner way to get the annotationRef's new position
     // but, on load, the refs are null until setTimeout runs
     useEffect(() => {
-      setTimeout(() => {
-        if (editableRef.current && annotationRef.current) {
-          const range = document.createRange()
-          const textNode = editableRef.current.lastChild
+      // hide thought annotation until the context view has finished swooping in (#3352)
+      const display = annotationRef.current?.style.display
+      if (isInContextView && annotationRef.current) annotationRef.current.style.display = 'none'
 
-          const length = textNode && textNode.nodeType === Node.TEXT_NODE && textNode.textContent?.length
-          const offset = editableRef.current.getBoundingClientRect()
+      setTimeout(
+        () => {
+          if (editableRef.current && annotationRef.current) {
+            const range = document.createRange()
+            const textNode = editableRef.current.lastChild
 
-          let right = offset.width - fontSize - (length ? fontSize / 3 : 0)
-          let top = 0
+            const length = textNode && textNode.nodeType === Node.TEXT_NODE && textNode.textContent?.length
+            const offset = editableRef.current.getBoundingClientRect()
 
-          if (length) {
-            // Select the last character
-            range.setStart(textNode, length - 1)
-            range.setEnd(textNode, length)
+            let right = offset.width - fontSize - (length ? fontSize / 3 : 0)
+            let top = 0
 
-            // Get bounding box
-            const rect = range.getBoundingClientRect()
-            const isAtEdge = rect.right - offset.left > offset.width
+            if (length) {
+              // Select the last character
+              range.setStart(textNode, length - 1)
+              range.setEnd(textNode, length)
 
-            top = rect.top - offset.top
-            // offset annotation container to account for -12px left margin in ThoughtPositioner #3352
-            if (!isAtEdge) right = rect.right - offset.left + (isTableCol1 ? 12 : 0)
+              // Get bounding box
+              const rect = range.getBoundingClientRect()
+              const isAtEdge = rect.right - offset.left > offset.width
+
+              top = rect.top - offset.top
+              // offset annotation container to account for -12px left margin in ThoughtPositioner #3352
+              if (!isAtEdge) right = rect.right - offset.left + (isTableCol1 ? 12 : 0)
+            }
+
+            // rect.right gives you the x position (relative to viewport)
+            annotationRef.current.style.left = `${right}px`
+            annotationRef.current.style.top = `${top}px`
+            if (isInContextView && display !== undefined) annotationRef.current.style.display = display
           }
-
-          // rect.right gives you the x position (relative to viewport)
-          annotationRef.current.style.left = `${right}px`
-          annotationRef.current.style.top = `${top}px`
-        }
-      })
+        },
+        isInContextView ? durations.get('disappearingUpperRight') : 0,
+      )
     }, [
       contentWidth,
       editableRef,
       email,
       fontSize,
       isEditing,
+      isInContextView,
       isTableCol1,
       numContexts,
       showSuperscript,
