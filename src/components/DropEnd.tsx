@@ -99,18 +99,18 @@ const DropEnd = ({
 
   // Allocate extra more space (1.4 em) to last drop target panel
   const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) + 1.4 : 0
-  const marginLeft = isRootPath ? -4 : last ? -2 : 0
-  const paddingLeft = isRootPath ? 3 : last ? (isTouch ? 6 : 1) : 0
+  const marginLeft = isRootPath ? 1 : last ? -2 : 0
   return (
     <li
       className={cx(
         dropEndRecipe(),
         css({
           display: 'list-item',
-          marginLeft: `${marginLeft}em`,
+          // PandCSS doesn't like interpolated values like '${marginLeft}em'
+          marginLeft: isRootPath ? '-4em' : last ? '-2em' : 0,
           // offset marginLeft, minus 1em for bullet
           // otherwise drop-hover will be too far left
-          paddingLeft: `${paddingLeft}em`,
+          paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
         }),
       )}
       style={{
