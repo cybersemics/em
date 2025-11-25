@@ -106,7 +106,7 @@ const DropEnd = ({
         dropEndRecipe(),
         css({
           display: 'list-item',
-          // PandCSS doesn't like interpolated values like '${marginLeft}em'
+          // PandaCSS doesn't like interpolated values like '${marginLeft}em'
           marginLeft: isRootPath ? '-4em' : last ? '-2em' : 0,
           // offset marginLeft, minus 1em for bullet
           // otherwise drop-hover will be too far left
