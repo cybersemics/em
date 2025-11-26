@@ -1,7 +1,7 @@
 import moize from 'moize'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -56,14 +56,14 @@ const addMissingProtocol = (url: string) =>
   (!url.startsWith('http:') && !url.startsWith('https:') && !url.startsWith('localhost:') ? 'https://' : '') + url
 
 /** A Url icon that links to the url. */
-const UrlIconLink = React.memo(({ url }: { url: string }) => {
+const UrlIconLink = React.memo(({ isVisible, url }: { isVisible?: boolean; url: string }) => {
   const dispatch = useDispatch()
   return (
     <a
       href={addMissingProtocol(url)}
       rel='noopener noreferrer'
       target='_blank'
-      className={urlLinkStyle}
+      className={cx(urlLinkStyle, css({ pointerEvents: !isVisible ? 'none' : 'all' }))}
       {...fastClick(e => {
         e.stopPropagation() // prevent Editable onMouseDown
         if (isInternalLink(url)) {
@@ -97,6 +97,7 @@ const ThoughtAnnotation = React.memo(
   ({
     email,
     isEditing,
+    isVisible,
     multiline,
     ellipsizedUrl,
     numContexts,
@@ -112,6 +113,7 @@ const ThoughtAnnotation = React.memo(
   }: {
     email?: string
     isEditing: boolean
+    isVisible?: boolean
     multiline?: boolean
     ellipsizedUrl?: boolean
     numContexts: number
@@ -161,7 +163,7 @@ const ThoughtAnnotation = React.memo(
       >
         {
           // do not render url icon on root thoughts in publish mode
-          url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
+          url && !(publishMode() && simplePath.length === 1) && <UrlIconLink isVisible={isVisible} url={url} />
         }
         {email && <EmailIconLink email={email} />}
         {
@@ -180,6 +182,7 @@ const ThoughtAnnotation = React.memo(
 /** Container for ThoughtAnnotation. */
 const ThoughtAnnotationContainer = React.memo(
   ({
+    isVisible,
     path,
     simplePath,
     minContexts = 2,
@@ -195,6 +198,7 @@ const ThoughtAnnotationContainer = React.memo(
     env?: LazyEnv
     focusOffset?: number
     invalidState?: boolean
+    isVisible?: boolean
     minContexts?: number
     multiline?: boolean
     ellipsizedUrl?: boolean
@@ -288,6 +292,7 @@ const ThoughtAnnotationContainer = React.memo(
         {...{
           simplePath,
           isEditing,
+          isVisible,
           multiline,
           ellipsizedUrl: ellipsizedUrl,
           numContexts,
