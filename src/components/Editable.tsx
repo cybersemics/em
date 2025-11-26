@@ -531,12 +531,15 @@ const Editable = ({
 
       // Get the browser-calculated range for the click position
       let range: Range | null = null
-
-      const pos = doc.caretPositionFromPoint(clientX, clientY)
-      if (pos?.offsetNode) {
-        range = document.createRange()
-        range.setStart(pos.offsetNode, pos.offset)
-        range.collapse(true)
+      if (doc.caretRangeFromPoint) {
+        range = doc.caretRangeFromPoint(clientX, clientY)
+      } else if (doc.caretPositionFromPoint) {
+        const pos = doc.caretPositionFromPoint(clientX, clientY)
+        if (pos?.offsetNode) {
+          range = document.createRange()
+          range.setStart(pos.offsetNode, pos.offset)
+          range.collapse(true)
+        }
       }
 
       // Ensure click is within our editable element
