@@ -28,7 +28,7 @@ const ThoughtAnnotationWrapper: FC<
         userSelect: 'none',
         boxSizing: 'border-box',
         lineHeight: multiline ? 1.25 : undefined,
-        marginTop: multiline ? 'calc(-0.12em - 0.5px) !important' : value ? '-0.425em' : undefined,
+        marginTop: multiline ? 'calc(-0.12em - 0.5px)' : value ? '-0.425em' : undefined,
         marginLeft: 'calc(0.666em - 18px)',
         display: 'inline-block',
         textAlign: 'left',
