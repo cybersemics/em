@@ -67,7 +67,7 @@ async function testClickBetweenThoughts(thought1: string, thought2: string) {
   expect(await isCaretInMiddle()).toBe(true)
 
   // Test 2: Click just below the overlap zone (should be in second thought)
-  await page.mouse.click(clickX, secondThoughtTop - overlapHeight + 1)
+  await page.mouse.click(clickX, secondThoughtTop - overlapHeight + 9)
 
   expect(await isSelectionLost()).toBe(false)
   expect(await getEditingText()).toBe(thought2)
