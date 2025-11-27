@@ -1,7 +1,8 @@
 import React, { FC, useCallback, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { panelCommandRecipe } from '../../../styled-system/recipes'
+import { SystemStyleObject } from '../../../styled-system/types'
 import Command from '../../@types/Command'
 import Icon from '../../@types/IconType'
 import { isTouch } from '../../browser'
@@ -13,8 +14,34 @@ interface PanelCommandProps {
   /** The command to execute when the button is tapped. */
   command: Command
   /** The size of the button. */
-  size?: 'small' | 'medium' | 'large' | 'xlarge'
+  size?: 'small' | 'medium'
 }
+
+interface ActiveButtonGlowImageProps {
+  cssRaw: SystemStyleObject
+  size?: 'small' | 'medium'
+}
+
+/** Glow image for active button state. */
+const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
+  <div
+    className={css(
+      {
+        gridArea: 'command',
+        objectFit: 'contain',
+        objectPosition: 'center',
+        backgroundGradient: 'activeGlow',
+        borderRadius: '0px',
+        pointerEvents: 'none',
+        transition: 'opacity {durations.medium} ease-in-out',
+        filter: 'blur(23px)',
+        // pandacss has typeerror for -webkit-backdrop-filter
+        ...({ ['-webkit-backdrop-filter']: 'blur(0.1px)' } as SystemStyleObject),
+      },
+      cssRaw,
+    )}
+  />
+)
 
 /** A single button in the Panel Command Grid. */
 const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
@@ -22,8 +49,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
 
   const { svg, isActive, canExecute } = command
   const isButtonExecutable = useSelector(state => !canExecute || canExecute(state))
-  const commandState = useSelector(state => isActive?.(state))
-  const isButtonActive = commandState
+  const isButtonActive = useSelector(state => isActive?.(state))
 
   /** Handles the onClick event. Executes the command when tapped. */
   const handleTap = useCallback(
@@ -47,33 +73,57 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
 
   return (
     <div
-      className={panelCommandRecipe({
-        size,
-        isButtonExecutable,
-        isButtonActive,
+      className={css({
+        display: 'grid',
+        // height: '100%',
+        // width: '100%',
+        ...(size === 'medium'
+          ? { gridColumn: 'span 2', gridTemplateColumns: '1fr 2fr', gridTemplateAreas: `"command command"` }
+          : { gridColumn: 'span 1', gridTemplateColumns: 'auto', gridTemplateAreas: `"command"` }),
       })}
-      {...fastClick(handleTap)}
     >
-      {SVG && (
-        <SVG
-          style={{ justifySelf: size === 'small' ? 'center' : 'center' }}
-          size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
-          animated={isAnimated}
-          animationComplete={() => setIsAnimated(false)}
-        />
-      )}
-      {!command.hideTitleInPanels && (
-        <div
-          className={css({
-            fontSize: 'sm',
-            marginTop: size === 'small' ? '0.5rem' : '0',
-            color: 'fg',
-            textAlign: size === 'medium' ? 'left' : 'center',
-          })}
-        >
-          {command.label}
-        </div>
-      )}
+      <ActiveButtonGlowImage
+        cssRaw={css.raw({
+          mixBlendMode: 'luminosity',
+          opacity: isButtonActive ? 0.75 : 0,
+        })}
+      />
+      <ActiveButtonGlowImage
+        cssRaw={css.raw({
+          mixBlendMode: 'saturation',
+          opacity: isButtonActive ? 0.45 : 0,
+        })}
+      />
+      <div
+        className={cx(
+          panelCommandRecipe({
+            isButtonExecutable,
+          }),
+          css({ gridArea: 'command' }),
+        )}
+        {...fastClick(handleTap)}
+      >
+        {SVG && (
+          <SVG
+            style={{ justifySelf: size === 'small' ? 'center' : 'center', flex: '0 1 auto' }}
+            size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
+            animated={isAnimated}
+            animationComplete={() => setIsAnimated(false)}
+          />
+        )}
+        {!command.hideTitleInPanels && size === 'medium' && (
+          <div
+            className={css({
+              fontSize: '14px',
+              color: 'fg',
+              textAlign: 'left',
+              letterSpacing: '-2%',
+            })}
+          >
+            {command.label}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
