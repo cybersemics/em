@@ -307,13 +307,12 @@ describe('drag', () => {
     // First, drag thought 'a' after thought 'b' (resulting in b followed by a)
     await dragAndDropThought('a', 'b', {
       position: 'after',
-      mouseUp: true,
       showAlert: true,
     })
 
     await dragAndDropThought('a', null, {
       position: 'none',
-      mouseUp: false,
+      dragOnly: true,
       showAlert: true,
     })
 
@@ -357,7 +356,7 @@ describe('drop', () => {
       - d
     `)
 
-    await dragAndDropThought('a', 'd', { position: 'after', mouseUp: true })
+    await dragAndDropThought('a', 'd', { position: 'after' })
 
     const image = await takeScreenshot()
     expect(image).toMatchImageSnapshot()
