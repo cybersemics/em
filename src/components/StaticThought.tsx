@@ -162,11 +162,12 @@ const StaticThought = ({
   return (
     <>
       <ThoughtAnnotation
+        editableRef={editableRef}
         env={env}
         minContexts={allowSingleContext ? 0 : 2}
         multiline={multiline}
         ellipsizedUrl={ellipsizedUrl}
-        placeholder={placeholder}
+        isTableCol1={isTableCol1}
         path={path}
         showContextBreadcrumbs={showContextBreadcrumbs}
         simplePath={simplePath}
