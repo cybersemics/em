@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import React from 'react'
+import { ConnectDragSource } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { thoughtRecipe } from '../../styled-system/recipes'
@@ -7,14 +8,17 @@ import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import { isSafari, isTouch } from '../browser'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
+import { LongPressProps } from '../hooks/useLongPress'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import theme from '../selectors/theme'
 import thoughtToPath from '../selectors/thoughtToPath'
+import dndRef from '../util/dndRef'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDivider from '../util/isDivider'
@@ -30,6 +34,8 @@ import HomeIcon from './icons/HomeIcon'
 export interface ThoughtProps {
   allowSingleContext?: boolean
   debugIndex?: number
+  dragSource: ConnectDragSource
+  longPressProps: LongPressProps
   editing?: boolean | null
   env?: LazyEnv
   // When context view is activated, some contexts may be pending
@@ -91,6 +97,8 @@ const isBlack = (color: string | undefined) => {
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
   allowSingleContext,
+  dragSource,
+  longPressProps,
   // See: ThoughtProps['isContextPending']
   env,
   isContextPending,
@@ -168,12 +176,18 @@ const StaticThought = ({
       />
       <div
         aria-label='thought'
+        {...longPressProps}
         className={cx(
           thoughtRecipe({
             ellipsizedUrl,
             inverse: (dark && isBlack(styleAnnotation?.color)) || (!dark && isWhite(styleAnnotation?.color)),
           }),
         )}
+        // HTML5Backend will override this to be "true" on platforms that use it.
+        // iOS Safari needs it to be true to disable native long press behavior. (#2953, #2931, #2964)
+        // Android works better if draggable is false.
+        draggable={isTouch && isSafari()}
+        ref={isTouch ? dndRef(ref => dragSource(ref)) : undefined}
         style={{ minWidth: `${MIN_CONTENT_WIDTH_EM}em` }}
       >
         {homeContext ? (
