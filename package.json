@@ -47,7 +47,7 @@
     "postinstall": "yarn build:packages && git config core.hooksPath .hooks && yarn build:styles",
     "servebuild": "npx serve -s build -l 3000",
     "start": "vite --host --port 3000",
-    "test:ios": "jest ./src/e2e/iOS --verbose",
+    "test:ios": "vitest ./src/e2e/iOS",
     "test:puppeteer": "./src/e2e/puppeteer/test-puppeteer.sh",
     "test": "vitest --project unit",
     "websocket-server": "cd server && yarn build && yarn start"

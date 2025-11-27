@@ -1,0 +1,15 @@
+
+
+Thu Nov 27 2025 10:50:00:828 GMT+0545 (+0545) -- Setting output as verbose
+Thu Nov 27 2025 10:50:01:468 GMT+0545 (+0545) -- [WARNING] Skipping initialisation of configuration console because: port already in use by another Binary
+Thu Nov 27 2025 10:50:03:303 GMT+0545 (+0545) -- [SUCCESS] You can now access your local server(s) in our remote browser
+
+Thu Nov 27 2025 10:50:04:408 GMT+0545 (+0545) -- Connecting to BrowserStack using WebSocket protocol...
+Thu Nov 27 2025 10:50:04:414 GMT+0545 (+0545) -- Platform supports WebSocket connections.
+
+Thu Nov 27 2025 10:50:04:519 GMT+0545 (+0545) -- Press Ctrl-C to exit
+
+
+Thu Nov 27 2025 10:50:10:407 GMT+0545 (+0545) -- local.browserstack.com:443 socket connected.
+Thu Nov 27 2025 10:50:21:419 GMT+0545 (+0545) -- api.smoot.apple.com:443 socket connected.
+Thu Nov 27 2025 10:50:21:843 GMT+0545 (+0545) -- bag.itunes.apple.com:443 socket connected.

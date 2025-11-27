@@ -26,7 +26,7 @@ const {
 // https://github.com/cybersemics/em/issues/1475
 // https://github.com/cybersemics/em/issues/1523
 
-it.skip('Enter edit mode ', async () => {
+it('Enter edit mode ', async () => {
   await newThought('foo')
   await hideKeyboardByTappingDone()
 
