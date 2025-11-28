@@ -20,8 +20,8 @@ stop_dev_server() {
 }
 
 cleanup() {
-    stop_dev_server || true
-    stop_docker_container || true
+    stop_dev_server 
+    stop_docker_container
 }
 
 # Set up trap to call cleanup function on script exit or if the program crashes
