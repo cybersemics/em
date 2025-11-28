@@ -525,11 +525,12 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
-  const handleCursorPosition = useCallback(
-    (clientX: number, clientY: number, preventDefault: () => void) => {
+  /** Determines if the default caret behavior should be prevented. */
+  const shouldPreventDefaultCaretBehaviour = useCallback(
+    (clientX: number, clientY: number, preventDefault: () => void): boolean => {
       const doc = document as Document
 
-      // Get the browser-calculated range for the click position
+      // Get the browser range for the click position
       let range: Range | null = null
       if (doc.caretRangeFromPoint) {
         range = doc.caretRangeFromPoint(clientX, clientY)
@@ -549,40 +550,16 @@ const Editable = ({
       }
 
       const node = range.startContainer
-
-      // Only validate text nodes - allow other node types to proceed normally
-      if (node.nodeType !== Node.TEXT_NODE) {
-        // Prevent clicks on the editable container itself (empty space)
-        if (node === contentRef.current) {
-          preventDefault()
-          return true
-        }
-        return false
-      }
-
       const offset = range.startOffset
-      const len = node.textContent?.length || 0
+      const nodeTextLength = node.textContent?.length || 0
 
-      // Cache for character rectangles to avoid redundant calculations
-      const rectCache = new Map<number, DOMRect | null>()
-
-      /** Gets the bounding client rectangle for a character at the given offset. */
+      /** Gets the bounding client rect for a character at the given offset. */
       const getCharRect = (targetOffset: number): DOMRect | null => {
-        if (rectCache.has(targetOffset)) {
-          return rectCache.get(targetOffset)!
-        }
-
-        try {
-          const charRange = document.createRange()
-          charRange.setStart(node, targetOffset)
-          charRange.setEnd(node, targetOffset + 1)
-          const rect = charRange.getBoundingClientRect()
-          rectCache.set(targetOffset, rect)
-          return rect
-        } catch (e) {
-          rectCache.set(targetOffset, null)
-          return null
-        }
+        const charRange = document.createRange()
+        charRange.setStart(node, targetOffset)
+        charRange.setEnd(node, targetOffset + 1)
+        const rect = charRange.getBoundingClientRect()
+        return rect
       }
 
       /** Check if click is within a character's bounding box. */
@@ -597,29 +574,20 @@ const Editable = ({
         return clientY >= rect.top && clientY <= rect.bottom
       }
 
-      // 1. Check if clicking directly on a character
+      // Check if clicking directly on a character
       // Try character at current offset and the one before it (for right-half clicks)
-      const offsetsToCheck = [offset, offset - 1].filter(o => o >= 0 && o < len)
+      const isClickOnCharacter = [offset, offset - 1]
+        .filter(o => o >= 0 && o < nodeTextLength)
+        .some(checkOffset => isInsideCharRect(getCharRect(checkOffset)))
 
-      for (const checkOffset of offsetsToCheck) {
-        const rect = getCharRect(checkOffset)
-        if (isInsideCharRect(rect)) {
-          return false // Valid click, allow default behavior
-        }
-      }
-
-      // 2. Handle edge cases: clicks before first or after last character
       // Allow clicks horizontally beyond text if vertically aligned with text line
-      if (offset === 0 || offset === len) {
-        const edgeOffset = offset === 0 ? 0 : len - 1
-        const rect = getCharRect(edgeOffset)
+      const isValidEdgeClick =
+        (offset === 0 || offset === nodeTextLength) &&
+        isVerticallyAligned(getCharRect(offset === 0 ? 0 : nodeTextLength - 1))
 
-        if (isVerticallyAligned(rect)) {
-          return false // Valid edge click, allow default
-        }
-      }
+      if (isClickOnCharacter || isValidEdgeClick) return false
 
-      // 3. Invalid click (padding/void area) - prevent default
+      // Invalid click (padding/void area), prevent default
       preventDefault()
       return true
     },
@@ -646,11 +614,7 @@ const Editable = ({
           bottomMargin: fontSize * 2,
         })
 
-        // Attempt to handle Safari cursor positioning
-        // If not handled (or not Safari), fall back to default behavior
-        const handled = handleCursorPosition(e.clientX, e.clientY, () => e.preventDefault())
-
-        if (!handled) {
+        if (!shouldPreventDefaultCaretBehaviour(e.clientX, e.clientY, () => e.preventDefault())) {
           allowDefaultSelection()
         }
       }
@@ -662,7 +626,14 @@ const Editable = ({
         e.preventDefault()
       }
     },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor, handleCursorPosition],
+    [
+      contentRef,
+      editingOrOnCursor,
+      fontSize,
+      allowDefaultSelection,
+      hasMulticursor,
+      shouldPreventDefaultCaretBehaviour,
+    ],
   )
 
   // Manually attach touchstart listener with { passive: false } to allow preventDefault
@@ -670,10 +641,10 @@ const Editable = ({
     const editable = contentRef.current
     if (!editable) return
 
-    /** Handle iOS touch events to prevent initial cursor jump. */
+    /** Handle touch events to prevent initial cursor jump. */
     const handleTouchStart = (e: TouchEvent) => {
       if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
-        handleCursorPosition(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault())
+        shouldPreventDefaultCaretBehaviour(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault())
       }
     }
 
@@ -683,7 +654,7 @@ const Editable = ({
     return () => {
       editable.removeEventListener('touchstart', handleTouchStart)
     }
-  }, [contentRef, editingOrOnCursor, hasMulticursor, handleCursorPosition])
+  }, [contentRef, editingOrOnCursor, hasMulticursor, shouldPreventDefaultCaretBehaviour])
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
@@ -781,7 +752,7 @@ const Editable = ({
       // iOS Safari delays event handling in case the DOM is modified during setTimeout inside an event handler,
       // unless it is given a hint that the element is some sort of form control
       role='button'
-      style={{ ...style, backgroundColor: 'rgba(255, 0, 0, 0.3)' }}
+      style={style}
     />
   )
 }
