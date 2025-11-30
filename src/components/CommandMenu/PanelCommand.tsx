@@ -85,8 +85,6 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
     <div
       className={css({
         display: 'grid',
-        // height: '100%',
-        // width: '100%',
         ...(size === 'medium'
           ? { gridColumn: 'span 2', gridTemplateColumns: '1fr 2fr', gridTemplateAreas: `"command command"` }
           : { gridColumn: 'span 1', gridTemplateColumns: 'auto', gridTemplateAreas: `"command"` }),
