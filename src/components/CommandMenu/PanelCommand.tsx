@@ -2,7 +2,6 @@ import React, { FC, useCallback, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { panelCommandRecipe } from '../../../styled-system/recipes'
-import { SystemStyleObject } from '../../../styled-system/types'
 import Command from '../../@types/Command'
 import Icon from '../../@types/IconType'
 import { isTouch } from '../../browser'
@@ -19,14 +18,13 @@ interface PanelCommandProps {
 }
 
 interface ActiveButtonGlowImageProps {
-  cssRaw: SystemStyleObject
   size?: 'small' | 'medium'
   isActive: boolean | undefined
   type: 'luminosity' | 'saturation'
 }
 
 /** Glow image for active button state. */
-const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw, isActive, type }) => {
+const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive, type }) => {
   const nodeRef = useRef<HTMLDivElement>(null)
   return (
     <FadeTransition
@@ -37,22 +35,19 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw, isActiv
     >
       <div
         ref={nodeRef}
-        className={css(
-          {
-            gridArea: 'command',
-            objectFit: 'contain',
-            objectPosition: 'center',
-            backgroundGradient: 'activeGlow',
-            borderRadius: '0px',
-            pointerEvents: 'none',
-            ...(type === 'luminosity' ? { mixBlendMode: 'luminosity' } : { mixBlendMode: 'saturation' }),
-            filter: 'blur(23px)',
-            _safari: {
-              willChange: 'opacity',
-            },
+        className={css({
+          gridArea: 'command',
+          objectFit: 'contain',
+          objectPosition: 'center',
+          backgroundGradient: 'activeGlow',
+          borderRadius: '0px',
+          pointerEvents: 'none',
+          ...(type === 'luminosity' ? { mixBlendMode: 'luminosity' } : { mixBlendMode: 'saturation' }),
+          filter: 'blur(23px)',
+          _safari: {
+            willChange: 'opacity',
           },
-          cssRaw,
-        )}
+        })}
       />
     </FadeTransition>
   )
@@ -97,20 +92,8 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           : { gridColumn: 'span 1', gridTemplateColumns: 'auto', gridTemplateAreas: `"command"` }),
       })}
     >
-      <ActiveButtonGlowImage
-        cssRaw={css.raw({
-          mixBlendMode: 'luminosity',
-        })}
-        isActive={isButtonActive}
-        type='luminosity'
-      />
-      <ActiveButtonGlowImage
-        cssRaw={css.raw({
-          mixBlendMode: 'saturation',
-        })}
-        isActive={isButtonActive}
-        type='saturation'
-      />
+      <ActiveButtonGlowImage isActive={isButtonActive} type='luminosity' />
+      <ActiveButtonGlowImage isActive={isButtonActive} type='saturation' />
       <div
         className={cx(
           panelCommandRecipe({
