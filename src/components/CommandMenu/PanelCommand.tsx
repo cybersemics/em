@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react'
+import React, { FC, useCallback, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { panelCommandRecipe } from '../../../styled-system/recipes'
@@ -9,6 +9,7 @@ import { isTouch } from '../../browser'
 import store from '../../stores/app'
 import { executeCommandWithMulticursor } from '../../util/executeCommand'
 import fastClick from '../../util/fastClick'
+import FadeTransition from '../FadeTransition'
 
 interface PanelCommandProps {
   /** The command to execute when the button is tapped. */
@@ -20,28 +21,42 @@ interface PanelCommandProps {
 interface ActiveButtonGlowImageProps {
   cssRaw: SystemStyleObject
   size?: 'small' | 'medium'
+  isActive: boolean | undefined
+  type: 'luminosity' | 'saturation'
 }
 
 /** Glow image for active button state. */
-const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw }) => (
-  <div
-    className={css(
-      {
-        gridArea: 'command',
-        objectFit: 'contain',
-        objectPosition: 'center',
-        backgroundGradient: 'activeGlow',
-        borderRadius: '0px',
-        pointerEvents: 'none',
-        transition: 'opacity {durations.medium} ease-in-out',
-        filter: 'blur(23px)',
-        // pandacss has typeerror for -webkit-backdrop-filter
-        ...({ ['-webkit-backdrop-filter']: 'blur(0.1px)' } as SystemStyleObject),
-      },
-      cssRaw,
-    )}
-  />
-)
+const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ cssRaw, isActive, type }) => {
+  const nodeRef = useRef<HTMLDivElement>(null)
+  return (
+    <FadeTransition
+      type={type === 'luminosity' ? 'activeButtonGlowLuminosity' : 'activeButtonGlowSaturation'}
+      in={isActive}
+      unmountOnExit
+      nodeRef={nodeRef}
+    >
+      <div
+        ref={nodeRef}
+        className={css(
+          {
+            gridArea: 'command',
+            objectFit: 'contain',
+            objectPosition: 'center',
+            backgroundGradient: 'activeGlow',
+            borderRadius: '0px',
+            pointerEvents: 'none',
+            ...(type === 'luminosity' ? { mixBlendMode: 'luminosity' } : { mixBlendMode: 'saturation' }),
+            filter: 'blur(23px)',
+            _safari: {
+              willChange: 'opacity',
+            },
+          },
+          cssRaw,
+        )}
+      />
+    </FadeTransition>
+  )
+}
 
 /** A single button in the Panel Command Grid. */
 const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
@@ -85,14 +100,16 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       <ActiveButtonGlowImage
         cssRaw={css.raw({
           mixBlendMode: 'luminosity',
-          opacity: isButtonActive ? 0.75 : 0,
         })}
+        isActive={isButtonActive}
+        type='luminosity'
       />
       <ActiveButtonGlowImage
         cssRaw={css.raw({
           mixBlendMode: 'saturation',
-          opacity: isButtonActive ? 0.45 : 0,
         })}
+        isActive={isButtonActive}
+        type='saturation'
       />
       <div
         className={cx(
