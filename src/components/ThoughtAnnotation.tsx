@@ -1,5 +1,6 @@
+import { debounce } from 'lodash'
 import moize from 'moize'
-import React, { RefObject, useEffect, useMemo, useRef, useState } from 'react'
+import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
@@ -282,54 +283,64 @@ const ThoughtAnnotationContainer = React.memo(
       setCalculateContexts(true)
     }, [])
 
+    const positionAnnotation = useCallback(() => {
+      if (editableRef.current && annotationRef.current) {
+        const range = document.createRange()
+        const textNode = editableRef.current.lastChild
+
+        const length = textNode && textNode.nodeType === Node.TEXT_NODE && textNode.textContent?.length
+        const offset = editableRef.current.getBoundingClientRect()
+
+        let right = offset.width - fontSize - (length ? fontSize / 3 : 0)
+        let top = 0
+
+        if (length) {
+          // Select the last character
+          range.setStart(textNode, length - 1)
+          range.setEnd(textNode, length)
+
+          // Get bounding box
+          const rect = range.getBoundingClientRect()
+          const isAtEdge = rect.right - offset.left > offset.width
+
+          top = rect.top - offset.top
+          // offset annotation container to account for -12px left margin in ThoughtPositioner #3352
+          if (!isAtEdge) right = rect.right - offset.left + (isTableCol1 ? 12 : 0)
+        }
+
+        // rect.right gives you the x position (relative to viewport)
+        annotationRef.current.style.left = `${right}px`
+        annotationRef.current.style.top = `${top}px`
+      }
+    }, [])
+
+    const debounced = useCallback(
+      debounce(() => {
+        if (editableRef.current && annotationRef.current) {
+          positionAnnotation()
+          annotationRef.current.style.opacity = '1'
+        }
+      }, durations.get('disappearingUpperRight')),
+      [],
+    )
+
+    useEffect(() => {
+      setTimeout(() => {
+        if (annotationRef.current) annotationRef.current.style.opacity = '0'
+      })
+      debounced()
+    }, [isInContextView])
+
     // useSelector would be a cleaner way to get the annotationRef's new position
     // but, on load, the refs are null until setTimeout runs
     useEffect(() => {
-      // hide thought annotation until the context view has finished swooping in (#3352)
-      const display = annotationRef.current?.style.display
-      if (isInContextView && annotationRef.current) annotationRef.current.style.display = 'none'
-
-      setTimeout(
-        () => {
-          if (editableRef.current && annotationRef.current) {
-            const range = document.createRange()
-            const textNode = editableRef.current.lastChild
-
-            const length = textNode && textNode.nodeType === Node.TEXT_NODE && textNode.textContent?.length
-            const offset = editableRef.current.getBoundingClientRect()
-
-            let right = offset.width - fontSize - (length ? fontSize / 3 : 0)
-            let top = 0
-
-            if (length) {
-              // Select the last character
-              range.setStart(textNode, length - 1)
-              range.setEnd(textNode, length)
-
-              // Get bounding box
-              const rect = range.getBoundingClientRect()
-              const isAtEdge = rect.right - offset.left > offset.width
-
-              top = rect.top - offset.top
-              // offset annotation container to account for -12px left margin in ThoughtPositioner #3352
-              if (!isAtEdge) right = rect.right - offset.left + (isTableCol1 ? 12 : 0)
-            }
-
-            // rect.right gives you the x position (relative to viewport)
-            annotationRef.current.style.left = `${right}px`
-            annotationRef.current.style.top = `${top}px`
-            if (isInContextView && display !== undefined) annotationRef.current.style.display = display
-          }
-        },
-        isInContextView ? durations.get('disappearingUpperRight') : 0,
-      )
+      setTimeout(positionAnnotation)
     }, [
       contentWidth,
       editableRef,
       email,
       fontSize,
       isEditing,
-      isInContextView,
       isTableCol1,
       numContexts,
       showSuperscript,
