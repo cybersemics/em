@@ -312,24 +312,27 @@ const ThoughtAnnotationContainer = React.memo(
         annotationRef.current.style.left = `${right}px`
         annotationRef.current.style.top = `${top}px`
       }
-    }, [])
+    }, [editableRef, fontSize, isTableCol1])
 
     const debounced = useCallback(
-      debounce(() => {
-        if (editableRef.current && annotationRef.current) {
-          positionAnnotation()
-          annotationRef.current.style.opacity = '1'
-        }
-      }, durations.get('disappearingUpperRight')),
-      [],
+      () =>
+        debounce(() => {
+          if (editableRef.current && annotationRef.current) {
+            positionAnnotation()
+            annotationRef.current.style.opacity = '1'
+          }
+        }, durations.get('disappearingUpperRight')),
+      [editableRef, positionAnnotation],
     )
 
     useEffect(() => {
-      setTimeout(() => {
-        if (annotationRef.current) annotationRef.current.style.opacity = '0'
-      })
-      debounced()
-    }, [isInContextView])
+      if (durations.get('disappearingUpperRight')) {
+        setTimeout(() => {
+          if (annotationRef.current) annotationRef.current.style.opacity = '0'
+        })
+        debounced()
+      }
+    }, [debounced, isInContextView])
 
     // useSelector would be a cleaner way to get the annotationRef's new position
     // but, on load, the refs are null until setTimeout runs
@@ -343,6 +346,7 @@ const ThoughtAnnotationContainer = React.memo(
       isEditing,
       isTableCol1,
       numContexts,
+      positionAnnotation,
       showSuperscript,
       styleAnnotation,
       url,
