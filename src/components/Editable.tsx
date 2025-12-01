@@ -530,6 +530,12 @@ const Editable = ({
     (clientX: number, clientY: number, preventDefault: () => void): boolean => {
       const doc = document as Document
 
+      // These APIs are not available in test environments (JSDOM)
+      // In that case, allow default behavior
+      if (!doc.caretRangeFromPoint && !doc.caretPositionFromPoint) {
+        return false
+      }
+
       // Get the browser range for the click position
       let range: Range | null = null
       if (doc.caretRangeFromPoint) {
