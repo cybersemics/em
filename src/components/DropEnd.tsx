@@ -55,7 +55,7 @@ const DropEnd = ({
     attributeEquals(state, head(rootedParentOf(state, path)), '=view', 'Table'),
   )
 
-  const dropHoverLength = useDropHoverWidth({ isTableCol2: isParentTableCol1 })
+  const dropHoverLength = useDropHoverWidth()
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
 

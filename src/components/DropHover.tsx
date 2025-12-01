@@ -31,11 +31,7 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
 
-  const isTableCol2 = useSelector(state =>
-    attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
-  )
-
-  const dropHoverLength = useDropHoverWidth({ isTableCol1, isTableCol2 })
+  const dropHoverLength = useDropHoverWidth()
 
   const animateHover = useSelector(state => {
     const parent = parentOf(simplePath)
