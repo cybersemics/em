@@ -1,7 +1,3 @@
-import { useMemo } from 'react'
-import { CONTENT_BOX_PADDING_LEFT, CONTENT_BOX_PADDING_RIGHT } from '../constants'
-import viewportStore from '../stores/viewport'
-
 interface DropHoverLengthProps {
   isTableCol1?: boolean // For dropping into place as a first column in table view
   isTableCol2?: boolean // For dropping into place as a second column in table view
@@ -58,17 +54,7 @@ interface DropHoverLengthProps {
  * @returns CSS width value as string.
  */
 const useDropHoverWidth = (props?: DropHoverLengthProps) => {
-  const contentWidth = viewportStore.useSelector(state => state.contentWidth)
-  const isTableCol1 = props?.isTableCol1
-  const isTableCol2 = props?.isTableCol2
-
-  return useMemo(
-    () =>
-      isTableCol1 || isTableCol2
-        ? '50vw' // Table view mode: 50% of viewport width for two-column layout
-        : `${contentWidth - CONTENT_BOX_PADDING_RIGHT - CONTENT_BOX_PADDING_LEFT}px`, // Normal mode: Content width minus padding
-    [contentWidth, isTableCol1, isTableCol2],
-  )
+  return '50vw'
 }
 
 export default useDropHoverWidth
