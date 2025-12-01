@@ -1,11 +1,12 @@
 import moize from 'moize'
 import { DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
 import DragThoughtZone from '../@types/DragThoughtZone'
+import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -44,6 +45,7 @@ import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
+import throttleByMousePosition from '../util/throttleByMousePosition'
 
 export type DropValidationResult = {
   isValid: boolean
@@ -271,28 +273,60 @@ const dragCollect = (monitor: DragSourceMonitor) => ({
 /** Collects props from the DropTarget. */
 const dropCollect = (monitor: DropTargetMonitor) => ({
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
-  // is being hovered over current thought irrespective of whether the given item is droppable
-  isBeingHoveredOver: monitor.isOver({ shallow: true }),
   isDeepHovering: monitor.isOver(),
   canDropThought: monitor.canDrop(),
 })
 
 /** A draggable and droppable Thought hook. */
-const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
+const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZone: DropThoughtZone }) => {
   const propsTypes = props as ThoughtContainerProps
+  const dispatch = useDispatch()
 
-  const [{ isDragging }, dragSource, dragPreview] = useDrag({
+  const [{ isDragging: isDraggingBullet }, dragSourceBullet, dragPreview] = useDrag({
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
     collect: dragCollect,
   })
 
-  const [{ isHovering, isBeingHoveredOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({
+  const [{ isDragging: isDraggingEditable }, dragSourceEditable] = useDrag({
+    type: DragAndDropType.Thought,
+    item: () => beginDrag(propsTypes),
+    canDrag: () => canDrag(propsTypes),
+    collect: dragCollect,
+  })
+
+  const [{ isHovering, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
+    hover: (_, monitor) =>
+      throttleByMousePosition(() => {
+        // is being hovered over current thought irrespective of whether the given item is
+        if (!monitor.isOver({ shallow: true })) return
+
+        dispatch((dispatch, getState) => {
+          const state = getState()
+
+          // If the drag has been canceled, ignore hoveringPath behavior
+          if (
+            state.longPress === LongPressState.DragCanceled ||
+            (state.hoveringPath === props.path && state.hoverZone === props.hoverZone)
+          )
+            return
+
+          dispatch(
+            longPress({
+              value: state.longPress,
+              draggingThoughts: state.draggingThoughts,
+              hoveringPath: props.path,
+              hoverZone: props.hoverZone,
+              sourceZone: DragThoughtZone.Thoughts,
+            }),
+          )
+        })
+      }, monitor.getClientOffset()),
   })
 
   // Check if this thought is part of a multiselect drag operation
@@ -302,11 +336,11 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
   })
 
   return {
-    isDragging: isDragging || isDraggingMultiple, // Combine both drag states: either this is the primary drag source OR it's part of multiselect drag
-    dragSource,
+    isDragging: isDraggingBullet || isDraggingEditable || isDraggingMultiple, // Combine both drag states: either this is the primary drag source OR it's part of multiselect drag
+    dragSourceBullet,
+    dragSourceEditable,
     dragPreview,
     isHovering,
-    isBeingHoveredOver,
     isDeepHovering,
     canDropThought,
     dropTarget,

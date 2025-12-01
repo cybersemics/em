@@ -1,4 +1,5 @@
 import React, { useRef } from 'react'
+import { ConnectDragSource } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -7,6 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { AlertType } from '../constants'
+import { LongPressProps } from '../hooks/useLongPress'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -16,12 +18,15 @@ import getThoughtFill from '../selectors/getThoughtFill'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
+import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import BulletPositioner from './BulletPositioner'
 
 interface BulletProps {
+  dragSource: ConnectDragSource
+  longPressProps: LongPressProps
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
   isDragging?: boolean
@@ -210,7 +215,7 @@ const BulletHighlightOverlay = ({
   publish?: boolean
   simplePath: SimplePath
 }) => {
-  const bulletOverlayRadius = isIOSSafari ? 300 : 245
+  const bulletOverlayRadius = calculateCursorOverlayRadius()
   return (
     <ellipse
       ry={bulletOverlayRadius}
@@ -228,6 +233,8 @@ const BulletHighlightOverlay = ({
 
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
+  dragSource,
+  longPressProps,
   isContextPending,
   isDragging,
   isEditing,
@@ -294,6 +301,8 @@ const Bullet = ({
 
   return (
     <BulletPositioner
+      dragSource={dragSource}
+      longPressProps={longPressProps}
       isEditing={isEditing}
       leaf={leaf}
       path={path}
