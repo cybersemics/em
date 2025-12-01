@@ -44,11 +44,6 @@ interface DropHoverLengthProps {
  * - DropUncle: Checks if in col2 context for proper positioning
  * - DropCliff: Uses col2 flag to adjust positioning when exiting table view.
  *
- * ## Width Behavior
- *
- * - Table view (`isTableCol1 || isTableCol2`): Returns `'50vw'` (50% of viewport width)
- * - Normal view: Returns `contentWidth - padding` in pixels for full content width.
- *
  * @param props.isTableCol1 - True when drop target is in table column 1 (direct children of =view:Table).
  * @param props.isTableCol2 - True when drop target is in table column 2 (grandchildren of =view:Table).
  * @returns CSS width value as string.
