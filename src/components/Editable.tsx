@@ -525,6 +525,81 @@ const Editable = ({
     [value, setCursorOnThought],
   )
 
+  /** Determines if the default caret behavior should be prevented. */
+  const shouldPreventDefaultCaretBehaviour = useCallback(
+    (clientX: number, clientY: number, preventDefault: () => void): boolean => {
+      const doc = document as Document
+
+      // These APIs are not available in test environments (JSDOM)
+      // In that case, allow default behavior
+      if (!doc.caretRangeFromPoint && !doc.caretPositionFromPoint) {
+        return false
+      }
+
+      // Get the browser range for the click position
+      let range: Range | null = null
+      if (doc.caretRangeFromPoint) {
+        range = doc.caretRangeFromPoint(clientX, clientY)
+      } else if (doc.caretPositionFromPoint) {
+        const pos = doc.caretPositionFromPoint(clientX, clientY)
+        if (pos?.offsetNode) {
+          range = document.createRange()
+          range.setStart(pos.offsetNode, pos.offset)
+          range.collapse(true)
+        }
+      }
+
+      // Ensure click is within our editable element
+      if (!range || !contentRef.current?.contains(range.startContainer)) {
+        preventDefault()
+        return true
+      }
+
+      const node = range.startContainer
+      const offset = range.startOffset
+      const nodeTextLength = node.textContent?.length || 0
+
+      /** Gets the bounding client rect for a character at the given offset. */
+      const getCharRect = (targetOffset: number): DOMRect | null => {
+        const charRange = document.createRange()
+        charRange.setStart(node, targetOffset)
+        charRange.setEnd(node, targetOffset + 1)
+        const rect = charRange.getBoundingClientRect()
+        return rect
+      }
+
+      /** Check if click is within a character's bounding box. */
+      const isInsideCharRect = (rect: DOMRect | null): boolean => {
+        if (!rect) return false
+        return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
+      }
+
+      /** Check if click is vertically aligned with a character (for edge cases). */
+      const isVerticallyAligned = (rect: DOMRect | null): boolean => {
+        if (!rect) return false
+        return clientY >= rect.top && clientY <= rect.bottom
+      }
+
+      // Check if clicking directly on a character
+      // Try character at current offset and the one before it (for right-half clicks)
+      const isClickOnCharacter = [offset, offset - 1]
+        .filter(o => o >= 0 && o < nodeTextLength)
+        .some(checkOffset => isInsideCharRect(getCharRect(checkOffset)))
+
+      // Allow clicks horizontally beyond text if vertically aligned with text line
+      const isValidEdgeClick =
+        (offset === 0 || offset === nodeTextLength) &&
+        isVerticallyAligned(getCharRect(offset === 0 ? 0 : nodeTextLength - 1))
+
+      if (isClickOnCharacter || isValidEdgeClick) return false
+
+      // Invalid click (padding/void area), prevent default
+      preventDefault()
+      return true
+    },
+    [contentRef],
+  )
+
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
       // If CMD/CTRL is pressed, don't focus the editable.
@@ -545,7 +620,9 @@ const Editable = ({
           bottomMargin: fontSize * 2,
         })
 
-        allowDefaultSelection()
+        if (!shouldPreventDefaultCaretBehaviour(e.clientX, e.clientY, () => e.preventDefault())) {
+          allowDefaultSelection()
+        }
       }
       // There are areas on the outside edge of the thought that will fail to trigger onTouchEnd.
       // In those cases, it is best to prevent onFocus or onClick, otherwise keyboard is open will be incorrectly activated.
@@ -555,8 +632,35 @@ const Editable = ({
         e.preventDefault()
       }
     },
-    [contentRef, editingOrOnCursor, fontSize, allowDefaultSelection, hasMulticursor],
+    [
+      contentRef,
+      editingOrOnCursor,
+      fontSize,
+      allowDefaultSelection,
+      hasMulticursor,
+      shouldPreventDefaultCaretBehaviour,
+    ],
   )
+
+  // Manually attach touchstart listener with { passive: false } to allow preventDefault
+  useEffect(() => {
+    const editable = contentRef.current
+    if (!editable) return
+
+    /** Handle touch events to prevent initial cursor jump. */
+    const handleTouchStart = (e: TouchEvent) => {
+      if (editingOrOnCursor && !hasMulticursor && e.touches.length > 0) {
+        shouldPreventDefaultCaretBehaviour(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault())
+      }
+    }
+
+    // Add event listener with { passive: false } to allow preventDefault
+    editable.addEventListener('touchstart', handleTouchStart, { passive: false })
+
+    return () => {
+      editable.removeEventListener('touchstart', handleTouchStart)
+    }
+  }, [contentRef, editingOrOnCursor, hasMulticursor, shouldPreventDefaultCaretBehaviour])
 
   /** Sets the cursor on the thought on touchend or click. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
