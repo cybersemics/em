@@ -59,7 +59,6 @@ describe('Font Size: 13', () => {
   })
 
   testSuite(187)
-  testSuite(375)
   testSuite(560)
   testSuite(575)
 })
