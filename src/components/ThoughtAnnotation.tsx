@@ -318,13 +318,19 @@ const ThoughtAnnotationContainer = React.memo(
 
     const contextAnimation = useContextAnimation(path)
     const descendant = useSelector(state => isDescendantPath(path, state.cursor))
+    const timeoutRef = useRef(0)
 
     // useSelector would be a cleaner way to get the annotationRef's new position
     // but, on load, the refs are null until setTimeout runs
     useEffect(() => {
-      if (contextAnimation && descendant && !isEditing && annotationRef.current)
+      if (contextAnimation && descendant && !isEditing && annotationRef.current) {
+        clearTimeout(timeoutRef.current)
         annotationRef.current.style.opacity = '0'
-      setTimeout(positionAnnotation, contextAnimation ? durations.get(contextAnimation) : 0)
+      }
+      timeoutRef.current = setTimeout(
+        positionAnnotation,
+        contextAnimation ? durations.get(contextAnimation) : 0,
+      ) as unknown as number
     }, [
       contentWidth,
       contextAnimation,
