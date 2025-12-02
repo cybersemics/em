@@ -27,6 +27,7 @@ import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isDescendantPath from '../util/isDescendantPath'
 import isEmail from '../util/isEmail'
 import isVisibleContext from '../util/isVisibleContext'
 import parentOf from '../util/parentOf'
@@ -316,14 +317,18 @@ const ThoughtAnnotationContainer = React.memo(
     }, [editableRef, fontSize, isTableCol1])
 
     const contextAnimation = useContextAnimation(path)
+    const descendant = useSelector(state => isDescendantPath(path, state.cursor))
 
     // useSelector would be a cleaner way to get the annotationRef's new position
     // but, on load, the refs are null until setTimeout runs
     useEffect(() => {
+      if (contextAnimation && descendant && !isEditing && annotationRef.current)
+        annotationRef.current.style.opacity = '0'
       setTimeout(positionAnnotation, contextAnimation ? durations.get(contextAnimation) : 0)
     }, [
       contentWidth,
       contextAnimation,
+      descendant,
       editableRef,
       email,
       fontSize,
