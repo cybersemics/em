@@ -5,10 +5,9 @@ import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
+import useContextAnimation from '../hooks/useContextAnimation'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import useMoveThoughtAnimation from '../hooks/useMoveThoughtAnimation'
-import isContextViewActive from '../selectors/isContextViewActive'
-import isDescendantPath from '../util/isDescendantPath'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
@@ -87,35 +86,7 @@ const TreeNode = ({
   })
 
   // /** The transition animation for descendants of the context view after toggleContextView. Returns null otherwise. */
-  const contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight' | null = useSelector(state => {
-    const isLastActionContextView = state.undoPatches[state.undoPatches.length - 1]?.some(
-      patch => patch.actions[0] === 'toggleContextView',
-    )
-    if (!isLastActionContextView) return null
-
-    // Determine the animation direction for disappearing text
-    let animation: 'disappearingLowerLeft' | 'disappearingUpperRight' = 'disappearingLowerLeft'
-
-    if (isDescendantPath(path, state.cursor)) {
-      const isAppearing = transitionGroupsProps.in
-      const isCursorInContextView = isLastActionContextView
-        ? !!state.cursor && isContextViewActive(state, state.cursor)
-        : false
-      if (isCursorInContextView) {
-        // Context View ON
-        // New contextual child appearing (fade IN from RIGHT)
-        // Old original child disappearing (fade OUT to LEFT)
-        animation = isAppearing ? 'disappearingUpperRight' : 'disappearingLowerLeft'
-      } else {
-        // Context View OFF
-        // Original child re-appearing (fade IN from LEFT)
-        // Contextual child disappearing (fade OUT to RIGHT)
-        animation = isAppearing ? 'disappearingLowerLeft' : 'disappearingUpperRight'
-      }
-    }
-
-    return animation
-  })
+  const contextAnimation = useContextAnimation(path, transitionGroupsProps.in)
 
   const moveDivStyle = useMoveThoughtAnimation(index, thoughtId)
 

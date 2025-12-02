@@ -1,4 +1,3 @@
-import { debounce } from 'lodash'
 import moize from 'moize'
 import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -11,6 +10,7 @@ import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
+import useContextAnimation from '../hooks/useContextAnimation'
 import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { filterAllChildren } from '../selectors/getChildren'
@@ -311,39 +311,24 @@ const ThoughtAnnotationContainer = React.memo(
         // rect.right gives you the x position (relative to viewport)
         annotationRef.current.style.left = `${right}px`
         annotationRef.current.style.top = `${top}px`
+        annotationRef.current.style.opacity = '1'
       }
     }, [editableRef, fontSize, isTableCol1])
 
-    const debounced = useCallback(
-      () =>
-        debounce(() => {
-          if (editableRef.current && annotationRef.current) {
-            positionAnnotation()
-            annotationRef.current.style.opacity = '1'
-          }
-        }, durations.get('disappearingUpperRight')),
-      [editableRef, positionAnnotation],
-    )
-
-    useEffect(() => {
-      if (durations.get('disappearingUpperRight')) {
-        setTimeout(() => {
-          if (annotationRef.current) annotationRef.current.style.opacity = '0'
-        })
-        debounced()
-      }
-    }, [debounced, isInContextView])
+    const contextAnimation = useContextAnimation(path)
 
     // useSelector would be a cleaner way to get the annotationRef's new position
     // but, on load, the refs are null until setTimeout runs
     useEffect(() => {
-      setTimeout(positionAnnotation)
+      setTimeout(positionAnnotation, contextAnimation ? durations.get(contextAnimation) : 0)
     }, [
       contentWidth,
+      contextAnimation,
       editableRef,
       email,
       fontSize,
       isEditing,
+      isInContextView,
       isTableCol1,
       numContexts,
       positionAnnotation,
