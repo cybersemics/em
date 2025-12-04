@@ -44,9 +44,9 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive, type 
           pointerEvents: 'none',
           ...(type === 'luminosity' ? { mixBlendMode: 'luminosity' } : { mixBlendMode: 'saturation' }),
           filter: 'blur(23px)',
-          _safari: {
-            willChange: 'opacity',
-          },
+          padding: 40 /* Expands the Paint Rect. */,
+          margin: -40 /* Pulls it back so layout doesn't break. */,
+          backgroundClip: 'content-box' /* Ensures background doesn't fill the padding. */,
         })}
       />
     </FadeTransition>
