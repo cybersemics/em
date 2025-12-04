@@ -36,18 +36,18 @@ const fadeTransitionRecipe = defineSlotRecipe({
       },
       activeButtonGlowLuminosity: {
         enter: { opacity: 0 },
-        enterActive: { opacity: 0.75, transition: `opacity {durations.medium} ease 0ms` },
+        enterActive: { opacity: 0.75, transition: `opacity {durations.activeButtonGlowLuminosity} ease 0ms` },
         enterDone: { opacity: 0.75 },
         exit: { opacity: 0.75 },
-        exitActive: { opacity: 0, transition: `opacity {durations.medium} ease 0ms` },
+        exitActive: { opacity: 0, transition: `opacity {durations.activeButtonGlowLuminosity} ease 0ms` },
         exitDone: { opacity: 0 },
       },
       activeButtonGlowSaturation: {
         enter: { opacity: 0 },
-        enterActive: { opacity: 0.45, transition: `opacity {durations.medium} ease 0ms` },
+        enterActive: { opacity: 0.45, transition: `opacity {durations.activeButtonGlowSaturation} ease 0ms` },
         enterDone: { opacity: 0.45 },
         exit: { opacity: 0.45 },
-        exitActive: { opacity: 0, transition: `opacity {durations.medium} ease 0ms` },
+        exitActive: { opacity: 0, transition: `opacity {durations.activeButtonGlowSaturation} ease 0ms` },
         exitDone: { opacity: 0 },
       },
       distractionFreeTyping: {

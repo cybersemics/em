@@ -8,7 +8,10 @@ export default defineRecipe({
     position: 'relative',
     boxSizing: 'border-box',
     padding: '0.5rem 1rem',
-    borderRadius: 48,
+    // Use CSS variables for border radii
+    '--panel-command-radius': '48px',
+    '--panel-command-radius-inner': '24px',
+    borderRadius: 'var(--panel-command-radius)',
     overflow: 'hidden',
     mixBlendMode: 'color-dodge',
 
@@ -44,7 +47,6 @@ export default defineRecipe({
       right: '0%',
       bottom: '0%',
       mixBlendMode: 'color-dodge',
-
       background: `radial-gradient(
             121.9% 149.44% at 57.5% 55.06%,
             rgba(130, 108, 203, 0) 0%,
@@ -63,25 +65,24 @@ export default defineRecipe({
             rgba(208, 210, 224, 0) 24.83%
           )
           border-box`,
-
-      borderRadius: 48,
+      borderRadius: 'var(--panel-command-radius)',
       border: '1px solid transparent',
       WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
       WebkitMaskComposite: 'xor',
       maskComposite: 'exclude',
     },
-    // Add pseudo-selector styling
+    // Add pseudo-selector styling using CSS variables
     '.panelCommandGroupRecipe > div:first-of-type &, .panelCommandGroupRecipe > div:first-of-type &::after': {
-      borderTopLeftRadius: 48,
-      borderTopRightRadius: 24,
-      borderBottomRightRadius: 24,
-      borderBottomLeftRadius: 48,
+      borderTopLeftRadius: 'var(--panel-command-radius)',
+      borderTopRightRadius: 'var(--panel-command-radius-inner)',
+      borderBottomRightRadius: 'var(--panel-command-radius-inner)',
+      borderBottomLeftRadius: 'var(--panel-command-radius)',
     },
     '.panelCommandGroupRecipe > div:last-of-type &, .panelCommandGroupRecipe > div:last-of-type &::after': {
-      borderTopRightRadius: 48,
-      borderTopLeftRadius: 24,
-      borderBottomLeftRadius: 24,
-      borderBottomRightRadius: 48,
+      borderTopRightRadius: 'var(--panel-command-radius)',
+      borderTopLeftRadius: 'var(--panel-command-radius-inner)',
+      borderBottomLeftRadius: 'var(--panel-command-radius-inner)',
+      borderBottomRightRadius: 'var(--panel-command-radius)',
     },
     '.panelCommandGroupRecipe > div:not(:first-of-type):not(:last-of-type) &': {
       borderRadius: '0',
