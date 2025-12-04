@@ -9,6 +9,16 @@ import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
 import haptics from '../util/haptics'
 
+export interface LongPressProps {
+  onContextMenu: (e: React.MouseEvent | React.PointerEvent) => void
+  onDragEnd?: () => void
+  onMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void
+  onMouseUp?: () => void
+  onTouchStart: (e: React.MouseEvent | React.TouchEvent) => void
+  onTouchEnd: () => void
+  onTouchCancel: () => void
+}
+
 /** Custom hook to manage long press.
  * The onLongPressStart handler is called after the delay if the user is still pressing.
  * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove).
@@ -109,7 +119,7 @@ const useLongPress = (
     [dispatch],
   )
 
-  const props = useMemo(
+  const props: LongPressProps = useMemo(
     () => ({
       // disable Android context menu
       // does not work to prevent iOS long press to select behavior

@@ -40,8 +40,8 @@ describe('mobile only', () => {
     const a = await waitForEditable('a')
     const b = await waitForEditable('b')
 
-    await longPressThought(a, { edge: 'right', x: 100 })
-    await longPressThought(b, { edge: 'right', x: 100 })
+    await longPressThought(a, { edge: 'right' })
+    await longPressThought(b, { edge: 'right' })
 
     // In CI, sometimes the count of highlighted bullets are incorrect. The selector query runs immediately after both long presses, but react might not have finished re-rendering all bullet components.
     // Wait for the command menu panel to show "2 thoughts selected" before we query for highlighted bullets.
