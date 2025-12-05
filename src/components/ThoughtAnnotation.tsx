@@ -10,6 +10,7 @@ import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
+import annotationPointerEvents from '../recipes/annotationPointerEvents'
 import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -56,14 +57,20 @@ const addMissingProtocol = (url: string) =>
   (!url.startsWith('http:') && !url.startsWith('https:') && !url.startsWith('localhost:') ? 'https://' : '') + url
 
 /** A Url icon that links to the url. */
-const UrlIconLink = React.memo(({ isVisible, url }: { isVisible?: boolean; url: string }) => {
+const UrlIconLink = React.memo(({ url }: { url: string }) => {
   const dispatch = useDispatch()
   return (
     <a
       href={addMissingProtocol(url)}
       rel='noopener noreferrer'
       target='_blank'
-      className={cx(urlLinkStyle, css({ pointerEvents: !isVisible ? 'none' : 'all' }))}
+      // Use annotationPointerEvents with override: true to override ThoughtAnnotationWrapper's
+      // pointerEvents: 'none' and make the icon clickable. This is a typesafe way to override
+      // the inherited pointer-events style, similar to how toolbar buttons override the toolbar.
+      // When the thought is hidden (isVisible: false), ThoughtAnnotationWrapper prevents this
+      // override by applying pointerEvents: 'none' to all children via the disableChildren variant,
+      // ensuring hidden thoughts are not clickable.
+      className={cx(urlLinkStyle, annotationPointerEvents({ override: true }))}
       {...fastClick(e => {
         e.stopPropagation() // prevent Editable onMouseDown
         if (isInternalLink(url)) {
@@ -86,7 +93,16 @@ UrlIconLink.displayName = 'UrlIconLink'
 
 /** Renders an email icon and adds mailto: to email addresses. */
 const EmailIconLink = React.memo(({ email }: { email: string }) => (
-  <a href={`mailto:${email}`} target='_blank' rel='noopener noreferrer' className={urlLinkStyle}>
+  <a
+    href={`mailto:${email}`}
+    target='_blank'
+    rel='noopener noreferrer'
+    // Use annotationPointerEvents with override: true to override ThoughtAnnotationWrapper's
+    // pointerEvents: 'none' and make the email link clickable. When the thought is hidden,
+    // ThoughtAnnotationWrapper prevents this override by applying pointerEvents: 'none' to all
+    // children via the disableChildren variant.
+    className={cx(urlLinkStyle, annotationPointerEvents({ override: true }))}
+  >
     {' '}
     <EmailIcon />
   </a>
@@ -153,6 +169,7 @@ const ThoughtAnnotation = React.memo(
       <ThoughtAnnotationWrapper
         isTableCol1={isTableCol1}
         ellipsizedUrl={ellipsizedUrl}
+        isVisible={isVisible}
         multiline={multiline}
         value={value}
         styleAnnotation={styleAnnotation}
@@ -163,7 +180,7 @@ const ThoughtAnnotation = React.memo(
       >
         {
           // do not render url icon on root thoughts in publish mode
-          url && !(publishMode() && simplePath.length === 1) && <UrlIconLink isVisible={isVisible} url={url} />
+          url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
         }
         {email && <EmailIconLink email={email} />}
         {
