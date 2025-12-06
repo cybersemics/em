@@ -6,9 +6,8 @@ import { token } from '../../styled-system/tokens'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
-import { LongPressState } from '../constants'
+import { DROP_HOVER_WIDTH, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
-import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import dropHoverColor from '../selectors/dropHoverColor'
@@ -30,8 +29,6 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
   const isTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
-
-  const dropHoverLength = useDropHoverWidth()
 
   const animateHover = useSelector(state => {
     const parent = parentOf(simplePath)
@@ -60,7 +57,7 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
         }),
       )}
       style={{
-        width: dropHoverLength,
+        width: DROP_HOVER_WIDTH,
         backgroundColor: animateHover ? token('colors.highlight2') : dropHoverColorValue,
       }}
     />

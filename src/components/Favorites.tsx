@@ -7,10 +7,9 @@ import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/toggleUserSetting'
-import { Settings } from '../constants'
+import { DROP_HOVER_WIDTH, Settings } from '../constants'
 import useDragAndDropFavorites from '../hooks/useDragDropFavorites'
 import useDragHold from '../hooks/useDragHold'
-import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
@@ -42,7 +41,6 @@ const DragAndDropFavorite = ({
     path: simplePath,
   })
   const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
-  const dropHoverLength = useDropHoverWidth()
 
   return (
     // Set overflow:auto so the drop target fully wraps its contents.
@@ -63,7 +61,7 @@ const DragAndDropFavorite = ({
               marginTop: '-0.4em',
             }),
           )}
-          style={{ width: dropHoverLength }}
+          style={{ width: DROP_HOVER_WIDTH }}
         />
       )}
       <ThoughtLink
@@ -88,7 +86,6 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
   const { dropTarget, isHovering } = useDragAndDropFavorites({
     disableDragAndDrop,
   })
-  const dropHoverLength = useDropHoverWidth()
 
   return (
     <div className={css({ height: '4em' })} ref={dndRef(dropTarget)}>
@@ -102,7 +99,7 @@ const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
             background: isHovering ? 'highlight2' : undefined,
           }),
         )}
-        style={{ width: dropHoverLength }}
+        style={{ width: DROP_HOVER_WIDTH }}
       />
     </div>
   )

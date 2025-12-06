@@ -5,9 +5,9 @@ import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import { DROP_HOVER_WIDTH } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
-import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import dropHoverColor from '../selectors/dropHoverColor'
 import getThoughtById from '../selectors/getThoughtById'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
@@ -41,8 +41,6 @@ const DropUncle = ({
   // Calculate the height for the uncle thought over cliff
   const dropTargetHeight = calculateCliffDropTargetHeight({ cliff, depth })
 
-  const dropHoverLength = useDropHoverWidth()
-
   if (!dropTarget) return null
 
   return (
@@ -54,7 +52,7 @@ const DropUncle = ({
           opacity: 0.9,
         }),
       )}
-      style={{ width: dropHoverLength, height: `${1.9 + dropTargetHeight}em` }}
+      style={{ width: DROP_HOVER_WIDTH, height: `${1.9 + dropTargetHeight}em` }}
       ref={dndRef(dropTarget)}
     >
       {testFlags.simulateDrop && (
@@ -75,7 +73,7 @@ const DropUncle = ({
       {(testFlags.simulateDrag || isHovering) && (
         <span
           className={dropHoverRecipe({ insideDropEnd: true })}
-          style={{ width: dropHoverLength, backgroundColor: dropHoverColorValue }}
+          style={{ width: DROP_HOVER_WIDTH, backgroundColor: dropHoverColorValue }}
         />
       )}
     </span>

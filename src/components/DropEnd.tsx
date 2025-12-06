@@ -5,9 +5,9 @@ import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
+import { DROP_HOVER_WIDTH } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
-import useDropHoverWidth from '../hooks/useDropHoverWidth'
 import attributeEquals from '../selectors/attributeEquals'
 import dropHoverColor from '../selectors/dropHoverColor'
 import { getChildrenSorted } from '../selectors/getChildren'
@@ -54,8 +54,6 @@ const DropEnd = ({
   const isParentTableCol1 = useSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, path)), '=view', 'Table'),
   )
-
-  const dropHoverLength = useDropHoverWidth()
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
 
@@ -119,7 +117,7 @@ const DropEnd = ({
         // use transform to avoid conflicting with margin, which is currently spread out across multiple components
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
         // If dropping target is table column 1, do not set width (but use width property of dropEndRecipe)
-        width: isParentTableCol1 ? undefined : dropHoverLength,
+        width: isParentTableCol1 ? undefined : DROP_HOVER_WIDTH,
       }}
       ref={dndRef(dropTarget)}
     >
@@ -142,7 +140,7 @@ const DropEnd = ({
         <span
           className={dropHoverRecipe({ insideDropEnd: true })}
           style={{
-            width: dropHoverLength,
+            width: DROP_HOVER_WIDTH,
             backgroundColor: dropHoverColorValue,
             // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch
             marginLeft: `-${DROPEND_FINGERSHIFT}em`,
