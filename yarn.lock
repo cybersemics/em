@@ -9691,7 +9691,7 @@ __metadata:
     webview-background: "workspace:*"
     workbox-build: "npm:^7.3.0"
     workbox-core: "npm:^7.4.0"
-    workbox-expiration: "npm:^7.3.0"
+    workbox-expiration: "npm:^7.4.0"
     workbox-precaching: "npm:^7.3.0"
     workbox-routing: "npm:^7.3.0"
     workbox-strategies: "npm:^7.3.0"
@@ -21828,13 +21828,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-expiration@npm:7.3.0, workbox-expiration@npm:^7.3.0":
+"workbox-expiration@npm:7.3.0":
   version: 7.3.0
   resolution: "workbox-expiration@npm:7.3.0"
   dependencies:
     idb: "npm:^7.0.1"
     workbox-core: "npm:7.3.0"
   checksum: 10c0/6040d72122ece901becfcc59974586e9cc9b6309840b83b652c9f9aafe32ff89783404a431cadf6f888f80e5371252820e425ced499742964d6d68687f6fad1a
+  languageName: node
+  linkType: hard
+
+"workbox-expiration@npm:^7.4.0":
+  version: 7.4.0
+  resolution: "workbox-expiration@npm:7.4.0"
+  dependencies:
+    idb: "npm:^7.0.1"
+    workbox-core: "npm:7.4.0"
+  checksum: 10c0/d4f5e96e6d58d74a1be7d8c842e68e9fc2d4a22664f629ec71570039a1876e033ca1e54d68eccded83d901999e48fb388c1f807b14f706b9b83c7b3ab5815cf8
   languageName: node
   linkType: hard
 
