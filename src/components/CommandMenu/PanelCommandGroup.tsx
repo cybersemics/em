@@ -17,7 +17,7 @@ const PanelCommandGroup: React.FC<PropsWithChildren<{ commandSize: 'small' | 'me
         css({
           display: 'grid',
           alignItems: 'stretch',
-          gap: '3px',
+          gap: 'inherit',
         }),
         panelCommandGroupRecipe({
           layout:
