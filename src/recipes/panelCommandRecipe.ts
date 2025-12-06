@@ -49,20 +49,20 @@ export default defineRecipe({
       mixBlendMode: 'color-dodge',
       background: `radial-gradient(
             121.9% 149.44% at 57.5% 55.06%,
-            rgba(130, 108, 203, 0) 0%,
-            rgba(127, 172, 255, 0.08) 100%
+            {colors.panelCommandBorderGradientPurple} 0%,
+            {colors.panelCommandBorderGradientBlue} 100%
           )
           padding-box,
         linear-gradient(
             182.54deg,
-            rgba(186, 187, 187, 0.26) 1.43%,
-            rgba(208, 210, 224, 0) 64.89%
+            {colors.panelCommandBorderGradientGray} 1.43%,
+            {colors.panelCommandBorderGradientPurpleLight} 64.89%
           )
           border-box,
         linear-gradient(
             1.31deg,
-            rgba(186, 187, 187, 0.26) -39.43%,
-            rgba(208, 210, 224, 0) 24.83%
+            {colors.panelCommandBorderGradientGray} -39.43%,
+            {colors.panelCommandBorderGradientPurpleLight} 24.83%
           )
           border-box`,
       borderRadius: 'var(--panel-command-radius)',

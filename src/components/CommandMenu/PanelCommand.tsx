@@ -103,7 +103,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       >
         {SVG && (
           <SVG
-            style={{ justifySelf: size === 'small' ? 'center' : 'center', flex: '0 1 auto' }}
+            style={{ justifySelf: size === 'small' ? 'center' : 'center' }}
             size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
             animated={isAnimated}
             animationComplete={() => setIsAnimated(false)}

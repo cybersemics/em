@@ -80,6 +80,10 @@ const colors = {
     panelBg: 'rgba(23, 23, 23, 1)', // #171717
     commandCenterBlue: 'rgba(106, 154, 181, 1)',
     commandCenterPurple: 'rgba(45, 8, 126, 1)', // #2d087e
+    panelCommandBorderGradientPurple: 'rgba(130, 108, 203, 0)',
+    panelCommandBorderGradientBlue: 'rgba(127, 172, 255, 0.08)',
+    panelCommandBorderGradientGray: 'rgba(186, 187, 187, 0.26)',
+    panelCommandBorderGradientPurpleLight: 'rgba(208, 210, 224, 0)',
   },
   light: {
     // Background colors in capacitor app needs to be in hexadecimal codes
@@ -162,6 +166,10 @@ const colors = {
     panelBg: 'rgba(232, 232, 232, 1)', // #171717
     commandCenterBlue: 'rgba(106, 154, 181, 1)',
     commandCenterPurple: 'rgba(45, 8, 126, 1)', // #2d087e
+    panelCommandBorderGradientPurple: 'rgba(130, 108, 203, 0)',
+    panelCommandBorderGradientBlue: 'rgba(127, 172, 255, 0.08)',
+    panelCommandBorderGradientGray: 'rgba(186, 187, 187, 0.26)',
+    panelCommandBorderGradientPurpleLight: 'rgba(208, 210, 224, 0)',
   },
 } as const
 
