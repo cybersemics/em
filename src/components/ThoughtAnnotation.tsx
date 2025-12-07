@@ -10,7 +10,6 @@ import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
-import useContextAnimation from '../hooks/useContextAnimation'
 import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { filterAllChildren } from '../selectors/getChildren'
@@ -25,6 +24,7 @@ import containsURL from '../util/containsURL'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
+import getContextAnimationName from '../util/getContextAnimationName'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
@@ -316,7 +316,7 @@ const ThoughtAnnotationContainer = React.memo(
       }
     }, [editableRef, fontSize, isTableCol1])
 
-    const contextAnimation = useContextAnimation(path)
+    const contextAnimation = useSelector(getContextAnimationName(path))
     const descendant = useSelector(state => isDescendantPath(path, state.cursor))
     const timeoutRef = useRef(0)
 
