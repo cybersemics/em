@@ -42,7 +42,7 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive, type 
           backgroundGradient: 'activeGlow',
           borderRadius: '0px',
           pointerEvents: 'none',
-          ...(type === 'luminosity' ? { mixBlendMode: 'luminosity' } : { mixBlendMode: 'saturation' }),
+          mixBlendMode: type === 'luminosity' ? 'luminosity' : 'saturation',
           filter: 'blur(23px)',
           padding: 40 /* Expands the Paint Rect so it includes all of the blur. */,
           margin: -40 /* Pulls it back so layout doesn't break. */,
@@ -103,7 +103,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
       >
         {SVG && (
           <SVG
-            style={{ justifySelf: size === 'small' ? 'center' : 'center' }}
+            style={{ justifySelf: 'center' }}
             size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
             animated={isAnimated}
             animationComplete={() => setIsAnimated(false)}
